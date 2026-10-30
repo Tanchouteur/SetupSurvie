@@ -40,6 +40,12 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | Prise électrique uniquement au départ ou batterie à intégrer dès la conception ? | Prise électrique pour commencer ; batterie à étudier plus tard. |
 | Qui peut ajouter des documents et gérer les mises à jour ? | Seulement Louis et Marc au début pour simplifier le prototype. |
 
+## Études complémentaires demandées
+
+Louis souhaite étudier la fiabilité des usages sensibles avec des outils spécialisés. Les champignons sont un exemple, pas un recentrage du projet sur la mycologie. Voir [l’étude de fiabilité](06-fiabilite-et-outils.md).
+
+Il demande aussi d’examiner un mode agentique, plusieurs tailles de modèles et des travaux longs lancés le soir : une heure de traitement est acceptable si le gain sur un 8B est réel. Cela complète le dialogue courant sans modifier son délai cible. Voir [les modes IA et travaux longs](07-modes-ia-et-travaux-longs.md). Les solutions décrites sont des pistes à tester, sans modèle ni architecture imposés.
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :

@@ -58,6 +58,10 @@ Cette liste est une proposition de recette à préciser pendant l’étude techn
 
 Une bibliothèque volumineuse demande de suivre séparément les contenus stockés, consultables et réellement indexés pour l’IA. Les premiers essais peuvent utiliser un échantillon limité sans réduire l’ambition de la bibliothèque finale.
 
+## Études complémentaires
+
+Étudier la [fiabilité et les outils spécialisés](06-fiabilite-et-outils.md), ainsi que les [modes IA et travaux longs](07-modes-ia-et-travaux-longs.md). Louis accepte des traitements d’environ une heure pour des demandes approfondies lancées volontairement, si cela améliore réellement la qualité. Le délai habituel d’une à deux minutes reste distinct. Ces études n’imposent pas encore leur implémentation dans le premier prototype.
+
 ## Prochain travail documentaire
 
 1. Inventorier les machines réellement accessibles.
