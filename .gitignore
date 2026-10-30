@@ -1,0 +1,15 @@
+.DS_Store
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Contenus volumineux et données propres aux appareils
+/data/
+/models/
+/library/
+/backups/
+/secrets/
