@@ -15,8 +15,7 @@ Le dossier de travail était vide à son ouverture. Le contexte transmis indique
 | PC envisagé : processeur | Probablement un Ryzen 5 | Estimation de Louis ; référence exacte inconnue |
 | PC envisagé : stockage | Environ 4 To | Estimation de Louis ; type, capacité libre et organisation inconnus |
 | PC envisagé : OS et disponibilité | Windows 11, autres usages à conserver | Confirmé par Louis ; aucune réinstallation autorisée |
-| Deuxième PC potentiel | Linux, RTX 2060, Ryzen 9 | Accès possible selon Louis ; disponibilité, distribution, VRAM, RAM et stockage inconnus |
-| PC de Louis | Peut servir au développement | Configuration et rôle à préciser |
+| PC Linux de développement | Linux, RTX 2060, Ryzen 9 ; situé dans la chambre de Louis | Prévu pendant le développement ; distribution, VRAM, RAM et stockage à préciser |
 | Réseau dédié et alimentation autonome | Pas de choix | À cadrer |
 
 ## Pistes techniques, sans choix arrêté
@@ -50,6 +49,14 @@ Les modalités restent à concevoir. Une éventuelle vente nécessitera une vér
 
 Le PC principal doit conserver Windows 11 et ses usages actuels. La piste Linux initiale ne peut donc pas être appliquée par une réinstallation de cette machine. Les modes de déploiement compatibles avec Windows et l’accès GPU devront être étudiés avant tout choix.
 
-Un deuxième PC Linux (RTX 2060, Ryzen 9) pourrait être accessible. Il constitue une autre cible possible pour les essais, sans décision de migrer le prototype. Ne pas déduire sa VRAM ou ses performances du seul nom du GPU, ni sa capacité d’hébergement du seul processeur.
+Un PC Linux (RTX 2060, Ryzen 9), situé dans la chambre de Louis, est prévu pendant le développement. Il constitue une cible pour les essais, sans rôle d’hébergement permanent partagé entre les familles. Ne pas déduire sa VRAM ou ses performances du seul nom du GPU, ni sa capacité d’hébergement du seul processeur.
 
 Comparer les deux machines quand leur disponibilité et leurs caractéristiques seront connues : facilité d’installation, qualité et délai des réponses, gêne pour les usages habituels, accès réseau. Le choix de la première cible reste ouvert.
+
+## Dimensionnement de l’appareil familial
+
+Cible confirmée : chaque famille dispose de son propre appareil. Minimiser son coût matériel tout en conservant une qualité IA suffisante est un objectif central. Budget et définition mesurable de « suffisant » restent ouverts.
+
+L’étude devra comparer des configurations et modèles sur les mêmes questions en français et recherches documentaires, avec la charge familiale attendue. Relever coût matériel, qualité, délai, mémoire utilisée et stockage nécessaire. Aucun achat ni seuil de performance n’est décidé à ce stade.
+
+Le souhait d’une bibliothèque maximale remplace l’idée d’une petite sélection comme cible finale. Cela n’interdit pas un échantillon réduit pour les premiers essais. Il faudra distinguer volume conservé, volume consultable et volume réellement indexé pour l’IA, puis mesurer la place des index et les temps de préparation.

@@ -7,7 +7,7 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | Question | Réponse |
 | --- | --- |
 | Le premier objectif est-il un prototype pour Louis et Marc, un produit destiné à la vente, ou d’abord une bibliothèque sans IA ? | Prototype complet pour Louis et Marc, puis envisager la vente. |
-| Quel PC sera utilisé, avec quel OS, processeur et stockage disponible ? | Probablement Ryzen 5, RTX 5060 Ti, 32 Go de RAM, environ 4 To. Références, espace libre, OS et attribution du PC à confirmer. |
+| Quel PC sera utilisé, avec quel OS, processeur et stockage disponible ? | Probablement Ryzen 5, RTX 5060 Ti, 32 Go de RAM, environ 4 To. Windows 11 à conserver ; références, espace libre et attribution du PC à confirmer. |
 | Quels sont les trois usages prioritaires, avec des exemples concrets de recherches ou questions ? | Médecine, réflexion en ingénierie, recettes et différenciation de champignons. Louis s’interroge sur les limites des modèles locaux ; pas de classement arrêté. |
 
 ## Deuxième série : fonctions et conditions d’utilisation
@@ -18,7 +18,19 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | Nombre d’utilisateurs simultanés et attente acceptable pour une réponse IA ? | Plusieurs personnes ; attente d’une à deux minutes acceptable. Nombre précis et délai sous charge à définir. |
 | PC dédié sous Linux, ou système et usages actuels à conserver ? | Windows 11 à conserver avec les usages actuels du PC principal. |
 | Comptes individuels ou espace commun ? | Un espace commun suffit pour commencer. |
-| Autre machine disponible ? | Accès possible à un PC Linux avec RTX 2060 et Ryzen 9 ; disponibilité, références et mémoire à confirmer. |
+| Autre machine disponible ? | PC Linux avec RTX 2060 et Ryzen 9 dans la chambre de Louis, pour la période de développement ; caractéristiques exactes à confirmer. |
+
+## Troisième série : cible familiale et bibliothèque
+
+| Question | Réponse |
+| --- | --- |
+| Le PC Linux servira-t-il durablement aux familles ? | Il sert pendant le développement. À terme chaque famille aura son appareil. |
+| Quel objectif pour le matériel final ? | Minimiser le coût tout en conservant une machine assez capable pour des modèles suffisants ; configuration à déterminer par les essais. |
+| Quelle ampleur pour la bibliothèque ? | Le maximum de contenu ; aucune limite chiffrée fixée. |
+| Quel rôle de l’IA ? | Combiner ses connaissances apprises et les documents locaux. |
+| Quel budget matériel par appareil familial ? | En attente |
+| Un appareil familial dédié sous Linux est-il acceptable ? | En attente ; Windows 11 à conserver concerne la machine existante. |
+| Quelle place pour les sources françaises et anglaises ? | En attente ; usage en français déjà exprimé. |
 
 ## Séries suivantes
 
@@ -42,6 +54,9 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | 2026-10-30 | Utilisation partagée | Confirmé | Plusieurs utilisateurs, attente acceptable d’une à deux minutes ; espace commun au prototype. |
 | 2026-10-30 | Analyse de photos | Arbitrage délégué | Tester si simple à intégrer ; proposition de fonction facultative, reportable selon les essais. |
 | 2026-10-30 | Visibilité du dépôt | Déclaré par Louis | Dépôt passé en privé ; réglage non vérifié indépendamment. |
+| 2026-10-30 | Appareils familiaux | Confirmé | Un appareil par famille ; minimiser le coût pour une qualité IA suffisante, à définir et mesurer. |
+| 2026-10-30 | PC Linux | Précisé | Machine de développement dans la chambre de Louis, sans rôle de serveur permanent commun aux familles. |
+| 2026-10-30 | Bibliothèque et assistant | Confirmé | Viser le maximum de contenu et combiner connaissances du modèle et recherche dans les documents. |
 | 2026-10-30 | Architecture et modèle IA | Ouvert | Aucune sélection définitive dans le contexte transmis. |
 
 Chaque décision ultérieure doit indiquer ce qui a été retenu, pourquoi, et les vérifications encore nécessaires. Une suggestion de l’assistant ne devient pas une décision sans validation ou instruction correspondante.

@@ -8,10 +8,19 @@ Pouvoir consulter une réserve de connaissances lors d’une coupure d’Interne
 
 Louis et son oncle Marc portent le projet. Louis confirme le 30 octobre 2026 que la première étape est un prototype complet pour eux deux. La vente sera envisagée ensuite ; elle ne constitue pas le premier livrable. Le positionnement commercial et les engagements associés restent à définir.
 
+## Cible familiale et développement
+
+Louis précise qu’à terme chaque famille aura son propre appareil. Le PC Linux situé dans sa chambre servira pendant le développement ; ce n’est pas un serveur permanent commun aux familles.
+
+Il faut déterminer une configuration reproductible qui minimise le coût tout en faisant fonctionner des modèles suffisamment capables pour les usages retenus. Aucun budget, modèle minimal ou matériel de série n’est encore arrêté. Les machines disponibles servent aux essais et ne fixent pas la configuration finale.
+
+La contrainte de conservation de Windows 11 concerne le PC existant. Elle ne détermine pas encore l’OS des futurs appareils familiaux.
+
 ## Besoins exprimés
 
 - Fonctionner sans Internet une fois le système préparé.
-- Donner accès à une bibliothèque comprenant des photos, schémas et illustrations.
+- Donner accès à une bibliothèque aussi large que possible, comprenant des photos, schémas et illustrations. La limite de stockage et la sélection des ressources restent à définir.
+- Permettre à l’assistant de combiner les connaissances apprises par le modèle avec les informations retrouvées dans les documents locaux.
 - Permettre une utilisation en français, même avec certaines sources anglaises.
 - Être accessible depuis un navigateur sur téléphone, tablette ou ordinateur à proximité.
 - Être simple à utiliser pour une personne peu technique.
@@ -58,6 +67,6 @@ Les futurs tests devront au minimum couvrir l’accès depuis un appareil client
 ## Contraintes confirmées lors du cadrage
 
 - Le PC principal est sous Windows 11 ; conserver son système et ses usages habituels.
-- Un autre PC Linux avec RTX 2060 et Ryzen 9 pourrait être disponible ; son accès reste à confirmer.
+- Le PC Linux avec RTX 2060 et Ryzen 9 est prévu pour la période de développement, dans la chambre de Louis ; ses caractéristiques exactes et modalités d’accès restent à confirmer.
 - Un espace commun suffit au prototype ; les espaces personnels ne sont pas demandés pour cette première étape.
 - L’analyse de photos peut être reportée si son intégration complique sensiblement le prototype.

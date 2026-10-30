@@ -2,7 +2,7 @@
 
 Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisable sans Internet, avec une bibliothèque illustrée et un assistant IA local, accessible depuis les appareils à proximité.
 
-**État au 30 octobre 2026 : cadrage documentaire.** Aucun logiciel installé, aucune architecture choisie et aucune performance validée dans ce dépôt. Le premier objectif confirmé est un prototype complet pour Louis et Marc ; la vente sera envisagée ensuite.
+**État au 30 octobre 2026 : cadrage documentaire.** Aucun logiciel installé, aucune architecture choisie et aucune performance validée dans ce dépôt. Le premier objectif confirmé est un prototype complet pour Louis et Marc ; la vente sera envisagée ensuite. La cible est un appareil par famille, avec un coût matériel à minimiser pour une qualité IA jugée suffisante.
 
 ## Documentation
 

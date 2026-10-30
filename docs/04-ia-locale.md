@@ -8,6 +8,14 @@ Un assistant capable de dialoguer en français, expliquer un sujet, aider à ré
 
 La fiche officielle de [Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B) décrit notamment des capacités multilingues et de raisonnement. C’est un candidat mentionné dans le contexte initial, sans sélection définitive. Ses performances annoncées ne prouvent pas sa fiabilité sur nos usages en français.
 
+## Combiner connaissances du modèle et bibliothèque
+
+Louis confirme vouloir les deux : exploiter ce que le modèle a appris et retrouver les informations des documents stockés localement. Cela ne demande pas, à lui seul, de réentraîner le modèle sur toute la bibliothèque. La piste à évaluer est de lui fournir les passages utiles lors de la réponse.
+
+Comportement proposé, encore à valider : distinguer les passages appuyés sur des documents consultables des explications générales du modèle. Ne pas inventer une référence quand aucun passage pertinent n’a été retrouvé. Les connaissances apprises du modèle ne sont pas une base documentaire dont chaque affirmation aurait une source récupérable.
+
+Le souhait de conserver un maximum de contenu ne signifie pas que tous les fichiers seront immédiatement exploitables par l’assistant. Prévoir un suivi des contenus conservés, consultables, indexés ou en échec, notamment pour les archives ZIM et scans.
+
 ## Trois capacités distinctes
 
 1. **Dialoguer avec le modèle** : il produit une réponse à partir de son entraînement et du contexte fourni. Il peut se tromper, omettre une condition ou produire une explication plausible mais fausse.
