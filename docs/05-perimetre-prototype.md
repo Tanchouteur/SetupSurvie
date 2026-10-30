@@ -12,7 +12,7 @@ Les usages cités sont la médecine, la réflexion en ingénierie, les recettes 
 
 | Sujet | Périmètre actuel |
 | --- | --- |
-| Accès | Navigateur sur les appareils du réseau local de la maison |
+| Accès | Navigateur sur les appareils du réseau local de la maison ; toute la bibliothèque consultable directement sans IA, utilisation pratique sur téléphone |
 | Réseau | LAN domestique maintenu opérationnel, même sans accès Internet |
 | Alimentation | Prise électrique |
 | Utilisateurs | Plusieurs personnes ; nombre précis à fixer pour les essais |

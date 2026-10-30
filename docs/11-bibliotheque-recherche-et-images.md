@@ -2,6 +2,16 @@
 
 Étude au 30 octobre 2026. Louis précise vouloir Wikipédia français avec illustrations et la possibilité pour l’assistant de retrouver des images documentaires avec les informations textuelles associées. Les champignons restent un exemple parmi d’autres. Aucun connecteur ni import n’est encore réalisé.
 
+## Accès direct sur le LAN : besoin confirmé
+
+Louis confirme que toute la bibliothèque doit aussi être accessible sans interroger l’IA, avec une utilisation pratique sur téléphone. La lecture et la recherche documentaire doivent donc rester possibles indépendamment de la disponibilité du modèle. Ne pas réduire cet accès à un répertoire de fichiers brut.
+
+Proposition d’expérience : un point d’entrée commun sur le LAN avec deux accès, Bibliothèque et Assistant. Pour la bibliothèque, prévoir navigation par thèmes, recherche sans génération IA, filtres langue/type et ouverture des documents illustrés. Sur téléphone, privilégier des pages lisibles, de grands boutons et un retour simple aux résultats. L’organisation exacte et les favoris éventuels restent des propositions à valider.
+
+Kiwix assure la consultation des ZIM ; les PDF et guides nécessitent un lecteur navigateur adapté. Un catalogue commun pourrait orienter vers ces lecteurs. Son moteur de recherche transversal doit être étudié : ne pas promettre qu’une recherche Kiwix interroge aussi les PDF. Même sans recherche transversale initiale, chaque collection doit être clairement accessible et ses limites visibles.
+
+Vérifications proposées : accéder à chaque type de ressource sur téléphone et ordinateur, lire sans IA, chercher quand le modèle est déchargé ou occupé par une tâche longue, puis recommencer sans Internet. Prévoir la gestion des pages volumineuses et PDF peu lisibles sur petit écran, avec conservation de l’original.
+
 ## Répartition des rôles proposée
 
 | Élément | Rôle |

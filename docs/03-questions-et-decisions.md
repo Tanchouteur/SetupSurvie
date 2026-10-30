@@ -56,6 +56,8 @@ Capacités déclarées pour les deux machines : 32 Go RAM et 8 Go VRAM. Référe
 
 Louis précise vouloir Wikipédia français avec images et une recherche IA capable de retrouver les illustrations avec leur contexte textuel. Voir [l’étude des données et des images](11-bibliotheque-recherche-et-images.md). La recherche Kiwix à la demande et la conservation des associations texte/image sont des propositions à tester ; aucun import automatique de ZIM dans Open WebUI n’est présumé.
 
+Louis confirme aussi l’accès direct et pratique à toute la bibliothèque depuis le LAN, y compris sur téléphone, sans requête IA obligatoire. La proposition de catalogue commun et ses modalités restent à concevoir.
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :

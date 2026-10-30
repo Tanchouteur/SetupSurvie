@@ -23,6 +23,7 @@ Chez Marc, le PC existant doit d’abord assurer les usages habituels sous Windo
 - Permettre à l’assistant de combiner les connaissances apprises par le modèle avec les informations retrouvées dans les documents locaux.
 - Inclure largement les ressources françaises et anglaises ; l’interface, les questions et les réponses doivent permettre une utilisation en français. Louis ne souhaite pas écarter une source utile au seul motif qu’elle est en anglais.
 - Être accessible depuis un navigateur sur téléphone, tablette ou ordinateur à proximité.
+- Donner un accès direct et pratique à toute la bibliothèque sur le LAN, notamment sur téléphone, sans devoir interroger l’IA.
 - Être simple à utiliser pour une personne peu technique.
 - Préparer un premier système, le tester et reproduire ensuite son installation sur d’autres PC.
 - Utiliser Docker, probablement Compose, pour les services lorsque cela convient.
@@ -46,7 +47,6 @@ Il reste à transformer ces usages en cas de test précis. Les exemples de test 
 
 ## Fonctions proposées, à valider
 
-- Consulter la bibliothèque indépendamment de l’IA.
 - Poser des questions en français et obtenir des réponses accompagnées de sources consultables.
 - Rechercher dans des documents français et anglais.
 - Traduire ou expliquer un passage à la demande en conservant les originaux.
