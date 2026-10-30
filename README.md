@@ -2,12 +2,13 @@
 
 Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisable sans Internet, avec une bibliothèque illustrée et un assistant IA local, accessible depuis les appareils à proximité.
 
-**État au 30 octobre 2026 : cadrage documentaire.** Aucun logiciel installé, aucune architecture choisie et aucune performance validée dans ce dépôt. Une éventuelle commercialisation est envisagée ; son périmètre reste à préciser.
+**État au 30 octobre 2026 : cadrage documentaire.** Aucun logiciel installé, aucune architecture choisie et aucune performance validée dans ce dépôt. Le premier objectif confirmé est un prototype complet pour Louis et Marc ; la vente sera envisagée ensuite.
 
 ## Documentation
 
 - [Cadrage et besoins](docs/01-cadrage.md) : intentions exprimées, usages et périmètre à préciser.
 - [État des lieux](docs/02-etat-des-lieux.md) : matériel déclaré, pistes étudiées et inconnues.
+- [Rôle et limites de l’IA locale](docs/04-ia-locale.md) : capacités à évaluer et distinction entre texte, documents et images.
 - [Questions et décisions](docs/03-questions-et-decisions.md) : entretien de cadrage et suivi des choix.
 - [Contexte initial conservé](docs/sources/contexte-initial.md) : texte transmis au démarrage, sans vérification indépendante.
 

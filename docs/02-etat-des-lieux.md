@@ -10,9 +10,12 @@ Le dossier de travail était vide à son ouverture. Le contexte transmis indique
 
 | Élément | Information transmise | Statut |
 | --- | --- | --- |
-| PC de Marc : GPU | NVIDIA RTX 5060 Ti, 8 Go de VRAM | Déclaré, non inspecté |
-| PC de Marc : mémoire | 32 Go DDR5 | Déclaré, non inspecté |
-| Processeur, stockage et OS | Inconnus | À renseigner |
+| PC envisagé : GPU | NVIDIA RTX 5060 Ti ; 8 Go de VRAM indiqués dans le contexte initial | Modèle confirmé de manière déclarative ; VRAM à vérifier |
+| PC envisagé : mémoire | 32 Go ; DDR5 indiqué dans le contexte initial | Capacité redonnée par Louis ; non inspecté |
+| PC envisagé : processeur | Probablement un Ryzen 5 | Estimation de Louis ; référence exacte inconnue |
+| PC envisagé : stockage | Environ 4 To | Estimation de Louis ; type, capacité libre et organisation inconnus |
+| PC envisagé : OS et disponibilité | Windows 11, autres usages à conserver | Confirmé par Louis ; aucune réinstallation autorisée |
+| Deuxième PC potentiel | Linux, RTX 2060, Ryzen 9 | Accès possible selon Louis ; disponibilité, distribution, VRAM, RAM et stockage inconnus |
 | PC de Louis | Peut servir au développement | Configuration et rôle à préciser |
 | Réseau dédié et alimentation autonome | Pas de choix | À cadrer |
 
@@ -42,3 +45,11 @@ Budget du prototype, matériel de série, prix de vente et consommation acceptab
 Séparer le système et les applications, les contenus communs (bibliothèque, modèles, index), puis les données propres à chaque appareil. Définir la préparation de l’hôte en complément de Docker, les versions, les sauvegardes, les mises à jour et une restauration hors ligne.
 
 Les modalités restent à concevoir. Une éventuelle vente nécessitera une vérification distincte des licences des logiciels, modèles et contenus effectivement distribués.
+
+## Conséquence des précisions de cadrage
+
+Le PC principal doit conserver Windows 11 et ses usages actuels. La piste Linux initiale ne peut donc pas être appliquée par une réinstallation de cette machine. Les modes de déploiement compatibles avec Windows et l’accès GPU devront être étudiés avant tout choix.
+
+Un deuxième PC Linux (RTX 2060, Ryzen 9) pourrait être accessible. Il constitue une autre cible possible pour les essais, sans décision de migrer le prototype. Ne pas déduire sa VRAM ou ses performances du seul nom du GPU, ni sa capacité d’hébergement du seul processeur.
+
+Comparer les deux machines quand leur disponibilité et leurs caractéristiques seront connues : facilité d’installation, qualité et délai des réponses, gêne pour les usages habituels, accès réseau. Le choix de la première cible reste ouvert.
