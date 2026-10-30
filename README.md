@@ -6,6 +6,10 @@ Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisab
 
 ## Documentation
 
+- [Sélection de modèles et outils](docs/08-selection-modeles-et-outils.md) : capacités, résultats publiés et faisabilité sur les deux PC.
+- [Machines dédiées](docs/09-machines-dediees.md) : idées autour de 1 000 € et paliers supérieurs.
+- [Protocole de comparaison](docs/10-protocole-comparaison-ia.md) : mesurer le gain réel d’un gros modèle lent.
+
 - [Périmètre du prototype](docs/05-perimetre-prototype.md) : synthèse des choix actuels, évolutions et vérifications proposées.
 - [Fiabilité et outils spécialisés](docs/06-fiabilite-et-outils.md) : pistes pour les usages sensibles et leur évaluation.
 - [Modes IA et travaux longs](docs/07-modes-ia-et-travaux-longs.md) : agents, modèles de plusieurs tailles et dossiers lancés le soir.

@@ -30,9 +30,9 @@ Le résultat attendu est un dossier vérifiable. Les décisions impliquant struc
 
 [llama.cpp](https://github.com/ggml-org/llama.cpp) prend en charge la compression des modèles et une exécution hybride CPU/GPU permettant de dépasser la seule capacité VRAM. Cela rend certains modèles plus lourds envisageables en contrepartie d’une vitesse à mesurer ; ce n’est pas une promesse de fonctionnement sur les machines disponibles.
 
-À titre de repère vérifié, le paquet [Qwen3 32B Q4_K_M dans Ollama](https://ollama.com/library/qwen3:32b) est affiché à environ 20 Go. Cette taille de fichier n’est pas la mémoire totale nécessaire : ajouter le contexte, les buffers, l’OS et les autres services. Avec les 32 Go de RAM déclarés chez Marc, la faisabilité et la coexistence avec ses applications restent à tester. La RAM du PC Linux est inconnue.
+À titre de repère vérifié, le paquet [Qwen3 32B Q4_K_M dans Ollama](https://ollama.com/library/qwen3:32b) est affiché à environ 20 Go. Cette taille de fichier n’est pas la mémoire totale nécessaire : ajouter le contexte, les buffers, l’OS et les autres services. Avec les 32 Go de RAM déclarés chez Marc, la faisabilité et la coexistence avec ses applications restent à tester. Louis précise ensuite que le PC Linux dispose lui aussi de 32 Go de RAM et 8 Go de VRAM.
 
-Une première comparaison pourrait couvrir la classe 8B, une classe intermédiaire autour de 14B et une classe autour de 30–32B selon la mémoire disponible. Ce sont des classes d’essai, pas une sélection des meilleurs modèles actuels ni une recommandation d’achat. Fixer versions et compression lors des essais. Accepter une heure n’autorise pas à conclure que n’importe quel modèle rentrera en mémoire ou terminera dans ce délai.
+La piste initiale couvrait la classe 8B, une classe intermédiaire autour de 14B et une classe autour de 30–32B. La [sélection actualisée](08-selection-modeles-et-outils.md) propose désormais notamment Qwen3.5 4B/9B/27B, Qwen3.8 27B et GPT-OSS 20B. Ce sont des classes d’essai, pas une sélection des meilleurs modèles actuels ni une recommandation d’achat. Fixer versions et compression lors des essais. Accepter une heure n’autorise pas à conclure que n’importe quel modèle rentrera en mémoire ou terminera dans ce délai.
 
 ## Fonctionnement proposé des travaux longs
 

@@ -25,9 +25,9 @@ Les usages cités sont la médecine, la réflexion en ingénierie, les recettes 
 
 ## Machines et étapes
 
-Le PC Linux avec RTX 2060 et Ryzen 9, dans la chambre de Louis, sert pendant le développement. Sa RAM, sa VRAM, sa distribution et son stockage restent à inventorier.
+Le PC Linux avec RTX 2060 et Ryzen 9, dans la chambre de Louis, sert pendant le développement. Louis confirme 32 Go de RAM et 8 Go de VRAM ; la référence GPU exacte, la distribution et le stockage restent à inventorier.
 
-Chez Marc, le système doit fonctionner sur son PC Windows 11 en conservant ses usages habituels. Configuration déclarée : RTX 5060 Ti, 32 Go de RAM, probablement Ryzen 5 et environ 4 To de stockage. Références, VRAM et espace libre à vérifier.
+Chez Marc, le système doit fonctionner sur son PC Windows 11 en conservant ses usages habituels. Configuration déclarée : RTX 5060 Ti, 32 Go de RAM, probablement Ryzen 5 et environ 4 To de stockage. Louis confirme 8 Go de VRAM ; références exactes et espace libre restent à vérifier.
 
 À terme, chaque famille possède son appareil. L’objectif est un coût matériel réduit pour une qualité IA suffisante, avec une enveloppe indicative autour de 1 000 €, à ajuster selon les essais. Ce montant n’est pas un prix de vente. Une machine dédiée, éventuellement allumée seulement au besoin, est envisagée ensuite chez Marc ; son OS n’est pas choisi.
 

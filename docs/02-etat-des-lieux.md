@@ -10,12 +10,12 @@ Le dossier de travail était vide à son ouverture. Le contexte transmis indique
 
 | Élément | Information transmise | Statut |
 | --- | --- | --- |
-| PC envisagé : GPU | NVIDIA RTX 5060 Ti ; 8 Go de VRAM indiqués dans le contexte initial | Modèle confirmé de manière déclarative ; VRAM à vérifier |
+| PC de Marc : GPU | NVIDIA RTX 5060 Ti, 8 Go de VRAM | Confirmé par Louis ; non inspecté |
 | PC envisagé : mémoire | 32 Go ; DDR5 indiqué dans le contexte initial | Capacité redonnée par Louis ; non inspecté |
 | PC envisagé : processeur | Probablement un Ryzen 5 | Estimation de Louis ; référence exacte inconnue |
 | PC envisagé : stockage | Environ 4 To | Estimation de Louis ; type, capacité libre et organisation inconnus |
 | PC envisagé : OS et disponibilité | Windows 11, autres usages à conserver | Confirmé par Louis ; aucune réinstallation autorisée |
-| PC Linux de développement | Linux, RTX 2060, Ryzen 9 ; situé dans la chambre de Louis | Prévu pendant le développement ; distribution, VRAM, RAM et stockage à préciser |
+| PC Linux de développement | Linux, carte déclarée RTX 2060 avec 8 Go VRAM, Ryzen 9, 32 Go RAM ; situé dans la chambre de Louis | Capacités confirmées par Louis ; référence GPU exacte, distribution et stockage à préciser |
 | Réseau du prototype | LAN habituel de la maison | Confirmé ; routeur et point d’accès dédiés dans un second temps |
 | Alimentation du prototype | Prise électrique | Confirmé ; batterie à étudier plus tard |
 
@@ -71,3 +71,9 @@ Le catalogue visé doit couvrir largement le français et l’anglais. La sélec
 Louis et Marc gèrent seuls les ajouts documentaires et les mises à jour au départ. L’import autonome par les familles n’est pas demandé pour cette version. Le mode d’administration et la méthode de livraison des mises à jour restent à concevoir.
 
 Les tests sans Internet doivent conserver le LAN domestique opérationnel. Le fonctionnement avec une box éteinte n’est pas garanti par ce premier périmètre ; il relève de l’évolution vers un réseau dédié.
+
+## Étude des modèles et machines dédiées
+
+Louis précise que les deux PC disposent de 32 Go de RAM et 8 Go de VRAM. Il accepte les appareils neufs ou d’occasion et souhaite aussi connaître les spécifications de machines plus puissantes si Marc constate un gain des gros modèles. Aucun achat n’est demandé.
+
+La [sélection des modèles et outils](08-selection-modeles-et-outils.md), les [pistes matérielles](09-machines-dediees.md) et le [protocole comparatif](10-protocole-comparaison-ia.md) distinguent les sources publiées des estimations et des futurs essais locaux. Ils actualisent les premières pistes Qwen3 8B/32B sans les effacer de l’historique.

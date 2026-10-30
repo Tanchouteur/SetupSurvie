@@ -46,11 +46,17 @@ Louis souhaite étudier la fiabilité des usages sensibles avec des outils spéc
 
 Il demande aussi d’examiner un mode agentique, plusieurs tailles de modèles et des travaux longs lancés le soir : une heure de traitement est acceptable si le gain sur un 8B est réel. Cela complète le dialogue courant sans modifier son délai cible. Voir [les modes IA et travaux longs](07-modes-ia-et-travaux-longs.md). Les solutions décrites sont des pistes à tester, sans modèle ni architecture imposés.
 
+## Étude comparative demandée
+
+Louis demande une sélection de modèles et outils pour chaque mode, la faisabilité sur les PC actuels et le gain réel d’un gros modèle lent. Il ajoute des exemples de machines autour de 1 000 € et des paliers plus puissants pour Marc si les résultats le justifient. Neuf et occasion acceptés ; aucun achat autorisé par cette étude.
+
+Capacités déclarées pour les deux machines : 32 Go RAM et 8 Go VRAM. Références exactes à inventorier ; ne pas déduire une variante de GPU de ce seul chiffre. Voir [modèles et outils](08-selection-modeles-et-outils.md), [matériel dédié](09-machines-dediees.md), [évaluation](10-protocole-comparaison-ia.md).
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :
 
-- Inventaire exact des deux PC : VRAM, RAM du PC Linux, versions des systèmes, pilotes et stockage libre.
+- Inventaire exact des deux PC : références CPU/GPU, versions des systèmes, pilotes et stockage libre ; 8 Go VRAM et 32 Go RAM déclarés pour chacun.
 - Sélection des composants, modèles et contenus ; licences et compatibilité à vérifier.
 - Scénarios de test, nombre d’utilisateurs simultanés et définition de la qualité IA suffisante.
 - Méthode de sauvegarde, restauration, livraison des mises à jour et préparation hors ligne.
