@@ -18,7 +18,7 @@ Date : 30 octobre 2026. Environnement local : Mac ARM64, Docker Desktop, contene
 - Import réel de `box.en.txt` dans Open WebUI, statut terminé ; une question française retrouve le passage anglais contenant le volume et la limite de charge. Ce petit cas démontre le câblage, pas un taux de pertinence général.
 - Connexion réelle Open WebUI → Ollama dans le réseau Compose ; version Ollama 0.40.13 relevée.
 
-Le téléchargement du modèle de dialogue a été démarré dans l’environnement temporaire puis interrompu lors de son arrêt. Aucune génération complète ni mesure de vitesse n’est comptée comme réussie dans ce rapport. Les conteneurs de test ont été arrêtés ; les fichiers de préparation sont conservés dans les dossiers temporaires.
+Le téléchargement de `qwen3.5:4b-q4_K_M` s’est terminé avant l’arrêt de l’environnement temporaire ; le manifeste relève le digest `d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04` (paquet de 3 324 173 934 octets). Aucune génération complète ni mesure de vitesse n’est comptée comme réussie dans ce rapport. Les conteneurs de test ont été arrêtés ; les fichiers de préparation sont conservés dans les dossiers temporaires.
 
 ## Points restant à valider sur les cibles
 
