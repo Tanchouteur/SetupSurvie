@@ -37,7 +37,7 @@ Consulter un ZIM dans Kiwix et permettre à l’IA d’en rechercher le contenu 
 
 Le contexte contient une addition estimative d’environ 235 Go de ressources et modèles, une marge proposée de 350–500 Go et une suggestion de SSD de 1 To. Ces valeurs ne sont pas des mesures d’installation ni un dimensionnement retenu. Les index, dépendances, fichiers temporaires et sauvegardes doivent être comptés après sélection du contenu.
 
-Budget du prototype, matériel de série, prix de vente et consommation acceptable : inconnus.
+Louis évoque environ 1 000 € de matériel par appareil familial, à décider selon les performances. Cette enveloppe est indicative et ne constitue pas un prix de vente. Budget des éventuels compléments du prototype, matériel de série et consommation acceptable : à préciser.
 
 ## Reproduction envisagée
 
@@ -55,8 +55,12 @@ Comparer les deux machines quand leur disponibilité et leurs caractéristiques 
 
 ## Dimensionnement de l’appareil familial
 
-Cible confirmée : chaque famille dispose de son propre appareil. Minimiser son coût matériel tout en conservant une qualité IA suffisante est un objectif central. Budget et définition mesurable de « suffisant » restent ouverts.
+Cible confirmée : chaque famille dispose de son propre appareil. Minimiser son coût matériel tout en conservant une qualité IA suffisante est un objectif central. L’enveloppe indicative est d’environ 1 000 €, ajustable selon les performances. La définition mesurable de « suffisant » reste ouverte.
 
 L’étude devra comparer des configurations et modèles sur les mêmes questions en français et recherches documentaires, avec la charge familiale attendue. Relever coût matériel, qualité, délai, mémoire utilisée et stockage nécessaire. Aucun achat ni seuil de performance n’est décidé à ce stade.
 
 Le souhait d’une bibliothèque maximale remplace l’idée d’une petite sélection comme cible finale. Cela n’interdit pas un échantillon réduit pour les premiers essais. Il faudra distinguer volume conservé, volume consultable et volume réellement indexé pour l’IA, puis mesurer la place des index et les temps de préparation.
+
+Chez Marc, conserver un premier déploiement sur son PC Windows à usages multiples. Une éventuelle machine dédiée, allumée au besoin, constitue une étape ultérieure envisagée. L’OS de cette machine et le budget effectivement engagé restent ouverts.
+
+Le catalogue visé doit couvrir largement le français et l’anglais. La sélection et les essais devront vérifier la recherche de sources anglaises à partir d’une question française ainsi que la restitution fidèle en français, sans présumer que la langue du dialogue garantit la qualité de la recherche.

@@ -16,6 +16,12 @@ Comportement proposé, encore à valider : distinguer les passages appuyés sur 
 
 Le souhait de conserver un maximum de contenu ne signifie pas que tous les fichiers seront immédiatement exploitables par l’assistant. Prévoir un suivi des contenus conservés, consultables, indexés ou en échec, notamment pour les archives ZIM et scans.
 
+## Français et anglais
+
+Louis souhaite conserver un maximum de ressources dans les deux langues et interroger l’ensemble en français. La traduction complète préalable n’est pas demandée. La chaîne à tester doit retrouver un document anglais depuis une question française, en extraire les passages utiles et produire une réponse fidèle en français, en permettant de consulter l’original.
+
+Prévoir des essais sur des termes techniques et des documents contradictoires ou incomplets. La capacité du modèle à parler français ne valide pas à elle seule le moteur de recherche multilingue.
+
 ## Trois capacités distinctes
 
 1. **Dialoguer avec le modèle** : il produit une réponse à partir de son entraînement et du contexte fourni. Il peut se tromper, omettre une condition ou produire une explication plausible mais fausse.

@@ -12,16 +12,16 @@ Louis et son oncle Marc portent le projet. Louis confirme le 30 octobre 2026 que
 
 Louis précise qu’à terme chaque famille aura son propre appareil. Le PC Linux situé dans sa chambre servira pendant le développement ; ce n’est pas un serveur permanent commun aux familles.
 
-Il faut déterminer une configuration reproductible qui minimise le coût tout en faisant fonctionner des modèles suffisamment capables pour les usages retenus. Aucun budget, modèle minimal ou matériel de série n’est encore arrêté. Les machines disponibles servent aux essais et ne fixent pas la configuration finale.
+Il faut déterminer une configuration reproductible qui minimise le coût tout en faisant fonctionner des modèles suffisamment capables pour les usages retenus. Louis évoque une enveloppe indicative d’environ 1 000 € pour le matériel par appareil, à ajuster selon les performances ; ce n’est pas un plafond ferme ni un prix de vente. Le modèle minimal et le matériel de série restent à déterminer. Les machines disponibles servent aux essais et ne fixent pas la configuration finale.
 
-La contrainte de conservation de Windows 11 concerne le PC existant. Elle ne détermine pas encore l’OS des futurs appareils familiaux.
+Chez Marc, le PC existant doit d’abord assurer les usages habituels sous Windows 11 et le serveur. Une machine dédiée pourrait être achetée ensuite, éventuellement gardée éteinte et allumée en situation de crise. Ce scénario est envisagé, sans décision d’achat ni choix d’OS pour les futurs appareils.
 
 ## Besoins exprimés
 
 - Fonctionner sans Internet une fois le système préparé.
 - Donner accès à une bibliothèque aussi large que possible, comprenant des photos, schémas et illustrations. La limite de stockage et la sélection des ressources restent à définir.
 - Permettre à l’assistant de combiner les connaissances apprises par le modèle avec les informations retrouvées dans les documents locaux.
-- Permettre une utilisation en français, même avec certaines sources anglaises.
+- Inclure largement les ressources françaises et anglaises ; l’interface, les questions et les réponses doivent permettre une utilisation en français. Louis ne souhaite pas écarter une source utile au seul motif qu’elle est en anglais.
 - Être accessible depuis un navigateur sur téléphone, tablette ou ordinateur à proximité.
 - Être simple à utiliser pour une personne peu technique.
 - Préparer un premier système, le tester et reproduire ensuite son installation sur d’autres PC.
@@ -70,3 +70,7 @@ Les futurs tests devront au minimum couvrir l’accès depuis un appareil client
 - Le PC Linux avec RTX 2060 et Ryzen 9 est prévu pour la période de développement, dans la chambre de Louis ; ses caractéristiques exactes et modalités d’accès restent à confirmer.
 - Un espace commun suffit au prototype ; les espaces personnels ne sont pas demandés pour cette première étape.
 - L’analyse de photos peut être reportée si son intégration complique sensiblement le prototype.
+
+## Conséquence du scénario d’usage occasionnel
+
+Si une machine dédiée est conservée éteinte jusqu’au besoin, sa préparation devra être complète avant la coupure d’Internet. Proposition à intégrer aux futurs essais : démarrer après une période d’arrêt et accéder aux documents et à l’IA sans téléchargement, connexion à un compte externe ni mise à jour obligatoire. Durée de stockage et fréquence des vérifications restent à définir.

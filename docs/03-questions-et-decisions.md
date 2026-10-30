@@ -7,7 +7,7 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | Question | Réponse |
 | --- | --- |
 | Le premier objectif est-il un prototype pour Louis et Marc, un produit destiné à la vente, ou d’abord une bibliothèque sans IA ? | Prototype complet pour Louis et Marc, puis envisager la vente. |
-| Quel PC sera utilisé, avec quel OS, processeur et stockage disponible ? | Probablement Ryzen 5, RTX 5060 Ti, 32 Go de RAM, environ 4 To. Windows 11 à conserver ; références, espace libre et attribution du PC à confirmer. |
+| Quel PC sera utilisé, avec quel OS, processeur et stockage disponible ? | Probablement Ryzen 5, RTX 5060 Ti, 32 Go de RAM, environ 4 To. PC de Marc sous Windows 11 à conserver ; références et espace libre à confirmer. |
 | Quels sont les trois usages prioritaires, avec des exemples concrets de recherches ou questions ? | Médecine, réflexion en ingénierie, recettes et différenciation de champignons. Louis s’interroge sur les limites des modèles locaux ; pas de classement arrêté. |
 
 ## Deuxième série : fonctions et conditions d’utilisation
@@ -28,9 +28,17 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | Quel objectif pour le matériel final ? | Minimiser le coût tout en conservant une machine assez capable pour des modèles suffisants ; configuration à déterminer par les essais. |
 | Quelle ampleur pour la bibliothèque ? | Le maximum de contenu ; aucune limite chiffrée fixée. |
 | Quel rôle de l’IA ? | Combiner ses connaissances apprises et les documents locaux. |
-| Quel budget matériel par appareil familial ? | En attente |
-| Un appareil familial dédié sous Linux est-il acceptable ? | En attente ; Windows 11 à conserver concerne la machine existante. |
-| Quelle place pour les sources françaises et anglaises ? | En attente ; usage en français déjà exprimé. |
+| Quel budget matériel par appareil familial ? | Environ 1 000 €, indicatif et à ajuster selon les performances ; pas un prix de vente. |
+| Un appareil familial dédié sous Linux est-il acceptable ? | Chez Marc, le PC doit d’abord faire serveur et PC habituel sous Windows 11. Achat ultérieur d’une machine dédiée éventuellement allumée en crise envisagé ; OS final non choisi. |
+| Quelle place pour les sources françaises et anglaises ? | Le maximum dans les deux langues ; lire les sources anglaises et répondre en français est souhaité. Fonctionnement multilingue à tester. |
+
+## Quatrième série : réseau, énergie et gestion des contenus
+
+| Question | Réponse |
+| --- | --- |
+| Wi-Fi dédié indépendant de la box ou réseau habituel de la maison ? | En attente |
+| Prise électrique uniquement au départ ou batterie à intégrer dès la conception ? | En attente |
+| Qui peut ajouter des documents et gérer les mises à jour ? | En attente |
 
 ## Séries suivantes
 
@@ -57,6 +65,9 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | 2026-10-30 | Appareils familiaux | Confirmé | Un appareil par famille ; minimiser le coût pour une qualité IA suffisante, à définir et mesurer. |
 | 2026-10-30 | PC Linux | Précisé | Machine de développement dans la chambre de Louis, sans rôle de serveur permanent commun aux familles. |
 | 2026-10-30 | Bibliothèque et assistant | Confirmé | Viser le maximum de contenu et combiner connaissances du modèle et recherche dans les documents. |
+| 2026-10-30 | Budget matériel familial | Indicatif | Autour de 1 000 €, à ajuster selon les performances, sans prix de vente arrêté. |
+| 2026-10-30 | Déploiement chez Marc | Confirmé / envisagé | PC Windows partagé avec ses usages habituels au départ ; éventuel achat ultérieur d’une machine dédiée. |
+| 2026-10-30 | Langues documentaires | Confirmé | Inclure largement le français et l’anglais, avec utilisation en français ; recherche multilingue à vérifier. |
 | 2026-10-30 | Architecture et modèle IA | Ouvert | Aucune sélection définitive dans le contexte transmis. |
 
 Chaque décision ultérieure doit indiquer ce qui a été retenu, pourquoi, et les vérifications encore nécessaires. Une suggestion de l’assistant ne devient pas une décision sans validation ou instruction correspondante.
