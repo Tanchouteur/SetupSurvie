@@ -64,6 +64,12 @@ Marc répond favorablement à la vision générale et insiste sur une utilisatio
 
 Louis demande de comparer NOMAD à Ollama + Open WebUI + Kiwix, puis de définir une architecture à essayer et une installation simple et fiable. La [comparaison](12-comparaison-nomad-assemblage.md) recommande un assemblage pour nos extensions IA ; le [plan d’architecture](13-architecture-et-installation-prototype.md) précise le socle Compose, les extensions et la recette. Recommandation technique de l’assistant, sans installation ni achat effectué.
 
+## Préparation du paquet et catalogue fonctionnel
+
+Louis demande de préparer Compose et les scripts pour essayer d’abord sur Windows chez Marc, puis sur Linux, ainsi qu’un répertoire des fonctionnalités et user stories. Les fichiers sont livrés avec un [guide d’installation](14-installation.md), un [catalogue fonctionnel](15-fonctionnalites-et-user-stories.md) et un [rapport de contrôles](16-verification-prototype.md).
+
+Louis insiste sur une recherche pratique et efficace. Le portail initial est un accueil et un catalogue, pas un moteur documentaire développé maison. Il expose la recherche plein texte Kiwix ; une recherche commune aux guides et ZIM, indépendante de l’IA, est explicitement inscrite parmi les fonctionnalités à développer.
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :

@@ -1,0 +1,7 @@
+SetupSurvie demonstration — Box ALPHA — version 1
+
+The inside dimensions of box ALPHA are 60 cm by 40 cm by 30 cm.
+Its internal volume is 72 litres (60 × 40 × 30 = 72,000 cubic centimetres).
+This is not a load-bearing specification. The maximum safe load has not been measured and cannot be inferred from the volume.
+Original illustrated document in the local library: /guides/box.en.html (relative to the library portal).
+Text and illustration created for the SetupSurvie test fixture. This is not a survival guide.

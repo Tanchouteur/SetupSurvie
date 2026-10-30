@@ -1,0 +1,78 @@
+name: setupsurvie
+services:
+  open-webui:
+    image: ${WEBUI_IMAGE:?Run the installer first}
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS}:3000:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      ENABLE_OPENAI_API: "false"
+      ENABLE_WEB_SEARCH: "false"
+      ENABLE_IMAGE_GENERATION: "false"
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      WEBUI_ADMIN_EMAIL: ${WEBUI_ADMIN_EMAIL}
+      WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD}
+      WEBUI_ADMIN_NAME: "Administration"
+      ENABLE_SIGNUP: "false"
+      DEFAULT_LOCALE: fr-FR
+      DEFAULT_MODELS: ${CHAT_MODEL}
+      DEFAULT_USER_ROLE: user
+      OFFLINE_MODE: "true"
+      HF_HUB_OFFLINE: "1"
+      TIKTOKEN_CACHE_DIR: /app/backend/data/cache/tiktoken
+      RAG_EMBEDDING_ENGINE: ""
+      RAG_EMBEDDING_MODEL: /app/backend/data/cache/embedding/bge-m3
+      RAG_EMBEDDING_MODEL_AUTO_UPDATE: "false"
+      RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE: "false"
+      RAG_RERANKING_MODEL_AUTO_UPDATE: "false"
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+      ENABLE_PERSISTENT_CONFIG: "false"
+      VECTOR_DB: chroma
+    volumes:
+      - type: bind
+        source: ${DATA_DIR}/state/openwebui
+        target: /app/backend/data
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 20
+      start_period: 60s
+  kiwix:
+    image: ${KIWIX_IMAGE}
+    restart: unless-stopped
+    init: true
+    entrypoint: ["/bin/sh", "/config/kiwix-entrypoint.sh"]
+    command: []
+    ports:
+      - "${BIND_ADDRESS}:8081:8080"
+    volumes:
+      - ./deploy/kiwix-entrypoint.sh:/config/kiwix-entrypoint.sh:ro
+      - type: bind
+        source: ${DATA_DIR}/library/zim
+        target: /data
+        read_only: true
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+  portal:
+    image: ${PORTAL_IMAGE}
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS}:8080:8080"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./portal:/srv/portal:ro
+      - ${DATA_DIR}/catalog:/srv/catalog:ro
+      - ${DATA_DIR}/library/guides:/srv/guides:ro
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5

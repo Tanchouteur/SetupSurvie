@@ -2,9 +2,31 @@
 
 Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisable sans Internet, avec une bibliothèque illustrée et un assistant IA local, accessible depuis les appareils à proximité.
 
-**État au 30 octobre 2026 : cadrage documentaire.** Aucun logiciel installé, aucune architecture choisie et aucune performance validée dans ce dépôt. Le premier objectif confirmé est un prototype complet pour Louis et Marc ; la vente sera envisagée ensuite. La cible est un appareil par famille, avec un coût matériel à minimiser pour une qualité IA jugée suffisante.
+**État au 30 octobre 2026 : prototype prêt à installer pour essais.** Compose, lanceurs Windows/Linux, portail et jeu d’essai documentaire sont préparés. Les contrôles locaux ne remplacent pas les essais sur le PC Windows de Marc et le PC Linux NVIDIA. Le premier objectif reste un prototype pour Louis et Marc ; la vente viendra ensuite.
+
+## Commencer
+
+Lire le [guide d’installation Windows puis Linux](docs/14-installation.md), installer les prérequis indiqués, puis lancer depuis le dépôt :
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Lan
+```
+
+Puis, sur le PC Linux préparé pour Docker et NVIDIA :
+
+```bash
+./scripts/install.sh --lan
+```
+
+Accueil : `http://ADRESSE-IP-DU-PC:8080`. Les données locales et identifiants ne sont pas versionnés. Aucun téléchargement massif de Wikipédia n’est lancé automatiquement.
+
+Le [catalogue des fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) distingue le socle à tester des développements restants. Le filtre de titres du portail n’est pas une recherche plein texte de tous les guides : Kiwix fournit celle des archives, et une recherche commune reste à développer.
 
 ## Documentation
+
+- [Installation et essais](docs/14-installation.md) : commandes, prérequis et fonctionnement hors ligne.
+- [Fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) : besoins, priorités, critères et état réel.
+- [Vérifications du paquet](docs/16-verification-prototype.md) : contrôles effectués et validations restantes.
 
 - [Architecture et installation du prototype](docs/13-architecture-et-installation-prototype.md) : proposition concrète à essayer et préparation d’un déploiement reproductible.
 - [NOMAD ou assemblage](docs/12-comparaison-nomad-assemblage.md) : comparaison fondée sur la documentation et le code inspecté.

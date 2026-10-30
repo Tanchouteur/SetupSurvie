@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SetupSurvie — Bibliothèque locale</title>
+<link rel="stylesheet" href="/style.css">
+<header><span class="badge">Prototype local</span><h1>Vos connaissances, à portée de main.</h1><p>Consultez les guides et l’encyclopédie, ou ouvrez l’assistant. La bibliothèque se lit sans IA.</p></header>
+<main>
+<nav aria-label="Services"><a class="card" id="chat" href="#"><strong>Assistant</strong><span>Discuter en français et interroger les guides importés.</span></a><a class="card" id="wiki" href="#"><strong>Encyclopédie</strong><span>Ouvrir les archives Kiwix téléchargées, avec leurs illustrations.</span></a></nav>
+<section aria-labelledby="wiki-search-title"><h2 id="wiki-search-title">Chercher dans l’encyclopédie</h2><form id="wiki-search"><label>Mots dans les articles<input id="wiki-query" type="search" required placeholder="Ex. : électricité, jardinage…"></label><label>Langue des articles<select id="wiki-language"><option value="fra">Français</option><option value="eng">Anglais</option></select></label><button type="submit">Chercher avec Kiwix</button></form><p>Recherche plein texte de Kiwix dans la langue sélectionnée. Sans archive, aucun article ne sera disponible. Les mots saisis ne sont pas traduits automatiquement.</p></section>
+<section aria-labelledby="guides-title"><h2 id="guides-title">Guides et documents</h2><p>Filtrer les titres du catalogue. La recherche dans le contenu des guides se fait pour l’instant dans l’assistant après leur import.</p>
+<div class="filters"><label>Rechercher<input id="search" type="search" placeholder="Titre ou thème…"></label><label>Langue<select id="language"><option value="">Toutes</option><option value="fr">Français</option><option value="en">Anglais</option><option value="other">Autre / non précisée</option></select></label></div>
+<p id="status" role="status">Chargement du catalogue…</p><ul id="guides"></ul></section>
+<aside>Les deux fiches de démonstration servent à tester la lecture et la recherche. Les ZIM ne sont pas encore reliés à la recherche IA. La récupération d’illustrations dans le chat et les dossiers longs seront ajoutés ensuite.</aside>
+</main><footer>SetupSurvie · Les originaux restent consultables. Pour les fonctions IA, ouvrir l’assistant.</footer>
+<script src="/app.js" defer></script>
+</html>

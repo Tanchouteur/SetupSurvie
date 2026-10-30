@@ -1,10 +1,10 @@
 # Architecture concrète à essayer et installation reproductible
 
-Proposition du 30 octobre 2026, fondée sur les besoins et la [comparaison NOMAD / assemblage](12-comparaison-nomad-assemblage.md). Architecture recommandée pour le premier essai ; aucun déploiement effectué. La réponse reçue de Marc confirme l’importance du dialogue français et de la recherche dans les documents anglais avec réponse/traduction en français.
+Proposition du 30 octobre 2026, fondée sur les besoins et la [comparaison NOMAD / assemblage](12-comparaison-nomad-assemblage.md). Architecture du paquet de prototype préparé ; services testés localement en conteneurs, validation sur vos deux PC encore à faire. La réponse reçue de Marc confirme l’importance du dialogue français et de la recherche dans les documents anglais avec réponse/traduction en français.
 
 ## Objectif de la première démonstration
 
-Sur le PC Linux de développement : ouvrir la bibliothèque depuis un téléphone, lire un article illustré sans IA, poser une question en français sur un guide anglais et ouvrir la source. Refaire sans Internet puis après redémarrage. Reproduire ensuite sur Windows 11 chez Marc sans supprimer ses usages habituels.
+Commencer sur Windows 11 chez Marc sans supprimer ses usages habituels, puis répéter sur le PC Linux de développement : ouvrir la bibliothèque depuis un téléphone, lire un article illustré sans IA, poser une question en français sur un guide anglais et ouvrir la source. Refaire sans Internet puis après redémarrage.
 
 Les deux PC sont déclarés à 32 Go de RAM et 8 Go de VRAM. Une génération à la fois au départ ; consultation documentaire en parallèle. Commencer avec Qwen3.5 4B Q4 puis 9B Q4. Les essais 27B interviennent une fois le socle vérifié.
 
@@ -64,7 +64,7 @@ Prévoir un paquet de version comprenant :
 - Une commande de diagnostic puis une commande de validation après installation.
 - Un manifeste des images, modèles et contenus avec versions, empreintes et état de préparation.
 
-L’objectif utilisateur sera un lanceur qui prépare les paramètres, démarre les services et affiche l’adresse d’accueil. Ce paquet n’existe pas encore : ne pas annoncer une installation en un clic validée. Le fournir sera la prochaine phase d’implémentation, sans réinstaller automatiquement l’OS ni modifier silencieusement des fichiers existants.
+L’objectif utilisateur sera un lanceur qui prépare les paramètres, démarre les services et affiche l’adresse d’accueil. Ce paquet est désormais préparé : voir le [guide](14-installation.md) et le [rapport de vérification](16-verification-prototype.md). Les prérequis système restent à installer séparément ; ne pas annoncer une installation en un clic validée sur les deux PC.
 
 Le lanceur vérifie : espace disque, moteur Docker/Compose, ports, accès GPU, présence des fichiers attendus et disponibilité d’Ollama. Il doit pouvoir être relancé sans perdre les données, signaler précisément une erreur et ne pas recréer les identifiants à chaque exécution.
 
@@ -72,7 +72,7 @@ Sous Windows, prévoir Docker Desktop/WSL2 pour les services et Ollama natif ; v
 
 ## Versions et fonctionnement hors ligne
 
-Avant de produire le Compose exécutable, choisir des versions publiées compatibles, les tester ensemble et enregistrer leurs digests ; ne pas utiliser `latest` comme définition d’une livraison. Le téléchargement et l’indexation sont une phase de préparation distincte du démarrage normal. Précharger notamment embeddings, OCR éventuel et ressources du navigateur ; aucun téléchargement implicite ne doit être nécessaire à la recette hors ligne.
+Le Compose utilise les versions et empreintes enregistrées dans `deploy/versions.json`. Leur démarrage a été contrôlé localement ; ne pas utiliser `latest` comme définition d’une livraison. Le téléchargement et l’indexation sont une phase de préparation distincte du démarrage normal. Précharger notamment embeddings, OCR éventuel et ressources du navigateur ; aucun téléchargement implicite ne doit être nécessaire à la recette hors ligne.
 
 Préparer ensuite un kit hors ligne contenant les images exportées, modèles, contenus et index ainsi que les réglages et notices nécessaires. Les pilotes et l’installation initiale de Docker demandent aussi des supports/prérequis adaptés au système. Ne pas confondre « redémarrer hors ligne après préparation » et « installer un PC nu sans Internet » : valider ces deux scénarios séparément si le second est retenu.
 

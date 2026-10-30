@@ -13,3 +13,7 @@
 /library/
 /backups/
 /secrets/
+/.local/
+/state/
+__pycache__/
+*.pyc
