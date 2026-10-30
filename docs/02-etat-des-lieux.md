@@ -77,3 +77,9 @@ Les tests sans Internet doivent conserver le LAN domestique opérationnel. Le fo
 Louis précise que les deux PC disposent de 32 Go de RAM et 8 Go de VRAM. Il accepte les appareils neufs ou d’occasion et souhaite aussi connaître les spécifications de machines plus puissantes si Marc constate un gain des gros modèles. Aucun achat n’est demandé.
 
 La [sélection des modèles et outils](08-selection-modeles-et-outils.md), les [pistes matérielles](09-machines-dediees.md) et le [protocole comparatif](10-protocole-comparaison-ia.md) distinguent les sources publiées des estimations et des futurs essais locaux. Ils actualisent les premières pistes Qwen3 8B/32B sans les effacer de l’historique.
+
+## Comparaison technique du 30 octobre 2026
+
+NOMAD a été lu au commit `54ee30a44902e5c252b477f8685c26ec3064ab72` (notes v1.35.1), sans exécution. Le code comprend déjà extraction/indexation textuelle des ZIM, pièces jointes photo et raisonnement dans le chat. Les images documentaires et les dossiers durables restent à traiter séparément ; ne plus présenter ces fonctions textuelles comme entièrement absentes de NOMAD.
+
+Voir la [comparaison détaillée](12-comparaison-nomad-assemblage.md) et l’[architecture d’essai recommandée](13-architecture-et-installation-prototype.md). Aucune stack n’est encore déployée.

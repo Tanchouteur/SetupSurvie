@@ -58,6 +58,12 @@ Louis précise vouloir Wikipédia français avec images et une recherche IA capa
 
 Louis confirme aussi l’accès direct et pratique à toute la bibliothèque depuis le LAN, y compris sur téléphone, sans requête IA obligatoire. La proposition de catalogue commun et ses modalités restent à concevoir.
 
+## Retour de Marc et architecture d’essai
+
+Marc répond favorablement à la vision générale et insiste sur une utilisation français/anglais fluide : parler en français, retrouver aussi les sources anglaises, traduire/expliquer et répondre en français. Cela confirme le besoin déjà exprimé ; aucune performance multilingue n’est encore validée et ce retour ne choisit pas une base logicielle.
+
+Louis demande de comparer NOMAD à Ollama + Open WebUI + Kiwix, puis de définir une architecture à essayer et une installation simple et fiable. La [comparaison](12-comparaison-nomad-assemblage.md) recommande un assemblage pour nos extensions IA ; le [plan d’architecture](13-architecture-et-installation-prototype.md) précise le socle Compose, les extensions et la recette. Recommandation technique de l’assistant, sans installation ni achat effectué.
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :

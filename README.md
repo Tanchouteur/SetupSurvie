@@ -6,6 +6,9 @@ Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisab
 
 ## Documentation
 
+- [Architecture et installation du prototype](docs/13-architecture-et-installation-prototype.md) : proposition concrète à essayer et préparation d’un déploiement reproductible.
+- [NOMAD ou assemblage](docs/12-comparaison-nomad-assemblage.md) : comparaison fondée sur la documentation et le code inspecté.
+
 - [Bibliothèque, recherche et images](docs/11-bibliotheque-recherche-et-images.md) : rôles des services, Wikipédia/Kiwix et récupération d’illustrations.
 
 - [Sélection de modèles et outils](docs/08-selection-modeles-et-outils.md) : capacités, résultats publiés et faisabilité sur les deux PC.
