@@ -36,19 +36,21 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 
 | Question | Réponse |
 | --- | --- |
-| Wi-Fi dédié indépendant de la box ou réseau habituel de la maison ? | En attente |
-| Prise électrique uniquement au départ ou batterie à intégrer dès la conception ? | En attente |
-| Qui peut ajouter des documents et gérer les mises à jour ? | En attente |
+| Wi-Fi dédié indépendant de la box ou réseau habituel de la maison ? | LAN domestique au départ ; routeur et point d’accès Wi-Fi dédiés dans un second temps. |
+| Prise électrique uniquement au départ ou batterie à intégrer dès la conception ? | Prise électrique pour commencer ; batterie à étudier plus tard. |
+| Qui peut ajouter des documents et gérer les mises à jour ? | Seulement Louis et Marc au début pour simplifier le prototype. |
 
-## Séries suivantes
+## Points encore ouverts
 
-À aborder une fois les premières réponses obtenues, sans tout décider d’un coup.
+Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :
 
-- **Utilisateurs et expérience** : public visé, nombre d’utilisateurs, simplicité attendue, comptes et accès administrateur.
-- **Contenus et IA** : sources déjà disponibles, français et anglais, ajout de documents personnels, rôle de l’IA, citations, traduction et images.
-- **Contraintes pratiques** : budget, stockage, réseau existant ou dédié, usage fixe ou transportable, alimentation et délais de réponse acceptables.
-- **Exploitation et vente** : qui installe et maintient, mises à jour avec ou sans Internet, sauvegarde, restauration, distribution et périmètre commercial.
-- **Recette** : scénarios précis permettant de déclarer le prototype utilisable.
+- Inventaire exact des deux PC : VRAM, RAM du PC Linux, versions des systèmes, pilotes et stockage libre.
+- Sélection des composants, modèles et contenus ; licences et compatibilité à vérifier.
+- Scénarios de test, nombre d’utilisateurs simultanés et définition de la qualité IA suffisante.
+- Méthode de sauvegarde, restauration, livraison des mises à jour et préparation hors ligne.
+- Configuration familiale de référence et éventuelle commercialisation, après les essais.
+
+La [fiche du prototype](05-perimetre-prototype.md) regroupe le périmètre actuel et propose des vérifications. Aucun déploiement ni achat n’est décidé par cette fiche.
 
 ## Registre des décisions
 
@@ -68,6 +70,9 @@ Mis à jour le 30 octobre 2026. Les réponses seront intégrées progressivement
 | 2026-10-30 | Budget matériel familial | Indicatif | Autour de 1 000 €, à ajuster selon les performances, sans prix de vente arrêté. |
 | 2026-10-30 | Déploiement chez Marc | Confirmé / envisagé | PC Windows partagé avec ses usages habituels au départ ; éventuel achat ultérieur d’une machine dédiée. |
 | 2026-10-30 | Langues documentaires | Confirmé | Inclure largement le français et l’anglais, avec utilisation en français ; recherche multilingue à vérifier. |
+| 2026-10-30 | Réseau | Confirmé | LAN domestique au prototype ; routeur et Wi-Fi dédiés dans un second temps. |
+| 2026-10-30 | Alimentation | Confirmé | Prise électrique ; batterie reportée. |
+| 2026-10-30 | Gestion des contenus | Confirmé | Ajouts documentaires et mises à jour assurés uniquement par Louis et Marc au début. |
 | 2026-10-30 | Architecture et modèle IA | Ouvert | Aucune sélection définitive dans le contexte transmis. |
 
 Chaque décision ultérieure doit indiquer ce qui a été retenu, pourquoi, et les vérifications encore nécessaires. Une suggestion de l’assistant ne devient pas une décision sans validation ou instruction correspondante.

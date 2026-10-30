@@ -6,6 +6,8 @@ Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisab
 
 ## Documentation
 
+- [Périmètre du prototype](docs/05-perimetre-prototype.md) : synthèse des choix actuels, évolutions et vérifications proposées.
+
 - [Cadrage et besoins](docs/01-cadrage.md) : intentions exprimées, usages et périmètre à préciser.
 - [État des lieux](docs/02-etat-des-lieux.md) : matériel déclaré, pistes étudiées et inconnues.
 - [Rôle et limites de l’IA locale](docs/04-ia-locale.md) : capacités à évaluer et distinction entre texte, documents et images.

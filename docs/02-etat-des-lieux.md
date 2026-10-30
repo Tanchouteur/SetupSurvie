@@ -16,7 +16,8 @@ Le dossier de travail était vide à son ouverture. Le contexte transmis indique
 | PC envisagé : stockage | Environ 4 To | Estimation de Louis ; type, capacité libre et organisation inconnus |
 | PC envisagé : OS et disponibilité | Windows 11, autres usages à conserver | Confirmé par Louis ; aucune réinstallation autorisée |
 | PC Linux de développement | Linux, RTX 2060, Ryzen 9 ; situé dans la chambre de Louis | Prévu pendant le développement ; distribution, VRAM, RAM et stockage à préciser |
-| Réseau dédié et alimentation autonome | Pas de choix | À cadrer |
+| Réseau du prototype | LAN habituel de la maison | Confirmé ; routeur et point d’accès dédiés dans un second temps |
+| Alimentation du prototype | Prise électrique | Confirmé ; batterie à étudier plus tard |
 
 ## Pistes techniques, sans choix arrêté
 
@@ -64,3 +65,9 @@ Le souhait d’une bibliothèque maximale remplace l’idée d’une petite sél
 Chez Marc, conserver un premier déploiement sur son PC Windows à usages multiples. Une éventuelle machine dédiée, allumée au besoin, constitue une étape ultérieure envisagée. L’OS de cette machine et le budget effectivement engagé restent ouverts.
 
 Le catalogue visé doit couvrir largement le français et l’anglais. La sélection et les essais devront vérifier la recherche de sources anglaises à partir d’une question française ainsi que la restitution fidèle en français, sans présumer que la langue du dialogue garantit la qualité de la recherche.
+
+## Administration du prototype
+
+Louis et Marc gèrent seuls les ajouts documentaires et les mises à jour au départ. L’import autonome par les familles n’est pas demandé pour cette version. Le mode d’administration et la méthode de livraison des mises à jour restent à concevoir.
+
+Les tests sans Internet doivent conserver le LAN domestique opérationnel. Le fonctionnement avec une box éteinte n’est pas garanti par ce premier périmètre ; il relève de l’évolution vers un réseau dédié.

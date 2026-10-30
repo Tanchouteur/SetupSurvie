@@ -54,7 +54,7 @@ Il reste à transformer ces usages en cas de test précis. Les exemples de test 
 
 ## Limites à préciser
 
-Fonctionner sans Internet ne signifie pas fonctionner sans électricité. Batterie, solaire et durée d’autonomie ne sont pas définis. Le réseau local et sa portée restent ouverts. Plusieurs personnes doivent pouvoir utiliser le système ; Louis accepte une attente d’une à deux minutes pour une réponse IA. Le nombre exact, la gestion des requêtes et le délai sous charge doivent être précisés et mesurés.
+Le prototype fonctionne sur prise électrique et sur le réseau local habituel de la maison. Le routeur et le point d’accès Wi-Fi dédiés sont prévus dans un second temps. La batterie est reportée ; le solaire et la durée d’autonomie ne sont pas définis. Une coupure d’Internet doit être distinguée d’un arrêt de la box ou du réseau local. Plusieurs personnes doivent pouvoir utiliser le système ; Louis accepte une attente d’une à deux minutes pour une réponse IA. Le nombre exact, la gestion des requêtes et le délai sous charge doivent être précisés et mesurés.
 
 La traduction complète de la bibliothèque, l’indexation de tous les ZIM et une couverture réseau de quartier ne sont pas des engagements pris.
 
@@ -69,6 +69,8 @@ Les futurs tests devront au minimum couvrir l’accès depuis un appareil client
 - Le PC principal est sous Windows 11 ; conserver son système et ses usages habituels.
 - Le PC Linux avec RTX 2060 et Ryzen 9 est prévu pour la période de développement, dans la chambre de Louis ; ses caractéristiques exactes et modalités d’accès restent à confirmer.
 - Un espace commun suffit au prototype ; les espaces personnels ne sont pas demandés pour cette première étape.
+- Louis et Marc sont seuls chargés de l’ajout des documents et de la gestion des mises à jour au début.
+- Utiliser le LAN domestique et une prise électrique ; routeur Wi-Fi dédié et batterie dans un second temps.
 - L’analyse de photos peut être reportée si son intégration complique sensiblement le prototype.
 
 ## Conséquence du scénario d’usage occasionnel
