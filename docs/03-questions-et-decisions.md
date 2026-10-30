@@ -52,6 +52,10 @@ Louis demande une sélection de modèles et outils pour chaque mode, la faisabil
 
 Capacités déclarées pour les deux machines : 32 Go RAM et 8 Go VRAM. Références exactes à inventorier ; ne pas déduire une variante de GPU de ce seul chiffre. Voir [modèles et outils](08-selection-modeles-et-outils.md), [matériel dédié](09-machines-dediees.md), [évaluation](10-protocole-comparaison-ia.md).
 
+## Bibliothèque et illustrations
+
+Louis précise vouloir Wikipédia français avec images et une recherche IA capable de retrouver les illustrations avec leur contexte textuel. Voir [l’étude des données et des images](11-bibliotheque-recherche-et-images.md). La recherche Kiwix à la demande et la conservation des associations texte/image sont des propositions à tester ; aucun import automatique de ZIM dans Open WebUI n’est présumé.
+
 ## Points encore ouverts
 
 Le cadrage permet de préparer l’étude technique sans prolonger l’entretien sur les choix déjà exprimés. Restent notamment :

@@ -6,6 +6,8 @@ Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisab
 
 ## Documentation
 
+- [Bibliothèque, recherche et images](docs/11-bibliotheque-recherche-et-images.md) : rôles des services, Wikipédia/Kiwix et récupération d’illustrations.
+
 - [Sélection de modèles et outils](docs/08-selection-modeles-et-outils.md) : capacités, résultats publiés et faisabilité sur les deux PC.
 - [Machines dédiées](docs/09-machines-dediees.md) : idées autour de 1 000 € et paliers supérieurs.
 - [Protocole de comparaison](docs/10-protocole-comparaison-ia.md) : mesurer le gain réel d’un gros modèle lent.
