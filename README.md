@@ -1,5 +1,9 @@
 # SetupSurvie
 
+<p align="center">
+  <img src="portal/branding/logo.png" width="160" height="160" alt="Logo SetupSurvie : un feu de camp et un livre ouvert">
+</p>
+
 Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisable sans Internet, avec une bibliothèque illustrée et un assistant IA local, accessible depuis les appareils à proximité.
 
 **État au 30 octobre 2026 : prototype prêt à installer pour essais.** Compose, lanceurs Windows/Linux, portail et jeu d’essai documentaire sont préparés. Les contrôles locaux ne remplacent pas les essais sur le PC Windows de Marc et le PC Linux NVIDIA. Le premier objectif reste un prototype pour Louis et Marc ; la vente viendra ensuite.
