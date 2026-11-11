@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Cartes hors ligne — SetupSurvie</title>
+  <link rel="stylesheet" href="/vendor/maps/maplibre-gl.css">
+  <link rel="stylesheet" href="/cartes.css">
+  <script defer src="/vendor/maps/maplibre-gl.js"></script>
+  <script defer src="/vendor/maps/pmtiles.js"></script>
+  <script defer src="/cartes.js"></script>
+</head>
+<body>
+  <header><a href="/#library">← Bibliothèque</a><h1>Cartes hors ligne</h1><label>Zone <select id="area" disabled><option>Chargement…</option></select></label><button id="home" disabled>Solliès-Ville</button><button id="print">Imprimer</button></header>
+  <p id="status" role="status">Ouverture des cartes enregistrées sur l’appareil…</p>
+  <main id="map" aria-label="Carte interactive du Sud de la France"></main>
+  <footer>Routes, chemins et lieux : repères datés, sans calcul d’itinéraire ni état du trafic. Le relief altimétrique n’est pas inclus. Déplacez la carte et utilisez +/− pour zoomer.</footer>
+</body>
+</html>

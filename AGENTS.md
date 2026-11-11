@@ -63,6 +63,10 @@ avec un plafond total de **600 Go** et un nettoyage simple. Le laboratoire utili
 `linux_lab.py` ; ne pas télécharger dans un point de montage absent ni utiliser
 le stockage Podman par défaut sur le disque système.
 
+Louis a précisé que les **500 Go documentaires** excluent les modèles et caches
+d'essai, et que le kit ne compte pas deux fois les mêmes documents. Le plafond
+physique du laboratoire et sa marge libre restent distincts et obligatoires.
+
 Respecter le marqueur `private/inference-paused.json` et les demandes de mode jeu.
 Ne pas lancer de LLM, benchmark ou action de démarrage forcé tant que la pause
 n'a pas été explicitement levée. Les tests unitaires simulés restent possibles.
@@ -139,3 +143,11 @@ le kit hors ligne d'environ 160 Go avec un petit installateur en ligne. Les mise
 à jour doivent préserver comptes, conversations, réglages et contenus, avec une
 sauvegarde et une restauration vérifiées avant toute migration destructive.
 Mettre à jour ces constats à mesure que le travail est réellement validé.
+
+Le pilote **0.1.7** ajoute les cartes PMTiles du Sud (PACA, Occitanie, Corse et
+Solliès-Ville) et une recette des sources via scripts/audit_library.py.
+Lire docs/28-bibliotheque-sud-recherche-et-ia.md. scripts/maps.py prépare les
+extraits ; scripts/lab_refresh_library.py actualise seulement Kiwix et le pilote.
+Pour les services de transfert en arrière-plan, utiliser --no-refresh puis
+actualiser séparément. L'indexation du pilote et la recherche Kiwix ne signifient
+pas que toutes les archives ont été importées dans les collections Open WebUI.

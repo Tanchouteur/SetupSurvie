@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {"id":"sollies","query":"risques Solliès Ville","expected":"sollies-dicrim"},
+    {"id":"var","query":"inondation Var","expected":"var-ddrm"},
+    {"id":"garden","query":"jardin méditerranéen","expected":"garden-herault"},
+    {"id":"seeds","query":"semences potagères","expected":"seeds-organic"},
+    {"id":"reading","query":"lecture CP","expected":"cp-reading"},
+    {"id":"primary-maths","query":"calcul CP","expected":"cp-numbers"},
+    {"id":"cm2","query":"fractions CM2","expected":"maths-cm2"},
+    {"id":"radio","query":"VHF maritime","expected":"radio-maritime"},
+    {"id":"welding","query":"soudage chalumeau","expected":"inrs-742"},
+    {"id":"botany","query":"botanique plantes","expected":"botany-mooc"},
+    {"id":"toxic-plants","query":"plantes toxiques","expected":"plants-toxic"},
+    {"id":"dental-bilingual","query":"douleur dents","expected":"dental-"},
+    {"id":"psychology","query":"secours psychologiques","expected":"psychological-first-aid"},
+    {"id":"water-bilingual","query":"puits désinfection","expected":"who-wash-01"},
+    {"id":"maps","query":"cartes Solliès Ville","expected":"MAP-cartes-sud"},
+    {"id":"family","query":"notices matériel","expected":"REF-dossier-familial"}
+  ]
+}

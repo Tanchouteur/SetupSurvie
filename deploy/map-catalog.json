@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "tool": {
+    "version": "1.31.2",
+    "linux_x86_64_url": "https://github.com/protomaps/go-pmtiles/releases/download/v1.31.2/go-pmtiles_1.31.2_Linux_x86_64.tar.gz",
+    "sha256": "3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f"
+  },
+  "source": "https://build.protomaps.com/20261110.pmtiles",
+  "edition": "2026-11-10",
+  "attribution": "© OpenStreetMap contributors · Protomaps · ODbL 1.0",
+  "maps": [
+    {"id": "sud", "title": "Sud : PACA, Occitanie et Corse", "bbox": [-1.8, 41.3, 9.7, 45.3], "center": [4.1, 43.5], "maxzoom": 13},
+    {"id": "sollies", "title": "Solliès-Ville et alentours", "bbox": [5.65, 43.0, 6.4, 43.5], "center": [6.04, 43.18], "maxzoom": 15}
+  ]
+}

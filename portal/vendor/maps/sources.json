@@ -1,0 +1,50 @@
+[
+  {
+    "path": "maplibre-gl.js",
+    "url": "https://unpkg.com/maplibre-gl@5.10.0/dist/maplibre-gl.js",
+    "bytes": 956052,
+    "sha256": "06ce45475856ffd058aca70ae9f579adcb52754e501cc8620e9f1c7e544156bd"
+  },
+  {
+    "path": "maplibre-gl.css",
+    "url": "https://unpkg.com/maplibre-gl@5.10.0/dist/maplibre-gl.css",
+    "bytes": 69430,
+    "sha256": "43c1d886b5fdf0aac4e7135bd6f84b823d9f48283a648012665f9be52c01389f"
+  },
+  {
+    "path": "maplibre-LICENSE.txt",
+    "url": "https://unpkg.com/maplibre-gl@5.10.0/LICENSE.txt",
+    "bytes": 5984,
+    "sha256": "ee5fc05a0677eaf69601d2c7db0d9ecd6cc27c3abc1d0733bc9ed34707cf8ef2"
+  },
+  {
+    "path": "pmtiles.js",
+    "url": "https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js",
+    "bytes": 19565,
+    "sha256": "afc49d216fd24c0a3c0ff3cd2e0c62d6cdaf062854c3dced778dcab168824f79"
+  },
+  {
+    "path": "fonts/Noto Sans Regular/0-255.pbf",
+    "url": "https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Regular/0-255.pbf",
+    "bytes": 76044,
+    "sha256": "62c6d49b15fa836eb6aa45e259c7ca6762f44b011b09e47776efbe4a6db1b397"
+  },
+  {
+    "path": "fonts/Noto Sans Regular/256-511.pbf",
+    "url": "https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Regular/256-511.pbf",
+    "bytes": 127726,
+    "sha256": "2eca7561f9f566bcacfda5dd04fb5880baec1328ec0f5484678289a13994de8a"
+  },
+  {
+    "path": "pmtiles-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/protomaps/PMTiles/main/LICENSE",
+    "bytes": 1713,
+    "sha256": "0371c38f338835f7fc13ed71176f3d92144e22c8b736a31cced57adbbeb647b3"
+  },
+  {
+    "path": "fonts/LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/protomaps/basemaps-assets/main/fonts/OFL.txt",
+    "bytes": 4374,
+    "sha256": "7713cfc8e3c36d5ec4aa3d6cffe7500a1b3310f8a86d914b8ea09c2a9dee7c2d"
+  }
+]

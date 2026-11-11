@@ -145,6 +145,15 @@ def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_r
         return results
 
 
+def install_templates(root):
+    """Publish blank guidance only; never overwrite a completed family document."""
+    for source in (setup.ROOT/'deploy/library-templates').glob('*.md'):
+        target=destination(root,'library/guides/REF-'+source.name)
+        if not target.exists():
+            target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+            target.chmod(0o644)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['list','download','clean-partials']);p.add_argument('--data-dir');p.add_argument('--pack',action='append',default=[]);p.add_argument('--id',action='append',default=[])
@@ -177,6 +186,8 @@ def main():
         print('Seuls les téléchargements partiels sélectionnés ont été supprimés.');return
     if not 1<=args.budget_gb<=600:p.error('Budget entre 1 et 600 Go.')
     download(root,selected,budget=args.budget_gb*1_000_000_000,storage_root=storage_root)
+    check_capacity(root,100_000,budget=args.budget_gb*1_000_000_000,storage_root=storage_root)
+    install_templates(root)
     if args.no_refresh:
         print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
         return

@@ -68,7 +68,7 @@ async def books():
 
 
 def index_guides():
-    documents=[];passages=[]
+    documents=[];passages=[];report=[]
     if GUIDES.exists():
         seed=GUIDES/'metadata.json'
         if seed.is_file() and not seed.is_symlink() and seed.stat().st_size<1_000_000:
@@ -77,12 +77,17 @@ def index_guides():
                 with store.connect() as db:
                     for item in entries:
                         if not isinstance(item,dict) or not isinstance(item.get('path'),str):continue
-                        db.execute('INSERT OR IGNORE INTO guide_meta VALUES(?,?,?,?,?)',tuple(str(item.get(key,''))[:2000] for key in ('path','title','language','provenance','licence')))
+                        db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?) ON CONFLICT(path) DO UPDATE SET title=excluded.title,language=excluded.language,provenance=excluded.provenance,licence=excluded.licence',tuple(str(item.get(key,''))[:2000] for key in ('path','title','language','provenance','licence')))
             except (ValueError,TypeError):pass
         with store.connect() as db:metadata={r['path']:dict(r) for r in db.execute('SELECT * FROM guide_meta')}
         for path in sorted(GUIDES.rglob('*')):
-            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()) or path.stat().st_size>300_000_000:continue
+            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()):continue
             relative=path.relative_to(GUIDES).as_posix();suffix=path.suffix.lower()
+            if suffix not in ('.txt','.md','.html','.pdf','.epub') or relative.startswith(('box.','boite.')):continue
+            record={'path':relative,'bytes':path.stat().st_size,'status':'pending'}
+            report.append(record)
+            if record['bytes']>300_000_000:
+                record['status']='too_large';continue
             page_texts=[]
             try:
                 if suffix in ('.txt','.md'):text=path.read_text(errors='replace')
@@ -95,21 +100,29 @@ def index_guides():
                     if cached.is_file():page_texts=json.loads(cached.read_text())
                     else:
                         reader=PdfReader(path)
-                        if len(reader.pages)>1200:continue
+                        if len(reader.pages)>1200:
+                            record['status']='page_limit';continue
                         page_texts=[(page.extract_text() or '')[:24000] for page in reader.pages]
                         temporary=cached.with_suffix('.tmp');temporary.write_text(json.dumps(page_texts,ensure_ascii=False));temporary.replace(cached)
                     text='\n'.join(page_texts[:4])
                 elif suffix=='.epub':
                     with zipfile.ZipFile(path) as z:
                         entries=[e for e in z.infolist() if e.filename.endswith(('.html','.xhtml')) and e.file_size<2_000_000]
-                        if sum(e.file_size for e in entries)>20_000_000:continue
+                        if sum(e.file_size for e in entries)>20_000_000:
+                            record['status']='too_large';continue
                         p=Text()
                         for e in entries:p.feed(z.read(e).decode(errors='replace'))
                         text=p.text()
                 else:continue
-            except Exception:continue
+            except Exception as exc:
+                record['status']='extraction_failed';record['error']=type(exc).__name__;continue
+            characters=sum(len(p.strip()) for p in page_texts) if suffix=='.pdf' else len(text.strip())
+            record.update(status='indexed' if characters else 'needs_ocr' if suffix=='.pdf' else 'no_text',
+                          characters=characters,pages=len(page_texts),searchable_pages=sum(bool(p.strip()) for p in page_texts),
+                          truncated_pages=sum(len(p)>=24000 for p in page_texts))
             meta=metadata.get(relative,{})
-            title=meta.get('title') or path.stem.replace('.fr','').replace('.en','').replace('_',' ')
+            heading=''.join(p.title) if suffix=='.html' else text.split('\n',1)[0][2:].strip() if suffix=='.md' and text.startswith('# ') else ''
+            title=meta.get('title') or heading[:200] or path.stem.replace('.fr','').replace('.en','').replace('_',' ')
             if relative.startswith(('box.','boite.')):title='La boîte ALPHA — démonstration'
             if relative.startswith(('box.','boite.')):continue
             language=meta.get('language') or ('fr' if '.fr.' in path.name else 'en' if '.en.' in path.name else '')
@@ -119,16 +132,52 @@ def index_guides():
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
+    store.ROOT.mkdir(parents=True,exist_ok=True)
+    temporary=store.ROOT/'index-report.tmp'
+    temporary.write_text(json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False))
+    temporary.replace(store.ROOT/'index-report.json')
     return len(documents)
 
 
 STOPWORDS=set('a au aux avec ce ces cette dans de des du elle en est et eux faire fais fait for from how il ils je la le les leur lui ma mais me mes moi mon nous of on or ou par pas pour qu que quel quelle qui sa se ses si sois sort sortir sous sur ta te tes the this to toi ton un une vos votre vous what quel quels quelles comment document documents guide guides efficacement peux peut voudrais veux donne donnez montre'.split())
 SYNONYMS={'toit':['toit','toiture','roof','roofing'],'toiture':['toiture','toit','roof'],'abri':['abri','abris','shelter'],'bache':['bache','tarpaulin','sheeting'],'eau':['eau','water'],'potable':['potable','drinking'],'apprendre':['apprendre','learning'],'enfant':['enfant','enfants','children'],'maths':['maths','mathematiques','mathematics']}
+STOPWORDS.update('comment pourquoi trouver rechercher recherche cherche expliquer explique informations information sujet concernant utiliser utilise voudrais besoin besoin les leurs pouvez pourrait pouvez avoir quand contient contient moi documenter faire preparer correctement sujet bon bonne'.split())
+SYNONYMS.update({
+    'semences':['semences','graines','seeds'],'graines':['graines','semences','seeds'],
+    'stocker':['stocker','stockage','storage','storing'],'conservation':['conservation','preservation','storage'],
+    'jardin':['jardin','jardins','garden','gardening'],'potager':['potager','vegetable','garden'],
+    'irrigation':['irrigation','arrosage','watering'],'sol':['sol','soil'],'compost':['compost','composting'],
+    'greffe':['greffe','grafting'],'abeilles':['abeilles','bees'],'poules':['poules','poultry','chickens'],
+    'dents':['dents','tooth','teeth'],'dentaire':['dentaire','dental'],'douleur':['douleur','pain'],
+    'psychologique':['psychologique','psychological'],'stress':['stress'],'enfants':['enfants','children'],
+    'plantes':['plantes','plants'],'champignons':['champignons','mushrooms'],'toxiques':['toxiques','toxic','poisonous'],
+    'radio':['radio','radiotelephonie'],'antenne':['antenne','antennes','antenna'],
+    'batterie':['batterie','batteries','battery'],'pompe':['pompe','pompes','pump'],
+    'menuiserie':['menuiserie','woodworking','carpentry'],'couture':['couture','sewing'],
+    'soudage':['soudage','soudure','welding'],'plomberie':['plomberie','plumbing'],
+    'velo':['velo','bicycle','bike'],'reparation':['reparation','repair'],'electricite':['electricite','electrical'],
+    'lecture':['lecture','reading'],'ecriture':['ecriture','writing'],'calcul':['calcul','arithmetic'],
+    'carte':['carte','cartes','map'],'incendie':['incendie','incendies','fire'],
+    'inondation':['inondation','inondations','flood'],'sollies':['sollies'],'ville':['ville'],
+    'puits':['puits','well','wells'],'desinfection':['desinfection','disinfection','disinfecting'],
+    'risques':['risques','risque','risks','risk'],'fractions':['fractions','fraction']
+})
+TERM_ALIASES={'stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
+              'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
+              'pompes':'pompe','velos':'velo','cartes':'carte','soudure':'soudage'}
+
+
+def index_report():
+    path=store.ROOT/'index-report.json'
+    if not path.is_file() or path.stat().st_size>2_000_000:
+        return {'documents':[],'indexed':0,'status':'not_available'}
+    try:return {**json.loads(path.read_text()),'status':'ready'}
+    except (OSError,ValueError):return {'documents':[],'indexed':0,'status':'not_available'}
 
 
 def search_terms(query):
     words=[unicodedata.normalize('NFKD',w).encode('ascii','ignore').decode().lower() for w in re.findall(r'\w+',query,flags=re.UNICODE)]
-    return list(dict.fromkeys(w for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
+    return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
 async def search(query,language='',limit=8):
@@ -146,7 +195,17 @@ async def search(query,language='',limit=8):
     for lang in langs:
         try:
             from urllib.parse import urlencode
-            translated=[next((s for s in SYNONYMS.get(w,[]) if s in ('roof','shelter','tarpaulin','water','drinking','learning','children','mathematics')),w) if lang=='eng' else w for w in words]
+            english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
+                     'apprendre':'learning','enfant':'children','enfants':'children','maths':'mathematics',
+                     'semences':'seeds','graines':'seeds','stocker':'storage','conservation':'preservation','jardin':'garden',
+                     'potager':'vegetable garden','sol':'soil','greffe':'grafting','abeilles':'bees','poules':'chickens',
+                     'dents':'teeth','dentaire':'dental','douleur':'pain','psychologique':'psychological','plantes':'plants',
+                     'champignons':'mushrooms','toxiques':'poisonous','antenne':'antenna','batterie':'battery','pompe':'pump',
+                     'menuiserie':'carpentry','couture':'sewing','soudage':'welding','plomberie':'plumbing',
+                     'velo':'bicycle','reparation':'repair','electricite':'electrical','lecture':'reading','ecriture':'writing',
+                     'calcul':'arithmetic','carte':'map','incendie':'fire','inondation':'flood',
+                     'puits':'wells','desinfection':'disinfecting','risques':'risks'}
+            translated=[english.get(w,w) if lang=='eng' else w for w in words]
             pattern=' '.join(translated) if translated else query
             raw,_=await get('/search?'+urlencode({'books.filter.lang':lang,'pattern':pattern,'format':'xml','pageLength':limit}))
             for item in ET.fromstring(raw).findall('./channel/item'):

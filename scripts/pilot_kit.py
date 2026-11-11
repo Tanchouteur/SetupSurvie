@@ -63,6 +63,10 @@ def export_lab(destination,english=False):
         copy(path,'payload/library/zim/'+path.name)
     for path in sorted((data/'library/guides').rglob('*')):
         if path.is_file():copy(path,'payload/'+path.relative_to(data).as_posix())
+    if (data/'library/maps').is_symlink():raise setup.SetupError('Le dossier des cartes ne doit pas être un lien.')
+    for path in sorted((data/'library/maps').rglob('*')):
+        if path.is_file() and not path.name.endswith('.part'):
+            copy(path,'payload/'+path.relative_to(data).as_posix())
     cache=data/'state/openwebui/cache'
     for name in ['embedding','embedding-ready.json','whisper','tiktoken']:
         source=cache/name

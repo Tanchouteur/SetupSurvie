@@ -24,7 +24,7 @@ PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
              'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN'}
-DIRECTORIES = ("library/zim", "library/guides", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
+DIRECTORIES = ("library/zim", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
 os.environ['HF_HUB_OFFLINE'] = '0'

@@ -102,6 +102,7 @@ services:
       - ${DATA_DIR}/state/pilot:/pilot-data
       - ${DATA_DIR}/state/openwebui:/webui-data:ro
       - ${DATA_DIR}/library/guides:/guides
+      - ${DATA_DIR}/library/maps:/maps:ro
       - ${DATA_DIR}/library/zim:/zim:ro
       - ${DATA_DIR}/models:/models:ro
       - ${DATA_DIR}/catalog:/catalog:ro

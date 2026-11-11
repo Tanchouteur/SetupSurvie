@@ -16,6 +16,8 @@ Recherche en cours : [sept modèles, contexte, outils, corpus bilingue et protoc
 
 Le pilote **0.1.5** ajoute les [mises à jour du logiciel et les téléchargements documentaires reprenables](docs/26-mises-a-jour-et-bibliotheque-pilote.md), avec application séparée du kit et restauration en cas d’échec.
 
+Le pilote **0.1.7** ajoute les [ressources du Sud et les contrôles de recherche et d’IA](docs/28-bibliotheque-sud-recherche-et-ia.md) : cartes hors ligne de Solliès-Ville/PACA/Occitanie/Corse, risques locaux, nouveaux manuels, recherche bilingue et suivi de l’indexation.
+
 ## Commencer
 
 Lire le [guide d’installation Windows puis Linux](docs/14-installation.md), installer les prérequis indiqués, puis lancer depuis le dépôt :
@@ -36,6 +38,8 @@ Le [catalogue des fonctionnalités et user stories](docs/15-fonctionnalites-et-u
 
 ## Documentation
 
+- [Inventaire complet des ressources téléchargées](docs/29-inventaire-ressources-telechargees.md) : les 10 archives, 68 PDF et 2 cartes réellement présents.
+- [Bibliothèque du Sud, recherche et IA](docs/28-bibliotheque-sud-recherche-et-ia.md) : contenus réellement ajoutés, cartes, recette des sources et limites.
 - [Plan de bibliothèque hors ligne — 500 Go](docs/25-plan-bibliotheque-hors-ligne-500go.md) : inventaire des téléchargements actuels, ressources à ajouter, priorités et budget complet.
 - [Installation et essais](docs/14-installation.md) : commandes, prérequis et fonctionnement hors ligne.
 - [Fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) : besoins, priorités, critères et état réel.

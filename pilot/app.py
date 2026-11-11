@@ -11,8 +11,9 @@ from urllib.parse import quote,urlparse
 
 from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,File,Form,Query
 from pydantic import BaseModel,Field
+from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,network,operations,store
+from . import accounts,engine,inventory,library,maps,network,operations,store
 
 COOKIE='survie_session'
 SESSION_SECONDS=30*86400
@@ -27,7 +28,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.6'
+VERSION='0.1.7'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -194,12 +195,26 @@ async def recover(body:Reset,request:Request,response:Response):
 
 
 @app.get('/api/search')
-async def search(q:str=Query(default='',max_length=200),language:str=''):
-    return {'results':await library.search(q.strip(),language) if q.strip() else []}
+async def search(q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20)):
+    return {'results':await library.search(q.strip(),language,limit=limit) if q.strip() else []}
 
 
 @app.get('/api/source')
 async def source(id:str):return await library.source(id)
+
+
+@app.get('/api/maps')
+async def offline_maps():return {'maps':await asyncio.to_thread(maps.available)}
+
+
+@app.get('/api/library/coverage')
+async def library_coverage():return await asyncio.to_thread(library.index_report)
+
+
+@app.get('/api/maps/{identifier}/archive')
+async def map_archive(identifier:str):
+    path=await asyncio.to_thread(maps.archive,identifier)
+    return FileResponse(path,media_type='application/octet-stream',headers={'Cache-Control':'public, max-age=3600'})
 
 
 @app.get('/api/media')
