@@ -1,9 +1,18 @@
 {
-	auto_https off
+	auto_https disable_redirects
+	default_sni {$TLS_FALLBACK_HOST:localhost}
 	admin off
 }
-:8080 {
+(portal_routes) {
 	header X-Content-Type-Options nosniff
+	handle /api/* {
+		reverse_proxy pilot:8000
+	}
+	@encyclopedia path /encyclopedie/search /encyclopedie/catalog/v2/entries
+	handle @encyclopedia {
+		uri strip_prefix /encyclopedie
+		reverse_proxy kiwix:8080
+	}
 	handle /health {
 		respond "ok" 200
 	}
@@ -13,11 +22,28 @@
 		file_server
 	}
 	handle_path /guides/* {
+		header Content-Security-Policy "sandbox; default-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
 		root * /srv/guides
 		file_server
 	}
 	handle {
+		header Cache-Control "no-cache"
 		root * /srv/portal
 		file_server
 	}
+}
+:8080 {
+	import portal_routes
+}
+{$TLS_PORTAL_ADDRESSES:https://localhost:8443} {
+	tls internal
+	import portal_routes
+}
+{$TLS_WEBUI_ADDRESSES:https://localhost:8444} {
+	tls internal
+	reverse_proxy open-webui:8080
+}
+{$TLS_KIWIX_ADDRESSES:https://localhost:8445} {
+	tls internal
+	reverse_proxy kiwix:8080
 }

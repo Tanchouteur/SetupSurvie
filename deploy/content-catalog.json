@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "shelter-safety",
+      "title": "Abri : sécurité de la construction — IFRC",
+      "language": "en",
+      "edition": "2009",
+      "url": "https://www.ifrc.org/sites/default/files/2021-08/305400-Shelter_safety_handbook-EN-LR.pdf",
+      "publisher": "IFRC",
+      "topics": [
+        "abri",
+        "construction"
+      ],
+      "path": "library/guides/OFF-shelter-safety-2009.en.pdf",
+      "bytes": 1120602,
+      "sha256": "afac8456b672f3ac26b2ae3938d8a1d5236886f2e0dc65ef304cc2c42c30debe",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "shelter-kit",
+      "title": "Abri : montage et fixation des bâches — IFRC",
+      "language": "en",
+      "edition": "2010",
+      "url": "https://www.ifrc.org/sites/default/files/2021-08/IFRC_shelter-kit-guidelines-EN-LR.pdf",
+      "publisher": "IFRC",
+      "topics": [
+        "abri",
+        "toiture",
+        "bâche"
+      ],
+      "path": "library/guides/OFF-shelter-kit-2010.en.pdf",
+      "bytes": 1232104,
+      "sha256": "a9bf47ee8ba786d988f665e17e1c312df682cff6b0822503320cf4fcfc4e2a2c",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "shelter-design",
+      "title": "Abri : catalogue de plans — UNHCR",
+      "language": "en",
+      "edition": "2016",
+      "url": "https://emergency.unhcr.org/sites/default/files/Shelter%20Design%20Catalogue%20January%202016.pdf",
+      "publisher": "UNHCR",
+      "topics": [
+        "abri",
+        "plans"
+      ],
+      "path": "library/guides/OFF-shelter-design-2016.en.pdf",
+      "bytes": 14331116,
+      "sha256": "9cb27654d709c39e2f44c3c2cb307894c22a35466b813e705a6fefc144a1471e",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "water-treatment",
+      "title": "Eau : traitement au point d’utilisation — OMS",
+      "language": "en",
+      "edition": "2013",
+      "url": "https://cdn.who.int/media/docs/default-source/wash-documents/who-tn-05-emergency-treatment-of-drinking-water-at-the-point-of-use.pdf",
+      "publisher": "WHO/WEDC",
+      "topics": [
+        "eau",
+        "hygiène"
+      ],
+      "path": "library/guides/OFF-water-treatment-2013.en.pdf",
+      "bytes": 1383781,
+      "sha256": "49cb198f80464c6245c6bf6c99e3b9d14f8c6ae75b97bf9add8c7daacb503c3e",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "water-needs",
+      "title": "Eau : besoins en situation d’urgence — OMS",
+      "language": "en",
+      "edition": "2013",
+      "url": "https://cdn.who.int/media/docs/default-source/wash-documents/who-tn-09-how-much-water-is-needed.pdf",
+      "publisher": "WHO/WEDC",
+      "topics": [
+        "eau",
+        "réserves"
+      ],
+      "path": "library/guides/OFF-water-needs-2013.en.pdf",
+      "bytes": 895946,
+      "sha256": "3c3f4f1e1e22e42cb2d3292247c319c03d4270a497008617e54725ecb0281e1f",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "water-chlorine",
+      "title": "Eau : mesurer le chlore — OMS",
+      "language": "en",
+      "edition": "2013",
+      "url": "https://cdn.who.int/media/docs/default-source/wash-documents/who-tn-11-measuring-chlorine-levels-in-water-supplies.pdf",
+      "publisher": "WHO/WEDC",
+      "topics": [
+        "eau",
+        "mesure"
+      ],
+      "path": "library/guides/OFF-water-chlorine-2013.en.pdf",
+      "bytes": 1338767,
+      "sha256": "633d659375b7c339c94707c82c3cad1ff4da1be317963c136869f027a468c5c3",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "sanitation",
+      "title": "Assainissement : options en situation d’urgence — OMS",
+      "language": "en",
+      "edition": "2013",
+      "url": "https://cdn.who.int/media/docs/default-source/wash-documents/who-tn-14-technical-options-for-excreta-disposal.pdf",
+      "publisher": "WHO/WEDC",
+      "topics": [
+        "assainissement",
+        "hygiène"
+      ],
+      "path": "library/guides/OFF-sanitation-2013.en.pdf",
+      "bytes": 989473,
+      "sha256": "2f13380d9a9d63a0aeb4320038744b5c4088ab070b10fef18b412080a85ffdd2",
+      "pack": "survival",
+      "commercial_review": true,
+      "licence": "Conditions de réutilisation à examiner ; pas de validation commerciale à ce stade."
+    },
+    {
+      "id": "maths-5e",
+      "title": "Mathématiques : manuel de 5e — Sésamath",
+      "language": "fr",
+      "edition": "2010",
+      "url": "https://manuel.sesamath.net/send_file.php?file=/files/ms5_2010.pdf",
+      "publisher": "Sésamath",
+      "topics": [
+        "éducation",
+        "mathématiques"
+      ],
+      "path": "library/guides/OFF-maths-5e-2010.fr.pdf",
+      "bytes": 74261087,
+      "sha256": "7488cd617792a300a309ff4f5dc837daf0b2e9b56c9182780984932c91f30a61",
+      "pack": "education",
+      "commercial_review": false,
+      "licence": "GNU FDL / CC BY-SA — voir licence du manuel"
+    },
+    {
+      "id": "maths-4e",
+      "title": "Mathématiques : manuel de 4e — Sésamath",
+      "language": "fr",
+      "edition": "2011",
+      "url": "https://manuel.sesamath.net/send_file.php?file=/files/ms4_2011.pdf",
+      "publisher": "Sésamath",
+      "topics": [
+        "éducation",
+        "mathématiques"
+      ],
+      "path": "library/guides/OFF-maths-4e-2011.fr.pdf",
+      "bytes": 100183953,
+      "sha256": "3f298e6449360d105bdac60279dddece12e8adb6654f004f047ee5252fdcdb6c",
+      "pack": "education",
+      "commercial_review": false,
+      "licence": "GNU FDL / CC BY-SA — voir licence du manuel"
+    }
+  ]
+}

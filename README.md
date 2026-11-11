@@ -6,7 +6,13 @@
 
 Projet de Louis et Marc Tanchou : préparer un serveur de connaissances utilisable sans Internet, avec une bibliothèque illustrée et un assistant IA local, accessible depuis les appareils à proximité.
 
-**État au 30 octobre 2026 : prototype prêt à installer pour essais.** Compose, lanceurs Windows/Linux, portail et jeu d’essai documentaire sont préparés. Les contrôles locaux ne remplacent pas les essais sur le PC Windows de Marc et le PC Linux NVIDIA. Le premier objectif reste un prototype pour Louis et Marc ; la vente viendra ensuite.
+**État au 11 novembre 2026 : paquet pilote préparé et essais Linux effectués.** Le laboratoire Podman de Louis utilise un volume isolé sur le SSD de 4 To, plafonné sous 600 Go. Voir les [commandes et résultats des essais Linux](docs/17-essais-linux-2026-11-11.md). Compose et les lanceurs Docker Windows/Linux restent disponibles ; les essais Windows chez Marc restent à faire. Le premier objectif reste un prototype pour Louis et Marc ; la vente viendra ensuite.
+
+Suite des essais : [dictée locale, trois tailles de modèles, Wikipédia illustré et accueil simplifié](docs/18-dictee-modeles-bibliotheque.md).
+
+Pour cette livraison : [guide du pilote Marc](docs/22-pilote-marc.md), [résultats, modèles retenus et réserves](docs/23-bilan-pilote-2026-11-11.md), [connexion simple et direction du produit](docs/24-acces-simple-et-offre.md). La [liste initiale des travaux](docs/19-avant-premiere-installation-marc.md) conserve le contexte de préparation.
+
+Recherche en cours : [sept modèles, contexte, outils, corpus bilingue et protocole de reprise](docs/20-campagne-modeles-contexte-et-corpus.md). Les calculs IA sont actuellement suspendus en mode jeu ; les téléchargements documentaires sont terminés.
 
 ## Commencer
 
@@ -24,10 +30,11 @@ Puis, sur le PC Linux préparé pour Docker et NVIDIA :
 
 Accueil : `http://ADRESSE-IP-DU-PC:8080`. Les données locales et identifiants ne sont pas versionnés. Aucun téléchargement massif de Wikipédia n’est lancé automatiquement.
 
-Le [catalogue des fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) distingue le socle à tester des développements restants. Le filtre de titres du portail n’est pas une recherche plein texte de tous les guides : Kiwix fournit celle des archives, et une recherche commune reste à développer.
+Le [catalogue des fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) distingue le socle à tester des développements restants. Le site réunit la recherche plein texte des guides lisibles et celle des archives Kiwix. Open WebUI reste accessible pour ses dossiers et conversations ; les historiques des deux interfaces sont distincts.
 
 ## Documentation
 
+- [Plan de bibliothèque hors ligne — 500 Go](docs/25-plan-bibliotheque-hors-ligne-500go.md) : inventaire des téléchargements actuels, ressources à ajouter, priorités et budget complet.
 - [Installation et essais](docs/14-installation.md) : commandes, prérequis et fonctionnement hors ligne.
 - [Fonctionnalités et user stories](docs/15-fonctionnalites-et-user-stories.md) : besoins, priorités, critères et état réel.
 - [Vérifications du paquet](docs/16-verification-prototype.md) : contrôles effectués et validations restantes.

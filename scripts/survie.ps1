@@ -8,12 +8,12 @@ foreach ($candidate in @('py', 'python', 'python3')) {
     $prefix = @()
     if ($candidate -eq 'py') { $prefix = @('-3') }
     try {
-        & $command.Source @prefix -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' 2>$null
+        & $command.Source @prefix -c 'import sys; sys.exit(0 if sys.version_info >= (3,11) else 1)' 2>$null
         if ($LASTEXITCODE -eq 0) { $python = $command.Source; break }
     } catch { continue }
 }
 if (-not $python) {
-    throw 'Python 3.10+ est requis. Installer Python 3, Docker Desktop et Ollama, puis rouvrir PowerShell. Voir docs/14-installation.md.'
+    throw 'Python 3.11+ est requis. Installer Python 3, Docker Desktop et Ollama, puis rouvrir PowerShell. Voir docs/14-installation.md.'
 }
 & $python @prefix -X utf8 $scriptPath @args
 exit $LASTEXITCODE

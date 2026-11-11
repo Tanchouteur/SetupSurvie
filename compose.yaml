@@ -17,8 +17,25 @@ services:
       WEBUI_ADMIN_PASSWORD: ${WEBUI_ADMIN_PASSWORD}
       WEBUI_ADMIN_NAME: "Administration"
       ENABLE_SIGNUP: "false"
+      JWT_EXPIRES_IN: "30d"
+      ENABLE_TITLE_GENERATION: "false"
+      ENABLE_TAGS_GENERATION: "false"
+      ENABLE_FOLLOW_UP_GENERATION: "false"
+      ENABLE_AUTOCOMPLETE_GENERATION: "false"
+      ENABLE_SEARCH_QUERY_GENERATION: "false"
+      ENABLE_RETRIEVAL_QUERY_GENERATION: "false"
+      ENABLE_CALENDAR: "false"
+      ENABLE_AUTOMATIONS: "false"
+      USER_PERMISSIONS_FEATURES_CALENDAR: "false"
+      USER_PERMISSIONS_FEATURES_AUTOMATIONS: "false"
+      USER_PERMISSIONS_FEATURES_CODE_INTERPRETER: "false"
+      USER_PERMISSIONS_FEATURES_DIRECT_TOOL_SERVERS: "false"
+      AUDIO_STT_ENGINE: ""
+      WHISPER_MODEL: /app/backend/data/cache/whisper/faster-whisper-small
+      WHISPER_MODEL_AUTO_UPDATE: "false"
+      WHISPER_COMPUTE_TYPE: int8
       DEFAULT_LOCALE: fr-FR
-      DEFAULT_MODELS: ${CHAT_MODEL}
+      DEFAULT_MODELS: survie-rapide
       DEFAULT_USER_ROLE: user
       OFFLINE_MODE: "true"
       HF_HUB_OFFLINE: "1"
@@ -61,16 +78,60 @@ services:
       timeout: 5s
       retries: 8
       start_period: 10s
+  pilot:
+    image: ${WEBUI_IMAGE}
+    restart: unless-stopped
+    working_dir: /srv
+    entrypoint: [python, -m, uvicorn, pilot.app:app, --host, "0.0.0.0", --port, "8000"]
+    command: []
+    environment:
+      PILOT_STATE_DIR: /pilot-data
+      WEBUI_DB_PATH: /webui-data/webui.db
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      WEBUI_URL: http://open-webui:8080
+      PILOT_CONTROL_URL: http://host.docker.internal:11436
+      PILOT_CONTROL_TOKEN: ${PILOT_CONTROL_TOKEN}
+      OLLAMA_URL: ${OLLAMA_BASE_URL}
+      KIWIX_URL: http://kiwix:8080
+      GUIDES_DIR: /guides
+      ASSISTANT_POLICY: /srv/system.fr.txt
+    volumes:
+      - ./pilot:/srv/pilot:ro
+      - ./deploy/assistant-system.fr.txt:/srv/system.fr.txt:ro
+      - ./deploy/model-profiles.json:/srv/model-profiles.json:ro
+      - ${DATA_DIR}/state/pilot:/pilot-data
+      - ${DATA_DIR}/state/openwebui:/webui-data:ro
+      - ${DATA_DIR}/library/guides:/guides
+      - ${DATA_DIR}/library/zim:/zim:ro
+      - ${DATA_DIR}/models:/models:ro
+      - ${DATA_DIR}/catalog:/catalog:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 10
+      start_period: 15s
   portal:
     image: ${PORTAL_IMAGE}
     restart: unless-stopped
     ports:
       - "${BIND_ADDRESS}:8080:8080"
+      - "${BIND_ADDRESS}:8443:8443"
+      - "${BIND_ADDRESS}:8444:8444"
+      - "${BIND_ADDRESS}:8445:8445"
+    environment:
+      TLS_PORTAL_ADDRESSES: ${TLS_PORTAL_ADDRESSES}
+      TLS_WEBUI_ADDRESSES: ${TLS_WEBUI_ADDRESSES}
+      TLS_KIWIX_ADDRESSES: ${TLS_KIWIX_ADDRESSES}
+      TLS_FALLBACK_HOST: ${TLS_FALLBACK_HOST}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./portal:/srv/portal:ro
       - ${DATA_DIR}/catalog:/srv/catalog:ro
       - ${DATA_DIR}/library/guides:/srv/guides:ro
+      - ${DATA_DIR}/state/caddy:/data
     healthcheck:
       test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1:8080/health"]
       interval: 15s

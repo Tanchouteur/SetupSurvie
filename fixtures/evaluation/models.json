@@ -1,0 +1,9 @@
+[
+  {"model":"qwen3.5:4b-q4_K_M","modes":[false,true]},
+  {"model":"qwen3.5:9b-q4_K_M","modes":[false,true]},
+  {"model":"qwen3.5:27b-q4_K_M","modes":[false,true]},
+  {"model":"gemma4:e4b","modes":[false,true]},
+  {"model":"gpt-oss:20b","modes":["low","high"]},
+  {"model":"gemma4:26b-a4b-it-q4_K_M","modes":[false,true]},
+  {"model":"qwen3.8:27b-q4_K_M","modes":[false,true]}
+]

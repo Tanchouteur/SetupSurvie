@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""SetupSurvie launcher. Python 3.10+, standard library only; never runs a shell."""
+"""SetupSurvie launcher. Python 3.11+, standard library only; never runs a shell."""
 from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
 import secrets
+import socket
+import re
 import shutil
 import subprocess
 import sys
@@ -18,7 +21,10 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 VERSIONS = json.loads((ROOT / "deploy/versions.json").read_text(encoding="utf-8"))
 PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
-DIRECTORIES = ("library/zim", "library/guides", "catalog", "state/openwebui", "models")
+MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
+             'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
+             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN'}
+DIRECTORIES = ("library/zim", "library/guides", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
 os.environ['HF_HUB_OFFLINE'] = '0'
@@ -35,6 +41,16 @@ m = SentenceTransformer('/app/backend/data/cache/embedding/bge-m3',
     device='cpu', trust_remote_code=False, local_files_only=True)
 assert m.encode(['test']).shape[1] == 1024
 """.replace("REVISION", repr(VERSIONS["embedding"]["revision"]))
+PREPARE_SPEECH = """
+import os
+os.environ['HF_HUB_OFFLINE']='0'
+from huggingface_hub import snapshot_download
+snapshot_download(repo_id=REPOSITORY,revision=REVISION,
+ local_dir='/app/backend/data/cache/whisper/faster-whisper-small',
+ allow_patterns=['*.json','*.txt','*.bin'])
+from faster_whisper import WhisperModel
+WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',device='cpu',compute_type='int8',local_files_only=True)
+""".replace('REPOSITORY',repr(VERSIONS['speech']['repository'])).replace('REVISION',repr(VERSIONS['speech']['revision']))
 
 
 class SetupError(RuntimeError):
@@ -71,6 +87,15 @@ def safe_path(value):
     if any(c in str(path) for c in "\n\r\x00"):
         raise SetupError("Le chemin contient un caractère non pris en charge.")
     return path
+
+
+def lan_host(value):
+    if not re.fullmatch(r'[a-zA-Z0-9](?:[a-zA-Z0-9.-]{0,251}[a-zA-Z0-9])?',value):
+        raise SetupError('Adresse IPv4 ou nom local non valide ; ne pas inclure de port ni de protocole.')
+    return value
+
+
+def control_key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
 
 
 class Installation:
@@ -128,6 +153,13 @@ class Installation:
                   "OLLAMA_BASE_URL": "http://ollama:11434" if c["target"] == "linux" else "http://host.docker.internal:11435",
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],
                   "WEBUI_ADMIN_PASSWORD": c["admin_password"], "CHAT_MODEL": c["chat_model"]}
+        values['PILOT_CONTROL_TOKEN']=control_key(c)
+        hosts=['localhost']
+        values['TLS_FALLBACK_HOST']=c.get('lan_host','localhost')
+        if c['bind']=='0.0.0.0':hosts.append(c.get('discovery_name','survie')+'.local')
+        if c.get('lan_host') and c['lan_host']!='localhost':hosts.append(c['lan_host'])
+        for key,port in [('TLS_PORTAL_ADDRESSES',8443),('TLS_WEBUI_ADDRESSES',8444),('TLS_KIWIX_ADDRESSES',8445)]:
+            values[key]=', '.join('https://'+host+':'+str(port) for host in hosts)
         values.update({key: self.image_reference(c, service) for key, service in
                        (("WEBUI_IMAGE", "open-webui"), ("KIWIX_IMAGE", "kiwix"),
                         ("PORTAL_IMAGE", "portal"), ("OLLAMA_IMAGE", "ollama"))})
@@ -159,7 +191,12 @@ class Installation:
         return base + list(args)
 
     def compose(self, c, *args, capture=False, timeout=None):
-        return run(self.command(c, *args), capture=capture, timeout=timeout)
+        return run(self.command(c, *args), capture=capture, timeout=timeout,env=self.environment())
+
+    @staticmethod
+    def environment():
+        # Compose gives shell values precedence over --env-file. Keep installations isolated.
+        return {key:value for key,value in os.environ.items() if key not in MANAGED_ENV}
 
     def catalog(self, c):
         root = Path(c["data_dir"]) / "library/guides"
@@ -220,6 +257,8 @@ class Installation:
     def start_native(self, c):
         if c["target"] != "windows":
             return
+        if (self.work/'inference-paused.json').exists():
+            print('Moteur IA en pause ; les documents restent disponibles.');return
         if os.name != "nt":
             raise SetupError("Le serveur natif Windows doit être démarré sur Windows.")
         marker = self.work / "native-ollama.json"
@@ -236,7 +275,7 @@ class Installation:
             raise SetupError("Ollama Windows introuvable.")
         env = os.environ.copy()
         env.update({"OLLAMA_HOST": "0.0.0.0:11435", "OLLAMA_MODELS": str(Path(c["data_dir"]) / "models"),
-                    "OLLAMA_NO_CLOUD": "1", "OLLAMA_CONTEXT_LENGTH": "4096",
+                    "OLLAMA_NO_CLOUD": "1", "OLLAMA_CONTEXT_LENGTH": "8192",
                     "OLLAMA_NUM_PARALLEL": "1", "OLLAMA_MAX_LOADED_MODELS": "1"})
         log_path = self.work / "ollama.log"
         with log_path.open("ab") as output:
@@ -301,12 +340,14 @@ class Installation:
                 print('PID Ollama absent ou différent : aucun processus natif arrêté.')
 
     def prepare(self, c, offline):
+        self.prepare_speech(c,offline)
         marker = Path(c["data_dir"]) / "state/openwebui/cache/embedding-ready.json"
         if marker.exists():
             cached = json.loads(marker.read_text(encoding="utf-8"))
-            if cached == VERSIONS["embedding"]:
+            folder=marker.parent/'embedding/bge-m3'
+            if cached == VERSIONS["embedding"] and (folder/'config.json').is_file() and (folder/'tokenizer.json').is_file() and any((folder/name).is_file() for name in ('model.safetensors','pytorch_model.bin')):
                 return
-            raise SetupError("Le modèle de recherche a changé. Prévoir une réindexation avant la mise à jour.")
+            if cached != VERSIONS['embedding']:raise SetupError("Le modèle de recherche a changé. Prévoir une réindexation avant la mise à jour.")
         if offline:
             raise SetupError("BGE-M3 n’est pas préparé. Lancez prepare une fois avec Internet.")
         print("Préparation du modèle multilingue BGE-M3 (plusieurs Go, CPU, une seule fois)…", flush=True)
@@ -317,13 +358,46 @@ class Installation:
         script = "from pathlib import Path; Path('/app/backend/data/cache/embedding-ready.json').write_text(" + repr(json.dumps(VERSIONS["embedding"])) + ")"
         self.compose(c, "run", "--rm", "--no-deps", "-T", "--entrypoint", "python", "open-webui", "-c", script)
 
+    def prepare_speech(self,c,offline):
+        marker=Path(c['data_dir'])/'state/openwebui/cache/whisper/ready.json'
+        folder=marker.parent/'faster-whisper-small'
+        if marker.exists() and json.loads(marker.read_text())==VERSIONS['speech'] and all((folder/name).is_file() for name in ('model.bin','config.json','tokenizer.json')):return
+        if offline:raise SetupError('Dictée non préparée. Lancez prepare avec Internet ou importez les caches du kit.')
+        self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','-e','HF_HUB_OFFLINE=0','-e','OFFLINE_MODE=false','open-webui','-c',PREPARE_SPEECH)
+        script="from pathlib import Path; Path('/app/backend/data/cache/whisper/ready.json').write_text("+repr(json.dumps(VERSIONS['speech']))+")"
+        self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','open-webui','-c',script)
+
     def up(self, c):
         self.catalog(c)
+        import control
+        control.start(self,c)
+        paused=(self.work/'inference-paused.json').exists()
         self.start_native(c)
-        self.compose(c, "up", "-d", "--pull", "never", "--wait", "--wait-timeout", "420")
+        services=['open-webui','kiwix','pilot','portal'] if paused else []
+        self.compose(c, "up", "-d", "--pull", "never", "--wait", "--wait-timeout", "420",*services)
         # Validate from the same network namespace as Open WebUI, not just from the host.
         script = "import os,urllib.request; print(urllib.request.urlopen(os.environ['OLLAMA_BASE_URL']+'/api/version',timeout=15).read().decode())"
-        self.compose(c, "exec", "-T", "open-webui", "python", "-c", script)
+        if not paused:
+            self.compose(c, "exec", "-T", "open-webui", "python", "-c", script)
+            self.compose(c,'exec','-T','pilot','python','-m','pilot.configure')
+        import discovery
+        try:discovery.start(self,c)
+        except (SetupError,OSError,ValueError) as exc:print('Nom local automatique indisponible :',str(exc),'Le site et l’accès direct restent disponibles.')
+
+    def addresses(self,c):
+        host=c.get('lan_host') or 'localhost'
+        print('Sur le PC serveur : http://localhost:8080 ; Open WebUI : http://localhost:3000')
+        if c['bind']=='0.0.0.0':
+            print('Nom facile à retenir : http://'+c.get('discovery_name','survie')+'.local:8080')
+            print(f'Sur le réseau local : https://{host}:8443 ; Open WebUI : https://{host}:8444 ; Kiwix : https://{host}:8445')
+            print('Installer le certificat local sur chaque appareil pour HTTPS et la dictée. Voir docs/22-pilote-marc.md.')
+        else:print('Accès limité au PC serveur. configure --lan --lan-host ADRESSE_IP pour ouvrir le réseau privé.')
+
+    def certificate(self,c,destination):
+        dest=safe_path(destination)
+        if dest.exists():raise SetupError('Le certificat de destination existe déjà.')
+        self.compose(c,'cp','portal:/data/caddy/pki/authorities/local/root.crt',str(dest))
+        print('Certificat PUBLIC exporté :',dest)
 
     def pull_model(self, c, model):
         if ":cloud" in model.lower() or model.lower().endswith('-cloud') or not model or any(x.isspace() for x in model):
@@ -343,6 +417,13 @@ class Installation:
 
     def verify(self, c, inference=False):
         failures = []
+        try:
+            state=self.request('http://127.0.0.1:8080/api/inference')
+            if not state.get('control_available'):failures.append('Contrôleur du moteur inaccessible depuis le site ; vérifier le service hôte et le port interne 11436.')
+            else:print('OK : site → contrôleur authentifié du moteur')
+            self.request('http://127.0.0.1:8080/api/inventory')
+            print('OK : inventaire local')
+        except (OSError,ValueError) as error:failures.append('API du site : '+str(error))
         for name, port, route in (("Portail", 8080, "/health"), ("Kiwix", 8081, "/"), ("Open WebUI", 3000, "/health")):
             try:
                 with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(f"http://127.0.0.1:{port}{route}", timeout=20) as response:
@@ -365,7 +446,7 @@ class Installation:
             if inference and c["chat_model"] in names:
                 result = self.request("http://127.0.0.1:11435/api/generate",
                                       {"model": c["chat_model"], "prompt": "Réponds en français : combien font deux plus deux ?",
-                                       "think": False, "stream": False, "options": {"num_ctx": 4096, "num_predict": 128}}, timeout=600)
+                                       "think": "low" if c["chat_model"].startswith("gpt-oss") else True, "stream": False, "options": {"num_ctx": 8192, "num_predict": 512}}, timeout=600)
                 if not result.get("response", "").strip():
                     failures.append("Réponse IA vide.")
                 else:
@@ -379,6 +460,11 @@ class Installation:
             print("OK : embeddings locaux BGE-M3")
         except SetupError as error:
             failures.append(f"Recherche documentaire : {error}")
+        try:
+            self.compose(c,'exec','-T','open-webui','python','-c',
+                         "from faster_whisper import WhisperModel; WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',device='cpu',compute_type='int8',local_files_only=True)")
+            print('OK : modèle de dictée chargé depuis les fichiers locaux, sur CPU')
+        except SetupError as error:failures.append('Dictée locale : '+str(error))
         report = {"automated_checks_passed": not failures, "failures": failures,
                   "manual_checks_pending": ["LAN depuis un téléphone", "question française sur guide anglais", "réseau Internet débranché", "redémarrage du PC", "restauration"]}
         write_json(self.work / "verification.json", report)
@@ -448,10 +534,11 @@ def parser():
         child.add_argument("--target", choices=("windows", "linux"), required=True)
         child.add_argument("--data-dir")
         child.add_argument("--lan", action="store_true", help="Publier les ports Web sur toutes les interfaces")
+        child.add_argument('--lan-host',type=lan_host)
         child.add_argument("--cpu", action="store_true", help="Linux : essai CPU explicite, sans réservation GPU")
         if command == "install":
             child.add_argument("--offline", action="store_true")
-    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images"):
+    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account"):
         child = subs.add_parser(command)
         if command == "verify":
             child.add_argument("--inference", action="store_true")
@@ -461,8 +548,14 @@ def parser():
             child.add_argument("model", nargs="?")
         if command == "configure":
             child.add_argument("--lan", action=argparse.BooleanOptionalAction, required=True)
+            child.add_argument('--lan-host',type=lan_host,help='Adresse IP du PC serveur, à réserver dans le routeur')
+            child.add_argument('--name',help='Nom local court, par exemple survie-marc ; lettres minuscules, chiffres, tirets')
         if command in {"export-images", "import-images"}:
             child.add_argument("destination")
+        if command=='certificate':child.add_argument('destination')
+        if command=='recover-account':
+            child.add_argument('email')
+            child.add_argument('--reset-password',action='store_true')
     return p
 
 
@@ -471,6 +564,9 @@ def main(argv=None):
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
         c = app.init(args.target, args.data_dir, args.lan, args.cpu)
+        if args.lan_host:
+            if not args.lan:raise SetupError('--lan-host nécessite --lan.')
+            c['lan_host']=args.lan_host;write_json(app.settings_path,c,private=True);app.render(c)
     else:
         c = app.load()
         app.render(c)
@@ -478,7 +574,6 @@ def main(argv=None):
         print(f"Réglages conservés dans {app.work}. Identifiants dans identifiants.txt.")
     elif args.action == "install":
         app.doctor(c)
-        app.demo(c)
         if not args.offline:
             app.compose(c, "pull")
         app.prepare(c, args.offline)
@@ -492,14 +587,26 @@ def main(argv=None):
         app.verify(c)
         print(f"Accueil : http://localhost:8080 — identifiants : {app.work / 'identifiants.txt'}")
     elif args.action == "configure":
+        if args.lan and not args.lan_host and not c.get('lan_host'):
+            raise SetupError('Précisez --lan-host avec l’adresse IPv4 du PC serveur.')
+        if args.name and not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?',args.name):raise SetupError('Nom local non valide.')
+        import discovery
+        discovery.stop(app)
         c["bind"] = "0.0.0.0" if args.lan else "127.0.0.1"
+        if args.lan_host:c['lan_host']=args.lan_host
+        if args.name:c['discovery_name']=args.name
         write_json(app.settings_path, c, private=True)
         app.render(c)
+        discovery.network_status(app,c,discovery.local_ip(c),False,'Relancez les services pour appliquer ce réglage réseau.')
         print("Réglage LAN enregistré. Lancez up pour l’appliquer.")
     elif args.action == "up":
         app.prepare(c, offline=True)
         app.up(c)
     elif args.action == "down":
+        import discovery
+        discovery.stop(app)
+        import control
+        control.stop(app)
         app.compose(c, "down")
         app.stop_native(c)
         print("Services arrêtés, données conservées.")
@@ -516,6 +623,10 @@ def main(argv=None):
         app.export_images(c, args.destination)
     elif args.action == "import-images":
         app.import_images(c, args.destination)
+    elif args.action=='certificate':app.certificate(c,args.destination)
+    elif args.action=='recover-account':
+        action='reset-password' if args.reset_password else 'recovery-code'
+        app.compose(c,'exec','pilot','python','-m','pilot.console',action,args.email)
     else:
         getattr(app, args.action)(c)
     return 0

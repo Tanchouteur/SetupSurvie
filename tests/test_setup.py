@@ -57,6 +57,10 @@ class InstallationTests(unittest.TestCase):
     def test_readiness_requires_matching_embedding_revision(self):
         cache = Path(self.config['data_dir']) / 'state/openwebui/cache/embedding-ready.json'
         setup.write_json(cache, setup.VERSIONS['embedding'])
+        setup.write_json(Path(self.config['data_dir'])/'state/openwebui/cache/whisper/ready.json',setup.VERSIONS['speech'])
+        root=Path(self.config['data_dir'])/'state/openwebui/cache'
+        for name in ['embedding/bge-m3/config.json','embedding/bge-m3/tokenizer.json','embedding/bge-m3/model.safetensors','whisper/faster-whisper-small/model.bin','whisper/faster-whisper-small/config.json','whisper/faster-whisper-small/tokenizer.json']:
+            target=root/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_text('fixture')
         with patch.object(self.app, 'compose') as compose:
             self.app.prepare(self.config, offline=True)
             compose.assert_not_called()
@@ -119,7 +123,7 @@ class InstallationTests(unittest.TestCase):
             with self.subTest(target=target, cpu=cpu):
                 c = dict(self.config, target=target, cpu=cpu)
                 self.app.render(c)
-                result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True)
+                result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True,env=self.app.environment())
                 self.assertEqual(result.returncode, 0, result.stderr)
                 services = json.loads(result.stdout)['services']
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')

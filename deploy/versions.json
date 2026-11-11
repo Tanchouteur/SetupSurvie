@@ -10,6 +10,10 @@
     "repository": "BAAI/bge-m3",
     "revision": "5617a9f61b028005a4858fdac845db406aefb181"
   },
-  "default_model": "qwen3.5:4b-q4_K_M",
+  "speech": {
+    "repository": "Systran/faster-whisper-small",
+    "revision": "536b0662742c02347bc0e980a01041f333bce120"
+  },
+  "default_model": "gpt-oss:20b",
   "ollama_native_reference": "0.40.13"
 }

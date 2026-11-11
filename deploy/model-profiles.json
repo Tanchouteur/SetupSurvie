@@ -1,0 +1,79 @@
+{
+  "profiles": [
+    {
+      "id": "rapide",
+      "name": "Réponse rapide · GPT-OSS 20B",
+      "model": "gpt-oss:20b",
+      "think": "low",
+      "category": "recommended",
+      "description": "Le plus rapide à chaud dans les essais réalisés ; raisonnement court. À mesurer aussi sur la RTX 5060."
+    },
+    {
+      "id": "moyenne",
+      "name": "Réponse moyenne · Gemma4 E4B",
+      "model": "gemma4:e4b",
+      "think": true,
+      "category": "recommended",
+      "description": "Option compacte avec réflexion, pour comparer qualité, consommation de mémoire et réactivité."
+    },
+    {
+      "id": "approfondie",
+      "name": "Réponse approfondie · GPT-OSS 20B",
+      "model": "gpt-oss:20b",
+      "think": "high",
+      "category": "recommended",
+      "description": "Budget de réflexion supérieur ; peut demander plusieurs minutes."
+    },
+    {
+      "id": "test-qwen4",
+      "name": "Comparer · Qwen3.5 4B",
+      "model": "qwen3.5:4b-q4_K_M",
+      "think": true,
+      "category": "comparison"
+    },
+    {
+      "id": "test-qwen9",
+      "name": "Comparer · Qwen3.5 9B",
+      "model": "qwen3.5:9b-q4_K_M",
+      "think": true,
+      "category": "comparison"
+    },
+    {
+      "id": "test-qwen27",
+      "name": "Comparer · Qwen3.5 27B",
+      "model": "qwen3.5:27b-q4_K_M",
+      "think": true,
+      "category": "comparison"
+    },
+    {
+      "id": "test-gemma26",
+      "name": "Comparer · Gemma4 26B A4B",
+      "model": "gemma4:26b-a4b-it-q4_K_M",
+      "think": true,
+      "category": "comparison"
+    },
+    {
+      "id": "test-qwen38",
+      "name": "Comparer · Qwen3.8 27B",
+      "model": "qwen3.8:27b-q4_K_M",
+      "think": true,
+      "category": "comparison"
+    },
+    {
+      "id": "test-qwen4-direct",
+      "name": "Comparer · Qwen3.5 4B sans réflexion",
+      "model": "qwen3.5:4b-q4_K_M",
+      "think": false,
+      "category": "comparison"
+    },
+    {
+      "id": "test-gemma-direct",
+      "name": "Comparer · Gemma4 E4B sans réflexion",
+      "model": "gemma4:e4b",
+      "think": false,
+      "category": "comparison"
+    }
+  ],
+  "context": 8192,
+  "output_tokens": 4096
+}
