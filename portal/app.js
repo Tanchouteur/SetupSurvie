@@ -6,6 +6,26 @@ const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 const mobileNav=matchMedia('(max-width:760px)');
 function setMenu(open,restore=true){open=!!open&&mobileNav.matches;document.body.classList.toggle('nav-open',open);document.querySelector('.workspace').inert=open;$('menu-toggle').setAttribute('aria-expanded',String(open));$('nav-overlay').hidden=!open;$('main-navigation').inert=mobileNav.matches&&!open;if(open)$('menu-close').focus();else if(restore&&mobileNav.matches)$('menu-toggle').focus();}
+// Only conversation identifiers and reading positions are stored on this browser, per account.
+function readingState(){try{return JSON.parse(localStorage.getItem('survie-reading:'+S.user.id))||{};}catch(_){return {};}}
+function writeReading(state){if(S.user)try{localStorage.setItem('survie-reading:'+S.user.id,JSON.stringify(state));}catch(_){}}
+function rememberReading(){
+  if(!S.user||!S.conversation||S.view!=='chat'||S.loadingConversation)return;
+  const state=readingState(),box=$('chat-messages');state.selected=S.conversation;state.positions=state.positions||{};
+  state.positions[S.conversation]={top:box.scrollTop,page:window.scrollY,bottom:box.scrollHeight-box.clientHeight-box.scrollTop<24};
+  const ids=Object.keys(state.positions);for(const id of ids.slice(0,Math.max(0,ids.length-100)))delete state.positions[id];writeReading(state);
+}
+function selectReading(id){const state=readingState();state.selected=id;writeReading(state);}
+function restoreReading(id){
+  const position=readingState().positions?.[id],box=$('chat-messages');
+  box.scrollTop=position?(position.bottom?box.scrollHeight:position.top):box.scrollHeight;
+  if(mobileNav.matches)window.scrollTo({top:position?.page||0,behavior:'instant'});
+}
+function resumeConversation(){if(S.user&&S.view==='chat'&&!S.conversation&&!S.loadingConversation){const id=readingState().selected;if(id)openConversation(id);}}
+$('chat-messages').addEventListener('scroll',rememberReading,{passive:true});
+window.addEventListener('scroll',()=>{if(mobileNav.matches)rememberReading();},{passive:true});
+window.addEventListener('pagehide',rememberReading);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberReading();});
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
 async function api(path,body,options={}){
   const config={credentials:'same-origin',...options};
@@ -19,14 +39,17 @@ function button(text,action,cls='secondary'){const b=element('button',text,cls);
 function view(name){
   if(!(name in labels))name='home';
   if(['admin','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Cette page est réservée à l’administrateur.');return;}S.requestedView=name;auth();return;}
+  rememberReading();
   setMenu(false,false);
   S.view=name;
+  document.body.classList.toggle('chat-open',name==='chat');
   for(const section of document.querySelectorAll('.view'))section.hidden=section.id!=='view-'+name;
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('breadcrumb').textContent=labels[name];
   if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
   if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='admin'||name==='users')loadAdmin();if(name==='data')loadData();
   if(name!=='chat')window.scrollTo({top:0,behavior:'instant'});
+  else{resumeConversation();if(S.conversation&&!S.loadingConversation)restoreReading(S.conversation);}
 }
 function accountUI(){
   const label=$('account-label');label.replaceChildren();
@@ -84,11 +107,12 @@ function message(role,text,sources=[],profile=''){
 }
 function newConversation(){
   if(S.job){toast('Attendez la réponse ou annulez la demande avant d’ouvrir une autre conversation.');view('chat');return;}
-  S.conversation=null;S.source=null;$('chat-source').hidden=true;$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');
+  rememberReading();selectReading(null);S.conversation=null;S.source=null;$('chat-source').hidden=true;$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');
 }
 async function openConversation(id){
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
-  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=null;$('chat-source').hidden=true;$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'');view('chat');if(data.jobs.length)watch(data.jobs[0].id);}catch(e){toast(e.message);}
+  rememberReading();S.loadingConversation=true;
+  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=null;$('chat-source').hidden=true;$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'');view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{S.loadingConversation=false;}
 }
 function bindExamples(){document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{$('chat-input').value=b.dataset.question;$('chat-input').focus();});}
 async function status(){
@@ -131,7 +155,7 @@ async function send(event){
   const text=$('chat-input').value.trim();if(!text)return;
   $('send-question').disabled=true;
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,conversation_id:S.conversation,source_id:S.source?.id||null});
-    if(!S.conversation){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;message('user',text);$('chat-input').value='';await histories();watch(data.id);
+    if(!S.conversation){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
   }catch(e){toast(e.message);$('send-question').disabled=false;}
 }
 function watch(id){
@@ -193,7 +217,7 @@ $('print-connect').onclick=()=>window.print();$('copy-connect').onclick=async()=
 $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.target.value);};
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
 $('forgot').onclick=()=>{$('login-form').hidden=true;$('recovery-form').hidden=false;$('auth-title').textContent='Récupérer mon compte.';};$('back-login').onclick=()=>{$('login-form').hidden=false;$('recovery-form').hidden=true;$('auth-title').textContent='Heureux de vous retrouver.';};
-$('login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type="submit"]');b.disabled=true;$('login-error').textContent='';try{S.user=await api('/auth/login',Object.fromEntries(new FormData(e.target)));$('auth-dialog').close();e.target.reset();accountUI();await histories();if(S.requestedView){const target=S.requestedView;S.requestedView=null;view(target);}toast('Vous êtes connecté.');}catch(error){$('login-error').textContent=error.message;}finally{b.disabled=false;}};
+$('login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type="submit"]');b.disabled=true;$('login-error').textContent='';try{S.user=await api('/auth/login',Object.fromEntries(new FormData(e.target)));$('auth-dialog').close();e.target.reset();accountUI();await histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;view(target);}toast('Vous êtes connecté.');}catch(error){$('login-error').textContent=error.message;}finally{b.disabled=false;}};
 $('recovery-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;try{const data=await api('/auth/recover',Object.fromEntries(new FormData(e.target)));S.user=data.user;$('auth-dialog').close();accountUI();await histories();auth();$('code-value').textContent=data.code;$('recovery-code').hidden=false;e.target.reset();toast('Mot de passe changé. Conservez votre nouveau code de secours.');}catch(error){$('recovery-error').textContent=error.message;}finally{b.disabled=false;}};
 $('logout').onclick=async()=>{try{await api('/auth/logout',{});}catch(_){}S.user=null;S.conversation=null;clearTimeout(S.poll);S.job=null;$('account-dialog').close();accountUI();histories();newConversation();view('home');};
 $('make-code').onclick=async()=>{if(S.user.recovery_ready&&!confirm('Le code précédent ne fonctionnera plus. Créer un nouveau code ?'))return;try{const data=await api('/auth/recovery-code',{});$('code-value').textContent=data.code;$('recovery-code').hidden=false;S.user.recovery_ready=true;}catch(e){$('account-error').textContent=e.message;}};
@@ -215,4 +239,4 @@ $('dictate').onclick=async()=>{
 window.addEventListener('pagehide',()=>tracks.forEach(t=>t.stop()));
 document.querySelectorAll('.native-webui').forEach(a=>a.href=localServiceURL('/','webui'));
 bindExamples();view(location.hash.slice(1)||'home');status();refreshInference();
-api('/auth/me').then(u=>{S.user=u;accountUI();histories();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;accountUI();});
+api('/auth/me').then(u=>{S.user=u;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;accountUI();});
