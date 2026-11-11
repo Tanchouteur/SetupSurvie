@@ -6,7 +6,8 @@ Budget confirmé par Louis : **500 Go décimaux de bibliothèque documentaire**.
 Les modèles IA et caches d’essai sont exclus ; le kit de transport n’est pas
 compté une seconde fois. Le plafond physique du laboratoire de 590 milliards
 d’octets et une marge libre d’au moins 15 Go restent contrôlés séparément.
-Aucun modèle n’est supprimé et le mode jeu reste actif.
+Aucun modèle n’est supprimé ; le téléchargement ne modifie pas le marqueur de
+pause du moteur et ne lance aucune inférence.
 
 ## Collections sélectionnées
 
