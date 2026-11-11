@@ -9,6 +9,7 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 from pilot_kit import checked_entries
+from pilot_kit import install
 from pilot_backup import backup
 
 
@@ -52,6 +53,23 @@ class DeliveryTests(unittest.TestCase):
             for target in [self.root/'data/backup',self.root/'private/backup',self.root/'data']:
                 with self.assertRaises(setup.SetupError):backup(app,c,target)
             compose.assert_not_called()
+
+    def test_kit_installs_independent_application_and_retains_transport_copy(self):
+        kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
+        original=application/'scripts/setup.py';original.write_text('transport copy')
+        (application/'unlisted-private.txt').write_text('must not be copied')
+        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':original.stat().st_size,'sha256':setup.file_hash(original)}]})
+        work=self.root/'installed/private';data=self.root/'installed/data'
+        with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'):
+            install(kit,'linux',data,work)
+        settings=json.loads((work/'settings.json').read_text())
+        installed=self.root/'installed/application'
+        self.assertEqual(settings['app_dir'],installed.as_posix())
+        self.assertEqual((installed/'scripts/setup.py').read_text(),'transport copy')
+        self.assertFalse((installed/'unlisted-private.txt').exists())
+        (installed/'scripts/setup.py').write_text('new software')
+        self.assertEqual(original.read_text(),'transport copy')
+        checked_entries(kit,json.loads((kit/'manifest.json').read_text()))
 
 
 if __name__=='__main__':unittest.main()

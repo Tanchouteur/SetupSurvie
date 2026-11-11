@@ -538,6 +538,7 @@ def parser():
         child.add_argument("--cpu", action="store_true", help="Linux : essai CPU explicite, sans réservation GPU")
         if command == "install":
             child.add_argument("--offline", action="store_true")
+            child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
     for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account"):
         child = subs.add_parser(command)
         if command == "verify":
@@ -573,6 +574,7 @@ def main(argv=None):
     if args.action == "init":
         print(f"Réglages conservés dans {app.work}. Identifiants dans identifiants.txt.")
     elif args.action == "install":
+        if args.offline and args.content_pack:raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
         app.doctor(c)
         if not args.offline:
             app.compose(c, "pull")
@@ -584,6 +586,12 @@ def main(argv=None):
                 app.pull_model(c, c["chat_model"])
             else:
                 app.record(c)
+        if args.content_pack:
+            import content
+            items=content.catalog();unknown=set(args.content_pack)-{i['pack'] for i in items}
+            if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
+            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack])
+            app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         app.verify(c)
         print(f"Accueil : http://localhost:8080 — identifiants : {app.work / 'identifiants.txt'}")
     elif args.action == "configure":

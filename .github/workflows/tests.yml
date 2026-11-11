@@ -1,0 +1,31 @@
+name: Tests du pilote
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/requirements.txt
+      - run: docker compose version
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/pilot_update.py build dist/setupsurvie-update.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: logiciel-et-empreinte
+          path: dist/*
+  windows-transfers-and-updates:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_content.py -v
+      - run: python -m unittest discover -s tests -p test_pilot_update.py -v

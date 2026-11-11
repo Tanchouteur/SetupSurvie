@@ -31,7 +31,9 @@ with sync_playwright() as p:
    assert abs(page.locator('#chat-messages').evaluate('(e)=>e.scrollTop')-420)<5
    assert page.evaluate('document.documentElement.scrollHeight<=innerHeight'),page.evaluate('[document.documentElement.scrollHeight,innerHeight]')
    assert page.locator('#send-question').bounding_box()['y']<height
-  else:assert abs(page.evaluate('scrollY')-420)<5
+  else:
+   assert abs(page.locator('#chat-messages').evaluate('(e)=>e.scrollTop')-420)<5
+   assert page.evaluate('document.documentElement.scrollHeight<=innerHeight')
   page.evaluate("view('library');view('chat')")
   if width>760:assert abs(page.locator('#chat-messages').evaluate('(e)=>e.scrollTop')-420)<5
   page.evaluate("openConversation('b')")

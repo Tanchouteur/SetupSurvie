@@ -5,6 +5,12 @@ const EMPTY=$('chat-messages').innerHTML;
 const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',admin:'Gestion de l’appareil',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Comptes et accès'};
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 const mobileNav=matchMedia('(max-width:760px)');
+function fitChatViewport(){
+  const height=window.visualViewport?.height||window.innerHeight;
+  document.documentElement.style.setProperty('--chat-viewport-height',height+'px');
+}
+window.visualViewport?.addEventListener('resize',fitChatViewport,{passive:true});
+window.addEventListener('resize',fitChatViewport,{passive:true});fitChatViewport();
 function setMenu(open,restore=true){open=!!open&&mobileNav.matches;document.body.classList.toggle('nav-open',open);document.querySelector('.workspace').inert=open;$('menu-toggle').setAttribute('aria-expanded',String(open));$('nav-overlay').hidden=!open;$('main-navigation').inert=mobileNav.matches&&!open;if(open)$('menu-close').focus();else if(restore&&mobileNav.matches)$('menu-toggle').focus();}
 // Only conversation identifiers and reading positions are stored on this browser, per account.
 function readingState(){try{return JSON.parse(localStorage.getItem('survie-reading:'+S.user.id))||{};}catch(_){return {};}}
@@ -18,8 +24,9 @@ function rememberReading(){
 function selectReading(id){const state=readingState();state.selected=id;writeReading(state);}
 function restoreReading(id){
   const position=readingState().positions?.[id],box=$('chat-messages');
-  box.scrollTop=position?(position.bottom?box.scrollHeight:position.top):box.scrollHeight;
-  if(mobileNav.matches)window.scrollTo({top:position?.page||0,behavior:'instant'});
+  const legacyPage=mobileNav.matches&&(position?.page||0)>0;
+  box.scrollTop=legacyPage?position.page:position?(position.bottom?box.scrollHeight:position.top):box.scrollHeight;
+  if(mobileNav.matches)window.scrollTo({top:0,behavior:'instant'});
 }
 function resumeConversation(){if(S.user&&S.view==='chat'&&!S.conversation&&!S.loadingConversation){const id=readingState().selected;if(id)openConversation(id);}}
 $('chat-messages').addEventListener('scroll',rememberReading,{passive:true});
@@ -95,7 +102,7 @@ function renderText(target,text,sources=[]){
       replacement.append(source?button(part,()=>readSource(source.id),'citation'):document.createTextNode(part));}
     node.replaceWith(replacement);
   }
-  for(const table of fragment.querySelectorAll('table')){const wrap=element('div',undefined,'message-table');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Tableau défilant');table.replaceWith(wrap);wrap.append(table);}
+  for(const table of fragment.querySelectorAll('table')){const wrap=element('div',undefined,'message-table');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Tableau défilant horizontalement');table.replaceWith(wrap);wrap.append(table);wrap.before(element('p','Faites glisser le tableau pour lire les autres colonnes →','table-scroll-hint'));}
   target.replaceChildren(fragment);
 }
 

@@ -20,7 +20,7 @@ L’assistant du site peut rechercher et lire les documents locaux, calculer et 
 
 ## Installer à partir du kit
 
-Copier le dossier complet `livraison-marc` sur le disque choisi. Le kit fait environ 157 Go ; prévoir un support NTFS ou exFAT et suffisamment d’espace pour la copie des données et les images Docker. FAT32 ne convient pas aux gros fichiers de ce kit. Ne pas modifier les fichiers après la vérification des empreintes. Les exemples utilisent `D:` : adapter à la lettre réelle du SSD. Choisir des dossiers de données et réglages **vides**. Le contrôle complet des empreintes et la copie de plus de 100 Go peuvent prendre plusieurs minutes.
+Copier le dossier complet `livraison-marc` sur le disque choisi. Le kit actualisé fait environ 160 Go ; prévoir un support NTFS ou exFAT et suffisamment d’espace pour la copie des données et les images Docker. FAT32 ne convient pas aux gros fichiers de ce kit. Ne pas modifier les fichiers après la vérification des empreintes. Les exemples utilisent `D:` : adapter à la lettre réelle du SSD. Choisir des dossiers de données et réglages **vides**. Le contrôle complet des empreintes et la copie de plus de 100 Go peuvent prendre plusieurs minutes.
 
 ```powershell
 cd D:\livraison-marc\app
@@ -30,9 +30,10 @@ py -3 scripts\pilot_kit.py install D:\livraison-marc --target windows --data-dir
 
 L’installation importe les images locales, copie les fichiers, vérifie les caches hors ligne, démarre les services et configure les profils partagés dans Open WebUI. Elle ne télécharge pas les modèles. Les logiciels prérequis doivent être installés auparavant. Les identifiants initiaux sont dans `D:\SetupSurvie\prive\identifiants.txt` ; conserver ce dossier privé et préparer le code de secours depuis le compte.
 
-Pour démarrer après ouverture de session et créer un raccourci sur le Bureau :
+Le code installé se trouve maintenant dans `D:\SetupSurvie\application`, séparé du kit de transport. Pour démarrer après ouverture de session et créer un raccourci sur le Bureau, utiliser cette copie :
 
 ```powershell
+cd D:\SetupSurvie\application
 .\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -Startup
 ```
 
@@ -133,3 +134,7 @@ Les résultats, la version Ollama et le relevé du GPU sont enregistrés dans le
 ## Arrêt et nettoyage
 
 Utiliser `survie.ps1 --work-dir D:\SetupSurvie\prive down` pour arrêter les services, le contrôleur, l’annonce du nom local et l’Ollama dédié. Les données restent conservées. Après sauvegarde, les dossiers choisis pour les données, réglages et kit peuvent se supprimer dans l’Explorateur ; ne pas supprimer les répertoires d’autres projets Docker. Pour retirer les règles ajoutées par le projet : `Remove-NetFirewallRule -Name SetupSurvie-Web-Private,SetupSurvie-mDNS-Private,SetupSurvie-Engine-Physical` dans PowerShell administrateur.
+
+## Mises à jour et nouveaux contenus
+
+Suivre le [guide des mises à jour du pilote](26-mises-a-jour-et-bibliotheque-pilote.md) pour remplacer seulement le logiciel, préserver les comptes et ajouter des lots sans réinstallation.

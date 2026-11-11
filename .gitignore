@@ -17,3 +17,4 @@
 /state/
 __pycache__/
 *.pyc
+/dist/

@@ -163,9 +163,10 @@ def stop(app):
     value=json.loads(marker.read_text())
     if not value.get('identity') or discovery.identity(value['pid'])!=value['identity']:marker.unlink();return
     (app.work/'control.stop').touch()
-    for _ in range(30):
+    for _ in range(100):
         if discovery.identity(value['pid'])!=value['identity']:break
         time.sleep(.1)
+    else:raise setup.SetupError('Le contrôleur ne s’est pas arrêté ; son identité est conservée pour éviter un doublon.')
     marker.unlink(missing_ok=True)
 
 

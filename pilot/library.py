@@ -81,7 +81,7 @@ def index_guides():
             except (ValueError,TypeError):pass
         with store.connect() as db:metadata={r['path']:dict(r) for r in db.execute('SELECT * FROM guide_meta')}
         for path in sorted(GUIDES.rglob('*')):
-            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()) or path.stat().st_size>120_000_000:continue
+            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()) or path.stat().st_size>300_000_000:continue
             relative=path.relative_to(GUIDES).as_posix();suffix=path.suffix.lower()
             page_texts=[]
             try:
@@ -176,7 +176,7 @@ async def source(identifier):
             meta=db.execute('SELECT provenance,licence FROM guide_meta WHERE path=?',(identifier.removeprefix('guide:').split('#page=')[0],)).fetchone()
         if not row:raise HTTPException(404,'Guide introuvable.')
         return {**dict(row),**(dict(meta) if meta else {}),'kind':'guide','images':[],
-                'preview':identifier.lower().endswith('.pdf')}
+                'preview':identifier.lower().split('#page=')[0].endswith('.pdf')}
     path=safe_zim_path(identifier)
     if path.split('/')[0] not in {b['book'] for b in await books()}:raise HTTPException(404,'Collection introuvable.')
     raw,_=await get('/content/'+quote(path,safe='/'))

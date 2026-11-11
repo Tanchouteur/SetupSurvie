@@ -10,7 +10,7 @@ import sys
 import setup
 
 
-def backup(app,c,destination):
+def backup(app,c,destination,*,resume=True):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
@@ -32,7 +32,8 @@ def backup(app,c,destination):
             target.chmod(0o600)
             files.append({'path':relative,'bytes':target.stat().st_size,'sha256':setup.file_hash(target)})
         setup.write_json(dest/'backup.json',{'schema':1,'files':files,'requires':'Le kit public correspondant fournit modèles, archives ZIM et caches ; cette sauvegarde contient comptes, conversations, guides et certificats privés.'},private=True)
-    finally:app.compose(c,'start','open-webui','pilot','portal')
+    finally:
+        if resume:app.compose(c,'start','open-webui','pilot','portal')
     print('Sauvegarde privée créée :',dest)
 
 
@@ -42,9 +43,21 @@ def restore(source,kit,work_dir,data_dir):
     for dest in [data,work]:
         if dest.exists() and any(dest.iterdir()):raise setup.SetupError('Restauration uniquement vers des dossiers vides.')
     report=json.loads((source/'backup.json').read_text());entries=checked_entries(source,report)
-    public=json.loads((kit/'manifest.json').read_text());checked_entries(kit,public)
+    public=json.loads((kit/'manifest.json').read_text());public_entries=checked_entries(kit,public)
     saved=json.loads((source/'private/settings.json').read_text())
     saved['data_dir']=data.as_posix()
+    application=work.parent/'application'
+    if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
+    for other in (data,work,kit):
+        if application==other or application.is_relative_to(other) or other.is_relative_to(application):
+            raise setup.SetupError('Application, kit, données et réglages doivent être séparés.')
+    application.mkdir(parents=True)
+    for entry,path in public_entries:
+        if not entry['path'].startswith('app/'):continue
+        target=application/Path(entry['path']).relative_to('app')
+        target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target);shutil.copymode(path,target)
+    setup.ROOT=application
+    saved['app_dir']=application.as_posix()
     saved['project']='survie-restored-'+secrets.token_hex(4)
     # An image ID is platform-local; it is re-imported and verified below.
     saved.pop('local_images',None)
@@ -54,7 +67,8 @@ def restore(source,kit,work_dir,data_dir):
         elif entry['path']=='private/identifiants.txt':dest=work/'identifiants.txt'
         else:continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest);dest.chmod(0o600)
-    for entry,path in checked_entries(kit,{'files':[e for e in public['files'] if e['path'].startswith('payload/')]}):
+    for entry,path in public_entries:
+        if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');dest=data/relative
         if relative.parts[:2]==('library','guides') and dest.exists():continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)

@@ -50,5 +50,13 @@ class ControlTests(unittest.TestCase):
             operating.name='nt';self.app.start_native({**self.c,'target':'windows'})
             launch.assert_not_called()
 
+    def test_slow_controller_stop_keeps_identity_and_refuses_duplicate(self):
+        marker=self.app.work/'control-process.json';identity={'path':'owned','created':'1'}
+        setup.write_json(marker,{'pid':123,'identity':identity})
+        with patch.object(control.discovery,'identity',return_value=identity),patch.object(control.time,'sleep'):
+            with self.assertRaises(setup.SetupError):control.stop(self.app)
+        self.assertTrue(marker.exists())
+        self.assertTrue((self.app.work/'control.stop').exists())
+
 
 if __name__=='__main__':unittest.main()

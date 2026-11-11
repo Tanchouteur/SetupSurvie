@@ -1,0 +1,6 @@
+# Versions effectivement présentes dans l'image du service utilisée pour les essais.
+fastapi==0.136.3
+httpx==0.28.1
+python-multipart==0.0.32
+pypdf==6.21.2
+qrcode==8.2

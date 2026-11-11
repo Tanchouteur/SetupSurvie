@@ -130,9 +130,12 @@ Lire en priorité `README.md`, `docs/22-pilote-marc.md`,
 `docs/25-plan-bibliotheque-hors-ligne-500go.md`. Ce dernier est un plan, pas la
 preuve que les lots proposés sont téléchargés.
 
-À l'écriture de ces consignes, le téléchargement de toute la bibliothèque et les
-mises à jour simplifiées sans réinstallation restent à terminer. Ne pas confondre
-le kit hors ligne d'environ 157 Go avec un petit installateur en ligne. Les mises
+Le pilote 0.1.5 fournit `scripts/content.py` pour les lots figés et
+`scripts/pilot_update.py` pour les mises à jour compatibles du code, avec sauvegarde
+et retour arrière. Lire `docs/26-mises-a-jour-et-bibliotheque-pilote.md`. Les lots
+du plan documentaire ne sont pas tous téléchargés ; les changements d’images et
+les migrations de données incompatibles demandent encore une procédure dédiée. Ne pas confondre
+le kit hors ligne d'environ 160 Go avec un petit installateur en ligne. Les mises
 à jour doivent préserver comptes, conversations, réglages et contenus, avec une
 sauvegarde et une restauration vérifiées avant toute migration destructive.
 Mettre à jour ces constats à mesure que le travail est réellement validé.

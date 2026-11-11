@@ -51,14 +51,14 @@ async def inventory():
         complete = path.name.endswith('.zim')
         stem = path.name.removesuffix('.part').removesuffix('.zim')
         book = loaded.get(stem)
-        match = re.fullmatch(r'(wikipedia|wikibooks)_([a-z]+)_.*_(\d{4}-\d{2})', stem)
+        match = re.fullmatch(r'(wikipedia|wikibooks|vikidia|appropedia)_([a-z]+)_.*_(\d{4}-\d{2})', stem)
         title = book.get('title') if book else stem
         language = LANGUAGES.get(book.get('language'), book.get('language')) if book else ''
         version = ''
         if match:
             kind, lang, version = match.groups()
             language = LANGUAGES.get(lang, lang)
-            title = ('Wikipédia' if kind == 'wikipedia' else 'Wikilivres') + ' — ' + language
+            title = {'wikipedia':'Wikipédia','wikibooks':'Wikilivres','vikidia':'Vikidia pour les enfants','appropedia':'Appropedia : techniques et autonomie'}[kind] + ' — ' + language
         ready = complete and bool(book)
         books.append({'id': stem, 'title': title, 'language': language,
                       'version': version, 'bytes': path.stat().st_size, 'ready': ready,

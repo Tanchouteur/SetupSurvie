@@ -14,6 +14,8 @@ Pour cette livraison : [guide du pilote Marc](docs/22-pilote-marc.md), [résulta
 
 Recherche en cours : [sept modèles, contexte, outils, corpus bilingue et protocole de reprise](docs/20-campagne-modeles-contexte-et-corpus.md). Les calculs IA sont actuellement suspendus en mode jeu ; les téléchargements documentaires sont terminés.
 
+Le pilote **0.1.5** ajoute les [mises à jour du logiciel et les téléchargements documentaires reprenables](docs/26-mises-a-jour-et-bibliotheque-pilote.md), avec application séparée du kit et restauration en cas d’échec.
+
 ## Commencer
 
 Lire le [guide d’installation Windows puis Linux](docs/14-installation.md), installer les prérequis indiqués, puis lancer depuis le dépôt :

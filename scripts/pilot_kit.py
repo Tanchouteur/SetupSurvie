@@ -82,11 +82,11 @@ def export_lab(destination,english=False):
     image_hash=setup.file_hash(image_path)
     setup.write_json(dest/'images.tar.json',{'images':image_records,'sha256':image_hash})
     records.extend({'path':p.name,'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in [image_path,dest/'images.tar.json'])
-    for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests']:
+    for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
         for path in sorted((setup.ROOT/name).rglob('*')):
             if path.is_file() and not path.is_symlink() and '__pycache__' not in path.parts and path.suffix!='.pyc':
                 copy(path,'app/'+path.relative_to(setup.ROOT).as_posix())
-    for name in ['README.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml']:
+    for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml']:
         copy(setup.ROOT/name,'app/'+name)
     for path in sorted((lab.MOUNT/'tools/discovery-wheels').iterdir()):
         if path.is_file():copy(path,'app/vendor/discovery/'+path.name)
@@ -100,22 +100,37 @@ def export_lab(destination,english=False):
 def install(root,target,data_dir,work_dir,lan_address=None):
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     manifest=json.loads((root/'manifest.json').read_text())
-    checked_entries(root,manifest)
+    entries=checked_entries(root,manifest)
     if setup.ROOT.resolve()!=(root/'app').resolve():raise setup.SetupError('Exécutez le lanceur situé dans kit/app/scripts.')
     data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
+    application=work.parent/'application'
+    for path in (root,data,work):
+        if application==path or application.is_relative_to(path) or path.is_relative_to(application):
+            raise setup.SetupError('Le dossier application doit être séparé du kit, des données et des réglages.')
+    if application.exists():raise setup.SetupError('Le dossier application existe déjà ; utiliser la mise à jour, pas une réinstallation.')
     if (data.exists() and any(data.iterdir())) or (work.exists() and any(work.iterdir())):
         raise setup.SetupError('Installation du kit réservée à des dossiers de données et réglages vides.')
     if shutil.disk_usage(data.parent if data.parent.exists() else root).free < sum(e['bytes'] for e in manifest['files'] if e['path'].startswith('payload/'))+15_000_000_000:
         raise setup.SetupError('Espace libre insuffisant pour copier les données du kit.')
+    application.mkdir(parents=True)
+    for entry,path in entries:
+        if not entry['path'].startswith('app/'):continue
+        destination=application/Path(entry['path']).relative_to('app')
+        destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
+        shutil.copymode(path,destination)
+    setup.ROOT=application
     app=setup.Installation(work)
     c=app.init(target,data,lan=bool(lan_address))
+    c['app_dir']=application.as_posix();setup.write_json(app.settings_path,c,private=True)
     if lan_address:c['lan_host']=setup.lan_host(lan_address);setup.write_json(app.settings_path,c,private=True);app.render(c)
-    for entry,path in checked_entries(root,{'files':[e for e in manifest['files'] if e['path'].startswith('payload/')]}):
+    for entry,path in entries:
+        if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
     app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True);app.up(c);app.verify(c)
     app.addresses(c)
     print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
+    print('Application installée, indépendante du kit :',application)
 
 
 def refresh_app(root):
@@ -123,9 +138,9 @@ def refresh_app(root):
     manifest=json.loads((root/'manifest.json').read_text())
     records=[entry for entry in manifest['files'] if not entry['path'].startswith('app/')]
     paths=[]
-    for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests']:
+    for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
         paths.extend(p for p in (setup.ROOT/name).rglob('*') if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix!='.pyc')
-    paths.extend(setup.ROOT/name for name in ['README.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml'])
+    paths.extend(setup.ROOT/name for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml'])
     for source in paths:
         relative='app/'+source.relative_to(setup.ROOT).as_posix();dest=root/relative
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
@@ -142,15 +157,49 @@ def refresh_app(root):
     print('Application du kit mise à jour ; données lourdes conservées.')
 
 
+def refresh_library(root,data):
+    """Add only pinned public catalogue items; never export mutable user state."""
+    from delivery_paths import destination,locked
+    root=setup.safe_path(root);data=setup.safe_path(data)
+    if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
+    with locked(destination(root,'library-refresh.lock')):
+        manifest=json.loads((root/'manifest.json').read_text())
+        records={entry['path']:entry for entry in manifest['files']}
+        sources=[]
+        for item in json.loads((setup.ROOT/'deploy/content-catalog.json').read_text())['items']:
+            if item['id']=='wikipedia-en' and not manifest.get('english_wikipedia',False):continue
+            relative='payload/'+item['path'];existing=records.get(relative);dest=destination(root,relative)
+            if existing and existing['bytes']==item['bytes'] and existing['sha256']==item['sha256'] and dest.is_file() and dest.stat().st_size==item['bytes']:continue
+            path=destination(data,item['path'])
+            if not path.is_file():continue
+            if path.stat().st_size!=item['bytes'] or setup.file_hash(path)!=item['sha256']:raise setup.SetupError('Contenu source non vérifié : '+item['id'])
+            sources.append((path,'payload/'+item['path'],item['sha256']))
+        meta=destination(data,'library/guides/metadata.json')
+        if meta.is_file():sources.append((meta,'payload/library/guides/metadata.json',setup.file_hash(meta)))
+        missing=sum(p.stat().st_size for p,relative,digest in sources if relative not in records or records[relative]['sha256']!=digest)
+        if shutil.disk_usage(root).free<missing+15_000_000_000:raise setup.SetupError('Marge libre insuffisante pour compléter le kit.')
+        for source,relative,digest in sources:
+            dest=destination(root,relative);dest.parent.mkdir(parents=True,exist_ok=True)
+            if not dest.is_file() or setup.file_hash(dest)!=digest:
+                temporary=destination(root,relative+'.copying');shutil.copyfile(source,temporary)
+                if setup.file_hash(temporary)!=digest:raise setup.SetupError('Copie interrompue ou source modifiée.')
+                temporary.replace(dest)
+            records[relative]={'path':relative,'bytes':dest.stat().st_size,'sha256':digest}
+        manifest['files']=list(records.values());setup.write_json(root/'manifest.json',manifest)
+    print('Bibliothèque du kit actualisée sans recopier les modèles ni les états personnels.')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action='store_true')
     p=subs.add_parser('verify');p.add_argument('kit')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
+    p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
     p=subs.add_parser('install');p.add_argument('kit');p.add_argument('--target',choices=['windows','linux'],required=True);p.add_argument('--data-dir',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--lan-host',type=setup.lan_host)
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
     elif args.action=='refresh-app':refresh_app(setup.safe_path(args.kit))
+    elif args.action=='refresh-library':refresh_library(setup.safe_path(args.kit),setup.safe_path(args.data_dir))
     elif args.action=='verify':
         root=setup.safe_path(args.kit);checked_entries(root,json.loads((root/'manifest.json').read_text()));print('Toutes les empreintes du kit sont conformes.')
     else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host)
