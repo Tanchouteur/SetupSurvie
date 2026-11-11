@@ -50,25 +50,32 @@ async function deleteConversation(c){
   try{await api('/conversations/'+encodeURIComponent(c.id),undefined,{method:'DELETE'});if(S.conversation===c.id)newConversation();await histories();toast('Conversation supprimée.');}catch(e){toast(e.message);}
 }
 function renderText(target,text,sources=[]){
-  target.replaceChildren();const lines=String(text).split('\n');let code=null,table=null;
-  function inline(parent,line){
-    const parts=line.split(/(\[\d+\]|\*\*[^*]+\*\*|`[^`]+`)/g);
-    for(const part of parts){
-      if(/^\[\d+\]$/.test(part)){const source=sources.find(s=>s.number===Number(part.slice(1,-1)));if(source){parent.append(button(part,()=>readSource(source.id),'citation'));continue;}}
-      if(part.startsWith('**')&&part.endsWith('**'))parent.append(element('strong',part.slice(2,-2)));
-      else if(part.startsWith('`')&&part.endsWith('`'))parent.append(element('code',part.slice(1,-1)));
-      else parent.append(document.createTextNode(part));
-    }
+  const html=marked.parse(String(text),{gfm:true,breaks:true});
+  const fragment=DOMPurify.sanitize(html,{
+    RETURN_DOM_FRAGMENT:true,
+    ALLOWED_TAGS:['p','br','strong','b','em','i','s','del','h1','h2','h3','h4','h5','h6','ul','ol','li','blockquote','pre','code','hr','table','thead','tbody','tr','th','td','a','sub','sup','details','summary'],
+    ALLOWED_ATTR:['href','title','start','colspan','rowspan'],
+    ALLOW_DATA_ATTR:false,ALLOW_ARIA_ATTR:false
+  });
+  for(const link of fragment.querySelectorAll('a')){
+    const href=link.getAttribute('href')||'';
+    if(!/^(https?:|mailto:|\/|#)/i.test(href)||href.startsWith('//'))link.removeAttribute('href');
+    else if(/^https?:/i.test(href)){link.target='_blank';link.rel='noopener noreferrer';}
   }
-  for(const line of lines){
-    if(line.startsWith('```')){if(code)code=null;else{code=element('pre');target.append(code);}continue;}
-    if(code){code.append(document.createTextNode(line+'\n'));continue;}
-    if(/^\s*\|?\s*:?-{2,}/.test(line))continue;
-    if(line.trim().startsWith('|')&&line.trim().endsWith('|')){if(!table){const wrap=element('div');wrap.style.overflowX='auto';table=element('table');wrap.append(table);target.append(wrap);}const row=element('tr');line.trim().slice(1,-1).split('|').forEach(t=>{const cell=element('td');inline(cell,t.trim());row.append(cell);});table.append(row);continue;}
-    table=null;if(!line.trim())continue;
-    const node=element(/^#{1,3} /.test(line)?'h3':'p');inline(node,line.replace(/^#{1,3} /,''));target.append(node);
+  // Citations stay clickable, except inside literal code and existing links.
+  const walker=document.createTreeWalker(fragment,NodeFilter.SHOW_TEXT),texts=[];
+  while(walker.nextNode())if(!walker.currentNode.parentElement?.closest('code,pre,a'))texts.push(walker.currentNode);
+  for(const node of texts){
+    const parts=node.textContent.split(/(\[\d+\])/g);if(parts.length===1)continue;
+    const replacement=document.createDocumentFragment();
+    for(const part of parts){const source=/^\[\d+\]$/.test(part)&&sources.find(s=>s.number===Number(part.slice(1,-1)));
+      replacement.append(source?button(part,()=>readSource(source.id),'citation'):document.createTextNode(part));}
+    node.replaceWith(replacement);
   }
+  for(const table of fragment.querySelectorAll('table')){const wrap=element('div',undefined,'message-table');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Tableau défilant');table.replaceWith(wrap);wrap.append(table);}
+  target.replaceChildren(fragment);
 }
+
 function message(role,text,sources=[],profile=''){
   const node=element('article',undefined,'message message-'+role);node.append(element('div',role==='user'?'Vous':(profile||'Assistant'),'message-label'));
   const body=element('div');renderText(body,text,sources);node.append(body);

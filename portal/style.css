@@ -23,3 +23,5 @@
 .brand-mark img{display:block;width:100%;height:100%;object-fit:contain}
 @media(max-width:760px){.site-logo{width:76px;height:76px;margin-bottom:18px}}
 .policy-text{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.7;max-width:95ch}.reader-actions .secondary-link{padding:10px 0;min-height:44px}
+
+.message-table{max-width:100%;overflow-x:auto;margin:16px 0}.message-table table{min-width:100%}.message th{background:#edf2e8;font-weight:700}.message pre{max-width:100%;overflow:auto;padding:16px;background:#edf2e8;border-radius:8px;white-space:pre}.message pre code{white-space:pre}.message code{font-family:ui-monospace,monospace;font-size:.9em}.message p code,.message li code{background:#edf2e8;padding:2px 4px;border-radius:4px}.message blockquote{margin:16px 0;padding:4px 16px;border-left:3px solid #91a681;color:#52694b}.message li{margin:6px 0}.message h1,.message h2,.message h3,.message h4,.message h5,.message h6{line-height:1.4;letter-spacing:normal;margin:20px 0 10px}.message h1{font-size:1.5em}.message h2{font-size:1.35em}.message h3{font-size:1.2em}.message h4,.message h5,.message h6{font-size:1.05em}
