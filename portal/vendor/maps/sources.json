@@ -45,6 +45,8 @@
     "path": "fonts/LICENSE.txt",
     "url": "https://raw.githubusercontent.com/protomaps/basemaps-assets/main/fonts/OFL.txt",
     "bytes": 4374,
-    "sha256": "7713cfc8e3c36d5ec4aa3d6cffe7500a1b3310f8a86d914b8ea09c2a9dee7c2d"
+    "sha256": "a4e64af683b9a5fc0ebcb849e7a2c1759e415f9791764d09b8a241b79fd90dfa",
+    "source_sha256": "7713cfc8e3c36d5ec4aa3d6cffe7500a1b3310f8a86d914b8ea09c2a9dee7c2d",
+    "normalization": "Espaces en fin de ligne retir\u00e9s ; texte de licence inchang\u00e9."
   }
 ]
