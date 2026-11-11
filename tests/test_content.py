@@ -87,5 +87,13 @@ class ContentTests(unittest.TestCase):
     def test_default_budget_is_500_decimal_gb(self):
         self.assertEqual(content.DEFAULT_BUDGET,500_000_000_000)
 
+    def test_background_download_can_leave_services_untouched(self):
+        import linux_lab as lab
+        item={**self.item,'pack':'health'}
+        with patch.object(sys,'argv',['content.py','download','--lab','--no-refresh','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download') as download,patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab,'podman') as podman:
+            content.main()
+            download.assert_called_once_with(self.root/'data',[item],budget=500_000_000_000,storage_root=self.root)
+            podman.assert_not_called()
+
 
 if __name__=='__main__':unittest.main()

@@ -38,13 +38,19 @@ Les éditions, langues, notes de contexte et droits restent dans le catalogue.
 
 ## État de lancement et reprise
 
-Service utilisateur démarré : `setupsurvie-priority-content.service`, avec priorité
-CPU/disque réduite, sans GPU ni inférence. Les 20 nouveaux PDF ont été téléchargés
-et vérifiés avant le début des trois ZIM ; les ZIM restent à considérer en cours
-tant que le fichier de progression n’indique pas `done`.
+Les **23 compléments sont téléchargés et vérifiés**. Le suivi indique `done`.
+La bibliothèque occupe **199,36 Go**, hors modèles et caches. Après rétablissement
+de son port publié, Kiwix expose neuf collections, dont iFixit FR/EN et Low-tech
+Magazine ; l’inventaire du portail annonce 43 guides.
+Trois recherches sans IA ont retrouvé les nouveaux PDF avec une page précise :
+« médicaments essentiels », « fermented » et « disinfecting wells ».
+Service utilisateur utilisé : `setupsurvie-priority-content.service`, avec priorité
+CPU/disque réduite, sans GPU ni inférence. Pour un prochain lancement sous systemd,
+utiliser `--no-refresh` et actualiser les services séparément : leurs processus
+persistants ne doivent pas hériter des limites du service de transfert.
 
 ```bash
-python3 scripts/content.py download --lab --budget-gb 500 \
+python3 scripts/content.py download --lab --no-refresh --budget-gb 500 \
   --pack health --pack food --pack water --pack repair \
   --pack survival --pack education
 
@@ -59,8 +65,10 @@ Les transferts contrôlent le budget avant le lot et avant chaque écriture.
 Le budget compte `data/library` une seule fois, y compris les transferts partiels ;
 la marge physique considère aussi les modèles, caches, conteneurs et kit présents.
 
-À la fin, seuls Kiwix et le pilote sont redémarrés pour actualiser les collections,
-sans démarrage du moteur IA. La présence sur disque et le SHA-256 ne prouvent pas
+Sans `--no-refresh`, seuls Kiwix et le pilote sont redémarrés pour actualiser les
+collections, sans démarrage du moteur IA. Le premier service de transfert a terminé
+les fichiers mais a expiré lors de sa fermeture après actualisation des conteneurs ;
+il a été arrêté pour empêcher les relances inutiles. La présence sur disque et le SHA-256 ne prouvent pas
 encore la qualité des recherches ni une validation hors ligne de chaque guide.
 
 ## Droits et lacunes
@@ -79,10 +87,11 @@ de vie/repli ne sont pas connues dans ce travail.
 
 ## Vérifications
 
-Dix tests ciblés couvrent reprise, fichier existant préservé, intégrité, dépassement
+Onze tests ciblés couvrent reprise, fichier existant préservé, intégrité, dépassement
 de taille, chemins, montage absent, plafond documentaire, exclusion des modèles et
 du kit, marge physique et arrêt avant écriture si le budget change en cours de transfert.
-Ils utilisent des contenus simulés et n’appellent aucun modèle IA.
+Ils utilisent des contenus simulés et n’appellent aucun modèle IA. Le dernier
+vérifie qu’un transfert en arrière-plan peut laisser les services inchangés.
 
 La suite complète a ensuite réussi : **72 tests**, dans l’image du service, sans
 réseau, secrets, données réelles ni GPU. Le binaire Compose déjà présent a servi

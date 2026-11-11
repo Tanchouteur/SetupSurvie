@@ -150,6 +150,7 @@ def main():
     p.add_argument('action',choices=['list','download','clean-partials']);p.add_argument('--data-dir');p.add_argument('--pack',action='append',default=[]);p.add_argument('--id',action='append',default=[])
     p.add_argument('--budget-gb',type=int,default=500);p.add_argument('--work-dir')
     p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
+    p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     args=p.parse_args()
     items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
     if args.action=='list':
@@ -176,6 +177,9 @@ def main():
         print('Seuls les téléchargements partiels sélectionnés ont été supprimés.');return
     if not 1<=args.budget_gb<=600:p.error('Budget entre 1 et 600 Go.')
     download(root,selected,budget=args.budget_gb*1_000_000_000,storage_root=storage_root)
+    if args.no_refresh:
+        print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
+        return
     if args.lab:
         from linux_lab import setup as lab_setup
         lab_app=lab_setup.Installation(lab.MOUNT/'private')
