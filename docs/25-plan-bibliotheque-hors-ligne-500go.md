@@ -1,5 +1,11 @@
 # Bibliothèque hors ligne : quoi télécharger avec une enveloppe de 500 Go
 
+**Précision de Louis après ce plan : les 500 Go portent sur la bibliothèque
+documentaire, hors modèles IA et caches de comparaison. Une copie du kit ne compte
+pas deux fois les mêmes documents.** Le budget système ci-dessous conserve la
+proposition initiale ; pour les téléchargements effectivement lancés et leur
+contrôle de capacité, voir [le suivi des ressources prioritaires](27-telechargements-prioritaires.md).
+
 État et proposition au **11 novembre 2026**, pour Louis et Marc. Usage retenu :
 famille en France, questions en français, sources françaises et anglaises,
 coupure d’Internet prolongée, services publics et approvisionnements dégradés,

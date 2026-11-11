@@ -139,7 +139,7 @@ def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_r
                 relative=item['path'].removeprefix('library/guides/')
                 records=[r for r in records if r.get('path')!=relative]
                 records.append({'path':relative,'title':item['title'],'language':item['language'],
-                    'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition'],'licence':item['licence']})
+                    'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition']+(' — '+item['notes'] if item.get('notes') else ''),'licence':item['licence']})
                 setup.write_json(meta,records)
         setup.write_json(root/'catalog/content-progress.json',{'status':'done','results':results})
         return results
