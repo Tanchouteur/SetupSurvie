@@ -191,3 +191,12 @@ réseau OSM synthétique et son image épinglée, sans modèle IA.
 ## Documents associés et traduction (0.1.16)
 
 Lire `docs/utilisation/documents-et-traduction.md` pour la conservation des associations côté serveur et les traductions privées progressives. Les instantanés, passages et exports ne doivent pas rejoindre le fonds public. La reprise reste explicite après redémarrage et respecte le mode jeu. Les tests simulés ne prouvent pas la fidélité d’un modèle réel. Louis souhaite une référence unifiée et simple à maintenir : `main`, avec suppression des branches temporaires de l’agent après intégration vérifiée.
+
+## Installation Windows en deux étapes (0.1.17)
+
+Lire `docs/installation/deux-etapes-windows.md`. Les deux lanceurs racine et leur
+catalogue d’installateurs doivent rester inclus dans les exports, rafraîchissements
+de kit et mises à jour. La reprise d’une première installation est explicite et
+refuse les sources/options modifiées ; elle ne remplace pas la mise à jour d’une
+installation terminée. Le kit système hors ligne et la recette Windows réelle
+restent à réaliser. Aucun téléchargement lourd ni installation système dans le runner.

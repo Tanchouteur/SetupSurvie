@@ -35,6 +35,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Installation
 
+- [Installation Windows en deux étapes](installation/deux-etapes-windows.md) — guide du pilote 0.1.17 ; installation réelle encore à valider.
+
 - [Préparer et vérifier le kit hors ligne](installation/preparer-kit-hors-ligne.md)
 
 - [Première version d’essai chez Marc](installation/pilote-marc.md)

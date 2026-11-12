@@ -18,7 +18,7 @@ from pilot_backup import backup
 from pilot_kit import checked_entries
 
 FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
-FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
+FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd')
 SERVICES=('open-webui','kiwix','pilot','portal')
 
 

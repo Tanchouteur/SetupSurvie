@@ -21,11 +21,11 @@ def validate(root,manifest):
     for relative in records:
         content.destination(root,relative)
         if relative.startswith('payload/'):
-            allowed=relative.startswith(('payload/models/','payload/library/','payload/state/openwebui/cache/'))
+            allowed=relative.startswith(('payload/models/','payload/library/','payload/state/openwebui/cache/')) or relative=='payload/catalog/downloaded-content.json'
             if not allowed or relative.endswith(('.db','.db-wal','.db-shm','.key','.pem','.env')) or Path(relative).name in ('settings.json','identifiants.txt'):
                 raise setup.SetupError('État personnel interdit dans le kit public : '+relative)
         elif relative not in ('images.tar','images.tar.json'):
-            allowed=relative in {'app/'+name for name in ('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')}
+            allowed=relative in {'app/'+name for name in ('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd')}
             allowed|=any(relative.startswith('app/'+folder+'/') for folder in ('scripts','pilot','portal','deploy','docs','fixtures','tests','assets','vendor'))
             if not allowed:raise setup.SetupError('Fichier hors périmètre du kit : '+relative)
     release=read('app/deploy/release.json')

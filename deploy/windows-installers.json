@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "checked_at": "2026-11-12",
+  "verification": "Métadonnées x64 relues dans microsoft/winget-pkgs ; binaires vérifiés au téléchargement, installation réelle à valider sur Windows.",
+  "installers": [
+    {
+      "id": "python",
+      "version": "3.13.17",
+      "file": "python-3.13.17-amd64.exe",
+      "url": "https://www.python.org/ftp/python/3.13.17/python-3.13.17-amd64.exe",
+      "sha256": "5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190",
+      "arguments": [
+        "InstallAllUsers=0",
+        "PrependPath=1"
+      ],
+      "source": "https://github.com/microsoft/winget-pkgs/blob/master/manifests/p/Python/Python/3/13/3.13.17/Python.Python.3.13.installer.yaml"
+    },
+    {
+      "id": "docker",
+      "version": "4.99.0",
+      "file": "Docker-Desktop-4.99.0.exe",
+      "url": "https://desktop.docker.com/win/main/amd64/245822/Docker%20Desktop%20Installer.exe",
+      "sha256": "a5e299131c9c53d60f3f752b162078945eb5faf6eedcf0be20a214c6e6cea444",
+      "arguments": [
+        "install",
+        "--backend=wsl-2",
+        "--no-windows-containers"
+      ],
+      "source": "https://github.com/microsoft/winget-pkgs/blob/master/manifests/d/Docker/DockerDesktop/4.99.0/Docker.DockerDesktop.installer.yaml"
+    },
+    {
+      "id": "ollama",
+      "version": "0.40.13",
+      "file": "OllamaSetup-0.40.13.exe",
+      "url": "https://github.com/ollama/ollama/releases/download/v0.40.13/OllamaSetup.exe",
+      "sha256": "9e3c76e54e7184c68e88a2378b909bf59bbe454f83c076cb4f4a717e946ae719",
+      "arguments": [
+        "/NORESTART"
+      ],
+      "source": "https://github.com/microsoft/winget-pkgs/blob/master/manifests/o/Ollama/Ollama/0.40.13/Ollama.Ollama.installer.yaml"
+    }
+  ]
+}

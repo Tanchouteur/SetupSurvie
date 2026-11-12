@@ -18,6 +18,10 @@ Depuis 0.1.15, aucun plafond documentaire logiciel chez Marc. Le kit existant re
 
 ## Avant de copier le kit
 
+Depuis le dépôt 0.1.17, le [parcours Windows en deux étapes](deux-etapes-windows.md)
+peut préparer les prérequis avec Internet puis installer un kit local. Il ne
+modifie pas l’installation 0.1.16 en cours et reste à valider réellement chez Marc.
+
 Le PC de Marc ne dispose actuellement d’aucun prérequis. Pour le pilote accompagné,
 préparer Windows, WSL 2, le pilote NVIDIA, Python, Docker Desktop et Ollama **avec
 Internet**, puis utiliser le kit sans Internet. Le kit ne contient pas leurs

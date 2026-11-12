@@ -30,6 +30,10 @@ leur présence dans un catalogue ne prouve pas leur téléchargement.
 L’installation portable repose sur [setup.py](../../scripts/setup.py), les
 lanceurs Windows/Linux et Compose. L’export du kit, les sauvegardes et les mises
 à jour ont des outils dédiés, présentés dans les [procédures d’exploitation](../exploitation/README.md).
+Depuis 0.1.17, les [deux lanceurs Windows](../installation/deux-etapes-windows.md)
+ajoutent une préparation PowerShell sans Python et une première installation
+journalisée dans des dossiers séparés. Le catalogue des installateurs système
+est distinct des références des images tierces ; ces dernières ne changent pas.
 Le laboratoire Podman de Louis utilise `scripts/linux_lab.py` et `scripts/lab.sh` ;
 il reste distinct des installations clients.
 

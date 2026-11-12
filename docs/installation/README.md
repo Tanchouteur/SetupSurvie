@@ -1,7 +1,17 @@
 # Installer SetupSurvie
 
-Guide d’orientation mis à jour le 11 novembre 2026. Les procédures Windows et
+Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
+
+## Windows en deux étapes (0.1.17)
+
+Depuis le dépôt, lancer **`1-Preparer-le-PC.cmd`**, puis
+**`2-Installer-SetupSurvie.cmd`**. Le [guide Windows](deux-etapes-windows.md)
+décrit les prérequis, les téléchargements vérifiés, le choix du disque, le kit
+local et la reprise explicite après interruption. Ce parcours automatise la
+préparation des composants manquants ; le pilote GPU et la confiance HTTPS sur
+les téléphones restent des étapes accompagnées. Les essais Windows réels restent
+à effectuer. Il ne remplace pas le parcours de mise à jour d’une installation existante.
 
 ## Installer le kit hors ligne chez Marc
 
@@ -20,7 +30,9 @@ Sous Windows : Python x64 3.11 à 3.15, Docker Desktop avec conteneurs Linux,
 Ollama Windows et pilote NVIDIA adapté. Sous Linux : Python 3.11+, Docker avec
 Compose et, pour le GPU, pilote NVIDIA et NVIDIA Container Toolkit configurés.
 Les versions de référence figurent dans [versions.json](../../deploy/versions.json).
-La préparation de l’OS, de Docker et des pilotes reste à la charge de l’opérateur.
+Les commandes ci-dessous sont le parcours manuel sur un système déjà préparé.
+Le nouveau parcours Windows ci-dessus automatise les dépendances manquantes ;
+les pilotes et le choix du disque Docker restent à vérifier par l’opérateur.
 
 Depuis la racine du dépôt, sur Windows :
 
