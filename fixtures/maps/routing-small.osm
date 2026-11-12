@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="SetupSurvie synthetic test; not real map data">
+  <node id="1" version="1" lat="43.1000" lon="6.1000"/>
+  <node id="2" version="1" lat="43.1000" lon="6.1020"/>
+  <node id="3" version="1" lat="43.1000" lon="6.1040"/>
+  <node id="4" version="1" lat="43.1020" lon="6.1000"/>
+  <node id="5" version="1" lat="43.1020" lon="6.1040"/>
+  <node id="6" version="1" lat="43.1010" lon="6.1020"/>
+  <way id="10" version="1"><nd ref="1"/><nd ref="4"/><nd ref="5"/><nd ref="3"/><tag k="highway" v="residential"/><tag k="name" v="Route de démonstration"/></way>
+  <way id="11" version="1"><nd ref="1"/><nd ref="2"/><nd ref="3"/><tag k="highway" v="footway"/><tag k="foot" v="yes"/><tag k="motor_vehicle" v="no"/><tag k="name" v="Sentier piéton de démonstration"/></way>
+  <way id="12" version="1"><nd ref="1"/><nd ref="6"/><nd ref="3"/><tag k="highway" v="residential"/><tag k="motorcar" v="no"/><tag k="motorcycle" v="yes"/><tag k="name" v="Passage moto de démonstration"/></way>
+</osm>

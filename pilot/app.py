@@ -7,13 +7,14 @@ import os
 from pathlib import Path
 import re
 import time
+from typing import Literal
 from urllib.parse import quote,urlparse
 
 from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,File,Form,Query
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -23,13 +24,14 @@ SESSION_SECONDS=30*86400
 @asynccontextmanager
 async def lifespan(app):
     store.init()
+    map_notebook.init()
     await asyncio.to_thread(library.index_guides)
     yield
     for task in list(engine.ACTIVE.values()):task.cancel()
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.10'
+VERSION='0.1.11'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -167,6 +169,11 @@ async def download_geography(body: GeographyDownload,value=Depends(admin)):
     return await operations.library_command('geography',body.model_dump())
 
 
+@app.post('/api/admin/library/routing',status_code=202)
+async def download_routes(body: GeographyDownload,value=Depends(admin)):
+    return await operations.library_command('routing',body.model_dump())
+
+
 @app.get('/api/geography/nearby')
 async def nearby_places(category: str, radius_km: float = Query(default=5,gt=0,le=25),
                         lat: float = Query(ge=-85,le=85,allow_inf_nan=False), lon: float = Query(ge=-180,lt=180,allow_inf_nan=False), value=Depends(user)):
@@ -190,6 +197,111 @@ async def terrain_tile(z:int,x:int,y:int,value=Depends(user)):
     async with TERRAIN_LOCK:
         raw=await asyncio.to_thread(geography.terrain_png,z,x,y)
     return Response(raw,media_type='image/png')
+
+
+class MapList(BaseModel):
+    title: str = Field(min_length=1,max_length=100)
+
+
+class MapPoint(BaseModel):
+    list_id: str = Field(pattern='^[a-f0-9]{32}$')
+    title: str = Field(min_length=1,max_length=120)
+    lat: float = Field(ge=-85,le=85,allow_inf_nan=False)
+    lon: float = Field(ge=-180,lt=180,allow_inf_nan=False)
+    kind: Literal['water','food','health','shelter','repair','communication','meeting','other'] = 'other'
+    notes: str = Field(default='',max_length=2000)
+
+
+class RoutePoint(BaseModel):
+    lat: float = Field(ge=-85,le=85,allow_inf_nan=False)
+    lon: float = Field(ge=-180,lt=180,allow_inf_nan=False)
+    title: str = Field(default='Étape',max_length=120)
+
+
+class RouteRequest(BaseModel):
+    points: list[RoutePoint] = Field(min_length=2,max_length=8)
+    mode: Literal['foot','motorcycle','car'] = 'foot'
+    speed_kmh: float = Field(default=4,ge=0.5,le=130,allow_inf_nan=False)
+    avoid_motorways: bool = True
+
+
+class SavedRoute(BaseModel):
+    draft_id: str = Field(pattern='^[a-f0-9]{32}$')
+    list_id: str = Field(pattern='^[a-f0-9]{32}$')
+    title: str = Field(min_length=1,max_length=120)
+
+
+@app.get('/api/map-notebook')
+async def map_notebook_status(value=Depends(user)):
+    return await asyncio.to_thread(map_notebook.overview)
+
+
+@app.post('/api/admin/map-notebook/lists')
+async def create_map_list(body:MapList,value=Depends(admin)):
+    return map_notebook.save_list(body.title)
+
+
+@app.post('/api/admin/map-notebook/lists/{identifier}')
+async def update_map_list(identifier:str,body:MapList,value=Depends(admin)):
+    return map_notebook.save_list(body.title,identifier)
+
+
+@app.delete('/api/admin/map-notebook/lists/{identifier}')
+async def delete_map_list(identifier:str,value=Depends(admin)):
+    map_notebook.delete_list(identifier);return {'ok':True}
+
+
+@app.post('/api/admin/map-notebook/points')
+async def create_map_point(body:MapPoint,value=Depends(admin)):
+    return map_notebook.save_point(body.model_dump())
+
+
+@app.post('/api/admin/map-notebook/points/{identifier}')
+async def update_map_point(identifier:str,body:MapPoint,value=Depends(admin)):
+    return map_notebook.save_point(body.model_dump(),identifier)
+
+
+@app.delete('/api/admin/map-notebook/points/{identifier}')
+async def delete_map_point(identifier:str,value=Depends(admin)):
+    map_notebook.delete_point(identifier);return {'ok':True}
+
+
+@app.get('/api/routing')
+async def routing_status(value=Depends(user)):
+    return await asyncio.to_thread(routing.status)
+
+
+@app.post('/api/admin/map-notebook/calculate')
+async def calculate_route(body:RouteRequest,value=Depends(admin)):
+    if not store.limit('routing:'+value['id'],maximum=12,period=60):raise HTTPException(429,'Attendez un instant avant de recalculer.')
+    data=await routing.calculate([p.model_dump() for p in body.points],body.mode,body.speed_kmh,body.avoid_motorways)
+    return map_notebook.draft(value['id'],data)
+
+
+@app.post('/api/admin/map-notebook/routes')
+async def save_map_route(body:SavedRoute,value=Depends(admin)):
+    if not body.title.strip():raise HTTPException(400,'Donnez un nom au trajet.')
+    return map_notebook.save_route(value['id'],body.draft_id,body.list_id,body.title)
+
+
+@app.get('/api/map-notebook/routes/{identifier}')
+async def saved_map_route(identifier:str,value=Depends(user)):
+    return await asyncio.to_thread(map_notebook.route,identifier)
+
+
+@app.delete('/api/admin/map-notebook/routes/{identifier}')
+async def delete_map_route(identifier:str,value=Depends(admin)):
+    map_notebook.delete_route(identifier);return {'ok':True}
+
+
+@app.get('/api/map-notebook/lists/{identifier}/gpx')
+async def map_list_gpx(identifier:str,value=Depends(user)):
+    return Response(map_notebook.gpx(list_id=identifier),media_type='application/gpx+xml',headers={'Content-Disposition':'attachment; filename="points-setupsurvie.gpx"'})
+
+
+@app.get('/api/map-notebook/routes/{identifier}/gpx')
+async def map_route_gpx(identifier:str,value=Depends(user)):
+    return Response(map_notebook.gpx(route_id=identifier),media_type='application/gpx+xml',headers={'Content-Disposition':'attachment; filename="trajet-setupsurvie.gpx"'})
 
 
 @app.get('/api/assistant-context')

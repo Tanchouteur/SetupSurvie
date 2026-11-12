@@ -15,6 +15,7 @@ import content
 import discovery
 import kiwix_select
 import geography_data
+import routing_prepare
 import setup
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
@@ -88,7 +89,7 @@ class Manager:
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
         self.check_storage()
-        if action == 'geography':
+        if action in ('geography','routing'):
             options = geography_data.validate(body)
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
             self.paths(state['id']).mkdir(parents=True)
@@ -154,7 +155,14 @@ class Manager:
         try:
             root, scope = self.check_storage()
             check()
-            if state['action'] == 'geography':
+            if state['action'] == 'routing':
+                update('downloading', 'Préparation des routes et chemins hors ligne…')
+                routing_prepare.prepare_area(root, state['options'], backend=self.backend, storage_root=scope, check=check,
+                    progress=lambda message: update('downloading', message))
+                check(); update('refreshing', 'Démarrage des moteurs de calcul de trajets…')
+                routing_prepare.start_services(self.app,self.config,self.backend)
+                update('completed', 'Routes et chemins préparés pour la marche, la moto et la petite voiture.')
+            elif state['action'] == 'geography':
                 update('downloading', 'Préparation de la géographie hors ligne…')
                 geography_data.prepare(root, state['options'], storage_root=scope, check=check,
                     progress=lambda message: update('downloading', message))
@@ -186,7 +194,7 @@ class Manager:
                     self.app.compose(self.config, 'restart', 'kiwix')
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
-            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action')=='geography' else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
+            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             print(type(exc).__name__, str(exc), flush=True)
             update('error', 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')

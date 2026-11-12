@@ -140,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography'):self.respond(404,{'detail':'Commande inconnue.'});return
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing'):self.respond(404,{'detail':'Commande inconnue.'});return
         try:
             length=int(self.headers.get('Content-Length','0'))
             if not 0<=length<=1024:raise ValueError()

@@ -1,6 +1,6 @@
 # Paramètres, déplacements et cartes hors ligne
 
-Guide du pilote **0.1.10**. Les téléchargements décrits sont des fonctions du
+Guide initial du pilote **0.1.10**. Depuis **0.1.11**, voir aussi les [listes de points et itinéraires](points-et-itineraires.md) : préparation sans GPS et consultation mobile. Les téléchargements décrits sont des fonctions du
 logiciel ; leur disponibilité ne prouve pas qu’une zone a été préparée sur un PC.
 
 ## Paramètres de l’appareil
@@ -101,11 +101,10 @@ et les données de localisation.
 - Lire l’altitude approximative si la dalle est téléchargée.
 - Activer l’ombrage du relief, calculé localement.
 - Mesurer entre deux points et afficher une coupe du terrain (50 km maximum).
-- Demander la position GPS de l’appareil explicitement ; autorisation, HTTPS et
-  capacité du téléphone sont nécessaires. Elle n’est pas enregistrée automatiquement.
+- Choisir les positions manuellement ; le bouton GPS a été retiré du parcours en 0.1.11.
 
 Les distances sont **à vol d’oiseau**. Le profil est une ligne droite, sans calcul
-de chemin praticable, de dénivelé cumulé de randonnée ou d’itinéraire routier.
+de chemin praticable ou de dénivelé cumulé de randonnée. Les itinéraires par les voies utilisent le [circuit de routage distinct](points-et-itineraires.md).
 Les altitudes interpolent les échantillons HGT voisins : elles restent
 approximatives et n’indiquent pas la hauteur des bâtiments. L’absence de données
 est signalée, pas remplacée par une altitude supposée.

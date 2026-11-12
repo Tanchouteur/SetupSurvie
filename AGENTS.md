@@ -177,3 +177,11 @@ extraits ; scripts/lab_refresh_library.py actualise seulement Kiwix et le pilote
 Pour les services de transfert en arrière-plan, utiliser --no-refresh puis
 actualiser séparément. L'indexation du pilote et la recherche Kiwix ne signifient
 pas que toutes les archives ont été importées dans les collections Open WebUI.
+
+## Tests dans le runner CPU
+
+Le runner de développement est une petite VM sur CPU. Ne jamais y télécharger
+de modèle IA, de corpus, de ZIM ou de carte lourde pour les tests. Utiliser des
+fixtures minuscules et des services simulés. Les préparations réelles se font sur
+les PC cibles ; le test OSRM réel de la CI GitHub utilise uniquement un petit
+réseau OSM synthétique et son image épinglée, sans modèle IA.

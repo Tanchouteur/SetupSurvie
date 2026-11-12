@@ -86,3 +86,5 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Projet : serveur autonome de connaissances avec IA locale](historique/sources/contexte-initial.md)
 
 Les [archives et la table des anciens chemins](historique/README.md) permettent de retrouver les références antérieures. Les [consignes de contribution](../AGENTS.md) définissent la maintenance documentaire.
+
+Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](utilisation/points-et-itineraires.md), avec consultation mobile et préparation sur ordinateur.

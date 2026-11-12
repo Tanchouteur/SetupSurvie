@@ -76,6 +76,7 @@
     document.getElementById('map-nearby').onsubmit=async event=>{event.preventDefault();if(!point){toolStatus.textContent='Choisissez d’abord un point sur la carte.';return;}const request=++nearbyRequest;try{const data=await api('/geography/nearby?lat='+point.lat+'&lon='+point.lon+'&category='+document.getElementById('map-category').value+'&radius_km='+document.getElementById('map-radius').value);if(request!==nearbyRequest)return;renderResults(data.results);toolStatus.textContent=(data.results.length?'':'Aucun résultat dans les données téléchargées. ')+data.note;}catch(e){toolStatus.textContent=e.message;}};
     document.getElementById('measure').onclick=()=>{measuring=true;measureStart=null;document.getElementById('terrain-profile').replaceChildren();toolStatus.textContent='Touchez le premier point, puis le second. Mesure en ligne droite.';};
     map.on('click',async event=>{
+      if(map.getLayer('notebook-points')&&map.queryRenderedFeatures(event.point,{layers:['notebook-points']}).length)return;
       const {lat,lng:lon}=event.lngLat.wrap();if(lat<-85||lat>85)return;selectPoint(lat,lon);
       if(!measuring)return;if(!measureStart){measureStart={lat,lon};toolStatus.textContent='Touchez le second point.';return;}
       const a=measureStart;measuring=false;
@@ -86,13 +87,33 @@
       }catch(e){toolStatus.textContent=e.message;}
     });
     document.getElementById('relief').onclick=()=>{showRelief=!showRelief;document.getElementById('relief').setAttribute('aria-pressed',String(showRelief));document.getElementById('relief').textContent=showRelief?'Masquer le relief':'Afficher le relief';map.setStyle(style(current));};
-    document.getElementById('locate').onclick=()=>{if(!navigator.geolocation){toolStatus.textContent='GPS indisponible. Choisissez un point.';return;}navigator.geolocation.getCurrentPosition(position=>{selectPoint(position.coords.latitude,position.coords.longitude);map.flyTo({center:[position.coords.longitude,position.coords.latitude],zoom:14});toolStatus.textContent='Position fournie par l’appareil, précision annoncée : '+Math.round(position.coords.accuracy)+' m. Elle n’est pas enregistrée automatiquement.';},()=>{toolStatus.textContent='Position indisponible : autorisation, HTTPS ou signal manquant. Choisissez un point.';},{timeout:12000,maximumAge:0});};
     const params=new URLSearchParams(location.search),lat=Number(params.get('lat')),lon=Number(params.get('lon'));
     if(params.has('lat')&&params.has('lon')&&Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=-85&&lat<=85&&lon>=-180&&lon<180){selectPoint(lat,lon);map.jumpTo({center:[lon,lat],zoom:14});}
     else if(reference){selectPoint(reference.lat,reference.lon);map.jumpTo({center:[reference.lon,reference.lat],zoom:13});}
     if(params.has('choose'))document.getElementById('geo-tools').open=true;
     if(!hasBasemap)toolStatus.textContent='Aucun fond de carte préparé. Vous pouvez saisir des coordonnées dans Paramètres ; les lieux et le relief téléchargés restent utilisables après connexion.';
 
+    let notebookPoints=[],routeGeometry=null;
+    function restorePlanningLayers(){
+      if(!map.isStyleLoaded())return;
+      const data={type:'FeatureCollection',features:notebookPoints.map(p=>({type:'Feature',properties:{id:p.id,title:p.title},geometry:{type:'Point',coordinates:[p.lon,p.lat]}}))};
+      if(map.getSource('notebook'))map.getSource('notebook').setData(data);
+      else{map.addSource('notebook',{type:'geojson',data});map.addLayer({id:'notebook-points',type:'circle',source:'notebook',paint:{'circle-radius':7,'circle-color':'#245b43','circle-stroke-color':'#ffffff','circle-stroke-width':2}});}
+      const route={type:'FeatureCollection',features:routeGeometry?[{type:'Feature',properties:{},geometry:routeGeometry}]:[]};
+      if(map.getSource('planned-route'))map.getSource('planned-route').setData(route);
+      else{map.addSource('planned-route',{type:'geojson',data:route});map.addLayer({id:'planned-route-line',type:'line',source:'planned-route',paint:{'line-color':'#ae5428','line-width':5}},'notebook-points');}
+    }
+    map.on('style.load',restorePlanningLayers);
+    map.once('idle',restorePlanningLayers);
+    map.on('click','notebook-points',event=>{const feature=event.features[0],p=notebookPoints.find(p=>p.id===feature.properties.id);if(p){selectPoint(p.lat,p.lon);new maplibregl.Popup().setLngLat([p.lon,p.lat]).setText(p.title).addTo(map);window.dispatchEvent(new CustomEvent('survie-saved-point',{detail:p}));}});
+    window.SurvieMap={
+      point:()=>point,
+      selectPoint:(p)=>{selectPoint(p.lat,p.lon);map.flyTo({center:[p.lon,p.lat],zoom:14});},
+      points:items=>{notebookPoints=items;restorePlanningLayers();},
+      route:geometry=>{routeGeometry=geometry;restorePlanningLayers();if(geometry){const bounds=new maplibregl.LngLatBounds();for(const p of geometry.coordinates)bounds.extend(p);map.fitBounds(bounds,{padding:40,maxZoom:15});}},
+      resize:()=>map.resize()
+    };
+    restorePlanningLayers();window.dispatchEvent(new Event('survie-map-ready'));
     select.disabled = false; home.disabled = false;
   } catch (error) {status.textContent = error.message || 'Impossible d’ouvrir les cartes. Revenez à la bibliothèque et réessayez.';}
 })();

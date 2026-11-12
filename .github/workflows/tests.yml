@@ -31,3 +31,14 @@ jobs:
       - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v
       - run: python -m unittest discover -s tests -p test_pilot_update.py -v
+  offline-routing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tests/requirements.txt
+      # Pinned OSRM image + tiny synthetic road graph; no corpus or LLM.
+      - run: python tests/routing_smoke.py

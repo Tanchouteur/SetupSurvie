@@ -138,3 +138,48 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+  router-foot:
+    image: ${ROUTING_IMAGE:-ghcr.io/project-osrm/osrm-backend:v6.0.0@sha256:729461bcc9ae9e6aafa92c0f93db9b060a32e85d5e72092c01ae4a4a9f1eb564}
+    profiles: [routing]
+    restart: unless-stopped
+    command: [osrm-routed, --algorithm, mld, --threads, "1", /data/network.osrm]
+    volumes:
+      - type: bind
+        source: ${DATA_DIR}/library/maps/routing/current/foot
+        target: /data
+        read_only: true
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  router-motorcycle:
+    image: ${ROUTING_IMAGE:-ghcr.io/project-osrm/osrm-backend:v6.0.0@sha256:729461bcc9ae9e6aafa92c0f93db9b060a32e85d5e72092c01ae4a4a9f1eb564}
+    profiles: [routing]
+    restart: unless-stopped
+    command: [osrm-routed, --algorithm, mld, --threads, "1", /data/network.osrm]
+    volumes:
+      - type: bind
+        source: ${DATA_DIR}/library/maps/routing/current/motorcycle
+        target: /data
+        read_only: true
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  router-car:
+    image: ${ROUTING_IMAGE:-ghcr.io/project-osrm/osrm-backend:v6.0.0@sha256:729461bcc9ae9e6aafa92c0f93db9b060a32e85d5e72092c01ae4a4a9f1eb564}
+    profiles: [routing]
+    restart: unless-stopped
+    command: [osrm-routed, --algorithm, mld, --threads, "1", /data/network.osrm]
+    volumes:
+      - type: bind
+        source: ${DATA_DIR}/library/maps/routing/current/car
+        target: /data
+        read_only: true
+    mem_limit: 2g
+    cpus: 1
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

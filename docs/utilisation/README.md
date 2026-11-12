@@ -43,3 +43,5 @@ La version affichée dans l’en-tête vient désormais du serveur. Après une m
 jour, recharger la page pour charger également le nouveau JavaScript.
 
 Les [paramètres et outils cartographiques](parametres-et-cartes.md) permettent de préparer les lieux, adresses et altitudes pour le hors ligne.
+
+Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](points-et-itineraires.md), avec consultation mobile et préparation sur ordinateur.

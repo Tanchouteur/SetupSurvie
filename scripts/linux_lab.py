@@ -19,7 +19,7 @@ IMAGE = BASE / 'storage.img'
 # Decimal bytes, leaving room below the user's 600 GB ceiling for outer metadata.
 CAPACITY = 590_000_000_000
 MOUNT = Path('/run/media') / getpass.getuser() / 'SetupSurvie'
-NAMES = ('pilot', 'open-webui', 'portal', 'kiwix', 'ollama')
+NAMES = ('router-foot','router-motorcycle','router-car','pilot', 'open-webui', 'portal', 'kiwix', 'ollama')
 PREFIX = 'setupsurvie-lab-'
 
 
@@ -224,6 +224,8 @@ def up():
             else:
                 run_container(name, reference(name), args, env)
         print(f'Démarré : {name}', flush=True)
+    import routing_prepare
+    if (MOUNT/'data/library/maps/routing/current/manifest.json').is_file():routing_prepare.start_services(setup.Installation(MOUNT/'private'),c,'lab')
     import control
     control.start(setup.Installation(MOUNT/'private'),c,'lab')
     if c['bind']=='0.0.0.0':

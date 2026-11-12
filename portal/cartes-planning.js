@@ -1,0 +1,64 @@
+'use strict';
+(() => {
+  const $=id=>document.getElementById(id);
+  const mobile=matchMedia('(max-width:760px)');
+  let book={lists:[],points:[],routes:[]},user=null,map=null,listId='',editingPoint=null,editingList=null,stops=['',''],draft=null,activeRoute=null,request=0;
+  const kinds={water:'Eau',food:'Alimentation',health:'Santé',shelter:'Abri',meeting:'Rendez-vous',repair:'Réparation',communication:'Communications',other:'Repère'};
+  function node(tag,text){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el;}
+  function button(label,action,cls=''){const el=node('button',label);el.type='button';el.className=cls;el.onclick=action;return el;}
+  function km(meters){return (meters/1000).toLocaleString('fr-FR',{maximumFractionDigits:2})+' km';}
+  function duration(seconds){const mins=Math.max(0,Math.ceil(seconds/60));return mins>=60?Math.floor(mins/60)+' h '+String(mins%60).padStart(2,'0'):mins+' min';}
+  async function api(path,body,method){const options={credentials:'same-origin'};if(body!==undefined){options.method=method||'POST';options.headers={'Content-Type':'application/json'};options.body=JSON.stringify(body);}else if(method)options.method=method;const response=await fetch('/api'+path,options);const data=await response.json();if(!response.ok)throw new Error(response.status===401?'Connectez-vous au portail pour retrouver les points et trajets.':typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');return data;}
+  function selectedPoints(){return book.points.filter(p=>p.list_id===listId);}
+  function clearRoute(){request++;draft=null;activeRoute=null;$('route-save-form').hidden=true;$('selected-route').hidden=true;map?.route(null);}
+  function listOptions(select,value){select.replaceChildren();for(const list of book.lists){const option=node('option',list.title);option.value=list.id;select.append(option);}if(book.lists.some(l=>l.id===value))select.value=value;}
+  function updateMap(){map?.points(selectedPoints());}
+  function displayRoute(route){activeRoute=route;$('selected-route').hidden=false;$('selected-route-title').textContent=route.title||'Trajet calculé';$('selected-route-distance').textContent=km(route.distance_m)+' par les voies';$('selected-route-duration').textContent=duration(route.duration_s)+' estimées · '+route.speed_kmh+' km/h · '+({foot:'à pied',motorcycle:'moto',car:'petite voiture'}[route.mode]);$('selected-route-note').textContent=route.note;$('selected-route-stops').replaceChildren();for(const point of route.points||[]){$('selected-route-stops').append(node('li',point.title+(point.offset_m>5?' · accroché à une voie à '+Math.round(point.offset_m)+' m':'')));}const segments=$('selected-route-segments');segments.replaceChildren();for(const step of (route.segments||[]).slice(0,50)){segments.append(node('p',step.name+' · '+km(step.distance_m)));}if((route.segments||[]).length>50)segments.append(node('p','Les 50 premiers segments sont affichés. Le fichier GPX conserve le tracé complet.'));$('selected-route-export').hidden=!route.id;if(route.id)$('selected-route-export').href='/api/map-notebook/routes/'+route.id+'/gpx';map?.route(route.geometry);requestAnimationFrame(()=>map?.resize());}
+  async function openRoute(id){clearRoute();const ticket=request;try{const route=await api('/map-notebook/routes/'+id);if(ticket!==request)return;displayRoute(route);$('planning-message').textContent='';}catch(e){$('notebook-message').textContent=e.message;}}
+  function render(){
+    listOptions($('notebook-list'),listId);listOptions($('point-list'),listId);
+    $('notebook-export').hidden=!listId;if(listId)$('notebook-export').href='/api/map-notebook/lists/'+listId+'/gpx';
+    const points=$('notebook-points'),routes=$('notebook-routes');points.replaceChildren();routes.replaceChildren();
+    for(const point of selectedPoints()){
+      const row=node('article');row.className='notebook-card';row.append(button(point.title,()=>map?.selectPoint(point),'point-open'),node('small',kinds[point.kind]||'Repère'));
+      if(point.notes){const details=node('details');details.append(node('summary','Notes'),node('p',point.notes));row.append(details);}
+      if(user?.role==='admin'){const actions=node('div');actions.className='editor-only card-actions';actions.append(button('Modifier',()=>editPoint(point)),button('Supprimer',()=>removePoint(point)));row.append(actions);}points.append(row);
+    }
+    for(const route of book.routes.filter(r=>r.list_id===listId)){
+      const row=node('article');row.className='notebook-card';row.append(button(route.title,()=>openRoute(route.id),'route-open'),node('small',km(route.distance_m)+' · '+duration(route.duration_s)+' · '+({foot:'à pied',motorcycle:'moto',car:'petite voiture'}[route.mode])));
+      if(user?.role==='admin'){const remove=button('Supprimer',()=>removeRoute(route));remove.className='editor-only';row.append(remove);}routes.append(row);
+    }
+    if(!points.children.length)points.append(node('p','Aucun point dans cette liste. Préparez vos repères sur ordinateur.'));
+    if(!routes.children.length)routes.append(node('p','Aucun trajet enregistré dans cette liste.'));
+    $('notebook-message').textContent=book.lists.length?'Choisissez un point ou un trajet pour l’afficher. Consultation sans GPS.':'Aucune liste préparée. La création se fait depuis un ordinateur avec un compte administrateur.';
+    for(const id of ['rename-map-list','delete-map-list','new-map-point'])$(id).disabled=!listId;
+    $('route-calculate').disabled=book.points.length<2;
+    renderStops();updateMap();
+  }
+  async function load(){try{const [data,profile]=await Promise.all([api('/map-notebook'),api('/auth/me')]);book=data;user=profile;if(!book.lists.some(l=>l.id===listId))listId=book.lists[0]?.id||'';$('planning-panel').hidden=user.role!=='admin';render();const status=await api('/routing');$('routing-availability').textContent=status.note+(status.coverage?' · zone du '+status.coverage.created:'');}catch(e){$('notebook-message').textContent=e.message;}}
+  function editList(list=null){editingList=list?.id||null;$('map-list-dialog-title').textContent=list?'Renommer la liste':'Nouvelle liste';$('map-list-title').value=list?.title||'';$('list-form-message').textContent='';$('map-list-dialog').showModal();$('map-list-title').focus();}
+  $('new-map-list').onclick=()=>editList();$('rename-map-list').onclick=()=>editList(book.lists.find(l=>l.id===listId));$('cancel-list').onclick=()=>$('map-list-dialog').close();
+  $('map-list-form').onsubmit=async event=>{event.preventDefault();const submit=event.submitter;submit.disabled=true;try{const result=await api('/admin/map-notebook/lists'+(editingList?'/'+editingList:''),{title:$('map-list-title').value.trim()});listId=result.id;$('map-list-dialog').close();clearRoute();await load();}catch(e){$('list-form-message').textContent=e.message;}finally{submit.disabled=false;}};
+  $('delete-map-list').onclick=async()=>{if(!listId||!confirm('Supprimer cette liste vide ? Les listes contenant des points ou trajets sont conservées.'))return;try{await api('/admin/map-notebook/lists/'+listId,undefined,'DELETE');clearRoute();await load();}catch(e){$('planning-message').textContent=e.message;}};
+  function editPoint(point=null){
+    if(!listId)return;const chosen=point||map?.point();if(!chosen){$('planning-message').textContent='Choisissez d’abord un point sur la carte.';return;}
+    editingPoint=point?.id||null;listOptions($('point-list'),point?.list_id||listId);$('map-point-dialog-title').textContent=point?'Modifier le point':'Enregistrer le point choisi';$('point-title').value=point?.title||'';$('point-lat').value=chosen.lat;$('point-lon').value=chosen.lon;$('point-kind').value=point?.kind||'other';$('point-notes').value=point?.notes||'';$('point-form-message').textContent='';$('map-point-dialog').showModal();$('point-title').focus();
+  }
+  $('new-map-point').onclick=()=>editPoint();$('cancel-point').onclick=()=>$('map-point-dialog').close();
+  $('map-point-form').onsubmit=async event=>{event.preventDefault();const submit=event.submitter;submit.disabled=true;try{await api('/admin/map-notebook/points'+(editingPoint?'/'+editingPoint:''),{list_id:$('point-list').value,title:$('point-title').value.trim(),lat:Number($('point-lat').value),lon:Number($('point-lon').value),kind:$('point-kind').value,notes:$('point-notes').value});listId=$('point-list').value;$('map-point-dialog').close();clearRoute();await load();}catch(e){$('point-form-message').textContent=e.message;}finally{submit.disabled=false;}};
+  async function removePoint(point){if(!confirm('Supprimer le point « '+point.title+' » ? Les trajets déjà enregistrés restent conservés.'))return;try{await api('/admin/map-notebook/points/'+point.id,undefined,'DELETE');clearRoute();await load();}catch(e){$('planning-message').textContent=e.message;}}
+  async function removeRoute(route){if(!confirm('Supprimer le trajet « '+route.title+' » ?'))return;try{await api('/admin/map-notebook/routes/'+route.id,undefined,'DELETE');if(activeRoute?.id===route.id)clearRoute();await load();}catch(e){$('planning-message').textContent=e.message;}}
+  function renderStops(){const target=$('route-stops');target.replaceChildren();stops=stops.map(id=>book.points.some(p=>p.id===id)?id:'');for(let i=0;i<stops.length;i++){
+    const row=node('div');row.className='route-stop';const label=node('label',i===0?'Départ':i===stops.length-1?'Arrivée':'Étape '+i),select=node('select');select.required=true;select.setAttribute('aria-label',label.textContent);select.append(node('option','Choisir un point enregistré'));select.firstChild.value='';for(const p of book.points){const option=node('option',p.title+' · '+(book.lists.find(l=>l.id===p.list_id)?.title||''));option.value=p.id;select.append(option);}select.value=stops[i];select.onchange=()=>{stops[i]=select.value;clearRoute();};label.append(select);row.append(label);if(i>0&&i<stops.length-1)row.append(button('Retirer',()=>{stops.splice(i,1);clearRoute();renderStops();}));target.append(row);
+    }$('route-add-stop').disabled=stops.length>=8;}
+  $('route-add-stop').onclick=()=>{if(stops.length<8){stops.splice(stops.length-1,0,'');clearRoute();renderStops();}};
+  $('route-mode').onchange=()=>{const foot=$('route-mode').value==='foot';$('route-speed').value=foot?4:40;$('route-speed').min=foot?0.5:5;$('route-speed').max=foot?12:130;$('route-avoid-motorways').disabled=foot;clearRoute();};
+  $('route-speed').oninput=clearRoute;$('route-avoid-motorways').onchange=clearRoute;$('route-avoid-motorways').disabled=true;
+  $('route-form').onsubmit=async event=>{event.preventDefault();if(!listId)return;const points=stops.map(id=>book.points.find(p=>p.id===id));if(points.some(p=>!p)){$('planning-message').textContent='Choisissez chaque étape.';return;}if(points.every(p=>p.id===points[0].id)){$('planning-message').textContent='Choisissez au moins deux points différents.';return;}clearRoute();const ticket=request;$('route-calculate').disabled=true;$('planning-message').textContent='Calcul dans le réseau local…';try{const data=await api('/admin/map-notebook/calculate',{points:points.map(p=>({lat:p.lat,lon:p.lon,title:p.title})),mode:$('route-mode').value,speed_kmh:Number($('route-speed').value),avoid_motorways:$('route-avoid-motorways').checked});if(ticket!==request)return;draft=data;displayRoute(data);$('route-title').value=points[0].title+' → '+points.at(-1).title;$('route-save-form').hidden=false;$('planning-message').textContent='Vérifiez le tracé, puis enregistrez-le pour le consulter plus tard.';}catch(e){if(ticket===request)$('planning-message').textContent=e.message;}finally{$('route-calculate').disabled=book.points.length<2;}};
+  $('route-save-form').onsubmit=async event=>{event.preventDefault();if(!draft)return;const data=draft,submit=event.submitter;submit.disabled=true;try{const saved=await api('/admin/map-notebook/routes',{draft_id:data.draft_id,list_id:listId,title:$('route-title').value.trim()});draft=null;$('route-save-form').hidden=true;await load();await openRoute(saved.id);$('planning-message').textContent='Trajet enregistré. Il reste consultable sans moteur de calcul ni GPS.';}catch(e){$('planning-message').textContent=e.message;}finally{submit.disabled=false;}};
+  $('notebook-list').onchange=()=>{listId=$('notebook-list').value;clearRoute();render();};$('notebook-refresh').onclick=load;$('clear-map-route').onclick=clearRoute;
+  for(const id of ['map-notebook','planning-panel','geo-tools'])$(id).addEventListener('toggle',()=>{if(mobile.matches&&$(id).open)for(const other of ['map-notebook','geo-tools'])if(other!==id)$(other).open=false;requestAnimationFrame(()=>map?.resize());});
+  window.addEventListener('survie-map-ready',()=>{map=window.SurvieMap;updateMap();if(activeRoute)map.route(activeRoute.geometry);});
+  if(window.SurvieMap)map=window.SurvieMap;
+  load();
+})();

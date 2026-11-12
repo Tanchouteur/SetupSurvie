@@ -49,3 +49,5 @@ du contrôleur. Les téléchargements utilisent les vérifications du préparate
 ils n’ajoutent aucun outil Internet à l’assistant et ne démarrent aucun modèle.
 
 Le pilote 0.1.10 ajoute les [lieux de référence et outils géographiques locaux](../utilisation/parametres-et-cartes.md) : réglages privés dans SQLite, données OSM/HGT dans `library/maps/geography`, préparation par le contrôleur hôte, recherche et relief sans Internet après préparation.
+
+Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](../utilisation/points-et-itineraires.md), avec consultation mobile et préparation sur ordinateur.

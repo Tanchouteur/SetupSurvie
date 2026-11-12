@@ -40,6 +40,8 @@ def refresh():
         print('Actualisé :',name,flush=True)
     # A library-only recovery may follow a reboot, when containers survived but
     # the host-side controller did not. Restore controls without starting Ollama.
+    import routing_prepare
+    if (lab.MOUNT/'data/library/maps/routing/current/manifest.json').is_file():routing_prepare.start_services(app,c,'lab')
     import control
     control.start(app,c,'lab')
 

@@ -23,7 +23,7 @@ VERSIONS = json.loads((ROOT / "deploy/versions.json").read_text(encoding="utf-8"
 PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
-             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN'}
+             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE'}
 DIRECTORIES = ("library/zim", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
@@ -154,6 +154,11 @@ class Installation:
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],
                   "WEBUI_ADMIN_PASSWORD": c["admin_password"], "CHAT_MODEL": c["chat_model"]}
         values['PILOT_CONTROL_TOKEN']=control_key(c)
+        routing_recipe=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8')) if (ROOT/'deploy/routing-engine.json').exists() else None
+        if routing_recipe:
+            entry=c.get('routing_image')
+            if entry and entry['reference']!=routing_recipe['image']:raise SetupError('Le moteur de routage a changé. Préparez ses données explicitement avant mise à jour.')
+            values['ROUTING_IMAGE']=entry['id'] if entry else routing_recipe['image']
         hosts=['localhost']
         values['TLS_FALLBACK_HOST']=c.get('lan_host','localhost')
         if c['bind']=='0.0.0.0':hosts.append(c.get('discovery_name','survie')+'.local')
@@ -188,6 +193,7 @@ class Installation:
             base += ["-f", str(ROOT / "compose.linux.yaml")]
             if not c["cpu"]:
                 base += ["-f", str(ROOT / "compose.gpu.yaml")]
+        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():base += ['--profile','routing']
         return base + list(args)
 
     def compose(self, c, *args, capture=False, timeout=None):
@@ -374,6 +380,7 @@ class Installation:
         paused=(self.work/'inference-paused.json').exists()
         self.start_native(c)
         services=['open-webui','kiwix','pilot','portal'] if paused else []
+        if paused and (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():services += ['router-foot','router-motorcycle','router-car']
         self.compose(c, "up", "-d", "--pull", "never", "--wait", "--wait-timeout", "420",*services)
         # Validate from the same network namespace as Open WebUI, not just from the host.
         script = "import os,urllib.request; print(urllib.request.urlopen(os.environ['OLLAMA_BASE_URL']+'/api/version',timeout=15).read().decode())"
@@ -484,6 +491,11 @@ class Installation:
         for service in names:
             item = json.loads(run(["docker", "image", "inspect", self.image_reference(c, service)], capture=True))[0]
             records.append({"service": service, "id": item["Id"], "reference": VERSIONS['images'][service]})
+        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():
+            reference=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8'))['image']
+            routing_entry=c.get('routing_image')
+            item=json.loads(run(['docker','image','inspect',routing_entry['id'] if routing_entry else reference],capture=True))[0]
+            records.append({'service':'routing','id':item['Id'],'reference':reference})
         dest.parent.mkdir(parents=True, exist_ok=True)
         run(["docker", "image", "save", "-o", dest, *[r["id"] for r in records]])
         write_json(Path(str(dest) + ".json"), {"images": records, "sha256": file_hash(dest),
@@ -504,6 +516,10 @@ class Installation:
         for name in expected:
             if entries[name]['reference'] != VERSIONS['images'][name]:
                 raise SetupError('Le kit ne correspond pas aux versions de ce dépôt.')
+        if 'routing' in entries:
+            reference=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8'))['image']
+            if entries['routing']['reference']!=reference:raise SetupError('Le kit contient un moteur de routage différent.')
+            expected.add('routing')
         run(['docker', 'image', 'load', '-i', source])
         for name in expected:
             entry = entries[name]
@@ -511,7 +527,8 @@ class Installation:
             if actual['Id'] != entry['id']:
                 raise SetupError('ID d’image invalide après chargement.')
         # `docker save/load` need not retain RepoDigests. Local immutable IDs avoid a network lookup.
-        c['local_images'] = {name: entries[name] for name in expected}
+        c['local_images'] = {name: entries[name] for name in expected if name!='routing'}
+        if 'routing' in expected:c['routing_image']=entries['routing']
         write_json(self.settings_path, c, private=True)
         self.render(c)
         print('Images importées et identifiants locaux enregistrés. Aucun service démarré.')
