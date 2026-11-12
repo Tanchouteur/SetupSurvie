@@ -11,7 +11,7 @@ sur les précisions ci-dessous.
 | Usages | Bibliothèque familiale, assistant local, enseignement et préparation aux services dégradés ; aucun sinistre présumé |
 | PC de Louis | Linux Bazzite, Ryzen 9, RTX 2060 **6 Go**, 32 Go RAM ; laboratoire de développement |
 | PC de Marc | Windows, RTX 5060 **8 Go**, **32 Go RAM** ; préserver ses usages habituels |
-| Budget documentaire | **500 Go décimaux**, hors modèles et caches d’essai ; les mêmes documents du kit ne comptent pas deux fois |
+| Budget documentaire | **Aucun plafond logiciel chez Marc** ; laboratoire de Louis limité à 500 Go décimaux hors modèles et caches. Marc vise le fonds utile complet, préparé directement chez lui si nécessaire (Louis, 12 novembre 2026) |
 | Stockage du laboratoire | SSD de 4 To ; image de 590 milliards d’octets, sous le plafond global de **600 Go**, avec au moins 15 Go libres |
 | Accès local | Nom demandé **survie.local**, accès par IP et QR code maintenus ; mDNS à tester sur les clients |
 | Interfaces | Portail et Open WebUI conservés ; mêmes comptes, historiques distincts |

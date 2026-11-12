@@ -56,9 +56,33 @@ class LibraryJobTests(unittest.TestCase):
             with self.assertRaises(setup.SetupError):self.manager.start('geography',{'lat':43,'lon':6,'radius_km':26})
             launch.assert_not_called()
 
+    def test_all_themes_and_unlimited_transfer_are_accepted(self):
+        with patch.object(jobs.subprocess,'Popen',return_value=MagicMock(pid=os.getpid())):
+            self.manager.start('plan',{'themes':list(jobs.kiwix_select.themes()),'max_add_gb':0})
+        self.assertEqual(len(self.manager.read()['options']['themes']),29)
+        self.assertEqual(self.manager.read()['options']['max_add_gb'],0)
+
+    def test_pdf_plan_updates_source_receipt_and_restarts_search_without_ollama(self):
+        state,folder=self.seed()
+        plan=json.loads((folder/'plan.json').read_text())
+        pdf={**self.item,'path':'library/guides/test.pdf','language':'fr','publisher':'Test',
+             'edition':'2026','licence':'Test fixture'}
+        plan['items']=[pdf];setup.write_json(folder/'plan.json',plan)
+        class Response(io.BytesIO):
+            status=200;headers={}
+            def geturl(inner):return pdf['url']
+        opener=MagicMock();opener.open.return_value=Response(self.raw)
+        with patch.object(content.urllib.request,'build_opener',return_value=opener), \
+             patch.object(self.app,'catalog'),patch.object(self.app,'compose') as compose:
+            self.manager.run(state['id'])
+        self.assertEqual(self.manager.read()['phase'],'completed')
+        receipt=content.catalog(Path(self.config['data_dir'])/'catalog/downloaded-content.json')
+        self.assertEqual(receipt,[pdf])
+        compose.assert_called_once_with(self.config,'restart','kiwix','pilot')
+
     def test_selection_is_validated_before_spawning_any_command(self):
         for body in [{'themes':['unknown']}, {'themes':['agriculture'],'max_add_gb':True},
-                     {'themes':['agriculture'],'max_add_gb':501}, {'themes':['agriculture'],'languages':['other']}]:
+                     {'themes':['agriculture'],'max_add_gb':-1}, {'themes':['agriculture'],'languages':['other']}]:
             with self.subTest(body=body), patch.object(jobs.subprocess, 'Popen') as launch:
                 with self.assertRaises(setup.SetupError):self.manager.start('plan', body)
                 launch.assert_not_called()

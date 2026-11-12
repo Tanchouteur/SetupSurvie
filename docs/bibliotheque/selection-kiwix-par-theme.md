@@ -1,4 +1,4 @@
-# Sélection automatique des collections Kiwix — pilote 0.1.9
+# Sélection automatique des collections Kiwix — pilote 0.1.15
 
 **Statut : guide de référence**, fonction implémentée et testée sur Linux.
 
@@ -6,6 +6,12 @@ L’administrateur peut choisir des archives du catalogue officiel Kiwix selon l
 thèmes demandés, en tenant compte des fichiers déjà installés. La sélection
 est accessible dans le portail et par les scripts de préparation. Aucun modèle
 IA n’intervient.
+
+## Fonds complet de Marc
+
+Voir le [guide de la bibliothèque complète](bibliotheque-complete-marc.md). `prepare --work-dir DOSSIER_PRIVE` sélectionne tous les thèmes et télécharge les ajouts en une commande. `select` prépare uniquement le plan. Tous les thèmes sont retenus par défaut en CLI ; les premières sélections du portail cochent aussi tous les thèmes. Les préférences précédemment enregistrées restent conservées.
+
+Le thème `fonds-general` ajoute tous les guides du catalogue figé et les encyclopédies FR/EN, y compris Wikipédia anglais. Les plans peuvent donc contenir des PDF et des ZIM. Les langues et éditions locales sont respectées ; la présence locale ne vaut pas une nouvelle vérification d'intégrité. Le téléchargeur enregistre les références effectivement vérifiées pour les futurs exports du kit.
 
 ## Depuis le site
 
@@ -35,7 +41,7 @@ Si une coupure a laissé un verrou de transfert, vérifier depuis le PC serveur
 que son processus propriétaire est arrêté avant de retirer ce verrou ; les
 fichiers partiels eux-mêmes doivent être conservés.
 
-À la fin, seul Kiwix est redémarré pour rendre les nouvelles archives disponibles.
+À la fin, Kiwix est redémarré pour rendre les nouvelles archives disponibles. Si le plan comprend des guides PDF, le pilote est aussi redémarré pour les indexer.
 Le pilote interroge son catalogue à chaque recherche ; il n’est pas nécessaire
 pour ces seuls ZIM de réindexer les PDF ou de démarrer Ollama. Cela ne remplit pas
 les collections Open WebUI. Une archive sans index plein texte reste signalée
@@ -54,8 +60,7 @@ python3 scripts/kiwix_select.py select --lab \
   --theme energie --max-add-gb 10
 ~~~
 
-Autres thèmes : eau, alimentation, sante, abri, reparation, communications,
-education, nature et orientation. `--theme tous` les regroupe. Les identifiants
+La commande `themes` donne les 29 catégories actuelles, dont élevage, pêche, plomberie, soudure, médicaments, risques, nautisme, champignons, sport et culture. `--theme tous` les regroupe. Les identifiants
 de commande s'écrivent sans accents. Français et anglais sont retenus par défaut ;
 `--language fr` limite aux collections déclarant le français, y compris les
 collections multilingues. Cela ne garantit pas que tout le contenu ou la piste
@@ -124,9 +129,7 @@ sélectionnée. Cela ne garantit pas l'identité des éditions ni l'absence de
 recoupements entre éditeurs différents. Les fichiers existants ne sont jamais
 supprimés. Leur présence ne constitue pas une nouvelle vérification SHA-256.
 
-Le plafond de nouveaux transferts est **10 Go par défaut**, réglable avec
-`--max-add-gb`. Il ne remplace ni les **500 Go documentaires**, ni la marge physique
-libre de **15 Go**, ni le plafond du volume du laboratoire. Les partiels comptent
+Hors laboratoire, il n’y a **aucun plafond documentaire ni plafond de transfert par défaut**. `--max-add-gb` limite volontairement les nouveaux transferts, `--budget-gb` limite volontairement le fonds total ; 0 signifie aucun plafond hors laboratoire. La marge physique libre de **15 Go** reste obligatoire. En mode `--lab`, les **500 Go documentaires** et le plafond physique du laboratoire restent appliqués. Les partiels comptent
 dans l'occupation et réduisent les octets restant à transférer. Les contrôles
 sont rejoués pendant le téléchargement. Les tailles OPDS étant arrondies, les
 tailles exactes des ajouts proviennent des Metalinks officiels.

@@ -24,7 +24,7 @@ def checked_entries(root,manifest,progress=None):
     return result
 
 
-def export_lab(destination,english=False):
+def export_lab(destination,english=True):
     import linux_lab as lab
     lab.checked_mount()
     dest=setup.safe_path(destination)
@@ -60,6 +60,8 @@ def export_lab(destination,english=False):
         copy(manifest,'payload/'+manifest.relative_to(data).as_posix())
         for layer in [parsed['config'],*parsed['layers']]:blobs.add(layer['digest'].replace(':','-'))
     for blob in sorted(blobs):copy(data/'models/blobs'/blob,'payload/models/blobs/'+blob)
+    receipt=data/'catalog/downloaded-content.json'
+    if receipt.is_file():copy(receipt,'payload/catalog/downloaded-content.json')
     for path in sorted((data/'library/zim').glob('*.zim')):
         if not english and path.name.startswith('wikipedia_en_'):continue
         copy(path,'payload/library/zim/'+path.name)
@@ -168,7 +170,7 @@ def refresh_app(root):
 
 
 def refresh_library(root,data):
-    """Add only pinned public catalogue items; never export mutable user state."""
+    """Add pinned and downloaded public items; never export mutable user state."""
     from delivery_paths import destination,locked
     root=setup.safe_path(root);data=setup.safe_path(data)
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
@@ -176,8 +178,11 @@ def refresh_library(root,data):
         manifest=json.loads((root/'manifest.json').read_text())
         records={entry['path']:entry for entry in manifest['files']}
         sources=[]
-        for item in json.loads((setup.ROOT/'deploy/content-catalog.json').read_text())['items']:
-            if item['id']=='wikipedia-en' and not manifest.get('english_wikipedia',False):continue
+        import content
+        public={i['path']:i for i in content.catalog()}
+        receipt=content.destination(data,'catalog/downloaded-content.json')
+        if receipt.exists():public.update({i['path']:i for i in content.catalog(receipt)})
+        for item in public.values():
             relative='payload/'+item['path'];existing=records.get(relative);dest=destination(root,relative)
             if existing and existing['bytes']==item['bytes'] and existing['sha256']==item['sha256'] and dest.is_file() and dest.stat().st_size==item['bytes']:continue
             path=destination(data,item['path'])
@@ -185,7 +190,12 @@ def refresh_library(root,data):
             if path.stat().st_size!=item['bytes'] or setup.file_hash(path)!=item['sha256']:raise setup.SetupError('Contenu source non vérifié : '+item['id'])
             sources.append((path,'payload/'+item['path'],item['sha256']))
         meta=destination(data,'library/guides/metadata.json')
-        if meta.is_file():sources.append((meta,'payload/library/guides/metadata.json',setup.file_hash(meta)))
+        if meta.is_file():
+            allowed={i['path'].removeprefix('library/guides/') for i in public.values() if i['path'].startswith('library/guides/')}
+            metadata=[i for i in json.loads(meta.read_text()) if i.get('path') in allowed]
+            public_meta=destination(root,'library-metadata-public.json')
+            setup.write_json(public_meta,metadata)
+            sources.append((public_meta,'payload/library/guides/metadata.json',setup.file_hash(public_meta)))
         missing=sum(p.stat().st_size for p,relative,digest in sources if relative not in records or records[relative]['sha256']!=digest)
         if shutil.disk_usage(root).free<missing+15_000_000_000:raise setup.SetupError('Marge libre insuffisante pour compléter le kit.')
         for source,relative,digest in sources:
@@ -195,13 +205,16 @@ def refresh_library(root,data):
                 if setup.file_hash(temporary)!=digest:raise setup.SetupError('Copie interrompue ou source modifiée.')
                 temporary.replace(dest)
             records[relative]={'path':relative,'bytes':dest.stat().st_size,'sha256':digest}
-        manifest['files']=list(records.values());setup.write_json(root/'manifest.json',manifest)
+        destination(root,'library-metadata-public.json').unlink(missing_ok=True)
+        manifest['files']=list(records.values())
+        manifest['english_wikipedia']=any(e['path'].startswith('payload/library/zim/wikipedia_en_all_') for e in records.values())
+        setup.write_json(root/'manifest.json',manifest)
     print('Bibliothèque du kit actualisée sans recopier les modèles ni les états personnels.')
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
-    p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action='store_true')
+    p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action=argparse.BooleanOptionalAction,default=True)
     p=subs.add_parser('verify');p.add_argument('kit')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)

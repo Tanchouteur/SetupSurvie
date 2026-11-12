@@ -23,7 +23,7 @@ class DownloadPaused(Exception):
     pass
 
 
-def check_capacity(root,missing=0,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_root=None):
+def check_capacity(root,missing=0,*,budget=None,reserve=15_000_000_000,storage_root=None):
     """Cap documents once; enforce physical free space separately from test models."""
     scope=Path(storage_root) if storage_root is not None else root
     if storage_root is not None:
@@ -34,7 +34,9 @@ def check_capacity(root,missing=0,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000
         disk=shutil.disk_usage(root)
     library=destination(root,'library')
     used=sum(p.stat().st_size for p in library.rglob('*') if p.is_file() and not p.is_symlink())
-    if used+missing>budget or disk.free<missing+reserve:
+    if storage_root is not None:
+        budget=min(budget if budget is not None else DEFAULT_BUDGET, DEFAULT_BUDGET)
+    if (budget is not None and used+missing>budget) or disk.free<missing+reserve:
         raise setup.SetupError('Budget documentaire ou marge physique insuffisants ; transfert arrêté sans publication.')
     return used
 
@@ -129,7 +131,7 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
     return 'downloaded'
 
 
-def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_root=None,cancelled=None):
+def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,cancelled=None):
     root=setup.safe_path(root)
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
@@ -150,6 +152,11 @@ def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_r
                 setup.write_json(root/'catalog/content-progress.json',{'id':item['id'],'status':'interrupted','message':'Relancer la même commande pour reprendre ; aucun fichier non vérifié publié.'})
                 raise
             results.append({'id':item['id'],'status':state})
+            receipt=destination(root,'catalog/downloaded-content.json')
+            published={i['path']:i for i in catalog(receipt)} if receipt.exists() else {}
+            published={path:entry for path,entry in published.items() if entry['id']!=item['id']}
+            published[item['path']]=item
+            setup.write_json(receipt,{'schema':1,'items':list(published.values())})
             if item['path'].startswith('library/guides/'):
                 meta=root/'library/guides/metadata.json'
                 if meta.is_symlink():raise setup.SetupError('Métadonnées liées refusées.')
@@ -175,7 +182,7 @@ def install_templates(root):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['list','download','clean-partials']);p.add_argument('--data-dir');p.add_argument('--pack',action='append',default=[]);p.add_argument('--id',action='append',default=[])
-    p.add_argument('--budget-gb',type=int,default=500);p.add_argument('--work-dir')
+    p.add_argument('--budget-gb',type=int,default=0,help='0 : pas de plafond documentaire hors laboratoire.');p.add_argument('--work-dir')
     p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
@@ -185,7 +192,6 @@ def main():
         plan=json.loads(args.selection.read_text(encoding='utf-8'))
         if plan.get('schema')!=1 or plan.get('kind')!='SetupSurvie Kiwix thematic selection':p.error('Plan de sélection Kiwix non reconnu.')
         items=catalog(args.selection);selected=items
-        if any(not i['path'].startswith('library/zim/') for i in items):p.error('Le plan Kiwix doit contenir uniquement des archives ZIM.')
     else:
         items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
     if args.action=='list':
@@ -212,9 +218,11 @@ def main():
         with locked(destination(root,'catalog/content.lock')):
             for i in selected:destination(root,i['path']+'.part').unlink(missing_ok=True)
         print('Seuls les téléchargements partiels sélectionnés ont été supprimés.');return
-    if not 1<=args.budget_gb<=600:p.error('Budget entre 1 et 600 Go.')
-    download(root,selected,budget=args.budget_gb*1_000_000_000,storage_root=storage_root)
-    check_capacity(root,100_000,budget=args.budget_gb*1_000_000_000,storage_root=storage_root)
+    if args.budget_gb<0:p.error('Budget positif ou 0 pour aucun plafond.')
+    budget=args.budget_gb*1_000_000_000 or None
+    if storage_root is not None:budget=min(budget if budget is not None else DEFAULT_BUDGET,DEFAULT_BUDGET)
+    download(root,selected,budget=budget,storage_root=storage_root)
+    check_capacity(root,100_000,budget=budget,storage_root=storage_root)
     install_templates(root)
     if args.no_refresh:
         print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')

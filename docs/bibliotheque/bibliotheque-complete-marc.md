@@ -1,0 +1,52 @@
+# Bibliothèque complète de Marc et laboratoire réduit
+
+**Guide de référence — pilote 0.1.15, 12 novembre 2026.** Besoin confirmé par Louis : Marc souhaite le fonds utile le plus complet possible ; son installation ne possède aucun plafond documentaire logiciel. Le laboratoire de Louis peut conserver une sélection plus petite.
+
+## Préparer directement chez Marc
+
+Installer le kit et ses prérequis selon le [guide Marc](../installation/pilote-marc.md), puis utiliser le logiciel 0.1.15 ou ultérieur. Le kit existant ne se complète pas simplement parce que le code change. Avec Internet sur le PC de Marc :
+
+```powershell
+cd D:\SetupSurvie\application
+py -3 scripts\kiwix_select.py prepare --work-dir D:\SetupSurvie\prive
+```
+
+Cette commande sélectionne puis télécharge les ajouts sans confirmation supplémentaire. Elle inclut tous les thèmes, les guides du catalogue figé et les encyclopédies françaises et anglaises, avec dédoublonnage des collections locales. Elle conserve chaque plan daté sous `donnees/catalog/`, vérifie les tailles et SHA-256, puis actualise Kiwix et le pilote. Aucun modèle n'est téléchargé ou interrogé, aucune pause IA n'est levée.
+
+Le plafond documentaire est absent sur cette installation. La place réellement libre et une réserve de **15 Go** restent obligatoires. Si tout ne tient pas, les fichiers exclus par capacité sont indiqués dans le plan ; il faut davantage de stockage pour les ajouter. Le fonds n'est pas garanti exhaustif sur tous les sites Internet : la découverte porte sur le catalogue officiel Kiwix et les guides explicitement référencés du projet, en français et anglais par défaut.
+
+En cas d'interruption, reprendre le plan enregistré, avec son chemin exact affiché par la commande :
+
+```powershell
+py -3 scripts\content.py download --work-dir D:\SetupSurvie\prive --selection D:\SetupSurvie\donnees\catalog\kiwix-selection-DATE.json
+```
+
+Le téléchargement reprend les partiels et conserve les fichiers différents. Pour chercher sans télécharger, utiliser `select` au lieu de `prepare`. Pour un transfert sans redémarrage des services, ajouter `--no-refresh` à `prepare` ou au téléchargeur.
+
+Depuis **Données locales → Enrichir la bibliothèque**, les nouvelles sélections proposent tous les thèmes et « Tout ce qui tient sur le disque ». Les choix d'une opération précédente restent conservés : cocher les nouveaux thèmes et choisir ce maximum pour étendre une ancienne sélection. Le parcours conserve les boutons de recherche, téléchargement, pause et reprise.
+
+## Sujets recherchés
+
+Les 29 catégories couvrent autonomie, préparation aux coupures, chasse, pêche et chasse sous-marine, agriculture et fruitiers, élevage et apiculture, eau et hygiène, alimentation et conservation, santé et secours, médicaments et toxicologie, énergies et électricité, plomberie, isolation et chauffage, abris et construction, mécanique et réparation, soudure, gaz et carburants, nuisibles, communications, nature et botanique, champignons, bushcraft et vannerie, navigation et météo, risques et protections NRBC, sport, enseignement, culture, histoire, religions et loisirs. Les termes incluent aussi la préparation civile, guerre civile et siège.
+
+Une correspondance désigne une collection entière ; elle ne valide pas chaque article ni la couverture de toutes les espèces, techniques, médicaments, compléments, armes ou équipements. Les ressources médicales professionnelles, ouvrages anciens et forums restent à examiner. Les droits de redistribution commerciale restent à vérifier.
+
+Le catalogue officiel consulté le 12 novembre contient **3 657 entrées**. Les nouvelles règles ne repèrent aucune collection spécialisée FR/EN pour chasse, pêche, plomberie, soudure, carburants, nuisibles, médicaments, risques ou champignons. Cela n'exclut pas des chapitres dans les collections générales ou les PDF déjà présents. Ces lacunes nécessitent des manuels dédiés, vérifiés puis ajoutés au catalogue figé ; aucun fichier ou SHA-256 n'est inventé pour les masquer.
+
+## Laboratoire et kit de transport
+
+`--lab` conserve le montage SSD obligatoire, le plafond de **500 Go documentaires**, la marge de 15 Go et les contrôles physiques du laboratoire sous 600 Go. Même `--budget-gb 0` ou un budget supérieur ne lève pas ce plafond en mode laboratoire. Pour un échantillon réduit :
+
+```bash
+python3 scripts/kiwix_select.py prepare --lab --theme autonomie --theme agriculture --max-add-gb 10 --no-refresh
+```
+
+Le kit ne doit pas imposer sa taille à Marc. Un nouvel export inclut désormais Wikipédia anglais lorsqu'il est présent ; `--no-english-wikipedia` permet encore un transport volontairement réduit. `refresh-library` ajoute les contenus publics disponibles du catalogue figé, y compris Wikipédia anglais, ainsi que les collections enregistrées par le téléchargeur dans `catalog/downloaded-content.json`. Les sources sont vérifiées avant copie ; les comptes et modèles existants ne sont pas remplacés. La préparation et les contrôles restent dans le [guide du kit](../installation/preparer-kit-hors-ligne.md).
+
+Pour éviter une deuxième copie volumineuse sur le SSD limité du laboratoire, préparer les compléments directement chez Marc. Les données supplémentaires chez lui n'ont pas à être téléchargées également chez Louis.
+
+## Vérifications et limites
+
+Suite locale : **149 tests, 148 réussites et un test COM Windows ignoré sur Linux** ; configuration Compose contrôlée sans démarrage. Tests sur le runner CPU, avec fichiers minuscules : sélection au-delà de 500 Go hors laboratoire, plafond laboratoire maintenu, réserve physique, sélection des guides et de Wikipédia anglais sans doublon, respect des langues, export d'une nouvelle collection et refus d'une source corrompue. Parcours Playwright avec API simulée : 29 thèmes, absence de plafond, préparation, téléchargement, pause et affichage de 320 à 1 366 pixels.
+
+Aucun corpus, modèle, ZIM ou carte lourde téléchargé dans le runner. Le catalogue distant a été consulté pour ses métadonnées uniquement. Cette livraison ne constitue ni une actualisation physique du kit SSD, ni un téléchargement chez Marc, ni un essai Windows ou iPhone réel.

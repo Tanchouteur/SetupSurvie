@@ -44,6 +44,65 @@ class KiwixSelectionTests(unittest.TestCase):
             return ks.select(entries, self.root, list(requested), reserve=0,
                              reader=lambda url, **kw: self.metalink(by_url[url]), **kwargs)
 
+    def test_marc_can_select_more_than_500gb_but_lab_remains_bounded(self):
+        from collections import namedtuple
+        usage=namedtuple('Usage','total used free')(2_000_000_000_000,0,2_000_000_000_000)
+        entry=self.entry(estimated_bytes=550_000_000_000)
+        with patch.object(ks.shutil,'disk_usage',return_value=usage):
+            plan=self.plan([entry])
+            self.assertEqual(len(plan['items']),1)
+            self.assertIsNone(plan['budget_bytes'])
+            with patch.object(Path,'is_mount',return_value=True):
+                plan=self.plan([entry],storage_root=self.root)
+                self.assertEqual(plan['budget_bytes'],500_000_000_000)
+                self.assertFalse(plan['items'])
+                with self.assertRaises(setup.SetupError):
+                    content.check_capacity(self.root,550_000_000_000,storage_root=self.root,budget=900_000_000_000,reserve=0)
+            content.check_capacity(self.root,550_000_000_000,reserve=0)
+            with self.assertRaises(setup.SetupError):
+                content.check_capacity(self.root,2_000_000_000_000,reserve=15_000_000_000)
+
+    def test_full_fund_adds_pinned_pdf_and_english_wikipedia_without_duplicates(self):
+        wiki=self.entry(name='wikipedia_en_all',title='Wikipedia')
+        pinned={'id':'wikipedia-en','title':'Wikipedia anglais','language':'en',
+                'path':'library/zim/'+wiki['filename'],'bytes':len(self.raw),'sha256':self.digest,
+                'url':wiki['meta4'].removesuffix('.meta4')}
+        pdf={**pinned,'id':'guide','title':'Guide eau','path':'library/guides/water.pdf','language':'fr'}
+        with patch.object(content,'catalog',return_value=[pdf,pinned]):
+            plan=ks.select([wiki],self.root,['fonds-general'],reserve=0,
+                           reader=lambda *a,**k:self.fail('Pinned edition already selected'))
+        self.assertEqual([i['id'] for i in plan['items']],['guide','wikipedia-en'])
+        self.assertEqual(plan['candidates'][-1]['status'],'covered_by_full_collection')
+        with patch.object(content,'catalog',return_value=[pdf,pinned]):
+            plan=ks.select([],self.root,['fonds-general'],languages=('fra',),reserve=0)
+        self.assertEqual([i['id'] for i in plan['items']],['guide'])
+
+    def test_new_marc_subjects_match_specialized_metadata(self):
+        examples={'elevage':'Livestock and beekeeping','peche':'Spearfishing and angling',
+                  'soudure':'MIG and TIG welding','nautisme':'Seamanship and meteorology',
+                  'champignons':'Mushroom cultivation','risques':'Civil protection and CBRN',
+                  'culture':'History and religion','sport':'Strength training',
+                  'plomberie':'Plumbing','nuisibles':'Pest control'}
+        for theme,title in examples.items():
+            with self.subTest(theme=theme):
+                self.assertIn(theme,ks.matches(self.entry(title=title),ks.themes(),[theme]))
+
+    def test_prepare_downloads_saved_plan_without_manual_second_command(self):
+        from unittest.mock import MagicMock
+        raw=b'<feed xmlns="http://www.w3.org/2005/Atom"><totalResults>0</totalResults></feed>'
+        output=self.root/'selection.json'
+        with patch.object(sys,'argv',['kiwix_select.py','prepare','--data-dir',str(self.root),'--output',str(output),'--no-refresh']), \
+             patch.object(ks,'fetch',return_value=raw), patch.object(content,'catalog',return_value=[]), \
+             patch.object(ks.subprocess,'run',return_value=MagicMock(returncode=0)) as run:
+            ks.main()
+        plan=json.loads(output.read_text())
+        self.assertEqual(set(plan['themes']),set(ks.themes()))
+        self.assertIsNone(plan['budget_bytes'])
+        command=run.call_args.args[0]
+        self.assertIn('--no-refresh',command)
+        self.assertEqual(command[command.index('--budget-gb')+1],'0')
+        self.assertEqual(command[command.index('--selection')+1],str(output))
+
     def test_parse_official_feed_and_reject_incomplete_catalog(self):
         raw = b'''<feed xmlns="http://www.w3.org/2005/Atom"><totalResults>1</totalResults><entry>
         <name>appropedia_en_all</name><title>Appropedia</title><language>eng,fra</language>

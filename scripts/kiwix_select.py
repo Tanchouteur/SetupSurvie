@@ -4,6 +4,8 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
+import subprocess
 from pathlib import Path
 import re
 import shutil
@@ -150,8 +152,8 @@ def pin(entry, reasons, reader=fetch):
             'videos': '_videos:yes' in entry['tags']}
 
 
-def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000_000_000,
-           budget=content.DEFAULT_BUDGET, reserve=15_000_000_000, storage_root=None, reader=fetch):
+def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
+           budget=None, reserve=15_000_000_000, storage_root=None, reader=fetch):
     rules = themes()
     if not requested or set(requested) - rules.keys():
         raise setup.SetupError('Choisir un thème présent dans la commande themes.')
@@ -162,7 +164,10 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000
             local_families.setdefault(family(Path(item['path']).name), []).append(item['path'])
     used = content.check_capacity(root, budget=budget, reserve=reserve, storage_root=storage_root)
     free = shutil.disk_usage(storage_root or root).free
-    available = max(0, min(max_add, budget - used, free - reserve))
+    if storage_root is not None:
+        budget=min(budget if budget is not None else content.DEFAULT_BUDGET, content.DEFAULT_BUDGET)
+    available = max(0, min(max_add if max_add is not None else free,
+                           budget - used if budget is not None else free, free - reserve))
     candidates = {}
     for entry in entries:
         reasons = matches(entry, rules, requested)
@@ -174,7 +179,33 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000
         if key not in candidates or rank > candidates[key][0]:
             candidates[key] = (rank, entry, reasons)
     records = []; items = []; added = 0
-    full_available = dict(local_families)
+    planned_families = {}
+    if 'fonds-general' in requested:
+        for item in content.catalog():
+            if not set(item['language'].split(',')).intersection(set(languages) | {'fr' if 'fra' in languages else '', 'en' if 'eng' in languages else '', 'mul'}):
+                continue
+            path=content.destination(root,item['path'])
+            part=content.destination(root,item['path']+'.part')
+            record={'title':item['title'],'filename':Path(item['path']).name,'themes':['fonds-general'],
+                    'bytes':item['bytes'],'estimated_bytes':item['bytes'],'fulltext_index':not item['path'].endswith('.zim')}
+            records.append(record)
+            if path.exists():
+                record['status']='already_local' if path.stat().st_size==item['bytes'] else 'existing_conflict'
+                continue
+            if path.suffix=='.zim' and family(path.name) in local_families:
+                record.update(status='already_local',local_paths=local_families[family(path.name)])
+                continue
+            partial_size=part.stat().st_size if part.exists() else 0
+            if partial_size>item['bytes']:
+                record['status']='partial_conflict';continue
+            missing=item['bytes']-partial_size
+            if added+missing>available:
+                record['status']='budget_excluded';continue
+            record.update(status='selected',remaining_bytes=missing)
+            items.append(item);added+=missing
+            if item['path'].endswith('.zim'):
+                planned_families[family(path.name)]=[item['path']]
+    full_available = {**local_families, **planned_families}
     # Practical mapped collections before loose keyword matches (e.g. TED talks),
     # then primary French language and smaller additions.
     ranked = sorted(candidates.values(), key=lambda x: (
@@ -189,6 +220,9 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000
         records.append(record)
         if family(entry['filename']) in local_families:
             record.update(status='already_local', local_paths=local_families[family(entry['filename'])])
+            continue
+        if family(entry['filename']) in planned_families:
+            record.update(status='covered_by_full_collection', collection_paths=planned_families[family(entry['filename'])])
             continue
         parent = full_collection(entry['filename'])
         if parent in full_available:
@@ -235,25 +269,26 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['themes', 'select'])
-    parser.add_argument('--theme', action='append', default=[], help='Répéter ou utiliser tous.')
+    parser.add_argument('action', choices=['themes', 'select', 'prepare'])
+    parser.add_argument('--theme', action='append', default=[], help='Tous les thèmes par défaut ; répéter pour limiter.')
     parser.add_argument('--language', action='append', choices=['fr', 'en'], help='Français et anglais par défaut.')
     parser.add_argument('--lab', action='store_true')
     parser.add_argument('--work-dir'); parser.add_argument('--data-dir')
     parser.add_argument('--feed', type=Path, help='Catalogue XML déjà sauvegardé ; Metalink en ligne pour les ajouts.')
     parser.add_argument('--output', type=Path, help='Plan JSON ; par défaut donnees/catalog/kiwix-selection.json.')
-    parser.add_argument('--max-add-gb', type=float, default=10, help='Plafond de nouveaux téléchargements, 10 Go par défaut.')
-    parser.add_argument('--budget-gb', type=int, default=500)
+    parser.add_argument('--max-add-gb', type=float, default=0, help='0 : tous les ajouts qui tiennent sur le disque.')
+    parser.add_argument('--budget-gb', type=int, default=0)
+    parser.add_argument('--no-refresh', action='store_true', help='prepare : transférer sans redémarrer les services.')
     args = parser.parse_args()
     if args.action == 'themes':
         for name, rule in themes().items():
             print(name + ' : ' + rule['label'])
         return
-    requested = list(themes()) if args.theme == ['tous'] else list(dict.fromkeys(args.theme))
+    requested = list(themes()) if not args.theme or args.theme == ['tous'] else list(dict.fromkeys(args.theme))
     if not requested or set(requested) - themes().keys():
         parser.error('Choisir --theme parmi themes, ou --theme tous.')
-    if not 0 <= args.max_add_gb <= 500 or not 1 <= args.budget_gb <= 600:
-        parser.error('Budget invalide (ajout : 0 à 500 Go ; bibliothèque : 1 à 600 Go).')
+    if not math.isfinite(args.max_add_gb) or args.max_add_gb < 0 or args.budget_gb < 0:
+        parser.error('Budget positif ou 0 pour aucun plafond hors laboratoire.')
     storage_root = None
     if args.lab:
         import linux_lab as lab
@@ -271,14 +306,15 @@ def main():
         parser.error('--lab, --work-dir ou --data-dir requis.')
     if not root.is_dir():
         parser.error('Dossier de données existant requis.')
-    content.check_capacity(root, storage_root=storage_root, budget=args.budget_gb * 1_000_000_000)
+    content.check_capacity(root, storage_root=storage_root, budget=args.budget_gb * 1_000_000_000 or None)
     raw = args.feed.read_bytes() if args.feed else fetch(CATALOG_URL)
     entries = parse_feed(raw)
-    output = args.output or content.destination(root, 'catalog/kiwix-selection.json')
+    filename='kiwix-selection-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')+'.json' if args.action=='prepare' else 'kiwix-selection.json'
+    output = args.output or content.destination(root, 'catalog/'+filename)
     if output.is_symlink() or output.exists():
         raise setup.SetupError('Le plan existe déjà ; choisir un autre --output pour le conserver.')
     report = select(entries, root, requested, languages=tuple(LANGUAGES[l] for l in (args.language or ['fr', 'en'])),
-                    max_add=int(args.max_add_gb * 1_000_000_000), budget=args.budget_gb * 1_000_000_000,
+                    max_add=int(args.max_add_gb * 1_000_000_000) or None, budget=args.budget_gb * 1_000_000_000 or None,
                     storage_root=storage_root)
     report['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
     setup.write_json(output, report)
@@ -293,7 +329,13 @@ def main():
     for theme in report['missing_themes']:
         print('Aucune collection spécialisée repérée pour :', theme)
     print('Plan enregistré :', output)
-    print('Aucune archive téléchargée. Utiliser content.py download --selection avec ce plan.')
+    if args.action=='prepare':
+        command=[sys.executable,str(setup.ROOT/'scripts/content.py'),'download','--selection',str(output),'--budget-gb',str(args.budget_gb)]
+        command+=['--lab'] if args.lab else ['--work-dir',args.work_dir] if args.work_dir else ['--data-dir',str(root)]
+        if args.no_refresh:command.append('--no-refresh')
+        if subprocess.run(command).returncode:raise setup.SetupError('Préparation interrompue ; reprendre le plan avec content.py download --selection.')
+    else:
+        print('Aucun contenu téléchargé. Utiliser content.py download --selection avec ce plan.')
 
 
 if __name__ == '__main__':

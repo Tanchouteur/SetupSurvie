@@ -12,6 +12,10 @@ Pour comparer : nouvelle conversation, même question et mêmes documents, puis 
 
 L’assistant du site peut rechercher et lire les documents locaux, calculer et convertir des unités. Open WebUI reste disponible pour ses conversations, dossiers et collections documentaires. **Même compte, historiques distincts** : les conversations créées dans une interface ne sont pas recopiées dans l’autre. Le site fournit un lien visible vers Open WebUI. Les outils du site et ceux d’Open WebUI ne sont pas identiques ; le connecteur Kiwix et le calculateur du site ne sont pas automatiquement des outils natifs Open WebUI.
 
+## Fonds complet souhaité par Marc
+
+Depuis 0.1.15, aucun plafond documentaire logiciel chez Marc. Le kit existant reste une sélection réduite ; compléter directement sur son PC avec la [préparation automatique du fonds complet](../bibliotheque/bibliotheque-complete-marc.md). Les limites de taille du laboratoire de Louis ne fixent pas le contenu cible de Marc.
+
 ## Avant de copier le kit
 
 Le PC de Marc ne dispose actuellement d’aucun prérequis. Pour le pilote accompagné,
@@ -24,7 +28,7 @@ Un installateur système hors ligne complet reste hors du périmètre de ce pilo
 - Windows 11 à jour, pilote NVIDIA compatible avec la RTX 5060, Python 3.11 à 3.15 (x64), Docker Desktop utilisant les conteneurs Linux et Ollama Windows. La référence Ollama du projet est dans `deploy/versions.json` ; relever toute différence pour les comparaisons. [GPU pris en charge par Ollama](https://github.com/ollama/ollama/blob/main/docs/gpu.mdx).
 - Vérifier la quantité de RAM et l’espace libre. Les modèles de 27B peuvent utiliser beaucoup de RAM et rester lents avec 8 Go de VRAM. Le pilote doit permettre de les annuler.
 - Docker Desktop doit être configuré pour placer son disque virtuel sur le SSD de données choisi ; le paquet ne déplace pas automatiquement un disque Docker existant.
-- Le kit contient les images de services, les sept modèles, BGE-M3, Whisper et les archives sélectionnées. Le kit initial exclut la très grosse Wikipédia anglaise ; Wikipédia français et Wikilivres français/anglais sont inclus. Wikipédia anglaise reste disponible sur le PC de Louis et peut être transférée séparément.
+- Le kit contient les images de services, les sept modèles, BGE-M3, Whisper et les archives sélectionnées. Le kit initial, constaté en 0.1.14, exclut la très grosse Wikipédia anglaise ; Wikipédia français et Wikilivres français/anglais sont inclus. Wikipédia anglaise reste disponible sur le PC de Louis. Les nouveaux exports 0.1.15 l’incluent par défaut lorsqu’elle est présente ; elle peut aussi être téléchargée directement chez Marc.
 - Depuis le kit 0.1.14 : deux fonds PMTiles (Sud et Solliès-Ville), lieux, adresses et relief autour du centre public de Solliès-Ville sur 10 km, trois graphes de trajet (marche, moto, voiture) et leur image OSRM. Ces données ne couvrent pas les trajets dans toute la France. Voir la [préparation et vérification du kit](preparer-kit-hors-ligne.md).
 - Le kit ne contient aucun compte, mot de passe, historique ni certificat privé de Louis. Les réglages et identifiants de Marc sont créés à l’installation.
 

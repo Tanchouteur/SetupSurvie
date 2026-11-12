@@ -238,7 +238,7 @@ async function loadContentManager(){
   try{
     const data=await api('/admin/library');if(S.user?.role!=='admin'||S.view!=='data')return;
     if(!contentInitialized){
-      $('content-themes').replaceChildren();const defaults=data.options?.themes||['autonomie','survie','agriculture','energie'];
+      $('content-themes').replaceChildren();const defaults=data.options?.themes||data.themes.map(t=>t.id);
       for(const theme of data.themes){const label=element('label'),input=element('input');input.type='checkbox';input.name='theme';input.value=theme.id;input.checked=defaults.includes(theme.id);label.append(input,element('span',theme.label));$('content-themes').append(label);}
       if(data.options?.themes){$('content-languages').value=data.options.languages.join(',');const budget=$('content-budget');if(![...budget.options].some(o=>Number(o.value)===data.options.max_add_gb)){const option=element('option',data.options.max_add_gb+' Go');option.value=data.options.max_add_gb;budget.append(option);}budget.value=data.options.max_add_gb;}
       contentInitialized=true;

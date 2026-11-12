@@ -2,6 +2,7 @@
 
 | Document | Statut et rôle |
 | --- | --- |
+| [Bibliothèque complète de Marc](bibliotheque-complete-marc.md) | Guide actuel : tous les thèmes et fonds de base, sans plafond chez Marc ; laboratoire réduit et plafonné |
 | [Where There Is No Doctor](where-there-is-no-doctor.md) | Guide d’ajout et recette : édition 2025 complète, 32 PDF, 503 pages, recherche et IA vérifiées |
 | [Sélection Kiwix par thème](selection-kiwix-par-theme.md) | Guide actuel : inventaire local, choix des collections, plan figé et téléchargement contrôlé |
 | [Inventaire des ressources](inventaire-ressources-telechargees.md) | Constat du 11 novembre 2026 : 10 archives, 68 PDF et 2 cartes ; aucune nouvelle vérification physique lors du classement documentaire |
@@ -10,7 +11,8 @@
 | [Bibliothèque du Sud, recherche et IA](../essais/bibliotheque-sud-recherche-et-ia.md) | Bilan de la livraison 0.1.7 : cartes, recherche, provenance et limites |
 | [Ajouter des contenus](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#télécharger-des-lots-sans-réinstaller) | Procédure pour les lots figés, reprise, intégrité et budget |
 
-Le budget retenu est **500 Go documentaires**, hors modèles IA et caches d’essai.
+Depuis le 12 novembre 2026, **aucun plafond documentaire logiciel chez Marc**.
+Les **500 Go documentaires** concernent le laboratoire de Louis, hors modèles IA et caches d’essai.
 Il reste distinct de l’espace physique disponible et du plafond global du
 laboratoire. Les mêmes documents ne sont pas comptés deux fois dans le budget du
 kit ; une copie supplémentaire utilise néanmoins de l’espace réel.

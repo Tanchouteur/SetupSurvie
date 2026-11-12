@@ -58,12 +58,14 @@ def main():
             context.route('**/*',route)
             page=context.new_page();page.on('pageerror',lambda error:errors.append(str(error)))
             page.goto(base+'/#data');page.wait_for_selector('#content-themes input',state='attached')
+            assert page.locator('#content-themes input:checked').count()==len(themes)
+            assert page.locator('#content-budget').input_value()=='0'
             assert not page.locator('#content-manager').evaluate('e=>e.open')
             assert page.locator('#software-version').inner_text()=='Version d’essai 0.1.9'
             page.locator('#content-manager>summary').click()
             for width in (1366,768,390,320):
                 page.set_viewport_size({'width':width,'height':900})
-                assert page.locator('#content-themes input').count()==14
+                assert page.locator('#content-themes input').count()==len(themes)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(engine,width)
                 assert page.locator('#content-plan').is_enabled()
                 report.append({'engine':engine,'width':width,'no_overflow':True})
@@ -72,7 +74,7 @@ def main():
             assert 'Chasse' in page.locator('#content-gaps').inner_text()
             # Changing the choices requires a new plan rather than downloading old choices.
             page.locator('#content-budget').select_option('5');assert page.locator('#content-download').is_disabled()
-            page.locator('#content-budget').select_option('10');assert page.locator('#content-download').is_enabled()
+            page.locator('#content-budget').select_option('0');assert page.locator('#content-download').is_enabled()
             page.locator('#content-download').click();page.wait_for_selector('#content-pause:visible')
             assert page.locator('#content-progress').is_visible()
             page.reload();page.wait_for_selector('#content-themes input',state='attached')

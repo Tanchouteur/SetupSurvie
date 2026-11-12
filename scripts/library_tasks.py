@@ -112,12 +112,12 @@ class Manager:
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'plan':
             requested = body.get('themes')
-            size = body.get('max_add_gb', 10)
+            size = body.get('max_add_gb', 0)
             languages = body.get('languages', ['fr', 'en'])
-            if not isinstance(requested, list) or not requested or len(requested) > 14 or any(not isinstance(t, str) or t not in kiwix_select.themes() for t in requested):
+            if not isinstance(requested, list) or not requested or len(requested) > len(kiwix_select.themes()) or any(not isinstance(t, str) or t not in kiwix_select.themes() for t in requested):
                 raise setup.SetupError('Choisissez au moins un thème proposé.')
-            if type(size) is not int or not 1 <= size <= 500:
-                raise setup.SetupError('Le plafond de téléchargement doit être compris entre 1 et 500 Go.')
+            if type(size) is not int or size < 0:
+                raise setup.SetupError('Le plafond de téléchargement doit être positif, ou 0 pour tous les ajouts possibles.')
             if not isinstance(languages, list) or not languages or any(l not in ('fr', 'en') for l in languages):
                 raise setup.SetupError('Choisissez le français, l’anglais ou les deux.')
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': {
@@ -192,7 +192,7 @@ class Manager:
                 options = state['options']
                 plan = kiwix_select.select(kiwix_select.parse_feed(raw), root, options['themes'],
                     languages=tuple(kiwix_select.LANGUAGES[l] for l in options['languages']),
-                    max_add=options['max_add_gb'] * 1_000_000_000, storage_root=scope, reader=reader)
+                    max_add=options['max_add_gb'] * 1_000_000_000 or None, storage_root=scope, reader=reader)
                 check(); plan['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
                 setup.write_json(folder / 'plan.json', plan, private=True)
                 update('planned', 'Sélection prête. Vérifiez les ajouts proposés avant de télécharger.')
@@ -206,9 +206,9 @@ class Manager:
                 self.app.catalog(self.config)
                 if self.backend == 'lab':
                     import linux_lab as lab
-                    lab.podman('restart', lab.PREFIX + 'kiwix', capture=True)
+                    lab.podman('restart', lab.PREFIX + 'kiwix', *([lab.PREFIX+'pilot'] if any(i['path'].startswith('library/guides/') for i in items) else []), capture=True)
                 else:
-                    self.app.compose(self.config, 'restart', 'kiwix')
+                    self.app.compose(self.config, 'restart', 'kiwix', *(['pilot'] if any(i['path'].startswith('library/guides/') for i in items) else []))
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
             update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')

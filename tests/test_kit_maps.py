@@ -40,6 +40,33 @@ class MapsKitTests(unittest.TestCase):
         usage=namedtuple('Usage','total used free')(590_000_000_000,100_000_000_000,490_000_000_000)
         mocked=patch.object(kit_maps.shutil,'disk_usage',return_value=usage);mocked.start();self.addCleanup(mocked.stop)
 
+    def test_refresh_adds_english_wikipedia_and_downloaded_collections_to_old_kit(self):
+        import content
+        entries=[]
+        for ident,name in [('wikipedia-en','wikipedia_en_all_maxi_2026-08.zim'),('new','sailing_en_all_2026-10.zim')]:
+            raw=('tiny '+ident).encode()
+            entry=record(self.data,'library/zim/'+name,raw)
+            entries.append({**entry,'id':ident,'url':'https://download.kiwix.org/zim/other/'+name})
+        setup.write_json(self.data/'catalog/downloaded-content.json',{'items':[entries[1]]})
+        record(self.data,'library/guides/private-family.txt',b'private')
+        with patch.object(content,'CATALOG',self.base/'unused'):
+            # Default catalogue is frozen at import; patch the reader instead.
+            original=content.catalog
+            def catalog(path=None):return [entries[0]] if path is None else original(path)
+            with patch.object(content,'catalog',side_effect=catalog):
+                pilot_kit.refresh_library(self.kit,self.data)
+        manifest=json.loads((self.kit/'manifest.json').read_text())
+        self.assertTrue(manifest['english_wikipedia'])
+        paths={i['path'] for i in manifest['files']}
+        self.assertTrue(all('payload/'+i['path'] in paths for i in entries))
+        self.assertNotIn('payload/library/guides/private-family.txt',paths)
+        self.assertEqual((self.kit/'payload/models/keep').read_bytes(),b'unchanged model')
+        target=self.kit/('payload/'+entries[1]['path']);target.unlink()
+        (self.data/entries[1]['path']).write_bytes(b'corrupt')
+        with patch.object(content,'catalog',side_effect=catalog):
+            with self.assertRaises(setup.SetupError):pilot_kit.refresh_library(self.kit,self.data)
+        self.assertFalse(target.exists())
+
     def save(self,path,images):path.write_bytes(b'new pinned images')
 
     def refresh(self,writer=None):return kit_maps.refresh(self.kit,self.data,[self.geo],True,self.images,writer or self.save)

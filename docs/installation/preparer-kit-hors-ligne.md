@@ -76,3 +76,9 @@ ni les performances de la RTX 5060, ni Safari iOS, ni la praticabilité des voie
 
 Les conditions de redistribution commerciale de chaque source restent à examiner ;
 le transport familial pour le pilote ne vaut pas validation d’une offre vendue.
+
+## Fonds complet depuis 0.1.15
+
+Le kit constaté en 0.1.14 reste à environ 161 Go ; aucune taille nouvelle n'est annoncée sans préparation réelle. Les nouveaux exports `export-lab` incluent Wikipédia anglais par défaut si présent. L'option `--no-english-wikipedia` conserve la possibilité d'un support réduit. `refresh-library KIT --data-dir DONNEES` complète aussi un ancien kit marqué sans Wikipédia anglais et ajoute les collections publiques enregistrées par le téléchargeur, avec contrôle des sources.
+
+Le laboratoire ne doit pas reproduire tout le fonds de Marc : préparer les compléments directement sur son installation, sans plafond documentaire, selon le [guide actuel](../bibliotheque/bibliotheque-complete-marc.md). La copie du kit sur le volume limité de Louis conserve tous ses contrôles de capacité.

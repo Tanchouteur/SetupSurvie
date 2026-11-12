@@ -1,5 +1,7 @@
 # Bibliothèque hors ligne : quoi télécharger avec une enveloppe de 500 Go
 
+> Actualisation du 12 novembre 2026 : les plafonds concernent le laboratoire de Louis. Marc souhaite un fonds complet sans plafond documentaire logiciel ; voir le [guide actuel](bibliotheque-complete-marc.md). Les tableaux historiques ci-dessous ne fixent pas une limite chez Marc.
+
 > Plan de sélection — les lots proposés ne sont pas tous téléchargés. La règle actuelle est de 500 Go documentaires, hors modèles et caches ; voir l’[inventaire daté](inventaire-ressources-telechargees.md) pour les fichiers recensés.
 
 **Précision de Louis après ce plan : les 500 Go portent sur la bibliothèque

@@ -63,8 +63,10 @@ avec un plafond total de **600 Go** et un nettoyage simple. Le laboratoire utili
 `linux_lab.py` ; ne pas télécharger dans un point de montage absent ni utiliser
 le stockage Podman par défaut sur le disque système.
 
-Louis a précisé que les **500 Go documentaires** excluent les modèles et caches
-d'essai, et que le kit ne compte pas deux fois les mêmes documents. Le plafond
+Louis a confirmé le **12 novembre 2026** : aucun plafond documentaire logiciel chez Marc ; le laboratoire peut conserver un fonds réduit. Le téléchargement complet se prépare directement chez Marc sans imposer sa réplication au laboratoire. Lire `docs/bibliotheque/bibliotheque-complete-marc.md`.
+
+Dans le laboratoire, les **500 Go documentaires** excluent les modèles et caches
+d'essai ; le kit ne compte pas deux fois les mêmes documents. Le plafond
 physique du laboratoire et sa marge libre restent distincts et obligatoires.
 
 Respecter le marqueur `private/inference-paused.json` et les demandes de mode jeu.
