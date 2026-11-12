@@ -103,7 +103,8 @@ class ContentTests(unittest.TestCase):
         item={**self.item,'pack':'health'}
         with patch.object(sys,'argv',['content.py','download','--lab','--no-refresh','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download') as download,patch.object(content,'check_capacity'),patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab,'podman') as podman:
             content.main()
-            download.assert_called_once_with(self.root/'data',[item],budget=500_000_000_000,storage_root=self.root)
+            # Windows temporary paths may use an 8.3 alias resolved by safe_path.
+            download.assert_called_once_with((self.root/'data').resolve(),[item],budget=500_000_000_000,storage_root=self.root)
             podman.assert_not_called()
 
 
