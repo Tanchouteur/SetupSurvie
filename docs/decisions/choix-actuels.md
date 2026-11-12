@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-Référence mise à jour le 11 novembre 2026 à partir des consignes de Louis et des
+Référence mise à jour le 12 novembre 2026 à partir des consignes de Louis et des
 guides du pilote. L’[historique des échanges](questions-et-decisions.md) reste
 conservé ; ses premières hypothèses matérielles et fonctionnelles ne priment pas
 sur les précisions ci-dessous.

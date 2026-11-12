@@ -93,3 +93,4 @@
 /* Bibliographic metadata must remain readable on narrow screens. */
 .source-chips button{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
 .source-dates,.result .muted{overflow-wrap:anywhere;min-width:0}
+@media(max-height:700px){.chat-open .translation-panel[open]{flex-shrink:1;min-height:44px;overflow:auto}}

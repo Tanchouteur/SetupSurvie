@@ -1,6 +1,6 @@
 # Architecture du pilote
 
-Vue de référence documentaire au 11 novembre 2026. Elle décrit les rôles des
+Vue de référence documentaire au 12 novembre 2026. Elle décrit les rôles des
 composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
 | Composant | Responsabilité | Entrées du dépôt |

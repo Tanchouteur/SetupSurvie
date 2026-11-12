@@ -23,6 +23,9 @@ Un document sélectionné mais n’ayant donné lieu à aucune question ni tradu
 
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 
+Depuis 0.1.18, le panneau de traduction peut se réduire et défiler sur les écrans
+courts pour garder le champ de question et son bouton d’envoi accessibles.
+
 Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
 
 ## Ce qui est traduit et ce qui reste à vérifier
