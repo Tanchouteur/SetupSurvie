@@ -117,6 +117,9 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
             if not output:raise setup.SetupError('Le moteur n’a pas créé de graphe exploitable.')
             for path in output:
                 if path.is_symlink() or not path.is_file():raise setup.SetupError('Sortie de routage non valide.')
+                # OSRM writes some indices mode 0600. Serving containers drop all
+                # capabilities, so publish non-private OSM graph files readable.
+                path.chmod(0o644)
                 files.append({'path':mode+'/'+path.name,'bytes':path.stat().st_size,'sha256':setup.file_hash(path)})
         content.check_capacity(root,100_000_000,storage_root=storage_root);check()
         manifest={'complete':True,'engine':'OSRM','version':config['version'],'image':config['image'],'build_id':build_id,
