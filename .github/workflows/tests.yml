@@ -22,6 +22,9 @@ jobs:
           path: dist/*
   windows-transfers-and-updates:
     runs-on: windows-latest
+    env:
+      # Match the Windows launchers, which invoke Python with -X utf8.
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

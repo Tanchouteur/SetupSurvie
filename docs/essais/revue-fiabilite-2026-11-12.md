@@ -38,7 +38,7 @@ et le [guide des mises à jour](../exploitation/mises-a-jour-et-bibliotheque-pil
 
 ## Vérifications et limites
 
-Suite locale : **220 tests, dont 3 ignorés**, sans échec ; services et contenus
+Suite locale : **221 tests, dont 3 ignorés**, sans échec ; services et contenus
 réels remplacés par des fixtures. Les contrôles portent notamment sur restauration
 de la pause et du registre, échec d’arrêt, concurrence, chemins et diagnostic en pause.
 La configuration Compose et le retour arrière simulé font partie de la suite.

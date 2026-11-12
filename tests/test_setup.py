@@ -4,8 +4,11 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+import sys
 import unittest
 from unittest.mock import patch
+
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 
 SPEC = importlib.util.spec_from_file_location('survie_setup', Path(__file__).resolve().parents[1] / 'scripts/setup.py')
 setup = importlib.util.module_from_spec(SPEC)

@@ -225,24 +225,30 @@ def main():
     if args.budget_gb<0:p.error('Budget positif ou 0 pour aucun plafond.')
     budget=args.budget_gb*1_000_000_000 or None
     if storage_root is not None:budget=min(budget if budget is not None else DEFAULT_BUDGET,DEFAULT_BUDGET)
-    download(root,selected,budget=budget,storage_root=storage_root)
-    check_capacity(root,100_000,budget=budget,storage_root=storage_root)
-    install_templates(root)
-    if args.no_refresh:
-        print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
-        return
-    if args.lab:
-        from linux_lab import setup as lab_setup
-        lab_app=lab_setup.Installation(lab.MOUNT/'private')
-        lab_app.catalog(lab_app.load())
-        lab.podman('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
-        print('Bibliothèque du laboratoire actualisée ; moteur IA inchangé.')
-        return
-    if app:
-        app.catalog(c)
-        app.compose(c,'restart','kiwix','pilot')
-        print('Catalogue actualisé et recherche redémarrée, sans lancer de génération IA.')
-    else:print('Téléchargement vérifié. Relancer le catalogue et la recherche avec le lanceur de cette installation.')
+    download_and_refresh(args,app,c,root,selected,budget,storage_root)
+
+
+def download_and_refresh(args,app,c,root,selected,budget,storage_root):
+    # Keep publication and restarts within the same backup exclusion window.
+    with locked(destination(root,'catalog/publication.lock')):
+        download(root,selected,budget=budget,storage_root=storage_root)
+        check_capacity(root,100_000,budget=budget,storage_root=storage_root)
+        install_templates(root)
+        if args.no_refresh:
+            print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
+            return
+        if args.lab:
+            from linux_lab import setup as lab_setup
+            lab_app=lab_setup.Installation(lab.MOUNT/'private')
+            lab_app.catalog(lab_app.load())
+            lab.podman('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
+            print('Bibliothèque du laboratoire actualisée ; moteur IA inchangé.')
+            return
+        if app:
+            app.catalog(c)
+            app.compose(c,'restart','kiwix','pilot')
+            print('Catalogue actualisé et recherche redémarrée, sans lancer de génération IA.')
+        else:print('Téléchargement vérifié. Relancer le catalogue et la recherche avec le lanceur de cette installation.')
 
 
 if __name__=='__main__':

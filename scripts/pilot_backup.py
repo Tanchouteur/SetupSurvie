@@ -32,8 +32,10 @@ def idle_backup(app,c,destination,*,resume=True):
         raise setup.SetupError('Mettez la préparation documentaire en pause et attendez son arrêt avant la sauvegarde.')
     # Same lock as CLI/web content transfers: no guide or receipt may be
     # published while the stopped-service snapshot is copied.
-    with locked(checked_destination(Path(c['data_dir']),'catalog/content.lock')):
-        return stopped_backup(app,c,destination,resume=resume)
+    data=Path(c['data_dir'])
+    with locked(checked_destination(data,'catalog/publication.lock')):
+        with locked(checked_destination(data,'catalog/content.lock')):
+            return stopped_backup(app,c,destination,resume=resume)
 
 
 def stopped_backup(app,c,destination,*,resume=True):

@@ -133,6 +133,25 @@ class DeliveryTests(unittest.TestCase):
             with self.assertRaisesRegex(setup.SetupError,'opération'):backup(app,c,self.root/'backup')
             compose.assert_not_called()
 
+    def test_cli_publication_excludes_backup_until_catalog_and_restart_finish(self):
+        import content
+        from types import SimpleNamespace
+        app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
+        root=Path(c['data_dir']);args=SimpleNamespace(no_refresh=False,lab=False)
+        def attempt_backup(*unused):
+            with self.assertRaisesRegex(setup.SetupError,'opération'):
+                backup(app,c,self.root/'backup')
+            compose.assert_not_called()
+        with patch.object(content,'download'),patch.object(content,'check_capacity'),patch.object(content,'install_templates',side_effect=attempt_backup),patch.object(app,'catalog',side_effect=attempt_backup),patch.object(app,'compose',side_effect=attempt_backup) as compose:
+            # The restart itself must also remain inside the exclusion window.
+            def restart(*unused):
+                with self.assertRaisesRegex(setup.SetupError,'opération'):
+                    backup(app,c,self.root/'backup')
+            compose.side_effect=restart
+            content.download_and_refresh(args,app,c,root,[],None,None)
+        self.assertFalse((root/'catalog/publication.lock').exists())
+        self.assertFalse((self.root/'backup').exists())
+
     @unittest.skipIf(os.name=='nt','Noms réservés créés seulement sur POSIX.')
     def test_backup_never_marks_nonportable_guide_paths_as_restorable(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
