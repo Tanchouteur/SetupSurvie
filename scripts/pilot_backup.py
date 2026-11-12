@@ -53,11 +53,14 @@ def stopped_backup(app,c,destination,*,resume=True):
                 if 'cache' in relative.parts or path.name.endswith('-shm'):continue
                 if path.is_symlink():raise setup.SetupError('Lien refusé dans la sauvegarde : '+relative.as_posix())
                 if path.is_file():sources.append((path,'data/'+relative.as_posix()))
+        seen=set()
         for source,relative in sources:
             if not source.exists():continue
             if source.is_symlink() or not source.resolve().is_relative_to(data.resolve()) and source not in [app.work/name for name in PRIVATE_FILES]:
                 raise setup.SetupError('Lien ou chemin externe refusé dans la sauvegarde.')
-            target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+            if relative.casefold() in seen:raise setup.SetupError('Chemin dupliqué ou ambigu dans la sauvegarde : '+relative)
+            seen.add(relative.casefold())
+            target=checked_destination(dest,relative);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
             target.chmod(0o600)
             files.append({'path':relative,'bytes':target.stat().st_size,'sha256':setup.file_hash(target)})
         setup.write_json(dest/'backup.json',{'schema':1,'files':files,'requires':'Le kit public correspondant fournit modèles, archives ZIM et caches ; cette sauvegarde contient comptes, conversations, guides et certificats privés.'},private=True)

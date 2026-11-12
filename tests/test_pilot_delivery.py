@@ -2,6 +2,7 @@ from collections import namedtuple
 import shutil
 import importlib.util
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -129,6 +130,17 @@ class DeliveryTests(unittest.TestCase):
         with patch.object(app,'compose') as compose:
             with self.assertRaisesRegex(setup.SetupError,'opération'):backup(app,c,self.root/'backup')
             compose.assert_not_called()
+
+    @unittest.skipIf(os.name=='nt','Noms réservés créés seulement sur POSIX.')
+    def test_backup_never_marks_nonportable_guide_paths_as_restorable(self):
+        app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
+        guides=Path(c['data_dir'])/'library/guides'
+        for names in [('con.txt',),('Guide.txt','guide.txt')]:
+            for name in names:(guides/name).write_bytes(b'fixture')
+            dest=self.root/('backup-'+names[0])
+            with patch.object(app,'compose'),self.assertRaises(setup.SetupError):backup(app,c,dest)
+            self.assertFalse((dest/'backup.json').exists())
+            for name in names:(guides/name).unlink()
 
     def test_backup_refuses_in_place_or_existing_destination(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
