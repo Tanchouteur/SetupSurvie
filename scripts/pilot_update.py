@@ -26,9 +26,9 @@ SERVICES=('open-webui','kiwix','pilot','portal')
 
 def release_at(root):
     path=root/'deploy/release.json'
-    if path.is_file():return json.loads(path.read_text())
+    if path.is_file():return json.loads(path.read_text(encoding='utf-8'))
     # Older pilots predate release.json. Read a constant; never execute their code.
-    for node in ast.parse((root/'pilot/app.py').read_text()).body:
+    for node in ast.parse((root/'pilot/app.py').read_text(encoding='utf-8')).body:
         if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='VERSION' for t in node.targets) and isinstance(node.value,ast.Constant) and isinstance(node.value.value,str):
             return {'version':node.value.value,'data_schema':1}
     raise setup.SetupError('Version installée impossible à identifier.')
@@ -46,8 +46,8 @@ def build(output):
     paths += [setup.ROOT/n for n in FILES if (setup.ROOT/n).is_file()]
     records=[];output.parent.mkdir(parents=True,exist_ok=True)
     temporary=output.with_name(output.name+'.part')
-    version=json.loads((setup.ROOT/'deploy/release.json').read_text())
-    api_version=re.search(r"^VERSION=['\"]([^'\"]+)['\"]",(setup.ROOT/'pilot/app.py').read_text(),re.MULTILINE)
+    version=json.loads((setup.ROOT/'deploy/release.json').read_text(encoding='utf-8'))
+    api_version=re.search(r"^VERSION=['\"]([^'\"]+)['\"]",(setup.ROOT/'pilot/app.py').read_text(encoding='utf-8'),re.MULTILINE)
     if not api_version or api_version.group(1)!=version['version']:
         raise setup.SetupError('Version du manifeste différente de celle de l’API ; paquet non créé.')
     try:
@@ -92,7 +92,7 @@ def unpack(package,expected,dest):
             path.chmod(0o755 if record.get('executable') else 0o644)
         for name in ('scripts/setup.py','scripts/pilot_update.py','deploy/versions.json','deploy/release.json','compose.yaml','pilot/app.py','portal/index.html'):
             if name not in paths:raise setup.SetupError('Paquet incomplet : '+name)
-        release=json.loads((dest/'deploy/release.json').read_text())
+        release=json.loads((dest/'deploy/release.json').read_text(encoding='utf-8'))
         if release!=manifest['release'] or release.get('data_schema')!=1:raise setup.SetupError('Migration de données non prise en charge.')
     return manifest
 
@@ -127,10 +127,10 @@ class Services:
 
 
 def restore_snapshot(snapshot,app,c):
-    report=json.loads((snapshot/'backup.json').read_text());entries=checked_entries(snapshot,report)
+    report=json.loads((snapshot/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(snapshot,report)
     data=Path(c['data_dir'])
     for entry,_ in entries:
-        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt'):
+        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json'):
             raise setup.SetupError('Sauvegarde non reconnue ; restauration manuelle requise.')
     # Only mutable service state; models, ZIM and caches are never removed.
     for name in ('state/pilot','state/caddy'):
@@ -152,7 +152,7 @@ def restore_snapshot(snapshot,app,c):
 
 
 def recover(app,journal,services):
-    j=json.loads(journal.read_text());root=Path(j['application']);previous=Path(j['previous']);snapshot=Path(j['snapshot'])
+    j=json.loads(journal.read_text(encoding='utf-8'));root=Path(j['application']);previous=Path(j['previous']);snapshot=Path(j['snapshot'])
     if j['phase'] in ('complete','rolled_back'):raise setup.SetupError('Cette opération est terminée ; aucun état utilisateur ne sera écrasé.')
     services.stop()
     if previous.exists():
@@ -174,7 +174,7 @@ def apply(app,package,digest,services=None):
     services=services or Services(app,c)
     with locked(app.work/'update.lock'):
         journal=app.work/'update.json'
-        if journal.exists() and json.loads(journal.read_text())['phase'] not in ('complete','rolled_back'):
+        if journal.exists() and json.loads(journal.read_text(encoding='utf-8'))['phase'] not in ('complete','rolled_back'):
             raise setup.SetupError('Une mise à jour interrompue doit être récupérée avant de continuer.')
         operation=destination(root.parent,'updates/'+uuid.uuid4().hex)
         operation.mkdir(parents=True);operation.chmod(0o700)
@@ -184,7 +184,7 @@ def apply(app,package,digest,services=None):
         if version_tuple(manifest['release']['version'])<=version_tuple(old_release['version']):raise setup.SetupError('Version déjà installée ou plus ancienne ; aucun remplacement effectué.')
         if manifest['release']['data_schema']!=old_release['data_schema']:raise setup.SetupError('Migration de schéma non prise en charge par cette mise à jour.')
         for relative in ('deploy/versions.json','deploy/discovery-packages.json'):
-            if json.loads((root/relative).read_text())!=json.loads((staged/relative).read_text()):raise setup.SetupError('Ce paquet exige de nouvelles dépendances ; utiliser une livraison dédiée.')
+            if json.loads((root/relative).read_text(encoding='utf-8'))!=json.loads((staged/relative).read_text(encoding='utf-8')):raise setup.SetupError('Ce paquet exige de nouvelles dépendances ; utiliser une livraison dédiée.')
         # Offline mDNS wheels are not present in a source checkout; preserve them.
         if (root/'vendor').is_dir():
             if (root/'vendor').is_symlink() or any(p.is_symlink() for p in (root/'vendor').rglob('*')):raise setup.SetupError('Lien dans les dépendances locales refusé.')
@@ -224,7 +224,7 @@ def main():
         import discovery
         owner=app.work/'update.lock/owner.json'
         if owner.is_file():
-            value=json.loads(owner.read_text())
+            value=json.loads(owner.read_text(encoding='utf-8'))
             if value.get('identity') and discovery.identity(value['pid'])==value['identity']:raise setup.SetupError('La mise à jour est encore en cours ; récupération refusée.')
         recover(app,app.work/'update.json',Services(app,app.load()))
         owner.unlink(missing_ok=True)

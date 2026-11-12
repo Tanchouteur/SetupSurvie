@@ -1,6 +1,6 @@
 # Première version d’essai chez Marc
 
-> Guide de référence du pilote — documentation réorganisée le 11 novembre 2026. Les essais Windows chez Marc et sur téléphone restent à réaliser lorsqu’ils sont indiqués comme non validés.
+> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.22. Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
 
 Ce guide décrit le paquet pilote. Les essais réalisés sur le PC Linux de Louis ne remplacent pas la recette sur le Windows de Marc, sa RTX 5060 8 Go et ses appareils du réseau local. Les mesures de la RTX 2060 ne prédisent pas directement ses temps de réponse. La RAM, le contexte, les fichiers du modèle et la mémoire vidéo disponible comptent aussi.
 
@@ -18,12 +18,13 @@ Depuis 0.1.15, aucun plafond documentaire logiciel chez Marc. Le kit existant re
 
 ## Avant de copier le kit
 
-Depuis le dépôt 0.1.17, le [parcours Windows en deux étapes](deux-etapes-windows.md)
-peut préparer les prérequis avec Internet puis installer un kit local. Il ne
-modifie pas l’installation 0.1.16 en cours et reste à valider réellement chez Marc.
+Depuis 0.1.20, le [lanceur Windows unique](deux-etapes-windows.md)
+enchaîne la préparation des prérequis avec Internet et l’installation. Ses diagnostics,
+conflits et raccourcis ont été testés chez Marc sans modifier la 0.1.16 en service.
+L’installation complète sur un Windows vierge reste à valider.
 
-Le PC de Marc ne dispose actuellement d’aucun prérequis. Pour le pilote accompagné,
-préparer Windows, WSL 2, le pilote NVIDIA, Python, Docker Desktop et Ollama **avec
+Pour un PC sans prérequis, préparer Windows, WSL 2, le pilote NVIDIA,
+Python, Docker Desktop et Ollama **avec
 Internet**, puis utiliser le kit sans Internet. Le kit ne contient pas leurs
 installateurs et ne prépare pas un Windows vierge entièrement hors ligne.
 Un installateur système hors ligne complet reste hors du périmètre de ce pilote.
@@ -126,6 +127,12 @@ Le secours respecte une éventuelle protection MFA native ; il ne la désactive 
 
 Conserver le kit public d’origine et une sauvegarde privée des comptes, historiques, guides et certificats. La sauvegarde arrête brièvement le site et les services de compte pour obtenir une copie cohérente, puis les redémarre. Les modèles, ZIM et caches déjà présents dans le kit ne sont pas recopiés dans cette sauvegarde privée.
 
+Depuis 0.1.22, elle conserve aussi la pause du moteur et le registre des contenus
+téléchargés. Mettre d’abord les préparations documentaires en pause et attendre leur
+arrêt ; un transfert ou une préparation concurrente entraîne un refus explicite.
+Une interruption brutale peut laisser un verrou : vérifier l’arrêt du processus
+concerné avant toute reprise, sans supprimer un verrou appartenant à une opération active.
+
 ```powershell
 py -3 scripts\pilot_backup.py backup E:\Sauvegardes\survie-essai-01 --work-dir D:\SetupSurvie\prive
 ```
@@ -135,6 +142,14 @@ Pour restaurer sur une installation arrêtée ou une autre machine, utiliser des
 ```powershell
 py -3 scripts\pilot_backup.py restore E:\Sauvegardes\survie-essai-01 --kit D:\livraison-marc --work-dir D:\SurvieRestaure\prive --data-dir D:\SurvieRestaure\donnees
 ```
+
+Sauvegarde, kit, données, réglages et application doivent être dans des dossiers
+séparés, sans imbrication. La restauration conserve une pause sauvegardée ; un
+diagnostic en pause contrôle la bibliothèque et reporte les contrôles Ollama.
+Un test avec inférence est refusé tant que la pause n’a pas été explicitement levée.
+Les anciennes sauvegardes restent acceptées mais ne peuvent restituer les fichiers
+qu’elles ne contenaient pas. Le registre restauré décrit les téléchargements passés :
+il ne remplace ni leurs fichiers ni une nouvelle vérification de leur intégrité.
 
 Les archives ZIM ajoutées après le kit et les nouveaux modèles doivent être sauvegardés séparément ou inclus dans un nouveau kit. Les sauvegardes privées contiennent des secrets : les conserver hors de la bibliothèque publique. La restauration conserve les comptes et secrets ; l’installation neuve du kit en crée de nouveaux. Les ports doivent être libres et l’adresse LAN doit être reconfigurée si elle change.
 

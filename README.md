@@ -11,9 +11,11 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **11 novembre 2026**, un paquet pilote est préparé et des essais ont été
-réalisés sur le PC Linux de Louis. L’installation Windows chez Marc, les usages
-sur ses téléphones et la recette complète hors ligne restent à valider sur place.
+Au **12 novembre 2026**, un paquet pilote est préparé et des essais ont été
+réalisés sur le PC Linux de Louis. Le diagnostic de l’installateur et ses protections
+ont aussi été testés sur le Windows de Marc ; voir le [bilan Windows](docs/essais/2026-11-12-installateur-windows-simple.md).
+L’installation complète sur un PC vierge, les usages sur téléphone et la recette
+complète hors ligne restent à valider.
 Le pilote accompagne cette première expérimentation ; l’offre commerciale reste
 à éprouver.
 

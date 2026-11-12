@@ -57,7 +57,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Savoirs et savoir-faire durables](bibliotheque/savoirs-durables.md) — référence unifiée des nouveaux besoins de Marc, pilote 0.1.19.
 
-- [Bibliothèque complète de Marc et laboratoire réduit](bibliotheque/bibliotheque-complete-marc.md) — guide actuel, pilote 0.1.15.
+- [Bibliothèque complète de Marc et laboratoire réduit](bibliotheque/bibliotheque-complete-marc.md) — guide actuel ; préparation introduite en 0.1.15, sélection affinée en 0.1.19.
 
 - [Where There Is No Doctor : téléchargement et recette](bibliotheque/where-there-is-no-doctor.md)
 
@@ -68,6 +68,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Revue de fiabilité et prochaines étapes — 12 novembre 2026](essais/revue-fiabilite-2026-11-12.md) — corrections 0.1.22 et validations restant à réaliser.
 - [Mise à jour Git fournie sur Windows — 12 novembre 2026](essais/2026-11-12-mise-a-jour-git-windows.md) — intégration aux installations et kits, lanceur stable et raccourci, pilote 0.1.21.
 
 - [Installateur Windows simplifié — 12 novembre 2026](essais/2026-11-12-installateur-windows-simple.md) — diagnostic réel, garde des ports, reprise et raccourcis ; limites de recette complète.

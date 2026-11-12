@@ -17,6 +17,7 @@ import kiwix_select
 import geography_data
 import routing_prepare
 import setup
+from delivery_paths import destination, locked
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
 
@@ -104,6 +105,10 @@ class Manager:
         return result
 
     def start(self, action, body):
+        with locked(destination(self.app.work, 'library-web/operation.lock')):
+            return self.start_locked(action, body)
+
+    def start_locked(self, action, body):
         state = self.current()
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
