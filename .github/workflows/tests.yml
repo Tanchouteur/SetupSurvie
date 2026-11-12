@@ -43,7 +43,7 @@ jobs:
       # Pinned OSRM image + tiny synthetic road graph; no corpus or LLM.
       - run: python tests/routing_smoke.py
   maps-interface:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
