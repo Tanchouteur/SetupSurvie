@@ -14,6 +14,7 @@ def refresh():
     policy=lab.MOUNT/'runtime/deploy/assistant-system.fr.txt'
     policy.parent.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(setup.ROOT/'deploy/assistant-system.fr.txt',policy)
+    shutil.copyfile(setup.ROOT/'deploy/kiwix-themes.json',policy.parent/'kiwix-themes.json')
     for name in ('kiwix','pilot'):
         # Rootless Podman can report a stale monitor on the first stop after
         # a parent service exits. Retry before touching the stateless container.
@@ -34,7 +35,7 @@ def refresh():
         else:
             args=['--env-file',str(lab.MOUNT/'private/pilot.env'),'--workdir','/srv','--memory=2g']
             mounts=[('runtime/pilot','/srv/pilot:ro'),('runtime/deploy/assistant-system.fr.txt','/srv/system.fr.txt:ro'),
-                    ('runtime/deploy/model-profiles.json','/srv/model-profiles.json:ro'),('data/state/pilot','/pilot-data'),
+                    ('runtime/deploy/model-profiles.json','/srv/model-profiles.json:ro'),('runtime/deploy/kiwix-themes.json','/srv/kiwix-themes.json:ro'),('data/state/pilot','/pilot-data'),
                     ('data/state/openwebui','/webui-data:ro'),('data/library/zim','/zim:ro'),('data/models','/models:ro'),
                     ('data/catalog','/catalog:ro'),('data/library/guides','/guides'),('data/library/maps','/maps:ro')]
             for source,target in mounts:args+=['-v',str(lab.MOUNT/source)+':'+target]

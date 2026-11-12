@@ -55,6 +55,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Bibliothèque
 
+- [Savoirs et savoir-faire durables](bibliotheque/savoirs-durables.md) — référence unifiée des nouveaux besoins de Marc, pilote 0.1.19.
+
 - [Bibliothèque complète de Marc et laboratoire réduit](bibliotheque/bibliotheque-complete-marc.md) — guide actuel, pilote 0.1.15.
 
 - [Where There Is No Doctor : téléchargement et recette](bibliotheque/where-there-is-no-doctor.md)

@@ -2,6 +2,7 @@
 
 | Document | Statut et rôle |
 | --- | --- |
+| [Savoirs et savoir-faire durables](savoirs-durables.md) | Besoins de Marc, parcours, sélection concrète et grille des besoins restant à vérifier, pilote 0.1.19 |
 | [Bibliothèque complète de Marc](bibliotheque-complete-marc.md) | Guide actuel : tous les thèmes et fonds de base, sans plafond chez Marc ; laboratoire réduit et plafonné |
 | [Where There Is No Doctor](where-there-is-no-doctor.md) | Guide d’ajout et recette : édition 2025 complète, 32 PDF, 503 pages, recherche et IA vérifiées |
 | [Sélection Kiwix par thème](selection-kiwix-par-theme.md) | Guide actuel : inventaire local, choix des collections, plan figé et téléchargement contrôlé |

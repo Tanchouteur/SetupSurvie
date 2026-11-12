@@ -99,6 +99,7 @@ services:
       - ./pilot:/srv/pilot:ro
       - ./deploy/assistant-system.fr.txt:/srv/system.fr.txt:ro
       - ./deploy/model-profiles.json:/srv/model-profiles.json:ro
+      - ./deploy/kiwix-themes.json:/srv/kiwix-themes.json:ro
       - ${DATA_DIR}/state/pilot:/pilot-data
       - ${DATA_DIR}/state/openwebui:/webui-data:ro
       - ${DATA_DIR}/library/guides:/guides

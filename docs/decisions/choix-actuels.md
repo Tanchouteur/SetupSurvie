@@ -17,6 +17,7 @@ sur les précisions ci-dessous.
 | Interfaces | Portail et Open WebUI conservés ; mêmes comptes, historiques distincts |
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
 | Fiabilité des réponses | Depuis 0.1.18, [dates distinctes, citations lues, faits et déductions, contradictions et incertitude](../utilisation/sources-et-fiabilite.md) ; consignes renforcées et métadonnées conservées, respect par les modèles réels encore à évaluer |
+| Savoirs durables | [Référence unique des besoins de Marc](../bibliotheque/savoirs-durables.md) : principes, mesures, fabrication, contrôle, entretien et transmission ; parcours et thèmes intégrés en 0.1.19, couverture documentaire à examiner |
 | Gestion des collections | Depuis Données locales, bloc administrateur repliable ; aperçu par thème puis téléchargement explicite, sans nouvelle entrée dans le menu (12 novembre 2026) |
 | Installation Windows | Depuis 0.1.17, [deux lanceurs](../installation/deux-etapes-windows.md) pour préparer le PC puis installer depuis Internet ou un kit, avec reprise explicite ; installation réelle encore à valider. Raccourcis Ouvrir / Arrêter et démarrage après ouverture de session conservés |
 | Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |

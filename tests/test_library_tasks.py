@@ -59,8 +59,18 @@ class LibraryJobTests(unittest.TestCase):
     def test_all_themes_and_unlimited_transfer_are_accepted(self):
         with patch.object(jobs.subprocess,'Popen',return_value=MagicMock(pid=os.getpid())):
             self.manager.start('plan',{'themes':list(jobs.kiwix_select.themes()),'max_add_gb':0})
-        self.assertEqual(len(self.manager.read()['options']['themes']),29)
+        self.assertEqual(set(self.manager.read()['options']['themes']),set(jobs.kiwix_select.themes()))
         self.assertEqual(self.manager.read()['options']['max_add_gb'],0)
+
+    def test_learning_review_is_reported_and_old_plans_remain_readable(self):
+        state,folder=self.seed()
+        plan={'items':[],'candidates':[],'remaining_download_bytes':0,'missing_themes':[],'library_bytes':0}
+        setup.write_json(folder/'plan.json',plan)
+        self.assertEqual(self.manager.status()['plan']['learning_coverage'],[])
+        self.assertTrue(self.manager.status()['plan']['legacy_selection'])
+        plan['learning_coverage']=[{'id':'sciences','status':'references_to_review','references':1,'local_references':0,'skills_to_review':['Algèbre']}]
+        setup.write_json(folder/'plan.json',plan)
+        self.assertEqual(self.manager.status()['plan']['learning_coverage'],plan['learning_coverage'])
 
     def test_pdf_plan_updates_source_receipt_and_restarts_search_without_ollama(self):
         state,folder=self.seed()

@@ -11,7 +11,7 @@ import tempfile
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
@@ -21,6 +21,7 @@ with closing(sqlite3.connect(accounts.DB_PATH)) as db:
     db.execute('INSERT INTO user VALUES(?,?,?,?,?)',('browser','Test','browser@test.invalid','admin',0))
     db.commit()
 (library.GUIDES/'shelter.en.txt').write_text('Shelter construction. Preserve dimensions and warnings.\n'*1800)
+(library.GUIDES/'craft.en.txt').write_text('Sewing and mending clothes. Rope making and tool sharpening. Tiny fictional fixture, not a practical manual.',encoding='utf-8')
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
 writer=PdfWriter()
@@ -43,6 +44,14 @@ async def books():return []
 library.books=books
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status
+async def library_command(action=None,payload=None):
+    from fastapi import HTTPException
+    if action not in (None,'status'):raise HTTPException(409,'Cette fixture ne télécharge aucun contenu.')
+    rules=json.loads(learning.RULES.read_text(encoding='utf-8'))['themes']
+    return {'available':True,'phase':'planned','id':'a'*32,'themes':[{'id':k,'label':v['label']} for k,v in rules.items()],
+            'plan':{'count':0,'remaining_download_bytes':0,'library_bytes':0,'missing_themes':[],'candidates':[],
+                    'learning_coverage':[{'id':'sciences','label':rules['sciences']['label'],'references':1,'local_references':0,'skills_to_review':['Algèbre'],'status':'references_to_review'}]}}
+operations.library_command=library_command
 async def translate(text,mode):
     await asyncio.sleep(.5)
     return 'Construction d’un abri. Conservez les dimensions et les avertissements.\n'+text[:25],engine.MODES[mode]['model']

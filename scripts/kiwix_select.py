@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sélectionner des archives Kiwix par thème, sans télécharger les archives ni lancer l'IA."""
+"""Sélectionner et préparer les collections Kiwix et guides par thème, sans lancer l'IA."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -31,6 +31,13 @@ def normalize(value):
 
 def themes():
     return json.loads(RULES.read_text(encoding='utf-8'))['themes']
+
+
+def collection_policy(name):
+    config=json.loads(RULES.read_text(encoding='utf-8')).get('selection',{})
+    for kind,key in [('excluded','excluded_collections'),('optional','optional_collections')]:
+        if any(name==p or name.startswith(p+'_') for p in config.get(key,[])):return kind
+    return 'core'
 
 
 def official_url(url, metadata=False):
@@ -92,6 +99,8 @@ def matches(entry, rules, requested):
     reasons = {}
     for theme in requested:
         rule = rules[theme]
+        if any(entry['name']==p or entry['name'].startswith(p+'_') for p in rule.get('exclude_collections',[])):
+            continue
         prefixes = [p for p in rule['collections'] if entry['name'] == p or entry['name'].startswith(p + '_')]
         terms = [term for term in rule['terms'] if ' ' + normalize(term) + ' ' in text]
         if prefixes or terms:
@@ -106,7 +115,10 @@ def family(filename):
 
 def full_collection(filename):
     """Recognise Wikimedia topic extracts; never infer overlap for other publishers."""
-    match = re.fullmatch(r'(wikipedia|wikivoyage|wikibooks|wikiversity)_([a-z-]+)_(.+)', family(filename))
+    stem=family(filename)
+    match=re.fullmatch(r'gutenberg_([a-z-]+)_(?:lcc-.+|top(?:_.+)?)',stem)
+    if match:return 'gutenberg_'+match.group(1)+'_all'
+    match = re.fullmatch(r'(wikipedia|wikivoyage|wikibooks|wikiversity)_([a-z-]+)_(.+)', stem)
     return match.group(1) + '_' + match.group(2) + '_all' if match and match.group(3) != 'all' else None
 
 
@@ -153,11 +165,12 @@ def pin(entry, reasons, reader=fetch):
 
 
 def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
-           budget=None, reserve=15_000_000_000, storage_root=None, reader=fetch):
+           budget=None, reserve=15_000_000_000, storage_root=None, reader=fetch, include_supplements=False):
     rules = themes()
     if not requested or set(requested) - rules.keys():
         raise setup.SetupError('Choisir un thème présent dans la commande themes.')
-    local = inventory(root, content.catalog())
+    pinned = content.catalog()
+    local = inventory(root, pinned)
     local_families = {}
     for item in local:
         if item['path'].endswith('.zim'):
@@ -168,25 +181,33 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
         budget=min(budget if budget is not None else content.DEFAULT_BUDGET, content.DEFAULT_BUDGET)
     available = max(0, min(max_add if max_add is not None else free,
                            budget - used if budget is not None else free, free - reserve))
-    candidates = {}
+    candidates = {};deferred={}
     for entry in entries:
         reasons = matches(entry, rules, requested)
         if not reasons or not set(entry['languages']).intersection(languages):
             continue
         key = family(entry['filename'])
+        policy=collection_policy(entry['name'])
+        if policy=='excluded' or (policy=='optional' and not include_supplements):
+            rank=('_pictures:yes' in entry['tags'],entry['flavour']!='mini',entry['edition'],entry['filename'])
+            if key not in deferred or rank>deferred[key][0]:deferred[key]=(rank,entry,reasons,policy)
+            continue
         # One edition/variant per collection/language, favouring illustrated full editions.
         rank = ('_pictures:yes' in entry['tags'], entry['flavour'] != 'mini', entry['edition'], entry['filename'])
         if key not in candidates or rank > candidates[key][0]:
             candidates[key] = (rank, entry, reasons)
     records = []; items = []; added = 0
     planned_families = {}
-    if 'fonds-general' in requested:
-        for item in content.catalog():
+    if 'fonds-general' in requested or any(rules[t].get('guides') for t in requested):
+        for item in pinned:
+            guide_themes=[t for t in requested if item['id'] in rules[t].get('guides',[])]
+            if 'fonds-general' in requested:guide_themes.insert(0,'fonds-general')
+            if not guide_themes:continue
             if not set(item['language'].split(',')).intersection(set(languages) | {'fr' if 'fra' in languages else '', 'en' if 'eng' in languages else '', 'mul'}):
                 continue
             path=content.destination(root,item['path'])
             part=content.destination(root,item['path']+'.part')
-            record={'title':item['title'],'filename':Path(item['path']).name,'themes':['fonds-general'],
+            record={'title':item['title'],'filename':Path(item['path']).name,'themes':guide_themes,
                     'bytes':item['bytes'],'estimated_bytes':item['bytes'],'fulltext_index':not item['path'].endswith('.zim')}
             records.append(record)
             if path.exists():
@@ -202,7 +223,7 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
             if added+missing>available:
                 record['status']='budget_excluded';continue
             record.update(status='selected',remaining_bytes=missing)
-            items.append(item);added+=missing
+            items.append({**item,'topics':list(dict.fromkeys(item.get('topics',[])+guide_themes))});added+=missing
             if item['path'].endswith('.zim'):
                 planned_families[family(path.name)]=[item['path']]
     full_available = {**local_families, **planned_families}
@@ -255,16 +276,30 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
         record.update(status='selected', remaining_bytes=missing)
         added += missing; items.append(item)
         full_available[family(entry['filename'])] = [item['path']]
-    matched = {theme: sum(theme in r['themes'] for r in records) for theme in requested}
+    for _,entry,reasons,policy in deferred.values():
+        records.append({'title':entry['title'],'filename':entry['filename'],'themes':list(reasons),'fulltext_index':'_ftindex:yes' in entry['tags'],
+                        'estimated_bytes':entry['estimated_bytes'],'status':'out_of_scope' if policy=='excluded' else 'optional_excluded'})
+    matched = {theme: sum(theme in r['themes'] and r.get('status') not in ('optional_excluded','out_of_scope') for r in records) for theme in requested}
     return {'schema': 1, 'kind': 'SetupSurvie Kiwix thematic selection',
             'created_at': datetime.now(timezone.utc).isoformat(), 'catalog_url': CATALOG_URL,
-            'themes': requested, 'languages': list(languages), 'items': items, 'candidates': records,
+            'themes': requested, 'languages': list(languages), 'include_supplements':include_supplements,'items': items, 'candidates': records,
             'local_inventory': local, 'library_bytes': used, 'remaining_download_bytes': added,
             'available_additional_bytes': available, 'budget_bytes': budget, 'theme_matches': matched,
             'missing_themes': [t for t, count in matched.items() if not count],
+            'learning_coverage':learning_coverage(rules,requested,records),
             'notice': 'Sélection de collections par métadonnées, pas extraction d’articles ni validation éditoriale. '
                       'Les fichiers présents ne sont pas réindexés ou revérifiés ici. '
                       'Les archives sans index plein texte restent à consulter directement dans Kiwix.'}
+
+
+def learning_coverage(rules,requested,records,*,presence_known=True):
+    """Metadata evidence only. No claim that a collection covers every skill."""
+    return [{'id':key,'label':rules[key]['label'],
+             'references':sum(key in r['themes'] and r.get('status') not in ('optional_excluded','out_of_scope') for r in records),
+             'local_references':sum(key in r['themes'] and r.get('status')=='already_local' for r in records) if presence_known else None,
+             'skills_to_review':[s['label'] for s in rules[key]['learning']['subjects']],
+             'status':'references_to_review' if any(key in r['themes'] and r.get('status') not in ('optional_excluded','out_of_scope') for r in records) else 'references_missing'}
+            for key in requested if 'learning' in rules[key]]
 
 
 def main():
@@ -279,6 +314,7 @@ def main():
     parser.add_argument('--max-add-gb', type=float, default=0, help='0 : tous les ajouts qui tiennent sur le disque.')
     parser.add_argument('--budget-gb', type=int, default=0)
     parser.add_argument('--no-refresh', action='store_true', help='prepare : transférer sans redémarrer les services.')
+    parser.add_argument('--include-supplements',action='store_true',help='Inclure aussi les fonds culturels et grandes collections vidéo ; volumes à examiner.')
     args = parser.parse_args()
     if args.action == 'themes':
         for name, rule in themes().items():
@@ -315,14 +351,15 @@ def main():
         raise setup.SetupError('Le plan existe déjà ; choisir un autre --output pour le conserver.')
     report = select(entries, root, requested, languages=tuple(LANGUAGES[l] for l in (args.language or ['fr', 'en'])),
                     max_add=int(args.max_add_gb * 1_000_000_000) or None, budget=args.budget_gb * 1_000_000_000 or None,
-                    storage_root=storage_root)
+                    storage_root=storage_root,include_supplements=args.include_supplements)
     report['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
     setup.write_json(output, report)
     print(f"Bibliothèque : {report['library_bytes']/1e9:.2f} Go. Ajouts sélectionnés : {len(report['items'])}, {report['remaining_download_bytes']/1e9:.2f} Go.")
     labels = {'selected': 'À télécharger', 'already_local': 'Déjà présent (édition conservée)',
               'covered_by_full_collection': 'Extrait écarté : collection complète présente ou sélectionnée',
               'budget_excluded': 'Écarté : budget', 'metadata_unavailable': 'Métadonnées indisponibles',
-              'existing_conflict': 'Fichier existant conservé', 'partial_conflict': 'Fichier partiel à examiner'}
+              'existing_conflict': 'Fichier existant conservé', 'partial_conflict': 'Fichier partiel à examiner',
+              'optional_excluded':'Complément sur choix explicite','out_of_scope':'Hors du fonds pratique'}
     for record in report['candidates']:
         print(labels[record['status']], '—', record['title'], '—', ', '.join(record['themes']),
               '— ' + record['filename'], '' if record['fulltext_index'] else '— sans index plein texte')

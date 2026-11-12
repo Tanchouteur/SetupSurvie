@@ -1,34 +1,1253 @@
 {
   "schema": 1,
   "themes": {
-    "autonomie": {"label": "Autonomie et techniques sobres", "collections": ["appropedia", "solar.lowtechmagazine.com", "sustainability.stackexchange.com", "lrnselfreliance"], "terms": ["self reliance", "self sufficiency", "homesteading", "autonomie", "low tech"]},
-    "survie": {"label": "Survie et préparation aux coupures", "collections": ["survivorlibrary.com", "zimgit-post-disaster", "canadian-prepper", "lrnselfreliance"], "terms": ["survival", "preppers", "prepping", "preparedness", "survie", "bushcraft"]},
-    "chasse": {"label": "Chasse, armes et sécurité", "collections": [], "terms": ["hunting", "chasse", "fishing", "peche", "firearm safety", "firearm maintenance", "ammunition storage", "armes", "munitions", "trapping"]},
-    "agriculture": {"label": "Agriculture, jardin et semences", "collections": ["gardenology", "gardenology.org", "gardening.stackexchange.com", "appropedia"], "terms": ["agriculture", "gardening", "farming", "permaculture", "semences", "jardinage", "beekeeping", "bee keeping", "fruit trees", "pruning", "grafting", "arboriculture", "taille des fruitiers"]},
-    "energie": {"label": "Énergie et électricité", "collections": ["energypedia", "solar.lowtechmagazine.com", "electronics.stackexchange.com", "appropedia"], "terms": ["renewable energy", "solar energy", "wind energy", "energie", "electricity", "electricite", "solar power", "wind turbine", "power generator", "groupe electrogene", "eolienne"]},
-    "eau": {"label": "Eau, hygiène et assainissement", "collections": ["zimgit-water"], "terms": ["water treatment", "water purification", "sanitation", "assainissement", "eau potable"]},
-    "alimentation": {"label": "Cuisine et conservation alimentaire", "collections": ["cooking.stackexchange.com", "zimgit-food-preparation", "canadian-prepper_en_preppingfood"], "terms": ["food storage", "food preservation", "canning", "conservation alimentaire", "cuisine", "nutrition", "food processing", "low resource cooking", "food safety"]},
-    "sante": {"label": "Santé et premiers secours", "collections": ["mdwiki", "wikipedia_en_medicine", "wikipedia_fr_medicine", "zimgit-medicine", "medicalsciences.stackexchange.com"], "terms": ["first aid", "premiers secours", "emergency medicine", "medical encyclopedia"]},
-    "abri": {"label": "Abri et construction", "collections": ["diy.stackexchange.com", "zimgit-post-disaster", "appropedia"], "terms": ["shelter", "home improvement", "construction", "abri", "treehouse", "cabin construction"]},
-    "reparation": {"label": "Réparation, outils et métiers", "collections": ["ifixit", "mechanics.stackexchange.com", "bicycles.stackexchange.com", "woodworking.stackexchange.com", "crafts.stackexchange.com"], "terms": ["repair", "reparation", "woodworking", "soudage"]},
-    "communications": {"label": "Radio et communications", "collections": ["ham.stackexchange.com"], "terms": ["amateur radio", "radioamateur", "communications d urgence", "computer networking", "internet", "telecommunications"]},
-    "education": {"label": "Enseignement familial", "collections": ["vikidia", "wikibooks", "wikiversity", "khanacademy", "sikana"], "terms": ["school curriculum", "education primaire", "mathematiques"]},
-    "nature": {"label": "Nature et botanique", "collections": ["gardenology", "gardenology.org", "biology.stackexchange.com"], "terms": ["botany", "botanique", "wildlife", "biodiversity", "biodiversite"]},
-    "orientation": {"label": "Orientation et activités de plein air", "collections": ["outdoors.stackexchange.com", "wikivoyage"], "terms": ["orienteering", "outdoor recreation", "randonnee", "navigation terrestre"]},
-    "fonds-general": {"label": "Encyclopédies et tous les guides du projet", "collections": ["wikipedia", "wiktionary", "wiktionnaire"], "terms": ["encyclopedia", "encyclopedie", "dictionary", "dictionnaire"]},
-    "elevage": {"label": "Élevage, apiculture et santé animale", "collections": [], "terms": ["livestock", "animal husbandry", "poultry", "rabbit farming", "beekeeping", "apiculture", "elevage", "veterinary", "pet care", "dog care", "cat care", "guinea pig", "aquaculture", "pisciculture"]},
-    "peche": {"label": "Pêche et chasse sous-marine", "collections": [], "terms": ["fishing", "angling", "spearfishing", "peche", "fish identification"]},
-    "plomberie": {"label": "Plomberie et installations sanitaires", "collections": [], "terms": ["plumbing", "plomberie", "rainwater harvesting"]},
-    "habitat": {"label": "Isolation, chauffage et construction en bois", "collections": ["woodworking.stackexchange.com"], "terms": ["insulation", "heating", "carpentry", "timber framing", "menuiserie", "chauffage", "cabane"]},
-    "soudure": {"label": "Soudure, brasage et travail des métaux", "collections": [], "terms": ["welding", "soldering", "brazing", "metalworking", "soudure", "soudage"]},
-    "carburants": {"label": "Gaz, carburants et sécurité du feu", "collections": [], "terms": ["fuel storage", "biogas", "fire safety", "firewood", "carburants", "biogaz"]},
-    "nuisibles": {"label": "Nuisibles et prévention", "collections": [], "terms": ["pest control", "nuisibles"]},
-    "medicaments": {"label": "Médicaments, plantes médicinales et toxicologie", "collections": [], "terms": ["pharmacology", "medicinal plants", "toxicology", "medicaments", "phytotherapie", "essential oils", "dietary supplements"]},
-    "risques": {"label": "Risques, protections, NRBC et protection civile", "collections": [], "terms": ["civil protection", "civil defense", "disaster preparedness", "radiation protection", "personal protective equipment", "cbrn", "nrbc", "civil war", "siege warfare"]},
-    "nautisme": {"label": "Navigation, météo et vie en bateau", "collections": [], "terms": ["seamanship", "sailing", "boating", "meteorology", "weather forecasting", "navigation maritime", "vie en bateau"]},
-    "artisanat": {"label": "Bushcraft, vannerie et savoir-faire", "collections": ["crafts.stackexchange.com", "outdoors.stackexchange.com"], "terms": ["bushcraft", "basket weaving", "basketry", "vannerie", "wilderness survival"]},
-    "champignons": {"label": "Champignons et plantes comestibles", "collections": [], "terms": ["mycology", "mushroom cultivation", "foraging", "edible plants", "champignons", "plantes comestibles"]},
-    "sport": {"label": "Sport, musculation et activité physique", "collections": ["fitness.stackexchange.com", "sports.stackexchange.com"], "terms": ["strength training", "physical fitness", "musculation"]},
-    "culture": {"label": "Culture, histoire, religions et loisirs", "collections": ["wikisource", "gutenberg"], "terms": ["history", "religion", "histoire", "board games", "loisirs"]}
-  }
+    "autonomie": {
+      "label": "Autonomie et techniques sobres",
+      "collections": [
+        "appropedia",
+        "solar.lowtechmagazine.com",
+        "sustainability.stackexchange.com",
+        "lrnselfreliance"
+      ],
+      "terms": [
+        "self reliance",
+        "self sufficiency",
+        "homesteading",
+        "autonomie",
+        "low tech"
+      ]
+    },
+    "survie": {
+      "label": "Survie et préparation aux coupures",
+      "collections": [
+        "survivorlibrary.com",
+        "zimgit-post-disaster",
+        "canadian-prepper",
+        "lrnselfreliance"
+      ],
+      "terms": [
+        "survival",
+        "preppers",
+        "prepping",
+        "preparedness",
+        "survie",
+        "bushcraft"
+      ]
+    },
+    "chasse": {
+      "label": "Chasse, armes et sécurité",
+      "collections": [],
+      "terms": [
+        "hunting",
+        "chasse",
+        "fishing",
+        "peche",
+        "firearm safety",
+        "firearm maintenance",
+        "ammunition storage",
+        "armes",
+        "munitions",
+        "trapping"
+      ]
+    },
+    "agriculture": {
+      "label": "Agriculture, sols, semences et fertilité",
+      "collections": [
+        "gardenology",
+        "gardenology.org",
+        "gardening.stackexchange.com",
+        "appropedia"
+      ],
+      "terms": [
+        "agriculture",
+        "gardening",
+        "farming",
+        "permaculture",
+        "semences",
+        "jardinage",
+        "beekeeping",
+        "bee keeping",
+        "fruit trees",
+        "pruning",
+        "grafting",
+        "arboriculture",
+        "taille des fruitiers",
+        "soil fertility",
+        "crop rotation",
+        "compost",
+        "drainage",
+        "irrigation",
+        "seed saving",
+        "plant propagation",
+        "crop diseases",
+        "pest management",
+        "fertilite",
+        "rotation des cultures",
+        "conservation des semences"
+      ],
+      "learning": {
+        "summary": "Maintenir la production et la fertilité dans la durée.",
+        "subjects": [
+          {
+            "label": "Sols, compost et rotations",
+            "query": "compost"
+          },
+          {
+            "label": "Fertilité à long terme",
+            "query": "fertilité"
+          },
+          {
+            "label": "Irrigation et drainage",
+            "query": "irrigation"
+          },
+          {
+            "label": "Sélection et conservation des semences",
+            "query": "semences"
+          },
+          {
+            "label": "Multiplication végétale et greffage",
+            "query": "greffage"
+          },
+          {
+            "label": "Maladies et ravageurs",
+            "query": "ravageurs"
+          },
+          {
+            "label": "Cultures de base",
+            "query": "agriculture"
+          }
+        ]
+      },
+      "guides": [
+        "garden-herault",
+        "seeds-organic",
+        "school-garden-fr",
+        "microgardens-fr"
+      ]
+    },
+    "energie": {
+      "label": "Énergie et électricité",
+      "collections": [
+        "energypedia",
+        "solar.lowtechmagazine.com",
+        "electronics.stackexchange.com",
+        "appropedia"
+      ],
+      "terms": [
+        "renewable energy",
+        "solar energy",
+        "wind energy",
+        "energie",
+        "electricity",
+        "electricite",
+        "solar power",
+        "wind turbine",
+        "power generator",
+        "groupe electrogene",
+        "eolienne"
+      ],
+      "learning": {
+        "summary": "Comprendre et maintenir la production d’énergie, avec les alternatives documentées.",
+        "subjects": [
+          {
+            "label": "Électromagnétisme et bases de l’électricité",
+            "query": "électromagnétisme"
+          },
+          {
+            "label": "Mesures, schémas et protections",
+            "query": "électricité"
+          },
+          {
+            "label": "Réparation des moteurs et générateurs",
+            "query": "moteurs"
+          },
+          {
+            "label": "Solaire, batteries et dépendances matérielles",
+            "query": "batterie"
+          },
+          {
+            "label": "Solutions mécaniques et hydrauliques",
+            "query": "roues hydrauliques"
+          }
+        ]
+      },
+      "guides": [
+        "wiring-fr",
+        "inrs-6187",
+        "inrs-6109"
+      ]
+    },
+    "eau": {
+      "label": "Eau, hygiène et assainissement",
+      "collections": [
+        "zimgit-water"
+      ],
+      "terms": [
+        "water treatment",
+        "water purification",
+        "sanitation",
+        "assainissement",
+        "eau potable"
+      ]
+    },
+    "alimentation": {
+      "label": "Cuisine et conservation alimentaire",
+      "collections": [
+        "cooking.stackexchange.com",
+        "zimgit-food-preparation",
+        "canadian-prepper_en_preppingfood"
+      ],
+      "terms": [
+        "food storage",
+        "food preservation",
+        "canning",
+        "conservation alimentaire",
+        "cuisine",
+        "nutrition",
+        "food processing",
+        "low resource cooking",
+        "food safety"
+      ]
+    },
+    "sante": {
+      "label": "Santé, secours et santé publique",
+      "collections": [
+        "mdwiki",
+        "wikipedia_en_medicine",
+        "wikipedia_fr_medicine",
+        "zimgit-medicine",
+        "medicalsciences.stackexchange.com",
+        "libretexts.org_en_med"
+      ],
+      "terms": [
+        "first aid",
+        "premiers secours",
+        "emergency medicine",
+        "medical encyclopedia",
+        "anatomy",
+        "physiology",
+        "public health",
+        "differential diagnosis",
+        "infectious diseases",
+        "maternal health",
+        "child health",
+        "dentistry",
+        "surgery",
+        "sante publique"
+      ],
+      "learning": {
+        "summary": "Étudier des références datées et leurs conditions d’application, avec les compétences nécessaires.",
+        "subjects": [
+          {
+            "label": "Anatomie et physiologie",
+            "query": "anatomie"
+          },
+          {
+            "label": "Hygiène, prévention et santé publique",
+            "query": "hygiène"
+          },
+          {
+            "label": "Diagnostic différentiel et infections",
+            "query": "diagnostic"
+          },
+          {
+            "label": "Santé maternelle et infantile",
+            "query": "maternité"
+          },
+          {
+            "label": "Soins dentaires",
+            "query": "dentaire"
+          },
+          {
+            "label": "Chirurgie : indications, moyens et compétences requis",
+            "query": "chirurgie"
+          },
+          {
+            "label": "Pharmacologie, préparation et conservation des remèdes",
+            "query": "pharmacologie"
+          }
+        ]
+      },
+      "guides": [
+        "psc-fr",
+        "gqs-fr",
+        "msf-clinical-fr",
+        "psychological-first-aid",
+        "dental-fm",
+        "dental-01",
+        "dental-02",
+        "dental-03",
+        "dental-04",
+        "dental-05",
+        "dental-06",
+        "dental-07",
+        "dental-08",
+        "dental-09",
+        "dental-10",
+        "dental-11",
+        "dental-12",
+        "no-doctor-fm",
+        "no-doctor-toc",
+        "no-doctor-int",
+        "no-doctor-01",
+        "no-doctor-02",
+        "no-doctor-03",
+        "no-doctor-04",
+        "no-doctor-05",
+        "no-doctor-06",
+        "no-doctor-07",
+        "no-doctor-08",
+        "no-doctor-09",
+        "no-doctor-10",
+        "no-doctor-11",
+        "no-doctor-12",
+        "no-doctor-13",
+        "no-doctor-14",
+        "no-doctor-15",
+        "no-doctor-16",
+        "no-doctor-17",
+        "no-doctor-18",
+        "no-doctor-19",
+        "no-doctor-20",
+        "no-doctor-21",
+        "no-doctor-22",
+        "no-doctor-23",
+        "no-doctor-gp",
+        "no-doctor-info",
+        "no-doctor-gloss",
+        "no-doctor-resc",
+        "no-doctor-indx",
+        "no-doctor-bm"
+      ]
+    },
+    "abri": {
+      "label": "Abri et construction",
+      "collections": [
+        "diy.stackexchange.com",
+        "zimgit-post-disaster",
+        "appropedia"
+      ],
+      "terms": [
+        "shelter",
+        "home improvement",
+        "construction",
+        "abri",
+        "treehouse",
+        "cabin construction"
+      ]
+    },
+    "reparation": {
+      "label": "Réparation, outils et métiers",
+      "collections": [
+        "ifixit",
+        "mechanics.stackexchange.com",
+        "bicycles.stackexchange.com",
+        "woodworking.stackexchange.com",
+        "crafts.stackexchange.com"
+      ],
+      "terms": [
+        "repair",
+        "reparation",
+        "woodworking",
+        "soudage",
+        "sharpening",
+        "tool maintenance",
+        "clothing repair",
+        "shoe repair",
+        "affutage",
+        "entretien des outils"
+      ],
+      "learning": {
+        "summary": "Diagnostiquer, entretenir et réparer en comprenant les contraintes.",
+        "subjects": [
+          {
+            "label": "Diagnostiquer une panne",
+            "query": "réparation"
+          },
+          {
+            "label": "Entretenir et affûter les outils",
+            "query": "affûtage"
+          },
+          {
+            "label": "Pièces, plans et tolérances",
+            "query": "tolérances"
+          },
+          {
+            "label": "Réparer un objet simple",
+            "query": "réparation"
+          }
+        ]
+      },
+      "guides": [
+        "inrs-122",
+        "inrs-6109"
+      ]
+    },
+    "communications": {
+      "label": "Radio et communications",
+      "collections": [
+        "ham.stackexchange.com"
+      ],
+      "terms": [
+        "amateur radio",
+        "radioamateur",
+        "communications d urgence",
+        "computer networking",
+        "internet",
+        "telecommunications"
+      ]
+    },
+    "education": {
+      "label": "Enseignement et transmission des savoirs",
+      "collections": [
+        "vikidia",
+        "wikibooks",
+        "wikiversity",
+        "khanacademy",
+        "sikana",
+        "libretexts.org_en_k12"
+      ],
+      "terms": [
+        "school curriculum",
+        "education primaire",
+        "mathematiques",
+        "literacy",
+        "numeracy",
+        "teaching methods",
+        "apprenticeship",
+        "progressive courses",
+        "exercises",
+        "pedagogy",
+        "transmission des savoirs",
+        "apprentissage lecture"
+      ],
+      "learning": {
+        "summary": "Apprendre, enseigner et vérifier la compréhension à chaque niveau.",
+        "subjects": [
+          {
+            "label": "Lire et écrire",
+            "query": "lecture"
+          },
+          {
+            "label": "Compter et raisonner",
+            "query": "calcul"
+          },
+          {
+            "label": "Cours progressifs et exercices",
+            "query": "enseignement"
+          },
+          {
+            "label": "Former des apprentis",
+            "query": "apprentissage"
+          },
+          {
+            "label": "Documenter une méthode et la transmettre",
+            "query": "pédagogie"
+          }
+        ]
+      },
+      "guides": [
+        "maths-cm2",
+        "maths-6e",
+        "maths-5e",
+        "maths-4e",
+        "maths-3e",
+        "cp-numbers",
+        "cp-reading",
+        "school-garden-fr"
+      ]
+    },
+    "nature": {
+      "label": "Nature et botanique",
+      "collections": [
+        "gardenology",
+        "gardenology.org",
+        "biology.stackexchange.com"
+      ],
+      "terms": [
+        "botany",
+        "botanique",
+        "wildlife",
+        "biodiversity",
+        "biodiversite"
+      ]
+    },
+    "orientation": {
+      "label": "Orientation et activités de plein air",
+      "collections": [
+        "outdoors.stackexchange.com",
+        "wikivoyage"
+      ],
+      "terms": [
+        "orienteering",
+        "outdoor recreation",
+        "randonnee",
+        "navigation terrestre"
+      ]
+    },
+    "fonds-general": {
+      "label": "Encyclopédies et tous les guides du projet",
+      "collections": [
+        "wikipedia",
+        "wiktionary",
+        "wiktionnaire"
+      ],
+      "terms": [
+        "encyclopedia",
+        "encyclopedie",
+        "dictionary",
+        "dictionnaire"
+      ]
+    },
+    "elevage": {
+      "label": "Élevage, apiculture et santé animale",
+      "collections": [],
+      "terms": [
+        "livestock",
+        "animal husbandry",
+        "poultry",
+        "rabbit farming",
+        "beekeeping",
+        "apiculture",
+        "elevage",
+        "veterinary",
+        "pet care",
+        "dog care",
+        "cat care",
+        "guinea pig",
+        "aquaculture",
+        "pisciculture"
+      ]
+    },
+    "peche": {
+      "label": "Pêche et chasse sous-marine",
+      "collections": [],
+      "terms": [
+        "fishing",
+        "angling",
+        "spearfishing",
+        "peche",
+        "fish identification"
+      ]
+    },
+    "plomberie": {
+      "label": "Plomberie et installations sanitaires",
+      "collections": [],
+      "terms": [
+        "plumbing",
+        "plomberie",
+        "rainwater harvesting"
+      ]
+    },
+    "habitat": {
+      "label": "Isolation, chauffage et construction en bois",
+      "collections": [
+        "woodworking.stackexchange.com"
+      ],
+      "terms": [
+        "insulation",
+        "heating",
+        "carpentry",
+        "timber framing",
+        "menuiserie",
+        "chauffage",
+        "cabane"
+      ]
+    },
+    "soudure": {
+      "label": "Soudure, brasage et travail des métaux",
+      "collections": [],
+      "terms": [
+        "welding",
+        "soldering",
+        "brazing",
+        "metalworking",
+        "soudure",
+        "soudage"
+      ]
+    },
+    "carburants": {
+      "label": "Gaz, carburants et sécurité du feu",
+      "collections": [],
+      "terms": [
+        "fuel storage",
+        "biogas",
+        "fire safety",
+        "firewood",
+        "carburants",
+        "biogaz"
+      ]
+    },
+    "nuisibles": {
+      "label": "Nuisibles et prévention",
+      "collections": [],
+      "terms": [
+        "pest control",
+        "nuisibles"
+      ]
+    },
+    "medicaments": {
+      "label": "Médicaments, plantes médicinales et toxicologie",
+      "collections": [],
+      "terms": [
+        "pharmacology",
+        "medicinal plants",
+        "toxicology",
+        "medicaments",
+        "phytotherapie",
+        "essential oils",
+        "dietary supplements",
+        "drug storage",
+        "medicine preservation",
+        "pharmacologie",
+        "conservation des medicaments"
+      ],
+      "guides": [
+        "msf-drugs-fr"
+      ]
+    },
+    "risques": {
+      "label": "Risques, protections, NRBC et protection civile",
+      "collections": [],
+      "terms": [
+        "civil protection",
+        "civil defense",
+        "disaster preparedness",
+        "radiation protection",
+        "personal protective equipment",
+        "cbrn",
+        "nrbc",
+        "civil war",
+        "siege warfare"
+      ]
+    },
+    "nautisme": {
+      "label": "Navigation, météo et vie en bateau",
+      "collections": [],
+      "terms": [
+        "seamanship",
+        "sailing",
+        "boating",
+        "meteorology",
+        "weather forecasting",
+        "navigation maritime",
+        "vie en bateau"
+      ]
+    },
+    "artisanat": {
+      "label": "Bushcraft, vannerie et savoir-faire",
+      "collections": [
+        "crafts.stackexchange.com",
+        "outdoors.stackexchange.com"
+      ],
+      "terms": [
+        "bushcraft",
+        "basket weaving",
+        "basketry",
+        "vannerie",
+        "wilderness survival"
+      ]
+    },
+    "champignons": {
+      "label": "Champignons et plantes comestibles",
+      "collections": [],
+      "terms": [
+        "mycology",
+        "mushroom cultivation",
+        "foraging",
+        "edible plants",
+        "champignons",
+        "plantes comestibles"
+      ]
+    },
+    "sport": {
+      "label": "Sport, musculation et activité physique",
+      "collections": [
+        "fitness.stackexchange.com",
+        "sports.stackexchange.com"
+      ],
+      "terms": [
+        "strength training",
+        "physical fitness",
+        "musculation"
+      ]
+    },
+    "culture": {
+      "label": "Culture, histoire, religions et loisirs",
+      "collections": [
+        "wikisource",
+        "gutenberg"
+      ],
+      "terms": [
+        "history",
+        "religion",
+        "histoire",
+        "board games",
+        "loisirs"
+      ]
+    },
+    "sciences": {
+      "label": "Sciences fondamentales et raisonnement",
+      "collections": [
+        "libretexts.org_en_math",
+        "libretexts.org_en_phys",
+        "libretexts.org_en_chem",
+        "libretexts.org_en_bio",
+        "libretexts.org_en_geo",
+        "libretexts.org_en_stats",
+        "math.stackexchange.com",
+        "physics.stackexchange.com",
+        "chemistry.stackexchange.com",
+        "biology.stackexchange.com",
+        "earthscience.stackexchange.com",
+        "khanacademy",
+        "wikiversity"
+      ],
+      "terms": [
+        "arithmetic",
+        "geometry",
+        "algebra",
+        "physics",
+        "chemistry",
+        "biology",
+        "ecology",
+        "geology",
+        "sciences fondamentales"
+      ],
+      "learning": {
+        "summary": "Comprendre les principes pour adapter une méthode et résoudre des exercices.",
+        "subjects": [
+          {
+            "label": "Arithmétique, proportions et algèbre",
+            "query": "algèbre"
+          },
+          {
+            "label": "Géométrie et plans",
+            "query": "géométrie"
+          },
+          {
+            "label": "Physique et énergie",
+            "query": "physique"
+          },
+          {
+            "label": "Chimie et transformations",
+            "query": "chimie"
+          },
+          {
+            "label": "Biologie et écologie",
+            "query": "écologie"
+          },
+          {
+            "label": "Géologie et sols",
+            "query": "géologie"
+          }
+        ]
+      },
+      "guides": [
+        "maths-cm2",
+        "maths-6e",
+        "maths-5e",
+        "maths-4e",
+        "maths-3e",
+        "cp-numbers",
+        "botany-mooc"
+      ],
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "mesure": {
+      "label": "Mesure, calcul et contrôle",
+      "collections": [
+        "libretexts.org_en_phys",
+        "libretexts.org_en_stats",
+        "engineering.stackexchange.com"
+      ],
+      "terms": [
+        "measurement",
+        "metrology",
+        "units of measurement",
+        "quality control",
+        "calibration",
+        "proportions",
+        "temperature",
+        "pressure",
+        "humidity",
+        "ph measurement",
+        "metrologie",
+        "controle qualite"
+      ],
+      "learning": {
+        "summary": "Choisir une unité, mesurer, calculer et vérifier la reproductibilité.",
+        "subjects": [
+          {
+            "label": "Unités, conversions et proportions",
+            "query": "unités"
+          },
+          {
+            "label": "Balances, masses et volumes",
+            "query": "balances"
+          },
+          {
+            "label": "Température et pression",
+            "query": "pression"
+          },
+          {
+            "label": "Humidité et pH",
+            "query": "humidité"
+          },
+          {
+            "label": "Étalonnage et erreurs de mesure",
+            "query": "étalonnage"
+          },
+          {
+            "label": "Essais de matériaux et contrôle qualité",
+            "query": "contrôle qualité"
+          }
+        ]
+      },
+      "guides": [
+        "water-chlorine",
+        "cp-numbers"
+      ],
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "textile": {
+      "label": "Textile, chaussures et cordages",
+      "collections": [
+        "crafts.stackexchange.com"
+      ],
+      "terms": [
+        "sewing",
+        "mending",
+        "textiles",
+        "shoemaking",
+        "leatherwork",
+        "rope making",
+        "cordage",
+        "couture",
+        "reparation de chaussures"
+      ],
+      "learning": {
+        "summary": "Entretenir et réparer les objets courants, avec les matières et outils disponibles.",
+        "subjects": [
+          {
+            "label": "Couture et réparation des vêtements",
+            "query": "couture"
+          },
+          {
+            "label": "Chaussures et travail du cuir",
+            "query": "chaussures"
+          },
+          {
+            "label": "Fibres et fabrication de cordages",
+            "query": "cordage"
+          },
+          {
+            "label": "Entretien courant et objets simples",
+            "query": "entretien"
+          }
+        ]
+      },
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "materiaux": {
+      "label": "Matériaux et matières premières",
+      "collections": [
+        "libretexts.org_en_eng",
+        "woodworking.stackexchange.com",
+        "appropedia",
+        "crafts.stackexchange.com"
+      ],
+      "terms": [
+        "materials science",
+        "raw materials",
+        "clay",
+        "lime mortar",
+        "ceramics",
+        "glass making",
+        "natural fibres",
+        "papermaking",
+        "charcoal",
+        "argile",
+        "chaux",
+        "materiaux"
+      ],
+      "learning": {
+        "summary": "Reconnaître les ressources, leur préparation et leurs usages possibles.",
+        "subjects": [
+          {
+            "label": "Bois, pierre et minerais",
+            "query": "minerais"
+          },
+          {
+            "label": "Argile, briques et céramiques",
+            "query": "argile"
+          },
+          {
+            "label": "Chaux, mortier et liants",
+            "query": "chaux"
+          },
+          {
+            "label": "Verre et charbon de bois",
+            "query": "charbon de bois"
+          },
+          {
+            "label": "Fibres, peaux et cordages",
+            "query": "fibres"
+          },
+          {
+            "label": "Papier et colles",
+            "query": "papier"
+          }
+        ]
+      },
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "machines": {
+      "label": "Outils à main et machines simples",
+      "collections": [
+        "libretexts.org_en_eng",
+        "engineering.stackexchange.com",
+        "mechanics.stackexchange.com",
+        "appropedia"
+      ],
+      "terms": [
+        "hand tools",
+        "sharpening",
+        "simple machines",
+        "gears",
+        "pulleys",
+        "pumps",
+        "waterwheel",
+        "lathe",
+        "forge",
+        "mechanical transmission",
+        "affutage",
+        "engrenages",
+        "moulins"
+      ],
+      "learning": {
+        "summary": "Relier principes, plans cotés, pièces, montage et entretien.",
+        "subjects": [
+          {
+            "label": "Outils à main et affûtage",
+            "query": "affûtage"
+          },
+          {
+            "label": "Engrenages, poulies et transmissions",
+            "query": "engrenages"
+          },
+          {
+            "label": "Pompes et circuits",
+            "query": "pompes"
+          },
+          {
+            "label": "Moulins et roues hydrauliques",
+            "query": "moulins"
+          },
+          {
+            "label": "Tours et forges",
+            "query": "tours"
+          },
+          {
+            "label": "Plans cotés, tolérances et réparations",
+            "query": "tolérances"
+          }
+        ]
+      },
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "metallurgie": {
+      "label": "Métallurgie et traitements des métaux",
+      "collections": [
+        "libretexts.org_en_eng",
+        "engineering.stackexchange.com"
+      ],
+      "terms": [
+        "metallurgy",
+        "ironmaking",
+        "blacksmithing",
+        "heat treatment",
+        "corrosion",
+        "metal casting",
+        "metallurgie",
+        "traitement thermique",
+        "minerais"
+      ],
+      "learning": {
+        "summary": "Comprendre les procédés et leurs conditions de réalisation et de contrôle.",
+        "subjects": [
+          {
+            "label": "Minerais et production du fer",
+            "query": "minerais"
+          },
+          {
+            "label": "Forge, fonderie et mise en forme",
+            "query": "forge"
+          },
+          {
+            "label": "Traitements thermiques",
+            "query": "traitements thermiques"
+          },
+          {
+            "label": "Corrosion et protection",
+            "query": "corrosion"
+          },
+          {
+            "label": "Travail des métaux courants",
+            "query": "métaux"
+          }
+        ]
+      },
+      "guides": [
+        "inrs-742",
+        "inrs-83",
+        "inrs-122"
+      ],
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "chimie-pratique": {
+      "label": "Chimie pratique et produits du quotidien",
+      "collections": [
+        "libretexts.org_en_chem",
+        "chemistry.stackexchange.com",
+        "appropedia"
+      ],
+      "terms": [
+        "soap making",
+        "adhesives",
+        "natural paints",
+        "ink making",
+        "cleaning products",
+        "practical chemistry",
+        "savon",
+        "colles",
+        "encres",
+        "produits entretien"
+      ],
+      "learning": {
+        "summary": "Comprendre les transformations, les matières utilisées et les précautions.",
+        "subjects": [
+          {
+            "label": "Savons et produits d’entretien",
+            "query": "savon"
+          },
+          {
+            "label": "Chaux et céramiques",
+            "query": "chaux"
+          },
+          {
+            "label": "Colles et adhésifs",
+            "query": "colles"
+          },
+          {
+            "label": "Peintures et encres",
+            "query": "encres"
+          },
+          {
+            "label": "Conditions de sécurité et limites des procédés",
+            "query": "sécurité chimique"
+          }
+        ]
+      },
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    },
+    "organisation": {
+      "label": "Organisation collective et comptabilité",
+      "collections": [
+        "libretexts.org_en_biz",
+        "libretexts.org_en_socialsci",
+        "economics.stackexchange.com",
+        "politics.stackexchange.com"
+      ],
+      "terms": [
+        "accounting",
+        "bookkeeping",
+        "conflict resolution",
+        "commons governance",
+        "cooperative management",
+        "archives management",
+        "comptabilite",
+        "gestion collective",
+        "arbitrage des conflits"
+      ],
+      "learning": {
+        "summary": "Organiser des activités communes et garder des archives compréhensibles.",
+        "subjects": [
+          {
+            "label": "Règles communes et biens partagés",
+            "query": "biens communs"
+          },
+          {
+            "label": "Arbitrage et conflits",
+            "query": "conflits"
+          },
+          {
+            "label": "Comptabilité et inventaires",
+            "query": "comptabilité"
+          },
+          {
+            "label": "Répartition du travail et coopération",
+            "query": "coopération"
+          },
+          {
+            "label": "Conservation et classement des archives",
+            "query": "archives"
+          }
+        ]
+      }
+    },
+    "histoire-techniques": {
+      "label": "Histoire des techniques et des sociétés",
+      "collections": [
+        "libretexts.org_en_human",
+        "history.stackexchange.com"
+      ],
+      "terms": [
+        "history of technology",
+        "history of agriculture",
+        "economic history",
+        "social history",
+        "histoire des techniques",
+        "histoire des societes"
+      ],
+      "learning": {
+        "summary": "Étudier les conditions de réussite et d’échec des techniques et des sociétés.",
+        "subjects": [
+          {
+            "label": "Nourriture et agriculture dans l’histoire",
+            "query": "histoire agriculture"
+          },
+          {
+            "label": "Énergie, outils et techniques anciennes",
+            "query": "histoire techniques"
+          },
+          {
+            "label": "Soins et santé dans les sociétés",
+            "query": "histoire médecine"
+          },
+          {
+            "label": "Institutions et organisation sociale",
+            "query": "institutions"
+          }
+        ]
+      },
+      "exclude_collections": [
+        "sqa.stackexchange.com",
+        "softwareengineering.stackexchange.com",
+        "freecodecamp"
+      ]
+    }
+  },
+  "learning_steps": [
+    {
+      "label": "Comprendre",
+      "description": "Les principes, le niveau nécessaire et des exercices adaptés."
+    },
+    {
+      "label": "Mesurer",
+      "description": "Les unités, instruments, erreurs possibles et ressources disponibles."
+    },
+    {
+      "label": "Réaliser",
+      "description": "Les matériaux, outils, plans et conditions de la méthode documentée."
+    },
+    {
+      "label": "Contrôler",
+      "description": "Les mesures et essais permettant de vérifier le résultat."
+    },
+    {
+      "label": "Entretenir",
+      "description": "Les pannes, réparations, limites et solutions de remplacement."
+    },
+    {
+      "label": "Transmettre",
+      "description": "Une explication, un exercice et une vérification de la compréhension."
+    }
+  ],
+  "learning_order": [
+    "sciences",
+    "mesure",
+    "materiaux",
+    "machines",
+    "energie",
+    "metallurgie",
+    "chimie-pratique",
+    "textile",
+    "reparation",
+    "agriculture",
+    "sante",
+    "education",
+    "organisation",
+    "histoire-techniques"
+  ],
+  "selection": {
+    "optional_collections": [
+      "gutenberg",
+      "khanacademy",
+      "wikisource",
+      "ted",
+      "alexandria.dk",
+      "nota-bene",
+      "womenshistory.si.edu",
+      "folgerpedia.folger.edu",
+      "internet-encyclopedia-philosophy"
+    ],
+    "excluded_collections": [
+      "wiki",
+      "evageeks",
+      "sqa.stackexchange.com",
+      "softwareengineering.stackexchange.com",
+      "freecodecamp"
+    ]
+  },
+  "learning_levels": [
+    {
+      "id": "principle",
+      "label": "Comprendre le principe",
+      "description": "Pourquoi la méthode fonctionne ; notions et mesures nécessaires."
+    },
+    {
+      "id": "current",
+      "label": "Pratiquer avec les moyens actuels",
+      "description": "Équipement, matériaux, étapes, entretien et contrôle du résultat."
+    },
+    {
+      "id": "local",
+      "label": "Étudier les alternatives locales",
+      "description": "Sans consommables industriels : ressources locales, fabrication des outils, dépendances et limites documentées."
+    },
+    {
+      "id": "transmit",
+      "label": "Transmettre",
+      "description": "Schémas, plans, vocabulaire, exercices, erreurs fréquentes et critères de réussite."
+    }
+  ]
 }

@@ -1,6 +1,6 @@
 # Bibliothèque complète de Marc et laboratoire réduit
 
-**Guide de référence — pilote 0.1.15, 12 novembre 2026.** Besoin confirmé par Louis : Marc souhaite le fonds utile le plus complet possible ; son installation ne possède aucun plafond documentaire logiciel. Le laboratoire de Louis peut conserver une sélection plus petite.
+**Guide de référence — pilote 0.1.19, 12 novembre 2026.** Besoin confirmé par Louis : Marc souhaite le fonds utile le plus complet possible ; son installation ne possède aucun plafond documentaire logiciel. Le laboratoire de Louis peut conserver une sélection plus petite.
 
 ## Préparer directement chez Marc
 
@@ -11,7 +11,7 @@ cd D:\SetupSurvie\application
 py -3 scripts\kiwix_select.py prepare --work-dir D:\SetupSurvie\prive
 ```
 
-Cette commande sélectionne puis télécharge les ajouts sans confirmation supplémentaire. Elle inclut tous les thèmes, les guides du catalogue figé et les encyclopédies françaises et anglaises, avec dédoublonnage des collections locales. Elle conserve chaque plan daté sous `donnees/catalog/`, vérifie les tailles et SHA-256, puis actualise Kiwix et le pilote. Aucun modèle n'est téléchargé ou interrogé, aucune pause IA n'est levée.
+Cette commande sélectionne puis télécharge les ajouts sans confirmation supplémentaire. Elle inclut tous les thèmes pratiques, les guides du catalogue figé et les encyclopédies françaises et anglaises, avec dédoublonnage des collections locales. Elle conserve chaque plan daté sous `donnees/catalog/`, vérifie les tailles et SHA-256, puis actualise Kiwix et le pilote. Aucun modèle n'est téléchargé ou interrogé, aucune pause IA n'est levée.
 
 Le plafond documentaire est absent sur cette installation. La place réellement libre et une réserve de **15 Go** restent obligatoires. Si tout ne tient pas, les fichiers exclus par capacité sont indiqués dans le plan ; il faut davantage de stockage pour les ajouter. Le fonds n'est pas garanti exhaustif sur tous les sites Internet : la découverte porte sur le catalogue officiel Kiwix et les guides explicitement référencés du projet, en français et anglais par défaut.
 
@@ -25,13 +25,27 @@ Le téléchargement reprend les partiels et conserve les fichiers différents. P
 
 Depuis **Données locales → Enrichir la bibliothèque**, les nouvelles sélections proposent tous les thèmes et « Tout ce qui tient sur le disque ». Les choix d'une opération précédente restent conservés : cocher les nouveaux thèmes et choisir ce maximum pour étendre une ancienne sélection. Le parcours conserve les boutons de recherche, téléchargement, pause et reprise.
 
+Depuis 0.1.19, les fonds culturels complets et grandes collections vidéo demandent
+le choix explicite des compléments ; [voir la sélection et l’audit des volumes](savoirs-durables.md#éviter-les-volumes-sans-rapport-avec-le-besoin). Un transfert déjà lancé garde son ancien plan.
+
 ## Sujets recherchés
 
-Les 29 catégories couvrent autonomie, préparation aux coupures, chasse, pêche et chasse sous-marine, agriculture et fruitiers, élevage et apiculture, eau et hygiène, alimentation et conservation, santé et secours, médicaments et toxicologie, énergies et électricité, plomberie, isolation et chauffage, abris et construction, mécanique et réparation, soudure, gaz et carburants, nuisibles, communications, nature et botanique, champignons, bushcraft et vannerie, navigation et météo, risques et protections NRBC, sport, enseignement, culture, histoire, religions et loisirs. Les termes incluent aussi la préparation civile, guerre civile et siège.
+Depuis 0.1.19, **38 thèmes** incluent les [nouveaux savoir-faire de Marc](savoirs-durables.md),
+dont sciences, mesure, matériaux, textile, machines, métallurgie, chimie pratique,
+organisation collective et histoire des techniques. Les thèmes existants couvrent
+aussi eau, alimentation, habitat, agriculture, santé, énergie, réparation,
+communications, enseignement, nature, préparation et loisirs. Les anciens plans
+conservent leurs choix ; préparer une nouvelle sélection avec les nouveaux thèmes.
 
 Une correspondance désigne une collection entière ; elle ne valide pas chaque article ni la couverture de toutes les espèces, techniques, médicaments, compléments, armes ou équipements. Les ressources médicales professionnelles, ouvrages anciens et forums restent à examiner. Les droits de redistribution commerciale restent à vérifier.
 
-Le catalogue officiel consulté le 12 novembre contient **3 657 entrées**. Les nouvelles règles ne repèrent aucune collection spécialisée FR/EN pour chasse, pêche, plomberie, soudure, carburants, nuisibles, médicaments, risques ou champignons. Cela n'exclut pas des chapitres dans les collections générales ou les PDF déjà présents. Ces lacunes nécessitent des manuels dédiés, vérifiés puis ajoutés au catalogue figé ; aucun fichier ou SHA-256 n'est inventé pour les masquer.
+Constat de la sélection **0.1.15**, conservé à son périmètre : le catalogue consulté
+le 12 novembre contient **3 657 entrées** ; les règles de cette version ne repéraient
+aucune collection spécialisée FR/EN pour chasse, pêche, plomberie, soudure,
+carburants, nuisibles, médicaments, risques ou champignons. Les collections
+générales et PDF pouvaient contenir des chapitres correspondants. La grille des
+[savoirs durables](savoirs-durables.md) décrit la recherche élargie de 0.1.19 ; les
+lacunes nécessitent toujours des manuels et une recette réelle, sans inventer de fichiers.
 
 ## Laboratoire et kit de transport
 
@@ -45,7 +59,7 @@ Le kit ne doit pas imposer sa taille à Marc. Un nouvel export inclut désormais
 
 Pour éviter une deuxième copie volumineuse sur le SSD limité du laboratoire, préparer les compléments directement chez Marc. Les données supplémentaires chez lui n'ont pas à être téléchargées également chez Louis.
 
-## Vérifications et limites
+## Vérifications et limites — bilan 0.1.15 conservé
 
 Suite locale : **149 tests, 148 réussites et un test COM Windows ignoré sur Linux** ; configuration Compose contrôlée sans démarrage. Tests sur le runner CPU, avec fichiers minuscules : sélection au-delà de 500 Go hors laboratoire, plafond laboratoire maintenu, réserve physique, sélection des guides et de Wikipédia anglais sans doublon, respect des langues, export d'une nouvelle collection et refus d'une source corrompue. Parcours Playwright avec API simulée : 29 thèmes, absence de plafond, préparation, téléchargement, pause et affichage de 320 à 1 366 pixels.
 

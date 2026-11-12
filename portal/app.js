@@ -56,7 +56,7 @@ function view(name){
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('breadcrumb').textContent=labels[name];
   if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
-  if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='settings'){loadAdmin();loadSettings();}if(name==='users')loadAdmin();if(name==='data')loadData();
+  if(name==='library')loadLearning();if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='settings'){loadAdmin();loadSettings();}if(name==='users')loadAdmin();if(name==='data')loadData();
   if(name!=='chat')window.scrollTo({top:0,behavior:'instant'});
   else{resumeConversation();if(S.conversation&&!S.loadingConversation)restoreReading(S.conversation);}
 }
@@ -153,6 +153,37 @@ async function runSearch(event){
     if(!data.results.length)$('search-results').append(element('div','Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
+let learningState=null;
+function learningSelection(){
+  const domain=learningState?.domains.find(d=>d.id===$('learning-domain').value);
+  return {domain,subject:domain?.subjects[Number($('learning-subject').value)]};
+}
+function updateLearningSubject(){
+  const domain=learningSelection().domain;$('learning-subject').replaceChildren();
+  for(const [i,subject] of (domain?.subjects||[]).entries()){const option=element('option',subject.label);option.value=i;$('learning-subject').append(option);}
+  $('learning-summary').textContent=domain?.summary||'';
+}
+async function loadLearning(){
+  if(learningState)return;
+  try{
+    const data=await api('/library/learning');if(!Array.isArray(data.domains)||!Array.isArray(data.steps))throw Error('Catalogue de parcours incomplet');learningState=data;
+    $('learning-domain').replaceChildren();for(const domain of data.domains){const option=element('option',domain.label);option.value=domain.id;$('learning-domain').append(option);}
+    $('learning-level').replaceChildren();for(const level of data.levels||[]){const option=element('option',level.label);option.value=level.id;$('learning-level').append(option);}
+    $('learning-notice').textContent=data.notice;$('learning-steps').replaceChildren();
+    for(const step of data.steps){const item=element('li');item.append(element('strong',step.label+' : '),document.createTextNode(step.description));$('learning-steps').append(item);}
+    updateLearningSubject();for(const id of ['learning-domain','learning-subject','learning-search','learning-ask'])$(id).disabled=!data.domains.length;
+  }catch(e){$('learning-notice').textContent='Les parcours ne sont pas disponibles. Vous pouvez utiliser la recherche ci-dessous.';}
+}
+$('learning-domain').onchange=updateLearningSubject;
+$('learning-search').onclick=()=>{const {subject}=learningSelection();if(!subject)return;$('library-query').value=subject.query;$('library-search').requestSubmit();};
+$('learning-ask').onclick=()=>{
+  if(S.job){toast('Attendez la réponse en cours ou annulez-la.');return;}
+  if(!needUser())return;
+  const {domain,subject}=learningSelection();if(!subject)return;const level=learningState.levels?.find(l=>l.id===$('learning-level').value);
+  newConversation();$('chat-input').value=`Je souhaite apprendre : ${subject.label} (${domain.label}). Niveau demandé : ${level?.label||'Comprendre le principe'} — ${level?.description||''}. Adapte le parcours à mon âge et mon niveau ; demande les informations manquantes et les ressources disponibles. Recherche puis lis les documents locaux. Explique les principes, propose des exercices et des corrections, puis les étapes : comprendre, mesurer, réaliser, contrôler, entretenir, transmettre, lorsque cela s’applique. Précise les matériaux, outils, instruments, compétences, limites et contrôles documentés. Cite les sources et leurs dates ; signale les informations absentes. Pour un acte à risque, distingue l’étude de la réalisation pratique.`;
+  $('chat-title').textContent='Apprendre : '+subject.label;$('chat-input').focus();
+};
+
 function documentText(source){let text=String(source.text||'');if(/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)&&text.startsWith('Identifiant de source : ')){const end=text.indexOf('\n\n');if(end>=0)text=text.slice(end+2);}const lines=text.split('\n'),norm=x=>x.trim().replace(/[’‘]/g,"'").toLocaleLowerCase();while(lines.length&&(!lines[0].trim()||norm(lines[0])===norm(source.title)))lines.shift();return lines.join('\n');}
 function renderDocument(target,source){const text=documentText(source);if(!text.trim()){target.textContent='Cet aperçu ne contient pas de texte lisible. Ouvrez le document d’origine pour le consulter.';return;}for(const line of text.split('\n')){if(!line.trim())continue;const paragraph=element('p',line);target.append(paragraph);}}
 async function readSource(id){
@@ -287,8 +318,8 @@ async function loadData(){
     $('data-preparation').textContent=data.note;
   }catch(e){$('data-summary').textContent=e.message;}
 }
-function contentOptions(){return {themes:[...$('content-themes').querySelectorAll('input:checked')].map(e=>e.value),languages:$('content-languages').value.split(','),max_add_gb:Number($('content-budget').value)};}
-function sameContentOptions(a,b){return !!a&&JSON.stringify([...a.themes].sort())===JSON.stringify([...b.themes].sort())&&JSON.stringify([...a.languages].sort())===JSON.stringify([...b.languages].sort())&&a.max_add_gb===b.max_add_gb;}
+function contentOptions(){return {themes:[...$('content-themes').querySelectorAll('input:checked')].map(e=>e.value),languages:$('content-languages').value.split(','),max_add_gb:Number($('content-budget').value),include_supplements:$('content-supplements').checked};}
+function sameContentOptions(a,b){return !!a&&JSON.stringify([...a.themes].sort())===JSON.stringify([...b.themes].sort())&&JSON.stringify([...a.languages].sort())===JSON.stringify([...b.languages].sort())&&a.max_add_gb===b.max_add_gb&&!!a.include_supplements===!!b.include_supplements;}
 function renderContentState(){
   if(!contentState)return;
   const data=contentState,busy=['starting','planning','downloading','refreshing'].includes(data.phase),plan=data.plan;
@@ -302,10 +333,13 @@ function renderContentState(){
   $('content-download').textContent=(data.phase==='paused'?'Reprendre le téléchargement':'Télécharger la sélection')+(plan?.count?' · '+bytes(plan.remaining_download_bytes):'');
   $('content-plan-summary').textContent=plan?(data.phase==='completed'?plan.count+' collection(s) téléchargée(s) et vérifiée(s).':plan.count+' nouvelle(s) collection(s) sélectionnée(s) · '+bytes(plan.remaining_download_bytes)+' à transférer lors de la préparation du plan.') : '';
   const names=new Map((data.themes||[]).map(t=>[t.id,t.label]));
-  $('content-gaps').textContent=plan?.missing_themes?.length?'Aucune collection spécialisée repérée pour : '+plan.missing_themes.map(t=>names.get(t)||t).join(', ')+'.':'';
+  $('content-gaps').textContent=plan?.missing_themes?.length?'Aucune référence repérée dans les catalogues consultés pour : '+plan.missing_themes.map(t=>names.get(t)||t).join(', ')+'.':'';
+  const coverage=plan?.learning_coverage||[];$('content-learning').hidden=!coverage.length;$('content-learning-list').replaceChildren();
+  for(const area of coverage){const item=element('li');item.append(element('strong',area.label+' : '),document.createTextNode(`${area.references} référence(s) repérée(s), ${area.local_references??'présence inconnue'} présente(s). Sujets à examiner : ${area.skills_to_review.join(', ')}.`));$('content-learning-list').append(item);}
+  if(plan?.legacy_selection)$('content-plan-summary').append(document.createTextNode(' Ancien plan : les nouveaux filtres de pertinence ne lui sont pas appliqués. Pour les utiliser, mettez le transfert en pause puis préparez une nouvelle sélection.'));
   $('content-results').hidden=!plan;
   if(plan){
-    const labels={selected:data.phase==='completed'?'Téléchargée et vérifiée':'À télécharger',already_local:'Déjà présent',covered_by_full_collection:'Collection complète présente ou sélectionnée',budget_excluded:'Dépasse le plafond choisi',metadata_unavailable:'Informations de téléchargement indisponibles',existing_conflict:'Fichier existant conservé',partial_conflict:'Fichier partiel à vérifier'};
+    const labels={selected:data.phase==='completed'?'Téléchargée et vérifiée':'À télécharger',already_local:'Déjà présent',covered_by_full_collection:'Collection complète présente ou sélectionnée',budget_excluded:'Dépasse le plafond choisi',optional_excluded:'Complément non demandé',out_of_scope:'Hors du fonds pratique',metadata_unavailable:'Informations de téléchargement indisponibles',existing_conflict:'Fichier existant conservé',partial_conflict:'Fichier partiel à vérifier'};
     $('content-candidates').replaceChildren();
     for(const item of plan.candidates){const row=element('li');row.append(element('strong',item.title),element('span',labels[item.status]||item.status,'small'),element('span',[item.themes.map(t=>names.get(t)||t).join(', '),bytes(item.bytes||item.estimated_bytes),item.fulltext_index?'':'Consultation directe dans Kiwix'].filter(Boolean).join(' · '),'small muted'));$('content-candidates').append(row);}
   }
@@ -318,7 +352,7 @@ async function loadContentManager(){
       $('content-themes').replaceChildren();const defaults=data.options?.themes||data.themes.map(t=>t.id);
       for(const theme of data.themes){const label=element('label'),input=element('input');input.type='checkbox';input.name='theme';input.value=theme.id;input.checked=defaults.includes(theme.id);label.append(input,element('span',theme.label));$('content-themes').append(label);}
       if(data.options?.themes){$('content-languages').value=data.options.languages.join(',');const budget=$('content-budget');if(![...budget.options].some(o=>Number(o.value)===data.options.max_add_gb)){const option=element('option',data.options.max_add_gb+' Go');option.value=data.options.max_add_gb;budget.append(option);}budget.value=data.options.max_add_gb;}
-      contentInitialized=true;
+      $('content-supplements').checked=!!data.options?.include_supplements;contentInitialized=true;
     }
     const previous=contentState?.phase;contentState=data;renderContentState();renderGeoJob(data);
     if(previous&&previous!=='completed'&&data.phase==='completed'){status();loadData();}
