@@ -98,6 +98,8 @@
 .learning-selects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .learning-selects label{font-size:14px;min-width:0}.learning-selects select{min-height:44px;width:100%;min-width:0;max-width:100%}
 .learning-browser,.learning-selects,.learning-actions{min-width:0;max-width:100%}
+.learning-browser{contain:inline-size;overflow-x:clip}
+#learning-level{min-width:0;width:100%;max-width:100%;appearance:none;-webkit-appearance:none}
 .learning-selects select{appearance:none;-webkit-appearance:none;padding-right:24px;background:#fff}
 .learning-actions{display:flex;gap:10px;flex-wrap:wrap}.learning-actions button{white-space:normal;max-width:100%;min-height:44px}
 .learning-method{margin-top:16px}.learning-method li{margin:8px 0}

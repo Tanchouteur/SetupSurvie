@@ -21,14 +21,12 @@ async(page)=>{
   if(questions.length)throw Error('Question envoyée sans validation');page.off('request',listener);
   await page.evaluate(()=>view('library'));
   const layouts=[];
-  // WebKit can round the document scroll width up by one CSS pixel after native select reflow.
-  // Larger overflow remains a failure with element bounds recorded below.
   for(const width of [1366,768,390,320]){
     await page.setViewportSize({width,height:900});
     for(const domain of ['sciences','sante','organisation','histoire-techniques']){
       await page.locator('#learning-domain').selectOption(domain);
       try{
-        await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);
+        await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);
       }catch(error){
         const measure=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,body:document.body.scrollWidth,
           overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&!e.closest('[hidden]')).slice(0,12)
