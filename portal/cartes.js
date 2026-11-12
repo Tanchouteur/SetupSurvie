@@ -12,7 +12,7 @@
     const hasBasemap=maps.length>0;
     if(!hasBasemap)maps.push({id:'empty',title:'Aucun fond de carte préparé',center:[2.3,46.5],bbox:[-180,-80,180,80],maxzoom:0});
     document.getElementById('no-basemap').hidden=hasBasemap;
-    let geoData=null,reference=null;try{const [g,r]=await Promise.all([fetch('/api/geography/status'),fetch('/api/settings')]);if(g.ok)geoData=await g.json();if(r.ok){const settings=await r.json();reference=settings.departure||settings.home;}}catch(_){}
+    let geoData=null,reference=null;if(user)try{const [g,r]=await Promise.all([fetch('/api/geography/status'),fetch('/api/settings')]);if(g.ok)geoData=await g.json();if(r.ok){const settings=await r.json();reference=settings.departure||settings.home;}}catch(_){}
     let showRelief=false;const hasTerrain=geoData?.datasets?.some(d=>d.terrain);
     const reliefButton=document.getElementById('relief');
     reliefButton.disabled=false;reliefButton.dataset.unavailable=String(!hasTerrain);

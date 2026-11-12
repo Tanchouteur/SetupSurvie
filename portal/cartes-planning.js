@@ -47,6 +47,7 @@
     editingPoint=point?.id||null;listOptions($('point-list'),point?.list_id||listId);const create=node('option','＋ Créer une nouvelle liste');create.value='__new__';$('point-list').append(create);if(!listId)$('point-list').value='__new__';$('point-new-list-field').hidden=$('point-list').value!=='__new__';$('point-new-list-title').required=$('point-list').value==='__new__';$('map-point-dialog-title').textContent=point?'Modifier le point':'Enregistrer le point choisi';$('point-title').value=point?.title||'';$('point-lat').value=chosen.lat;$('point-lon').value=chosen.lon;$('point-kind').value=point?.kind||'other';$('point-notes').value=point?.notes||'';$('point-form-message').textContent='';$('map-point-dialog').showModal();$('point-title').focus();
   }
   function beginPoint(){if(!window.MapUI.requireUser())return;if(user?.role!=='admin'){window.MapUI.notify('Un compte administrateur est nécessaire pour ajouter un point.');return;}pickingPoint=true;map?.pickPoint();if(mobile.matches)document.body.classList.remove('map-panel-open');}
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&pickingPoint){pickingPoint=false;map?.finishPick();window.MapUI.notify('Ajout du point annulé.');}});
   $('new-map-point').onclick=beginPoint;
   $('begin-map-point').onclick=beginPoint;
   $('save-selected-point').onclick=()=>{if(window.MapUI.requireUser())editPoint();};

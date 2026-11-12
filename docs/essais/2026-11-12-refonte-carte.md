@@ -43,7 +43,7 @@ une liste et une commande dans un autre panneau, sans parcours guidé.
 - Régression des itinéraires rejouée : calcul, enregistrement, kilomètres/durée,
   erreur sans trajet enregistrable et rejet d’une réponse après changement de mode.
 - Recettes : `tests/browser_map_redesign.js` et `tests/browser_map_notebook.js`.
-  CI dédiée avec Chromium et WebKit sur Ubuntu 24.04, Playwright 1.58.2. Les tests
+  CI dédiée **réussie sur Chromium et WebKit** sur Ubuntu 24.04, Playwright 1.58.2. Les deux recettes passent sur chacun des deux moteurs. Les tests
   utilisent uniquement des réponses locales fictives ; aucun corpus ou modèle IA
   téléchargé dans le runner. Les navigateurs de CI sont installés sur la machine
   GitHub, pas sur les PC utilisateurs.

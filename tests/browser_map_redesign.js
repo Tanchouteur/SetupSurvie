@@ -35,6 +35,7 @@ async (page) => {
   if(await page.locator('#map').evaluate(e=>e.clientHeight)<700)throw new Error('Les panneaux mangent la carte sur ordinateur.');
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(searches!==0)throw new Error('La recherche privée ne doit pas partir sans connexion.');
+  if(calls.some(path=>path==='/api/geography/status'||path==='/api/settings'))throw new Error('Appels privés inutiles sans session.');
   await page.locator('#map-login-form [name=email]').fill('admin');await page.locator('#map-login-form [name=password]').fill('fixture-password');
   await page.locator('#map-login-form button[type=submit]').click();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='admin');
   await page.locator('#map-nearby button').click();await page.waitForFunction(()=>document.querySelector('#search-help').hidden===false);
@@ -43,6 +44,8 @@ async (page) => {
   await page.locator('[data-panel=map-layers]').click();await page.locator('#relief').click();
   if(await page.locator('#relief').isDisabled())throw new Error('Le relief manquant doit être explicable par une action.');
   if(!(await page.locator('#relief-help').innerText()).includes('Aucune altitude'))throw new Error('Relief absent non expliqué.');
+  await page.locator('#begin-map-point').click();await page.keyboard.press('Escape');
+  if(!(await page.locator('#map-notice').innerText()).includes('annulé'))throw new Error('Le choix du point ne peut pas être annulé.');
   await page.locator('#begin-map-point').click();const bounds=await page.locator('#map').boundingBox();await page.mouse.click(bounds.x+120,bounds.y+220);
   await page.locator('#map-point-dialog').waitFor({state:'visible'});
   if(await page.locator('#point-list').inputValue()!=='__new__')throw new Error('Le premier point doit permettre de créer sa liste.');
