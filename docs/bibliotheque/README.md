@@ -8,7 +8,6 @@
 | [Plan de bibliothèque de 500 Go](plan-bibliotheque-hors-ligne-500go.md) | Plan de sélection, avec son ancienne répartition conservée ; les lots proposés ne sont pas tous téléchargés |
 | [Téléchargements prioritaires](../essais/telechargements-prioritaires.md) | Bilan de la livraison 0.1.6, conservé à son périmètre |
 | [Bibliothèque du Sud, recherche et IA](../essais/bibliotheque-sud-recherche-et-ia.md) | Bilan de la livraison 0.1.7 : cartes, recherche, provenance et limites |
-| [Sélection Kiwix par thème](selection-kiwix-par-theme.md) | Préparation d’un plan selon les thèmes, l’inventaire et le budget ; pilote 0.1.8 |
 | [Ajouter des contenus](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#télécharger-des-lots-sans-réinstaller) | Procédure pour les lots figés, reprise, intégrité et budget |
 
 Le budget retenu est **500 Go documentaires**, hors modèles IA et caches d’essai.

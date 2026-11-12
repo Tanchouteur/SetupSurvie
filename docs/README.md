@@ -44,8 +44,6 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Bibliothèque
 
-- [Sélection automatique des collections Kiwix par thème](bibliotheque/selection-kiwix-par-theme.md) : guide du pilote 0.1.8.
-
 - [Where There Is No Doctor : téléchargement et recette](bibliotheque/where-there-is-no-doctor.md)
 
 - [Sélection automatique Kiwix par thème](bibliotheque/selection-kiwix-par-theme.md) — guide de référence du pilote 0.1.8.
