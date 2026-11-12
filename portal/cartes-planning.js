@@ -60,5 +60,8 @@
   for(const id of ['map-notebook','planning-panel','geo-tools'])$(id).addEventListener('toggle',()=>{if(mobile.matches&&$(id).open)for(const other of ['map-notebook','geo-tools'])if(other!==id)$(other).open=false;requestAnimationFrame(()=>map?.resize());});
   window.addEventListener('survie-map-ready',()=>{map=window.SurvieMap;updateMap();if(activeRoute)map.route(activeRoute.geometry);});
   if(window.SurvieMap)map=window.SurvieMap;
+  let printSheetOpen=false;
+  window.addEventListener('beforeprint',()=>{printSheetOpen=$('route-sheet').open;if(activeRoute)$('route-sheet').open=true;map?.resize();});
+  window.addEventListener('afterprint',()=>{$('route-sheet').open=printSheetOpen;map?.resize();});
   load();
 })();

@@ -47,12 +47,19 @@ async def main():
                 routing.URLS[mode]='http://'+ip+':5000'
             results={}
             for mode in ('foot','motorcycle','car'):
-                for attempt in range(30):
+                for attempt in range(5):
                     try:
                         results[mode]=await routing.calculate([{'lat':43.1,'lon':6.1,'title':'Départ'},{'lat':43.1,'lon':6.104,'title':'Arrivée'}],mode,4 if mode=='foot' else 40)
                         break
-                    except Exception:
-                        if attempt==29:raise
+                    except Exception as exc:
+                        print('Routing request',mode,'attempt',attempt+1,repr(exc),flush=True)
+                        if attempt==4:
+                            for candidate in ('foot','motorcycle','car'):
+                                identifier=app.compose(config,'ps','-q','router-'+candidate,capture=True)
+                                if identifier:
+                                    details=routing_prepare.engine('compose','logs',identifier,check=False)
+                                    print('Synthetic service',candidate,(details.stdout or '')[-2500:],(details.stderr or '')[-2500:],flush=True)
+                            raise
                         await asyncio.sleep(1)
             assert results['foot']['distance_m'] < results['motorcycle']['distance_m'] < results['car']['distance_m'],{m:r['distance_m'] for m,r in results.items()}
             assert results['foot']['duration_s']==round(results['foot']['distance_m']/4*3.6)
