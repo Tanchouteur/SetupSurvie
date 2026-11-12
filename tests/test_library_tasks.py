@@ -67,6 +67,7 @@ class LibraryJobTests(unittest.TestCase):
         plan={'items':[],'candidates':[],'remaining_download_bytes':0,'missing_themes':[],'library_bytes':0}
         setup.write_json(folder/'plan.json',plan)
         self.assertEqual(self.manager.status()['plan']['learning_coverage'],[])
+        self.assertTrue(self.manager.status()['plan']['legacy_selection'])
         plan['learning_coverage']=[{'id':'sciences','status':'references_to_review','references':1,'local_references':0,'skills_to_review':['Algèbre']}]
         setup.write_json(folder/'plan.json',plan)
         self.assertEqual(self.manager.status()['plan']['learning_coverage'],plan['learning_coverage'])

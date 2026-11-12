@@ -94,6 +94,7 @@ class Manager:
                 plan = json.loads(plan_path.read_text(encoding='utf-8'))
                 result['plan'] = {k: plan[k] for k in ('candidates', 'remaining_download_bytes', 'missing_themes', 'library_bytes')}
                 result['plan']['count'] = len(plan['items'])
+                result['plan']['legacy_selection'] = 'include_supplements' not in plan
                 result['plan']['learning_coverage'] = plan.get('learning_coverage',[])
             if state['phase'] == 'downloading':
                 progress = Path(self.config['data_dir']) / 'catalog/content-progress.json'
