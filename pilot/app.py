@@ -1,5 +1,6 @@
 """Authenticated local gateway for the first household pilot."""
 import asyncio
+from datetime import datetime,timezone
 from contextlib import asynccontextmanager
 import hashlib
 import json
@@ -14,7 +15,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -33,7 +34,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.17'
+VERSION='0.1.18'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -625,7 +626,10 @@ async def reindex(value=Depends(admin)):return {'guides':await asyncio.to_thread
 
 
 @app.post('/api/admin/guides')
-async def upload(file:UploadFile=File(...),title:str=Form(...),language:str=Form('fr'),provenance:str=Form(''),licence:str=Form(''),value=Depends(admin)):
+async def upload(file:UploadFile=File(...),title:str=Form(...),language:str=Form('fr'),provenance:str=Form(''),licence:str=Form(''),
+                 document_date:str=Form('',max_length=10),edition:str=Form('',max_length=300),value=Depends(admin)):
+    document_date=document_date.strip()
+    if document_date and not source_metadata.date_value(document_date):raise HTTPException(422,'Date du document : indiquez une année, une année-mois ou une date AAAA-MM-JJ valide, ou laissez vide si elle est inconnue.')
     suffix=Path(file.filename or '').suffix.lower()
     if suffix not in ('.pdf','.txt','.md','.epub'):raise HTTPException(400,'Formats acceptés : PDF, texte, Markdown ou EPUB.')
     data=await file.read(20_000_001)
@@ -634,11 +638,15 @@ async def upload(file:UploadFile=File(...),title:str=Form(...),language:str=Form
     path=store.new_id()+'.'+(language or 'other')+suffix
     library.GUIDES.mkdir(parents=True,exist_ok=True)
     (library.GUIDES/path).write_bytes(data)
-    with store.connect() as db:db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?)',(path,title[:200],language,provenance[:1000],licence[:1000]))
+    with store.connect() as db:
+        db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?)',(path,title[:200],language,provenance[:1000],licence[:1000]))
+        db.execute('INSERT INTO guide_dates VALUES(?,?,?,?)',(path,document_date,edition.strip(),datetime.now(timezone.utc).date().isoformat()))
     count=await asyncio.to_thread(library.index_guides)
     with store.connect() as db:
         indexed=db.execute('SELECT 1 FROM documents WHERE id=?',('guide:'+path,)).fetchone()
-        if not indexed:db.execute('DELETE FROM guide_meta WHERE path=?',(path,))
+        if not indexed:
+            db.execute('DELETE FROM guide_meta WHERE path=?',(path,))
+            db.execute('DELETE FROM guide_dates WHERE path=?',(path,))
     if not indexed:
         (library.GUIDES/path).unlink(missing_ok=True)
         raise HTTPException(400,'Le fichier n’a pas pu être lu. Vérifiez son format et son éventuelle protection par mot de passe.')

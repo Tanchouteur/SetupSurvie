@@ -31,6 +31,22 @@ class PilotAPITests(unittest.TestCase):
         response=self.client.post('/api/auth/login',json={'email':who,'password':'example-password'})
         self.assertEqual(response.status_code,200);return response
 
+    def test_uploaded_document_preserves_declared_dates_and_rejects_impossible_dates(self):
+        self.login('admin');headers={'Origin':'http://testserver'}
+        response=self.client.post('/api/admin/guides',files={'file':('notice.txt',b'Volume : 40 litres.','text/plain')},
+                                  data={'title':'Notice fictive','document_date':'2010-05','edition':'Deuxième édition'},headers=headers)
+        self.assertEqual(response.status_code,200)
+        source=self.client.get('/api/source',params={'id':response.json()['id']}).json()
+        self.assertEqual(source['document_date'],'2010-05');self.assertEqual(source['edition'],'Deuxième édition')
+        self.assertRegex(source['collected_at'],r'^\d{4}-\d{2}-\d{2}$')
+        self.assertEqual(source['archive_date'],'')
+        before=list(library.GUIDES.iterdir())
+        response=self.client.post('/api/admin/guides',files={'file':('bad.txt',b'Fiction','text/plain')},
+                                  data={'title':'Bad','document_date':'2026-02-30'},headers=headers)
+        self.assertEqual(response.status_code,422);self.assertEqual(list(library.GUIDES.iterdir()),before)
+        self.client.cookies.clear();self.login('alice')
+        self.assertEqual(self.client.post('/api/admin/guides',files={'file':('x.txt',b'Fiction')},data={'title':'x'},headers=headers).status_code,403)
+
     def test_associated_document_survives_reopen_and_omitted_source_then_can_be_removed(self):
         self.login();library.GUIDES.mkdir();(library.GUIDES/'guide.en.txt').write_text('Useful water guide')
         library.index_guides();headers={'Origin':'http://testserver'}

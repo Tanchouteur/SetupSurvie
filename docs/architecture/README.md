@@ -1,6 +1,6 @@
 # Architecture du pilote
 
-Vue de référence documentaire au 11 novembre 2026. Elle décrit les rôles des
+Vue de référence documentaire au 12 novembre 2026. Elle décrit les rôles des
 composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
 | Composant | Responsabilité | Entrées du dépôt |
@@ -20,6 +20,13 @@ Le contexte produit de l’assistant est dans
 [engine.py](../../pilot/engine.py) ajoute les consignes d’outils, l’historique et
 les passages consultés. Ce contexte est distinct d’[AGENTS.md](../../AGENTS.md),
 qui guide le développement.
+
+Depuis 0.1.18, les [métadonnées de source](../utilisation/sources-et-fiabilite.md)
+séparent date du document, édition, collecte et date du catalogue d’archive.
+Une table privée `guide_dates` complète `guide_meta` sans modifier ses cinq
+colonnes. Recherche, lecture, contexte du modèle et références enregistrées
+transportent ces informations ; le portail distingue une date inconnue.
+Les références exposées comme lues sont filtrées avant affichage et conservation.
 
 Le contrat de livraison est dans [release.json](../../deploy/release.json).
 Les références des composants tiers sont dans [versions.json](../../deploy/versions.json).

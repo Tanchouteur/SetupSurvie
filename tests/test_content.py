@@ -98,6 +98,22 @@ class ContentTests(unittest.TestCase):
     def test_default_budget_is_500_decimal_gb(self):
         self.assertEqual(content.DEFAULT_BUDGET,500_000_000_000)
 
+    def test_metadata_distinguishes_edition_from_collection_and_keeps_unknown_old_collection_unknown(self):
+        item={**self.item,'title':'Notice','language':'fr','publisher':'Fixture','edition':'2010','licence':'Test'}
+        with patch.object(content,'check_capacity'),patch.object(content,'transfer',return_value='downloaded'):
+            content.download(self.root,[item],reserve=0)
+        path=self.root/'library/guides/metadata.json'
+        first=json.loads(path.read_text())[0]
+        self.assertEqual(first['edition'],'2010');self.assertEqual(first['document_date'],'')
+        self.assertRegex(first['collected_at'],r'^\d{4}-\d{2}-\d{2}$')
+        with patch.object(content,'check_capacity'),patch.object(content,'transfer',return_value='present'):
+            content.download(self.root,[item],reserve=0)
+        self.assertEqual(json.loads(path.read_text())[0]['collected_at'],first['collected_at'])
+        first.pop('collected_at');path.write_text(json.dumps([first]))
+        with patch.object(content,'check_capacity'),patch.object(content,'transfer',return_value='present'):
+            content.download(self.root,[item],reserve=0)
+        self.assertEqual(json.loads(path.read_text())[0]['collected_at'],'')
+
     def test_background_download_can_leave_services_untouched(self):
         import linux_lab as lab
         item={**self.item,'pack':'health'}

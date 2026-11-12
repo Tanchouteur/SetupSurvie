@@ -20,7 +20,8 @@ async (page) => {
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[320,568]]){
     await page.setViewportSize({width,height});
-    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth&&document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);
+    try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth&&document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);}
+    catch(error){throw Error('Disposition incorrecte '+width+'x'+height+' '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,send:document.getElementById('send-question').getBoundingClientRect().toJSON(),chat:document.getElementById('view-chat').getBoundingClientRect().toJSON(),viewport:visualViewport?.height}))));}
     const valid=await page.evaluate(()=>({horizontal:document.documentElement.scrollWidth<=innerWidth,composer:document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight}));
     if(!valid.horizontal||!valid.composer)throw Error('Disposition incorrecte '+width+'x'+height);
     layouts.push({width,height,...valid});
