@@ -46,13 +46,14 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Where There Is No Doctor : téléchargement et recette](bibliotheque/where-there-is-no-doctor.md)
 
-- [Sélection automatique Kiwix par thème](bibliotheque/selection-kiwix-par-theme.md) — guide de référence du pilote 0.1.8.
+- [Sélection automatique Kiwix par thème](bibliotheque/selection-kiwix-par-theme.md) — guide de référence du pilote 0.1.9.
 
 - [Bibliothèque hors ligne : quoi télécharger avec une enveloppe de 500 Go](bibliotheque/plan-bibliotheque-hors-ligne-500go.md)
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
 
+- [Gestion de bibliothèque et récupération du contrôleur — 12 novembre 2026](essais/2026-11-12-gestion-bibliotheque-et-controleur.md)
 - [Mesurer le gain réel d’un gros modèle](essais/protocole-comparaison-ia.md)
 - [Vérifications du paquet de prototype](essais/verification-prototype.md)
 - [Essais sur le PC Linux de Louis — 11 novembre 2026](essais/essais-linux-2026-11-11.md)

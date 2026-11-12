@@ -59,3 +59,16 @@ async def command(action,force=False):
         UPDATED=0
         return {'accepted':True}
     except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service de commande ne répond pas. Utilisez le lanceur sur le PC serveur.')
+
+
+async def library_command(action=None,body=None):
+    if action not in (None,'plan','download','pause'):raise HTTPException(400,'Action documentaire inconnue.')
+    try:
+        if not TOKEN:raise ValueError()
+        async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
+            path=URL+'/library'+('/'+action if action else '')
+            headers={'Authorization':'Bearer '+TOKEN}
+            response=await client.post(path,json=body or {},headers=headers) if action else await client.get(path,headers=headers)
+            if response.status_code in (400,409):raise HTTPException(response.status_code,response.json().get('detail','Vérifiez la sélection.'))
+            response.raise_for_status();return response.json()
+    except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service de téléchargement ne répond pas. Relancez les services depuis le PC serveur ; la bibliothèque déjà installée reste disponible.')

@@ -2,6 +2,7 @@
 const $=id=>document.getElementById(id);
 const S={view:'home',user:null,conversation:null,source:null,job:null,poll:null,status:null,searchAbort:null};
 const EMPTY=$('chat-messages').innerHTML;
+let contentTimer=null,contentState=null,contentInitialized=false,contentCommandBusy=false;
 const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',admin:'Gestion de l’appareil',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Comptes et accès'};
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 const mobileNav=matchMedia('(max-width:760px)');
@@ -48,7 +49,7 @@ function view(name){
   if(['admin','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Cette page est réservée à l’administrateur.');return;}S.requestedView=name;auth();return;}
   rememberReading();
   setMenu(false,false);
-  S.view=name;
+  S.view=name;if(name!=='data')clearTimeout(contentTimer);
   document.body.classList.toggle('chat-open',name==='chat');
   for(const section of document.querySelectorAll('.view'))section.hidden=section.id!=='view-'+name;
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
@@ -61,6 +62,7 @@ function view(name){
 function accountUI(){
   const label=$('account-label');label.replaceChildren();
   label.append(document.createTextNode(S.user?.name||'Se connecter'),element('small',S.user?'Votre compte local':'Retrouver mes conversations'));
+  $('content-manager').hidden=S.user?.role!=='admin';if(S.view==='data'&&S.user?.role==='admin')loadContentManager();
   $('mobile-account').textContent=S.user?.name||'Se connecter';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('users-nav').hidden=S.user?.role!=='admin';
   if(S.user&&!S.user.recovery_ready)toast('Pensez à préparer votre code de secours dans « Mon compte ».');
 }
@@ -123,7 +125,7 @@ async function openConversation(id){
 }
 function bindExamples(){document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{$('chat-input').value=b.dataset.question;$('chat-input').focus();});}
 async function status(){
-  try{S.status=await api('/status');const modes=$('chat-mode'),selected=modes.value;modes.replaceChildren();for(const category of ['recommended','comparison']){const group=element('optgroup');group.label=category==='recommended'?'Choix conseillés pour les essais':'Autres modèles à comparer';for(const profile of S.status.modes.filter(x=>x.category===category)){const option=element('option',profile.name);option.value=profile.id;group.append(option);}modes.append(group);}if([...modes.options].some(o=>o.value===selected))modes.value=selected;$('library-count').textContent=`${S.status.books.length} collections · ${S.status.guides} guides`;
+  try{S.status=await api('/status');$('software-version').textContent='Version d’essai '+S.status.version;const modes=$('chat-mode'),selected=modes.value;modes.replaceChildren();for(const category of ['recommended','comparison']){const group=element('optgroup');group.label=category==='recommended'?'Choix conseillés pour les essais':'Autres modèles à comparer';for(const profile of S.status.modes.filter(x=>x.category===category)){const option=element('option',profile.name);option.value=profile.id;group.append(option);}modes.append(group);}if([...modes.options].some(o=>o.value===selected))modes.value=selected;$('library-count').textContent=`${S.status.books.length} collections · ${S.status.guides} guides`;
     const grid=$('collections');grid.replaceChildren();for(const book of S.status.books){const b=button('',()=>{view('data');},'collection');b.append(element('span','▤','book-icon'));const copy=element('span');copy.append(element('strong',book.title),element('small',book.language==='fra'?'Français · disponible hors ligne':'Anglais · disponible hors ligne'));b.append(copy);grid.append(b);}
   }catch(e){$('service-status').textContent='Service momentanément indisponible';toast(e.message);}
 }
@@ -191,6 +193,7 @@ async function engineCommand(action){$('engine-start').disabled=true;$('engine-s
 
 async function loadNetwork(){try{const data=await api('/network');const warning=$('connect-warning');warning.hidden=!data.warning;warning.textContent=data.warning||'';if(!data.lan_enabled){warning.hidden=false;warning.textContent='L’accès depuis les autres appareils est désactivé. La personne qui prépare ce PC peut l’activer dans les réglages réseau.';}$('connect-qr').src='/api/network/qr.svg?kind=direct&v='+Date.now();$('connect-address').textContent=data.http_url;$('connect-address').href=data.http_url;$('connect-secure').textContent=data.https_url;$('connect-secure').href=data.https_url;}catch(e){$('connect-warning').hidden=false;$('connect-warning').textContent=e.message;}}
 async function loadData(){
+  if(S.user?.role==='admin')loadContentManager();
   try{const data=await api('/inventory');$('data-summary').replaceChildren();for(const [title,text] of [['Collections',String(data.books.length)],['Guides',String(data.guides.length)],['Modèles locaux',String(data.models.length)]]){const card=element('div',undefined,'data-stat');card.append(element('strong',text),element('span',title));$('data-summary').append(card);}
     for(const [kind,id] of [['books','data-books'],['guides','data-guides'],['models','data-models']]){
       const grid=$(id);grid.replaceChildren();
@@ -205,6 +208,56 @@ async function loadData(){
     $('data-preparation').textContent=data.note;
   }catch(e){$('data-summary').textContent=e.message;}
 }
+function contentOptions(){return {themes:[...$('content-themes').querySelectorAll('input:checked')].map(e=>e.value),languages:$('content-languages').value.split(','),max_add_gb:Number($('content-budget').value)};}
+function sameContentOptions(a,b){return !!a&&JSON.stringify([...a.themes].sort())===JSON.stringify([...b.themes].sort())&&JSON.stringify([...a.languages].sort())===JSON.stringify([...b.languages].sort())&&a.max_add_gb===b.max_add_gb;}
+function renderContentState(){
+  if(!contentState)return;
+  const data=contentState,busy=['starting','planning','downloading','refreshing'].includes(data.phase),plan=data.plan;
+  $('content-fields').disabled=busy||contentCommandBusy;$('content-plan').disabled=busy||contentCommandBusy;
+  $('content-message').textContent=data.message||'Choisissez les thèmes, puis cherchez les collections disponibles.';
+  const meter=$('content-progress'),progress=data.progress;meter.hidden=data.phase!=='downloading';
+  if(progress?.total&&['downloading','paused'].includes(data.phase)){meter.value=100*progress.bytes/progress.total;$('content-message').textContent+=' '+bytes(progress.bytes)+' / '+bytes(progress.total)+'.';}else meter.removeAttribute('value');
+  $('content-pause').hidden=!['starting','planning','downloading'].includes(data.phase);$('content-pause').disabled=contentCommandBusy||!!data.pause_requested;
+  $('content-download').hidden=!plan||!['planned','paused','error'].includes(data.phase);
+  $('content-download').disabled=contentCommandBusy||!plan?.count||!sameContentOptions(data.options,contentOptions());
+  $('content-download').textContent=(data.phase==='paused'?'Reprendre le téléchargement':'Télécharger la sélection')+(plan?.count?' · '+bytes(plan.remaining_download_bytes):'');
+  $('content-plan-summary').textContent=plan?(data.phase==='completed'?plan.count+' collection(s) téléchargée(s) et vérifiée(s).':plan.count+' nouvelle(s) collection(s) sélectionnée(s) · '+bytes(plan.remaining_download_bytes)+' à transférer lors de la préparation du plan.') : '';
+  const names=new Map((data.themes||[]).map(t=>[t.id,t.label]));
+  $('content-gaps').textContent=plan?.missing_themes?.length?'Aucune collection spécialisée repérée pour : '+plan.missing_themes.map(t=>names.get(t)||t).join(', ')+'.':'';
+  $('content-results').hidden=!plan;
+  if(plan){
+    const labels={selected:data.phase==='completed'?'Téléchargée et vérifiée':'À télécharger',already_local:'Déjà présent',covered_by_full_collection:'Collection complète présente ou sélectionnée',budget_excluded:'Dépasse le plafond choisi',metadata_unavailable:'Informations de téléchargement indisponibles',existing_conflict:'Fichier existant conservé',partial_conflict:'Fichier partiel à vérifier'};
+    $('content-candidates').replaceChildren();
+    for(const item of plan.candidates){const row=element('li');row.append(element('strong',item.title),element('span',labels[item.status]||item.status,'small'),element('span',[item.themes.map(t=>names.get(t)||t).join(', '),bytes(item.bytes||item.estimated_bytes),item.fulltext_index?'':'Consultation directe dans Kiwix'].filter(Boolean).join(' · '),'small muted'));$('content-candidates').append(row);}
+  }
+}
+async function loadContentManager(){
+  clearTimeout(contentTimer);if(S.user?.role!=='admin'||S.view!=='data')return;
+  try{
+    const data=await api('/admin/library');if(S.user?.role!=='admin'||S.view!=='data')return;
+    if(!contentInitialized){
+      $('content-themes').replaceChildren();const defaults=data.options?.themes||['autonomie','survie','agriculture','energie'];
+      for(const theme of data.themes){const label=element('label'),input=element('input');input.type='checkbox';input.name='theme';input.value=theme.id;input.checked=defaults.includes(theme.id);label.append(input,element('span',theme.label));$('content-themes').append(label);}
+      if(data.options){$('content-languages').value=data.options.languages.join(',');const budget=$('content-budget');if(![...budget.options].some(o=>Number(o.value)===data.options.max_add_gb)){const option=element('option',data.options.max_add_gb+' Go');option.value=data.options.max_add_gb;budget.append(option);}budget.value=data.options.max_add_gb;}
+      contentInitialized=true;
+    }
+    const previous=contentState?.phase;contentState=data;renderContentState();
+    if(previous&&previous!=='completed'&&data.phase==='completed'){status();loadData();}
+    if(['starting','planning','downloading','refreshing'].includes(data.phase))contentTimer=setTimeout(loadContentManager,2000);
+  }catch(e){$('content-message').textContent=e.message;$('content-plan').disabled=!contentInitialized;}
+}
+async function contentAction(action,body){
+  if(contentCommandBusy)return;
+  contentCommandBusy=true;renderContentState();
+  try{await api('/admin/library/'+action,body||{});await loadContentManager();}
+  catch(e){$('content-message').textContent=e.message;}
+  finally{contentCommandBusy=false;if(contentState){const message=$('content-message').textContent;renderContentState();$('content-message').textContent=message;}}
+}
+$('content-form').onsubmit=e=>{e.preventDefault();const options=contentOptions();if(!options.themes.length){$('content-message').textContent='Choisissez au moins un thème.';return;}contentAction('plan',options);};
+$('content-form').onchange=renderContentState;
+$('content-download').onclick=()=>contentAction('download',{id:contentState.id});
+$('content-pause').onclick=()=>contentAction('pause');
+$('content-refresh').onclick=loadContentManager;
 function passwordDialog(name){return new Promise(resolve=>{const dialog=element('dialog'),form=element('form'),input=element('input'),label=element('label','Nouveau mot de passe (8 caractères minimum)');input.type='password';input.autocomplete='new-password';input.required=true;input.minLength=8;label.append(input);const save=element('button','Changer le mot de passe');save.type='submit';form.append(element('h2','Compte de '+name),label,save,button('Annuler',()=>dialog.close(),'secondary'));form.onsubmit=e=>{e.preventDefault();resolve(input.value);dialog.close();};dialog.addEventListener('close',()=>{dialog.remove();resolve(null);},{once:true});dialog.append(form);document.body.append(dialog);dialog.showModal();});}
 async function loadAdmin(){
   if(S.user?.role!=='admin')return;

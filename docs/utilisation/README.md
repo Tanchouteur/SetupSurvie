@@ -1,6 +1,6 @@
 # Utiliser le serveur familial
 
-Guide du pilote, mis à jour le 11 novembre 2026. Les usages réels chez Marc et sur
+Guide du pilote, mis à jour le 12 novembre 2026. Les usages réels chez Marc et sur
 Safari iPhone restent à vérifier sur place.
 
 1. Relier l’appareil au même réseau que le serveur, puis ouvrir l’adresse ou le QR code de la page **Autre appareil**. Un Wi-Fi invité peut empêcher la connexion.
@@ -29,3 +29,15 @@ ne nécessite pas de la lever.
 
 Pour les stocks et objets, voir le [guide de l’inventaire local](inventaire-local.md).
 Le fonds recensé et ses limites sont dans la [documentation de bibliothèque](../bibliotheque/README.md).
+
+## Ajouter des collections par thème
+
+Avec un compte administrateur : **Données locales → Enrichir la bibliothèque**.
+Choisir les thèmes, langues et plafond, puis **Chercher les contenus** pour voir
+le volume proposé. **Télécharger la sélection** lance le transfert sur le PC
+serveur ; fermer la page ne l’arrête pas. Le même bloc permet de suivre, mettre
+en pause et reprendre. La consultation quotidienne garde le même menu.
+Voir le [guide de sélection Kiwix](../bibliotheque/selection-kiwix-par-theme.md).
+
+La version affichée dans l’en-tête vient désormais du serveur. Après une mise à
+jour, recharger la page pour charger également le nouveau JavaScript.

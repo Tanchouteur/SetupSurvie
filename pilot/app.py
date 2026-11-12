@@ -28,7 +28,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.8'
+VERSION='0.1.9'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -86,6 +86,36 @@ class Login(BaseModel):
 
 @app.get('/api/health')
 async def health():return {'ok':True,'version':VERSION}
+
+
+class LibrarySelection(BaseModel):
+    themes:list[str]=Field(min_length=1,max_length=14)
+    languages:list[str]=Field(default_factory=lambda:['fr','en'],min_length=1,max_length=2)
+    max_add_gb:int=Field(default=10,ge=1,le=500)
+
+
+class LibraryDownload(BaseModel):
+    id:str=Field(pattern='^[a-f0-9]{32}$')
+
+
+@app.get('/api/admin/library')
+async def library_status(value=Depends(admin)):
+    return await operations.library_command()
+
+
+@app.post('/api/admin/library/plan',status_code=202)
+async def library_plan(body:LibrarySelection,value=Depends(admin)):
+    return await operations.library_command('plan',body.model_dump())
+
+
+@app.post('/api/admin/library/download',status_code=202)
+async def library_download(body:LibraryDownload,value=Depends(admin)):
+    return await operations.library_command('download',body.model_dump())
+
+
+@app.post('/api/admin/library/pause',status_code=202)
+async def library_pause(value=Depends(admin)):
+    return await operations.library_command('pause')
 
 
 @app.get('/api/assistant-context')

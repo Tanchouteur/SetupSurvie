@@ -16,6 +16,7 @@ import time
 
 import discovery
 import setup
+import library_tasks
 
 
 def key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
@@ -54,6 +55,7 @@ class Server(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self,app,c,backend,address=('0.0.0.0',11436)):
         self.app,self.config,self.backend=app,c,backend
+        self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
         super().__init__(address,Handler)
 
@@ -130,31 +132,49 @@ class Handler(BaseHTTPRequestHandler):
         return True
     def do_GET(self):
         if not self.authorized():return
+        if self.path=='/library':
+            try:self.respond(200,self.server.library.status())
+            except (OSError,ValueError,RuntimeError,setup.SetupError):self.respond(503,{'detail':'Le suivi documentaire est indisponible sur le PC serveur.'})
+            return
         if self.path!='/status':self.respond(404,{'detail':'Route inconnue.'});return
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop'):self.respond(404,{'detail':'Commande inconnue.'});return
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause'):self.respond(404,{'detail':'Commande inconnue.'});return
         try:
             length=int(self.headers.get('Content-Length','0'))
             if not 0<=length<=1024:raise ValueError()
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return
+        if self.path.startswith('/library/'):
+            try:
+                with self.server.lock:
+                    if self.path=='/library/pause':self.server.library.pause()
+                    else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
+                self.respond(202,{'accepted':True})
+            except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
+            except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'Vérifiez le disque de données et le service de téléchargement sur le PC serveur.'})
+            return
         ok,error=self.server.change(self.path[1:],body.get('force') is True)
         self.respond(202 if ok else 409,{'accepted':ok,'detail':error})
 
 
 def start(app,c,backend='compose'):
     marker=app.work/'control-process.json'
+    version=json.loads((setup.ROOT/'deploy/release.json').read_text())['version']
     if marker.exists():
         value=json.loads(marker.read_text())
-        if value.get('identity') and discovery.identity(value['pid'])==value['identity']:return
+        if value.get('identity') and discovery.identity(value['pid'])==value['identity']:
+            if value.get('version')==version:return
+            # Reload an older controller when deploying software, without
+            # touching Ollama. Detached library jobs continue independently.
+            stop(app)
     (app.work/'control.stop').unlink(missing_ok=True)
     kwargs={'creationflags':subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP} if os.name=='nt' else {'start_new_session':True}
     with (app.work/'control.log').open('ab') as log:
         process=subprocess.Popen([sys.executable,str(setup.ROOT/'scripts/control.py'),'serve','--work-dir',str(app.work),'--backend',backend],stdin=subprocess.DEVNULL,stdout=log,stderr=log,**kwargs)
-    setup.write_json(marker,{'pid':process.pid,'identity':discovery.identity(process.pid)},private=True)
+    setup.write_json(marker,{'pid':process.pid,'identity':discovery.identity(process.pid),'version':version},private=True)
 
 
 def stop(app):

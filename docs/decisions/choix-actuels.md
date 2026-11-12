@@ -16,6 +16,7 @@ sur les précisions ci-dessous.
 | Accès local | Nom demandé **survie.local**, accès par IP et QR code maintenus ; mDNS à tester sur les clients |
 | Interfaces | Portail et Open WebUI conservés ; mêmes comptes, historiques distincts |
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
+| Gestion des collections | Depuis Données locales, bloc administrateur repliable ; aperçu par thème puis téléchargement explicite, sans nouvelle entrée dans le menu (12 novembre 2026) |
 | Mode jeu | Respect du marqueur de pause ; reprise du moteur uniquement après levée explicite |
 | Confidentialité | Comptes, conversations, clés, modèles et gros contenus hors Git ; préservation des données lors des opérations |
 

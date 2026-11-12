@@ -52,6 +52,17 @@ class ContentTests(unittest.TestCase):
         path=content.destination(self.root,self.item['path']);path.parent.mkdir(parents=True);path.write_bytes(b'user-data')
         with self.assertRaises(setup.SetupError):content.transfer(self.root,self.item)
         self.assertEqual(path.read_bytes(),b'user-data')
+
+    def test_pause_during_integrity_check_preserves_unpublished_partial(self):
+        checks=0
+        def cancelled():
+            nonlocal checks
+            checks+=1
+            return checks>=5
+        with self.assertRaises(content.DownloadPaused):
+            content.transfer(self.root,self.item,lambda *a,**k:Response(self.raw),cancelled=cancelled)
+        self.assertFalse((self.root/self.item['path']).exists())
+        self.assertEqual((self.root/(self.item['path']+'.part')).read_bytes(),self.raw)
     def test_budget_rejected_before_network_and_lock_released(self):
         with patch.object(content,'transfer') as transfer:
             with self.assertRaises(setup.SetupError):content.download(self.root,[self.item],budget=1,reserve=0)

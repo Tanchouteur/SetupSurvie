@@ -51,6 +51,21 @@ class PilotAPITests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/admin/users').status_code,403)
         self.assertEqual(self.client.get('/api/conversations').json()['conversations'],[])
 
+    def test_library_management_requires_admin_and_forwards_only_fixed_actions(self):
+        self.login()
+        with patch.object(operations,'library_command',new_callable=AsyncMock) as command:
+            self.assertEqual(self.client.get('/api/admin/library').status_code,403)
+            for action in ('plan','download','pause'):
+                self.assertEqual(self.client.post('/api/admin/library/'+action,json={},headers={'Origin':'http://testserver'}).status_code,403)
+            command.assert_not_called()
+        self.client.cookies.clear()
+        self.login('admin')
+        with patch.object(operations,'library_command',new_callable=AsyncMock,return_value={'accepted':True}) as command:
+            response=self.client.post('/api/admin/library/plan',json={'themes':['energie'],'max_add_gb':5},headers={'Origin':'http://testserver'})
+            self.assertEqual(response.status_code,202)
+            command.assert_awaited_once_with('plan',{'themes':['energie'],'languages':['fr','en'],'max_add_gb':5})
+        self.assertEqual(self.client.post('/api/admin/library/download',json={'id':'../outside'},headers={'Origin':'http://testserver'}).status_code,422)
+
     def test_delete_conversation_checks_owner_and_active_jobs_and_removes_data(self):
         self.login()
         with patch.object(engine,'launch'):

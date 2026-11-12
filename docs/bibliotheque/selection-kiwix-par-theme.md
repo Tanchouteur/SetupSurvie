@@ -1,13 +1,51 @@
-# Sélection automatique des collections Kiwix — pilote 0.1.8
+# Sélection automatique des collections Kiwix — pilote 0.1.9
 
 **Statut : guide de référence**, fonction implémentée et testée sur Linux.
 
-Le préparateur peut choisir des archives du catalogue officiel Kiwix selon les
-thèmes demandés, en tenant compte des fichiers déjà installés. Cette fonction
-est accessible par les scripts de préparation ; il n'y a pas encore de bouton
-de sélection dans le portail de Marc. Aucun modèle IA n'intervient.
+L’administrateur peut choisir des archives du catalogue officiel Kiwix selon les
+thèmes demandés, en tenant compte des fichiers déjà installés. La sélection
+est accessible dans le portail et par les scripts de préparation. Aucun modèle
+IA n’intervient.
 
-## Préparer une sélection
+## Depuis le site
+
+1. Se connecter avec un compte administrateur et ouvrir **Données locales**.
+2. Déplier **Enrichir la bibliothèque**. Les lecteurs ne voient pas ce bloc et
+   aucune entrée supplémentaire n’est ajoutée au menu principal.
+3. Cocher les thèmes, choisir les langues et le maximum à ajouter, puis cliquer
+   sur **Chercher les contenus**. Cette étape prépare une sélection sans
+   télécharger d’archive. Une connexion Internet est nécessaire sur le serveur.
+4. Consulter le volume proposé, les thèmes sans correspondance et, au besoin,
+   **Voir les collections proposées**. Après modification des choix, préparer
+   une nouvelle sélection avant de lancer le téléchargement.
+5. Cliquer sur **Télécharger la sélection**. La progression est conservée sur
+   le PC serveur : changer de page ou fermer le navigateur n’arrête pas le travail.
+   **Mettre en pause** conserve les partiels ; **Reprendre le téléchargement**
+   reprend et vérifie les fichiers. Une réponse réseau peut demander jusqu’à
+   une minute avant de prendre en compte la pause.
+
+Les choix et le plan courant sont conservés dans le dossier privé du serveur,
+sous `library-web/`. L’interface n’accepte ni chemin, ni URL, ni commande libre.
+Les tâches s’exécutent dans un processus hôte distinct, par l’intermédiaire du
+contrôleur authentifié. Elles survivent à son redémarrage. Une tâche disparue
+après une coupure est signalée comme interrompue : préparer une nouvelle sélection
+pour reprendre les partiels. Ne pas lancer simultanément un transfert CLI sur les
+mêmes données : le verrou existant refuserait le second téléchargement.
+Si une coupure a laissé un verrou de transfert, vérifier depuis le PC serveur
+que son processus propriétaire est arrêté avant de retirer ce verrou ; les
+fichiers partiels eux-mêmes doivent être conservés.
+
+À la fin, seul Kiwix est redémarré pour rendre les nouvelles archives disponibles.
+Le pilote interroge son catalogue à chaque recherche ; il n’est pas nécessaire
+pour ces seuls ZIM de réindexer les PDF ou de démarrer Ollama. Cela ne remplit pas
+les collections Open WebUI. Une archive sans index plein texte reste signalée
+comme consultable directement, sans promettre une recherche par l’assistant.
+
+Si le service de téléchargement est indisponible, les contenus existants restent
+lisibles. Le lanceur doit démarrer le contrôleur hôte ; la récupération du
+laboratoire `scripts/lab_refresh_library.py` le rétablit sans démarrer le moteur IA.
+
+## Préparer une sélection en ligne de commande
 
 ~~~bash
 python3 scripts/kiwix_select.py themes
@@ -143,3 +181,7 @@ privées ni GPU. Les trois configurations Compose sont analysées sans démarrag
 Le plan conservé dans `data/catalog/kiwix-selection.json` propose 30 ajouts,
 pour **9,93 Go** supplémentaires, avec un plafond de 10 Go. Ces archives sont
 sélectionnées, pas téléchargées ni validées éditorialement.
+
+Pour le parcours du site ajouté en 0.1.9, voir le [bilan du 12 novembre 2026](../essais/2026-11-12-gestion-bibliotheque-et-controleur.md) :
+106 tests, navigation Chromium/WebKit, préparation réelle et récupération du
+contrôleur. Les chiffres précédents décrivent la recette des scripts en 0.1.8.

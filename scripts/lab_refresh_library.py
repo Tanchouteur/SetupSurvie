@@ -38,6 +38,10 @@ def refresh():
             args+=['--entrypoint','python',lab.reference('open-webui'),'-m','uvicorn','pilot.app:app','--host','0.0.0.0','--port','8000']
         lab.podman(*common,*args,capture=True)
         print('Actualisé :',name,flush=True)
+    # A library-only recovery may follow a reboot, when containers survived but
+    # the host-side controller did not. Restore controls without starting Ollama.
+    import control
+    control.start(app,c,'lab')
 
 
 if __name__=='__main__':refresh()

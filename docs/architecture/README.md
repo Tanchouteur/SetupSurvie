@@ -40,3 +40,10 @@ Web par défaut sont 8080/3000/8081 et 8443/8444/8445 pour HTTPS. Les ports inte
 La [proposition initiale](../historique/architecture-et-installation-prototype.md)
 et la [comparaison NOMAD](../historique/comparaison-nomad-assemblage.md) restent
 archivées pour expliquer le cheminement des choix.
+
+La [sélection Kiwix par thème](../bibliotheque/selection-kiwix-par-theme.md) passe
+par les routes administrateur du pilote puis le contrôleur hôte authentifié.
+Celui-ci lance uniquement les tâches documentaires prévues, avec paramètres
+bornés. Leur processus et leur état persistent indépendamment du navigateur et
+du contrôleur. Les téléchargements utilisent les vérifications du préparateur ;
+ils n’ajoutent aucun outil Internet à l’assistant et ne démarrent aucun modèle.

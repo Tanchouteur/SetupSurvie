@@ -18,6 +18,11 @@ CATALOG=setup.ROOT/'deploy/content-catalog.json'
 DEFAULT_BUDGET=500_000_000_000
 
 
+class DownloadPaused(Exception):
+    """Cooperative stop: keep partials, never publish an unverified file."""
+    pass
+
+
 def check_capacity(root,missing=0,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_root=None):
     """Cap documents once; enforce physical free space separately from test models."""
     scope=Path(storage_root) if storage_root is not None else root
@@ -77,15 +82,26 @@ def catalog(path=CATALOG):
     return items
 
 
-def transfer(root,item,opener=None,progress=None,before_write=None):
+def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None):
+    def check():
+        if cancelled and cancelled():raise DownloadPaused()
+    def digest(path):
+        if cancelled is None:return setup.file_hash(path)
+        value=hashlib.sha256()
+        with path.open('rb') as stream:
+            while block:=stream.read(8*1024*1024):
+                check();value.update(block)
+        check();return value.hexdigest()
+    check()
     target=destination(root,item['path']);partial=destination(root,item['path']+'.part')
     size=item['bytes'];target.parent.mkdir(parents=True,exist_ok=True)
     if target.exists():
-        if target.stat().st_size==size and setup.file_hash(target)==item['sha256']:return 'present'
+        if target.stat().st_size==size and digest(target)==item['sha256']:return 'present'
         raise setup.SetupError('Fichier existant différent, conservé : '+str(target))
     offset=partial.stat().st_size if partial.exists() else 0
     if offset>size:raise setup.SetupError('Fichier partiel trop grand ; nettoyer ce téléchargement avant de reprendre.')
     if offset<size:
+        check()
         request=urllib.request.Request(item['url'],headers={'Range':f'bytes={offset}-','Accept-Encoding':'identity','User-Agent':'SetupSurvie-offline-library/0.1'})
         open_url=opener or urllib.request.build_opener(urllib.request.ProxyHandler({})).open
         with open_url(request,timeout=60) as response:
@@ -99,19 +115,21 @@ def transfer(root,item,opener=None,progress=None,before_write=None):
             if response.headers.get('Content-Encoding','identity')!='identity':raise setup.SetupError('Contenu compressé inattendu.')
             with partial.open('ab' if offset else 'wb') as out:
                 while chunk:=response.read(min(1024*1024,size-offset+1)):
+                    check()
                     if offset+len(chunk)>size:raise setup.SetupError('Le serveur dépasse la taille annoncée.')
                     if before_write:before_write(len(chunk))
                     out.write(chunk);offset+=len(chunk)
                     if progress:progress(offset,size)
                 out.flush();os.fsync(out.fileno())
     if partial.stat().st_size!=size:raise setup.SetupError('Téléchargement interrompu ; relancer la même commande pour reprendre.')
-    if setup.file_hash(partial)!=item['sha256']:raise setup.SetupError('Empreinte incorrecte ; fichier partiel conservé, jamais publié.')
+    if digest(partial)!=item['sha256']:raise setup.SetupError('Empreinte incorrecte ; fichier partiel conservé, jamais publié.')
+    check()
     partial.chmod(0o644)
     partial.replace(target)
     return 'downloaded'
 
 
-def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_root=None):
+def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_root=None,cancelled=None):
     root=setup.safe_path(root)
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
@@ -127,7 +145,7 @@ def download(root,items,*,budget=DEFAULT_BUDGET,reserve=15_000_000_000,storage_r
                 setup.write_json(root/'catalog/content-progress.json',{'id':item['id'],'bytes':done,'total':total,'status':'downloading'})
             def before_write(count):
                 check_capacity(root,count+1_000_000,budget=budget,reserve=reserve,storage_root=storage_root)
-            try:state=transfer(root,item,progress=progress,before_write=before_write)
+            try:state=transfer(root,item,progress=progress,before_write=before_write,cancelled=cancelled)
             except BaseException:
                 setup.write_json(root/'catalog/content-progress.json',{'id':item['id'],'status':'interrupted','message':'Relancer la même commande pour reprendre ; aucun fichier non vérifié publié.'})
                 raise

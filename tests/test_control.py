@@ -29,10 +29,21 @@ class ControlTests(unittest.TestCase):
 
     def test_unauthorized_and_unknown_routes_never_execute(self):
         with patch.object(self.server,'change') as change:
-            for token,path,code in [(None,'/start',401),('bad','/stop',401),(control.key(self.c),'/run',404)]:
+            for token,path,code in [(None,'/start',401),('bad','/stop',401),(None,'/library/plan',401),(control.key(self.c),'/run',404)]:
                 with self.assertRaises(urllib.error.HTTPError) as error:self.post(path,token,{'command':'anything'})
                 self.assertEqual(error.exception.code,code)
             change.assert_not_called()
+
+    def test_library_routes_are_authenticated_and_limited(self):
+        with patch.object(self.server.library,'start') as start:
+            with self.post('/library/plan',control.key(self.c),{'themes':['eau']}) as response:
+                self.assertEqual(response.status,202)
+            start.assert_called_once_with('plan',{'themes':['eau']})
+        request=urllib.request.Request(self.base+'/library',headers={'Authorization':'Bearer '+control.key(self.c)})
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=3) as response:
+            value=json.load(response)
+        self.assertEqual(value['phase'],'idle')
+        self.assertTrue(any(t['id']=='energie' for t in value['themes']))
 
     def test_paused_start_requires_explicit_force(self):
         setup.write_json(self.app.work/'inference-paused.json',{'reason':'user_gaming'})
@@ -57,6 +68,17 @@ class ControlTests(unittest.TestCase):
             with self.assertRaises(setup.SetupError):control.stop(self.app)
         self.assertTrue(marker.exists())
         self.assertTrue((self.app.work/'control.stop').exists())
+
+    def test_start_reloads_old_controller_but_keeps_current_one(self):
+        from unittest.mock import MagicMock
+        marker=self.app.work/'control-process.json';identity={'path':'owned','created':'1'}
+        setup.write_json(marker,{'pid':123,'identity':identity,'version':'0.0.1'})
+        with patch.object(control.discovery,'identity',return_value=identity),patch.object(control,'stop') as stop,patch.object(control.subprocess,'Popen',return_value=MagicMock(pid=123)) as launch:
+            control.start(self.app,self.c)
+            stop.assert_called_once_with(self.app)
+            self.assertEqual(Path(launch.call_args.args[0][1]).name,'control.py')
+            control.start(self.app,self.c)
+            self.assertEqual(launch.call_count,1)
 
 
 if __name__=='__main__':unittest.main()
