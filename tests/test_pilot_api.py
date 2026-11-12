@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-from pilot import accounts, app as gateway, engine, library, operations,store
+from pilot import accounts, app as gateway, engine, library, operations,store,translations
 
 
 class PilotAPITests(unittest.TestCase):
@@ -30,6 +30,50 @@ class PilotAPITests(unittest.TestCase):
     def login(self,who='alice'):
         response=self.client.post('/api/auth/login',json={'email':who,'password':'example-password'})
         self.assertEqual(response.status_code,200);return response
+
+    def test_associated_document_survives_reopen_and_omitted_source_then_can_be_removed(self):
+        self.login();library.GUIDES.mkdir();(library.GUIDES/'guide.en.txt').write_text('Useful water guide')
+        library.index_guides();headers={'Origin':'http://testserver'}
+        with patch.object(engine,'launch') as launch:
+            created=self.client.post('/api/questions',json={'message':'Explique ce document','source_id':'guide:guide.en.txt'},headers=headers).json()
+            conv=created['conversation_id']
+            saved=self.client.get('/api/conversations/'+conv).json()
+            self.assertEqual(saved['source']['id'],'guide:guide.en.txt')
+            self.client.post('/api/questions',json={'message':'Et ensuite ?','conversation_id':conv},headers=headers)
+            self.assertEqual(launch.call_args.args[-1],'guide:guide.en.txt')
+        self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':None},headers=headers).status_code,200)
+        self.assertIsNone(self.client.get('/api/conversations/'+conv).json()['source'])
+        with patch.object(library,'source',new_callable=AsyncMock) as source:
+            self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':'guide:guide.en.txt'},headers={'Authorization':'Bearer bob'}).status_code,404)
+            source.assert_not_awaited()
+
+    def test_translation_endpoints_isolation_restart_export_and_deletion(self):
+        self.login();library.GUIDES.mkdir();(library.GUIDES/'guide.en.txt').write_text('Useful water guide')
+        library.index_guides();headers={'Origin':'http://testserver'}
+        with patch.object(translations,'launch'):
+            response=self.client.post('/api/translations',json={'source_id':'guide:guide.en.txt'},headers=headers)
+        self.assertEqual(response.status_code,202);item=response.json();key=item['id'];conv=item['conversation_id']
+        self.assertEqual(self.client.get('/api/conversations/'+conv).json()['translations'],[key])
+        for suffix in ['', '/export']:
+            self.assertEqual(self.client.get('/api/translations/'+key+suffix,headers={'Authorization':'Bearer bob'}).status_code,404)
+        self.assertEqual(self.client.post('/api/translations/'+key+'/pause',json={},headers={'Authorization':'Bearer bob'}).status_code,404)
+        self.assertEqual(self.client.delete('/api/conversations/'+conv,headers=headers).status_code,409)
+        self.assertEqual(self.client.post('/api/translations/'+key+'/pause',json={},headers=headers).status_code,200)
+        self.assertIn('pas encore traduit',self.client.get('/api/translations/'+key+'/export').text)
+        with patch.object(operations,'status',AsyncMock(return_value={'online':False,'paused':True,'message':'mode jeu'})),patch.object(translations,'launch') as launch:
+            self.assertEqual(self.client.post('/api/translations/'+key+'/resume',json={},headers=headers).status_code,503)
+            launch.assert_not_called()
+        self.assertEqual(self.client.delete('/api/conversations/'+conv,headers=headers).status_code,200)
+        self.assertEqual(self.client.get('/api/translations/'+key).status_code,404)
+        with store.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM translation_parts').fetchone()[0],0)
+            self.assertEqual(db.execute('SELECT count(*) FROM conversation_sources').fetchone()[0],0)
+
+    def test_full_library_profile_reaches_controller_without_old_gateway_limit(self):
+        self.login('admin')
+        with patch.object(operations,'library_command',AsyncMock(return_value={'accepted':True})) as command:
+            response=self.client.post('/api/admin/library/plan',json={'themes':['eau']*29,'max_add_gb':0},headers={'Origin':'http://testserver'})
+        self.assertEqual(response.status_code,202);self.assertEqual(command.call_args.args[1]['max_add_gb'],0)
 
     def test_cookie_has_30_days_httponly_and_secure_on_https(self):
         response=self.login()

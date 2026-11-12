@@ -55,3 +55,7 @@ comptes, conversations et contenus, mais coupe l’accès depuis les autres appa
 Le PC reste allumé. Fermer uniquement le navigateur laisse le serveur disponible.
 Voir le [guide des raccourcis](../installation/pilote-marc.md#installer-à-partir-du-kit)
 pour désactiver le démarrage automatique ou équiper une installation existante.
+
+## Documents et traduction
+
+Le [guide des documents associés et de la traduction progressive](documents-et-traduction.md) explique la conservation du document dans une conversation, la traduction du PDF entier ou de certaines pages, les pauses, la reprise avec un autre modèle et l’export du texte français. Disponible à partir de 0.1.16, après actualisation du logiciel et du navigateur.

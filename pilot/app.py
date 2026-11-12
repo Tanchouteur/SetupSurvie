@@ -14,7 +14,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -27,11 +27,13 @@ async def lifespan(app):
     map_notebook.init()
     await asyncio.to_thread(library.index_guides)
     yield
+    for task in list(translations.ACTIVE.values()):task.cancel()
+    if translations.ACTIVE:await asyncio.gather(*list(translations.ACTIVE.values()),return_exceptions=True)
     for task in list(engine.ACTIVE.values()):task.cancel()
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.15'
+VERSION='0.1.16'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -92,9 +94,9 @@ async def health():return {'ok':True,'version':VERSION}
 
 
 class LibrarySelection(BaseModel):
-    themes:list[str]=Field(min_length=1,max_length=14)
+    themes:list[str]=Field(min_length=1,max_length=100)
     languages:list[str]=Field(default_factory=lambda:['fr','en'],min_length=1,max_length=2)
-    max_add_gb:int=Field(default=10,ge=1,le=500)
+    max_add_gb:int=Field(default=0,ge=0)
 
 
 class LibraryDownload(BaseModel):
@@ -453,7 +455,8 @@ async def conversation(identifier:str,value=Depends(user)):
     item=store.owned_conversation(identifier,value['id'])
     if not item:raise HTTPException(404,'Conversation introuvable.')
     with store.connect() as db:jobs=[dict(r) for r in db.execute("SELECT id,status,mode FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(identifier,))]
-    return {**item,'messages':store.messages(identifier),'jobs':jobs}
+    with store.connect() as db:translated=[r['id'] for r in db.execute('SELECT id FROM translations WHERE conversation_id=? ORDER BY created DESC',(identifier,))]
+    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'translations':translated}
 
 
 @app.delete('/api/conversations/{identifier}')
@@ -462,6 +465,7 @@ async def delete_conversation(identifier:str,value=Depends(user)):
         db.execute('BEGIN IMMEDIATE')
         if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():
             raise HTTPException(404,'Conversation introuvable.')
+        if db.execute("SELECT 1 FROM translations WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():raise HTTPException(409,'Mettez la traduction en pause avant de supprimer cette conversation.')
         jobs=db.execute('SELECT id,status FROM jobs WHERE conversation_id=?',(identifier,)).fetchall()
         if any(job['status'] in ('queued','running') for job in jobs):
             raise HTTPException(409,'Une réponse est en cours. Attendez sa fin ou annulez-la avant de supprimer cette conversation.')
@@ -486,6 +490,10 @@ async def question(body:Question,value=Depends(user)):
     if not state.get('online') or state.get('operation'):
         raise HTTPException(503,state['message']+'. La bibliothèque reste disponible. Consultez « État de l’appareil » pour le redémarrage.')
     conversation_id=body.conversation_id
+    if conversation_id and not store.owned_conversation(conversation_id,value['id']):raise HTTPException(404,'Conversation introuvable.')
+    attached=store.conversation_source(conversation_id) if conversation_id else None
+    source_id=body.source_id if 'source_id' in body.model_fields_set else (attached or {}).get('id')
+    source=await library.source(source_id) if source_id else None
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         if conversation_id and not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(conversation_id,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
@@ -495,11 +503,65 @@ async def question(body:Question,value=Depends(user)):
             raise HTTPException(429,'Vous avez déjà des questions en cours. Attendez ou annulez-en une.')
         if not conversation_id:
             conversation_id=store.new_id();db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation_id,value['id'],body.message[:80],time.time()))
+        store.set_conversation_source(db,conversation_id,source)
         db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation_id,'user',body.message,time.time()))
         identifier=store.new_id();now=time.time()
         db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,value['id'],conversation_id,body.mode,'queued',now,now))
-    engine.launch(identifier,value['id'],conversation_id,body.mode,body.source_id)
+    engine.launch(identifier,value['id'],conversation_id,body.mode,source_id)
     return {'id':identifier,'conversation_id':conversation_id}
+
+
+class AssociatedSource(BaseModel):
+    source_id:str|None=Field(default=None,max_length=2000)
+
+
+@app.put('/api/conversations/{identifier}/source')
+async def associate_source(identifier:str,body:AssociatedSource,value=Depends(user)):
+    if not store.owned_conversation(identifier,value['id']):raise HTTPException(404,'Conversation introuvable.')
+    source=await library.source(body.source_id) if body.source_id else None
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
+        store.set_conversation_source(db,identifier,source)
+    return {'source':store.conversation_source(identifier)}
+
+
+class TranslationRequest(BaseModel):
+    source_id:str=Field(min_length=1,max_length=2000)
+    conversation_id:str|None=Field(default=None,max_length=100)
+    mode:str='rapide'
+    first_page:int=Field(default=1,ge=1,le=1200)
+    last_page:int|None=Field(default=None,ge=1,le=1200)
+
+
+class TranslationResume(BaseModel):
+    mode:str|None=None
+
+
+@app.post('/api/translations',status_code=202)
+async def translate_document(body:TranslationRequest,value=Depends(user)):
+    return await translations.create(value['id'],body.source_id,body.conversation_id,body.mode,body.first_page,body.last_page)
+
+
+@app.get('/api/translations/{identifier}')
+async def translation_status(identifier:str,offset:int=Query(default=0,ge=0,le=100000),value=Depends(user)):
+    return translations.status(identifier,value['id'],offset)
+
+
+@app.post('/api/translations/{identifier}/pause')
+async def pause_translation(identifier:str,value=Depends(user)):
+    return await translations.pause(identifier,value['id'])
+
+
+@app.post('/api/translations/{identifier}/resume',status_code=202)
+async def resume_translation(identifier:str,body:TranslationResume,value=Depends(user)):
+    return await translations.resume(identifier,value['id'],body.mode)
+
+
+@app.get('/api/translations/{identifier}/export')
+async def export_translation(identifier:str,value=Depends(user)):
+    text=translations.export(identifier,value['id'])
+    return Response(text,media_type='text/plain; charset=utf-8',headers={'Content-Disposition':'attachment; filename="traduction-fr.txt"'})
 
 
 @app.get('/api/jobs/{identifier}')

@@ -4,3 +4,6 @@ httpx==0.28.1
 python-multipart==0.0.32
 pypdf==6.21.2
 qrcode==8.2
+
+# Local browser fixture server; no production image change.
+uvicorn==0.54.0

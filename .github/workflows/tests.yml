@@ -27,11 +27,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: python -m pip install -r tests/requirements.txt
       - run: python -m unittest discover -s tests -p test_content.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v
       - run: python -m unittest discover -s tests -p test_windows_shortcuts.py -v
       - run: python -m unittest discover -s tests -p test_pilot_update.py -v
+      - run: python -m unittest discover -s tests -p test_pilot_api.py -v
+      - run: python -m unittest discover -s tests -p test_translations.py -v
   offline-routing:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -57,3 +60,5 @@ jobs:
       - run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
       - run: /tmp/setupsurvie-browser/node_modules/.bin/playwright install --with-deps chromium webkit
       - run: node tests/browser_maps_runner.cjs
+      - run: python -m pip install -r tests/requirements.txt
+      - run: node tests/browser_translations_runner.cjs

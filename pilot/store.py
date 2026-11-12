@@ -34,6 +34,9 @@ def init():
         CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,until REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS revoked(digest TEXT PRIMARY KEY,expires REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS conversations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,title TEXT NOT NULL,created REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS conversation_sources(conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,source_id TEXT NOT NULL,title TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS translations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,source_id TEXT NOT NULL,title TEXT NOT NULL,mode TEXT NOT NULL,status TEXT NOT NULL,error TEXT,created REAL NOT NULL,updated REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS translation_parts(translation_id TEXT NOT NULL REFERENCES translations(id) ON DELETE CASCADE,position INTEGER NOT NULL,page INTEGER NOT NULL,source_text TEXT NOT NULL,translated TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'pending',model TEXT,PRIMARY KEY(translation_id,position));
         CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,role TEXT NOT NULL,content TEXT NOT NULL,sources TEXT NOT NULL DEFAULT '[]',created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,conversation_id TEXT NOT NULL REFERENCES conversations(id),mode TEXT NOT NULL,status TEXT NOT NULL,answer TEXT NOT NULL DEFAULT '',sources TEXT NOT NULL DEFAULT '[]',error TEXT,created REAL NOT NULL,updated REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS feedback(id TEXT PRIMARY KEY,user_id TEXT,content TEXT NOT NULL,view TEXT,created REAL NOT NULL);
@@ -42,6 +45,7 @@ def init():
         CREATE VIRTUAL TABLE IF NOT EXISTS documents USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');
         CREATE VIRTUAL TABLE IF NOT EXISTS passages USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');
         ''')
+        db.execute("UPDATE translations SET status='paused',error='Le service a redémarré. Reprenez la traduction pour continuer.',updated=? WHERE status IN ('queued','running')",(time.time(),))
         columns={row['name'] for row in db.execute('PRAGMA table_info(messages)')}
         for column in ('model','mode'):
             if column not in columns:db.execute('ALTER TABLE messages ADD COLUMN '+column+' TEXT')
@@ -103,3 +107,15 @@ def owned_conversation(identifier, user_id):
 def messages(identifier):
     with connect() as db:
         return [{**dict(row),'sources':json.loads(row['sources'])} for row in db.execute('SELECT * FROM messages WHERE conversation_id=? ORDER BY id', (identifier,))]
+
+
+def conversation_source(identifier):
+    with connect() as db:
+        row=db.execute('SELECT source_id AS id,title FROM conversation_sources WHERE conversation_id=?',(identifier,)).fetchone()
+    return dict(row) if row else None
+
+
+def set_conversation_source(db,identifier,source):
+    if source:
+        db.execute('INSERT INTO conversation_sources VALUES(?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET source_id=excluded.source_id,title=excluded.title',(identifier,source['id'],source['title']))
+    else:db.execute('DELETE FROM conversation_sources WHERE conversation_id=?',(identifier,))

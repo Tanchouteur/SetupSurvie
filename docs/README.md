@@ -26,6 +26,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Documents associés et traduction progressive](utilisation/documents-et-traduction.md) — guide du pilote 0.1.16.
+
 - [Paramètres, déplacements et cartes hors ligne](utilisation/parametres-et-cartes.md) — guide du pilote 0.1.10.
 
 

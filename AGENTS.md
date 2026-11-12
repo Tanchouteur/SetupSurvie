@@ -187,3 +187,7 @@ de modèle IA, de corpus, de ZIM ou de carte lourde pour les tests. Utiliser des
 fixtures minuscules et des services simulés. Les préparations réelles se font sur
 les PC cibles ; le test OSRM réel de la CI GitHub utilise uniquement un petit
 réseau OSM synthétique et son image épinglée, sans modèle IA.
+
+## Documents associés et traduction (0.1.16)
+
+Lire `docs/utilisation/documents-et-traduction.md` pour la conservation des associations côté serveur et les traductions privées progressives. Les instantanés, passages et exports ne doivent pas rejoindre le fonds public. La reprise reste explicite après redémarrage et respecte le mode jeu. Les tests simulés ne prouvent pas la fidélité d’un modèle réel. Louis souhaite une référence unifiée et simple à maintenir : `main`, avec suppression des branches temporaires de l’agent après intégration vérifiée.
