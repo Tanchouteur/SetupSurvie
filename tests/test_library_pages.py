@@ -15,14 +15,17 @@ class LibraryPageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder);guides=base/'guides';guides.mkdir()
             (guides/'seeds.en.txt').write_text('Seed storage: keep seeds dry. Check storage conditions.')
+            (guides/'doctor.en.txt').write_text('Where There Is No Doctor. How to examine a sick person.')
             writer=PdfWriter();writer.add_blank_page(width=300,height=400);writer.write(guides/'scanned.fr.pdf')
             with patch.object(store,'ROOT',base/'state'),patch.object(library,'GUIDES',guides),patch.object(library,'books',AsyncMock(return_value=[])):
                 store.init();library.index_guides()
                 found=asyncio.run(library.search('Comment stocker les graines ?'))
                 self.assertEqual(found[0]['id'],'guide:seeds.en.txt')
+                doctor=asyncio.run(library.search('examiner personne malade'))
+                self.assertEqual(doctor[0]['id'],'guide:doctor.en.txt')
                 report=library.index_report()
                 self.assertEqual(next(r for r in report['documents'] if r['path']=='scanned.fr.pdf')['status'],'needs_ocr')
-                self.assertEqual(report['indexed'],1)
+                self.assertEqual(report['indexed'],2)
 
     def test_search_reaches_last_pdf_page_and_links_illustrated_original(self):
         with tempfile.TemporaryDirectory() as folder:

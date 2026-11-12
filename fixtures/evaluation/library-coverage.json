@@ -1,5 +1,7 @@
 {
   "cases": [
+    {"id":"no-doctor-title","query":"Where There Is No Doctor","expected":"HES-no-doctor-"},
+    {"id":"no-doctor-french","query":"examiner personne malade","expected":"HES-no-doctor-2025-03"},
     {"id":"sollies","query":"risques Solliès Ville","expected":"sollies-dicrim"},
     {"id":"var","query":"inondation Var","expected":"var-ddrm"},
     {"id":"garden","query":"jardin méditerranéen","expected":"garden-herault"},

@@ -1,5 +1,6 @@
 """Two real assistant checks on new sources, using a disposable reader account."""
 import asyncio
+import argparse
 import json
 import secrets
 import time
@@ -8,6 +9,8 @@ import httpx
 from . import accounts,store
 
 CASES=[
+    {'id':'no-doctor','expected':'HES-no-doctor-2025-03',
+     'message':'Recherche examiner personne malade dans la bibliothèque sans filtre de langue. Ouvre et lis une page du chapitre How to examine a sick person du manuel Where There Is No Doctor. Réponds en français uniquement avec le titre du manuel, son édition et le titre du chapitre, puis cite la source réellement lue. Ne donne pas de conseil médical.'},
     {'id':'local','expected':'EXT-sollies-dicrim',
      'message':'Recherche le DICRIM de Solliès-Ville dans la bibliothèque, puis ouvre et lis le document trouvé avec read_source. Indique son titre et la commune concernée. Deux phrases en français, avec la citation de la source effectivement lue.'},
     {'id':'bilingual','expected':'EXT-dental-',
@@ -15,14 +18,14 @@ CASES=[
 ]
 
 
-async def main():
+async def main(cases=None,report_name='acceptance-library.json'):
     created=None;rows=[];origin={'Origin':'http://127.0.0.1:8000'}
     async with httpx.AsyncClient(base_url='http://127.0.0.1:8000',trust_env=False,timeout=30) as client:
         try:
             email='recette-bibliotheque-'+secrets.token_hex(6)+'@survie.local';password=secrets.token_urlsafe(24)
             created=await accounts.native('/api/v1/auths/add',{'name':'Recette bibliothèque temporaire','email':email,'password':password,'role':'user','profile_image_url':'/user.png'},accounts.emergency_admin_token())
             response=await client.post('/api/auth/login',json={'email':email,'password':password});response.raise_for_status()
-            for case in CASES:
+            for case in [c for c in CASES if not cases or c['id'] in cases]:
                 started=time.monotonic()
                 response=await client.post('/api/questions',json={'message':case['message'],'mode':'rapide'},headers=origin);response.raise_for_status()
                 job_id=response.json()['id']
@@ -39,7 +42,7 @@ async def main():
                 passed=job['status']=='done' and 'search_library' in names and 'read_source' in names and any(case['expected'] in s['id'] for s in job.get('sources',[]))
                 rows.append({'case':case['id'],'passed':passed,'status':job['status'],'seconds':round(time.monotonic()-started,2),'answer':job['answer'],'sources':job.get('sources',[]),'tools':tools})
                 print(case['id'],job['status'],'source lue et citée :',passed,flush=True)
-                (store.ROOT/'acceptance-library.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2))
+                (store.ROOT/report_name).write_text(json.dumps(rows,ensure_ascii=False,indent=2))
         finally:
             if created:
                 with store.connect() as db:
@@ -56,4 +59,9 @@ async def main():
     if not all(r['passed'] for r in rows):raise SystemExit('Contrôler acceptance-library.json : un essai n’a pas cité la source attendue.')
 
 
-if __name__=='__main__':asyncio.run(main())
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--case',action='append',choices=[c['id'] for c in CASES])
+    args=parser.parse_args()
+    name='acceptance-no-doctor.json' if args.case==['no-doctor'] else 'acceptance-library.json'
+    asyncio.run(main(args.case,name))

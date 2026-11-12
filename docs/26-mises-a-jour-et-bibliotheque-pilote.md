@@ -210,3 +210,7 @@ PC de Marc restent à valider chez lui.
 
 Ces résultats ne valident pas encore Docker Desktop/Ollama sur le PC de Marc ni
 le clavier physique et la dictée sur son téléphone.
+
+## Where There Is No Doctor
+
+Le lot `no-doctor` télécharge les 32 PDF de l’édition anglaise 2025, annexes comprises. Ajouter `--pack no-doctor` à la commande `scripts/content.py download`, avec `--work-dir` pour l’installation portable ou `--lab --no-refresh` pour le laboratoire. Voir la [fiche de téléchargement et de recette](bibliotheque/where-there-is-no-doctor.md).

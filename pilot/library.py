@@ -162,6 +162,9 @@ SYNONYMS.update({
     'puits':['puits','well','wells'],'desinfection':['desinfection','disinfection','disinfecting'],
     'risques':['risques','risque','risks','risk'],'fractions':['fractions','fraction']
 })
+SYNONYMS.update({'examiner':['examiner','examine','examining','examination'],
+                 'malade':['malade','malades','sick','patient'],
+                 'personne':['personne','person','people']})
 TERM_ALIASES={'stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
               'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
               'pompes':'pompe','velos':'velo','cartes':'carte','soudure':'soudage'}
@@ -205,6 +208,7 @@ async def search(query,language='',limit=8):
                      'velo':'bicycle','reparation':'repair','electricite':'electrical','lecture':'reading','ecriture':'writing',
                      'calcul':'arithmetic','carte':'map','incendie':'fire','inondation':'flood',
                      'puits':'wells','desinfection':'disinfecting','risques':'risks'}
+            english.update({'examiner':'examine','malade':'sick','personne':'person'})
             translated=[english.get(w,w) if lang=='eng' else w for w in words]
             pattern=' '.join(translated) if translated else query
             raw,_=await get('/search?'+urlencode({'books.filter.lang':lang,'pattern':pattern,'format':'xml','pageLength':limit}))

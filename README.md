@@ -38,6 +38,7 @@ Le [catalogue des fonctionnalités et user stories](docs/15-fonctionnalites-et-u
 
 ## Documentation
 
+- [Where There Is No Doctor : téléchargement et recette](docs/bibliotheque/where-there-is-no-doctor.md) : édition 2025 complète, indexation et essai réel de l’assistant.
 - [Sélection automatique Kiwix par thème](docs/bibliotheque/selection-kiwix-par-theme.md) : inventaire local, plan de sélection et téléchargement contrôlé.
 
 - [Inventaire complet des ressources téléchargées](docs/29-inventaire-ressources-telechargees.md) : les 10 archives, 68 PDF et 2 cartes réellement présents.
