@@ -27,7 +27,14 @@ async(page)=>{
     await page.setViewportSize({width,height:900});
     for(const domain of ['sciences','sante','organisation','histoire-techniques']){
       await page.locator('#learning-domain').selectOption(domain);
-      try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);}catch(e){throw Error('Overflow '+width+' '+domain+' '+JSON.stringify(await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,body:document.body.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&!e.closest('[hidden]')).slice(0,12).map(e=>({tag:e.tagName,id:e.id,class:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right}))})))));}
+      try{
+        await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);
+      }catch(error){
+        const measure=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,body:document.body.scrollWidth,
+          overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&!e.closest('[hidden]')).slice(0,12)
+            .map(e=>({tag:e.tagName,id:e.id,class:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right}))}));
+        throw Error('Overflow '+width+' '+domain+' '+JSON.stringify(measure));
+      }
       if(await page.locator('#learning-subject option').count()<4)throw Error('Sujets manquants '+domain);
     }
     layouts.push({width,scrollWidth:await page.evaluate(()=>document.documentElement.scrollWidth),noHorizontalOverflow:true});
