@@ -127,6 +127,14 @@ et grandes collections vidéo**, désactivée par défaut. Le CLI utilise
 plafond documentaire logiciel chez Marc. Wikipédia anglais et les collections
 pratiques volumineuses restent possibles : la taille seule ne décide pas de leur utilité.
 
+Repères de taille du catalogue consulté (tailles OPDS arrondies, pas un audit du
+PC de Marc) : Survivor Library environ **220 Go**, Wikipédia anglais **127 Go**,
+Khan Academy anglais **180 Go** et français **101 Go**, Gutenberg anglais complet
+**221 Go**. Les deux derniers ensembles pédagogiques sont des compléments vidéo ;
+Gutenberg est un fonds littéraire très large. Survivor Library peut contenir des
+ouvrages techniques historiques utiles, dont l’époque et les procédés restent à
+examiner. Aucun de ces volumes ne mesure à lui seul la qualité du fonds.
+
 Les sous-collections Gutenberg de même langue sont écartées si leur collection
 complète est présente ou sélectionnée. Les chevauchements possibles entre
 multilingue et monolingue restent à examiner ; aucune équivalence n’est inventée.
