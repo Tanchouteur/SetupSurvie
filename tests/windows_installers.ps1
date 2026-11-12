@@ -5,7 +5,7 @@ foreach ($path in @((Join-Path $root 'scripts'), $PSScriptRoot)) {
     Get-ChildItem -LiteralPath $path -Filter '*.ps1' | ForEach-Object {
         $tokens = $null; $errors = $null
         $null = [Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors)
-        if ($errors.Count) { throw ($_.Name + ': ' + ($errors | Out-String)) }
+        if ($errors.Count) { throw ($_.Name + ': ' + (($errors | ForEach-Object { 'line ' + $_.Extent.StartLineNumber + ': ' + $_.Message }) -join '; ')) }
     }
 }
 . (Join-Path $root 'scripts\prepare-windows.ps1') -Check -CacheDir (Join-Path $env:TEMP ('survie-mock-' + [guid]::NewGuid()))

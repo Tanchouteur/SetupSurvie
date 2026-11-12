@@ -79,7 +79,7 @@ function Install-SurvieDependency($Item, $CacheDir) {
         Move-Item -LiteralPath ($path + '.part') -Destination $path -Force
     }
     Assert-SurvieInstallerHash $path $Item.sha256
-    Write-Host ('Ouverture de l’installateur ' + $Item.id + '. Suivez ses écrans et sa licence.')
+    Write-Host ('Ouverture de l''installateur ' + $Item.id + '. Suivez ses écrans et sa licence.')
     $options = @{ FilePath = $path; Wait = $true; PassThru = $true }
     if (@($Item.arguments).Count) { $options.ArgumentList = @($Item.arguments) }
     $process = Start-Process @options

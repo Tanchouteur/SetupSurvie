@@ -32,7 +32,7 @@ function Invoke-SurvieWSLInstall {
     $arguments = @('--install', '--no-distribution', '--no-launch')
     if (Get-SurvieWSLVersion) { $arguments = @('--update') }
     $process = Start-Process -FilePath 'wsl.exe' -ArgumentList $arguments -Verb RunAs -Wait -PassThru
-    if ($process.ExitCode -notin @(0, 3010, 1641)) { throw 'WSL n’a pas pu être préparé. Vérifiez Windows Update et la virtualisation, puis relancez.' }
+    if ($process.ExitCode -notin @(0, 3010, 1641)) { throw 'WSL n''a pas pu être préparé. Vérifiez Windows Update et la virtualisation, puis relancez.' }
 }
 
 function Invoke-SurviePreparation {
@@ -53,7 +53,7 @@ function Invoke-SurviePreparation {
         $null = New-Item -ItemType Directory -Force -Path $CacheDir
         Invoke-SurvieWSLInstall
         @{ restart = $true; boot = $facts.Boot } | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
-        Write-Host 'Redémarrez Windows, puis relancez ce même lanceur. Ubuntu n’est pas nécessaire.'
+        Write-Host 'Redémarrez Windows, puis relancez ce même lanceur. Ubuntu n''est pas nécessaire.'
         return 3010
     }
     foreach ($item in $catalog.installers) {
@@ -64,7 +64,7 @@ function Invoke-SurviePreparation {
             default { throw 'Composant inconnu dans le catalogue.' }
         }
         if ($available) { Write-Host ($item.id + ' déjà présent ; installation conservée.'); continue }
-        if ($Check) { throw ($item.id + ' manque. Relancez sans -Check pour l’installer.') }
+        if ($Check) { throw ($item.id + ' manque. Relancez sans -Check pour l''installer.') }
         $code = Install-SurvieDependency $item $CacheDir
         if ($code -eq 3010) {
             @{ restart = $true; boot = $facts.Boot } | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
