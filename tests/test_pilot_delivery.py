@@ -85,7 +85,12 @@ class DeliveryTests(unittest.TestCase):
     def test_windows_kit_configures_shortcuts_from_installed_copy(self):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         script=application/'scripts/setup.py';script.write_text('software fixture')
-        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':script.stat().st_size,'sha256':setup.file_hash(script)}]})
+        files=[script]
+        for name in ('update-windows.ps1','windows-common.ps1'):
+            target=application/'scripts'/name
+            target.write_text('# tiny updater fixture')
+            files.append(target)
+        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/'+p.relative_to(application).as_posix(),'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in files]})
         work=self.root/'installed/private';data=self.root/'installed/data'
         with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'),patch.object(setup.shutil,'which',return_value='powershell.exe'),patch.object(setup,'run') as shortcuts:
             install(kit,'windows',data,work)
@@ -93,6 +98,7 @@ class DeliveryTests(unittest.TestCase):
         self.assertIn(str(work.parent/'application/scripts/create-shortcuts.ps1'),command)
         self.assertEqual(command[-1],'-Startup')
         self.assertNotIn(str(application/'scripts/create-shortcuts.ps1'),command)
+        self.assertTrue((work.parent/'Mettre-a-jour-SetupSurvie.cmd').is_file())
 
 
 if __name__=='__main__':unittest.main()

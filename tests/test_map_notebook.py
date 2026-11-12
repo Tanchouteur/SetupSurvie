@@ -1,4 +1,5 @@
 import json
+import datetime
 import os
 from pathlib import Path
 import sys
@@ -116,7 +117,11 @@ class RoutingPreparationTests(unittest.TestCase):
                     if 'osrm-customize' in args:
                         index=path/'network.osrm.properties';index.write_bytes(b'synthetic graph');index.chmod(0o600)
                 return SimpleNamespace(returncode=0)
-            with patch.object(routing_prepare.content,'check_capacity'):
+            # Windows may return the same wall-clock tick for both tiny builds.
+            first_time=datetime.datetime(2026,1,1,tzinfo=datetime.timezone.utc)
+            second_time=first_time+datetime.timedelta(seconds=1)
+            with patch.object(routing_prepare.content,'check_capacity'), patch.object(routing_prepare.datetime,'datetime',wraps=datetime.datetime) as clock:
+                clock.now.side_effect=[first_time,first_time,second_time,second_time]
                 first=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner,backend='lab',source_url='https://overpass.private.coffee/api/interpreter')
                 second=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner)
             self.assertNotEqual(first['build_id'],second['build_id'])

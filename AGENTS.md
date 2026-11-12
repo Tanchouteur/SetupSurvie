@@ -206,6 +206,14 @@ restent à réaliser. Le diagnostic réel sur le PC Windows de Marc, les conflit
 avant copie et les raccourcis isolés sont testés ; voir `docs/essais/2026-11-12-installateur-windows-simple.md`.
 Ne pas arrêter l’installation en service pour la recette. Aucun téléchargement lourd ni installation système dans le runner.
 
+Depuis **0.1.21**, `scripts/windows_update.py` prépare le lanceur de mise à jour
+stable dans le dossier d’installation et `scripts/update-windows.ps1` synchronise
+un dépôt Git de maintenance séparé avant d’appeler `pilot_update.py`. Le raccourci
+de mise à jour et Git font partie des nouvelles installations. Préserver les
+quatre lanceurs racine dans les kits ; les exclure des paquets logiciels compatibles
+avec les lecteurs 0.1.16. Les scripts et le générateur restent dans ces paquets.
+Ne jamais remplacer une application par un simple pull dans son dossier actif.
+
 ## Sources et fiabilité (0.1.18)
 
 Lire `docs/utilisation/sources-et-fiabilite.md` et `docs/essais/protocole-fiabilite-ia.md`.

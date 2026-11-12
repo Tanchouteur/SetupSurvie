@@ -47,6 +47,7 @@ function Find-SurviePython { return @{ Path = 'fixture'; Prefix = @() } }
 function Find-SurvieDockerDesktop { return 'fixture' }
 function Get-SurvieDockerType { return 'linux' }
 function Find-SurvieOllama { return 'fixture' }
+function Find-SurvieGit { return 'fixture' }
 function Get-Command { param($Name, $ErrorAction) return @{ Source = 'mock-nvidia' } }
 function mock-nvidia { $global:LASTEXITCODE = 0; return 'Mock GPU, 8192 MiB' }
 function Install-SurvieDependency { throw 'Unexpected installation' }
@@ -55,6 +56,21 @@ Assert ((Invoke-SurviePreparation) -eq 0) 'Ready PC must not reinstall or modify
 function Find-SurvieDockerDesktop { return $null }
 Assert ((Invoke-SurviePreparation) -eq 0) 'An accessible Docker engine must not trigger a Desktop reinstall'
 function Find-SurvieDockerDesktop { return 'fixture' }
+$script:gitPresent = $false
+function Find-SurvieGit { if ($script:gitPresent) { return 'fixture' }; return $null }
+$failed = $false
+try { Invoke-SurviePreparation } catch { $failed = $_.Exception.Message -match 'git manque' }
+Assert $failed 'Check must report missing Git without installing it'
+$Check = $false
+function Install-SurvieDependency($Item, $CacheDir) {
+    Assert ($Item.id -eq 'git') 'Only missing Git should be prepared'
+    $script:gitPresent = $true
+    return 0
+}
+Assert ((Invoke-SurviePreparation) -eq 0) 'A new Windows installation must prepare missing Git'
+$Check = $true
+function Find-SurvieGit { return 'fixture' }
+function Install-SurvieDependency { throw 'Unexpected installation' }
 function Get-SurvieWindowsFacts { return @{ Build = 19045; X64 = $true; Virtualization = $true; Boot = 'fixture' } }
 $failed = $false
 try { Invoke-SurviePreparation } catch { $failed = $_.Exception.Message -match 'Windows 11' }

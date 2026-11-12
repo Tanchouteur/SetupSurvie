@@ -1,6 +1,6 @@
 # Installer SetupSurvie sur Windows
 
-**Guide actuel — pilote 0.1.20, 12 novembre 2026.** Lanceur unique et contrôles préliminaires
+**Guide actuel — pilote 0.1.21, 12 novembre 2026.** Lanceur unique et contrôles préliminaires
 testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
 Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
 
@@ -30,16 +30,17 @@ Depuis le dépôt récupéré ou décompressé, double-cliquer sur
 Il nécessite Windows 11 24H2 ou plus récent **x64**, la virtualisation activée dans
 le BIOS/UEFI, Internet et la possibilité de valider les demandes administrateur.
 
-Le lanceur vérifie WSL 2, Python x64 3.11 à 3.15, Docker Desktop et Ollama. Il
+Le lanceur vérifie WSL 2, Python x64 3.11 à 3.15, Docker Desktop, Git et Ollama. Il
 conserve les installations présentes, installe les composants absents et ne
 met pas automatiquement les logiciels existants à niveau. Les versions présentes
 ne sont pas toutes certifiées compatibles par ce seul diagnostic ; le second
 lanceur vérifie réellement Docker/Compose et les services.
 
-Les installateurs manquants sont téléchargés depuis Python, Docker et Ollama,
+Les installateurs manquants sont téléchargés depuis Python, Docker, Git for Windows et Ollama,
 avec SHA-256 vérifié avant exécution. Les versions, URL, empreintes et sources
 consultées figurent dans `deploy/windows-installers.json`. Ces métadonnées ont
-été relues dans les [manifestes Microsoft](https://github.com/microsoft/winget-pkgs) ;
+été relues dans les [manifestes Microsoft](https://github.com/microsoft/winget-pkgs)
+et, pour Git, dans son [API de livraison officielle](https://api.github.com/repos/git-for-windows/git/releases/tags/v2.56.1.windows.1) ;
 les binaires ne sont pas téléchargés ni installés dans le runner CPU.
 La référence Ollama native reste celle de `deploy/versions.json`.
 
@@ -110,6 +111,10 @@ Docker. Le kit et la destination doivent rester séparés.
 Le lanceur crée les raccourcis **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** et
 le démarrage à l’ouverture de session. `-NoStartup` conserve seulement les
 raccourcis manuels. Le portail s’ouvre à la fin ; `-NoBrowser` évite cette ouverture.
+Il crée aussi **Mettre à jour SetupSurvie** sur le Bureau et
+`Mettre-a-jour-SetupSurvie.cmd` à côté du dossier `application`. Ce lanceur stable
+utilise Git puis la sauvegarde et le retour arrière existants ; voir le
+[guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md).
 Les raccourcis d’une autre installation sont conservés ; les nouveaux reçoivent
 un suffixe si leur nom est déjà utilisé. Désactiver le démarrage ne supprime que
 le raccourci appartenant à l’installation concernée.
@@ -126,8 +131,8 @@ Exemple avec paramètres :
 Pour un kit ancien sans ces deux fichiers à sa racine, utiliser le second lanceur
 du dépôt 0.1.17 en lui indiquant le dossier du kit. Le logiciel installé reste
 celui du kit, avec sa version. Les nouveaux exports/rafraîchissements du kit
-incluent le lanceur unique et les deux anciens. Les mises à jour d’une installation existante incluent
-leurs scripts mais excluent les trois fichiers racine `.cmd` pour rester
+incluent le lanceur d’installation, celui de mise à jour et les deux anciens. Les mises à jour d’une installation existante incluent
+leurs scripts et le générateur du lanceur stable, mais excluent les quatre fichiers racine `.cmd` pour rester
 lisibles par le programme de mise à jour 0.1.16 ; une installation terminée utilise
 ses raccourcis habituels.
 

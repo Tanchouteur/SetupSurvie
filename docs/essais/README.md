@@ -4,6 +4,7 @@ Les rapports conservent leurs résultats et limites à la date de l’essai. Un 
 
 | Document | Périmètre |
 | --- | --- |
+| [Mise à jour Git fournie sur Windows — 12 novembre 2026](2026-11-12-mise-a-jour-git-windows.md) | Lanceur générique, prérequis Git, raccourci stable et distribution avec les installations, pilote 0.1.21 |
 | [Installateur Windows simplifié — 12 novembre 2026](2026-11-12-installateur-windows-simple.md) | Lanceur unique, diagnostic réel sur le PC de Marc, protection des services existants et raccourcis, pilote 0.1.20 |
 | [Fiabilité et incertitude des modèles](protocole-fiabilite-ia.md) | Huit scénarios fictifs, contrôles simulés et protocole réel encore à exécuter, pilote 0.1.18 |
 | [Kit Marc hors ligne — 12 novembre 2026](2026-11-12-kit-marc-hors-ligne.md) | Cartes, dépendances et limites de première installation, pilote 0.1.14 |

@@ -37,7 +37,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Installation
 
-- [Installation Windows avec un seul lanceur](installation/deux-etapes-windows.md) — guide du pilote 0.1.20 ; diagnostic et contrôles testés sur Windows, installation complète sur PC vierge encore à valider.
+- [Installation Windows avec un seul lanceur](installation/deux-etapes-windows.md) — guide du pilote 0.1.21 ; diagnostic, raccourci de mise à jour Git et contrôles testés sur Windows, installation complète sur PC vierge encore à valider.
 
 - [Préparer et vérifier le kit hors ligne](installation/preparer-kit-hors-ligne.md)
 
@@ -67,6 +67,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Mise à jour Git fournie sur Windows — 12 novembre 2026](essais/2026-11-12-mise-a-jour-git-windows.md) — intégration aux installations et kits, lanceur stable et raccourci, pilote 0.1.21.
 
 - [Installateur Windows simplifié — 12 novembre 2026](essais/2026-11-12-installateur-windows-simple.md) — diagnostic réel, garde des ports, reprise et raccourcis ; limites de recette complète.
 

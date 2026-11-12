@@ -3,7 +3,7 @@
 Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
 
-## Windows : un seul lanceur (0.1.20)
+## Windows : installation et mise à jour (0.1.21)
 
 Depuis le dépôt, lancer **`Installer-SetupSurvie.cmd`**. La préparation du PC puis
 l’installation s’enchaînent. Les deux anciens lanceurs restent utilisables séparément. Le [guide Windows](deux-etapes-windows.md)
@@ -12,6 +12,9 @@ local et la reprise explicite après interruption. Ce parcours automatise la
 préparation des composants manquants ; le pilote GPU et la confiance HTTPS sur
 les téléphones restent des étapes accompagnées. Les essais Windows réels restent
 à effectuer. Il ne remplace pas le parcours de mise à jour d’une installation existante.
+Chaque nouvelle installation fournit aussi **Mettre à jour SetupSurvie** et son
+lanceur Git, avec sauvegarde et récupération ; voir le
+[guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md).
 
 ## Installer le kit hors ligne chez Marc
 
