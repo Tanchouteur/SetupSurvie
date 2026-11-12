@@ -195,8 +195,10 @@ Lire `docs/utilisation/documents-et-traduction.md` pour la conservation des asso
 ## Installation Windows en deux étapes (0.1.17)
 
 Lire `docs/installation/deux-etapes-windows.md`. Les deux lanceurs racine et leur
-catalogue d’installateurs doivent rester inclus dans les exports, rafraîchissements
-de kit et mises à jour. La reprise d’une première installation est explicite et
+catalogue d’installateurs doivent rester inclus dans les exports et rafraîchissements
+de kit. Les mises à jour transportent les scripts d’installation mais excluent les
+nouveaux fichiers racine `.cmd`, refusés par la liste autorisée des lecteurs 0.1.16.
+La reprise d’une première installation est explicite et
 refuse les sources/options modifiées ; elle ne remplace pas la mise à jour d’une
 installation terminée. Le kit système hors ligne et la recette Windows réelle
 restent à réaliser. Aucun téléchargement lourd ni installation système dans le runner.

@@ -18,7 +18,9 @@ from pilot_backup import backup
 from pilot_kit import checked_entries
 
 FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
-FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd')
+# Keep this root allowlist compatible with already installed 0.1.16 readers.
+# First-install wrappers belong to source/kit deliveries, not software updates.
+FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
 SERVICES=('open-webui','kiwix','pilot','portal')
 
 

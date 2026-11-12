@@ -61,7 +61,8 @@ def source_records(kit):
     paths = [p for name in (*FOLDERS, 'vendor/discovery')
              for p in (setup.ROOT/name).rglob('*')
              if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix != '.pyc']
-    paths.extend(setup.ROOT/name for name in FILES if (setup.ROOT/name).is_file())
+    install_files = (*FILES, '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd')
+    paths.extend(setup.ROOT/name for name in install_files if (setup.ROOT/name).is_file())
     return [({'path': 'app/'+p.relative_to(setup.ROOT).as_posix(),
               'bytes': p.stat().st_size, 'sha256': setup.file_hash(p)}, p) for p in sorted(paths)], None
 

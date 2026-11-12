@@ -97,8 +97,11 @@ Exemple avec paramètres :
 
 Pour un kit ancien sans ces deux fichiers à sa racine, utiliser le second lanceur
 du dépôt 0.1.17 en lui indiquant le dossier du kit. Le logiciel installé reste
-celui du kit, avec sa version. Les nouveaux exports/rafraîchissements du kit et
-les paquets de mise à jour incluent les deux lanceurs.
+celui du kit, avec sa version. Les nouveaux exports/rafraîchissements du kit
+incluent les deux lanceurs. Les mises à jour d’une installation existante incluent
+leurs scripts mais excluent les deux nouveaux fichiers racine `.cmd` pour rester
+lisibles par le programme de mise à jour 0.1.16 ; une installation terminée utilise
+ses raccourcis habituels.
 
 ## Reprendre une interruption
 
