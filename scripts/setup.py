@@ -437,6 +437,9 @@ class Installation:
                    "ollama": versions, "models": [{key: m.get(key) for key in ("name", "digest", "size", "details")} for m in tags.get("models", [])]})
 
     def verify(self, c, inference=False):
+        paused=(self.work/'inference-paused.json').exists()
+        if paused and inference:
+            raise SetupError('Moteur en pause : le test IA est refusé. Levez explicitement la pause avant de demander une inférence.')
         failures = []
         try:
             state=self.request('http://127.0.0.1:8080/api/inference')
@@ -453,28 +456,31 @@ class Installation:
                 print(f"OK : {name}")
             except (OSError, SetupError) as error:
                 failures.append(f"{name} : {error}")
-        try:
-            self.compose(c, "exec", "-T", "open-webui", "python", "-c",
-                         "import os,urllib.request; urllib.request.urlopen(os.environ['OLLAMA_BASE_URL']+'/api/tags',timeout=15)")
-            print("OK : Open WebUI → Ollama")
-        except SetupError as error:
-            failures.append(str(error))
-        try:
-            tags = self.request("http://127.0.0.1:11435/api/tags")
-            names = {m["name"] for m in tags.get("models", [])}
-            if c["chat_model"] not in names:
-                failures.append("Modèle de dialogue absent : lancez pull-model.")
-            if inference and c["chat_model"] in names:
-                result = self.request("http://127.0.0.1:11435/api/generate",
-                                      {"model": c["chat_model"], "prompt": "Réponds en français : combien font deux plus deux ?",
-                                       "think": "low" if c["chat_model"].startswith("gpt-oss") else True, "stream": False, "options": {"num_ctx": 8192, "num_predict": 512}}, timeout=600)
-                if not result.get("response", "").strip():
-                    failures.append("Réponse IA vide.")
-                else:
-                    print("Réponse de test :", result["response"])
-                    write_json(self.work / "inference-test.json", result)
-        except (OSError, ValueError) as error:
-            failures.append(f"Ollama : {error}")
+        if paused:
+            print('Moteur en pause : contrôles Ollama différés, aucune inférence demandée.')
+        else:
+            try:
+                self.compose(c, "exec", "-T", "open-webui", "python", "-c",
+                             "import os,urllib.request; urllib.request.urlopen(os.environ['OLLAMA_BASE_URL']+'/api/tags',timeout=15)")
+                print("OK : Open WebUI → Ollama")
+            except SetupError as error:
+                failures.append(str(error))
+            try:
+                tags = self.request("http://127.0.0.1:11435/api/tags")
+                names = {m["name"] for m in tags.get("models", [])}
+                if c["chat_model"] not in names:
+                    failures.append("Modèle de dialogue absent : lancez pull-model.")
+                if inference and c["chat_model"] in names:
+                    result = self.request("http://127.0.0.1:11435/api/generate",
+                                          {"model": c["chat_model"], "prompt": "Réponds en français : combien font deux plus deux ?",
+                                           "think": "low" if c["chat_model"].startswith("gpt-oss") else True, "stream": False, "options": {"num_ctx": 8192, "num_predict": 512}}, timeout=600)
+                    if not result.get("response", "").strip():
+                        failures.append("Réponse IA vide.")
+                    else:
+                        print("Réponse de test :", result["response"])
+                        write_json(self.work / "inference-test.json", result)
+            except (OSError, ValueError) as error:
+                failures.append(f"Ollama : {error}")
         try:
             self.compose(c, "exec", "-T", "open-webui", "python", "-c",
                          "from sentence_transformers import SentenceTransformer; m=SentenceTransformer('/app/backend/data/cache/embedding/bge-m3',device='cpu',trust_remote_code=False,local_files_only=True); assert m.encode(['français','English']).shape==(2,1024)")
@@ -486,7 +492,7 @@ class Installation:
                          "from faster_whisper import WhisperModel; WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',device='cpu',compute_type='int8',local_files_only=True)")
             print('OK : modèle de dictée chargé depuis les fichiers locaux, sur CPU')
         except SetupError as error:failures.append('Dictée locale : '+str(error))
-        report = {"automated_checks_passed": not failures, "failures": failures,
+        report = {"automated_checks_passed": not failures, "failures": failures, "inference_paused": paused, "ollama_checks_deferred": paused,
                   "manual_checks_pending": ["LAN depuis un téléphone", "question française sur guide anglais", "réseau Internet débranché", "redémarrage du PC", "restauration"]}
         write_json(self.work / "verification.json", report)
         if failures:

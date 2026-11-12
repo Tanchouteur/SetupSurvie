@@ -8,25 +8,54 @@ import secrets
 import sys
 
 import setup
+from delivery_paths import destination as checked_destination,locked
+
+PRIVATE_FILES=('settings.json','identifiants.txt','inference-paused.json')
+
+
+def separate_roots(*roots):
+    for number,path in enumerate(roots):
+        for other in roots[:number]:
+            if path==other or path.is_relative_to(other) or other.is_relative_to(path):
+                raise setup.SetupError('Sauvegarde, kit, données, application et réglages doivent être dans des dossiers séparés sans chevauchement.')
 
 
 def backup(app,c,destination,*,resume=True):
+    # Serialize the state check with new jobs, including their refresh phase.
+    with locked(checked_destination(app.work,'library-web/operation.lock')):
+        return idle_backup(app,c,destination,resume=resume)
+
+
+def idle_backup(app,c,destination,*,resume=True):
+    state=checked_destination(app.work,'library-web/state.json')
+    if state.is_file() and json.loads(state.read_text(encoding='utf-8')).get('phase') in ('starting','planning','downloading','refreshing'):
+        raise setup.SetupError('Mettez la préparation documentaire en pause et attendez son arrêt avant la sauvegarde.')
+    # Same lock as CLI/web content transfers: no guide or receipt may be
+    # published while the stopped-service snapshot is copied.
+    with locked(checked_destination(Path(c['data_dir']),'catalog/content.lock')):
+        return stopped_backup(app,c,destination,resume=resume)
+
+
+def stopped_backup(app,c,destination,*,resume=True):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
     dest.mkdir(parents=True);dest.chmod(0o700)
     files=[]
-    app.compose(c,'stop','portal','pilot','open-webui')
     try:
-        sources=[(app.settings_path,'private/settings.json'),(app.work/'identifiants.txt','private/identifiants.txt')]
+        app.compose(c,'stop','portal','pilot','open-webui')
+        sources=[(checked_destination(app.work,name),'private/'+name) for name in PRIVATE_FILES]
+        receipt=checked_destination(data,'catalog/downloaded-content.json')
+        sources.append((receipt,'data/catalog/downloaded-content.json'))
         for name in ['state/pilot','state/openwebui','state/caddy','library/guides']:
             for path in sorted((data/name).rglob('*')):
                 relative=path.relative_to(data)
                 if 'cache' in relative.parts or path.name.endswith('-shm'):continue
+                if path.is_symlink():raise setup.SetupError('Lien refusé dans la sauvegarde : '+relative.as_posix())
                 if path.is_file():sources.append((path,'data/'+relative.as_posix()))
         for source,relative in sources:
             if not source.exists():continue
-            if source.is_symlink() or not source.resolve().is_relative_to(data.resolve()) and source not in [app.settings_path,app.work/'identifiants.txt']:
+            if source.is_symlink() or not source.resolve().is_relative_to(data.resolve()) and source not in [app.work/name for name in PRIVATE_FILES]:
                 raise setup.SetupError('Lien ou chemin externe refusé dans la sauvegarde.')
             target=dest/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
             target.chmod(0o600)
@@ -40,17 +69,22 @@ def backup(app,c,destination,*,resume=True):
 def restore(source,kit,work_dir,data_dir):
     from pilot_kit import checked_entries
     source=setup.safe_path(source);kit=setup.safe_path(kit);data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
-    for dest in [data,work]:
-        if dest.exists() and any(dest.iterdir()):raise setup.SetupError('Restauration uniquement vers des dossiers vides.')
-    report=json.loads((source/'backup.json').read_text());entries=checked_entries(source,report)
-    public=json.loads((kit/'manifest.json').read_text());public_entries=checked_entries(kit,public)
-    saved=json.loads((source/'private/settings.json').read_text())
-    saved['data_dir']=data.as_posix()
     application=work.parent/'application'
+    separate_roots(source,kit,data,work,application)
+    for dest in [data,work]:
+        if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):raise setup.SetupError('Restauration uniquement vers des dossiers vides.')
+    report=json.loads((source/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(source,report)
+    public=json.loads((kit/'manifest.json').read_text(encoding='utf-8'));public_entries=checked_entries(kit,public)
+    allowed_private={'private/'+name for name in PRIVATE_FILES}
+    for entry,_ in entries:
+        relative=entry['path']
+        if relative not in allowed_private and relative!='data/catalog/downloaded-content.json' and not relative.startswith(('data/state/','data/library/guides/')):
+            raise setup.SetupError('Fichier de sauvegarde hors périmètre : '+relative)
+    settings=next((path for entry,path in entries if entry['path']=='private/settings.json'),None)
+    if settings is None:raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
+    saved=json.loads(settings.read_text(encoding='utf-8'))
+    saved['data_dir']=data.as_posix()
     if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
-    for other in (data,work,kit):
-        if application==other or application.is_relative_to(other) or other.is_relative_to(application):
-            raise setup.SetupError('Application, kit, données et réglages doivent être séparés.')
     application.mkdir(parents=True)
     for entry,path in public_entries:
         if not entry['path'].startswith('app/'):continue
@@ -64,13 +98,13 @@ def restore(source,kit,work_dir,data_dir):
     for entry,path in entries:
         if entry['path'].startswith('data/'):
             dest=data/Path(entry['path']).relative_to('data')
-        elif entry['path']=='private/identifiants.txt':dest=work/'identifiants.txt'
+        elif entry['path'] in allowed_private-{'private/settings.json'}:dest=checked_destination(work,entry['path'].removeprefix('private/'))
         else:continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest);dest.chmod(0o600)
     for entry,path in public_entries:
         if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');dest=data/relative
-        if relative.parts[:2]==('library','guides') and dest.exists():continue
+        if dest.exists() and (relative.parts[:2]==('library','guides') or relative==Path('catalog/downloaded-content.json')):continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
     app=setup.Installation(work);setup.write_json(app.settings_path,saved,private=True)
     app.init(saved['target'],data,cpu=saved['cpu'])

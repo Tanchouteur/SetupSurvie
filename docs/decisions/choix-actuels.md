@@ -22,6 +22,7 @@ sur les précisions ci-dessous.
 | Installation Windows | Depuis 0.1.20, [un seul lanceur](../installation/deux-etapes-windows.md) prépare le PC puis installe depuis Internet ou un kit ; les deux anciens restent utilisables. Diagnostic des composants et conflits avant copie, reprise explicite et raccourcis préservés ; installation complète sur Windows vierge encore à valider |
 | Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |
 | Mode jeu | Respect du marqueur de pause ; reprise du moteur uniquement après levée explicite |
+| Sauvegarde et diagnostic | Depuis 0.1.21, pause du moteur et registre documentaire sauvegardés ; préparations concurrentes refusées. Diagnostic documentaire possible en pause, test IA refusé jusqu’à levée explicite. Voir le [guide de restauration](../installation/pilote-marc.md#sauvegarder-et-restaurer) |
 | Confidentialité | Comptes, conversations, clés, modèles et gros contenus hors Git ; préservation des données lors des opérations |
 
 Les guides de l’[installation](../installation/README.md), de
@@ -29,7 +30,8 @@ l’[exploitation](../exploitation/README.md) et l’[architecture](../architect
 décrivent l’application de ces choix. Les pistes d’offre et de routeur dédié
 restent des hypothèses dans [Connexion simple et direction du produit](acces-simple-et-offre.md).
 
-Restent à évaluer : installation Windows réelle, fonctionnement hors ligne après
+Les [contrôles Windows datés](../essais/2026-11-12-installateur-windows-simple.md) sont acquis dans leur périmètre.
+Restent à évaluer : installation complète sur Windows vierge, fonctionnement hors ligne après
 redémarrage, restauration chez Marc, Safari iPhone, dictée humaine, résolution du
 nom, qualité des modèles et couverture documentaire pratique. Les droits de
 redistribution commerciale restent à examiner par ressource. Les résultats Linux

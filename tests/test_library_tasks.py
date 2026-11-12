@@ -45,6 +45,14 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(folder / 'plan.json', plan)
         return state, folder
 
+    def test_backup_operation_lock_refuses_new_job_before_spawning(self):
+        lock=self.app.work/'library-web/operation.lock';lock.mkdir(parents=True)
+        with patch.object(jobs.subprocess,'Popen') as launch:
+            with self.assertRaisesRegex(setup.SetupError,'opération'):
+                self.manager.start('plan',{'themes':['agriculture'],'max_add_gb':0})
+            launch.assert_not_called()
+        self.assertEqual(self.manager.read()['phase'],'idle')
+
     def test_geography_uses_bounded_detached_worker_without_model_or_restart(self):
         state,folder=self.seed(action='geography')
         state['options']={'lat':43.1,'lon':6.1,'radius_km':5,'terrain':True};self.manager.write(state)

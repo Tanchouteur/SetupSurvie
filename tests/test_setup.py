@@ -13,6 +13,23 @@ SPEC.loader.exec_module(setup)
 
 
 class InstallationTests(unittest.TestCase):
+    def test_verification_in_pause_checks_library_without_contacting_ollama_or_generating(self):
+        marker=self.app.work/'inference-paused.json';marker.write_text('{"reason":"gaming"}')
+        from unittest.mock import MagicMock
+        opener=MagicMock();opener.open.return_value.__enter__.return_value.status=200
+        def request(url,*args,**kwargs):
+            self.assertNotIn('11435',url)
+            return {'control_available':True} if url.endswith('/inference') else {}
+        with patch.object(self.app,'request',side_effect=request),patch.object(self.app,'compose') as compose,patch.object(setup.urllib.request,'build_opener',return_value=opener):
+            self.app.verify(self.config)
+        self.assertNotIn('/api/tags',str(compose.call_args_list))
+        report=json.loads((self.app.work/'verification.json').read_text())
+        self.assertTrue(report['automated_checks_passed']);self.assertTrue(report['ollama_checks_deferred'])
+        self.assertEqual(marker.read_text(),'{"reason":"gaming"}')
+        with patch.object(self.app,'request') as contact,patch.object(self.app,'compose') as compose:
+            with self.assertRaisesRegex(setup.SetupError,'pause'):self.app.verify(self.config,inference=True)
+            contact.assert_not_called();compose.assert_not_called()
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix='survie test ')
         self.base = Path(self.tmp.name)

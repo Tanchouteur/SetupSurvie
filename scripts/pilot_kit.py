@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -12,9 +13,19 @@ import setup
 
 
 def checked_entries(root,manifest,progress=None):
+    from delivery_paths import destination
+    if not isinstance(manifest,dict) or not isinstance(manifest.get('files'),list):
+        raise setup.SetupError('Manifeste de fichiers non valide.')
+    root=Path(root);seen=set()
     result=[]
     for number,entry in enumerate(manifest['files'],1):
-        path=root/entry['path']
+        if not isinstance(entry,dict) or not isinstance(entry.get('path'),str):raise setup.SetupError('Entrée de manifeste non valide.')
+        relative=entry['path']
+        if relative.casefold() in seen:raise setup.SetupError('Chemin dupliqué ou ambigu dans le manifeste : '+relative)
+        seen.add(relative.casefold())
+        if type(entry.get('bytes')) is not int or entry['bytes']<0 or not isinstance(entry.get('sha256'),str) or not re.fullmatch('[a-f0-9]{64}',entry['sha256']):
+            raise setup.SetupError('Taille ou empreinte de manifeste non valide.')
+        path=destination(root,relative)
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or not path.is_file():
             raise setup.SetupError('Fichier de kit absent ou chemin non valide : '+entry['path'])
         if path.stat().st_size!=entry['bytes'] or setup.file_hash(path)!=entry['sha256']:
@@ -51,12 +62,12 @@ def export_lab(destination,english=True):
         print('KIT',relative,flush=True)
 
     data=lab.MOUNT/'data'
-    profiles=json.loads((setup.ROOT/'deploy/model-profiles.json').read_text())['profiles']
+    profiles=json.loads((setup.ROOT/'deploy/model-profiles.json').read_text(encoding='utf-8'))['profiles']
     blobs=set()
     for model in sorted({p['model'] for p in profiles}):
         name,tag=model.split(':',1)
         manifest=data/'models/manifests/registry.ollama.ai/library'/name/tag
-        parsed=json.loads(manifest.read_text())
+        parsed=json.loads(manifest.read_text(encoding='utf-8'))
         copy(manifest,'payload/'+manifest.relative_to(data).as_posix())
         for layer in [parsed['config'],*parsed['layers']]:blobs.add(layer['digest'].replace(':','-'))
     for blob in sorted(blobs):copy(data/'models/blobs'/blob,'payload/models/blobs/'+blob)
@@ -82,7 +93,7 @@ def export_lab(destination,english=True):
     image_records=[]
     import kit_maps
     image_records,_=kit_maps.image_records(lab,(data/'library/maps/routing/current/manifest.json').is_file())
-    saved=json.loads((dest/'images.tar.json').read_text()) if (dest/'images.tar.json').is_file() else {}
+    saved=json.loads((dest/'images.tar.json').read_text(encoding='utf-8')) if (dest/'images.tar.json').is_file() else {}
     if not image_path.exists() or saved.get('images')!=image_records or setup.file_hash(image_path)!=saved.get('sha256'):
         temporary=dest/'images.tar.copying'
         lab.podman('save','--format','docker-archive','--multi-image-archive','-o',str(temporary),*[r['id'] for r in image_records])
@@ -107,10 +118,10 @@ def export_lab(destination,english=True):
 
 def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
-    manifest=json.loads((root/'manifest.json').read_text())
+    manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
     entries=checked_entries(root,manifest)
     if any(e['path']=='payload/library/maps/routing/current/manifest.json' for e in manifest['files']):
-        images=json.loads((root/'images.tar.json').read_text())
+        images=json.loads((root/'images.tar.json').read_text(encoding='utf-8'))
         if not any(e['service']=='routing' for e in images['images']):raise setup.SetupError('Le kit contient des routes mais pas leur moteur hors ligne.')
     if setup.ROOT.resolve()!=(root/'app').resolve():raise setup.SetupError('Exécutez le lanceur situé dans kit/app/scripts.')
     data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
@@ -147,7 +158,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
 
 def refresh_app(root):
     if (root/'kit-building.json').exists():raise setup.SetupError('Attendre la fin de l’export initial.')
-    manifest=json.loads((root/'manifest.json').read_text())
+    manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
     records=[entry for entry in manifest['files'] if not entry['path'].startswith('app/')]
     paths=[]
     for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
@@ -175,7 +186,7 @@ def refresh_library(root,data):
     root=setup.safe_path(root);data=setup.safe_path(data)
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     with locked(destination(root,'library-refresh.lock')):
-        manifest=json.loads((root/'manifest.json').read_text())
+        manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
         records={entry['path']:entry for entry in manifest['files']}
         sources=[]
         import content
@@ -192,7 +203,7 @@ def refresh_library(root,data):
         meta=destination(data,'library/guides/metadata.json')
         if meta.is_file():
             allowed={i['path'].removeprefix('library/guides/') for i in public.values() if i['path'].startswith('library/guides/')}
-            metadata=[i for i in json.loads(meta.read_text()) if i.get('path') in allowed]
+            metadata=[i for i in json.loads(meta.read_text(encoding='utf-8')) if i.get('path') in allowed]
             public_meta=destination(root,'library-metadata-public.json')
             setup.write_json(public_meta,metadata)
             sources.append((public_meta,'payload/library/guides/metadata.json',setup.file_hash(public_meta)))
@@ -236,7 +247,7 @@ def main():
         import kit_audit
         root=setup.safe_path(args.kit)
         if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
-        manifest=json.loads((root/'manifest.json').read_text());done=0;last=time.monotonic()
+        manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'));done=0;last=time.monotonic()
         def progress(number,total,size):
             nonlocal done,last
             done+=size
