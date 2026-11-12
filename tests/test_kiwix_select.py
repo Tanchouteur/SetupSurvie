@@ -104,6 +104,23 @@ class KiwixSelectionTests(unittest.TestCase):
         self.assertFalse(ks.matches(self.entry(name='sqa.stackexchange.com_en_all',title='Software Quality Assurance',summary='Quality control and calibration in software'),ks.themes(),['mesure']))
         self.assertFalse(ks.matches(self.entry(name='freecodecamp_en_coding-interview-prep',title='Coding interview',summary='Algorithms and algebra'),ks.themes(),['sciences']))
 
+    def test_supplements_require_explicit_choice_and_false_positives_are_never_downloaded(self):
+        culture=self.entry(name='gutenberg_en_all',title='Gutenberg')
+        irrelevant=self.entry(name='wiki_en_all',title='Magic the Gathering encyclopedia')
+        core=self.plan([culture,irrelevant],['culture','fonds-general'])
+        self.assertFalse(core['items'])
+        self.assertEqual({r['status'] for r in core['candidates']},{'optional_excluded','out_of_scope'})
+        extended=self.plan([culture,irrelevant],['culture','fonds-general'],include_supplements=True)
+        self.assertEqual(len(extended['items']),1)
+        self.assertIn('gutenberg',extended['items'][0]['path'])
+
+    def test_gutenberg_subcollection_is_not_copied_alongside_same_language_complete_collection(self):
+        full=self.entry(name='gutenberg_en_all',title='Gutenberg')
+        subset=self.entry(name='gutenberg_en_lcc-t',title='Gutenberg technology',estimated_bytes=10)
+        plan=self.plan([subset,full],['culture'],include_supplements=True)
+        self.assertEqual(len(plan['items']),1)
+        self.assertEqual(plan['candidates'][1]['status'],'covered_by_full_collection')
+
     def test_curated_guides_are_added_once_for_the_selected_learning_themes(self):
         guide={'id':'maths-6e','title':'Maths','language':'fr','path':'library/guides/maths.pdf',
                'bytes':len(self.raw),'sha256':self.digest,'topics':['mathématiques']}

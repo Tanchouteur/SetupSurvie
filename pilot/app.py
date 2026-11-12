@@ -98,6 +98,7 @@ class LibrarySelection(BaseModel):
     themes:list[str]=Field(min_length=1,max_length=100)
     languages:list[str]=Field(default_factory=lambda:['fr','en'],min_length=1,max_length=2)
     max_add_gb:int=Field(default=0,ge=0)
+    include_supplements:bool=False
 
 
 class LibraryDownload(BaseModel):

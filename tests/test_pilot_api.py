@@ -35,7 +35,7 @@ class PilotAPITests(unittest.TestCase):
         with patch.object(engine,'launch') as launch,patch.object(operations,'status',side_effect=AssertionError('No engine needed')):
             response=self.client.get('/api/library/learning')
             self.assertEqual(response.status_code,200)
-            self.assertEqual(len(response.json()['domains']),13)
+            self.assertEqual(len(response.json()['domains']),14)
             self.assertEqual(len(response.json()['steps']),6)
             self.assertEqual(self.client.get('/api/conversations').status_code,401)
             launch.assert_not_called()
@@ -137,7 +137,7 @@ class PilotAPITests(unittest.TestCase):
         with patch.object(operations,'library_command',new_callable=AsyncMock,return_value={'accepted':True}) as command:
             response=self.client.post('/api/admin/library/plan',json={'themes':['energie'],'max_add_gb':5},headers={'Origin':'http://testserver'})
             self.assertEqual(response.status_code,202)
-            command.assert_awaited_once_with('plan',{'themes':['energie'],'languages':['fr','en'],'max_add_gb':5})
+            command.assert_awaited_once_with('plan',{'themes':['energie'],'languages':['fr','en'],'max_add_gb':5,'include_supplements':False})
         self.assertEqual(self.client.post('/api/admin/library/download',json={'id':'../outside'},headers={'Origin':'http://testserver'}).status_code,422)
 
     def test_delete_conversation_checks_owner_and_active_jobs_and_removes_data(self):

@@ -34,7 +34,7 @@ s’appliquent aussi à ces domaines.
 
 ## Ce qui est intégré au logiciel
 
-- **Bibliothèque → Explorer les savoir-faire** : 13 parcours, dont réparation,
+- **Bibliothèque → Explorer les savoir-faire** : 14 parcours, dont réparation,
   avec des sujets concrets. **Chercher les documents** utilise la recherche locale
   bilingue. **Préparer une question à l’assistant** remplit une demande adaptée au
   niveau, aux exercices et aux sources ; l’utilisateur choisit de l’envoyer.
@@ -53,6 +53,18 @@ s’appliquent aussi à ces domaines.
 - La sélection affiche les **besoins restant à vérifier** pour chaque parcours.
   Les références sont repérées dans les métadonnées ; la présence locale au moment
   de la sélection ne certifie ni l’intégrité, ni l’indexation, ni la couverture.
+
+Pour chaque sujet, choisir l’un des quatre niveaux : **comprendre le principe**,
+**pratiquer avec les moyens actuels**, **étudier les alternatives locales sans
+consommables industriels**, **transmettre**. Ces niveaux complètent les étapes
+de travail ; ils ne prétendent pas rendre tout procédé réalisable localement.
+Le parcours Énergie relie électromagnétisme, mesures, schémas, moteurs,
+générateurs, solaire/batteries et solutions mécaniques ou hydrauliques.
+
+Les sources recherchées incluent manuels d’apprentissage, ouvrages de métiers,
+cours techniques, plans, normes, atlas, encyclopédies anciennes et modernes,
+agronomie et médecine. Le mot « survie » n’est pas un critère obligatoire.
+L’accès public ou le référencement d’une norme n’autorise pas sa redistribution.
 
 Le fichier `deploy/kiwix-themes.json` est la référence commune des thèmes et
 parcours ; ces listes ne sont pas recopiées dans plusieurs guides. Aucun menu
@@ -104,6 +116,41 @@ Compléter ensuite sur le PC cible par les [sélections de collections](selectio
 et le [fonds complet de Marc](bibliotheque-complete-marc.md). Vérifier le plan et
 la place libre avant de transférer. Le laboratoire garde son plafond physique et
 ses contrôles de montage ; il n’a pas à recopier tout le fonds de Marc.
+
+## Éviter les volumes sans rapport avec le besoin
+
+En 0.1.18, cocher tous les thèmes pouvait sélectionner des fonds culturels entiers,
+des vidéos très volumineuses et des faux positifs de mots-clés. Depuis 0.1.19,
+ces compléments demandent la case **Inclure aussi les fonds culturels complets
+et grandes collections vidéo**, désactivée par défaut. Le CLI utilise
+`--include-supplements`. Tous les thèmes pratiques restent accessibles, sans
+plafond documentaire logiciel chez Marc. Wikipédia anglais et les collections
+pratiques volumineuses restent possibles : la taille seule ne décide pas de leur utilité.
+
+Les sous-collections Gutenberg de même langue sont écartées si leur collection
+complète est présente ou sélectionnée. Les chevauchements possibles entre
+multilingue et monolingue restent à examiner ; aucune équivalence n’est inventée.
+Les compléments non demandés et faux positifs identifiés restent visibles dans
+le plan avec leur raison d’exclusion. Aucun fichier installé n’est supprimé.
+
+**Un transfert déjà lancé garde son ancien plan.** La mise à jour ne remplace ni
+ne filtre silencieusement ses téléchargements. Pour revoir une sélection,
+effectuer une pause explicite puis préparer un nouveau plan ; les fichiers
+conformes déjà acquis et les partiels compatibles restent conservés.
+
+Pour auditer la liste exacte d’un ancien plan, sans modifier ni interrompre le transfert :
+
+```powershell
+py -3 scripts\audit_selection.py 'D:\CHEMIN\plan.json' --output 'D:\Survie\data\diagnostics\audit-plan.json'
+```
+
+Le rapport classe guides, références pertinentes par métadonnées, compléments,
+chevauchements, hors-sujet et références à examiner. Il indique tailles et plus
+gros postes, avec l’empreinte du plan et du catalogue. Ce total additionne les
+fichiers complets du plan ; il ne faut pas le confondre avec le reste à transférer,
+le volume local, les partiels ou les modèles. Sans le fichier du plan de Marc,
+le suivi de **753,27 Go / 181 ajouts**, communiqué le 12 novembre à 21:27,
+ne permet pas une validation collection par collection.
 
 Les tests CPU utilisent de minuscules fixtures : sélection, dédoublonnage,
 langues, présence distincte de la validation, recherche bilingue, parcours et

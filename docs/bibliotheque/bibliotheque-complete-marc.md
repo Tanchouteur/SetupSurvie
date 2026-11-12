@@ -11,7 +11,7 @@ cd D:\SetupSurvie\application
 py -3 scripts\kiwix_select.py prepare --work-dir D:\SetupSurvie\prive
 ```
 
-Cette commande sélectionne puis télécharge les ajouts sans confirmation supplémentaire. Elle inclut tous les thèmes, les guides du catalogue figé et les encyclopédies françaises et anglaises, avec dédoublonnage des collections locales. Elle conserve chaque plan daté sous `donnees/catalog/`, vérifie les tailles et SHA-256, puis actualise Kiwix et le pilote. Aucun modèle n'est téléchargé ou interrogé, aucune pause IA n'est levée.
+Cette commande sélectionne puis télécharge les ajouts sans confirmation supplémentaire. Elle inclut tous les thèmes pratiques, les guides du catalogue figé et les encyclopédies françaises et anglaises, avec dédoublonnage des collections locales. Elle conserve chaque plan daté sous `donnees/catalog/`, vérifie les tailles et SHA-256, puis actualise Kiwix et le pilote. Aucun modèle n'est téléchargé ou interrogé, aucune pause IA n'est levée.
 
 Le plafond documentaire est absent sur cette installation. La place réellement libre et une réserve de **15 Go** restent obligatoires. Si tout ne tient pas, les fichiers exclus par capacité sont indiqués dans le plan ; il faut davantage de stockage pour les ajouter. Le fonds n'est pas garanti exhaustif sur tous les sites Internet : la découverte porte sur le catalogue officiel Kiwix et les guides explicitement référencés du projet, en français et anglais par défaut.
 
@@ -24,6 +24,9 @@ py -3 scripts\content.py download --work-dir D:\SetupSurvie\prive --selection D:
 Le téléchargement reprend les partiels et conserve les fichiers différents. Pour chercher sans télécharger, utiliser `select` au lieu de `prepare`. Pour un transfert sans redémarrage des services, ajouter `--no-refresh` à `prepare` ou au téléchargeur.
 
 Depuis **Données locales → Enrichir la bibliothèque**, les nouvelles sélections proposent tous les thèmes et « Tout ce qui tient sur le disque ». Les choix d'une opération précédente restent conservés : cocher les nouveaux thèmes et choisir ce maximum pour étendre une ancienne sélection. Le parcours conserve les boutons de recherche, téléchargement, pause et reprise.
+
+Depuis 0.1.19, les fonds culturels complets et grandes collections vidéo demandent
+le choix explicite des compléments ; [voir la sélection et l’audit des volumes](savoirs-durables.md#éviter-les-volumes-sans-rapport-avec-le-besoin). Un transfert déjà lancé garde son ancien plan.
 
 ## Sujets recherchés
 

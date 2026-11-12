@@ -145,6 +145,36 @@
         "power generator",
         "groupe electrogene",
         "eolienne"
+      ],
+      "learning": {
+        "summary": "Comprendre et maintenir la production d’énergie, avec les alternatives documentées.",
+        "subjects": [
+          {
+            "label": "Électromagnétisme et bases de l’électricité",
+            "query": "électromagnétisme"
+          },
+          {
+            "label": "Mesures, schémas et protections",
+            "query": "électricité"
+          },
+          {
+            "label": "Réparation des moteurs et générateurs",
+            "query": "moteurs"
+          },
+          {
+            "label": "Solaire, batteries et dépendances matérielles",
+            "query": "batterie"
+          },
+          {
+            "label": "Solutions mécaniques et hydrauliques",
+            "query": "roues hydrauliques"
+          }
+        ]
+      },
+      "guides": [
+        "wiring-fr",
+        "inrs-6187",
+        "inrs-6109"
       ]
     },
     "eau": {
@@ -1167,6 +1197,7 @@
     "mesure",
     "materiaux",
     "machines",
+    "energie",
     "metallurgie",
     "chimie-pratique",
     "textile",
@@ -1176,5 +1207,47 @@
     "education",
     "organisation",
     "histoire-techniques"
+  ],
+  "selection": {
+    "optional_collections": [
+      "gutenberg",
+      "khanacademy",
+      "wikisource",
+      "ted",
+      "alexandria.dk",
+      "nota-bene",
+      "womenshistory.si.edu",
+      "folgerpedia.folger.edu",
+      "internet-encyclopedia-philosophy"
+    ],
+    "excluded_collections": [
+      "wiki",
+      "evageeks",
+      "sqa.stackexchange.com",
+      "softwareengineering.stackexchange.com",
+      "freecodecamp"
+    ]
+  },
+  "learning_levels": [
+    {
+      "id": "principle",
+      "label": "Comprendre le principe",
+      "description": "Pourquoi la méthode fonctionne ; notions et mesures nécessaires."
+    },
+    {
+      "id": "current",
+      "label": "Pratiquer avec les moyens actuels",
+      "description": "Équipement, matériaux, étapes, entretien et contrôle du résultat."
+    },
+    {
+      "id": "local",
+      "label": "Étudier les alternatives locales",
+      "description": "Sans consommables industriels : ressources locales, fabrication des outils, dépendances et limites documentées."
+    },
+    {
+      "id": "transmit",
+      "label": "Transmettre",
+      "description": "Schémas, plans, vocabulaire, exercices, erreurs fréquentes et critères de réussite."
+    }
   ]
 }

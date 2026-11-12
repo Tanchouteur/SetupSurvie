@@ -6,7 +6,7 @@ async(page)=>{
   await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>view('library'));
   await page.locator('#learning-browser').evaluate(e=>e.open=true);
-  await page.waitForFunction(()=>document.querySelectorAll('#learning-domain option').length===13);
+  await page.waitForFunction(()=>document.querySelectorAll('#learning-domain option').length===14);
   const domains=await page.locator('#learning-domain option').evaluateAll(items=>items.map(e=>e.value));
   if(!domains.includes('sciences')||!domains.includes('organisation'))throw Error('Parcours manquants');
   await page.locator('#learning-domain').selectOption('textile');
@@ -14,10 +14,10 @@ async(page)=>{
   await page.waitForFunction(()=>document.querySelector('#search-results')?.textContent.includes('Sewing'));
   if(await page.locator('#library-query').inputValue()!=='couture')throw Error('Recherche du sujet incorrecte');
   const questions=[];const listener=request=>{if(request.url().endsWith('/api/questions'))questions.push(request.url());};page.on('request',listener);
-  await page.locator('#learning-ask').click();
+  await page.locator('#learning-level').selectOption('local');await page.locator('#learning-ask').click();
   await page.locator('#chat-input').waitFor({state:'visible'});
   const prompt=await page.locator('#chat-input').inputValue();
-  if(!prompt.includes('Couture')||!prompt.includes('sources et leurs dates')||!prompt.includes('exercices'))throw Error('Question pédagogique incomplète');
+  if(!prompt.includes('consommables industriels')||!prompt.includes('Couture')||!prompt.includes('sources et leurs dates')||!prompt.includes('exercices'))throw Error('Question pédagogique incomplète');
   if(questions.length)throw Error('Question envoyée sans validation');page.off('request',listener);
   await page.evaluate(()=>view('library'));
   const layouts=[];
@@ -25,7 +25,7 @@ async(page)=>{
     await page.setViewportSize({width,height:900});
     for(const domain of ['sciences','sante','organisation','histoire-techniques']){
       await page.locator('#learning-domain').selectOption(domain);
-      await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);
+      try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);}catch(e){throw Error('Overflow '+width+' '+domain+' '+JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&!e.closest('[hidden]')).slice(0,12).map(e=>({tag:e.tagName,id:e.id,class:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right})))));}
       if(await page.locator('#learning-subject option').count()<4)throw Error('Sujets manquants '+domain);
     }
     layouts.push({width,noHorizontalOverflow:true});

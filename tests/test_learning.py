@@ -18,9 +18,10 @@ from pilot import learning,library,store
 class LearningTests(unittest.TestCase):
     def test_pathways_cover_the_requested_axes_with_concrete_subjects_and_existing_guide_ids(self):
         data=learning.pathways();rules=ks.themes()
-        expected={'sciences','mesure','materiaux','machines','metallurgie','chimie-pratique','textile','agriculture','sante','education','organisation','histoire-techniques','reparation'}
+        expected={'sciences','mesure','materiaux','machines','metallurgie','chimie-pratique','textile','agriculture','sante','education','organisation','histoire-techniques','reparation','energie'}
         self.assertEqual({d['id'] for d in data['domains']},expected)
         self.assertEqual(data['domains'][0]['id'],'sciences')
+        self.assertEqual([v['id'] for v in data['levels']],['principle','current','local','transmit'])
         self.assertEqual([s['label'] for s in data['steps']],['Comprendre','Mesurer','Réaliser','Contrôler','Entretenir','Transmettre'])
         guide_ids={item['id'] for item in content.catalog()}
         for domain in data['domains']:

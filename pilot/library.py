@@ -192,6 +192,9 @@ SYNONYMS['ph']=['ph','acidity','acidite']
 SYNONYMS['cordage']=['cordage','cordages','rope','ropes','cord']
 SYNONYMS['couture']=['couture','sewing','stitching','mending']
 SYNONYMS['etalonnage']=['etalonnage','calibration','calibrating']
+LEARNING_ENGLISH.update({'electromagnetisme':'electromagnetism','moteurs':'motors','roues':'wheels','hydrauliques':'hydraulic'})
+for french,english in LEARNING_ENGLISH.items():
+    SYNONYMS[french]=list(dict.fromkeys(SYNONYMS.get(french,[french])+[english]))
 
 
 def index_report():

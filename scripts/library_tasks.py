@@ -115,6 +115,8 @@ class Manager:
             requested = body.get('themes')
             size = body.get('max_add_gb', 0)
             languages = body.get('languages', ['fr', 'en'])
+            supplements=body.get('include_supplements',False)
+            if type(supplements) is not bool:raise setup.SetupError('Choix des compléments non valide.')
             if not isinstance(requested, list) or not requested or len(requested) > len(kiwix_select.themes()) or any(not isinstance(t, str) or t not in kiwix_select.themes() for t in requested):
                 raise setup.SetupError('Choisissez au moins un thème proposé.')
             if type(size) is not int or size < 0:
@@ -122,7 +124,7 @@ class Manager:
             if not isinstance(languages, list) or not languages or any(l not in ('fr', 'en') for l in languages):
                 raise setup.SetupError('Choisissez le français, l’anglais ou les deux.')
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': {
-                'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages))}}
+                'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages)),'include_supplements':supplements}}
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'download':
             if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error'):
@@ -193,7 +195,7 @@ class Manager:
                 options = state['options']
                 plan = kiwix_select.select(kiwix_select.parse_feed(raw), root, options['themes'],
                     languages=tuple(kiwix_select.LANGUAGES[l] for l in options['languages']),
-                    max_add=options['max_add_gb'] * 1_000_000_000 or None, storage_root=scope, reader=reader)
+                    max_add=options['max_add_gb'] * 1_000_000_000 or None, storage_root=scope, reader=reader,include_supplements=options.get('include_supplements',False))
                 check(); plan['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
                 setup.write_json(folder / 'plan.json', plan, private=True)
                 update('planned', 'Sélection prête. Vérifiez les ajouts proposés avant de télécharger.')

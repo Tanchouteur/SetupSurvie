@@ -10,6 +10,7 @@ def pathways():
     config=json.loads(RULES.read_text(encoding='utf-8'))
     ordered=list(dict.fromkeys(config.get('learning_order',[])+list(config['themes'])))
     return {'steps':config.get('learning_steps',[]),
+            'levels':config.get('learning_levels',[]),
             'domains':[{'id':key,'label':config['themes'][key]['label'],**config['themes'][key]['learning']}
                        for key in ordered if key in config['themes'] and 'learning' in config['themes'][key]],
             'notice':'Ces parcours guident la recherche. Les documents disponibles et les informations manquantes sont à vérifier pour chaque sujet.'}

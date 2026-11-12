@@ -16,7 +16,7 @@ Le thème `fonds-general` ajoute tous les guides du catalogue figé et les encyc
 ## Depuis le site
 
 Depuis 0.1.19, les [savoirs durables](savoirs-durables.md) étendent la sélection à
-38 thèmes et rattachent des guides figés aux thèmes concernés. Le plan affiche
+38 thèmes pratiques, avec les fonds culturels et grandes vidéos sur choix explicite, et rattachent des guides figés aux thèmes concernés. Le plan affiche
 les sujets à examiner pour chaque parcours, sans certifier leur couverture.
 
 1. Se connecter avec un compte administrateur et ouvrir **Données locales**.
