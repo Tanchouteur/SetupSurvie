@@ -11,11 +11,21 @@ import tempfile
 import shutil
 from unittest.mock import patch
 import time
+import subprocess
 
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'scripts'))
 import setup
 import routing_prepare
 from pilot import maps,routing
+
+
+def ci_engine(*args,**kwargs):
+    try:return routing_prepare.engine(*args,**kwargs)
+    except setup.SetupError as exc:
+        cause=exc.__cause__
+        if isinstance(cause,subprocess.CalledProcessError):
+            print('Synthetic graph engine diagnostics:',(cause.stdout or '')[-4000:],(cause.stderr or '')[-4000:],flush=True)
+        raise
 
 
 async def main():
@@ -27,7 +37,7 @@ async def main():
             # Keep the application checks intact; verify a real 2 GB minimum here.
             assert shutil.disk_usage(root).free>2_000_000_000,'CI needs 2 GB for the pinned engine and tiny graph'
             with patch.object(routing_prepare.content,'check_capacity'):
-                routing_prepare.build(data,ROOT/'fixtures/maps/routing-small.osm',[6.09,43.09,6.12,43.12],allow_download=True,progress=print)
+                routing_prepare.build(data,ROOT/'fixtures/maps/routing-small.osm',[6.09,43.09,6.12,43.12],allow_download=True,progress=print,runner=ci_engine)
             maps.ROOT=data/'library/maps'
             started=True;routing_prepare.start_services(app,config,'compose')
             for mode in ('foot','motorcycle','car'):
