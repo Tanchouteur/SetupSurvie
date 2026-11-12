@@ -11,6 +11,9 @@ def refresh():
     app.catalog(c)
     for folder in ('pilot','portal'):
         shutil.copytree(setup.ROOT/folder,lab.MOUNT/'runtime'/folder,dirs_exist_ok=True)
+    policy=lab.MOUNT/'runtime/deploy/assistant-system.fr.txt'
+    policy.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(setup.ROOT/'deploy/assistant-system.fr.txt',policy)
     for name in ('kiwix','pilot'):
         # Rootless Podman can report a stale monitor on the first stop after
         # a parent service exits. Retry before touching the stateless container.

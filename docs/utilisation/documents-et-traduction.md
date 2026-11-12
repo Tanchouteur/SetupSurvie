@@ -43,6 +43,16 @@ Les associations, traductions et instantanés textuels restent dans la base priv
 
 Supprimer une conversation supprime ses associations et traductions. Une traduction active doit d’abord être mise en pause. Les documents originaux ne sont pas modifiés. Ne pas partager un export contenant un document familial privé.
 
+## Actualiser le laboratoire de Louis
+
+Dans le clone du projet sur le PC Bazzite, vérifier que le travail local est conservé puis récupérer `main` avec `git pull --ff-only`. Depuis ce même dossier :
+
+```bash
+python3 scripts/lab_refresh_library.py
+```
+
+Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier **Version d’essai 0.1.16** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
+
 ## Vérifications de cette livraison
 
 Tests sur le runner CPU avec petites fixtures et réponses simulées : reprise après interruption, absence de mélange avec une source modifiée, accès entre comptes refusé, pauses, refus et réponses tronquées, conservation de toutes les pages d’un PDF de six pages et choix d’une plage.

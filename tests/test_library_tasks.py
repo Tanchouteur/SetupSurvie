@@ -182,6 +182,7 @@ class LibraryJobTests(unittest.TestCase):
              patch.object(setup.Installation,'catalog'),patch.object(lab_refresh_library.shutil,'copytree'), \
              patch.object(lab,'podman',return_value=result) as podman,patch.object(control,'start') as start:
             lab_refresh_library.refresh()
+        self.assertEqual((self.root/'runtime/deploy/assistant-system.fr.txt').read_text(),(setup.ROOT/'deploy/assistant-system.fr.txt').read_text())
         self.assertEqual(start.call_args.args[2],'lab')
         self.assertFalse(any('ollama' in str(call) for call in podman.call_args_list))
 
