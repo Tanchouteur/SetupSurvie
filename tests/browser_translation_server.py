@@ -12,6 +12,7 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
 from pilot import accounts,app as gateway,engine,library,operations,store,translations
+engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
 accounts.DB_PATH=str(root/'webui-fixture.db')

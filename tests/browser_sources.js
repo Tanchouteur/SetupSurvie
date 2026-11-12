@@ -18,6 +18,7 @@ async (page) => {
   await page.locator('.source-chips button').first().click();
   await page.locator('#reader .source-dates').waitFor({state:'visible'});
   await page.evaluate(()=>view('settings'));
+  await page.waitForFunction(()=>document.getElementById('assistant-policy').textContent.includes('Je ne sais pas'));
   const form=page.locator('#upload-form');await form.locator('..').evaluate(e=>e.open=true);
   await form.locator('[name="title"]').fill('Notice fictive sans date');
   await form.locator('[name="file"]').setInputFiles({name:'notice.txt',mimeType:'text/plain',buffer:Buffer.from('Notice fictive. Trois compartiments.')});
