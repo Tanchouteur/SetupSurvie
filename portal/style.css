@@ -93,4 +93,11 @@
 /* Bibliographic metadata must remain readable on narrow screens. */
 .source-chips button{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
 .source-dates,.result .muted{overflow-wrap:anywhere;min-width:0}
+.learning-browser{margin:0 0 24px;padding:16px;border:1px solid #dce5d4;border-radius:12px;background:#fff;overflow-wrap:anywhere}
+.learning-browser>summary,.learning-method>summary{cursor:pointer;font-weight:650}
+.learning-selects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.learning-selects label{font-size:14px;min-width:0}.learning-selects select{min-height:44px;max-width:100%}
+.learning-actions{display:flex;gap:10px;flex-wrap:wrap}.learning-actions button{white-space:normal;max-width:100%;min-height:44px}
+.learning-method{margin-top:16px}.learning-method li{margin:8px 0}
+@media(max-width:760px){.learning-selects{grid-template-columns:minmax(0,1fr)}.learning-actions{flex-direction:column}.learning-actions button{width:100%}}
 @media(max-height:700px){.chat-open .translation-panel[open]{flex-shrink:1;min-height:44px;overflow:auto}}

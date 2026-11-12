@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sélectionner des archives Kiwix par thème, sans télécharger les archives ni lancer l'IA."""
+"""Sélectionner et préparer les collections Kiwix et guides par thème, sans lancer l'IA."""
 import argparse
 from datetime import datetime, timezone
 import hashlib
@@ -92,6 +92,8 @@ def matches(entry, rules, requested):
     reasons = {}
     for theme in requested:
         rule = rules[theme]
+        if any(entry['name']==p or entry['name'].startswith(p+'_') for p in rule.get('exclude_collections',[])):
+            continue
         prefixes = [p for p in rule['collections'] if entry['name'] == p or entry['name'].startswith(p + '_')]
         terms = [term for term in rule['terms'] if ' ' + normalize(term) + ' ' in text]
         if prefixes or terms:
@@ -157,7 +159,8 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
     rules = themes()
     if not requested or set(requested) - rules.keys():
         raise setup.SetupError('Choisir un thème présent dans la commande themes.')
-    local = inventory(root, content.catalog())
+    pinned = content.catalog()
+    local = inventory(root, pinned)
     local_families = {}
     for item in local:
         if item['path'].endswith('.zim'):
@@ -180,13 +183,16 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
             candidates[key] = (rank, entry, reasons)
     records = []; items = []; added = 0
     planned_families = {}
-    if 'fonds-general' in requested:
-        for item in content.catalog():
+    if 'fonds-general' in requested or any(rules[t].get('guides') for t in requested):
+        for item in pinned:
+            guide_themes=[t for t in requested if item['id'] in rules[t].get('guides',[])]
+            if 'fonds-general' in requested:guide_themes.insert(0,'fonds-general')
+            if not guide_themes:continue
             if not set(item['language'].split(',')).intersection(set(languages) | {'fr' if 'fra' in languages else '', 'en' if 'eng' in languages else '', 'mul'}):
                 continue
             path=content.destination(root,item['path'])
             part=content.destination(root,item['path']+'.part')
-            record={'title':item['title'],'filename':Path(item['path']).name,'themes':['fonds-general'],
+            record={'title':item['title'],'filename':Path(item['path']).name,'themes':guide_themes,
                     'bytes':item['bytes'],'estimated_bytes':item['bytes'],'fulltext_index':not item['path'].endswith('.zim')}
             records.append(record)
             if path.exists():
@@ -202,7 +208,7 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
             if added+missing>available:
                 record['status']='budget_excluded';continue
             record.update(status='selected',remaining_bytes=missing)
-            items.append(item);added+=missing
+            items.append({**item,'topics':list(dict.fromkeys(item.get('topics',[])+guide_themes))});added+=missing
             if item['path'].endswith('.zim'):
                 planned_families[family(path.name)]=[item['path']]
     full_available = {**local_families, **planned_families}
@@ -262,9 +268,20 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
             'local_inventory': local, 'library_bytes': used, 'remaining_download_bytes': added,
             'available_additional_bytes': available, 'budget_bytes': budget, 'theme_matches': matched,
             'missing_themes': [t for t, count in matched.items() if not count],
+            'learning_coverage':learning_coverage(rules,requested,records),
             'notice': 'Sélection de collections par métadonnées, pas extraction d’articles ni validation éditoriale. '
                       'Les fichiers présents ne sont pas réindexés ou revérifiés ici. '
                       'Les archives sans index plein texte restent à consulter directement dans Kiwix.'}
+
+
+def learning_coverage(rules,requested,records,*,presence_known=True):
+    """Metadata evidence only. No claim that a collection covers every skill."""
+    return [{'id':key,'label':rules[key]['label'],
+             'references':sum(key in r['themes'] for r in records),
+             'local_references':sum(key in r['themes'] and r.get('status')=='already_local' for r in records) if presence_known else None,
+             'skills_to_review':[s['label'] for s in rules[key]['learning']['subjects']],
+             'status':'references_to_review' if any(key in r['themes'] for r in records) else 'references_missing'}
+            for key in requested if 'learning' in rules[key]]
 
 
 def main():

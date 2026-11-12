@@ -211,3 +211,11 @@ Ne pas confondre date du document, édition, collecte et date du catalogue Kiwix
 de `guide_meta` ; conserver la compatibilité et les anciennes conversations.
 Les fixtures de fiabilité sont fictives et réservées à une installation d’essai.
 Les tests simulés et la préparation des scénarios ne valident pas les modèles réels.
+
+## Savoirs durables (0.1.19)
+
+Lire `docs/bibliotheque/savoirs-durables.md`, référence unique des besoins de Marc.
+Thèmes et parcours partagent `deploy/kiwix-themes.json` ; préserver son montage
+dans le pilote portable et le laboratoire. La grille repère des références et
+des besoins à examiner, sans certifier la couverture. Les tests restent sur
+fixtures ; les gros contenus se préparent sur les PC cibles.

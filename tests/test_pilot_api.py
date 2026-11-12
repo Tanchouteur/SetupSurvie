@@ -31,6 +31,20 @@ class PilotAPITests(unittest.TestCase):
         response=self.client.post('/api/auth/login',json={'email':who,'password':'example-password'})
         self.assertEqual(response.status_code,200);return response
 
+    def test_learning_paths_are_read_only_and_available_without_an_ai_session(self):
+        with patch.object(engine,'launch') as launch,patch.object(operations,'status',side_effect=AssertionError('No engine needed')):
+            response=self.client.get('/api/library/learning')
+            self.assertEqual(response.status_code,200)
+            self.assertEqual(len(response.json()['domains']),13)
+            self.assertEqual(len(response.json()['steps']),6)
+            self.assertEqual(self.client.get('/api/conversations').status_code,401)
+            launch.assert_not_called()
+
+    def test_missing_learning_catalogue_returns_friendly_error_without_blocking_search(self):
+        with patch.object(gateway.learning,'RULES',self.root/'absent.json'):
+            self.assertEqual(self.client.get('/api/library/learning').status_code,503)
+        self.assertEqual(self.client.get('/api/search?q=').json(),{'results':[]})
+
     def test_uploaded_document_preserves_declared_dates_and_rejects_impossible_dates(self):
         self.login('admin');headers={'Origin':'http://testserver'}
         response=self.client.post('/api/admin/guides',files={'file':('notice.txt',b'Volume : 40 litres.','text/plain')},

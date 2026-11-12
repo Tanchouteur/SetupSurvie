@@ -58,6 +58,11 @@ pour désactiver le démarrage automatique ou équiper une installation existant
 
 ## Documents et traduction
 
+Depuis 0.1.19, **Bibliothèque → Explorer les savoir-faire** permet de choisir un
+sujet, chercher ses documents et préparer une question pédagogique à envoyer.
+Les [parcours de savoir-faire](../bibliotheque/savoirs-durables.md) regroupent les
+besoins de Marc, sans ajout au menu principal.
+
 Le [guide des sources et de la fiabilité](sources-et-fiabilite.md) décrit les dates
 affichées, les citations réellement lues, la distinction entre faits et déductions
 et les réponses que la base ne permet pas d’établir, à partir de 0.1.18.

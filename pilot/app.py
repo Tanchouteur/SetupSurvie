@@ -15,7 +15,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -34,7 +34,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.18'
+VERSION='0.1.19'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -416,6 +416,12 @@ async def recover(body:Reset,request:Request,response:Response):
 @app.get('/api/search')
 async def search(q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20)):
     return {'results':await library.search(q.strip(),language,limit=limit) if q.strip() else []}
+
+
+@app.get('/api/library/learning')
+async def learning_paths():
+    try:return learning.pathways()
+    except (OSError,ValueError,KeyError):raise HTTPException(503,'Les parcours ne sont pas disponibles. La recherche documentaire reste accessible.')
 
 
 @app.get('/api/source')

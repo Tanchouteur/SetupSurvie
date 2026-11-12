@@ -28,6 +28,13 @@ colonnes. Recherche, lecture, contexte du modèle et références enregistrées
 transportent ces informations ; le portail distingue une date inconnue.
 Les références exposées comme lues sont filtrées avant affichage et conservation.
 
+Les [parcours de savoir-faire](../bibliotheque/savoirs-durables.md) de 0.1.19
+utilisent les mêmes règles que la sélection Kiwix : `deploy/kiwix-themes.json`,
+monté en lecture seule dans le pilote. L’API publique `/api/library/learning`
+fournit uniquement le catalogue des parcours ; la préparation d’une question
+reste locale au navigateur jusqu’à son envoi. La grille du sélecteur est un
+relevé de métadonnées et de présence, sans validation éditoriale automatique.
+
 Le contrat de livraison est dans [release.json](../../deploy/release.json).
 Les références des composants tiers sont dans [versions.json](../../deploy/versions.json).
 Les catalogues [documentaires](../../deploy/content-catalog.json) et

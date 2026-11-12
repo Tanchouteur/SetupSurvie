@@ -173,6 +173,26 @@ TERM_ALIASES={'stocker':'stocker','stockage':'stocker','conserver':'conservation
               'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
               'pompes':'pompe','velos':'velo','cartes':'carte','soudure':'soudage'}
 
+# Practical and scientific vocabulary shared with the learning entry points.
+LEARNING_ENGLISH={'algebre':'algebra','geometrie':'geometry','physique':'physics','chimie':'chemistry','biologie':'biology',
+ 'ecologie':'ecology','geologie':'geology','unites':'units','balances':'scales','pression':'pressure','humidite':'humidity',
+ 'etalonnage':'calibration','controle':'control','qualite':'quality','minerais':'ores','argile':'clay','chaux':'lime',
+ 'charbon':'charcoal','bois':'wood','fibres':'fibers','papier':'paper','affutage':'sharpening','engrenages':'gears',
+ 'moulins':'mills','tours':'lathe','tolerances':'tolerances','forge':'forge','traitements':'treatment','thermiques':'heat',
+ 'corrosion':'corrosion','metaux':'metals','savon':'soap','colles':'adhesives','encres':'inks','securite':'safety',
+ 'couture':'sewing','chaussures':'shoes','cordage':'rope','entretien':'maintenance','fertilite':'fertility',
+ 'greffage':'grafting','ravageurs':'pests','anatomie':'anatomy','hygiene':'hygiene','diagnostic':'diagnosis',
+ 'maternite':'maternal health','chirurgie':'surgery','pharmacologie':'pharmacology','enseignement':'education',
+ 'apprentissage':'apprenticeship','pedagogie':'teaching','biens':'commons','communs':'shared',
+ 'conflits':'conflicts','comptabilite':'accounting','cooperation':'cooperation','archives':'archives',
+ 'histoire':'history','techniques':'technology','medecine':'medicine','institutions':'institutions'}
+for french,english in LEARNING_ENGLISH.items():
+    SYNONYMS[french]=list(dict.fromkeys(SYNONYMS.get(french,[french])+[english]))
+SYNONYMS['ph']=['ph','acidity','acidite']
+SYNONYMS['cordage']=['cordage','cordages','rope','ropes','cord']
+SYNONYMS['couture']=['couture','sewing','stitching','mending']
+SYNONYMS['etalonnage']=['etalonnage','calibration','calibrating']
+
 
 def index_report():
     path=store.ROOT/'index-report.json'
@@ -213,6 +233,7 @@ async def search(query,language='',limit=8):
                      'calcul':'arithmetic','carte':'map','incendie':'fire','inondation':'flood',
                      'puits':'wells','desinfection':'disinfecting','risques':'risks'}
             english.update({'examiner':'examine','malade':'sick','personne':'person'})
+            english.update(LEARNING_ENGLISH)
             translated=[english.get(w,w) if lang=='eng' else w for w in words]
             pattern=' '.join(translated) if translated else query
             raw,_=await get('/search?'+urlencode({'books.filter.lang':lang,'pattern':pattern,'format':'xml','pageLength':limit}))

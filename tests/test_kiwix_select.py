@@ -87,6 +87,48 @@ class KiwixSelectionTests(unittest.TestCase):
             with self.subTest(theme=theme):
                 self.assertIn(theme,ks.matches(self.entry(title=title),ks.themes(),[theme]))
 
+    def test_sustainable_knowledge_themes_and_real_collection_prefixes_are_selected(self):
+        examples={'sciences':('libretexts.org_en_phys','Physics LibreTexts'),
+                  'mesure':('metrology_en_all','Calibration and quality control'),
+                  'textile':('sewing_en_all','Sewing and rope making'),
+                  'materiaux':('materials_en_all','Clay and ceramics'),
+                  'machines':('engineering.stackexchange.com_en_all','Engineering Q&A'),
+                  'metallurgie':('metals_en_all','Metallurgy and heat treatment'),
+                  'chimie-pratique':('chemistry_en_all','Soap making'),
+                  'organisation':('libretexts.org_en_biz','Business LibreTexts'),
+                  'histoire-techniques':('history.stackexchange.com_en_all','History Q&A')}
+        for theme,(name,title) in examples.items():
+            with self.subTest(theme=theme):
+                self.assertIn(theme,ks.matches(self.entry(name=name,title=title),ks.themes(),[theme]))
+        self.assertFalse(ks.matches(self.entry(name='softwareengineering.stackexchange.com_en_all',title='Software Engineering',summary='Software development'),ks.themes(),['machines']))
+        self.assertFalse(ks.matches(self.entry(name='sqa.stackexchange.com_en_all',title='Software Quality Assurance',summary='Quality control and calibration in software'),ks.themes(),['mesure']))
+        self.assertFalse(ks.matches(self.entry(name='freecodecamp_en_coding-interview-prep',title='Coding interview',summary='Algorithms and algebra'),ks.themes(),['sciences']))
+
+    def test_curated_guides_are_added_once_for_the_selected_learning_themes(self):
+        guide={'id':'maths-6e','title':'Maths','language':'fr','path':'library/guides/maths.pdf',
+               'bytes':len(self.raw),'sha256':self.digest,'topics':['mathématiques']}
+        with patch.object(content,'catalog',return_value=[guide]):
+            plan=ks.select([],self.root,['sciences','education'],reserve=0,reader=lambda *a,**k:self.fail('No network for pinned guides'))
+            english_only=ks.select([],self.root,['sciences','education'],reserve=0,languages=('eng',))
+        self.assertEqual(len(plan['items']),1)
+        self.assertEqual(set(plan['items'][0]['topics']),{'mathématiques','sciences','education'})
+        self.assertEqual({r['id'] for r in plan['learning_coverage']},{'sciences','education'})
+        self.assertTrue(all(r['status']=='references_to_review' for r in plan['learning_coverage']))
+        self.assertFalse(english_only['items'])
+        self.assertEqual(set(english_only['missing_themes']),{'sciences','education'})
+
+    def test_learning_reference_counts_do_not_claim_editorial_validation(self):
+        guide={'id':'maths-6e','title':'Maths','language':'fr','path':'library/guides/maths.pdf',
+               'bytes':len(self.raw),'sha256':self.digest,'topics':[]}
+        target=self.root/guide['path'];target.parent.mkdir(parents=True);target.write_bytes(b'x'*len(self.raw))
+        with patch.object(content,'catalog',return_value=[guide]):
+            plan=ks.select([],self.root,['sciences'],reserve=0)
+        row=plan['learning_coverage'][0]
+        self.assertEqual(row['local_references'],1)
+        self.assertEqual(row['status'],'references_to_review')
+        self.assertEqual(len(row['skills_to_review']),6)
+        self.assertIn('non recalculée',plan['local_inventory'][0]['integrity_note'])
+
     def test_prepare_downloads_saved_plan_without_manual_second_command(self):
         from unittest.mock import MagicMock
         raw=b'<feed xmlns="http://www.w3.org/2005/Atom"><totalResults>0</totalResults></feed>'
