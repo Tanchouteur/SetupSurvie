@@ -2,6 +2,7 @@
 Run in an isolated test environment: python tests/browser_translation_server.py
 """
 import asyncio
+from contextlib import closing
 import json
 import sqlite3
 from pathlib import Path
@@ -14,9 +15,10 @@ from pilot import accounts,app as gateway,engine,library,operations,store,transl
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
 accounts.DB_PATH=str(root/'webui-fixture.db')
-with sqlite3.connect(accounts.DB_PATH) as db:
+with closing(sqlite3.connect(accounts.DB_PATH)) as db:
     db.execute('CREATE TABLE user(id TEXT,name TEXT,email TEXT,role TEXT,created_at INTEGER)')
     db.execute('INSERT INTO user VALUES(?,?,?,?,?)',('browser','Test','browser@test.invalid','admin',0))
+    db.commit()
 (library.GUIDES/'shelter.en.txt').write_text('Shelter construction. Preserve dimensions and warnings.\n'*1800)
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject

@@ -1,5 +1,6 @@
 """Bibliographic metadata and backward compatibility; tiny synthetic documents only."""
 import asyncio
+from contextlib import closing
 import json
 from pathlib import Path
 import sqlite3
@@ -19,9 +20,10 @@ class MetadataTests(unittest.TestCase):
 
     def test_legacy_database_is_extended_without_changing_five_column_metadata_or_history(self):
         store.ROOT.mkdir()
-        with sqlite3.connect(store.ROOT/'pilot.db') as db:
+        with closing(sqlite3.connect(store.ROOT/'pilot.db')) as db:
             db.execute('CREATE TABLE guide_meta(path TEXT PRIMARY KEY,title TEXT,language TEXT,provenance TEXT,licence TEXT)')
             db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?)',('old.fr.txt','Ancienne notice','fr','Organisme — édition 2009',''))
+            db.commit()
         store.init();store.init()
         (self.guides/'old.fr.txt').write_text('La boîte contient une bouteille.')
         library.index_guides()
