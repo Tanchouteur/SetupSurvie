@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const S={view:'home',user:null,conversation:null,source:null,job:null,poll:null,status:null,searchAbort:null};
 const EMPTY=$('chat-messages').innerHTML;
 let contentTimer=null,contentState=null,contentInitialized=false,contentCommandBusy=false;
-const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',admin:'Gestion de l’appareil',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Comptes et accès'};
+const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',settings:'Paramètres',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Comptes et accès'};
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 const mobileNav=matchMedia('(max-width:760px)');
 function fitChatViewport(){
@@ -45,8 +45,9 @@ async function api(path,body,options={}){
 }
 function button(text,action,cls='secondary'){const b=element('button',text,cls);b.type='button';b.addEventListener('click',action);return b;}
 function view(name){
+  if(name==='admin')name='settings';
   if(!(name in labels))name='home';
-  if(['admin','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Cette page est réservée à l’administrateur.');return;}S.requestedView=name;auth();return;}
+  if(['settings','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Cette page est réservée à l’administrateur.');return;}S.requestedView=name;auth();return;}
   rememberReading();
   setMenu(false,false);
   S.view=name;if(name!=='data')clearTimeout(contentTimer);
@@ -55,15 +56,15 @@ function view(name){
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('breadcrumb').textContent=labels[name];
   if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
-  if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='admin'||name==='users')loadAdmin();if(name==='data')loadData();
+  if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='settings'){loadAdmin();loadSettings();}if(name==='users')loadAdmin();if(name==='data')loadData();
   if(name!=='chat')window.scrollTo({top:0,behavior:'instant'});
   else{resumeConversation();if(S.conversation&&!S.loadingConversation)restoreReading(S.conversation);}
 }
 function accountUI(){
   const label=$('account-label');label.replaceChildren();
   label.append(document.createTextNode(S.user?.name||'Se connecter'),element('small',S.user?'Votre compte local':'Retrouver mes conversations'));
-  $('content-manager').hidden=S.user?.role!=='admin';if(S.view==='data'&&S.user?.role==='admin')loadContentManager();
-  $('mobile-account').textContent=S.user?.name||'Se connecter';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('users-nav').hidden=S.user?.role!=='admin';
+  $('content-manager').hidden=S.user?.role!=='admin';if(S.view==='data'&&S.user){loadContentManager();loadGeography();}
+  $('mobile-account').textContent=S.user?.name||'Se connecter';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('geo-download-form').hidden=S.user?.role!=='admin';
   if(S.user&&!S.user.recovery_ready)toast('Pensez à préparer votre code de secours dans « Mon compte ».');
 }
 function auth(){
@@ -194,6 +195,7 @@ async function engineCommand(action){$('engine-start').disabled=true;$('engine-s
 async function loadNetwork(){try{const data=await api('/network');const warning=$('connect-warning');warning.hidden=!data.warning;warning.textContent=data.warning||'';if(!data.lan_enabled){warning.hidden=false;warning.textContent='L’accès depuis les autres appareils est désactivé. La personne qui prépare ce PC peut l’activer dans les réglages réseau.';}$('connect-qr').src='/api/network/qr.svg?kind=direct&v='+Date.now();$('connect-address').textContent=data.http_url;$('connect-address').href=data.http_url;$('connect-secure').textContent=data.https_url;$('connect-secure').href=data.https_url;}catch(e){$('connect-warning').hidden=false;$('connect-warning').textContent=e.message;}}
 async function loadData(){
   if(S.user?.role==='admin')loadContentManager();
+  if(S.user)loadGeography();
   try{const data=await api('/inventory');$('data-summary').replaceChildren();for(const [title,text] of [['Collections',String(data.books.length)],['Guides',String(data.guides.length)],['Modèles locaux',String(data.models.length)]]){const card=element('div',undefined,'data-stat');card.append(element('strong',text),element('span',title));$('data-summary').append(card);}
     for(const [kind,id] of [['books','data-books'],['guides','data-guides'],['models','data-models']]){
       const grid=$(id);grid.replaceChildren();
@@ -238,10 +240,10 @@ async function loadContentManager(){
     if(!contentInitialized){
       $('content-themes').replaceChildren();const defaults=data.options?.themes||['autonomie','survie','agriculture','energie'];
       for(const theme of data.themes){const label=element('label'),input=element('input');input.type='checkbox';input.name='theme';input.value=theme.id;input.checked=defaults.includes(theme.id);label.append(input,element('span',theme.label));$('content-themes').append(label);}
-      if(data.options){$('content-languages').value=data.options.languages.join(',');const budget=$('content-budget');if(![...budget.options].some(o=>Number(o.value)===data.options.max_add_gb)){const option=element('option',data.options.max_add_gb+' Go');option.value=data.options.max_add_gb;budget.append(option);}budget.value=data.options.max_add_gb;}
+      if(data.options?.themes){$('content-languages').value=data.options.languages.join(',');const budget=$('content-budget');if(![...budget.options].some(o=>Number(o.value)===data.options.max_add_gb)){const option=element('option',data.options.max_add_gb+' Go');option.value=data.options.max_add_gb;budget.append(option);}budget.value=data.options.max_add_gb;}
       contentInitialized=true;
     }
-    const previous=contentState?.phase;contentState=data;renderContentState();
+    const previous=contentState?.phase;contentState=data;renderContentState();renderGeoJob(data);
     if(previous&&previous!=='completed'&&data.phase==='completed'){status();loadData();}
     if(['starting','planning','downloading','refreshing'].includes(data.phase))contentTimer=setTimeout(loadContentManager,2000);
   }catch(e){$('content-message').textContent=e.message;$('content-plan').disabled=!contentInitialized;}
@@ -251,7 +253,7 @@ async function contentAction(action,body){
   contentCommandBusy=true;renderContentState();
   try{await api('/admin/library/'+action,body||{});await loadContentManager();}
   catch(e){$('content-message').textContent=e.message;}
-  finally{contentCommandBusy=false;if(contentState){const message=$('content-message').textContent;renderContentState();$('content-message').textContent=message;}}
+  finally{contentCommandBusy=false;if(contentState)renderGeoJob(contentState);if(contentState){const message=$('content-message').textContent;renderContentState();$('content-message').textContent=message;}}
 }
 $('content-form').onsubmit=e=>{e.preventDefault();const options=contentOptions();if(!options.themes.length){$('content-message').textContent='Choisissez au moins un thème.';return;}contentAction('plan',options);};
 $('content-form').onchange=renderContentState;
@@ -298,5 +300,8 @@ $('dictate').onclick=async()=>{
 };
 window.addEventListener('pagehide',()=>tracks.forEach(t=>t.stop()));
 document.querySelectorAll('.native-webui').forEach(a=>a.href=localServiceURL('/','webui'));
+window.addEventListener('DOMContentLoaded',()=>{
 bindExamples();view(location.hash.slice(1)||'home');status();refreshInference();
 api('/auth/me').then(u=>{S.user=u;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;accountUI();});
+
+});

@@ -13,8 +13,9 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography
 
+TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
 SESSION_SECONDS=30*86400
 
@@ -28,7 +29,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.9'
+VERSION='0.1.10'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -116,6 +117,79 @@ async def library_download(body:LibraryDownload,value=Depends(admin)):
 @app.post('/api/admin/library/pause',status_code=202)
 async def library_pause(value=Depends(admin)):
     return await operations.library_command('pause')
+
+
+class LocationChoice(BaseModel):
+    candidate: str | None = Field(default=None, pattern='^[a-f0-9]{32}$')
+    lat: float | None = Field(default=None, ge=-85, le=85, allow_inf_nan=False)
+    lon: float | None = Field(default=None, ge=-180, lt=180, allow_inf_nan=False)
+    label: str = Field(default='Point choisi sur la carte', min_length=1, max_length=200)
+
+
+class GeographyDownload(BaseModel):
+    lat: float = Field(ge=-80, le=80, allow_inf_nan=False)
+    lon: float = Field(ge=-180, lt=180, allow_inf_nan=False)
+    radius_km: int = Field(default=10, ge=1, le=25, strict=True)
+    terrain: bool = True
+
+
+@app.get('/api/settings')
+async def get_settings(value=Depends(user)):
+    return geography.settings()
+
+
+@app.post('/api/admin/settings/{target}')
+async def set_settings(target: str, body: LocationChoice, value=Depends(admin)):
+    try:return geography.set_location(target, **body.model_dump())
+    except ValueError as exc:raise HTTPException(400, str(exc))
+
+
+@app.delete('/api/admin/settings/{target}')
+async def clear_settings(target: str, value=Depends(admin)):
+    if target not in ('home','departure'):raise HTTPException(400,'Emplacement inconnu.')
+    geography.save(target,None)
+    return {'ok':True}
+
+
+@app.get('/api/geography/addresses')
+async def find_addresses(q: str = Query(min_length=3,max_length=200), online: bool = False, value=Depends(user)):
+    if online and value['role']!='admin':raise HTTPException(403,'Recherche en ligne réservée à l’administrateur.')
+    return await geography.addresses(q, online)
+
+
+@app.get('/api/geography/status')
+async def geography_status(value=Depends(user)):
+    return await asyncio.to_thread(geography.status)
+
+
+@app.post('/api/admin/library/geography',status_code=202)
+async def download_geography(body: GeographyDownload,value=Depends(admin)):
+    return await operations.library_command('geography',body.model_dump())
+
+
+@app.get('/api/geography/nearby')
+async def nearby_places(category: str, radius_km: float = Query(default=5,gt=0,le=25),
+                        lat: float = Query(ge=-85,le=85,allow_inf_nan=False), lon: float = Query(ge=-180,lt=180,allow_inf_nan=False), value=Depends(user)):
+    try:return await asyncio.to_thread(geography.nearby,category,radius_km,lat,lon)
+    except ValueError as exc:raise HTTPException(400,str(exc))
+
+
+@app.get('/api/geography/elevation')
+async def point_elevation(lat: float = Query(ge=-85,le=85,allow_inf_nan=False), lon: float = Query(ge=-180,lt=180,allow_inf_nan=False),value=Depends(user)):
+    return await asyncio.to_thread(geography.elevation,lat,lon)
+
+
+@app.get('/api/geography/profile')
+async def terrain_profile(lat1:float,lon1:float,lat2:float,lon2:float,value=Depends(user)):
+    try:return await asyncio.to_thread(geography.profile,lat1,lon1,lat2,lon2)
+    except ValueError as exc:raise HTTPException(400,str(exc))
+
+
+@app.get('/api/geography/terrain/{z}/{x}/{y}.png')
+async def terrain_tile(z:int,x:int,y:int,value=Depends(user)):
+    async with TERRAIN_LOCK:
+        raw=await asyncio.to_thread(geography.terrain_png,z,x,y)
+    return Response(raw,media_type='image/png')
 
 
 @app.get('/api/assistant-context')

@@ -26,6 +26,9 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Paramètres, déplacements et cartes hors ligne](utilisation/parametres-et-cartes.md) — guide du pilote 0.1.10.
+
+
 - [Inventaire des données locales](utilisation/inventaire-local.md)
 
 ### Installation
@@ -52,6 +55,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Paramètres et géographie — 12 novembre 2026](essais/2026-11-12-parametres-et-geographie.md)
 
 - [Gestion de bibliothèque et récupération du contrôleur — 12 novembre 2026](essais/2026-11-12-gestion-bibliotheque-et-controleur.md)
 - [Mesurer le gain réel d’un gros modèle](essais/protocole-comparaison-ia.md)

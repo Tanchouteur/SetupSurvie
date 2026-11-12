@@ -41,3 +41,5 @@ Voir le [guide de sélection Kiwix](../bibliotheque/selection-kiwix-par-theme.md
 
 La version affichée dans l’en-tête vient désormais du serveur. Après une mise à
 jour, recharger la page pour charger également le nouveau JavaScript.
+
+Les [paramètres et outils cartographiques](parametres-et-cartes.md) permettent de préparer les lieux, adresses et altitudes pour le hors ligne.

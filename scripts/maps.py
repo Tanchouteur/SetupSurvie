@@ -65,7 +65,7 @@ def prepare(root,tool,*,storage_root=None,max_bytes=20_000_000_000):
             '<p><a href="/cartes.html" target="_blank" rel="noopener">Ouvrir les cartes locales</a></p>'
             '<p>Le fond régional est détaillé jusqu’au zoom 13 ; les alentours de Solliès-Ville jusqu’au zoom 15. '
             'La carte ne calcule pas d’itinéraire et ne garantit pas les conditions actuelles des routes, '
-            'l’accès à un lieu ou la potabilité d’un point d’eau. Aucun relief altimétrique n’est inclus.</p>'
+            'l’accès à un lieu ou la potabilité d’un point d’eau. Le fond seul ne contient pas de relief altimétrique. Les altitudes se préparent séparément depuis Données locales.</p>'
             '<p>Attribution : '+recipe['attribution']+'. Ces cartes se consultent sans Internet.</p></html>')
         guide.chmod(0o644)
         setup.write_json(root/'catalog/map-progress.json',{'status':'done','maps':list(records)})

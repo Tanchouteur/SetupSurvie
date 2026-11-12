@@ -33,3 +33,5 @@ ne prédisent pas les performances Windows.
 
 Toute nouvelle décision doit préciser son origine, sa date, sa conséquence sur
 les guides concernés et les validations encore nécessaires.
+
+Depuis le pilote 0.1.10, les lieux communs et commandes de gestion sont regroupés dans Paramètres. Le domicile est distinct du départ actuel ; les adresses locales sont recherchées dans les zones préparées ou choisies manuellement. Voir le [guide](../utilisation/parametres-et-cartes.md).

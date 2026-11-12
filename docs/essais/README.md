@@ -4,6 +4,7 @@ Les rapports conservent leurs résultats et limites à la date de l’essai. Un 
 
 | Document | Périmètre |
 | --- | --- |
+| [Paramètres et géographie — 12 novembre 2026](2026-11-12-parametres-et-geographie.md) | Adresses, déplacements, données locales et outils cartographiques, pilote 0.1.10 |
 | [Mesurer le gain réel d’un gros modèle](protocole-comparaison-ia.md) | Protocole comparatif, sans résultat implicite |
 | [Vérifications du paquet de prototype](verification-prototype.md) | Contrôles du prototype initial |
 | [Essais sur le PC Linux de Louis — 11 novembre 2026](essais-linux-2026-11-11.md) | Essais Linux du 11 novembre 2026 |

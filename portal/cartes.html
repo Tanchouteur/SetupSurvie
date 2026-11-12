@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Cartes hors ligne — SetupSurvie</title>
+  <link rel="icon" href="/branding/favicon.ico">
   <link rel="stylesheet" href="/vendor/maps/maplibre-gl.css">
   <link rel="stylesheet" href="/cartes.css">
   <script defer src="/vendor/maps/maplibre-gl.js"></script>
@@ -11,9 +12,10 @@
   <script defer src="/cartes.js"></script>
 </head>
 <body>
-  <header><a href="/#library">← Bibliothèque</a><h1>Cartes hors ligne</h1><label>Zone <select id="area" disabled><option>Chargement…</option></select></label><button id="home" disabled>Solliès-Ville</button><button id="print">Imprimer</button></header>
+  <header><a href="/#library">← Bibliothèque</a><h1>Cartes hors ligne</h1><label>Zone <select id="area" disabled><option>Chargement…</option></select></label><button id="home" disabled>Point de départ</button><button id="print">Imprimer</button></header>
   <p id="status" role="status">Ouverture des cartes enregistrées sur l’appareil…</p>
+  <details id="geo-tools"><summary>Rechercher un lieu, mesurer et lire le relief</summary><div class="tools-grid"><form id="map-search"><label>Adresse ou lieu hors ligne<input id="map-query" required minlength="3" maxlength="200" placeholder="Rue, commune…"></label><button>Rechercher</button></form><form id="map-nearby"><label>Lieux proches<select id="map-category"><option value="water">Points d’eau</option><option value="food">Alimentation</option><option value="health">Santé</option><option value="shelter">Abri</option><option value="repair">Réparation</option><option value="communication">Communications</option></select></label><label>Rayon<select id="map-radius"><option value="1">1 km</option><option value="5" selected>5 km</option><option value="10">10 km</option><option value="25">25 km</option></select></label><button>Chercher autour du point</button></form><div><button id="measure" type="button">Mesurer entre deux points</button><button id="relief" type="button" aria-pressed="false" disabled>Afficher le relief</button><button id="locate" type="button">Ma position GPS</button></div></div><p id="map-point" role="status">Touchez la carte pour choisir un point.</p><a id="save-point" hidden>Utiliser ce point dans les paramètres →</a><p id="geo-tool-status" role="status" aria-live="polite"></p><div id="map-results"></div><div id="terrain-profile"></div></details>
   <main id="map" aria-label="Carte interactive du Sud de la France"></main>
-  <footer>Routes, chemins et lieux : repères datés, sans calcul d’itinéraire ni état du trafic. Le relief altimétrique n’est pas inclus. Déplacez la carte et utilisez +/− pour zoomer.</footer>
+  <footer>Routes, chemins et lieux : repères datés, sans calcul d’itinéraire ni état du trafic. Le relief et les lieux utiles nécessitent une zone préparée dans Données locales. Altitudes approximatives. © OpenStreetMap contributors · Terrain : Mapzen / Copernicus EU-DEM / USGS / NOAA. Déplacez la carte et utilisez +/− pour zoomer.</footer>
 </body>
 </html>

@@ -14,6 +14,7 @@ import uuid
 import content
 import discovery
 import kiwix_select
+import geography_data
 import setup
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
@@ -30,7 +31,7 @@ class Manager:
         self.state_path = self.directory / 'state.json'
 
     def read(self):
-        return json.loads(self.state_path.read_text()) if self.state_path.exists() else {'phase': 'idle'}
+        return json.loads(self.state_path.read_text(encoding='utf-8')) if self.state_path.exists() else {'phase': 'idle'}
 
     def write(self, state):
         setup.write_json(self.state_path, state, private=True)
@@ -72,13 +73,13 @@ class Manager:
                 result.update(pause_requested=True, message='Pause demandée. Attente de la fin de l’échange en cours ; les fichiers partiels seront conservés.')
             plan_path = self.paths(state['id']) / 'plan.json'
             if plan_path.is_file():
-                plan = json.loads(plan_path.read_text())
+                plan = json.loads(plan_path.read_text(encoding='utf-8'))
                 result['plan'] = {k: plan[k] for k in ('candidates', 'remaining_download_bytes', 'missing_themes', 'library_bytes')}
                 result['plan']['count'] = len(plan['items'])
             if state['phase'] == 'downloading':
                 progress = Path(self.config['data_dir']) / 'catalog/content-progress.json'
                 if progress.is_file():
-                    value = json.loads(progress.read_text())
+                    value = json.loads(progress.read_text(encoding='utf-8'))
                     result['progress'] = {k: value[k] for k in ('id', 'bytes', 'total', 'status') if k in value}
         return result
 
@@ -87,7 +88,11 @@ class Manager:
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
         self.check_storage()
-        if action == 'plan':
+        if action == 'geography':
+            options = geography_data.validate(body)
+            state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
+            self.paths(state['id']).mkdir(parents=True)
+        elif action == 'plan':
             requested = body.get('themes')
             size = body.get('max_add_gb', 10)
             languages = body.get('languages', ['fr', 'en'])
@@ -149,7 +154,12 @@ class Manager:
         try:
             root, scope = self.check_storage()
             check()
-            if state['action'] == 'plan':
+            if state['action'] == 'geography':
+                update('downloading', 'Préparation de la géographie hors ligne…')
+                geography_data.prepare(root, state['options'], storage_root=scope, check=check,
+                    progress=lambda message: update('downloading', message))
+                update('completed', 'Adresses, lieux et relief sélectionné prêts hors ligne.')
+            elif state['action'] == 'plan':
                 update('planning', 'Recherche des collections adaptées à vos thèmes…')
                 def reader(*args, **kwargs):
                     check(); return kiwix_select.fetch(*args, **kwargs)
@@ -176,7 +186,7 @@ class Manager:
                     self.app.compose(self.config, 'restart', 'kiwix')
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
-            update('paused', 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
+            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action')=='geography' else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             print(type(exc).__name__, str(exc), flush=True)
             update('error', 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')

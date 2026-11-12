@@ -313,6 +313,8 @@ Privilégier une définition lisible pour le geste, sans télécharger systémat
 la 4K ni des chaînes entières. Une vidéo de démonstration complète un manuel ;
 elle doit être visionnable sans compte ni lecteur distant.
 
+La préparation locale des adresses, lieux utiles et altitudes est implémentée dans le pilote 0.1.10 : voir le [guide des paramètres et cartes](../utilisation/parametres-et-cartes.md). Elle reste distincte du fond PMTiles et ne prouve pas que ces zones ont été téléchargées sur le pilote.
+
 ## 4. Ce qu’il faut aussi télécharger pour que les connaissances restent accessibles
 
 Dans les 20 Go de logiciels et les 45 Go de modèles :

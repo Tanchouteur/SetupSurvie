@@ -37,6 +37,7 @@ def init():
         CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,role TEXT NOT NULL,content TEXT NOT NULL,sources TEXT NOT NULL DEFAULT '[]',created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,conversation_id TEXT NOT NULL REFERENCES conversations(id),mode TEXT NOT NULL,status TEXT NOT NULL,answer TEXT NOT NULL DEFAULT '',sources TEXT NOT NULL DEFAULT '[]',error TEXT,created REAL NOT NULL,updated REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS feedback(id TEXT PRIMARY KEY,user_id TEXT,content TEXT NOT NULL,view TEXT,created REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS guide_meta(path TEXT PRIMARY KEY,title TEXT,language TEXT,provenance TEXT,licence TEXT);
         CREATE VIRTUAL TABLE IF NOT EXISTS documents USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');
         CREATE VIRTUAL TABLE IF NOT EXISTS passages USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');

@@ -39,6 +39,17 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(folder / 'plan.json', plan)
         return state, folder
 
+    def test_geography_uses_bounded_detached_worker_without_model_or_restart(self):
+        state,folder=self.seed(action='geography')
+        state['options']={'lat':43.1,'lon':6.1,'radius_km':5,'terrain':True};self.manager.write(state)
+        with patch.object(self.manager,'check_storage',return_value=(self.root/'data',None)), patch.object(jobs.geography_data,'prepare') as prepare, patch.object(self.app,'compose') as compose:
+            self.manager.run(state['id'])
+        self.assertEqual(self.manager.read()['phase'],'completed')
+        self.assertEqual(prepare.call_args.args[1],state['options']);compose.assert_not_called()
+        with patch.object(self.manager,'check_storage'),patch.object(jobs.subprocess,'Popen') as launch:
+            with self.assertRaises(setup.SetupError):self.manager.start('geography',{'lat':43,'lon':6,'radius_km':26})
+            launch.assert_not_called()
+
     def test_selection_is_validated_before_spawning_any_command(self):
         for body in [{'themes':['unknown']}, {'themes':['agriculture'],'max_add_gb':True},
                      {'themes':['agriculture'],'max_add_gb':501}, {'themes':['agriculture'],'languages':['other']}]:
