@@ -64,7 +64,7 @@ def run(args, *, capture=False, env=None, timeout=None):
                                 capture_output=capture, timeout=timeout, check=True)
         return result.stdout.strip() if capture else ""
     except FileNotFoundError as exc:
-        raise SetupError(f"Programme introuvable : {args[0]}. Voir docs/14-installation.md.") from exc
+        raise SetupError(f"Programme introuvable : {args[0]}. Voir docs/installation/README.md.") from exc
     except subprocess.TimeoutExpired as exc:
         raise SetupError(f"Délai dépassé : {args[0]}. Voir les journaux.") from exc
     except subprocess.CalledProcessError as exc:
@@ -390,7 +390,7 @@ class Installation:
         if c['bind']=='0.0.0.0':
             print('Nom facile à retenir : http://'+c.get('discovery_name','survie')+'.local:8080')
             print(f'Sur le réseau local : https://{host}:8443 ; Open WebUI : https://{host}:8444 ; Kiwix : https://{host}:8445')
-            print('Installer le certificat local sur chaque appareil pour HTTPS et la dictée. Voir docs/22-pilote-marc.md.')
+            print('Installer le certificat local sur chaque appareil pour HTTPS et la dictée. Voir docs/installation/pilote-marc.md.')
         else:print('Accès limité au PC serveur. configure --lan --lan-host ADRESSE_IP pour ouvrir le réseau privé.')
 
     def certificate(self,c,destination):

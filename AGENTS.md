@@ -115,6 +115,32 @@ leur revente. Documenter les lacunes et les droits restant à examiner.
 5. Vérifier que le commit est présent sur le distant et annoncer la branche,
    le commit, les vérifications effectuées et les limites restantes.
 
+## Documentation : organisation et maintenance
+
+- Partir de `docs/README.md` pour trouver les guides de référence. Classer les
+  documents par usage : utilisation, installation, exploitation, architecture,
+  bibliothèque, décisions, essais et historique. Le README racine reste une
+  présentation courte avec les parcours essentiels ; éviter d’y accumuler les
+  comptes rendus de livraison.
+- Pour chaque changement de comportement, commande, configuration, prérequis ou
+  procédure, mettre à jour dans la même livraison le guide de référence concerné
+  et ses renvois. Réviser aussi les choix actuels et l’architecture si nécessaire.
+  Ne pas laisser une nouvelle procédure uniquement dans un bilan de livraison.
+- Indiquer le statut des documents : guide actuel, plan/proposition, bilan daté
+  ou archive. Distinguer prévu, implémenté, téléchargé, indexé et réellement testé.
+  Préciser les validations non exécutées, les machines et les limites restantes.
+- Conserver les anciens bilans, décisions et sources avec leur date et leur
+  contexte. Ajouter une note de remplacement ou un lien vers la référence actuelle
+  lorsqu’une ancienne affirmation devient trompeuse ; ne pas réécrire un résultat
+  historique comme si un nouvel essai avait eu lieu.
+- Après création, déplacement ou renommage d’un document, actualiser l’index et
+  les liens Markdown, chemins cités dans les consignes et renvois des scripts.
+  Vérifier les cibles locales et les ancres ; conserver la correspondance des
+  anciens chemins dans `docs/historique/README.md` lors d’un reclassement.
+- Une réorganisation documentaire seule ne change ni la version du logiciel ni
+  les références des composants tiers. Ne pas toucher aux changements de code
+  en cours pour faire correspondre artificiellement la documentation.
+
 ## Vérifications et suivi
 
 Tests automatisés : `python3 -m unittest discover -s tests -v`. Le Python choisi
@@ -129,14 +155,14 @@ les changements d'interface. Une émulation WebKit ne remplace pas un essai rée
 sur iPhone. Distinguer tests unitaires, essais Linux, essais Windows et validations
 hors ligne ; ne pas présenter un résultat non exécuté comme acquis.
 
-Lire en priorité `README.md`, `docs/22-pilote-marc.md`,
-`docs/23-bilan-pilote-2026-11-11.md`, `docs/24-acces-simple-et-offre.md` et
-`docs/25-plan-bibliotheque-hors-ligne-500go.md`. Ce dernier est un plan, pas la
+Lire en priorité `README.md`, `docs/README.md`, `docs/decisions/choix-actuels.md`, `docs/installation/pilote-marc.md`,
+`docs/essais/bilan-pilote-2026-11-11.md`, `docs/decisions/acces-simple-et-offre.md` et
+`docs/bibliotheque/plan-bibliotheque-hors-ligne-500go.md`. Ce dernier est un plan, pas la
 preuve que les lots proposés sont téléchargés.
 
 Le pilote 0.1.5 fournit `scripts/content.py` pour les lots figés et
 `scripts/pilot_update.py` pour les mises à jour compatibles du code, avec sauvegarde
-et retour arrière. Lire `docs/26-mises-a-jour-et-bibliotheque-pilote.md`. Les lots
+et retour arrière. Lire `docs/exploitation/mises-a-jour-et-bibliotheque-pilote.md`. Les lots
 du plan documentaire ne sont pas tous téléchargés ; les changements d’images et
 les migrations de données incompatibles demandent encore une procédure dédiée. Ne pas confondre
 le kit hors ligne d'environ 160 Go avec un petit installateur en ligne. Les mises
@@ -146,7 +172,7 @@ Mettre à jour ces constats à mesure que le travail est réellement validé.
 
 Le pilote **0.1.7** ajoute les cartes PMTiles du Sud (PACA, Occitanie, Corse et
 Solliès-Ville) et une recette des sources via scripts/audit_library.py.
-Lire docs/28-bibliotheque-sud-recherche-et-ia.md. scripts/maps.py prépare les
+Lire docs/essais/bibliotheque-sud-recherche-et-ia.md. scripts/maps.py prépare les
 extraits ; scripts/lab_refresh_library.py actualise seulement Kiwix et le pilote.
 Pour les services de transfert en arrière-plan, utiliser --no-refresh puis
 actualiser séparément. L'indexation du pilote et la recherche Kiwix ne signifient

@@ -1,0 +1,17 @@
+# Essais et résultats
+
+Les rapports conservent leurs résultats et limites à la date de l’essai. Un ancien nombre de tests ou de ressources ne décrit pas nécessairement la livraison suivante.
+
+| Document | Périmètre |
+| --- | --- |
+| [Mesurer le gain réel d’un gros modèle](protocole-comparaison-ia.md) | Protocole comparatif, sans résultat implicite |
+| [Vérifications du paquet de prototype](verification-prototype.md) | Contrôles du prototype initial |
+| [Essais sur le PC Linux de Louis — 11 novembre 2026](essais-linux-2026-11-11.md) | Essais Linux du 11 novembre 2026 |
+| [Campagne modèles, contexte, outils et corpus](campagne-modeles-contexte-et-corpus.md) | Campagne de modèles, contexte et corpus |
+| [Bilan du pilote — 11 novembre 2026](bilan-pilote-2026-11-11.md) | Bilan du pilote et réserves |
+| [Ressources prioritaires : téléchargements du 11 novembre 2026](telechargements-prioritaires.md) | Téléchargements prioritaires, livraison 0.1.6 |
+| [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) | Cartes du Sud, recherche et IA, livraison 0.1.7 |
+
+Les nouvelles validations doivent préciser machine, système, version, commandes, résultats et limites. Ne pas transformer un essai Linux en validation Windows ou un test WebKit en essai réel sur iPhone.
+
+Pour installer le pilote actuel, suivre les [guides de référence](../README.md).
