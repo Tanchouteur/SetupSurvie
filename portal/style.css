@@ -90,3 +90,6 @@
 @media(max-height:700px){.translation-content{max-height:48px}.translation-content>.small{display:none}.chat-open .chat-view:has(#translation-panel[open]){overflow-y:auto}}
 
 .translation-range{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}.translation-range label{display:grid;gap:4px;flex:1;min-width:120px}.translation-range input{width:100%;max-width:100%;box-sizing:border-box}
+/* Bibliographic metadata must remain readable on narrow screens. */
+.source-chips button{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.source-dates,.result .muted{overflow-wrap:anywhere;min-width:0}

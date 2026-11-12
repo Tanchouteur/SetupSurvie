@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store
+from . import store,source_metadata
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -62,7 +62,8 @@ async def books():
         result=[]
         for e in root.findall('a:entry',ns):
             link=next((l.get('href','') for l in e.findall('a:link',ns) if l.get('type')=='text/html'),'')
-            result.append({'title':e.findtext('a:title',namespaces=ns),'language':e.findtext('a:language',namespaces=ns),'book':link.removeprefix('/content/')})
+            result.append({'title':e.findtext('a:title',namespaces=ns),'language':e.findtext('a:language',namespaces=ns),'book':link.removeprefix('/content/'),
+                           'archive_date':source_metadata.date_value(e.findtext('a:updated',default='',namespaces=ns),timestamp=True)})
         return result
     except (httpx.HTTPError,ET.ParseError,HTTPException):return []
 
@@ -78,6 +79,9 @@ def index_guides():
                     for item in entries:
                         if not isinstance(item,dict) or not isinstance(item.get('path'),str):continue
                         db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?) ON CONFLICT(path) DO UPDATE SET title=excluded.title,language=excluded.language,provenance=excluded.provenance,licence=excluded.licence',tuple(str(item.get(key,''))[:2000] for key in ('path','title','language','provenance','licence')))
+                        dates=source_metadata.metadata(item)
+                        db.execute('INSERT INTO guide_dates VALUES(?,?,?,?) ON CONFLICT(path) DO UPDATE SET document_date=CASE WHEN excluded.document_date!=\'\' THEN excluded.document_date ELSE guide_dates.document_date END,edition=CASE WHEN excluded.edition!=\'\' THEN excluded.edition ELSE guide_dates.edition END,collected_at=CASE WHEN excluded.collected_at!=\'\' THEN excluded.collected_at ELSE guide_dates.collected_at END',
+                                   (item['path'],dates['document_date'],dates['edition'] if item.get('edition') else '',dates['collected_at']))
             except (ValueError,TypeError):pass
         with store.connect() as db:metadata={r['path']:dict(r) for r in db.execute('SELECT * FROM guide_meta')}
         for path in sorted(GUIDES.rglob('*')):
@@ -192,7 +196,7 @@ async def search(query,language='',limit=8):
         with store.connect() as db:
             for table in ('documents','passages'):
                 rows=db.execute(f"SELECT id,title,url,language,snippet({table},4,'','', '…',30) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' ORDER BY bm25({table}) LIMIT ?",(expression,language,language,limit)).fetchall()
-                results.extend([{**dict(r),'kind':'guide'} for r in rows])
+                results.extend([{**dict(r),'kind':'guide',**guide_metadata(db,r['id'])} for r in rows])
     available=await books()
     langs=sorted({x['language'] for x in available if x['language'] and (not language or x['language']=={'fr':'fra','en':'eng'}.get(language,language))})
     for lang in langs:
@@ -217,7 +221,8 @@ async def search(query,language='',limit=8):
                 if not link.startswith('/content/'):continue
                 p=Text();p.feed(item.findtext('description',''))
                 results.append({'id':'zim:'+link.removeprefix('/content/'),'title':item.findtext('title',''),
-                    'excerpt':p.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),'language':lang,'url':link})
+                    'excerpt':p.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),'language':lang,'url':link,
+                    **source_metadata.metadata(next((b for b in available if b['book']==unquote(link.removeprefix('/content/')).split('/')[0]),{}))})
         except (httpx.HTTPError,ET.ParseError,HTTPException):continue
     norm=lambda s:unquote(s).casefold().replace('é','e').replace('è','e')
     results.sort(key=lambda r:norm(r['title'])!=norm(query))
@@ -231,26 +236,36 @@ def safe_zim_path(identifier):
     return path
 
 
+def guide_metadata(db,identifier):
+    path=identifier.removeprefix('guide:').split('#page=')[0]
+    row=db.execute('SELECT m.provenance,m.licence,d.document_date,d.edition,d.collected_at FROM guide_meta m LEFT JOIN guide_dates d ON m.path=d.path WHERE m.path=?',(path,)).fetchone()
+    item=dict(row) if row else {}
+    return {**item,**source_metadata.metadata(item)}
+
+
 async def source(identifier):
     if identifier.startswith('guide:'):
         with store.connect() as db:
             table='passages' if '#page=' in identifier else 'documents'
             row=db.execute('SELECT * FROM '+table+' WHERE id=?',(identifier,)).fetchone()
-            meta=db.execute('SELECT provenance,licence FROM guide_meta WHERE path=?',(identifier.removeprefix('guide:').split('#page=')[0],)).fetchone()
+            meta=guide_metadata(db,identifier)
         if not row:raise HTTPException(404,'Guide introuvable.')
-        return {**dict(row),**(dict(meta) if meta else {}),'kind':'guide','images':[],
+        return {**dict(row),**meta,'kind':'guide','images':[],
+                'text_truncated':len(row['text']) >= (24000 if table=='passages' else 500000),
                 'preview':identifier.lower().split('#page=')[0].endswith('.pdf')}
     path=safe_zim_path(identifier)
-    if path.split('/')[0] not in {b['book'] for b in await books()}:raise HTTPException(404,'Collection introuvable.')
+    book=next((b for b in await books() if b['book']==path.split('/')[0]),None)
+    if book is None:raise HTTPException(404,'Collection introuvable.')
     raw,_=await get('/content/'+quote(path,safe='/'))
     p=Text();p.feed(raw.decode(errors='replace'))
+    text=p.text()
     images=[]
     for image in p.images:
         target=urljoin('/content/'+quote(path,safe='/'),image['src'])
         if target.startswith('/content/'):
             images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
-    return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':p.text()[:100000],
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10]}
+    return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],**source_metadata.metadata(book)}
 
 
 def calculate(expression):

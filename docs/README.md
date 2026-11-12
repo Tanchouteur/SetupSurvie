@@ -26,6 +26,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide du pilote 0.1.18.
+
 - [Documents associés et traduction progressive](utilisation/documents-et-traduction.md) — guide du pilote 0.1.16.
 
 - [Paramètres, déplacements et cartes hors ligne](utilisation/parametres-et-cartes.md) — guide du pilote 0.1.10.
@@ -63,6 +65,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Vérifier les sources et l’incertitude des modèles](essais/protocole-fiabilite-ia.md) — protocole ; essais sur modèles réels encore à exécuter.
 
 - [Kit Marc et recette hors ligne — 12 novembre 2026](essais/2026-11-12-kit-marc-hors-ligne.md)
 

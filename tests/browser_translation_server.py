@@ -2,6 +2,7 @@
 Run in an isolated test environment: python tests/browser_translation_server.py
 """
 import asyncio
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -21,6 +22,8 @@ for number in range(1,7):
     text=('Page '+str(number)+'. Shelter dimensions and construction warnings. ')*100
     stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET').encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
+(library.GUIDES/'metadata.json').write_text(json.dumps([{'path':'shelter.en.txt','title':'Shelter fixture','language':'en',
+    'document_date':'2010-05','edition':'Deuxième édition','collected_at':'2026-11-12','provenance':'Fixture synthétique'}]))
 
 async def native(path,payload=None,token=None):
     if path=='/api/v1/auths/signin':return {'id':'browser','name':'Test','role':'admin','email':'browser@test.invalid','token':'fixture-only'}
@@ -37,7 +40,16 @@ async def translate(text,mode):
     return 'Construction d’un abri. Conservez les dimensions et les avertissements.\n'+text[:25],engine.MODES[mode]['model']
 translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.
-def launch(identifier,*args):engine.update(identifier,status='done',answer='Réponse simulée, aucun modèle lancé.')
+def launch(identifier,*args):
+    refs=[];answer='Réponse simulée, aucun modèle lancé.'
+    if args[-1]:
+        with store.connect() as db:
+            row=db.execute('SELECT title FROM documents WHERE id=?',(args[-1],)).fetchone()
+            if row:refs=[{'id':args[-1],'title':row['title'],'number':1,**library.guide_metadata(db,args[-1])}]
+        if refs:answer+=' Le document indique des conditions de construction [1].'
+    with store.connect() as db:
+        db.execute('INSERT INTO messages(conversation_id,role,content,sources,created) VALUES(?,?,?,?,?)',(args[1],'assistant',answer,json.dumps(refs),0))
+    engine.update(identifier,status='done',answer=answer,sources=refs)
 engine.launch=launch
 base=BASE
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')

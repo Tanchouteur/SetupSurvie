@@ -184,6 +184,7 @@ class LibraryJobTests(unittest.TestCase):
             lab_refresh_library.refresh()
         self.assertEqual((self.root/'runtime/deploy/assistant-system.fr.txt').read_text(),(setup.ROOT/'deploy/assistant-system.fr.txt').read_text())
         self.assertEqual(start.call_args.args[2],'lab')
+        self.assertTrue(any('pilot.configure' in str(call) for call in podman.call_args_list))
         self.assertFalse(any('ollama' in str(call) for call in podman.call_args_list))
 
 

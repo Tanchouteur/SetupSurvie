@@ -23,8 +23,10 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const context=await browser.newContext();const page=await context.newPage();
       const errors=[];page.on('pageerror',error=>errors.push(String(error)));
       const result=await recipe(page);
+      const sourceRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_sources.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const sourceResult=await sourceRecipe(page);
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

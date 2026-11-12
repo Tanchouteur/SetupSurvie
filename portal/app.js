@@ -109,10 +109,23 @@ function renderText(target,text,sources=[]){
   target.replaceChildren(fragment);
 }
 
+function sourceDates(source){
+  const parts=[source.document_date?'Document : '+source.document_date:'Date du document inconnue'];
+  if(source.edition)parts.push('Édition : '+source.edition);
+  if(source.archive_date)parts.push('Archive (catalogue) : '+source.archive_date);
+  if(source.collected_at)parts.push('Collecte locale : '+source.collected_at);
+  return parts.join(' · ');
+}
+function sourceChips(sources){
+  const refs=element('div',undefined,'source-chips');
+  for(const source of sources)refs.append(button(`[${source.number}] ${source.title} · ${sourceDates(source)}`,()=>readSource(source.id)));
+  return refs;
+}
+
 function message(role,text,sources=[],profile=''){
   const node=element('article',undefined,'message message-'+role);node.append(element('div',role==='user'?'Vous':(profile||'Assistant'),'message-label'));
   const body=element('div');renderText(body,text,sources);node.append(body);
-  if(sources.length){const refs=element('div',undefined,'source-chips');for(const source of sources)refs.append(button(`[${source.number}] ${source.title}`,()=>readSource(source.id)));node.append(refs);}
+  if(sources.length)node.append(sourceChips(sources));
   $('chat-messages').append(node);return {node,body};
 }
 function newConversation(){
@@ -136,7 +149,7 @@ async function runSearch(event){
   S.searchAbort?.abort();S.searchAbort=new AbortController();$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
   try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value),undefined,{signal:S.searchAbort.signal});
     $('search-message').textContent=`${data.results.length} résultat(s) pour « ${q} »`;
-    for(const result of data.results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}`,'result-meta'),element('h3',result.title),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));$('search-results').append(node);}
+    for(const result of data.results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));$('search-results').append(node);}
     if(!data.results.length)$('search-results').append(element('div','Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
@@ -149,6 +162,7 @@ async function readSource(id){
     const actions=element('div',undefined,'reader-actions');actions.append(button('← Résultats',()=>{reader.hidden=true;document.querySelector('.reading-layout').classList.remove('reading');},'secondary'),button('Poser une question sur ce document',()=>askSource(source)));
     if(S.conversation)actions.append(button('Associer à la conversation ouverte',()=>attachToConversation(source)),button('Revenir à la conversation',()=>view('chat'),'text-button'));
     reader.append(actions,element('div',source.id.startsWith('guide:WIKI-FR-')?'EXTRAIT DE WIKIPÉDIA':source.id.startsWith('guide:BOOK-EN-')?'EXTRAIT DE WIKILIVRES':source.kind==='guide'?'GUIDE LOCAL':'ARTICLE DE LA BIBLIOTHÈQUE','eyebrow'),element('h2',source.title));
+    reader.append(element('p',sourceDates(source),'source-dates muted small'));
     if(source.images?.length){const images=element('div',undefined,'reader-images');for(const img of source.images.slice(0,4)){const e=element('img');e.src='/api/media?id='+encodeURIComponent(img.id);e.alt=img.alt;e.loading='lazy';images.append(e);}reader.append(images);}
     if(source.provenance||source.licence){const details=element('details',undefined,'source-details');details.append(element('summary','Origine et licence du document'));if(source.provenance)details.append(element('p',source.provenance));if(source.licence)details.append(element('p',source.licence));reader.append(details);}const body=element('div',undefined,'reader-body');renderDocument(body,source);reader.append(body);
     if(source.preview)reader.append(element('p','Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
@@ -241,7 +255,7 @@ function watch(id){
         S.job=null;$('cancel-job').hidden=true;$('send-question').disabled=false;
         $('chat-status').textContent=job.error||(job.status==='incomplete'?'Réponse incomplète : essayez une question plus ciblée.':'Réponse terminée. Vous pouvez ouvrir les sources ou poursuivre.');
         if(!job.answer)renderText(pending.body,job.error||'Aucune réponse finale.',[]);
-        if(job.sources.length){const chips=element('div',undefined,'source-chips');for(const s of job.sources)chips.append(button(`[${s.number}] ${s.title}`,()=>readSource(s.id)));pending.node.append(chips);}await histories();return;
+        if(job.sources.length)pending.node.append(sourceChips(job.sources));await histories();return;
       }
       S.poll=setTimeout(poll,1000);
     }catch(e){S.job=null;$('cancel-job').hidden=true;$('send-question').disabled=false;$('chat-status').textContent=e.message;}

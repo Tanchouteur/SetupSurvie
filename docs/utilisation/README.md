@@ -58,4 +58,8 @@ pour désactiver le démarrage automatique ou équiper une installation existant
 
 ## Documents et traduction
 
+Le [guide des sources et de la fiabilité](sources-et-fiabilite.md) décrit les dates
+affichées, les citations réellement lues, la distinction entre faits et déductions
+et les réponses que la base ne permet pas d’établir, à partir de 0.1.18.
+
 Le [guide des documents associés et de la traduction progressive](documents-et-traduction.md) explique la conservation du document dans une conversation, la traduction du PDF entier ou de certaines pages, les pauses, la reprise avec un autre modèle et l’export du texte français. Disponible à partir de 0.1.16, après actualisation du logiciel et du navigateur.

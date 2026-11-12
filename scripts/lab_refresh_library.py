@@ -47,6 +47,10 @@ def refresh():
     if (lab.MOUNT/'data/library/maps/routing/current/manifest.json').is_file():routing_prepare.start_services(app,c,'lab')
     import control
     control.start(app,c,'lab')
+    # Refresh shared policies too, without starting Ollama or loading a model.
+    configured=lab.podman('exec',lab.PREFIX+'pilot','python','-m','pilot.configure',capture=True,check=False)
+    if configured.returncode:
+        print('Profils Open WebUI non actualisés : relancer cette commande lorsque le service est disponible.',flush=True)
 
 
 if __name__=='__main__':refresh()

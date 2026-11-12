@@ -202,3 +202,12 @@ La reprise d’une première installation est explicite et
 refuse les sources/options modifiées ; elle ne remplace pas la mise à jour d’une
 installation terminée. Le kit système hors ligne et la recette Windows réelle
 restent à réaliser. Aucun téléchargement lourd ni installation système dans le runner.
+
+## Sources et fiabilité (0.1.18)
+
+Lire `docs/utilisation/sources-et-fiabilite.md` et `docs/essais/protocole-fiabilite-ia.md`.
+Ne pas confondre date du document, édition, collecte et date du catalogue Kiwix.
+`guide_dates` complète les anciennes métadonnées sans changer les cinq colonnes
+de `guide_meta` ; conserver la compatibilité et les anciennes conversations.
+Les fixtures de fiabilité sont fictives et réservées à une installation d’essai.
+Les tests simulés et la préparation des scénarios ne valident pas les modèles réels.

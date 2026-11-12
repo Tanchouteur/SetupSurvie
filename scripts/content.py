@@ -2,6 +2,7 @@
 """Download selected, pinned offline contents without touching accounts or models."""
 import argparse
 from contextlib import contextmanager
+from datetime import datetime,timezone
 import hashlib
 import json
 import os
@@ -162,9 +163,12 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
                 if meta.is_symlink():raise setup.SetupError('Métadonnées liées refusées.')
                 records=json.loads(meta.read_text()) if meta.exists() else []
                 relative=item['path'].removeprefix('library/guides/')
+                previous=next((r for r in records if r.get('path')==relative),{})
                 records=[r for r in records if r.get('path')!=relative]
                 records.append({'path':relative,'title':item['title'],'language':item['language'],
-                    'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition']+(' — '+item['notes'] if item.get('notes') else ''),'licence':item['licence']})
+                    'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition']+(' — '+item['notes'] if item.get('notes') else ''),'licence':item['licence'],
+                    'edition':item['edition'],'document_date':item.get('document_date',previous.get('document_date','')),
+                    'collected_at':datetime.now(timezone.utc).date().isoformat() if state=='downloaded' else previous.get('collected_at','')})
                 setup.write_json(meta,records)
         setup.write_json(root/'catalog/content-progress.json',{'status':'done','results':results})
         return results
