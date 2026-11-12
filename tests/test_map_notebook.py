@@ -112,12 +112,14 @@ class RoutingPreparationTests(unittest.TestCase):
                 calls.append(args)
                 if args[0]=='run':
                     mount=args[args.index('-v')+1];path=Path(mount.rsplit(':/data',1)[0])
-                    if 'osrm-customize' in args:(path/'network.osrm.properties').write_bytes(b'synthetic graph')
+                    if 'osrm-customize' in args:
+                        index=path/'network.osrm.properties';index.write_bytes(b'synthetic graph');index.chmod(0o600)
                 return SimpleNamespace(returncode=0)
             with patch.object(routing_prepare.content,'check_capacity'):
                 first=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner)
                 second=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner)
             self.assertNotEqual(first['build_id'],second['build_id'])
+            self.assertEqual((root/'library/maps/routing/current/foot/network.osrm.properties').stat().st_mode & 0o777,0o644)
             self.assertEqual(len(list((root/'library/maps/routing').glob('previous-*'))),1)
             self.assertEqual({Path(f['path']).parts[0] for f in first['files']},{'foot','motorcycle','car'})
             self.assertFalse(any(args[0]=='pull' for args in calls))

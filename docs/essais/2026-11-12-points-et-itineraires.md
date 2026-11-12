@@ -17,8 +17,9 @@ de couche dans le runner. Ancien graphe conservé lors d’un remplacement.
 ## Tests
 
 - **123 tests unitaires réussis** dans l’environnement Python isolé du runner.
-  Capacité disque simulée comme lors de la version précédente, sans changer les
-  réserves de production. Aucun modèle ou document lourd téléchargé dans cette VM.
+  Les tests de téléchargement et de livraison de petites fixtures utilisent une capacité
+  disque simulée ; les cas de capacité insuffisante restent explicitement testés.
+  La commande standard passe dans le runner, sans changer les réserves de production. Aucun modèle ou document lourd téléchargé dans cette VM.
 - Tests nouveaux : droits lecteur/administrateur, listes non vides protégées,
   points déplacés, trajets indépendants des points, brouillons limités au compte
   et à une utilisation, GPX échappé, données non préparées, couverture, erreurs
@@ -35,11 +36,18 @@ de couche dans le runner. Ancien graphe conservé lors d’un remplacement.
   artefacts privés du navigateur, hors Git.
 - La CI Linux/Windows exécute les tests habituels. Un job GitHub distinct exécute
   réellement OSRM et les trois profils sur `fixtures/maps/routing-small.osm`,
-  réseau entièrement fictif d’environ 1,5 Ko. Son image est téléchargée dans la
+  réseau entièrement fictif de 1 045 octets. Son image est téléchargée dans la
   machine CI GitHub, jamais dans le runner de développement. La fixture dispose
   d’une réserve test de 2 Go ; la réserve de production reste 10 Go + 15 Go libres.
   Ce test a identifié et permis de corriger le nom `--data_version` et les tags Lua
-  absents (`nil`) qui excluaient à tort les voies piétonnes.
+  absents (`nil`) qui excluaient à tort les voies piétonnes. Il a aussi révélé les
+  permissions 0600 de certains index OSRM, incompatibles avec les conteneurs sans
+  capabilities ; les graphes OSM sont désormais publiés lisibles (0644). Les points
+  privés restent dans la base protégée.
+- **OSRM réel réussi dans GitHub CI** : 325,8 m à pied, 394,1 m à moto et 769,9 m
+  en voiture sur le réseau fictif. Les modes suivent bien des voies distinctes.
+  Les trois graphes sont préparés, servis et interrogés avec contrôle de version
+  du graphe et estimation à 4 km/h pour le piéton.
 - Vérification syntaxique Python/JavaScript, construction du paquet de mise à jour
   et `git diff --check` exécutés.
 

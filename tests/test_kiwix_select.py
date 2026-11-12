@@ -1,3 +1,5 @@
+from collections import namedtuple
+import shutil
 import hashlib
 import io
 import json
@@ -16,6 +18,10 @@ import setup
 
 class KiwixSelectionTests(unittest.TestCase):
     def setUp(self):
+        # Tiny fixtures must not depend on the CI host having the production
+        # 15 GB reserve. Capacity failure cases override this fixture explicitly.
+        usage=namedtuple('Usage','total used free')(200_000_000_000,100_000_000_000,100_000_000_000)
+        disk=patch.object(shutil,'disk_usage',return_value=usage);disk.start();self.addCleanup(disk.stop)
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.raw = b'illustrated zim sample'
