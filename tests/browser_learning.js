@@ -21,14 +21,16 @@ async(page)=>{
   if(questions.length)throw Error('Question envoyée sans validation');page.off('request',listener);
   await page.evaluate(()=>view('library'));
   const layouts=[];
+  // WebKit can round the document scroll width up by one CSS pixel after native select reflow.
+  // Larger overflow remains a failure with element bounds recorded below.
   for(const width of [1366,768,390,320]){
     await page.setViewportSize({width,height:900});
     for(const domain of ['sciences','sante','organisation','histoire-techniques']){
       await page.locator('#learning-domain').selectOption(domain);
-      try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);}catch(e){throw Error('Overflow '+width+' '+domain+' '+JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&!e.closest('[hidden]')).slice(0,12).map(e=>({tag:e.tagName,id:e.id,class:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right})))));}
+      try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+1);}catch(e){throw Error('Overflow '+width+' '+domain+' '+JSON.stringify(await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,body:document.body.scrollWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&!e.closest('[hidden]')).slice(0,12).map(e=>({tag:e.tagName,id:e.id,class:e.className,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right}))})))));}
       if(await page.locator('#learning-subject option').count()<4)throw Error('Sujets manquants '+domain);
     }
-    layouts.push({width,noHorizontalOverflow:true});
+    layouts.push({width,scrollWidth:await page.evaluate(()=>document.documentElement.scrollWidth),noHorizontalOverflow:true});
   }
   await page.route('**/api/library/learning',route=>route.fulfill({status:503,contentType:'application/json',body:'{"detail":"fixture unavailable"}'}));
   await page.reload();await page.evaluate(()=>view('library'));
