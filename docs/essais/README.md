@@ -4,6 +4,7 @@ Les rapports conservent leurs résultats et limites à la date de l’essai. Un 
 
 | Document | Périmètre |
 | --- | --- |
+| [Kit Marc hors ligne — 12 novembre 2026](2026-11-12-kit-marc-hors-ligne.md) | Cartes, dépendances et limites de première installation, pilote 0.1.14 |
 | [Refonte de la carte — 12 novembre 2026](2026-11-12-refonte-carte.md) | Recherche explicite, création guidée et interface mobile, pilote 0.1.12 |
 | [Points et itinéraires — 12 novembre 2026](2026-11-12-points-et-itineraires.md) | Listes, routage local et consultation mobile, pilote 0.1.11 |
 | [Paramètres et géographie — 12 novembre 2026](2026-11-12-parametres-et-geographie.md) | Adresses, déplacements, données locales et outils cartographiques, pilote 0.1.10 |

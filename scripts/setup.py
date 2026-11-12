@@ -57,6 +57,12 @@ class SetupError(RuntimeError):
     pass
 
 
+def canonical_image_id(value):
+    value=str(value).removeprefix('sha256:')
+    if not re.fullmatch('[0-9a-f]{64}',value):raise SetupError('Identifiant d’image non valide.')
+    return 'sha256:'+value
+
+
 def run(args, *, capture=False, env=None, timeout=None):
     try:
         result = subprocess.run([str(a) for a in args], cwd=ROOT, env=env,
@@ -532,8 +538,10 @@ class Installation:
         for name in expected:
             entry = entries[name]
             actual = json.loads(run(['docker', 'image', 'inspect', entry['id']], capture=True))[0]
-            if actual['Id'] != entry['id']:
+            actual_id=canonical_image_id(actual['Id'])
+            if actual_id != canonical_image_id(entry['id']):
                 raise SetupError('ID d’image invalide après chargement.')
+            entries[name]={**entry,'id':actual_id}
         # `docker save/load` need not retain RepoDigests. Local immutable IDs avoid a network lookup.
         c['local_images'] = {name: entries[name] for name in expected if name!='routing'}
         if 'routing' in expected:c['routing_image']=entries['routing']

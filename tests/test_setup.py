@@ -94,6 +94,19 @@ class InstallationTests(unittest.TestCase):
         self.app.render(self.config)
         self.assertIn("PORTAL_IMAGE='sha256:"+'a'*64+"'", self.app.env_path.read_text())
 
+    def test_import_accepts_podman_hex_ids_and_docker_prefixed_ids_without_pull(self):
+        archive=self.base/'images.tar';archive.write_bytes(b'archive fixture')
+        images=[{'service':name,'reference':reference,'id':format(index+1,'064x')} for index,(name,reference) in enumerate(setup.VERSIONS['images'].items())]
+        setup.write_json(Path(str(archive)+'.json'),{'images':images,'sha256':setup.file_hash(archive)})
+        calls=[]
+        def command(args,**kwargs):
+            calls.append(args)
+            if args[:3]==['docker','image','inspect']:return json.dumps([{'Id':'sha256:'+args[3]}])
+            self.assertEqual(args[:3],['docker','image','load']);return ''
+        with patch.object(setup,'run',side_effect=command):self.app.import_images(self.config,archive)
+        self.assertTrue(all(entry['id'].startswith('sha256:') for entry in self.config['local_images'].values()))
+        self.assertFalse(any('pull' in args for args in calls))
+
     def test_sensitive_settings_cannot_be_in_public_library(self):
         app=setup.Installation(self.base / 'exposed/library/private')
         with self.assertRaises(setup.SetupError):

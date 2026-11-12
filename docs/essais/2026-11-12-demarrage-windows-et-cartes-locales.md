@@ -77,3 +77,7 @@ Restent à valider chez Marc : première installation Windows, création des deu
 icônes, ouverture de session, démarrage de Docker, arrêt et reprise depuis les
 raccourcis. Les données actuelles couvrent la zone choisie ; elles ne constituent
 pas une préparation des routes, lieux et relief de toute la France.
+
+Actualisation du 12 novembre, pilote 0.1.14 : les données cartographiques sont
+désormais incluses dans le kit ; voir le [bilan du kit](2026-11-12-kit-marc-hors-ligne.md).
+Le présent bilan conserve les résultats et limites de la livraison 0.1.13.

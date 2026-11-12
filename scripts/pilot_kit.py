@@ -6,19 +6,21 @@ import os
 from pathlib import Path
 import shutil
 import sys
+import time
 
 import setup
 
 
-def checked_entries(root,manifest):
+def checked_entries(root,manifest,progress=None):
     result=[]
-    for entry in manifest['files']:
+    for number,entry in enumerate(manifest['files'],1):
         path=root/entry['path']
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or not path.is_file():
             raise setup.SetupError('Fichier de kit absent ou chemin non valide : '+entry['path'])
         if path.stat().st_size!=entry['bytes'] or setup.file_hash(path)!=entry['sha256']:
             raise setup.SetupError('Kit incomplet ou modifié : '+entry['path'])
         result.append((entry,path))
+        if progress:progress(number,len(manifest['files']),entry['bytes'])
     return result
 
 
@@ -76,10 +78,10 @@ def export_lab(destination,english=False):
                 copy(path,'payload/'+path.relative_to(data).as_posix())
     image_path=dest/'images.tar'
     image_records=[]
-    for service in ('open-webui','kiwix','portal','ollama'):
-        inspected=json.loads(lab.podman('image','inspect',lab.reference(service),capture=True).stdout)[0]
-        image_records.append({'service':service,'id':inspected['Id'],'reference':setup.VERSIONS['images'][service]})
-    if not image_path.exists():
+    import kit_maps
+    image_records,_=kit_maps.image_records(lab,(data/'library/maps/routing/current/manifest.json').is_file())
+    saved=json.loads((dest/'images.tar.json').read_text()) if (dest/'images.tar.json').is_file() else {}
+    if not image_path.exists() or saved.get('images')!=image_records or setup.file_hash(image_path)!=saved.get('sha256'):
         temporary=dest/'images.tar.copying'
         lab.podman('save','--format','docker-archive','--multi-image-archive','-o',str(temporary),*[r['id'] for r in image_records])
         temporary.replace(image_path)
@@ -105,6 +107,9 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     manifest=json.loads((root/'manifest.json').read_text())
     entries=checked_entries(root,manifest)
+    if any(e['path']=='payload/library/maps/routing/current/manifest.json' for e in manifest['files']):
+        images=json.loads((root/'images.tar.json').read_text())
+        if not any(e['service']=='routing' for e in images['images']):raise setup.SetupError('Le kit contient des routes mais pas leur moteur hors ligne.')
     if setup.ROOT.resolve()!=(root/'app').resolve():raise setup.SetupError('Exécutez le lanceur situé dans kit/app/scripts.')
     data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
     application=work.parent/'application'
@@ -200,14 +205,32 @@ def main():
     p=subs.add_parser('verify');p.add_argument('kit')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
+    p=subs.add_parser('refresh-maps-lab');p.add_argument('kit');p.add_argument('--geography',action='append',default=[]);p.add_argument('--routing',action='store_true')
+    p=subs.add_parser('recover-maps');p.add_argument('kit')
     p=subs.add_parser('install');p.add_argument('kit');p.add_argument('--target',choices=['windows','linux'],required=True);p.add_argument('--data-dir',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--lan-host',type=setup.lan_host)
     p.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrer à l’ouverture de session ; --no-startup conserve les raccourcis manuels.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
     elif args.action=='refresh-app':refresh_app(setup.safe_path(args.kit))
     elif args.action=='refresh-library':refresh_library(setup.safe_path(args.kit),setup.safe_path(args.data_dir))
+    elif args.action=='refresh-maps-lab':
+        import kit_maps
+        kit_maps.refresh_lab(setup.safe_path(args.kit),args.geography,args.routing)
+    elif args.action=='recover-maps':
+        import kit_maps
+        kit_maps.recover(setup.safe_path(args.kit))
     elif args.action=='verify':
-        root=setup.safe_path(args.kit);checked_entries(root,json.loads((root/'manifest.json').read_text()));print('Toutes les empreintes du kit sont conformes.')
+        import kit_audit
+        root=setup.safe_path(args.kit)
+        if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
+        manifest=json.loads((root/'manifest.json').read_text());done=0;last=time.monotonic()
+        def progress(number,total,size):
+            nonlocal done,last
+            done+=size
+            if time.monotonic()-last>10 or number==total:
+                print(f'Vérification : {number}/{total} fichiers, {done/1e9:.2f} Go contrôlés',flush=True);last=time.monotonic()
+        checked_entries(root,manifest,progress)
+        print('Toutes les empreintes du kit sont conformes.');print(json.dumps(kit_audit.validate(root,manifest),ensure_ascii=False))
     else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host,startup=args.startup)
 
 

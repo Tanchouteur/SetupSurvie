@@ -18,6 +18,7 @@ sur les précisions ci-dessous.
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
 | Gestion des collections | Depuis Données locales, bloc administrateur repliable ; aperçu par thème puis téléchargement explicite, sans nouvelle entrée dans le menu (12 novembre 2026) |
 | Installation Windows | Raccourcis Ouvrir / Arrêter et démarrage après ouverture de session par défaut dès 0.1.13 ; désactivation explicite possible, aucun arrêt du PC |
+| Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |
 | Mode jeu | Respect du marqueur de pause ; reprise du moteur uniquement après levée explicite |
 | Confidentialité | Comptes, conversations, clés, modèles et gros contenus hors Git ; préservation des données lors des opérations |
 

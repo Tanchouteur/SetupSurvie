@@ -33,6 +33,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Installation
 
+- [Préparer et vérifier le kit hors ligne](installation/preparer-kit-hors-ligne.md)
+
 - [Première version d’essai chez Marc](installation/pilote-marc.md)
 
 ### Exploitation
@@ -55,6 +57,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Kit Marc et recette hors ligne — 12 novembre 2026](essais/2026-11-12-kit-marc-hors-ligne.md)
 
 - [Démarrage Windows et cartes locales — 12 novembre 2026](essais/2026-11-12-demarrage-windows-et-cartes-locales.md)
 - [Refonte de la carte — 12 novembre 2026](essais/2026-11-12-refonte-carte.md)

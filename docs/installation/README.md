@@ -10,6 +10,9 @@ installation dans des dossiers vides, raccourcis, LAN, certificats et recette.
 Le kit contient les services, modèles et contenus sélectionnés ; vérifier son
 manifeste avant transfert. Les prérequis système doivent être installés séparément.
 
+Pour actualiser les cartes et vérifier les dépendances du kit avant transfert,
+suivre [Préparer et vérifier le kit hors ligne](preparer-kit-hors-ligne.md).
+
 ## Préparer une installation depuis le dépôt
 
 Ce parcours télécharge ses dépendances et n’équivaut pas à l’installation du kit.
