@@ -87,7 +87,7 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
             check();progress('Préparation du réseau : '+mode+'…')
             folder=staging/mode;folder.mkdir();name='network.osm.pbf' if source.name.endswith('.osm.pbf') else 'network.osm'
             shutil.copyfile(source,folder/name)
-            phases=[['osrm-extract','--threads','1','--data-version',build_id,'-p','/profiles/'+mode+'.lua','/data/'+name],
+            phases=[['osrm-extract','--threads','1','--data_version',build_id,'-p','/profiles/'+mode+'.lua','/data/'+name],
                     ['osrm-partition','--threads','1','/data/network.osrm'],
                     ['osrm-customize','--threads','1','/data/network.osrm']]
             for index,command in enumerate(phases):
