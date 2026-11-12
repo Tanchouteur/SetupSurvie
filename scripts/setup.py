@@ -381,11 +381,13 @@ class Installation:
 
     def install_windows_shortcuts(self,c,*,startup=True):
         if c['target']!='windows':return
+        import windows_update
+        windows_update.install_launcher(self,c)
         shell=shutil.which('powershell.exe')
         if not shell:raise SetupError('PowerShell Windows est requis pour créer les raccourcis.')
         run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'scripts/create-shortcuts.ps1'),
              '-WorkDir',str(self.work),'-Startup' if startup else '-DisableStartup'],capture=True)
-        print('Raccourcis Ouvrir / Arrêter créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
+        print('Raccourcis Ouvrir / Arrêter / Mettre à jour créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
 
     def up(self, c):
         self.catalog(c)

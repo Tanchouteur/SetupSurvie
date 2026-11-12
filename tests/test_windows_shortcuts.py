@@ -36,6 +36,9 @@ class WindowsShortcutTests(unittest.TestCase):
             self.assertIn(canonical,start['arguments']);self.assertIn(canonical,automatic['arguments'])
             self.assertNotIn('-OpenBrowser',automatic['arguments'])
             self.assertTrue(start['icon'].lower().endswith('favicon.ico,0'))
+            update=properties(desktop/'Mettre à jour SetupSurvie.lnk')
+            self.assertIn('update-windows.ps1',update['arguments'])
+            self.assertIn(canonical,update['arguments'])
             subprocess.run([*args,'-DisableStartup'],check=True,capture_output=True)
             self.assertFalse(paths[3].exists());self.assertTrue(paths[0].exists());self.assertTrue(paths[1].exists())
 
@@ -53,12 +56,29 @@ class WindowsShortcutTests(unittest.TestCase):
             subprocess.run([*command, '-WorkDir', str(second), '-Startup'], check=True, capture_output=True)
             for path, content in initial.items():
                 self.assertEqual(path.read_bytes(), content)
-            self.assertEqual(len(list(desktop.glob('*.lnk'))), 4)
+            self.assertEqual(len(list(desktop.glob('*.lnk'))), 6)
             self.assertEqual(len(list(startup.glob('*.lnk'))), 2)
             subprocess.run([*command, '-WorkDir', str(second), '-DisableStartup'], check=True, capture_output=True)
             self.assertEqual(len(list(startup.glob('*.lnk'))), 1)
             for path, content in initial.items():
                 self.assertEqual(path.read_bytes(), content)
+
+    def test_update_shortcut_uses_stable_script_outside_application(self):
+        with tempfile.TemporaryDirectory(prefix='survie mise à jour ') as folder:
+            root = Path(folder)
+            desktop = root/'bureau'; startup = root/'demarrage'; work = root/'prive'
+            maintenance = root/'maintenance'
+            for path in (desktop, startup, work, maintenance):
+                path.mkdir()
+            (maintenance/'update-windows.ps1').write_text('# stable fixture')
+            (work/'settings.json').write_text(json.dumps({'app_dir': str(root/'application')}))
+            subprocess.run(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                            str(ROOT/'scripts/create-shortcuts.ps1'), '-WorkDir', str(work),
+                            '-DesktopDir', str(desktop), '-StartupDir', str(startup)], check=True, capture_output=True)
+            literal = str(desktop/'Mettre à jour SetupSurvie.lnk').replace("'", "''")
+            properties = self.ps("$s=(New-Object -ComObject WScript.Shell).CreateShortcut('"+literal+"'); @{arguments=$s.Arguments;directory=$s.WorkingDirectory} | ConvertTo-Json -Compress")
+            self.assertIn(str(maintenance/'update-windows.ps1'), properties['arguments'])
+            self.assertEqual(Path(properties['directory']), maintenance)
 
 
 

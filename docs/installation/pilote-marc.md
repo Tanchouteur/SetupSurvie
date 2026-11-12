@@ -1,6 +1,6 @@
 # Première version d’essai chez Marc
 
-> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.21. Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
+> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.22. Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
 
 Ce guide décrit le paquet pilote. Les essais réalisés sur le PC Linux de Louis ne remplacent pas la recette sur le Windows de Marc, sa RTX 5060 8 Go et ses appareils du réseau local. Les mesures de la RTX 2060 ne prédisent pas directement ses temps de réponse. La RAM, le contexte, les fichiers du modèle et la mémoire vidéo disponible comptent aussi.
 
@@ -127,7 +127,7 @@ Le secours respecte une éventuelle protection MFA native ; il ne la désactive 
 
 Conserver le kit public d’origine et une sauvegarde privée des comptes, historiques, guides et certificats. La sauvegarde arrête brièvement le site et les services de compte pour obtenir une copie cohérente, puis les redémarre. Les modèles, ZIM et caches déjà présents dans le kit ne sont pas recopiés dans cette sauvegarde privée.
 
-Depuis 0.1.21, elle conserve aussi la pause du moteur et le registre des contenus
+Depuis 0.1.22, elle conserve aussi la pause du moteur et le registre des contenus
 téléchargés. Mettre d’abord les préparations documentaires en pause et attendre leur
 arrêt ; un transfert ou une préparation concurrente entraîne un refus explicite.
 Une interruption brutale peut laisser un verrou : vérifier l’arrêt du processus

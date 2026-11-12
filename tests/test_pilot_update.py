@@ -63,7 +63,7 @@ class UpdateTests(unittest.TestCase):
         self.assertFalse((self.work/'update.lock').exists())
 
     def test_first_install_wrappers_do_not_break_legacy_update_allowlist(self):
-        for name in ('Installer-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'):
+        for name in ('Mettre-a-jour-SetupSurvie.cmd','Installer-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'):
             (self.source/name).write_text('first install fixture')
         (self.source/'scripts/install-windows.ps1').write_text('installer implementation fixture')
         with patch.object(setup,'ROOT',self.source):
@@ -73,6 +73,7 @@ class UpdateTests(unittest.TestCase):
             manifest=update.unpack(package,digest,self.base/'legacy-unpacked')
         names={entry['path'] for entry in manifest['files']}
         self.assertNotIn('Installer-SetupSurvie.cmd',names)
+        self.assertNotIn('Mettre-a-jour-SetupSurvie.cmd',names)
         self.assertNotIn('1-Preparer-le-PC.cmd',names)
         self.assertIn('scripts/install-windows.ps1',names)
     def test_failed_health_restores_previous_code_and_database(self):

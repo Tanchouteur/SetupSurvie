@@ -62,6 +62,7 @@ function Invoke-SurviePreparation {
             'python' { [bool](Find-SurviePython) }
             'docker' { [bool](Find-SurvieDockerDesktop) -or [bool](Get-SurvieDockerType) }
             'ollama' { [bool](Find-SurvieOllama) }
+            'git' { [bool](Find-SurvieGit) }
             default { throw 'Composant inconnu dans le catalogue.' }
         }
         if ($available) { Write-Host ($item.id + ' déjà présent ; installation conservée.'); continue }
@@ -77,6 +78,7 @@ function Invoke-SurviePreparation {
             'python' { [bool](Find-SurviePython) }
             'docker' { [bool](Find-SurvieDockerDesktop) -or [bool](Get-SurvieDockerType) }
             'ollama' { [bool](Find-SurvieOllama) }
+            'git' { [bool](Find-SurvieGit) }
         }
         if (-not $found) { throw ($item.id + ' reste introuvable. Fermez cette fenêtre et relancez le lanceur après avoir terminé son installation.') }
     }

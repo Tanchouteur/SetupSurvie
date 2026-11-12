@@ -21,6 +21,26 @@ function Find-SurviePython {
     return $null
 }
 
+function Find-SurvieGit {
+    $command = Get-Command git -ErrorAction SilentlyContinue
+    $candidates = @()
+    if ($command) { $candidates += $command.Source }
+    $candidates += @((Join-Path $env:ProgramFiles 'Git\cmd\git.exe'), (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe'))
+    if (Get-Command Get-AppxPackage -ErrorAction SilentlyContinue) {
+        foreach ($package in @(Get-AppxPackage -Name '*CodexPrimaryRuntime*' -ErrorAction SilentlyContinue | Sort-Object Version -Descending)) {
+            $candidates += Join-Path $package.InstallLocation 'dependencies\native\git\cmd\git.exe'
+        }
+    }
+    foreach ($path in $candidates) {
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        try {
+            & $path --version 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) { return $path }
+        } catch { }
+    }
+    return $null
+}
+
 function Find-SurvieDockerDesktop {
     $candidates = @(
         (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'),

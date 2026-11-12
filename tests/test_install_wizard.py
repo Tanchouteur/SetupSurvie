@@ -176,7 +176,7 @@ class WizardTests(unittest.TestCase):
         self.records.stop()
         records, _ = wizard.source_records(None)
         names = {entry['path'] for entry, _ in records}
-        for name in ('Installer-SetupSurvie.cmd', '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd', 'scripts/install-all-windows.ps1'):
+        for name in ('Installer-SetupSurvie.cmd', 'Mettre-a-jour-SetupSurvie.cmd', '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd', 'scripts/install-all-windows.ps1', 'scripts/update-windows.ps1', 'scripts/windows_update.py'):
             self.assertIn('app/'+name, names)
 
 

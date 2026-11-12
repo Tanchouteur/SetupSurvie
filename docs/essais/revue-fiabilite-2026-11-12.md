@@ -1,6 +1,6 @@
 # Revue de fiabilité — 12 novembre 2026
 
-**Bilan daté, pilote 0.1.21, à partir de la 0.1.20 (`f7f8282`).** Analyse du code,
+**Bilan daté, pilote 0.1.22, à partir de la 0.1.21 (`4d4866b`).** Analyse du code,
 des guides et tests dans le runner Linux CPU. Aucun accès au PC de Marc pendant
 cette revue, aucun téléchargement documentaire lourd et aucune inférence réelle.
 
@@ -11,7 +11,7 @@ moteur IA, sources consultables, apprentissage et réparation, données séparé
 logiciel. Il reste un pilote accompagné. Une CI verte ne certifie ni la vérité des
 documents ni une réinstallation complète sur le matériel cible.
 
-La 0.1.21 corrige quatre problèmes confirmés :
+La 0.1.22 corrige quatre problèmes confirmés :
 
 - La sauvegarde omettait la pause du moteur et le registre des téléchargements.
   Ils sont maintenant copiés et restaurés, sans remplacement du registre privé
@@ -38,7 +38,7 @@ et le [guide des mises à jour](../exploitation/mises-a-jour-et-bibliotheque-pil
 
 ## Vérifications et limites
 
-Suite locale : **214 tests, dont 2 ignorés**, sans échec ; services et contenus
+Suite locale : **220 tests, dont 3 ignorés**, sans échec ; services et contenus
 réels remplacés par des fixtures. Les contrôles portent notamment sur restauration
 de la pause et du registre, échec d’arrêt, concurrence, chemins et diagnostic en pause.
 La configuration Compose et le retour arrière simulé font partie de la suite.
