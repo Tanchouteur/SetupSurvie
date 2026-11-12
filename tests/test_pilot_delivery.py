@@ -77,5 +77,17 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(original.read_text(),'transport copy')
         checked_entries(kit,json.loads((kit/'manifest.json').read_text()))
 
+    def test_windows_kit_configures_shortcuts_from_installed_copy(self):
+        kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
+        script=application/'scripts/setup.py';script.write_text('software fixture')
+        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':script.stat().st_size,'sha256':setup.file_hash(script)}]})
+        work=self.root/'installed/private';data=self.root/'installed/data'
+        with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'),patch.object(setup.shutil,'which',return_value='powershell.exe'),patch.object(setup,'run') as shortcuts:
+            install(kit,'windows',data,work)
+        command=shortcuts.call_args.args[0]
+        self.assertIn(str(work.parent/'application/scripts/create-shortcuts.ps1'),command)
+        self.assertEqual(command[-1],'-Startup')
+        self.assertNotIn(str(application/'scripts/create-shortcuts.ps1'),command)
+
 
 if __name__=='__main__':unittest.main()

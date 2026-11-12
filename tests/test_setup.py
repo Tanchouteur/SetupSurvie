@@ -110,6 +110,26 @@ class InstallationTests(unittest.TestCase):
             self.app.start_native(self.config)
             process.assert_not_called()
 
+    def test_shortcuts_only_for_windows_and_startup_can_be_disabled(self):
+        with patch.object(setup,'run') as run:
+            self.app.install_windows_shortcuts(self.config)
+            run.assert_not_called()
+        windows={**self.config,'target':'windows'}
+        with patch.object(setup.shutil,'which',return_value='powershell.exe'),patch.object(setup,'run') as run:
+            self.app.install_windows_shortcuts(windows)
+            args=run.call_args.args[0]
+            self.assertIn(str(setup.ROOT/'scripts/create-shortcuts.ps1'),args)
+            self.assertEqual(args[-1],'-Startup')
+            self.assertEqual(args[args.index('-WorkDir')+1],str(self.app.work))
+            self.app.install_windows_shortcuts(windows,startup=False)
+            self.assertEqual(run.call_args.args[0][-1],'-DisableStartup')
+
+    def test_stop_native_cleanup_even_if_docker_is_unavailable(self):
+        import control,discovery
+        with patch.object(setup,'Installation',return_value=self.app),patch.object(control,'stop'),patch.object(discovery,'stop'),patch.object(self.app,'compose',side_effect=setup.SetupError('Docker unavailable')),patch.object(self.app,'stop_native') as native:
+            with self.assertRaises(setup.SetupError):setup.main(['--work-dir',str(self.app.work),'down'])
+        native.assert_called_once_with(self.config)
+
     def test_local_import_cannot_use_another_image_version(self):
         self.config['local_images'] = {'portal': {'reference':'unrelated', 'id':'sha256:abc'}}
         with self.assertRaises(setup.SetupError):

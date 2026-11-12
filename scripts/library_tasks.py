@@ -25,6 +25,23 @@ class Paused(Exception):
     pass
 
 
+def shutdown(app,config,*,timeout=120):
+    """User shutdown differs from an update: prevent detached jobs restarting services."""
+    manager=Manager(app,config,'compose')
+    state=manager.current()
+    if state['phase'] in ('starting','planning','downloading'):
+        try:manager.pause()
+        except setup.SetupError:
+            if manager.current()['phase'] in ACTIVE:raise
+    import control
+    control.stop(app)
+    deadline=time.monotonic()+timeout
+    while manager.current()['phase'] in ACTIVE:
+        if time.monotonic()>=deadline:
+            raise setup.SetupError('Une préparation termine encore son arrêt. Patientez puis réessayez ; les fichiers partiels sont conservés.')
+        time.sleep(.2)
+
+
 class Manager:
     def __init__(self, app, config, backend):
         self.app, self.config, self.backend = app, config, backend

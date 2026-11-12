@@ -32,14 +32,28 @@ py -3 scripts\pilot_kit.py install D:\livraison-marc --target windows --data-dir
 
 L’installation importe les images locales, copie les fichiers, vérifie les caches hors ligne, démarre les services et configure les profils partagés dans Open WebUI. Elle ne télécharge pas les modèles. Les logiciels prérequis doivent être installés auparavant. Les identifiants initiaux sont dans `D:\SetupSurvie\prive\identifiants.txt` ; conserver ce dossier privé et préparer le code de secours depuis le compte.
 
-Le code installé se trouve maintenant dans `D:\SetupSurvie\application`, séparé du kit de transport. Pour démarrer après ouverture de session et créer un raccourci sur le Bureau, utiliser cette copie :
+Le code installé se trouve dans `D:\SetupSurvie\application`, séparé du kit de transport. À partir de 0.1.13, l’installation Windows crée automatiquement **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** sur le Bureau, avec le logo du projet, et active le démarrage à l’ouverture de session de cet utilisateur. Le kit de transport peut ensuite être débranché.
+
+Pour une installation existante, ajouter ou recréer ces raccourcis depuis la copie installée :
 
 ```powershell
 cd D:\SetupSurvie\application
 .\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -Startup
 ```
 
-Le raccourci démarre Docker Desktop si nécessaire, attend son démarrage, puis lance les services. Il ne pose aucune question au modèle. Pour supprimer le démarrage automatique, supprimer seulement le raccourci `SetupSurvie.lnk` du dossier ouvert par `shell:startup`.
+**Ouvrir SetupSurvie** démarre Docker Desktop si nécessaire, attend son démarrage, lance les services puis ouvre le portail. À l’ouverture de session, le même lancement s’effectue sans ouvrir le navigateur. Aucun modèle n’est interrogé et une pause du moteur est conservée. Il s’agit d’un démarrage après connexion à Windows, pas d’un service avant ouverture de session.
+
+**Arrêter SetupSurvie** met en pause les préparations en cours, puis arrête les services de cette installation et son Ollama dédié ; les données restent conservées. Il peut attendre la fin d’un échange réseau avant de terminer. Le PC, Docker Desktop et les autres projets ne sont pas arrêtés. Les autres appareils du réseau perdent l’accès au serveur jusqu’à sa remise en route. Fermer seulement le navigateur laisse le serveur disponible.
+
+Pour désactiver le démarrage automatique tout en gardant les deux raccourcis du Bureau :
+
+```powershell
+.\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -DisableStartup
+```
+
+Une nouvelle installation peut aussi demander `--no-startup` à `pilot_kit.py install` ou `-NoStartup` à `install.ps1`. Les raccourcis manuels restent créés. Après mise à jour d’une ancienne installation, la commande de création est volontaire : une mise à jour ne réactive pas une préférence de démarrage désactivée.
+
+En cas d’échec, une fenêtre explique le problème et les journaux `demarrage.log` ou `arret.log` restent dans le dossier privé. Les lanceurs et l’ouverture de session doivent encore être essayés sur le Windows réel de Marc.
 
 ## Accès sur le PC serveur
 

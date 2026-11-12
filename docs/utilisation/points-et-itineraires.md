@@ -131,3 +131,10 @@ L’onglet **Affichage** contient la sélection du fond, les informations de dat
 le relief. Le bouton du relief manquant reste activable pour expliquer la raison :
 connexion nécessaire, service indisponible ou altitudes non préparées. Les données
 manquantes ne sont pas téléchargées automatiquement.
+
+Sur le laboratoire Podman sans privilèges de Louis, la préparation utilise l’UID
+0 du conteneur, qui correspond à l’utilisateur Linux dans cet espace de noms.
+Cela préserve l’écriture sur le volume monté, sans privilèges root sur le PC.
+La préparation Docker conserve son utilisateur non privilégié habituel. Les
+limites CPU, RAM, réseau et capacités restent appliquées. Les extractions en
+ligne consignent aussi le serveur Overpass réellement utilisé dans le manifeste.

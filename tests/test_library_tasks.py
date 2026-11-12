@@ -106,6 +106,16 @@ class LibraryJobTests(unittest.TestCase):
         self.assertEqual(partial.read_bytes(), self.raw[:3])
         self.assertTrue(paused.exists())
 
+    def test_user_shutdown_pauses_detached_job_before_services_can_stop(self):
+        import control
+        state,folder=self.seed(phase='downloading')
+        def stop(app):self.manager.run(state['id'])
+        with patch.object(control,'stop',side_effect=stop) as stopped:
+            jobs.shutdown(self.app,self.config)
+        stopped.assert_called_once_with(self.app)
+        self.assertTrue((folder/'cancel').exists())
+        self.assertEqual(self.manager.current()['phase'],'paused')
+
     def test_download_verifies_and_refreshes_only_kiwix(self):
         state, _ = self.seed()
         paused = self.app.work / 'inference-paused.json'; paused.write_text('{"reason":"gaming"}')

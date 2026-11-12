@@ -45,3 +45,13 @@ jour, recharger la page pour charger également le nouveau JavaScript.
 Les [paramètres et outils cartographiques](parametres-et-cartes.md) permettent de préparer les lieux, adresses et altitudes pour le hors ligne.
 
 Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](points-et-itineraires.md), avec consultation mobile et préparation sur ordinateur.
+
+## Ouvrir et arrêter depuis le PC Windows
+
+À partir de l’installation 0.1.13, le Bureau propose **Ouvrir SetupSurvie** et
+**Arrêter SetupSurvie**. Le serveur démarre aussi à l’ouverture de session
+Windows. Ouvrir lance les services et le navigateur ; arrêter conserve les
+comptes, conversations et contenus, mais coupe l’accès depuis les autres appareils.
+Le PC reste allumé. Fermer uniquement le navigateur laisse le serveur disponible.
+Voir le [guide des raccourcis](../installation/pilote-marc.md#installer-à-partir-du-kit)
+pour désactiver le démarrage automatique ou équiper une installation existante.

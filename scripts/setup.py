@@ -373,6 +373,14 @@ class Installation:
         script="from pathlib import Path; Path('/app/backend/data/cache/whisper/ready.json').write_text("+repr(json.dumps(VERSIONS['speech']))+")"
         self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','open-webui','-c',script)
 
+    def install_windows_shortcuts(self,c,*,startup=True):
+        if c['target']!='windows':return
+        shell=shutil.which('powershell.exe')
+        if not shell:raise SetupError('PowerShell Windows est requis pour créer les raccourcis.')
+        run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'scripts/create-shortcuts.ps1'),
+             '-WorkDir',str(self.work),'-Startup' if startup else '-DisableStartup'],capture=True)
+        print('Raccourcis Ouvrir / Arrêter créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
+
     def up(self, c):
         self.catalog(c)
         import control
@@ -556,6 +564,7 @@ def parser():
         if command == "install":
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
+            child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; --no-startup conserve seulement les raccourcis.')
     for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account"):
         child = subs.add_parser(command)
         if command == "verify":
@@ -610,6 +619,7 @@ def main(argv=None):
             content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack])
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         app.verify(c)
+        app.install_windows_shortcuts(c,startup=args.startup)
         print(f"Accueil : http://localhost:8080 — identifiants : {app.work / 'identifiants.txt'}")
     elif args.action == "configure":
         if args.lan and not args.lan_host and not c.get('lan_host'):
@@ -630,10 +640,14 @@ def main(argv=None):
     elif args.action == "down":
         import discovery
         discovery.stop(app)
-        import control
-        control.stop(app)
-        app.compose(c, "down")
-        app.stop_native(c)
+        import library_tasks
+        library_tasks.shutdown(app,c)
+        try:
+            app.compose(c, "down")
+        finally:
+            # Even an unavailable Docker daemon must not leave the owned native
+            # Ollama process running. Never stop Docker Desktop or other projects.
+            app.stop_native(c)
         print("Services arrêtés, données conservées.")
     elif args.action == 'reload-library':
         app.catalog(c)

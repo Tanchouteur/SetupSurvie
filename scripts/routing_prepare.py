@@ -64,7 +64,7 @@ def stop_services(config,backend):
         if lab.podman('container','exists',name,check=False).returncode==0:lab.podman('stop',name)
 
 
-def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:None,progress=lambda message:None,allow_download=False,runner=engine):
+def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:None,progress=lambda message:None,allow_download=False,runner=engine,source_url=None):
     root=setup.safe_path(root);source=Path(source)
     if source.is_symlink() or not source.is_file() or source.stat().st_size>50_000_000 or not (source.name.endswith('.osm.pbf') or source.suffix=='.osm'):
         raise setup.SetupError('Choisissez un extrait OSM de 50 Mo maximum (.osm ou .osm.pbf), sans lien symbolique.')
@@ -103,9 +103,13 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
                             errors.append(exc);runner(backend,'kill',task,check=False);return
                 watcher=threading.Thread(target=watch,daemon=True);watcher.start()
                 try:
+                    # Rootless Podman maps container UID 0 to the PC user. An
+                    # explicit host UID instead maps to a subordinate user that
+                    # cannot write these bind mounts (or traverse the SSD root).
+                    user='0:0' if backend=='lab' else str(getattr(os,'getuid',lambda:1000)())+':'+str(getattr(os,'getgid',lambda:1000)())
                     runner(backend,'run','--rm','--pull=never','--name',task,'--network=none','--cpus=2','--memory=4g','--pids-limit=512',
                         '--cap-drop=ALL','--security-opt=no-new-privileges','--security-opt=label=disable',
-                        '--user',str(getattr(os,'getuid',lambda:1000)())+':'+str(getattr(os,'getgid',lambda:1000)()),
+                        '--user',user,
                         '-v',str(folder)+':/data','-v',str(profiles)+':/profiles:ro',config['image'],*command)
                 except Exception:
                     if errors:raise errors[0]
@@ -126,6 +130,7 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
                   'created':datetime.datetime.now(datetime.timezone.utc).date().isoformat(),'bbox':bbox,'profiles':config['profiles'],
                   'source':{'name':source.name,'sha256':setup.file_hash(source)},'profile_sha256':{m:setup.file_hash(profiles/(m+'.lua')) for m in config['profiles']},
                   'files':files,'attribution':config['attribution']}
+        if source_url:manifest['source']['url']=source_url
         setup.write_json(staging/'manifest.json',manifest)
         current=directory/'current';previous=None
         if current.exists():
@@ -148,14 +153,14 @@ def prepare_area(root,options,*,backend,storage_root=None,check=lambda:None,prog
         progress('Téléchargement des voies et restrictions OpenStreetMap…')
         south,west,north,east=bbox[1],bbox[0],bbox[3],bbox[2]
         query=f'[out:xml][timeout:90][maxsize:134217728];way["highway"]({south},{west},{north},{east})->.roads;rel(bw.roads)["type"="restriction"]->.restrictions;(.roads;.restrictions;);(._;>>;);out body;'
-        raw=geography_data.fetch('https://overpass-api.de/api/interpreter',data=urllib.parse.urlencode({'data':query}).encode(),maximum=50_000_000,check=check)
+        raw,endpoint=geography_data.fetch_overpass(query,maximum=50_000_000,check=check)
         document=ET.fromstring(raw)
         if document.tag!='osm' or document.find('remark') is not None or document.find('way') is None:raise setup.SetupError('Réseau incomplet ou vide. Réduisez la zone et réessayez.')
         directory=content.destination(root,'library/maps/routing');directory.mkdir(parents=True,exist_ok=True)
         source=directory/('source-'+uuid.uuid4().hex+'.osm')
         try:
             source.write_bytes(raw)
-            return build(root,source,bbox,backend=backend,storage_root=storage_root,check=check,progress=progress,allow_download=True)
+            return build(root,source,bbox,backend=backend,storage_root=storage_root,check=check,progress=progress,allow_download=True,source_url=endpoint)
         finally:source.unlink(missing_ok=True)
 
 

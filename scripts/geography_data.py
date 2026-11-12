@@ -8,12 +8,14 @@ from pathlib import Path
 import shutil
 import urllib.parse
 import urllib.request
+import urllib.error
 import uuid
 
 import content
 import setup
 
 ATTRIBUTION='© OpenStreetMap contributors · ODbL 1.0. Terrain: Mapzen; Europe: Copernicus EU-DEM; global: USGS SRTM/GMTED2010, NOAA ETOPO1.'
+OVERPASS_SERVERS=('https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter')
 
 
 def validate(body):
@@ -49,6 +51,18 @@ def categories(tags):
     if shop in ('hardware','doityourself','bicycle','car_repair'):result.append('repair')
     if amenity in ('telephone','post_office'):result.append('communication')
     return result
+
+
+def fetch_overpass(query,*,maximum,check=lambda:None,reader=None):
+    """Try one fixed backup provider for transient public API failures only."""
+    reader=reader or fetch
+    for index,url in enumerate(OVERPASS_SERVERS):
+        check()
+        try:return reader(url,data=urllib.parse.urlencode({'data':query}).encode(),maximum=maximum,check=check),url
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (429,500,502,503,504) or index==len(OVERPASS_SERVERS)-1:raise
+        except (urllib.error.URLError,TimeoutError):
+            if index==len(OVERPASS_SERVERS)-1:raise
 
 
 def parse_places(value):
@@ -94,8 +108,7 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
             area=f'(around:{radius*1000},{lat},{lon})'
             filters=['["addr:street"]','["place"]','["amenity"~"^(drinking_water|water_point|fountain|marketplace|pharmacy|hospital|clinic|doctors|shelter|telephone|post_office)$"]','["natural"~"^(spring|water)$"]','["man_made"="water_well"]','["shop"~"^(supermarket|convenience|bakery|greengrocer|farm|butcher|hardware|doityourself|bicycle|car_repair)$"]','["tourism"~"^(camp_site|alpine_hut|wilderness_hut)$"]','["healthcare"]']
             query='[out:json][timeout:75][maxsize:67108864];('+''.join('nwr'+f+area+';' for f in filters)+');out center tags;'
-            source='https://overpass-api.de/api/interpreter'
-            raw=reader(source,data=urllib.parse.urlencode({'data':query}).encode(),maximum=30_000_000,check=guard)
+            raw,source=fetch_overpass(query,maximum=30_000_000,check=guard,reader=reader)
             parsed=parse_places(json.loads(raw));setup.write_json(staging/'places.json',parsed)
             files=[{'path':'places.json','source':source,'source_sha256':hashlib.sha256(raw).hexdigest()}]
             if options['terrain']:

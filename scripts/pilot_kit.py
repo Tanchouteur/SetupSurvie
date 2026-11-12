@@ -101,7 +101,7 @@ def export_lab(destination,english=False):
     print('KIT PRÊT',dest,flush=True)
 
 
-def install(root,target,data_dir,work_dir,lan_address=None):
+def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     manifest=json.loads((root/'manifest.json').read_text())
     entries=checked_entries(root,manifest)
@@ -132,6 +132,7 @@ def install(root,target,data_dir,work_dir,lan_address=None):
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
     app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True);app.up(c);app.verify(c)
+    app.install_windows_shortcuts(c,startup=startup)
     app.addresses(c)
     print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
     print('Application installée, indépendante du kit :',application)
@@ -200,13 +201,14 @@ def main():
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
     p=subs.add_parser('install');p.add_argument('kit');p.add_argument('--target',choices=['windows','linux'],required=True);p.add_argument('--data-dir',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--lan-host',type=setup.lan_host)
+    p.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrer à l’ouverture de session ; --no-startup conserve les raccourcis manuels.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
     elif args.action=='refresh-app':refresh_app(setup.safe_path(args.kit))
     elif args.action=='refresh-library':refresh_library(setup.safe_path(args.kit),setup.safe_path(args.data_dir))
     elif args.action=='verify':
         root=setup.safe_path(args.kit);checked_entries(root,json.loads((root/'manifest.json').read_text()));print('Toutes les empreintes du kit sont conformes.')
-    else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host)
+    else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host,startup=args.startup)
 
 
 if __name__=='__main__':

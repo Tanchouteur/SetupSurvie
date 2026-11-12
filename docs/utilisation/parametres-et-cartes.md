@@ -60,7 +60,7 @@ Les sources sont fixes :
 
 | Données | Source / format | Usage local |
 | --- | --- | --- |
-| Adresses, lieux nommés et lieux utiles | OpenStreetMap via Overpass, JSON | Recherche d’adresse et de lieux proches |
+| Adresses, lieux nommés et lieux utiles | OpenStreetMap via Overpass (serveur principal ou secours fixe), JSON | Recherche d’adresse et de lieux proches |
 | Altitudes du terrain | Mapzen Terrain Tiles / Skadi, HGT | Altitude, ombrage du relief et coupe du terrain |
 | Fond de carte | Préparation PMTiles existante, distincte | Routes, bâtiments, cours d’eau et localités |
 
@@ -148,3 +148,10 @@ ou copier séparément `library/maps`, notamment les zones ajoutées depuis le k
 La sauvegarde privée ne les recopie pas automatiquement.
 
 Depuis le pilote 0.1.12, les outils de carte sont regroupés dans les onglets Rechercher, Mes repères, Itinéraire et Affichage ; la connexion peut se faire directement sur la carte. Voir le [parcours des points et trajets](points-et-itineraires.md).
+
+Depuis 0.1.13, une erreur temporaire du serveur Overpass principal (429 ou erreur
+serveur) déclenche un seul essai sur le serveur de secours fixe
+[Private.coffee, répertorié par OpenStreetMap](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances).
+La zone demandée est transmise à ce fournisseur si le secours est utilisé.
+Une requête invalide ou un dépassement de taille n’entraîne pas d’essai de secours.
+Le manifeste des lieux conserve le fournisseur réellement utilisé.

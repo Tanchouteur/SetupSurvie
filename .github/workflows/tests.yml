@@ -30,6 +30,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_content.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v
+      - run: python -m unittest discover -s tests -p test_windows_shortcuts.py -v
       - run: python -m unittest discover -s tests -p test_pilot_update.py -v
   offline-routing:
     runs-on: ubuntu-latest

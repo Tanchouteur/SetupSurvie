@@ -146,5 +146,27 @@ class GeographyTests(unittest.TestCase):
         self.assertEqual((existing/'keep').read_text(),'user data')
         self.assertEqual(list(existing.parent.glob('.prepare-*')),[])
 
+    def test_overpass_uses_fixed_backup_only_for_transient_failures(self):
+        import urllib.error
+        calls=[]
+        def reader(url,**kwargs):
+            calls.append(url)
+            if len(calls)==1:raise urllib.error.HTTPError(url,502,'temporary',{},None)
+            return b'<osm />'
+        raw,source=geography_data.fetch_overpass('query',maximum=100,reader=reader)
+        self.assertEqual(raw,b'<osm />')
+        self.assertEqual(calls,list(geography_data.OVERPASS_SERVERS))
+        self.assertEqual(source,geography_data.OVERPASS_SERVERS[1])
+        calls.clear()
+        def invalid(url,**kwargs):
+            calls.append(url);raise urllib.error.HTTPError(url,400,'bad query',{},None)
+        with self.assertRaises(urllib.error.HTTPError):geography_data.fetch_overpass('bad query',maximum=100,reader=invalid)
+        self.assertEqual(len(calls),1)
+        calls.clear()
+        def oversized(url,**kwargs):
+            calls.append(url);raise setup.SetupError('response too large')
+        with self.assertRaises(setup.SetupError):geography_data.fetch_overpass('large query',maximum=100,reader=oversized)
+        self.assertEqual(len(calls),1)
+
 
 if __name__=='__main__':unittest.main()

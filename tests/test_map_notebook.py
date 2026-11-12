@@ -116,9 +116,12 @@ class RoutingPreparationTests(unittest.TestCase):
                         index=path/'network.osrm.properties';index.write_bytes(b'synthetic graph');index.chmod(0o600)
                 return SimpleNamespace(returncode=0)
             with patch.object(routing_prepare.content,'check_capacity'):
-                first=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner)
+                first=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner,backend='lab',source_url='https://overpass.private.coffee/api/interpreter')
                 second=routing_prepare.build(root,source,[6.09,43.09,6.12,43.12],runner=runner)
             self.assertNotEqual(first['build_id'],second['build_id'])
+            self.assertEqual(first['source']['url'],'https://overpass.private.coffee/api/interpreter')
+            commands=[args for args in calls if args[0]=='run']
+            self.assertTrue(all(args[args.index('--user')+1]=='0:0' for args in commands[:9]))
             self.assertEqual((root/'library/maps/routing/current/foot/network.osrm.properties').stat().st_mode & 0o777,0o644)
             self.assertEqual(len(list((root/'library/maps/routing').glob('previous-*'))),1)
             self.assertEqual({Path(f['path']).parts[0] for f in first['files']},{'foot','motorcycle','car'})
