@@ -18,7 +18,9 @@ async (page) => {
     else if(path==='/api/admin/users')data={users:[]};
     else if(path==='/api/admin/feedback')data={feedback:[]};
     else if(path==='/api/assistant-context')data={system:'Contexte de test'};
-    else if(path==='/api/geography/status')data={datasets:[]};
+    else if(path==='/api/geography/status')data={datasets:[{terrain:false,center:[6.1,43.1],radius_km:5,places:1,addresses:1,created:'fixture'}]};
+    else if(path==='/api/map-notebook')data={lists:[],points:[],routes:[]};
+    else if(path==='/api/routing')data={prepared:false,note:'Test'};
     else if(path==='/api/inventory')data={books:[],guides:[],models:[],note:'Test'};
     else if(path==='/api/admin/library')data=job;
     else if(path==='/api/geography/addresses')data={results:[{id:'a'.repeat(32),label:'12 Rue des Écoles, Test',lat:43.1,lon:6.1,source:'OpenStreetMap local'}],note:'Résultat local'};
@@ -53,10 +55,12 @@ async (page) => {
   await page.waitForFunction(()=>document.querySelector('#geo-lat').value==='43.2');
   await page.locator('#geo-download').click();await page.waitForFunction(()=>document.querySelector('#geo-message').textContent.includes('Préparation'));
   await page.goto(base+'/cartes.html?choose=1');await page.waitForFunction(()=>document.querySelector('#area').disabled===false);
+  if(await page.locator('#open-map-panel').isVisible())await page.locator('#open-map-panel').click();
   await page.locator('#map-query').fill('Rue des Écoles');await page.locator('#map-search button').click();
   await page.getByRole('button',{name:'12 Rue des Écoles, Test',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#map-point').textContent.includes('123'));
-  await page.locator('#map-nearby button').click();await page.getByRole('button',{name:'Source locale · 12 m à vol d’oiseau'}).waitFor();
+  if(await page.locator('#open-map-panel').isVisible())await page.locator('#open-map-panel').click();
+  await page.locator('#map-nearby button').click();await page.getByRole('button',{name:'Source locale',exact:true}).waitFor();
   for(const width of [1366,768,390,320]){
     await page.setViewportSize({width,height:850});
     if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Débordement Cartes '+width);

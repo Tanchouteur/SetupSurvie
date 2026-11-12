@@ -31,12 +31,12 @@ async (page) => {
     await route.fulfill({status,json:data});
   });
   await page.setViewportSize({width:1440,height:900});
-  await page.goto(base+'/cartes.html');await page.reload();await page.waitForFunction(()=>window.SurvieMap);
+  await page.goto(base+'/cartes.html');await page.waitForFunction(()=>window.SurvieMap);
   if(await page.locator('#map').evaluate(e=>e.clientHeight)<700)throw new Error('Les panneaux mangent la carte sur ordinateur.');
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(searches!==0)throw new Error('La recherche privée ne doit pas partir sans connexion.');
   await page.locator('#map-login-form [name=email]').fill('admin');await page.locator('#map-login-form [name=password]').fill('fixture-password');
-  await page.locator('#map-login-form button[type=submit]').click();await page.waitForFunction(()=>document.body.dataset.mapRole==='admin');
+  await page.locator('#map-login-form button[type=submit]').click();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='admin');
   await page.locator('#map-nearby button').click();await page.waitForFunction(()=>document.querySelector('#search-help').hidden===false);
   if(searches!==0)throw new Error('Requête inutile alors que les lieux ne sont pas préparés.');
   if(!(await page.locator('#geo-tool-status').innerText()).includes('pas encore téléchargés'))throw new Error('Données absentes non expliquées.');
@@ -49,7 +49,7 @@ async (page) => {
   await page.locator('#point-title').fill('Réserve familiale');await page.locator('#point-new-list-title').fill('Nos ressources');
   await page.locator('#map-point-form button[type=submit]').click();await page.waitForFunction(()=>document.querySelector('#notebook-points').textContent.includes('Réserve familiale'));
   if(book.lists.length!==1||book.points.length!==1||book.points[0].list_id!==book.lists[0].id)throw new Error('Création de liste/point incorrecte.');
-  available=true;await page.reload();await page.waitForFunction(()=>window.SurvieMap);await page.locator('#map-nearby button').click();
+  available=true;await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap);await page.locator('#map-nearby button').click();
   if(!(await page.locator('#map-nearby button').innerText()).includes('Recherche'))throw new Error('Pas d’état de chargement.');
   await page.getByRole('button',{name:'Source de démonstration',exact:true}).waitFor();
   await page.getByRole('button',{name:'Source de démonstration',exact:true}).click();
@@ -60,7 +60,7 @@ async (page) => {
   await page.locator('[data-panel=map-notebook]').click();await page.screenshot({path:'/artifacts/map-redesign-admin-desktop.png',fullPage:true});
   const layouts=[];role='user';calls.length=0;
   for(const [width,height] of [[1440,900],[1024,768],[768,900],[390,844],[375,667],[320,568],[844,390]]){
-    await page.setViewportSize({width,height});await page.reload();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='user');
+    await page.setViewportSize({width,height});await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='user');
     if(width<=760)await page.locator('#open-map-panel').click();
     await page.locator('[data-panel=map-notebook]').click();
     await page.getByRole('button',{name:'Réserve familiale',exact:true}).click();
@@ -72,7 +72,7 @@ async (page) => {
     if(width===390)await page.screenshot({path:'/artifacts/map-redesign-reader-mobile.png',fullPage:true});
   }
   if(calls.some(p=>p.startsWith('/api/admin/')))throw new Error('Un lecteur a demandé une mutation.');
-  role=null;await page.setViewportSize({width:390,height:844});await page.reload();await page.waitForFunction(()=>window.SurvieMap);await page.locator('#open-map-panel').click();
+  role=null;await page.setViewportSize({width:390,height:844});await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap);await page.locator('#open-map-panel').click();
   await page.screenshot({path:'/artifacts/map-redesign-guest-mobile.png',fullPage:true});
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(errors.length||external.length)throw new Error(JSON.stringify({errors,external}));

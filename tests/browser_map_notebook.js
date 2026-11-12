@@ -35,7 +35,7 @@ async (page) => {
     await route.fulfill({status,json:data});
   });
   await page.setViewportSize({width:1366,height:950});
-  await page.goto(base+'/cartes.html');await page.reload();
+  await page.goto(base+'/cartes.html');
   await page.waitForFunction(()=>window.SurvieMap&&document.querySelector('#planning-panel').hidden===false);
   await page.locator('[data-panel=map-notebook]').click();
   await page.locator('#new-map-list').click();await page.locator('#map-list-title').fill('Eau et lieux de repli');await page.locator('#map-list-form button[type=submit]').click();
@@ -62,7 +62,7 @@ await page.locator('#point-title').fill(title);await page.locator('#point-kind')
   await page.locator('#route-calculate').click();await page.locator('#route-mode').selectOption('car');
   await page.waitForFunction(()=>document.querySelector('#route-calculate').disabled===false);
   if(await page.locator('#route-save-form').isVisible())throw new Error('Une réponse périmée a été affichée.');
-  role='user';calls.length=0;await page.reload();
+  role='user';calls.length=0;await page.waitForLoadState('networkidle');await page.reload();
   await page.waitForFunction(()=>document.querySelector('#notebook-list').options.length===1);
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[375,667],[320,568],[844,390]]){
@@ -78,7 +78,7 @@ await page.locator('#point-title').fill(title);await page.locator('#point-kind')
     if(width===390)await page.screenshot({path:'/artifacts/setupsurvie-routes-mobile.png',fullPage:true});
   }
   if(calls.some(p=>p.startsWith('/api/admin/')))throw new Error('Un lecteur a demandé une opération administrateur.');
-  role='admin';await page.setViewportSize({width:390,height:844});await page.reload();await page.waitForFunction(()=>window.SurvieMap);
+  role='admin';await page.setViewportSize({width:390,height:844});await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap);
   if(await page.locator('#planning-panel').isVisible())throw new Error('Le téléphone doit privilégier la consultation, même administrateur.');
   if(await page.locator('#locate').count())throw new Error('Le parcours ne doit pas demander le GPS.');
   if(errors.length||external.length)throw new Error(JSON.stringify({errors,external}));

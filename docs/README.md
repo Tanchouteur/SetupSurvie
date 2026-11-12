@@ -56,6 +56,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Refonte de la carte — 12 novembre 2026](essais/2026-11-12-refonte-carte.md)
+
 - [Points et itinéraires — 12 novembre 2026](essais/2026-11-12-points-et-itineraires.md)
 
 - [Paramètres et géographie — 12 novembre 2026](essais/2026-11-12-parametres-et-geographie.md)
