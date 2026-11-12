@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import shutil
+from unittest.mock import patch
 import time
 
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'scripts'))
@@ -21,7 +23,11 @@ async def main():
         root=Path(folder);app=setup.Installation(root/'private');config=app.init('linux',root/'data',cpu=True)
         data=Path(config['data_dir']);started=False
         try:
-            routing_prepare.build(data,ROOT/'fixtures/maps/routing-small.osm',[6.09,43.09,6.12,43.12],allow_download=True,progress=print)
+            # This tiny CI fixture does not need the production 10 GB build reserve.
+            # Keep the application checks intact; verify a real 2 GB minimum here.
+            assert shutil.disk_usage(root).free>2_000_000_000,'CI needs 2 GB for the pinned engine and tiny graph'
+            with patch.object(routing_prepare.content,'check_capacity'):
+                routing_prepare.build(data,ROOT/'fixtures/maps/routing-small.osm',[6.09,43.09,6.12,43.12],allow_download=True,progress=print)
             maps.ROOT=data/'library/maps'
             started=True;routing_prepare.start_services(app,config,'compose')
             for mode in ('foot','motorcycle','car'):

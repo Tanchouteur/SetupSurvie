@@ -110,7 +110,7 @@
       point:()=>point,
       selectPoint:(p)=>{selectPoint(p.lat,p.lon);map.flyTo({center:[p.lon,p.lat],zoom:14});},
       points:items=>{notebookPoints=items;restorePlanningLayers();},
-      route:geometry=>{routeGeometry=geometry;restorePlanningLayers();if(geometry){const bounds=new maplibregl.LngLatBounds();for(const p of geometry.coordinates)bounds.extend(p);map.fitBounds(bounds,{padding:40,maxZoom:15});}},
+      route:geometry=>{routeGeometry=geometry;map.resize();restorePlanningLayers();if(geometry){const bounds=new maplibregl.LngLatBounds();for(const p of geometry.coordinates)bounds.extend(p);map.fitBounds(bounds,{padding:40,maxZoom:15});}},
       resize:()=>map.resize()
     };
     restorePlanningLayers();window.dispatchEvent(new Event('survie-map-ready'));
