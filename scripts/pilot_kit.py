@@ -94,7 +94,7 @@ def export_lab(destination,english=True):
         for path in sorted((setup.ROOT/name).rglob('*')):
             if path.is_file() and not path.is_symlink() and '__pycache__' not in path.parts and path.suffix!='.pyc':
                 copy(path,'app/'+path.relative_to(setup.ROOT).as_posix())
-    for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml']:
+    for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd']:
         copy(setup.ROOT/name,'app/'+name)
     for path in sorted((lab.MOUNT/'tools/discovery-wheels').iterdir()):
         if path.is_file():copy(path,'app/vendor/discovery/'+path.name)
@@ -152,7 +152,7 @@ def refresh_app(root):
     paths=[]
     for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
         paths.extend(p for p in (setup.ROOT/name).rglob('*') if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix!='.pyc')
-    paths.extend(setup.ROOT/name for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml'])
+    paths.extend(setup.ROOT/name for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'])
     for source in paths:
         relative='app/'+source.relative_to(setup.ROOT).as_posix();dest=root/relative
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)

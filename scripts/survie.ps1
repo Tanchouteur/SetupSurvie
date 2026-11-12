@@ -13,7 +13,7 @@ foreach ($candidate in @('py', 'python', 'python3')) {
     } catch { continue }
 }
 if (-not $python) {
-    throw 'Python 3.11+ est requis. Installer Python 3, Docker Desktop et Ollama, puis rouvrir PowerShell. Voir docs/14-installation.md.'
+    throw 'Python 3.11+ est requis. Installer Python 3, Docker Desktop et Ollama, puis rouvrir PowerShell. Voir docs/installation/README.md.'
 }
 & $python @prefix -X utf8 $scriptPath @args
 exit $LASTEXITCODE

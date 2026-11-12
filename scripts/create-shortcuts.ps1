@@ -1,5 +1,6 @@
 ﻿[CmdletBinding()]
-param([string]$WorkDir = (Join-Path (Split-Path $PSScriptRoot) '.local'), [switch]$Startup, [switch]$DisableStartup)
+param([string]$WorkDir = (Join-Path (Split-Path $PSScriptRoot) '.local'), [switch]$Startup, [switch]$DisableStartup,
+    [string]$DesktopDir, [string]$StartupDir)
 $ErrorActionPreference = 'Stop'
 if ($Startup -and $DisableStartup) { throw 'Choisir Startup ou DisableStartup, pas les deux.' }
 $launcher = Join-Path $PSScriptRoot 'start-pilot.ps1'
@@ -18,8 +19,9 @@ function Add-PilotShortcut([string]$Folder, [string]$Name, [string]$Script, [boo
     if (Test-Path -LiteralPath $icon) { $shortcut.IconLocation = $icon + ',0' }
     $shortcut.Save()
 }
-$desktop = [Environment]::GetFolderPath('Desktop', 'Create')
-$startupFolder = [Environment]::GetFolderPath('Startup', 'Create')
+# Explicit destinations also allow real COM checks outside Windows' live Startup.
+$desktop = if ($DesktopDir) { (Resolve-Path -LiteralPath $DesktopDir).Path } else { [Environment]::GetFolderPath('Desktop', 'Create') }
+$startupFolder = if ($StartupDir) { (Resolve-Path -LiteralPath $StartupDir).Path } else { [Environment]::GetFolderPath('Startup', 'Create') }
 Add-PilotShortcut $desktop 'Ouvrir SetupSurvie.lnk' $launcher $true 'Démarrer SetupSurvie et ouvrir la bibliothèque'
 Add-PilotShortcut $desktop 'Arrêter SetupSurvie.lnk' $stopper $false 'Arrêter les services SetupSurvie en conservant les données'
 if ($Startup) { Add-PilotShortcut $startupFolder 'SetupSurvie.lnk' $launcher $false "Démarrer SetupSurvie à l'ouverture de session" }

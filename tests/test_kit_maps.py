@@ -165,6 +165,15 @@ class OfflineClosureTests(unittest.TestCase):
         result=kit_audit.validate(self.root,self.manifest())
         self.assertEqual(result['models'],1);self.assertEqual(result['images'],4)
 
+    def test_public_download_receipt_and_root_launchers_are_allowed(self):
+        self.add('payload/catalog/downloaded-content.json', {'items': []})
+        self.add('app/1-Preparer-le-PC.cmd', b'fixture')
+        self.add('app/2-Installer-SetupSurvie.cmd', b'fixture')
+        self.assertEqual(kit_audit.validate(self.root,self.manifest())['models'],1)
+        self.add('payload/catalog/settings.json', {'secret': 'fixture'})
+        with self.assertRaisesRegex(setup.SetupError,'personnel interdit'):
+            kit_audit.validate(self.root,self.manifest())
+
     def test_pytorch_embedding_cache_is_supported_like_the_installer(self):
         old='payload/state/openwebui/cache/embedding/bge-m3/model.safetensors'
         new=old.replace('model.safetensors','pytorch_model.bin')

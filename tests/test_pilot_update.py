@@ -61,6 +61,19 @@ class UpdateTests(unittest.TestCase):
         self.assertTrue((result/'previous/portal/index.html').is_file());self.assert_static_data()
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'complete')
         self.assertFalse((self.work/'update.lock').exists())
+
+    def test_first_install_wrappers_do_not_break_legacy_update_allowlist(self):
+        for name in ('1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'):
+            (self.source/name).write_text('first install fixture')
+        (self.source/'scripts/install-windows.ps1').write_text('installer implementation fixture')
+        with patch.object(setup,'ROOT',self.source):
+            package=self.base/'with-installers.zip';digest=update.build(package)
+        legacy_files=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
+        with patch.object(update,'FILES',legacy_files):
+            manifest=update.unpack(package,digest,self.base/'legacy-unpacked')
+        names={entry['path'] for entry in manifest['files']}
+        self.assertNotIn('1-Preparer-le-PC.cmd',names)
+        self.assertIn('scripts/install-windows.ps1',names)
     def test_failed_health_restores_previous_code_and_database(self):
         with self.assertRaises(setup.SetupError):self.run_update(fail=True)
         self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1')
