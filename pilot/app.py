@@ -28,7 +28,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.7'
+VERSION='0.1.8'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 

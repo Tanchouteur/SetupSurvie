@@ -160,11 +160,21 @@ def main():
     p.add_argument('--budget-gb',type=int,default=500);p.add_argument('--work-dir')
     p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
+    p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
     args=p.parse_args()
-    items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
+    if args.selection:
+        if args.pack or args.id:p.error('--selection ne se combine pas avec --pack ou --id.')
+        plan=json.loads(args.selection.read_text(encoding='utf-8'))
+        if plan.get('schema')!=1 or plan.get('kind')!='SetupSurvie Kiwix thematic selection':p.error('Plan de sélection Kiwix non reconnu.')
+        items=catalog(args.selection);selected=items
+        if any(not i['path'].startswith('library/zim/') for i in items):p.error('Le plan Kiwix doit contenir uniquement des archives ZIM.')
+    else:
+        items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
     if args.action=='list':
         for i in items:print(i['id'],i['pack'],i['bytes'],i['title'])
         return
+    if args.selection and not selected:
+        print('Aucune nouvelle archive dans cette sélection ; rien à télécharger.');return
     if not selected or set(args.id)-{i['id'] for i in items} or set(args.pack)-{i['pack'] for i in items}:p.error('Choisir des --pack ou --id présents dans list.')
     storage_root=None
     if args.lab:

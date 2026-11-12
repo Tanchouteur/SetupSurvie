@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""Sélectionner des archives Kiwix par thème, sans télécharger les archives ni lancer l'IA."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+import sys
+import unicodedata
+import urllib.parse
+import urllib.request
+import xml.etree.ElementTree as ET
+
+import content
+import setup
+
+CATALOG_URL = 'https://opds.library.kiwix.org/catalog/v2/entries?count=-1'
+RULES = setup.ROOT / 'deploy/kiwix-themes.json'
+ATOM = {'a': 'http://www.w3.org/2005/Atom'}
+METALINK = {'m': 'urn:ietf:params:xml:ns:metalink'}
+LANGUAGES = {'fr': 'fra', 'en': 'eng'}
+
+
+def normalize(value):
+    return re.sub(r'[^a-z0-9]+', ' ', unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode().lower()).strip()
+
+
+def themes():
+    return json.loads(RULES.read_text(encoding='utf-8'))['themes']
+
+
+def official_url(url, metadata=False):
+    parsed = urllib.parse.urlsplit(url)
+    hosts = {'download.kiwix.org', 'lb.download.kiwix.org', 'opds.library.kiwix.org', 'mirror.download.kiwix.org'}
+    if parsed.scheme != 'https' or parsed.hostname not in hosts or parsed.username or parsed.password or parsed.port not in (None, 443) or parsed.fragment:
+        raise setup.SetupError('Adresse officielle Kiwix HTTPS attendue.')
+    if not metadata:
+        if not re.fullmatch(r'/zim/[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+\.zim(?:\.meta4)?', parsed.path):
+            raise setup.SetupError('Chemin d’archive Kiwix non valide.')
+    return url
+
+
+def fetch(url, maximum=25_000_000):
+    official_url(url, metadata=True)
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(urllib.request.Request(url, headers={'User-Agent': 'SetupSurvie-kiwix-selector/0.1'}), timeout=60) as response:
+        official_url(response.geturl(), metadata=True)
+        raw = response.read(maximum + 1)
+    if len(raw) > maximum:
+        raise setup.SetupError('Catalogue Kiwix trop volumineux.')
+    return raw
+
+
+def parse_feed(raw):
+    root = ET.fromstring(raw)
+    entries = root.findall('a:entry', ATOM)
+    total = root.findtext('a:totalResults', namespaces=ATOM) or root.findtext('{http://a9.com/-/spec/opensearch/1.1/}totalResults')
+    if total is None or int(total) != len(entries):
+        raise setup.SetupError('Catalogue incomplet ou paginé ; la sélection ne serait pas exhaustive sur ses métadonnées.')
+    result = []
+    for entry in entries:
+        def value(name):
+            return entry.findtext('a:' + name, '', ATOM)
+        link = next((l for l in entry.findall('a:link', ATOM) if l.get('type') == 'application/x-zim'), None)
+        if link is None:
+            continue
+        try:
+            url = official_url(link.get('href', ''))
+            size = int(link.get('length', '0'))
+            if not url.endswith('.zim.meta4') or size <= 0:
+                continue
+        except (ValueError, setup.SetupError):
+            continue
+        filename = urllib.parse.urlsplit(url).path.rsplit('/', 1)[-1].removesuffix('.meta4')
+        result.append({'name': value('name'), 'title': value('title'), 'summary': value('summary'),
+                       'languages': value('language').split(','), 'edition': value('updated')[:10],
+                       'flavour': value('flavour'), 'tags': value('tags').split(';'),
+                       'meta4': url, 'filename': filename, 'estimated_bytes': size})
+    return result
+
+
+def matches(entry, rules, requested):
+    text = ' ' + normalize(entry['title'] + ' ' + entry['summary']) + ' '
+    identity = ' ' + normalize(entry['name']) + text
+    # Games and fiction using survival vocabulary are not practical manuals.
+    if any(' ' + word + ' ' in identity for word in ('pokemon', 'minecraft', 'roguelite', 'roleplaying', 'videogame', 'video game', 'jeu video')):
+        return {}
+    reasons = {}
+    for theme in requested:
+        rule = rules[theme]
+        prefixes = [p for p in rule['collections'] if entry['name'] == p or entry['name'].startswith(p + '_')]
+        terms = [term for term in rule['terms'] if ' ' + normalize(term) + ' ' in text]
+        if prefixes or terms:
+            reasons[theme] = ['collection: ' + p for p in prefixes] + ['mot-clé: ' + t for t in terms]
+    return reasons
+
+
+def family(filename):
+    stem = re.sub(r'_\d{4}-\d{2}(?:-\d{2})?[a-z]?\.zim$', '', filename)
+    return re.sub(r'_(maxi|nopic|mini)$', '', stem)
+
+
+def full_collection(filename):
+    """Recognise Wikimedia topic extracts; never infer overlap for other publishers."""
+    match = re.fullmatch(r'(wikipedia|wikivoyage|wikibooks|wikiversity)_([a-z-]+)_(.+)', family(filename))
+    return match.group(1) + '_' + match.group(2) + '_all' if match and match.group(3) != 'all' else None
+
+
+def inventory(root, pinned):
+    records = []
+    known = {item['path']: item for item in pinned}
+    library = content.destination(root, 'library')
+    for path in sorted(library.rglob('*')):
+        if not path.is_file() or path.is_symlink():
+            continue
+        relative = path.relative_to(root).as_posix()
+        content.destination(root, relative)
+        if path.suffix.lower() not in ('.zim', '.pdf', '.pmtiles', '.epub', '.md', '.txt', '.html'):
+            continue
+        item = known.get(relative)
+        records.append({'path': relative, 'bytes': path.stat().st_size,
+                        'title': item['title'] if item else path.name,
+                        'topics': item.get('topics', []) if item else [],
+                        'status': 'present_size_matches' if item and path.stat().st_size == item['bytes'] else 'present_unverified',
+                        'integrity_note': 'Empreinte non recalculée pendant la sélection.'})
+    return records
+
+
+def pin(entry, reasons, reader=fetch):
+    root = ET.fromstring(reader(entry['meta4'], maximum=2_000_000))
+    files = root.findall('m:file', METALINK)
+    if len(files) != 1 or files[0].get('name') != entry['filename']:
+        raise setup.SetupError('Metalink ne correspondant pas à l’archive.')
+    record = files[0]
+    size = int(record.findtext('m:size', '0', METALINK))
+    digest = next((h.text or '' for h in record.findall('m:hash', METALINK) if h.get('type') == 'sha-256'), '').strip().lower()
+    if not 0 < size <= 600_000_000_000 or not re.fullmatch('[a-f0-9]{64}', digest):
+        raise setup.SetupError('Taille exacte ou SHA-256 absent du Metalink.')
+    url = official_url(entry['meta4'].removesuffix('.meta4'))
+    return {'id': 'kiwix-' + hashlib.sha256(entry['filename'].encode()).hexdigest()[:16],
+            'title': entry['title'], 'language': ','.join(entry['languages']), 'edition': entry['edition'],
+            'url': url, 'publisher': 'Kiwix / openZIM — voir les attributions dans l’archive',
+            'topics': list(reasons), 'path': 'library/zim/' + entry['filename'], 'bytes': size,
+            'sha256': digest, 'pack': 'kiwix-themes', 'commercial_review': True,
+            'licence': 'Droits et attributions de chaque contenu à examiner avant redistribution commerciale.',
+            'notes': entry['summary'], 'selection_reasons': reasons, 'source_meta4': entry['meta4'],
+            'fulltext_index': '_ftindex:yes' in entry['tags'], 'pictures': '_pictures:yes' in entry['tags'],
+            'videos': '_videos:yes' in entry['tags']}
+
+
+def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=10_000_000_000,
+           budget=content.DEFAULT_BUDGET, reserve=15_000_000_000, storage_root=None, reader=fetch):
+    rules = themes()
+    if not requested or set(requested) - rules.keys():
+        raise setup.SetupError('Choisir un thème présent dans la commande themes.')
+    local = inventory(root, content.catalog())
+    local_families = {}
+    for item in local:
+        if item['path'].endswith('.zim'):
+            local_families.setdefault(family(Path(item['path']).name), []).append(item['path'])
+    used = content.check_capacity(root, budget=budget, reserve=reserve, storage_root=storage_root)
+    free = shutil.disk_usage(storage_root or root).free
+    available = max(0, min(max_add, budget - used, free - reserve))
+    candidates = {}
+    for entry in entries:
+        reasons = matches(entry, rules, requested)
+        if not reasons or not set(entry['languages']).intersection(languages):
+            continue
+        key = family(entry['filename'])
+        # One edition/variant per collection/language, favouring illustrated full editions.
+        rank = ('_pictures:yes' in entry['tags'], entry['flavour'] != 'mini', entry['edition'], entry['filename'])
+        if key not in candidates or rank > candidates[key][0]:
+            candidates[key] = (rank, entry, reasons)
+    records = []; items = []; added = 0
+    full_available = dict(local_families)
+    # Practical mapped collections before loose keyword matches (e.g. TED talks),
+    # then primary French language and smaller additions.
+    ranked = sorted(candidates.values(), key=lambda x: (
+                    not any(v.startswith('collection:') for rs in x[2].values() for v in rs),
+                    x[1]['languages'][0] != 'fra',
+                    full_collection(x[1]['filename']) is not None,
+                    x[1]['estimated_bytes'], x[1]['filename']))
+    for _, entry, reasons in ranked:
+        record = {'title': entry['title'], 'filename': entry['filename'], 'themes': list(reasons),
+                  'reasons': reasons, 'estimated_bytes': entry['estimated_bytes'],
+                  'fulltext_index': '_ftindex:yes' in entry['tags']}
+        records.append(record)
+        if family(entry['filename']) in local_families:
+            record.update(status='already_local', local_paths=local_families[family(entry['filename'])])
+            continue
+        parent = full_collection(entry['filename'])
+        if parent in full_available:
+            record.update(status='covered_by_full_collection', collection_paths=full_available[parent])
+            continue
+        # OPDS lengths are rounded to KiB. Avoid fetching multi-MB Metalinks for
+        # archives clearly outside the budget; exact sizes below come from Metalink.
+        if entry['estimated_bytes'] > available - added + 1024:
+            record['status'] = 'budget_excluded'
+            continue
+        try:
+            item = pin(entry, reasons, reader)
+        except (OSError, ValueError, ET.ParseError, setup.SetupError) as exc:
+            record.update(status='metadata_unavailable', detail=str(exc))
+            continue
+        record['bytes'] = item['bytes']
+        path = content.destination(root, item['path'])
+        partial = content.destination(root, item['path'] + '.part')
+        if path.exists():
+            record['status'] = 'existing_conflict'
+            continue
+        partial_size = partial.stat().st_size if partial.exists() else 0
+        if partial_size > item['bytes']:
+            record['status'] = 'partial_conflict'
+            continue
+        missing = item['bytes'] - partial_size
+        if added + missing > available:
+            record['status'] = 'budget_excluded'
+            continue
+        record.update(status='selected', remaining_bytes=missing)
+        added += missing; items.append(item)
+        full_available[family(entry['filename'])] = [item['path']]
+    matched = {theme: sum(theme in r['themes'] for r in records) for theme in requested}
+    return {'schema': 1, 'kind': 'SetupSurvie Kiwix thematic selection',
+            'created_at': datetime.now(timezone.utc).isoformat(), 'catalog_url': CATALOG_URL,
+            'themes': requested, 'languages': list(languages), 'items': items, 'candidates': records,
+            'local_inventory': local, 'library_bytes': used, 'remaining_download_bytes': added,
+            'available_additional_bytes': available, 'budget_bytes': budget, 'theme_matches': matched,
+            'missing_themes': [t for t, count in matched.items() if not count],
+            'notice': 'Sélection de collections par métadonnées, pas extraction d’articles ni validation éditoriale. '
+                      'Les fichiers présents ne sont pas réindexés ou revérifiés ici. '
+                      'Les archives sans index plein texte restent à consulter directement dans Kiwix.'}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['themes', 'select'])
+    parser.add_argument('--theme', action='append', default=[], help='Répéter ou utiliser tous.')
+    parser.add_argument('--language', action='append', choices=['fr', 'en'], help='Français et anglais par défaut.')
+    parser.add_argument('--lab', action='store_true')
+    parser.add_argument('--work-dir'); parser.add_argument('--data-dir')
+    parser.add_argument('--feed', type=Path, help='Catalogue XML déjà sauvegardé ; Metalink en ligne pour les ajouts.')
+    parser.add_argument('--output', type=Path, help='Plan JSON ; par défaut donnees/catalog/kiwix-selection.json.')
+    parser.add_argument('--max-add-gb', type=float, default=10, help='Plafond de nouveaux téléchargements, 10 Go par défaut.')
+    parser.add_argument('--budget-gb', type=int, default=500)
+    args = parser.parse_args()
+    if args.action == 'themes':
+        for name, rule in themes().items():
+            print(name + ' : ' + rule['label'])
+        return
+    requested = list(themes()) if args.theme == ['tous'] else list(dict.fromkeys(args.theme))
+    if not requested or set(requested) - themes().keys():
+        parser.error('Choisir --theme parmi themes, ou --theme tous.')
+    if not 0 <= args.max_add_gb <= 500 or not 1 <= args.budget_gb <= 600:
+        parser.error('Budget invalide (ajout : 0 à 500 Go ; bibliothèque : 1 à 600 Go).')
+    storage_root = None
+    if args.lab:
+        import linux_lab as lab
+        lab.checked_mount(); storage_root = lab.MOUNT
+        if args.work_dir or args.data_dir:
+            parser.error('--lab choisit déjà le dossier de données du laboratoire.')
+        root = lab.MOUNT / 'data'
+    elif args.work_dir:
+        if args.data_dir:
+            parser.error('Choisir --work-dir ou --data-dir.')
+        root = setup.safe_path(setup.Installation(args.work_dir).load()['data_dir'])
+    elif args.data_dir:
+        root = setup.safe_path(args.data_dir)
+    else:
+        parser.error('--lab, --work-dir ou --data-dir requis.')
+    if not root.is_dir():
+        parser.error('Dossier de données existant requis.')
+    content.check_capacity(root, storage_root=storage_root, budget=args.budget_gb * 1_000_000_000)
+    raw = args.feed.read_bytes() if args.feed else fetch(CATALOG_URL)
+    entries = parse_feed(raw)
+    output = args.output or content.destination(root, 'catalog/kiwix-selection.json')
+    if output.is_symlink() or output.exists():
+        raise setup.SetupError('Le plan existe déjà ; choisir un autre --output pour le conserver.')
+    report = select(entries, root, requested, languages=tuple(LANGUAGES[l] for l in (args.language or ['fr', 'en'])),
+                    max_add=int(args.max_add_gb * 1_000_000_000), budget=args.budget_gb * 1_000_000_000,
+                    storage_root=storage_root)
+    report['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
+    setup.write_json(output, report)
+    print(f"Bibliothèque : {report['library_bytes']/1e9:.2f} Go. Ajouts sélectionnés : {len(report['items'])}, {report['remaining_download_bytes']/1e9:.2f} Go.")
+    labels = {'selected': 'À télécharger', 'already_local': 'Déjà présent (édition conservée)',
+              'covered_by_full_collection': 'Extrait écarté : collection complète présente ou sélectionnée',
+              'budget_excluded': 'Écarté : budget', 'metadata_unavailable': 'Métadonnées indisponibles',
+              'existing_conflict': 'Fichier existant conservé', 'partial_conflict': 'Fichier partiel à examiner'}
+    for record in report['candidates']:
+        print(labels[record['status']], '—', record['title'], '—', ', '.join(record['themes']),
+              '— ' + record['filename'], '' if record['fulltext_index'] else '— sans index plein texte')
+    for theme in report['missing_themes']:
+        print('Aucune collection spécialisée repérée pour :', theme)
+    print('Plan enregistré :', output)
+    print('Aucune archive téléchargée. Utiliser content.py download --selection avec ce plan.')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (setup.SetupError, OSError, ValueError, KeyError, ET.ParseError) as exc:
+        print('ERREUR :', exc, file=sys.stderr); sys.exit(1)
