@@ -81,7 +81,7 @@ function Invoke-SurvieGitUpdate($Settings) {
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $source 'scripts\pilot_update.py'), 'build', $package))
     $digest = ((Get-Content -LiteralPath ($package + '.sha256') -Raw).Trim() -split '\s+')[0]
     if ($digest -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $digest) { throw 'Empreinte incorrecte : application conservée.' }
-    Write-Host 'Sauvegarde puis mise à jour. Le site sera brièvement indisponible ; les transferts indépendants continuent.'
+    Write-Host 'Sauvegarde puis mise à jour. Le site sera brièvement indisponible ; les préparations documentaires doivent être en pause.'
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
     $refresh = Join-Path $Settings.Application 'scripts\windows_update.py'
     if (Test-Path -LiteralPath $refresh) { Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', $refresh, '--work-dir', $Settings.Work)) }

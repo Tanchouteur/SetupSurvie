@@ -2,7 +2,7 @@
 $ErrorActionPreference = 'Stop'
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
 $root = Split-Path $PSScriptRoot
-$fixture = Join-Path $env:TEMP ('survie-update-' + [guid]::NewGuid())
+$fixture = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('survie-update-' + [guid]::NewGuid())))
 $work = Join-Path $fixture 'reglages ailleurs'
 $app = Join-Path $fixture 'application'
 $source = Join-Path $fixture 'maintenance\source'
@@ -15,7 +15,7 @@ try {
     . (Join-Path $root 'scripts\update-windows.ps1') -WorkDir $work -Check
     $settings = Get-SurvieUpdateSettings
     Assert ($settings.Work -eq $work) 'Private folder must be taken from the installation, without a fixed drive'
-    Assert ($settings.Application -eq $app) 'Application must come from settings'
+    Assert ($settings.Application -eq $app) ("Application must come from settings: expected [$app], actual [$($settings.Application)]")
     function Initialize-SurvieTools { }
     function Find-SurviePython { return @{ Path = 'python-fixture'; Prefix = @('-3') } }
     function Find-SurvieGit { return 'git-fixture' }
