@@ -69,10 +69,11 @@ Le dossier choisi contient ensuite :
 | `donnees` | Modèles, bibliothèque, caches et états des services |
 | `prive` | Réglages et identifiants de cette installation |
 
-Sans kit, le parcours prépare les services, caches, modèle par défaut et lot
+Sans kit, le parcours prépare les services, caches, les deux modèles des trois modes conseillés et le lot
 `survival` du catalogue figé. Il ne télécharge pas tous les modèles de comparaison,
-ni toute la bibliothèque ni les cartes : les compléments restent dans le portail.
-Le contrôle préliminaire réserve au moins 40 Go libres sur le disque de données,
+ni toute la bibliothèque ni les cartes. Bibliothèque et cartes se complètent dans
+le portail ; les autres modèles peuvent être ajoutés avec `scripts/survie.ps1 pull-model`.
+Le contrôle préliminaire réserve au moins 60 Go libres sur le disque de données,
 en plus du logiciel à copier ; cela ne garantit pas la place nécessaire au fonds
 complet. Contrôler séparément l’espace du disque Docker.
 

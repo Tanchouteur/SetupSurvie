@@ -22,8 +22,10 @@ def installation_lock(base):
     """OS lock released on process death; the empty lock file can safely remain."""
     path = destination(base, '.installation.lock')
     with path.open('a+b') as stream:
-        stream.seek(0)
-        if not stream.read(1):
+        # Windows forbids reading another process's locked byte before we can
+        # report contention. Inspect the length without reading that byte.
+        stream.seek(0, os.SEEK_END)
+        if not stream.tell():
             stream.write(b'0'); stream.flush()
         stream.seek(0)
         try:
@@ -96,6 +98,8 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
     with installation_lock(base):
         journal = destination(base, '.installation.json')
         state = json.loads(journal.read_text(encoding='utf-8')) if journal.exists() else None
+        if state and state.get('status') not in ('copying', 'configuring', 'complete'):
+            raise setup.SetupError('Journal d’installation non reconnu. Aucune donnée remplacée.')
         if state and state.get('status') == 'complete':
             raise setup.SetupError('Installation déjà terminée. Utilisez les raccourcis ou la mise à jour, pas une réinstallation.')
         if state and not resume:
@@ -121,7 +125,7 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         copying = not state or state['status'] == 'copying'
         remaining = sum(e['bytes'] for e, _, target in targets if not target.is_file() or target.stat().st_size != e['bytes']) if copying else 0
         # Reserve room for Docker images, caches and a default model in online mode.
-        reserve = 22_000_000_000 if kit or not copying else 40_000_000_000
+        reserve = 22_000_000_000 if kit or not copying else 60_000_000_000
         if shutil.disk_usage(base).free < remaining+reserve:
             raise setup.SetupError(f'Espace insuffisant : au moins {(remaining+reserve)/1e9:.1f} Go libres requis sur le disque de données. Vérifiez aussi le disque Docker.')
         if not state:
@@ -156,6 +160,11 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         else:
             arguments.extend(['--content-pack', 'survival'])
         execute_step(arguments)
+        if not kit:
+            profiles = json.loads((setup.ROOT/'deploy/model-profiles.json').read_text())['profiles']
+            for model in sorted({p['model'] for p in profiles if p.get('category') == 'recommended'} - {setup.VERSIONS['default_model']}):
+                print('Préparation du modèle conseillé : '+model, flush=True)
+                execute_step([*common, 'pull-model', model])
         state['status'] = 'complete'
         setup.write_json(journal, state, private=True)
         print('Installation terminée. Portail : http://localhost:8080\n'
