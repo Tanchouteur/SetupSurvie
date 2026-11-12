@@ -3,11 +3,18 @@ param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume, [switch
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
 try {
+    Initialize-SurvieTools
     $python = Find-SurviePython
     if (-not $python) { throw 'Python x64 3.11 à 3.15 manque. Lancez 1-Preparer-le-PC.cmd.' }
     if (-not (Find-SurvieOllama)) { throw 'Ollama manque. Lancez 1-Preparer-le-PC.cmd.' }
-    if (-not $BaseDir) { $BaseDir = Read-Host 'Dossier dédié sur votre disque de données (exemple D:\SetupSurvie)' }
-    if (-not $BaseDir) { throw 'Choisissez un dossier dédié.' }
+    if (-not $BaseDir) {
+        $suggested = if (Test-Path 'D:\') { 'D:\SetupSurvie' } else { Join-Path $env:USERPROFILE 'SetupSurvie' }
+        $BaseDir = Read-Host ("Dossier d'installation [Entrée : " + $suggested + ']')
+        if (-not $BaseDir) { $BaseDir = $suggested }
+    }
+    $prefix = $python.Prefix
+    & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'install_wizard.py') --base-dir $BaseDir --check
+    if ($LASTEXITCODE -ne 0) { throw 'Installation non démarrée. Suivez le message ci-dessus pour conserver votre installation existante.' }
     if (-not $Kit -and -not $Resume) {
         $Kit = Read-Host 'Dossier du kit local, ou Entrée pour télécharger avec Internet'
     }
@@ -31,7 +38,6 @@ try {
     if ($Resume) { $arguments += '--resume' }
     if ($NoStartup) { $arguments += '--no-startup' }
     if ($LanHost) { $arguments += @('--lan-host', $LanHost) }
-    $prefix = $python.Prefix
     & $python.Path @prefix @arguments
     if ($LASTEXITCODE -ne 0) { throw 'Installation interrompue. Corrigez le problème affiché puis relancez avec -Resume pour reprendre.' }
     if ($LanHost) {

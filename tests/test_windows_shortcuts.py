@@ -39,6 +39,27 @@ class WindowsShortcutTests(unittest.TestCase):
             subprocess.run([*args,'-DisableStartup'],check=True,capture_output=True)
             self.assertFalse(paths[3].exists());self.assertTrue(paths[0].exists());self.assertTrue(paths[1].exists())
 
+    def test_second_installation_preserves_first_installation_shortcuts(self):
+        with tempfile.TemporaryDirectory(prefix='survie raccourcis ') as folder:
+            root = Path(folder)
+            desktop = root/'bureau'; startup = root/'demarrage'
+            first = root/'premiere'; second = root/'seconde'
+            for path in (desktop, startup, first, second):
+                path.mkdir()
+            command = ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                       str(ROOT/'scripts/create-shortcuts.ps1'), '-DesktopDir', str(desktop), '-StartupDir', str(startup)]
+            subprocess.run([*command, '-WorkDir', str(first), '-Startup'], check=True, capture_output=True)
+            initial = {path: path.read_bytes() for path in [*desktop.glob('*.lnk'), *startup.glob('*.lnk')]}
+            subprocess.run([*command, '-WorkDir', str(second), '-Startup'], check=True, capture_output=True)
+            for path, content in initial.items():
+                self.assertEqual(path.read_bytes(), content)
+            self.assertEqual(len(list(desktop.glob('*.lnk'))), 4)
+            self.assertEqual(len(list(startup.glob('*.lnk'))), 2)
+            subprocess.run([*command, '-WorkDir', str(second), '-DisableStartup'], check=True, capture_output=True)
+            self.assertEqual(len(list(startup.glob('*.lnk'))), 1)
+            for path, content in initial.items():
+                self.assertEqual(path.read_bytes(), content)
+
 
 
 if __name__=='__main__':unittest.main()

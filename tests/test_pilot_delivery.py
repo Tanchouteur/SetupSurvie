@@ -28,7 +28,12 @@ class DeliveryTests(unittest.TestCase):
         kit=self.root/'kit';kit.mkdir();outside=self.root/'private.txt';outside.write_text('secret')
         entry={'path':'../private.txt','bytes':6,'sha256':setup.file_hash(outside)}
         with self.assertRaises(setup.SetupError):checked_entries(kit,{'files':[entry]})
-        (kit/'linked').symlink_to(outside)
+        try:
+            (kit/'linked').symlink_to(outside)
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Création de lien non autorisée sur ce système.')
+            raise
         with self.assertRaises(setup.SetupError):checked_entries(kit,{'files':[{**entry,'path':'linked'}]})
         file=kit/'data';file.write_text('valid');entry={'path':'data','bytes':5,'sha256':setup.file_hash(file)}
         self.assertEqual(len(checked_entries(kit,{'files':[entry]})),1)

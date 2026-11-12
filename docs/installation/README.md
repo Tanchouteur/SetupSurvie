@@ -3,10 +3,10 @@
 Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
 
-## Windows en deux étapes (0.1.17)
+## Windows : un seul lanceur (0.1.20)
 
-Depuis le dépôt, lancer **`1-Preparer-le-PC.cmd`**, puis
-**`2-Installer-SetupSurvie.cmd`**. Le [guide Windows](deux-etapes-windows.md)
+Depuis le dépôt, lancer **`Installer-SetupSurvie.cmd`**. La préparation du PC puis
+l’installation s’enchaînent. Les deux anciens lanceurs restent utilisables séparément. Le [guide Windows](deux-etapes-windows.md)
 décrit les prérequis, les téléchargements vérifiés, le choix du disque, le kit
 local et la reprise explicite après interruption. Ce parcours automatise la
 préparation des composants manquants ; le pilote GPU et la confiance HTTPS sur

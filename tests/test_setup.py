@@ -47,7 +47,12 @@ class InstallationTests(unittest.TestCase):
         target.write_text('Version conservée', encoding='utf-8')
         outside = self.base / 'outside.txt'
         outside.write_text('secret', encoding='utf-8')
-        (root / 'linked.txt').symlink_to(outside)
+        try:
+            (root / 'linked.txt').symlink_to(outside)
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Création de lien non autorisée sur ce système.')
+            raise
         self.app.demo(self.config)
         self.assertEqual(target.read_text(encoding='utf-8'), 'Version conservée')
         catalog = json.loads((Path(self.config['data_dir']) / 'catalog/guides.json').read_text())
@@ -167,7 +172,7 @@ class InstallationTests(unittest.TestCase):
                 services = json.loads(result.stdout)['services']
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')
                 self.assertEqual(services['open-webui']['environment']['WEBUI_SECRET_KEY'], self.config['secret'])
-                self.assertEqual(services['portal']['volumes'][2]['source'], str(Path(c['data_dir']) / 'catalog'))
+                self.assertEqual(Path(services['portal']['volumes'][2]['source']), Path(c['data_dir']) / 'catalog')
                 self.assertEqual('ollama' in services, target == 'linux')
                 if target == 'linux':
                     gpu = services['ollama'].get('deploy', {}).get('resources', {}).get('reservations', {}).get('devices', [])

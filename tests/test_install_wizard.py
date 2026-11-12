@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import shutil
+import socket
 import sys
 import tempfile
 import unittest
@@ -25,10 +26,12 @@ class WizardTests(unittest.TestCase):
         self.records.start()
         self.space = patch.object(wizard.shutil, 'disk_usage', return_value=shutil._ntuple_diskusage(100_000_000_000, 0, 100_000_000_000))
         self.space.start()
+        self.ports = patch.object(wizard, 'port_busy', return_value=False)
+        self.ports.start()
         self.calls = []
 
     def tearDown(self):
-        self.space.stop(); self.records.stop(); self.tmp.cleanup()
+        self.ports.stop(); self.space.stop(); self.records.stop(); self.tmp.cleanup()
 
     def step(self, args):
         self.calls.append(list(map(str, args)))
@@ -125,6 +128,56 @@ class WizardTests(unittest.TestCase):
         with self.assertRaises(setup.SetupError):
             wizard.copy_checked(self.source, target, self.entry)
         self.assertFalse(target.exists())
+
+    def test_busy_port_stops_before_source_audit_copy_or_download(self):
+        with patch.object(wizard, 'port_busy', side_effect=lambda port: port == 8080):
+            with self.assertRaisesRegex(setup.SetupError, 'mise à jour'):
+                wizard.install(self.base, execute_step=self.step)
+        wizard.source_records.assert_not_called()
+        self.assertFalse(self.calls)
+        self.assertFalse((self.base/'.installation.json').exists())
+
+    def test_port_probe_detects_an_existing_local_listener(self):
+        self.ports.stop()
+        with socket.socket() as listener:
+            listener.bind(('127.0.0.1', 0))
+            listener.listen()
+            port = listener.getsockname()[1]
+            self.assertTrue(wizard.port_busy(port))
+        self.assertFalse(wizard.port_busy(port))
+
+    def test_resume_accepts_only_its_own_published_ports(self):
+        work = self.base/'prive'
+        setup.write_json(work/'settings.json', {'project': 'own-test', 'target': 'windows'})
+        for output in ('[{"State":"running","Publishers":[{"PublishedPort":8080}]}]',
+                       '{"State":"running","Publishers":[{"PublishedPort":8080}]}\n'):
+            with patch.object(wizard, 'port_busy', side_effect=lambda port: port == 8080), \
+                 patch.object(setup.Installation, 'compose', return_value=output) as compose:
+                wizard.check_installation_ports(work)
+                compose.assert_called_once()
+        with patch.object(wizard, 'port_busy', side_effect=lambda port: port in (8080, 3000)), \
+             patch.object(setup.Installation, 'compose', return_value='[{"State":"running","Publishers":[{"PublishedPort":8080}]}]'):
+            with self.assertRaisesRegex(setup.SetupError, '3000'):
+                wizard.check_installation_ports(work)
+
+    def test_resume_does_not_trust_stale_native_process_markers(self):
+        work = self.base/'prive'
+        setup.write_json(work/'settings.json', {'project': 'own-test', 'target': 'windows'})
+        setup.write_json(work/'native-ollama.json', {'pid': 123, 'binary': 'fixture'})
+        with patch.object(wizard, 'port_busy', side_effect=lambda port: port == 11435), \
+             patch.object(setup.Installation, 'native_owned', return_value=False):
+            with self.assertRaisesRegex(setup.SetupError, '11435'):
+                wizard.check_installation_ports(work)
+        with patch.object(wizard, 'port_busy', side_effect=lambda port: port == 11435), \
+             patch.object(setup.Installation, 'native_owned', return_value=True):
+            wizard.check_installation_ports(work)
+
+    def test_source_export_contains_single_and_legacy_launchers(self):
+        self.records.stop()
+        records, _ = wizard.source_records(None)
+        names = {entry['path'] for entry, _ in records}
+        for name in ('Installer-SetupSurvie.cmd', '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd', 'scripts/install-all-windows.ps1'):
+            self.assertIn('app/'+name, names)
 
 
 if __name__ == '__main__':

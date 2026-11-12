@@ -1,8 +1,27 @@
-# Installer Windows en deux étapes
+# Installer SetupSurvie sur Windows
 
-**Guide actuel — pilote 0.1.17, 12 novembre 2026.** Lanceurs implémentés ; installation
-réelle sur Windows vierge, redémarrages, RTX 5060 et téléphones encore à valider.
+**Guide actuel — pilote 0.1.20, 12 novembre 2026.** Lanceur unique et contrôles préliminaires
+testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
 Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
+
+## Commencer avec un seul fichier
+
+Double-cliquer sur **`Installer-SetupSurvie.cmd`**. Il vérifie et prépare le PC,
+puis passe automatiquement à l’installation. Les composants déjà présents sont
+conservés, y compris Docker Desktop installé sur un autre disque ou un moteur
+Docker déjà accessible. Aucun service existant n’est arrêté automatiquement.
+
+Si un redémarrage Windows est nécessaire, le parcours s’arrête et demande de
+relancer ce même fichier après le redémarrage, avec les mêmes options. Une installation
+applicative interrompue se reprend avec `Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Resume`.
+Les anciens fichiers `1-Preparer-le-PC.cmd` et `2-Installer-SetupSurvie.cmd`
+restent disponibles pour exécuter séparément les deux étapes décrites ci-dessous.
+
+Pour vérifier seulement les prérequis sans installer ni démarrer Docker :
+
+```powershell
+.\Installer-SetupSurvie.cmd -Check
+```
 
 ## Préparer le PC
 
@@ -51,7 +70,7 @@ Pour un diagnostic sans installation ni démarrage de Docker :
 
 Double-cliquer sur **`2-Installer-SetupSurvie.cmd`** et renseigner :
 
-1. Un dossier dédié sur le disque de données, par exemple `D:\SetupSurvie`.
+1. Un dossier dédié sur le disque de données. Entrée accepte `D:\SetupSurvie` si le disque D: existe, sinon `SetupSurvie` dans votre dossier utilisateur. Le contrôle de capacité reste obligatoire.
 2. Le dossier du kit contenant `manifest.json`, ou Entrée pour télécharger.
 3. Une adresse IPv4 du réseau Windows privé affiché pour partager le serveur,
    ou Entrée pour limiter l’accès au PC.
@@ -60,6 +79,12 @@ Docker Desktop démarre si nécessaire. Terminer son accueil et vérifier **Sett
 → Resources → Advanced → Disk image location**. Le lanceur attend une confirmation
 de l’emplacement : il ne déplace pas un disque Docker existant. Une autre instance
 Docker déjà accessible doit utiliser des conteneurs Linux.
+
+Avant les questions sur le kit et le réseau, le lanceur vérifie les ports. Si une
+autre installation fonctionne déjà, il indique comment l’ouvrir ou la mettre à
+jour et s’arrête avant de copier ou télécharger. Un autre dossier ne suffit pas
+à faire cohabiter deux serveurs : les ports de service sont communs. La reprise
+accepte les services et processus identifiés comme appartenant à cette installation.
 
 Le dossier choisi contient ensuite :
 
@@ -85,6 +110,9 @@ Docker. Le kit et la destination doivent rester séparés.
 Le lanceur crée les raccourcis **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** et
 le démarrage à l’ouverture de session. `-NoStartup` conserve seulement les
 raccourcis manuels. Le portail s’ouvre à la fin ; `-NoBrowser` évite cette ouverture.
+Les raccourcis d’une autre installation sont conservés ; les nouveaux reçoivent
+un suffixe si leur nom est déjà utilisé. Désactiver le démarrage ne supprime que
+le raccourci appartenant à l’installation concernée.
 Les tests de disponibilité n’interrogent aucun modèle. Une pause existante reste
 respectée ; le démarrage normal d’une nouvelle installation lance le service
 Ollama sans génération de réponse.
@@ -92,14 +120,14 @@ Ollama sans génération de réponse.
 Exemple avec paramètres :
 
 ```powershell
-.\2-Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Kit E:\livraison-marc -LanHost 192.168.1.50
+.\Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Kit E:\livraison-marc -LanHost 192.168.1.50
 ```
 
 Pour un kit ancien sans ces deux fichiers à sa racine, utiliser le second lanceur
 du dépôt 0.1.17 en lui indiquant le dossier du kit. Le logiciel installé reste
 celui du kit, avec sa version. Les nouveaux exports/rafraîchissements du kit
-incluent les deux lanceurs. Les mises à jour d’une installation existante incluent
-leurs scripts mais excluent les deux nouveaux fichiers racine `.cmd` pour rester
+incluent le lanceur unique et les deux anciens. Les mises à jour d’une installation existante incluent
+leurs scripts mais excluent les trois fichiers racine `.cmd` pour rester
 lisibles par le programme de mise à jour 0.1.16 ; une installation terminée utilise
 ses raccourcis habituels.
 
@@ -112,7 +140,7 @@ la même destination et est libéré à la fermeture du processus.
 Après une interruption, conserver le dépôt ou kit source inchangé puis lancer :
 
 ```powershell
-.\2-Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Resume
+.\Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Resume
 ```
 
 Le parcours retrouve le kit, le partage réseau et le choix de démarrage. Les

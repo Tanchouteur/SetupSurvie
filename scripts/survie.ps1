@@ -1,5 +1,7 @@
 ﻿# PowerShell 5.1 or 7. No system settings are changed by this wrapper.
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'windows-common.ps1')
+Initialize-SurvieTools
 $scriptPath = Join-Path $PSScriptRoot 'setup.py'
 $python = $null
 foreach ($candidate in @('py', 'python', 'python3')) {

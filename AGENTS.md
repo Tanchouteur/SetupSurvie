@@ -194,14 +194,17 @@ Lire `docs/utilisation/documents-et-traduction.md` pour la conservation des asso
 
 ## Installation Windows en deux étapes (0.1.17)
 
-Lire `docs/installation/deux-etapes-windows.md`. Les deux lanceurs racine et leur
+Lire `docs/installation/deux-etapes-windows.md`. Le lanceur unique `Installer-SetupSurvie.cmd`
+(0.1.20), les deux anciens lanceurs racine et leur
 catalogue d’installateurs doivent rester inclus dans les exports et rafraîchissements
 de kit. Les mises à jour transportent les scripts d’installation mais excluent les
-nouveaux fichiers racine `.cmd`, refusés par la liste autorisée des lecteurs 0.1.16.
+fichiers racine `.cmd`, refusés par la liste autorisée des lecteurs 0.1.16.
 La reprise d’une première installation est explicite et
 refuse les sources/options modifiées ; elle ne remplace pas la mise à jour d’une
 installation terminée. Le kit système hors ligne et la recette Windows réelle
-restent à réaliser. Aucun téléchargement lourd ni installation système dans le runner.
+restent à réaliser. Le diagnostic réel sur le PC Windows de Marc, les conflits
+avant copie et les raccourcis isolés sont testés ; voir `docs/essais/2026-11-12-installateur-windows-simple.md`.
+Ne pas arrêter l’installation en service pour la recette. Aucun téléchargement lourd ni installation système dans le runner.
 
 ## Sources et fiabilité (0.1.18)
 

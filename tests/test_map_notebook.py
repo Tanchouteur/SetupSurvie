@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -122,7 +123,10 @@ class RoutingPreparationTests(unittest.TestCase):
             self.assertEqual(first['source']['url'],'https://overpass.private.coffee/api/interpreter')
             commands=[args for args in calls if args[0]=='run']
             self.assertTrue(all(args[args.index('--user')+1]=='0:0' for args in commands[:9]))
-            self.assertEqual((root/'library/maps/routing/current/foot/network.osrm.properties').stat().st_mode & 0o777,0o644)
+            prepared_index = root/'library/maps/routing/current/foot/network.osrm.properties'
+            self.assertTrue(os.access(prepared_index, os.R_OK))
+            if os.name != 'nt':
+                self.assertEqual(prepared_index.stat().st_mode & 0o777,0o644)
             self.assertEqual(len(list((root/'library/maps/routing').glob('previous-*'))),1)
             self.assertEqual({Path(f['path']).parts[0] for f in first['files']},{'foot','motorcycle','car'})
             self.assertFalse(any(args[0]=='pull' for args in calls))

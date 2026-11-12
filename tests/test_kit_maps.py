@@ -167,6 +167,7 @@ class OfflineClosureTests(unittest.TestCase):
 
     def test_public_download_receipt_and_root_launchers_are_allowed(self):
         self.add('payload/catalog/downloaded-content.json', {'items': []})
+        self.add('app/Installer-SetupSurvie.cmd', b'fixture')
         self.add('app/1-Preparer-le-PC.cmd', b'fixture')
         self.add('app/2-Installer-SetupSurvie.cmd', b'fixture')
         self.assertEqual(kit_audit.validate(self.root,self.manifest())['models'],1)

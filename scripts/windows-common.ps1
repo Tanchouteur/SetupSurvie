@@ -2,7 +2,9 @@
 Set-StrictMode -Version 2
 
 function Update-SurviePath {
-    $env:PATH = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+    # Keep portable tools supplied by the caller as well as newly installed tools.
+    $paths = @($env:PATH, [Environment]::GetEnvironmentVariable('Path', 'Machine'), [Environment]::GetEnvironmentVariable('Path', 'User')) -join ';'
+    $env:PATH = (($paths -split ';' | Where-Object { $_ } | Select-Object -Unique) -join ';')
 }
 
 function Find-SurviePython {
@@ -20,11 +22,32 @@ function Find-SurviePython {
 }
 
 function Find-SurvieDockerDesktop {
-    foreach ($path in @(
+    $candidates = @(
         (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe')
-    )) { if (Test-Path -LiteralPath $path) { return $path } }
+    )
+    $cli = Get-Command docker -ErrorAction SilentlyContinue
+    if ($cli) {
+        $directory = Split-Path (Split-Path (Split-Path $cli.Source))
+        $candidates += Join-Path $directory 'Docker Desktop.exe'
+    }
+    # A running Desktop can live on a data disk without being registered in PATH.
+    foreach ($process in @(Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue)) {
+        try { if ($process.Path) { $candidates += $process.Path } } catch { }
+    }
+    foreach ($path in $candidates) { if (Test-Path -LiteralPath $path -PathType Leaf) { return $path } }
     return $null
+}
+
+function Initialize-SurvieTools {
+    Update-SurviePath
+    $desktop = Find-SurvieDockerDesktop
+    if ($desktop) {
+        $bin = Join-Path (Split-Path $desktop) 'resources\bin'
+        if (Test-Path -LiteralPath (Join-Path $bin 'docker.exe')) { $env:PATH = $bin + ';' + $env:PATH }
+    }
+    $ollama = Find-SurvieOllama
+    if ($ollama) { $env:PATH = (Split-Path $ollama) + ';' + $env:PATH }
 }
 
 function Find-SurvieOllama {
@@ -51,7 +74,7 @@ function Start-SurvieDocker {
     if ($kind) { throw 'Docker utilise les conteneurs Windows. Choisissez les conteneurs Linux dans Docker Desktop.' }
     $desktop = Find-SurvieDockerDesktop
     if (-not $desktop) { throw 'Docker Desktop manque. Relancez 1-Preparer-le-PC.cmd.' }
-    Start-Process -FilePath $desktop | Out-Null
+    Start-Process -FilePath $desktop -WindowStyle Hidden | Out-Null
     Write-Host 'Docker Desktop démarre. Validez son accueil et sa licence si nécessaire.'
     for ($attempt = 0; $attempt -lt 90; $attempt++) {
         Start-Sleep -Seconds 2

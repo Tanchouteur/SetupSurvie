@@ -36,6 +36,7 @@ function Invoke-SurvieWSLInstall {
 }
 
 function Invoke-SurviePreparation {
+    Initialize-SurvieTools
     $facts = Get-SurvieWindowsFacts
     if (-not $facts.X64 -or $facts.Build -lt 26100) { throw 'Ce parcours nécessite Windows 11 24H2 ou plus récent, x64. Aucun changement effectué.' }
     if (-not $facts.Virtualization) { throw 'Activez la virtualisation dans le BIOS/UEFI puis relancez. Aucun changement effectué.' }
@@ -59,7 +60,7 @@ function Invoke-SurviePreparation {
     foreach ($item in $catalog.installers) {
         $available = switch ($item.id) {
             'python' { [bool](Find-SurviePython) }
-            'docker' { [bool](Find-SurvieDockerDesktop) }
+            'docker' { [bool](Find-SurvieDockerDesktop) -or [bool](Get-SurvieDockerType) }
             'ollama' { [bool](Find-SurvieOllama) }
             default { throw 'Composant inconnu dans le catalogue.' }
         }
@@ -74,7 +75,7 @@ function Invoke-SurviePreparation {
         # An installer may complete successfully without installing the chosen component.
         $found = switch ($item.id) {
             'python' { [bool](Find-SurviePython) }
-            'docker' { [bool](Find-SurvieDockerDesktop) }
+            'docker' { [bool](Find-SurvieDockerDesktop) -or [bool](Get-SurvieDockerType) }
             'ollama' { [bool](Find-SurvieOllama) }
         }
         if (-not $found) { throw ($item.id + ' reste introuvable. Fermez cette fenêtre et relancez le lanceur après avoir terminé son installation.') }
@@ -85,7 +86,8 @@ function Invoke-SurviePreparation {
     }
     & $gpu.Source --query-gpu=name,memory.total --format=csv,noheader | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw 'Le pilote NVIDIA ne répond pas. Corrigez-le puis relancez.' }
-    Write-Host 'Prérequis présents. Vous pouvez lancer 2-Installer-SetupSurvie.cmd. Docker et le GPU seront encore à valider en usage réel.'
+    Write-Host 'Prérequis présents. Docker et le GPU seront encore à valider en usage réel.'
+    Write-Host 'Le lanceur Installer-SetupSurvie.cmd poursuit automatiquement ; sinon, lancez 2-Installer-SetupSurvie.cmd.'
     return 0
 }
 

@@ -37,7 +37,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Installation
 
-- [Installation Windows en deux étapes](installation/deux-etapes-windows.md) — guide du pilote 0.1.17 ; installation réelle encore à valider.
+- [Installation Windows avec un seul lanceur](installation/deux-etapes-windows.md) — guide du pilote 0.1.20 ; diagnostic et contrôles testés sur Windows, installation complète sur PC vierge encore à valider.
 
 - [Préparer et vérifier le kit hors ligne](installation/preparer-kit-hors-ligne.md)
 
@@ -67,6 +67,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Installateur Windows simplifié — 12 novembre 2026](essais/2026-11-12-installateur-windows-simple.md) — diagnostic réel, garde des ports, reprise et raccourcis ; limites de recette complète.
 
 - [Vérifier les sources et l’incertitude des modèles](essais/protocole-fiabilite-ia.md) — protocole ; essais sur modèles réels encore à exécuter.
 

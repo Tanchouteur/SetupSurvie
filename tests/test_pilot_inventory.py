@@ -53,7 +53,12 @@ class InventoryTests(unittest.IsolatedAsyncioTestCase):
     async def test_guides_report_missing_files_and_symlinks_do_not_count(self):
         with store.connect() as db:
             db.execute('INSERT INTO documents VALUES(?,?,?,?,?)',('guide:missing.fr.txt','Absent','','fr','Texte'))
-        (inventory.ZIMS/'outside.zim').symlink_to(self.root/'state/pilot.db')
+        try:
+            (inventory.ZIMS/'outside.zim').symlink_to(self.root/'state/pilot.db')
+        except OSError as exc:
+            if getattr(exc, 'winerror', None) == 1314:
+                self.skipTest('Création de lien non autorisée sur ce système.')
+            raise
         with patch.object(library,'books',AsyncMock(return_value=[])):
             data = await inventory.inventory()
         self.assertEqual(data['books'],[])
