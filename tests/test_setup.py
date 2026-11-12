@@ -22,6 +22,12 @@ class InstallationTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_new_installation_uses_requested_default_login_without_resetting_existing_account(self):
+        self.assertEqual(self.config['admin_email'],'admin@survie.local')
+        config={**self.config,'admin_password':'changed-by-owner'}
+        setup.write_json(self.app.settings_path,config,private=True)
+        self.assertEqual(self.app.init('linux',cpu=True)['admin_password'],'changed-by-owner')
+
     def test_repeat_keeps_secrets_and_user_data(self):
         doc = Path(self.config['data_dir']) / 'library/guides/private.txt'
         doc.write_text('Mon document', encoding='utf-8')

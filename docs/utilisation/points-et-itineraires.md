@@ -1,28 +1,28 @@
 # Points et itinéraires hors ligne
 
-Guide du pilote **0.1.11**. La carte sert à préparer et consulter des déplacements,
+Guide du pilote **0.1.12**. La carte sert à préparer et consulter des déplacements,
 sans suivi GPS et sans service de routage Internet.
 
 ## Consulter sur téléphone
 
-Se connecter au portail, ouvrir Cartes puis **Mes points et itinéraires enregistrés**.
+Ouvrir Cartes puis utiliser **Se connecter**, en haut de la carte. La connexion utilise le compte du portail, sans quitter la page. Ouvrir **Rechercher · Mes repères**, puis l’onglet **Mes repères**.
 Choisir une liste, toucher un point ou ouvrir un trajet. La fiche indique les
 kilomètres par les voies, le mode et la durée estimée. Les notes et le tracé restent
 accessibles même si le moteur de calcul est arrêté. Le téléphone consulte les
 contenus du serveur sur le réseau local ; il ne devient pas une carte autonome
 loin du serveur. Exporter le GPX ou imprimer la carte et la fiche avant de partir.
 
-L’édition est masquée sur petit écran et appareil tactile. Les lecteurs ne peuvent
+L’édition est masquée sur petit écran et appareil tactile. Le panneau mobile est repliable ; la carte conserve sa hauteur. Un résumé du trajet avec kilomètres et durée reste visible quand le panneau est fermé. Les lecteurs ne peuvent
 pas modifier les listes, points ou trajets, quelle que soit la taille de l’écran.
 Le compte administrateur prépare sur ordinateur.
 
 ## Préparer sur ordinateur
 
-Dans **Préparer les listes et trajets** :
+Avec un compte administrateur sur ordinateur :
 
-1. Créer une liste (eau, famille, repli…).
-2. Choisir un point sur la carte puis l’enregistrer avec un nom, un type et des notes.
-3. Choisir les points de départ et d’arrivée, et éventuellement des étapes (8 maximum).
+1. Cliquer sur **Ajouter un point**, au-dessus de la carte.
+2. Cliquer sur l’emplacement choisi : le formulaire s’ouvre. Donner un nom au point, choisir sa liste ou **Créer une nouvelle liste**, puis enregistrer. Les coordonnées restent consultables dans un volet du formulaire.
+3. Ouvrir l’onglet **Itinéraire**. Choisir les points de départ et d’arrivée, et éventuellement des étapes (8 maximum).
 4. Choisir **à pied**, **moto** ou **petite voiture** et une vitesse moyenne.
 5. Calculer, contrôler le tracé et enregistrer le trajet dans la liste.
 
@@ -113,3 +113,21 @@ local pour une reprise sans accès au registre.
 
 Limites de volume : 50 listes, 1 000 points, 100 trajets ; les exports GPX de listes
 et trajets sont disponibles aux utilisateurs connectés.
+
+## Comprendre une recherche qui ne trouve rien
+
+L’onglet **Rechercher** affiche « Recherche… » pendant l’appel, puis le nombre de
+résultats ou un message d’erreur. Si aucun point n’est choisi, la recherche proche
+part du centre de la carte. Les résultats proches sont matérialisés sur la carte ;
+cliquer un résultat le sélectionne et permet de l’ajouter à une liste sur ordinateur.
+Les anciennes propositions sont effacées quand une nouvelle recherche commence.
+
+Sans connexion, l’action ouvre directement la fenêtre de connexion. Si les lieux
+ne sont pas téléchargés, la page explique la différence entre fond de carte et
+lieux utiles et propose **Préparer les données de cette zone**. Une recherche vide
+ne prouve pas l’absence de lieu sur le terrain.
+
+L’onglet **Affichage** contient la sélection du fond, les informations de date et
+le relief. Le bouton du relief manquant reste activable pour expliquer la raison :
+connexion nécessaire, service indisponible ou altitudes non préparées. Les données
+manquantes ne sont pas téléchargées automatiquement.

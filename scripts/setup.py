@@ -131,7 +131,7 @@ class Installation:
                       "bind": "0.0.0.0" if lan else "127.0.0.1", "cpu": cpu,
                       "project": "survie-" + secrets.token_hex(4),
                       "secret": secrets.token_hex(32), "admin_email": "admin@survie.local",
-                      "admin_password": secrets.token_urlsafe(24),
+                      "admin_password": "test77**",
                       "chat_model": VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"

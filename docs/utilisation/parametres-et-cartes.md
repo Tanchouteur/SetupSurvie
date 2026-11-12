@@ -146,3 +146,5 @@ existantes. Ne pas placer cette base dans la bibliothèque publique. Les lots
 cartographiques restent des contenus volumineux : conserver le kit correspondant
 ou copier séparément `library/maps`, notamment les zones ajoutées depuis le kit.
 La sauvegarde privée ne les recopie pas automatiquement.
+
+Depuis le pilote 0.1.12, les outils de carte sont regroupés dans les onglets Rechercher, Mes repères, Itinéraire et Affichage ; la connexion peut se faire directement sur la carte. Voir le [parcours des points et trajets](points-et-itineraires.md).

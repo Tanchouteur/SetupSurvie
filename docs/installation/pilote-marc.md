@@ -140,3 +140,13 @@ Utiliser `survie.ps1 --work-dir D:\SetupSurvie\prive down` pour arrêter les ser
 ## Mises à jour et nouveaux contenus
 
 Suivre le [guide des mises à jour du pilote](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) pour remplacer seulement le logiciel, préserver les comptes et ajouter des lots sans réinstallation.
+
+## Identifiant initial du pilote 0.1.12
+
+Les nouvelles installations utilisent l’identifiant `admin` (compte interne
+`admin@survie.local`) et le mot de passe initial demandé par Louis dans
+l’installateur. Le mot de passe n’est pas recopié dans cette documentation.
+Ces valeurs ne remplacent jamais le mot de passe d’une installation existante.
+Les secrets techniques de session et de contrôle restent générés aléatoirement.
+La connexion sur la carte utilise le même compte que le portail. La publication
+du code ne modifie aucun compte sur les machines existantes.

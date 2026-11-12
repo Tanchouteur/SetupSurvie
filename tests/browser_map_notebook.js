@@ -37,14 +37,16 @@ async (page) => {
   await page.setViewportSize({width:1366,height:950});
   await page.goto(base+'/cartes.html');await page.reload();
   await page.waitForFunction(()=>window.SurvieMap&&document.querySelector('#planning-panel').hidden===false);
-  await page.locator('#planning-panel>summary').click();
+  await page.locator('[data-panel=map-notebook]').click();
   await page.locator('#new-map-list').click();await page.locator('#map-list-title').fill('Eau et lieux de repli');await page.locator('#map-list-form button[type=submit]').click();
   await page.waitForFunction(()=>document.querySelector('#new-map-point').disabled===false);
   for(const [title,lat,lon] of [['Départ familial',43.1,6.1],['Point d’eau à vérifier',43.11,6.11]]){
+    await page.locator('#begin-map-point').click();
     await page.evaluate(p=>window.SurvieMap.selectPoint(p),{lat,lon});
-    await page.locator('#new-map-point').click();await page.locator('#point-title').fill(title);await page.locator('#point-kind').selectOption('water');await page.locator('#point-notes').fill('Repère fictif. Vérifier l’accès avant utilisation.');await page.locator('#map-point-form button[type=submit]').click();
+await page.locator('#point-title').fill(title);await page.locator('#point-kind').selectOption('water');await page.locator('#point-notes').fill('Repère fictif. Vérifier l’accès avant utilisation.');await page.locator('#map-point-form button[type=submit]').click();
     await page.waitForFunction(count=>document.querySelectorAll('#route-stops select option').length>=count,book.points.length*2+2);
   }
+  await page.locator('[data-panel=planning-panel]').click();
   await page.locator('#route-stops select').nth(0).selectOption(book.points[0].id);await page.locator('#route-stops select').nth(1).selectOption(book.points[1].id);
   if(await page.locator('#route-speed').inputValue()!=='4')throw new Error('La marche doit être proposée à 4 km/h.');
   await page.locator('#route-calculate').click();await page.locator('#route-save-form').waitFor({state:'visible'});
@@ -65,7 +67,8 @@ async (page) => {
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[375,667],[320,568],[844,390]]){
     await page.setViewportSize({width,height});
-    await page.locator('#map-notebook').evaluate(e=>e.open=true);
+    if(width<=760)await page.locator('#open-map-panel').click();
+    await page.locator('[data-panel=map-notebook]').click();
     await page.getByRole('button',{name:'Vers le point d’eau',exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('#selected-route-title').textContent==='Vers le point d’eau');
     if(await page.locator('#planning-panel').isVisible())throw new Error('Édition visible chez un lecteur.');
