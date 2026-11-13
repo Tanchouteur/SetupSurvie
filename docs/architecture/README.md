@@ -6,12 +6,12 @@ composants ; les [bilans](../essais/README.md) indiquent les validations réalis
 | Composant | Responsabilité | Entrées du dépôt |
 | --- | --- | --- |
 | Portail servi par Caddy | Navigation, assistant, bibliothèque, cartes et accès aux autres interfaces | [portal](../../portal/), [Caddyfile](../../deploy/Caddyfile) |
-| Passerelle FastAPI | Comptes via Open WebUI, conversations du portail, recherche, lecture, calcul et suivi | [pilot](../../pilot/) |
+| Passerelle FastAPI | Profils locaux sans mot de passe, conversations du portail, recherche, lecture, calcul et suivi | [pilot](../../pilot/) |
 | Open WebUI | Comptes natifs, dossiers, conversations avancées et collections propres | [compose.yaml](../../compose.yaml) |
 | Kiwix | Consultation illustrée et recherche native des archives ZIM | [Point d’entrée Kiwix](../../deploy/kiwix-entrypoint.sh) |
 | Ollama et contrôleur hôte | Inférence locale, état et commandes d’administration du moteur | [Profils](../../deploy/model-profiles.json), [contrôleur](../../scripts/control.py) |
 
-Le portail et Open WebUI partagent les comptes, mais ont des historiques distincts.
+Le portail et Open WebUI reprennent le profil choisi sans mot de passe, mais ont des historiques distincts.
 Le pilote indexe les guides et interroge Kiwix ; cela ne crée pas automatiquement
 de collections dans Open WebUI. La bibliothèque reste utilisable avec l’IA arrêtée.
 
@@ -81,7 +81,7 @@ Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](../uti
 
 Les associations sont stockées dans `conversation_sources`, sans modifier les anciennes lignes des conversations. `translations` et `translation_parts` conservent les travaux privés, le texte source de chaque passage, son numéro de page et le modèle qui l’a traduit. Ces ajouts SQLite sont non destructifs ; le contrat de données reste 1. Les associations anciennes absentes ne sont pas reconstruites à partir de citations ambiguës.
 
-`pilot/translations.py` extrait l’original PDF dans un thread, borne la préparation puis traite les passages avec un schéma de réponse Ollama. Le contenu à traduire est fourni comme message utilisateur ; l’historique d’un refus précédent n’est pas réinjecté. Le worker partage `engine.LOCK` avec le chat et vérifie le contrôleur avant chaque passage. Il enregistre le résultat seulement si la traduction est toujours active. Le redémarrage du pilote met les travaux actifs en pause ; aucune inférence ne reprend au démarrage. Les exports restent authentifiés. Depuis 0.1.25, les nouvelles traductions terminées rejoignent le fonds public sous forme de HTML identifié, sans texte de conversation ; les anciennes restent privées jusqu’à publication explicite.
+`pilot/translations.py` extrait l’original PDF dans un thread, borne la préparation puis traite les passages avec un schéma de réponse Ollama. Le contenu à traduire est fourni comme message utilisateur ; l’historique d’un refus précédent n’est pas réinjecté. Le worker partage `engine.LOCK` avec le chat et vérifie le contrôleur avant chaque passage. Il enregistre le résultat seulement si la traduction est toujours active. Le redémarrage du pilote met les travaux actifs en pause ; aucune inférence ne reprend au démarrage. Les exports restent rattachés au profil choisi, librement sélectionnable depuis 0.1.29. Depuis 0.1.25, les nouvelles traductions terminées rejoignent le fonds public sous forme de HTML identifié, sans texte de conversation ; les anciennes restent privées jusqu’à publication explicite.
 
 Le [guide d’utilisation](../utilisation/documents-et-traduction.md) précise les limites de texte, la pagination, les images et les validations restantes.
 
@@ -134,3 +134,31 @@ réécrire les anciens fichiers. Les avertissements sont échappés comme texte 
 le HTML partagé et conservés dans l’export. L’API propriétaire expose aussi le
 texte source pour comparaison ; celui-ci n’est pas ajouté au HTML public.
 Aucun moteur supplémentaire ni contrat de données incompatible n’est introduit.
+
+## Profils locaux sans mot de passe — 0.1.29
+
+À la demande de Louis, `pilot/profiles.py` remplace l’authentification du portail
+par des identités librement sélectionnables, persistées dans `profiles`. Un cookie
+`survie_profile` mémorise un identifiant public, sans secret et utilisable sur
+HTTP comme HTTPS ; son absence ou une ancienne valeur revient
+au profil Famille. Les lectures de l’ancienne base Open WebUI sont en lecture
+seule ; les identifiants existants gardent leurs conversations et favoris.
+Le rôle sert à présenter les outils, sans protection entre personnes : chacun
+peut sélectionner Famille et ses réglages. Les anciens mots de passe et données
+ne sont pas effacés. Les anciennes routes de connexion/récupération renvoient
+une invitation à recharger le nouveau portail.
+
+Caddy sert désormais aussi HTTP `3000` et HTTPS `8444` pour Open WebUI. Il retire
+les en-têtes `X-Survie-*` entrants puis copie l’identité renvoyée par le pilote.
+Open WebUI utilise les variables `WEBUI_AUTH_TRUSTED_*_HEADER` de sa version
+épinglée ; le port natif n’est plus publié. La dictée et la configuration des
+modèles obtiennent une session native en interne par ce même mécanisme, sans
+mot de passe demandé à l’utilisateur. L’API locale continue de fonctionner sans
+Open WebUI ; l’accès avancé dépend du proxy, du pilote et du service natif.
+
+Un en-tête de profil attendu permet de refuser une action d’un onglet devenu
+périmé ; les onglets partagent aussi une notification de changement, complétée par un
+contrôle du profil toutes les dix secondes sur les pages visibles, avec délai
+de réponse borné à quatre secondes. Il s’agit
+de cohérence d’identité, pas d’une authentification. Les contrôles d’origine des
+mutations sont conservés. Voir le [guide des profils](../utilisation/profils-locaux.md).

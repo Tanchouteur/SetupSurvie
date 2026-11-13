@@ -11,7 +11,7 @@ with sync_playwright() as p:
    path=urlparse(r.request.url).path
    if path.startswith('/api/'):
     key=path[5:]
-    data={'auth/me':{'id':'test','name':'Test','role':'user','recovery_ready':True},'status':{'modes':[],'books':[],'guides':0},'conversations':{'conversations':[{'id':'a','title':'Conversation A'},{'id':'b','title':'Conversation B'}]}}
+    data={'profiles/current':{'id':'test','name':'Test','role':'user','recovery_ready':True},'status':{'modes':[],'books':[],'guides':0},'conversations':{'conversations':[{'id':'a','title':'Conversation A'},{'id':'b','title':'Conversation B'}]}}
     if key.startswith('conversations/'):
      cid=key.split('/')[1];value={'title':'Conversation '+cid.upper(),'messages':[{'role':'assistant','content':'\n\n'.join('Paragraphe '+str(i)+' : un contenu assez long pour lire et tester le défilement.' for i in range(120)),'sources':[]}],'jobs':[]}
     else:value=data.get(key,{})

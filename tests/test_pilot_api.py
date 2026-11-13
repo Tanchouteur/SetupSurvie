@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-from pilot import accounts, app as gateway, engine, library, operations,store,translations
+from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles
 
 
 class PilotAPITests(unittest.TestCase):
@@ -22,13 +22,13 @@ class PilotAPITests(unittest.TestCase):
             if path=='/api/v1/auths/signout':return {'ok':True}
             raise AssertionError(path)
         for obj,name,value in [(store,'ROOT',self.root/'state'),(library,'GUIDES',self.root/'guides'),
-                               (accounts,'native',AsyncMock(side_effect=native)),(library,'books',AsyncMock(return_value=[])),
+                               (accounts,'native',AsyncMock(side_effect=native)),(profiles,'native_profiles',lambda:list(self.users.values())),(library,'books',AsyncMock(return_value=[])),
                                (operations,'status',AsyncMock(return_value={'online':True,'message':'Prêt'}))]:
             p=patch.object(obj,name,value);p.start();self.addCleanup(p.stop)
         self.client=TestClient(gateway.app);self.client.__enter__();self.addCleanup(self.client.__exit__,None,None,None)
 
     def login(self,who='alice'):
-        response=self.client.post('/api/auth/login',json={'email':who,'password':'example-password'})
+        response=self.client.post('/api/profiles/select',json={'id':who},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);return response
 
     def test_learning_paths_are_read_only_and_available_without_an_ai_session(self):
@@ -37,7 +37,7 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(response.status_code,200)
             self.assertEqual(len(response.json()['domains']),14)
             self.assertEqual(len(response.json()['steps']),6)
-            self.assertEqual(self.client.get('/api/conversations').status_code,401)
+            self.assertEqual(self.client.get('/api/conversations').status_code,200)
             launch.assert_not_called()
 
     def test_missing_learning_catalogue_returns_friendly_error_without_blocking_search(self):
@@ -74,7 +74,7 @@ class PilotAPITests(unittest.TestCase):
         self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':None},headers=headers).status_code,200)
         self.assertIsNone(self.client.get('/api/conversations/'+conv).json()['source'])
         with patch.object(library,'source',new_callable=AsyncMock) as source:
-            self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':'guide:guide.en.txt'},headers={'Authorization':'Bearer bob'}).status_code,404)
+            self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':'guide:guide.en.txt'},headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
             source.assert_not_awaited()
 
     def test_translation_endpoints_isolation_restart_export_and_deletion(self):
@@ -85,8 +85,8 @@ class PilotAPITests(unittest.TestCase):
         self.assertEqual(response.status_code,202);item=response.json();key=item['id'];conv=item['conversation_id']
         self.assertEqual(self.client.get('/api/conversations/'+conv).json()['translations'],[key])
         for suffix in ['', '/export']:
-            self.assertEqual(self.client.get('/api/translations/'+key+suffix,headers={'Authorization':'Bearer bob'}).status_code,404)
-        self.assertEqual(self.client.post('/api/translations/'+key+'/pause',json={},headers={'Authorization':'Bearer bob'}).status_code,404)
+            self.assertEqual(self.client.get('/api/translations/'+key+suffix,headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
+        self.assertEqual(self.client.post('/api/translations/'+key+'/pause',json={},headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
         self.assertEqual(self.client.delete('/api/conversations/'+conv,headers=headers).status_code,409)
         self.assertEqual(self.client.post('/api/translations/'+key+'/pause',json={},headers=headers).status_code,200)
         self.assertIn('pas encore traduit',self.client.get('/api/translations/'+key+'/export').text)
@@ -105,17 +105,17 @@ class PilotAPITests(unittest.TestCase):
             response=self.client.post('/api/admin/library/plan',json={'themes':['eau']*29,'max_add_gb':0},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,202);self.assertEqual(command.call_args.args[1]['max_add_gb'],0)
 
-    def test_cookie_has_30_days_httponly_and_secure_on_https(self):
+    def test_non_secret_profile_choice_is_persistent_and_usable_on_http_and_https(self):
         response=self.login()
         header=response.headers['set-cookie'].lower()
-        self.assertIn('max-age=2592000',header);self.assertIn('httponly',header);self.assertIn('samesite=lax',header)
-        response=self.client.post('/api/auth/login',json={'email':'alice','password':'example'},headers={'Origin':'http://testserver','X-Forwarded-Proto':'https'})
-        self.assertIn('; Secure',response.headers['set-cookie'])
+        self.assertIn('max-age=315360000',header);self.assertIn('httponly',header);self.assertIn('samesite=lax',header)
+        response=self.client.post('/api/profiles/select',json={'id':'alice'},headers={'Origin':'http://testserver','X-Forwarded-Proto':'https'})
+        self.assertNotIn('; Secure',response.headers['set-cookie'])
 
     def test_cross_origin_mutation_and_cookie_without_origin_are_rejected(self):
         self.login()
         for headers in [{},{'Origin':'http://evil.invalid'}]:
-            response=self.client.post('/api/auth/recovery-code',headers=headers)
+            response=self.client.post('/api/profiles/select',json={'id':'bob'},headers=headers)
             self.assertEqual(response.status_code,403)
 
     def test_reader_cannot_access_admin_or_other_history(self):
@@ -145,7 +145,7 @@ class PilotAPITests(unittest.TestCase):
         with patch.object(engine,'launch'):
             created=self.client.post('/api/questions',json={'message':'À supprimer'},headers={'Origin':'http://testserver'}).json()
         path='/api/conversations/'+created['conversation_id']
-        self.assertEqual(self.client.delete(path,headers={'Authorization':'Bearer bob'}).status_code,404)
+        self.assertEqual(self.client.delete(path,headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
         self.assertEqual(self.client.delete(path,headers={'Origin':'http://testserver'}).status_code,409)
         trace=store.ROOT/'traces'/f"{created['id']}.json";trace.parent.mkdir();trace.write_text('trace')
         with store.connect() as db:db.execute("UPDATE jobs SET status='done' WHERE id=?",(created['id'],))
@@ -156,23 +156,23 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT count(*) FROM messages').fetchone()[0],0)
             self.assertEqual(db.execute('SELECT count(*) FROM jobs').fetchone()[0],0)
 
-    def test_recovery_code_hashed_single_use_and_replaced(self):
-        self.login()
-        response=self.client.post('/api/auth/recovery-code',headers={'Origin':'http://testserver'})
-        code=response.json()['code']
-        with store.connect() as db:row=dict(db.execute('SELECT * FROM recovery').fetchone())
-        self.assertNotIn(code,json.dumps(row));self.assertTrue(store.consume_code('alice',code));self.assertFalse(store.consume_code('alice',code))
-        new=store.recovery_code('alice');self.assertNotEqual(new,code);self.assertFalse(store.consume_code('alice',code));self.assertTrue(store.consume_code('alice',new))
+    def test_no_password_or_recovery_code_is_needed_after_old_sessions_expire(self):
+        self.client.cookies.set(gateway.COOKIE,'expired-old-session')
+        with patch.object(accounts,'native',side_effect=AssertionError('No upstream login')):
+            self.assertEqual(self.client.get('/api/profiles/current').json()['id'],profiles.DEFAULT)
+            self.login('bob')
+            self.assertEqual(self.client.get('/api/profiles/current').json()['id'],'bob')
+        self.assertNotIn('recovery_ready',self.client.get('/api/profiles/current').json())
 
-    def test_logout_revokes_token_even_if_upstream_still_accepts_it(self):
-        self.login()
-        self.assertEqual(self.client.post('/api/auth/logout',headers={'Origin':'http://testserver'}).status_code,200)
-        self.assertEqual(self.client.get('/api/auth/me',headers={'Authorization':'Bearer alice'}).status_code,401)
+    def test_password_endpoints_explain_the_new_profile_flow(self):
+        for path in ('login','recover','recovery-code','logout'):
+            self.assertEqual(self.client.post('/api/auth/'+path,json={}).status_code,410)
 
-    def test_utf8_password_validated_before_consuming_recovery_code(self):
-        with patch.object(accounts,'native_account') as account:
-            response=self.client.post('/api/auth/recover',json={'email':'alice','code':'A'*32,'new_password':'é'*40})
-            self.assertEqual(response.status_code,400);account.assert_not_called()
+    def test_stale_tab_cannot_write_to_the_newly_selected_profile(self):
+        self.login('alice');self.login('bob')
+        response=self.client.post('/api/questions',json={'message':'Ancien onglet'},headers={'Origin':'http://testserver','X-Survie-Profile':'alice'})
+        self.assertEqual(response.status_code,409)
+        self.assertEqual(response.headers['X-Survie-Profile-Changed'],'true')
 
     def test_job_isolation_and_cancel_before_start(self):
         self.login()
@@ -180,7 +180,7 @@ class PilotAPITests(unittest.TestCase):
             response=self.client.post('/api/questions',json={'message':'Question de test','mode':'rapide'},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);identifier=response.json()['id']
         self.assertEqual(self.client.get('/api/jobs/'+identifier).status_code,200)
-        self.assertEqual(self.client.get('/api/jobs/'+identifier,headers={'Authorization':'Bearer bob'}).status_code,404)
+        self.assertEqual(self.client.get('/api/jobs/'+identifier,headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
         self.assertEqual(self.client.post('/api/jobs/'+identifier+'/cancel',headers={'Origin':'http://testserver'}).status_code,200)
         self.assertEqual(self.client.get('/api/jobs/'+identifier).json()['status'],'cancelled')
 

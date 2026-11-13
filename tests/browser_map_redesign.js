@@ -10,8 +10,9 @@ async (page) => {
     if(url.origin!==base){external.push(req.url());return route.abort();}
     if(!path.startsWith('/api/'))return route.continue();calls.push(path);
     let data={},status=200;
-    if(path==='/api/auth/login'){role='admin';data={id:'test',name:'Administration',role};}
-    else if(path==='/api/auth/me'){if(role)data={id:'test',name:'Administration',role};else{status=401;data={detail:'Connexion requise'};}}
+    if(path==='/api/profiles/select'){role='admin';data={id:'test',name:'Administration',role};}
+    else if(path==='/api/profiles')data={profiles:[{id:'test',name:'Administration',role:'admin'}]};
+    else if(path==='/api/profiles/current'){if(role)data={id:'test',name:'Administration',role};else{status=401;data={detail:'Connexion requise'};}}
     else if(path==='/api/maps')data={maps:[]};
     else if(!role){status=401;data={detail:'Connexion requise'};}
     else if(path==='/api/settings')data={home:null,departure:null};
@@ -36,8 +37,7 @@ async (page) => {
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(searches!==0)throw new Error('La recherche privée ne doit pas partir sans connexion.');
   if(calls.some(path=>path==='/api/geography/status'||path==='/api/settings'))throw new Error('Appels privés inutiles sans session.');
-  await page.locator('#map-login-form [name=email]').fill('admin');await page.locator('#map-login-form [name=password]').fill('fixture-password');
-  await page.locator('#map-login-form button[type=submit]').click();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='admin');
+  await page.locator('#map-profile-list button').click();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='admin');
   await page.locator('#map-nearby button').click();await page.waitForFunction(()=>document.querySelector('#search-help').hidden===false);
   if(searches!==0)throw new Error('Requête inutile alors que les lieux ne sont pas préparés.');
   if(!(await page.locator('#geo-tool-status').innerText()).includes('pas encore téléchargés'))throw new Error('Données absentes non expliquées.');
@@ -79,5 +79,5 @@ async (page) => {
   await page.screenshot({path:'/artifacts/map-redesign-guest-mobile.png',fullPage:true});
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(errors.length||external.length)throw new Error(JSON.stringify({errors,external}));
-  return {passed:true,layouts,first_point_creates_list:true,inline_login:true,empty_data_explained:true,search_loading_and_error:true,physical_phone:false};
+  return {passed:true,layouts,first_point_creates_list:true,profile_selection:true,empty_data_explained:true,search_loading_and_error:true,physical_phone:false};
 }

@@ -10,7 +10,7 @@ async (page) => {
     if(url.origin!==base){external.push(req.url());await route.abort();return;}
     if(!path.startsWith('/api/')){await route.continue();return;}
     let data={};
-    if(path==='/api/auth/me')data={id:'test',role:'admin',name:'Test',recovery_ready:true};
+    if(path==='/api/profiles/current')data={id:'test',role:'admin',name:'Test',recovery_ready:true};
     else if(path==='/api/status')data={version:'0.1.10',modes:[],books:[],guides:0};
     else if(path==='/api/conversations')data={conversations:[]};
     else if(path==='/api/inference')data={online:false,control_available:true,message:'Moteur arrêté',models:[],gpus:[],memory:{},disk:{},jobs:{}};

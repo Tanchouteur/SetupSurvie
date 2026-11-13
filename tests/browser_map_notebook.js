@@ -13,7 +13,7 @@ async (page) => {
     if(!path.startsWith('/api/'))return route.continue();
     calls.push(path);let data={},status=200;
     if(path==='/api/maps')data={maps:[]};
-    else if(path==='/api/auth/me')data={id:'browser',name:'Test',role};
+    else if(path==='/api/profiles/current')data={id:'browser',name:'Test',role};
     else if(path==='/api/settings')data={home:null,departure:null};
     else if(path==='/api/geography/status')data={datasets:[]};
     else if(path==='/api/geography/elevation')data={elevation_m:null};

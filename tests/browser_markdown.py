@@ -36,7 +36,7 @@ with sync_playwright() as p:
    from urllib.parse import urlparse
    path=urlparse(r.request.url).path
    if path.startswith('/api/'):
-    value={'auth/me':{'id':'t','name':'Test','role':'user','recovery_ready':True},'conversations':{'conversations':[]},'status':{'modes':[],'books':[],'guides':0}}.get(path[5:],{})
+    value={'profiles/current':{'id':'t','name':'Test','role':'user','recovery_ready':True},'conversations':{'conversations':[]},'status':{'modes':[],'books':[],'guides':0}}.get(path[5:],{})
     return r.fulfill(json=value)
    file=root/('index.html' if path=='/' else path.lstrip('/'))
    if file.is_file():return r.fulfill(path=str(file))

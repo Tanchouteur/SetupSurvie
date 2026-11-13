@@ -59,3 +59,16 @@ async def reset_password(email,password):
     account=native_account(email)
     if not account:raise HTTPException(400,'Code ou identifiant non valide.')
     await native('/api/v1/users/'+account['id']+'/update',{'password':password},emergency_admin_token())
+
+
+async def profile_token(profile):
+    """Short internal bridge to native sessions; no user password or token exposed."""
+    from .profiles import webui_headers
+    try:
+        async with httpx.AsyncClient(trust_env=False,timeout=30) as client:
+            response=await client.post(WEBUI+'/api/v1/auths/signin',headers=webui_headers(profile),json={'email':profile['email'],'password':''})
+            if response.status_code!=200:raise HTTPException(503,'L’assistant avancé est indisponible. Le portail reste utilisable.')
+            value=response.json()
+        if not isinstance(value.get('token'),str) or not value['token']:raise ValueError('Native profile unavailable')
+        return value['token']
+    except (httpx.HTTPError,ValueError):raise HTTPException(503,'L’assistant avancé est indisponible. Le portail reste utilisable.')

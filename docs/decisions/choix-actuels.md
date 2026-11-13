@@ -80,3 +80,11 @@ reste privée. Les anciens travaux ne sont pas déclarés contrôlés. Une compa
 avec un moteur spécialisé et une évaluation bilingue sur documents réels restent
 à réaliser avant de choisir un nouveau moteur ; aucun gain de fidélité des modèles
 n’est affirmé sur la seule base des tests simulés.
+
+Le 13 novembre 2026, Louis demande de supprimer les mots de passe et codes de
+secours, pour ne pas bloquer l’usage en urgence, tout en gardant des profils.
+Depuis 0.1.29, Famille fonctionne immédiatement ; les anciens identifiants et
+historiques restent conservés et les profils sont librement sélectionnables sur
+le réseau. Les profils ne garantissent pas la confidentialité entre utilisateurs.
+Le [guide actuel](../utilisation/profils-locaux.md) remplace les anciennes procédures
+de connexion du pilote. Les deux accès secondaires du menu sont décrits et séparés.

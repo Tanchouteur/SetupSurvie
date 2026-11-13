@@ -2,7 +2,6 @@
 import asyncio
 from datetime import datetime,timezone
 from contextlib import asynccontextmanager,contextmanager
-import hashlib
 import importlib
 import logging
 import json
@@ -17,11 +16,10 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
-SESSION_SECONDS=30*86400
 
 
 DEGRADED={}
@@ -44,6 +42,7 @@ def optional_feature(name):
 @asynccontextmanager
 async def lifespan(app):
     store.init()
+    await asyncio.to_thread(profiles.initialize)
     DEGRADED.clear()
     try:map_notebook.init()
     except Exception:DEGRADED['map_notebook']=True
@@ -61,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.28'
+VERSION='0.1.29'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -72,7 +71,8 @@ async def origin_check(request,call_next):
         expected=request.headers.get('host','')
         if origin and urlparse(origin).netloc!=expected:
             return Response('Origine non autorisée',status_code=403)
-        if request.cookies.get(COOKIE) and not origin and not request.headers.get('authorization'):
+        if request.headers.get('sec-fetch-site')=='cross-site':return Response('Origine non autorisée',status_code=403)
+        if (request.cookies.get(COOKIE) or request.cookies.get(profiles.COOKIE)) and not origin:
             return Response('Origine requise',status_code=403)
     response=await call_next(request)
     response.headers['Cache-Control']='no-store'
@@ -80,20 +80,10 @@ async def origin_check(request,call_next):
     return response
 
 
-def token(request):
-    authorization=request.headers.get('authorization','')
-    return authorization[7:] if authorization.startswith('Bearer ') else request.cookies.get(COOKIE)
-
-
 async def user(request:Request):
-    credential=token(request)
-    if not credential:raise HTTPException(401,'Connectez-vous pour utiliser l’assistant.')
-    with store.connect() as db:
-        db.execute('DELETE FROM revoked WHERE expires<?',(time.time(),))
-        if db.execute('SELECT 1 FROM revoked WHERE digest=?',(hashlib.sha256(credential.encode()).hexdigest(),)).fetchone():
-            raise HTTPException(401,'Cette session a été fermée.')
-    value=await accounts.native('/api/v1/auths/',token=credential)
-    if value.get('role') not in ('admin','user'):raise HTTPException(403,'Ce compte attend l’accord d’un administrateur.')
+    value=await asyncio.to_thread(profiles.current,request.cookies.get(profiles.COOKIE))
+    expected=request.headers.get('X-Survie-Profile')
+    if expected and expected!=value['id']:raise HTTPException(409,'Le profil a changé dans un autre onglet. Rechargez la page.',headers={'X-Survie-Profile-Changed':'true'})
     return value
 
 
@@ -102,19 +92,15 @@ async def admin(value=Depends(user)):
     return value
 
 
-def public_user(value):
-    with store.connect() as db:ready=db.execute('SELECT 1 FROM recovery WHERE user_id=? AND used=0',(value['id'],)).fetchone() is not None
-    return {**{k:value.get(k) for k in ('id','name','email','role')},'recovery_ready':ready}
+def public_user(value):return profiles.public(value)
 
 
-def cookie(response,request,credential):
-    response.set_cookie(COOKIE,credential,max_age=SESSION_SECONDS,httponly=True,samesite='lax',
-                        secure=request.headers.get('x-forwarded-proto',request.url.scheme)=='https',path='/')
-
-
-class Login(BaseModel):
-    email:str=Field(min_length=3,max_length=254)
-    password:str=Field(min_length=1,max_length=200)
+def profile_cookie(response,request,identifier):
+    # Public identity label, not a credential: keep the choice usable on HTTP too.
+    # A Secure choice set by HTTPS would prevent selecting a profile on HTTP later.
+    response.set_cookie(profiles.COOKIE,identifier,max_age=10*365*86400,httponly=True,samesite='lax',path='/')
+    # Old credentials are no longer used to identify a profile.
+    response.delete_cookie(COOKIE,path='/')
 
 
 @app.get('/api/health')
@@ -383,62 +369,45 @@ async def start_engine(body:StartEngine,value=Depends(admin)):return await opera
 async def stop_engine(value=Depends(admin)):return await operations.command('stop')
 
 
-@app.post('/api/auth/login')
-async def login(body:Login,request:Request,response:Response):
-    key='login:'+hashlib.sha256(((request.client.host if request.client else '')+body.email.lower()).encode()).hexdigest()
-    if not store.limit(key,maximum=20):raise HTTPException(429,'Trop de tentatives. Réessayez dans quinze minutes.')
-    credentials=body.model_dump()
-    credentials['email']=credentials['email'].strip().lower()
-    if '@' not in credentials['email']:credentials['email']+='@survie.local'
-    value=await accounts.native('/api/v1/auths/signin',credentials)
-    if 'token' not in value:raise HTTPException(409,'Une protection supplémentaire est activée. Utilisez l’administration avancée.')
-    cookie(response,request,value['token'])
-    return public_user(value)
+class ProfileSelection(BaseModel):
+    id:str=Field(min_length=1,max_length=200)
+
+
+class ProfileCreation(BaseModel):
+    name:str=Field(min_length=1,max_length=100)
+
+
+@app.get('/api/profiles')
+async def profile_list():return {'profiles':await asyncio.to_thread(profiles.listing)}
 
 
 @app.get('/api/auth/me')
+@app.get('/api/profiles/current')
 async def me(value=Depends(user)):return public_user(value)
 
 
-@app.post('/api/auth/logout')
-async def logout(request:Request,response:Response,value=Depends(user)):
-    # Native signout revokes where supported; remove this browser's cookie in every case.
-    try:await accounts.native('/api/v1/auths/signout',{},token(request))
-    except HTTPException:pass
-    with store.connect() as db:db.execute('INSERT OR REPLACE INTO revoked VALUES(?,?)',(hashlib.sha256(token(request).encode()).hexdigest(),time.time()+SESSION_SECONDS))
-    response.delete_cookie(COOKIE,path='/')
-    return {'ok':True}
+@app.post('/api/profiles/select')
+async def select_profile(body:ProfileSelection,request:Request,response:Response):
+    value=await asyncio.to_thread(profiles.selected,body.id)
+    profile_cookie(response,request,value['id'])
+    return public_user(value)
 
 
-@app.post('/api/auth/recovery-code')
-async def recovery_code(value=Depends(user)):
-    return {'code':await asyncio.to_thread(store.recovery_code,value['id'])}
+@app.post('/api/profiles',status_code=201)
+async def create_profile(body:ProfileCreation,request:Request,response:Response):
+    value=await asyncio.to_thread(profiles.create,body.name)
+    profile_cookie(response,request,value['id'])
+    return public_user(value)
 
 
-class Reset(BaseModel):
-    email:str=Field(min_length=3,max_length=254)
-    code:str=Field(min_length=10,max_length=160)
-    new_password:str=Field(min_length=8,max_length=72)
+@app.get('/api/profiles/webui-headers')
+async def webui_profile(value=Depends(user)):
+    return Response(status_code=200,headers=profiles.webui_headers(value))
 
 
-@app.post('/api/auth/recover')
-async def recover(body:Reset,request:Request,response:Response):
-    if len(body.new_password.encode())>72:raise HTTPException(400,'Le mot de passe doit tenir dans 72 octets UTF-8. Essayez moins de caractères.')
-    email=body.email.strip().lower()
-    if '@' not in email:email+='@survie.local'
-    # Both account and IP limits apply; a new source IP cannot bypass the account limit.
-    for key in ('reset-email:'+email,'reset-ip:'+(request.client.host if request.client else 'local')):
-        if not store.limit(key):raise HTTPException(429,'Trop de tentatives. Réessayez dans quinze minutes.')
-    account=await asyncio.to_thread(accounts.native_account,email)
-    if not account or not await asyncio.to_thread(store.consume_code,account['id'],body.code):
-        raise HTTPException(400,'Code ou identifiant non valide.')
-    await accounts.reset_password(email,body.new_password)
-    with store.connect() as db:jobs=db.execute("SELECT id FROM jobs WHERE user_id=? AND status IN ('queued','running')",(account['id'],)).fetchall()
-    for job in jobs:engine.cancel(job['id'])
-    new_code=await asyncio.to_thread(store.recovery_code,account['id'])
-    value=await accounts.native('/api/v1/auths/signin',{'email':email,'password':body.new_password})
-    cookie(response,request,value['token'])
-    return {'user':public_user(value),'code':new_code}
+@app.post('/api/auth/{action}')
+async def retired_login(action:str):
+    raise HTTPException(410,'Les mots de passe et codes de secours ont été remplacés par les profils. Rechargez la page puis choisissez votre profil.')
 
 
 @app.get('/api/search')
@@ -673,43 +642,21 @@ async def cancel(identifier:str,value=Depends(user)):
 async def transcribe(request:Request,file:UploadFile=File(...),value=Depends(user)):
     content=await file.read(20_000_001)
     if len(content)>20_000_000:raise HTTPException(413,'Enregistrement trop long. Essayez une dictée plus courte.')
+    credential=await accounts.profile_token(value)
     async with accounts.httpx.AsyncClient(trust_env=False,timeout=180) as client:
-        result=await client.post(accounts.WEBUI+'/api/v1/audio/transcriptions',headers={'Authorization':'Bearer '+token(request)},
+        result=await client.post(accounts.WEBUI+'/api/v1/audio/transcriptions',headers={'Authorization':'Bearer '+credential,**profiles.webui_headers(value)},
             files={'file':(Path(file.filename or 'dictee.webm').name,content,file.content_type or 'audio/webm')},data={'language':'fr'})
     if result.status_code!=200:raise HTTPException(503,'La dictée est indisponible. Vous pouvez écrire votre question.')
     return {'text':result.json().get('text','')}
 
 
 @app.get('/api/admin/users')
-async def users(value=Depends(admin)):
-    import sqlite3
-    db=sqlite3.connect('file:'+accounts.DB_PATH+'?mode=ro',uri=True);db.row_factory=sqlite3.Row
-    try:return {'users':[dict(r) for r in db.execute('SELECT id,name,email,role FROM user ORDER BY created_at')]}
-    finally:db.close()
-
-
-class AddUser(Login):
-    name:str=Field(min_length=1,max_length=100)
-    password:str=Field(min_length=8,max_length=72)
+async def users(value=Depends(admin)):return {'users':await asyncio.to_thread(profiles.listing)}
 
 
 @app.post('/api/admin/users')
-async def add_user(body:AddUser,request:Request,value=Depends(admin)):
-    if len(body.password.encode())>72:raise HTTPException(400,'Le mot de passe doit tenir dans 72 octets UTF-8.')
-    details=body.model_dump();details['email']=details['email'].strip().lower()
-    if '@' not in details['email']:details['email']+='@survie.local'
-    result=await accounts.native('/api/v1/auths/add',{**details,'role':'user','profile_image_url':'/user.png'},token(request))
-    return {k:result.get(k) for k in ('id','name','email','role')}
-
-
-class Password(BaseModel):password:str=Field(min_length=8,max_length=72)
-
-
-@app.post('/api/admin/users/{identifier}/password')
-async def change_user_password(identifier:str,body:Password,request:Request,value=Depends(admin)):
-    if len(body.password.encode())>72:raise HTTPException(400,'Le mot de passe doit tenir dans 72 octets UTF-8.')
-    await accounts.native('/api/v1/users/'+identifier+'/update',body.model_dump(),token(request))
-    return {'ok':True}
+async def add_user(body:ProfileCreation,value=Depends(admin)):
+    return public_user(await asyncio.to_thread(profiles.create,body.name))
 
 
 @app.post('/api/admin/reindex')

@@ -14,7 +14,9 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r tests/requirements.txt
       - run: docker compose version
+      - run: docker run --rm -i caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy adapt --config - --adapter caddyfile --validate < deploy/Caddyfile
       - run: python -m unittest discover -s tests -v
+      - run: python tests/profile_proxy_smoke.py
       - run: python scripts/pilot_update.py build dist/setupsurvie-update.zip
       - uses: actions/upload-artifact@v4
         with:
@@ -48,6 +50,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_setup.py -v
       - run: python -m unittest discover -s tests -p test_power_loss.py -v
       - run: python -m unittest discover -s tests -p test_pilot_api.py -v
+      - run: python -m unittest discover -s tests -p test_profiles.py -v
       - run: python -m unittest discover -s tests -p test_translations.py -v
       - run: python -m unittest discover -s tests -p test_translation_quality.py -v
       - run: python -m unittest discover -s tests -p test_document_library.py -v

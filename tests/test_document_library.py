@@ -34,7 +34,7 @@ class DocumentLibraryTests(unittest.TestCase):
         library.index_guides()
         self.client=TestClient(gateway.app);self.addCleanup(self.client.close)
         self.client.headers['Origin']='http://testserver'
-        native=patch.object(gateway.accounts,'native',AsyncMock(side_effect=lambda *args,**kwargs:self.user))
+        native=patch.object(gateway.profiles,'current',side_effect=lambda *args,**kwargs:self.user)
         native.start();self.addCleanup(native.stop)
         self.client.cookies.set(gateway.COOKIE,'fixture-only')
 
@@ -98,8 +98,8 @@ class DocumentLibraryTests(unittest.TestCase):
         self.assertEqual(len(self.client.get('/api/favorites').json()['results']),1)
         gateway.app.dependency_overrides.clear()
         self.client.cookies.clear()
-        self.assertEqual(self.client.get('/api/favorites').status_code,401)
-        self.assertEqual(self.client.get('/api/search',params={'q':'helix','favorites_only':'true'}).status_code,401)
+        self.assertEqual(self.client.get('/api/favorites').status_code,200)
+        self.assertEqual(self.client.get('/api/search',params={'q':'helix','favorites_only':'true'}).status_code,200)
 
     def test_article_favorite_search_uses_its_snapshot_without_global_kiwix_top_results(self):
         article={'id':'zim:book/article','title':'Article fixture','url':'/content/book/article','language':'eng','text':'Rare quartz calibration word.'}

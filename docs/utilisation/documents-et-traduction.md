@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.28, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.1.29, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -10,8 +10,8 @@ fourni localement, sans service Internet ni IA. **Texte et assistant** conserve
 l’aperçu textuel pour poser des questions. Le bouton d’ouverture directe et le
 téléchargement restent disponibles si le lecteur rencontre un problème.
 
-Avec un compte connecté, **Ajouter aux favoris** marque un document ou un article
-Kiwix. Les favoris sont personnels, enregistrés côté serveur et conservés entre
+Avec le profil choisi, **Ajouter aux favoris** marque un document ou un article
+Kiwix. Les favoris sont propres au profil, enregistrés côté serveur et conservés entre
 appareils. Dans la Bibliothèque, **Mes favoris** affiche la liste ; saisir une
 recherche la limite au contenu de ces documents, y compris les pages tardives des
 PDF. L’assistant peut aussi chercher dans vos favoris lorsqu’on le lui demande.
@@ -23,6 +23,10 @@ Le filtre **Traductions IA partagées** liste les traductions récentes ; une
 recherche retrouve aussi les autres traductions indexées. Les filtres de langue
 s’appliquent aux trois vues. Un document supprimé du disque peut rester dans les
 favoris ; cela ne le rend pas disponible. Son étoile peut être retirée.
+
+Depuis 0.1.29, les [profils locaux](profils-locaux.md) remplacent les mots de passe.
+Les données dites privées ci-dessous restent hors du fonds public, mais toute
+personne du réseau peut choisir leur profil pour les consulter.
 
 ## Garder un document dans une conversation
 
@@ -105,7 +109,7 @@ une traduction relue par une personne compétente.
 
 **Depuis 0.1.25, une nouvelle traduction terminée devient un document local
 partagé**, consultable sans compte sur le réseau familial. Les brouillons,
-instantanés sources, conversations et exports privés restent réservés au compte.
+instantanés sources, conversations et exports privés restent rattachés au profil, hors du fonds documentaire partagé.
 Les anciennes traductions restent privées : leur propriétaire doit choisir
 **Ajouter aux documents locaux · visible par tous** pour les publier. Cette mise
 à jour ne publie pas rétroactivement des travaux privés.
@@ -158,7 +162,7 @@ Dans le clone du projet sur le PC Bazzite, vérifier que le travail local est co
 python3 scripts/lab_refresh_library.py
 ```
 
-Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier la version **0.1.28** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
+Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier la version **0.1.29** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
 
 ## Vérifications et limites
 
