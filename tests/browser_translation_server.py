@@ -29,6 +29,7 @@ for number in range(1,7):
     page=writer.add_blank_page(width=300,height=400)
     page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
     text=('Page '+str(number)+'. Shelter dimensions and construction warnings. ')*100
+    if number==6:text+=' Appendix rotor calibration.'
     stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET').encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
 (library.GUIDES/'metadata.json').write_text(json.dumps([{'path':'shelter.en.txt','title':'Shelter fixture','language':'en',

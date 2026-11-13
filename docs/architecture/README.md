@@ -81,6 +81,30 @@ Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](../uti
 
 Les associations sont stockées dans `conversation_sources`, sans modifier les anciennes lignes des conversations. `translations` et `translation_parts` conservent les travaux privés, le texte source de chaque passage, son numéro de page et le modèle qui l’a traduit. Ces ajouts SQLite sont non destructifs ; le contrat de données reste 1. Les associations anciennes absentes ne sont pas reconstruites à partir de citations ambiguës.
 
-`pilot/translations.py` extrait l’original PDF dans un thread, borne la préparation puis traite les passages avec un schéma de réponse Ollama. Le contenu à traduire est fourni comme message utilisateur ; l’historique d’un refus précédent n’est pas réinjecté. Le worker partage `engine.LOCK` avec le chat et vérifie le contrôleur avant chaque passage. Il enregistre le résultat seulement si la traduction est toujours active. Le redémarrage du pilote met les travaux actifs en pause ; aucune inférence ne reprend au démarrage. Les exports sont authentifiés et les traductions ne rejoignent pas le fonds public.
+`pilot/translations.py` extrait l’original PDF dans un thread, borne la préparation puis traite les passages avec un schéma de réponse Ollama. Le contenu à traduire est fourni comme message utilisateur ; l’historique d’un refus précédent n’est pas réinjecté. Le worker partage `engine.LOCK` avec le chat et vérifie le contrôleur avant chaque passage. Il enregistre le résultat seulement si la traduction est toujours active. Le redémarrage du pilote met les travaux actifs en pause ; aucune inférence ne reprend au démarrage. Les exports restent authentifiés. Depuis 0.1.25, les nouvelles traductions terminées rejoignent le fonds public sous forme de HTML identifié, sans texte de conversation ; les anciennes restent privées jusqu’à publication explicite.
 
 Le [guide d’utilisation](../utilisation/documents-et-traduction.md) précise les limites de texte, la pagination, les images et les validations restantes.
+
+## Lecture et défaillances partielles — 0.1.25
+
+`pilot/publications.py` publie les traductions sans garder le verrou d’inférence.
+Une intention dans `settings`, enregistrée avec la traduction, permet de reprendre
+une publication interrompue ; `translation_publications` conserve la provenance
+indépendamment des conversations. Le fichier est écrit durablement, l’index est
+mis à jour dans une transaction, puis la publication est marquée terminée. Un
+nouvel essai identique ne réécrit pas le fichier. Les erreurs conservent le texte
+privé et ne font pas échouer une traduction déjà terminée.
+
+`pilot/favorites.py` gère les favoris par propriétaire. La recherche filtre les
+sources avant la limite de résultats ; les articles Kiwix ont un instantané FTS
+personnel. Les routes optionnelles chargent leur module à la demande et renvoient
+une erreur 503 localisée en cas de panne. L’état `/api/health` expose les noms des
+fonctions dégradées. La réindexation et la récupération des publications ont des
+délais de démarrage bornés ; SQLite et le système de fichiers restent communs.
+
+`portal/documents.js` enrichit le portail séparément. `pdf.html` et PDF.js ont leur
+propre contexte JavaScript ; les fichiers PDF sont chargés depuis le serveur
+statique, indépendamment de l’API. Un petit script distinct conserve les liens
+d’ouverture et de téléchargement si le rendu échoue. `secours.html` consulte une
+liste statique de fichiers publics, sans comptes ni favoris. Une panne de génération
+de cette liste ne fait pas échouer l’indexation de recherche.

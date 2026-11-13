@@ -47,6 +47,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_power_loss.py -v
       - run: python -m unittest discover -s tests -p test_pilot_api.py -v
       - run: python -m unittest discover -s tests -p test_translations.py -v
+      - run: python -m unittest discover -s tests -p test_document_library.py -v
+      - run: python -m unittest discover -s tests -p test_pdf_assets.py -v
       - run: python -m unittest discover -s tests -p test_source_metadata.py -v
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
       - run: python -m unittest discover -s tests -p test_learning.py -v

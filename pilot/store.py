@@ -54,6 +54,21 @@ def init():
             if column not in columns:db.execute('ALTER TABLE messages ADD COLUMN '+column+' TEXT')
         db.execute("UPDATE jobs SET status='interrupted',error='Le service a redémarré. Vous pouvez relancer la question.',updated=? WHERE status IN ('queued','running')", (time.time(),))
 
+    # Optional schema cannot roll back or prevent the core initialization.
+    schemas={
+        'favorites':[
+            'CREATE TABLE IF NOT EXISTS favorites(user_id TEXT NOT NULL,source_id TEXT NOT NULL,title TEXT NOT NULL,url TEXT NOT NULL,language TEXT NOT NULL,created REAL NOT NULL,PRIMARY KEY(user_id,source_id))',
+            "CREATE VIRTUAL TABLE IF NOT EXISTS favorite_articles USING fts5(user_id UNINDEXED,id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2')"],
+        'publications':[
+            'CREATE TABLE IF NOT EXISTS translation_publications(translation_id TEXT PRIMARY KEY,user_id TEXT NOT NULL,source_id TEXT NOT NULL,title TEXT NOT NULL,source_meta TEXT NOT NULL,auto_publish INTEGER NOT NULL DEFAULT 0,published_path TEXT UNIQUE,published_at REAL,error TEXT)']}
+    for feature,statements in schemas.items():
+        try:
+            with connect() as db:
+                for statement in statements:db.execute(statement)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning('Initialisation de %s indisponible ; état principal conservé.',feature)
+
 
 def canonical(code):
     return ''.join(ch for ch in str(code).upper() if ch.isalnum())

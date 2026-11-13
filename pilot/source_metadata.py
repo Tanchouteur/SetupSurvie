@@ -1,6 +1,22 @@
 """Bibliographic facts supplied by metadata, never guessed from file timestamps."""
 from datetime import date, datetime
 import re
+import json
+import sqlite3
+
+TRANSLATION_NOTICE='Traduction IA non vérifiée. Comparez les nombres, unités, tableaux et consignes avec le document original. Les illustrations ne sont pas traduites.'
+
+
+def translation_metadata(db,path):
+    if not path.startswith('TRAD-'):return {'is_ai_translation':False}
+    result={'is_ai_translation':True,'translation_notice':TRANSLATION_NOTICE}
+    try:
+        row=db.execute('SELECT source_id,title,source_meta FROM translation_publications WHERE published_path=?',(path,)).fetchone()
+        if row:
+            meta=json.loads(row['source_meta'])
+            result.update(original_id=row['source_id'],original_title=row['title'],original_document_date=meta.get('document_date',''),original_edition=meta.get('edition',''))
+    except (sqlite3.Error,ValueError,TypeError,AttributeError):pass
+    return result
 
 DATE_FIELDS=('document_date','collected_at','archive_date')
 FIELDS=('document_date','edition','collected_at','archive_date')

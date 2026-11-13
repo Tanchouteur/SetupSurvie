@@ -45,3 +45,12 @@ les guides concernés et les validations encore nécessaires.
 Depuis le pilote 0.1.10, les lieux communs et commandes de gestion sont regroupés dans Paramètres. Le domicile est distinct du départ actuel ; les adresses locales sont recherchées dans les zones préparées ou choisies manuellement. Voir le [guide](../utilisation/parametres-et-cartes.md).
 
 Le 12 novembre 2026, Louis demande la conservation du document associé et une traduction progressive. Depuis 0.1.16, ce traitement privé dispose d’une progression, de plages PDF, d’une pause/reprise et d’un export texte. L’original est conservé ; les figures et la mise en page ne sont pas traduites. Voir le [guide actuel](../utilisation/documents-et-traduction.md). Les essais réels des modèles restent distincts des tests simulés. La branche `main` reste la référence unique à maintenir ; les branches de travail intégrées créées pour ces livraisons sont temporaires.
+
+Le 13 novembre 2026, Louis demande le partage des traductions terminées dans les
+documents locaux, les favoris et une meilleure isolation des pannes. Le pilote
+0.1.25 publie les nouvelles traductions en HTML marqué IA non vérifiée, conserve
+les anciennes privées jusqu’à action explicite et ajoute des favoris personnels
+recherchables. Le lecteur PDF dédié et l’accès statique de secours réduisent la
+dépendance à l’API. Le [guide actuel](../utilisation/documents-et-traduction.md)
+précise les replis et les limites ; cette isolation ne couvre pas une panne du
+disque ou du serveur web.
