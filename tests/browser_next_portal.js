@@ -9,6 +9,7 @@ async page => {
   assert(await page.locator('.next-banner').count()===1,'Nouvelle interface par défaut');
   await page.locator('#navigation [data-route="bibliotheque"]').click();
   await page.locator('[data-route="bibliotheque/collections"]').click();
+  await page.locator('#collection-filter').fill('');
   await page.waitForSelector('#data-guides button');
   assert(await page.locator('#next-collections').isVisible(),'Bibliothèque réelle et guides');
   // Existing reader and enriched PDF/favorite functions retain the same controls.
@@ -17,7 +18,7 @@ async page => {
   assert(await page.locator('#reader').isVisible(),'Lecture du vrai document fixture');
   await page.goBack();await page.waitForFunction(()=>document.querySelector('#next-collections').hidden===false);
   assert(await page.locator('#next-collections').isVisible(),'Retour à la collection');
-  await page.locator('[data-route="bibliotheque/recherche"]').click();await page.locator('#library-query').fill('Shelter');
+  await page.locator('.next-tabs [data-route="bibliotheque/recherche"]').click();await page.locator('#library-query').fill('Shelter');
   await page.locator('#library-search').evaluate(f=>f.requestSubmit());await page.waitForSelector('#search-results .result');
   assert(page.url().includes('q=Shelter'),'Recherche et filtres adressables');
   await page.locator('#search-results .result button').first().click();await page.waitForSelector('#reader h2');
@@ -52,8 +53,10 @@ async page => {
   await page.locator('#next-machine-tabs [data-route="appareil/telechargements"]').click();
   assert(!await page.locator('#geo-download-form').isVisible(),'Préparation complexe retirée sur mobile');
   assert(await page.locator('#view-data .next-activity').isVisible(),'Suivi accessible sur mobile');
-  await page.locator('#navigation [data-route="cartes"]').click();
-  assert(await page.getByRole('link',{name:'Ouvrir les cartes et mes repères →'}).isVisible(),'Cartes réelles accessibles sur mobile');
+  await page.locator('#navigation').getByRole('link',{name:'Cartes',exact:true}).click();
+  await page.waitForURL('**/cartes.html?interface=nouveau');
+  await page.waitForFunction(()=>window.SurvieMap);
+  assert(await page.locator('#map').isVisible(),'L’onglet Cartes ouvre directement la carte sur mobile');
   for(const width of [320,390,760,820,1440]){await page.setViewportSize({width,height:950});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement à '+width);}
   await page.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau');
   await page.waitForFunction(()=>document.querySelector('#pdf-ask').getAttribute('href')?.includes('/nouveau/'));

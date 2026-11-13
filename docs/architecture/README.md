@@ -202,3 +202,8 @@ Le téléchargeur enregistre aussi un petit plan courant pour les transferts dir
 Windows/Linux. Aucune commande indépendante n’est ajoutée par cet endpoint.
 Voir le [guide](../utilisation/nouvelle-interface.md) et le
 [bilan](../essais/2026-11-13-interface-fonctionnelle.md).
+
+Depuis 0.1.34, `portal/nouveau/collections.js` filtre uniquement les cartes de
+l’inventaire déjà affichées ; leurs actions restent attachées aux mêmes éléments.
+Le routeur mémorise le filtre et ouvre directement la page native Cartes.
+Le relief repose sur les tuiles locales existantes, sans nouvelle source réseau.

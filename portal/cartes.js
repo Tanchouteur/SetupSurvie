@@ -13,11 +13,12 @@
     if(!hasBasemap)maps.push({id:'empty',title:'Aucun fond de carte préparé',center:[2.3,46.5],bbox:[-180,-80,180,80],maxzoom:0});
     document.getElementById('no-basemap').hidden=hasBasemap;
     let geoData=null,reference=null;if(user)try{const [g,r]=await Promise.all([fetch('/api/geography/status'),fetch('/api/settings')]);if(g.ok)geoData=await g.json();if(r.ok){const settings=await r.json();reference=settings.departure||settings.home;}}catch(_){}
-    let showRelief=false;const hasTerrain=geoData?.datasets?.some(d=>d.terrain);
+    const hasTerrain=!!geoData?.datasets?.some(d=>d.terrain);let showRelief=hasTerrain;
     const reliefButton=document.getElementById('relief');
     reliefButton.disabled=false;reliefButton.dataset.unavailable=String(!hasTerrain);
-    reliefButton.textContent=hasTerrain?'Afficher le relief':'Pourquoi le relief est indisponible ?';
-    document.getElementById('relief-help').textContent=!user?'Choisissez un profil pour vérifier les altitudes disponibles.':geoData===null?'Le service des altitudes est momentanément indisponible. Réessayez en actualisant la page.':!hasTerrain?'Aucune altitude n’a été téléchargée. Le fond de carte seul ne contient pas de relief.':'Altitudes locales disponibles. Activez l’ombrage pour mieux lire le terrain.';
+    reliefButton.setAttribute('aria-pressed',String(showRelief));
+    reliefButton.textContent=hasTerrain?'Masquer le relief':'Pourquoi le relief est indisponible ?';
+    document.getElementById('relief-help').textContent=!user?'Choisissez un profil pour vérifier les altitudes disponibles.':geoData===null?'Le service des altitudes est momentanément indisponible. Réessayez en actualisant la page.':!hasTerrain?'Aucune altitude n’a été téléchargée. Le fond de carte seul ne contient pas de relief.':'Relief affiché par défaut dans les zones dont les altitudes sont disponibles. Vous pouvez le masquer.';
     document.getElementById('relief-prepare').hidden=!user||hasTerrain||geoData===null;
     const protocol = new pmtiles.Protocol();
     maplibregl.addProtocol('pmtiles', protocol.tile);

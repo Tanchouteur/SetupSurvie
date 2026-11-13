@@ -6,7 +6,7 @@
   const home=modern?'/nouveau/':'/classique/';
   const map=document.querySelector('.map-header');
   const back=map?.querySelector('.back-link')||document.querySelector('header > a');
-  if(back){back.href=modern?(map?home+'#/cartes':home+'#/bibliotheque/collections'):home+'#library';back.textContent=map?'← Cartes et bibliothèque':'← Bibliothèque';}
+  if(back){back.href=modern?(map?home+'#/accueil':home+'#/bibliotheque/collections'):home+'#library';back.textContent=map?'← Accueil':'← Bibliothèque';}
   const update=()=>{
     const ask=document.getElementById('pdf-ask');
     if(ask){const id=new URLSearchParams(location.search).get('id');if(id){const target=home+'?document='+encodeURIComponent(id)+(modern?'#/assistant':'#chat');if(ask.getAttribute('href')!==target)ask.href=target;}}

@@ -83,6 +83,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Recherche des ressources et cartes directes — 13 novembre 2026](essais/2026-11-13-recherche-collections-et-cartes.md) — filtre Collections, relief local par défaut et non-régression de l’interface 0.1.34.
+
 - [Audit du fonds réel de Marc — 13 novembre 2026](essais/2026-11-13-audit-fonds-marc.md) — volumes, besoins, accès aux vidéos et défaut de recherche Kiwix ; cartes préparées séparément.
 - [Interface fonctionnelle Windows/Linux — 13 novembre 2026](essais/2026-11-13-interface-fonctionnelle.md) — API réelles sur fixtures, classique conservée et validations distinctes.
 

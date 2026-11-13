@@ -8,7 +8,7 @@
   document.body.prepend(notice);
   const nav=make('nav','next-main-nav');nav.id='navigation';nav.setAttribute('aria-label','Navigation principale');
   for(const [path,icon,label] of [['accueil','⌂','Accueil'],['bibliotheque','▤','Bibliothèque'],['assistant','◌','Assistant'],['cartes','⌖','Cartes'],['appareil','◴','Mon appareil']]){
-    const a=make('a','nav-item',`<span aria-hidden="true">${icon}</span><span>${label}</span>`);a.href='#/'+path;a.dataset.route=path;nav.append(a);
+    const a=make('a','nav-item',`<span aria-hidden="true">${icon}</span><span>${label}</span>`);a.href=path==='cartes'?'/cartes.html?interface=nouveau':'#/'+path;if(path!=='cartes')a.dataset.route=path;nav.append(a);
   }
   get('main-navigation').querySelector('nav').replaceWith(nav);
   const history=make('details','next-history');history.append(make('summary','','Vos conversations'));history.append(document.querySelector('.sidebar-section'));
@@ -31,7 +31,12 @@
   const learning=make('div','next-library-pane');learning.id='next-learning';learningBrowser.open=true;learning.append(learningBrowser);
   const collections=make('div','next-library-pane');collections.id='next-collections';
   collections.append(make('p','muted','Ces collections sont réellement présentes sur le serveur. Leur disponibilité de lecture est vérifiée séparément de leur téléchargement.'));
-  collections.append(make('h2','','Encyclopédies et livres'),get('data-books'),make('h2','','Guides et fiches pratiques'),get('data-guides'));
+  const filter=make('form','next-collection-filter');filter.id='collection-filter-form';
+  filter.innerHTML='<label for="collection-filter">Chercher une ressource installée</label><div class="next-collection-search"><input id="collection-filter" type="search" maxlength="160" autocomplete="off" placeholder="Ex. : Wikipédia, jardin, Anses…" aria-describedby="collection-filter-help"><button id="collection-filter-clear" class="secondary" type="button">Tout afficher</button></div><p id="collection-filter-help" class="small muted">Recherche dans les noms et les descriptions des collections et guides, sans ouvrir leur contenu.</p><p id="collection-filter-count" class="small" role="status" aria-live="polite"></p><a id="collection-search-inside" href="#/bibliotheque/recherche">Chercher aussi à l’intérieur des documents →</a>';
+  const empty=make('p','empty-panel','Aucune ressource de l’inventaire ne correspond à ces mots. Un article ou un chapitre peut toutefois traiter ce sujet : essayez la recherche dans les documents.');empty.id='collection-filter-empty';empty.hidden=true;
+  const booksTitle=make('h2','','Encyclopédies et livres');booksTitle.id='collection-books-title';
+  const guidesTitle=make('h2','','Guides et fiches pratiques');guidesTitle.id='collection-guides-title';
+  collections.append(filter,empty,booksTitle,get('data-books'),guidesTitle,get('data-guides'));
   const invNotice=make('p','small muted');invNotice.id='next-inventory-notice';invNotice.setAttribute('role','status');collections.prepend(invNotice);
   lib.append(collections,search,learning);
   const storage=make('section','view');storage.id='view-storage';storage.hidden=true;

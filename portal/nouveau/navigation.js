@@ -51,6 +51,7 @@
   window.addEventListener('resize',fitNextChat,{passive:true});window.visualViewport?.addEventListener('resize',fitNextChat,{passive:true});
   function activate(route,restoring=false){
     if(!route)return;
+    if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html?interface=nouveau');return;}
     if(['settings','users'].includes(route.name)&&S.user?.role!=='admin'){
       if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');auth();}else S.requestedView=route.name;
       return;
@@ -75,7 +76,7 @@
     if(route.name==='library'){
       put('library-tab',route.tab);
       $('next-collections').hidden=route.tab!=='collections';$('next-learning').hidden=route.tab!=='parcours';$('next-search').hidden=['collections','parcours'].includes(route.tab);
-      if(route.tab==='collections'&&Date.now()-inventoryAt>60000)loadData();
+      if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setQuery(query);if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
       if(!['collections','parcours'].includes(route.tab)){
         $('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';
         const scope=route.tab==='favoris'?'favorites':route.tab==='traductions'?'translations':'all';
@@ -173,6 +174,7 @@
   document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!applying&&S.user)put('detail:'+node.id,node.open);},true);
   let frame=0;window.addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;remember();});},{passive:true});
   $('chat-input').addEventListener('input',saveDraft);
+  document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.
   $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);skipSearch=true;navigate(route);skipSearch=false;},true);
   document.addEventListener('click',event=>{

@@ -1,6 +1,6 @@
 # La nouvelle interface et l’interface classique
 
-**Guide actuel — 0.1.32, 13 novembre 2026.**
+**Guide actuel — 0.1.34, 13 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -14,7 +14,7 @@ La maquette fictive reste séparée sous `/maquette/`.
 | Accueil | Rechercher, ouvrir une collection, aller à l’assistant ou aux cartes |
 | Bibliothèque | Collections réellement présentes, recherche, parcours, favoris et traductions |
 | Assistant | Conversations, documents associés, traduction, dictée, sources et modes de réponse |
-| Cartes | Ouvrir les cartes réelles, repères et itinéraires existants |
+| Cartes | Accès direct à la carte réelle, aux repères et aux itinéraires existants |
 | Mon appareil | Vue d’ensemble, activité, téléchargements, stockage et réglages |
 
 Dans Bibliothèque → Collections, **Ouvrir cette collection** ouvre directement
@@ -22,6 +22,25 @@ son lecteur Kiwix local, sans question ni recherche préalable. Les guides garde
 leur lecture, leur PDF, leurs favoris et la possibilité de poser une question.
 Le lien Open WebUI reste visible pour les fonctions avancées et ses historiques
 distincts. Les sources originales et l’accès de secours restent disponibles.
+
+Depuis 0.1.34, le champ **Chercher une ressource installée** filtre les
+encyclopédies, livres et guides de Collections par nom, nom de fichier,
+description et langue, sans tenir compte des accents ou majuscules. Plusieurs
+mots peuvent être saisis dans un ordre différent. Les boutons d’ouverture restent
+ceux des cartes habituelles ; **Tout afficher** retire le filtre. Le compteur
+distingue les correspondances de celles réellement disponibles à la lecture.
+
+Ce filtre n’ouvre pas le contenu des archives et ne lance ni IA ni téléchargement.
+Aucune correspondance dans les titres ne prouve l’absence d’un sujet dans les
+articles. **Chercher aussi à l’intérieur des documents** reprend les mots saisis
+dans l’onglet Rechercher. Le filtre est conservé par profil et figure dans
+l’adresse, pour le retour navigateur et le rechargement.
+
+L’onglet **Cartes** ouvre désormais directement la page cartographique. Le relief
+est affiché par défaut lorsque des altitudes locales sont disponibles. On peut
+le masquer ou le réactiver dans Affichage. Une zone dépourvue d’altitudes garde
+son fond de carte ; aucune préparation ou connexion Internet n’est déclenchée.
+Le lien de retour mène à l’accueil, sans écran intermédiaire ni boucle vers la carte.
 
 **Mon appareil → Réglages** reprend lieux, commandes du moteur, ajout de guides,
 profils, accès téléphone/QR code, contexte exact et retours. Le profil Famille

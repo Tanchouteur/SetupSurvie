@@ -25,7 +25,7 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 
 ## Commencer
 
-Le portail **0.1.32** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.1.34** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 accessible par **Interface classique** ; la maquette fictive est conservée séparément.
 

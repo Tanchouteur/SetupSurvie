@@ -12,7 +12,7 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
     for(let attempt=0;attempt<50;attempt++){try{if((await fetch('http://127.0.0.1:8766/cartes.html')).ok)break;}catch(_){}await new Promise(r=>setTimeout(r,100));}
     for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
       browser=await engine.launch({headless:true});
-      for(const file of ['browser_map_redesign.js','browser_map_notebook.js','browser_ux_preview.js']){
+      for(const file of ['browser_map_redesign.js','browser_map_notebook.js','browser_ux_preview.js','browser_map_defaults.js']){
         const context=await browser.newContext();const page=await context.newPage();
         const source=fs.readFileSync(path.join(__dirname,file),'utf8').replaceAll('http://10.0.3.2:8766','http://127.0.0.1:8766').replaceAll('/artifacts/','/tmp/maps-ui-');
         const recipe=eval('('+source+')');

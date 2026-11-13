@@ -104,7 +104,7 @@ et les données de localisation.
 - Rechercher une adresse locale ou toucher la carte pour choisir un point.
 - Chercher autour de ce point : eau, alimentation, santé, abri, réparation ou communications.
 - Lire l’altitude approximative si la dalle est téléchargée.
-- Activer l’ombrage du relief, calculé localement.
+- Afficher ou masquer l’ombrage du relief, calculé localement ; depuis 0.1.34, il est affiché par défaut si les altitudes sont disponibles.
 - Mesurer entre deux points et afficher une coupe du terrain (50 km maximum).
 - Choisir les positions manuellement ; le bouton GPS a été retiré du parcours en 0.1.11.
 
@@ -174,3 +174,11 @@ secours Overpass fixe est VK Maps, recensé parmi les [instances publiques](http
 Les données HGT ne constituent pas une carte d’itinéraires ; ceux-ci restent à
 préparer séparément. La préparation depuis le bouton existant reste possible
 pour d’autres centres et rayons.
+
+## Accès direct et relief — 0.1.34
+
+L’onglet Cartes de la nouvelle interface ouvre directement la carte. Le relief
+local préparé s’affiche dès l’ouverture ; le bouton **Masquer le relief** permet
+de le retirer. Si aucune altitude n’est disponible, la carte reste consultable
+et explique ce manque, sans téléchargement automatique. L’existence d’une zone
+d’altitudes n’implique pas une couverture du relief partout sur la carte mondiale.
