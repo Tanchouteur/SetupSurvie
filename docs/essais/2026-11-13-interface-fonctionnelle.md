@@ -63,7 +63,13 @@ défilant empêche le panneau de traduction de pousser le composeur hors écran.
 La CI Windows a aussi révélé la différence entre alias 8.3 et chemin long du
 répertoire temporaire : les chemins de plan sont désormais normalisés après
 refus des composants liés, avant comparaison aux racines autorisées.
-Les résultats CI finaux sont consignés avant publication.
+La [CI finale du code fonctionnel `133bf01`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43462498101)
+est **entièrement réussie** : Linux (suite complète de 322 tests, dont 3 ignorés,
+proxy des profils, configuration Caddy et paquet logiciel), Windows (modules
+ciblés, installateurs simulés, handles et raccourcis COM dans le profil jetable),
+Chromium/WebKit (classique, nouvelle interface et traduction dans les deux),
+et routage hors ligne sur réseau synthétique. Aucun de ces résultats ne vaut
+installation physique chez Marc ou essai Safari iPhone réel.
 
 ## Limites réelles
 
