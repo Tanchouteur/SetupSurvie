@@ -31,8 +31,10 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const documentsResult=await documentsRecipe(page);
       const qualityRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_quality.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const qualityResult=await qualityRecipe(page);
+      const profileRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_profiles.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const profileResult=await profileRecipe(page);
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

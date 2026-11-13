@@ -192,6 +192,9 @@ class InstallationTests(unittest.TestCase):
                 services = json.loads(result.stdout)['services']
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')
                 self.assertEqual(services['open-webui']['environment']['WEBUI_SECRET_KEY'], self.config['secret'])
+                self.assertEqual(services['open-webui']['environment']['WEBUI_AUTH_TRUSTED_EMAIL_HEADER'],'X-Survie-Email')
+                self.assertNotIn('ports',services['open-webui'])
+                self.assertTrue(any(p['published']=='3000' and p['target']==3000 for p in services['portal']['ports']))
                 self.assertEqual(Path(services['portal']['volumes'][2]['source']), Path(c['data_dir']) / 'catalog')
                 self.assertEqual('ollama' in services, target == 'linux')
                 if target == 'linux':

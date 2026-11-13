@@ -32,6 +32,21 @@
 		file_server
 	}
 }
+(webui_routes) {
+    route {
+        request_header -X-Survie-Email
+        request_header -X-Survie-Name
+        request_header -X-Survie-Role
+        forward_auth pilot:8000 {
+            uri /api/profiles/webui-headers
+            copy_headers X-Survie-Email X-Survie-Name X-Survie-Role
+        }
+        reverse_proxy open-webui:8080
+    }
+}
+:3000 {
+    import webui_routes
+}
 :8080 {
 	import portal_routes
 }
@@ -41,7 +56,7 @@
 }
 {$TLS_WEBUI_ADDRESSES:https://localhost:8444} {
 	tls internal
-	reverse_proxy open-webui:8080
+	import webui_routes
 }
 {$TLS_KIWIX_ADDRESSES:https://localhost:8445} {
 	tls internal

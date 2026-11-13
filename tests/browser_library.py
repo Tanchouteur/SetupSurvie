@@ -36,7 +36,7 @@ def main():
                     request.continue_(); return
                 requests.append(path)
                 value = {}
-                if path=='/api/auth/me':value={'id':'browser','name':'Test','email':'test','role':role[0],'recovery_ready':True}
+                if path=='/api/profiles/current':value={'id':'browser','name':'Test','email':'test','role':role[0],'recovery_ready':True}
                 elif path=='/api/status':value={'version':'0.1.9','modes':[],'books':[],'guides':1}
                 elif path=='/api/conversations':value={'conversations':[]}
                 elif path=='/api/inference':value={'online':True,'control_available':True,'message':'Assistant prêt','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{}}

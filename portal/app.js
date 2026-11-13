@@ -3,7 +3,7 @@ const $=id=>document.getElementById(id);
 const S={view:'home',user:null,conversation:null,source:null,job:null,poll:null,status:null,searchAbort:null,translation:null,translationOffset:0};
 const EMPTY=$('chat-messages').innerHTML;
 let contentTimer=null,contentState=null,contentInitialized=false,contentCommandBusy=false;
-const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',settings:'Paramètres',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Comptes et accès'};
+const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',settings:'Paramètres',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Profils locaux'};
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
 const mobileNav=matchMedia('(max-width:760px)');
 function fitChatViewport(){
@@ -36,18 +36,18 @@ window.addEventListener('pagehide',rememberReading);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberReading();});
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
 async function api(path,body,options={}){
-  const config={credentials:'same-origin',...options};
+  const config={credentials:'same-origin',...options};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
   if(body!==undefined){config.method=options.method||'POST';config.body=body instanceof FormData?body:JSON.stringify(body);if(!(body instanceof FormData))config.headers={...config.headers,'Content-Type':'application/json'};}
   const r=await fetch('/api'+path,config);let data;
   try{data=await r.json();}catch(_){throw new Error('Le service ne répond pas. Réessayez dans quelques instants.');}
-  if(!r.ok){if(r.status===401&&path!=='/auth/login'){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
+  if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){location.reload();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
   return data;
 }
 function button(text,action,cls='secondary'){const b=element('button',text,cls);b.type='button';b.addEventListener('click',action);return b;}
 function view(name){
   if(name==='admin')name='settings';
   if(!(name in labels))name='home';
-  if(['settings','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Cette page est réservée à l’administrateur.');return;}S.requestedView=name;auth();return;}
+  if(['settings','users'].includes(name)&&S.user?.role!=='admin'){if(S.user){toast('Choisissez le profil Famille pour ouvrir les réglages.');auth();return;}S.requestedView=name;auth();return;}
   rememberReading();
   setMenu(false,false);
   S.view=name;if(name!=='data')clearTimeout(contentTimer);if(name!=='chat')clearTimeout(translationTimer);else if(S.translation)loadTranslation(S.translation);
@@ -62,21 +62,25 @@ function view(name){
 }
 function accountUI(){
   const label=$('account-label');label.replaceChildren();
-  label.append(document.createTextNode(S.user?.name||'Se connecter'),element('small',S.user?'Votre compte local':'Retrouver mes conversations'));
+  label.append(document.createTextNode(S.user?.name||'Choisir un profil'),element('small',S.user?'Changer de profil · sans mot de passe':'Conversations et favoris'));
   $('content-manager').hidden=S.user?.role!=='admin';if(S.view==='data'&&S.user){loadContentManager();loadGeography();}
-  $('mobile-account').textContent=S.user?.name||'Se connecter';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('geo-download-form').hidden=S.user?.role!=='admin';
+  $('mobile-account').textContent=S.user?.name||'Choisir un profil';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('geo-download-form').hidden=S.user?.role!=='admin';
   document.dispatchEvent(new CustomEvent('survie:auth'));
-  if(S.user&&!S.user.recovery_ready)toast('Pensez à préparer votre code de secours dans « Mon compte ».');
 }
-function auth(){
+async function auth(){
   setMenu(false,false);
-  if(S.user){$('profile-name').textContent=S.user.name;$('profile-email').textContent=S.user.email;$('recovery-code').hidden=true;$('code-value').textContent='';$('account-dialog').showModal();}
-  else{$('login-form').hidden=false;$('recovery-form').hidden=true;$('auth-title').textContent='Heureux de vous retrouver.';$('auth-dialog').showModal();}
+  const dialog=$('auth-dialog');if(!dialog.open)dialog.showModal();$('profile-error').textContent='';$('profile-list').replaceChildren();
+  try{const data=await api('/profiles');for(const profile of data.profiles){const b=button(profile.name+(profile.id===S.user?.id?' · utilisé ici':''),()=>switchProfile(profile.id),'profile-choice secondary');b.setAttribute('aria-pressed',String(profile.id===S.user?.id));$('profile-list').append(b);}}
+  catch(error){$('profile-error').textContent=error.message;}
 }
+async function switchProfile(identifier){
+  try{await api('/profiles/select',{id:identifier});localStorage.setItem('survie.profile.changed',String(Date.now()));location.reload();}catch(error){$('profile-error').textContent=error.message;}
+}
+
 function needUser(){if(S.user)return true;auth();return false;}
 async function histories(){
   const list=$('conversation-list'),picker=$('conversation-picker');list.replaceChildren();picker.replaceChildren(element('option','Retrouver une conversation'));picker.firstChild.value='';
-  if(!S.user){list.append(element('p','Connectez-vous pour retrouver vos échanges.','muted small'));picker.hidden=true;return;}
+  if(!S.user){list.append(element('p','Choisissez un profil pour retrouver vos échanges.','muted small'));picker.hidden=true;return;}
   try{const data=await api('/conversations');for(const c of data.conversations){const row=element('div',undefined,'conversation-row'),remove=button('×',()=>deleteConversation(c),'conversation-delete');remove.setAttribute('aria-label','Supprimer la conversation : '+c.title);remove.title='Supprimer cette conversation';row.append(button(c.title,()=>openConversation(c.id),'conversation-link'),remove);list.append(row);const o=element('option',c.title);o.value=c.id;picker.append(o);}picker.hidden=!data.conversations.length;if(!data.conversations.length)list.append(element('p','Vos premières conversations apparaîtront ici.','muted small'));}catch(e){toast(e.message);}
 }
 async function deleteConversation(c){
@@ -386,11 +390,12 @@ $('content-form').onchange=renderContentState;
 $('content-download').onclick=()=>contentAction('download',{id:contentState.id});
 $('content-pause').onclick=()=>contentAction('pause');
 $('content-refresh').onclick=loadContentManager;
-function passwordDialog(name){return new Promise(resolve=>{const dialog=element('dialog'),form=element('form'),input=element('input'),label=element('label','Nouveau mot de passe (8 caractères minimum)');input.type='password';input.autocomplete='new-password';input.required=true;input.minLength=8;label.append(input);const save=element('button','Changer le mot de passe');save.type='submit';form.append(element('h2','Compte de '+name),label,save,button('Annuler',()=>dialog.close(),'secondary'));form.onsubmit=e=>{e.preventDefault();resolve(input.value);dialog.close();};dialog.addEventListener('close',()=>{dialog.remove();resolve(null);},{once:true});dialog.append(form);document.body.append(dialog);dialog.showModal();});}
+
 async function loadAdmin(){
   if(S.user?.role!=='admin')return;
-  try{const data=await api('/admin/users');$('users-list').replaceChildren();for(const u of data.users){const row=element('div',undefined,'user-entry');const copy=element('span',u.name);copy.append(element('small',u.email+' · '+(u.role==='admin'?'administrateur':'lecteur')));row.append(copy,button('Changer le mot de passe',async()=>{const pass=await passwordDialog(u.name);if(!pass)return;try{await api('/admin/users/'+encodeURIComponent(u.id)+'/password',{password:pass});toast('Mot de passe changé. Les anciennes sessions ont été fermées.');if(u.id===S.user.id){S.user=null;accountUI();auth();}}catch(e){toast(e.message);}},'secondary'));$('users-list').append(row);}const context=await api('/assistant-context');$('assistant-policy').textContent=context.system;await feedbacks();}catch(e){toast(e.message);}
+  try{const data=await api('/admin/users');$('users-list').replaceChildren();for(const u of data.users){const row=element('div',undefined,'user-entry');const copy=element('span',u.name);copy.append(element('small',u.role==='admin'?'Accès aux réglages':'Profil personnel'));row.append(copy);$('users-list').append(row);}const context=await api('/assistant-context');$('assistant-policy').textContent=context.system;await feedbacks();}catch(e){toast(e.message);}
 }
+
 async function feedbacks(){try{const data=await api('/admin/feedback');$('feedback-list').replaceChildren();for(const f of data.feedback){const item=element('article',undefined,'feedback-entry');item.append(element('small',new Date(f.created*1000).toLocaleString('fr-FR')+' · '+f.view,'muted'),element('p',f.content));$('feedback-list').append(item);}if(!data.feedback.length)$('feedback-list').append(element('p','Les premiers retours apparaîtront ici.','muted small'));}catch(e){toast(e.message);}}
 
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>view(b.dataset.view));
@@ -404,14 +409,10 @@ $('engine-start').onclick=()=>engineCommand('start');$('engine-stop').onclick=()
 $('print-connect').onclick=()=>window.print();$('copy-connect').onclick=async()=>{const text=$('connect-address').href;try{if(navigator.clipboard)await navigator.clipboard.writeText(text);else{const input=element('textarea');input.value=text;document.body.append(input);input.select();const done=document.execCommand('copy');input.remove();if(!done)throw new Error();}toast('Adresse copiée.');}catch(_){toast('Vous pouvez sélectionner et copier l’adresse affichée.');}};
 $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.target.value);};
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
-$('forgot').onclick=()=>{$('login-form').hidden=true;$('recovery-form').hidden=false;$('auth-title').textContent='Récupérer mon compte.';};$('back-login').onclick=()=>{$('login-form').hidden=false;$('recovery-form').hidden=true;$('auth-title').textContent='Heureux de vous retrouver.';};
-$('login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type="submit"]');b.disabled=true;$('login-error').textContent='';try{S.user=await api('/auth/login',Object.fromEntries(new FormData(e.target)));$('auth-dialog').close();e.target.reset();accountUI();await histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;view(target);}toast('Vous êtes connecté.');}catch(error){$('login-error').textContent=error.message;}finally{b.disabled=false;}};
-$('recovery-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;try{const data=await api('/auth/recover',Object.fromEntries(new FormData(e.target)));S.user=data.user;$('auth-dialog').close();accountUI();await histories();auth();$('code-value').textContent=data.code;$('recovery-code').hidden=false;e.target.reset();toast('Mot de passe changé. Conservez votre nouveau code de secours.');}catch(error){$('recovery-error').textContent=error.message;}finally{b.disabled=false;}};
-$('logout').onclick=async()=>{try{await api('/auth/logout',{});}catch(_){}S.user=null;S.conversation=null;clearTimeout(S.poll);S.job=null;$('account-dialog').close();accountUI();histories();newConversation();view('home');};
-$('make-code').onclick=async()=>{if(S.user.recovery_ready&&!confirm('Le code précédent ne fonctionnera plus. Créer un nouveau code ?'))return;try{const data=await api('/auth/recovery-code',{});$('code-value').textContent=data.code;$('recovery-code').hidden=false;S.user.recovery_ready=true;}catch(e){$('account-error').textContent=e.message;}};
-$('print-code').onclick=()=>{const w=window.open('','_blank','width=700,height=600');if(!w){toast('Autorisez l’ouverture de la fiche pour l’imprimer.');return;}const d=w.document;d.title='Fiche de secours SetupSurvie';d.body.append(element('h1','SetupSurvie — fiche de secours'),element('p','Identifiant : '+S.user.email),element('h2',$('code-value').textContent),element('p','Pour récupérer le compte : ouvrez l’accueil, choisissez Se connecter puis Mot de passe oublié. Le code fonctionne sans Internet et une seule fois. Conservez cette fiche séparément de l’appareil.'),element('p','Adresse locale actuelle : '+location.origin));w.print();};
+window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')location.reload();});
+$('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));location.reload();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
+$('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};
-$('add-user-form').onsubmit=async e=>{e.preventDefault();try{await api('/admin/users',Object.fromEntries(new FormData(e.target)));$('user-status').textContent='Compte lecteur créé.';e.target.reset();loadAdmin();}catch(error){$('user-status').textContent=error.message;}};
 $('feedback-button').onclick=()=>{if(needUser())$('feedback-dialog').showModal();};$('feedback-form').onsubmit=async e=>{e.preventDefault();try{await api('/feedback',{content:new FormData(e.target).get('content'),view:S.view+(S.view==='chat'?' · '+$('chat-mode').selectedOptions[0].textContent:'')});e.target.reset();$('feedback-dialog').close();toast('Merci, votre retour a été enregistré sur cet appareil.');}catch(error){$('feedback-status').textContent=error.message;}};$('refresh-feedback').onclick=feedbacks;
 let recorder=null,tracks=[],chunks=[];
 $('dictate').onclick=async()=>{
@@ -428,6 +429,6 @@ window.addEventListener('pagehide',()=>tracks.forEach(t=>t.stop()));
 document.querySelectorAll('.native-webui').forEach(a=>a.href=localServiceURL('/','webui'));
 window.addEventListener('DOMContentLoaded',()=>{
 bindExamples();view(location.hash.slice(1)||'home');status();refreshInference();
-api('/auth/me').then(u=>{S.user=u;S.authReady=true;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;S.authReady=true;accountUI();});
+api('/profiles/current').then(u=>{S.user=u;S.authReady=true;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;S.authReady=true;accountUI();});
 
 });

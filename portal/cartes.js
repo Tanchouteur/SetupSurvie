@@ -17,7 +17,7 @@
     const reliefButton=document.getElementById('relief');
     reliefButton.disabled=false;reliefButton.dataset.unavailable=String(!hasTerrain);
     reliefButton.textContent=hasTerrain?'Afficher le relief':'Pourquoi le relief est indisponible ?';
-    document.getElementById('relief-help').textContent=!user?'Connectez-vous pour vérifier les altitudes disponibles.':geoData===null?'Le service des altitudes est momentanément indisponible. Réessayez en actualisant la page.':!hasTerrain?'Aucune altitude n’a été téléchargée. Le fond de carte seul ne contient pas de relief.':'Altitudes locales disponibles. Activez l’ombrage pour mieux lire le terrain.';
+    document.getElementById('relief-help').textContent=!user?'Choisissez un profil pour vérifier les altitudes disponibles.':geoData===null?'Le service des altitudes est momentanément indisponible. Réessayez en actualisant la page.':!hasTerrain?'Aucune altitude n’a été téléchargée. Le fond de carte seul ne contient pas de relief.':'Altitudes locales disponibles. Activez l’ombrage pour mieux lire le terrain.';
     document.getElementById('relief-prepare').hidden=!user||hasTerrain||geoData===null;
     const protocol = new pmtiles.Protocol();
     maplibregl.addProtocol('pmtiles', protocol.tile);
@@ -69,7 +69,7 @@
 
     const toolStatus=document.getElementById('geo-tool-status'),results=document.getElementById('map-results');
     let point=reference?{lat:reference.lat,lon:reference.lon}:null,marker=null,measureStart=null,measuring=false,pointRequest=0,nearbyRequest=0;
-    async function api(path){const response=await fetch('/api'+path);const data=await response.json();if(!response.ok){if(response.status===401){window.MapUI.user=null;document.body.dataset.mapRole='guest';document.getElementById('map-auth-state').hidden=false;window.MapUI.notify('Votre session a expiré. Reconnectez-vous ici pour continuer.');window.MapUI.login();}throw new Error(response.status===401?'Connexion nécessaire pour cet outil.':typeof data.detail==='string'?data.detail:'Outil indisponible.');}return data;}
+    async function api(path){const response=await fetch('/api'+path,{headers:window.MapUI.user?{'X-Survie-Profile':window.MapUI.user.id}:{}});const data=await response.json();if(!response.ok){if(response.status===401){window.MapUI.user=null;document.body.dataset.mapRole='guest';document.getElementById('map-auth-state').hidden=false;window.MapUI.notify('Choisissez un profil pour continuer.');window.MapUI.login();}throw new Error(response.status===401?'Profil nécessaire pour cet outil.':typeof data.detail==='string'?data.detail:'Outil indisponible.');}return data;}
     function node(tag,text){const n=document.createElement(tag);n.textContent=text;return n;}
     async function selectPoint(lat,lon){
       const request=++pointRequest;point={lat,lon};if(marker)marker.remove();marker=new maplibregl.Marker().setLngLat([lon,lat]).addTo(map);

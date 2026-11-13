@@ -47,7 +47,7 @@ py -3 scripts\pilot_kit.py verify D:\livraison-marc
 py -3 scripts\pilot_kit.py install D:\livraison-marc --target windows --data-dir D:\SetupSurvie\donnees --work-dir D:\SetupSurvie\prive
 ```
 
-L’installation importe les images locales, copie les fichiers, vérifie les caches hors ligne, démarre les services et configure les profils partagés dans Open WebUI. Elle ne télécharge pas les modèles. Les logiciels prérequis doivent être installés auparavant. Les identifiants initiaux sont dans `D:\SetupSurvie\prive\identifiants.txt` ; conserver ce dossier privé et préparer le code de secours depuis le compte.
+L’installation importe les images locales, copie les fichiers, vérifie les caches hors ligne, démarre les services et configure les profils partagés dans Open WebUI. Elle ne télécharge pas les modèles. Les logiciels prérequis doivent être installés auparavant. Depuis 0.1.29, ouvrir le portail et choisir un profil, sans mot de passe. Conserver le dossier privé pour les réglages et sauvegardes.
 
 Le code installé se trouve dans `D:\SetupSurvie\application`, séparé du kit de transport. À partir de 0.1.13, l’installation Windows crée automatiquement **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** sur le Bureau, avec le logo du projet, et active le démarrage à l’ouverture de session de cet utilisateur. Le kit de transport peut ensuite être débranché.
 
@@ -94,7 +94,7 @@ En cas d’échec, une fenêtre explique le problème et les journaux `demarrage
 4. Sur un réseau Windows déclaré **Privé**, exécuter une fois `scripts\open-lan-firewall.ps1` dans PowerShell administrateur. La règle concerne les ports Web et le sous-réseau local. Aucune redirection de port sur Internet n’est nécessaire. Ne pas ouvrir le port API Ollama `11435` aux lecteurs et vérifier les éventuelles règles Ollama préexistantes.
 5. Depuis les autres appareils, utiliser `https://192.168.1.50:8443` pour le site, `:8444` pour Open WebUI et `:8445` pour Kiwix. Les liens du site adaptent leurs adresses au serveur et au protocole utilisés.
 
-Les ports HTTP `8080`, `3000` et `8081` fonctionnent aussi sur le LAN, mais HTTPS est à utiliser pour les comptes et la dictée. Le navigateur demande un contexte sécurisé pour le micro. Caddy crée une autorité de certification locale propre à cette installation ; elle fonctionne sans Internet et conserve ses clés dans `donnees\state\caddy`. [Principe du HTTPS local Caddy](https://caddyserver.com/docs/running).
+Les ports HTTP `8080`, `3000` et `8081` fonctionnent aussi sur le LAN, mais HTTPS reste utile pour la dictée et le transport des données ; aucun mot de passe n’est requis. Le navigateur demande un contexte sécurisé pour le micro. Caddy crée une autorité de certification locale propre à cette installation ; elle fonctionne sans Internet et conserve ses clés dans `donnees\state\caddy`. [Principe du HTTPS local Caddy](https://caddyserver.com/docs/running).
 
 Exporter son certificat **public**, puis installer sa confiance sur chaque appareil lecteur :
 
@@ -111,17 +111,14 @@ Sur le laboratoire Linux de Louis, le réglage correspondant est `./scripts/lab.
 
 ## Mot de passe et code de secours
 
-Le cookie du site et le jeton natif expirent 30 jours après la connexion. Le code de secours s’imprime depuis le compte ; le serveur ne conserve que son empreinte. Un nouveau code invalide le précédent. « Mot de passe oublié » fonctionne sans e-mail ni Internet, conserve les conversations et invalide les anciennes sessions.
+**Depuis 0.1.29, ils ne sont plus nécessaires.** Le portail utilise des profils
+librement sélectionnables sur le réseau local. Choisir son nom pour retrouver
+ses conversations et favoris ; **Famille** ouvre les réglages. Les anciens
+comptes et leurs données sont conservés. Voir les [profils locaux](../utilisation/profils-locaux.md).
 
-Si mot de passe et code sont perdus, depuis le PC serveur avec l’accès autorisé au dossier privé :
-
-```powershell
-.\scripts\survie.ps1 --work-dir D:\SetupSurvie\prive recover-account admin
-# Ou choisir directement un nouveau mot de passe, sans le mettre dans la ligne de commande :
-.\scripts\survie.ps1 --work-dir D:\SetupSurvie\prive recover-account admin --reset-password
-```
-
-Le secours respecte une éventuelle protection MFA native ; il ne la désactive pas. Ne jamais supprimer la base de données pour récupérer un compte. `identifiants.txt` contient le mot de passe initial, qui peut avoir changé depuis.
+Les anciens outils techniques `recover-account` restent disponibles pour une
+maintenance native ou une ancienne version ; ils ne font plus partie du parcours
+normal. Ne jamais supprimer les bases pour retrouver un profil.
 
 ## Sauvegarder et restaurer
 
@@ -188,6 +185,8 @@ Utiliser `survie.ps1 --work-dir D:\SetupSurvie\prive down` pour arrêter les ser
 Suivre le [guide des mises à jour du pilote](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) pour remplacer seulement le logiciel, préserver les comptes et ajouter des lots sans réinstallation.
 
 ## Identifiant initial du pilote 0.1.12
+
+**Historique, remplacé depuis 0.1.29 par les [profils sans mot de passe](../utilisation/profils-locaux.md).** Les nouvelles installations n’utilisent plus ce mot de passe initial pour accéder au produit.
 
 Les nouvelles installations utilisent l’identifiant `admin` (compte interne
 `admin@survie.local`) et le mot de passe initial demandé par Louis dans

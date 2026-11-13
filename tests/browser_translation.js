@@ -3,7 +3,7 @@ async (page) => {
   const base='http://10.0.3.2:8769';
   await page.unrouteAll({behavior:'wait'});
   await page.goto(base);
-  await page.request.post(base+'/api/auth/login',{data:{email:'browser',password:'fixture'},headers:{Origin:base}});
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   const result=await page.request.post(base+'/api/questions',{data:{message:'Explique ce document',source_id:'guide:shelter.en.txt'},headers:{Origin:base}});
   if(!result.ok())throw Error(await result.text());
   const item=await result.json();

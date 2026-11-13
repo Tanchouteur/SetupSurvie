@@ -88,7 +88,7 @@ class GeographyTests(unittest.TestCase):
             self.assertEqual(client.post('/api/admin/settings/home',json={'lat':123,'lon':6}).status_code,422)
             self.assertEqual(client.get('/api/settings').json()['home']['lat'],43)
             gateway.app.dependency_overrides.clear()
-            self.assertEqual(client.get('/api/settings').status_code,401)
+            self.assertEqual(client.get('/api/settings').status_code,200)
     def test_assistant_executes_geo_tool_calls_without_network_or_model(self):
         import asyncio
         from contextlib import asynccontextmanager

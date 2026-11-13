@@ -137,14 +137,13 @@ class Installation:
                       "bind": "0.0.0.0" if lan else "127.0.0.1", "cpu": cpu,
                       "project": "survie-" + secrets.token_hex(4),
                       "secret": secrets.token_hex(32), "admin_email": "admin@survie.local",
-                      "admin_password": "test77**",
+                      "admin_password": secrets.token_urlsafe(32),
                       "chat_model": VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"
-            durable.write_bytes(credentials,("Compte administrateur local Open WebUI\n"
-                                   f"Identifiant : {config['admin_email']}\n"
-                                   f"Mot de passe initial : {config['admin_password']}\n"
-                                   "Ne pas diffuser ce fichier. Les comptes lecteurs se créent dans l’administration.\n").encode('utf-8'),private=True)
+            durable.write_bytes(credentials,("SetupSurvie — profils locaux sans mot de passe\n"
+                                   "Ouvrez l’accueil et choisissez un profil. Aucun code de secours n’est nécessaire.\n"
+                                   "Les anciennes informations techniques restent dans les réglages privés.\n").encode('utf-8'),private=True)
         for name in DIRECTORIES:
             durable.mkdir(Path(config["data_dir"]) / name)
         self.render(config)
@@ -562,7 +561,7 @@ class Installation:
         if 'routing' in expected:c['routing_image']=entries['routing']
         write_json(self.settings_path, c, private=True)
         self.render(c)
-        print('Images importées et identifiants locaux enregistrés. Aucun service démarré.')
+        print('Images importées et profils locaux préparés. Aucun service démarré.')
 
 
 def file_hash(path):
@@ -621,7 +620,7 @@ def main(argv=None):
         c = app.load()
         app.render(c)
     if args.action == "init":
-        print(f"Réglages conservés dans {app.work}. Identifiants dans identifiants.txt.")
+        print(f"Réglages conservés dans {app.work}. Accès par profil, sans mot de passe.")
     elif args.action == "install":
         if args.offline and args.content_pack:raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
         app.doctor(c)
@@ -643,7 +642,7 @@ def main(argv=None):
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)
-        print(f"Accueil : http://localhost:8080 — identifiants : {app.work / 'identifiants.txt'}")
+        print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
     elif args.action == "configure":
         if args.lan and not args.lan_host and not c.get('lan_host'):
             raise SetupError('Précisez --lan-host avec l’adresse IPv4 du PC serveur.')

@@ -2,7 +2,7 @@
 async page => {
   const base='http://10.0.3.2:8769';
   await page.unrouteAll({behavior:'wait'});await page.goto(base);
-  await page.request.post(base+'/api/auth/login',{data:{email:'browser',password:'fixture'},headers:{Origin:base}});
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
   async function begin(source){
     const r=await page.request.post(base+'/api/translations',{data:{source_id:source,mode:'rapide'},headers:{Origin:base}});

@@ -119,6 +119,8 @@ def webui_env(c):
            'ENABLE_WEB_SEARCH': 'false', 'ENABLE_IMAGE_GENERATION': 'false',
            'WEBUI_SECRET_KEY': c['secret'], 'WEBUI_ADMIN_EMAIL': c['admin_email'],
            'WEBUI_ADMIN_PASSWORD': c['admin_password'], 'WEBUI_ADMIN_NAME': 'Administration',
+           'WEBUI_AUTH_TRUSTED_EMAIL_HEADER':'X-Survie-Email', 'WEBUI_AUTH_TRUSTED_NAME_HEADER':'X-Survie-Name',
+           'WEBUI_AUTH_TRUSTED_ROLE_HEADER':'X-Survie-Role', 'ENABLE_LOGIN_FORM':'false',
            'ENABLE_SIGNUP': 'false', 'DEFAULT_LOCALE': 'fr-FR', 'DEFAULT_MODELS': 'survie-rapide',
            'JWT_EXPIRES_IN': '30d',
            'ENABLE_TITLE_GENERATION': 'false', 'ENABLE_TAGS_GENERATION': 'false',
@@ -150,21 +152,18 @@ def run_container(name, image, args, env=None, *, detach=True,command_args=()):
     return podman(*options, *args, image,*command_args,capture=detach)
 
 
-def up():
-    _, c = configuration()
+def container_specifications(c):
     tls_hosts=list(dict.fromkeys(['localhost',c.get('lan_host','localhost')]+([c.get('discovery_name','survie')+'.local'] if c['bind']=='0.0.0.0' else [])))
-    if podman('network', 'exists', 'setupsurvie-lab', check=False).returncode:
-        podman('network', 'create', 'setupsurvie-lab', capture=True)
-    specifications = {
+    return {
         'ollama': (['--device', 'nvidia.com/gpu=all', '--network', 'setupsurvie-lab',
                     '--network-alias', 'ollama', '-p', '127.0.0.1:11435:11434',
                     '-v', f'{MOUNT}/data/models:/root/.ollama/models', '--memory=22g', '--memory-swap=24g'],
                    {'OLLAMA_HOST': '0.0.0.0:11434', 'OLLAMA_NO_CLOUD': '1',
                     'OLLAMA_CONTEXT_LENGTH': '4096', 'OLLAMA_NUM_PARALLEL': '1',
                     'OLLAMA_MAX_LOADED_MODELS': '1'}),
-        'open-webui': (['--network', 'setupsurvie-lab', '--network-alias', 'open-webui', '-p', f'{c["bind"]}:3000:8080',
+        'open-webui': (['--network', 'setupsurvie-lab', '--network-alias', 'open-webui',
                         '-v', f'{MOUNT}/data/state/openwebui:/app/backend/data', '--memory=8g'], webui_env(c)),
-        'portal': (['--network', 'setupsurvie-lab', '-p', f'{c["bind"]}:8080:8080',
+        'portal': (['--network', 'setupsurvie-lab', '-p', f'{c["bind"]}:8080:8080', '-p', f'{c["bind"]}:3000:3000',
                     '-p', f'{c["bind"]}:8443:8443', '-p', f'{c["bind"]}:8444:8444', '-p', f'{c["bind"]}:8445:8445',
                     '-v', f'{MOUNT}/runtime/deploy/Caddyfile:/etc/caddy/Caddyfile:ro',
                     '-v', f'{MOUNT}/runtime/portal:/srv/portal:ro',
@@ -195,6 +194,13 @@ def up():
                    'OLLAMA_URL':'http://ollama:11434','KIWIX_URL':'http://kiwix:8080',
                    'GUIDES_DIR':'/guides','ASSISTANT_POLICY':'/srv/system.fr.txt'}),
     }
+
+
+def up():
+    _, c = configuration()
+    if podman('network', 'exists', 'setupsurvie-lab', check=False).returncode:
+        podman('network', 'create', 'setupsurvie-lab', capture=True)
+    specifications=container_specifications(c)
     for name in ('ollama', 'kiwix', 'open-webui', 'pilot', 'portal'):
         if name == 'ollama' and (MOUNT / 'private/inference-paused.json').exists():
             print('Ollama reste arrêté : mode jeu actif.', flush=True)
@@ -256,6 +262,23 @@ def prepare():
     setup.write_json(marker, setup.VERSIONS['embedding'])
 
 
+def refresh_access():
+    """Recreate only the profile-aware proxy and advanced UI; keep all volumes/IA."""
+    _,c=configuration()
+    target=MOUNT/'runtime/deploy/Caddyfile';target.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(setup.ROOT/'deploy/Caddyfile',target)
+    specs=container_specifications(c)
+    for name in ('portal','open-webui'):
+        exists=podman('container','exists',PREFIX+name,check=False).returncode==0
+        if exists:
+            podman('stop','-t','30',PREFIX+name,capture=True)
+            podman('rm',PREFIX+name,capture=True)
+    for name in ('open-webui','portal'):
+        args,env=specs[name]
+        run_container(name,reference(name),args,env)
+    print('Accès Web actualisé : profils sans mot de passe. IA inchangée.')
+
+
 def down(remove=False):
     import control
     control.stop(setup.Installation(MOUNT/'private'))
@@ -311,7 +334,7 @@ WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('mount', 'pull', 'prepare', 'up', 'down', 'status',
+    parser.add_argument('action', choices=('mount', 'pull', 'prepare', 'up', 'refresh-access', 'down', 'status',
                                          'pull-model', 'record', 'unmount', 'clean', 'prepare-speech',
                                          'download-corpus', 'jobs', 'pause-inference', 'resume-inference', 'network'))
     parser.add_argument('--erase-data', action='store_true', help='Supprime définitivement le volume et toutes ses données')
@@ -385,6 +408,8 @@ def main():
             podman('rm',PREFIX+name,capture=True)
         up()
         app.addresses(c)
+    elif args.action == 'refresh-access':
+        refresh_access()
     elif args.action == 'up':
         up()
     elif args.action == 'down':

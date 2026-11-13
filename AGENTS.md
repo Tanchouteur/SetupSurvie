@@ -32,7 +32,7 @@ de branding ne constituent pas une décision de renommage du produit.
   « réponse approfondie ». Conserver les choix supplémentaires pour les essais
   de Marc ; ne pas choisir les gagnants selon la seule taille des modèles.
 - Open WebUI conserve les comptes natifs, dossiers et conversations avancées.
-  Les deux interfaces partagent les comptes mais ont des historiques distincts.
+  Depuis 0.1.29, les deux interfaces reprennent le profil librement choisi, sans mot de passe ; leurs historiques restent distincts.
   Conserver un lien visible vers Open WebUI.
 - Kiwix sert les archives ZIM illustrées ; les guides sont également indexés par
   le pilote. La bibliothèque doit rester accessible quand le moteur IA est arrêté.
@@ -250,3 +250,16 @@ n’est revendiquée. Les anciens passages restent sans contrôle enregistré. L
 comparaison et les propositions refusées restent privées ; les avertissements
 suivent les traductions partagées et exports. Ne pas relancer d’inférence réelle
 pour un test dans le runner CPU.
+
+## Profils locaux (0.1.29)
+
+Louis demande explicitement l’absence de mot de passe et de code de secours.
+Lire `docs/utilisation/profils-locaux.md`. Les profils rangent les données sans
+protéger leur confidentialité entre utilisateurs du réseau. Préserver les IDs
+importés et les anciens historiques. Famille donne accès aux réglages et peut
+être choisi librement. Ne pas réintroduire de connexion dans le portail ou les
+cartes. Open WebUI utilise les en-têtes de profil fournis par Caddy sur 3000/8444 ;
+ne pas publier son port interne. Les clés natives existantes restent internes.
+Vérifier changement de profil, onglets périmés, dictée et repli documentaire.
+Le laboratoire a une commande `refresh-access` qui recrée seulement les deux
+services Web sans relancer l’IA ni supprimer les volumes.

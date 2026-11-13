@@ -1,5 +1,9 @@
 # Connexion simple et direction du produit
 
+**Actualisation 0.1.29, 13 novembre 2026 :** Louis retient les profils locaux sans
+mot de passe ni code de secours. Le [guide actuel](../utilisation/profils-locaux.md)
+prévaut sur les propositions ou descriptions de connexion conservées ci-dessous.
+
 > Guide de référence du pilote — documentation réorganisée le 11 novembre 2026. Les essais Windows chez Marc et sur téléphone restent à réaliser lorsqu’ils sont indiqués comme non validés.
 
 ## Parcours visé

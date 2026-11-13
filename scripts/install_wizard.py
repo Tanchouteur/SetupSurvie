@@ -224,7 +224,7 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         state['status'] = 'complete'
         setup.write_json(journal, state, private=True)
         print('Installation terminée. Portail : http://localhost:8080\n'
-              'Identifiants : '+str(work/'identifiants.txt')+'\n'
+              'Accès : choisissez un profil, sans mot de passe.\n'
               'Pour les autres appareils : configurez le réseau privé avec le guide Windows.', flush=True)
 
 

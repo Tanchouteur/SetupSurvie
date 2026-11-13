@@ -50,10 +50,10 @@ class NotebookTests(unittest.TestCase):
         identifier=notebook.save_route('alice',draft['draft_id'],group,'Oui')['id']
         with self.assertRaises(HTTPException):notebook.save_route('alice',draft['draft_id'],group,'Doublon')
         self.assertEqual(notebook.route(identifier)['duration_s'],7200)
-    def test_guests_and_readers_cannot_edit_but_readers_can_consult(self):
+    def test_default_family_and_reader_profiles_can_consult_but_reader_cannot_edit(self):
         self.addCleanup(gateway.app.dependency_overrides.clear)
         with TestClient(gateway.app) as client:
-            self.assertEqual(client.get('/api/map-notebook').status_code,401)
+            self.assertEqual(client.get('/api/map-notebook').status_code,200)
             gateway.app.dependency_overrides[gateway.user]=lambda:{'id':'reader','role':'user'}
             self.assertEqual(client.get('/api/map-notebook').status_code,200)
             for path in ('lists','points','calculate','routes'):

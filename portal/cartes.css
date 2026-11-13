@@ -9,3 +9,5 @@
 @media(pointer:coarse){.desktop-edit,.editor-only,#planning-panel{display:none!important}.map-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 .map-route-chip{position:absolute;left:18px;bottom:34px;box-shadow:var(--shadow);background:#fff7e9;border-color:#d8b986;color:#7e4f27;z-index:4}.map-route-chip:hover{background:#f9ecd4}@media(max-width:760px){.map-route-chip{left:12px;bottom:82px;max-width:calc(100% - 24px);font-size:12px}.map-panel-open .map-route-chip{display:none}}@media print{.map-route-chip{display:none!important}}
+
+.map-profile-list{display:grid;gap:10px;margin:16px 0}.map-profile-list button{text-align:left;overflow-wrap:anywhere}

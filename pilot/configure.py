@@ -10,7 +10,7 @@ BUILTIN_TOOLS={name:name in {'time','user_input','files','knowledge'} for name i
 
 
 async def configure():
-    token=accounts.emergency_admin_token()
+    token=await accounts.profile_token({'name':'Famille','email':'family@survie.local','role':'admin'})
     db=accounts.sqlite3.connect('file:'+accounts.DB_PATH+'?mode=ro',uri=True)
     try:ids={row[0] for row in db.execute('SELECT id FROM model')}
     finally:db.close()

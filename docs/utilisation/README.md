@@ -1,11 +1,11 @@
 # Utiliser le serveur familial
 
-Guide du pilote, mis à jour le 12 novembre 2026. Les usages réels chez Marc et sur
+Guide du pilote, mis à jour le 13 novembre 2026. Les usages réels chez Marc et sur
 Safari iPhone restent à vérifier sur place.
 
 1. Relier l’appareil au même réseau que le serveur, puis ouvrir l’adresse ou le QR code de la page **Autre appareil**. Un Wi-Fi invité peut empêcher la connexion.
 2. Ouvrir la **Bibliothèque** pour chercher et consulter les guides et archives. Elle reste disponible lorsque le moteur IA est arrêté.
-3. Ouvrir l’assistant, se connecter et choisir un mode : réponse rapide, moyenne ou approfondie. Les autres modèles restent disponibles pour les comparaisons.
+3. Ouvrir l’assistant, choisir son profil sans mot de passe, puis un mode : réponse rapide, moyenne ou approfondie. Les autres modèles restent disponibles pour les comparaisons.
 4. Vérifier les sources de la réponse en ouvrant les documents cités. Une réponse sans source consultée ne doit pas être présentée comme issue de la bibliothèque.
 
 L’assistant du portail peut rechercher et lire les documents locaux, calculer et
@@ -14,7 +14,7 @@ PC. Les documents manquants doivent être signalés. Les réponses sensibles ne
 certifient ni une conduite médicale, ni la potabilité, ni la sécurité d’un ouvrage.
 
 Le lien vers **Open WebUI** donne accès aux dossiers et conversations avancées.
-Le compte est partagé avec le portail ; les historiques sont distincts. L’index
+Le profil choisi est repris sans mot de passe ; les historiques sont distincts. L’index
 du portail et les archives Kiwix ne constituent pas un import automatique dans
 les collections Open WebUI.
 
@@ -22,7 +22,8 @@ Depuis **Bibliothèque → Cartes hors ligne**, les cartes du Sud et de Solliès
 permettent de se repérer. Elles ne calculent pas d’itinéraire et n’incluent pas
 l’état actuel des chemins ni de couche altimétrique.
 
-Pour les mots de passe, le code de secours, la dictée, les certificats et l’état
+Pour le choix de profil, voir les [profils locaux sans mot de passe](profils-locaux.md).
+Pour la dictée, les certificats et l’état
 du moteur, suivre le [guide Marc](../installation/pilote-marc.md). Une pause de
 l’IA doit être levée explicitement par l’administrateur ; consulter la bibliothèque
 ne nécessite pas de la lever.
@@ -32,7 +33,7 @@ Le fonds recensé et ses limites sont dans la [documentation de bibliothèque](.
 
 ## Ajouter des collections par thème
 
-Avec un compte administrateur : **Données locales → Enrichir la bibliothèque**.
+Avec le profil Famille ou un profil administrateur : **Données locales → Enrichir la bibliothèque**.
 Choisir les thèmes, langues et plafond, puis **Chercher les contenus** pour voir
 le volume proposé. **Télécharger la sélection** lance le transfert sur le PC
 serveur ; fermer la page ne l’arrête pas. Le même bloc permet de suivre, mettre
