@@ -69,6 +69,11 @@ class LibraryMonitorTests(unittest.TestCase):
         value=self.result();self.assertEqual(value['phase'],'waiting_retry');self.assertEqual(value['pending_errors'],1)
         self.assertNotIn('SECRET',json.dumps(value))
 
+    def test_old_retry_errors_do_not_hide_a_plan_now_fully_verified(self):
+        self.write(self.root/'catalog/downloaded-content.json',{'items':[self.item]})
+        self.write(self.root/'catalog/content-retry.json',{'pid':123,'failed':{'garden':{'error':'old 404'}}})
+        value=self.result();self.assertEqual(value['phase'],'verified');self.assertEqual(value['pending_errors'],0)
+
     def test_malformed_or_external_plan_fails_without_reading_external_file(self):
         self.write(self.root/'diagnostics/bibliotheque-transfer.json',{'pid':123,'identity':self.identity,'plan':'/not-authorized/secret'})
         value=self.result();self.assertEqual(value['phase'],'unknown');self.assertNotIn('/not-authorized',json.dumps(value))

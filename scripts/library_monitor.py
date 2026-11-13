@@ -190,7 +190,7 @@ def snapshot(root, work, *, now=None):
         else:
             phase = 'checking'
         failed = retry.get('failed', {}) if matching_retry else {}
-        failed_count = sum(i in selected for i in failed) if isinstance(failed, dict) else 0
+        failed_count = sum(i in selected and i not in verified for i in failed) if isinstance(failed, dict) else 0
         return {**base, 'source': source, 'phase': phase, 'kind': 'download',
                 'worker_alive': alive, 'progress_at': updated if fresh else None,
                 'stale': not fresh or now - updated > 120, 'active': active,
