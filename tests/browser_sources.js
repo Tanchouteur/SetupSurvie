@@ -2,9 +2,9 @@
 async (page) => {
   const base='http://10.0.3.2:8769';
   await page.unrouteAll({behavior:'wait'});
-  await page.goto(base);
+  await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>readSource('guide:shelter.en.txt'));
   await page.locator('#reader .source-dates').waitFor({state:'visible'});
   const date=await page.locator('#reader .source-dates').textContent();

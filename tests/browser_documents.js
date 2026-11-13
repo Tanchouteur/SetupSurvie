@@ -2,10 +2,10 @@
 async (page) => {
   const base='http://10.0.3.2:8769';
   await page.unrouteAll({behavior:'wait'});
-  await page.goto(base);
+  await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.request.delete(base+'/api/favorites?source_id='+encodeURIComponent('guide:shelter.en.pdf'),{headers:{Origin:base}});
-  await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>search('Shelter'));
   const pdfResult=page.locator('.result[data-source="guide:shelter.en.pdf#page=6"]');
   await pdfResult.waitFor({state:'visible'});

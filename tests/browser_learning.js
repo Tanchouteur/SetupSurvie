@@ -1,9 +1,9 @@
 // Read-only catalogue and tiny fixture documents; preparing a question never runs a model.
 async(page)=>{
   const base='http://10.0.3.2:8769';
-  await page.unrouteAll({behavior:'wait'});await page.goto(base+'/#library');
+  await page.unrouteAll({behavior:'wait'});await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>view('library'));
   await page.locator('#learning-browser').evaluate(e=>e.open=true);
   await page.waitForFunction(()=>document.querySelectorAll('#learning-domain option').length===14);

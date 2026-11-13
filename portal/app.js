@@ -34,13 +34,14 @@ $('chat-messages').addEventListener('scroll',rememberReading,{passive:true});
 window.addEventListener('scroll',()=>{if(mobileNav.matches)rememberReading();},{passive:true});
 window.addEventListener('pagehide',rememberReading);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberReading();});
+function reloadProfile(){if(S.profileReloading)return;S.profileReloading=true;location.reload();}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
 async function api(path,body,options={}){
   const config={credentials:'same-origin',...options};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
   if(body!==undefined){config.method=options.method||'POST';config.body=body instanceof FormData?body:JSON.stringify(body);if(!(body instanceof FormData))config.headers={...config.headers,'Content-Type':'application/json'};}
   const r=await fetch('/api'+path,config);let data;
   try{data=await r.json();}catch(_){throw new Error('Le service ne répond pas. Réessayez dans quelques instants.');}
-  if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){location.reload();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
+  if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){reloadProfile();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
   return data;
 }
 function button(text,action,cls='secondary'){const b=element('button',text,cls);b.type='button';b.addEventListener('click',action);return b;}
@@ -74,7 +75,7 @@ async function auth(){
   catch(error){$('profile-error').textContent=error.message;}
 }
 async function switchProfile(identifier){
-  try{await api('/profiles/select',{id:identifier});localStorage.setItem('survie.profile.changed',String(Date.now()));location.reload();}catch(error){$('profile-error').textContent=error.message;}
+  try{await api('/profiles/select',{id:identifier});localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('profile-error').textContent=error.message;}
 }
 
 function needUser(){if(S.user)return true;auth();return false;}
@@ -409,14 +410,14 @@ $('engine-start').onclick=()=>engineCommand('start');$('engine-stop').onclick=()
 $('print-connect').onclick=()=>window.print();$('copy-connect').onclick=async()=>{const text=$('connect-address').href;try{if(navigator.clipboard)await navigator.clipboard.writeText(text);else{const input=element('textarea');input.value=text;document.body.append(input);input.select();const done=document.execCommand('copy');input.remove();if(!done)throw new Error();}toast('Adresse copiée.');}catch(_){toast('Vous pouvez sélectionner et copier l’adresse affichée.');}};
 $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.target.value);};
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
-window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')location.reload();});
+window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')reloadProfile();});
 async function refreshProfileOnReturn(){
   if(!S.user||document.hidden)return;
-  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok&&(await response.json()).id!==S.user?.id)location.reload();}catch(_){/* Offline reading remains available. */}
+  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok&&(await response.json()).id!==S.user?.id)reloadProfile();}catch(_){/* Offline reading remains available. */}
 }
 window.addEventListener('focus',refreshProfileOnReturn);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfileOnReturn();});
-$('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));location.reload();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
+$('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
 $('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};
 $('feedback-button').onclick=()=>{if(needUser())$('feedback-dialog').showModal();};$('feedback-form').onsubmit=async e=>{e.preventDefault();try{await api('/feedback',{content:new FormData(e.target).get('content'),view:S.view+(S.view==='chat'?' · '+$('chat-mode').selectedOptions[0].textContent:'')});e.target.reset();$('feedback-dialog').close();toast('Merci, votre retour a été enregistré sur cet appareil.');}catch(error){$('feedback-status').textContent=error.message;}};$('refresh-feedback').onclick=feedbacks;

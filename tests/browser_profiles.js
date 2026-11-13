@@ -1,13 +1,11 @@
 // Real tiny API fixture, no password or real model. Includes the cramped menu.
 async page => {
   const base='http://10.0.3.2:8769';
-  await page.unrouteAll({behavior:'wait'});await page.context().clearCookies();
-  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='local-family');
-  // Simulate the TLS proxy response, then keep using the plain local address.
+  await page.unrouteAll({behavior:'wait'});await page.goto('about:blank');await page.context().clearCookies();
+  // Simulate the TLS proxy response before loading the portal, then use HTTP.
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base,'X-Forwarded-Proto':'https'}});
-  await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
-  await page.request.post(base+'/api/profiles/select',{data:{id:'local-family'},headers:{Origin:base}});
-  await page.reload();await page.waitForFunction(()=>S.user?.id==='local-family');
+  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.locator('#account-button').click();await page.getByRole('button',{name:'Famille',exact:true}).click();await page.waitForFunction(()=>S.user?.id==='local-family');
   if(await page.locator('input[type=password]').count())throw Error('Password field remains in portal');
   const layouts=[];
   for(const [width,height] of [[1440,900],[1024,768],[900,500],[390,844],[320,568]]){
