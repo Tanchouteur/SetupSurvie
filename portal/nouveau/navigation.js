@@ -222,7 +222,7 @@
   history.scrollRestoration='manual';
   window.addEventListener('DOMContentLoaded',()=>{
     const requested=parse(initialHash)||fromLegacy(initialHash.slice(1)||'home');
-    if(initialDocument){requested.name=initialHash==='#chat'?'chat':'library';requested.section=initialHash==='#chat'?'assistant':'bibliotheque';requested.tab=requested.name==='library'?'recherche':'';}
+    if(initialDocument){const chatIntent=initialHash==='#chat'||initialHash.startsWith('#/assistant');requested.name=chatIntent?'chat':'library';requested.section=chatIntent?'assistant':'bibliotheque';requested.tab=requested.name==='library'?'recherche':'';}
     historyReady=true;history.replaceState({...history.state,scroll:history.state?.scroll||0},'',urlFor(requested.section,requested.tab,requested.params));activate(requested,true);decorateLinks();
   });
   if(window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty('--next-banner-height',document.querySelector('.next-banner').offsetHeight+'px')).observe(document.querySelector('.next-banner'));

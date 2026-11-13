@@ -55,6 +55,11 @@ async page => {
   await page.locator('#navigation [data-route="cartes"]').click();
   assert(await page.getByRole('link',{name:'Ouvrir les cartes et mes repères →'}).isVisible(),'Cartes réelles accessibles sur mobile');
   for(const width of [320,390,760,820,1440]){await page.setViewportSize({width,height:950});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement à '+width);}
+  await page.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau');
+  await page.waitForFunction(()=>document.querySelector('#pdf-ask').getAttribute('href')?.includes('/nouveau/'));
+  await page.getByRole('link',{name:'Questionner ce document'}).click();
+  await page.waitForFunction(()=>typeof S!=='undefined'&&S.source?.id==='guide:shelter.en.pdf');
+  assert(await page.locator('#view-chat').isVisible(),'Le lecteur PDF ouvre le bon assistant avec son document associé');
   assert(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   assert(!commands.some(p=>/inference|geography\/download|routing\/download|library\/download/.test(p)),'Aucun démarrage moteur ni téléchargement réel');
   return {checks:checks.length,results:checks,conversation};

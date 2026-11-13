@@ -55,7 +55,7 @@ La suite Python complète passe localement : **321 tests, 3 ignorés**, dont les
 11 contrôles initiaux du moniteur (handle partagé compris). Un douzième contrôle
 vérifie le cas du dernier journal Marc : des erreurs de tentative anciennes ne
 sont pas affichées comme ajouts en attente lorsque tous les reçus sont présents. La recette Chromium fonctionnelle passe
-avec 26 contrôles. Syntaxe JavaScript, `git diff --check` et construction du
+avec 27 contrôles, dont le retour PDF vers le bon assistant avec son document associé. Syntaxe JavaScript, `git diff --check` et construction du
 paquet logiciel 0.1.32 sont vérifiés. Une recette supplémentaire vérifie aussi la nouvelle interface avec document
 associé et traduction ouverte : restauration, pause/reprise, export et saisie
 accessible à 1366×900, 768×900, 390×844 et 320×568. Un conteneur de contexte
