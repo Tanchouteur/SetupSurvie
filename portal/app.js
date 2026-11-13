@@ -410,6 +410,12 @@ $('print-connect').onclick=()=>window.print();$('copy-connect').onclick=async()=
 $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.target.value);};
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
 window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')location.reload();});
+async function refreshProfileOnReturn(){
+  if(!S.user||document.hidden)return;
+  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok&&(await response.json()).id!==S.user?.id)location.reload();}catch(_){/* Offline reading remains available. */}
+}
+window.addEventListener('focus',refreshProfileOnReturn);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfileOnReturn();});
 $('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));location.reload();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
 $('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};

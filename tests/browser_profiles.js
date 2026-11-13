@@ -28,7 +28,7 @@ async page => {
   if(!(await(await page.request.get(base+'/api/conversations')).json()).conversations.some(c=>c.title==='Mémo du profil'))throw Error('History lost');
   const other=await page.context().newPage();await other.goto(base);await other.waitForFunction(id=>S.user?.id===id,id);
   await page.locator('#account-button').click();await page.getByRole('button',{name:'Famille',exact:true}).click();await page.waitForFunction(()=>S.user?.id==='local-family');
-  await other.waitForFunction(()=>S.user?.id==='local-family');
+  await other.bringToFront();await other.waitForFunction(()=>S.user?.id==='local-family');
   const stale=await page.request.put(base+'/api/favorites',{data:{source_id:'guide:craft.en.txt'},headers:{Origin:base,'X-Survie-Profile':id}});
   if(stale.status()!==409)throw Error('Stale tab can change another profile');
   await other.close();

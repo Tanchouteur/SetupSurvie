@@ -25,6 +25,8 @@
   mobile.addEventListener('change',()=>{document.body.classList.remove('map-panel-open');resize();});
   $('map-login-close').onclick=()=>$('map-login-dialog').close();
   window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')location.reload();});
+  async function refreshProfile(){if(!UI.user||document.hidden)return;try{const response=await fetch('/api/profiles/current');if(response.ok&&(await response.json()).id!==UI.user?.id)location.reload();}catch(_){}}
+  window.addEventListener('focus',refreshProfile);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfile();});
   UI.ready=(async()=>{try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok){UI.user=await response.json();$('map-account').textContent=UI.user.name||'Choisir un profil';$('map-auth-state').hidden=true;}else if(response.status===401){$('map-auth-state').hidden=false;}else{notify('Le choix de profil est indisponible. Vous pouvez toujours consulter la carte.');}}
   catch(_){notify('Le choix de profil ne répond pas. La carte reste accessible.');}
   document.body.dataset.mapRole=UI.user?.role||'guest';return UI.user;})();

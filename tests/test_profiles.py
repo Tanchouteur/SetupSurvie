@@ -1,5 +1,6 @@
 """Password-free profiles, safe preservation and native bridge; tiny fixtures only."""
 import asyncio
+from contextlib import contextmanager
 import hashlib
 import json
 from pathlib import Path
@@ -13,11 +14,19 @@ from fastapi.testclient import TestClient
 from pilot import accounts,app as gateway,library,profiles,store
 
 
+@contextmanager
+def native_database(path):
+    db=sqlite3.connect(path)
+    try:
+        with db:yield db
+    finally:db.close()
+
+
 class ProfileTests(unittest.TestCase):
     def setUp(self):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup);self.root=Path(temp.name)
         self.native=self.root/'native.db';self.guides=self.root/'guides';self.guides.mkdir()
-        with sqlite3.connect(self.native) as db:
+        with native_database(self.native) as db:
             db.execute('CREATE TABLE user(id TEXT PRIMARY KEY,name TEXT,email TEXT,role TEXT)')
             db.execute("INSERT INTO user VALUES('original-alice','Alice','alice@survie.local','user')")
         for obj,key,value in [(store,'ROOT',self.root/'state'),(accounts,'DB_PATH',str(self.native)),(library,'GUIDES',self.guides)]:
@@ -60,7 +69,7 @@ class ProfileTests(unittest.TestCase):
 
     def test_portal_profile_does_not_duplicate_when_native_later_creates_its_account(self):
         p=profiles.create('Marc')
-        with sqlite3.connect(self.native) as db:
+        with native_database(self.native) as db:
             db.execute('INSERT INTO user VALUES(?,?,?,?)',('new-native-id',p['name'],p['email'],'user'))
         found=profiles.listing()
         self.assertEqual(len([x for x in found if x['name']=='Marc']),1)
@@ -69,7 +78,7 @@ class ProfileTests(unittest.TestCase):
     def test_orphan_identity_is_recovered_and_native_name_restored_when_available(self):
         with store.connect() as db:db.execute("INSERT INTO conversations VALUES('old','orphan','Saved',0)")
         profiles.sync();self.assertEqual(profiles.selected('orphan')['origin'],'recovered')
-        with sqlite3.connect(self.native) as db:db.execute("INSERT INTO user VALUES('orphan','Marc','marc@survie.local','admin')")
+        with native_database(self.native) as db:db.execute("INSERT INTO user VALUES('orphan','Marc','marc@survie.local','admin')")
         profiles.sync();restored=profiles.selected('orphan')
         self.assertEqual(restored['name'],'Marc');self.assertEqual(restored['role'],'admin')
         self.assertEqual(restored['origin'],'native')

@@ -25,5 +25,5 @@
       if(!response.ok)throw Error('Favoris momentanément indisponibles. Le PDF reste consultable.');active=!active;render();
     }catch(error){document.getElementById('pdf-status').textContent=error.message;}finally{favorite.disabled=false;}
   };
-  refresh();
+  window.addEventListener('focus',refresh);refresh();
 })();
