@@ -23,6 +23,22 @@ def sync_file(path):
         os.fsync(stream.fileno())
 
 
+def mkdir(path):
+    """Persist each newly allocated directory entry, including its ancestors."""
+    path = Path(path)
+    missing = []
+    parent = path
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    if not parent.is_dir():raise NotADirectoryError(str(parent))
+    for directory in reversed(missing):
+        try:directory.mkdir()
+        except FileExistsError:
+            if not directory.is_dir():raise
+        sync_directory(directory.parent)
+
+
 def publish(source, target):
     source, target = Path(source), Path(target)
     os.replace(source, target)
@@ -33,7 +49,7 @@ def publish(source, target):
 
 def write_bytes(path, body, *, private=False):
     path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    mkdir(path.parent)
     fd, name = tempfile.mkstemp(prefix='.' + path.name + '.', suffix='.pending', dir=path.parent)
     temporary = Path(name)
     try:

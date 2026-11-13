@@ -115,7 +115,7 @@ class Installation:
         return json.loads(self.settings_path.read_text(encoding="utf-8"))
 
     def init(self, target, data_dir=None, lan=False, cpu=False):
-        self.work.mkdir(parents=True, exist_ok=True)
+        durable.mkdir(self.work)
         if os.name != "nt":
             self.work.chmod(0o700)
         if self.settings_path.exists():
@@ -145,7 +145,7 @@ class Installation:
                                    f"Mot de passe initial : {config['admin_password']}\n"
                                    "Ne pas diffuser ce fichier. Les comptes lecteurs se créent dans l’administration.\n").encode('utf-8'),private=True)
         for name in DIRECTORIES:
-            (Path(config["data_dir"]) / name).mkdir(parents=True, exist_ok=True)
+            durable.mkdir(Path(config["data_dir"]) / name)
         self.render(config)
         self.catalog(config)
         return config

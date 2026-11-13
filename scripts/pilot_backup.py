@@ -43,7 +43,7 @@ def stopped_backup(app,c,destination,*,resume=True):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
-    dest.mkdir(parents=True);dest.chmod(0o700)
+    durable.mkdir(dest);dest.chmod(0o700)
     files=[]
     try:
         app.compose(c,'stop','portal','pilot','open-webui')
@@ -92,7 +92,7 @@ def restore(source,kit,work_dir,data_dir):
     saved=json.loads(settings.read_text(encoding='utf-8'))
     saved['data_dir']=data.as_posix()
     if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
-    application.mkdir(parents=True)
+    durable.mkdir(application)
     for entry,path in public_entries:
         if not entry['path'].startswith('app/'):continue
         target=application/Path(entry['path']).relative_to('app')

@@ -185,7 +185,7 @@ def apply(app,package,digest,services=None):
         if journal.exists() and json.loads(journal.read_text(encoding='utf-8'))['phase'] not in ('complete','rolled_back'):
             raise setup.SetupError('Une mise à jour interrompue doit être récupérée avant de continuer.')
         operation=destination(root.parent,'updates/'+uuid.uuid4().hex)
-        operation.mkdir(parents=True);operation.chmod(0o700)
+        durable.mkdir(operation);operation.chmod(0o700)
         staged=operation/'new';previous=operation/'previous';snapshot=operation/'snapshot'
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)

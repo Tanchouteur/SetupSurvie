@@ -147,7 +147,7 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
     kit = setup.safe_path(kit) if kit else None
     if kit and (kit == base or kit.is_relative_to(base) or base.is_relative_to(kit)):
         raise setup.SetupError('Le kit et l’installation doivent rester séparés.')
-    base.mkdir(parents=True, exist_ok=True)
+    durable.mkdir(base)
     with installation_lock(base):
         journal = destination(base, '.installation.json')
         state = json.loads(journal.read_text(encoding='utf-8')) if journal.exists() else None

@@ -98,7 +98,7 @@ def index_guides():
                 elif suffix=='.html':p=Text();p.feed(path.read_text(errors='replace'));text=p.text()
                 elif suffix=='.pdf':
                     from pypdf import PdfReader
-                    cache=store.ROOT/'index-cache';cache.mkdir(exist_ok=True)
+                    cache=store.ROOT/'index-cache';durable.mkdir(cache)
                     stat=path.stat();key=hashlib.sha256(('pdf-v1:'+relative+':'+str(stat.st_mtime_ns)+':'+str(stat.st_size)).encode()).hexdigest()
                     cached=cache/(key+'.json')
                     page_texts=None
@@ -141,7 +141,7 @@ def index_guides():
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
-    store.ROOT.mkdir(parents=True,exist_ok=True)
+    durable.mkdir(store.ROOT)
     durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
     return len(documents)
 

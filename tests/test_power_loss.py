@@ -90,6 +90,20 @@ setup.write_json(Path(sys.argv[2]),{'value':'nouveau réglage'},private=True)
             with self.assertRaises(OSError):setup.write_json(target, {'value': 'new'})
         self.assertEqual(json.loads(target.read_text()), {'value': 'old'})
 
+    def test_new_directory_entries_are_synced_before_state_publication(self):
+        target=self.root/'new'/'nested'/'settings.json'
+        events=[];publish=durable.publish
+        sync_directory=durable.sync_directory
+        def sync(path):
+            events.append(Path(path));sync_directory(path)
+        def checked_publish(source,destination):
+            self.assertIn(self.root,events)
+            self.assertIn(self.root/'new',events)
+            publish(source,destination)
+        with patch.object(durable,'sync_directory',side_effect=sync),patch.object(durable,'publish',side_effect=checked_publish):
+            setup.write_json(target,{'complete':True})
+        self.assertTrue(json.loads(target.read_text())['complete'])
+
     def test_sqlite_survives_kill_with_committed_messages_and_explicitly_paused_jobs(self):
         code = '''
 from pathlib import Path
