@@ -1,7 +1,5 @@
 /* This small independent script keeps native access usable if PDF.js fails. */
 (() => {
-  const fit=()=>{document.getElementById('pdf-container').style.top=document.querySelector('header').getBoundingClientRect().height+'px';};
-  fit();window.addEventListener('resize',fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(document.querySelector('header'));
   const id=new URLSearchParams(location.search).get('id')||'',base=id.split('#page=')[0];
   if(!base.startsWith('guide:')||!base.toLowerCase().endsWith('.pdf')){
     document.getElementById('pdf-status').textContent='Référence PDF non valide. Revenez à la bibliothèque.';return;
