@@ -32,7 +32,12 @@ async page => {
   if(!(await(await page.request.get(base+'/api/conversations')).json()).conversations.some(c=>c.title==='Mémo du profil'))throw Error('History lost');
   const other=await page.context().newPage();await other.goto(base);await other.waitForFunction(id=>S.user?.id===id,id);
   await page.locator('#account-button').click();await page.getByRole('button',{name:'Famille',exact:true}).click();await page.waitForFunction(()=>S.user?.id==='local-family');
-  await other.bringToFront();await other.waitForFunction(()=>S.user?.id==='local-family');
+  await other.bringToFront();
+  try{await other.waitForFunction(()=>S.user?.id==='local-family');}
+  catch(error){
+    const state=await other.evaluate(async()=>({user:S.user,reloading:S.profileReloading,hidden:document.hidden,focus:document.hasFocus(),visibility:document.visibilityState,current:await(await fetch('/api/profiles/current')).json(),storage:localStorage.getItem('survie.profile.changed')}));
+    throw Error('Secondary profile tab: '+JSON.stringify(state)+' cookies='+JSON.stringify((await page.context().cookies()).filter(c=>c.name==='survie_profile')));
+  }
   const stale=await page.request.put(base+'/api/favorites',{data:{source_id:'guide:craft.en.txt'},headers:{Origin:base,'X-Survie-Profile':id}});
   if(stale.status()!==409)throw Error('Stale tab can change another profile');
   await other.close();
