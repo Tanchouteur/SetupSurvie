@@ -50,6 +50,9 @@ Sur runner CPU, sans corpus, carte lourde ou modèle :
 - Les recettes sont ajoutées aux lanceurs CI Chromium/WebKit ; les modules de
   l’interface classique et les campagnes existantes sont conservés.
 
-Les résultats CI seront consignés avant intégration. Aucun déploiement sur le PC
+La [CI du commit fonctionnel `9bc685f`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43467670565)
+est **entièrement réussie** : Windows, Linux, Chromium, WebKit et routage hors
+ligne synthétique. Les nouvelles recettes et les campagnes existantes passent
+sur les deux moteurs navigateur. Aucun déploiement sur le PC
 Windows de Marc ni essai Safari iPhone physique ne sont effectués dans le runner.
 Les résultats Windows 0.1.33 du journal d’incidents restent distincts de cette recette.
