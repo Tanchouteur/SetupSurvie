@@ -73,3 +73,21 @@ Ne pas lancer de modèle ni de benchmark dans le runner CPU et ne pas arrêter l
 applications de l’utilisateur pour libérer de la VRAM. Les résultats Linux et
 Windows restent séparés ; un résultat ne certifie pas tous les documents ni tous
 les usages futurs.
+
+## Campagne de traduction après 0.1.28 — à réaliser
+
+Les contrôles de nombres et d’unités réduisent certaines erreurs détectables ;
+ils ne mesurent pas la fidélité du français. Sur une installation d’essai avec
+modèles déjà présents, comparer au moins une quinzaine d’extraits représentatifs :
+texte courant, tableaux, mesures, négations, procédures numérotées et pages
+numérisées. Garder un original et une traduction de référence relue par une
+personne bilingue ; ne pas placer les réponses attendues dans la bibliothèque.
+Les scans restent hors capacité de traduction sans texte extractible, faute d’OCR.
+
+Pour chaque mode, noter les omissions, ajouts, erreurs de sens, terminologie,
+nombres/unités et anomalies de l’extraction, ainsi que les blocages justifiés et
+faux positifs des contrôles. Conserver modèle exact, version, délai et matériel.
+Un résultat sans alerte n’est pas une réussite sémantique : la relecture reste
+le critère. Comparer ensuite un moteur spécialisé sur les mêmes extraits, sans
+choisir sur la seule fluidité ou vitesse. Cette campagne n’a pas été exécutée
+par les tests simulés de la livraison 0.1.28.

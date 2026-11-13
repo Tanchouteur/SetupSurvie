@@ -72,3 +72,11 @@ pause volontaire. Le mode `inference_autostart: false` laisse le moteur sur
 commande explicite. Les modifications de pare-feu et le créneau Windows Update
 18 h–midi sont propres à cette activation autorisée. Voir le
 [guide de reprise Windows](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127).
+
+Le 13 novembre 2026, Louis demande une traduction plus exploitable. En 0.1.28,
+le moteur existant est conservé avec contrôle local des nombres/unités, blocage
+des anomalies fortes et avertissements de complétude. La comparaison source/texte
+reste privée. Les anciens travaux ne sont pas déclarés contrôlés. Une comparaison
+avec un moteur spécialisé et une évaluation bilingue sur documents réels restent
+à réaliser avant de choisir un nouveau moteur ; aucun gain de fidélité des modèles
+n’est affirmé sur la seule base des tests simulés.

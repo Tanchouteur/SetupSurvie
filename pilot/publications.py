@@ -40,11 +40,19 @@ def _publish(identifier,user_id):
         reserve(db,identifier,user_id,{'id':item['source_id'],'title':item['title']})
         record=dict(db.execute('SELECT * FROM translation_publications WHERE translation_id=?',(identifier,)).fetchone())
         parts=[dict(row) for row in db.execute('SELECT * FROM translation_parts WHERE translation_id=? ORDER BY position',(identifier,))]
+        reports={row['position']:json.loads(row['report']) for row in db.execute('SELECT position,report FROM translation_checks WHERE translation_id=?',(identifier,))}
     if any(part['status'] not in ('done','unreadable') for part in parts) or not any(part['status']=='done' for part in parts):
         raise HTTPException(409,'Cette traduction contient encore des passages à traiter.')
     if sum(len(part['translated']) for part in parts)>20_000_000:raise HTTPException(413,'La traduction est trop volumineuse pour un document partagé. Exportez le texte ou traduisez des plages plus courtes.')
     path='TRAD-'+identifier+'.fr.html'
     target=library.GUIDES/path
+    if not record['published_at']:
+        from .translation_quality import assess
+        for part in parts:
+            # Legacy completed parts were never gated and cannot be resumed.
+            # Preserve their explicit unverified status and existing publication contract.
+            if part['status']=='done' and part['position'] in reports and assess(part['source_text'],part['translated'])['status']=='blocked':
+                raise HTTPException(409,'Un passage traduit présente une anomalie de nombres ou d’unités, ou reste identique à l’original. Publication refusée ; le texte privé est conservé.')
     source_meta=json.loads(record['source_meta'])
     pages=defaultdict(list)
     for part in parts:pages[part['page']].append(part)
@@ -64,8 +72,16 @@ def _publish(identifier,user_id):
 <p>Provenance de l’original : {escape(source_meta.get('provenance',''))}. Conditions d’utilisation déclarées pour l’original : {escape(source_meta.get('licence') or 'à vérifier')}.</p>
 <p>Empreinte SHA-256 de l’instantané textuel utilisé : {digest}. Cette empreinte ne porte pas sur le fichier PDF.</p>'''
     sections=[]
+    if reports:
+        warnings=sum(report['status']=='warning' for report in reports.values())
+        unchecked=sum(p['status']=='done' and p['position'] not in reports for p in parts)
+        head+=f'<p class="notice">Contrôles automatiques limités : {warnings} passage(s) à relire, {unchecked} passage(s) sans contrôle enregistré. Ils ne valident pas le sens de la traduction ; aucune relecture humaine n’est attestée.</p>'
     for page,rows in pages.items():
-        body=''.join('<p class="part">'+escape(p['translated'] if p['status']=='done' else '[Texte non extractible : consultez la page originale.]')+'</p>' for p in rows)
+        body=''
+        for p in rows:
+            messages=reports.get(p['position'],{}).get('issues',[])
+            if messages:body+='<p class="notice">À relire : '+escape(' '.join(i['message'] for i in messages))+'</p>'
+            body+='<p class="part">'+escape(p['translated'] if p['status']=='done' else '[Texte non extractible : consultez la page originale.]')+'</p>'
         sections.append(f'<section id="page={page}"><h2>Page/section {page}</h2>{body}</section>')
     payload=(head+'\n'.join(sections)+'</html>').encode('utf-8')
     if target.exists():

@@ -28,7 +28,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide du pilote 0.1.18.
 
-- [Documents, favoris et traductions](utilisation/documents-et-traduction.md) — guide du pilote 0.1.25, lecture PDF et accès de secours.
+- [Documents, favoris et traductions](utilisation/documents-et-traduction.md) — guide du pilote 0.1.28, lecture PDF, contrôles de traduction et accès de secours.
 
 - [Paramètres, déplacements et cartes hors ligne](utilisation/parametres-et-cartes.md) — guide du pilote 0.1.10.
 

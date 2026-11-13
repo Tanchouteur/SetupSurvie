@@ -239,3 +239,14 @@ Thèmes et parcours partagent `deploy/kiwix-themes.json` ; préserver son montag
 dans le pilote portable et le laboratoire. La grille repère des références et
 des besoins à examiner, sans certifier la couverture. Les tests restent sur
 fixtures ; les gros contenus se préparent sur les PC cibles.
+
+## Contrôles de traduction (0.1.28)
+
+Lire le guide documentaire avant de changer les seuils et unités de
+`pilot/translation_quality.py`. Les anomalies bloquantes ne doivent jamais être
+comptées comme passages traduits ou publiées. Conserver source, rapport versionné,
+proposition refusée et avertissements ; aucune validation automatique du sens
+n’est revendiquée. Les anciens passages restent sans contrôle enregistré. La
+comparaison et les propositions refusées restent privées ; les avertissements
+suivent les traductions partagées et exports. Ne pas relancer d’inférence réelle
+pour un test dans le runner CPU.

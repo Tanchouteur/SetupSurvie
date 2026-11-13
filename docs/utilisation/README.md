@@ -73,3 +73,9 @@ les associations aux conversations et la traduction progressive. Depuis 0.1.25,
 les nouvelles traductions terminées rejoignent les documents locaux partagés ;
 les anciennes restent privées jusqu’à publication explicite. **Lecture de secours**
 permet de consulter les fichiers sans l’API ni l’IA.
+
+Depuis 0.1.28, les nouveaux passages traduits sont contrôlés pour repérer des
+nombres ou unités altérés, et signaler certaines omissions possibles. Le panneau
+permet de comparer le texte source ; une anomalie bloquante attend une reprise.
+Les contrôles ne valident pas le sens et ne certifient pas les anciens travaux.
+Voir le [guide documentaire](documents-et-traduction.md#contrôles-de-traduction--depuis-0128).

@@ -29,8 +29,10 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const learningResult=await learningRecipe(page);
       const documentsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_documents.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const documentsResult=await documentsRecipe(page);
+      const qualityRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_quality.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const qualityResult=await qualityRecipe(page);
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}
