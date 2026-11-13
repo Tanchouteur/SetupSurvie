@@ -51,9 +51,8 @@ kit synthétique et assertions de raccourcis adaptées au suivi introduit en 0.1
 Le test vérifie toujours que la seconde installation ne modifie aucun raccourci
 de la première. Les limites de capacité réelles restent inchangées.
 
-La suite Python complète passe localement : 320 tests, 3 ignorés. Un contrôle
-supplémentaire du handle partagé porte le total attendu à 321 ; les 11 tests
-du moniteur passent aussi isolément. La recette Chromium fonctionnelle passe
+La suite Python complète passe localement : **321 tests, 3 ignorés**, dont les
+11 contrôles du moniteur (handle partagé compris). La recette Chromium fonctionnelle passe
 avec 26 contrôles. Syntaxe JavaScript, `git diff --check` et construction du
 paquet logiciel 0.1.32 sont vérifiés. Les résultats CI sont consignés avant publication.
 

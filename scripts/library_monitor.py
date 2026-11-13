@@ -67,7 +67,12 @@ def owner_status(owner):
 
 
 def allowed_plan(path, root, work):
-    path = Path(path).absolute()
+    original = Path(path).absolute()
+    # Windows TEMP can use an 8.3 alias while root.resolve() uses its long name.
+    # Reject linked components before canonicalising, then compare canonical roots.
+    if any(part.is_symlink() for part in [original, *original.parents]):
+        raise ValueError('Linked plan')
+    path = original.resolve()
     if path.is_relative_to((root / 'catalog').resolve()):
         relative = path.relative_to(root.resolve()).as_posix()
         return destination(root, relative)

@@ -45,7 +45,7 @@
   }
   function restorePosition(state){requestAnimationFrame(()=>{const target=state?.focus&&document.getElementById(state.focus);(target||$('main')).focus({preventScroll:true});window.scrollTo({top:state?.scroll||0,behavior:'instant'});});}
   const baseView=view,baseRead=readSource,baseOpen=openConversation,baseStatus=status,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
-  labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';
+  labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Réglages';
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function activate(route,restoring=false){
     if(!route)return;

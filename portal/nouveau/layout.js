@@ -45,7 +45,10 @@
   get('view-monitor').querySelector('.page-heading').replaceWith(header('Comprendre ce qui se passe.','Ce sont les mesures du PC qui héberge SetupSurvie, même lorsque vous consultez cette page depuis un téléphone.'));
   get('view-data').querySelector('.page-heading').replaceWith(header('Les téléchargements et préparations.','Suivez les transferts en cours avant d’ajouter de nouveaux contenus.'));
   // Inventory grids moved to Library/Storage; remove only the now-empty headings.
-  for(const node of [...get('view-data').children])if(node.tagName==='H2')node.remove();
+  for(const node of [...get('view-data').children]){
+    if(node.tagName==='H2'||node.classList.contains('section-top'))node.remove();
+    else if(node.tagName==='P')storage.append(node);
+  }
   const machineTabs=make('nav','next-tabs');machineTabs.id='next-machine-tabs';machineTabs.setAttribute('aria-label','Rubriques de l’appareil');
   machineTabs.innerHTML=[['ensemble','Vue d’ensemble'],['activite','Activité'],['telechargements','Téléchargements'],['stockage','Stockage'],['reglages','Réglages']].map(([p,l])=>route('appareil/'+p,l)).join('');
   get('view-monitor').querySelector('.page-heading').after(machineTabs);
