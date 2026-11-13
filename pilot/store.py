@@ -9,17 +9,19 @@ import secrets
 import sqlite3
 import time
 import uuid
+from . import durable
 
 ROOT = Path(os.environ.get('PILOT_STATE_DIR', '/pilot-data'))
 
 
 @contextmanager
 def connect():
-    ROOT.mkdir(parents=True, exist_ok=True)
+    durable.mkdir(ROOT)
     ROOT.chmod(0o700)
     db = sqlite3.connect(ROOT / 'pilot.db', timeout=20)
     db.row_factory = sqlite3.Row
     db.execute('PRAGMA journal_mode=WAL')
+    db.execute('PRAGMA synchronous=FULL')
     db.execute('PRAGMA foreign_keys=ON')
     (ROOT / 'pilot.db').chmod(0o600)
     try:

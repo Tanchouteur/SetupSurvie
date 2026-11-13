@@ -13,6 +13,7 @@ import uuid
 import zipfile
 
 import setup
+from pilot import durable
 from delivery_paths import destination,locked
 from pilot_backup import backup
 from pilot_kit import checked_entries
@@ -58,11 +59,12 @@ def build(output):
                 archive.write(path,'app/'+relative)
                 records.append({'path':relative,'bytes':path.stat().st_size,'sha256':setup.file_hash(path),'executable':bool(path.stat().st_mode&0o111)})
             archive.writestr('update.json',json.dumps({'schema':1,'kind':'SetupSurvie software update','release':version,'files':records},ensure_ascii=False))
-        temporary.replace(output)
+        durable.sync_file(temporary)
+        durable.publish(temporary,output)
     except BaseException:
         temporary.unlink(missing_ok=True);raise
     digest=setup.file_hash(output)
-    output.with_name(output.name+'.sha256').write_text(digest+'  '+output.name+'\n')
+    durable.write_bytes(output.with_name(output.name+'.sha256'),(digest+'  '+output.name+'\n').encode('utf-8'))
     print('Paquet logiciel :',output,'\nSHA-256 :',digest)
     return digest
 
@@ -143,12 +145,18 @@ def restore_snapshot(snapshot,app,c):
             if path.is_symlink():raise setup.SetupError('Lien dans les états ; restauration manuelle requise.')
             if path.is_dir():shutil.rmtree(path)
             else:path.unlink()
+    directories=set()
     for entry,source in entries:
         relative=entry['path']
         if relative.startswith('data/state/'):target=destination(data,relative.removeprefix('data/'))
         elif relative in ('private/settings.json','private/identifiants.txt'):target=destination(app.work,relative.removeprefix('private/'))
         else:continue
         target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target);target.chmod(0o600)
+        durable.sync_file(target)
+        for parent in target.parents:
+            directories.add(parent)
+            if parent in (data,app.work):break
+    for parent in sorted(directories,key=lambda p:len(p.parts),reverse=True):durable.sync_directory(parent)
 
 
 def recover(app,journal,services):
@@ -156,8 +164,8 @@ def recover(app,journal,services):
     if j['phase'] in ('complete','rolled_back'):raise setup.SetupError('Cette opération est terminée ; aucun état utilisateur ne sera écrasé.')
     services.stop()
     if previous.exists():
-        if root.exists():root.rename(root.with_name(root.name+'.failed-'+uuid.uuid4().hex[:8]))
-        previous.rename(root)
+        if root.exists():durable.publish(root,root.with_name(root.name+'.failed-'+uuid.uuid4().hex[:8]))
+        durable.publish(previous,root)
     if (snapshot/'backup.json').is_file():restore_snapshot(snapshot,app,services.c)
     setup.ROOT=root
     services.start();services.check(j['old_version'])
@@ -177,7 +185,7 @@ def apply(app,package,digest,services=None):
         if journal.exists() and json.loads(journal.read_text(encoding='utf-8'))['phase'] not in ('complete','rolled_back'):
             raise setup.SetupError('Une mise à jour interrompue doit être récupérée avant de continuer.')
         operation=destination(root.parent,'updates/'+uuid.uuid4().hex)
-        operation.mkdir(parents=True);operation.chmod(0o700)
+        durable.mkdir(operation);operation.chmod(0o700)
         staged=operation/'new';previous=operation/'previous';snapshot=operation/'snapshot'
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)
@@ -191,6 +199,7 @@ def apply(app,package,digest,services=None):
             shutil.copytree(root/'vendor',staged/'vendor')
         snapshot_bytes=sum(p.stat().st_size for name in ('state/pilot','state/openwebui','state/caddy','library/guides') for p in (data/name).rglob('*') if p.is_file() and not p.is_symlink() and 'cache' not in p.relative_to(data).parts)
         if shutil.disk_usage(root).free<snapshot_bytes+2_000_000_000:raise setup.SetupError('Marge libre insuffisante pour la sauvegarde et le remplacement.')
+        durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),
            'old_version':old_release['version'],'new_version':manifest['release']['version']}
         setup.write_json(journal,j,private=True)
@@ -198,7 +207,7 @@ def apply(app,package,digest,services=None):
             services.stop()
             backup(app,c,snapshot,resume=False)
             j['phase']='snapshot_ready';setup.write_json(journal,j,private=True)
-            root.rename(previous);staged.rename(root)
+            durable.publish(root,previous);durable.publish(staged,root)
             j['phase']='switched';setup.write_json(journal,j,private=True)
             services.start();services.check(j['new_version'])
             j['phase']='complete';setup.write_json(journal,j,private=True)
@@ -220,15 +229,9 @@ def main():
     app=setup.Installation(args.work_dir)
     if args.action=='apply':apply(app,args.package,args.sha256)
     else:
-        # A power cut can leave a lock directory; recovery is an explicit local action.
-        import discovery
-        owner=app.work/'update.lock/owner.json'
-        if owner.is_file():
-            value=json.loads(owner.read_text(encoding='utf-8'))
-            if value.get('identity') and discovery.identity(value['pid'])==value['identity']:raise setup.SetupError('La mise à jour est encore en cours ; récupération refusée.')
-        recover(app,app.work/'update.json',Services(app,app.load()))
-        owner.unlink(missing_ok=True)
-        (app.work/'update.lock').rmdir() if (app.work/'update.lock').exists() else None
+        # Recovery and application share the same OS lease, including after a crash.
+        with locked(app.work/'update.lock'):
+            recover(app,app.work/'update.json',Services(app,app.load()))
 
 
 if __name__=='__main__':

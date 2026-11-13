@@ -214,6 +214,15 @@ quatre lanceurs racine dans les kits ; les exclure des paquets logiciels compati
 avec les lecteurs 0.1.16. Les scripts et le générateur restent dans ces paquets.
 Ne jamais remplacer une application par un simple pull dans son dossier actif.
 
+## Coupures et reprise (0.1.23)
+
+Lire `docs/exploitation/coupures-et-redemarrage.md`. Les fichiers `.lease` des verrous
+OS restent présents : ne pas les supprimer ni contourner un propriétaire inconnu.
+Utiliser `pilot/durable.py` pour les publications critiques et synchroniser les
+copies avant de valider le journal. Le démarrage refuse une mise à jour inachevée ;
+sa récupération est explicite. Les tests tuent seulement nos processus jetables,
+sans Docker réel ni arrêt du PC, et ne prouvent pas la tenue physique du stockage.
+
 ## Sources et fiabilité (0.1.18)
 
 Lire `docs/utilisation/sources-et-fiabilite.md` et `docs/essais/protocole-fiabilite-ia.md`.

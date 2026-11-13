@@ -18,6 +18,66 @@ import xml.etree.ElementTree as ET
 import content
 import geography_data
 import setup
+from pilot import durable
+
+
+def verified_graph(folder):
+    from pilot_kit import checked_entries
+    try:
+        manifest=json.loads((folder/'manifest.json').read_text(encoding='utf-8'))
+        if not isinstance(manifest,dict) or manifest.get('complete') is not True or manifest.get('engine')!='OSRM' or not manifest.get('files'):return False
+        checked_entries(folder,manifest)
+        return True
+    except (OSError,ValueError,setup.SetupError):return False
+
+
+def recover_graph_publication(directory):
+    journal=directory/'publication.json'
+    if not journal.exists():return
+    state=json.loads(journal.read_text(encoding='utf-8'))
+    if not isinstance(state,dict):raise setup.SetupError('Journal de routage non reconnu ; données conservées.')
+    if state.get('phase')=='complete':return
+    if state.get('phase')!='pending':raise setup.SetupError('Journal de routage non reconnu ; données conservées.')
+    for key,prefix in (('previous','previous-'),('staging','.prepare-')):
+        name=state.get(key)
+        if not isinstance(name,str) or not name.startswith(prefix) or Path(name).name!=name:
+            raise setup.SetupError('Journal de routage non reconnu ; données conservées.')
+    current=content.destination(directory,'current')
+    previous=content.destination(directory,state['previous'])
+    staging=content.destination(directory,state['staging'])
+    if not verified_graph(current):
+        candidate=previous if verified_graph(previous) else staging if verified_graph(staging) else None
+        if candidate is None:raise setup.SetupError('Routage interrompu : aucune copie complète vérifiable. Données conservées pour récupération.')
+        if current.exists():durable.publish(current,directory/('interrupted-'+uuid.uuid4().hex))
+        durable.publish(candidate,current)
+    state['phase']='complete';setup.write_json(journal,state)
+
+
+def recover_publication(root):
+    directory=content.destination(Path(root),'library/maps/routing')
+    if not (directory/'publication.json').exists():return
+    with content.locked(directory/'publication.lock'):
+        recover_graph_publication(directory)
+
+
+def publish_graph(staging,root):
+    directory=content.destination(Path(root),'library/maps/routing')
+    staging=Path(staging)
+    if staging.parent.resolve()!=directory.resolve() or not staging.name.startswith('.prepare-'):
+        raise setup.SetupError('Dossier de préparation du routage non reconnu.')
+    with content.locked(directory/'publication.lock'):
+        recover_graph_publication(directory)
+        durable.sync_tree(staging)
+        current=directory/'current';previous=directory/('previous-'+uuid.uuid4().hex)
+        state={'phase':'pending','previous':previous.name,'staging':staging.name}
+        setup.write_json(directory/'publication.json',state)
+        try:
+            if current.exists():durable.publish(current,previous)
+            durable.publish(staging,current)
+            state['phase']='complete';setup.write_json(directory/'publication.json',state)
+        except BaseException:
+            recover_graph_publication(directory)
+            raise
 
 
 def recipe():
@@ -38,6 +98,7 @@ def start_services(app,config,backend):
     if backend=='lab':
         import linux_lab as lab
         lab.checked_mount()
+        recover_publication(Path(config['data_dir']))
         root=Path(config['data_dir'])/'library/maps/routing/current'
         if not (root/'manifest.json').is_file():return
         if lab.podman('network','exists','setupsurvie-lab',check=False).returncode:
@@ -51,6 +112,7 @@ def start_services(app,config,backend):
                 '--security-opt=label=disable','--security-opt=no-new-privileges','--cap-drop=ALL',
                 '-v',str(root/mode)+':/data:ro',recipe()['image'],'osrm-routed','--algorithm','mld','--threads','1','/data/network.osrm')
     else:
+        recover_publication(Path(config['data_dir']))
         app.render(config)
         app.compose(config,'up','-d','--pull','never','--no-deps','--force-recreate',*('router-'+mode for mode in recipe()['profiles']))
 
@@ -72,8 +134,8 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
     west,south,east,north=bbox
     if not -180<=west<east<180 or not -80<=south<north<=80:raise setup.SetupError('Zone non valide ou traversant le méridien 180°.')
     if east-west>2 or north-south>2:raise setup.SetupError('Préparez un extrait local de moins de deux degrés par axe.')
-    config=recipe();directory=content.destination(root,'library/maps/routing');directory.mkdir(parents=True,exist_ok=True)
-    staging=directory/('.prepare-'+uuid.uuid4().hex);staging.mkdir()
+    config=recipe();directory=content.destination(root,'library/maps/routing');durable.mkdir(directory)
+    staging=directory/('.prepare-'+uuid.uuid4().hex);durable.mkdir(staging)
     build_id=datetime.datetime.now(datetime.timezone.utc).isoformat()
     try:
         content.check_capacity(root,10_000_000_000,storage_root=storage_root);check()
@@ -132,13 +194,7 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
                   'files':files,'attribution':config['attribution']}
         if source_url:manifest['source']['url']=source_url
         setup.write_json(staging/'manifest.json',manifest)
-        current=directory/'current';previous=None
-        if current.exists():
-            previous=directory/('previous-'+uuid.uuid4().hex);current.rename(previous)
-        try:staging.rename(current)
-        except BaseException:
-            if previous:previous.rename(current)
-            raise
+        publish_graph(staging,root)
         return manifest
     finally:
         if staging.exists():shutil.rmtree(staging)

@@ -8,6 +8,7 @@ import secrets
 import sys
 
 import setup
+from pilot import durable
 from delivery_paths import destination as checked_destination,locked
 
 PRIVATE_FILES=('settings.json','identifiants.txt','inference-paused.json')
@@ -42,7 +43,7 @@ def stopped_backup(app,c,destination,*,resume=True):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
-    dest.mkdir(parents=True);dest.chmod(0o700)
+    durable.mkdir(dest);dest.chmod(0o700)
     files=[]
     try:
         app.compose(c,'stop','portal','pilot','open-webui')
@@ -65,6 +66,7 @@ def stopped_backup(app,c,destination,*,resume=True):
             target=checked_destination(dest,relative);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
             target.chmod(0o600)
             files.append({'path':relative,'bytes':target.stat().st_size,'sha256':setup.file_hash(target)})
+        durable.sync_tree(dest)
         setup.write_json(dest/'backup.json',{'schema':1,'files':files,'requires':'Le kit public correspondant fournit modèles, archives ZIM et caches ; cette sauvegarde contient comptes, conversations, guides et certificats privés.'},private=True)
     finally:
         if resume:app.compose(c,'start','open-webui','pilot','portal')
@@ -90,7 +92,7 @@ def restore(source,kit,work_dir,data_dir):
     saved=json.loads(settings.read_text(encoding='utf-8'))
     saved['data_dir']=data.as_posix()
     if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
-    application.mkdir(parents=True)
+    durable.mkdir(application)
     for entry,path in public_entries:
         if not entry['path'].startswith('app/'):continue
         target=application/Path(entry['path']).relative_to('app')
@@ -111,6 +113,8 @@ def restore(source,kit,work_dir,data_dir):
         relative=Path(entry['path']).relative_to('payload');dest=data/relative
         if dest.exists() and (relative.parts[:2]==('library','guides') or relative==Path('catalog/downloaded-content.json')):continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
+    for folder in (application,data,work):
+        if folder.exists():durable.sync_tree(folder)
     app=setup.Installation(work);setup.write_json(app.settings_path,saved,private=True)
     app.init(saved['target'],data,cpu=saved['cpu'])
     app.import_images(saved,kit/'images.tar');app.prepare(saved,True);app.up(saved);app.verify(saved)

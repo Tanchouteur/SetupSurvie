@@ -1,6 +1,6 @@
 # Architecture du pilote
 
-Vue de référence documentaire au 12 novembre 2026. Elle décrit les rôles des
+Vue de référence documentaire au 13 novembre 2026. Elle décrit les rôles des
 composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
 | Composant | Responsabilité | Entrées du dépôt |
@@ -36,6 +36,13 @@ reste locale au navigateur jusqu’à son envoi. La grille du sélecteur est un
 relevé de métadonnées et de présence, sans validation éditoriale automatique.
 
 Le contrat de livraison est dans [release.json](../../deploy/release.json).
+
+Depuis 0.1.23, [durable.py](../../pilot/durable.py) est partagé par le service et
+les scripts hôtes pour publier les fichiers après synchronisation. Les opérations
+hôtes utilisent des verrous du système d’exploitation, avec fichier `.lease`
+persistant. SQLite conserve WAL et impose FULL ; les états interrompus ne relancent
+pas implicitement l’inférence. Voir [la reprise après coupure](../exploitation/coupures-et-redemarrage.md)
+pour les limites Windows, les services tiers et les essais matériels restant à faire.
 Les références des composants tiers sont dans [versions.json](../../deploy/versions.json).
 Les catalogues [documentaires](../../deploy/content-catalog.json) et
 [cartographiques](../../deploy/map-catalog.json) décrivent les ressources prévues ;

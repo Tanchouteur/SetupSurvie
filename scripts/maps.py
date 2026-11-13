@@ -8,12 +8,13 @@ import time
 
 import content
 import setup
+from pilot import durable
 
 
 def prepare(root,tool,*,storage_root=None,max_bytes=20_000_000_000):
     root=setup.safe_path(root)
     recipe=json.loads((setup.ROOT/'deploy/map-catalog.json').read_text())
-    maps=content.destination(root,'library/maps');maps.mkdir(parents=True,exist_ok=True)
+    maps=content.destination(root,'library/maps');durable.mkdir(maps)
     manifest=maps/'manifest.json'
     previous=json.loads(manifest.read_text()) if manifest.exists() else {'maps':[]}
     records={m['id']:m for m in previous['maps']}
@@ -53,12 +54,12 @@ def prepare(root,tool,*,storage_root=None,max_bytes=20_000_000_000):
             subprocess.run([str(tool),'verify',str(partial)],check=True,stdout=subprocess.DEVNULL)
             record={**item,'path':name,'bytes':partial.stat().st_size,'sha256':setup.file_hash(partial),
                     'source':recipe['source'],'edition':recipe['edition'],'attribution':recipe['attribution']}
-            partial.chmod(0o644);partial.replace(final)
+            durable.sync_file(partial);partial.chmod(0o644);durable.publish(partial,final)
             records[item['id']]=record
             setup.write_json(manifest,{'schema':1,'maps':list(records.values())})
             print('Carte vérifiée :',name,record['bytes'],flush=True)
         guide=content.destination(root,'library/guides/MAP-cartes-sud.fr.html')
-        guide.write_text('<!doctype html><html lang="fr"><meta charset="utf-8"><title>Cartes hors ligne de Solliès-Ville et du Sud</title>'
+        durable.write_bytes(guide,('<!doctype html><html lang="fr"><meta charset="utf-8"><title>Cartes hors ligne de Solliès-Ville et du Sud</title>'
             '<h1>Cartes hors ligne : Solliès-Ville, Var, PACA, Occitanie et Corse</h1>'
             '<p>Carte des routes, chemins, bâtiments, localités et cours d’eau. '
             'Fond OpenStreetMap/Protomaps du '+recipe['edition']+'.</p>'
@@ -66,7 +67,7 @@ def prepare(root,tool,*,storage_root=None,max_bytes=20_000_000_000):
             '<p>Le fond régional est détaillé jusqu’au zoom 13 ; les alentours de Solliès-Ville jusqu’au zoom 15. '
             'La carte ne calcule pas d’itinéraire et ne garantit pas les conditions actuelles des routes, '
             'l’accès à un lieu ou la potabilité d’un point d’eau. Le fond seul ne contient pas de relief altimétrique. Les altitudes se préparent séparément depuis Données locales.</p>'
-            '<p>Attribution : '+recipe['attribution']+'. Ces cartes se consultent sans Internet.</p></html>')
+            '<p>Attribution : '+recipe['attribution']+'. Ces cartes se consultent sans Internet.</p></html>').encode('utf-8'))
         guide.chmod(0o644)
         setup.write_json(root/'catalog/map-progress.json',{'status':'done','maps':list(records)})
     return records

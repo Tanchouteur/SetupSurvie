@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Download selected, pinned offline contents without touching accounts or models."""
 import argparse
-from contextlib import contextmanager
 from datetime import datetime,timezone
 import hashlib
 import json
@@ -14,6 +13,8 @@ import urllib.parse
 import urllib.request
 
 import setup
+from delivery_paths import locked
+from pilot import durable
 
 CATALOG=setup.ROOT/'deploy/content-catalog.json'
 DEFAULT_BUDGET=500_000_000_000
@@ -54,20 +55,6 @@ def destination(root,relative):
         if parent.is_symlink():raise setup.SetupError('Lien symbolique refusé : '+relative)
     if not path.resolve().is_relative_to(root.resolve()):raise setup.SetupError('Chemin externe refusé.')
     return path
-
-
-@contextmanager
-def locked(path):
-    path.parent.mkdir(parents=True,exist_ok=True)
-    try:path.mkdir()
-    except FileExistsError:raise setup.SetupError('Une opération est en cours ou a été interrompue : '+str(path))
-    owner=path/'owner.json'
-    try:
-        import discovery
-        setup.write_json(owner,{'pid':os.getpid(),'identity':discovery.identity(os.getpid())},private=True)
-        yield
-    finally:
-        owner.unlink(missing_ok=True);path.rmdir()
 
 
 def catalog(path=CATALOG):
@@ -128,7 +115,8 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
     if digest(partial)!=item['sha256']:raise setup.SetupError('Empreinte incorrecte ; fichier partiel conservé, jamais publié.')
     check()
     partial.chmod(0o644)
-    partial.replace(target)
+    durable.sync_file(partial)
+    durable.publish(partial,target)
     return 'downloaded'
 
 

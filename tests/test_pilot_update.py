@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
+from crash_harness import crash_after_ready
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
@@ -110,6 +111,72 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1')
         self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
         self.assert_static_data()
+
+    def assert_abrupt_cut_recovery(self, point):
+        if point.startswith('rollback'):
+            self.run_update()
+            journal=json.loads((self.work/'update.json').read_text())
+            journal['phase']='switched';setup.write_json(self.work/'update.json',journal,private=True)
+        ready=self.base/'ready'
+        code='''
+from pathlib import Path
+import time
+import pilot_update as update
+from pilot import durable
+base=Path(sys.argv[2]).resolve();point=sys.argv[3];ready=Path(sys.argv[4])
+root=base/'installed';work=base/'private';data=base/'data'
+app=setup.Installation(work);config=app.load();setup.ROOT=root
+app.compose=lambda *args,**kwargs:None
+class Services:
+    c=config
+    def stop(self):pass
+    def start(self):pass
+    def check(self,version):pass
+def stop_here():
+    ready.touch();time.sleep(60)
+original=durable.publish
+def publish(source,target):
+    original(source,target)
+    source=Path(source);target=Path(target)
+    if point=='between-renames' and source==root:stop_here()
+    if point=='after-renames' and source.name=='new' and target==root:stop_here()
+    if point=='rollback-rename' and source.name=='previous' and target==root:stop_here()
+durable.publish=publish
+copy=update.shutil.copyfile
+def interrupted_copy(source,target,*args,**kwargs):
+    if point=='rollback-copy' and Path(target)==data/'state/pilot/pilot.db':
+        Path(target).write_bytes(b'torn fixture');stop_here()
+    return copy(source,target,*args,**kwargs)
+update.shutil.copyfile=interrupted_copy
+if point.startswith('rollback'):
+    update.recover(app,work/'update.json',Services())
+else:
+    package=base/'update.zip'
+    update.apply(app,package,setup.file_hash(package),Services())
+'''
+        crash_after_ready(code,[self.base,point,ready],ready)
+        with self.assertRaisesRegex(setup.SetupError,'interrompue'),patch.object(self.app,'compose') as compose:
+            self.app.up(self.c)
+        compose.assert_not_called()
+        services=Services(self.app,self.c);services.starts=1
+        with patch.object(setup,'ROOT',self.root):
+            update.recover(self.app,self.work/'update.json',services)
+        self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1')
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
+        self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
+        self.assert_static_data()
+
+    def test_kill_between_application_directory_renames(self):
+        self.assert_abrupt_cut_recovery('between-renames')
+
+    def test_kill_after_new_application_directory_rename(self):
+        self.assert_abrupt_cut_recovery('after-renames')
+
+    def test_kill_during_rollback_directory_rename_then_repeat_recovery(self):
+        self.assert_abrupt_cut_recovery('rollback-rename')
+
+    def test_kill_during_rollback_database_copy_then_repeat_recovery(self):
+        self.assert_abrupt_cut_recovery('rollback-copy')
 
 
 if __name__=='__main__':unittest.main()

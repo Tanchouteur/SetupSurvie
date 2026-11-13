@@ -46,6 +46,7 @@ class LibraryPageTests(unittest.TestCase):
                 self.assertTrue(source['preview']);self.assertTrue(source['url'].endswith('#page=6'))
                 self.assertIn('Roof shelter',source['text'])
                 # Cached extraction must remain searchable after a second index.
+                for cached in (store.ROOT/'index-cache').glob('*.json'):cached.write_text('{torn fixture')
                 self.assertEqual(library.index_guides(),1)
                 self.assertEqual(len(asyncio.run(library.search('toit abri'))),1)
     def test_only_read_and_cited_sources_are_displayed(self):

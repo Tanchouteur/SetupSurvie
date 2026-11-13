@@ -10,6 +10,7 @@ import sys
 import time
 
 import setup
+from pilot import durable
 
 
 def checked_entries(root,manifest,progress=None):
@@ -134,7 +135,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
         raise setup.SetupError('Installation du kit réservée à des dossiers de données et réglages vides.')
     if shutil.disk_usage(data.parent if data.parent.exists() else root).free < sum(e['bytes'] for e in manifest['files'] if e['path'].startswith('payload/'))+15_000_000_000:
         raise setup.SetupError('Espace libre insuffisant pour copier les données du kit.')
-    application.mkdir(parents=True)
+    durable.mkdir(application)
     for entry,path in entries:
         if not entry['path'].startswith('app/'):continue
         destination=application/Path(entry['path']).relative_to('app')
@@ -149,6 +150,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
         if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
+    durable.sync_tree(application);durable.sync_tree(data)
     app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True);app.up(c);app.verify(c)
     app.install_windows_shortcuts(c,startup=startup)
     app.addresses(c)

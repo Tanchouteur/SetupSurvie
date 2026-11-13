@@ -130,8 +130,9 @@ Conserver le kit public d’origine et une sauvegarde privée des comptes, histo
 Depuis 0.1.22, elle conserve aussi la pause du moteur et le registre des contenus
 téléchargés. Mettre d’abord les préparations documentaires en pause et attendre leur
 arrêt ; un transfert ou une préparation concurrente entraîne un refus explicite.
-Une interruption brutale peut laisser un verrou : vérifier l’arrêt du processus
-concerné avant toute reprise, sans supprimer un verrou appartenant à une opération active.
+Depuis 0.1.23, les verrous du système se libèrent à la mort du processus ; leurs
+fichiers `.lease` restent présents et ne doivent pas être supprimés. Les anciens
+verrous inconnus sont conservés pour diagnostic. Lire [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md).
 
 ```powershell
 py -3 scripts\pilot_backup.py backup E:\Sauvegardes\survie-essai-01 --work-dir D:\SetupSurvie\prive
