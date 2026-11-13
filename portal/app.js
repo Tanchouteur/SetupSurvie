@@ -29,7 +29,7 @@ function restoreReading(id){
   box.scrollTop=legacyPage?position.page:position?(position.bottom?box.scrollHeight:position.top):box.scrollHeight;
   if(mobileNav.matches)window.scrollTo({top:0,behavior:'instant'});
 }
-function resumeConversation(){if(S.user&&S.view==='chat'&&!S.conversation&&!S.loadingConversation){const id=readingState().selected;if(id)openConversation(id);}}
+function resumeConversation(){if(S.user&&S.view==='chat'&&!S.conversation&&!S.loadingConversation&&!new URLSearchParams(location.search).has('document')){const id=readingState().selected;if(id)openConversation(id);}}
 $('chat-messages').addEventListener('scroll',rememberReading,{passive:true});
 window.addEventListener('scroll',()=>{if(mobileNav.matches)rememberReading();},{passive:true});
 window.addEventListener('pagehide',rememberReading);
@@ -65,6 +65,7 @@ function accountUI(){
   label.append(document.createTextNode(S.user?.name||'Se connecter'),element('small',S.user?'Votre compte local':'Retrouver mes conversations'));
   $('content-manager').hidden=S.user?.role!=='admin';if(S.view==='data'&&S.user){loadContentManager();loadGeography();}
   $('mobile-account').textContent=S.user?.name||'Se connecter';$('engine-controls').hidden=S.user?.role!=='admin';$('admin-nav').hidden=S.user?.role!=='admin';$('geo-download-form').hidden=S.user?.role!=='admin';
+  document.dispatchEvent(new CustomEvent('survie:auth'));
   if(S.user&&!S.user.recovery_ready)toast('Pensez à préparer votre code de secours dans « Mon compte ».');
 }
 function auth(){
@@ -79,7 +80,7 @@ async function histories(){
   try{const data=await api('/conversations');for(const c of data.conversations){const row=element('div',undefined,'conversation-row'),remove=button('×',()=>deleteConversation(c),'conversation-delete');remove.setAttribute('aria-label','Supprimer la conversation : '+c.title);remove.title='Supprimer cette conversation';row.append(button(c.title,()=>openConversation(c.id),'conversation-link'),remove);list.append(row);const o=element('option',c.title);o.value=c.id;picker.append(o);}picker.hidden=!data.conversations.length;if(!data.conversations.length)list.append(element('p','Vos premières conversations apparaîtront ici.','muted small'));}catch(e){toast(e.message);}
 }
 async function deleteConversation(c){
-  if(!confirm('Supprimer la conversation « '+c.title+' » et tous ses messages ?'))return;
+  if(!confirm('Supprimer la conversation « '+c.title+' » et tous ses messages ? Les traductions publiées restent dans la bibliothèque. Les traductions non publiées seront supprimées.'))return;
   try{await api('/conversations/'+encodeURIComponent(c.id),undefined,{method:'DELETE'});if(S.conversation===c.id)newConversation();await histories();toast('Conversation supprimée.');}catch(e){toast(e.message);}
 }
 function renderText(target,text,sources=[]){
@@ -135,7 +136,7 @@ function newConversation(){
 async function openConversation(id){
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
   rememberReading();S.loadingConversation=true;
-  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=data.source||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'');view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);if(data.translations?.length)loadTranslation(data.translations[0]);restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{S.loadingConversation=false;}
+  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=data.source||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'');view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);if(match)loadTranslation(match.id);else if(!data.translation_items&&data.translations?.length)loadTranslation(data.translations[0]);document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{S.loadingConversation=false;}
 }
 function bindExamples(){document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{$('chat-input').value=b.dataset.question;$('chat-input').focus();});}
 async function status(){
@@ -143,16 +144,21 @@ async function status(){
     const grid=$('collections');grid.replaceChildren();for(const book of S.status.books){const b=button('',()=>{view('data');},'collection');b.append(element('span','▤','book-icon'));const copy=element('span');copy.append(element('strong',book.title),element('small',book.language==='fra'?'Français · disponible hors ligne':'Anglais · disponible hors ligne'));b.append(copy);grid.append(b);}
   }catch(e){$('service-status').textContent='Service momentanément indisponible';toast(e.message);}
 }
-function search(query){$('library-query').value=query;view('library');runSearch();}
+function search(query){document.dispatchEvent(new CustomEvent('survie:scope-reset'));$('library-query').value=query;view('library');runSearch();}
 async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
   S.searchAbort?.abort();S.searchAbort=new AbortController();$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
   try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value),undefined,{signal:S.searchAbort.signal});
     $('search-message').textContent=`${data.results.length} résultat(s) pour « ${q} »`;
-    for(const result of data.results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));$('search-results').append(node);}
+    renderLibraryResults(data.results);
     if(!data.results.length)$('search-results').append(element('div','Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
+function renderLibraryResults(results){
+  for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));$('search-results').append(node);}
+  document.dispatchEvent(new CustomEvent('survie:results',{detail:results}));
+}
+
 let learningState=null;
 function learningSelection(){
   const domain=learningState?.domains.find(d=>d.id===$('learning-domain').value);
@@ -198,7 +204,7 @@ async function readSource(id){
     if(source.provenance||source.licence){const details=element('details',undefined,'source-details');details.append(element('summary','Origine et licence du document'));if(source.provenance)details.append(element('p',source.provenance));if(source.licence)details.append(element('p',source.licence));reader.append(details);}const body=element('div',undefined,'reader-body');renderDocument(body,source);reader.append(body);
     if(source.preview)reader.append(element('p','Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
     const original=element('a',source.id.includes('.pdf')?'Lire le PDF illustré →':'Ouvrir le document d’origine →','secondary-link');
-    const archiveLink=/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)?source.text.match(/Original illustré local : (https?:\/\/[^\s]+)/):null;if(archiveLink){try{const path=new URL(archiveLink[1]).pathname;if(path.startsWith('/content/')){original.href=localServiceURL(path,'kiwix');original.textContent='Voir la page illustrée d’origine →';}}catch(_){}}if(!original.hasAttribute('href')&&source.id.startsWith('guide:'))original.href=source.url;else if(!original.hasAttribute('href')){original.href=localServiceURL(source.url,'kiwix');}original.target='_blank';original.rel='noopener';actions.append(original);
+    const archiveLink=/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)?source.text.match(/Original illustré local : (https?:\/\/[^\s]+)/):null;if(archiveLink){try{const path=new URL(archiveLink[1]).pathname;if(path.startsWith('/content/')){original.href=localServiceURL(path,'kiwix');original.textContent='Voir la page illustrée d’origine →';}}catch(_){}}if(!original.hasAttribute('href')&&source.id.startsWith('guide:'))original.href=source.url;else if(!original.hasAttribute('href')){original.href=localServiceURL(source.url,'kiwix');}original.target='_blank';original.rel='noopener';actions.append(original);document.dispatchEvent(new CustomEvent('survie:source',{detail:source}));
   }catch(e){reader.replaceChildren(element('p',e.message,'error'));}
 }
 function askSource(source){
@@ -206,7 +212,7 @@ function askSource(source){
   newConversation();S.source=source;showAssociatedSource();view('chat');$('chat-input').focus();
 }
 let translationTimer=null,translationVersion=0,translationBusy=false;
-function clearTranslation(){clearTimeout(translationTimer);translationVersion++;S.translation=null;S.translationOffset=0;$('translation-panel').open=false;$('translation-parts').replaceChildren();$('translation-status').textContent='';$('translation-summary').textContent='Traduire le document en français';$('translation-progress').hidden=true;$('translation-progress').value=0;$('translation-progress').max=1;for(const id of ['translation-pause','translation-resume','translation-export','translation-previous','translation-next'])$(id).hidden=true;$('translation-start').hidden=false;$('translation-first').value='1';$('translation-last').value='';}
+function clearTranslation(){clearTimeout(translationTimer);translationVersion++;S.translation=null;S.translationSource=null;S.translationOffset=0;$('translation-panel').open=false;$('translation-parts').replaceChildren();$('translation-status').textContent='';$('translation-summary').textContent='Traduire le document en français';$('translation-progress').hidden=true;$('translation-progress').value=0;$('translation-progress').max=1;document.dispatchEvent(new CustomEvent('survie:translation-clear'));for(const id of ['translation-pause','translation-resume','translation-export','translation-previous','translation-next'])$(id).hidden=true;$('translation-start').hidden=false;$('translation-first').value='1';$('translation-last').value='';}
 function showAssociatedSource(){
   const node=$('chat-source');node.replaceChildren();node.hidden=!S.source;
   if(S.source)node.append(button('Document associé : '+S.source.title,()=>readSource(S.source.id),'text-button'),button('Retirer',async()=>{try{if(S.conversation)await api('/conversations/'+encodeURIComponent(S.conversation)+'/source',{source_id:null},{method:'PUT'});S.source=null;showAssociatedSource();}catch(e){toast(e.message);}},'text-button'));
@@ -215,13 +221,13 @@ function showAssociatedSource(){
 }
 async function attachToConversation(source){
   if(!S.conversation||!needUser())return;
-  try{const data=await api('/conversations/'+encodeURIComponent(S.conversation)+'/source',{source_id:source.id},{method:'PUT'});S.source=data.source;showAssociatedSource();view('chat');}catch(e){toast(e.message);}
+  try{const data=await api('/conversations/'+encodeURIComponent(S.conversation)+'/source',{source_id:source.id},{method:'PUT'});clearTranslation();S.source=data.source;showAssociatedSource();view('chat');}catch(e){toast(e.message);}
 }
 async function loadTranslation(id,offset=S.translationOffset){
   clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation;
   try{const data=await api('/translations/'+encodeURIComponent(id)+'?offset='+offset);
     if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
-    $('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
+    S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
     const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
     $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
@@ -235,6 +241,7 @@ async function loadTranslation(id,offset=S.translationOffset){
       const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));$('translation-parts').append(article);
     }
     $('translation-previous').hidden=offset===0;$('translation-next').hidden=offset+data.parts.length>=data.total;
+    document.dispatchEvent(new CustomEvent('survie:translation',{detail:data}));
     if(active&&S.view==='chat')translationTimer=setTimeout(()=>loadTranslation(id,offset),2000);
   }catch(e){if(version===translationVersion){$('translation-status').textContent=e.message;if(S.view==='chat'&&e.status!==401&&e.status!==404)translationTimer=setTimeout(()=>loadTranslation(id,offset),5000);}}
 }
@@ -270,7 +277,7 @@ function wholeDocumentTranslation(text){
 async function send(event){
   event.preventDefault();if(!needUser()||S.job)return;
   const text=$('chat-input').value.trim();if(!text)return;
-  if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
+  if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
   $('send-question').disabled=true;
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,conversation_id:S.conversation,source_id:S.source?.id||null});
     if(!S.conversation){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
@@ -413,6 +420,6 @@ window.addEventListener('pagehide',()=>tracks.forEach(t=>t.stop()));
 document.querySelectorAll('.native-webui').forEach(a=>a.href=localServiceURL('/','webui'));
 window.addEventListener('DOMContentLoaded',()=>{
 bindExamples();view(location.hash.slice(1)||'home');status();refreshInference();
-api('/auth/me').then(u=>{S.user=u;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;accountUI();});
+api('/auth/me').then(u=>{S.user=u;S.authReady=true;accountUI();histories();resumeConversation();if(S.requestedView){const target=S.requestedView;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();view(target);}}).catch(()=>{S.user=null;S.authReady=true;accountUI();});
 
 });

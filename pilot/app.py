@@ -1,8 +1,10 @@
 """Authenticated local gateway for the first household pilot."""
 import asyncio
 from datetime import datetime,timezone
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager,contextmanager
 import hashlib
+import importlib
+import logging
 import json
 import os
 from pathlib import Path
@@ -22,11 +24,36 @@ COOKIE='survie_session'
 SESSION_SECONDS=30*86400
 
 
+DEGRADED={}
+STARTUP_FEATURE_TIMEOUT=30
+
+
+@contextmanager
+def optional_feature(name):
+    try:
+        module=importlib.import_module('.'+name,__package__)
+        yield module
+        DEGRADED.pop(name,None)
+    except HTTPException:raise
+    except Exception:
+        DEGRADED[name]=True
+        logging.getLogger(__name__).warning('Fonction optionnelle indisponible : %s',name)
+        raise HTTPException(503,'Cette fonction est momentanément indisponible. Les autres documents et conversations restent accessibles.')
+
+
 @asynccontextmanager
 async def lifespan(app):
     store.init()
-    map_notebook.init()
-    await asyncio.to_thread(library.index_guides)
+    DEGRADED.clear()
+    try:map_notebook.init()
+    except Exception:DEGRADED['map_notebook']=True
+    try:await asyncio.wait_for(asyncio.to_thread(library.index_guides),STARTUP_FEATURE_TIMEOUT)
+    except Exception:
+        DEGRADED['index']=True
+        logging.getLogger(__name__).warning('Réindexation interrompue au démarrage ; dernier index conservé.')
+    try:
+        with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
+    except HTTPException:pass
     yield
     for task in list(translations.ACTIVE.values()):task.cancel()
     if translations.ACTIVE:await asyncio.gather(*list(translations.ACTIVE.values()),return_exceptions=True)
@@ -34,7 +61,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.24'
+VERSION='0.1.25'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -91,7 +118,7 @@ class Login(BaseModel):
 
 
 @app.get('/api/health')
-async def health():return {'ok':True,'version':VERSION}
+async def health():return {'ok':True,'version':VERSION,'degraded_features':sorted(DEGRADED)}
 
 
 class LibrarySelection(BaseModel):
@@ -415,8 +442,42 @@ async def recover(body:Reset,request:Request,response:Response):
 
 
 @app.get('/api/search')
-async def search(q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20)):
-    return {'results':await library.search(q.strip(),language,limit=limit) if q.strip() else []}
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False):
+    owner=(await user(request))['id'] if favorites_only else None
+    if favorites_only or translations_only:
+        with optional_feature('favorites' if favorites_only else 'publications'):
+            return {'results':await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []}
+    return {'results':await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []}
+
+
+class FavoriteRequest(BaseModel):
+    source_id:str=Field(min_length=1,max_length=2000)
+
+
+@app.get('/api/favorites')
+async def favorite_list(language:str='',value=Depends(user)):
+    with optional_feature('favorites') as module:return {'results':module.listing(value['id'],language)}
+
+
+@app.put('/api/favorites')
+async def favorite_add(body:FavoriteRequest,value=Depends(user)):
+    with optional_feature('favorites') as module:
+        await module.add(value['id'],body.source_id)
+        return {'ok':True,'source_id':module.canonical(body.source_id)}
+
+
+@app.delete('/api/favorites')
+async def favorite_remove(source_id:str=Query(min_length=1,max_length=2000),value=Depends(user)):
+    with optional_feature('favorites') as module:module.remove(value['id'],source_id)
+    return {'ok':True}
+
+
+@app.get('/api/library/translations')
+async def shared_translations():
+    with optional_feature('publications') as publications:
+        with store.connect() as db:
+            rows=db.execute("SELECT g.path,g.title,g.language FROM guide_meta g JOIN translation_publications p ON p.published_path=g.path WHERE p.published_at IS NOT NULL ORDER BY p.published_at DESC LIMIT 200").fetchall()
+            return {'results':[{'id':'guide:'+row['path'],'title':row['title'],'language':row['language'],'kind':'guide','url':'/guides/'+quote(row['path']),'excerpt':publications.NOTICE,**library.guide_metadata(db,'guide:'+row['path'])} for row in rows]}
 
 
 @app.get('/api/library/learning')
@@ -427,6 +488,17 @@ async def learning_paths():
 
 @app.get('/api/source')
 async def source(id:str):return await library.source(id)
+
+
+@app.get('/api/original')
+async def original_pdf(id:str=Query(max_length=2000)):
+    base=id.split('#page=')[0]
+    if not base.startswith('guide:') or not base.lower().endswith('.pdf'):raise HTTPException(400,'Document PDF local requis.')
+    await library.source(base)
+    path=library.GUIDES/base.removeprefix('guide:')
+    if any(p.is_symlink() for p in [path,*path.parents]) or not path.resolve().is_relative_to(library.GUIDES.resolve()) or not path.is_file():
+        raise HTTPException(404,'Document original indisponible.')
+    return FileResponse(path,media_type='application/pdf',headers={'Content-Disposition':'inline','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; frame-ancestors 'self'"})
 
 
 @app.get('/api/maps')
@@ -463,8 +535,8 @@ async def conversation(identifier:str,value=Depends(user)):
     item=store.owned_conversation(identifier,value['id'])
     if not item:raise HTTPException(404,'Conversation introuvable.')
     with store.connect() as db:jobs=[dict(r) for r in db.execute("SELECT id,status,mode FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(identifier,))]
-    with store.connect() as db:translated=[r['id'] for r in db.execute('SELECT id FROM translations WHERE conversation_id=? ORDER BY created DESC',(identifier,))]
-    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'translations':translated}
+    with store.connect() as db:translated=[dict(r) for r in db.execute('SELECT id,title,source_id,status,created,mode FROM translations WHERE conversation_id=? ORDER BY created DESC',(identifier,))]
+    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'translations':[r['id'] for r in translated],'translation_items':translated}
 
 
 @app.delete('/api/conversations/{identifier}')
@@ -474,6 +546,8 @@ async def delete_conversation(identifier:str,value=Depends(user)):
         if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():
             raise HTTPException(404,'Conversation introuvable.')
         if db.execute("SELECT 1 FROM translations WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():raise HTTPException(409,'Mettez la traduction en pause avant de supprimer cette conversation.')
+        if db.execute("SELECT 1 FROM translations t JOIN settings s ON s.key='auto-translation:'||t.id WHERE t.conversation_id=? AND t.status='completed' AND NOT EXISTS(SELECT 1 FROM settings done WHERE done.key='published-translation:'||t.id)",(identifier,)).fetchone():
+            raise HTTPException(409,'L’ajout d’une traduction terminée aux documents locaux reste à finaliser. Réessayez son ajout ou exportez-la avant de supprimer la conversation.')
         jobs=db.execute('SELECT id,status FROM jobs WHERE conversation_id=?',(identifier,)).fetchall()
         if any(job['status'] in ('queued','running') for job in jobs):
             raise HTTPException(409,'Une réponse est en cours. Attendez sa fin ou annulez-la avant de supprimer cette conversation.')
@@ -570,6 +644,16 @@ async def resume_translation(identifier:str,body:TranslationResume,value=Depends
 async def export_translation(identifier:str,value=Depends(user)):
     text=translations.export(identifier,value['id'])
     return Response(text,media_type='text/plain; charset=utf-8',headers={'Content-Disposition':'attachment; filename="traduction-fr.txt"'})
+
+
+@app.post('/api/translations/{identifier}/publish')
+async def publish_translation(identifier:str,value=Depends(user)):
+    item=translations.owned(identifier,value['id'])
+    try:source=await library.source(item['source_id'])
+    except HTTPException:source={'id':item['source_id'],'title':item['title']}
+    with optional_feature('publications') as module:
+        with store.connect() as db:module.reserve(db,identifier,value['id'],source)
+        return await module.publish(identifier,value['id'])
 
 
 @app.get('/api/jobs/{identifier}')

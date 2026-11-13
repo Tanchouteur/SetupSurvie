@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import re
 import zipfile
+import threading
+import logging
 from urllib.parse import quote, unquote, urljoin, urlparse
 import xml.etree.ElementTree as ET
 
@@ -68,7 +70,32 @@ async def books():
     except (httpx.HTTPError,ET.ParseError,HTTPException):return []
 
 
+INDEX_LOCK=threading.RLock()
+
+
 def index_guides():
+    with INDEX_LOCK:return _index_guides()
+
+
+class TranslationText(Text):
+    """Our generated HTML has explicit original-page sections, not PDF geometry."""
+    def __init__(self):
+        super().__init__();self.pages={};self.page=None
+    def handle_starttag(self,tag,attrs):
+        super().handle_starttag(tag,attrs)
+        if tag=='section':
+            match=re.fullmatch(r'page=(\d+)',dict(attrs).get('id',''))
+            if match:self.page=int(match.group(1));self.pages[self.page]=[]
+    def handle_data(self,data):
+        super().handle_data(data)
+        if self.page is not None and not self.skip and not self.math:self.pages[self.page].append(data)
+    def handle_endtag(self,tag):
+        super().handle_endtag(tag)
+        if tag=='section':self.page=None
+
+
+def _index_guides():
+    if not GUIDES.is_dir():raise OSError('Dossier documentaire indisponible ; index précédent conservé.')
     documents=[];passages=[];report=[]
     if GUIDES.exists():
         seed=GUIDES/'metadata.json'
@@ -92,10 +119,15 @@ def index_guides():
             report.append(record)
             if record['bytes']>300_000_000:
                 record['status']='too_large';continue
-            page_texts=[]
+            page_texts=[];numbered_pages=None
             try:
                 if suffix in ('.txt','.md'):text=path.read_text(errors='replace')
-                elif suffix=='.html':p=Text();p.feed(path.read_text(errors='replace'));text=p.text()
+                elif suffix=='.html':
+                    p=TranslationText() if relative.startswith('TRAD-') else Text()
+                    p.feed(path.read_text(encoding='utf-8',errors='replace'));text=p.text()
+                    if isinstance(p,TranslationText):
+                        numbered_pages=[(n,'\n'.join(lines)[:24000]) for n,lines in p.pages.items()]
+                        page_texts=[text for _,text in numbered_pages]
                 elif suffix=='.pdf':
                     from pypdf import PdfReader
                     cache=store.ROOT/'index-cache';durable.mkdir(cache)
@@ -136,13 +168,23 @@ def index_guides():
             if relative.startswith(('box.','boite.')):continue
             language=meta.get('language') or ('fr' if '.fr.' in path.name else 'en' if '.en.' in path.name else '')
             documents.append(('guide:'+relative,title,'/guides/'+quote(relative),language,text[:500000]))
-            for number,page_text in enumerate(page_texts,1):
+            for number,page_text in (numbered_pages if numbered_pages is not None else enumerate(page_texts,1)):
                 if page_text.strip():passages.append(('guide:'+relative+'#page='+str(number),title+' — page '+str(number),'/guides/'+quote(relative)+'#page='+str(number),language,page_text))
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
     durable.mkdir(store.ROOT)
-    durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
+    try:durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
+    except OSError:logging.getLogger(__name__).warning('Rapport documentaire non actualisé ; index de recherche conservé.')
+    try:
+        emergency={'kind':'SetupSurvie emergency index','documents':[{'title':title,'url':url,'language':language,'id':identifier} for identifier,title,url,language,_ in documents]}
+        emergency_path=GUIDES/'_setupsurvie-index.json'
+        if emergency_path.exists():
+            old=json.loads(emergency_path.read_text(encoding='utf-8'))
+            if not isinstance(old,dict) or old.get('kind')!=emergency['kind']:raise ValueError('Fichier non géré par SetupSurvie.')
+        durable.write_bytes(emergency_path,json.dumps(emergency,ensure_ascii=False).encode('utf-8'))
+    except (OSError,ValueError):
+        logging.getLogger(__name__).warning('Liste de secours non actualisée ; index de recherche conservé.')
     return len(documents)
 
 
@@ -213,7 +255,7 @@ def search_terms(query):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
-async def search(query,language='',limit=8):
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False):
     words=search_terms(query)
     results=[]
     if words:
@@ -221,8 +263,17 @@ async def search(query,language='',limit=8):
         expression=' AND '.join(groups)
         with store.connect() as db:
             for table in ('documents','passages'):
-                rows=db.execute(f"SELECT id,title,url,language,snippet({table},4,'','', '…',30) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' ORDER BY bm25({table}) LIMIT ?",(expression,language,language,limit)).fetchall()
+                restriction='';parameters=[expression,language,language]
+                if favorite_user is not None:
+                    restriction+=f" AND EXISTS(SELECT 1 FROM favorites f WHERE f.user_id=? AND f.source_id=CASE WHEN instr({table}.id,'#page=')>0 THEN substr({table}.id,1,instr({table}.id,'#page=')-1) ELSE {table}.id END)"
+                    parameters.append(favorite_user)
+                if translations_only:restriction+=" AND id LIKE 'guide:TRAD-%'"
+                rows=db.execute(f"SELECT id,title,url,language,snippet({table},4,'','', '…',30) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*parameters,limit)).fetchall()
                 results.extend([{**dict(r),'kind':'guide',**guide_metadata(db,r['id'])} for r in rows])
+            if favorite_user is not None and not translations_only:
+                rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
+                results.extend([{**dict(row),'kind':'article'} for row in rows])
+    if favorite_user is not None or translations_only:return results[:limit*2]
     available=await books()
     langs=sorted({x['language'] for x in available if x['language'] and (not language or x['language']=={'fr':'fra','en':'eng'}.get(language,language))})
     for lang in langs:
@@ -267,7 +318,7 @@ def guide_metadata(db,identifier):
     path=identifier.removeprefix('guide:').split('#page=')[0]
     row=db.execute('SELECT m.provenance,m.licence,d.document_date,d.edition,d.collected_at FROM guide_meta m LEFT JOIN guide_dates d ON m.path=d.path WHERE m.path=?',(path,)).fetchone()
     item=dict(row) if row else {}
-    return {**item,**source_metadata.metadata(item)}
+    return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path)}
 
 
 async def source(identifier):

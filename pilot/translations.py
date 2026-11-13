@@ -66,6 +66,21 @@ async def extract(identifier,first_page=1,last_page=None):
     return source,await asyncio.to_thread(read)
 
 
+def publication_state(identifier):
+    try:
+        from . import publications
+        return publications.state(identifier)
+    except Exception:
+        return {'automatic':False,'source_id':None,'error':'Ajout aux documents locaux indisponible. Le texte traduit reste conservé et exportable.'}
+
+
+async def publish_automatic(identifier,user_id):
+    try:
+        from . import publications
+        await publications.automatic(identifier,user_id)
+    except Exception:pass  # A publication failure must never fail a completed translation.
+
+
 def owned(identifier,user_id):
     with store.connect() as db:row=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()
     if not row:raise HTTPException(404,'Traduction introuvable.')
@@ -79,7 +94,7 @@ def status(identifier,user_id,offset=0):
         rows=db.execute('SELECT position,page,translated,status,model FROM translation_parts WHERE translation_id=? ORDER BY position LIMIT 10 OFFSET ?',(identifier,offset)).fetchall()
         pages=db.execute('SELECT count(DISTINCT page) FROM translation_parts WHERE translation_id=?',(identifier,)).fetchone()[0]
     return {**item,'total':sum(counts.values()),'done':counts.get('done',0),'unreadable':counts.get('unreadable',0),
-            'pages':pages,'parts':[dict(r) for r in rows],'offset':offset,'notice':NOTICE}
+            'pages':pages,'parts':[dict(r) for r in rows],'offset':offset,'notice':NOTICE,'publication':publication_state(identifier)}
 
 
 def update(identifier,status,error=None):
@@ -108,7 +123,13 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
         store.set_conversation_source(db,conversation_id,source)
         key=store.new_id();now=time.time()
         db.execute('INSERT INTO translations VALUES(?,?,?,?,?,?,?,?,?,?)',(key,user_id,conversation_id,source['id'],source['title'],mode,'queued',None,now,now))
+        snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date')}
+        db.execute('INSERT INTO settings VALUES(?,?)',('auto-translation:'+key,json.dumps(snapshot,ensure_ascii=False)))
         db.executemany('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',[(key,n,page,text,state) for n,(page,text,state) in enumerate(parts)])
+    try:
+        from . import publications
+        with store.connect() as db:publications.reserve(db,key,user_id,source,auto_publish=True)
+    except Exception:pass  # The durable core intent allows publication to be retried.
     launch(key)
     return status(key,user_id)
 
@@ -149,17 +170,21 @@ async def run(identifier):
                     item=db.execute('SELECT * FROM translations WHERE id=?',(identifier,)).fetchone()
                     if not item or item['status'] not in ('queued','running'):return
                     part=db.execute("SELECT * FROM translation_parts WHERE translation_id=? AND status='pending' ORDER BY position LIMIT 1",(identifier,)).fetchone()
-                if not part:update(identifier,'completed');return
-                try:await available()
-                except HTTPException as exc:update(identifier,'paused',exc.detail);return
-                update(identifier,'running')
-                async with asyncio.timeout(900):result,model=await translate(part['source_text'],item['mode'])
-                with store.connect() as db:
-                    # A pause/deletion can arrive while inference is in progress.
-                    current=db.execute('SELECT status FROM translations WHERE id=?',(identifier,)).fetchone()
-                    if not current or current['status']!='running':return
-                    db.execute("UPDATE translation_parts SET translated=?,status='done',model=? WHERE translation_id=? AND position=?",(result,model,identifier,part['position']))
-                    db.execute("UPDATE translations SET status='queued',updated=? WHERE id=?",(time.time(),identifier))
+                if not part:
+                    update(identifier,'completed')
+                else:
+                    try:await available()
+                    except HTTPException as exc:update(identifier,'paused',exc.detail);return
+                    update(identifier,'running')
+                    async with asyncio.timeout(900):result,model=await translate(part['source_text'],item['mode'])
+                    with store.connect() as db:
+                        current=db.execute('SELECT status FROM translations WHERE id=?',(identifier,)).fetchone()
+                        if not current or current['status']!='running':return
+                        db.execute("UPDATE translation_parts SET translated=?,status='done',model=? WHERE translation_id=? AND position=?",(result,model,identifier,part['position']))
+                        db.execute("UPDATE translations SET status='queued',updated=? WHERE id=?",(time.time(),identifier))
+            if not part:
+                await publish_automatic(identifier,item['user_id'])
+                return
             await asyncio.sleep(0)
     except asyncio.CancelledError:
         with store.connect() as db:db.execute("UPDATE translations SET status='paused',error='Traduction mise en pause. Les passages terminés sont conservés.',updated=? WHERE id=? AND status IN ('queued','running')",(time.time(),identifier))

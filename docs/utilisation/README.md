@@ -67,4 +67,9 @@ Le [guide des sources et de la fiabilité](sources-et-fiabilite.md) décrit les 
 affichées, les citations réellement lues, la distinction entre faits et déductions
 et les réponses que la base ne permet pas d’établir, à partir de 0.1.18.
 
-Le [guide des documents associés et de la traduction progressive](documents-et-traduction.md) explique la conservation du document dans une conversation, la traduction du PDF entier ou de certaines pages, les pauses, la reprise avec un autre modèle et l’export du texte français. Disponible à partir de 0.1.16, après actualisation du logiciel et du navigateur.
+Le [guide des documents, favoris et traductions](documents-et-traduction.md)
+explique la lecture PDF en pleine page, les favoris personnels et leur recherche,
+les associations aux conversations et la traduction progressive. Depuis 0.1.25,
+les nouvelles traductions terminées rejoignent les documents locaux partagés ;
+les anciennes restent privées jusqu’à publication explicite. **Lecture de secours**
+permet de consulter les fichiers sans l’API ni l’IA.

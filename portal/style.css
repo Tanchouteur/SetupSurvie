@@ -105,3 +105,6 @@
 .learning-method{margin-top:16px}.learning-method li{margin:8px 0}
 @media(max-width:760px){.learning-selects{grid-template-columns:minmax(0,1fr)}.learning-actions{flex-direction:column}.learning-actions button{width:100%}}
 @media(max-height:700px){.chat-open .translation-panel[open]{flex-shrink:1;min-height:44px;overflow:auto}}
+
+/* Optional documentary features remain separate from the core layout. */
+.document-filters{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.document-filters[hidden]{display:none}.document-filters button{min-height:44px;padding:9px 13px;border:1px solid #c4d1c1;border-radius:20px;background:#fff;color:#315c40}.document-filters button[aria-pressed=true]{background:#315c40;color:white}.result .favorite-toggle{display:block;min-height:44px;margin-top:8px}.result .secondary-link{display:inline-block;margin:8px 10px 8px 0;min-height:44px;padding:10px 0}.translation-label{padding:10px;border-left:4px solid #aa761d;background:#fff7e3;color:#644614!important;overflow-wrap:anywhere}#translation-publication button{margin:4px;min-height:44px}#translation-choice-label{display:block}#translation-choice{width:100%;max-width:100%;min-width:0}.favorite-toggle[aria-pressed=true]{font-weight:700}

@@ -188,9 +188,9 @@ fixtures minuscules et des services simulés. Les préparations réelles se font
 les PC cibles ; le test OSRM réel de la CI GitHub utilise uniquement un petit
 réseau OSM synthétique et son image épinglée, sans modèle IA.
 
-## Documents associés et traduction (0.1.16)
+## Documents associés et traduction (0.1.25)
 
-Lire `docs/utilisation/documents-et-traduction.md` pour la conservation des associations côté serveur et les traductions privées progressives. Les instantanés, passages et exports ne doivent pas rejoindre le fonds public. La reprise reste explicite après redémarrage et respecte le mode jeu. Les tests simulés ne prouvent pas la fidélité d’un modèle réel. Louis souhaite une référence unifiée et simple à maintenir : `main`, avec suppression des branches temporaires de l’agent après intégration vérifiée.
+Lire `docs/utilisation/documents-et-traduction.md` pour les associations, favoris personnels et traductions progressives. Louis autorise les nouvelles traductions terminées dans les documents locaux partagés ; les anciennes restent privées jusqu’à publication explicite. Les instantanés sources, brouillons, conversations et exports restent privés. Préserver les documents publiés après suppression de conversation. Les fonctions optionnelles doivent échouer localement, sans bloquer recherche, lecture ou conversations ; conserver le repli statique `/secours.html`. La reprise reste explicite après redémarrage et respecte le mode jeu. Les tests simulés ne prouvent pas la fidélité d’un modèle réel. Louis souhaite une référence unifiée et simple à maintenir : `main`, avec suppression des branches temporaires de l’agent après intégration vérifiée.
 
 ## Installation Windows en deux étapes (0.1.17)
 

@@ -1,6 +1,28 @@
-# Documents associés et traduction progressive
+# Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.16, 12 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.1.25, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+
+## Lire et retrouver un document
+
+Les résultats PDF proposent **Lire le PDF** dans une page dédiée : pagination,
+zoom, recherche dans le texte et illustrations d’origine. Le lecteur PDF.js est
+fourni localement, sans service Internet ni IA. **Texte et assistant** conserve
+l’aperçu textuel pour poser des questions. Le bouton d’ouverture directe et le
+téléchargement restent disponibles si le lecteur rencontre un problème.
+
+Avec un compte connecté, **Ajouter aux favoris** marque un document ou un article
+Kiwix. Les favoris sont personnels, enregistrés côté serveur et conservés entre
+appareils. Dans la Bibliothèque, **Mes favoris** affiche la liste ; saisir une
+recherche la limite au contenu de ces documents, y compris les pages tardives des
+PDF. L’assistant peut aussi chercher dans vos favoris lorsqu’on le lui demande.
+La limite actuelle est de 1 000 favoris par compte. Pour les articles Kiwix, la
+recherche dans les favoris utilise le texte consulté au moment de l’ajout ; elle
+ne garantit pas sa fraîcheur après remplacement d’une archive.
+
+Le filtre **Traductions IA partagées** liste les traductions récentes ; une
+recherche retrouve aussi les autres traductions indexées. Les filtres de langue
+s’appliquent aux trois vues. Un document supprimé du disque peut rester dans les
+favoris ; cela ne le rend pas disponible. Son étoile peut être retirée.
 
 ## Garder un document dans une conversation
 
@@ -19,7 +41,8 @@ Un document sélectionné mais n’ayant donné lieu à aucune question ni tradu
 3. Cliquer sur **Traduire en français**. Une demande simple dans la conversation, comme « traduit moi ce guide en français » ou « peux-tu me traduire le document entièrement en français », déclenche également la traduction complète dédiée. Les autres formulations gardent le traitement habituel de l’assistant ; pour une plage de pages, utiliser les champs du panneau.
 4. Suivre le nombre de passages traduits. Les passages se consultent par groupes de dix, avec leur page/section, le modèle utilisé et un accès à l’original.
 5. **Mettre en pause** interrompt le passage en cours. Choisir au besoin un autre modèle, puis **Reprendre avec le modèle choisi** : les passages terminés sont conservés, seul le travail restant est repris.
-6. **Télécharger le texte français** enregistre un fichier texte, même si la traduction est partielle. Les passages manquants y sont explicitement indiqués.
+6. Une fois le traitement terminé, la nouvelle traduction est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de relancer un ajout échoué. Les différentes traductions d’une conversation restent sélectionnables.
+7. **Télécharger le texte français** enregistre un fichier texte, même si la traduction est partielle. Les passages manquants y sont explicitement indiqués.
 
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 
@@ -40,11 +63,54 @@ Un refus explicite, une réponse vide, un format inexploitable ou une réponse i
 
 Limites actuelles : PDF accessible de 300 Mo maximum, 1 200 pages maximum, 100 000 caractères par page et cinq millions de caractères pour la plage choisie. Un PDF protégé est refusé explicitement. Pour les autres guides et articles, le texte intégral disponible dans l’index ou le lecteur est utilisé ; un aperçu atteignant sa limite de taille est refusé plutôt que présenté comme un document entièrement traduit. Les plages de pages sont réservées aux PDF. Aucun OCR automatique ni traduction d’un ZIM entier n’est ajouté.
 
-## Confidentialité, sauvegarde et suppression
+## Partage, sauvegarde et suppression
 
-Les associations, traductions et instantanés textuels restent dans la base privée du pilote, accessibles uniquement au propriétaire de la conversation, y compris pour l’export. Ils sont conservés avec les sauvegardes privées de l’installation ; ils ne sont pas ajoutés au catalogue public, au kit ou aux collections Open WebUI.
+**Depuis 0.1.25, une nouvelle traduction terminée devient un document local
+partagé**, consultable sans compte sur le réseau familial. Les brouillons,
+instantanés sources, conversations et exports privés restent réservés au compte.
+Les anciennes traductions restent privées : leur propriétaire doit choisir
+**Ajouter aux documents locaux · visible par tous** pour les publier. Cette mise
+à jour ne publie pas rétroactivement des travaux privés.
 
-Supprimer une conversation supprime ses associations et traductions. Une traduction active doit d’abord être mise en pause. Les documents originaux ne sont pas modifiés. Ne pas partager un export contenant un document familial privé.
+Le document partagé est un fichier HTML français indépendant, marqué **Traduction
+IA non vérifiée**. Il conserve le titre, la date et l’édition connues de l’original,
+les pages traitées, les modèles employés et un lien vers l’original. Une traduction
+d’une plage de pages l’indique ; des pages sans texte donnent une traduction
+signalée partielle. Les nombres, unités et consignes doivent toujours être
+comparés à l’original. Une traduction ne constitue pas une seconde source fiable.
+Les droits de l’original continuent de s’appliquer ; le partage local n’accorde
+aucune autorisation supplémentaire de revente ou redistribution.
+
+Supprimer une conversation supprime ses associations et ses traductions privées,
+**mais conserve les documents déjà publiés** et les favoris. Une traduction active
+doit d’abord être mise en pause. Une traduction terminée dont l’ajout automatique
+a échoué bloque la suppression pour préserver son résultat : réessayer l’ajout
+avant de supprimer la conversation. Les originaux ne sont pas modifiés.
+
+Les fichiers partagés sont dans `library/guides/TRAD-….fr.html` ; les sauvegarder
+avec les autres documents locaux. Les sauvegardes privées conservent associations,
+progression, favoris et métadonnées, mais ne remplacent pas une copie du fonds.
+Après interruption entre l’écriture du fichier et son indexation, le pilote
+réessaie l’ajout au démarrage, sans relancer d’IA. Une inférence interrompue reste
+en pause. Un fichier publié modifié à la main est conservé, sans écrasement.
+La publication est actuellement limitée à 20 millions de caractères traduits.
+
+## Si une fonction ne répond plus
+
+Le lien **Lecture de secours** ouvre `/secours.html`. Il donne un accès aux fichiers
+locaux et à Kiwix sans API du pilote ni moteur IA. Sa liste est la dernière liste
+statique produite par l’indexation (ou le catalogue d’installation précédent) ; son
+filtre porte sur les titres. Si elle manque, le lien Kiwix reste accessible. Le
+serveur web et les disques doivent toujours fonctionner. Selon le navigateur, un
+PDF ouvert directement peut être téléchargé plutôt qu’affiché : l’ouvrir ensuite
+avec le lecteur du téléphone ou du PC.
+
+Les nouveaux modules de favoris, publication et rendu PDF ont des replis séparés.
+Un échec d’indexation au démarrage conserve le dernier index validé et cesse de
+bloquer le démarrage après 30 secondes ; le travail déjà lancé en thread peut
+continuer. Une base SQLite corrompue, un disque plein ou une panne du serveur web
+peuvent affecter plusieurs fonctions : suivre le [guide de reprise](../exploitation/coupures-et-redemarrage.md)
+et conserver une sauvegarde indépendante.
 
 ## Actualiser le laboratoire de Louis
 
@@ -54,12 +120,22 @@ Dans le clone du projet sur le PC Bazzite, vérifier que le travail local est co
 python3 scripts/lab_refresh_library.py
 ```
 
-Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier **Version d’essai 0.1.16** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
+Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier la version **0.1.25** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
 
-## Vérifications de cette livraison
+## Vérifications et limites
 
-Tests sur le runner CPU avec petites fixtures et réponses simulées : reprise après interruption, absence de mélange avec une source modifiée, accès entre comptes refusé, pauses, refus et réponses tronquées, conservation de toutes les pages d’un PDF de six pages et choix d’une plage.
+Les tests utilisent de petites fixtures et une inférence simulée : isolation des
+comptes, publication et reprise après erreur d’écriture/indexation, conservation
+après suppression de conversation, recherche dans les favoris et accès PDF par
+plages d’octets. Les recettes navigateur testent le rendu PDF réel, le parcours
+partage/favoris et les replis avec API, lecteur ou module optionnel indisponibles,
+entre 320 et 1 366 pixels. La vérification locale du 13 novembre compte 261 tests,
+dont 3 tests COM Windows ignorés sous Linux, sans échec ; le parcours documentaire
+a aussi été exécuté avec Chromium via Playwright MCP. Voir `tests/test_document_library.py`,
+`tests/browser_documents.js` et la CI du commit concerné.
 
-Le parcours Playwright utilise une véritable API locale avec identité et inférence simulées : association après rechargement, traduction depuis la conversation, pause/reprise, export et navigation de 320 à 1 366 pixels. La suite locale compte 162 tests (161 réussis, un test COM Windows ignoré sur Linux). Les tests de l’API et de traduction sont aussi ajoutés au job Windows, et la recette Chromium/WebKit à la CI ; les résultats distants sont à consulter dans la CI du commit concerné. Recettes : `tests/browser_translation_server.py` (nécessite les dépendances de tests et uvicorn dans un environnement isolé) et `tests/browser_translation.js` (Playwright MCP, adresse du serveur de fixture à adapter). Le serveur de recette écoute sur 8769 et ne doit servir que dans un environnement de test isolé.
-
-Aucun modèle réel, GPU, corpus ou compte utilisateur n’a été utilisé pour ces contrôles. La traduction réelle par GPT-OSS/Gemma, l’installation Windows et Safari sur iPhone restent à vérifier. L’écran 0.1.14 ne dispose pas de cette fonction : installer la mise à jour 0.1.16 et recharger le navigateur avant l’essai.
+Les résultats de la livraison initiale 0.1.16 (162 tests, un test Windows ignoré)
+restent historiques. Les tests simulés ne prouvent ni la fidélité d’un modèle réel,
+ni la tenue physique du stockage après coupure. Safari sur iPhone, les gros PDF
+et les performances avec le fonds complet restent à vérifier sur les clients.
+Aucun OCR automatique ni pièce jointe privée multiple n’est ajouté par ce patch.
