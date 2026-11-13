@@ -191,7 +191,7 @@ class DeliveryTests(unittest.TestCase):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         script=application/'scripts/setup.py';script.write_text('software fixture')
         files=[script]
-        for name in ('update-windows.ps1','windows-common.ps1'):
+        for name in ('update-windows.ps1','windows-common.ps1','startup-windows.ps1','stop-windows.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
             target=application/'scripts'/name
             target.write_text('# tiny updater fixture')
             files.append(target)
@@ -199,7 +199,7 @@ class DeliveryTests(unittest.TestCase):
         work=self.root/'installed/private';data=self.root/'installed/data'
         with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'),patch.object(setup.shutil,'which',return_value='powershell.exe'),patch.object(setup,'run') as shortcuts:
             install(kit,'windows',data,work)
-        command=shortcuts.call_args.args[0]
+        command=next(call.args[0] for call in shortcuts.call_args_list if any(str(arg).endswith('create-shortcuts.ps1') for arg in call.args[0]))
         self.assertIn(str(work.parent/'application/scripts/create-shortcuts.ps1'),command)
         self.assertEqual(command[-1],'-Startup')
         self.assertNotIn(str(application/'scripts/create-shortcuts.ps1'),command)

@@ -336,6 +336,10 @@ async def status():
             'modes':[{'id':key,**value} for key,value in engine.MODES.items()]}
 
 
+@app.get('/api/activity')
+async def local_activity():return await operations.activity()
+
+
 @app.get('/api/inventory')
 async def local_inventory():return await inventory.inventory()
 

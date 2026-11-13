@@ -1,11 +1,17 @@
 # Plan de refonte UX du portail
 
-**Statut : plan de réalisation, 13 novembre 2026. La refonte complète reste à réaliser.**
+**Statut : plan de référence du 13 novembre 2026, concrétisé par une première interface fonctionnelle en 0.1.32.**
 
-Une [maquette navigable isolée](../utilisation/maquette-ux.md) est disponible
-depuis 0.1.31 pour essayer les parcours avec des exemples fictifs. Le portail
-actuel reste à la racine ; la compatibilité complète et le suivi réel restent
-à raccorder. Voir le [bilan et ses limites](../essais/2026-11-13-maquette-ux.md).
+Louis valide la présentation PC et demande son activation normale sur Windows/Linux.
+Le [guide actuel](../utilisation/nouvelle-interface.md) décrit ce qui est livré ;
+le [bilan](../essais/2026-11-13-interface-fonctionnelle.md) distingue les essais sur
+fixtures des validations physiques restantes. Le détail du plan ci-dessous conserve
+le contexte de conception ; les passages au futur ne sont pas des résultats d’essai.
+
+La [maquette isolée de 0.1.31](../utilisation/maquette-ux.md) est conservée avec
+ses exemples fictifs. Cette étape gardait la classique à la racine ; elle est
+remplacée en 0.1.32 par l’entrée fonctionnelle et `/classique/`. Le
+[bilan de la maquette](../essais/2026-11-13-maquette-ux.md) conserve ses résultats historiques.
 
 Demandes de Louis : clarifier le site sans perdre ses fonctions, conserver une
 interface actuelle utilisable, garder l’ouverture directe des encyclopédies,

@@ -17,6 +17,7 @@ import time
 import discovery
 import setup
 import library_tasks
+import library_monitor
 
 
 def key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
@@ -57,6 +58,7 @@ class Server(ThreadingHTTPServer):
         self.app,self.config,self.backend=app,c,backend
         self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
+        self.activity_cache=None;self.activity_time=0
         super().__init__(address,Handler)
 
     def status(self):
@@ -77,6 +79,13 @@ class Server(ThreadingHTTPServer):
         except (OSError,ValueError):pass
         return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,
                 'operation':operation,'error':error,'control_available':True}
+
+    def activity(self):
+        with self.lock:
+            if self.activity_cache is None or time.monotonic()-self.activity_time>5:
+                self.activity_cache=library_monitor.snapshot(self.config['data_dir'],self.app.work)
+                self.activity_time=time.monotonic()
+            return self.activity_cache
 
     def change(self,action,force=False):
         with self.lock:
@@ -132,6 +141,8 @@ class Handler(BaseHTTPRequestHandler):
         return True
     def do_GET(self):
         if not self.authorized():return
+        if self.path=='/activity':
+            self.respond(200,self.server.activity());return
         if self.path=='/library':
             try:self.respond(200,self.server.library.status())
             except (OSError,ValueError,RuntimeError,setup.SetupError):self.respond(503,{'detail':'Le suivi documentaire est indisponible sur le PC serveur.'})

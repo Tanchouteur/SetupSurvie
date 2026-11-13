@@ -86,3 +86,11 @@ Voir le [guide documentaire](documents-et-traduction.md#contrôles-de-traduction
 La [maquette UX](maquette-ux.md) est accessible séparément depuis le portail
 0.1.31. Ses contenus et mesures sont fictifs ; l’interface actuelle reste celle
 des usages réels.
+
+## Organisation actuelle — 0.1.32
+
+Le [guide de la nouvelle interface](nouvelle-interface.md) présente les cinq
+rubriques de l’entrée principale, les données réelles et les suivis. Les anciennes
+procédures par « Données locales » restent accessibles dans `/classique/` ; leur
+équivalent courant est **Mon appareil → Téléchargements**, avec les inventaires
+dans **Bibliothèque → Collections** et **Mon appareil → Stockage**.
