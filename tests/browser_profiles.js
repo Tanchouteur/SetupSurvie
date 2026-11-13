@@ -1,6 +1,7 @@
 // Real tiny API fixture, no password or real model. Includes the cramped menu.
 async page => {
   const base='http://10.0.3.2:8769';
+  await page.setViewportSize({width:1366,height:900});
   await page.unrouteAll({behavior:'wait'});await page.goto('about:blank');await page.context().clearCookies();
   // Simulate the TLS proxy response before loading the portal, then use HTTP.
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base,'X-Forwarded-Proto':'https'}});
