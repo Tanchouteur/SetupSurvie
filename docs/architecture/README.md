@@ -173,3 +173,11 @@ concurrents. La reprise web réutilise l’identifiant et le gestionnaire de tâ
 existant ; le dernier plan autorisé est figé par son empreinte. Ce mécanisme ne
 remplace ni une ouverture de session Windows ni la récupération d’une mise à jour
 interrompue. Voir le [guide Windows](../installation/deux-etapes-windows.md#démarrage-automatique-windows-depuis-0130).
+
+## Plan de refonte du portail — 13 novembre 2026
+
+Le [plan UX](../decisions/plan-refonte-ux.md) propose une nouvelle répartition des
+écrans, un suivi commun des opérations et une navigation mémorisée, avec une
+interface classique conservée et utilisable. Il définit aussi les différences
+ordinateur/téléphone et les critères de non-régression. Ce plan ne décrit pas
+une refonte déjà livrée ; les composants et procédures actuels restent inchangés.

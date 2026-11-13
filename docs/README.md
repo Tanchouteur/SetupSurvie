@@ -58,6 +58,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Décisions et besoins
 
+- [Plan de refonte UX du portail](decisions/plan-refonte-ux.md) — proposition du 13 novembre 2026 : interface classique conservée, collections directement ouvrables, navigation mémorisée, suivi machine et mobile simplifié ; non implémentée.
+
 - [Questions et décisions](decisions/questions-et-decisions.md)
 - [Fonctionnalités et user stories](decisions/fonctionnalites-et-user-stories.md)
 - [Connexion simple et direction du produit](decisions/acces-simple-et-offre.md)
