@@ -48,9 +48,20 @@ absents de son cache. La recette a été exécutée par le MCP Chromium disponib
 le lanceur CI conserve les deux moteurs. Aucun navigateur supplémentaire n’a été
 installé dans le runner pour cette livraison.
 
-## Restant à valider
+## Vérifications CI
 
-- WebKit et CI du commit livré : consulter les résultats GitHub, distincts de ce bilan local.
+Sur le [run 43449686090](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43449686090)
+du commit fonctionnel `906b3bb`, l’étape `browser_maps_runner.cjs` a réussi :
+la recette de la maquette passe donc aussi sous Chromium et WebKit dans la CI.
+Le scénario de routage hors ligne réussit également.
+
+La CI globale reste en échec : fixture `startup-windows.ps1` absente dans le test
+de kit Linux, et test Windows `test_second_installation_preserves_first_installation_shortcuts`.
+Les mêmes deux échecs sont présents dans le
+[run de référence 43446870838](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43446870838)
+du commit `9162728`, avant la maquette. Aucun résultat CI global vert n’est revendiqué.
+
+## Restant à valider
 - iPhone/Safari réels, clavier et dictée humaine, confort avec Marc et une personne novice.
 - Machine Windows réelle, état du transfert existant, mesures matérielles,
   lecture Kiwix réelle depuis la nouvelle interface et fonctionnement hors ligne complet.
