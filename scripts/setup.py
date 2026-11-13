@@ -70,7 +70,8 @@ def run(args, *, capture=False, env=None, timeout=None):
     try:
         result = subprocess.run([str(a) for a in args], cwd=ROOT, env=env,
                                 text=True, encoding="utf-8", errors="replace",
-                                capture_output=capture, timeout=timeout, check=True)
+                                capture_output=capture, timeout=timeout, check=True,
+                                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
         return result.stdout.strip() if capture else ""
     except FileNotFoundError as exc:
         raise SetupError(f"Programme introuvable : {args[0]}. Voir docs/installation/README.md.") from exc

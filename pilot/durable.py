@@ -6,6 +6,7 @@ that limit explicit instead of claiming that a rename alone survives power loss.
 import os
 from pathlib import Path
 import tempfile
+import time
 
 
 def sync_directory(path):
@@ -41,7 +42,14 @@ def mkdir(path):
 
 def publish(source, target):
     source, target = Path(source), Path(target)
-    os.replace(source, target)
+    for attempt in range(50):
+        try:
+            os.replace(source, target)
+            break
+        except PermissionError as exc:
+            if getattr(exc, 'winerror', None) not in (5, 32, 33) or attempt == 49:
+                raise
+            time.sleep(0.1)
     sync_directory(target.parent)
     if source.parent != target.parent:
         sync_directory(source.parent)

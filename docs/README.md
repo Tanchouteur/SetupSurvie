@@ -70,6 +70,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Reprise de bibliothèque et consoles Windows — 13 novembre 2026](essais/2026-11-13-reprise-bibliotheque-windows.md) — correction HTTPS, supervision du plan et appels GPU silencieux, pilote 0.1.24.
+
 - [Revue de fiabilité et prochaines étapes — 12 novembre 2026](essais/revue-fiabilite-2026-11-12.md) — corrections 0.1.22 et validations restant à réaliser.
 - [Mise à jour Git fournie sur Windows — 12 novembre 2026](essais/2026-11-12-mise-a-jour-git-windows.md) — intégration aux installations et kits, lanceur stable et raccourci, pilote 0.1.21.
 

@@ -3,6 +3,9 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+import os
+import subprocess
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import urllib.error
@@ -13,6 +16,13 @@ import setup,control
 
 
 class ControlTests(unittest.TestCase):
+    def test_hardware_query_is_silent_and_accepts_fractional_gpu_temperature(self):
+        output = SimpleNamespace(returncode=0, stdout='NVIDIA GPU, 8192, 1024, 10, 46.73\n')
+        with patch.object(control.subprocess, 'run', return_value=output) as run:
+            value = control.hardware(self.c)
+        self.assertEqual(value['gpus'][0]['temperature'], 46.73)
+        self.assertEqual(run.call_args.kwargs['creationflags'], subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name);self.app=setup.Installation(self.root/'private');self.c=self.app.init('linux',self.root/'data',cpu=True)

@@ -23,6 +23,32 @@ py -3 scripts\content.py download --work-dir D:\SetupSurvie\prive --selection D:
 
 Le téléchargement reprend les partiels et conserve les fichiers différents. Pour chercher sans télécharger, utiliser `select` au lieu de `prepare`. Pour un transfert sans redémarrage des services, ajouter `--no-refresh` à `prepare` ou au téléchargeur.
 
+### Reprise supervisée des gros plans (0.1.24)
+
+Pour une sélection déjà enregistrée et un transfert long, notamment pendant la nuit :
+
+```powershell
+py -3 scripts\content_retry.py --work-dir D:\SetupSurvie\prive --selection D:\SetupSurvie\donnees\catalog\kiwix-selection-DATE.json
+```
+
+Ce superviseur conserve les fichiers dont la taille et le reçu vérifié correspondent
+au plan, sans relire toutes les grosses archives à chaque relance. Un fichier absent,
+une taille différente ou une empreinte différente dans le reçu reste à contrôler.
+Les nouveaux fichiers sont toujours vérifiés intégralement avant publication.
+
+Une erreur réseau sur un document ne bloque plus les suivants. Les contenus en
+échec sont inscrits dans `catalog/content-retry.json`, puis retentés par passes
+avec un délai croissant, plafonné à 15 minutes. Le nombre maximal de passes est
+96 par défaut (`--max-rounds`) ; après épuisement, le statut reste incomplet et
+les partiels sont conservés. Le programme ne redémarre aucun service et ne lance
+aucun modèle. Une actualisation du catalogue et de la recherche reste à effectuer
+séparément après les transferts.
+
+En cas de chaîne de certificats manquante sous Windows, le superviseur effectue
+une vérification HTTPS avec le client système, pour permettre à Windows de
+récupérer les autorités nécessaires, puis retente Python. Aucun certificat
+invalide n’est accepté et aucune vérification HTTPS n’est désactivée.
+
 Depuis **Données locales → Enrichir la bibliothèque**, les nouvelles sélections proposent tous les thèmes et « Tout ce qui tient sur le disque ». Les choix d'une opération précédente restent conservés : cocher les nouveaux thèmes et choisir ce maximum pour étendre une ancienne sélection. Le parcours conserve les boutons de recherche, téléchargement, pause et reprise.
 
 Depuis 0.1.19, les fonds culturels complets et grandes collections vidéo demandent

@@ -36,6 +36,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_windows_update.py -v
       - run: python -m unittest discover -s tests -p test_install_wizard.py -v
       - run: python -m unittest discover -s tests -p test_content.py -v
+      - run: python -m unittest discover -s tests -p test_content_retry.py -v
+      - run: python -m unittest discover -s tests -p test_windows_publish.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v
       - run: python -m unittest discover -s tests -p test_windows_shortcuts.py -v
