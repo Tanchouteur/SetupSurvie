@@ -296,6 +296,9 @@ def main():
 
 
 def download_and_refresh(args,app,c,root,selected,budget,storage_root):
+    if app and getattr(args,'selection',None):
+        import windows_resume
+        windows_resume.arm_if_installed(app,c,args.selection,args.jobs)
     # Keep publication and restarts within the same backup exclusion window.
     with locked(destination(root,'catalog/publication.lock')):
         download(root,selected,budget=budget,storage_root=storage_root,workers=args.jobs)

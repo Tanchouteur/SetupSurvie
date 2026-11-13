@@ -134,6 +134,8 @@ def main():
     plan = json.loads(args.selection.read_text(encoding='utf-8'))
     if plan.get('schema') != 1 or plan.get('kind') != 'SetupSurvie Kiwix thematic selection':
         raise setup.SetupError('Plan de sélection non reconnu.')
+    import windows_resume
+    windows_resume.arm_if_installed(app,app.load(),args.selection,args.jobs)
     # One supervisor per data directory; one batch lock covers all parallel writers.
     from delivery_paths import locked
     with locked(root/'catalog/content-supervisor.lock'):

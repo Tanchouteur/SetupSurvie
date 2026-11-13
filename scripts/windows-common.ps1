@@ -1,6 +1,47 @@
 ﻿# Shared functions; dot-sourcing never installs or starts anything.
 Set-StrictMode -Version 2
 
+function Get-SurviePrivateIPv4 {
+    return @(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -and $_.NetProfile.NetworkCategory -eq 'Private' } | ForEach-Object { $_.IPv4Address.IPAddress } | Select-Object -Unique)
+}
+
+function Select-SurvieLanHost([string]$Requested) {
+    $addresses=@(Get-SurviePrivateIPv4)
+    if ($Requested -and $Requested -ieq 'LOCAL') { return '' }
+    if (-not $Requested) {
+        if ($addresses.Count -eq 1) {
+            $Requested=Read-Host ('Reseau prive : '+$addresses[0]+' ; Entree pour partager, ou LOCAL pour limiter au PC')
+            if (-not $Requested) { return $addresses[0] }
+        } else {
+            foreach ($address in $addresses) { Write-Host ('Reseau prive : '+$address) }
+            $Requested=Read-Host 'Indiquez une adresse privee ci-dessus, ou LOCAL pour limiter au PC'
+        }
+    }
+    if ($Requested -ieq 'LOCAL') { return '' }
+    if (-not $Requested -or $addresses -notcontains $Requested) { throw 'Choisissez une IPv4 du reseau Windows prive. Passez le reseau domestique en prive puis relancez, ou choisissez LOCAL.' }
+    return $Requested
+}
+
+function Test-SurvieLanEndpoint([string]$Address,[string]$Version) {
+    $value=Invoke-RestMethod -Uri ('http://'+$Address+':8080/api/health') -TimeoutSec 15 -ErrorAction Stop
+    if (-not $value.ok -or $value.version -ne $Version) { throw 'La version installee ne repond pas sur son adresse reseau.' }
+}
+
+function Disable-SurviePublicOllamaRules([string]$Program,[string]$BackupDir) {
+    if (-not (Test-Path -LiteralPath $Program -PathType Leaf) -or [IO.Path]::GetFileName($Program) -ine 'ollama.exe') { throw 'Executable Ollama exact requis pour revoir ses regles.' }
+    $expected=[IO.Path]::GetFullPath($Program)
+    $rules=@(Get-NetFirewallRule -Direction Inbound -Action Allow | Where-Object DisplayName -eq 'ollama' | Where-Object { ([string]$_.Profile) -match 'Public|Any' } | Where-Object {
+        $filter=$_ | Get-NetFirewallApplicationFilter
+        $filter.Program -and [IO.Path]::GetFullPath($filter.Program) -ieq $expected
+    })
+    if ($rules.Count) {
+        New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null
+        $backup=Join-Path $BackupDir ('ollama-firewall-'+[guid]::NewGuid().ToString('N')+'.xml')
+        $rules | Export-Clixml -LiteralPath $backup
+        foreach ($rule in $rules) { Disable-NetFirewallRule -Name $rule.Name | Out-Null }
+    }
+}
+
 function Update-SurviePath {
     # Keep portable tools supplied by the caller as well as newly installed tools.
     $paths = @($env:PATH, [Environment]::GetEnvironmentVariable('Path', 'Machine'), [Environment]::GetEnvironmentVariable('Path', 'User')) -join ';'

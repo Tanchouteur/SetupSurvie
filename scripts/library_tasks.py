@@ -211,7 +211,11 @@ class Manager:
                 update('downloading', 'Téléchargement et vérification des archives…')
                 # Use the existing downloader and its lock, integrity and budget checks.
                 # Cancellation is checked before each network request/write/hash block.
-                content.download(root, items, storage_root=scope, workers=2, cancelled=lambda: (folder / 'cancel').exists())
+                import windows_resume
+                windows_resume.arm_if_installed(self.app,self.config,folder/'plan.json',2)
+                import content_retry
+                pending=content_retry.remaining(root,items)
+                content.download(root, pending, storage_root=scope, workers=2, cancelled=lambda: (folder / 'cancel').exists())
                 check(); update('refreshing', 'Mise à disposition des nouvelles collections…')
                 self.app.catalog(self.config)
                 if self.backend == 'lab':

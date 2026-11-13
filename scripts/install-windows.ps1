@@ -18,11 +18,7 @@ try {
     if (-not $Kit -and -not $Resume) {
         $Kit = Read-Host 'Dossier du kit local, ou Entrée pour télécharger avec Internet'
     }
-    if (-not $LanHost -and -not $Resume) {
-        $connections = @(Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -and $_.NetProfile.NetworkCategory -eq 'Private' })
-        foreach ($connection in $connections) { Write-Host ($connection.InterfaceAlias + ' : ' + $connection.IPv4Address.IPAddress) }
-        $LanHost = Read-Host 'Pour partager sur votre réseau privé, indiquez une IPv4 ci-dessus ; Entrée limite au PC'
-    }
+    if (-not $Resume) { $LanHost=Select-SurvieLanHost $LanHost }
     if ($Resume) {
         $journal = Get-Content -LiteralPath (Join-Path $BaseDir '.installation.json') -Raw | ConvertFrom-Json
         if (-not $Kit -and $journal.options.kit) { $Kit = $journal.options.kit }
@@ -44,10 +40,17 @@ try {
         Write-Host 'Windows va demander les droits administrateur pour les règles du réseau privé. Les API du moteur restent bloquées aux lecteurs.'
         $firewall = Join-Path $BaseDir 'application\scripts\open-lan-firewall.ps1'
         try {
-            $process = Start-Process -FilePath 'powershell.exe' -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $firewall + '"') -Verb RunAs -Wait -PassThru
+            $runtimePath=Join-Path $BaseDir 'maintenance\startup-settings.json'
+            $ollama=Find-SurvieOllama
+            if (Test-Path -LiteralPath $runtimePath) { $runtime=Get-Content -LiteralPath $runtimePath -Raw -Encoding UTF8 | ConvertFrom-Json; if ($runtime.ollama) { $ollama=$runtime.ollama } }
+            $extra=if ($ollama) { ' -OllamaPath "'+$ollama+'" -WorkDir "'+(Join-Path $BaseDir 'prive')+'"' } else { '' }
+            $process = Start-Process -FilePath 'powershell.exe' -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $firewall + '"'+$extra) -Verb RunAs -WindowStyle Hidden -Wait -PassThru
             if ($process.ExitCode -ne 0) { throw 'Règles non confirmées.' }
         } catch { Write-Warning 'Application installée ; règles réseau non confirmées. Voir le guide Windows avant utilisation sur téléphone.' }
-        Write-Host ('Accès réseau à tester : https://' + $LanHost + ':8443 ; voir le guide pour installer le certificat public sur les téléphones.')
+        $release=Get-Content -LiteralPath (Join-Path $BaseDir 'application\deploy\release.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+        Test-SurvieLanEndpoint $LanHost $release.version
+        Write-Host ('Adresse reseau verifiee sur le serveur : http://' + $LanHost + ':8080 ; confirmer depuis un telephone du meme Wi-Fi.')
+        Write-Host ('HTTPS : https://' + $LanHost + ':8443 ; installer le certificat public sur le telephone pour la dictee.')
     }
     if (-not $NoBrowser) { Start-Process 'http://localhost:8080' }
     exit 0

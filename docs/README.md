@@ -41,7 +41,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Installation
 
-- [Installation Windows avec un seul lanceur](installation/deux-etapes-windows.md) — guide du pilote 0.1.21 ; diagnostic, raccourci de mise à jour Git et contrôles testés sur Windows, installation complète sur PC vierge encore à valider.
+- [Installation Windows avec un seul lanceur](installation/deux-etapes-windows.md) — démarrage automatique sans IA depuis 0.1.30, reprise et mises à jour Git ; installation complète sur PC vierge encore à valider.
 
 - [Préparer et vérifier le kit hors ligne](installation/preparer-kit-hors-ligne.md)
 

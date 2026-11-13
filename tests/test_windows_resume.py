@@ -74,6 +74,24 @@ class WindowsRecoveryTests(unittest.TestCase):
         native.assert_not_called()
         self.assertIn('pilot',compose.call_args.args)
         self.assertNotIn('ollama',compose.call_args.args[1:])
+    def test_web_job_resume_keeps_ui_identity_and_respects_its_pause(self):
+        import library_tasks
+        job='a'*32;folder=self.app.work/'library-web'/job;folder.mkdir(parents=True)
+        web_plan=folder/'plan.json';web_plan.write_bytes(self.plan.read_bytes())
+        setup.write_json(self.app.work/'library-web/state.json',{'id':job,'action':'download','phase':'interrupted'})
+        windows_resume.configure(self.app.work,web_plan)
+        def finish(manager,identifier):
+            self.assertEqual(identifier,job)
+            state=manager.read();self.assertEqual(state['pid'],__import__('os').getpid())
+            state['phase']='completed';manager.write(state)
+        with patch.object(library_tasks.Manager,'run',autospec=True,side_effect=finish),patch.object(setup.Installation,'start_native') as native:
+            self.assertEqual(windows_resume.run(self.app.work),'complete')
+        native.assert_not_called()
+        (folder/'cancel').touch()
+        with patch.object(library_tasks.Manager,'run') as restart:
+            self.assertEqual(windows_resume.run(self.app.work),'paused')
+        restart.assert_not_called();self.assertTrue((folder/'cancel').exists())
+
     def test_external_plan_and_invalid_jobs_refused(self):
         external=self.root/'external.json';external.write_bytes(self.plan.read_bytes())
         with self.assertRaises(ValueError):windows_resume.configure(self.app.work,external)

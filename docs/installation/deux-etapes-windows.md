@@ -1,6 +1,6 @@
 # Installer SetupSurvie sur Windows
 
-**Guide actuel — pilote 0.1.21, 12 novembre 2026.** Lanceur unique et contrôles préliminaires
+**Guide actuel — pilote 0.1.30, 13 novembre 2026.** Lanceur unique et contrôles préliminaires
 testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
 Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
 
@@ -77,8 +77,8 @@ Double-cliquer sur **`2-Installer-SetupSurvie.cmd`** et renseigner :
 
 1. Un dossier dédié sur le disque de données. Entrée accepte `D:\SetupSurvie` si le disque D: existe, sinon `SetupSurvie` dans votre dossier utilisateur. Le contrôle de capacité reste obligatoire.
 2. Le dossier du kit contenant `manifest.json`, ou Entrée pour télécharger.
-3. Une adresse IPv4 du réseau Windows privé affiché pour partager le serveur,
-   ou Entrée pour limiter l’accès au PC.
+3. Le réseau privé proposé : Entrée confirme son adresse lorsqu’il est unique.
+   Saisir LOCAL pour limiter volontairement l’accès au PC.
 
 Docker Desktop démarre si nécessaire. Terminer son accueil et vérifier **Settings
 → Resources → Advanced → Disk image location**. Le lanceur attend une confirmation
@@ -121,10 +121,10 @@ utilise Git puis la sauvegarde et le retour arrière existants ; voir le
 [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md).
 Les raccourcis d’une autre installation sont conservés ; les nouveaux reçoivent
 un suffixe si leur nom est déjà utilisé. Désactiver le démarrage ne supprime que
-le raccourci appartenant à l’installation concernée.
+le raccourci et désactive les tâches appartenant à l’installation concernée.
 Les tests de disponibilité n’interrogent aucun modèle. Une pause existante reste
-respectée ; le démarrage normal d’une nouvelle installation lance le service
-Ollama sans génération de réponse.
+respectée. L’installation initiale peut lancer Ollama pour préparer les modèles ;
+les démarrages automatiques suivants ouvrent les services documentaires sans IA.
 
 Exemple avec paramètres :
 
@@ -183,3 +183,99 @@ Ce premier lot ne fournit pas encore les installateurs système hors ligne, la
 réinstallation de Windows, les sauvegardes planifiées depuis le portail ni les
 métadonnées enrichies des notices. Ces lots restent à réaliser et à tester selon
 le plan retenu. Ne pas annoncer une réinstallation complète hors ligne validée.
+
+
+## Démarrage automatique Windows depuis 0.1.30
+
+L’installation avec démarrage automatique (choix par défaut) prépare un lanceur
+stable dans `maintenance/startup-windows.ps1`, ses chemins Python/Docker/Ollama
+réels et deux tâches Windows limitées à l’utilisateur courant. À l’ouverture de
+session, Docker Desktop est démarré si nécessaire, puis le portail, Open WebUI,
+Kiwix et le contrôleur. Un contrôle toutes les cinq minutes retente si le démarrage
+a échoué ; un site déjà sain à la version installée n’est pas redémarré. Le lanceur
+ne dépend pas de `Docker/install-settings.json`, fichier qui peut disparaître.
+Les outils portables sur le disque de données restent trouvables après redémarrage.
+
+La préférence `inference_autostart: false` est enregistrée : les services
+s’ouvrent sans lancer le moteur IA. L’utilisateur peut démarrer l’IA depuis le
+portail. La pause du mode jeu est conservée. Seul le raccourci de démarrage
+Ollama correspondant exactement à l’exécutable utilisé est déplacé hors du
+dossier Startup, avec conservation d’une copie ; les autres installations sont
+laissées en place. Les modèles nécessaires à l’installation peuvent toujours
+être préparés pendant l’installation initiale.
+
+Une tâche distincte, **sans limite de durée**, reprend le dernier plan documentaire
+autorisé et figé. Les commandes de sélection/téléchargement et le téléchargement
+web arment cette reprise quand le lanceur automatique est installé. Aucun nouveau
+catalogue n’est choisi à l’insu de l’utilisateur. Sans plan sélectionné, elle ne
+fait rien. Les pauses volontaires restent respectées. Un transfert déjà actif
+n’est pas remplacé ; les reçus permettent de garder les fichiers vérifiés sans
+relire toutes les grosses archives. Une sélection web reprise conserve son
+identifiant et actualise son état dans le portail.
+
+Ces tâches utilisateur fonctionnent **après ouverture de session Windows**,
+nécessaire à Docker Desktop. Elles n’activent pas l’ouverture de session automatique.
+La [reprise avant ouverture de session](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127)
+reste une option distincte pour la bibliothèque seule ; elle est déjà configurée
+chez Marc et coexiste sans doublon grâce aux verrous.
+
+`-NoStartup` désactive les nouveaux raccourcis et tâches de surveillance ; une
+reprise avant session activée séparément reste indépendante. Les journaux sont
+sous `data/diagnostics/demarrage-automatique.log` et `bibliotheque-auto.log`.
+Pour une installation existante, installer la version correspondante puis lancer
+`python scripts/setup.py --work-dir CHEMIN_PRIVE shortcuts` depuis son dossier
+application. Ajouter `--no-startup` pour désactiver les tâches et le raccourci de
+démarrage. Une mise à jour logicielle seule ne réactive pas un démarrage
+explicitement désactivé.
+
+Vérifications chez Marc le 13 novembre : 94 tests ciblés sans échec, dont cinq
+ignorés Windows, exécution réelle des deux tâches et accès au site 0.1.29 réussis,
+même téléchargement en cours et IA en pause. Le nouveau démarrage à froid et une
+installation complète sur Windows vierge restent à tester ; aucun redémarrage du
+PC n’a été imposé pour ces contrôles.
+
+
+## Éviter une installation limitée au PC par erreur
+
+Sur un unique réseau Windows privé avec passerelle, l’installateur propose son
+IPv4 : Entrée confirme le partage sur ce réseau. Pour rester volontairement
+limité au PC, saisir **LOCAL**. Si plusieurs réseaux privés sont présents,
+choisir leur adresse explicitement. Sans réseau privé détecté, le lanceur ne
+choisit pas silencieusement un mode inaccessible : passer le réseau domestique
+en privé ou choisir LOCAL. Il ne change pas la catégorie réseau à votre place.
+
+L’étape pare-feu autorisée ouvre les ports web sur le profil privé et le sous-réseau
+local. Elle conserve le blocage des commandes IA sur les interfaces physiques et
+retire seulement les autorisations publiques entrantes Ollama correspondant à
+l’exécutable de cette installation, avec copie de leurs réglages précédents.
+Un refus d’élévation est signalé comme une validation réseau non terminée.
+
+Avant de donner l’adresse à utiliser, le lanceur contrôle `/api/health` sur
+l’IPv4 choisie et exige la version installée ; un site limité à localhost ou une
+ancienne version ne passent pas ce contrôle. L’adresse HTTP est fournie d’abord
+pour un premier essai simple. HTTPS est également disponible, mais nécessite la
+confiance dans le certificat racine public de SetupSurvie sur chaque appareil,
+notamment pour la dictée. Ne pas contourner un avertissement TLS comme preuve
+que le certificat est installé.
+
+Un contrôle effectué depuis le serveur ne remplace pas celui du téléphone : le
+Wi-Fi invité, l’isolation des clients ou un autre pare-feu peuvent encore empêcher
+l’accès. Lors de la recette du 13 novembre chez Marc, HTTP, nom local, recherche,
+lecture PDF par plage et les trois services HTTPS avec la CA locale sont validés
+sur le PC. Le contrôle depuis un autre appareil reste à faire par Marc.
+
+
+Le raccourci **Suivi bibliothèque SetupSurvie** est également installé. Le suivi
+reconnaît `python.exe` et `pythonw.exe` ; il lit la longueur réelle des partiels
+par un handle partagé Windows, car la taille d’annuaire peut rester à zéro tant
+que le fichier est ouvert. Seules les lignes d’erreur sont affichées comme telles,
+pas les titres des contenus en cours. Fermer ou rouvrir ce suivi ne coupe aucun
+transfert. Ces corrections ont été vérifiées sur la reprise active de Marc.
+
+
+Le raccourci Arrêter conserve un marqueur d’arrêt volontaire pour le site : la
+surveillance ne le relance pas cinq minutes plus tard. Ouvrir SetupSurvie ou une
+commande `up` explicite permet de reprendre. La pause de téléchargement reste
+indépendante ; ne pas confondre l’arrêt du site avec celui du superviseur de
+bibliothèque. Les mises à jour inachevées bloquent les redémarrages automatiques
+jusqu’à leur récupération explicite.

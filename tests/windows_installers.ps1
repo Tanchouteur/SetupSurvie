@@ -10,6 +10,48 @@ foreach ($path in @((Join-Path $root 'scripts'), $PSScriptRoot)) {
 }
 . (Join-Path $root 'scripts\prepare-windows.ps1') -Check -CacheDir (Join-Path $env:TEMP ('survie-mock-' + [guid]::NewGuid()))
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
+# Network selection and health checks are isolated from this PC's real network.
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    function Get-SurviePrivateIPv4 { return @('192.168.50.10') }
+    function Read-Host { param($Prompt) return '' }
+    Assert ((Select-SurvieLanHost '') -eq '192.168.50.10') 'Enter should select the single trusted network, not silently stay local'
+    Assert ((Select-SurvieLanHost 'LOCAL') -eq '') 'Local-only must remain an explicit choice'
+    $failed=$false
+    try { Select-SurvieLanHost '192.168.90.2' } catch { $failed=$true }
+    Assert $failed 'An address outside the detected private networks must be refused'
+    function Get-SurviePrivateIPv4 { return @() }
+    $failed=$false
+    try { Select-SurvieLanHost '' } catch { $failed=$true }
+    Assert $failed 'No private network must require an explicit choice'
+    function Invoke-RestMethod { param($Uri,$TimeoutSec,$ErrorAction) return @{ok=$true;version='0.1.30'} }
+    Test-SurvieLanEndpoint '192.168.50.10' '0.1.30'
+    $failed=$false
+    try { Test-SurvieLanEndpoint '192.168.50.10' '0.1.29' } catch { $failed=$true }
+    Assert $failed 'LAN verification must require the installed version'
+}
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    $fixture=Join-Path $env:TEMP ('survie-firewall-'+[guid]::NewGuid())
+    New-Item -ItemType Directory -Path $fixture | Out-Null
+    $program=Join-Path $fixture 'ollama.exe'; Set-Content -LiteralPath $program -Value 'fixture only'
+    $script:disabled=@()
+    function Get-NetFirewallRule { param($Direction,$Action)
+        return @([pscustomobject]@{Name='ours';DisplayName='ollama';Profile='Public';Program=$program},
+                 [pscustomobject]@{Name='another-install';DisplayName='ollama';Profile='Public';Program='C:\Other\ollama.exe'},
+                 [pscustomobject]@{Name='private-rule';DisplayName='ollama';Profile='Private';Program=$program})
+    }
+    function Get-NetFirewallApplicationFilter { param([Parameter(ValueFromPipeline=$true)]$Rule) process { return @{Program=$Rule.Program} } }
+    function Disable-NetFirewallRule { param($Name) $script:disabled+=@($Name) }
+    try {
+        Disable-SurviePublicOllamaRules $program (Join-Path $fixture 'backup')
+        Assert ($script:disabled.Count -eq 1 -and $script:disabled[0] -eq 'ours') 'Only the exact installed public Ollama rule may be disabled'
+        Assert (@(Get-ChildItem -LiteralPath (Join-Path $fixture 'backup') -Filter '*.xml').Count -eq 1) 'Keep the old rule for recovery'
+    } finally {
+        if ((Split-Path $fixture) -ne $env:TEMP) { throw 'Unexpected firewall fixture path' }
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
 # Real discovery functions, with a tiny portable-layout fixture and no execution.
 & {
     . (Join-Path $root 'scripts\windows-common.ps1')

@@ -21,13 +21,22 @@ def runtime(work_dir):
     return setup.Installation(work),config
 
 
+def authorized_plan_path(work,root,plan):
+    if plan.is_relative_to((root/'catalog').resolve()):return True
+    folder=(work/'library-web').resolve()
+    try:parts=plan.relative_to(folder).parts
+    except ValueError:return False
+    import re
+    return len(parts)==2 and re.fullmatch('[a-f0-9]{32}',parts[0]) is not None and parts[1]=='plan.json'
+
+
 def configure(work_dir, selection, jobs=2):
     app,config=runtime(work_dir)
     import setup,content
     if type(jobs) is not int or not 1<=jobs<=3:raise ValueError('Un à trois transferts requis.')
     root=setup.safe_path(config['data_dir'])
     plan=Path(selection).resolve()
-    if not plan.is_relative_to((root/'catalog').resolve()):
+    if not authorized_plan_path(app.work,root,plan):
         raise ValueError('Le plan doit être conservé dans le catalogue de cette installation.')
     value=json.loads(plan.read_text(encoding='utf-8'))
     if value.get('schema')!=1 or value.get('kind')!='SetupSurvie Kiwix thematic selection':
@@ -57,11 +66,13 @@ def run(work_dir, *, probe=False):
     import setup,content_retry
     from delivery_paths import locked
     root=setup.safe_path(config['data_dir'])
-    state=json.loads((app.work/'content-resume.json').read_text(encoding='utf-8'))
+    state_path=app.work/'content-resume.json'
+    if not state_path.is_file():return 'disabled'
+    state=json.loads(state_path.read_text(encoding='utf-8'))
     if state.get('schema')!=1 or state.get('enabled') is not True:return 'disabled'
     if setup.safe_path(state['data_dir'])!=root:raise ValueError('Le dossier de données a changé ; réactiver explicitement la reprise.')
     plan=Path(state['selection']).resolve()
-    if not plan.is_relative_to((root/'catalog').resolve()) or setup.file_hash(plan)!=state['sha256']:
+    if not authorized_plan_path(app.work,root,plan) or setup.file_hash(plan)!=state['sha256']:
         raise ValueError('Le plan a changé ; réactiver explicitement la reprise.')
     if type(state['jobs']) is not int or not 1<=state['jobs']<=3:raise ValueError('Nombre de transferts incorrect.')
     journal=app.work/'update.json'
@@ -79,6 +90,13 @@ def run(work_dir, *, probe=False):
         setup.write_json(root/'diagnostics/windows-resume-probe.json',
                          {'ok':True,'https':True,'pid':os.getpid(),'time':time.time()})
         return 'probe_ok'
+    # CLI and web downloads can hold only content.lock. Do not steal their
+    # progress metadata when the installer watcher checks every five minutes.
+    try:
+        with locked(root/'catalog/content.lock'):pass
+    except setup.SetupError as exc:
+        if isinstance(exc.__cause__,OSError):return 'already_running'
+        raise
     guard=locked(root/'catalog/content-supervisor.lock')
     try:guard.__enter__()
     except setup.SetupError as exc:
@@ -88,7 +106,9 @@ def run(work_dir, *, probe=False):
         if (root/'catalog/content-supervisor.pause').exists():return 'paused'
         import content
         items=content.catalog(plan)
-        if not content_retry.remaining(root,items):return 'complete'
+        web_job=plan.parent.name if plan.parent.parent==(app.work/'library-web').resolve() else None
+        if not web_job and not content_retry.remaining(root,items):return 'complete'
+        if web_job and (plan.parent/'cancel').exists():return 'paused'
         log=root/'diagnostics/bibliotheque-auto.log'
         log.parent.mkdir(parents=True,exist_ok=True)
         with log.open('a',encoding='utf-8',buffering=1) as stream, redirect_stdout(stream), redirect_stderr(stream):
@@ -97,6 +117,20 @@ def run(work_dir, *, probe=False):
                 'plan':str(plan),'log':str(log),'errors':str(log),'state':'reprise_automatique',
                 'supervision':str(root/'catalog/content-retry.json')})
             print('Reprise automatique Windows ; aucun démarrage du moteur IA.',flush=True)
+            if web_job:
+                import library_tasks
+                manager=library_tasks.Manager(app,config,'compose')
+                web_state=manager.read()
+                if web_state.get('id')!=web_job or web_state.get('action')!='download':
+                    raise ValueError('La sélection web a changé ; reprise explicite nécessaire.')
+                if web_state.get('phase')=='completed':return 'complete'
+                web_state.update(pid=os.getpid(),identity=app.native_identity(os.getpid()),started_at=time.time())
+                manager.write(web_state);manager.run(web_job)
+                result=manager.read()
+                if result['phase']=='completed':return 'complete'
+                if result['phase']=='paused':return 'paused'
+                raise OSError('Reprise web incomplète : '+result.get('message','consulter le journal'))
+
             complete=content_retry.supervise(root,items,workers=state['jobs'],
                 cancelled=lambda:(root/'catalog/content-supervisor.pause').exists())
             if not complete:raise OSError('Des contenus restent en attente ; prochaine reprise programmée.')
@@ -113,9 +147,15 @@ def prepare_login(work_dir):
         if not marker.exists():setup.write_json(marker,{'reason':'windows_no_inference_autostart'},private=True)
 
 
+def arm_if_installed(app,config,selection,jobs=2):
+    if config.get('target')!='windows' or not config.get('app_dir'):return
+    marker=Path(config['app_dir']).parent/'maintenance/startup-settings.json'
+    if marker.is_file():configure(app.work,selection,jobs)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=('enable','run','probe','prepare-login','disable'))
+    parser.add_argument('action',choices=('enable','run','probe','prepare-login','disable','pause-site'))
     parser.add_argument('--work-dir',required=True)
     parser.add_argument('--selection');parser.add_argument('--jobs',type=int,choices=(1,2,3),default=2)
     args=parser.parse_args()
@@ -123,6 +163,9 @@ def main():
         if not args.selection:parser.error('--selection requis.')
         print(configure(args.work_dir,args.selection,args.jobs));return
     if args.action=='prepare-login':prepare_login(args.work_dir);return
+    if args.action=='pause-site':
+        app,_=runtime(args.work_dir);import setup
+        setup.write_json(app.work/'startup-paused.json',{'reason':'user_shutdown'},private=True);return
     if args.action=='disable':
         app,_=runtime(args.work_dir);import setup
         state=json.loads((app.work/'content-resume.json').read_text(encoding='utf-8'))

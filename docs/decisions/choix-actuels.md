@@ -89,3 +89,18 @@ historiques restent conservés et les profils sont librement sélectionnables su
 le réseau. Les profils ne garantissent pas la confidentialité entre utilisateurs.
 Le [guide actuel](../utilisation/profils-locaux.md) remplace les anciennes procédures
 de connexion du pilote. Les deux accès secondaires du menu sont décrits et séparés.
+
+
+Marc demande le 13 novembre 2026 le démarrage automatique du site et l’intégration
+à l’installateur après un redémarrage Windows. Depuis 0.1.30, le choix de démarrage
+par défaut prépare deux tâches utilisateur : services web sans IA et reprise du
+dernier plan documentaire explicitement autorisé. Les chemins d’outils sont
+persistés et aucun fichier temporaire d’installation Docker n’est requis. La
+bibliothèque avant ouverture de session reste une option indépendante. Voir le
+[guide Windows](../installation/deux-etapes-windows.md#démarrage-automatique-windows-depuis-0130).
+
+La même livraison évite le choix implicite « PC seulement » : un unique réseau
+privé est proposé par défaut, LOCAL reste explicite, et la version répondant sur
+l’IPv4 locale est contrôlée. Les règles Ollama publiques sont revues uniquement
+pour l’exécutable installé. La validation depuis le serveur reste distincte d’un
+vrai essai depuis un téléphone.

@@ -377,10 +377,18 @@ class Installation:
         if c['target']!='windows':return
         import windows_update
         windows_update.install_launcher(self,c)
+        import windows_autostart
+        stable=windows_autostart.prepare(self,c) if startup else None
         shell=shutil.which('powershell.exe')
         if not shell:raise SetupError('PowerShell Windows est requis pour créer les raccourcis.')
         run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(ROOT/'scripts/create-shortcuts.ps1'),
              '-WorkDir',str(self.work),'-Startup' if startup else '-DisableStartup'],capture=True)
+        if stable:
+            run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(stable.with_name('register-startup-windows.ps1')),
+                 '-WorkDir',str(self.work)],capture=True)
+        elif not startup and c.get('app_dir'):
+            registration=Path(c['app_dir']).parent/'maintenance/register-startup-windows.ps1'
+            if registration.exists():run([shell,'-NoProfile','-ExecutionPolicy','Bypass','-File',str(registration),'-WorkDir',str(self.work),'-Disable'],capture=True)
         print('Raccourcis Ouvrir / Arrêter / Mettre à jour créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
 
     def up(self, c):
@@ -587,8 +595,10 @@ def parser():
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
             child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; --no-startup conserve seulement les raccourcis.')
-    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account"):
+    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account", "shortcuts"):
         child = subs.add_parser(command)
+        if command == "shortcuts":
+            child.add_argument("--no-startup",action="store_true")
         if command == "verify":
             child.add_argument("--inference", action="store_true")
         if command == "prepare":
@@ -643,6 +653,8 @@ def main(argv=None):
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)
         print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
+    elif args.action == "shortcuts":
+        app.install_windows_shortcuts(c,startup=not args.no_startup)
     elif args.action == "configure":
         if args.lan and not args.lan_host and not c.get('lan_host'):
             raise SetupError('Précisez --lan-host avec l’adresse IPv4 du PC serveur.')
@@ -657,9 +669,11 @@ def main(argv=None):
         discovery.network_status(app,c,discovery.local_ip(c),False,'Relancez les services pour appliquer ce réglage réseau.')
         print("Réglage LAN enregistré. Lancez up pour l’appliquer.")
     elif args.action == "up":
+        (app.work/"startup-paused.json").unlink(missing_ok=True)
         app.prepare(c, offline=True)
         app.up(c)
     elif args.action == "down":
+        if c["target"]=="windows":write_json(app.work/"startup-paused.json",{"reason":"user_shutdown"},private=True)
         import discovery
         discovery.stop(app)
         import library_tasks

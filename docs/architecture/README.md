@@ -162,3 +162,14 @@ contrôle du profil toutes les dix secondes sur les pages visibles, avec délai
 de réponse borné à quatre secondes. Il s’agit
 de cohérence d’identité, pas d’une authentification. Les contrôles d’origine des
 mutations sont conservés. Voir le [guide des profils](../utilisation/profils-locaux.md).
+
+
+Le démarrage Windows 0.1.30 persiste les chemins d’outils via
+`scripts/windows_autostart.py` et installe un lanceur dans le dossier stable
+`maintenance/`. Deux tâches interactives limitées surveillent indépendamment le
+site et le transfert : le premier a une durée bornée, le second n’a aucune limite
+de durée. Les verrous du superviseur et du transfert empêchent les écrivains
+concurrents. La reprise web réutilise l’identifiant et le gestionnaire de tâche
+existant ; le dernier plan autorisé est figé par son empreinte. Ce mécanisme ne
+remplace ni une ouverture de session Windows ni la récupération d’une mise à jour
+interrompue. Voir le [guide Windows](../installation/deux-etapes-windows.md#démarrage-automatique-windows-depuis-0130).
