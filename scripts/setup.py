@@ -395,7 +395,7 @@ class Installation:
         import routing_prepare
         routing_prepare.recover_publication(Path(c['data_dir']))
         self.catalog(c)
-        paused=(self.work/'inference-paused.json').exists()
+        paused=(self.work/'inference-paused.json').exists() or c.get('inference_autostart') is False
         if paused and c['target']=='linux':
             # Docker may restart an old container before the host launcher runs.
             self.compose(c,'stop','ollama')

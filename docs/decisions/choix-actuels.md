@@ -63,3 +63,12 @@ utilise deux fichiers simultanés (un à trois en ligne de commande). Voir le
 [guide d’exploitation](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#miroirs-et-transferts-simultanés-depuis-0126).
 Le débit dépend du serveur et de la connexion ; les reçus, la capacité disque et
 la vérification intégrale restent protégés.
+
+
+Le 13 novembre 2026, Marc autorise la reprise Windows de son plan documentaire
+sans démarrage IA et sans interrompre le transfert actif. La 0.1.27 prépare une
+tâche limitée, vérifiée par un test HTTPS sous le compte cible, et conserve une
+pause volontaire. Le mode `inference_autostart: false` laisse le moteur sur
+commande explicite. Les modifications de pare-feu et le créneau Windows Update
+18 h–midi sont propres à cette activation autorisée. Voir le
+[guide de reprise Windows](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127).

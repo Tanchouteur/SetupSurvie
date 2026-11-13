@@ -45,7 +45,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Exploitation
 
-- [Coupures du PC et redémarrage](exploitation/coupures-et-redemarrage.md) — protections 0.1.23, reprise et limites matérielles.
+- [Coupures du PC et redémarrage](exploitation/coupures-et-redemarrage.md) — protections de coupure et reprise automatique Windows sans IA depuis 0.1.27.
 
 - [Mettre à jour le pilote et ajouter des contenus](exploitation/mises-a-jour-et-bibliotheque-pilote.md) — miroirs automatiques et transferts simultanés depuis 0.1.26.
 
