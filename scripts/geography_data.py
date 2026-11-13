@@ -13,6 +13,7 @@ import uuid
 
 import content
 import setup
+from pilot import durable
 
 ATTRIBUTION='© OpenStreetMap contributors · ODbL 1.0. Terrain: Mapzen; Europe: Copernicus EU-DEM; global: USGS SRTM/GMTED2010, NOAA ETOPO1.'
 OVERPASS_SERVERS=('https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter')
@@ -90,7 +91,7 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
     options=validate(options);lat,lon,radius=options['lat'],options['lon'],options['radius_km']
     date=datetime.datetime.now(datetime.timezone.utc).date().isoformat()
     identifier=hashlib.sha256(json.dumps({**options,'date':date},sort_keys=True).encode()).hexdigest()[:20]
-    directory=content.destination(root,'library/maps/geography');directory.mkdir(parents=True,exist_ok=True)
+    directory=content.destination(root,'library/maps/geography');durable.mkdir(directory)
     final=directory/identifier
     if final.exists():
         manifest=json.loads((final/'manifest.json').read_text(encoding='utf-8'))
@@ -98,7 +99,7 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
             if setup.file_hash(final/item['path'])!=item['sha256']:raise setup.SetupError('Données existantes altérées ; conservées pour examen.')
         return manifest
     # Stage on the data disk and publish the whole bundle only after validation.
-    staging=directory/('.prepare-'+uuid.uuid4().hex);staging.mkdir()
+    staging=directory/('.prepare-'+uuid.uuid4().hex);durable.mkdir(staging)
     try:
         with content.locked(root/'catalog/content.lock'):
             content.check_capacity(root,300_000_000,storage_root=storage_root)
@@ -133,7 +134,7 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
                 guard();path=staging/item['path'];item.update(bytes=path.stat().st_size,sha256=setup.file_hash(path))
             manifest={'schema':1,'complete':True,'created':date,'center':[lon,lat],'radius_km':radius,'terrain':options['terrain'],'places':len(parsed['places']),'addresses':len(parsed['addresses']),'files':files,'bytes':sum(f['bytes'] for f in files),'attribution':ATTRIBUTION,'integrity':'Empreintes calculées à la réception HTTPS ; pas des empreintes publiées par les fournisseurs.'}
             setup.write_json(staging/'manifest.json',manifest)
-            check();staging.rename(final)
+            check();durable.sync_tree(staging);durable.publish(staging,final)
             return manifest
     finally:
         if staging.exists():shutil.rmtree(staging)

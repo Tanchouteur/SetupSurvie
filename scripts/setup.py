@@ -391,6 +391,8 @@ class Installation:
                 raise SetupError('Journal de mise à jour illisible : conservez les données et les dossiers updates ; récupération nécessaire avant démarrage.')
             if not isinstance(state,dict) or state.get('phase') not in ('complete','rolled_back'):
                 raise SetupError('Mise à jour interrompue : utilisez Mettre-a-jour-SetupSurvie.cmd -Recover ou pilot_update.py recover avant de démarrer.')
+        import routing_prepare
+        routing_prepare.recover_publication(Path(c['data_dir']))
         self.catalog(c)
         paused=(self.work/'inference-paused.json').exists()
         if paused and c['target']=='linux':

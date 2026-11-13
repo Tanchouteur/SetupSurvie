@@ -214,3 +214,48 @@ backup(app,config,sys.argv[3])
         complete=self.root/'complete'
         with patch.object(app,'compose'):backup(app,c,complete)
         checked_entries(complete,json.loads((complete/'backup.json').read_text(encoding='utf-8')))
+
+    def graph(self,folder,body):
+        file=folder/'foot/network.osrm';file.parent.mkdir(parents=True)
+        file.write_bytes(body)
+        setup.write_json(folder/'manifest.json',{'complete':True,'engine':'OSRM','files':[
+            {'path':'foot/network.osrm','bytes':len(body),'sha256':hashlib.sha256(body).hexdigest()}]})
+
+    def test_routing_graph_publication_survives_kills_before_and_after_directory_moves(self):
+        import routing_prepare
+        code='''
+from pathlib import Path
+import time,routing_prepare
+from pilot import durable
+root=Path(sys.argv[2]);point=sys.argv[3];ready=Path(sys.argv[4])
+directory=root/'library/maps/routing';current=directory/'current';staging=directory/'.prepare-fixture'
+original=durable.publish
+def stop_here():ready.touch();time.sleep(60)
+def publish(source,target):
+    source=Path(source);target=Path(target)
+    if point=='first' and source==staging:stop_here()
+    original(source,target)
+    if point=='between' and source==current:stop_here()
+    if point=='after' and source==staging:stop_here()
+durable.publish=publish
+routing_prepare.publish_graph(staging,root)
+'''
+        for point,expected in [('between',b'old graph'),('after',b'new graph'),('first',b'new graph')]:
+            with self.subTest(point=point):
+                root=self.root/point;directory=root/'library/maps/routing'
+                if point!='first':self.graph(directory/'current',b'old graph')
+                self.graph(directory/'.prepare-fixture',b'new graph')
+                crash_after_ready(code,[root,point,self.ready],self.ready)
+                routing_prepare.recover_publication(root)
+                self.assertEqual((directory/'current/foot/network.osrm').read_bytes(),expected)
+                routing_prepare.recover_publication(root)
+                self.assertEqual(json.loads((directory/'publication.json').read_text())['phase'],'complete')
+
+    def test_routing_recovery_preserves_unverifiable_data_instead_of_resetting(self):
+        import routing_prepare
+        directory=self.root/'library/maps/routing'
+        self.graph(directory/'current',b'expected')
+        target=directory/'current/foot/network.osrm';target.write_bytes(b'torn')
+        setup.write_json(directory/'publication.json',{'phase':'pending','previous':'previous-missing','staging':'.prepare-missing'})
+        with self.assertRaises(setup.SetupError):routing_prepare.recover_publication(self.root)
+        self.assertEqual(target.read_bytes(),b'torn')
