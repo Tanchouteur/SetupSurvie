@@ -10,7 +10,9 @@ affiché dans le menu ou en haut du téléphone pour choisir son profil, ou cré
 un profil avec un prénom ou un nom. Les cartes proposent le même choix sans
 quitter leur page. Aucun identifiant, mot de passe ou code de secours à saisir.
 
-Le profil choisi est conservé dans ce navigateur. Après effacement des cookies,
+Le profil choisi est conservé dans ce navigateur, avec un cookie contenant
+uniquement son identifiant public, sans secret. Il reste utilisable sur les
+adresses HTTP et HTTPS du même appareil. Après effacement des cookies,
 changement d’appareil ou longue absence, le choisir à nouveau dans la liste :
 les conversations et favoris sont conservés sur le serveur. Les onglets du
 portail et des cartes se mettent à jour lors du changement ; une requête d’un

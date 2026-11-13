@@ -96,8 +96,9 @@ def public_user(value):return profiles.public(value)
 
 
 def profile_cookie(response,request,identifier):
-    response.set_cookie(profiles.COOKIE,identifier,max_age=10*365*86400,httponly=True,samesite='lax',
-                        secure=request.headers.get('x-forwarded-proto',request.url.scheme)=='https',path='/')
+    # Public identity label, not a credential: keep the choice usable on HTTP too.
+    # A Secure choice set by HTTPS would prevent selecting a profile on HTTP later.
+    response.set_cookie(profiles.COOKIE,identifier,max_age=10*365*86400,httponly=True,samesite='lax',path='/')
     # Old credentials are no longer used to identify a profile.
     response.delete_cookie(COOKIE,path='/')
 

@@ -3,6 +3,11 @@ async page => {
   const base='http://10.0.3.2:8769';
   await page.unrouteAll({behavior:'wait'});await page.context().clearCookies();
   await page.goto(base);await page.waitForFunction(()=>S.user?.id==='local-family');
+  // Simulate the TLS proxy response, then keep using the plain local address.
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base,'X-Forwarded-Proto':'https'}});
+  await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.request.post(base+'/api/profiles/select',{data:{id:'local-family'},headers:{Origin:base}});
+  await page.reload();await page.waitForFunction(()=>S.user?.id==='local-family');
   if(await page.locator('input[type=password]').count())throw Error('Password field remains in portal');
   const layouts=[];
   for(const [width,height] of [[1440,900],[1024,768],[900,500],[390,844],[320,568]]){
@@ -34,5 +39,5 @@ async page => {
   await other.close();
   await page.locator('#feedback-button').click();await page.locator('#feedback-dialog').waitFor({state:'visible'});await page.locator('[data-close=feedback-dialog]').click();
   if(await page.locator('input[type=password]').count())throw Error('Password field remains');
-  return {noPassword:true,profileCreatedAndRestored:true,favoritesAndHistoryPreserved:true,tabsSynchronized:true,staleWriteBlocked:true,feedbackStillAccessible:true,layouts};
+  return {httpAndHttpsChoice:true,noPassword:true,profileCreatedAndRestored:true,favoritesAndHistoryPreserved:true,tabsSynchronized:true,staleWriteBlocked:true,feedbackStillAccessible:true,layouts};
 }

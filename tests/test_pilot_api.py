@@ -105,12 +105,12 @@ class PilotAPITests(unittest.TestCase):
             response=self.client.post('/api/admin/library/plan',json={'themes':['eau']*29,'max_add_gb':0},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,202);self.assertEqual(command.call_args.args[1]['max_add_gb'],0)
 
-    def test_profile_choice_is_persistent_httponly_and_secure_on_https(self):
+    def test_non_secret_profile_choice_is_persistent_and_usable_on_http_and_https(self):
         response=self.login()
         header=response.headers['set-cookie'].lower()
         self.assertIn('max-age=315360000',header);self.assertIn('httponly',header);self.assertIn('samesite=lax',header)
         response=self.client.post('/api/profiles/select',json={'id':'alice'},headers={'Origin':'http://testserver','X-Forwarded-Proto':'https'})
-        self.assertIn('; Secure',response.headers['set-cookie'])
+        self.assertNotIn('; Secure',response.headers['set-cookie'])
 
     def test_cross_origin_mutation_and_cookie_without_origin_are_rejected(self):
         self.login()

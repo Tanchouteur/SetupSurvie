@@ -139,7 +139,8 @@ Aucun moteur supplémentaire ni contrat de données incompatible n’est introdu
 
 À la demande de Louis, `pilot/profiles.py` remplace l’authentification du portail
 par des identités librement sélectionnables, persistées dans `profiles`. Un cookie
-`survie_profile` mémorise le choix ; son absence ou une ancienne valeur revient
+`survie_profile` mémorise un identifiant public, sans secret et utilisable sur
+HTTP comme HTTPS ; son absence ou une ancienne valeur revient
 au profil Famille. Les lectures de l’ancienne base Open WebUI sont en lecture
 seule ; les identifiants existants gardent leurs conversations et favoris.
 Le rôle sert à présenter les outils, sans protection entre personnes : chacun
