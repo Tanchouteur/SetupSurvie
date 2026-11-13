@@ -64,5 +64,8 @@
   tools.after(make('p','next-mobile-note','Les opérations complexes de préparation et les réglages du moteur se font depuis un ordinateur. Les profils et le suivi restent consultables ici.'));
   const memory=make('article','panel');memory.innerHTML='<h2>Mémoire de navigation</h2><p>Effacez seulement les onglets, filtres et brouillons mémorisés sur ce navigateur. Vos conversations et favoris sur le serveur sont conservés.</p><button id="next-clear-memory" class="secondary">Effacer la mémoire de navigation</button>';settings.append(memory);
   get('view-chat').querySelector('h1').textContent='Prenons le temps de comprendre.';
+  const context=make('div','next-chat-context');
+  for(const selector of ['.next-history','.native-help','#inference-banner','#chat-source','#translation-panel','#conversation-picker']){const node=get('view-chat').querySelector(selector);if(node)context.append(node);}
+  get('view-chat').querySelector('.chat-top').after(context);
   const bottom=make('div','next-mobile-tools','<a href="/classique/">Interface classique ↗</a><a class="native-webui" href="/">Open WebUI ↗</a><a href="/secours.html">Documents de secours ↗</a>');document.querySelector('footer').before(bottom);
 })();

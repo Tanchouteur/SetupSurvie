@@ -54,7 +54,14 @@ de la première. Les limites de capacité réelles restent inchangées.
 La suite Python complète passe localement : **321 tests, 3 ignorés**, dont les
 11 contrôles du moniteur (handle partagé compris). La recette Chromium fonctionnelle passe
 avec 26 contrôles. Syntaxe JavaScript, `git diff --check` et construction du
-paquet logiciel 0.1.32 sont vérifiés. Les résultats CI sont consignés avant publication.
+paquet logiciel 0.1.32 sont vérifiés. Une recette supplémentaire vérifie aussi la nouvelle interface avec document
+associé et traduction ouverte : restauration, pause/reprise, export et saisie
+accessible à 1366×900, 768×900, 390×844 et 320×568. Un conteneur de contexte
+défilant empêche le panneau de traduction de pousser le composeur hors écran.
+La CI Windows a aussi révélé la différence entre alias 8.3 et chemin long du
+répertoire temporaire : les chemins de plan sont désormais normalisés après
+refus des composants liés, avant comparaison aux racines autorisées.
+Les résultats CI finaux sont consignés avant publication.
 
 ## Limites réelles
 
