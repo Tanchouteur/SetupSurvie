@@ -60,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.31'
+VERSION='0.1.32'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -334,6 +334,10 @@ async def status():
     with store.connect() as db:guides=db.execute('SELECT count(*) FROM documents').fetchone()[0]
     return {'version':VERSION,'books':await library.books(),'guides':guides,
             'modes':[{'id':key,**value} for key,value in engine.MODES.items()]}
+
+
+@app.get('/api/activity')
+async def local_activity():return await operations.activity()
 
 
 @app.get('/api/inventory')

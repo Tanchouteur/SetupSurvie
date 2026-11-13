@@ -1,5 +1,10 @@
 # Paramètres, déplacements et cartes hors ligne
 
+**Navigation actuelle depuis 0.1.32 :** les réglages se trouvent dans
+**Mon appareil → Réglages**, les préparations dans **Mon appareil → Téléchargements**,
+et la carte dans **Cartes**. Les intitulés historiques ci-dessous décrivent aussi
+la présentation conservée sous `/classique/`. Voir le [guide actuel](nouvelle-interface.md).
+
 Guide initial du pilote **0.1.10**. Depuis **0.1.11**, voir aussi les [listes de points et itinéraires](points-et-itineraires.md) : préparation sans GPS et consultation mobile. Les téléchargements décrits sont des fonctions du
 logiciel ; leur disponibilité ne prouve pas qu’une zone a été préparée sur un PC.
 

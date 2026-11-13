@@ -1,5 +1,10 @@
 # Inventaire des données locales
 
+Depuis 0.1.32 : **Bibliothèque → Collections** pour ouvrir les encyclopédies et
+guides, **Mon appareil → Stockage** pour les modèles et **Mon appareil → Téléchargements**
+pour les préparations. L’ancienne présentation reste dans `/classique/`.
+Voir la [nouvelle interface](nouvelle-interface.md).
+
 > Guide de référence du pilote — documentation réorganisée le 11 novembre 2026. Les essais Windows chez Marc et sur téléphone restent à réaliser lorsqu’ils sont indiqués comme non validés.
 
 La page **Données locales**, accessible depuis la navigation et `http://localhost:8080/#data`, recense les archives encyclopédiques, les guides et les modèles présents sur le volume dédié.

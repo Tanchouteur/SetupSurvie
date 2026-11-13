@@ -72,3 +72,15 @@ async def library_command(action=None,body=None):
             if response.status_code in (400,409):raise HTTPException(response.status_code,response.json().get('detail','Vérifiez la sélection.'))
             response.raise_for_status();return response.json()
     except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service de téléchargement ne répond pas. Relancez les services depuis le PC serveur ; la bibliothèque déjà installée reste disponible.')
+
+
+async def activity():
+    """Read-only filtered host activity; no profile content or raw diagnostics."""
+    try:
+        if not TOKEN:raise ValueError()
+        async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
+            response=await client.get(URL+'/activity',headers={'Authorization':'Bearer '+TOKEN})
+            response.raise_for_status();return response.json()
+    except (httpx.HTTPError,ValueError):
+        return {'phase':'unknown','source':None,'stale':True,'active':[],'commands':False,
+                'control_available':False,'observed_at':time.time()}

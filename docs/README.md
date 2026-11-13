@@ -28,6 +28,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Nouvelle interface Windows/Linux et retour classique](utilisation/nouvelle-interface.md) — guide actuel 0.1.32 : organisation, suivi réel, navigation et mise à jour normale.
+
 - [Essayer la maquette UX](utilisation/maquette-ux.md) — prototype séparé 0.1.31, navigation mémorisée et exemples fictifs ; portail actuel conservé.
 
 - [Profils locaux, sans mot de passe](utilisation/profils-locaux.md) — accès familial, anciens comptes et liens du menu, depuis 0.1.29.
@@ -80,6 +82,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Interface fonctionnelle Windows/Linux — 13 novembre 2026](essais/2026-11-13-interface-fonctionnelle.md) — API réelles sur fixtures, classique conservée et validations distinctes.
 
 - [Maquette UX navigable — 13 novembre 2026](essais/2026-11-13-maquette-ux.md) — recette navigateur, limites et suite Python comparée à la référence.
 

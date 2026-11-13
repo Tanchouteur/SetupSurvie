@@ -174,6 +174,13 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
             final=destination(root,item['path']);part=destination(root,item['path']+'.part')
             if not final.exists():missing+=max(0,item['bytes']-(part.stat().st_size if part.exists() else 0))
         check_capacity(root,missing,budget=budget,reserve=reserve,storage_root=storage_root)
+        # Shared read-only monitoring for direct Linux/Windows CLI transfers too.
+        # The pinned plan contains only public bibliographic metadata, never URLs or logs.
+        import discovery
+        active_plan=root/'catalog/active-content-plan.json'
+        setup.write_json(active_plan,{'items':[{k:i[k] for k in ('id','title','path','bytes','sha256') if k in i} for i in items]})
+        setup.write_json(root/'diagnostics/content-transfer.json',{'pid':os.getpid(),
+            'identity':discovery.identity(os.getpid()),'started':time.time(),'plan':str(active_plan)})
         metadata=threading.RLock();writes=threading.Lock();stop=threading.Event()
         active={};results=[];last_report=0;first_error=None
         def stopped():

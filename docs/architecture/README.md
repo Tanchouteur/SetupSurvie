@@ -185,3 +185,20 @@ une refonte déjà livrée ; les composants et procédures actuels restent incha
 Depuis 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée
 dans `portal/maquette/` permet d’essayer cette organisation sans appels API.
 Le portail actuel reste à la racine ; le suivi commun réel n’est pas encore raccordé.
+
+## Interface fonctionnelle — 0.1.32
+
+L’entrée principale et `/nouveau/` servent la nouvelle organisation, avec les
+API existantes. `/classique/` conserve ses propres scripts/styles et les mêmes
+données ; `/maquette/` reste fictif. `scripts/build_next_portal.py` génère les
+entrées modernes à partir du balisage classique. `layout.js` déplace les contrôles
+existants avant leur liaison ; `navigation.js` adapte historique et contexte.
+
+`GET /api/activity` passe par la route interne authentifiée `/activity` du
+contrôleur. `scripts/library_monitor.py` associe identité, plan, reçus et progrès
+sans ouvrir de base ni prendre de verrou. Un cache hôte de cinq secondes borne
+les lectures concurrentes ; aucune erreur brute, chemin ou PID n’est publié.
+Le téléchargeur enregistre aussi un petit plan courant pour les transferts directs
+Windows/Linux. Aucune commande indépendante n’est ajoutée par cet endpoint.
+Voir le [guide](../utilisation/nouvelle-interface.md) et le
+[bilan](../essais/2026-11-13-interface-fonctionnelle.md).

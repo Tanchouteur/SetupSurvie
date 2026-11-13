@@ -56,7 +56,9 @@ class WindowsShortcutTests(unittest.TestCase):
             subprocess.run([*command, '-WorkDir', str(second), '-Startup'], check=True, capture_output=True)
             for path, content in initial.items():
                 self.assertEqual(path.read_bytes(), content)
-            self.assertEqual(len(list(desktop.glob('*.lnk'))), 6)
+            # Open, stop, monitor and update shortcuts for each installation.
+            self.assertEqual(len(list(desktop.glob('*.lnk'))), 8)
+            self.assertEqual(len(list(desktop.glob('Suivi*.lnk'))), 2)
             self.assertEqual(len(list(startup.glob('*.lnk'))), 2)
             subprocess.run([*command, '-WorkDir', str(second), '-DisableStartup'], check=True, capture_output=True)
             self.assertEqual(len(list(startup.glob('*.lnk'))), 1)

@@ -1,0 +1,61 @@
+async page => {
+  const base='http://10.0.3.2:8769';const checks=[];const errors=[];const commands=[];
+  const assert=(value,label)=>{if(!value)throw Error(label);checks.push(label);};
+  page.on('pageerror',e=>errors.push(e.message));
+  page.on('request',r=>{if(r.method()==='POST')commands.push(new URL(r.url()).pathname);});
+  await page.goto('about:blank');await page.context().clearCookies();
+  await page.route('**/api/activity',r=>r.fulfill({json:{phase:'downloading',source:'windows',observed_at:Date.now()/1000,worker_alive:true,total_bytes:10000000000,verified_bytes:3000000000,total_count:4,verified_count:1,active:[{id:'book',title:'Collection fixture',bytes:1000000000,total:2000000000,phase:'downloading'}]}}));
+  await page.setViewportSize({width:1440,height:950});await page.goto(base+'/#/accueil');await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+  assert(await page.locator('.next-banner').count()===1,'Nouvelle interface par défaut');
+  await page.locator('#navigation [data-route="bibliotheque"]').click();
+  await page.locator('[data-route="bibliotheque/collections"]').click();
+  await page.waitForSelector('#data-guides button');
+  assert(await page.locator('#next-collections').isVisible(),'Bibliothèque réelle et guides');
+  // Existing reader and enriched PDF/favorite functions retain the same controls.
+  await page.locator('#data-guides button').first().click();await page.waitForSelector('#reader .reader-actions');
+  assert(page.url().includes('source='),'Document adressable');
+  assert(await page.locator('#reader').isVisible(),'Lecture du vrai document fixture');
+  await page.goBack();await page.waitForFunction(()=>document.querySelector('#next-collections').hidden===false);
+  assert(await page.locator('#next-collections').isVisible(),'Retour à la collection');
+  await page.locator('[data-route="bibliotheque/recherche"]').click();await page.locator('#library-query').fill('Shelter');
+  await page.locator('#library-search').evaluate(f=>f.requestSubmit());await page.waitForSelector('#search-results .result');
+  assert(page.url().includes('q=Shelter'),'Recherche et filtres adressables');
+  await page.locator('#search-results .result button').first().click();await page.waitForSelector('#reader h2');
+  await page.goBack();await page.waitForSelector('#search-results .result');
+  assert(await page.locator('#library-query').inputValue()==='Shelter','Retour conserve la requête');
+  await page.locator('#navigation [data-route="assistant"]').click();
+  await page.locator('#chat-input').fill('Brouillon conservé');
+  await page.locator('#navigation [data-route="appareil"]').click();
+  await page.waitForFunction(()=>document.querySelector('.next-activity .next-transfer-title').textContent==='Téléchargement en cours');
+  assert((await page.locator('#view-monitor .next-transfer-message').textContent()).includes('3.0 Go'),'Vrais volumes API, pas de mesures fictives codées en dur');
+  await page.locator('#next-machine-tabs [data-route="appareil/telechargements"]').click();
+  await page.locator('#content-manager').evaluate(d=>d.open=true);
+  assert(await page.locator('#content-form').isVisible(),'Préparation documentaire conservée sur ordinateur');
+  await page.locator('#content-plan').click();
+  assert(!commands.includes('/api/admin/library/plan'),'Pas de préparation concurrente pendant le transfert indépendant');
+  await page.locator('[data-route="appareil/reglages"]').click();
+  assert(await page.locator('#upload-form').count()===1,'Ajout de guide et réglages conservés');
+  await page.locator('#navigation [data-route="assistant"]').click();
+  assert(await page.locator('#chat-input').inputValue()==='Brouillon conservé','Brouillon après navigation');
+  await page.reload();await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+  assert(await page.locator('#chat-input').inputValue()==='Brouillon conservé','Brouillon après rechargement');
+  await page.locator('#chat-input').fill('Question simulée de recette');await page.locator('#chat-form').evaluate(f=>f.requestSubmit());
+  await page.waitForURL(/conversation=/);await page.waitForFunction(()=>!!S.conversation&&!S.job);
+  assert(page.url().includes('conversation='),'Conversation réelle adressable');
+  assert((await page.locator('#chat-messages').textContent()).includes('Réponse simulée'),'Envoi fonctionne sur API simulée sans modèle');
+  const conversation=await page.evaluate(()=>S.conversation);
+  // An explicitly opened classic uses the same profile and stored conversations.
+  const classic=await page.context().newPage();await classic.goto(base+'/classique/');await classic.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+  await classic.waitForSelector('.conversation-link');
+  assert((await classic.locator('#conversation-list').textContent()).includes('Question simulée'),'Classique retrouve le même historique');await classic.close();
+  await page.setViewportSize({width:390,height:844});await page.locator('#navigation [data-route="appareil"]').click();
+  await page.locator('#next-machine-tabs [data-route="appareil/telechargements"]').click();
+  assert(!await page.locator('#geo-download-form').isVisible(),'Préparation complexe retirée sur mobile');
+  assert(await page.locator('#view-data .next-activity').isVisible(),'Suivi accessible sur mobile');
+  await page.locator('#navigation [data-route="cartes"]').click();
+  assert(await page.getByRole('link',{name:'Ouvrir les cartes et mes repères →'}).isVisible(),'Cartes réelles accessibles sur mobile');
+  for(const width of [320,390,760,820,1440]){await page.setViewportSize({width,height:950});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement à '+width);}
+  assert(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
+  assert(!commands.some(p=>/inference|geography\/download|routing\/download|library\/download/.test(p)),'Aucun démarrage moteur ni téléchargement réel');
+  return {checks:checks.length,results:checks,conversation};
+}

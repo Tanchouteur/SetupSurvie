@@ -1,4 +1,6 @@
 import hashlib
+import shutil
+from collections import namedtuple
 import json
 from pathlib import Path
 import sys
@@ -16,6 +18,9 @@ import setup
 
 class SupervisedDownloadTests(unittest.TestCase):
     def setUp(self):
+        # Supervision fixtures are bytes, not a real production disk reservation.
+        usage=namedtuple('Usage','total used free')(200_000_000_000,100_000_000_000,100_000_000_000)
+        disk=patch.object(shutil,'disk_usage',return_value=usage);disk.start();self.addCleanup(disk.stop)
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.items = [dict(id=name, title=name, path='library/guides/'+name+'.txt',

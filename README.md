@@ -25,6 +25,10 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 
 ## Commencer
 
+Le portail **0.1.32** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+sur Windows et Linux, avec les données réelles. La présentation précédente reste
+accessible par **Interface classique** ; la maquette fictive est conservée séparément.
+
 - **Installer sur Windows** : double-cliquer sur `Installer-SetupSurvie.cmd`, qui prépare le PC puis poursuit l’installation. Lire le [parcours Windows](docs/installation/deux-etapes-windows.md), ses validations et ses limites.
 - **Mettre à jour sur Windows** : utiliser le raccourci **Mettre à jour SetupSurvie** ou `Mettre-a-jour-SetupSurvie.cmd` dans le dossier d’installation. Le [guide de mise à jour](docs/exploitation/mises-a-jour-et-bibliotheque-pilote.md) décrit la récupération Git, la sauvegarde et le retour arrière.
 - **Choisir les collections Kiwix** : utiliser la [sélection automatique par thème](docs/bibliotheque/selection-kiwix-par-theme.md), avec inventaire local et budget de téléchargement.

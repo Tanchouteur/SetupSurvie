@@ -18,7 +18,7 @@ sur les précisions ci-dessous.
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
 | Fiabilité des réponses | Depuis 0.1.18, [dates distinctes, citations lues, faits et déductions, contradictions et incertitude](../utilisation/sources-et-fiabilite.md) ; consignes renforcées et métadonnées conservées, respect par les modèles réels encore à évaluer |
 | Savoirs durables | [Référence unique des besoins de Marc](../bibliotheque/savoirs-durables.md) : principes, mesures, fabrication, contrôle, entretien et transmission ; parcours et thèmes intégrés en 0.1.19, couverture documentaire à examiner |
-| Gestion des collections | Depuis Données locales, bloc administrateur repliable ; aperçu par thème puis téléchargement explicite, sans nouvelle entrée dans le menu (12 novembre 2026) |
+| Gestion des collections | Depuis 0.1.32, **Bibliothèque → Collections** ouvre les contenus ; **Mon appareil → Téléchargements** regroupe préparation et suivi. L’interface classique conserve Données locales. [Guide actuel](../utilisation/nouvelle-interface.md), organisation validée par Louis le 13 novembre |
 | Installation Windows | Depuis 0.1.20, [un seul lanceur](../installation/deux-etapes-windows.md) prépare le PC puis installe depuis Internet ou un kit ; les deux anciens restent utilisables. Diagnostic des composants et conflits avant copie, reprise explicite et raccourcis préservés ; installation complète sur Windows vierge encore à valider |
 | Mise à jour Windows | Depuis 0.1.21, [raccourci Git fourni à l’installation](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) : récupération de main dans un dépôt séparé, sauvegarde, paquet vérifié et retour arrière ; lanceur stable hors du logiciel remplacé |
 | Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |
@@ -104,3 +104,9 @@ privé est proposé par défaut, LOCAL reste explicite, et la version répondant
 l’IPv4 locale est contrôlée. Les règles Ollama publiques sont revues uniquement
 pour l’exécutable installé. La validation depuis le serveur reste distincte d’un
 vrai essai depuis un téléphone.
+
+Le 13 novembre 2026, Louis valide la présentation PC et demande la mise en place
+normale sur Windows/Linux, son téléchargement étant terminé. Depuis 0.1.32,
+l’entrée principale utilise la nouvelle organisation ; la classique reste
+accessible sans retour de base et la maquette demeure fictive. Les validations
+simulées et recettes physiques restent distinguées dans le [bilan](../essais/2026-11-13-interface-fonctionnelle.md).
