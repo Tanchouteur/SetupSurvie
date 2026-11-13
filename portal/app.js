@@ -412,11 +412,14 @@ $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.targe
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
 window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')reloadProfile();});
 async function refreshProfileOnReturn(){
-  if(!S.user||document.hidden)return;
-  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok&&(await response.json()).id!==S.user?.id)reloadProfile();}catch(_){/* Offline reading remains available. */}
+  if(!S.user||document.hidden||S.profileChecking||S.profileReloading)return;
+  S.profileChecking=true;const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);
+  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin',signal:controller.signal});if(response.ok&&(await response.json()).id!==S.user?.id)reloadProfile();}catch(_){/* Offline reading remains available. */}
+  finally{clearTimeout(timeout);S.profileChecking=false;}
 }
 window.addEventListener('focus',refreshProfileOnReturn);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfileOnReturn();});
+setInterval(refreshProfileOnReturn,10000);
 $('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
 $('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};

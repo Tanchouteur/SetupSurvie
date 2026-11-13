@@ -26,8 +26,15 @@
   mobile.addEventListener('change',()=>{document.body.classList.remove('map-panel-open');resize();});
   $('map-login-close').onclick=()=>$('map-login-dialog').close();
   window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')reloadProfile();});
-  async function refreshProfile(){if(!UI.user||document.hidden)return;try{const response=await fetch('/api/profiles/current');if(response.ok&&(await response.json()).id!==UI.user?.id)reloadProfile();}catch(_){}}
+  let checkingProfile=false;
+  async function refreshProfile(){
+    if(!UI.user||document.hidden||checkingProfile||reloading)return;
+    checkingProfile=true;const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);
+    try{const response=await fetch('/api/profiles/current',{signal:controller.signal});if(response.ok&&(await response.json()).id!==UI.user?.id)reloadProfile();}catch(_){}
+    finally{clearTimeout(timeout);checkingProfile=false;}
+  }
   window.addEventListener('focus',refreshProfile);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfile();});
+  setInterval(refreshProfile,10000);
   UI.ready=(async()=>{try{const response=await fetch('/api/profiles/current',{credentials:'same-origin'});if(response.ok){UI.user=await response.json();$('map-account').textContent=UI.user.name||'Choisir un profil';$('map-auth-state').hidden=true;}else if(response.status===401){$('map-auth-state').hidden=false;}else{notify('Le choix de profil est indisponible. Vous pouvez toujours consulter la carte.');}}
   catch(_){notify('Le choix de profil ne répond pas. La carte reste accessible.');}
   document.body.dataset.mapRole=UI.user?.role||'guest';return UI.user;})();

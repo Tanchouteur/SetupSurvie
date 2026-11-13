@@ -15,7 +15,8 @@ uniquement son identifiant public, sans secret. Il reste utilisable sur les
 adresses HTTP et HTTPS du même appareil. Après effacement des cookies,
 changement d’appareil ou longue absence, le choisir à nouveau dans la liste :
 les conversations et favoris sont conservés sur le serveur. Les onglets du
-portail et des cartes se mettent à jour lors du changement ; une requête d’un
+portail et des cartes se mettent à jour lors du changement, au retour dans
+l’onglet et par un contrôle toutes les dix secondes lorsque la page est visible ; une requête d’un
 ancien onglet est refusée si elle viserait le nouveau profil. Les traitements
 déjà lancés restent associés au profil qui les a demandés.
 

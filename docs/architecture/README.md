@@ -157,6 +157,8 @@ mot de passe demandé à l’utilisateur. L’API locale continue de fonctionner
 Open WebUI ; l’accès avancé dépend du proxy, du pilote et du service natif.
 
 Un en-tête de profil attendu permet de refuser une action d’un onglet devenu
-périmé ; les onglets partagent aussi une notification de changement. Il s’agit
+périmé ; les onglets partagent aussi une notification de changement, complétée par un
+contrôle du profil toutes les dix secondes sur les pages visibles, avec délai
+de réponse borné à quatre secondes. Il s’agit
 de cohérence d’identité, pas d’une authentification. Les contrôles d’origine des
 mutations sont conservés. Voir le [guide des profils](../utilisation/profils-locaux.md).
