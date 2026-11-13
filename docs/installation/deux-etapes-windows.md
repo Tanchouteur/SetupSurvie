@@ -1,6 +1,6 @@
 # Installer SetupSurvie sur Windows
 
-**Guide actuel — pilote 0.1.30, 13 novembre 2026.** Lanceur unique et contrôles préliminaires
+**Guide actuel — pilote 0.1.33, 13 novembre 2026.** Lanceur unique et contrôles préliminaires
 testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
 Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
 
@@ -287,3 +287,44 @@ commande `up` explicite permet de reprendre. La pause de téléchargement reste
 indépendante ; ne pas confondre l’arrêt du site avec celui du superviseur de
 bibliothèque. Les mises à jour inachevées bloquent les redémarrages automatiques
 jusqu’à leur récupération explicite.
+
+
+## Cartes incluses dans la préparation de base — 0.1.33
+
+En installation **avec Internet**, le lanceur prépare désormais les fonds locaux
+PMTiles : Sud (PACA, Occitanie et Corse, zoom 13) et Solliès-Ville (zoom 15), puis
+le relief et les lieux/adresses dans un rayon de 25 km autour de Solliès-Ville.
+Il s’agit des zones du pilote de Marc, déclarées dans `deploy/map-catalog.json`,
+pas d’une couverture mondiale. Les altitudes permettent l’ombrage et la coupe
+du terrain. Le calcul d’itinéraires reste une préparation distincte.
+
+L’outil PMTiles Windows/Linux x64 est téléchargé depuis sa publication officielle
+avec empreinte SHA-256 figée, avant toute exécution. Les cartes terminées sont
+vérifiées et réutilisées. Une extraction partielle est conservée en diagnostic,
+puis reprise en recommençant uniquement cette extraction ; le programme PMTiles
+ne permet pas ici la reprise octet par octet. Le fond quotidien officiel peut
+expirer : un fond récent du même fournisseur est alors recherché, avec sa **vraie
+date et sa source enregistrées**, sans prétendre conserver l’ancienne édition.
+
+Le relief est préparé indépendamment des adresses/points d’intérêt. Une panne
+Overpass conserve les fonds et altitudes déjà prêts et affiche un avertissement
+explicite ; `catalog/map-installation.json` distingue les états de chaque jeu.
+Les fournisseurs fixes de secours sont conservés dans le manifeste du jeu acquis.
+Les coordonnées de la zone sont transmises à ces fournisseurs. Les lieux OSM ne
+prouvent pas un accès, des horaires à jour, une ressource disponible ou de l’eau potable.
+
+Une installation **depuis un kit hors ligne** ne télécharge rien : les cartes
+présentes sont contrôlées ; les jeux absents sont signalés explicitement. Préparer
+le kit avec les cartes avant de l’apporter sur un site sans Internet.
+
+Pour compléter une installation existante, sans réinstaller les comptes ni
+relancer un modèle :
+
+```powershell
+python application/scripts/setup.py --work-dir prive prepare-maps
+```
+
+Adapter les deux chemins au dossier existant. Cette commande vérifie les cartes,
+prépare les éléments manquants et réindexe le guide cartographique. Le suivi de
+bibliothèque affiche aussi le nombre de fonds présents : les 100 % d’un plan
+Kiwix/PDF ne signifient plus implicitement que des cartes ont été téléchargées.

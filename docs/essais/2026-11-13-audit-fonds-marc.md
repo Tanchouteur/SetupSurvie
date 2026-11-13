@@ -105,3 +105,25 @@ de supprimer des acquisitions conservées par Louis.
 Les preuves détaillées (reçus, réponses HTTP, indexation, volumes et sondages)
 restent dans les diagnostics privés du PC. Les comptes, conversations et traces
 réseau personnelles ne sont pas publiés dans Git.
+
+
+## Complément cartographique acquis pendant cet audit
+
+Les deux fonds sont maintenant présents et vérifiés : Sud 598 803 265 octets,
+Solliès-Ville 36 644 630 octets. Le relief et les lieux de Solliès-Ville (25 km)
+sont publiés : quatre dalles HGT, **3 582 lieux et 28 842 entrées d’adresses/localités**,
+108 698 264 octets pour ce jeu. La présence d’une entrée n’atteste pas une adresse
+postale complète. Les deux premiers serveurs Overpass expiraient ; le secours
+fixe VK Maps a répondu. Le manifeste conserve la source réelle et les empreintes.
+Le guide initial de cartes et les données de relief sont distincts des 235 reçus
+documentaires. Leur ajout ne rend pas les calculs d’itinéraires disponibles.
+
+
+Validation ciblée de la livraison 0.1.33 après intégration de l’interface 0.1.32 :
+93 tests exécutés, 91 réussites et deux cas ignorés (liens symboliques sans privilège).
+Le script d’installation bloque une fausse réussite si les fonds requis échouent ;
+un test distinct vérifie qu’une panne des lieux conserve le relief en signalant
+leur absence. Le catalogue figé utilise aussi la nouvelle URL Anses vérifiée,
+avec la taille et l’empreinte initiales conservées. Installation complète sur
+Windows vierge, Safari réel, redémarrage à froid et calcul d’itinéraires restent
+à qualifier séparément.

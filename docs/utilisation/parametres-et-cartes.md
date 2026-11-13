@@ -160,3 +160,17 @@ serveur) déclenche un seul essai sur le serveur de secours fixe
 La zone demandée est transmise à ce fournisseur si le secours est utilisé.
 Une requête invalide ou un dépassement de taille n’entraîne pas d’essai de secours.
 Le manifeste des lieux conserve le fournisseur réellement utilisé.
+
+
+### Préparation par défaut depuis 0.1.33
+
+Le parcours d’installation en ligne inclut maintenant les deux fonds de carte du
+pilote, puis le relief de Solliès-Ville dans un rayon de 25 km. Il tente aussi les
+adresses et lieux OSM de cette zone. Voir le [guide Windows](../installation/deux-etapes-windows.md#cartes-incluses-dans-la-préparation-de-base--0133).
+Le relief reste utilisable si les fournisseurs de lieux ne répondent pas : cela
+ne fait pas apparaître une fausse couverture de points d’intérêt. Les anciens
+jeux sans marqueur explicite gardent leur comportement compatible. Le troisième
+secours Overpass fixe est VK Maps, recensé parmi les [instances publiques](https://wiki.openstreetmap.org/wiki/Overpass_API).
+Les données HGT ne constituent pas une carte d’itinéraires ; ceux-ci restent à
+préparer séparément. La préparation depuis le bouton existant reste possible
+pour d’autres centres et rayons.

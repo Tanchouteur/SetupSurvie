@@ -90,3 +90,13 @@ Pour éviter une deuxième copie volumineuse sur le SSD limité du laboratoire, 
 Suite locale : **149 tests, 148 réussites et un test COM Windows ignoré sur Linux** ; configuration Compose contrôlée sans démarrage. Tests sur le runner CPU, avec fichiers minuscules : sélection au-delà de 500 Go hors laboratoire, plafond laboratoire maintenu, réserve physique, sélection des guides et de Wikipédia anglais sans doublon, respect des langues, export d'une nouvelle collection et refus d'une source corrompue. Parcours Playwright avec API simulée : 29 thèmes, absence de plafond, préparation, téléchargement, pause et affichage de 320 à 1 366 pixels.
 
 Aucun corpus, modèle, ZIM ou carte lourde téléchargé dans le runner. Le catalogue distant a été consulté pour ses métadonnées uniquement. Cette livraison ne constitue ni une actualisation physique du kit SSD, ni un téléchargement chez Marc, ni un essai Windows ou iPhone réel.
+
+
+## Le plan documentaire ne couvre pas les cartes
+
+Un plan de sélection Kiwix/PDF ne comprend ni PMTiles, ni relief, ni lieux OSM,
+ni graphes de routage. Depuis 0.1.33, l’installation en ligne prépare les fonds
+et le relief de base séparément : voir le [guide Windows](../installation/deux-etapes-windows.md#cartes-incluses-dans-la-préparation-de-base--0133).
+L’achèvement d’un ancien plan reste limité à ses fichiers. L’[audit du fonds réel
+chez Marc](../essais/2026-11-13-audit-fonds-marc.md) distingue ce résultat des besoins
+pratiques, de l’indexation et des défauts d’accès encore ouverts.

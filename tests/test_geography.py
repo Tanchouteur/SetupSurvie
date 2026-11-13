@@ -168,13 +168,26 @@ class GeographyTests(unittest.TestCase):
             return b'<osm />'
         raw,source=geography_data.fetch_overpass('query',maximum=100,reader=reader)
         self.assertEqual(raw,b'<osm />')
-        self.assertEqual(calls,list(geography_data.OVERPASS_SERVERS))
+        self.assertEqual(calls,list(geography_data.OVERPASS_SERVERS[:2]))
         self.assertEqual(source,geography_data.OVERPASS_SERVERS[1])
         calls.clear()
         def invalid(url,**kwargs):
             calls.append(url);raise urllib.error.HTTPError(url,400,'bad query',{},None)
         with self.assertRaises(urllib.error.HTTPError):geography_data.fetch_overpass('bad query',maximum=100,reader=invalid)
         self.assertEqual(len(calls),1)
+
+    def test_second_outage_uses_documented_third_provider_and_records_real_source(self):
+        import urllib.error
+        calls=[]
+        def reader(url,**kwargs):
+            calls.append(url)
+            if len(calls)<3:raise TimeoutError('unavailable')
+            self.assertIn('?data=',url)
+            self.assertNotIn('data',kwargs)
+            return b'{"elements":[]}'
+        raw,source=geography_data.fetch_overpass('query',maximum=100,reader=reader)
+        self.assertEqual(source,geography_data.OVERPASS_SERVERS[2])
+        self.assertEqual(len(calls),3)
         calls.clear()
         def oversized(url,**kwargs):
             calls.append(url);raise setup.SetupError('response too large')

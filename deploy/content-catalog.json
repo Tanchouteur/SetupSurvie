@@ -1237,7 +1237,7 @@
     {
       "id": "plants-toxic",
       "title": "Plantes toxiques en cas d’ingestion : fiches d’information",
-      "url": "https://www.anses.fr/system/files/ANSES-Ft-Plantes-toxiques-ingestion-2021.pdf",
+      "url": "https://www.anses.fr/fr/system/files?file=ANSES-Ft-Plantes-toxiques-ingestion-2021.pdf",
       "pack": "nature",
       "topics": [
         "plantes",
