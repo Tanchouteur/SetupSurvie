@@ -240,8 +240,9 @@ PC n’a été imposé pour ces contrôles.
 **Réserve de recette du 13 novembre :** après correction de l'écoute locale,
 Marc signale encore une expiration depuis son Wi-Fi, par IP et par nom. L'accès
 entre appareils n'était donc pas validé lors de ce premier essai. Un retour
-ultérieur de Marc confirme un accès Wi-Fi fonctionnel ; le point d'accès et
-l'adresse utilisés restent à préciser. Le [journal Windows](../exploitation/journal-incidents-windows.md#win-008--observations-et-essais-du-13-novembre)
+ultérieur de Marc confirme que les deux liens fonctionnent après connexion au
+Wi-Fi. La cause des premiers échecs et la qualification de tous les points d'accès
+restent distinctes de ce succès. Le [journal Windows](../exploitation/journal-incidents-windows.md#win-008--observations-et-essais-du-13-novembre)
 conserve les faits, les essais sans effet et le prochain test à effectuer.
 
 Sur un unique réseau Windows privé avec passerelle, l’installateur propose son
