@@ -28,6 +28,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Essayer la maquette UX](utilisation/maquette-ux.md) — prototype séparé 0.1.31, navigation mémorisée et exemples fictifs ; portail actuel conservé.
+
 - [Profils locaux, sans mot de passe](utilisation/profils-locaux.md) — accès familial, anciens comptes et liens du menu, depuis 0.1.29.
 
 - [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide du pilote 0.1.18.
@@ -78,6 +80,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Maquette UX navigable — 13 novembre 2026](essais/2026-11-13-maquette-ux.md) — recette navigateur, limites et suite Python comparée à la référence.
 
 - [Reprise de bibliothèque et consoles Windows — 13 novembre 2026](essais/2026-11-13-reprise-bibliotheque-windows.md) — correction HTTPS, supervision du plan et appels GPU silencieux, pilote 0.1.24.
 

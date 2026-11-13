@@ -80,3 +80,9 @@ nombres ou unités altérés, et signaler certaines omissions possibles. Le pann
 permet de comparer le texte source ; une anomalie bloquante attend une reprise.
 Les contrôles ne valident pas le sens et ne certifient pas les anciens travaux.
 Voir le [guide documentaire](documents-et-traduction.md#contrôles-de-traduction--depuis-0128).
+
+## Essayer la future organisation
+
+La [maquette UX](maquette-ux.md) est accessible séparément depuis le portail
+0.1.31. Ses contenus et mesures sont fictifs ; l’interface actuelle reste celle
+des usages réels.

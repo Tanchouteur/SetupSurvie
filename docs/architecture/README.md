@@ -181,3 +181,7 @@ Le [plan UX](../decisions/plan-refonte-ux.md) propose une nouvelle répartition 
 interface classique conservée et utilisable. Il définit aussi les différences
 ordinateur/téléphone et les critères de non-régression. Ce plan ne décrit pas
 une refonte déjà livrée ; les composants et procédures actuels restent inchangés.
+
+Depuis 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée
+dans `portal/maquette/` permet d’essayer cette organisation sans appels API.
+Le portail actuel reste à la racine ; le suivi commun réel n’est pas encore raccordé.
