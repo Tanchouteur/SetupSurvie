@@ -166,7 +166,7 @@ class LibraryJobTests(unittest.TestCase):
             def geturl(self):return self.item_url
         response = Response(self.raw); response.item_url = self.item['url']
         opener = MagicMock(); opener.open.return_value = response
-        with patch.object(content.urllib.request, 'build_opener', return_value=opener), \
+        with patch('content_mirrors.opener_for',return_value=None), patch.object(content.urllib.request, 'build_opener', return_value=opener), \
              patch.object(self.app, 'catalog') as catalog, patch.object(self.app, 'compose') as compose:
             self.manager.run(state['id'])
         self.assertEqual(self.manager.read()['phase'], 'completed')

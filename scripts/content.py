@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Download selected, pinned offline contents without touching accounts or models."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
+import threading
+import time
 from datetime import datetime,timezone
 import hashlib
 import json
@@ -72,7 +76,7 @@ def catalog(path=CATALOG):
     return items
 
 
-def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None):
+def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None,write_lock=None):
     def check():
         if cancelled and cancelled():raise DownloadPaused()
     def digest(path):
@@ -93,7 +97,8 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
     if offset<size:
         check()
         request=urllib.request.Request(item['url'],headers={'Range':f'bytes={offset}-','Accept-Encoding':'identity','User-Agent':'SetupSurvie-offline-library/0.1'})
-        open_url=opener or urllib.request.build_opener(urllib.request.ProxyHandler({})).open
+        from content_mirrors import opener_for, network_open
+        open_url=opener or opener_for(root,item,check) or network_open
         with open_url(request,timeout=60) as response:
             if urllib.parse.urlsplit(response.geturl()).scheme!='https':raise setup.SetupError('Redirection non HTTPS refusée.')
             status=response.status
@@ -107,8 +112,10 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
                 while chunk:=response.read(min(1024*1024,size-offset+1)):
                     check()
                     if offset+len(chunk)>size:raise setup.SetupError('Le serveur dépasse la taille annoncée.')
-                    if before_write:before_write(len(chunk))
-                    out.write(chunk);offset+=len(chunk)
+                    with write_lock if write_lock is not None else nullcontext():
+                        check()
+                        if before_write:before_write(len(chunk))
+                        out.write(chunk);out.flush();offset+=len(chunk)
                     if progress:progress(offset,size)
                 out.flush();os.fsync(out.fileno())
     if partial.stat().st_size!=size:raise setup.SetupError('Téléchargement interrompu ; relancer la même commande pour reprendre.')
@@ -120,7 +127,34 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
     return 'downloaded'
 
 
-def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,cancelled=None):
+def record_download(root,item,state):
+    """Caller holds the shared metadata lock for this read/modify/publish."""
+    receipt=destination(root,'catalog/downloaded-content.json')
+    published={i['path']:i for i in catalog(receipt)} if receipt.exists() else {}
+    published={path:entry for path,entry in published.items() if entry['id']!=item['id']}
+    published[item['path']]=item
+    setup.write_json(receipt,{'schema':1,'items':list(published.values())})
+    if item['path'].startswith('library/guides/'):
+        meta=root/'library/guides/metadata.json'
+        if meta.is_symlink():raise setup.SetupError('Métadonnées liées refusées.')
+        records=json.loads(meta.read_text()) if meta.exists() else []
+        relative=item['path'].removeprefix('library/guides/')
+        previous=next((r for r in records if r.get('path')==relative),{})
+        records=[r for r in records if r.get('path')!=relative]
+        records.append({'path':relative,'title':item['title'],'language':item['language'],
+            'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition']+(' — '+item['notes'] if item.get('notes') else ''),'licence':item['licence'],
+            'edition':item['edition'],'document_date':item.get('document_date',previous.get('document_date','')),
+            'collected_at':datetime.now(timezone.utc).date().isoformat() if state=='downloaded' else previous.get('collected_at','')})
+        setup.write_json(meta,records)
+
+
+def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,cancelled=None,
+             workers=1,continue_on_error=False,repair_tls=None):
+    if type(workers) is not int or not 1<=workers<=3:
+        raise setup.SetupError('Choisissez entre un et trois téléchargements simultanés.')
+    items=list(items)
+    if len({i['path'].casefold() for i in items})!=len(items) or len({i['id'] for i in items})!=len(items):
+        raise setup.SetupError('Sélection de téléchargement ambiguë.')
     root=setup.safe_path(root)
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
@@ -129,36 +163,69 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
             final=destination(root,item['path']);part=destination(root,item['path']+'.part')
             if not final.exists():missing+=max(0,item['bytes']-(part.stat().st_size if part.exists() else 0))
         check_capacity(root,missing,budget=budget,reserve=reserve,storage_root=storage_root)
-        results=[]
-        for item in items:
+        metadata=threading.RLock();writes=threading.Lock();stop=threading.Event()
+        active={};results=[];last_report=0;first_error=None
+        def stopped():
+            return stop.is_set() or bool(cancelled and cancelled())
+        def report(item,done,total,status,force=False):
+            nonlocal last_report
+            with metadata:
+                active[item['id']]={'id':item['id'],'title':item['title'],'bytes':done,'total':total,'status':status}
+                now=time.monotonic()
+                if force or now-last_report>=.5:
+                    setup.write_json(root/'catalog/content-progress.json',{
+                        **active[item['id']], 'status':'downloading', 'workers':workers,
+                        'active':list(active.values())})
+                    last_report=now
+        def run(item):
+            if stopped():raise DownloadPaused()
             print(item['title'],flush=True)
-            def progress(done,total):
-                setup.write_json(root/'catalog/content-progress.json',{'id':item['id'],'bytes':done,'total':total,'status':'downloading'})
+            part=destination(root,item['path']+'.part')
+            report(item,part.stat().st_size if part.exists() else 0,item['bytes'],'downloading',True)
+            def progress(done,total):report(item,done,total,'downloading')
             def before_write(count):
                 check_capacity(root,count+1_000_000,budget=budget,reserve=reserve,storage_root=storage_root)
-            try:state=transfer(root,item,progress=progress,before_write=before_write,cancelled=cancelled)
+            try:
+                try:
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
+                except Exception as exc:
+                    if not repair_tls or 'CERTIFICATE_VERIFY_FAILED' not in str(exc):raise
+                    if stopped():raise DownloadPaused()
+                    repair_tls(item['url'])
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
+                with metadata:record_download(root,item,state)
+                return {'id':item['id'],'status':state}
+            except DownloadPaused:
+                stop.set();raise
+            except Exception as exc:
+                if not continue_on_error:stop.set();raise
+                print(f"En attente : {item['id']} — {exc}. Les autres contenus continuent.",file=sys.stderr,flush=True)
+                return {'id':item['id'],'status':'failed','error':str(exc)}
             except BaseException:
-                setup.write_json(root/'catalog/content-progress.json',{'id':item['id'],'status':'interrupted','message':'Relancer la même commande pour reprendre ; aucun fichier non vérifié publié.'})
-                raise
-            results.append({'id':item['id'],'status':state})
-            receipt=destination(root,'catalog/downloaded-content.json')
-            published={i['path']:i for i in catalog(receipt)} if receipt.exists() else {}
-            published={path:entry for path,entry in published.items() if entry['id']!=item['id']}
-            published[item['path']]=item
-            setup.write_json(receipt,{'schema':1,'items':list(published.values())})
-            if item['path'].startswith('library/guides/'):
-                meta=root/'library/guides/metadata.json'
-                if meta.is_symlink():raise setup.SetupError('Métadonnées liées refusées.')
-                records=json.loads(meta.read_text()) if meta.exists() else []
-                relative=item['path'].removeprefix('library/guides/')
-                previous=next((r for r in records if r.get('path')==relative),{})
-                records=[r for r in records if r.get('path')!=relative]
-                records.append({'path':relative,'title':item['title'],'language':item['language'],
-                    'provenance':item['publisher']+' — '+item['url']+' — édition '+item['edition']+(' — '+item['notes'] if item.get('notes') else ''),'licence':item['licence'],
-                    'edition':item['edition'],'document_date':item.get('document_date',previous.get('document_date','')),
-                    'collected_at':datetime.now(timezone.utc).date().isoformat() if state=='downloaded' else previous.get('collected_at','')})
-                setup.write_json(meta,records)
-        setup.write_json(root/'catalog/content-progress.json',{'status':'done','results':results})
+                stop.set();raise
+            finally:
+                with metadata:
+                    active.pop(item['id'],None)
+                    setup.write_json(root/'catalog/content-progress.json',{**next(iter(active.values()),{}),'status':'downloading',
+                        'workers':workers,'active':list(active.values())})
+        # All writers are joined before releasing the OS lock, even on failure/pause.
+        with ThreadPoolExecutor(max_workers=workers,thread_name_prefix='library') as pool:
+            futures=[pool.submit(run,item) for item in items]
+            try:
+                for future in as_completed(futures):
+                    try:results.append(future.result())
+                    except BaseException as exc:
+                        if first_error is None or (isinstance(first_error,DownloadPaused) and not isinstance(exc,DownloadPaused)):
+                            first_error=exc
+                        stop.set()
+            except BaseException:
+                stop.set();raise
+        if first_error is not None:
+            setup.write_json(root/'catalog/content-progress.json',{'status':'interrupted','active':[],
+                'message':'Relancer la même commande pour reprendre ; aucun fichier non vérifié publié.'})
+            raise first_error
+        setup.write_json(root/'catalog/content-progress.json',{'status':'incomplete' if any(r['status']=='failed' for r in results) else 'done',
+            'workers':workers,'active':[],'results':results})
         return results
 
 
@@ -177,6 +244,7 @@ def main():
     p.add_argument('--budget-gb',type=int,default=0,help='0 : pas de plafond documentaire hors laboratoire.');p.add_argument('--work-dir')
     p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
+    p.add_argument('--jobs',type=int,choices=(1,2,3),default=2,help='Téléchargements simultanés (2 par défaut).')
     p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
     args=p.parse_args()
     if args.selection:
@@ -219,7 +287,7 @@ def main():
 def download_and_refresh(args,app,c,root,selected,budget,storage_root):
     # Keep publication and restarts within the same backup exclusion window.
     with locked(destination(root,'catalog/publication.lock')):
-        download(root,selected,budget=budget,storage_root=storage_root)
+        download(root,selected,budget=budget,storage_root=storage_root,workers=args.jobs)
         check_capacity(root,100_000,budget=budget,storage_root=storage_root)
         install_templates(root)
         if args.no_refresh:

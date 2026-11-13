@@ -54,3 +54,12 @@ recherchables. Le lecteur PDF dédié et l’accès statique de secours réduise
 dépendance à l’API. Le [guide actuel](../utilisation/documents-et-traduction.md)
 précise les replis et les limites ; cette isolation ne couvre pas une panne du
 disque ou du serveur web.
+
+
+Le 13 novembre 2026, Marc demande le miroir le plus rapide et des transferts
+simultanés. La 0.1.26 mesure les miroirs officiels Kiwix avec taille et SHA-256
+figés, reprend les partiels sans les tronquer lors du changement de miroir et
+utilise deux fichiers simultanés (un à trois en ligne de commande). Voir le
+[guide d’exploitation](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#miroirs-et-transferts-simultanés-depuis-0126).
+Le débit dépend du serveur et de la connexion ; les reçus, la capacité disque et
+la vérification intégrale restent protégés.

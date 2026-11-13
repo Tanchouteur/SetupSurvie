@@ -639,7 +639,7 @@ def main(argv=None):
             import content
             items=content.catalog();unknown=set(args.content_pack)-{i['pack'] for i in items}
             if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
-            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack])
+            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack],workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)

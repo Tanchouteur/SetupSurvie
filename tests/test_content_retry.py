@@ -71,6 +71,22 @@ class SupervisedDownloadTests(unittest.TestCase):
         (self.root/self.items[0]['path']).unlink()
         self.assertEqual(content_retry.remaining(self.root, self.items[:1]), self.items[:1])
 
+    def test_parallel_supervisor_retries_only_failed_files(self):
+        calls=[]
+        def download(root,items,**kwargs):
+            calls.append([i['id'] for i in items])
+            self.assertEqual(kwargs['workers'],2)
+            self.assertTrue(kwargs['continue_on_error'])
+            results=[]
+            for item in items:
+                if len(calls)==1 and item['id']=='a':
+                    results.append({'id':'a','status':'failed','error':'offline'})
+                else:
+                    self.publish(item);results.append({'id':item['id'],'status':'downloaded'})
+            return results
+        self.assertTrue(content_retry.supervise(self.root,self.items,download=download,workers=2,retry_delay=0,max_rounds=2))
+        self.assertEqual(calls,[['a','b'],['a']])
+
     def test_native_probe_keeps_https_and_hides_its_console(self):
         curl = self.root/'System32/curl.exe'; curl.parent.mkdir(); curl.write_bytes(b'fixture')
         native = SimpleNamespace(name='nt', environ={'SystemRoot': str(self.root)})

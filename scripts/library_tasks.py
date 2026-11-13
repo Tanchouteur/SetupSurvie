@@ -101,7 +101,8 @@ class Manager:
                 progress = Path(self.config['data_dir']) / 'catalog/content-progress.json'
                 if progress.is_file():
                     value = json.loads(progress.read_text(encoding='utf-8'))
-                    result['progress'] = {k: value[k] for k in ('id', 'bytes', 'total', 'status') if k in value}
+                    result['progress'] = {k: value[k] for k in ('id', 'bytes', 'total', 'status', 'workers') if k in value}
+                    result['progress']['active'] = [{k: entry[k] for k in ('id','title','bytes','total','status') if k in entry} for entry in value.get('active',[])]
         return result
 
     def start(self, action, body):
@@ -210,7 +211,7 @@ class Manager:
                 update('downloading', 'Téléchargement et vérification des archives…')
                 # Use the existing downloader and its lock, integrity and budget checks.
                 # Cancellation is checked before each network request/write/hash block.
-                content.download(root, items, storage_root=scope, cancelled=lambda: (folder / 'cancel').exists())
+                content.download(root, items, storage_root=scope, workers=2, cancelled=lambda: (folder / 'cancel').exists())
                 check(); update('refreshing', 'Mise à disposition des nouvelles collections…')
                 self.app.catalog(self.config)
                 if self.backend == 'lab':

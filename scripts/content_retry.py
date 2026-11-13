@@ -41,7 +41,7 @@ def refresh_windows_trust(url):
 
 
 def supervise(root, items, *, max_rounds=96, retry_delay=60, cancelled=None,
-              download=None, trust_refresh=None, wait=None):
+              download=None, trust_refresh=None, wait=None, workers=1):
     download = download or content.download
     trust_refresh = trust_refresh or refresh_windows_trust
     wait = wait or time.sleep
@@ -54,29 +54,43 @@ def supervise(root, items, *, max_rounds=96, retry_delay=60, cancelled=None,
     content.check_capacity(root, missing)
     print(f'{len(items)-len(pending)} éléments déjà vérifiés conservés ; {len(pending)} à préparer.', flush=True)
     for attempt in range(1, max_rounds+1):
-        for item in pending:
-            if cancelled and cancelled():
-                raise content.DownloadPaused()
-            try:
+        if workers>1 and pending:
+            def repair(url):
+                print('Vérification HTTPS avec les autorités Windows ; certificats vérifiés.',flush=True)
+                try:trust_refresh(url)
+                except (OSError, subprocess.SubprocessError):pass
+            results=download(root,pending,cancelled=cancelled,workers=workers,
+                             continue_on_error=True,repair_tls=repair)
+            by_id={i['id']:i for i in pending}
+            for result in results:
+                if result['status']=='failed':
+                    failed[result['id']]={'title':by_id[result['id']]['title'],'error':result['error'],'attempt':attempt}
+                else:failed.pop(result['id'],None)
+            setup.write_json(status_path,{'status':'running','pid':os.getpid(),'attempt':attempt,'failed':failed})
+        else:
+            for item in pending:
+                if cancelled and cancelled():
+                    raise content.DownloadPaused()
                 try:
-                    download(root, [item], cancelled=cancelled)
-                except Exception as exc:
-                    if 'CERTIFICATE_VERIFY_FAILED' not in str(exc):
-                        raise
-                    print('Vérification HTTPS avec les autorités Windows ; validation des certificats conservée.', flush=True)
                     try:
-                        trust_refresh(item['url'])
-                    except (OSError, subprocess.SubprocessError):
-                        pass
-                    download(root, [item], cancelled=cancelled)
-                failed.pop(item['id'], None)
-            except content.DownloadPaused:
-                raise
-            except Exception as exc:
-                failed[item['id']] = {'title': item['title'], 'error': str(exc), 'attempt': attempt}
-                print(f"En attente : {item['id']} — {exc}. Les autres contenus continuent.", file=sys.stderr, flush=True)
-            setup.write_json(status_path, {'status': 'running', 'pid': os.getpid(),
-                             'attempt': attempt, 'failed': failed})
+                        download(root, [item], cancelled=cancelled)
+                    except Exception as exc:
+                        if 'CERTIFICATE_VERIFY_FAILED' not in str(exc):
+                            raise
+                        print('Vérification HTTPS avec les autorités Windows ; validation des certificats conservée.', flush=True)
+                        try:
+                            trust_refresh(item['url'])
+                        except (OSError, subprocess.SubprocessError):
+                            pass
+                        download(root, [item], cancelled=cancelled)
+                    failed.pop(item['id'], None)
+                except content.DownloadPaused:
+                    raise
+                except Exception as exc:
+                    failed[item['id']] = {'title': item['title'], 'error': str(exc), 'attempt': attempt}
+                    print(f"En attente : {item['id']} — {exc}. Les autres contenus continuent.", file=sys.stderr, flush=True)
+                setup.write_json(status_path, {'status': 'running', 'pid': os.getpid(),
+                                 'attempt': attempt, 'failed': failed})
         pending = remaining(root, items)
         if not pending:
             content.install_templates(root)
@@ -109,6 +123,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--work-dir', required=True)
     parser.add_argument('--selection', type=Path, required=True)
+    parser.add_argument('--jobs',type=int,choices=(1,2,3),default=2)
     parser.add_argument('--max-rounds', type=int, default=96)
     parser.add_argument('--retry-delay', type=int, default=60)
     args = parser.parse_args()
@@ -119,11 +134,11 @@ def main():
     plan = json.loads(args.selection.read_text(encoding='utf-8'))
     if plan.get('schema') != 1 or plan.get('kind') != 'SetupSurvie Kiwix thematic selection':
         raise setup.SetupError('Plan de sélection non reconnu.')
-    # One supervisor per data directory; per-file downloads keep their own lock.
+    # One supervisor per data directory; one batch lock covers all parallel writers.
     from delivery_paths import locked
     with locked(root/'catalog/content-supervisor.lock'):
         return 0 if supervise(root, content.catalog(args.selection),
-                              max_rounds=args.max_rounds, retry_delay=args.retry_delay,
+                              max_rounds=args.max_rounds, retry_delay=args.retry_delay, workers=args.jobs,
                               cancelled=lambda: (root/'catalog/content-supervisor.pause').exists()) else 1
 
 

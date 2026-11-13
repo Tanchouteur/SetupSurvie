@@ -108,3 +108,11 @@ statique, indépendamment de l’API. Un petit script distinct conserve les lien
 d’ouverture et de téléchargement si le rendu échoue. `secours.html` consulte une
 liste statique de fichiers publics, sans comptes ni favoris. Une panne de génération
 de cette liste ne fait pas échouer l’indexation de recherche.
+
+
+Depuis 0.1.26, `scripts/content_mirrors.py` classe les miroirs Kiwix à partir du
+Metalink vérifié par taille et SHA-256. `scripts/content.py` possède un seul
+verrou de lot et jusqu’à trois transferts réseau ; un verrou de métadonnées
+protège les reçus et un verrou d’écriture associe contrôle de capacité et
+écriture. Les commandes et l’installateur utilisent deux transferts par défaut.
+Voir le [guide des transferts](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#miroirs-et-transferts-simultanés-depuis-0126).

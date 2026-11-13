@@ -137,7 +137,7 @@ class DeliveryTests(unittest.TestCase):
         import content
         from types import SimpleNamespace
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
-        root=Path(c['data_dir']);args=SimpleNamespace(no_refresh=False,lab=False)
+        root=Path(c['data_dir']);args=SimpleNamespace(no_refresh=False,lab=False,jobs=2)
         def attempt_backup(*unused):
             with self.assertRaisesRegex(setup.SetupError,'opération'):
                 backup(app,c,self.root/'backup')
