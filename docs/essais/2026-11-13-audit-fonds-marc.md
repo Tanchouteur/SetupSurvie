@@ -127,3 +127,23 @@ leur absence. Le catalogue figé utilise aussi la nouvelle URL Anses vérifiée,
 avec la taille et l’empreinte initiales conservées. Installation complète sur
 Windows vierge, Safari réel, redémarrage à froid et calcul d’itinéraires restent
 à qualifier séparément.
+
+
+### Recette Windows après déploiement 0.1.33
+
+Mise à jour terminée, état privé contrôlé et 123 fichiers de l’instantané vérifiés.
+Les routes `/`, `/nouveau/`, `/classique/`, `/maquette/` et `/cartes.html` répondent
+200 ; la racine sert la nouvelle interface et l’API annonce 0.1.33 sans dégradation.
+Deux fonds de carte sont disponibles. Une altitude locale est retournée, une
+tuile PNG de relief est calculée hors ligne et la recherche de points d’eau
+renvoie des repères locaux. Le suivi confirme 181/181 ajouts et deux fonds séparés.
+Ces contrôles HTTP ne remplacent pas une recette visuelle sur téléphone.
+
+Nettoyage autorisé : six dossiers temporaires/essais et copies d’application
+en échec ont été supprimés après vérification des chemins, des processus et des
+tâches. Volume logique retiré : 4 599 568 717 octets, dont une image de test.
+Les sauvegardes de retour arrière, données documentaires et états privés restent
+conservés. Le détail des suppressions reste dans les diagnostics du PC.
+Windows Update ne signalait pas de redémarrage obligatoire ; des opérations
+Firefox en attente ont été relevées. Un redémarrage à froid reste à exécuter,
+avec ouverture de session nécessaire au lanceur web configuré.
