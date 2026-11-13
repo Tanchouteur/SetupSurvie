@@ -36,6 +36,17 @@ class ContentTests(unittest.TestCase):
         part=content.destination(self.root,self.item['path']+'.part');part.parent.mkdir(parents=True);part.write_bytes(self.raw[:5])
         content.transfer(self.root,self.item,lambda *a,**k:Response(self.raw))
         self.assertEqual((self.root/self.item['path']).read_bytes(),self.raw)
+    def test_ignored_range_with_short_or_changed_prefix_preserves_partial(self):
+        part=content.destination(self.root,self.item['path']+'.part');part.parent.mkdir(parents=True)
+        before=self.raw[:10]
+        for response in (self.raw[:3],b'wrong-prefix',self.raw[:12]):
+            part.write_bytes(before)
+            with self.assertRaises(setup.SetupError):
+                content.transfer(self.root,self.item,lambda *a,**k:Response(response))
+            self.assertTrue(part.read_bytes().startswith(before))
+            self.assertGreaterEqual(part.stat().st_size,len(before))
+            self.assertFalse((self.root/self.item['path']).exists())
+
     def test_bad_range_hash_oversize_and_truncated_never_published(self):
         for body,status,headers in [(self.raw,206,{'Content-Range':'bytes 1-3/4'}),(self.raw[:-1]+b'x',200,{}),(self.raw+b'x',200,{}),(self.raw[:2],200,{})]:
             with self.subTest(status=status,body=body):

@@ -105,7 +105,18 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
             if status==206:
                 match=re.fullmatch(r'bytes (\d+)-(\d+)/(\d+)',response.headers.get('Content-Range',''))
                 if not match or tuple(map(int,match.groups()))!=(offset,size-1,size):raise setup.SetupError('Réponse partielle incohérente ; aucun ajout au fichier.')
-            elif status==200:offset=0
+            elif status==200:
+                # Some PDF servers ignore Range. Compare their prefix instead of
+                # truncating bytes already downloaded, even on a short response.
+                if offset:
+                    with partial.open('rb') as existing:
+                        left=offset
+                        while left:
+                            check()
+                            block=response.read(min(1024*1024,left))
+                            if not block or block!=existing.read(len(block)):
+                                raise setup.SetupError('Le serveur ignore la reprise et ne fournit pas le préfixe attendu ; partiel conservé.')
+                            left-=len(block)
             else:raise setup.SetupError('Réponse HTTP inattendue : '+str(status))
             if response.headers.get('Content-Encoding','identity')!='identity':raise setup.SetupError('Contenu compressé inattendu.')
             with partial.open('ab' if offset else 'wb') as out:
