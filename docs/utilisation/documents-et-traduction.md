@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.25, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.1.28, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -63,6 +63,44 @@ Un refus explicite, une réponse vide, un format inexploitable ou une réponse i
 
 Limites actuelles : PDF accessible de 300 Mo maximum, 1 200 pages maximum, 100 000 caractères par page et cinq millions de caractères pour la plage choisie. Un PDF protégé est refusé explicitement. Pour les autres guides et articles, le texte intégral disponible dans l’index ou le lecteur est utilisé ; un aperçu atteignant sa limite de taille est refusé plutôt que présenté comme un document entièrement traduit. Les plages de pages sont réservées aux PDF. Aucun OCR automatique ni traduction d’un ZIM entier n’est ajouté.
 
+## Contrôles de traduction — depuis 0.1.28
+
+Chaque **nouveau passage** passe des contrôles locaux avant d’être enregistré
+comme traduit. Ils ne demandent ni Internet ni seconde inférence.
+
+| Résultat | Comportement et action |
+| --- | --- |
+| Nombres ajoutés, perdus ou modifiés ; association nombre/unité reconnue différente ; long texte identique à la source | Passage refusé, traitement interrompu. La proposition reste visible comme **refusée, ne pas utiliser** ; elle ne compte pas comme traduite et n’est pas publiée. Choisir un autre mode puis **Reprendre**. Les passages terminés restent conservés |
+| Réponse beaucoup plus courte ou longue ; négation anglaise sans équivalent français repéré | Passage conservé avec **À relire**. L’avertissement apparaît dans la conversation, l’export et le document local partagé. Comparer à la source |
+| Aucune anomalie repérée | Passage conservé avec la mention **Contrôles limités**. Cela ne valide pas son sens ni sa fidélité |
+| Ancien passage déjà traduit | **Pas de contrôle enregistré**. Il n’est pas présenté comme validé rétroactivement ; les anciennes publications restent inchangées |
+
+Dans chaque passage, **Comparer avec le texte original** affiche l’instantané
+exact fourni au modèle, sous la traduction. Le bouton **Consulter l’original**
+ouvre le document pour contrôler aussi la mise en page et les tableaux. Le texte
+source et une proposition refusée restent privés ; le partage n’ajoute que les
+avertissements aux traductions acceptées. Les avertissements ne sont pas un
+certificat de relecture humaine.
+
+Le modèle reçoit la consigne de garder les chiffres, signes, occurrences et
+unités, sans conversion. Les contrôles tolèrent notamment `1.5` / `1,5`, `1 000` /
+`1000`, et les noms d’unités courants traduits. Ils sont conservateurs : un nombre
+écrit en lettres, une conversion correcte ou un format de milliers ambigu peut
+bloquer le passage. Il n’existe pas de bouton pour accepter silencieusement une
+proposition refusée. Si un autre mode reste bloqué, conserver l’original et
+l’export des passages terminés ; une traduction manuelle reste nécessaire.
+
+Les unités reconnues forment une liste limitée (masses, volumes, longueurs,
+durées, températures, quelques unités électriques et pressions). Les tableaux,
+formules, unités rares, négations complexes et changements de sens ne sont pas
+validés. Une phrase peut conserver les mêmes nombres tout en disant l’inverse.
+Les seuils de longueur et la recherche de négations sont des indices, avec des
+faux positifs et des erreurs possibles non détectées. Les passages privilégient
+les fins de phrase quand leur taille le permet ; cela ne donne pas au modèle le
+contexte du manuel entier. Aucun glossaire technique ni moteur spécialisé évalué
+n’est encore ajouté. Pour une consigne importante, comparer l’original ou utiliser
+une traduction relue par une personne compétente.
+
 ## Partage, sauvegarde et suppression
 
 **Depuis 0.1.25, une nouvelle traduction terminée devient un document local
@@ -120,7 +158,7 @@ Dans le clone du projet sur le PC Bazzite, vérifier que le travail local est co
 python3 scripts/lab_refresh_library.py
 ```
 
-Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier la version **0.1.25** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
+Le script vérifie le montage SSD, actualise le portail, le pilote et son contexte documentaire puis redémarre uniquement les services documentaires concernés. Il conserve les états et ne démarre pas Ollama. Recharger ensuite le navigateur et vérifier la version **0.1.28** avant le nouvel essai. Cette procédure est propre au laboratoire ; pour une installation portable, utiliser le [paquet logiciel et sa procédure de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#petites-mises-à-jour-du-logiciel).
 
 ## Vérifications et limites
 
@@ -129,9 +167,9 @@ comptes, publication et reprise après erreur d’écriture/indexation, conserva
 après suppression de conversation, recherche dans les favoris et accès PDF par
 plages d’octets. Les recettes navigateur testent le rendu PDF réel, le parcours
 partage/favoris et les replis avec API, lecteur ou module optionnel indisponibles,
-entre 320 et 1 366 pixels. La vérification locale du 13 novembre compte 261 tests,
+entre 320 et 1 366 pixels. La vérification de la livraison 0.1.25, le 13 novembre, comptait 261 tests,
 dont 3 tests COM Windows ignorés sous Linux, sans échec ; le parcours documentaire
-a aussi été exécuté avec Chromium via Playwright MCP. Voir `tests/test_document_library.py`,
+avait aussi été exécuté avec Chromium via Playwright MCP. Voir `tests/test_document_library.py`,
 `tests/browser_documents.js` et la CI du commit concerné.
 
 Les résultats de la livraison initiale 0.1.16 (162 tests, un test Windows ignoré)
@@ -139,3 +177,16 @@ restent historiques. Les tests simulés ne prouvent ni la fidélité d’un mod�
 ni la tenue physique du stockage après coupure. Safari sur iPhone, les gros PDF
 et les performances avec le fonds complet restent à vérifier sur les clients.
 Aucun OCR automatique ni pièce jointe privée multiple n’est ajouté par ce patch.
+
+Pour 0.1.28, `tests/test_translation_quality.py` vérifie les erreurs de nombres,
+unités, signes, les formats tolérés, la reprise sans perte et les limites des
+heuristiques. `tests/browser_translation_quality.js` injecte une mauvaise dose
+fictive puis un résumé trop court et vérifie comparaison, avertissements,
+publication et disposition mobile. Ces tests utilisent des réponses simulées ;
+aucun résultat de fidélité sur modèle réel n’en est déduit.
+
+Vérification locale 0.1.28 : **290 tests sans échec, dont 3 tests COM Windows
+ignorés sous Linux**. Le nouveau parcours de contrôle a aussi été exécuté avec
+Chromium via Playwright MCP. La CI du commit de livraison exécute les contrôles
+Windows et les parcours Chromium/WebKit ; ces moteurs ne remplacent pas un essai
+sur iPhone physique.

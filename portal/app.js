@@ -231,13 +231,21 @@ async function loadTranslation(id,offset=S.translationOffset){
     const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
     $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
+    if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
     $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
     const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done+data.unreadable;
     const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
     $('translation-parts').replaceChildren();
     for(const part of data.parts){const article=element('article',undefined,'translation-part');article.append(element('h3','Page/section '+part.page+' · passage '+(part.position+1)));
-      if(part.model)article.append(element('p',part.model,'small muted'));
+      if(part.model||part.quality?.model)article.append(element('p',part.model||part.quality.model,'small muted'));
       article.append(element('p',part.status==='done'?part.translated:part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
+      if(part.quality){
+        const labels={checked:'Contrôles limités : aucune anomalie repérée. Le sens reste à vérifier.',warning:'À relire : anomalie possible.',blocked:'Passage refusé par les contrôles.',unchecked:'Pas de contrôle automatique enregistré pour ce passage.'};
+        article.append(element('p',labels[part.quality.status]||'Contrôle indisponible.',part.quality.status==='checked'?'small muted':'translation-label small'));
+        for(const issue of part.quality.issues||[])article.append(element('p',issue.message,'translation-label small'));
+      }
+      if(part.source_text){const details=element('details',undefined,'translation-comparison');details.append(element('summary','Comparer avec le texte original'),element('pre',part.source_text));article.append(details);}
+      if(part.candidate){const details=element('details');details.append(element('summary','Voir la proposition refusée · ne pas utiliser'),element('p',part.candidate));article.append(details);}
       const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));$('translation-parts').append(article);
     }
     $('translation-previous').hidden=offset===0;$('translation-next').hidden=offset+data.parts.length>=data.total;

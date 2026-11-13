@@ -116,3 +116,21 @@ verrou de lot et jusqu’à trois transferts réseau ; un verrou de métadonnée
 protège les reçus et un verrou d’écriture associe contrôle de capacité et
 écriture. Les commandes et l’installateur utilisent deux transferts par défaut.
 Voir le [guide des transferts](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#miroirs-et-transferts-simultanés-depuis-0126).
+
+## Contrôles de traduction — 0.1.28
+
+`pilot/translation_quality.py` compare les occurrences de nombres normalisés et
+les associations avec une liste limitée d’unités. Ces anomalies bloquent le passage ;
+les écarts de longueur et négations non retrouvées sont des avertissements. Le
+worker enregistre contrôle, résultat accepté ou proposition refusée et état dans
+une même transaction. La table additive `translation_checks` conserve un rapport
+versionné par passage et la proposition rejetée, avec suppression en cascade de
+la traduction. Les anciennes lignes restent explicitement sans contrôle.
+
+Le contrôle intervient avant de compter le passage comme terminé. Son exception
+interrompt uniquement cette traduction ; la recherche et les documents restent
+accessibles. La publication recontrôle les passages ayant un rapport, sans
+réécrire les anciens fichiers. Les avertissements sont échappés comme texte dans
+le HTML partagé et conservés dans l’export. L’API propriétaire expose aussi le
+texte source pour comparaison ; celui-ci n’est pas ajouté au HTML public.
+Aucun moteur supplémentaire ni contrat de données incompatible n’est introduit.
