@@ -34,7 +34,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.22'
+VERSION='0.1.23'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -644,7 +644,8 @@ async def upload(file:UploadFile=File(...),title:str=Form(...),language:str=Form
     language=language if language in ('fr','en') else ''
     path=store.new_id()+'.'+(language or 'other')+suffix
     library.GUIDES.mkdir(parents=True,exist_ok=True)
-    (library.GUIDES/path).write_bytes(data)
+    from .durable import write_bytes
+    write_bytes(library.GUIDES/path,data)
     with store.connect() as db:
         db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?)',(path,title[:200],language,provenance[:1000],licence[:1000]))
         db.execute('INSERT INTO guide_dates VALUES(?,?,?,?)',(path,document_date,edition.strip(),datetime.now(timezone.utc).date().isoformat()))

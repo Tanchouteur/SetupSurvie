@@ -92,5 +92,15 @@ class EvidenceTests(unittest.TestCase):
         self.assertFalse(result['more'])
         self.assertTrue(result['partial_read']);self.assertTrue(result['text_limit_reached'])
 
+    def test_answer_and_job_are_committed_together_even_when_trace_disk_write_fails(self):
+        def failed_trace(*args,**kwargs):
+            with store.connect() as db:
+                self.assertEqual(db.execute("SELECT status FROM jobs WHERE id='j'").fetchone()[0],'done')
+                self.assertEqual(db.execute("SELECT count(*) FROM messages WHERE role='assistant'").fetchone()[0],1)
+            raise OSError('fixture disk failure')
+        with patch.object(engine.durable,'write_bytes',side_effect=failed_trace):
+            _,answer=self.run_chat([{'content':'Réponse de fixture conservée.'}])
+        self.assertEqual(answer['content'],'Réponse de fixture conservée.')
+
 
 if __name__=='__main__':unittest.main()

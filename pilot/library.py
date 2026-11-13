@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata
+from . import store,source_metadata,durable
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -101,13 +101,18 @@ def index_guides():
                     cache=store.ROOT/'index-cache';cache.mkdir(exist_ok=True)
                     stat=path.stat();key=hashlib.sha256(('pdf-v1:'+relative+':'+str(stat.st_mtime_ns)+':'+str(stat.st_size)).encode()).hexdigest()
                     cached=cache/(key+'.json')
-                    if cached.is_file():page_texts=json.loads(cached.read_text())
-                    else:
+                    page_texts=None
+                    if cached.is_file():
+                        try:
+                            page_texts=json.loads(cached.read_text(encoding='utf-8'))
+                            if not isinstance(page_texts,list) or any(not isinstance(page,str) for page in page_texts):page_texts=None
+                        except (OSError,ValueError):pass
+                    if page_texts is None:
                         reader=PdfReader(path)
                         if len(reader.pages)>1200:
                             record['status']='page_limit';continue
                         page_texts=[(page.extract_text() or '')[:24000] for page in reader.pages]
-                        temporary=cached.with_suffix('.tmp');temporary.write_text(json.dumps(page_texts,ensure_ascii=False));temporary.replace(cached)
+                        durable.write_bytes(cached,json.dumps(page_texts,ensure_ascii=False).encode('utf-8'),private=True)
                     text='\n'.join(page_texts[:4])
                 elif suffix=='.epub':
                     with zipfile.ZipFile(path) as z:
@@ -137,9 +142,7 @@ def index_guides():
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
     store.ROOT.mkdir(parents=True,exist_ok=True)
-    temporary=store.ROOT/'index-report.tmp'
-    temporary.write_text(json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False))
-    temporary.replace(store.ROOT/'index-report.json')
+    durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
     return len(documents)
 
 

@@ -1,6 +1,7 @@
 """Bounded local conversations with a small, read-only tool harness."""
 import asyncio
 import json
+import logging
 import os
 import re
 from pathlib import Path
@@ -8,7 +9,7 @@ import time
 
 import httpx
 
-from . import library,store,geography,source_metadata
+from . import library,store,geography,source_metadata,durable
 
 OLLAMA=os.environ.get('OLLAMA_URL','http://ollama:11434').rstrip('/')
 POLICY=Path(os.environ.get('ASSISTANT_POLICY','/srv/system.fr.txt'))
@@ -159,10 +160,14 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
             with store.connect() as db:
                 db.execute('INSERT INTO messages(conversation_id,role,content,sources,created,model,mode) VALUES(?,?,?,?,?,?,?)',
                     (conversation_id,'assistant',answer,json.dumps(final_sources,ensure_ascii=False),time.time(),selected['model'],mode))
+                db.execute('UPDATE jobs SET status=?,answer=?,sources=?,updated=? WHERE id=?',
+                    ('incomplete' if interrupted else 'done',answer,json.dumps(final_sources,ensure_ascii=False),time.time(),identifier))
             # Tools are evidence, not private reasoning; retain the trace for feedback/debugging.
-            path=store.ROOT/'traces';path.mkdir(exist_ok=True)
-            (path/(identifier+'.json')).write_text(json.dumps({'tools':tool_trace,'model':selected['model'],'think':selected['think'],'metrics':metrics},ensure_ascii=False,indent=2))
-            update(identifier,status='incomplete' if interrupted else 'done',answer=answer,sources=final_sources)
+            try:
+                path=store.ROOT/'traces'
+                durable.write_bytes(path/(identifier+'.json'),json.dumps({'tools':tool_trace,'model':selected['model'],'think':selected['think'],'metrics':metrics},ensure_ascii=False,indent=2).encode('utf-8'),private=True)
+            except OSError:
+                logging.getLogger(__name__).warning('Trace de diagnostic non conservée ; la réponse est enregistrée.')
     except asyncio.CancelledError:
         update(identifier,status='cancelled',error='Demande annulée.');raise
     except TimeoutError:update(identifier,status='incomplete',error='Temps maximal atteint. Essayez une question plus ciblée.')

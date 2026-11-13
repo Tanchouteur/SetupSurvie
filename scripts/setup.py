@@ -19,6 +19,9 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from pilot import durable
 VERSIONS = json.loads((ROOT / "deploy/versions.json").read_text(encoding="utf-8"))
 PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
@@ -80,12 +83,8 @@ def run(args, *, capture=False, env=None, timeout=None):
 
 
 def write_json(path, value, *, private=False):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if private and os.name != "nt":
-        tmp.chmod(0o600)
-    tmp.replace(path)
+    body = (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode('utf-8')
+    durable.write_bytes(path, body, private=private)
 
 
 def safe_path(value):
@@ -141,13 +140,10 @@ class Installation:
                       "chat_model": VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"
-            credentials.write_text("Compte administrateur local Open WebUI\n"
+            durable.write_bytes(credentials,("Compte administrateur local Open WebUI\n"
                                    f"Identifiant : {config['admin_email']}\n"
                                    f"Mot de passe initial : {config['admin_password']}\n"
-                                   "Ne pas diffuser ce fichier. Les comptes lecteurs se créent dans l’administration.\n",
-                                   encoding="utf-8")
-            if os.name != "nt":
-                credentials.chmod(0o600)
+                                   "Ne pas diffuser ce fichier. Les comptes lecteurs se créent dans l’administration.\n").encode('utf-8'),private=True)
         for name in DIRECTORIES:
             (Path(config["data_dir"]) / name).mkdir(parents=True, exist_ok=True)
         self.render(config)
@@ -179,9 +175,7 @@ class Installation:
             if any(ch in val for ch in "\r\n\x00"):
                 raise SetupError(f"Valeur invalide pour {key}.")
             lines.append(key + "='" + val.replace("'", "\\'") + "'")
-        self.env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        if os.name != "nt":
-            self.env_path.chmod(0o600)
+        durable.write_bytes(self.env_path, ("\n".join(lines) + "\n").encode('utf-8'), private=True)
 
     @staticmethod
     def image_reference(c, service):
@@ -390,11 +384,21 @@ class Installation:
         print('Raccourcis Ouvrir / Arrêter / Mettre à jour créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
 
     def up(self, c):
+        journal=self.work/'update.json'
+        if journal.exists():
+            try:state=json.loads(journal.read_text(encoding='utf-8'))
+            except (OSError,ValueError):
+                raise SetupError('Journal de mise à jour illisible : conservez les données et les dossiers updates ; récupération nécessaire avant démarrage.')
+            if not isinstance(state,dict) or state.get('phase') not in ('complete','rolled_back'):
+                raise SetupError('Mise à jour interrompue : utilisez Mettre-a-jour-SetupSurvie.cmd -Recover ou pilot_update.py recover avant de démarrer.')
         self.catalog(c)
+        paused=(self.work/'inference-paused.json').exists()
+        if paused and c['target']=='linux':
+            # Docker may restart an old container before the host launcher runs.
+            self.compose(c,'stop','ollama')
         import control
         control.start(self,c)
-        paused=(self.work/'inference-paused.json').exists()
-        self.start_native(c)
+        if not paused:self.start_native(c)
         services=['open-webui','kiwix','pilot','portal'] if paused else []
         if paused and (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():services += ['router-foot','router-motorcycle','router-car']
         self.compose(c, "up", "-d", "--pull", "never", "--wait", "--wait-timeout", "420",*services)

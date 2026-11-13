@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-Index mis à jour le 12 novembre 2026. Commencer par le parcours correspondant au besoin.
+Index mis à jour le 13 novembre 2026. Commencer par le parcours correspondant au besoin.
 
 ## Guides de référence
 
@@ -44,6 +44,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Première version d’essai chez Marc](installation/pilote-marc.md)
 
 ### Exploitation
+
+- [Coupures du PC et redémarrage](exploitation/coupures-et-redemarrage.md) — protections 0.1.23, reprise et limites matérielles.
 
 - [Mettre à jour le pilote et ajouter des contenus](exploitation/mises-a-jour-et-bibliotheque-pilote.md)
 

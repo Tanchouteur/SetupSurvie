@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 import setup
+from pilot import durable
 from delivery_paths import destination
 
 
@@ -118,14 +119,16 @@ def source_records(kit):
 
 def copy_checked(source, target, entry):
     if target.is_file() and target.stat().st_size == entry['bytes'] and setup.file_hash(target) == entry['sha256']:
+        durable.sync_file(target)
         return
     target.parent.mkdir(parents=True, exist_ok=True)
     partial = destination(target.parent, target.name+'.installation-part')
     shutil.copyfile(source, partial)
     if partial.stat().st_size != entry['bytes'] or setup.file_hash(partial) != entry['sha256']:
         raise setup.SetupError('Copie interrompue ou source modifiée : '+entry['path'])
+    durable.sync_file(partial)
     shutil.copymode(source, partial)
-    partial.replace(target)
+    durable.publish(partial,target)
 
 
 def execute(arguments):
@@ -189,6 +192,8 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
                 copy_checked(source, target, entry)
                 if number % 100 == 0 or number == len(targets):
                     print(f'Copie contrôlée : {number}/{len(targets)} fichiers', flush=True)
+            durable.sync_tree(application,sync_files=False)
+            if data.exists():durable.sync_tree(data,sync_files=False)
             state['status'] = 'configuring'
             setup.write_json(journal, state, private=True)
         launcher = application/'scripts/setup.py'

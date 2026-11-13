@@ -17,6 +17,10 @@ applicative interrompue se reprend avec `Installer-SetupSurvie.cmd -BaseDir D:\S
 Les anciens fichiers `1-Preparer-le-PC.cmd` et `2-Installer-SetupSurvie.cmd`
 restent disponibles pour exécuter séparément les deux étapes décrites ci-dessous.
 
+Depuis 0.1.23, les copies sont synchronisées avant d’enregistrer l’étape terminée.
+Pour un arrêt brutal du PC, suivre [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md) ;
+une installation interrompue reste distincte d’une mise à jour à récupérer.
+
 Pour vérifier seulement les prérequis sans installer ni démarrer Docker :
 
 ```powershell

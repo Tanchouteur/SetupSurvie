@@ -10,6 +10,7 @@ import sys
 import time
 
 import setup
+from pilot import durable
 
 
 def checked_entries(root,manifest,progress=None):
@@ -149,6 +150,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
         if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
+    durable.sync_tree(application);durable.sync_tree(data)
     app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True);app.up(c);app.verify(c)
     app.install_windows_shortcuts(c,startup=startup)
     app.addresses(c)
