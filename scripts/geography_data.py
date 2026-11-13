@@ -16,7 +16,8 @@ import setup
 from pilot import durable
 
 ATTRIBUTION='© OpenStreetMap contributors · ODbL 1.0. Terrain: Mapzen; Europe: Copernicus EU-DEM; global: USGS SRTM/GMTED2010, NOAA ETOPO1.'
-OVERPASS_SERVERS=('https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter')
+OVERPASS_SERVERS=('https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter',
+                  'https://maps.mail.ru/osm/tools/overpass/api/interpreter')
 
 
 def validate(body):
@@ -25,7 +26,8 @@ def validate(body):
         raise setup.SetupError('Coordonnées de préparation non valides.')
     if type(radius) is not int or not 1<=radius<=25:raise setup.SetupError('Rayon de préparation entre 1 et 25 km.')
     if type(body.get('terrain',True)) is not bool:raise setup.SetupError('Choix de relief non valide.')
-    return {'lat':float(lat),'lon':float(lon),'radius_km':radius,'terrain':body.get('terrain',True)}
+    if type(body.get('places',True)) is not bool:raise setup.SetupError('Choix de lieux non valide.')
+    return {'lat':float(lat),'lon':float(lon),'radius_km':radius,'terrain':body.get('terrain',True),'places':body.get('places',True)}
 
 
 def fetch(url, *, data=None, maximum=30_000_000, check=lambda:None):
@@ -55,11 +57,15 @@ def categories(tags):
 
 
 def fetch_overpass(query,*,maximum,check=lambda:None,reader=None):
-    """Try one fixed backup provider for transient public API failures only."""
+    """Use fixed public providers, retaining the actual source in the bundle."""
     reader=reader or fetch
     for index,url in enumerate(OVERPASS_SERVERS):
         check()
-        try:return reader(url,data=urllib.parse.urlencode({'data':query}).encode(),maximum=maximum,check=check),url
+        try:
+            encoded=urllib.parse.urlencode({'data':query})
+            if url.startswith('https://maps.mail.ru/'):
+                return reader(url+'?'+encoded,maximum=maximum,check=check),url
+            return reader(url,data=encoded.encode(),maximum=maximum,check=check),url
         except urllib.error.HTTPError as exc:
             if exc.code not in (429,500,502,503,504) or index==len(OVERPASS_SERVERS)-1:raise
         except (urllib.error.URLError,TimeoutError):
@@ -105,11 +111,14 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
             content.check_capacity(root,300_000_000,storage_root=storage_root)
             def guard():
                 check();content.check_capacity(root,10_000_000,storage_root=storage_root)
-            progress('Téléchargement des adresses et lieux OpenStreetMap…')
+            progress('Téléchargement des adresses et lieux OpenStreetMap…' if options['places'] else 'Préparation indépendante du relief…')
             area=f'(around:{radius*1000},{lat},{lon})'
             filters=['["addr:street"]','["place"]','["amenity"~"^(drinking_water|water_point|fountain|marketplace|pharmacy|hospital|clinic|doctors|shelter|telephone|post_office)$"]','["natural"~"^(spring|water)$"]','["man_made"="water_well"]','["shop"~"^(supermarket|convenience|bakery|greengrocer|farm|butcher|hardware|doityourself|bicycle|car_repair)$"]','["tourism"~"^(camp_site|alpine_hut|wilderness_hut)$"]','["healthcare"]']
             query='[out:json][timeout:75][maxsize:67108864];('+''.join('nwr'+f+area+';' for f in filters)+');out center tags;'
-            raw,source=fetch_overpass(query,maximum=30_000_000,check=guard,reader=reader)
+            if options['places']:
+                raw,source=fetch_overpass(query,maximum=30_000_000,check=guard,reader=reader)
+            else:
+                raw=b'{"elements":[]}';source='local:empty-places-not-prepared'
             parsed=parse_places(json.loads(raw));setup.write_json(staging/'places.json',parsed)
             files=[{'path':'places.json','source':source,'source_sha256':hashlib.sha256(raw).hexdigest()}]
             if options['terrain']:
@@ -132,7 +141,7 @@ def prepare(root,options,*,storage_root=None,check=lambda:None,progress=lambda m
             shutil.copyfile(attribution,staging/'attribution.txt');files.append({'path':'attribution.txt','source':'https://github.com/tilezen/joerd/blob/master/docs/attribution.md'})
             for item in files:
                 guard();path=staging/item['path'];item.update(bytes=path.stat().st_size,sha256=setup.file_hash(path))
-            manifest={'schema':1,'complete':True,'created':date,'center':[lon,lat],'radius_km':radius,'terrain':options['terrain'],'places':len(parsed['places']),'addresses':len(parsed['addresses']),'files':files,'bytes':sum(f['bytes'] for f in files),'attribution':ATTRIBUTION,'integrity':'Empreintes calculées à la réception HTTPS ; pas des empreintes publiées par les fournisseurs.'}
+            manifest={'schema':1,'complete':True,'created':date,'center':[lon,lat],'radius_km':radius,'terrain':options['terrain'],'places_prepared':options['places'],'places':len(parsed['places']),'addresses':len(parsed['addresses']),'files':files,'bytes':sum(f['bytes'] for f in files),'attribution':ATTRIBUTION,'integrity':'Empreintes calculées à la réception HTTPS ; pas des empreintes publiées par les fournisseurs.'}
             setup.write_json(staging/'manifest.json',manifest)
             check();durable.sync_tree(staging);durable.publish(staging,final)
             return manifest

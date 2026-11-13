@@ -146,6 +146,19 @@ class GeographyTests(unittest.TestCase):
         self.assertEqual((existing/'keep').read_text(),'user data')
         self.assertEqual(list(existing.parent.glob('.prepare-*')),[])
 
+    def test_terrain_can_be_prepared_without_overpass_and_does_not_claim_poi_coverage(self):
+        root=self.root/'data';root.mkdir()
+        def terrain_only(url,**kwargs):
+            self.assertIn('/skadi/',url)
+            return gzip.compress(struct.pack('>h',321)*1201**2)
+        with patch.object(geography_data.content,'check_capacity'):
+            manifest=geography_data.prepare(root,{'lat':43.1,'lon':6.1,'radius_km':1,'places':False},reader=terrain_only)
+        self.assertFalse(manifest['places_prepared'])
+        self.assertTrue(manifest['terrain'])
+        with patch.object(maps,'ROOT',root/'library/maps'):
+            self.assertEqual(geography.elevation(43.1,6.1)['elevation_m'],321)
+            self.assertFalse(geography.nearby('water',lat=43.1,lon=6.1)['fully_covered'])
+
     def test_overpass_uses_fixed_backup_only_for_transient_failures(self):
         import urllib.error
         calls=[]

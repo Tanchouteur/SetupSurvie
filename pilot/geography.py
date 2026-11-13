@@ -96,7 +96,7 @@ def datasets():
 
 
 def status():
-    return {'datasets':[{'id':root.name,**{k:value.get(k) for k in ('created','center','radius_km','places','addresses','terrain','attribution','bytes')}} for root,value in datasets()], 'note':NOTE}
+    return {'datasets':[{'id':root.name,**{k:value.get(k) for k in ('created','center','radius_km','places','addresses','terrain','attribution','bytes')},'places_prepared':value.get('places_prepared',True)} for root,value in datasets()], 'note':NOTE}
 
 
 def local_addresses(query):
@@ -144,6 +144,7 @@ def nearby(category, radius_km=5, lat=None, lon=None):
         point=location();lat,lon=point['lat'],point['lon']
     lat,lon=coordinates(lat,lon);found=[];seen=set();coverage=[]
     for root,manifest in datasets():
+        if not manifest.get('places_prepared',True):continue
         coverage.append({'center':manifest['center'],'radius_km':manifest['radius_km'],'created':manifest['created']})
         for item in json.loads((root/'places.json').read_text(encoding='utf-8'))['places']:
             if category not in item['categories'] or item['id'] in seen:continue

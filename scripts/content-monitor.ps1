@@ -40,6 +40,18 @@ do {
   Write-Host ('En cours : '+$current)
   Write-Host ('Plan : {0:N2} / {1:N2} Go verifies ({2:N1} %) - {3}/{4} ajouts' -f ($verified/1e9),($total/1e9),(100*$verified/$total),$done.Count,@($plan.items).Count)
   Write-Host ('Total local verifie : {0:N2} Go ; {1} contenus' -f ($allVerified/1e9),@($receipt.items).Count)
+  $mapManifest=Join-Path $root 'library\maps\manifest.json'
+  $mapCount=0
+  if (Test-Path -LiteralPath $mapManifest) {
+   $mapData=Get-Content -LiteralPath $mapManifest -Raw -Encoding UTF8 | ConvertFrom-Json
+   foreach ($map in @($mapData.maps)) {
+    if ($map.path -notmatch '^[a-z0-9-]+\.pmtiles$') { continue }
+    $mapFile=Join-Path $root ('library\maps\'+$map.path)
+    if ((Test-Path -LiteralPath $mapFile) -and (Get-Item -LiteralPath $mapFile).Length -eq $map.bytes) { $mapCount++ }
+   }
+  }
+  Write-Host ('Cartes hors ligne : {0} fond(s) present(s), en plus du plan documentaire.' -f $mapCount)
+  if (-not $mapCount) { Write-Host 'Cartes absentes : lancer la preparation des cartes ; les 100 % du plan ne les incluent pas.' -ForegroundColor Yellow }
   Write-Host ('Fichiers partiels : {0:N2} Go (pas encore verifies)' -f ($partialBytes/1e9))
   if ($worker) { Write-Host ('Processus : '+$worker.Id+' ('+$worker.ProcessName+')') }
   if ($progress.active) {

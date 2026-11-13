@@ -595,7 +595,7 @@ def parser():
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
             child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; --no-startup conserve seulement les raccourcis.')
-    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account", "shortcuts"):
+    for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "prepare-maps", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account", "shortcuts"):
         child = subs.add_parser(command)
         if command == "shortcuts":
             child.add_argument("--no-startup",action="store_true")
@@ -650,9 +650,21 @@ def main(argv=None):
             if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
             content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack],workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
+        import map_install
+        map_install.ensure(Path(c['data_dir']),offline=args.offline)
+        app.catalog(c)
+        # Maps add their local guide after the initial service startup.
+        app.compose(c,'exec','-T','pilot','python','-c',
+                    'from pilot import library; library.index_guides()')
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)
         print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
+    elif args.action == "prepare-maps":
+        import map_install
+        map_install.ensure(Path(c['data_dir']))
+        app.catalog(c)
+        app.compose(c,'exec','-T','pilot','python','-c',
+                    'from pilot import library; library.index_guides()')
     elif args.action == "shortcuts":
         app.install_windows_shortcuts(c,startup=not args.no_startup)
     elif args.action == "configure":

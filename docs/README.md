@@ -81,6 +81,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Audit du fonds réel de Marc — 13 novembre 2026](essais/2026-11-13-audit-fonds-marc.md) — volumes, besoins, accès aux vidéos et défaut de recherche Kiwix ; cartes préparées séparément.
+
 - [Maquette UX navigable — 13 novembre 2026](essais/2026-11-13-maquette-ux.md) — recette navigateur, limites et suite Python comparée à la référence.
 
 - [Reprise de bibliothèque et consoles Windows — 13 novembre 2026](essais/2026-11-13-reprise-bibliotheque-windows.md) — correction HTTPS, supervision du plan et appels GPU silencieux, pilote 0.1.24.
