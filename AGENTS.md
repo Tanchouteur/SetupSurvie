@@ -263,3 +263,7 @@ ne pas publier son port interne. Les clés natives existantes restent internes.
 Vérifier changement de profil, onglets périmés, dictée et repli documentaire.
 Le laboratoire a une commande `refresh-access` qui recrée seulement les deux
 services Web sans relancer l’IA ni supprimer les volumes.
+
+## Disque de secours complet et documentation humaine (protocole du 13 novembre 2026)
+
+Lire `docs/exploitation/disque-de-secours-hors-ligne.md` avant de modifier export, sauvegarde, réparation ou restauration. Louis demande une copie sur un autre disque physique couvrant l’installation réelle complète, ses prérequis Windows/Linux et ses ressources, pour reconstruire un autre PC sans Internet ni accès au disque source. La documentation doit être compréhensible par un humain sans IA ni portail ; `docs/exploitation/manuel-de-secours.md` est le premier guide actuel. Le protocole définit les états vérifiables, la conservation de la dernière copie saine, l’adaptation entre systèmes et la recette humaine. Il reste un plan : ne pas annoncer un installateur autonome, une documentation exportée complète ou une restauration intersystèmes validés avant réalisation et essais. Préserver la séparation entre kit public et données personnelles ; le fonds de Marc n’est pas plafonné par celui du laboratoire. Une formalisation documentaire seule ne change pas la version logicielle.

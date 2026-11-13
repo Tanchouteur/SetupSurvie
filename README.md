@@ -32,6 +32,7 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 - **Préparer une installation depuis le dépôt** : lire les [parcours d’installation](docs/installation/README.md), leurs prérequis et leurs limites.
 - **Utiliser le serveur** : consulter le [guide d’utilisation](docs/utilisation/README.md).
 - **Entretenir une installation existante** : suivre les [sauvegardes, restaurations et mises à jour](docs/exploitation/README.md).
+- **Comprendre une panne et préparer le secours** : lire le [manuel humain](docs/exploitation/manuel-de-secours.md) et le [protocole du disque de secours complet](docs/exploitation/disque-de-secours-hors-ligne.md), dont l’installateur autonome reste à réaliser.
 - **Comprendre ou développer le projet** : partir de l’[architecture](docs/architecture/README.md) et des [choix actuels](docs/decisions/choix-actuels.md).
 
 Sur le serveur, le portail est accessible à `http://localhost:8080`, Open WebUI à

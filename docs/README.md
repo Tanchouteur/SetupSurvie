@@ -9,6 +9,8 @@ Index mis à jour le 13 novembre 2026. Commencer par le parcours correspondant a
 | Utiliser le serveur en famille | [Utilisation](utilisation/README.md) |
 | Installer depuis le kit ou le dépôt | [Installation](installation/README.md) |
 | Sauvegarder, restaurer et mettre à jour | [Exploitation](exploitation/README.md) |
+| Comprendre une panne sans IA | [Manuel de secours](exploitation/manuel-de-secours.md) |
+| Préparer un disque de secours complet Windows/Linux | [Protocole cible hors ligne](exploitation/disque-de-secours-hors-ligne.md) |
 | Comprendre les composants et les données | [Architecture](architecture/README.md) |
 | Trouver les contenus recensés et les lots envisagés | [Bibliothèque](bibliotheque/README.md) |
 | Connaître les choix retenus | [Choix actuels](decisions/choix-actuels.md) |
@@ -46,6 +48,9 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Première version d’essai chez Marc](installation/pilote-marc.md)
 
 ### Exploitation
+
+- [Disque de secours complet et restauration sans Internet](exploitation/disque-de-secours-hors-ligne.md) — protocole cible du 13 novembre 2026 ; export autonome et restauration intersystèmes à développer et qualifier.
+- [Manuel de secours : comprendre la panne et préserver ses données](exploitation/manuel-de-secours.md) — guide humain actuel de premier diagnostic, avec les limites de la version 0.1.29.
 
 - [Coupures du PC et redémarrage](exploitation/coupures-et-redemarrage.md) — protections de coupure et reprise automatique Windows sans IA depuis 0.1.27.
 

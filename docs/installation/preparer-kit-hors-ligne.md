@@ -9,6 +9,8 @@ Internet une première fois ; un Windows vierge ne peut pas être installé avec
 ce seul kit. Les commandes ci-dessous préparent le kit sur le laboratoire de
 Louis ; elles ne sont pas des prérequis à installer chez Marc.
 
+Le besoin de reconstruction complète sur une autre machine, Windows ou Linux, sans aucun téléchargement est formalisé dans le [protocole du disque de secours](../exploitation/disque-de-secours-hors-ligne.md), daté du 13 novembre 2026. Il inclut prérequis, fonds réel complet, états personnels et manuel humain. Il reste à développer et qualifier : les résultats du kit ci-dessous conservent leur périmètre historique.
+
 ## Actualiser les cartes sans recopier les modèles
 
 Le volume dédié doit être monté et validé par le laboratoire. Depuis le dépôt :

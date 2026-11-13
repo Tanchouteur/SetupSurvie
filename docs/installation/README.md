@@ -71,3 +71,7 @@ transfert ou modification, suivre les [procédures d’exploitation](../exploita
 Les résultats Linux sont dans les [bilans d’essais](../essais/README.md) ; ils ne
 valident pas le matériel Windows de Marc. Le laboratoire Podman de Louis conserve
 ses propres contrôles de montage et de capacité, décrits dans les bilans Linux.
+
+## Disque de secours complet : protocole cible
+
+Le [protocole de disque de secours et restauration hors ligne](../exploitation/disque-de-secours-hors-ligne.md) formalise la reconstruction sur un autre PC Windows ou Linux avec le seul disque externe, sans Internet ni disque source. Il couvre aussi les prérequis système, les données ajoutées après le kit et la documentation humaine autonome. Les cibles compatibles et les parcours intersystèmes restent à développer et qualifier ; le kit actuel ne satisfait pas encore cette promesse. Pour s’orienter dans une panne avec les fonctions présentes, commencer par le [manuel de secours](../exploitation/manuel-de-secours.md).
