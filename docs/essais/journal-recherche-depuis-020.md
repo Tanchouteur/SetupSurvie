@@ -147,3 +147,11 @@ Whisper traduisant vers l’anglais ; aucune vidéo réelle n’est déclarée t
 Le [bilan du travail nocturne](2026-11-14-recherche-0120-et-travail-nocturne.md)
 conserve les essais exécutés et les limites. La validation finale du fonds Windows,
 les ouvertures prioritaires et les observations hors ligne restent nécessaires.
+
+La CI nocturne a également révélé un accès SQLite encore ouvert après annulation
+sous Windows. Les écritures du cache sont désormais sérialisées en arrière-plan,
+avec file bornée et fermeture attendue ; le résultat natif ne les attend plus.
+Des tests bloquent volontairement le thread pour vérifier la fin correcte.
+Les durées des premières réponses restent celles de la réception, y compris
+lorsque plusieurs paquets arrivent ensemble. Voir le même bilan pour les preuves
+et les écarts entre première campagne et correction finale.

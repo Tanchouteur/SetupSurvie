@@ -15,6 +15,8 @@ class Report093Tests(unittest.IsolatedAsyncioTestCase):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
         location=patch.object(store,'ROOT',Path(temp.name));location.start();self.addCleanup(location.stop);store.init()
         self.addAsyncCleanup(kiwix_queries.close)
+        # Ordering assertions concern the native scheduler, independently of disk speed.
+        cache=patch.dict('os.environ',{'PILOT_SEARCH_CACHE_BYTES':'0'});cache.start();self.addCleanup(cache.stop)
 
     def plan(self,query):return retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
 

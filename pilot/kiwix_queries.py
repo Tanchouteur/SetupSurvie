@@ -15,8 +15,33 @@ MAX_ENTRIES=256
 
 def state():
     loop=asyncio.get_running_loop()
-    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{}}
+    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{},'pending':OrderedDict(),'writer':None}
     return STATES[loop]
+
+
+async def disk_io(operation,*args):
+    """Cancellation must not leave a thread using a SQLite file after teardown."""
+    task=asyncio.create_task(asyncio.to_thread(operation,*args))
+    try:return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        while not task.done():
+            try:await asyncio.shield(task)
+            except asyncio.CancelledError:pass
+        if not task.cancelled():task.exception()
+        raise
+
+
+def remember_on_disk(shared,root,key,result):
+    pending=shared['pending'];pending[key]=(root,key,result)
+    while len(pending)>MAX_ENTRIES or sum(len(value[2][0]) for value in pending.values())>MAX_BYTES:pending.popitem(last=False)
+    async def write_all():
+        try:
+            while pending:
+                _,arguments=pending.popitem(last=False)
+                try:await disk_io(search_cache.write,*arguments)
+                except Exception:pass # Optional persistence never fails a search.
+        finally:pending.clear()
+    if shared['writer'] is None or shared['writer'].done():shared['writer']=asyncio.create_task(write_all())
 
 
 async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
@@ -30,8 +55,8 @@ async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
             tree=ET.fromstring(raw)
             if tree.tag!='rss' or tree.find('channel') is None:raise ValueError('Invalid search response')
     async def fetch():
-        if generation:
-            cached=await asyncio.to_thread(search_cache.read,root,key)
+        if generation and search_cache.budget():
+            cached=await disk_io(search_cache.read,root,key)
             if cached:
                 try:validate(cached[0])
                 except (ValueError,TypeError,ET.ParseError):cached=None
@@ -47,7 +72,7 @@ async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
                 if len(raw)<=1_000_000:
                     shared['cache'][key]=(time.monotonic(),result)
                     trim()
-                    if generation:await asyncio.to_thread(search_cache.write,root,key,result)
+                    if generation and search_cache.budget():remember_on_disk(shared,root,key,result)
                 return result
     def trim():
         while len(shared['cache'])>MAX_ENTRIES or sum(len(value[1][0]) for value in shared['cache'].values())>MAX_BYTES:shared['cache'].popitem(last=False)
@@ -76,3 +101,4 @@ async def close():
         tasks=list(shared['flights'].values())
         for task in tasks:task.cancel()
         await asyncio.gather(*tasks,return_exceptions=True)
+        if shared['writer']:await asyncio.gather(shared['writer'],return_exceptions=True)

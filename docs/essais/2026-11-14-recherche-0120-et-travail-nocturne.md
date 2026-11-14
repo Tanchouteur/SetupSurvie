@@ -79,8 +79,8 @@ empêcher une recherche. Voir le [guide de référence](../exploitation/cache-et
 
 ## Vérifications exécutées dans le runner
 
-- **519 tests Python réussis, trois ignorés**, avec FastAPI/httpx et libzim dans
-  l’environnement isolé. Onze nouveaux cas vérifient notamment guides reçus avant
+- **521 tests Python réussis, trois ignorés**, avec FastAPI/httpx et libzim dans
+  l’environnement isolé. Treize nouveaux cas vérifient notamment guides reçus avant
   catalogue lent, flux borné, déconnexion, erreurs privées, favoris, requête vide,
   renouvellement du fonds, cache invalide et quota. Une réponse simulée à 3,1 s
   expire avec l’ancien budget mais aboutit avec le nouveau.
@@ -126,12 +126,38 @@ avec sources officielles, ordre de livraison et contrôle par média. L’indexa
 des paroles, l’acquisition de pistes et le lecteur synchronisé ne sont pas livrés
 par cette correction du moteur.
 
-## Audit du paquet candidat
+## Audit du paquet
 
-Le paquet du code `dc7c684` a été construit puis déballé avec le lecteur de mise
-à jour : **729 fichiers acceptés**, 6 576 789 octets compressés, version 0.13.0 et
-schéma 1. Les modules cache/flux, le JavaScript et Compose sont identiques au code
-poussé ; aucun ZIM, modèle, base cache ou média vidéo n’est inclus. Empreinte :
-`6243f4c40fedc1249e4767a2d1da620f0d00e122e33883878d8613bc1ad62d46`.
-La mesure supplémentaire des premières réponses et les ajouts de tests suivants
-nécessitent un nouveau paquet final ; cet audit ne vaut pas déploiement chez Marc.
+Le paquet du code `51f9f02` a été construit puis déballé avec le lecteur de mise
+à jour : **729 fichiers acceptés**, 6 578 027 octets compressés, version 0.13.0 et
+schéma 1. Tous les fichiers déballés sont identiques aux sources de ce commit,
+notamment le cache, le flux et la mesure des premières réponses. Aucun ZIM, modèle,
+base cache ou média vidéo n’est inclus. Empreinte du paquet audité :
+`37049168d0d516c2cd1d04680c50718b834dcaeaaba25899b0175fa89d48e481`.
+Le présent complément de bilan modifie seulement la documentation ; il ne change
+pas ce code validé. Cet audit ne vaut pas déploiement chez Marc.
+
+## Corrections issues de la CI
+
+Le premier scénario WebKit utilisait une phase intermédiaire de 0,8 seconde,
+trop courte pour assurer son observation avant la fin ; le premier scénario de
+lecture attend maintenant 1,8 seconde. Le rapport doit accepter des premiers et
+derniers paquets reçus ensemble : des durées égales sont légitimes et ne doivent
+pas être transformées en avance artificielle. Les assertions gardent valeurs
+finies, cohérence chronologique et mises à jour effectivement reçues. Le code
+n’invente pas une première réponse avant la réception réelle. Chromium et WebKit
+ont ensuite réussi les 18 contrôles de flux, les 50 de recherche et les 175 de
+paramètres sur `b4a9637` ; le job Windows de ce même passage a révélé le cas suivant.
+
+Sous Windows, un contrôle d’ordre des reformulations limité à une seconde a
+expiré pendant une écriture du nouveau cache. Le thread SQLite pouvait continuer
+après l’annulation et empêcher le nettoyage du dossier (`WinError 32`). La
+correction sérialise les écritures en arrière-plan, avec file limitée à 8 Mo et
+256 réponses. Elles ne retardent plus le résultat HTTP. L’arrêt attend leur fin,
+et une lecture annulée attend la fermeture de son accès. Deux tests avec thread
+volontairement bloqué vérifient livraison avant écriture, attente à l’arrêt et
+fermeture avant terminaison de l’annulation. Le test d’ordonnancement désactive
+le cache disque, dont il ne mesure pas la vitesse ; son ordre reste vérifié.
+La nouvelle campagne locale termine à 521 tests, trois ignorés, et les 28 contrôles
+Kiwix à 135 archives, dont la réutilisation disque après effacement de la mémoire,
+réussissent encore. CI finale et nouvel audit du paquet à confirmer.

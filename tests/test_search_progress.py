@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch,AsyncMock
 import httpx
@@ -95,6 +96,37 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             await kiwix_queries.close()
             _,cached=await kiwix_queries.request(store.ROOT,'fixture','/search?q=retry','fulltext',reader,generation='a')
         self.assertTrue(cached);self.assertEqual(calls,2)
+
+    async def test_slow_cache_writer_does_not_delay_results_and_shutdown_joins_the_file_user(self):
+        entered=threading.Event();release=threading.Event();closed=threading.Event()
+        def writer(*args):
+            entered.set()
+            try:release.wait(5)
+            finally:closed.set()
+        async def reader(path):return b'<rss><channel/></rss>','application/xml'
+        with patch.object(search_cache,'write',writer):
+            try:
+                await asyncio.wait_for(kiwix_queries.request(store.ROOT,'fixture','/search?q=slow-disk','fulltext',reader,generation='a'),1)
+                self.assertTrue(await asyncio.to_thread(entered.wait,1))
+                stopping=asyncio.create_task(kiwix_queries.close());await asyncio.sleep(.02)
+                self.assertFalse(stopping.done());self.assertFalse(closed.is_set())
+            finally:release.set()
+            await stopping;self.assertTrue(closed.is_set())
+
+    async def test_cancelling_disk_read_waits_for_the_open_file_to_close(self):
+        entered=threading.Event();release=threading.Event();closed=threading.Event()
+        def reader(*args):
+            entered.set()
+            try:release.wait(5)
+            finally:closed.set()
+        with patch.object(search_cache,'read',reader):
+            task=asyncio.create_task(kiwix_queries.request(store.ROOT,'fixture','/search?q=read','fulltext',AsyncMock(),generation='a'))
+            try:
+                self.assertTrue(await asyncio.to_thread(entered.wait,1));task.cancel();await asyncio.sleep(.02)
+                self.assertFalse(task.done());self.assertFalse(closed.is_set())
+            finally:release.set()
+            with self.assertRaises(asyncio.CancelledError):await task
+            self.assertTrue(closed.is_set())
 
     async def test_native_response_after_old_three_second_limit_can_finish_in_extended_search(self):
         book={'book':'fixture_fr','language':'fra','fulltext':True}
