@@ -6,7 +6,7 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports 0.2.0, 0.8.0 et 0.9.3 reçus ; 31 recherches partielles sur 32 dans le dernier, relecture humaine encore attendue |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports jusqu’à 0.10.0 reçus ; encore 31 recherches partielles sur 32 et délai médian 12,3 s ; relecture humaine encore attendue |
 | Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | R1 réel 0.9.3 terminé sans erreur : 134 index natifs, un index local de 120 articles ; pause/reprise et nouveau lot réels restent à vérifier |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.9.3 reçu : expirations et correspondances faibles ; ordonnanceur, filtrage et volume des outils corrigés en 0.9.4, nouvelle mesure attendue |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.10.0 reçu : classement amélioré sur quelques titres, couverture encore partielle et délai dégradé ; incompatibilité multilingue reproduite, correction et traces ciblées 0.11.1 |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |

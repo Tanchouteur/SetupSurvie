@@ -66,7 +66,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.11.0'
+VERSION='0.11.1'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -492,13 +492,13 @@ async def search_diagnostic():
 
 
 @app.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all'):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all',diagnostic:bool=False):
     owner=(await user(request))['id'] if favorites_only else None
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
-            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain) if q.strip() else []
+            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,**({'diagnostic':True} if diagnostic else {})) if q.strip() else []
     else:
-        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain) if q.strip() else []
+        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,**({'diagnostic':True} if diagnostic else {})) if q.strip() else []
     return {'results':found,**({'coverage':found.coverage} if isinstance(found,library.SearchResults) else {})}
 
 

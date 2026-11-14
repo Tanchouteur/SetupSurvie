@@ -286,7 +286,7 @@ def search_terms(query):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
-async def search_archives(pattern_for, language, limit, *, query_plan=None):
+async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False):
     """Explicit homogeneous archive sets; multilingual archives queried separately.
 
     Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
@@ -301,7 +301,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     if not getattr(available,'available',True):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
-    groups={};eligible=[];selected_books=[]
+    groups={};eligible=[];selected_books=[];incompatible=[]
     saved_labels=catalogue.snapshot()
     manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
     # Metadata tags can be absent or stale even when an index exists. Query
@@ -325,13 +325,16 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
         if query_plan and query_plan.collection and not catalogue.matches_collection(book,query_plan.collection,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')),saved_labels):continue
-        languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
+        languages=archive_index.languages(book.get('language') or '')
         if requested and requested not in languages:continue
         selected_books.append(book)
         if book.get('fulltext') is False and known.get('status')!='ready':
             report['without_fulltext']+=1
-        if known.get('status')=='ready' and known.get('has_fulltext_index') is False:
+        if known.get('status')=='ready' and (known.get('has_fulltext_index') is False or known.get('kiwix_language_compatible') is False or len(languages)!=1):
             report['locally_indexed']+=1;continue
+        if len(languages)!=1 or known.get('kiwix_language_compatible') is False:
+            incompatible.append({'book':book['book'],'languages':list(languages),'has_fulltext_index':known.get('has_fulltext_index',book.get('fulltext'))})
+            continue
         if not book.get('book'):continue
         key='books.id' if book.get('search_id') else 'books.name'
         value=book.get('search_id') or book['book']
@@ -345,7 +348,12 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     # own request so their timeout cannot hide the five small archives beside it.
     batches=sorted([items[i:i+12] for items in groups.values() for i in range(0,len(items),12)],key=lambda batch:batch[0][0])
     done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(2);title_semaphore=asyncio.Semaphore(2);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
-    errors=[];error_counts={};cache_hits=0
+    errors=[];error_counts={};cache_hits=0;trace=[]
+    def traced(stage,books,pattern,started,**outcome):
+        if diagnostic and len(trace)<40:
+            trace.append({'stage':stage,'collections':[str(book.get('book',''))[:300] for book in books],
+                          'languages':[str(book.get('language',''))[:100] for book in books],
+                          'pattern':str(pattern)[:200],'elapsed_ms':round((time.monotonic()-started)*1000),**outcome})
     def failure(error,kind,books,elapsed):
         status=getattr(error,'upstream_status',getattr(error,'status_code',None))
         if isinstance(error,httpx.HTTPStatusError):status=error.response.status_code
@@ -353,12 +361,13 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         error_counts[reason]=error_counts.get(reason,0)+1
         if len(errors)<12:errors.append({'stage':kind,'reason':reason,'http_status':status if type(status) is int else None,'collections':[str(b.get('book',''))[:300] for b in books],
                                       'elapsed_ms':round((time.monotonic()-elapsed)*1000)})
-        return status
+        return status,reason
     async def run(batch, fallback=True, pattern_override=None):
         nonlocal calls,refinement_attempted,refinement_failed,refinement_finished,cache_hits
         lang=requested or ('eng' if all('eng' in re.split(r'[,;\s]+',str(e[1].get('language',''))) for e in batch) else '')
         params=[(batch[0][2],entry[3]) for entry in batch]
-        params += [('pattern',pattern_override if pattern_override is not None else pattern_for(lang)),('format','xml'),('pageLength',limit)]
+        pattern=pattern_override if pattern_override is not None else pattern_for(lang)
+        params += [('pattern',pattern),('format','xml'),('pageLength',limit)]
         started=time.monotonic()
         try:
             async with semaphore:
@@ -367,6 +376,8 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 if pattern_override is not None:refinement_attempted+=1
                 (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/search?'+urlencode(params),'fulltext',get);cache_hits+=cached
                 tree=ET.fromstring(raw)
+                traced('refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],pattern,started,
+                       outcome='success',results=len(tree.findall('./channel/item')),response_bytes=len(raw),cached=cached)
                 if pattern_override is not None:refinement_finished+=1
                 # This pinned Kiwix version does not parse Boolean OR reliably.
                 # Gather shorter literal queries for a second pass, after every
@@ -390,7 +401,9 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 prior=records.get(record['id'])
                 if prior is None or prior.get('match')=='title':records[record['id']]=record
         except (TimeoutError,httpx.HTTPError,ET.ParseError,HTTPException,ValueError) as error:
-            status=failure(error,'refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],started)
+            status,reason=failure(error,'refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],started)
+            traced('refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],pattern,started,
+                   outcome='error',reason=reason,http_status=status)
             if pattern_override is not None:refinement_failed+=1;refinement_finished+=1;return
             if len(batch)>1 and fallback and status in (400,404,413):
                 await asyncio.gather(*(run([entry],False) for entry in batch))
@@ -409,6 +422,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 values=json.loads(raw)
                 if not isinstance(values,list):raise ValueError('Invalid suggestions')
             title_done+=1
+            traced('title',[book],term,started,outcome='success',results=len(values),response_bytes=len(raw),cached=cached)
             for position,value in enumerate(values[:12]):
                 if not isinstance(value,dict) or value.get('kind')!='path' or not isinstance(value.get('path'),str):continue
                 raw_path=value['path']
@@ -424,7 +438,8 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                         'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
                 records.setdefault(record['id'],record)
         except (TimeoutError,httpx.HTTPError,HTTPException,ValueError,TypeError) as error:
-            title_failed+=1;failure(error,'title',[book],started)
+            title_failed+=1;status,reason=failure(error,'title',[book],started)
+            traced('title',[book],term,started,outcome='error',reason=reason,http_status=status)
     title_books=[]
     if query_plan and query_plan.words:
         def title_priority(book):return next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(book.get('book','')).lower()),10)
@@ -467,6 +482,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     report.update(title_searched=title_done,title_failed=title_failed,title_not_searched=len(title_books)-title_done-title_failed)
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
+    report['native_incompatible']=len(incompatible)
     report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,deadline_exceeded=deadline_exceeded,deadline_ms=12000,primary_requests=calls-refinement_attempted,request_limit=32,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
     messages=[]
     if report['catalog']['state']=='stale':
@@ -483,14 +499,17 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         report['status']='partial';messages.append('Recherche partielle : certaines encyclopédies n’ont pas pu être interrogées. Aucun résultat ne permet de conclure que le sujet est absent du fonds.')
     if report['without_fulltext']:
         report['status']='partial';messages.append(str(report['without_fulltext'])+' collection(s) n’annoncent pas d’index de texte. Elles ont été interrogées dans la limite du budget ; la lecture directe reste disponible dans Collections.')
+    if incompatible:
+        report['status']='partial';messages.append(str(len(incompatible))+' collection(s) ne sont pas interrogeables par Kiwix avec leurs langues annoncées. Utilisez « Créer ou reprendre les index » pour préparer leur recherche locale ; les originaux restent accessibles dans Collections.')
     if error_counts:
         labels={'timeout':'délai dépassé','http_error':'réponse HTTP en erreur','connection_error':'connexion impossible','invalid_response':'réponse illisible'}
         messages.append('Appels documentaires en erreur : '+', '.join(str(count)+' '+labels[reason] for reason,count in sorted(error_counts.items()))+'. Le rapport de vérification conserve leurs causes et collections.')
     if messages:report['warning']=' '.join(messages)
+    if diagnostic:report.update(trace=trace,index_requirements=incompatible[:40],trace_notice='Délais client, attente comprise ; charge CPU et temps interne du serveur non mesurés.')
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all'):
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False):
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
     candidate_limit=min(80,max(20,limit*4))
@@ -549,7 +568,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
         collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata)))
     try:
-        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
+        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic)
         local=await local_task
     finally:
         if not local_task.done():local_task.cancel()

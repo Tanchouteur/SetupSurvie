@@ -1,7 +1,7 @@
 # Rendre les archives recherchables
 
-**Guide actuel — 0.9.3, 14 novembre 2026.** L’index complémentaire extrait le texte
-des archives ZIM sans véritable index Kiwix. Il ne modifie pas les originaux,
+**Guide actuel — 0.11.1, 14 novembre 2026.** L’index complémentaire extrait le texte
+des archives ZIM sans index natif utilisable par Kiwix. Il ne modifie pas les originaux,
 ne charge aucun modèle IA et ne transcrit pas les vidéos.
 
 ## Après une installation ou un téléchargement
@@ -19,6 +19,20 @@ fois, dans **Famille → Mon appareil → Paramètres → Bibliothèque et prép
 La simple mise à jour du logiciel ne lance pas rétroactivement une extraction
 de tout le fonds. **Créer ou reprendre les index** permet cet examen initial.
 Une fois préparé, le traitement est entièrement local et fonctionne sans Internet.
+
+Depuis 0.11.1, l’examen distingue **index natif présent** et **langues compatibles
+avec Kiwix**. Plusieurs langues dans une même archive peuvent faire refuser sa
+recherche native, même seule. Un index local complémentaire est alors préparé.
+Le seul mot `mul` dans un nom ne suffit pas : une métadonnée contenant uniquement
+ce code reste compatible avec cette règle.
+
+Sur une installation déjà examinée, appliquer la mise à jour puis relancer
+**Créer ou reprendre les index**, même si l’ancien rapport disait 135/135.
+Les archives natives compatibles restent réutilisées et les compléments inchangés
+ne sont pas reconstruits. Les archives nouvellement reconnues incompatibles
+reçoivent leur complément ; la durée dépend du texte présent. Il n’est pas
+nécessaire de réparer l’outil s’il était déjà prêt. Télécharger ensuite le rapport
+d’indexation, puis le nouveau contrôle complet de recherche.
 
 Une préparation longue peut tourner la nuit. Dans **Préparation automatique après
 téléchargement**, activer/désactiver la fonction, choisir les heures du PC serveur
@@ -53,6 +67,10 @@ nombre d’articles des archives terminées. **Télécharger le rapport d’inde
 exporte version, progression, réglages, motifs d’arrêt et erreurs ; il ne contient
 pas les conversations ni les secrets du PC. Une erreur conserve les fichiers
 vérifiés et les index déjà publiés, puis demande une reprise explicite.
+Les résultats indiquent aussi les langues natives, la compatibilité des langues
+et la raison du complément (`native_multilingual`, `native_language_missing` ou
+`missing_index`). Ce contrôle de métadonnées ne certifie pas tous les usages de
+l’API Kiwix. Une langue d’article non déterminée n’est pas déclarée française.
 
 Si un fichier a été remplacé depuis sa vérification, la file est suspendue et
 l’indique. Refaire la vérification ou le téléchargement de cette archive avant de

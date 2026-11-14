@@ -59,7 +59,7 @@
         const started=performance.now(),record={...item,review:{state:'unreviewed'}},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.domain==='resilience'?' · Autonomie et résilience':'')));results.append(article);
         if(item.need)article.append(element('p',item.need,'small'));
         try{
-          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:item.domain||'all'});
+          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:item.domain||'all',diagnostic:'true'});
           const data=await read('/search?'+params);record.elapsed_ms=Math.round(performance.now()-started);record.coverage=data.coverage||null;
           record.results=(data.results||[]).slice(0,5).map(row=>({id:row.id,title:row.title,language:row.language,collection:row.collection,match:row.match,url:row.url,excerpt:row.excerpt,domains:row.domains}));
           article.append(element('p',record.results.length+' document(s) affiché(s) · '+(record.elapsed_ms/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s.','small muted'));

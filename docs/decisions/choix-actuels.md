@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+Le [rapport réel 0.10.0](../essais/2026-11-14-rapport-recherche-0100.md) conserve
+31 recherches partielles sur 32 et une médiane de 12,3 s. La correction 0.11.1
+traite les index natifs aux langues incompatibles et enrichit le diagnostic
+explicite, sans relever encore les budgets. Le [prompt des paramètres](prompt-refonte-parametres.md)
+cadre le chantier parallèle demandé ensuite par Louis, distinct de la recherche.
+
 Référence mise à jour le 14 novembre 2026 à partir des consignes de Louis et des
 guides du pilote. L’[historique des échanges](questions-et-decisions.md) reste
 conservé ; ses premières hypothèses matérielles et fonctionnelles ne priment pas

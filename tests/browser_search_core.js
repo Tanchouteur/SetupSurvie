@@ -11,7 +11,7 @@ async page => {
       {id:'wikipedia_fr_2026-01',title:'Wikipédia',family:'Wikipédia',variant:'Collection complète',language:'Français',version:'2026-01',ready:true,url:'/content/wiki/',description:'Encyclopédie fictive'}
     ];return r.fulfill({json:data});
   });
-  await page.route('**/api/search?*',r=>{const params=new URL(r.request().url()).searchParams;searches.push(Object.fromEntries(params));return r.fulfill({json:{results:[{id:'guide:shelter.en.pdf#page=2',kind:'guide',title:'Document de recette — page 2',language:'en',excerpt:'Extrait fictif pour vérifier la présentation.',other_matches:[{id:'guide:shelter.en.pdf#page=3',title:'Même document — page 3',url:'/guides/shelter.en.pdf#page=3'}]}],coverage:{status:'partial',collection:params.get('collection'),warning:'Une collection de démonstration reste indisponible.'}}});});
+  await page.route('**/api/search?*',r=>{const params=new URL(r.request().url()).searchParams;searches.push(Object.fromEntries(params));return r.fulfill({json:{results:[{id:'guide:shelter.en.pdf#page=2',kind:'guide',title:'Document de recette — page 2',language:'en',excerpt:'Extrait fictif pour vérifier la présentation.',other_matches:[{id:'guide:shelter.en.pdf#page=3',title:'Même document — page 3',url:'/guides/shelter.en.pdf#page=3'}]}],coverage:{status:'partial',collection:params.get('collection'),warning:'Une collection de démonstration reste indisponible.',...(params.get('diagnostic')==='true'?{trace:[{stage:'fulltext',collections:['fixture'],pattern:'fixture',elapsed_ms:1,outcome:'success',results:1}]}:{})}}});});
   await page.setViewportSize({width:1440,height:900});await page.goto(base+'/#/bibliotheque/collections');
   await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
   const group=page.locator('.next-collection-group').filter({hasText:'Canadian Prepper'});
@@ -95,6 +95,7 @@ async page => {
   const extendedDownload=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const extended=await extendedDownload,extendedChunks=[];for await(const chunk of await extended.createReadStream())extendedChunks.push(chunk);
   const complete=JSON.parse(Buffer.concat(extendedChunks).toString());
   check(complete.schema===2&&complete.suite==='extended'&&complete.reference.version==='2026-11-14.1'&&complete.cases.length===32,'Rapport complet avec référence versionnée');
+  check(complete.cases.every(row=>row.coverage.trace?.[0].stage==='fulltext'),'Rapport complet conserve les détails des appels demandés explicitement');
   check(complete.review_summary.reviewed===3&&complete.review_summary.useful===1&&complete.cases[0].review.rank===1&&complete.cases[1].review.state==='no_useful'&&complete.cases[2].review.state==='uncertain','Avis humains conservés sans validation automatique');
   check(complete.cases.slice(3).every(row=>row.review.state==='unreviewed'),'Mesure terminée distincte des résultats encore à lire');
   check(await page.locator('#next-search-check-results .search-check-case a').first().getAttribute('href').then(value=>value.includes('domain=resilience')),'Lecture du résultat conserve le périmètre de test');

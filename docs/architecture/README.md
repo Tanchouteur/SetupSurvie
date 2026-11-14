@@ -412,3 +412,16 @@ Les instantanés JSON des nouveaux trajets ajoutent `connectors` et
 `access_selected` ; aucune table n’est migrée. Les jetons et hints OSRM ne sont pas
 conservés dans les trajets. Les versions anciennes restent lisibles. L’export GPX
 n’ajoute pas les raccordements non vérifiés dans la trace routée.
+
+
+## Index multilingues et traces explicites (0.11.1)
+
+L’extraction distingue `has_fulltext_index` et `kiwix_language_compatible` dans le
+manifeste existant. Plusieurs langues ou leur absence nécessitent un complément
+SQLite, sans changer son format. Toute archive `ready` est interrogée localement ;
+une archive incompatible non préparée reste signalée et ne consomme pas d’appel
+natif voué au refus. Une métadonnée `mul` unique n’est pas exclue par son nom.
+`/api/search?diagnostic=true` ajoute au maximum quarante événements et les
+compléments nécessaires. Seul le contrôle explicite de recherche le demande ;
+les réponses normales aux outils IA n’embarquent pas ces journaux. Les délais
+rapportés incluent l’attente client et ne sont pas une mesure CPU du serveur.

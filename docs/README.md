@@ -2,6 +2,9 @@
 
 - [Paramètres et Mon appareil](utilisation/parametres-et-appareil.md) — guide actuel 0.12.0, quatre usages et correspondance complète des commandes.
 
+- [Rapport réel 0.10.0](essais/2026-11-14-rapport-recherche-0100.md) — couverture et latence comparées à 0.9.3, refus multilingue reproduit.
+- [Index multilingues et diagnostic détaillé](essais/2026-11-14-index-multilingues-et-diagnostic.md) — correction 0.11.1, CI réussie ; nouveau contrôle réel attendu après préparation.
+- [Prompt de refonte des paramètres](decisions/prompt-refonte-parametres.md) — périmètre et règles pour le chantier parallèle demandé par Louis.
 - [Fiabilisation des cartes et choix d’accès](essais/2026-11-14-cartes-et-acces.md) — 0.11.0, intégré sur main ; validations et limites.
 
 - [Sous-titres français pour chaque vidéo](essais/protocole-sous-titres-videos.md) — précision du plan L6, inventaire et contrôles réels à réaliser.
