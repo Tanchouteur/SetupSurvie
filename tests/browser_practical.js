@@ -34,6 +34,12 @@ async page=>{
   check(data.dossiers.find(d=>d.id==='abri').reviewed_sections===2&&!('conversations' in data),'Export des repères et lacunes, sans conversation');
   await page.goto(base+'/#/bibliotheque/parcours?dossier=abri');await page.waitForFunction(()=>document.querySelectorAll('.practical-reference').length===2);await page.locator('.practical-reference').first().getByRole('button',{name:'Retirer ce repère du dossier',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.practical-gap').length===6);
   check((await page.request.get(base+'/api/source?id=guide%3Ashelter.en.txt')).ok(),'Retirer un repère conserve le document original');
+  const delayedData=await(await page.request.get(base+'/api/library/dossiers/abri')).json();
+  await page.goto(base+'/#/bibliotheque/recherche?domain=all&dossier=abri&source=guide%3Ashelter.en.txt');await page.locator('.practical-editor').waitFor();
+  await page.route('**/api/library/dossiers/abri',async r=>{await new Promise(resolve=>setTimeout(resolve,300));await r.fulfill({json:delayedData}).catch(()=>{});});
+  const delayed=page.waitForRequest(r=>r.url().endsWith('/api/library/dossiers/abri'));await page.locator('.practical-editor > summary').click();await delayed;await page.reload();await page.locator('.practical-editor').waitFor();await page.waitForTimeout(400);
+  check(!await page.locator('.practical-editor').evaluate(e=>e.open),'Rechargement pendant la lecture des repères sans requête tardive');await page.unroute('**/api/library/dossiers/abri');
+  await page.goto(base+'/#/bibliotheque/parcours?dossier=abri');await page.waitForFunction(()=>document.querySelector('.practical-gap'));
   await page.route('**/api/library/dossiers',r=>r.fulfill({status:503,json:{detail:'Dossiers indisponibles pour cette recette.'}}));await page.reload();await page.waitForFunction(()=>document.querySelector('#next-practical-detail')?.textContent.includes('indisponibles'));
   await page.locator('.next-tabs [data-route="bibliotheque/recherche"]').click();check(await page.locator('#library-query').isEnabled(),'Module de dossiers indisponible sans bloquer la recherche');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};

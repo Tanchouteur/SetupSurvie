@@ -21,14 +21,16 @@ vérifient les six dossiers, lecture et datation des références, persistance,
 révision changée pendant la lecture, absence de source, conflit d’édition,
 retrait local, limite des notes, corruption isolée, recherche partielle et
 conservation de l’original. La recette Chromium MCP vérifie les parcours,
-19 contrôles de navigation, relecture et disposition de 320 à 1 366 pixels,
+20 contrôles de navigation, relecture et disposition de 320 à 1 366 pixels,
 avec un sélecteur compact sur téléphone.
 
 La première CI a exposé une erreur WebKit lors d’un rechargement rapide du lecteur :
 l’éditeur de repères chargeait ses données alors qu’il était replié. Ces lectures
 sont maintenant déclenchées seulement à l’ouverture explicite de cet éditeur ;
 la recette de classement vérifie l’absence de ces requêtes pendant une lecture
-et un classement ordinaires. La nouvelle CI reste nécessaire avant intégration.
+et un classement ordinaires. Les requêtes sont aussi annulées lorsque la page
+est quittée ; une lecture retardée suivie d’un rechargement fait partie de la
+recette. La nouvelle CI reste nécessaire avant intégration.
 
 La version mineure 0.9.0 ajoute cette fonction compatible ; le schéma de données
 et les images tierces restent inchangés. Les validations finales seront consignées

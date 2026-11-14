@@ -1,6 +1,10 @@
 /* Practical reading dossiers, with explicit human references and visible gaps. */
 (() => {
   const host=$('next-learning');if(!host)return;
+  let requests=new AbortController();
+  const request=(path,body,options={})=>api(path,body,{...options,signal:requests.signal});
+  window.addEventListener('pagehide',()=>requests.abort());
+  window.addEventListener('pageshow',()=>{if(requests.signal.aborted)requests=new AbortController();});
   const panel=element('section',undefined,'practical-panel');panel.id='next-practical';panel.append(element('h2','Un objectif concret'),element('p','Retrouvez les documents utiles et les points encore à examiner, avant de préparer votre projet.'));
   const cards=element('nav',undefined,'practical-grid');cards.setAttribute('aria-label','Dossiers pratiques');const status=element('p',undefined,'small muted');status.setAttribute('role','status');
   const mobileLabel=element('label','Objectif à consulter','practical-mobile-choice'),mobileSelect=element('select');mobileSelect.id='next-practical-choice';mobileLabel.append(mobileSelect);
@@ -8,6 +12,7 @@
   const detail=element('article',undefined,'panel practical-detail');detail.id='next-practical-detail';panel.append(mobileLabel,cards,status,detail);host.prepend(panel);
   const typeNames={unknown:'Type à vérifier',overview:'Présentation générale',explanation:'Explication',procedure:'Procédure',exercise:'Exercice',manual:'Notice technique'};
   let overview=null,selected=null,epoch=0,route=null;
+  window.addEventListener('pageshow',event=>{if(event.persisted&&route?.tab==='parcours')load(route.params.dossier);});
   const link=(title,path)=>{const a=element('a',title);a.href='/#/'+path;a.dataset.route=path;return a;};
   const path=id=>'bibliotheque/parcours?'+new URLSearchParams({dossier:id});
   const sourcePath=(item,id)=>'bibliotheque/recherche?'+new URLSearchParams({q:item.queries[0],domain:'resilience',dossier:item.id,source:id});
@@ -17,9 +22,9 @@
   async function load(id){
     const ticket=++epoch;status.textContent='Lecture des repères…';
     try{
-      overview=await api('/library/dossiers');if(ticket!==epoch)return;
+      overview=await request('/library/dossiers');if(ticket!==epoch)return;
       const item=overview.dossiers.find(d=>d.id===id)||overview.dossiers[0];if(!item)throw Error('Les dossiers ne sont pas disponibles.');
-      const data=await api('/library/dossiers/'+encodeURIComponent(item.id));if(ticket!==epoch)return;selected=data;
+      const data=await request('/library/dossiers/'+encodeURIComponent(item.id));if(ticket!==epoch)return;selected=data;
       drawCards();render(selected);status.textContent=overview.notice;
     }catch(error){if(ticket!==epoch)return;detail.replaceChildren(element('p',error.message,'error'));status.textContent='La recherche et les collections restent disponibles.';}
   }
@@ -29,7 +34,7 @@
     const searchButton=button('Chercher des sources pour ce dossier',async()=>{
       searchButton.disabled=true;result.replaceChildren(element('p','Recherche dans les textes disponibles…','muted'));const ticket=epoch;
       try{
-        const data=await api('/library/dossiers/'+encodeURIComponent(item.id)+'/search');if(ticket!==epoch)return;result.replaceChildren(element('p',data.notice,'small'));
+        const data=await request('/library/dossiers/'+encodeURIComponent(item.id)+'/search');if(ticket!==epoch)return;result.replaceChildren(element('p',data.notice,'small'));
         for(const coverage of data.coverage||[])if(coverage.status!=='complete')result.append(element('p',coverage.warning||'Une partie du fonds n’a pas pu être interrogée.','small catalogue-warning'));
         if(!data.results.length)result.append(element('p','Aucune source trouvée par ces recherches. Le dossier reste à documenter ; cela ne prouve pas que le fonds ne contient rien sur le sujet.'));
         for(const row of data.results){const card=element('article',undefined,'practical-result');card.append(link(row.title+' →',sourcePath(item,row.id)),element('p',(typeNames[row.classification?.document_type]||typeNames.unknown)+' · '+(row.language||'Langue inconnue')+' · résultat à examiner','small muted'));if(row.excerpt)card.append(element('p',row.excerpt,'small'));result.append(card);}
@@ -50,7 +55,7 @@
         if(entry.state==='reviewed')block.append(element('p',entry.note),element('p','Repère fourni après lecture par la famille ; sens et réalisation non certifiés.','small muted'));
         else{const old=element('details');old.append(element('summary',entry.state==='source_changed'?'Source modifiée : ancien repère à revoir':'Source indisponible : ancien repère'),element('p',entry.note));block.append(old);}
         if(S.user?.role==='admin')block.append(button('Retirer ce repère du dossier',async()=>{
-          try{await api('/admin/library/dossiers/'+item.id+'/references/'+entry.id+'?revision='+item.revision,undefined,{method:'DELETE'});await load(item.id);}catch(error){toast(error.message);}
+          try{await request('/admin/library/dossiers/'+item.id+'/references/'+entry.id+'?revision='+item.revision,undefined,{method:'DELETE'});await load(item.id);}catch(error){toast(error.message);}
         },'text-button'));card.append(block);
       }
       grid.append(card);
@@ -73,16 +78,16 @@
     form.append(label,field,locatorLabel,noteLabel,checkedLabel,save,message);details.append(form);reader.append(details);
     let current=null;
     async function selection(){
-      const target=select.value;save.disabled=true;
-      try{const data=await api('/library/dossiers/'+encodeURIComponent(target));if(select.value!==target||S.reader!==source.id)return;current=data;field.replaceChildren(legend);for(const section of data.sections){const l=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='section';input.value=section.id;l.append(input,document.createTextNode(section.label));field.append(l);}save.disabled=false;}
+      const target=select.value;save.disabled=true;current=null;
+      try{const data=await request('/library/dossiers/'+encodeURIComponent(target));if(select.value!==target||S.reader!==source.id)return;current=data;field.replaceChildren(legend);for(const section of data.sections){const l=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='section';input.value=section.id;l.append(input,document.createTextNode(section.label));field.append(l);}save.disabled=false;}
       catch(error){message.textContent=error.message;}
     }
     let loading=false;
     details.addEventListener('toggle',async()=>{
-      if(!details.open||select.options.length||loading)return;loading=true;
+      if(!details.open||(select.options.length&&current)||loading)return;loading=true;
       try{
-        const data=overview||await api('/library/dossiers');if(S.reader!==source.id)return;
-        for(const item of data.dossiers)select.append(new Option(item.title,item.id));
+        const data=overview||await request('/library/dossiers');if(S.reader!==source.id)return;
+        select.replaceChildren();for(const item of data.dossiers)select.append(new Option(item.title,item.id));
         const wanted=new URLSearchParams(location.hash.split('?')[1]).get('dossier');if(data.dossiers.some(d=>d.id===wanted))select.value=wanted;
         select.onchange=selection;await selection();
       }catch(error){message.textContent=error.message;}finally{loading=false;}
@@ -90,13 +95,13 @@
     form.onsubmit=async event=>{
       event.preventDefault();if(!current||select.disabled)return;save.disabled=true;select.disabled=true;
       try{
-        const data=await api('/admin/library/dossiers/'+current.id+'/references',{source_id:source.id,source_revision:revision,dossier_revision:current.revision,sections:[...field.querySelectorAll('[name="section"]:checked')].map(e=>e.value),locator:locator.value,note:note.value,reviewed:checked.checked},{method:'PUT'});
+        const data=await request('/admin/library/dossiers/'+current.id+'/references',{source_id:source.id,source_revision:revision,dossier_revision:current.revision,sections:[...field.querySelectorAll('[name="section"]:checked')].map(e=>e.value),locator:locator.value,note:note.value,reviewed:checked.checked},{method:'PUT'});
         current=data;message.replaceChildren(document.createTextNode('Repère conservé. '),link('Ouvrir le dossier →',path(current.id)));
       }catch(error){message.textContent=error.message;}finally{save.disabled=false;select.disabled=false;}
     };
   });
   const exportPanel=element('article',undefined,'panel');exportPanel.append(element('h2','Repères des dossiers pratiques'),element('p','Conservez les références examinées, leurs notes et les points encore à documenter. Les originaux restent dans la bibliothèque.','small muted'));
   const exportStatus=element('p',undefined,'small');exportStatus.setAttribute('role','status');exportPanel.append(button('Exporter les dossiers',async()=>{
-    try{const data=await api('/admin/library/dossiers-export'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=element('a');a.href=url;a.download='setupsurvie-dossiers.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){exportStatus.textContent=error.message;}
+    try{const data=await request('/admin/library/dossiers-export'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=element('a');a.href=url;a.download='setupsurvie-dossiers.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){exportStatus.textContent=error.message;}
   },'secondary'),exportStatus);$('view-settings').append(exportPanel);
 })();
