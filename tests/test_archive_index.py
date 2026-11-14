@@ -121,13 +121,13 @@ class IsolatedArchiveIndexTests(unittest.TestCase):
             probe=[str(python),'-I','-X','utf8',str(root_code/'scripts/index_reader_probe.py')]
             absent=subprocess.run(probe,env=env,capture_output=True,text=True,timeout=30)
             self.assertEqual(absent.returncode,1);self.assertEqual(json.loads(absent.stdout)['error'],'reader_missing')
-            site=Path(subprocess.check_output([str(python),'-I','-c','import sysconfig; print(sysconfig.get_paths()["purelib"])'],env=env,text=True).strip())
+            site=Path(subprocess.check_output([str(python),'-I','-X','utf8','-c','import sysconfig; print(sysconfig.get_paths()["purelib"])'],env=env,text=True,encoding='utf-8').strip())
             dist=metadata.distribution('libzim')
             for relative in dist.files:
                 if str(relative).startswith('../'):continue
                 source=dist.locate_file(relative);target=site/relative
                 if source.is_file():target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
-            dependency=subprocess.check_output([str(python),'-I','-c','import importlib.util; print(importlib.util.find_spec("fastapi"))'],env=env,text=True).strip()
+            dependency=subprocess.check_output([str(python),'-I','-X','utf8','-c','import importlib.util; print(importlib.util.find_spec("fastapi"))'],env=env,text=True,encoding='utf-8').strip()
             self.assertEqual(dependency,'None','The isolated reader must not inherit web dependencies')
             self.assertTrue(json.loads(subprocess.check_output(probe,env=env,text=True))['ok'])
             zims=root/'archives';zims.mkdir()

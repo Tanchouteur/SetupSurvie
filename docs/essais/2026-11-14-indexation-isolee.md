@@ -54,6 +54,10 @@ l’export du contrôle préalable. CI finale et nombre de tests à consigner.
 Le travail Windows principal couvre Python 3.12 ; une recette isolée supplémentaire
 est prévue en CI pour les cibles de kit 3.11, 3.13 et 3.14, sans multiplier toute
 la suite applicative. Ces résultats restent à consigner avant publication.
+La première recette Windows a échoué dans le décodage de son propre chemin
+accentué, avant le lecteur : le mode isolé ignore la variable `PYTHONUTF8`.
+La recette et la commande de lancement demandent maintenant explicitement UTF-8.
+Cet échec de test n’est pas attribué à la panne réelle de Marc.
 
 **Version corrective 0.9.2** : vérification et diagnostic d’un outil déjà prévu,
 sans changement de version de libzim, d’image tierce ni de schéma de données.

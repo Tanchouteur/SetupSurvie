@@ -266,7 +266,7 @@ class Manager:
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
-                command=[str(self.index_python()),str(setup.ROOT/'scripts/index_archives.py'),'--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel'),'--job-id',job]
+                command=[str(self.index_python()),'-X','utf8',str(setup.ROOT/'scripts/index_archives.py'),'--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel'),'--job-id',job]
                 if state['options'].get('automatic'):
                     selection=folder/'index-selection.json'
                     setup.write_json(selection,[Path(p).name for p in state['options']['selection']],private=True)
