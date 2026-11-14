@@ -13,7 +13,7 @@
     ['entretien','Entretien et diagnostics.','Comprendre un problème et conserver un rapport avant une intervention.'],
     ['lieux','Vos lieux de référence.','Le domicile et le point de départ servent aux cartes et à l’assistant.']
   ]){
-    const pane=make('div','settings-pane');pane.id='settings-'+key;pane.dataset.settingsPane=key;pane.hidden=true;
+    const pane=make('div','settings-pane');pane.id='settings-'+key;pane.dataset.settingsPane=key;pane.hidden=true;pane.dataset.title=title;pane.dataset.description=description;
     const heading=make('div','settings-heading');heading.append(make('h2','',title),make('p','muted',description));pane.append(heading);settings.append(pane);panes[key]=pane;
   }
   settings.querySelector('.page-heading h1').textContent='Paramètres';
@@ -35,7 +35,7 @@
   const advanced=(node,id,title)=>{const d=make('details','settings-advanced');d.id=id;d.append(make('summary','',title));node.before(d);d.append(node);return d;};
   advanced(index,'settings-index','Préparer la recherche dans les archives');get('next-index-settings').before(make('p','next-mobile-note','Pour préparer les index ou modifier leur programmation, utilisez un ordinateur. La pause et le rapport restent accessibles ici.'));
   const engine=move('engine-controls','assistant');engine.querySelector('details').open=true;engine.querySelector('summary').textContent='Démarrer ou arrêter l’assistant';engine.querySelector('details').id='settings-engine';
-  panes.assistant.prepend(make('p','help-strip','Pour jouer ou libérer la mémoire, arrêtez l’assistant. Sa reprise reste une action explicite. Les documents restent consultables.'));
+  engine.append(make('p','small muted','Pour jouer ou libérer la mémoire, arrêtez l’assistant. Sa reprise reste explicite ; les documents restent consultables.'));
   const engineState=make('p','small');engineState.id='settings-engine-state';engine.prepend(engineState);
   panes.assistant.append(link('ensemble','Voir l’état et la mémoire du PC','Consulter les mesures, sans démarrer l’assistant.'));
   advanced(move('next-context-form','assistant'),'settings-context','Options avancées : mémoire et essai du modèle');
@@ -71,7 +71,11 @@
   // Primary mobile actions remain usable; only long preparation forms stay on PC.
   for(const [target,text] of [['view-data','Sur téléphone, consultez le suivi et mettez en pause les préparations du portail. Le choix de nouveaux contenus ou de zones se fait sur ordinateur.'],['settings-bibliotheque','L’ajout d’un fichier et la préparation des archives se font sur ordinateur. Le suivi et les rapports restent accessibles sur téléphone.'],['settings-lieux','Les lieux enregistrés restent consultables ici. Pour modifier une adresse ou ses coordonnées, utilisez un ordinateur.']])get(target).append(make('p','next-mobile-note',text));
   window.SettingsLayout={show(tab){
-    for(const [key,pane] of Object.entries(panes))pane.hidden=key!==tab;
+    for(const [key,pane] of Object.entries(panes)){pane.hidden=key!==tab;pane.querySelector('.settings-heading').hidden=key!=='reglages';}
+    const pane=panes[tab]||panes.reglages;
+    settings.querySelector('.page-heading h1').textContent=tab==='reglages'?'Paramètres':({acces:'Profils et connexion',bibliotheque:'Bibliothèque et préparations',assistant:'Assistant',entretien:'Entretien et diagnostics',lieux:'Vos lieux de référence'}[tab]||'Paramètres');
+    document.title=settings.querySelector('.page-heading h1').textContent+' · SetupSurvie';
+    settings.querySelector('.page-heading p').textContent=tab==='reglages'?'Pour les réglages partagés, choisissez le profil Famille, sans mot de passe.':pane.dataset.description;
     back.hidden=tab==='reglages';
     get('settings-engine-state').textContent=get('engine-state').textContent+' · '+get('engine-detail').textContent;
   }};

@@ -29,7 +29,7 @@
   function remember(){
     if(!historyReady||!current)return;
     const state={...history.state,scroll:window.scrollY,focus:document.activeElement?.id||null};
-    history.replaceState(state,'',location.href);
+    if(history.state?.scroll!==state.scroll||history.state?.focus!==state.focus)history.replaceState(state,'',location.href);
     put('last',urlFor(current.section,current.tab,current.params));
   }
   function saveDraft(){
@@ -182,7 +182,7 @@
   }
   document.addEventListener('survie:inventory',()=>{if(!S.user)return;for(const detail of document.querySelectorAll('.next-collection-group[id]')){if(detail.dataset.filtering)continue;const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}});
   document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!applying&&S.user&&!node.dataset.filtering)put('detail:'+node.id,node.open);},true);
-  let frame=0;window.addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;remember();});},{passive:true});
+  let scrollTimer=0;window.addEventListener('scroll',()=>{if(!scrollTimer)scrollTimer=setTimeout(()=>{scrollTimer=0;remember();},250);},{passive:true});
   $('chat-input').addEventListener('input',saveDraft);
   document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.

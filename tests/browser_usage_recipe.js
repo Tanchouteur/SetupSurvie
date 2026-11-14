@@ -32,7 +32,7 @@ async page=>{
     const profiles=(await(await page.request.get(base+'/api/profiles')).json()).profiles;
     const name=profiles.find(profile=>profile.id===id).name;
     await page.locator('#account-button').click();await page.locator('#profile-list').getByRole('button',{name,exact:true}).click();
-    await page.waitForFunction(id=>S.authReady&&S.user?.id===id&&S.status,id);
+    try{await page.waitForFunction(id=>typeof S!=='undefined'&&S.authReady&&S.user?.id===id&&S.status,id);}catch(error){throw Error('Profil attendu '+id+' : '+JSON.stringify(await page.evaluate(()=>({hash:location.hash,user:typeof S==='undefined'?null:S.user,auth:document.querySelector('#auth-dialog')?.open,error:document.querySelector('#profile-error')?.textContent})))+' / '+error.message);}
   };
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/appareil/entretien');await ready();
   const initial=calls.length;await open();

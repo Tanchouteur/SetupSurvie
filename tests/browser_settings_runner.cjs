@@ -14,7 +14,7 @@ const base=process.env.UX_BASE||'http://127.0.0.1:8782',out=process.env.UX_ARTIF
     const context=await browser.newContext();const page=await context.newPage();page.setDefaultTimeout(12000);
     const recipe=eval('('+fs.readFileSync(path.join(__dirname,file),'utf8').replaceAll('http://10.0.3.2:8769',base).replaceAll('/artifacts/',out+'/')+')');
     try{results[name][file]=await recipe(page);console.log(name,file,results[name][file].checks,'checks');}
-    catch(error){await page.screenshot({path:path.join(out,name+'-'+file+'-failure.png'),fullPage:true});throw error;}
+    catch(error){console.error('Fixture failure',page.url(),await page.evaluate(()=>({user:typeof S==='undefined'?null:S.user?.id,view:typeof S==='undefined'?null:S.view,profileDialog:document.querySelector('#auth-dialog')?.open})).catch(()=>null));await page.screenshot({path:path.join(out,name+'-'+file+'-failure.png'),fullPage:true});throw error;}
     finally{await context.close();fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(results,null,2));}
    }
    const page=await browser.newPage();
