@@ -3,8 +3,6 @@
 import argparse
 from concurrent.futures import ProcessPoolExecutor,as_completed
 import json
-import multiprocessing
-import os
 from pathlib import Path
 import sys
 import time
@@ -22,9 +20,9 @@ def error_record(source,error):
 
 
 def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False,reserve=15_000_000_000,selection=None,job_id=None):
-    if os.name=='nt':
-        windowless=Path(sys.executable).with_name('pythonw.exe')
-        if windowless.is_file():multiprocessing.set_executable(str(windowless))
+    # Keep CPython's own executable selection. On Windows its venv-aware spawn
+    # bypasses the redirector; substituting the venv's pythonw.exe bypasses that
+    # fix and leaves ProcessPoolExecutor waiting for children which never start.
     root=Path(state_dir)/'archive-index';durable.mkdir(root)
     workers=index_workers(workers)
     files=[p for p in sorted(Path(zim_dir).glob('*.zim')) if not p.is_symlink()]

@@ -141,11 +141,22 @@ class IsolatedArchiveIndexTests(unittest.TestCase):
                     creator.add_item(Article('Bicycle','Bicycle repair','Fictional puncture repair example, no real instructions.'))
                 generated.rename(zims/generated.name)
             command=[str(python),'-X','utf8',str(root_code/'scripts/index_archives.py'),'--zim-dir',str(zims),'--state-dir',str(root/'etat'),'--workers','2','--reserve-bytes','1000000000']
-            result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=30)
-            self.assertEqual(result.returncode,0,result.stderr)
+            def invoke():
+                with subprocess.Popen(command,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8') as process:
+                    try:output,error=process.communicate(timeout=30)
+                    except subprocess.TimeoutExpired:
+                        # Kill only our fixture tree before the parent disappears;
+                        # orphaned pythonw workers otherwise hold the venv open.
+                        if os.name=='nt':subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True,timeout=10)
+                        else:process.kill()
+                        output,error=process.communicate(timeout=10)
+                        self.fail('Isolated index command timed out: '+output+error)
+                    return subprocess.CompletedProcess(command,process.returncode,output,error)
+            result=invoke()
+            self.assertEqual(result.returncode,0,result.stderr+'\n'+result.stdout)
             report=json.loads(result.stdout);self.assertEqual(report['phase'],'completed');self.assertTrue(report['reader_probe']['ok'])
             self.assertEqual({r['status'] for r in report['results']},{'ready','kiwix_index'});self.assertEqual(report['articles'],1)
             published=next((root/'etat/archive-index').glob('*.sqlite'));mtime=published.stat().st_mtime_ns
-            again=subprocess.run(command,env=env,capture_output=True,text=True,timeout=30)
-            self.assertEqual(again.returncode,0,again.stderr);self.assertEqual(published.stat().st_mtime_ns,mtime)
+            again=invoke()
+            self.assertEqual(again.returncode,0,again.stderr+'\n'+again.stdout);self.assertEqual(published.stat().st_mtime_ns,mtime)
             self.assertEqual(json.loads(again.stdout)['error_summary'],{})
