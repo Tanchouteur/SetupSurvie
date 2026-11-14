@@ -24,7 +24,7 @@ sur les précisions ci-dessous.
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
 | Fiabilité des réponses | Depuis 0.1.18, [dates distinctes, citations lues, faits et déductions, contradictions et incertitude](../utilisation/sources-et-fiabilite.md) ; consignes renforcées et métadonnées conservées, respect par les modèles réels encore à évaluer |
 | Savoirs durables | [Référence unique des besoins de Marc](../bibliotheque/savoirs-durables.md) : principes, mesures, fabrication, contrôle, entretien et transmission ; parcours et thèmes intégrés en 0.1.19, couverture documentaire à examiner |
-| Gestion des collections | Depuis 0.1.32, **Bibliothèque → Collections** ouvre les contenus ; **Mon appareil → Téléchargements** regroupe préparation et suivi. L’interface classique conserve Données locales. [Guide actuel](../utilisation/nouvelle-interface.md), organisation validée par Louis le 13 novembre |
+| Gestion des collections | Depuis 0.1.32, **Bibliothèque → Collections** ouvre les contenus ; **Mon appareil → Paramètres → Bibliothèque et préparations** donne accès aux téléchargements et au stockage depuis 0.12.0 ; **Travaux en cours** garde le suivi. L’interface classique conserve Données locales. [Guide actuel](../utilisation/nouvelle-interface.md), organisation validée par Louis le 13 novembre |
 | Installation Windows | Depuis 0.1.20, [un seul lanceur](../installation/deux-etapes-windows.md) prépare le PC puis installe depuis Internet ou un kit ; les deux anciens restent utilisables. Diagnostic des composants et conflits avant copie, reprise explicite et raccourcis préservés ; installation complète sur Windows vierge encore à valider |
 | Mise à jour Windows | Depuis 0.1.21, [raccourci Git fourni à l’installation](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) : récupération de main dans un dépôt séparé, sauvegarde, paquet vérifié et retour arrière ; lanceur stable hors du logiciel remplacé |
 | Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |
@@ -232,3 +232,16 @@ La [recette R7](../utilisation/verifier-usage-hors-ligne.md) réunit des lecture
 sans IA et des observations humaines distinctes. Aucun résultat automatique
 ne certifie la coupure Internet ou la qualité documentaire. Le contrôle ne
 modifie pas la pause du moteur ; les mesures ne reprennent pas au rechargement.
+
+## Paramètres par usage — 0.12.0
+
+La réorganisation demandée par Louis conserve les commandes dans quatre rubriques :
+profils/connexion, bibliothèque/préparations, assistant, entretien/diagnostics.
+Le suivi reste indépendant dans Mon appareil ; les options techniques sont
+secondaires et les commandes d’arrêt restent accessibles sur téléphone.
+La [correspondance exhaustive](../utilisation/parametres-et-appareil.md) décrit
+les déplacements, sans suppression de fonctionnalité ni migration des données.
+Les moteurs et cartes restent ceux de main, avec la recherche 0.11.1 intégrée avant
+l’UX. Les [essais](../essais/2026-11-14-parametres-ux.md) distinguent fixtures et
+validation physique. Un écran unique de boutons et les duplications de contrôles
+ont été écartés ; les nœuds existants sont déplacés pour conserver leurs événements.

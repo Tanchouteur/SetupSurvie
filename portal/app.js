@@ -56,7 +56,8 @@ function view(name){
   for(const section of document.querySelectorAll('.view'))section.hidden=section.id!=='view-'+name;
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('breadcrumb').textContent=labels[name];
-  if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
+  // The next portal route adapter owns its URL and history state.
+  if(!document.body.classList.contains('next-interface')&&location.hash!=='#'+name)history.replaceState(null,'','#'+name);
   if(name==='library')loadLearning();if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='settings'){loadAdmin();loadSettings();}if(name==='users')loadAdmin();if(name==='data')loadData();
   if(name!=='chat')window.scrollTo({top:0,behavior:'instant'});
   else{resumeConversation();if(S.conversation&&!S.loadingConversation)restoreReading(S.conversation);}

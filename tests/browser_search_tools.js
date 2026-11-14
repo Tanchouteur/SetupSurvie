@@ -25,8 +25,8 @@ async page=>{
   check(queries.at(-1).domain==='all','Périmètre conservé au rechargement');
   await page.locator('#search-domain').selectOption('culture');await page.waitForFunction(()=>location.hash.includes('domain=culture'));
   await page.goBack();await page.waitForFunction(()=>document.querySelector('#search-domain').value==='all');check(true,'Retour navigateur restaure le périmètre');
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('[data-route="appareil/reglages"]').click();
-  await page.waitForFunction(()=>document.querySelector('#next-index-status').textContent.includes('123'));
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/bibliotheque"]').click();
+  await page.locator('#settings-index > summary').click();await page.waitForFunction(()=>document.querySelector('#next-index-status').textContent.includes('123'));
   check((await page.locator('#next-index-prepare').textContent()).includes('réparer'),'Outil déjà préparé reconnu et réparable');
   const indexStarted=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/admin/library/index/start'&&response.request().method()==='POST');
   await page.locator('#next-index-start').click();await indexStarted;check(calls.includes('/api/admin/library/index/start'),'Indexation lancée par la commande dédiée');
@@ -36,7 +36,7 @@ async page=>{
   check(calls.some(row=>row.enabled===true&&row.start_hour===23&&row.end_hour===6),'Plage nocturne transmise au serveur');
   const downloading=page.waitForEvent('download');await page.locator('#next-index-export').click();const download=await downloading,parts=[];for await(const chunk of await download.createReadStream())parts.push(chunk);const report=JSON.parse(Buffer.concat(parts).toString());
   check(report.index_queue.pending===2&&!('conversations' in report),'Rapport d’indexation exporté sans conversations');
-  await page.locator('#next-context-size').selectOption('32768');await page.locator('#next-context-form').evaluate(f=>f.requestSubmit());
+  await page.goto(base+'/#/appareil/assistant');await page.locator('#settings-context > summary').click();await page.locator('#next-context-size').selectOption('32768');await page.locator('#next-context-form').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>document.querySelector('#next-context-status').textContent.includes('enregistré'));
   check(calls.some(row=>row.model==='gpt-oss:20b'&&row.tokens===32768),'Contexte sauvegardé par modèle');
   await page.locator('#next-context-model').selectOption('gemma4:e4b');check(await page.locator('#next-context-size').inputValue()==='8192','Autre modèle conserve son réglage');
@@ -44,7 +44,7 @@ async page=>{
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:850});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Réglages sans débordement à '+width);}
   await page.setViewportSize({width:1366,height:900});
   indexState={...indexState,phase:'error',index_reader_ready:false,reader_probe:{schema:1,ok:false,error:'fts5_unavailable'},message:'Ce Python ne fournit pas la recherche SQLite nécessaire.',search_index:{archives:135,completed:0,articles:0,reader_probe:{schema:1,ok:false,error:'fts5_unavailable'},error_summary:{fts5_unavailable:1},results:[]}};
-  await page.reload();await page.waitForFunction(()=>document.getElementById('next-index-status').textContent.includes('SQLite'));
+  await page.goto(base+'/#/appareil/bibliotheque');await page.waitForFunction(()=>document.getElementById('next-index-status').textContent.includes('SQLite'));
   check(await page.locator('#next-index-start').isDisabled(),'Échec de vérification de l’outil empêche un lancement faussement prêt');
   const failureDownload=page.waitForEvent('download');await page.locator('#next-index-export').click();const failureFile=await failureDownload,blocks=[];for await(const block of await failureFile.createReadStream())blocks.push(block);const failureReport=JSON.parse(Buffer.concat(blocks).toString());
   check(failureReport.reader_probe.error==='fts5_unavailable'&&failureReport.index.completed===0,'Rapport conserve le contrôle préalable et zéro archive parcourue');

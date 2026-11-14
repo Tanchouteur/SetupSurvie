@@ -101,7 +101,7 @@ sans modifier les conversations enregistrées.
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
    puis recharger la page et vérifier **0.11.1** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
-2. Choisir **Famille**, puis **Mon appareil → Réglages → Vérifier la recherche**.
+2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
    puis lancer. Le contrôle complet peut prendre plusieurs minutes. Ils interrogent les documents réels,
    sans démarrer le modèle, préparer de contenu ni modifier la bibliothèque.
@@ -144,7 +144,7 @@ le seul titre et ne constituent pas une validation de sécurité.
 
 Le [guide d’indexation](indexation-archives.md) explique la préparation du texte des ZIM non recherchables et la pause. Le [bilan du rapport de Marc](../essais/2026-11-14-recherche-index-et-espaces.md) distingue les améliorations du moteur de leurs validations sur son fonds.
 
-Famille → Mon appareil → Réglages → Mémoire de l’assistant permet de régler le contexte de chaque modèle : 16k par défaut, 8k pour revenir à une petite allocation, puis 32k et 64k pour les essais. Le contexte ne charge pas toute la bibliothèque et n’augmente pas automatiquement selon la RAM disponible. Un grand contexte peut demander plus de mémoire et de temps ; comparer sur le PC cible avant de conserver le réglage. Ce réglage concerne les conversations ; la traduction par passages conserve son budget propre.
+Famille → Mon appareil → Paramètres → Assistant → Options avancées : mémoire et essai du modèle → Mémoire de l’assistant permet de régler le contexte de chaque modèle : 16k par défaut, 8k pour revenir à une petite allocation, puis 32k et 64k pour les essais. Le contexte ne charge pas toute la bibliothèque et n’augmente pas automatiquement selon la RAM disponible. Un grand contexte peut demander plus de mémoire et de temps ; comparer sur le PC cible avant de conserver le réglage. Ce réglage concerne les conversations ; la traduction par passages conserve son budget propre.
 
 Depuis 0.7.0, **Voir les durées** permet de distinguer recherche, lecture et modèle.
 L’[essai mémoire volontaire](mesurer-assistant-et-memoire.md) prépare une proposition

@@ -24,8 +24,8 @@ async page=>{
   await page.route('**/api/admin/assistant/calibration/stop',r=>{calls.push('stop');state={...state,status:'cancelled',message:'Essai arrêté à votre demande.'};return r.fulfill({json:state});});
   await page.route('**/api/admin/assistant/calibration/apply',r=>{calls.push({apply:r.request().postDataJSON()});state={...state,configured_context:32768,can_rollback:true};return r.fulfill({json:{model:state.model,tokens:32768,previous:16384}});});
   await page.route('**/api/admin/assistant/context/rollback',r=>{calls.push('rollback');state={...state,configured_context:16384,can_rollback:false};return r.fulfill({json:{model:state.model,tokens:16384}});});
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
-  await page.locator('.context-trial > summary').click();await page.waitForFunction(()=>document.getElementById('next-calibration-mode').options.length>0);
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/assistant"]').click();
+  if(!await page.locator('#settings-context').evaluate(node=>node.open))await page.locator('#settings-context > summary').click();await page.locator('.context-trial > summary').click();await page.waitForFunction(()=>document.getElementById('next-calibration-mode').options.length>0);
   check(calls.length===0,'Ouvrir les réglages ne lance pas d’essai');
   await page.locator('#next-calibration-limit').selectOption('65536');await page.locator('#next-calibration-form').evaluate(form=>form.requestSubmit());
   await page.waitForFunction(()=>document.getElementById('next-calibration-stop').hidden===false);

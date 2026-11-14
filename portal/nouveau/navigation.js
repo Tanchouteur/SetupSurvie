@@ -2,11 +2,11 @@
 (() => {
   const sections={home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',activity:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
   const routes={accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
-  const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect'};
+  const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',lieux:'settings'};
   const libraryTabs=['collections','recherche','parcours','favoris','traductions'];
   const namespace='survie-next-v1:',ttl=7*86400000;
   let current=null,applying=false,popping=false,scopeCommand=false,activityTimer=null,inventoryAt=0,historyReady=false,openingSource=false,skipSearch=false,lastActivity=null,activityRequest=null,pendingRestore=null;
-  let profileId=null,draftKey=null,lastDraft='';
+  let profileId=null,draftKey=null,lastDraft='',pendingAdminRoute=null;
   const initialHash=location.hash,initialDocument=new URLSearchParams(location.search).get('document');
   const get=(name,fallback)=>{try{const record=JSON.parse(localStorage.getItem(namespace+S.user?.id+':'+name));if(record&&Date.now()-record.at<ttl)return record.value;}catch(_){}return fallback;};
   const put=(name,value)=>{if(!S.user)return;try{localStorage.setItem(namespace+S.user.id+':'+name,JSON.stringify({at:Date.now(),value}));}catch(_){}};
@@ -23,13 +23,13 @@
     if(name==='admin')name='settings';
     if(name==='library')return {section:'bibliotheque',name,tab:current?.section==='bibliotheque'&&!['collections','parcours'].includes(current.tab)?current.tab:'recherche',params:current?.section==='bibliotheque'?new URLSearchParams(current.params):new URLSearchParams()};
     if(name==='chat')return {section:'assistant',name,tab:'',params:new URLSearchParams(S.conversation?{conversation:S.conversation}:{})};
-    const tab=Object.keys(machine).find(k=>machine[k]===name);
+    const tab=name==='settings'&&new URLSearchParams(location.search).has('lat')?'lieux':Object.keys(machine).find(k=>machine[k]===name);
     return tab?{section:'appareil',name,tab,params:new URLSearchParams()}:parse('#/'+(sections[name]||'accueil'));
   }
   function remember(){
     if(!historyReady||!current)return;
     const state={...history.state,scroll:window.scrollY,focus:document.activeElement?.id||null};
-    history.replaceState(state,'',location.href);
+    if(history.state?.scroll!==state.scroll||history.state?.focus!==state.focus)history.replaceState(state,'',location.href);
     put('last',urlFor(current.section,current.tab,current.params));
   }
   function saveDraft(){
@@ -45,7 +45,7 @@
   }
   function restorePosition(state){requestAnimationFrame(()=>{const target=state?.focus&&document.getElementById(state.focus);(target||$('main')).focus({preventScroll:true});window.scrollTo({top:state?.scroll||0,behavior:'instant'});});}
   const baseView=view,baseRead=readSource,baseOpen=openConversation,baseStatus=status,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
-  labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Réglages';
+  labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function fitNextChat(){if(current?.name!=='chat')return;const viewport=window.visualViewport;const height=viewport?.height||innerHeight;const top=$('view-chat').getBoundingClientRect().top-(viewport?.offsetTop||0);const nav=mobileNav.matches?$('main-navigation').getBoundingClientRect().height:0;document.documentElement.style.setProperty('--next-chat-height',Math.max(160,height-top-nav)+'px');}
   window.addEventListener('resize',fitNextChat,{passive:true});window.visualViewport?.addEventListener('resize',fitNextChat,{passive:true});
@@ -56,7 +56,7 @@
     if(!route)return;
     if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html?interface=nouveau');return;}
     if(['settings','users'].includes(route.name)&&S.user?.role!=='admin'){
-      if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');auth();}else S.requestedView=route.name;
+      if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');if(!$('auth-dialog').open)auth();}else{pendingAdminRoute=route;S.requestedView=route.name;}
       return;
     }
     const saved=history.state;
@@ -69,10 +69,11 @@
     $('breadcrumb').textContent=route.section==='appareil'?'Mon appareil':labels[route.name];
     document.querySelectorAll('#navigation [data-route]').forEach(a=>{const active=a.dataset.route===route.section;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     for(const a of document.querySelectorAll('.next-tabs [data-route]')){
-      const active=a.dataset.route===route.section+'/'+route.tab||route.section==='appareil'&&['profils','connexion'].includes(route.tab)&&a.dataset.route==='appareil/reglages';
+      const active=a.dataset.route===route.section+'/'+route.tab||route.section==='appareil'&&!['ensemble','activite'].includes(route.tab)&&a.dataset.route==='appareil/reglages';
       if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     }
     if(route.section==='appareil'){
+      if(route.name==='settings')window.SettingsLayout.show(route.tab);
       document.querySelector('#view-'+route.name+' .page-heading').after($('next-machine-tabs'));put('machine-tab',route.tab);
       if(route.name==='storage')loadData();
     }
@@ -181,7 +182,7 @@
   }
   document.addEventListener('survie:inventory',()=>{if(!S.user)return;for(const detail of document.querySelectorAll('.next-collection-group[id]')){if(detail.dataset.filtering)continue;const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}});
   document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!applying&&S.user&&!node.dataset.filtering)put('detail:'+node.id,node.open);},true);
-  let frame=0;window.addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;remember();});},{passive:true});
+  let scrollTimer=0;window.addEventListener('scroll',()=>{if(!scrollTimer)scrollTimer=setTimeout(()=>{scrollTimer=0;remember();},250);},{passive:true});
   $('chat-input').addEventListener('input',saveDraft);
   document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.
@@ -224,7 +225,8 @@
     if(!S.user){if(S.authReady&&current?.name==='library')activate(current,true);return;}
     profileId=S.user.id;draftKey=null;$('chat-domain').value=get('chat-domain','resilience');
     const saved=!initialHash?get('last',''):'';
-    const target=saved&&parse(saved)||current||parse('#/accueil');
+    const target=pendingAdminRoute||saved&&parse(saved)||current||parse('#/accueil');
+    if(pendingAdminRoute){pendingAdminRoute=null;S.requestedView=null;if(S.user.role==='admin'&&$('auth-dialog').open)$('auth-dialog').close();}
     navigate(target,true);restoreDraft();
   });
   const baseNew=newConversation;
@@ -233,14 +235,16 @@
   const baseSend=send;
   send=async event=>{const old='draft:'+(S.conversation||'new');saveDraft();await baseSend(event);if(!$('chat-input').value){put(old,'');draftKey='draft:'+(S.conversation||'new');put(draftKey,'');if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}}};
   $('chat-form').onsubmit=send;
-  $('next-clear-memory').onclick=()=>{try{for(const k of Object.keys(localStorage))if(k.startsWith(namespace))localStorage.removeItem(k);}catch(_){}lastDraft='';draftKey=null;$('chat-input').value='';toast('Mémoire de navigation effacée. Les données du serveur sont conservées.');};
+  $('next-clear-memory').onclick=()=>{if(!confirm('Effacer les rubriques, filtres et brouillons de ce navigateur ? Les conversations et favoris du serveur seront conservés.'))return;try{for(const k of Object.keys(localStorage))if(k.startsWith(namespace))localStorage.removeItem(k);}catch(_){}lastDraft='';draftKey=null;$('chat-input').value='';toast('Mémoire de navigation effacée. Les données du serveur sont conservées.');};
   window.addEventListener('pagehide',()=>{saveDraft();remember();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden){saveDraft();remember();clearTimeout(activityTimer);clearTimeout(inferenceTimer);}else{refreshInference();pollActivity();}});
   history.scrollRestoration='manual';
   window.addEventListener('DOMContentLoaded',()=>{
     const requested=parse(initialHash)||fromLegacy(initialHash.slice(1)||'home');
     if(initialDocument){const chatIntent=initialHash==='#chat'||initialHash.startsWith('#/assistant');requested.name=chatIntent?'chat':'library';requested.section=chatIntent?'assistant':'bibliotheque';requested.tab=requested.name==='library'?'recherche':'';}
-    historyReady=true;history.replaceState({...history.state,scroll:history.state?.scroll||0},'',urlFor(requested.section,requested.tab,requested.params));activate(requested,true);decorateLinks();
+    // A modal is not restored by a document reload. Do not keep its stale history marker.
+    const {dialog:previousDialog,...initialState}=history.state||{};
+    historyReady=true;history.replaceState({...initialState,scroll:initialState.scroll||0},'',urlFor(requested.section,requested.tab,requested.params));activate(requested,true);decorateLinks();
   });
   document.documentElement.style.setProperty('--next-banner-height','0px');
 })();

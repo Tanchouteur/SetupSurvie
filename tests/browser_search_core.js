@@ -73,7 +73,7 @@ async page => {
   }
   check((await page.locator('[data-route="bibliotheque/parcours"]').textContent()).includes('Apprendre par thème'),'Parcours renommé par son usage');
   await page.setViewportSize({width:1366,height:768});
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/entretien"]').click();
   const postsBefore=writes.length;await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
   check(await page.locator('#next-search-check-results .search-check-case').count()===10,'Recette des dix recherches disponible depuis le site');

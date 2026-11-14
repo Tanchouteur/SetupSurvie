@@ -6,7 +6,7 @@ ne change pas et reste utilisable sans IA. Aucun nouveau modèle n’est téléc
 
 ## Lancer puis relire
 
-1. Choisir **Famille → Mon appareil → Réglages → Vérifier la recherche → Comparer
+1. Choisir **Famille → Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche → Comparer
    une aide IA à la recherche**. Ouvrir ce panneau ne lance aucune inférence.
 2. Réserver une période disponible, sans usage simultané d’Open WebUI. Le moteur
    doit être démarré volontairement, le modèle déjà présent et les mesures mémoire

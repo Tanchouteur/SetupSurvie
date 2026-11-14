@@ -1,5 +1,7 @@
 # Utiliser le serveur familial
 
+- [Paramètres et Mon appareil](parametres-et-appareil.md) — suivi, quatre rubriques et options avancées.
+
 - [Vérifier l’usage hors ligne](verifier-usage-hors-ligne.md) — contrôle sans IA, étapes humaines, arrêt et rapport R7.
 - [Dossiers pratiques](dossiers-pratiques.md) — objectifs, sources et points à examiner.
 

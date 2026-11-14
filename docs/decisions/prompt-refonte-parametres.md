@@ -1,7 +1,7 @@
 # Prompt pour l’agent de refonte des paramètres
 
 **Consigne de chantier demandée par Louis — 14 novembre 2026.** La refonte est
-à réaliser et à vérifier ; ce document ne décrit pas une interface déjà livrée.
+conservée comme consigne historique ; la [référence 0.12.0](../utilisation/parametres-et-appareil.md) décrit maintenant l’interface implémentée, et le [bilan](../essais/2026-11-14-parametres-ux.md) ses validations.
 Louis autorise sa préparation en parallèle du moteur de recherche. Les cartes
 0.11.0 sont intégrées à main ; la correction recherche 0.11.1 s’intègre avant
 le chantier UX. Les travaux de recherche se poursuivent séparément de celui-ci.

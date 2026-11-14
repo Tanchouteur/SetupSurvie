@@ -28,6 +28,8 @@ corrections et la CI finales de chaque lot. Toutes ces livraisons sont sur `main
 | 0.11.0 · `fcef6dc` | Chantier cartes d’un autre agent : relief transparent et choix d’accès aux itinéraires, intégré sur main avant la suite recherche | [Bilan cartes](2026-11-14-cartes-et-acces.md), validations et limites propres ; les essais sur les deux PC et iPhone physique restent distincts |
 | 0.11.1 · `1836d63` | Complément local pour les index natifs aux langues incompatibles, arrêt des appels natifs voués au refus, traces détaillées réservées au contrôle explicite | [Bilan](2026-11-14-index-multilingues-et-diagnostic.md), 508 tests et huit tâches de CI réussies ; 35 contrôles Kiwix réels synthétiques ; nouvelle préparation et mesure chez Marc attendues |
 
+| 0.12.0 | Paramètres répartis en quatre usages, options avancées dépliables, suivi et arrêt accessibles au téléphone ; contrôles existants déplacés avec leurs événements | [Inventaire](../utilisation/parametres-et-appareil.md), [bilan avec captures](2026-11-14-parametres-ux.md), 508 tests runner et huit jobs CI réussis sur `32dbed5` ; moteurs et cartes 0.11.0/0.11.1 conservés, Safari physique et recette chez Marc distincts |
+
 Les nombres de tests incluent trois tests ignorés sous Linux ; les bilans
 précisent les plateformes réellement essayées. Aucun de ces nombres ne mesure
 la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du disque.

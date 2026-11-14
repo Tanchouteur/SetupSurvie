@@ -1,9 +1,10 @@
 # Inventaire des données locales
 
-Depuis 0.1.32 : **Bibliothèque → Collections** pour ouvrir les encyclopédies et
-guides, **Mon appareil → Stockage** pour les modèles et **Mon appareil → Téléchargements**
-pour les préparations. L’ancienne présentation reste dans `/classique/`.
-Voir la [nouvelle interface](nouvelle-interface.md).
+Depuis **0.12.0** : **Bibliothèque → Collections** ouvre les encyclopédies et
+guides. **Mon appareil → Paramètres → Bibliothèque et préparations** donne accès
+aux fichiers/espace disque et aux téléchargements. Les anciennes adresses
+Stockage et Téléchargements restent utilisables. Voir le [guide des paramètres](parametres-et-appareil.md).
+Les intitulés historiques ci-dessous décrivent aussi la présentation conservée.
 
 > Guide de référence du pilote — documentation réorganisée le 11 novembre 2026. Les essais Windows chez Marc et sur téléphone restent à réaliser lorsqu’ils sont indiqués comme non validés.
 

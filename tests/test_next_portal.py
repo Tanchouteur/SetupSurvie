@@ -24,7 +24,7 @@ class NextPortalTests(unittest.TestCase):
             self.assertEqual((ROOT/name).read_text(),expected,name)
         old=IDs((ROOT/'portal/classique/index.html').read_text());new=IDs(expected)
         self.assertEqual(set(old.ids),set(new.ids));self.assertEqual(len(new.ids),len(set(new.ids)))
-        self.assertLess(new.scripts.index('/nouveau/layout.js?v=0.11.1'),next(i for i,s in enumerate(new.scripts) if s.startswith('/app.js')))
+        self.assertLess(next(i for i,s in enumerate(new.scripts) if s.startswith('/nouveau/layout.js')), next(i for i,s in enumerate(new.scripts) if s.startswith('/app.js')))
         self.assertTrue(new.scripts[-1].startswith('/nouveau/navigation.js'))
 
     def test_classic_has_its_own_scripts_and_styles_and_shared_reader_assets(self):

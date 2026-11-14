@@ -15,7 +15,7 @@ n’est jamais indexé comme document complet.
 
 L’outil est préparé pendant une nouvelle installation en ligne. Une installation
 existante peut encore demander **Préparer l’outil · Internet requis** une première
-fois, dans **Famille → Mon appareil → Réglages → Rendre les archives recherchables**.
+fois, dans **Famille → Mon appareil → Paramètres → Bibliothèque et préparations → Préparer la recherche dans les archives**.
 La simple mise à jour du logiciel ne lance pas rétroactivement une extraction
 de tout le fonds. **Créer ou reprendre les index** permet cet examen initial.
 Une fois préparé, le traitement est entièrement local et fonctionne sans Internet.

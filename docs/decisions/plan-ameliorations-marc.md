@@ -373,7 +373,8 @@ Les possibilités existantes et leurs données sont préservées.
 
 Louis demande également, le 14 novembre, une **réorganisation des réglages et de
 leurs écrans après la fiabilisation complète** : IDEE-006 dans la
-[boîte à idées](boite-a-idees.md). La simplification de ces parcours est un chantier
-suivant ; elle ne remplace pas le traitement des échecs de recherche observés.
+[boîte à idées](boite-a-idees.md). Après la demande de préparation parallèle, la [0.12.0](../essais/2026-11-14-parametres-ux.md)
+implémente ce regroupement après intégration de la recherche 0.11.1 ; elle ne
+remplace pas le traitement des échecs de recherche observés.
 
 La [livraison 0.4.0](../essais/2026-11-14-indexation-automatique-et-diagnostic.md) couvre l’indexation automatique et le diagnostic. Les essais matériels restent distincts ; les autres exigences du plan ne sont pas clôturées par cette seule livraison.
