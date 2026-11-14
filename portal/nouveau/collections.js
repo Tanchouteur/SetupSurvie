@@ -22,10 +22,10 @@
   function collectionOptions(data){
     const select=document.getElementById('search-collection');if(!select)return;
     const selected=select.value||select.dataset.requested||'',families=new Map();
-    for(const item of data.books||[]){if(!item.ready)continue;const family=item.family||item.title||item.id;const key=normal(item.family||item.id).replace(/[^a-z0-9]/g,'');if(key&&!families.has(key))families.set(key,family);}
+    for(const item of data.books||[]){if(!item.ready)continue;const family=item.family||item.title||item.id,key=normal(item.family||item.id).replace(/[^a-z0-9]/g,'');if(!key)continue;const prior=families.get(key);families.set(key,{label:family,edited:!!prior?.edited||item.labels_status==='corrected'});}
     select.replaceChildren(new Option('Toutes les collections',''));
-    for(const [key,label] of families)select.append(new Option(label,key));
-    if(selected&&!families.has(selected))select.append(new Option(selected+' · à vérifier',selected));
+    for(const [key,value] of families)select.append(new Option(value.label,(value.edited?'group:':'')+key));
+    if(selected&&![...select.options].some(option=>option.value===selected))select.append(new Option(selected+' · à vérifier',selected));
     select.value=selected;
   }
   document.addEventListener('survie:inventory',event=>{arrangeCollections();collectionOptions(event.detail);apply();});

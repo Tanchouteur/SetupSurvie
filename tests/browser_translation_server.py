@@ -11,10 +11,12 @@ import tempfile
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
+inventory.ZIMS=root/'zim';inventory.ZIMS.mkdir()
+for topic in ('energy','food'):(inventory.ZIMS/('fixture-channel_en_'+topic+'_2026-01.zim')).write_bytes(b'Fictional archive metadata fixture, not a real ZIM.')
 accounts.DB_PATH=str(root/'webui-fixture.db')
 with closing(sqlite3.connect(accounts.DB_PATH)) as db:
     db.execute('CREATE TABLE user(id TEXT,name TEXT,email TEXT,role TEXT,created_at INTEGER)')

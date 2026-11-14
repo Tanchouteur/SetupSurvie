@@ -265,3 +265,17 @@ sans écriture dans les comptes ni les documents. Le contrôle court reste disti
 Le lecteur HTTP suit les redirections de contenu à origine et archive identiques,
 au plus cinq, sans suivre les catalogues ni les liens externes. Sa réponse conserve
 le chemin final pour résoudre les images, tout en préservant l’identifiant demandé.
+
+## Métadonnées corrigibles — 0.6.0
+
+`pilot/catalogue.py` conserve une surcouche JSON versionnée dans `settings`, sous
+les clés `catalogue:v1:`. Identité canonique par article ZIM ou document guide,
+sans suffixe de page PDF ; révision locale par référence, taille et date de
+modification. Une nouvelle révision invalide l’ancien classement humain et les
+noms corrigés, sans effacer leur enregistrement avant retour explicite.
+
+Le moteur commun applique les espaces corrigés avant filtrage et transmet le
+type/état à l’assistant. Les groupes corrigés filtrent Kiwix et les index SQLite.
+Les libellés originaux et identifiants restent inchangés ; l’export ne lit que
+les clés de la surcouche et une liste autorisée de champs. Les erreurs de lecture
+de métadonnées sont signalées sans supprimer les candidats de recherche globale.

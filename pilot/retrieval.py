@@ -7,7 +7,8 @@ from urllib.parse import unquote
 
 
 def normal(text):
-    return re.sub(r'[^a-z0-9]+',' ',unicodedata.normalize('NFKD',unquote(str(text))).encode('ascii','ignore').decode().lower()).strip()
+    decomposed=unicodedata.normalize('NFKD',unquote(str(text)))
+    return re.sub(r'[^a-z0-9]+',' ',''.join(char for char in decomposed if not unicodedata.combining(char)).lower()).strip()
 
 
 # Intent words are useful for ranking, but must not exclude a book that uses
@@ -82,7 +83,8 @@ def plan(query,words,synonyms,collection=''):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
         title_fr.append(concept['fr'][0] if concept else word)
         title_en.append(concept['en'][0] if concept else (next((x for x in reversed(group) if x!=word),word)))
-    return Plan(query,dedup,groups,practical,normal(collection).replace(' ','') or detected,' '.join(title_fr),' '.join(title_en),action)
+    scope=('group:'+normal(collection[6:]).replace(' ','')) if collection.startswith('group:') else normal(collection).replace(' ','') or detected
+    return Plan(query,dedup,groups,practical,scope,' '.join(title_fr),' '.join(title_en),action)
 
 
 def rank(item,query,position=0):
@@ -105,6 +107,8 @@ def rank(item,query,position=0):
     canonical=' '.join(query.words)
     if canonical and canonical==title:score+=5 if query.practical else 30
     if query.practical:
+        classification=item.get('classification',{})
+        if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
         if any('feu' in group for group in query.groups) and re.search(r'\b(production de feu|faire du feu|allumage|fire making|fire starting|start a fire)\b',title):score+=20
         if re.search(r'\b(construction|fabrication|allumage|production|techniques|guide|instructions|tutorial|making|build|repair|starting)\b',title):score+=15
         if re.search(r'\b(quiz|questionnaire|qcm)\b',title+' '+text):score-=24
@@ -174,4 +178,5 @@ def domains(item):
     # Conservative automatic indication; never certifies a procedure.
     text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
     resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|food preservation|conserves|canning|solaire|solar|photovoltaic|photovoltaique|affutage|sharpening)\b',text))
-    return ['resilience'] if resilience else ['culture']
+    cultural=bool(re.search(r'\b(histoire|history|science|sciences|physique|physics|biologie|biology|mathematiques|mathematics|enseignement|education|geographie|geography|litterature|literature|philosophie|philosophy)\b',text))
+    return (['resilience'] if resilience else [])+(['culture'] if cultural or not resilience else [])

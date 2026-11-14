@@ -2,6 +2,8 @@
 
 - [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
+- [Classer les documents et nommer les collections](utilisation/classement-et-collections.md) — guide 0.6.0, corrections communes, révisions et export.
+- [Classements et collections corrigibles](essais/2026-11-14-classement-et-collections.md) — bilan 0.6.0, validation en cours.
 - [Référence de pertinence et lecture](essais/2026-11-14-reference-recherche-et-lecture.md) — bilan 0.5.0, 32 demandes, lecture redirigée et CI réussie ; fonds réel à vérifier.
 - [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.4.0, automatisation et pause.
 - [Indexation automatique et diagnostic](essais/2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0, CI Linux/Windows et navigateurs réussie ; recette du fonds réel à faire.

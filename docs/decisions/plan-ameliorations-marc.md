@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, recette réelle R1 attendue |
 | L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence de 32 demandes, vocabulaire et lecture redirigée 0.5.0 ; R2 réel attendu |
-| L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | À compléter |
+| L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | À compléter |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
@@ -151,6 +151,13 @@ de Marc reste sans adresse précise, donc sa cause réelle n’est pas certifié
 **Fin technique :** corrections conservées après actualisation, liens inchangés,
 pas de disparition globale d’un document, cas techniques Wikipédia et Appropedia
 retrouvés ; navigation retour/rechargement vérifiée. Relecture réelle **R3**.
+
+**Implémenté en 0.6.0 :** corrections communes par document, deux espaces possibles,
+type inconnu par défaut, révision locale et état d’examen ; noms et groupes
+modifiables, filtres des archives et index complémentaires, export sans contenu.
+Le [guide actuel](../utilisation/classement-et-collections.md) précise les limites.
+La relecture des libellés et procédures réellement présents ne devient pas acquise
+par la seule livraison de ces commandes.
 
 ### L4 — Assistant, rapidité et mémoire utile
 

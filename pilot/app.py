@@ -16,7 +16,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -60,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.5.0'
+VERSION='0.6.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -499,6 +499,45 @@ async def learning_paths():
 
 @app.get('/api/source')
 async def source(id:str):return await library.source(id)
+
+
+class SourceClassification(BaseModel):
+    source_id:str=Field(min_length=1,max_length=2000)
+    revision:str=Field(pattern=r'^[a-f0-9]{64}$')
+    domains:list[Literal['resilience','culture']]=Field(max_length=2)
+    document_type:Literal['unknown','overview','explanation','procedure','exercise','manual']='unknown'
+    reviewed:bool=False
+
+
+class CollectionLabels(BaseModel):
+    collection_id:str=Field(min_length=1,max_length=300)
+    revision:str=Field(pattern=r'^[a-f0-9]{64}$')
+    family:str=Field(min_length=1,max_length=80)
+    variant:str=Field(min_length=1,max_length=120)
+
+
+@app.put('/api/admin/library/classification')
+async def set_classification(body:SourceClassification,value=Depends(admin)):
+    if not body.source_id.startswith(('guide:','zim:')):raise HTTPException(400,'Référence de document invalide.')
+    with optional_feature('catalogue') as module:
+        return await asyncio.to_thread(module.save,body.source_id,{'domains':body.domains,'document_type':body.document_type,'status':'reviewed' if body.reviewed else 'corrected'},body.revision,library.GUIDES,inventory.ZIMS)
+
+
+@app.put('/api/admin/library/collection-labels')
+async def set_collection_labels(body:CollectionLabels,value=Depends(admin)):
+    with optional_feature('catalogue') as module:
+        return await asyncio.to_thread(module.save,'collection:'+body.collection_id,{'family':body.family.strip(),'variant':body.variant.strip()},body.revision,library.GUIDES,inventory.ZIMS)
+
+
+@app.delete('/api/admin/library/metadata')
+async def reset_document_metadata(source_id:str=Query(min_length=1,max_length=2000),value=Depends(admin)):
+    with optional_feature('catalogue') as module:await asyncio.to_thread(module.reset,source_id)
+    return {'ok':True}
+
+
+@app.get('/api/admin/library/metadata-export')
+async def export_document_metadata(value=Depends(admin)):
+    with optional_feature('catalogue') as module:return await asyncio.to_thread(module.export)
 
 
 @app.get('/api/original')

@@ -1,8 +1,8 @@
 # Utiliser le serveur familial
 
-- [Rendre les archives recherchables](indexation-archives.md) — guide 0.3.0.
+- [Rendre les archives recherchables](indexation-archives.md) — guide 0.4.0.
 
-Guide du pilote, mis à jour le 13 novembre 2026. Les usages réels chez Marc et sur
+Guide du pilote, mis à jour le 14 novembre 2026. Les usages réels chez Marc et sur
 Safari iPhone restent à vérifier sur place.
 
 1. Relier l’appareil au même réseau que le serveur, puis ouvrir l’adresse ou le QR code de la page **Autre appareil**. Un Wi-Fi invité peut empêcher la connexion.
@@ -97,4 +97,9 @@ procédures par « Données locales » restent accessibles dans `/classique/` ; 
 équivalent courant est **Mon appareil → Téléchargements**, avec les inventaires
 dans **Bibliothèque → Collections** et **Mon appareil → Stockage**.
 
-- [Retrouver un document utile et vérifier la recherche depuis le site](recherche-documentaire.md) — guide actuel 0.1.36.
+- [Retrouver un document utile et vérifier la recherche depuis le site](recherche-documentaire.md) — guide actuel 0.6.0.
+
+## Classement et collections
+
+Voir le [guide actuel 0.6.0](classement-et-collections.md) pour corriger les espaces,
+les types de documents et les noms de collections, puis exporter ces métadonnées.

@@ -77,7 +77,7 @@ class Matches(list):
     def __init__(self,values=(),coverage=None):super().__init__(values);self.coverage=coverage or {}
 
 
-def search(root,plan,language='',limit=40,source_dir=None):
+def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=None):
     if not plan.groups:return Matches()
     deadline=time.monotonic()+3
     def one(path):
@@ -85,7 +85,9 @@ def search(root,plan,language='',limit=40,source_dir=None):
             with connect(path.resolve(),True) as db:
                 db.set_progress_handler(lambda:int(time.monotonic()>deadline),1000)
                 meta=json.loads(db.execute('SELECT value FROM metadata WHERE key=?',('source',)).fetchone()[0])
-                if plan.collection and plan.collection not in retrieval.normal(meta['book']+' '+meta['title']).replace(' ',''):return [],'excluded'
+                if plan.collection:
+                    allowed=collection_match(meta,plan.collection) if collection_match else plan.collection in retrieval.normal(meta['book']+' '+meta['title']).replace(' ','')
+                    if not allowed:return [],'excluded'
                 if source_dir is not None and Path(source_dir).is_dir():
                     source=Path(source_dir)/(meta['book']+'.zim')
                     if not source.is_file():return [],'outdated'

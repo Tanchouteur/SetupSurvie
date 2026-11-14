@@ -55,6 +55,8 @@ def reference(references,item,consulted=False):
         for key in ('is_ai_translation','original_id','original_title','original_document_date','original_edition','translation_notice'):
             if key in item:prior[key]=item[key]
         prior['excerpt']=item.get('excerpt',item.get('text',''))[:600]
+        if item.get('classification'):
+            prior['classification']={key:item['classification'][key] for key in ('document_type','method','status','domains')}
     prior['consulted']|=consulted
     return prior
 

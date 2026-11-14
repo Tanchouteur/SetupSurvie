@@ -151,3 +151,10 @@ mesure automatique. Le contrôle court reste disponible. Les redirections d’ar
 locaux sont prises en charge et l’original reste proposé en cas d’échec d’aperçu.
 Le [bilan](../essais/2026-11-14-reference-recherche-et-lecture.md) distingue le défaut
 reproduit des articles indisponibles rapportés par Marc sans leur adresse précise.
+
+La 0.6.0 rend le classement et les noms [corrigibles depuis Famille](../utilisation/classement-et-collections.md),
+avec deux espaces possibles, type inconnu par défaut et état d’examen humain.
+Les fichiers restent en un exemplaire, sans modification des ZIM. Les corrections
+sont liées à la révision locale et exportables sans les textes. La relecture réelle
+du fonds, de ses titres et de ses procédures reste nécessaire ; livrer l’outil
+ne qualifie pas automatiquement toute la bibliothèque.

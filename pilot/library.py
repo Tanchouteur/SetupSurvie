@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog
+from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -301,6 +301,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
     groups={};eligible=[];selected_books=[]
+    saved_labels=catalogue.snapshot()
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
     def priority(book):
@@ -313,7 +314,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         book=dict(original)
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
-        if query_plan and query_plan.collection and query_plan.collection not in retrieval.normal(book.get('book','')+' '+str(book.get('title',''))).replace(' ',''):continue
+        if query_plan and query_plan.collection and not catalogue.matches_collection(book,query_plan.collection,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')),saved_labels):continue
         languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
         if requested and requested not in languages:continue
         selected_books.append(book)
@@ -457,7 +458,10 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                 rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
                 results.extend([{**dict(row),'kind':'article'} for row in rows])
     if query_plan.collection:results=[r for r in results if query_plan.collection in retrieval.normal(str(r.get('provenance',''))+' '+r['title']+' '+r['id']).replace(' ','')]
-    if favorite_user is not None or translations_only:return retrieval.ordered(results,query_plan,limit*2)
+    if favorite_user is not None or translations_only:
+        catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        if domain!='all':results=[r for r in results if domain in r['domains']]
+        return retrieval.ordered(results,query_plan,limit*2)
     def pattern_for(lang,selected_words=None):
         english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
                  'apprendre':'learning','enfant':'children','enfants':'children','maths':'mathematics',
@@ -481,7 +485,9 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
-    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,Path(os.environ.get('ZIM_DIR','/zim'))))
+    saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))
+    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
+        collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata)))
     try:
         articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
         local=await local_task
@@ -490,7 +496,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     combined=results+local+articles
     for item in combined:
         item['language']=retrieval.article_language(item)
-        item['domains']=retrieval.domains(item)
+    metadata_available=catalogue.annotate(combined,GUIDES,zims,saved_metadata)
     allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
     combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
     if domain!='all':combined=[r for r in combined if domain in r['domains']]
@@ -501,6 +507,10 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         coverage['warning']=coverage.get('warning','')+' Certains index locaux sont indisponibles ou périmés ; relancez leur préparation.'
     coverage['coverage_scope']='searchable_text'
     coverage['domain']=domain
+    coverage['metadata_status']='ready' if metadata_available else 'degraded'
+    if not metadata_available:
+        if coverage['status']=='complete':coverage['status']='partial'
+        coverage['warning']=coverage.get('warning','')+' Certains classements corrigés ne sont pas disponibles ; le classement automatique reste utilisé pour ces documents.'
     coverage['local_index']=archive_index.status(store.ROOT/'archive-index')
     coverage['parallelism']=max(3,min(12,(os.cpu_count() or 2)*2))
     coverage['collection']=query_plan.collection
@@ -531,9 +541,10 @@ async def source(identifier):
             row=db.execute('SELECT * FROM '+table+' WHERE id=?',(identifier,)).fetchone()
             meta=guide_metadata(db,identifier)
         if not row:raise HTTPException(404,'Guide introuvable.')
-        return {**dict(row),**meta,'kind':'guide','images':[],
+        result={**dict(row),**meta,'kind':'guide','images':[],
                 'text_truncated':len(row['text']) >= (24000 if table=='passages' else 500000),
                 'preview':identifier.lower().split('#page=')[0].endswith('.pdf')}
+        catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
     path=safe_zim_path(identifier)
     available=await books()
     if not getattr(available,'available',True):raise HTTPException(503,'La liste des collections est momentanément indisponible. Réessayez ou ouvrez le document d’origine.')
@@ -551,8 +562,9 @@ async def source(identifier):
         target=urljoin(resolved_path,image['src'])
         if target.startswith('/content/'):
             images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
-    return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
+    result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
             'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+    catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
 
 
 def calculate(expression):

@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.5.0, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.6.0, 14 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -91,7 +91,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.5.0** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.6.0** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Réglages → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
@@ -119,6 +119,12 @@ n’est configuré ou testé par cette livraison.
 ## Indexation et espaces depuis 0.3.0
 
 Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. Le classement utilise le texte disponible ; élargir au fonds complet permet de retrouver les documents non classés. La sélection et les filtres figurent dans l’adresse et sont restaurés au retour. Les favoris et traductions gardent leurs sélections personnelles.
+
+Depuis 0.6.0, le profil Famille peut [corriger ces espaces et le type du document](classement-et-collections.md),
+ainsi que les noms des collections. Une correction humaine conservée prime sur
+l’indication automatique pour la même révision ; le document reste toujours dans
+la bibliothèque globale. Les types de procédure/notice ne sont pas devinés sur
+le seul titre et ne constituent pas une validation de sécurité.
 
 Le [guide d’indexation](indexation-archives.md) explique la préparation du texte des ZIM non recherchables et la pause. Le [bilan du rapport de Marc](../essais/2026-11-14-recherche-index-et-espaces.md) distingue les améliorations du moteur de leurs validations sur son fonds.
 

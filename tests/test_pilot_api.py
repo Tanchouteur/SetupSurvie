@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
-from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles
+from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory
 
 
 class PilotAPITests(unittest.TestCase):
@@ -40,6 +40,35 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(len(response.json()['steps']),6)
             self.assertEqual(self.client.get('/api/conversations').status_code,200)
             launch.assert_not_called()
+
+    def test_metadata_edits_require_family_revision_and_preserve_original_files(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        library.GUIDES.mkdir(parents=True,exist_ok=True);path=library.GUIDES/'fixture.fr.txt';path.write_text('Fictional mechanism document.')
+        library.index_guides();revision=catalogue.revision('guide:fixture.fr.txt',library.GUIDES,self.root/'zim')
+        body={'source_id':'guide:fixture.fr.txt','revision':revision,'domains':['resilience','culture'],'document_type':'procedure','reviewed':True}
+        self.assertEqual(self.client.put('/api/admin/library/classification',json=body,headers=headers).status_code,403)
+        self.assertEqual(self.client.get('/api/admin/library/metadata-export').status_code,403)
+        self.client.cookies.clear();self.login('admin')
+        self.assertEqual(self.client.put('/api/admin/library/classification',json=body,headers=headers).status_code,200)
+        info=self.client.get('/api/source',params={'id':body['source_id']}).json()['classification'];self.assertEqual(info['status'],'reviewed')
+        self.assertEqual(self.client.put('/api/admin/library/classification',json={**body,'domains':['invalid']},headers=headers).status_code,422)
+        path.write_text('Another edition, changed size.')
+        self.assertEqual(self.client.put('/api/admin/library/classification',json=body,headers=headers).status_code,409)
+        exported=self.client.get('/api/admin/library/metadata-export').json();self.assertEqual(len(exported['records']),1)
+        self.assertNotIn('Fictional',json.dumps(exported));self.assertNotIn('admin',json.dumps(exported))
+        self.assertEqual(self.client.delete('/api/admin/library/metadata',params={'source_id':body['source_id']},headers=headers).status_code,200)
+        self.assertEqual(self.client.get('/api/admin/library/metadata-export').json()['records'],[])
+        self.assertEqual(path.read_text(),'Another edition, changed size.')
+
+    def test_collection_names_can_be_corrected_without_changing_archive_id(self):
+        self.login('admin');headers={'Origin':'http://testserver'};zims=self.root/'zim';zims.mkdir();stem='example-channel_en_energy_2026-01';(zims/(stem+'.zim')).write_bytes(b'Archive fixture')
+        with patch.object(inventory,'ZIMS',zims):
+            revision=catalogue.revision('collection:'+stem,library.GUIDES,zims)
+            body={'collection_id':stem,'revision':revision,'family':'Groupe de recette','variant':'Énergie et batteries'}
+            response=self.client.put('/api/admin/library/collection-labels',json=body,headers=headers)
+            self.assertEqual(response.status_code,200,response.text)
+            row=self.client.get('/api/inventory').json()['books'][0]
+        self.assertEqual(row['family'],body['family']);self.assertEqual(row['variant'],body['variant']);self.assertEqual(row['id'],stem)
 
     def test_missing_learning_catalogue_returns_friendly_error_without_blocking_search(self):
         with patch.object(gateway.learning,'RULES',self.root/'absent.json'):

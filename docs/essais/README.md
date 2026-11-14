@@ -1,6 +1,7 @@
 # Essais et résultats
 
 - [Recettes progressives chez Marc](recettes-progressives-marc.md) — protocole prévu, outils actuels et rapports à développer.
+- [Classements et collections corrigibles](2026-11-14-classement-et-collections.md) — bilan 0.6.0.
 - [Référence de pertinence et lecture](2026-11-14-reference-recherche-et-lecture.md) — bilan 0.5.0, demandes naturelles, contrôle complet et lecture redirigée.
 - [Indexation automatique et diagnostic](2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0.
 - [Rapport de Marc, indexation et espaces](2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0.

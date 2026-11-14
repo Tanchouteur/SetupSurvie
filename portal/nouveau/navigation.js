@@ -90,7 +90,7 @@
         else document.dispatchEvent(new CustomEvent('survie:scope-reset'));
         scopeCommand=false;
         const source=route.params.get('source');
-        if(source&&!openingSource&&S.reader!==source){openingSource=true;baseRead(source).finally(()=>{openingSource=false;if(restoring)restorePosition(saved);});}
+        if(source&&S.authReady&&!openingSource&&(S.reader!==source||$('reader').hidden)){openingSource=true;baseRead(source).finally(()=>{openingSource=false;if(restoring)restorePosition(saved);});}
         if(!source){$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');}
       }
     }
@@ -213,7 +213,7 @@
   document.addEventListener('survie:results',()=>{decorateLinks();if(pendingRestore&&pendingRestore.hash===location.hash){restorePosition(pendingRestore.state);pendingRestore=null;}});
   document.addEventListener('survie:conversation',()=>{restoreDraft();if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}});
   document.addEventListener('survie:auth',()=>{
-    if(!S.user)return;
+    if(!S.user){if(S.authReady&&current?.name==='library')activate(current,true);return;}
     profileId=S.user.id;draftKey=null;$('chat-domain').value=get('chat-domain','resilience');
     const saved=!initialHash?get('last',''):'';
     const target=saved&&parse(saved)||current||parse('#/accueil');
