@@ -58,6 +58,11 @@ installation active par un simple pull.
   profils, accès classique direct, carte et suivi ; traduction associée, pause,
   reprise, rechargement et export vérifiés sur l’API simulée.
 
+Un premier passage CI a révélé une course dans la recette de relief existante :
+les dernières tuiles du scénario précédent étaient comptées après remise à zéro.
+Les deux documents sont désormais séparés avant de compter, et le scénario sans
+altitude attend aussi que la carte soit prête. Le code cartographique est inchangé.
+
 La recette de confort rejoint la CI Chromium/WebKit ; le test Kiwix rejoint la
 suite Windows. Les résultats de CI sont à lire sur le commit livré.
 
