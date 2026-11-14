@@ -255,3 +255,13 @@ Les ZIM restent en lecture seule. `scripts/index_archives.py` extrait leur texte
 ## Préparation automatique et catalogue — 0.4.0
 
 Les producteurs de fichiers vérifiés écrivent la file `catalog/search-index-queue.json` sous verrou. Le contrôleur lance un seul travail documentaire lorsque publication et téléchargement sont libres. Les pauses volontaires et interruptions restent explicites ; les reports horaires et le mode jeu gardent leur logique propre. Le manifeste cumulatif des index conserve les résultats des lots précédents. Le catalogue Kiwix utilise un cache court partagé entre appels et un instantané daté, sans masquer les erreurs derrière une liste vide valide. Les diagnostics exposent des codes sûrs, pas les corps HTTP ni les secrets.
+
+## Référence de recherche et lecture — 0.5.0
+
+Le contrôle complet lit une référence JSON statique versionnée ; ses sources
+attendues fictives restent dans les tests, sans être imposées à la bibliothèque
+réelle. Les avis de pertinence sont conservés dans le rapport côté navigateur,
+sans écriture dans les comptes ni les documents. Le contrôle court reste distinct.
+Le lecteur HTTP suit les redirections de contenu à origine et archive identiques,
+au plus cinq, sans suivre les catalogues ni les liens externes. Sa réponse conserve
+le chemin final pour résoudre les images, tout en préservant l’identifiant demandé.

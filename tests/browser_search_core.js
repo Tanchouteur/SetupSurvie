@@ -46,6 +46,13 @@ async page => {
   await page.evaluate(()=>readSource('guide:template.fr.md'));await page.waitForSelector('#reader .reader-body table');
   check(await page.locator('#reader .reader-body h1').textContent()==='Équipements','Titres Markdown lisibles');
   check(!await page.evaluate(()=>window.unsafeFixture),'Document Markdown assaini');
+  await page.route('**/api/source?id=*',r=>r.fulfill({status:404,json:{detail:'Document indisponible.'}}));
+  await page.evaluate(()=>readSource('zim:wikipedia_fr/Alias'));
+  check((await page.locator('#reader').textContent()).includes('L’aperçu de ce document'),'Échec de l’aperçu distinct d’une absence de document');
+  const fallback=page.locator('#reader').getByRole('link',{name:'Ouvrir le document d’origine →'});
+  check(await fallback.getAttribute('href').then(value=>new URL(value).pathname==='/content/wikipedia_fr/Alias'),'Accès direct conservé après échec de l’aperçu');
+  check(await page.locator('#reader').getByRole('button',{name:'Réessayer',exact:true}).count()===1,'Nouvel essai disponible dans le lecteur');
+  check(await page.evaluate(()=>originalSourceURL('zim:book/%2e%2e/private')===null&&originalSourceURL('zim:book/../../api')===null),'Repli de lecture refuse les chemins hors archive');
   let stage='searching';
   await page.route('**/api/jobs/phase-fixture',r=>r.fulfill({json:{id:'phase-fixture',created:Date.now()/1000-5,mode:'rapide',status:stage==='done'?'done':'running',answer:stage==='done'?'Réponse fictive terminée.':'',sources:[],progress:{stage,sources_found:2,sources_read:stage==='reading'?1:0}}}));
   await page.evaluate(()=>{newConversation();watch('phase-fixture');});
@@ -71,6 +78,30 @@ async page => {
   check(!('conversations' in report)&&!('user' in report),'Rapport limité aux recherches de test');
   await page.screenshot({path:'/artifacts/controle-recherche.png',fullPage:true});
   await page.locator('[data-close="next-search-check-dialog"]').click();
+  await page.locator('#next-search-check-suite').selectOption('extended');
+  await page.locator('#next-search-check-open').click();
+  await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===32);
+  check(await page.locator('#next-search-check-results .search-check-case').count()===32,'Contrôle complet des 32 demandes disponible');
+  check(writes.length===postsBefore,'Contrôle complet sans appel de calcul ni téléchargement');
+  const feedback=page.locator('#next-search-check-results .search-check-review select');
+  await feedback.nth(0).selectOption('0');await feedback.nth(1).selectOption('no_useful');await feedback.nth(2).selectOption('uncertain');
+  const extendedDownload=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const extended=await extendedDownload,extendedChunks=[];for await(const chunk of await extended.createReadStream())extendedChunks.push(chunk);
+  const complete=JSON.parse(Buffer.concat(extendedChunks).toString());
+  check(complete.schema===2&&complete.suite==='extended'&&complete.reference.version==='2026-11-14.1'&&complete.cases.length===32,'Rapport complet avec référence versionnée');
+  check(complete.review_summary.reviewed===3&&complete.review_summary.useful===1&&complete.cases[0].review.rank===1&&complete.cases[1].review.state==='no_useful'&&complete.cases[2].review.state==='uncertain','Avis humains conservés sans validation automatique');
+  check(complete.cases.slice(3).every(row=>row.review.state==='unreviewed'),'Mesure terminée distincte des résultats encore à lire');
+  check(await page.locator('#next-search-check-results .search-check-case a').first().getAttribute('href').then(value=>value.includes('domain=resilience')),'Lecture du résultat conserve le périmètre de test');
+  for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:768});check(!await page.locator('#next-search-check-dialog').evaluate(e=>e.scrollWidth>e.clientWidth),'Contrôle complet sans débordement à '+width);
+  }
+  await page.setViewportSize({width:1366,height:768});
+  await page.locator('[data-close="next-search-check-dialog"]').click();
+  await page.route('**/nouveau/search-reference.json?*',r=>r.fulfill({json:{schema:99,cases:[]}}));
+  await page.locator('#next-search-check-open').click();
+  await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('doit être mise à jour'));
+  check(!await page.locator('#next-search-check-open').isDisabled(),'Liste de tests invalide expliquée et relance possible');
+  await page.locator('[data-close="next-search-check-dialog"]').click();
+  await page.unroute('**/nouveau/search-reference.json?*');await page.locator('#next-search-check-suite').selectOption('short');
   await page.route('**/api/search?*',async r=>{await new Promise(resolve=>setTimeout(resolve,250));await r.fulfill({json:{results:[],coverage:{status:'complete'}}}).catch(()=>{});});
   const requested=page.waitForRequest(r=>r.url().includes('/api/search?'));await page.locator('#next-search-check-open').click();await requested;await page.locator('#next-search-check-cancel').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('Vérification arrêtée'));

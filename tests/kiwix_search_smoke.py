@@ -49,6 +49,11 @@ def create_archives(folder):
             creator.add_item(Article('Pedal_generator','Pedal generator construction','Pedal generator materials and checks. Fictional fixture.'))
             creator.add_item(Article('Eau_potable','Guide de potabilisation de l’eau','Eau potable, purification et vérifications. Extrait fictif sans procédure.'))
             creator.add_item(Article('Shelter_construction','Shelter construction','Shelter construction and roof design. Fictional fixture.'))
+            creator.add_item(Article('Mending_clothes','Mending clothes','Sewing and mending a garment. Fictional fixture without instructions.'))
+            creator.add_item(Article('Solar_panel','Solar panel installation','Solar panel installation and electrical checks. Fictional fixture without instructions.'))
+            creator.add_item(Article('Vegetable_canning','Vegetable canning and food preservation','Canning vegetables for food storage. Fictional fixture without instructions.'))
+            creator.add_item(Article('Tool_sharpening','Tool sharpening','Tool sharpening and maintenance. Fictional fixture without instructions.'))
+            creator.add_redirection('Fire_alias','Alias de production de feu','Techniques_de_production_de_feu',{})
         paths.append(path)
     if sum(path.stat().st_size for path in paths)>1_000_000:raise RuntimeError('Synthetic fixture exceeded 1 MB')
     return paths
@@ -96,6 +101,10 @@ def main():
                     check(any(r['id'].endswith('/'+expected) for r in found),query+' reaches an actual indexed technical article',{'ids':[r['id'] for r in found],'coverage':found.coverage})
                 scoped=await library.search('faire du feu dans Wikipédia')
                 check(bool(scoped) and all(r['id'].startswith('zim:wikipedia_fr/') for r in scoped),'Wikipedia is a real archive scope')
+                for query,expected in [('recoudre un vêtement','Mending_clothes'),('installer un panneau solaire','Solar_panel'),('faire des conserves de légumes','Vegetable_canning'),('aiguiser un outil','Tool_sharpening')]:
+                    found=await library.search(query,limit=5,collection='manualen',domain='resilience')
+                    check(bool(found) and found[0]['id']=='zim:manual_en/'+expected,query+' ranks its actual English source first',{'ids':[r['id'] for r in found],'coverage':found.coverage})
+                    check(found[0].get('match')!='title',query+' has an actual fulltext match, not only a title suggestion')
                 tagged=await library.search('allumer un feu',collection='missingtagfr')
                 check(bool(tagged) and tagged.coverage['searched']==1,'Missing ftindex tag does not hide a working fulltext index')
                 titles=await library.search('allumer un feu',collection='titleonlyfr')
@@ -103,6 +112,8 @@ def main():
                 check(titles.coverage['status']=='partial','Missing fulltext coverage is explicit')
                 source=await library.source('zim:wikipedia_fr/Techniques_de_production_de_feu')
                 check('Friction' in source['text'] and source['language'] in ('fr','fra'),'Actual source can be read with its language after retrieval')
+                alias=await library.source('zim:wikipedia_fr/Fire_alias')
+                check('Friction' in alias['text'] and alias['id'].endswith('/Fire_alias'),'A generated Kiwix alias reaches its actual target')
                 try:await real_get('/search?'+urlencode({'books.filter.lang':'fra','pattern':'feu','format':'xml'}))
                 except HTTPException:checks.append('Broad multilingual request is rejected by the pinned server')
         try:

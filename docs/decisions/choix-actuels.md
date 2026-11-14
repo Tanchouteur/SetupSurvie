@@ -145,3 +145,9 @@ résultats, sans conclure à l’absence d’un document sur une recherche parti
 La capture suivante de Louis retrouve des sources pertinentes avec le filtre ;
 elle ne prouve pas la cause de l’incident précédent. La recette sur le fonds réel
 reste distincte des [contrôles de développement](../essais/2026-11-14-indexation-automatique-et-diagnostic.md).
+
+La 0.5.0 étend la référence à 32 demandes et sépare la relecture humaine de la
+mesure automatique. Le contrôle court reste disponible. Les redirections d’articles
+locaux sont prises en charge et l’original reste proposé en cas d’échec d’aperçu.
+Le [bilan](../essais/2026-11-14-reference-recherche-et-lecture.md) distingue le défaut
+reproduit des articles indisponibles rapportés par Marc sans leur adresse précise.

@@ -1,0 +1,35 @@
+{
+  "notice": "Documents entièrement fictifs : aucune instruction pratique, aucun extrait de corpus réel. Les attentes ne prouvent pas que ces documents sont présents chez Marc.",
+  "documents": [
+    {"id":"fire","title":"Techniques de production de feu","language":"fr","provenance":"Wikipédia — fixture fictive","text":"Friction et percussion, comparaison des méthodes d’allumage. Fire making and fire starting. Fixture, aucune instruction réelle."},
+    {"id":"generator","title":"Construction d’un générateur à pédales","language":"fr","text":"Pedal generator construction. Assembly diagram and materials. Fictional fixture without instructions."},
+    {"id":"puncture","title":"Bicycle puncture repair","language":"en","text":"Bicycle puncture repair and patching. Fictional fixture without instructions."},
+    {"id":"water","title":"Drinking water treatment and filtration","language":"en","text":"Water purification, disinfection and filtering. Fictional fixture without instructions."},
+    {"id":"water-storage","title":"Water storage","language":"en","text":"Water storage and preservation. Fictional fixture without instructions."},
+    {"id":"seeds","title":"Seed storage and preservation","language":"en","text":"Seeds storage and conservation. Fictional fixture without instructions."},
+    {"id":"shelter","title":"Shelter construction","language":"en","text":"Shelter building and roof design. Fictional fixture without instructions."},
+    {"id":"tarp","title":"Tarpaulin roof fixing","language":"en","text":"Fixing tarpaulin to a shelter roof. Fictional fixture without instructions."},
+    {"id":"battery","title":"Battery maintenance","language":"en","text":"Battery care and inspection. Fictional fixture without instructions."},
+    {"id":"radio","title":"Radio repair","language":"en","text":"Radio repair and receiver inspection. Fictional fixture without instructions."},
+    {"id":"sewing","title":"Mending clothes","language":"en","text":"Sewing and mending a garment. Fictional fixture without instructions."},
+    {"id":"solar","title":"Solar panel installation","language":"en","text":"Solar panel installation and electrical checks. Fictional fixture without instructions."},
+    {"id":"canning","title":"Vegetable canning and food preservation","language":"en","text":"Canning vegetables for food storage. Fictional fixture without instructions."},
+    {"id":"sharpening","title":"Tool sharpening","language":"en","text":"Tool sharpening and maintenance. Fictional fixture without instructions."},
+    {"id":"plumbing","title":"Plumbing leak repair","language":"en","text":"Plumbing repair and leak inspection. Fictional fixture without instructions."},
+    {"id":"compost","title":"Compost preparation","language":"en","text":"Compost and soil care. Fictional fixture without instructions."},
+    {"id":"quiz","title":"Botanique — quiz","language":"fr","text":"Questionnaire : la sève comme allume feu est une réponse proposée, pas une procédure."},
+    {"id":"history","title":"Histoire du cyclisme","language":"fr","text":"Histoire du vélo, de la pédale et du cyclisme. Fixture sans instruction."},
+    {"id":"var","title":"Risques d’incendies dans le Var","language":"fr","text":"Prévention des incendies et réglementation du feu. Fixture sans instruction."},
+    {"id":"directive","title":"Drinking Water Directive","language":"en","text":"Drinking water legal framework. Fictional fixture without instructions."},
+    {"id":"radio-law","title":"Radio licensing rules","language":"en","text":"Radio licensing and regulations. Fictional fixture without instructions."},
+    {"id":"metal","title":"Métallurgie ancienne","language":"fr","text":"Histoire du feu et des métaux. Fixture sans instruction."}
+  ],
+  "expected": {
+    "fire-natural":"fire", "fire-plural":"fire", "fire-english":"fire", "fire-wikipedia":"fire",
+    "generator-build":"generator", "generator-natural":"generator", "bicycle-puncture":"puncture", "bicycle-english":"puncture",
+    "water-drinking":"water", "water-filter":"water", "water-storage":"water-storage", "seeds-preserve":"seeds", "seeds-storage":"seeds",
+    "shelter-build":"shelter", "roof-tarp":"tarp", "battery-care":"battery", "radio-repair":"radio", "clothes-mending":"sewing",
+    "solar-panel":"solar", "food-canning":"canning", "tool-sharpening":"sharpening", "plumbing-leak":"plumbing", "garden-compost":"compost", "botany-quiz":"quiz",
+    "verify-fire":"fire", "verify-generator":"generator", "verify-bicycle":"puncture", "verify-water":"water", "verify-seeds":"seeds", "verify-shelter":"shelter", "verify-history":"history", "verify-unknown":null
+  }
+}

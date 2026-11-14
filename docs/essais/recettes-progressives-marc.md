@@ -1,6 +1,6 @@
 # Recettes progressives sur le PC de Marc
 
-**Protocole prévu — 14 novembre 2026.** Louis et Marc testeront au fil des lots.
+**Protocole actuel et suites prévues — 14 novembre 2026.** Louis et Marc testeront au fil des lots.
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
@@ -12,6 +12,11 @@ rapport exporte version, délais, couverture, résultats et extraits. Pour les Z
 sans index réel, la [création/reprise manuelle](../utilisation/indexation-archives.md)
 est disponible au même endroit. Ces deux opérations sont distinctes.
 
+Depuis 0.5.0, **Contrôle complet · 32 recherches** élargit R2. Après lecture,
+choisir les résultats utiles ou indiquer qu’aucun ne répond ; laisser les autres
+à vérifier puis exporter. La [procédure actuelle](../utilisation/recherche-documentaire.md#vérification-sur-le-windows-de-marc-depuis-le-site)
+distingue mesures et avis humains. Aucun résultat fictif n’est attendu sur le PC réel.
+
 Les futurs diagnostics ci-dessous doivent être livrés avec une commande ou un
 bouton explicite, un arrêt possible et un export JSON lisible par l’agent. Ne pas
 exiger TeamViewer ni un accès distant de développement pour lancer les recettes.
@@ -21,7 +26,7 @@ exiger TeamViewer ni un accès distant de développement pour lancer les recette
 | Rapport | Quand le demander | Ce qu’il doit mesurer | État de l’outil |
 | --- | --- | --- | --- |
 | R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | Rapport d’indexation disponible en 0.4.0 |
-| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; compléter avec état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Dix cas et diagnostic disponibles en 0.4.0 ; référence de pertinence étendue à poursuivre |
+| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Dix cas courts et diagnostic depuis 0.4.0 ; 32 cas versionnés et avis humains exportables en 0.5.0 ; mesure du fonds réel attendue |
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Fiche de relecture à développer ; observation manuelle possible |
 | R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Réglages et certaines traces existent ; rapport et calibration à développer |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |

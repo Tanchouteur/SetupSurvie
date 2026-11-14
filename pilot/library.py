@@ -48,17 +48,43 @@ class Text(HTMLParser):
     def text(self):return '\n'.join(x.strip() for x in ''.join(self.parts).splitlines() if x.strip())
 
 
+class Fetched(tuple):
+    def __new__(cls,body,kind,path):
+        value=super().__new__(cls,(body,kind));value.path=path;return value
+
+
 async def get(path, maximum=2_000_000):
-    async with httpx.AsyncClient(trust_env=False,timeout=25,follow_redirects=False) as client:
-        async with client.stream('GET',KIWIX+path) as response:
-            if response.status_code!=200:
-                error=HTTPException(404,'Document indisponible.');error.upstream_status=response.status_code
-                raise error
-            body=bytearray()
-            async for chunk in response.aiter_bytes():
-                body.extend(chunk)
-                if len(body)>maximum:raise HTTPException(413,'Ce document est trop volumineux pour cet aperçu.')
-            return bytes(body),response.headers.get('content-type','application/octet-stream')
+    content=path.startswith('/content/')
+    current=KIWIX+path;seen=set()
+    async with asyncio.timeout(25),httpx.AsyncClient(trust_env=False,timeout=25,follow_redirects=False) as client:
+        for step in range(6):
+            if current in seen:raise HTTPException(502,'La redirection de ce document tourne en boucle. Essayez son original.')
+            seen.add(current)
+            async with client.stream('GET',current) as response:
+                if content and response.status_code in (301,302,303,307,308):
+                    location=response.headers.get('location','')
+                    target=urlparse(urljoin(current,location));origin=urlparse(KIWIX)
+                    # Only aliases within the same local archive. Never follow
+                    # an external website, service endpoint or another book.
+                    valid=bool(location) and target.scheme==origin.scheme and target.netloc==origin.netloc and not target.query and target.path.startswith('/content/')
+                    if valid:
+                        try:
+                            resolved=safe_zim_path('zim:'+target.path.removeprefix('/content/'))
+                            original=safe_zim_path('zim:'+path.removeprefix('/content/'))
+                            valid=resolved.split('/')[0]==original.split('/')[0]
+                        except HTTPException:valid=False
+                    if not valid:raise HTTPException(502,'Ce document renvoie hors de son archive locale. Ouvrez sa collection pour vérifier le lien.')
+                    if step==5:raise HTTPException(502,'Ce document comporte trop de redirections. Essayez son original.')
+                    current=target._replace(fragment='').geturl();continue
+                if response.status_code!=200:
+                    detail='Cet article ne répond pas dans son archive locale. Réessayez ou ouvrez son original.' if content else 'Document indisponible.'
+                    error=HTTPException(404,detail);error.upstream_status=response.status_code
+                    raise error
+                body=bytearray()
+                async for chunk in response.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body)>maximum:raise HTTPException(413,'Ce document est trop volumineux pour cet aperçu.')
+                return Fetched(bytes(body),response.headers.get('content-type','application/octet-stream'),urlparse(current).path)
 
 
 Catalog=kiwix_catalog.Catalog
@@ -446,8 +472,13 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         english.update({'examiner':'examine','malade':'sick','personne':'person'})
         english.update(LEARNING_ENGLISH)
         english.update({'feu':'fire','allumer':'lighting','camp':'campfire','generateur':'generator','generatrice':'generator','pedale':'pedal','pedales':'pedal'})
+        # Same vocabulary for archive requests and local FTS; do not rely only
+        # on title suggestions to bridge a French question and English text.
+        for key in ('couture','vetement','panneau','solaire','conserves','legume','affutage','outil'):
+            concept=retrieval.CONCEPTS[key]
+            for term in concept['terms']:english[term]=concept['en'][0]
         translated=[english.get(w,w) if lang=='eng' else w for w in (words if selected_words is None else selected_words)]
-        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction')}.get(query_plan.action)
+        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
     local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,Path(os.environ.get('ZIM_DIR','/zim'))))
@@ -504,14 +535,20 @@ async def source(identifier):
                 'text_truncated':len(row['text']) >= (24000 if table=='passages' else 500000),
                 'preview':identifier.lower().split('#page=')[0].endswith('.pdf')}
     path=safe_zim_path(identifier)
-    book=next((b for b in await books() if b['book']==path.split('/')[0]),None)
+    available=await books()
+    if not getattr(available,'available',True):raise HTTPException(503,'La liste des collections est momentanément indisponible. Réessayez ou ouvrez le document d’origine.')
+    book=next((b for b in available if b['book']==path.split('/')[0]),None)
     if book is None:raise HTTPException(404,'Collection introuvable.')
-    raw,_=await get('/content/'+quote(path,safe='/'))
+    try:fetched=await get('/content/'+quote(path,safe='/'))
+    except (TimeoutError,httpx.TimeoutException):raise HTTPException(504,'Le lecteur a dépassé son délai de réponse. Réessayez ou ouvrez le document d’origine.')
+    except httpx.HTTPError:raise HTTPException(503,'Le lecteur ne parvient pas à joindre cette archive. Réessayez ou ouvrez le document d’origine.')
+    raw,_=fetched
+    resolved_path=getattr(fetched,'path','/content/'+quote(path,safe='/'))
     p=Text();p.feed(raw.decode(errors='replace'))
     text=p.text()
     images=[]
     for image in p.images:
-        target=urljoin('/content/'+quote(path,safe='/'),image['src'])
+        target=urljoin(resolved_path,image['src'])
         if target.startswith('/content/'):
             images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
     return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,

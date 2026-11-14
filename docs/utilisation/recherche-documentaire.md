@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.1.36, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.5.0, 14 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -29,6 +29,25 @@ Un article d’encyclopédie peut expliquer un principe sans donner les pièces,
 les dimensions et les étapes nécessaires à une fabrication. Ouvrir la source
 et vérifier ces éléments avant de la considérer comme un guide de réalisation.
 La taille de la bibliothèque ne prouve pas qu’une telle procédure existe.
+
+Le vocabulaire courant est rapproché des expressions techniques françaises et
+anglaises : recoudre/couture, vêtement/clothes, conserves/canning, aiguiser/affûtage,
+panneau solaire/solar panel. Ces équivalences aident à retrouver un texte déjà
+présent ; elles n’ajoutent aucun contenu et ne couvrent pas toutes les formulations.
+
+## Si un document trouvé ne s’ouvre pas
+
+Le lecteur suit les redirections d’un article vers un autre de la même archive
+locale, avec une limite de cinq passages et un délai global de 25 secondes.
+Il refuse les redirections vers Internet ou un autre service. Les boucles et
+erreurs restent signalées. Les images relatives utilisent l’adresse de la cible.
+
+Si l’aperçu échoue, **Réessayer** relance la lecture ; **Ouvrir le document
+d’origine** essaie le lecteur Kiwix ou PDF directement, dans un nouvel onglet.
+Ce repli ne garantit pas que l’original existe. Copier l’adresse du portail et le
+titre pour signaler un échec persistant ; un résultat trouvé n’est pas encore un
+document lu. Les couleurs des liens à l’intérieur des archives dépendent aussi
+de la source et ne constituent pas un indicateur fiable de disponibilité.
 
 ## Comprendre une recherche partielle
 
@@ -72,19 +91,23 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.1.36** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.5.0** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Réglages → Vérifier la recherche**.
-3. Laisser les huit recherches se terminer. Elles interrogent les documents réels,
+3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
+   puis lancer. Le contrôle complet peut prendre plusieurs minutes. Ils interrogent les documents réels,
    sans démarrer le modèle, préparer de contenu ni modifier la bibliothèque.
    **Arrêter la vérification** conserve les résultats déjà reçus.
-4. Ouvrir les résultats dans leurs onglets et noter s’ils répondent réellement au
-   besoin, surtout pour le feu et le générateur à pédales. Une recherche terminée
-   n’est pas une validation de sa pertinence.
+4. Ouvrir les résultats dans leurs onglets et, après lecture, choisir celui qui
+   répond réellement au besoin dans le menu sous la recherche. **Aucun de ces résultats**
+   et **Je ne peux pas encore juger** restent possibles. Les autres recherches restent
+   **À vérifier** ; terminer la mesure ne les valide pas automatiquement.
 5. **Télécharger le rapport** conserve la version du serveur, les requêtes, les
    délais et les titres/identifiants des cinq premiers résultats, avec les limites
-   signalées. Il ne contient pas l’historique des conversations. Ce fichier permet
-   de comparer les résultats après une correction.
+   signalées. Le contrôle complet ajoute la version de sa liste et les besoins
+   visés ; les avis humains et leurs rangs sont conservés séparément des mesures.
+   Le rapport ne contient pas l’historique des conversations. Le télécharger avant
+   de fermer ou relancer : les avis ne sont pas enregistrés sur le serveur.
 6. Lors d’un usage volontaire de l’assistant, comparer une nouvelle question en
    rapide et sa relance sur Wikipédia. Noter quelle étape prend du temps et les
    sources lues. Ne pas lever le mode jeu ni forcer un démarrage pour cette recette.
@@ -103,6 +126,6 @@ Famille → Mon appareil → Réglages → Mémoire de l’assistant permet de r
 
 ## Diagnostic depuis 0.4.0
 
-Le rapport comporte dix recherches, dont « faire du feux » avec Toute la bibliothèque puis Autonomie et résilience, ainsi qu’un diagnostic préalable sans IA. Il distingue Kiwix joignable, catalogue en direct/en cache/ancien/indisponible et les raisons d’échec. L’ancien catalogue utilisé en repli est daté ; sa présence ne prouve pas la disponibilité de toutes les archives. Le diagnostic prépare parfois le cache : son temps est séparé des requêtes suivantes.
+Le contrôle court comporte dix recherches, dont « faire du feux » avec Toute la bibliothèque puis Autonomie et résilience, ainsi qu’un diagnostic préalable sans IA. Il distingue Kiwix joignable, catalogue en direct/en cache/ancien/indisponible et les raisons d’échec. L’ancien catalogue utilisé en repli est daté ; sa présence ne prouve pas la disponibilité de toutes les archives. Le diagnostic prépare parfois le cache : son temps est séparé des requêtes suivantes. Depuis 0.5.0, le contrôle complet étend cette recette à 32 demandes versionnées, sans prolonger obligatoirement le contrôle court.
 
 Un avertissement visible précède les résultats incomplets. Une « mention du sujet dans le texte » n’est pas une preuve que le document explique sa réalisation. La couverture porte sur les textes disponibles, pas sur les paroles de vidéos, les scans sans OCR ni la qualité d’une procédure. Voir le [guide d’indexation automatique](indexation-archives.md).

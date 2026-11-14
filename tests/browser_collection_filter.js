@@ -9,7 +9,7 @@ async page => {
     guides:[{id:'guide:energie-fr.pdf',title:'Guide d’électricité',language:'Français',description:'Organisme de test · Édition 2026',ready:true,bytes:3}],models:[],note:'Inventaire fictif de recette'}
   }));
   await page.setViewportSize({width:1440,height:950});
-  await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+  await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   await page.waitForFunction(()=>document.querySelectorAll('#next-collections .data-card').length===3);
   const field=page.locator('#collection-filter'),visible=()=>page.locator('#next-collections .data-card:visible').count();
   const opening=await page.locator('#data-books a').getAttribute('href');
@@ -27,7 +27,7 @@ async page => {
   await page.locator('#navigation [data-route="assistant"]').click();
   await page.locator('#navigation [data-route="bibliotheque"]').click();
   check(await field.inputValue()==='electricite','Filtre conservé entre rubriques');
-  await page.reload();await page.waitForFunction(()=>S.authReady&&S.user);
+  await page.reload();await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   check(await field.inputValue()==='electricite','Filtre restauré au rechargement');
   await page.locator('#collection-filter-clear').click();
   check(await visible()===3,'Tout afficher restaure les cartes');

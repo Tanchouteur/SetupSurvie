@@ -58,7 +58,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, recette réelle R1 attendue |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture implémentés en 0.4.0 ; pertinence étendue et R2 à poursuivre |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence de 32 demandes, vocabulaire et lecture redirigée 0.5.0 ; R2 réel attendu |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | À compléter |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | À compléter |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -123,6 +123,13 @@ les index validés restent utilisables pendant la reconstruction. Rapport **R1**
 les cinq premiers résultats des cas documentés, mêmes sources attendues avec et
 sans filtre adapté ; les erreurs restent explicites. Le gain réel et les délais
 sur le fonds de Marc sont mesurés par **R2**, sans les déduire de petites fixtures.
+
+**Livré en 0.5.0 :** 32 demandes versionnées, dont huit de vérification séparées
+des 24 cas de réglage, sources attendues uniquement dans les fixtures fictives,
+contrôle complet optionnel sur le site et choix humain du résultat utile exporté.
+Quatre lacunes de vocabulaire FR/EN ont été reproduites puis corrigées. Les
+redirections d’articles sont prises en charge ; la capture « Document indisponible »
+de Marc reste sans adresse précise, donc sa cause réelle n’est pas certifiée.
 
 ### L3 — Deux espaces, collections et noms compréhensibles
 

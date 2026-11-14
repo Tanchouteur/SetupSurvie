@@ -54,6 +54,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_search_marc_report.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_search.py -v
       - run: python -m unittest discover -s tests -p test_search_relevance.py -v
+      - run: python -m unittest discover -s tests -p test_search_reference.py -v
+      - run: python -m unittest discover -s tests -p test_library_redirects.py -v
       - run: python -m unittest discover -s tests -p test_library_monitor.py -v
       - run: python -m unittest discover -s tests -p test_next_portal.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v

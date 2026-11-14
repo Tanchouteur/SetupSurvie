@@ -2,6 +2,7 @@
 
 - [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
+- [Référence de pertinence et lecture](essais/2026-11-14-reference-recherche-et-lecture.md) — bilan 0.5.0, 32 demandes et redirections d’articles ; validation en cours.
 - [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.4.0, automatisation et pause.
 - [Indexation automatique et diagnostic](essais/2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0, CI Linux/Windows et navigateurs réussie ; recette du fonds réel à faire.
 - [Rapport de Marc et indexation](essais/2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0 et limites.
@@ -34,7 +35,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
-- [Recherche documentaire et recette depuis le site](utilisation/recherche-documentaire.md) — guide actuel 0.1.36 : pertinence, collections, assistant et vérification Windows sans terminal.
+- [Recherche documentaire et recette depuis le site](utilisation/recherche-documentaire.md) — guide actuel 0.5.0 : pertinence, lecture, collections et contrôles court/complet sans terminal.
 
 - [Nouvelle interface Windows/Linux](utilisation/nouvelle-interface.md) — guide actuel 0.1.35 : organisation, conversation, suivi réel, navigation et mise à jour normale.
 

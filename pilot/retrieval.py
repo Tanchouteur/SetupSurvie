@@ -12,7 +12,7 @@ def normal(text):
 
 # Intent words are useful for ranking, but must not exclude a book that uses
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
-ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre'.split())
+ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
 EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y'.split())
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
 # Related technical expressions, not links to hand-picked documents. These also
@@ -29,6 +29,14 @@ CONCEPTS={
  'velo':{'terms':['velo','velos','bicycle','bicycles','bike','bikes'],'fr':['velo'],'en':['bicycle']},
  'eau':{'terms':['eau','water'],'fr':['eau'],'en':['water']},
  'abri':{'terms':['abri','abris','shelter','shelters'],'fr':['abri'],'en':['shelter']},
+ 'couture':{'terms':['couture','coudre','recoudre','ravauder','sewing','mending'],'fr':['couture'],'en':['sewing']},
+ 'vetement':{'terms':['vetement','vetements','garment','garments','clothes','clothing'],'fr':['vetement'],'en':['clothes']},
+ 'panneau':{'terms':['panneau','panneaux','panel','panels'],'fr':['panneau'],'en':['panel']},
+ 'solaire':{'terms':['solaire','solaires','solar','photovoltaic','photovoltaique'],'fr':['solaire'],'en':['solar']},
+ 'conserves':{'terms':['conserve','conserves','canning'],'fr':['conserves'],'en':['canning']},
+ 'legume':{'terms':['legume','legumes','vegetable','vegetables'],'fr':['legumes'],'en':['vegetables']},
+ 'affutage':{'terms':['affutage','affuter','aiguiser','sharpening','sharpen'],'fr':['affutage'],'en':['sharpening']},
+ 'outil':{'terms':['outil','outils','tool','tools'],'fr':['outil'],'en':['tool']},
 }
 
 
@@ -55,7 +63,7 @@ class Plan:
 def plan(query,words,synonyms,collection=''):
     raw=normal(query)
     detected=next((key for key,aliases in COLLECTIONS.items() if any(re.search(r'\b'+re.escape(normal(alias))+r'\b',raw) for alias in aliases)), '')
-    practical=bool(re.search(r'\b(comment|faire|allumer|allumage|fabriquer|fabrication|construire|construction|reparer|reparation|entretenir|entretien|realiser|techniques|how|build|make|making|repair|tutorial)\b',raw)) and not re.search(r'\b(histoire|archeologie|history|origines)\b',raw)
+    practical=bool(re.search(r'\b(comment|faire|allumer|allumage|fabriquer|fabrication|construire|construction|reparer|reparation|entretenir|entretien|realiser|installer|installation|recoudre|coudre|affuter|aiguiser|techniques|how|build|make|making|repair|tutorial)\b',raw)) and not re.search(r'\b(histoire|archeologie|history|origines)\b',raw)
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
     meaningful=[w for w in terms if w not in ACTIONS]
@@ -146,10 +154,12 @@ def ordered(items,query,limit):
 
 
 INTENTS={
- 'repair':r'\b(reparer|reparation|repair|repairing|maintenance|entretien|entretenir)\b',
+ 'repair':r'\b(reparer|reparation|repair|repairing|maintenance|entretien|entretenir|recoudre|ravauder|mending)\b',
  'preserve':r'\b(conserver|conservation|stocker|storage|preserving|preservation|saving|save)\b',
  'purify':r'\b(potable|potabilisation|potabiliser|purifier|purification|filtrer|filtration|disinfection|desinfection|purifying|treatment|traitement)\b',
  'build':r'\b(fabriquer|fabrication|construire|construction|build|building|assembly|assemble|diy)\b',
+ 'install':r'\b(installer|installation|install|installing)\b',
+ 'sharpen':r'\b(affutage|affuter|aiguiser|sharpen|sharpening)\b',
 }
 
 def article_language(item):
@@ -163,5 +173,5 @@ def article_language(item):
 def domains(item):
     # Conservative automatic indication; never certifies a procedure.
     text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
-    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|conservation alimentaire|food preservation)\b',text))
+    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|food preservation|conserves|canning|solaire|solar|photovoltaic|photovoltaique|affutage|sharpening)\b',text))
     return ['resilience'] if resilience else ['culture']

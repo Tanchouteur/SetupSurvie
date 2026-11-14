@@ -205,6 +205,15 @@ $('learning-ask').onclick=()=>{
 
 function documentText(source){let text=String(source.text||'');if(/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)&&text.startsWith('Identifiant de source : ')){const end=text.indexOf('\n\n');if(end>=0)text=text.slice(end+2);}const lines=text.split('\n'),norm=x=>x.trim().replace(/[’‘]/g,"'").toLocaleLowerCase();while(lines.length&&(!lines[0].trim()||norm(lines[0])===norm(source.title)))lines.shift();return lines.join('\n');}
 function renderDocument(target,source){const text=documentText(source);if(source.id?.split('#')[0].endsWith('.md')){renderText(target,text);return;}if(!text.trim()){target.textContent='Cet aperçu ne contient pas de texte lisible. Ouvrez le document d’origine pour le consulter.';return;}for(const line of text.split('\n')){if(!line.trim())continue;const paragraph=element('p',line);target.append(paragraph);}}
+function originalSourceURL(id){
+  const archive=id.startsWith('zim:'),guide=id.startsWith('guide:');if(!archive&&!guide)return null;
+  let path=id.slice(archive?4:6).replace(/#page=\d+$/,'');
+  try{for(let count=0;count<3;count++){const decoded=decodeURIComponent(path);if(decoded===path)break;path=decoded;}}catch(_){return null;}
+  if(!path||path.startsWith('/')||path.includes('\\')||path.includes('\0')||/%[a-f0-9]{2}/i.test(path)||path.split('/').some(part=>part==='.'||part==='..'))return null;
+  const encoded=path.split('/').map(encodeURIComponent).join('/');
+  if(archive)return localServiceURL('/content/'+encoded,'kiwix');
+  return path.toLowerCase().endsWith('.pdf')?'/pdf.html?id='+encodeURIComponent(id):'/guides/'+encoded;
+}
 async function readSource(id){
   view('library');document.querySelectorAll('.result').forEach(node=>node.classList.toggle('selected',node.dataset.source===id));S.reader=id;const reader=$('reader');reader.hidden=false;reader.replaceChildren(element('p','Ouverture du document…','muted'));
   document.querySelector('.reading-layout').classList.add('reading');
@@ -219,7 +228,14 @@ async function readSource(id){
     if(source.preview)reader.append(element('p','Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
     const original=element('a',source.id.includes('.pdf')?'Lire le PDF illustré →':'Ouvrir le document d’origine →','secondary-link');
     const archiveLink=/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)?source.text.match(/Original illustré local : (https?:\/\/[^\s]+)/):null;if(archiveLink){try{const path=new URL(archiveLink[1]).pathname;if(path.startsWith('/content/')){original.href=localServiceURL(path,'kiwix');original.textContent='Voir la page illustrée d’origine →';}}catch(_){}}if(!original.hasAttribute('href')&&source.id.startsWith('guide:'))original.href=source.url;else if(!original.hasAttribute('href')){original.href=localServiceURL(source.url,'kiwix');}original.target='_blank';original.rel='noopener';actions.append(original);document.dispatchEvent(new CustomEvent('survie:source',{detail:source}));
-  }catch(e){reader.replaceChildren(element('p',e.message,'error'));}
+  }catch(e){
+    if(S.reader!==id)return;
+    const message=element('p','L’aperçu de ce document n’a pas pu être ouvert.','error'),actions=element('div',undefined,'reader-actions');
+    actions.append(button('← Résultats',()=>{reader.hidden=true;document.querySelector('.reading-layout').classList.remove('reading');},'secondary'),button('Réessayer',()=>readSource(id),'secondary'));
+    const direct=originalSourceURL(id);
+    if(direct){const link=element('a','Ouvrir le document d’origine →','secondary-link');link.href=direct;link.target='_blank';link.rel='noopener';actions.append(link);}
+    reader.replaceChildren(actions,message,element('p',e.message,'small muted'),element('p','Un résultat de recherche ne garantit pas que sa page soit encore lisible. L’original peut fonctionner même lorsque cet aperçu échoue.','small muted'));
+  }
 }
 function askSource(source){
   if(S.job){toast('Attendez la réponse en cours ou annulez-la.');return;}
