@@ -54,6 +54,9 @@ async def lifespan(app):
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
     yield
+    try:
+        with optional_feature('search_experiment') as module:await module.cancel(reason='service_restarted')
+    except HTTPException:pass
     await calibration.cancel(reason='service_restarted')
     for task in list(translations.ACTIVE.values()):task.cancel()
     if translations.ACTIVE:await asyncio.gather(*list(translations.ACTIVE.values()),return_exceptions=True)
@@ -62,7 +65,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.7.0'
+VERSION='0.8.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -829,6 +832,40 @@ class CalibrationApply(BaseModel):
 
 class ContextModel(BaseModel):
     model:str=Field(max_length=100)
+
+
+class SearchExperimentChoice(BaseModel):
+    mode:str=Field(default='rapide',max_length=40)
+    suite:Literal['verification','all']='verification'
+    latency_budget_seconds:int=Field(default=15,ge=1,le=60)
+
+
+class SearchExperimentReview(BaseModel):
+    id:str=Field(pattern=r'^[a-f0-9]{32}$')
+    case_id:str=Field(max_length=100)
+    judgments:dict[str,Literal['useful','unrelated','uncertain']]=Field(max_length=12)
+
+
+@app.get('/api/admin/search-experiment')
+async def get_search_experiment(value=Depends(admin)):
+    with optional_feature('search_experiment') as module:return {'version':VERSION,**module.status()}
+
+
+@app.post('/api/admin/search-experiment/start',status_code=202)
+async def start_search_experiment(body:SearchExperimentChoice,value=Depends(admin)):
+    with optional_feature('search_experiment') as module:
+        report=await module.start(body.mode,body.suite,body.latency_budget_seconds*1000)
+        report['version']=VERSION;module.save(report);return report
+
+
+@app.post('/api/admin/search-experiment/stop')
+async def stop_search_experiment(value=Depends(admin)):
+    with optional_feature('search_experiment') as module:return await module.cancel()
+
+
+@app.post('/api/admin/search-experiment/review')
+async def review_search_experiment(body:SearchExperimentReview,value=Depends(admin)):
+    with optional_feature('search_experiment') as module:return module.review(body.id,body.case_id,body.judgments)
 
 
 @app.get('/api/admin/assistant/calibration')

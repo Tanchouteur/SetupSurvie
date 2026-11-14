@@ -42,6 +42,13 @@ class Abort(Exception):
 def running():return any(not task.done() for task in ACTIVE.values())
 
 
+def competing_trial():
+    # An optional module can be absent; if it is running, it is already loaded.
+    import sys
+    module=sys.modules.get(__package__+'.search_experiment')
+    return module is not None and module.running()
+
+
 def location():return store.ROOT/'calibration/latest.json'
 
 
@@ -198,11 +205,11 @@ async def run(report,options):
 
 async def start(mode,max_context=32768,*,reserve_ram_bytes=RAM_RESERVE,reserve_video_bytes=VIDEO_RESERVE,max_first_text_ms=90000,trial_timeout_seconds=600):
     if mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
-    if running() or engine.LOCK.locked():raise HTTPException(409,'Une réponse ou un essai est déjà en cours.')
+    if running() or competing_trial() or engine.LOCK.locked():raise HTTPException(409,'Une réponse ou un essai est déjà en cours.')
     options={'max_context':max_context,'reserve_ram_bytes':reserve_ram_bytes,'reserve_video_bytes':reserve_video_bytes,'max_first_text_ms':max_first_text_ms,'trial_timeout_seconds':trial_timeout_seconds}
     try:await guard(options,starting=True)
     except Abort as error:raise HTTPException(409,REASONS.get(str(error),REASONS['test_unavailable']))
-    if running() or engine.LOCK.locked():raise HTTPException(409,'Une autre demande vient de démarrer. Réessayez après sa fin.')
+    if running() or competing_trial() or engine.LOCK.locked():raise HTTPException(409,'Une autre demande vient de démarrer. Réessayez après sa fin.')
     identifier=uuid.uuid4().hex
     report={'schema':1,'kind':'SetupSurvie context calibration','id':identifier,'created':time.time(),'status':'running','mode':mode,
             'model':engine.MODES[mode]['model'],'settings':options,'trials':[],'recommendation':None,'previous_context':engine.context_size(engine.MODES[mode]['model'])}

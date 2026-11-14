@@ -17,6 +17,11 @@ choisir les résultats utiles ou indiquer qu’aucun ne répond ; laisser les au
 à vérifier puis exporter. La [procédure actuelle](../utilisation/recherche-documentaire.md#vérification-sur-le-windows-de-marc-depuis-le-site)
 distingue mesures et avis humains. Aucun résultat fictif n’est attendu sur le PC réel.
 
+Depuis 0.8.0, le [comparatif facultatif IA](../utilisation/comparer-recherche-ia.md)
+prépare la décision L8 avec trois méthodes, huit ou 32 demandes et avis humains
+conservés. Il charge explicitement un modèle local ; le contrôle sans IA reste
+distinct. Exporter ce rapport après relecture pour compléter R2/R4.
+
 Les futurs diagnostics ci-dessous doivent être livrés avec une commande ou un
 bouton explicite, un arrêt possible et un export JSON lisible par l’agent. Ne pas
 exiger TeamViewer ni un accès distant de développement pour lancer les recettes.

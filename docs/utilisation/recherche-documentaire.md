@@ -140,3 +140,10 @@ pause, les réserves et les demandes prioritaires ; R4 réel reste à exécuter.
 Le contrôle court comporte dix recherches, dont « faire du feux » avec Toute la bibliothèque puis Autonomie et résilience, ainsi qu’un diagnostic préalable sans IA. Il distingue Kiwix joignable, catalogue en direct/en cache/ancien/indisponible et les raisons d’échec. L’ancien catalogue utilisé en repli est daté ; sa présence ne prouve pas la disponibilité de toutes les archives. Le diagnostic prépare parfois le cache : son temps est séparé des requêtes suivantes. Depuis 0.5.0, le contrôle complet étend cette recette à 32 demandes versionnées, sans prolonger obligatoirement le contrôle court.
 
 Un avertissement visible précède les résultats incomplets. Une « mention du sujet dans le texte » n’est pas une preuve que le document explique sa réalisation. La couverture porte sur les textes disponibles, pas sur les paroles de vidéos, les scans sans OCR ni la qualité d’une procédure. Voir le [guide d’indexation automatique](indexation-archives.md).
+
+## Comparatif facultatif depuis 0.8.0
+
+Famille peut [comparer une aide IA à la recherche](comparer-recherche-ia.md),
+avec reformulations bilingues, reclassement et relecture humaine. Cette expérience
+n’ajoute aucun appel au modèle dans la recherche habituelle ; l’intégration reste
+reportée jusqu’à une mesure réelle favorable et répétée.

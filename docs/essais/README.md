@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Comparatif de recherche IA](2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0 ; mesure réelle attendue.
+
 - [Recettes progressives chez Marc](recettes-progressives-marc.md) — protocole prévu, outils actuels et rapports à développer.
 - [Mesures assistant et contexte](2026-11-14-mesures-assistant-et-contexte.md) — bilan 0.7.0, essais simulés ; R4 réel à faire.
 - [Classements et collections corrigibles](2026-11-14-classement-et-collections.md) — bilan 0.6.0.

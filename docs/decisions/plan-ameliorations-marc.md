@@ -65,7 +65,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | À développer |
-| L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | À évaluer puis décider |
+| L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | À réaliser progressivement |
 
 ### L1 — Installation, téléchargements et indexation automatique
@@ -276,6 +276,12 @@ mais doit nommer la lacune et sa prochaine action. Utilité réelle : **R3**.
 **Fin technique :** comparatif reproductible, rapport **R2/R4**, décision et coûts
 consignés ; le moteur sans IA reste disponible. L’absence de mesure bloque
 l’activation par défaut de l’option, pas les autres lots.
+
+**Implémenté en 0.8.0 :** comparatif des trois méthodes, référence embarquée,
+avis humains persistants, indicateurs séparés et budget choisi. Aucun appel IA
+n’est ajouté à la recherche ordinaire. Le [guide](../utilisation/comparer-recherche-ia.md)
+définit la recette ; la décision d’intégration attend le rapport réel R2/R4.
+L’index sémantique est reporté tant que ce bénéfice n’est pas établi.
 
 ### L9 — Recette commune, documentation et publication
 

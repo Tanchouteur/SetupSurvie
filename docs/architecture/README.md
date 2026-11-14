@@ -303,3 +303,14 @@ prioritaire ; pause/pression/annulation interrompent le test sans reprise forcé
 L’application du résultat est explicite et liée au digest, à la limite native et
 au matériel observé. Les rapports privés restent sous `calibration/`, le réglage
 précédent et le dernier contexte mesuré dans `settings`, sans migration destructive.
+
+## Comparatif facultatif de recherche (0.8.0)
+
+`pilot/search_experiment.py` utilise le moteur documentaire commun puis deux appels
+structurés au modèle local présent. Il est accessible uniquement par actions Famille
+`/api/admin/search-experiment`, `/start`, `/stop` et `/review`. Le verrou moteur,
+les réserves et la priorité des conversations sont partagés avec la calibration ;
+la recherche normale ne dépend pas de ce module optionnel. Rapports durables privés
+dans `search-experiments/`, pas de reprise automatique ni de réglage modifié.
+`pilot/search-reference.json` est la référence embarquée ; le générateur de portail
+produit sa copie statique. Voir le [guide](../utilisation/comparer-recherche-ia.md).

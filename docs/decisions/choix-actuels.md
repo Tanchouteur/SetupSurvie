@@ -165,3 +165,11 @@ appliqué explicitement ; aucun remplissage systématique de RAM ni reprise du m
 jeu. La lecture associée préparée par le portail est réutilisée. Les mesures et
 budgets sont testés sur HTTP simulé ; la vitesse, le contexte stable et la qualité
 des modèles chez Marc attendent toujours R4 réel.
+
+## Comparatif de recherche 0.8.0 — 14 novembre 2026
+
+Le [comparatif volontaire](../utilisation/comparer-recherche-ia.md) est retenu pour
+mesurer reformulation bilingue et reclassement sur le modèle local. Les avis humains,
+cas réservés, faux positifs, couverture et budget de délai conditionnent la décision.
+L’aide reste désactivée dans la recherche ordinaire ; l’index sémantique est reporté
+jusqu’au bénéfice établi par R2/R4 réel. Aucun nouveau modèle n’est imposé.

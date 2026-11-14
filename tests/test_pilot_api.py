@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
-from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory,assistant_metrics,calibration
+from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory,assistant_metrics,calibration,search_experiment
 
 
 class PilotAPITests(unittest.TestCase):
@@ -52,6 +52,19 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/admin/assistant/calibration/start',json={'mode':'rapide','max_context':32768},headers=headers).status_code,202)
             self.assertEqual(start.await_args.kwargs['reserve_ram_bytes'],4*1024**3)
             self.assertEqual(start.await_args.kwargs['reserve_video_bytes'],512*1024**2)
+
+    def test_search_experiment_is_explicit_family_only_with_bounded_options(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        self.assertEqual(self.client.get('/api/admin/search-experiment').status_code,403)
+        self.assertEqual(self.client.post('/api/admin/search-experiment/start',json={},headers=headers).status_code,403)
+        self.client.cookies.clear();self.login('admin')
+        with patch.object(search_experiment,'start',AsyncMock(return_value={'schema':1,'id':'a'*32,'status':'running','cases':[]})) as start:
+            self.assertEqual(self.client.get('/api/admin/search-experiment').status_code,200);start.assert_not_called()
+            self.assertEqual(self.client.post('/api/admin/search-experiment/start',json={'latency_budget_seconds':500},headers=headers).status_code,422)
+            response=self.client.post('/api/admin/search-experiment/start',json={'suite':'verification','latency_budget_seconds':15},headers=headers)
+            self.assertEqual(response.status_code,202);self.assertEqual(response.json()['version'],gateway.VERSION)
+            self.assertEqual(start.await_args.args,('rapide','verification',15000))
+        self.assertEqual(self.client.post('/api/admin/search-experiment/review',json={'id':'a'*32,'case_id':'verify-fire','judgments':{'x':'invented'}},headers=headers).status_code,422)
 
     def test_measurements_export_requires_job_owner_and_excludes_conversation(self):
         self.login('alice')

@@ -51,13 +51,16 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const diagnosticPage=await context.newPage();
       const diagnosticRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_assistant_diagnostics.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const diagnosticResult=await diagnosticRecipe(diagnosticPage);await diagnosticPage.close();
+      const experimentPage=await context.newPage();
+      const experimentRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_experiment.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const experimentResult=await experimentRecipe(experimentPage);await experimentPage.close();
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);
       const nextTranslation=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,next:nextResult,nextTranslation:nextTranslationResult}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,next:nextResult,nextTranslation:nextTranslationResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}
