@@ -83,6 +83,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Consoles spontanées Windows — 14 novembre 2026](essais/2026-11-14-consoles-windows.md) — capture native, mesures NVML et démarrage sans console, 0.1.36.
+
 - [Recherche et confort des conversations — 14 novembre 2026](essais/2026-11-14-recherche-et-conversations.md) — correction Kiwix, limites explicites et conversation lisible, 0.1.35.
 - [Recherche des ressources et cartes directes — 13 novembre 2026](essais/2026-11-13-recherche-collections-et-cartes.md) — filtre Collections, relief local par défaut et non-régression de l’interface 0.1.34.
 

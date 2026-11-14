@@ -48,6 +48,17 @@ function Add-PilotShortcut([string]$Folder, [string]$Name, [string]$Script, [boo
     $shortcut = $shell.CreateShortcut($path)
     $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $Script + '" -WorkDir "' + $WorkDir + '"'
+    if ($Script -like '*startup-windows.ps1') {
+        $background=Join-Path (Split-Path $Script) 'windows_background.py'
+        $runtimePath=Join-Path (Split-Path $Script) 'startup-settings.json'
+        if ((Test-Path -LiteralPath $background) -and (Test-Path -LiteralPath $runtimePath)) {
+            $runtime=Get-Content -LiteralPath $runtimePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            $pythonw=Join-Path (Split-Path $runtime.python) 'pythonw.exe'
+            if (-not (Test-Path -LiteralPath $pythonw)) { throw 'Python sans console introuvable.' }
+            $shortcut.TargetPath=$pythonw
+            $shortcut.Arguments='"'+$background+'" -WorkDir "'+$WorkDir+'"'
+        }
+    }
     if ($OpenBrowser) { $shortcut.Arguments += ' -OpenBrowser' }
     elseif ($Script -like '*content-monitor.ps1') { $shortcut.Arguments += ' -Continu' }
     elseif ($Script -like '*startup-windows.ps1') { $shortcut.Arguments += ' -Startup' }

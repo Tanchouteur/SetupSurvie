@@ -1,4 +1,5 @@
 import io
+import os
 import json
 from pathlib import Path
 import re
@@ -12,6 +13,7 @@ import lab_library_ranges as ranges
 
 
 class RangeTransferTests(unittest.TestCase):
+    @unittest.skipUnless(hasattr(os,'pwrite'),'Écriture positionnelle du laboratoire Linux uniquement.')
     def test_preserves_prefix_and_resumes_completed_ranges(self):
         payload = b'abcdefghijklmnopqrstuvwxyz'
         requested = []

@@ -16,12 +16,20 @@ import setup,control
 
 
 class ControlTests(unittest.TestCase):
-    def test_hardware_query_is_silent_and_accepts_fractional_gpu_temperature(self):
+    def test_nonwindows_hardware_query_accepts_fractional_gpu_temperature(self):
         output = SimpleNamespace(returncode=0, stdout='NVIDIA GPU, 8192, 1024, 10, 46.73\n')
-        with patch.object(control.subprocess, 'run', return_value=output) as run:
+        with patch.object(control,'os',SimpleNamespace(name='posix')),patch.object(control.subprocess, 'run', return_value=output) as run:
             value = control.hardware(self.c)
         self.assertEqual(value['gpus'][0]['temperature'], 46.73)
-        self.assertEqual(run.call_args.kwargs['creationflags'], subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        self.assertNotIn('creationflags',run.call_args.kwargs)
+
+    def test_windows_hardware_never_starts_a_gpu_subprocess_even_if_driver_fails(self):
+        import gpu_windows
+        from unittest.mock import MagicMock
+        for response in ([{'name':'native GPU','total':8,'used':2,'utilization':10,'temperature':47}],OSError('driver absent')):
+            with patch.object(control,'os',SimpleNamespace(name='nt')),patch('ctypes.windll',MagicMock(),create=True),patch.object(gpu_windows,'query',side_effect=response if isinstance(response,Exception) else None,return_value=response),patch.object(control.subprocess,'run',side_effect=AssertionError('No helper executable')):
+                value=control.hardware(self.c)
+            self.assertEqual(value['gpus'],[] if isinstance(response,Exception) else response)
 
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)

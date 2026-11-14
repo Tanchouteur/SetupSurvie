@@ -60,4 +60,19 @@ class AutoStartTests(unittest.TestCase):
         self.assertFalse(windows_resume.authorized_plan_path(work,data,work/'library-web'/'unknown'/'plan.json'))
         self.assertFalse(windows_resume.authorized_plan_path(work,data,work/'settings.json'))
 
+    def test_update_refresh_keeps_preferences_and_uses_owned_task_only(self):
+        windows_autostart.prepare(self.app,self.c)
+        config={**self.app.load(),'inference_autostart':True};setup.write_json(self.app.settings_path,config)
+        before=self.app.settings_path.read_bytes()
+        with patch.object(windows_autostart,'os') as operating,patch.object(windows_autostart.shutil,'which',return_value='powershell-fixture'),patch.object(setup,'run') as run:
+            operating.name='nt';windows_autostart.refresh(self.app,config)
+        self.assertEqual(self.app.settings_path.read_bytes(),before)
+        self.assertIn('-RefreshOnly',run.call_args.args[0])
+        self.assertTrue((self.root/'maintenance/windows_background.py').exists())
+
+    def test_unconfigured_update_does_not_enable_startup(self):
+        with patch.object(setup,'run') as run:windows_autostart.refresh(self.app,self.c)
+        run.assert_not_called()
+        self.assertFalse((self.root/'maintenance/startup-settings.json').exists())
+
 if __name__=='__main__':unittest.main()

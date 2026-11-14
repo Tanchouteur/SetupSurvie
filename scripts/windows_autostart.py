@@ -10,7 +10,7 @@ from delivery_paths import destination
 from pilot import durable
 
 
-def prepare(app,config,*,python=None,find=shutil.which):
+def prepare(app,config,*,python=None,find=shutil.which,preserve_preferences=False):
     if config['target']!='windows' or not config.get('app_dir'):return None
     application=setup.safe_path(config['app_dir']);base=application.parent
     stable=destination(base,'maintenance')
@@ -40,11 +40,25 @@ def prepare(app,config,*,python=None,find=shutil.which):
            'python':str(executable),'ollama':find('ollama') or (str(data/'tools/Ollama/ollama.exe') if (data/'tools/Ollama/ollama.exe').is_file() else None),'paths':list(dict.fromkeys(paths)),'desktop':desktop,
            'task_name':'SetupSurvie-Demarrage-'+hashlib.sha256(str(app.work.resolve()).casefold().encode()).hexdigest()[:8]}
     setup.write_json(previous,state,private=True)
-    config={**config,'inference_autostart':False}
-    setup.write_json(app.settings_path,config,private=True)
-    for name in ('startup-windows.ps1','stop-windows.ps1','windows-common.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
+    if not preserve_preferences:
+        config={**config,'inference_autostart':False}
+        setup.write_json(app.settings_path,config,private=True)
+    for name in ('windows_background.py','startup-windows.ps1','stop-windows.ps1','windows-common.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
         origin=setup.ROOT/'scripts'/name;target=destination(stable,name)
         if origin.resolve()==target.resolve():continue
         temporary=target.with_name(target.name+'.pending')
         shutil.copyfile(origin,temporary);durable.sync_file(temporary);durable.publish(temporary,target)
     return stable/'startup-windows.ps1'
+
+
+def refresh(app,config):
+    """Migrate only an already configured startup, preserving a disabled task."""
+    if config.get('target')!='windows' or not config.get('app_dir'):return
+    stable=setup.safe_path(config['app_dir']).parent/'maintenance'
+    if not (stable/'startup-settings.json').is_file():return
+    launcher=prepare(app,config,preserve_preferences=True)
+    if os.name=='nt':
+        shell=shutil.which('powershell.exe')
+        if not shell:raise setup.SetupError('PowerShell requis pour actualiser le démarrage géré.')
+        setup.run([shell,'-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',
+                   str(launcher.with_name('register-startup-windows.ps1')),'-WorkDir',str(app.work),'-RefreshOnly'],capture=True)

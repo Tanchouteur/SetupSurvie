@@ -27,7 +27,7 @@ class StorageGuardTests(unittest.TestCase):
             mount = Path(root)
             (mount / 'private').mkdir()
             (mount / 'private/inference-paused.json').write_text('{}')
-            with patch.object(lab, 'MOUNT', mount), patch.object(lab, 'checked_mount'), patch.object(lab, 'command') as run:
+            with patch.object(lab, 'MOUNT', mount), patch.object(lab, 'checked_mount'), patch.object(lab, 'command') as run, patch.object(lab.os,'getuid',return_value=1000,create=True):
                 lab.podman('restart', lab.PREFIX + 'portal')
                 run.assert_called_once()
 
@@ -51,8 +51,8 @@ class StorageGuardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             image = Path(root) / 'sparse.img'
             with image.open('wb') as stream:
-                stream.truncate(lab.CAPACITY)
-            with patch.object(lab, 'IMAGE', image), patch.object(lab, 'loop_device', return_value=None), \
+                stream.truncate(1024)
+            with patch.object(lab, 'CAPACITY',1024),patch.object(lab, 'IMAGE', image), patch.object(lab, 'loop_device', return_value=None), \
                     patch.object(lab, 'command') as run:
                 run.return_value.returncode = 1
                 with self.assertRaises(RuntimeError):

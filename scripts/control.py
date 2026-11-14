@@ -42,12 +42,16 @@ def hardware(c):
         except (OSError,ValueError,KeyError):pass
     gpu=[]
     try:
-        result=subprocess.run(['nvidia-smi','--query-gpu=name,memory.total,memory.used,utilization.gpu,temperature.gpu','--format=csv,noheader,nounits'],capture_output=True,text=True,timeout=3,creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
-        if result.returncode==0:
-            for line in result.stdout.splitlines():
-                name,total,used,load,temp=[p.strip() for p in line.split(',')]
-                gpu.append({'name':name,'total':int(total)*1024**2,'used':int(used)*1024**2,'utilization':int(load),'temperature':float(temp)})
-    except (OSError,ValueError,subprocess.TimeoutExpired):pass
+        if os.name=='nt':
+            from gpu_windows import query
+            gpu=query()
+        else:
+            result=subprocess.run(['nvidia-smi','--query-gpu=name,memory.total,memory.used,utilization.gpu,temperature.gpu','--format=csv,noheader,nounits'],capture_output=True,text=True,timeout=3)
+            if result.returncode==0:
+                for line in result.stdout.splitlines():
+                    name,total,used,load,temp=[p.strip() for p in line.split(',')]
+                    gpu.append({'name':name,'total':int(total)*1024**2,'used':int(used)*1024**2,'utilization':int(load),'temperature':float(temp)})
+    except (OSError,ValueError,AttributeError,subprocess.TimeoutExpired):pass
     disk=shutil.disk_usage(c['data_dir'])
     return {'memory':memory,'gpus':gpu,'disk':{'total':disk.total,'used':disk.used,'free':disk.free}}
 

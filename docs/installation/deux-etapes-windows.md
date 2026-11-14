@@ -328,3 +328,24 @@ Adapter les deux chemins au dossier existant. Cette commande vérifie les cartes
 prépare les éléments manquants et réindexe le guide cartographique. Le suivi de
 bibliothèque affiche aussi le nombre de fonds présents : les 100 % d’un plan
 Kiwix/PDF ne signifient plus implicitement que des cartes ont été téléchargées.
+
+
+## Démarrage silencieux et migration des lanceurs — 0.1.36
+
+La tâche de surveillance lance `pythonw.exe` avec `windows_background.py`.
+Ce petit lanceur exécute le script PowerShell fixe avec `CREATE_NO_WINDOW`,
+entrées fermées et sorties dans `diagnostics/startup-background.log`. Un échec
+retourne un code non nul au planificateur ; aucune boîte de dialogue ne remplace
+le journal. Les raccourcis automatiques gérés sont migrés vers ce même lanceur.
+Les fenêtres de suivi et de mise à jour ouvertes volontairement restent visibles.
+
+Le rafraîchissement du lanceur de mise à jour actualise aussi les helpers d’un
+démarrage déjà configuré et migre ses tâches gérées. Il conserve les préférences
+IA et ne réactive pas un démarrage ou une reprise volontairement désactivés.
+Un nom de tâche ou un dossier de maintenance appartenant à une autre application
+reste refusé. Le réseau, les données et Ollama ne sont pas réinitialisés.
+
+Sur Windows, les mesures NVIDIA utilisent directement la bibliothèque NVML du
+pilote, dans le processus du contrôleur : aucun `nvidia-smi`, PowerShell ou autre
+exécutable de mesure n’est lancé. Si la bibliothèque manque ou échoue, la mesure
+est indisponible, sans repli vers un programme pouvant créer une console.

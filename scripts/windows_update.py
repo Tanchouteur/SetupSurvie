@@ -38,6 +38,8 @@ def install_launcher(app, config):
         temporary = destination(base, 'Mettre-a-jour-SetupSurvie.cmd.tmp')
         temporary.write_bytes(payload)
         temporary.replace(launcher)
+    import windows_autostart
+    windows_autostart.refresh(app, config)
 
 
 if __name__ == '__main__':

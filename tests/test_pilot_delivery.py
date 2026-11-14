@@ -191,7 +191,7 @@ class DeliveryTests(unittest.TestCase):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         script=application/'scripts/setup.py';script.write_text('software fixture')
         files=[script]
-        for name in ('update-windows.ps1','windows-common.ps1','startup-windows.ps1','stop-windows.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
+        for name in ('windows_background.py','update-windows.ps1','windows-common.ps1','startup-windows.ps1','stop-windows.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
             target=application/'scripts'/name
             target.write_text('# tiny updater fixture')
             files.append(target)

@@ -4,6 +4,7 @@ Les rapports conservent leurs résultats et limites à la date de l’essai. Un 
 
 | Document | Périmètre |
 | --- | --- |
+| [Consoles spontanées Windows — 14 novembre 2026](2026-11-14-consoles-windows.md) | Mesures natives NVML, tâche pythonw, migration des helpers et recette réelle 0.1.36 |
 | [Recherche et confort des conversations — 14 novembre 2026](2026-11-14-recherche-et-conversations.md) | Correction Kiwix et conversation 0.1.35, fixtures sans inférence |
 | [Reprise de bibliothèque et consoles Windows — 13 novembre 2026](2026-11-13-reprise-bibliotheque-windows.md) | Reprise supervisée sans perte des fichiers, certificats et consoles silencieuses, pilote 0.1.24 |
 | [Revue de fiabilité — 12 novembre 2026](revue-fiabilite-2026-11-12.md) | Corrections 0.1.22 et étapes vers une version plus fiable |
