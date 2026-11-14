@@ -100,6 +100,17 @@ class Manager:
         result = {k: state[k] for k in ('phase', 'message', 'options', 'id') if k in state}
         result['index_reader_ready']=self.index_ready()
         result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
+        queued=result['index_queue'];waiting=''
+        if queued['pending']:
+            if queued['hold']:waiting=queued['hold']
+            elif not queued['settings']['enabled']:waiting='disabled'
+            elif index_queue.gaming(self.app.work):waiting='gaming'
+            elif not index_queue.in_window(queued['settings']):waiting='schedule'
+            elif not result['index_reader_ready']:waiting='missing_reader'
+            elif state['phase']=='planned':waiting='selection_pending'
+            elif state['phase'] in ACTIVE and state.get('action')!='index':waiting='other_operation'
+            else:waiting=index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
+        queued['waiting_reason']=waiting
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
@@ -134,7 +145,13 @@ class Manager:
             # Never start during any CLI/web content publication or backup.
             with locked(destination(root,'catalog/content.lock')),locked(destination(root,'catalog/publication.lock')):
                 self.start('index',{'automatic':True})
-        except setup.SetupError:return
+                with index_queue.edit(root) as value:value.pop('last_attempt',None)
+        except setup.SetupError as exc:
+            reason='insufficient_storage' if 'marge' in str(exc).lower() or 'budget' in str(exc).lower() else 'operation_busy'
+            with index_queue.edit(root) as value:
+                previous=value.get('last_attempt',{})
+                if previous.get('reason')!=reason or time.time()-previous.get('at',0)>60:value['last_attempt']={'reason':reason,'at':time.time()}
+            return
 
     def index_ready(self):
         import search_index_tools

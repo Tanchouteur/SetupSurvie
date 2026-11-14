@@ -51,6 +51,14 @@ class SearchIndexQueueTests(unittest.TestCase):
         with patch.object(self.manager,'index_ready',return_value=True),patch.object(self.manager,'start') as start:
             self.manager.auto_index();start.assert_not_called()
 
+    def test_missing_tool_and_storage_deferral_are_visible_without_raw_errors(self):
+        queue.enqueue(self.data,self.item)
+        self.assertEqual(self.manager.status()['index_queue']['waiting_reason'],'missing_reader')
+        with patch.object(self.manager,'index_ready',return_value=True),patch.object(self.manager,'start',side_effect=setup.SetupError('Marge de stockage insuffisante /private/path')):
+            self.manager.auto_index();status=self.manager.status()
+        self.assertEqual(status['index_queue']['waiting_reason'],'insufficient_storage')
+        self.assertNotIn('/private/path',json.dumps(status))
+
     def test_window_handles_midnight_and_settings_reject_unknown_values(self):
         opts={'start_hour':22,'end_hour':6}
         for hour,expected in [(21,False),(22,True),(0,True),(5,True),(6,False)]:
