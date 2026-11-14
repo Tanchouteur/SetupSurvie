@@ -2,6 +2,8 @@
 from contextlib import ExitStack
 from functools import lru_cache
 import json
+import hashlib
+import threading
 import math
 import mmap
 from pathlib import Path
@@ -184,6 +186,32 @@ class Heights:
         return round((a*(1-dx)+b*dx)*(1-dy)+(c*(1-dx)+d*dx)*dy,2)
 
 
+def _height_samples(heights, latitudes, longitudes):
+    # Resolve horizontal interpolation once for all rows; avoid 66,564 complete
+    # coordinate lookups and rounded public elevation calls for every tile.
+    columns=[]
+    for lon in longitudes:
+        lon=((lon+180)%360)-180;east=math.floor(lon)
+        columns.append((east,lon-east))
+    rows=[]
+    for lat in latitudes:
+        north=math.floor(lat);row=[];prepared={}
+        for east,fraction in columns:
+            if east not in prepared:
+                pair=heights.grids.get(tile_name(lat,east+.5))
+                if pair:
+                    grid,n=pair;fy=(1-(lat-north))*(n-1);y=min(n-2,math.floor(fy))
+                    prepared[east]=(grid,n,y,fy-y)
+                else:prepared[east]=None
+            pair=prepared[east]
+            if pair is None:row.append(None);continue
+            grid,n,y,dy=pair;fx=fraction*(n-1);x=min(n-2,math.floor(fx));dx=fx-x
+            a,b=struct.unpack_from('>hh',grid,2*(y*n+x));c,d=struct.unpack_from('>hh',grid,2*((y+1)*n+x))
+            row.append(None if -32768 in (a,b,c,d) else (a*(1-dx)+b*dx)*(1-dy)+(c*(1-dx)+d*dx)*dy)
+        rows.append(row)
+    return rows
+
+
 def elevation(lat,lon):
     lat,lon=coordinates(lat,lon)
     with Heights() as heights:
@@ -199,25 +227,62 @@ def profile(lat1,lon1,lat2,lon2):
     return {'distance_m':meters,'points':points,'note':'Coupe du terrain en ligne droite, pas un chemin praticable ni un itinéraire. Altitudes approximatives.'}
 
 
-def terrain_png(z,x,y):
-    signature=tuple((str(root), (root/'manifest.json').stat().st_mtime_ns) for root,_ in datasets())
-    return _terrain_png(z,x,y,signature)
+# Raster shade, rather than raster-dem: MapLibre's DEM decoder ignores alpha.
+# Missing elevations must never be interpreted as sea level or opaque pixels.
+_TERRAIN_LOCKS = [threading.Lock() for _ in range(16)]
 
 
-@lru_cache(maxsize=32)
-def _terrain_png(z,x,y,signature):
-    if not 0<=z<=14 or not 0<=x<2**z or not 0<=y<2**z:raise HTTPException(404,'Tuile inconnue.')
-    size=256;rows=[];present=False
+def terrain_signature():
+    return tuple((str(root), (root/'manifest.json').stat().st_mtime_ns,
+                  tuple((item['path'], (root/item['path']).stat().st_mtime_ns, item['bytes'])
+                        for item in value['files'] if item['path'].endswith('.hgt')))
+                 for root, value in datasets())
+
+
+def terrain_etag(signature, z, x, y):
+    return '"'+hashlib.sha256(repr(('shade-v1', signature, z, x, y)).encode()).hexdigest()+'"'
+
+
+def terrain_png(z, x, y, signature=None):
+    if not 8 <= z <= 14 or not 0 <= x < 2**z or not 0 <= y < 2**z:
+        raise HTTPException(404, 'Tuile inconnue.')
+    signature = terrain_signature() if signature is None else signature
+    # Coalesce identical concurrent requests without serializing unrelated tiles.
+    with _TERRAIN_LOCKS[hash((z, x, y)) % len(_TERRAIN_LOCKS)]:
+        return _terrain_png(z, x, y, signature)
+
+
+def _png(rows, size=256):
+    def chunk(kind, body):
+        return struct.pack('>I', len(body))+kind+body+struct.pack('>I', zlib.crc32(kind+body))
+    return (b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 6, 0, 0, 0))
+            +chunk(b'IDAT', zlib.compress(b''.join(rows), 3))+chunk(b'IEND', b''))
+
+
+@lru_cache(maxsize=128)
+def _terrain_png(z, x, y, signature):
+    size=256
+    # One pixel of real neighbouring elevation on each side avoids tile seams.
+    longitudes=[(x+(i+.5)/size)/2**z*360-180 for i in range(-1, size+1)]
+    latitudes=[math.degrees(math.atan(math.sinh(math.pi*(1-2*(y+(j+.5)/size)/2**z))))
+               for j in range(-1, size+1)]
     with Heights() as heights:
-        if not heights.grids:raise HTTPException(404,'Relief non téléchargé.')
-        longitudes=[(x+(i+.5)/size)/2**z*360-180 for i in range(size)]
-        for j in range(size):
-            lat=math.degrees(math.atan(math.sinh(math.pi*(1-2*(y+(j+.5)/size)/2**z))))
-            row=bytearray([0])
-            for lon in longitudes:
-                height=heights.sample(lat,min(lon,179.999999));present|=height is not None
-                v=round(((height or 0)+32768)*256);row.extend(((v>>16)&255,(v>>8)&255,v&255,255 if height is not None else 0))
-            rows.append(row)
-    if not present:raise HTTPException(404,'Zone sans altitude préparée.')
-    def chunk(kind,body):return struct.pack('>I',len(body))+kind+body+struct.pack('>I',zlib.crc32(kind+body))
-    return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',size,size,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b'')
+        samples=_height_samples(heights,latitudes,longitudes) if heights.grids else []
+    rows=[]
+    for j in range(size):
+        row=bytearray([0])
+        resolution=40075016.686*math.cos(math.radians(latitudes[j+1]))/(size*2**z)
+        for i in range(size):
+            if not samples:
+                row.extend((0,0,0,0));continue
+            a,b,c,d,center=(samples[j+1][i], samples[j+1][i+2], samples[j][i+1], samples[j+2][i+1], samples[j+1][i+1])
+            if None in (a,b,c,d,center):
+                row.extend((0,0,0,0));continue
+            dx=(b-a)/(2*resolution);dy=(d-c)/(2*resolution)
+            # Northwest illumination. Flat terrain is transparent, slopes subtle.
+            light=(-dx-dy)/(math.sqrt(2)*math.sqrt(1+dx*dx+dy*dy))
+            alpha=min(64, round(abs(light)*90))
+            row.extend((255,255,255,alpha) if light>0 else (53,57,44,alpha))
+        rows.append(row)
+    # Empty/missing tiles are valid transparent raster tiles, cached as well.
+    return _png(rows)

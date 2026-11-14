@@ -3,7 +3,7 @@
   const status = document.getElementById('status');
   const select = document.getElementById('area');
   const home = document.getElementById('home');
-  document.getElementById('print').addEventListener('click', () => window.print());
+  const printButton=document.getElementById('print');printButton.disabled=true;
   try {
     const user=await window.MapUI.ready;
     const response = await fetch('/api/maps');
@@ -44,11 +44,22 @@
         {id: 'places', type: 'symbol', source: 'local', 'source-layer': 'places', layout: {'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name'], ''], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 11, 13, 15]}, paint: {'text-color': '#29463e', 'text-halo-color': '#fff', 'text-halo-width': 1.5}}
       ]
     });
-    const style=item=>{const s=baseStyle(item);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster-dem',tiles:[location.origin+'/api/geography/terrain/{z}/{x}/{y}.png'],tileSize:256,encoding:'terrarium',minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'hillshade',source:'terrain',paint:{'hillshade-exaggeration':0.45}});}return s;};
-    const map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, preserveDrawingBuffer: true});
+    const style=item=>{const s=baseStyle(item);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/terrain/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
+    const map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, maxTileCacheSize: 96});
+    // Capture a fresh frame only for printing; normal rendering keeps the
+    // default non-preserved drawing buffer (MapLibre 5 canvas attributes).
+    const printImage=document.createElement('img');printImage.className='map-print-image';printImage.alt='Carte du trajet préparé';
+    document.querySelector('.map-stage').append(printImage);
+    function preparePrint(){map.resize();map.redraw();printImage.src=map.getCanvas().toDataURL('image/png');}
+    printButton.onclick=async()=>{try{preparePrint();await printImage.decode();window.print();}catch(_){window.MapUI.notify('La carte ne peut pas être imprimée pour le moment. Réessayez après son chargement.');}};
+    window.addEventListener('beforeprint',preparePrint);
+    window.addEventListener('afterprint',()=>{printImage.removeAttribute('src');resizeMap();});
+    printButton.disabled=false;
     // Free navigation also permits choosing a departure outside the downloaded basemap.
     map.on('idle', () => {document.getElementById('map').dataset.ready = 'true';});
-    new ResizeObserver(()=>map.resize()).observe(document.getElementById('map'));
+    let resizeFrame=0;
+    function resizeMap(){if(!resizeFrame)resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;map.resize();});}
+    new ResizeObserver(resizeMap).observe(document.getElementById('map'));
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.ScaleControl({unit: 'metric'}));
     const showStatus = () => { status.textContent = current.id==='empty'?'Aucun fond de carte téléchargé. Préparez une carte pour voir les routes et bâtiments.':current.title + ' · données du ' + current.edition + ' · détail jusqu’au zoom ' + current.maxzoom + '. Fonctionne sans Internet.'; };
@@ -62,9 +73,9 @@
       showStatus();
     });
     home.addEventListener('click', () => {
-      current = maps.find(m => m.id === 'sollies') || maps[0]; select.value = current.id;
-      map.setStyle(style(current));
-      // Free navigation also permits choosing a departure outside the downloaded basemap.
+      select.value = current.id;
+      if(!map.getSource('local')&&current.id!=='empty')map.setStyle(style(current));
+      // Recenter without rebuilding the current basemap.
       map.jumpTo({center: reference?[reference.lon,reference.lat]:current.center, zoom: 13}); if(reference)selectPoint(reference.lat,reference.lon);else window.MapUI.notify('Aucun point de départ enregistré. Cliquez sur la carte pour choisir un point.');showStatus();
     });
 
@@ -107,7 +118,10 @@
     document.getElementById('map-search').onsubmit=event=>search(event,false);
     document.getElementById('map-nearby').onsubmit=event=>search(event,true);
     document.getElementById('measure').onclick=()=>{if(!window.MapUI.requireUser())return;measuring=true;window.MapUI.notify('Mesure : cliquez sur le premier point, puis sur le second.');measureStart=null;document.getElementById('terrain-profile').replaceChildren();toolStatus.textContent='Touchez le premier point, puis le second. Mesure en ligne droite.';};
+    let accessPick=null;
     map.on('click',async event=>{
+      if(accessPick){const pick=accessPick;accessPick=null;map.getCanvas().style.cursor='';pick({lat:event.lngLat.lat,lon:event.lngLat.lng});return;}
+      if(map.getLayer('accesses')&&map.queryRenderedFeatures(event.point,{layers:['accesses']}).length)return;
       if(map.getLayer('notebook-points')&&map.queryRenderedFeatures(event.point,{layers:['notebook-points']}).length)return;
       const {lat,lng:lon}=event.lngLat.wrap();if(lat<-85||lat>85)return;selectPoint(lat,lon);
       window.MapUI.notify('');
@@ -119,16 +133,16 @@
         const low=Math.min(...heights),high=Math.max(...heights),ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),line=document.createElementNS(ns,'polyline');svg.setAttribute('viewBox','0 0 400 100');svg.setAttribute('role','img');svg.setAttribute('aria-label','Profil du terrain de '+low+' à '+high+' mètres');line.setAttribute('points',heights.map((h,i)=>(i*400/40)+','+(95-90*(h-low)/Math.max(1,high-low))).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke','#245b43');line.setAttribute('stroke-width','2');svg.append(line);panel.append(node('p','Altitude min. '+low+' m · max. '+high+' m'),svg);
       }catch(e){toolStatus.textContent=e.message;}
     });
-    document.getElementById('relief').onclick=()=>{if(!window.MapUI.requireUser())return;if(!hasTerrain){window.MapUI.showPanel('map-layers');window.MapUI.notify(geoData===null?'Vérification du relief indisponible. Réessayez en actualisant la page.':'Relief non préparé : téléchargez les altitudes dans Données locales.');return;}showRelief=!showRelief;document.getElementById('relief').setAttribute('aria-pressed',String(showRelief));document.getElementById('relief').textContent=showRelief?'Masquer le relief':'Afficher le relief';map.setStyle(style(current));};
+    document.getElementById('relief').onclick=()=>{if(!window.MapUI.requireUser())return;if(!hasTerrain){window.MapUI.showPanel('map-layers');window.MapUI.notify(geoData===null?'Vérification du relief indisponible. Réessayez en actualisant la page.':'Relief non préparé : téléchargez les altitudes dans Données locales.');return;}showRelief=!showRelief;document.getElementById('relief').setAttribute('aria-pressed',String(showRelief));document.getElementById('relief').textContent=showRelief?'Masquer le relief':'Afficher le relief';if(map.getLayer('terrain-shade'))map.setLayoutProperty('terrain-shade','visibility',showRelief?'visible':'none');else if(showRelief){const terrain=style(current);map.addSource('terrain',terrain.sources.terrain);map.addLayer(terrain.layers.find(l=>l.id==='terrain-shade'),map.getLayer('water')?'water':undefined);}};
     const params=new URLSearchParams(location.search),lat=Number(params.get('lat')),lon=Number(params.get('lon'));
     if(params.has('lat')&&params.has('lon')&&Number.isFinite(lat)&&Number.isFinite(lon)&&lat>=-85&&lat<=85&&lon>=-180&&lon<180){selectPoint(lat,lon);map.jumpTo({center:[lon,lat],zoom:14});}
     else if(reference){selectPoint(reference.lat,reference.lon);map.jumpTo({center:[reference.lon,reference.lat],zoom:13});}
     if(params.has('choose'))window.MapUI.notify('Cliquez sur la carte pour choisir votre point de départ.');
     if(!hasBasemap)toolStatus.textContent='Aucun fond de carte préparé. Vous pouvez saisir des coordonnées dans Paramètres ; les lieux et le relief téléchargés restent utilisables après connexion.';
 
-    let notebookPoints=[],routeGeometry=null;
+    let notebookPoints=[],routeGeometry=null,connectors=[],accessCandidates=[],activeAccess=-1;
     function restorePlanningLayers(){
-      if(!map.isStyleLoaded())return;
+      if(!map.getLayer('background'))return;
       const data={type:'FeatureCollection',features:notebookPoints.map(p=>({type:'Feature',properties:{id:p.id,title:p.title},geometry:{type:'Point',coordinates:[p.lon,p.lat]}}))};
       if(map.getSource('notebook'))map.getSource('notebook').setData(data);
       else{map.addSource('notebook',{type:'geojson',data});map.addLayer({id:'notebook-points',type:'circle',source:'notebook',paint:{'circle-radius':7,'circle-color':'#245b43','circle-stroke-color':'#ffffff','circle-stroke-width':2}});}
@@ -136,6 +150,21 @@
       if(map.getSource('planned-route'))map.getSource('planned-route').setData(route);
       else{map.addSource('planned-route',{type:'geojson',data:route});map.addLayer({id:'planned-route-line',type:'line',source:'planned-route',paint:{'line-color':'#ae5428','line-width':5}},'notebook-points');}
     }
+    function restoreAccessLayers(){
+      if(!map.getLayer('background'))return;
+      const lines={type:'FeatureCollection',features:connectors.map(c=>({type:'Feature',properties:{},geometry:c.geometry}))};
+      if(map.getSource('route-connectors'))map.getSource('route-connectors').setData(lines);
+      else{map.addSource('route-connectors',{type:'geojson',data:lines});map.addLayer({id:'route-connectors',type:'line',source:'route-connectors',paint:{'line-color':'#9b6b30','line-width':3,'line-dasharray':[2,2]}});}
+      const candidates={type:'FeatureCollection',features:accessCandidates.map((c,i)=>({type:'Feature',properties:{index:i,label:String(i+1),active:i===activeAccess},geometry:{type:'Point',coordinates:[c.lon,c.lat]}}))};
+      if(map.getSource('accesses'))map.getSource('accesses').setData(candidates);
+      else{
+        map.addSource('accesses',{type:'geojson',data:candidates});
+        map.addLayer({id:'accesses',type:'circle',source:'accesses',paint:{'circle-radius':14,'circle-color':['case',['get','active'],'#ae5428','#275e47'],'circle-stroke-color':'#fff','circle-stroke-width':3}});
+        map.addLayer({id:'access-numbers',type:'symbol',source:'accesses',layout:{'text-field':['get','label'],'text-font':['Noto Sans Regular'],'text-size':13,'text-allow-overlap':true},paint:{'text-color':'#fff'}});
+      }
+    }
+    map.on('style.load',restoreAccessLayers);
+    map.on('click','accesses',event=>window.dispatchEvent(new CustomEvent('survie-access-selected',{detail:Number(event.features[0].properties.index)})));
     map.on('style.load',restorePlanningLayers);
     map.once('idle',restorePlanningLayers);
     map.on('click','notebook-points',event=>{const feature=event.features[0],p=notebookPoints.find(p=>p.id===feature.properties.id);if(p){selectPoint(p.lat,p.lon);new maplibregl.Popup().setLngLat([p.lon,p.lat]).setText(p.title).addTo(map);window.dispatchEvent(new CustomEvent('survie-saved-point',{detail:p}));}});
@@ -145,8 +174,10 @@
       finishPick:()=>{map.getCanvas().style.cursor='';},
       selectPoint:(p)=>{selectPoint(p.lat,p.lon);map.flyTo({center:[p.lon,p.lat],zoom:14});},
       points:items=>{notebookPoints=items;restorePlanningLayers();},
-      route:geometry=>{routeGeometry=geometry;map.resize();restorePlanningLayers();if(geometry){const bounds=new maplibregl.LngLatBounds();for(const p of geometry.coordinates)bounds.extend(p);map.fitBounds(bounds,{padding:40,maxZoom:15});}},
-      resize:()=>map.resize()
+      route:(geometry,links=[])=>{routeGeometry=geometry;connectors=links;restorePlanningLayers();restoreAccessLayers();if(geometry){const bounds=new maplibregl.LngLatBounds();for(const p of geometry.coordinates)bounds.extend(p);for(const c of links)for(const p of c.geometry.coordinates)bounds.extend(p);map.fitBounds(bounds,{padding:48,maxZoom:15});}},
+      accesses:(items,origin,active=-1,fit=false)=>{accessCandidates=items;activeAccess=active;restoreAccessLayers();if(fit&&items.length){const bounds=new maplibregl.LngLatBounds([origin.lon,origin.lat],[origin.lon,origin.lat]);items.forEach(p=>bounds.extend([p.lon,p.lat]));map.fitBounds(bounds,{padding:64,maxZoom:16});}},
+      pickAccess:callback=>{accessPick=callback;map.getCanvas().style.cursor=callback?'crosshair':'';},
+      resize:resizeMap
     };
     restorePlanningLayers();window.dispatchEvent(new Event('survie-map-ready'));
     select.disabled = false; home.disabled = false;

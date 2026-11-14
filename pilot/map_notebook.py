@@ -114,7 +114,14 @@ def gpx(list_id=None,route_id=None):
         return el
     root=ET.Element('{'+namespace+'}gpx',{'version':'1.1','creator':'SetupSurvie'})
     if route_id:
-        item=route(route_id);track=child(root,'trk');child(track,'name',item['title']);child(track,'desc',item['note'])
+        item=route(route_id)
+        for point in item.get('points',[]):
+            origin=child(root,'wpt',lat=str(point['lat']),lon=str(point['lon']));child(origin,'name',point['title'])
+            child(origin,'desc','Point d’origine. Liaison vers la voie à vérifier, non incluse dans la trace calculée.')
+            if point.get('offset_m',0)>5:
+                access=child(root,'wpt',lat=str(point['snapped_lat']),lon=str(point['snapped_lon']))
+                child(access,'name','Accès · '+point['title']);child(access,'desc',str(round(point['offset_m']))+' m à vol d’oiseau du point. Liaison non vérifiée.')
+        track=child(root,'trk');child(track,'name',item['title']);child(track,'desc',item['note'])
         segment=child(track,'trkseg')
         for lon,lat in item['geometry']['coordinates']:child(segment,'trkpt',lat=str(lat),lon=str(lon))
     else:
