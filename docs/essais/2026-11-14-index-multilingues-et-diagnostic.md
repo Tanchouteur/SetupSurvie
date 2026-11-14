@@ -67,3 +67,17 @@ nouvel écran, image tierce, modèle ou migration de schéma. La pertinence rée
 les délais et les métadonnées des archives de Marc restent à mesurer après
 préparation des compléments. Le prompt de refonte des paramètres est une consigne
 pour un autre chantier, pas une refonte déclarée livrée par cette correction.
+
+## Paquet de mise à jour vérifié
+
+L’artefact `logiciel-et-empreinte` de la CI 43639780417 est téléchargé puis ouvert
+avec `pilot_update.unpack` dans un répertoire temporaire. L’empreinte du ZIP,
+le manifeste et les **708 fichiers** sont acceptés. Tous les fichiers hors
+Markdown correspondent à main, y compris la correction d’index, le lecteur,
+l’API et le rapport détaillé du portail. Les modifications après la CI sont
+documentaires. La petite fixture cartographique PMTiles de 585 octets appartient
+aux tests ; aucun corpus ni modèle réel n’a été ajouté au paquet.
+
+Cet audit ne démarre aucun service et ne prouve pas l’installation sur le PC de
+Marc. La prochaine preuve reste le rapport d’indexation après reprise manuelle,
+puis le contrôle complet détaillé sans IA et la lecture des résultats utiles.

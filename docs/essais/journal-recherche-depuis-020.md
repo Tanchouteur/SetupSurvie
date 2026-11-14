@@ -55,6 +55,10 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
   Le refus natif d’une archive multilingue pourtant indexée est reproduit.
   La [correction 0.11.1](2026-11-14-index-multilingues-et-diagnostic.md) prépare son
   complément local et un diagnostic plus détaillé, sur la base des cartes intégrées.
+- Paquet 0.11.1 vérifié avec le lecteur de mise à jour : 708 fichiers acceptés,
+  code identique à main et détail du diagnostic présent. Le
+  [bilan du paquet](2026-11-14-index-multilingues-et-diagnostic.md#paquet-de-mise-à-jour-vérifié)
+  distingue ce contrôle de l’installation et des mesures encore attendues chez Marc.
 
 ## Décisions conservées ou reportées
 
