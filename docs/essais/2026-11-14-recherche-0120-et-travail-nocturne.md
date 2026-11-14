@@ -89,9 +89,9 @@ empêcher une recherche. Voir le [guide de référence](../exploitation/cache-et
   les collections éligibles sont examinées sans échec, avec résultats progressifs.
   Premiers résultats entre 32 et 46 ms, fin entre 1 089 et 2 193 ms sur ces seuls
   fichiers minuscules. Une répétition à chaud n’ajoute aucun appel HTTP natif.
-- **Chromium MCP : 14 contrôles de flux HTTP réel**, backend et documents de test,
+- **Chromium MCP : 16 contrôles de flux HTTP réel**, backend et documents de test,
   puis **49 contrôles existants de recherche** réussis dans un contexte neuf.
-  Lecture pendant attente, arrêt conservant les résultats, erreur, rechargement
+  Lecture pendant attente, passages dépliés et focus clavier conservés, arrêt, erreur, rechargement
   et largeurs 1 366/390/320 pixels sont couverts. Pas d’erreur JavaScript observée.
 - **Caddy épinglé réel** : le premier paquet traverse le proxy avant la fin du
   traitement ; aucune modification de sa configuration n’est nécessaire.

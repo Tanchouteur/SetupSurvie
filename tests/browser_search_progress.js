@@ -9,7 +9,11 @@ async page=>{
   await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
   check((await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Premier résultat visible pendant que les autres collections restent en cours');
   check(await page.locator('#search-results .result h3').first().textContent()==='Premier document fictif','Premier document reçu sans attendre la réponse finale');
+  await page.locator('#search-results .other-matches summary').click();
+  await page.locator('#search-results .other-matches button').focus();
   await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===2&&!document.getElementById('search-stop'));
+  check(await page.locator('#search-results .other-matches').evaluate(node=>node.open),'Les passages ouverts restent dépliés quand arrivent les autres documents');
+  check(await page.locator('#search-results .other-matches button').evaluate(node=>node===document.activeElement),'La navigation au clavier est conservée pendant les résultats progressifs');
   check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
   check((await page.locator('#search-message').textContent()).includes('2 document(s)'),'Dernière réponse complète les résultats');
   const request=async query=>{await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
