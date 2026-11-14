@@ -63,3 +63,7 @@ doivent pas remplir le contexte ordinaire de l’assistant.
 
 Le [journal depuis 0.2.0](journal-recherche-depuis-020.md) conserve cette réouverture
 du travail : objectif non validé, erreurs reproductibles et prochaine mesure réelle.
+
+**Suite livrée :** la [correction 0.11.1](2026-11-14-index-multilingues-et-diagnostic.md)
+prépare les compléments multilingues et enrichit le rapport existant. La CI est
+réussie ; l’amélioration des délais et du fonds réel n’est pas encore mesurée.

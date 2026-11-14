@@ -3,7 +3,8 @@
 **Consigne de chantier demandée par Louis — 14 novembre 2026.** La refonte est
 à réaliser et à vérifier ; ce document ne décrit pas une interface déjà livrée.
 Louis autorise sa préparation en parallèle du moteur de recherche. Les cartes
-0.11.0 sont intégrées à main ; le chantier recherche prépare la 0.11.1.
+0.11.0 sont intégrées à main ; la correction recherche 0.11.1 s’intègre avant
+le chantier UX. Les travaux de recherche se poursuivent séparément de celui-ci.
 
 ## Texte à transmettre
 
