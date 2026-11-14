@@ -147,7 +147,7 @@ class Manager:
                 self.start('index',{'automatic':True})
                 with index_queue.edit(root) as value:value.pop('last_attempt',None)
         except setup.SetupError as exc:
-            reason='insufficient_storage' if 'marge' in str(exc).lower() or 'budget' in str(exc).lower() else 'operation_busy'
+            reason='source_changed' if isinstance(exc,index_queue.SourceChanged) else 'insufficient_storage' if 'marge' in str(exc).lower() or 'budget' in str(exc).lower() else 'operation_busy'
             with index_queue.edit(root) as value:
                 previous=value.get('last_attempt',{})
                 if previous.get('reason')!=reason or time.time()-previous.get('at',0)>60:value['last_attempt']={'reason':reason,'at':time.time()}
@@ -174,6 +174,7 @@ class Manager:
             automatic=body.get('automatic') is True
             root=Path(self.config['data_dir'])
             selection=index_queue.read(root)['pending'] if action=='index' else {}
+            if action=='index' and automatic:index_queue.validate_selection(root,selection)
             if action=='index' and not automatic:index_queue.hold(root,'')
             state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':automatic,'selection':selection}}
             self.paths(state['id']).mkdir(parents=True)

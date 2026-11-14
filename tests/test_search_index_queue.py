@@ -59,6 +59,17 @@ class SearchIndexQueueTests(unittest.TestCase):
         self.assertEqual(status['index_queue']['waiting_reason'],'insufficient_storage')
         self.assertNotIn('/private/path',json.dumps(status))
 
+    def test_changed_archive_is_not_automatically_indexed_as_previously_verified(self):
+        queue.enqueue(self.data,self.item);selection=queue.read(self.data)['pending']
+        self.file.write_bytes(b'new unverified content')
+        with self.assertRaises(queue.SourceChanged):queue.validate_selection(self.data,selection)
+        self.assertEqual(queue.read(self.data)['hold'],'source_changed')
+        with patch.object(self.manager,'index_ready',return_value=True),patch.object(self.manager,'start') as start:
+            self.manager.auto_index();start.assert_not_called()
+        queue.enqueue(self.data,{**self.item,'sha256':'b'*64})
+        self.assertEqual(queue.read(self.data)['hold'],'')
+        queue.validate_selection(self.data,queue.read(self.data)['pending'])
+
     def test_window_handles_midnight_and_settings_reject_unknown_values(self):
         opts={'start_hour':22,'end_hour':6}
         for hour,expected in [(21,False),(22,True),(0,True),(5,True),(6,False)]:

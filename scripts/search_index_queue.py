@@ -10,6 +10,9 @@ import re
 import setup
 from delivery_paths import destination,locked
 
+class SourceChanged(setup.SetupError):pass
+
+
 DEFAULTS={'enabled':True,'start_hour':0,'end_hour':0,'workers':0}
 
 
@@ -49,6 +52,8 @@ def enqueue(root,item):
         if isinstance(completed,dict) and (completed.get('sha256'),completed.get('bytes'),completed.get('mtime_ns'))==(item['sha256'],stat.st_size,stat.st_mtime_ns):
             key=hashlib.sha256(target.name.encode()).hexdigest()[:24]
             if completed.get('kind')=='kiwix_index' or (Path(root)/'state/pilot/archive-index'/(key+'.sqlite')).is_file():return
+        if value.get('hold')=='source_changed' and value.get('last_problem')==relative:
+            value['hold']='';value.pop('last_problem',None)
         previous=value['pending'].get(relative,{})
         if (previous.get('sha256'),previous.get('bytes'),previous.get('mtime_ns'))==(item['sha256'],stat.st_size,stat.st_mtime_ns):return
         value['pending'][relative]={'sha256':item['sha256'],'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'queued_at':time.time()}
@@ -79,7 +84,8 @@ def acknowledge(root,selection,report):
             path=destination(root,relative)
             if path.name not in done or value['pending'].get(relative)!=record or not path.is_file():continue
             stat=path.stat()
-            if stat.st_size!=record['bytes'] or stat.st_mtime_ns!=record['mtime_ns']:continue
+            if stat.st_size!=record['bytes'] or stat.st_mtime_ns!=record['mtime_ns']:
+                value['hold']='source_changed';value['last_problem']=relative;continue
             value['completed'][relative]={**record,'kind':done[path.name]};value['pending'].pop(relative,None)
         value['last_run']={k:report.get(k) for k in ('phase','completed','articles','started','workers')}
 
@@ -96,3 +102,12 @@ def gaming(work):
     try:reason=json.loads(marker.read_text(encoding='utf-8')).get('reason','')
     except (OSError,ValueError):return True
     return reason in ('user_gaming','gaming','game','mode_jeu')
+
+
+def validate_selection(root,selection):
+    for relative,record in selection.items():
+        path=destination(root,relative)
+        stat=path.stat() if path.is_file() and not path.is_symlink() else None
+        if stat is None or (stat.st_size,stat.st_mtime_ns)!=(record['bytes'],record['mtime_ns']):
+            with edit(root) as value:value['hold']='source_changed';value['last_problem']=relative
+            raise SourceChanged('Une archive a changé après vérification ; sa préparation automatique est suspendue.')
