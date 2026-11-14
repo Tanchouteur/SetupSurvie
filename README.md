@@ -11,15 +11,17 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **14 novembre 2026**, le pilote **0.12.0** propose une recherche locale avec
+Au **14 novembre 2026**, le pilote **0.13.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
+Les résultats arrivent progressivement ; un cache local réutilise les réponses
+valides pour le même état du fonds, avec budget disque ajustable.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
 noms de collections sont corrigibles et exportables. Des rapports de délais et un
 essai mémoire volontaire complètent le contexte IA réglable par modèle. Un
 comparatif facultatif permet de mesurer une aide IA à la recherche, conservée
 désactivée dans l’usage habituel en attendant les résultats réels. Six dossiers
-pratiques organisent les sources examinées et les points encore à documenter.
+pratiques facultatifs donnent quelques repères, sans limiter les sujets recherchables.
 Un [contrôle d’usage hors ligne](docs/utilisation/verifier-usage-hors-ligne.md)
 réunit les mesures sans IA et les observations humaines dans un rapport.
 L’outil d’indexation vérifie ses prérequis isolés avant le parcours des archives.
@@ -39,7 +41,7 @@ avec suivi des travaux et options techniques dépliables.
 
 ## Commencer
 
-Le portail **0.12.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.13.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 

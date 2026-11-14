@@ -192,6 +192,7 @@ def container_specifications(c):
                    'PILOT_CONTROL_URL':'http://host.containers.internal:11436','PILOT_CONTROL_TOKEN':setup.control_key(c),
                    'WEBUI_SECRET_KEY':c['secret'],'WEBUI_URL':'http://open-webui:8080',
                    'OLLAMA_URL':'http://ollama:11434','KIWIX_URL':'http://kiwix:8080',
+                   'PILOT_SEARCH_CACHE_BYTES':os.environ.get('PILOT_SEARCH_CACHE_BYTES','2000000000'),
                    'GUIDES_DIR':'/guides','ASSISTANT_POLICY':'/srv/system.fr.txt'}),
     }
 

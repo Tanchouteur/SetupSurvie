@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Recherche progressive et cache](exploitation/cache-et-recherche-progressive.md) — guide 0.13.0, premiers documents, arrêt et budget ajustable.
+- [Rapports 0.12.0 et travail nocturne](essais/2026-11-14-recherche-0120-et-travail-nocturne.md) — préparation réelle et délais ; correction et essais distincts.
+- [Vidéos locales dans la recherche](decisions/videos-locales-et-recherche.md) — besoin confirmé, `library/video/`, réalisation prévue.
+
 - [Paramètres et Mon appareil](utilisation/parametres-et-appareil.md) — guide actuel 0.12.0, quatre usages et correspondance complète des commandes.
 
 - [Rapport réel 0.10.0](essais/2026-11-14-rapport-recherche-0100.md) — couverture et latence comparées à 0.9.3, refus multilingue reproduit.

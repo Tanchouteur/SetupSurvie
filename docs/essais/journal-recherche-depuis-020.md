@@ -113,3 +113,37 @@ Pour chaque suite : ajouter différence concrète, cause vérifiée ou hypothès
 tests exécutés et non exécutés, choix retenu/reporté/abandonné et lien vers la
 livraison. Le résumé final s’appuiera sur ces preuves et séparera développement,
 déploiement chez Marc et validation humaine des documents.
+
+## Rapports réels 0.12.0 et correction nocturne 0.13.0
+
+L’UX des paramètres a été intégrée séparément sur main (PR #10, `5508740`) ; ses
+contrôleurs, les cartes et leurs recettes sont conservés. Le travail nocturne reste
+sur le moteur et son affichage de résultats, sans nouvelle refonte des paramètres.
+
+Les deux nouveaux rapports réels confirment 135 archives examinées sans erreur,
+120 index natifs compatibles et 15 compléments locaux, totalisant 3 238 articles.
+La recherche multilingue locale fonctionne ; les anciens HTTP 400 ont disparu.
+La médiane des 32 recherches reste 12,586 secondes et 31 atteignent l’échéance :
+le délai et les expirations d’appels constituent encore un problème observable.
+Aucun avis humain n’est enregistré ; ces mesures ne qualifient pas la pertinence.
+
+La 0.13.0 ajoute premiers résultats progressifs, lecture pendant la recherche,
+arrêt conservant les résultats et budget natif de 60 secondes sur le portail.
+Le JSON des outils garde douze secondes. Le cache passe de quinze secondes en
+mémoire à cinq minutes, avec complément disque de 24 heures invalidé par l’état
+des archives et des index. Les erreurs ne sont pas mémorisées comme absence.
+Le budget initial de 2 Go est ajustable, sans plafond produit à 2 Go ; les réserves
+et les limites d’accès disque restent distinctes. Les résultats ne sont pas des
+réponses IA mises en cache. Voir le [guide actuel](../exploitation/cache-et-recherche-progressive.md).
+
+Louis confirme la priorité à un outil utile et pourra faire évoluer le matériel
+après mesure. Les six dossiers sont facultatifs. Le nouveau dossier
+`library/video/` et les vidéos YouTube 480p sont rapportés, sans inventaire distant
+par l’agent. L’[étude traduction et vidéos](../decisions/videos-locales-et-recherche.md)
+précise acquisition des pistes, transcriptions horodatées et progression proposée.
+Elle distingue la traduction française de la transcription et de la fonction
+Whisper traduisant vers l’anglais ; aucune vidéo réelle n’est déclarée traitée.
+
+Le [bilan du travail nocturne](2026-11-14-recherche-0120-et-travail-nocturne.md)
+conserve les essais exécutés et les limites. La validation finale du fonds Windows,
+les ouvertures prioritaires et les observations hors ligne restent nécessaires.

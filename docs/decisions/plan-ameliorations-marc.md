@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.10.0 reçu : classement amélioré sur quelques titres, couverture encore partielle et délai dégradé ; incompatibilité multilingue reproduite, correction et traces ciblées 0.11.1 |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R1/R2 0.12.0 : 135 archives préparées, 15 compléments utilisables ; 32 recherches partielles surtout par délai. Flux progressif et cache durable développés en 0.13.0 ; nouvelle mesure Windows et avis humains attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -218,6 +218,11 @@ traduction partielle/refusée présentée comme complète. Durée et fidélité 
 réel restent distinctes de l’essai synthétique ; rapport **R5**.
 
 ### L6 — Vidéos et sous-titres français hors ligne
+
+**Extension confirmée le 14 novembre :** inclure les vidéos YouTube 480p ajoutées
+par Marc dans `library/video/`, leurs métadonnées puis leurs transcriptions
+horodatées, dans une recherche commune avec les documents. Voir le
+[besoin tracé](videos-locales-et-recherche.md). L’inventaire ne se limite plus aux ZIM.
 
 **Précision de Louis du 14 novembre :** valider la récupération ou la création
 des sous-titres français **pour chaque vidéo**, pas seulement quelques exemples.
@@ -378,3 +383,14 @@ implémente ce regroupement après intégration de la recherche 0.11.1 ; elle ne
 remplace pas le traitement des échecs de recherche observés.
 
 La [livraison 0.4.0](../essais/2026-11-14-indexation-automatique-et-diagnostic.md) couvre l’indexation automatique et le diagnostic. Les essais matériels restent distincts ; les autres exigences du plan ne sont pas clôturées par cette seule livraison.
+
+## Complément du travail nocturne — 0.13.0
+
+Les [rapports 0.12.0](../essais/2026-11-14-recherche-0120-et-travail-nocturne.md)
+confirment la préparation multilingue et identifient les délais encore insuffisants.
+Le [cache et la recherche progressive](../exploitation/cache-et-recherche-progressive.md)
+donnent plus de temps sans masquer les premiers documents. Deux Go est un exemple
+de budget, pas une limite fonctionnelle ; une évolution matérielle reste envisageable
+après mesure. Les six dossiers sont facultatifs, la recherche générale reste centrale.
+Les [vidéos locales 480p](videos-locales-et-recherche.md) ajoutées par Marc dans
+`library/video/` sont à intégrer aux documents avec passages horodatés et sous-titres.

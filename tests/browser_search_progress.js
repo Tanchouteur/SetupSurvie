@@ -1,0 +1,40 @@
+// Real streamed HTTP from the tiny fixture API; its documents/delays are fictional.
+async page=>{
+  const base='http://10.0.3.2:8772',checks=[],errors=[];
+  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
+  await page.setViewportSize({width:1366,height:900});
+  await page.goto(base+'/#/bibliotheque/recherche?q=fixture-progress-one&domain=all');
+  await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
+  check((await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Premier résultat visible pendant que les autres collections restent en cours');
+  check(await page.locator('#search-results .result h3').first().textContent()==='Premier document fictif','Premier document reçu sans attendre la réponse finale');
+  await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===2&&!document.getElementById('search-stop'));
+  check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
+  check((await page.locator('#search-message').textContent()).includes('2 document(s)'),'Dernière réponse complète les résultats');
+  const request=async query=>{await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
+  await request('fixture-progress-stop');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
+  await page.locator('#search-stop').click();
+  check((await page.locator('#search-message').textContent()).includes('résultats reçus sont conservés'),'Arrêt annoncé comme incomplet avec résultats conservés');
+  await page.waitForTimeout(900);check(await page.locator('#search-results .result').count()===1,'La réponse finale tardive ne remplit pas une recherche arrêtée');
+  await request('fixture-progress-error');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
+  await page.waitForFunction(()=>document.getElementById('search-message').textContent.includes('interrompue'));
+  check(await page.locator('#search-results .result').count()===1,'Erreur du flux conserve les résultats déjà reçus');
+  check(!(await page.locator('#search-message').textContent()).includes('PRIVATE'),'Erreur technique exportée sous un message public');
+  await request('fixture-progress-read');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
+  await page.locator('#search-results .result button').first().click();
+  await page.waitForFunction(()=>!document.getElementById('reader').hidden&&document.getElementById('reader').textContent.includes('Shelter'));
+  await page.waitForFunction(()=>!document.getElementById('search-stop'));
+  check(await page.locator('#reader').isVisible(),'Lire un document reste possible pendant la recherche');
+  await page.reload();await page.waitForFunction(()=>S.authReady&&document.getElementById('library-query').value==='fixture-progress-read');
+  await page.waitForFunction(()=>!document.getElementById('search-stop')&&document.querySelectorAll('#search-results .result').length===2);
+  check((await page.locator('#library-query').inputValue())==='fixture-progress-read','Rechargement conserve la demande avec le flux progressif');
+  for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:844});await request('fixture-progress-layout'+width);
+    await page.waitForFunction(()=>document.getElementById('search-stop'));
+    check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Résultats et arrêt accessibles sans débordement à '+width);
+    await page.waitForFunction(()=>!document.getElementById('search-stop'));
+  }
+  check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
+  return {checks:checks.length,results:checks,real_model:false,real_corpus:false};
+}

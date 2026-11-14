@@ -42,6 +42,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const searchPage=await context.newPage();
       const searchRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_core.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/search-core-')+')');
       const searchResult=await searchRecipe(searchPage);await searchPage.close();
+      const progressPage=await context.newPage();
+      const progressRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_progress.js'),'utf8').replaceAll('http://10.0.3.2:8772','http://127.0.0.1:8769')+')');
+      const progressResult=await progressRecipe(progressPage);await progressPage.close();
       const toolsPage=await context.newPage();
       const toolsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_tools.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const toolsResult=await toolsRecipe(toolsPage);await toolsPage.close();
@@ -69,7 +72,7 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const nextTranslation=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,next:nextResult,nextTranslation:nextTranslationResult}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,next:nextResult,nextTranslation:nextTranslationResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

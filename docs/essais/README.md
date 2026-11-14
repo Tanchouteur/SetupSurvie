@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Rapports 0.12.0 et travail nocturne](2026-11-14-recherche-0120-et-travail-nocturne.md) — index prêts, délais et essais de la correction 0.13.0.
+
 - [Paramètres par usage](2026-11-14-parametres-ux.md) — 0.12.0, inventaire, captures et essais.
 
 - [Rapport réel 0.10.0](2026-11-14-rapport-recherche-0100.md) — comparaison des 32 demandes et cause reproduite.

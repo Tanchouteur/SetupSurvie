@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.11.1, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.13.0, 14 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -25,8 +25,11 @@ les documents de prévention lorsqu’on les recherche précisément.
 Depuis 0.9.4, une demande pratique écarte les correspondances dont l’action
 n’est pas étayée, notamment un exercice de prix de vélo proposé pour une réparation.
 Les collections spécialisées et les reformulations utiles sont interrogées tôt.
-La phase de recherche dans les archives peut durer jusqu’à douze secondes ;
-les autres préparations peuvent s’ajouter. Un avertissement de couverture
+Depuis 0.13.0, les premiers documents apparaissent pendant la recherche et restent
+consultables. **Arrêter la recherche** conserve ce qui a déjà été reçu. La phase
+native peut durer jusqu’à 60 secondes ; les autres préparations peuvent s’ajouter.
+Le [guide de recherche progressive et du cache](../exploitation/cache-et-recherche-progressive.md)
+précise les délais, la réutilisation et les réglages de taille. Un avertissement de couverture
 partielle reste significatif, même si des documents utiles ont déjà été trouvés.
 
 Les pages d’un même PDF sont regroupées. **Autres passages dans ce document**
@@ -99,11 +102,12 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.11.1** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.13.0** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
-   puis lancer. Le contrôle complet peut prendre plusieurs minutes. Ils interrogent les documents réels,
+   puis lancer. Les résultats arrivent progressivement ; le contrôle attend au maximum
+   90 secondes par demande. Le contrôle complet peut prendre plusieurs dizaines de minutes. Ils interrogent les documents réels,
    sans démarrer le modèle, préparer de contenu ni modifier la bibliothèque.
    **Arrêter la vérification** conserve les résultats déjà reçus.
 4. Ouvrir les résultats dans leurs onglets et, après lecture, choisir celui qui
@@ -167,7 +171,8 @@ reportée jusqu’à une mesure réelle favorable et répétée.
 ## Un objectif pratique depuis 0.9.0
 
 Dans **Apprendre par thème**, les [six dossiers pratiques](dossiers-pratiques.md)
-organisent la recherche puis les pages ou sections réellement examinées. Chaque
+sont des raccourcis facultatifs vers quelques objectifs et leurs pages ou sections
+réellement examinées. Ils ne limitent ni le fonds ni les sujets de recherche. Chaque
 point sans référence reste explicitement à documenter. Les repères ne remplacent
 ni la lecture de l’original ni la qualification du fonds réel.
 
@@ -182,7 +187,8 @@ Les termes crevaison, fuite et filtration relient aussi français et anglais.
 Les requêtes Kiwix partagent deux voies pour le texte et deux pour les titres,
 même avec plusieurs recherches en cours. Le rapport conserve les causes bornées
 (délai, HTTP, connexion ou format), les collections et la limite de temps atteinte.
-Seules les réponses réussies et valides sont réutilisées pendant quinze secondes,
+Depuis 0.13.0, seules les réponses réussies et valides sont réutilisées cinq minutes
+en mémoire et jusqu’à 24 heures sur disque pour le même état de la bibliothèque,
 avec un compteur explicite. Un timeout ou une surcharge ne provoque plus une
 multiplication de sous-requêtes. Les CPU de l’indexation restent réglables séparément.
 

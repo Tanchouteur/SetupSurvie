@@ -1,5 +1,7 @@
 # Utiliser le serveur familial
 
+- [Rechercher un document](recherche-documentaire.md) — premiers résultats, filtres et contrôle exportable.
+
 - [Paramètres et Mon appareil](parametres-et-appareil.md) — suivi, quatre rubriques et options avancées.
 
 - [Vérifier l’usage hors ligne](verifier-usage-hors-ligne.md) — contrôle sans IA, étapes humaines, arrêt et rapport R7.

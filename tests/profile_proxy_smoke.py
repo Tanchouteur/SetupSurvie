@@ -31,10 +31,15 @@ def main():
         config=json.loads(adapted.stdout)
         chosen=[s for s in config['apps']['http']['servers'].values() if ':3000' in s['listen']]
         assert len(chosen)==1
-        seen=[]
+        seen=[];release_stream=threading.Event()
         class Stub(http.server.BaseHTTPRequestHandler):
             def log_message(self,*args):pass
             def do_GET(self):
+                if self.path=='/api/search?stream=true':
+                    self.send_response(200);self.send_header('Content-Type','text/event-stream');self.send_header('Cache-Control','no-store');self.end_headers()
+                    self.wfile.write(b'data: {"state":"results","results":[{"id":"fixture"}]}\n\n');self.wfile.flush()
+                    release_stream.wait(4)
+                    self.wfile.write(b'data: {"state":"done","results":[]}\n\n');self.wfile.flush();return
                 if self.path=='/api/profiles/webui-headers':
                     assert self.headers.get('X-Survie-Email') is None
                     assert self.headers.get('X-Survie-Role') is None
@@ -72,6 +77,13 @@ def main():
                     with urllib.request.urlopen(request,timeout=3) as response:data=json.load(response)
                     assert data['X-Survie-Email']==email and data['X-Survie-Role']==role,data
                 print('Pinned Caddy: valid routes, spoofed headers stripped, cookie-selected profile forwarded.')
+                try:
+                    with urllib.request.urlopen('http://127.0.0.1:'+str(port)+'/api/search?stream=true',timeout=2) as response:
+                        first=response.readline();assert b'"state":"results"' in first,first
+                        assert not release_stream.is_set(),'First frame must cross the proxy before final completion'
+                        release_stream.set();assert b'"state":"done"' in response.read()
+                finally:release_stream.set()
+                print('Pinned Caddy: early search results flushed before final response.')
             finally:
                 process.terminate();process.wait(timeout=10);backend.shutdown();backend.server_close();thread.join(timeout=5)
 

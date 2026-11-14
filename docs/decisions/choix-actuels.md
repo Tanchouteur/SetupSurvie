@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+
+Complément 0.13.0 : [recherche progressive et cache reconstructible](../exploitation/cache-et-recherche-progressive.md).
+Louis accepte davantage d’attente si les documents arrivent progressivement ;
+2 Go est un exemple de cache ajustable et le matériel pourra évoluer après mesure.
+La recherche générale reste centrale ; les six dossiers sont des aides facultatives.
+Les [vidéos locales 480p](videos-locales-et-recherche.md) sont à intégrer, avec
+transcriptions horodatées et contrôle français par média ; réalisation prévue.
+
 Le [rapport réel 0.10.0](../essais/2026-11-14-rapport-recherche-0100.md) conserve
 31 recherches partielles sur 32 et une médiane de 12,3 s. La correction 0.11.1
 traite les index natifs aux langues incompatibles et enrichit le diagnostic

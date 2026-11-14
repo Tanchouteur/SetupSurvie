@@ -47,6 +47,16 @@ async def native(path,payload=None,token=None):
 accounts.native=native
 async def books(**kwargs):return []
 library.books=books
+original_search=library.search
+async def progressive_search(query,*args,on_update=None,**kwargs):
+    if not query.startswith('fixture-progress'):return await original_search(query,*args,on_update=on_update,**kwargs)
+    first={'id':'guide:shelter.en.txt','title':'Premier document fictif','kind':'guide','language':'en','excerpt':'First synthetic document.'}
+    final={'id':'guide:craft.en.txt','title':'Second document fictif','kind':'guide','language':'en','excerpt':'Second synthetic document.'}
+    if on_update:await on_update(library.SearchResults([first],{'status':'partial','running':True,'domain':'all','searched':1,'collections_selected':3}))
+    await asyncio.sleep(.8)
+    if query.endswith('error'):raise RuntimeError('PRIVATE FIXTURE FAILURE')
+    return library.SearchResults([first,final],{'status':'complete','domain':'all','searched':3,'collections_selected':3})
+library.search=progressive_search
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status
 async def library_command(action=None,payload=None):

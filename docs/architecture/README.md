@@ -436,3 +436,20 @@ natif voué au refus. Une métadonnée `mul` unique n’est pas exclue par son n
 compléments nécessaires. Seul le contrôle explicite de recherche le demande ;
 les réponses normales aux outils IA n’embarquent pas ces journaux. Les délais
 rapportés incluent l’attente client et ne sont pas une mesure CPU du serveur.
+
+## Recherche progressive et cache — 0.13.0
+
+`pilot/search_stream.py` diffuse des instantanés SSE sur `/api/search?stream=true`,
+à partir du même moteur et des mêmes filtres que le JSON existant. La file garde
+uniquement le dernier instantané en attente. La fermeture du flux annule le travail
+client. Le budget natif est de 60 secondes sur ce parcours, de 12 sur l’ancien JSON.
+`diagnostic=true` utilise également 60 secondes ; le journal reste borné à 40 appels.
+Le portail conserve la lecture ouverte et les résultats lors d’un arrêt.
+
+`pilot/search_cache.py` complète les requêtes mutualisées de `kiwix_queries.py` :
+SQLite reconstructible sous `state/pilot/cache/search`, réponses valides seulement,
+invalidation par état des ZIM/catalogue/manifeste, quotas et réserve disque.
+Aucune migration des données privées ni changement d’image tiers. Voir le
+[guide d’exploitation](../exploitation/cache-et-recherche-progressive.md).
+La traduction et l’indexation des [vidéos locales](../decisions/videos-locales-et-recherche.md)
+restent un chantier distinct ; le flux actuel ne cherche pas dans leurs paroles.

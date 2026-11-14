@@ -6,6 +6,11 @@ validée pour chaque vidéo. Ce document complète le
 [lot L6](../decisions/plan-ameliorations-marc.md#l6--vidéos-et-sous-titres-français-hors-ligne)
 et le rapport R6 ; ce n’est pas le bilan d’un inventaire ou d’un essai réel.
 
+Louis précise ensuite que Marc prépare aussi des fichiers YouTube 480p dans
+`library/video/`. Le [besoin des vidéos locales](../decisions/videos-locales-et-recherche.md)
+ajoute leur inventaire, leurs transcriptions et leurs passages horodatés à la
+recherche commune, avec les documents. Ces fichiers ne sont pas présumés dans les ZIM.
+
 ## Périmètre et inventaire attendu
 
 Recenser les vidéos réellement présentes dans la bibliothèque locale, y compris

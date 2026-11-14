@@ -37,9 +37,22 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberRea
 function reloadProfile(){if(S.profileReloading)return;S.profileReloading=true;location.reload();}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
 async function api(path,body,options={}){
-  const config={credentials:'same-origin',...options};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
+  const {onResult,...requestOptions}=options,config={credentials:'same-origin',...requestOptions};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
   if(body!==undefined){config.method=options.method||'POST';config.body=body instanceof FormData?body:JSON.stringify(body);if(!(body instanceof FormData))config.headers={...config.headers,'Content-Type':'application/json'};}
   const r=await fetch('/api'+path,config);let data;
+  if(r.ok&&onResult&&r.headers.get('Content-Type')?.includes('text/event-stream')){
+    const reader=r.body.getReader(),decoder=new TextDecoder();let buffer='',final=null;
+    try{
+      while(true){const part=await reader.read();buffer+=decoder.decode(part.value||new Uint8Array(),{stream:!part.done});if(buffer.length>2_000_000)throw Error('Réponse documentaire trop volumineuse.');
+        let newline;while((newline=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,newline).trimEnd();buffer=buffer.slice(newline+1);if(!line.startsWith('data: '))continue;
+          const value=JSON.parse(line.slice(6));if(value.state==='error')throw Error(value.message||'La recherche a été interrompue.');
+          if(Array.isArray(value.results)){onResult(value);if(value.state==='done')final=value;}
+        }
+        if(part.done)break;
+      }
+      if(!final)throw Error('La recherche a été interrompue. Les résultats reçus sont conservés.');return final;
+    }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+  }
   try{data=await r.json();}catch(_){throw new Error('Le service ne répond pas. Réessayez dans quelques instants.');}
   if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){reloadProfile();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
   return data;
@@ -154,15 +167,21 @@ function search(query){document.dispatchEvent(new CustomEvent('survie:scope-rese
 async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
   S.searchAbort?.abort();const controller=new AbortController();S.searchAbort=controller;$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
-  try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'all')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal});
+  function display(data){
     if(controller.signal.aborted||S.searchAbort!==controller)return;
     const selectedCollection=[...($('search-collection')?.options||[])].find(o=>o.value===data.coverage?.collection)?.textContent||({wikipedia:'Wikipédia',appropedia:'Appropedia',wikibooks:'Wikilivres',wikihow:'wikiHow'}[data.coverage?.collection])||data.coverage?.collection;
     $('search-message').classList.toggle('search-warning',!!data.coverage?.status&&data.coverage.status!=='complete');
-    $('search-message').textContent=`${data.results.length} document(s) trouvé(s) pour « ${q} »`+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
-    renderLibraryResults(data.results);
-    if(data.coverage?.domain&&data.coverage.domain!=='all')$('search-results').append(button('Élargir à toute la bibliothèque',()=>{$('search-domain').value='all';$('search-domain').dispatchEvent(new Event('change'));},'secondary'));
-    if(!data.results.length)$('search-results').append(element('div',data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
+    $('search-message').textContent=`${data.results.length} document(s) trouvé(s) pour « ${q} »`+(data.state==='results'?' · Recherche en cours'+(Number.isFinite(data.coverage?.collections_selected)?' · '+((data.coverage.searched||0)+(data.coverage.locally_indexed||0))+' / '+data.coverage.collections_selected+' collections examinées':''):'')+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
+    const signature=JSON.stringify(data.results);if($('search-results').dataset.signature!==signature){$('search-results').dataset.signature=signature;$('search-results').replaceChildren();renderLibraryResults(data.results);}
+    $('search-results').querySelectorAll('.search-extra').forEach(node=>node.remove());
+    if(data.coverage?.domain&&data.coverage.domain!=='all'){const wider=button('Élargir à toute la bibliothèque',()=>{$('search-domain').value='all';$('search-domain').dispatchEvent(new Event('change'));},'secondary search-extra');$('search-results').append(wider);}
+    if(!data.results.length)$('search-results').append(element('div',data.state==='results'?'Recherche en cours ; les premiers documents apparaîtront ici.':data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel search-extra'));
+  }
+  $('search-results').dataset.signature='';
+  $('search-stop')?.remove();const stop=button('Arrêter la recherche',()=>{controller.abort();if(S.searchAbort===controller){$('search-message').textContent='Recherche arrêtée. Les résultats reçus sont conservés ; la recherche peut être incomplète.';stop.remove();}},'secondary');stop.id='search-stop';$('search-message').after(stop);
+  try{const data=await api('/search?q='+encodeURIComponent(q)+'&stream=true&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'all')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal,onResult:display});display(data);
   }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)$('search-message').textContent=e.message;}
+  finally{stop.remove();}
 }
 function renderLibraryResults(results){
   for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind==='guide'?'Guide':'Article'} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}${result.collection?' · '+result.collection:''}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));

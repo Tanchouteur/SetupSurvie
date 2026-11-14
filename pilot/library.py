@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries
+from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -286,7 +286,7 @@ def search_terms(query):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
-async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False):
+async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12):
     """Explicit homogeneous archive sets; multilingual archives queried separately.
 
     Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
@@ -304,6 +304,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     groups={};eligible=[];selected_books=[];incompatible=[]
     saved_labels=catalogue.snapshot()
     manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
+    generation=await asyncio.to_thread(search_cache.snapshot,Path(os.environ.get('ZIM_DIR','/zim')),available,store.ROOT/'archive-index')
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
     def priority(book):
@@ -349,6 +350,10 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     batches=sorted([items[i:i+12] for items in groups.values() for i in range(0,len(items),12)],key=lambda batch:batch[0][0])
     done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(2);title_semaphore=asyncio.Semaphore(2);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
     errors=[];error_counts={};cache_hits=0;trace=[]
+    async def notify():
+        if on_update:await on_update(list(records.values()),{'status':'partial','running':True,'searched':len(done),'failed':len(failed),
+            'not_searched':max(0,len(eligible)-len(done)-len(failed)),'collections_selected':len(selected_books),'locally_indexed':report['locally_indexed'],
+            'native_incompatible':len(incompatible),'deadline_ms':round(budget*1000)})
     def traced(stage,books,pattern,started,**outcome):
         if diagnostic and len(trace)<40:
             trace.append({'stage':stage,'collections':[str(book.get('book',''))[:300] for book in books],
@@ -374,7 +379,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
                 if calls>=32:return
                 calls+=1
                 if pattern_override is not None:refinement_attempted+=1
-                (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/search?'+urlencode(params),'fulltext',get);cache_hits+=cached
+                (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/search?'+urlencode(params),'fulltext',get,generation=generation,timeout=10 if budget>12 else 3);cache_hits+=cached
                 tree=ET.fromstring(raw)
                 traced('refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],pattern,started,
                        outcome='success',results=len(tree.findall('./channel/item')),response_bytes=len(raw),cached=cached)
@@ -400,6 +405,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
                     'language':book.get('language',''),'url':link,'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
                 prior=records.get(record['id'])
                 if prior is None or prior.get('match')=='title':records[record['id']]=record
+            await notify()
         except (TimeoutError,httpx.HTTPError,ET.ParseError,HTTPException,ValueError) as error:
             status,reason=failure(error,'refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],started)
             traced('refinement' if pattern_override is not None else 'fulltext',[e[1] for e in batch],pattern,started,
@@ -408,6 +414,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             if len(batch)>1 and fallback and status in (400,404,413):
                 await asyncio.gather(*(run([entry],False) for entry in batch))
             else:failed.update(entry[0] for entry in batch)
+            await notify()
     title_done=0;title_failed=0
     async def title_lookup(book):
         nonlocal title_done,title_failed,cache_hits
@@ -418,7 +425,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
         started=time.monotonic()
         try:
             async with title_semaphore:
-                (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}),'title',get);cache_hits+=cached
+                (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}),'title',get,generation=generation,timeout=5 if budget>12 else 2);cache_hits+=cached
                 values=json.loads(raw)
                 if not isinstance(values,list):raise ValueError('Invalid suggestions')
             title_done+=1
@@ -437,9 +444,11 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
                         'kind':'article','language':book.get('language',''),'url':'/content/'+quote(identifier,safe='/'),
                         'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
                 records.setdefault(record['id'],record)
+            await notify()
         except (TimeoutError,httpx.HTTPError,HTTPException,ValueError,TypeError) as error:
             title_failed+=1;status,reason=failure(error,'title',[book],started)
             traced('title',[book],term,started,outcome='error',reason=reason,http_status=status)
+            await notify()
     title_books=[]
     if query_plan and query_plan.words:
         def title_priority(book):return next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(book.get('book','')).lower()),10)
@@ -473,7 +482,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             await run(batch,pattern is None,pattern)
             schedule_refinements(True)
     try:
-        async with asyncio.timeout(12):
+        async with asyncio.timeout(budget):
             await asyncio.gather(*(title_lookup(book) for book in title_books),consume(),consume())
             schedule_refinements(False)
             await asyncio.gather(consume(),consume())
@@ -483,7 +492,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
     report['native_incompatible']=len(incompatible)
-    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,deadline_exceeded=deadline_exceeded,deadline_ms=12000,primary_requests=calls-refinement_attempted,request_limit=32,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
+    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,cache_disk_ttl_seconds=search_cache.MAX_AGE,cache_generation=generation[:16],deadline_exceeded=deadline_exceeded,deadline_ms=round(budget*1000),primary_requests=calls-refinement_attempted,request_limit=32,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
     messages=[]
     if report['catalog']['state']=='stale':
         report['status']='partial';messages.append('Le catalogue répond mal ; la dernière liste connue est utilisée. Sa date figure dans le diagnostic.')
@@ -509,7 +518,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False):
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12):
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
     candidate_limit=min(80,max(20,limit*4))
@@ -565,21 +574,35 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
     saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))
-    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
-        collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata)))
+    local_rows=[];current_articles=[];current_coverage={'status':'partial','running':True,'searched':0,'collections_selected':None};update_lock=asyncio.Lock()
+    async def selected(items):
+        combined=[dict(row) for row in items]
+        for item in combined:item['language']=retrieval.article_language(item)
+        metadata_available=catalogue.annotate(combined,GUIDES,zims,saved_metadata)
+        allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
+        combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
+        if domain!='all':combined=[r for r in combined if domain in r['domains']]
+        return await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2),metadata_available
+    async def notify():
+        if not on_update:return
+        async with update_lock:
+            rows,_=await selected(results+local_rows+current_articles)
+            await on_update(SearchResults(rows,{**current_coverage,'domain':domain,'collection':query_plan.collection}))
+    async def native_update(rows,coverage):
+        nonlocal current_articles,current_coverage
+        current_articles=rows;current_coverage=coverage;await notify()
+    async def read_local():
+        found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
+            collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata))
+        local_rows.extend(found);await notify();return found
+    local_task=asyncio.create_task(read_local())
     try:
-        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic)
+        await notify()
+        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic,on_update=native_update if on_update else None,budget=budget)
         local=await local_task
     finally:
         if not local_task.done():local_task.cancel()
-    combined=results+local+articles
-    for item in combined:
-        item['language']=retrieval.article_language(item)
-    metadata_available=catalogue.annotate(combined,GUIDES,zims,saved_metadata)
-    allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
-    combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
-    if domain!='all':combined=[r for r in combined if domain in r['domains']]
-    ordered=await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2)
+    ordered,metadata_available=await selected(results+local+articles)
     coverage['local_query']=getattr(local,'coverage',{})
     if any(coverage['local_query'].get(key,0) for key in ('failed','outdated')):
         if coverage['status']=='complete':coverage['status']='partial'

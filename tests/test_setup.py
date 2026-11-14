@@ -187,9 +187,10 @@ class InstallationTests(unittest.TestCase):
             with self.subTest(target=target, cpu=cpu):
                 c = dict(self.config, target=target, cpu=cpu)
                 self.app.render(c)
-                result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True,env=self.app.environment())
+                result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True,env={**self.app.environment(),'PILOT_SEARCH_CACHE_BYTES':'8000000000'})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 services = json.loads(result.stdout)['services']
+                self.assertEqual(services['pilot']['environment']['PILOT_SEARCH_CACHE_BYTES'],'8000000000')
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')
                 self.assertEqual(services['open-webui']['environment']['WEBUI_SECRET_KEY'], self.config['secret'])
                 self.assertEqual(services['open-webui']['environment']['WEBUI_AUTH_TRUSTED_EMAIL_HEADER'],'X-Survie-Email')

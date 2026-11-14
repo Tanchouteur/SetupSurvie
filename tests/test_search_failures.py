@@ -103,8 +103,8 @@ class SearchFailureTests(unittest.IsolatedAsyncioTestCase):
         response=b'<rss><channel>'+b' '*160000+b'</channel></rss>'
         reader=AsyncMock(return_value=(response,'application/xml'))
         for i in range(70):await kiwix_queries.request(store.ROOT,'fixture','/search?'+str(i),'fulltext',reader)
-        shared=kiwix_queries.state();self.assertLessEqual(len(shared['cache']),64);self.assertLessEqual(sum(len(v[1][0]) for v in shared['cache'].values()),kiwix_queries.MAX_BYTES)
-        key=next(iter(shared['cache']));stamp,value=shared['cache'][key];shared['cache'][key]=(stamp-30,value)
+        shared=kiwix_queries.state();self.assertLessEqual(len(shared['cache']),kiwix_queries.MAX_ENTRIES);self.assertLessEqual(sum(len(v[1][0]) for v in shared['cache'].values()),kiwix_queries.MAX_BYTES)
+        key=next(iter(shared['cache']));stamp,value=shared['cache'][key];shared['cache'][key]=(stamp-kiwix_queries.TTL-1,value)
         _,cached=await kiwix_queries.request(*key,'fulltext',reader);self.assertFalse(cached)
         gate=asyncio.Event();started=asyncio.Event()
         async def delayed(path):started.set();await gate.wait();return b'[]','application/json'
