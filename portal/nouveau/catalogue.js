@@ -23,10 +23,10 @@
     const details=element('details',undefined,'catalogue-editor'),heading=element('summary','Corriger le classement');details.append(heading);
     details.append(element('p','Ce classement aide à retrouver le document. Il ne certifie ni son exactitude ni la sécurité d’une procédure.','small muted'));
     const form=element('form'),field=element('fieldset'),legend=element('legend','Où retrouver ce document ?');field.append(legend);
-    for(const [key,label] of Object.entries(domains)){const row=element('label'),input=element('input');input.type='checkbox';input.name='domain';input.value=key;input.checked=info.domains.includes(key);row.append(input,document.createTextNode(' '+label));field.append(row);}
+    for(const [key,label] of Object.entries(domains)){const row=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='domain';input.value=key;input.checked=info.domains.includes(key);row.append(input,document.createTextNode(label));field.append(row);}
     field.append(element('p','Sans espace choisi, le document reste dans Toute la bibliothèque.','small muted'));
     const label=element('label','Ce document contient surtout…'),select=element('select');select.name='document_type';for(const [key,text] of Object.entries(types))select.append(new Option(text,key));select.value=info.document_type;label.append(select);
-    const reviewedLabel=element('label'),reviewed=element('input');reviewed.type='checkbox';reviewed.checked=info.status==='reviewed';reviewedLabel.append(reviewed,document.createTextNode(' J’ai examiné le contenu pour ce classement.'));
+    const reviewedLabel=element('label',undefined,'catalogue-check'),reviewed=element('input');reviewed.type='checkbox';reviewed.checked=info.status==='reviewed';reviewedLabel.append(reviewed,document.createTextNode('J’ai examiné le contenu pour ce classement.'));
     const status=element('p',undefined,'small');status.setAttribute('role','status');
     const save=element('button','Enregistrer le classement');save.type='submit';save.disabled=!info.revision;
     const actions=element('div',undefined,'actions');actions.append(save);
