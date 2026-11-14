@@ -324,6 +324,9 @@ Le [contrôle isolé 0.9.2](../essais/2026-11-14-indexation-isolee.md) complète
 prérequis vérifiés dans le Python du lecteur avant les archives, arrêt anticipé
 et diagnostic catégoriel, ainsi que correction du lancement des processus dans
 le venv Windows reproduit en CI, sans présumer la cause réelle de l’incident.
+La [conservation des index 0.9.3](../essais/2026-11-14-index-sauvegarde-et-retour-arriere.md)
+complète L1/L9 : exclusion des écrivains pendant sauvegarde et retour arrière,
+processus d’extraction restants et fichiers de verrou conservés.
 
 La [procédure des rapports manuels](../essais/recettes-progressives-marc.md)
 définit R1 à R7, leur disponibilité actuelle et la façon de demander un essai.

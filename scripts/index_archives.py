@@ -11,11 +11,18 @@ from pilot import archive_index,durable
 from delivery_paths import locked
 from runtime_resources import index_workers,background_worker
 import index_reader_probe
+import index_locks
+from setup import SetupError
+
+
+def build_one(source,root,**options):
+    with locked(index_locks.worker(root,source)):
+        return archive_index.build_archive(source,root,**options)
 
 
 def error_record(source,error):
     import errno
-    reason='storage_reserve' if isinstance(error,archive_index.StorageReserve) else 'source_changed' if isinstance(error,archive_index.ArchiveChanged) else 'source_missing' if isinstance(error,FileNotFoundError) else 'permission_denied' if isinstance(error,PermissionError) else 'storage_full' if isinstance(error,OSError) and error.errno in (errno.ENOSPC,getattr(errno,'EDQUOT',-1)) else 'reader_import' if isinstance(error,(ImportError,ModuleNotFoundError)) else 'sqlite_error' if isinstance(error,archive_index.sqlite3.Error) else 'archive_error'
+    reason='storage_reserve' if isinstance(error,archive_index.StorageReserve) else 'source_changed' if isinstance(error,archive_index.ArchiveChanged) else 'source_missing' if isinstance(error,FileNotFoundError) else 'permission_denied' if isinstance(error,PermissionError) else 'storage_full' if isinstance(error,OSError) and error.errno in (errno.ENOSPC,getattr(errno,'EDQUOT',-1)) else 'reader_import' if isinstance(error,(ImportError,ModuleNotFoundError)) else 'sqlite_error' if isinstance(error,archive_index.sqlite3.Error) else 'index_busy' if isinstance(error,SetupError) else 'archive_error'
     return {'archive':source.name,'status':'error','error':type(error).__name__,'reason':reason}
 
 
@@ -38,8 +45,11 @@ def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False,reserve=15_000_
         report['reader_probe']=index_reader_probe.probe()
         if not report['reader_probe']['ok']:
             report['phase']='partial';report['error_summary']={report['reader_probe']['error']:1};save();return report
+        try:index_locks.prepare(root,files)
+        except SetupError:
+            report['phase']='partial';report['error_summary']={'index_busy':1};save();return report
         with ProcessPoolExecutor(max_workers=workers,initializer=background_worker) as pool:
-            pending={pool.submit(archive_index.build_archive,p,root,cancel=cancel,force=force,reserve=reserve):p for p in files}
+            pending={pool.submit(build_one,p,root,cancel=cancel,force=force,reserve=reserve):p for p in files}
             for future in as_completed(pending):
                 try:result=future.result()
                 except archive_index.Paused:result={'archive':pending[future].name,'status':'paused'}

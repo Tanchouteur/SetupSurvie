@@ -352,3 +352,14 @@ du venv Windows empêche son démarrage adapté aux environnements isolés. La r
 exécute le vrai CLI à deux processus dans un venv sans dépendances Web.
 La restauration automatique d’une recherche par `navigation.js` attend le résultat
 du profil, y compris son repli anonyme, pour éviter les trois requêtes au démarrage.
+
+## Maintenance et écrivains d’index (0.9.3)
+
+`pilot_backup.maintenance` exclut les tâches Web, publications, transferts et
+écrivains d’index avant l’arrêt des services. `pilot_update` garde ce contexte
+pendant le remplacement et le retour arrière ; sa récupération explicite le reprend.
+`index_locks.py` enregistre les verrous par archive avant toute soumission au pool,
+et `index_archives.build_one` les détient pendant chaque extraction. La maintenance
+acquiert aussi ces verrous pour exclure les processus restants et les départs tardifs.
+Les instantanés excluent les `.lease` des états ; le retour arrière conserve les
+inodes existants, y compris ceux détenus par son propre contexte de maintenance.

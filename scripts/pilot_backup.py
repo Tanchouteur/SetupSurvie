@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Stopped-service user snapshot, complementary to the immutable public pilot kit."""
 import argparse
+from contextlib import contextmanager
 import json
 from pathlib import Path
 import shutil
@@ -8,6 +9,7 @@ import secrets
 import sys
 
 import setup
+import index_locks
 from pilot import durable
 from delivery_paths import destination as checked_destination,locked
 
@@ -22,21 +24,20 @@ def separate_roots(*roots):
 
 
 def backup(app,c,destination,*,resume=True):
-    # Serialize the state check with new jobs, including their refresh phase.
+    with maintenance(app,c):
+        return stopped_backup(app,c,destination,resume=resume)
+
+
+@contextmanager
+def maintenance(app,c):
+    """Exclude web jobs, CLI transfers and index writers throughout maintenance."""
     with locked(checked_destination(app.work,'library-web/operation.lock')):
-        return idle_backup(app,c,destination,resume=resume)
-
-
-def idle_backup(app,c,destination,*,resume=True):
-    state=checked_destination(app.work,'library-web/state.json')
-    if state.is_file() and json.loads(state.read_text(encoding='utf-8')).get('phase') in ('starting','planning','downloading','refreshing'):
-        raise setup.SetupError('Mettez la préparation documentaire en pause et attendez son arrêt avant la sauvegarde.')
-    # Same lock as CLI/web content transfers: no guide or receipt may be
-    # published while the stopped-service snapshot is copied.
-    data=Path(c['data_dir'])
-    with locked(checked_destination(data,'catalog/publication.lock')):
-        with locked(checked_destination(data,'catalog/content.lock')):
-            return stopped_backup(app,c,destination,resume=resume)
+        state=checked_destination(app.work,'library-web/state.json')
+        if state.is_file() and json.loads(state.read_text(encoding='utf-8')).get('phase') in ('starting','planning','downloading','refreshing'):
+            raise setup.SetupError('Mettez la préparation documentaire en pause et attendez son arrêt avant la sauvegarde ou la mise à jour.')
+        data=Path(c['data_dir'])
+        with locked(checked_destination(data,'catalog/publication.lock')),locked(checked_destination(data,'catalog/content.lock')),index_locks.stopped(checked_destination(data,'state/pilot/archive-index')):
+            yield
 
 
 def stopped_backup(app,c,destination,*,resume=True):
@@ -53,7 +54,7 @@ def stopped_backup(app,c,destination,*,resume=True):
         for name in ['state/pilot','state/openwebui','state/caddy','library/guides']:
             for path in sorted((data/name).rglob('*')):
                 relative=path.relative_to(data)
-                if 'cache' in relative.parts or path.name.endswith('-shm'):continue
+                if 'cache' in relative.parts or path.name.endswith('-shm') or relative.parts[0]=='state' and path.name.endswith('.lease'):continue
                 if path.is_symlink():raise setup.SetupError('Lien refusé dans la sauvegarde : '+relative.as_posix())
                 if path.is_file():sources.append((path,'data/'+relative.as_posix()))
         seen=set()
@@ -103,6 +104,7 @@ def restore(source,kit,work_dir,data_dir):
     # An image ID is platform-local; it is re-imported and verified below.
     saved.pop('local_images',None)
     for entry,path in entries:
+        if entry['path'].startswith('data/state/') and entry['path'].endswith('.lease'):continue
         if entry['path'].startswith('data/'):
             dest=data/Path(entry['path']).relative_to('data')
         elif entry['path'] in allowed_private-{'private/settings.json'}:dest=checked_destination(work,entry['path'].removeprefix('private/'))

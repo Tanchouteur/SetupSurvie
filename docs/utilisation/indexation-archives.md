@@ -1,6 +1,6 @@
 # Rendre les archives recherchables
 
-**Guide actuel — 0.9.2, 14 novembre 2026.** L’index complémentaire extrait le texte
+**Guide actuel — 0.9.3, 14 novembre 2026.** L’index complémentaire extrait le texte
 des archives ZIM sans véritable index Kiwix. Il ne modifie pas les originaux,
 ne charge aucun modèle IA et ne transcrit pas les vidéos.
 
@@ -106,6 +106,8 @@ Commande manuelle équivalente à la préparation locale :
 
 `--workers 1` à `--workers 16` impose le parallélisme ; `--include-indexed` force
 également les ZIM déjà indexés par Kiwix et n’est pas le fonctionnement normal.
+Avec `--cancel <fichier>`, créer ce fichier demande une pause au prochain point
+de contrôle ; attendre la fin du processus avant une sauvegarde ou mise à jour.
 `--reserve-bytes` règle la réserve en maintenance ; ne pas descendre sous 15 Go
 au laboratoire. Les petits tests CLI choisissent explicitement 1 Go pour ne pas
 dépendre de la capacité de la VM de CI.
@@ -149,3 +151,22 @@ adapté à l’environnement isolé : le remplacement par son `pythonw.exe` pouv
 bloquer ce démarrage. La préparation vérifie les prérequis ; elle ne garantit
 pas à elle seule que les processus ont ensuite parcouru les archives.
 Voir le [bilan des essais isolés](../essais/2026-11-14-indexation-isolee.md).
+
+## Sauvegarde et mise à jour depuis 0.9.3
+
+Mettre les préparations en pause et attendre leur arrêt avant ces opérations.
+La sauvegarde privée conserve aussi les index et leur progression. Elle refuse
+désormais un écrivain CLI actif avant d’arrêter les services ; la mise à jour et
+son retour arrière gardent cette exclusion jusqu’à leur fin. Un processus
+d’extraction encore vivant sans son superviseur reste pris en compte.
+
+Le motif `index_busy` indique un processus actif ou un verrou à examiner, et non
+un lecteur à réinstaller. Attendre l’arrêt confirmé ; transmettre le rapport si
+l’état reste incompréhensible. Ne pas supprimer les `.lease` pour débloquer.
+Ces fichiers ne sont pas transportés comme des états à restaurer. Les index
+restaurés restent soumis à la vérification de leurs sources : une archive
+remplacée ou recopiée avec une autre date peut demander une nouvelle préparation.
+
+Pour la première mise à jour vers 0.9.3, l’ancien programme de maintenance reste
+en charge : respecter la pause préalable. Voir le
+[bilan des protections](../essais/2026-11-14-index-sauvegarde-et-retour-arriere.md).

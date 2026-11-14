@@ -201,3 +201,11 @@ Le [bilan](../essais/2026-11-14-indexation-isolee.md) conserve les essais Linux 
 Windows isolés et la correction du lancement des processus. La cause réelle chez
 Marc attend R1, sans nouveau corpus ajouté. La restauration de recherche déclenche
 une seule requête après lecture du profil, avec repli public si ce dernier échoue.
+
+## Conservation des index 0.9.3 — 14 novembre 2026
+
+Sauvegarde, remplacement et retour arrière partagent les exclusions des écrivains
+CLI/Web, y compris un processus d’extraction restant après son superviseur.
+Les verrous OS ne sont pas restaurés comme des données ni supprimés pendant le
+nettoyage. Les [preuves et limites](../essais/2026-11-14-index-sauvegarde-et-retour-arriere.md)
+restent distinctes d’un essai du fonds de Marc ou d’une restauration physique complète.

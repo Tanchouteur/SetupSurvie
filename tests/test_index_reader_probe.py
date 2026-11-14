@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import index_reader_probe as probe,index_archives,search_index_tools as tools,setup
+import index_locks
+from delivery_paths import locked
 from pilot import archive_index,durable
 
 
@@ -56,9 +58,32 @@ class ReaderProbeTests(unittest.TestCase):
         cases=[(archive_index.StorageReserve('PRIVATE'),'storage_reserve'),(archive_index.ArchiveChanged('PRIVATE'),'source_changed'),
                (PermissionError('PRIVATE'),'permission_denied'),(FileNotFoundError('PRIVATE'),'source_missing'),
                (OSError(errno.ENOSPC,'PRIVATE'),'storage_full'),(ImportError('PRIVATE'),'reader_import'),
-               (sqlite3.OperationalError('PRIVATE'),'sqlite_error'),(RuntimeError('PRIVATE'),'archive_error')]
+               (sqlite3.OperationalError('PRIVATE'),'sqlite_error'),(setup.SetupError('PRIVATE'),'index_busy'),(RuntimeError('PRIVATE'),'archive_error')]
         for error,reason in cases:
             result=index_archives.error_record(Path('fixture.zim'),error);self.assertEqual(result['reason'],reason);self.assertNotIn('PRIVATE',json.dumps(result))
+
+    def test_live_orphan_worker_refuses_a_new_pool_without_invalidating_reader(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);zims=root/'zim';zims.mkdir();(zims/'fixture.zim').write_bytes(b'fixture')
+            index=root/'state/archive-index';index.mkdir(parents=True)
+            (index/'previous.sqlite').write_bytes(b'published index')
+            with locked(index_locks.worker(index,zims/'fixture.zim')),patch.object(probe,'probe',return_value={'schema':1,'ok':True}),patch.object(index_archives,'ProcessPoolExecutor') as pool:
+                report=index_archives.run(zims,root/'state');pool.assert_not_called()
+            self.assertTrue(report['reader_probe']['ok']);self.assertEqual(report['phase'],'partial')
+            self.assertEqual(report['error_summary'],{'index_busy':1});self.assertEqual(report['completed'],0)
+            self.assertEqual((index/'previous.sqlite').read_bytes(),b'published index')
+
+    def test_registered_delayed_worker_cannot_start_inside_maintenance(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);sources=[Path('first.zim'),Path('second.zim')]
+            index_locks.prepare(root,sources)
+            self.assertEqual(len(index_locks.workers(root)),2)
+            with index_locks.stopped(root),patch.object(archive_index,'build_archive') as build:
+                with self.assertRaises(setup.SetupError):index_archives.build_one(sources[0],root)
+                build.assert_not_called()
+            with patch.object(archive_index,'build_archive',return_value={'status':'ready'}) as build:
+                self.assertEqual(index_archives.build_one(sources[0],root)['status'],'ready')
+                build.assert_called_once()
 
     def test_isolated_verification_has_fixed_command_and_safe_failure_report(self):
         with tempfile.TemporaryDirectory() as folder:

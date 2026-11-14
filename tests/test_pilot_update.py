@@ -12,6 +12,7 @@ from crash_harness import crash_after_ready
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 import pilot_update as update
+from delivery_paths import locked
 
 
 class Services:
@@ -42,7 +43,7 @@ class UpdateTests(unittest.TestCase):
         with patch.object(setup,'ROOT',self.root):
             self.app=setup.Installation(self.work);self.c=self.app.init('linux',self.data,cpu=True)
         self.c['app_dir']=str(self.root);setup.write_json(self.app.settings_path,self.c,private=True)
-        for path,body in [('state/pilot/pilot.db',b'old-db'),('state/openwebui/webui.db',b'accounts-and-history'),('models/blob',b'large-model-sentinel'),('library/zim/book.zim',b'archive-sentinel'),('state/openwebui/cache/file',b'cache-sentinel')]:
+        for path,body in [('state/pilot/pilot.db',b'old-db'),('state/pilot/archive-index/text.sqlite',b'index-sentinel'),('state/openwebui/webui.db',b'accounts-and-history'),('models/blob',b'large-model-sentinel'),('library/zim/book.zim',b'archive-sentinel'),('state/openwebui/cache/file',b'cache-sentinel')]:
             target=self.data/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(body)
         (self.work/'inference-paused.json').write_text('{"reason":"user_gaming"}')
     def run_update(self,fail=False):
@@ -55,6 +56,7 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'library/zim/book.zim').read_bytes(),b'archive-sentinel')
         self.assertEqual((self.data/'state/openwebui/webui.db').read_bytes(),b'accounts-and-history')
         self.assertEqual((self.data/'state/openwebui/cache/file').read_bytes(),b'cache-sentinel')
+        self.assertEqual((self.data/'state/pilot/archive-index/text.sqlite').read_bytes(),b'index-sentinel')
         self.assertTrue((self.work/'inference-paused.json').exists())
     def test_update_changes_code_and_preserves_accounts_models_and_pause(self):
         result,service=self.run_update()
@@ -83,6 +85,49 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
         self.assert_static_data()
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
+
+    def test_active_cli_index_refuses_update_before_stop_or_incomplete_journal(self):
+        service=Services(self.app,self.c);index=self.data/'state/pilot/archive-index'
+        with locked(index/'operation.lock'),patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose') as compose:
+            with self.assertRaisesRegex(setup.SetupError,'opération'):update.apply(self.app,self.package,self.digest,service)
+            compose.assert_not_called()
+        self.assertEqual(service.stops,0);self.assertFalse((self.work/'update.json').exists())
+        self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1');self.assert_static_data()
+
+    def test_index_lease_survives_rollback_and_excludes_writers_through_all_transitions(self):
+        index=self.data/'state/pilot/archive-index';lease=index/'operation.lock.lease';lease.write_bytes(b'lease inode sentinel')
+        inode=lease.stat().st_ino;service=Services(self.app,self.c,True);events=[]
+        def excluded(event):
+            with self.assertRaises(setup.SetupError):
+                with locked(index/'operation.lock'):pass
+            events.append(event)
+        start,stop,check=service.start,service.stop,service.check
+        def starting():
+            excluded('start');start()
+            if service.starts==1:
+                (index/'text.sqlite').write_bytes(b'changed during failed startup')
+                (index/'new.sqlite').write_bytes(b'not in previous snapshot')
+        service.start=starting
+        service.stop=lambda:(excluded('stop'),stop())
+        service.check=lambda version:(excluded('check'),check(version))
+        copy=update.shutil.copyfile
+        def copy_checked(source,target,*args,**kwargs):
+            if Path(target)==index/'text.sqlite':excluded('restore')
+            return copy(source,target,*args,**kwargs)
+        with patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose'),patch.object(update.shutil,'copyfile',side_effect=copy_checked):
+            with self.assertRaisesRegex(setup.SetupError,'Unhealthy'):update.apply(self.app,self.package,self.digest,service)
+        self.assertIn('restore',events);self.assertEqual(events.count('start'),2);self.assertEqual(events.count('stop'),2)
+        self.assertEqual(lease.stat().st_ino,inode);self.assertEqual(lease.read_bytes(),b'lease inode sentinel')
+        self.assertFalse((index/'new.sqlite').exists());self.assert_static_data()
+        with locked(index/'operation.lock'):pass
+
+    def test_manual_recovery_refuses_an_active_index_before_restoring_any_state(self):
+        self.run_update();journal=self.work/'update.json';state=json.loads(journal.read_text());state['phase']='switched';setup.write_json(journal,state)
+        service=Services(self.app,self.c);index=self.data/'state/pilot/archive-index'
+        with locked(index/'operation.lock'),patch.object(setup,'ROOT',self.root):
+            with self.assertRaisesRegex(setup.SetupError,'opération'):update.recover(self.app,journal,service)
+        self.assertEqual(service.stops,0);self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.2')
+        self.assertEqual(json.loads(journal.read_text())['phase'],'switched')
     def test_untrusted_archive_or_traversal_rejected_before_service_stop(self):
         with self.assertRaises(setup.SetupError):update.unpack(self.package,'0'*64,self.base/'staged')
         with zipfile.ZipFile(self.package,'a') as archive:archive.writestr('app/../../secret',b'bad')

@@ -209,11 +209,41 @@ def write(path,value,**kwargs):
 setup.write_json=write
 backup(app,config,sys.argv[3])
 '''
-        crash_after_ready(code,[app.work,destination,self.ready],self.ready)
+        index_lock=Path(c['data_dir'])/'state/pilot/archive-index/operation.lock'
+        def index_excluded(process):
+            with self.assertRaises(setup.SetupError):
+                with delivery_paths.locked(index_lock):pass
+        crash_after_ready(code,[app.work,destination,self.ready],self.ready,index_excluded)
+        with delivery_paths.locked(index_lock):pass
+        self.assertTrue(index_lock.with_name(index_lock.name+'.lease').exists())
         self.assertFalse((destination/'backup.json').exists())
         complete=self.root/'complete'
         with patch.object(app,'compose'):backup(app,c,complete)
         checked_entries(complete,json.loads((complete/'backup.json').read_text(encoding='utf-8')))
+
+    def test_orphan_index_worker_blocks_snapshot_until_its_process_dies(self):
+        from pilot_backup import backup
+        app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
+        index=Path(c['data_dir'])/'state/pilot/archive-index';index.mkdir()
+        (index/'published.sqlite').write_bytes(b'previous fixture index')
+        code='''
+from pathlib import Path
+import time,index_archives
+def extract(source,root,**options):
+    Path(sys.argv[3]).touch();time.sleep(60)
+index_archives.archive_index.build_archive=extract
+index_archives.build_one(Path('fixture.zim'),Path(sys.argv[2]))
+'''
+        def active(process):
+            # The supervisor's operation lease is free, but a real worker owns
+            # its per-archive lease and still prevents maintenance.
+            with delivery_paths.locked(index/'operation.lock'):pass
+            with patch.object(app,'compose') as compose:
+                with self.assertRaisesRegex(setup.SetupError,'opération'):backup(app,c,self.root/'blocked')
+                compose.assert_not_called()
+        crash_after_ready(code,[index,self.ready],self.ready,active)
+        with patch.object(app,'compose'):backup(app,c,self.root/'complete')
+        self.assertEqual((self.root/'complete/data/state/pilot/archive-index/published.sqlite').read_bytes(),b'previous fixture index')
 
     def graph(self,folder,body):
         file=folder/'foot/network.osrm';file.parent.mkdir(parents=True)

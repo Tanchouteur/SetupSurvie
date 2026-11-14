@@ -131,6 +131,12 @@ Depuis 0.1.23, les verrous du système se libèrent à la mort du processus ; le
 fichiers `.lease` restent présents et ne doivent pas être supprimés. Les anciens
 verrous inconnus sont conservés pour diagnostic. Lire [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md).
 
+Depuis 0.9.3, les index de recherche et leur progression sont copiés seulement
+quand leurs écrivains CLI et Web ont libéré leurs verrous. Un refus se produit
+avant l’arrêt du site. Les `.lease` ne sont pas des données à restaurer : les
+nouvelles sauvegardes les excluent et les anciennes entrées sont ignorées. Un
+index restauré dont l’archive a changé reste signalé périmé et demande une reprise.
+
 ```powershell
 py -3 scripts\pilot_backup.py backup E:\Sauvegardes\survie-essai-01 --work-dir D:\SetupSurvie\prive
 ```

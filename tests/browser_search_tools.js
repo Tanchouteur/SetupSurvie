@@ -48,5 +48,10 @@ async page=>{
   check(await page.locator('#next-index-start').isDisabled(),'Échec de vérification de l’outil empêche un lancement faussement prêt');
   const failureDownload=page.waitForEvent('download');await page.locator('#next-index-export').click();const failureFile=await failureDownload,blocks=[];for await(const block of await failureFile.createReadStream())blocks.push(block);const failureReport=JSON.parse(Buffer.concat(blocks).toString());
   check(failureReport.reader_probe.error==='fts5_unavailable'&&failureReport.index.completed===0,'Rapport conserve le contrôle préalable et zéro archive parcourue');
+  indexState={...indexState,index_reader_ready:true,reader_probe:{schema:1,ok:true},message:'Certaines archives n’ont pas pu être indexées.',search_index:{archives:2,completed:0,articles:0,reader_probe:{schema:1,ok:true},error_summary:{index_busy:1},results:[]}};
+  await page.reload();await page.waitForFunction(()=>document.getElementById('next-index-status').textContent.includes('processus d’indexation encore actif'));
+  check(!await page.locator('#next-index-start').isDisabled(),'Un ancien processus actif ne marque pas le lecteur comme défectueux');
+  const busyDownload=page.waitForEvent('download');await page.locator('#next-index-export').click();const busyFile=await busyDownload,busyBlocks=[];for await(const block of await busyFile.createReadStream())busyBlocks.push(block);
+  check(JSON.parse(Buffer.concat(busyBlocks).toString()).index.error_summary.index_busy===1,'Rapport distingue un écrivain encore actif d’une archive illisible');
   return {checks:checks.length,results:checks};
 }

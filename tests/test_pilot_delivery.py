@@ -14,6 +14,9 @@ import setup
 from pilot_kit import checked_entries
 from pilot_kit import install
 from pilot_backup import backup,restore
+from delivery_paths import locked
+import index_locks
+from pilot import archive_index,retrieval
 
 
 class DeliveryTests(unittest.TestCase):
@@ -91,6 +94,52 @@ class DeliveryTests(unittest.TestCase):
                 with self.assertRaisesRegex(setup.SetupError,'chevauchement'):
                     restore(self.root/'backup',self.root/'kit',work,data)
             entries.assert_not_called()
+
+    def test_backup_refuses_a_cli_index_owner_before_stopping_services(self):
+        app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
+        index=Path(c['data_dir'])/'state/pilot/archive-index';index.mkdir()
+        (index/'previous.sqlite').write_bytes(b'published index')
+        for owner in (index/'operation.lock',index_locks.worker(index,Path('fixture.zim'))):
+            with self.subTest(owner=owner.name),locked(owner),patch.object(app,'compose') as compose:
+                with self.assertRaisesRegex(setup.SetupError,'opération'):backup(app,c,self.root/'snapshot')
+                compose.assert_not_called()
+        self.assertFalse((self.root/'snapshot').exists())
+        self.assertEqual((index/'previous.sqlite').read_bytes(),b'published index')
+
+    def test_snapshot_excludes_index_writers_and_restores_a_searchable_index(self):
+        app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
+        index=Path(c['data_dir'])/'state/pilot/archive-index';index.mkdir()
+        with archive_index.connect(index/'fixture.sqlite') as db:
+            db.execute('CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT)')
+            db.execute('INSERT INTO metadata VALUES(?,?)',('source',json.dumps({'book':'fixture','title':'Fixture','fingerprint':'1:fixture:1:1'})))
+            db.execute('CREATE VIRTUAL TABLE articles USING fts5(path UNINDEXED,title,text,language UNINDEXED)')
+            db.execute('INSERT INTO articles VALUES(?,?,?,?)',('Bicycle','Vélo fictif','Une crevaison fictive, sans procédure.','fr'));db.commit()
+        original=shutil.copyfile;copied=[]
+        def copy(source,target,*args,**kwargs):
+            if str(source).endswith('fixture.sqlite'):
+                with self.assertRaises(setup.SetupError):
+                    with locked(index/'operation.lock'):pass
+                copied.append('index')
+            return original(source,target,*args,**kwargs)
+        snapshot=self.root/'snapshot'
+        with patch.object(app,'compose'),patch('pilot_backup.shutil.copyfile',side_effect=copy):backup(app,c,snapshot)
+        self.assertEqual(copied,['index'])
+        self.assertFalse(list(snapshot.rglob('*.lease')))
+        # Older snapshots can contain lease files. They are verified as inputs,
+        # but ownership must never be restored from them.
+        old=snapshot/'data/state/pilot/archive-index/operation.lock.lease';old.write_bytes(b'old lease')
+        report=json.loads((snapshot/'backup.json').read_text());report['files'].append({'path':old.relative_to(snapshot).as_posix(),'bytes':old.stat().st_size,'sha256':setup.file_hash(old)})
+        setup.write_json(snapshot/'backup.json',report)
+        kit=self.root/'kit';script=kit/'app/scripts/setup.py';script.parent.mkdir(parents=True);script.write_bytes(b'# fixture')
+        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':script.stat().st_size,'sha256':setup.file_hash(script)}]})
+        work=self.root/'restored/private';data=self.root/'restored/data'
+        with patch.object(setup,'ROOT',setup.ROOT),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'):
+            restore(snapshot,kit,work,data)
+        restored=data/'state/pilot/archive-index'
+        found=archive_index.search(restored,retrieval.plan('crevaison',['crevaison'],{}))
+        self.assertEqual(found[0]['id'],'zim:fixture/Bicycle')
+        self.assertFalse((restored/'operation.lock.lease').exists())
+        with locked(restored/'operation.lock'):pass
 
     def test_backup_attempts_service_recovery_after_partial_stop_failure(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)

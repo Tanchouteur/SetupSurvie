@@ -15,7 +15,7 @@ import zipfile
 import setup
 from pilot import durable
 from delivery_paths import destination,locked
-from pilot_backup import backup
+from pilot_backup import maintenance,stopped_backup
 from pilot_kit import checked_entries
 
 FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
@@ -128,6 +128,16 @@ class Services:
         raise setup.SetupError('La nouvelle version ne répond pas correctement.')
 
 
+def clear_state(folder):
+    """Keep OS lease inodes, including the index lease owned by this operation."""
+    for path in folder.iterdir():
+        if path.is_symlink():raise setup.SetupError('Lien dans les états ; restauration manuelle requise.')
+        if path.is_dir():
+            clear_state(path)
+            if not any(path.iterdir()):path.rmdir()
+        elif not path.name.endswith('.lease'):path.unlink()
+
+
 def restore_snapshot(snapshot,app,c):
     report=json.loads((snapshot/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(snapshot,report)
     data=Path(c['data_dir'])
@@ -137,17 +147,20 @@ def restore_snapshot(snapshot,app,c):
     # Only mutable service state; models, ZIM and caches are never removed.
     for name in ('state/pilot','state/caddy'):
         folder=destination(data,name)
-        if folder.exists():shutil.rmtree(folder)
+        if folder.exists():clear_state(folder)
     folder=destination(data,'state/openwebui')
     if folder.exists():
         for path in folder.iterdir():
             if path.name=='cache':continue
             if path.is_symlink():raise setup.SetupError('Lien dans les états ; restauration manuelle requise.')
-            if path.is_dir():shutil.rmtree(path)
-            else:path.unlink()
+            if path.is_dir():
+                clear_state(path)
+                if not any(path.iterdir()):path.rmdir()
+            elif not path.name.endswith('.lease'):path.unlink()
     directories=set()
     for entry,source in entries:
         relative=entry['path']
+        if relative.startswith('data/state/') and relative.endswith('.lease'):continue
         if relative.startswith('data/state/'):target=destination(data,relative.removeprefix('data/'))
         elif relative in ('private/settings.json','private/identifiants.txt'):target=destination(app.work,relative.removeprefix('private/'))
         else:continue
@@ -160,6 +173,11 @@ def restore_snapshot(snapshot,app,c):
 
 
 def recover(app,journal,services):
+    with maintenance(app,services.c):
+        return recover_locked(app,journal,services)
+
+
+def recover_locked(app,journal,services):
     j=json.loads(journal.read_text(encoding='utf-8'));root=Path(j['application']);previous=Path(j['previous']);snapshot=Path(j['snapshot'])
     if j['phase'] in ('complete','rolled_back'):raise setup.SetupError('Cette opération est terminée ; aucun état utilisateur ne sera écrasé.')
     services.stop()
@@ -202,19 +220,20 @@ def apply(app,package,digest,services=None):
         durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),
            'old_version':old_release['version'],'new_version':manifest['release']['version']}
-        setup.write_json(journal,j,private=True)
-        try:
-            services.stop()
-            backup(app,c,snapshot,resume=False)
-            j['phase']='snapshot_ready';setup.write_json(journal,j,private=True)
-            durable.publish(root,previous);durable.publish(staged,root)
-            j['phase']='switched';setup.write_json(journal,j,private=True)
-            services.start();services.check(j['new_version'])
-            j['phase']='complete';setup.write_json(journal,j,private=True)
-        except BaseException:
-            try:recover(app,journal,services)
-            except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
-            raise
+        with maintenance(app,c):
+            setup.write_json(journal,j,private=True)
+            try:
+                services.stop()
+                stopped_backup(app,c,snapshot,resume=False)
+                j['phase']='snapshot_ready';setup.write_json(journal,j,private=True)
+                durable.publish(root,previous);durable.publish(staged,root)
+                j['phase']='switched';setup.write_json(journal,j,private=True)
+                services.start();services.check(j['new_version'])
+                j['phase']='complete';setup.write_json(journal,j,private=True)
+            except BaseException:
+                try:recover_locked(app,journal,services)
+                except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
+                raise
         print('Mise à jour terminée :',j['new_version'],'; données conservées. Sauvegarde privée :',operation)
         return operation
 
