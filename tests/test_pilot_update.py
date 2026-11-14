@@ -29,7 +29,7 @@ class Services:
 
 class UpdateTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.base=Path(self.temp.name)
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.base=Path(self.temp.name).resolve()
         self.source=self.base/'source';self.root=self.base/'installed';self.data=self.base/'data';self.work=self.base/'private'
         self.source.mkdir();self.root.mkdir()
         for base,version in [(self.source,'0.1.2'),(self.root,'0.1.1')]:
