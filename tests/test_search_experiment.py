@@ -14,15 +14,16 @@ class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);root=Path(temporary.name)
         self.pause=False;self.hang=False;self.invalid=False;self.bad_rank=False;self.partial=False;self.remote=False
+        self.large_coverage=False;self.missing_video=False
         self.started=asyncio.Event();self.release=asyncio.Event();self.calls=[]
         reference={'version':'fixture.1','cases':[{'id':sid,'query':query,'domain':'resilience','need':'Fictional need'} for sid,query in [('tune-fire','calibration feu'),('verify-fire','production feu'),('verify-unknown','inconnue')]]}
         path=root/'reference.json';path.write_text(json.dumps(reference))
         for target,name,value in [(store,'ROOT',root/'state'),(engine,'LOCK',asyncio.Semaphore(1)),(engine,'ACTIVE',{}),(translations,'ACTIVE',{}),(calibration,'ACTIVE',{}),(experiment,'ACTIVE',{}),(experiment,'REFERENCE',path)]:
             p=patch.object(target,name,value);p.start();self.addCleanup(p.stop)
         store.init()
-        async def state(**kwargs):return {'online':True,'control_available':True,'paused':self.pause,'memory':{'total':32*1024**3,'available':20*1024**3},'gpus':[{'name':'Fake GPU','total':8*1024**3,'used':3*1024**3}]}
+        async def state(**kwargs):return {'online':True,'control_available':True,'paused':self.pause,'memory':{'total':32*1024**3,'available':20*1024**3},'gpus':[] if self.missing_video else [{'name':'Fake GPU','total':8*1024**3,'used':3*1024**3}]}
         p=patch.object(operations,'status',AsyncMock(side_effect=state));p.start();self.addCleanup(p.stop)
-        async def runtime(*args,**kwargs):return {'available':True,'installed':not self.remote,'digest':'a'*64,'native_context':32768,'other_models':0,'running':None}
+        async def runtime(*args,**kwargs):return {'available':True,'installed':not self.remote,'digest':'a'*64,'native_context':32768,'other_models':0,'running':{'size_vram':5*1024**3} if self.missing_video else None}
         p=patch.object(model_runtime,'describe',AsyncMock(side_effect=runtime));p.start();self.addCleanup(p.stop)
         self.unload=AsyncMock()
         p=patch.object(calibration,'release_model',self.unload);p.start();self.addCleanup(p.stop)
@@ -31,7 +32,9 @@ class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
             if 'inconnue' in query:return library.SearchResults([],{'status':'complete'})
             title='Useful fictional procedure' if query in ('allumage','fire making') else 'Incidental fictional mention'
             sid='useful' if query in ('allumage','fire making') else 'distractor'
-            return library.SearchResults([{'id':'guide:'+sid,'title':title,'language':'en','excerpt':'Fictional extract, no real instructions.','private':'DO NOT EXPORT'}],{'status':'partial' if self.partial else 'complete'})
+            coverage={'status':'partial' if self.partial else 'complete'}
+            if self.large_coverage:coverage['local_index']={'phase':'completed','archives':400,'articles':1000,'results':[{'archive':'fixture.zim','path':'PRIVATE-PATH-'+str(i),'detail':'x'*1000} for i in range(400)]}
+            return library.SearchResults([{'id':'guide:'+sid,'title':title,'language':'en','excerpt':'Fictional extract, no real instructions.','private':'DO NOT EXPORT'}],coverage)
         p=patch.object(library,'search',AsyncMock(side_effect=find));p.start();self.addCleanup(p.stop)
         client=httpx.AsyncClient
         async def handler(request):
@@ -137,6 +140,14 @@ class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(experiment.status()['reason'],'paused')
         self.pause=False;await experiment.start();await experiment.cancel()
         self.assertEqual(experiment.status()['reason'],'user_cancelled');self.assertFalse(experiment.running())
+
+    async def test_large_index_manifest_is_summarized_and_missing_video_measurement_refuses_conclusion(self):
+        self.large_coverage=True;report=await self.finish('all')
+        raw=json.dumps(report);self.assertLess(len(raw),20000);self.assertNotIn('PRIVATE-PATH',raw)
+        self.assertEqual(report['cases'][0]['coverage'][0]['local_index']['archives'],400)
+        self.missing_video=True;report=await self.finish()
+        self.assertEqual(report['status'],'interrupted');self.assertEqual(report['reason'],'hardware_unavailable')
+        self.assertEqual(report['summary']['decision'],'needs_measurements')
 
     def test_reference_is_bundled_with_service_and_matches_static_copy(self):
         root=Path(__file__).resolve().parents[1]

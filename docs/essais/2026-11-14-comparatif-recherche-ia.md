@@ -20,6 +20,9 @@ Les tests utilisent exclusivement des résultats et une inférence simulés :
 reformulation, permutation invalide, identifiant inventé, erreur, pause, priorité
 d’une conversation, annulation, redémarrage, exclusion mutuelle avec la calibration,
 persistance des avis et absence de modification de la recherche habituelle.
+Un inventaire simulé de 400 archives vérifie que le rapport reste borné et ne
+recopie ni les chemins ni les détails de chaque archive. Un usage vidéo sans
+mesures vidéo interrompt le bilan matériel au lieu de le considérer complet.
 Le [guide actuel](../utilisation/comparer-recherche-ia.md) précise la recette,
 les biais des caches, les données exportées et les critères de décision.
 

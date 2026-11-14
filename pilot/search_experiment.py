@@ -109,6 +109,19 @@ def rows(found):
     return [{k:(str(row.get(k,'')) if k=='id' else str(row.get(k,''))[:300]) for k in ('id','title','language','collection','excerpt')} for row in found[:5]]
 
 
+def coverage_summary(value):
+    # Index progress may contain thousands of per-archive records. Never duplicate
+    # that full manifest three times per case or copy its private paths.
+    result={key:value[key] for key in ('status','searched','failed','without_fulltext','not_searched','coverage_scope','domain','metadata_status','parallelism') if key in value}
+    if isinstance(value.get('warning'),str):result['warning']=value['warning'][:2000]
+    for name,keys in {'catalog':('state','collections','fetched_at','age_seconds','elapsed_ms','reason'),
+                      'local_query':('searched','failed','outdated'),
+                      'local_index':('phase','archives','completed','articles','workers','started')}.items():
+        nested=value.get(name,{})
+        if isinstance(nested,dict):result[name]={key:nested[key] for key in keys if key in nested and isinstance(nested[key],(int,float,str,bool))}
+    return result
+
+
 def merge(lists):
     scores={};items={}
     for found in lists:
@@ -167,7 +180,7 @@ async def search(case,query,language,report):
     try:
         result=await watched(library.search(query,language=language,limit=5,collection=case.get('collection',''),domain=case['domain']),report,timeout=30)
         coverage=getattr(result,'coverage',{})
-        case.setdefault('coverage',[]).append({'query':query,'language':language,**coverage})
+        case.setdefault('coverage',[]).append({'query':query,'language':language,**coverage_summary(coverage)})
         if coverage.get('status')!='complete':case['coverage_complete']=False
         return rows(result)
     except (httpx.HTTPError,TimeoutError,ValueError):raise calibration.Abort('search_error')
@@ -228,6 +241,7 @@ async def run(report,cases):
                 await run_case(report,item)
             report['runtime_after']=await model_runtime.describe(engine.OLLAMA,report['model'],fresh=True)
             if report['runtime_after'].get('digest')!=runtime['digest']:raise calibration.Abort('model_changed')
+            if (report['runtime_after'].get('running') or {}).get('size_vram',0) and report['minimum_free'].get('video_available') is None:raise calibration.Abort('hardware_unavailable')
             report['status']='completed'
     except calibration.Abort as error:report.update(status='interrupted',reason=str(error))
     except asyncio.CancelledError:report.update(status='cancelled',reason='user_cancelled')

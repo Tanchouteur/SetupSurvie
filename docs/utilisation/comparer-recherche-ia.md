@@ -91,6 +91,9 @@ Les rapports privés sont dans `state/pilot/search-experiments/`, couverts par l
 sauvegarde habituelle. Ils contiennent les demandes fixes de test, reformulations,
 titres et courts extraits, identifiants, avis, couverture, modèle/digest, contexte,
 matériel et mémoire libre minimale observée, durées et compteurs techniques.
+La couverture ne recopie pas l’inventaire détaillé de chaque archive : seuls les
+compteurs et états utiles sont conservés. Une utilisation vidéo sans mesure de
+mémoire vidéo empêche de conclure sur cet essai.
 Ils ne contiennent pas de conversations, de raisonnement privé ni de texte complet.
 L’accès au panneau suit le [profil Famille](profils-locaux.md).
 
