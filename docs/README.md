@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Corrections des rapports réels](essais/2026-11-14-corrections-rapports-recherche.md) — 0.9.1, validation en cours ; contrôle Windows réel encore attendu.
+- [Corrections des rapports réels](essais/2026-11-14-corrections-rapports-recherche.md) — 0.9.1, CI réussie ; contrôle du fonds Windows réel encore attendu.
 
 - [Rapports réels de recherche 0.8.0](essais/2026-11-14-rapports-recherche-080.md) — échecs partiels, comparatif IA interrompu et tentative d’indexation à diagnostiquer.
 - [Dossiers pratiques](utilisation/dossiers-pratiques.md) — guide 0.9.0, objectifs et références examinées.

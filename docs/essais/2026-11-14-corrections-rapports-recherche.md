@@ -1,6 +1,6 @@
 # Corrections après les rapports réels 0.8.0
 
-**Bilan en cours — 0.9.1, 14 novembre 2026.** Suite prioritaire L2/L8 aux
+**Bilan daté — 0.9.1, 14 novembre 2026.** Suite prioritaire L2/L8 aux
 [rapports transmis par Louis](2026-11-14-rapports-recherche-080.md). Le problème
 d’indexation réel reste à diagnostiquer avec son export ; sa cause n’est pas
 déduite de la seule capture « 135 / 135 examinées, 0 article indexé ».
@@ -66,7 +66,10 @@ effectivement les deux sujets de sa demande, et le contrôle pédagogique ne sup
 plus que le premier appel réseau est une recherche plutôt qu’un titre.
 
 Chromium MCP : recherche principale (45 contrôles), outils (14), comparatif (16).
-La suite finale Linux/Windows/WebKit et le nombre de tests restent à consigner.
+La [CI finale du code 3b73822](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43620110380)
+est réussie : **469 tests Python, dont trois ignorés**, contrôles Windows,
+Kiwix et routage synthétique. Chromium et WebKit passent chacun les 45 contrôles
+de recherche, 14 d’outils, 16 du comparatif, 20 de classement et 20 des dossiers.
 Aucun modèle ni corpus de Marc n’a été chargé. Les délais, gains et stabilité réels
 après correction restent à vérifier chez Marc, d’abord avec R1 puis R2 court.
 
