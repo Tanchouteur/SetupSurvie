@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-Index mis à jour le 13 novembre 2026. Commencer par le parcours correspondant au besoin.
+Index mis à jour le 14 novembre 2026. Commencer par le parcours correspondant au besoin.
 
 ## Guides de référence
 
@@ -62,6 +62,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Décisions et besoins
 
+- [Boîte à idées](decisions/boite-a-idees.md) — évolutions reportées, dont Maison de Solliès-Ville.
+
 - [Plan de refonte UX du portail](decisions/plan-refonte-ux.md) — proposition du 13 novembre 2026 : interface classique conservée, collections directement ouvrables, navigation mémorisée, suivi machine et mobile simplifié ; non implémentée.
 
 - [Questions et décisions](decisions/questions-et-decisions.md)
@@ -82,6 +84,8 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 - [Inventaire des ressources téléchargées — 11 novembre 2026](bibliotheque/inventaire-ressources-telechargees.md)
 
 ### Essais et résultats
+
+- [Retour d’expérience de Marc — 14 novembre 2026](essais/2026-11-14-retour-experience-marc.md) — appel rapporté par Louis, cinq captures, recherche prioritaire et propositions non implémentées.
 
 - [Recherche et confort des conversations — 14 novembre 2026](essais/2026-11-14-recherche-et-conversations.md) — correction Kiwix, limites explicites et conversation lisible, 0.1.35.
 - [Recherche des ressources et cartes directes — 13 novembre 2026](essais/2026-11-13-recherche-collections-et-cartes.md) — filtre Collections, relief local par défaut et non-régression de l’interface 0.1.34.

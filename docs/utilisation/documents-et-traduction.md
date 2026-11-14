@@ -55,6 +55,29 @@ courts pour garder le champ de question et son bouton d’envoi accessibles.
 
 Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
 
+## Taille des documents et livres longs
+
+**Limites relues dans le code 0.1.35 le 14 novembre 2026.** Un PDF de 500 pages
+peut être accepté : la traduction ne charge pas tout le livre dans un seul
+contexte. Le texte est extrait page par page, puis découpé en passages d’environ
+2 200 caractères. Chaque passage terminé est enregistré ; pause et reprise
+explicite conservent ce qui est déjà traduit. Aucun délai garanti ni traduction
+réelle de 500 pages n’est établi par les tests simulés.
+
+Pour les PDF locaux, les limites sont : fichier de **300 millions d’octets au
+maximum (300 Mo décimaux)**, document de **1 200 pages au maximum**, **100 000
+caractères par page** et **5 millions de caractères sur la plage demandée**.
+Un fichier dépassant 1 200 pages est refusé même si la plage choisie est courte ;
+il faut une copie découpée. Une plage peut réduire la quantité totale de texte,
+mais ne contourne pas les autres limites. Un PDF chiffré est refusé. Les pages
+sans texte extractible sont signalées et ne deviennent pas traduites par OCR.
+
+Pour un guide textuel, l’aperçu doit être complet et faire moins de 500 000
+caractères ; pour un article d’archive, moins de 100 000. La traduction intégrale
+d’un aperçu déclaré incomplet est refusée. La mise en page, les images et la
+cohérence d’un terme entre tous les passages d’un livre ne sont pas garanties.
+Cette fonction ne produit pas de sous-titres vidéo.
+
 ## Ce qui est traduit et ce qui reste à vérifier
 
 Les PDF sont lus dans le fichier original, page par page : la traduction n’est pas limitée aux quatre premières pages de l’aperçu. Les pages demandées sont découpées en passages courts. Le texte source de ces passages est conservé dans l’état privé : une reprise ne mélange pas un nouvel original avec le début d’une ancienne traduction.
