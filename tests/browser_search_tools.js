@@ -27,7 +27,8 @@ async page=>{
   await page.locator('#navigation [data-route="appareil"]').click();await page.locator('[data-route="appareil/reglages"]').click();
   await page.waitForFunction(()=>document.querySelector('#next-index-status').textContent.includes('123'));
   check((await page.locator('#next-index-prepare').textContent()).includes('réparer'),'Outil déjà préparé reconnu et réparable');
-  await page.locator('#next-index-start').click();check(calls.includes('/api/admin/library/index/start'),'Indexation lancée par la commande dédiée');
+  const indexStarted=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/admin/library/index/start'&&response.request().method()==='POST');
+  await page.locator('#next-index-start').click();await indexStarted;check(calls.includes('/api/admin/library/index/start'),'Indexation lancée par la commande dédiée');
   await page.locator('#next-index-settings').locator('..').locator('summary').click();
   await page.locator('#next-index-from').selectOption('23');await page.locator('#next-index-settings').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>document.getElementById('next-index-settings-status').textContent.includes('enregistrée'));
