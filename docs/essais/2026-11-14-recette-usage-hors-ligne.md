@@ -77,3 +77,16 @@ physique d’Internet n’est utilisé. WebKit ne vaut pas Safari sur iPhone phy
 sans modification d’image tierce ni migration de données. Le rapport réel R7
 reste attendu chez Marc, ainsi que R2 après les corrections 0.9.4. Le
 [journal depuis 0.2.0](journal-recherche-depuis-020.md) conserve ces distinctions.
+
+## Audit du paquet livré
+
+L’artefact `logiciel-et-empreinte` de la même CI est téléchargé puis contrôlé
+par le vrai lecteur `pilot_update.unpack` dans un répertoire temporaire :
+SHA-256 du ZIP, manifeste et empreintes des **697 fichiers** sont acceptés.
+Le nouveau script de recette, ses styles, les points d’entrée et les modules
+de recherche sont présents. Tous les fichiers hors Markdown correspondent à
+`main` ; les différences documentaires postérieures à la CI sont explicites.
+Aucun service n’est démarré et aucun modèle, corpus ou état privé n’est dans ce
+paquet. Cet audit confirme le contenu transporté, pas l’application de la mise
+à jour sur le Windows de Marc. La matrice L9 est rectifiée pour distinguer
+l’export R7 livré de la recette réelle toujours attendue.

@@ -41,6 +41,10 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
   [contrôle d’usage exportable](2026-11-14-recette-usage-hors-ligne.md), lectures
   bornées, observations par profil/version et absence de reprise automatique.
   Livré avec CI réussie ; aucune recette physique chez Marc n’en est déduite.
+- Audit du paquet 0.10.0 de cette CI : 697 fichiers acceptés par le lecteur de
+  mise à jour réel, nouveau script et code de recherche identiques à `main` ;
+  transport vérifié, installation chez Marc non vérifiée. Le
+  [bilan](2026-11-14-recette-usage-hors-ligne.md#audit-du-paquet-livré) conserve la preuve.
 
 ## Décisions conservées ou reportées
 

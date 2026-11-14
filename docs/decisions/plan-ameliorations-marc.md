@@ -66,7 +66,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
-| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot et conservation des index 0.9.3 ; scénario/export R7 et recette réelle intégrée encore à faire |
+| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
 
 ### L1 — Installation, téléchargements et indexation automatique
 
