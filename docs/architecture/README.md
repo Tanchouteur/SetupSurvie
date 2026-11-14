@@ -199,7 +199,10 @@ sans les cloner, en conservant IDs, événements, ancêtres `article`/`details` 
 `view-settings` attendus par les contrôleurs. `settings.css` complète la charte.
 Les nouvelles sous-rubriques restent des présentations de `view-settings`, sans
 nouvelle API. La route demandée est conservée pendant la lecture du profil ; un
-rechargement retire le marqueur d’un dialogue qui n’est plus ouvert.
+rechargement retire le marqueur d’un dialogue qui n’est plus ouvert. Le contrôleur
+commun ne réécrit pas les adresses historiques dans cette interface ; les
+écritures de position identiques sont évitées et celles du défilement espacées
+de 250 ms pour préserver la navigation WebKit.
 Voir la [correspondance des commandes](../utilisation/parametres-et-appareil.md).
 
 `GET /api/activity` passe par la route interne authentifiée `/activity` du

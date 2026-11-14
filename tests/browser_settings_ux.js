@@ -2,7 +2,7 @@ async page => {
   const base='http://10.0.3.2:8769',checks=[],errors=[],commands=[];
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   const ready=()=>page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
-  const reload=async()=>{await page.waitForLoadState('networkidle');await page.reload();await ready();};
+  const reload=async()=>{await page.waitForLoadState('networkidle');await page.reload({waitUntil:'domcontentloaded'});await ready();};
   const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash==='#/appareil/'+tab,tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(['POST','PUT','DELETE','PATCH'].includes(r.method()))commands.push(new URL(r.url()).pathname);});
