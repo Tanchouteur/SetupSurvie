@@ -1,6 +1,6 @@
 # Classements persistants et collections corrigibles
 
-**Bilan en cours — 0.6.0, 14 novembre 2026.** Lot L3 du
+**Bilan daté — 0.6.0, 14 novembre 2026.** Lot L3 du
 [plan retenu](../decisions/plan-ameliorations-marc.md), dans l’objectif de première
 version fiable du moteur. Aucun nouveau corpus ni modèle n’est téléchargé.
 
@@ -45,11 +45,23 @@ même lorsque Kiwix ne propose pas cette archive.
 
 API simulée : droits Famille, validation des champs, refus de révision périmée,
 lecture des corrections et noms de collections sans changement d’identifiants.
-Chromium MCP : 18 contrôles, édition réelle dans la base de fixture, rechargement
+Chromium MCP : 19 contrôles, édition réelle dans la base de fixture, rechargement
 avec profil volontairement retardé, filtres, navigation arrière, groupes mémorisés,
-export et absence de débordement à 1366/390/320 pixels.
+export, dialogue de noms avec Précédent/Suivant et absence de débordement à 1366/390/320 pixels.
 
-La suite complète et la CI Windows/WebKit restent à consigner. Les essais ne
+Suite locale : 420 tests, trois exclusions signalées ; Kiwix 3.8.1 réel : 29 contrôles
+sur cinq ZIM générés (282 587 octets). Les recettes existantes Chromium de recherche
+(45 contrôles) et de réglages (14) passent aussi.
+
+La [CI du code livré](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43606964502)
+est réussie : Linux (420 tests, trois exclusions), Windows, Kiwix réel, routage
+hors ligne et interface. Chromium et WebKit passent chacun les 19 contrôles
+de classement, les 45 de recherche et les 14 de réglages. Le paquet logiciel
+est construit par la CI. Une course d’observation de l’ancien test d’indexation
+a été corrigée : il attend désormais la réponse de la commande avant de vérifier
+qu’elle a été transmise, sans supprimer l’assertion.
+
+Les essais ne
 valident pas une qualification éditoriale du fonds de Marc, Safari sur iPhone,
 la vitesse de son disque ou le comportement des modèles réels.
 
