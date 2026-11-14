@@ -132,9 +132,14 @@ class IsolatedArchiveIndexTests(unittest.TestCase):
             self.assertTrue(json.loads(subprocess.check_output(probe,env=env,text=True))['ok'])
             zims=root/'archives';zims.mkdir()
             for name,indexed in [('guide_fr',False),('native_fr',True)]:
-                with Creator(zims/(name+'.zim')).config_indexing(indexed,'fra') as creator:
+                # The downloaded archives are created upstream. libzim's Windows
+                # writer cannot create fixtures under an accented directory;
+                # create them separately, then exercise the reader at that path.
+                generated=Path(folder)/(name+'.zim')
+                with Creator(generated).config_indexing(indexed,'fra') as creator:
                     for key,value in {'Title':'Guide fictif','Language':'fra','Name':name}.items():creator.add_metadata(key,value)
                     creator.add_item(Article('Bicycle','Bicycle repair','Fictional puncture repair example, no real instructions.'))
+                generated.rename(zims/generated.name)
             command=[str(python),'-X','utf8',str(root_code/'scripts/index_archives.py'),'--zim-dir',str(zims),'--state-dir',str(root/'etat'),'--workers','2','--reserve-bytes','1000000000']
             result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=30)
             self.assertEqual(result.returncode,0,result.stderr)
