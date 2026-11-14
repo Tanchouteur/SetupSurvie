@@ -1,6 +1,10 @@
 # Consoles spontanées Windows — 14 novembre 2026
 
-**Bilan de correction 0.1.36.** Le parent des outils GPU et les processus de
+**Correctif candidat 0.1.36 — branche locale, non publié sur main à la demande de Louis.**
+
+Le PC conserve son interface 0.1.34 ; seuls les scripts hôte nécessaires ont été
+actualisés. Le paquet complet candidat n’est pas déployé. Le correctif reste à
+intégrer à la refonte en cours avant une future mise à jour générale. Le parent des outils GPU et les processus de
 console ont été relevés par l’API Windows de liste des processus, sans arrêter
 Ollama, Docker ou le réseau. Une première tentative d’abonnement WMI a été
 annulée par Windows ; la capture retenue est la capture native suivante.
@@ -19,7 +23,7 @@ conservées et absence d’activation implicite d’un démarrage non configuré
 
 L’IA native déjà lancée reste intacte. Aucun essai d’inférence ni redémarrage du
 PC n’est nécessaire pour appliquer la correction du contrôleur. Le nouveau
-lanceur est testé séparément puis la version complète est déployée avec la
+lanceur est testé séparément et les scripts hôte corrigés sont appliqués avec la
 bibliothèque et les cartes conservées. Les incidents et limites sont consignés
 dans le [journal Windows](../exploitation/journal-incidents-windows.md#win-018--consoles-répétées-malgré-le-masquage-des-mesures-gpu).
 
@@ -38,3 +42,9 @@ sur Windows (cas Linux/COM/liens non disponibles selon le test). L’ancien cas
 Le kit miniature inclut le nouveau helper de démarrage. `git diff --check` est
 réussi. Les tests et captures ne prétendent pas couvrir les consoles d’autres
 logiciels ni constituer un redémarrage à froid du PC.
+
+
+Trois vérifications réelles du site sain, via le helper installé, sont réussies
+avec interdiction simulée de créer un enfant : aucun PowerShell ni autre helper
+n’est lancé pour ce contrôle périodique. Le paquet candidat a été rangé parmi les
+livraisons locales non publiées, pour ne pas le présenter comme une sortie de main.

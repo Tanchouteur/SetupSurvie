@@ -330,7 +330,9 @@ bibliothèque affiche aussi le nombre de fonds présents : les 100 % d’un plan
 Kiwix/PDF ne signifient plus implicitement que des cartes ont été téléchargées.
 
 
-## Démarrage silencieux et migration des lanceurs — 0.1.36
+## Démarrage silencieux et migration des lanceurs — candidat 0.1.36
+
+Correctif local non publié sur main, en attente d’intégration après la refonte.
 
 La tâche de surveillance lance `pythonw.exe` avec `windows_background.py`.
 Ce petit lanceur exécute le script PowerShell fixe avec `CREATE_NO_WINDOW`,
