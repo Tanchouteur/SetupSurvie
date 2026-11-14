@@ -54,6 +54,10 @@ exporte version, progression, réglages, motifs d’arrêt et erreurs ; il ne co
 pas les conversations ni les secrets du PC. Une erreur conserve les fichiers
 vérifiés et les index déjà publiés, puis demande une reprise explicite.
 
+Si un fichier a été remplacé depuis sa vérification, la file est suspendue et
+l’indique. Refaire la vérification ou le téléchargement de cette archive avant de
+reprendre ; la nouvelle édition ne doit pas être marquée traitée par l’ancien travail.
+
 Les index publiés sont immédiatement disponibles, sans redémarrage de l’assistant.
 Le manifeste conserve toutes les archives préparées, même lorsqu’un nouveau lot
 n’en contient qu’une. Les index manquants, illisibles ou périmés sont signalés dans

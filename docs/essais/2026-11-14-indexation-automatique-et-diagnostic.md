@@ -1,6 +1,6 @@
 # Indexation automatique et diagnostic de recherche
 
-**Bilan en cours — 0.4.0, 14 novembre 2026.** Suite de l’objectif utilisateur
+**Bilan daté — 0.4.0, 14 novembre 2026.** Suite de l’objectif utilisateur
 « Finir cette première version fiable du moteur de recherche ». Ce bilan couvre
 le lot L1 et une partie de L2 ; il ne clôt pas les autres lots ni la recette réelle.
 
@@ -23,6 +23,8 @@ le lot L1 et une partie de L2 ; il ne clôt pas les autres lots ni la recette r�
   des correspondances directes dans le titre. Aucun type de procédure n’est certifié.
 - Index locaux périmés ou illisibles signalés ; index correspondant à un ZIM supprimé
   ignoré. Les limites d’indexation des vidéos, images et gros articles restent explicites.
+- Une archive remplacée depuis sa vérification suspend la file avec un motif visible.
+  Une réponse d’une ancienne recherche ne peut plus écraser la question suivante.
 
 ## Éléments réellement vérifiés pendant le développement
 
@@ -38,8 +40,20 @@ un ancien travail, conservation de pause et de sélection, mode jeu distinct d�
 IA arrêtée, plages traversant minuit et processus enfant vivant.
 
 Kiwix 3.8.1 réel : vingt contrôles sur cinq ZIM générés, environ 280 Ko, sans corpus
-ni modèle. Les tests d’interface et la CI de livraison doivent être consignés après
-leur exécution. Une simulation ne valide ni la vitesse du HDD ni les modèles réels.
+ni modèle. Recettes locales Chromium par le navigateur MCP : 31 contrôles du cœur
+de recherche, dont une réponse volontairement arrivée dans le désordre, et 14 de
+préparation/diagnostic, dont les horaires et le rapport exporté.
+
+Préparation isolée du lecteur Linux, téléchargement du paquet Windows x64 pour
+Python 3.13 sans l’exécuter, vérification des deux empreintes puis réparation Linux
+hors ligne réellement exécutés. Cela ne valide pas une installation Windows vierge.
+La [CI du code livré](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43601077713)
+est réussie sur ses cinq travaux : Linux (399 tests, trois exclusions signalées),
+transferts/mises à jour et indexation Windows, Kiwix réel, routage hors ligne et
+interface Chromium/WebKit. Les recettes de recherche passent avec 31 et 14 contrôles
+sur chacun des deux moteurs navigateur. Les tests utilisent des données minuscules
+ou simulées ; ils ne valident ni la vitesse du HDD, ni Safari sur iPhone physique,
+ni les modèles réels. Le paquet logiciel est aussi construit par la CI.
 
 ## Recette à demander chez Marc
 

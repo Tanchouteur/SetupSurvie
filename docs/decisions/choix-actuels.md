@@ -136,3 +136,12 @@ procédures demeurent suivis explicitement, sans réalisation implicite.
 ## Recherche : suite du 14 novembre 2026
 
 Le [plan actuel](plan-ameliorations-marc.md) retient deux espaces dans un seul produit, indexation complémentaire des ZIM non recherchables, priorité aux savoir-faire et usage parallèle du CPU. La 0.3.0 en livre une première étape, avec contexte réglable par modèle. Les limites et essais manquants sont au [bilan](../essais/2026-11-14-recherche-index-et-espaces.md).
+
+La 0.4.0 ajoute l’[indexation après publication vérifiée](../utilisation/indexation-archives.md),
+avec file persistante, créneau horaire et réglage des ressources. Le catalogue
+Kiwix est partagé brièvement entre les recherches ; un instantané ancien est
+daté et signalé. Le diagnostic depuis le site distingue disponibilité, index et
+résultats, sans conclure à l’absence d’un document sur une recherche partielle.
+La capture suivante de Louis retrouve des sources pertinentes avec le filtre ;
+elle ne prouve pas la cause de l’incident précédent. La recette sur le fonds réel
+reste distincte des [contrôles de développement](../essais/2026-11-14-indexation-automatique-et-diagnostic.md).
