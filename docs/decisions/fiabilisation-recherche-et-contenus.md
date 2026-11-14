@@ -2,7 +2,7 @@
 
 **Chantier actuel — 14 novembre 2026.** Louis demande de travailler tous les
 points du retour de Marc et de fiabiliser en priorité le cœur de recherche.
-Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais les lots, décisions et pistes écartées. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
+Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais le programme L1–L9, décisions, critères de fin et pistes écartées. Les [recettes progressives](../essais/recettes-progressives-marc.md) précisent les rapports à demander et les blocages à annoncer. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
 observations ; ce suivi distingue réalisation et validations manquantes.
 
 | Point | État | Preuve ou prochaine vérification |

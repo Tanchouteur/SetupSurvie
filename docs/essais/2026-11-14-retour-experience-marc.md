@@ -171,3 +171,7 @@ Louis demande explicitement de garder pour plus tard un espace **Maison de
 Solliès-Ville** : équipements, notices associées, entretien et éventuellement
 stocks. L’idée est enregistrée dans la [boîte à idées](../decisions/boite-a-idees.md),
 sans inventer un inventaire ni ajouter dès maintenant un onglet vide.
+
+## Retour complémentaire après installation de la 0.3.0
+
+Louis signale un premier résultat dégradé sur « faire du feux », puis confirme que Wikipédia s’ouvre directement et que de nouveaux essais, y compris avec Autonomie et résilience, retrouvent les articles Wikipédia et Wikilivres pertinents. La couverture reste partielle. Les deux captures ont été consultées sans être copiées dans Git ; le [protocole de recette](recettes-progressives-marc.md#incident-du-14-novembre--recherche-feu-intermittente) distingue ces observations de leurs causes encore inconnues. Ce retour ne constitue ni une panne permanente du filtre ni une validation complète du moteur.

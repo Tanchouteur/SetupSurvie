@@ -1,6 +1,7 @@
 # Documentation SetupSurvie
 
-- [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — suivi actuel, décisions et pistes écartées.
+- [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
+- [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
 - [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.3.0.
 - [Rapport de Marc et indexation](essais/2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0 et limites.
 
