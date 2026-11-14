@@ -39,3 +39,4 @@ Les rapports conservent leurs résultats et limites à la date de l’essai. Un 
 Les nouvelles validations doivent préciser machine, système, version, commandes, résultats et limites. Ne pas transformer un essai Linux en validation Windows ou un test WebKit en essai réel sur iPhone.
 
 Pour installer le pilote actuel, suivre les [guides de référence](../README.md).
+- [Rapports réels de recherche 0.8.0](2026-11-14-rapports-recherche-080.md) — diagnostic transmis par Louis ; corrections prioritaires en cours.

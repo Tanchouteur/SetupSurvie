@@ -1,6 +1,6 @@
 # Six dossiers de lecture pratique
 
-**Bilan en cours — 0.9.0, 14 novembre 2026.** Lot L7 du
+**Bilan daté — 0.9.0, 14 novembre 2026.** Lot L7 du
 [plan des retours de Marc](../decisions/plan-ameliorations-marc.md).
 
 Les objectifs feu, eau, abri, générateur à pédales, vélo et graines disposent
@@ -30,10 +30,12 @@ sont maintenant déclenchées seulement à l’ouverture explicite de cet édite
 la recette de classement vérifie l’absence de ces requêtes pendant une lecture
 et un classement ordinaires. Les requêtes sont aussi annulées lorsque la page
 est quittée ; une lecture retardée suivie d’un rechargement fait partie de la
-recette. La nouvelle CI reste nécessaire avant intégration.
+recette. La [CI finale du code faec986](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43617903467)
+est réussie : **459 tests Python, dont trois ignorés**, contrôles Windows,
+Kiwix sur petites archives et routage synthétique. Chromium et WebKit passent
+chacun les 20 contrôles des dossiers et les 20 contrôles de classement.
 
 La version mineure 0.9.0 ajoute cette fonction compatible ; le schéma de données
-et les images tierces restent inchangés. Les validations finales seront consignées
-après la CI. Le [guide actuel](../utilisation/dossiers-pratiques.md) distingue
+et les images tierces restent inchangés. Le [guide actuel](../utilisation/dossiers-pratiques.md) distingue
 les commandes livrées et la relecture réelle R3 encore attendue. Le corpus de Marc
 n’a pas été copié, enrichi ni qualifié par ces essais.

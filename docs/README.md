@@ -1,7 +1,8 @@
 # Documentation SetupSurvie
 
+- [Rapports réels de recherche 0.8.0](essais/2026-11-14-rapports-recherche-080.md) — échecs partiels, comparatif IA interrompu et tentative d’indexation à diagnostiquer.
 - [Dossiers pratiques](utilisation/dossiers-pratiques.md) — guide 0.9.0, objectifs et références examinées.
-- [Six dossiers pratiques](essais/2026-11-14-dossiers-pratiques.md) — bilan 0.9.0, validation en cours.
+- [Six dossiers pratiques](essais/2026-11-14-dossiers-pratiques.md) — bilan 0.9.0, CI réussie ; relecture du fonds réel attendue.
 
 - [Comparer une aide IA à la recherche](utilisation/comparer-recherche-ia.md) — guide 0.8.0, essai volontaire et avis humains.
 - [Comparatif de recherche IA](essais/2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0, CI réussie ; mesure réelle attendue.

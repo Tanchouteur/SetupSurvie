@@ -6,7 +6,7 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Premier rapport reçu le 14 novembre, version 0.2.0 ; nouvelle comparaison chez Marc à effectuer |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports 0.2.0 puis 0.8.0 reçus le 14 novembre ; échecs réels à corriger et relecture humaine encore attendue |
 | Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Index manuel 0.3.0 et préparation automatique 0.4.0 ; création sur le fonds de Marc non exécutée |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
@@ -313,6 +313,11 @@ validé chez Marc ce qui n’a été essayé que sur données simulées ou en CI
 
 ## Recettes progressives et conditions de blocage
 
+Les [rapports réels 0.8.0](../essais/2026-11-14-rapports-recherche-080.md) sont reçus :
+32 recherches partielles, comparatif IA interrompu et tentative d’indexation en
+erreur ensuite. Ils rouvrent des corrections prioritaires L1/L2/L8. La livraison
+des commandes ou une CI verte ne suffit pas à clore ces lots.
+
 La [procédure des rapports manuels](../essais/recettes-progressives-marc.md)
 définit R1 à R7, leur disponibilité actuelle et la façon de demander un essai.
 Les boutons non livrés y sont signalés comme prévus.
@@ -334,5 +339,10 @@ Maison de Solliès-Ville reste reportée (IDEE-001). Refonte complète des carte
 changement de matériel, nouvel installateur système autonome et préparation du
 disque de secours complet ne sont pas ajoutés implicitement à ce programme.
 Les possibilités existantes et leurs données sont préservées.
+
+Louis demande également, le 14 novembre, une **réorganisation des réglages et de
+leurs écrans après la fiabilisation complète** : IDEE-006 dans la
+[boîte à idées](boite-a-idees.md). La simplification de ces parcours est un chantier
+suivant ; elle ne remplace pas le traitement des échecs de recherche observés.
 
 La [livraison 0.4.0](../essais/2026-11-14-indexation-automatique-et-diagnostic.md) couvre l’indexation automatique et le diagnostic. Les essais matériels restent distincts ; les autres exigences du plan ne sont pas clôturées par cette seule livraison.
