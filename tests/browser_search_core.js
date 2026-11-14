@@ -33,6 +33,7 @@ async page => {
   check(page.url().includes('collection=wikipedia'),'Filtre de collection dans l’adresse');
   await page.reload();await page.waitForSelector('#search-results .result');
   check(searches.at(-1).collection==='wikipedia','Filtre conservé au rechargement avant chargement de l’inventaire');
+  await page.waitForFunction(()=>document.getElementById('search-message').textContent.includes('indisponible')&&document.querySelector('#search-results .result'));
   check((await page.locator('#search-message').textContent()).includes('indisponible'),'Recherche partielle expliquée');
   await page.screenshot({path:'/artifacts/recherche-pertinence.png',fullPage:true});
   check(await page.locator('.other-matches').count()===1,'Autres pages regroupées sous le document');
@@ -77,5 +78,14 @@ async page => {
   const partialDownload=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const partial=await partialDownload,partialChunks=[];for await(const chunk of await partial.createReadStream())partialChunks.push(chunk);
   check(JSON.parse(Buffer.concat(partialChunks).toString()).status==='cancelled','Rapport partiel explicitement marqué après arrêt');
   await page.locator('[data-close="next-search-check-dialog"]').click();
+  await page.evaluate(async()=>{
+    const original=api;
+    try{
+      api=(path,...args)=>path.startsWith('/search?')?new Promise(resolve=>{const query=new URLSearchParams(path.split('?')[1]).get('q');setTimeout(()=>resolve({results:[{id:'guide:'+query,title:query,language:'fr',kind:'guide',excerpt:'Fixture de concurrence'}],coverage:{status:'complete'}}),query==='ancienne-demande'?150:5);}):original(path,...args);
+      $('library-query').value='ancienne-demande';const first=runSearch();$('library-query').value='nouvelle-demande';const last=runSearch();await Promise.all([first,last]);
+    }finally{api=original;}
+  });
+  check((await page.locator('#search-message').textContent()).includes('nouvelle-demande'),'La réponse tardive ne remplace pas la dernière requête');
+  check(await page.locator('#search-results .result').first().getAttribute('data-source')==='guide:nouvelle-demande','Les résultats correspondent à la requête actuelle');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
 }
