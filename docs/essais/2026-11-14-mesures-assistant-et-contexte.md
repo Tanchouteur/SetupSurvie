@@ -1,6 +1,6 @@
 # Mesures de l’assistant et calibration explicite du contexte
 
-**Bilan en cours — 0.7.0, 14 novembre 2026.** Lot L4 du
+**Bilan daté — 0.7.0, 14 novembre 2026.** Lot L4 du
 [plan retenu](../decisions/plan-ameliorations-marc.md). Objectif : expliquer les
 délais réels et préparer R4, sans prétendre les avoir mesurés sur le PC de Marc.
 
@@ -57,8 +57,15 @@ privé, mesures conservées sur erreur, réduction au contexte natif et budget o
 
 Chromium MCP : 19 contrôles nouveaux de durées/calibration simulées ; recherche
 (45), classement (19) et confort de conversation (37) également vérifiés. Pas de
-débordement observé à 1366/390/320 pixels pour les nouvelles commandes. La CI finale
-Windows/WebKit et le nombre final de tests sont à consigner.
+débordement observé à 1366/390/320 pixels pour les nouvelles commandes.
+
+La [CI finale sur le code b10c7ec](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43611740909)
+est réussie : **435 tests Python, dont trois ignorés**, contrôles Windows,
+29 vérifications Kiwix sur cinq petites archives générées, routage synthétique,
+Chromium et WebKit. Les deux navigateurs passent notamment les 19 nouveaux
+contrôles de durées/calibration, les 19 de classement et les 14 d’outils de recherche.
+Les essais mémoire sont simulés, y compris le refus d’une application devenue
+périmée pendant la vérification du modèle ; aucun essai matériel n’en est déduit.
 
 **Version mineure 0.7.0** : nouveaux rapports et essai explicite compatibles avec
 le schéma 1 et les états existants ; images tierces inchangées. Aucun gain de vitesse,

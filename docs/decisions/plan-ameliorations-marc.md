@@ -7,12 +7,12 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
 | Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Premier rapport reçu le 14 novembre, version 0.2.0 ; nouvelle comparaison chez Marc à effectuer |
-| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Implémenté en 0.3.0 sur petites archives réelles générées ; création sur le fonds de Marc non exécutée |
+| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Index manuel 0.3.0 et préparation automatique 0.4.0 ; création sur le fonds de Marc non exécutée |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
-| Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres par article implémentés en 0.3.0 ; classement automatique provisoire, catalogue éditorial complet à faire |
+| Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
-| Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement 0.1.36 conservé ; révision éditoriale de toutes les variantes à faire |
-| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Défaut 16k et réglages 8/16/32/64k en 0.3.0 ; calibration RAM/VRAM et délais réels à faire |
+| Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
+| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages 0.3.0, mesures et calibration volontaire 0.7.0 ; délais et mémoire réels à mesurer chez Marc |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Accès au moteur existant livré ; lecture traduite intégrée Kiwix/PDF à développer |
 | Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | À développer et qualifier sur les archives réelles |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
@@ -34,7 +34,8 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 - **Retenu : augmenter le contexte utilisable**, avec réglage par modèle et
   comparaison 16k/32k sur Windows. **Écarté : imposer le maximum théorique à tous
   les modèles ou prétendre qu’occuper toute la RAM améliore la vitesse**.
-  L’ajustement automatique selon mesures matérielles reste à réaliser.
+  La calibration volontaire est implémentée en 0.7.0 ; son résultat reste à
+  appliquer explicitement après mesure sur le PC concerné.
 - **À évaluer : reformulation ou reclassement IA**, puis recherche sémantique
   multilingue sur un échantillon si le gain est mesurable. Le socle sans IA est
   conservé ; aucun modèle supplémentaire n’est imposé dans cette livraison.
