@@ -108,7 +108,7 @@ class Manager:
             elif not index_queue.in_window(queued['settings']):waiting='schedule'
             elif not result['index_reader_ready']:waiting='missing_reader'
             elif state['phase']=='planned':waiting='selection_pending'
-            elif state['phase'] in ACTIVE and state.get('action')!='index':waiting='other_operation'
+            elif state['phase'] in ACTIVE:waiting='other_operation' if state.get('action')!='index' else ''
             else:waiting=index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
         queued['waiting_reason']=waiting
         from pilot.archive_index import status as index_status
