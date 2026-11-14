@@ -36,9 +36,10 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
 - Rapports 0.9.3 reçus ensuite : indexation terminée sans erreur, mais 31 recherches
   partielles sur 32 et nouveau comparatif IA interrompu. L’indexation manquante ne
   suffit plus à expliquer les résultats. [Analyse datée](2026-11-14-rapports-recherche-093.md).
-- Une recette d’usage hors ligne R7 est préparée dans une branche de travail,
-  **non livrée**. Les rapports réels 0.9.3 donnent priorité aux expirations et
-  au classement du moteur commun. Son brouillon est conservé pour reprise.
+- Après les corrections prioritaires 0.9.4, le brouillon R7 est repris en 0.10.0 :
+  [contrôle d’usage exportable](2026-11-14-recette-usage-hors-ligne.md), lectures
+  bornées, observations par profil/version et absence de reprise automatique.
+  Validation de livraison en cours ; aucune recette physique chez Marc n’en est déduite.
 
 ## Décisions conservées ou reportées
 

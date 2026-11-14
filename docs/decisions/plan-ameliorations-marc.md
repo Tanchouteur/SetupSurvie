@@ -311,6 +311,11 @@ L’index sémantique est reporté tant que ce bénéfice n’est pas établi.
 aucun échec connu sans décision explicite ; rapport intégré **R7**. Ne pas déclarer
 validé chez Marc ce qui n’a été essayé que sur données simulées ou en CI.
 
+**Outillage R7 en 0.10.0 :** [contrôle d’usage](../utilisation/verifier-usage-hors-ligne.md)
+depuis le site, mesures bornées et observations humaines exportables, brouillon
+par profil/version sans reprise automatique. Il prépare la recette réelle ;
+il ne clôt ni celle-ci ni les lots de traduction et de sous-titres encore prévus.
+
 ## Recettes progressives et conditions de blocage
 
 Les [rapports réels 0.8.0](../essais/2026-11-14-rapports-recherche-080.md) sont reçus :

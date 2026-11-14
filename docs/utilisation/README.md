@@ -1,5 +1,6 @@
 # Utiliser le serveur familial
 
+- [Vérifier l’usage hors ligne](verifier-usage-hors-ligne.md) — contrôle sans IA, étapes humaines, arrêt et rapport R7.
 - [Dossiers pratiques](dossiers-pratiques.md) — objectifs, sources et points à examiner.
 
 - [Comparer une aide IA à la recherche](comparer-recherche-ia.md) — essai facultatif, mesures et relecture.
