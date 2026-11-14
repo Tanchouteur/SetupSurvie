@@ -208,19 +208,42 @@ l’inventaire déjà affichées ; leurs actions restent attachées aux mêmes �
 Le routeur mémorise le filtre et ouvre directement la page native Cartes.
 Le relief repose sur les tuiles locales existantes, sans nouvelle source réseau.
 
-## Recherche Kiwix depuis 0.1.35
+## Socle de recherche Kiwix
 
-`pilot/library.py` sélectionne explicitement les archives par identifiant Kiwix,
-ou par nom en repli, plutôt qu’un filtre global de langue. Les lots de six
-archives ont les mêmes métadonnées de langue ; les archives multilingues ou sans
-langue connue restent isolées. Un lot refusé est retenté archive par archive.
-Trois requêtes au plus sont simultanées, avec 32 appels au plus, trois secondes
-pour le catalogue puis dix pour les recherches. Les succès déjà reçus sont conservés.
+Depuis 0.1.35, `pilot/library.py` sélectionne explicitement les archives par
+identifiant Kiwix ou par nom en repli. Les lots sont homogènes par langue et les
+archives multilingues ou sans langue connue restent isolées. Un lot refusé est
+retenté archive par archive, sans masquer les succès reçus. Cela n’implique pas
+que chaque archive multilingue soit prise en charge en plein texte par Kiwix.
 
-`/api/search` et l’outil `search_library` transmettent `coverage` : état, nombres
-d’archives interrogées, en échec, non interrogées et sans index, avec un message
-explicite si nécessaire. Les recherches limitées aux favoris ou traductions
-conservent leur périmètre propre. Guides et articles sont alternés avant la limite
-finale pour éviter que les seuls guides masquent les encyclopédies.
-Les états décrivent la recherche, pas une validation documentaire ou une lecture.
-Voir le [bilan et les limites](../essais/2026-11-14-recherche-et-conversations.md).
+`/api/search` et l’outil `search_library` transmettent `coverage`, avec les archives
+interrogées, en échec ou non interrogées. Le compteur historique `without_fulltext`
+désigne les tags d’index négatifs, pas une preuve physique d’absence d’index.
+Depuis 0.1.36, ces tags servent à prioriser les sondages ; titres et reformulations
+ont aussi leurs compteurs. Les recherches limitées aux favoris ou traductions
+gardent leur périmètre. Le classement commun remplace l’alternance guide/article
+utilisée en 0.1.35. Les états décrivent une recherche, pas une validation ou une lecture.
+
+## Consolidation documentaire 0.1.36
+
+`pilot/retrieval.py` prépare la requête, le périmètre et le classement lexical
+commun. `library.search` rassemble des candidats FTS et Kiwix avant classement,
+regroupe les pages et transmet `coverage`. `collection` filtre séparément les
+archives. Les titres sont interrogés dans quatre collections prioritaires ;
+32 appels plein texte au plus sont autorisés, avec trois requêtes simultanées
+et dix secondes pour l’ensemble après le catalogue (trois secondes au plus).
+Les reformulations Kiwix utilisent des recherches littérales distinctes, après
+la première passe, et non une syntaxe OR supposée. Les métadonnées d’index
+ordonnent les sondages sans exclure les archives.
+
+`engine.document_request` prépare certaines demandes documentaires avant le
+premier appel au modèle, puis conserve les outils pour affiner. Les caches sont
+propres à une réponse et au périmètre, pas un index sémantique global. Le contexte
+est compacté sans modifier l’historique stocké. `engine.PROGRESS` expose un suivi
+éphémère par demande, renvoyé seulement après contrôle du propriétaire dans
+`/api/jobs/{id}` ; aucun schéma de base n’est changé.
+
+La vérification depuis le site utilise uniquement santé et recherche en GET,
+et produit un rapport côté navigateur. Elle ne proclame pas le fonds validé.
+Le [bilan](../essais/2026-11-14-moteur-recherche-utile.md) détaille le vrai Kiwix
+sur archives générées et les limites de transfert au fonds de Marc.

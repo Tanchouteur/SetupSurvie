@@ -24,6 +24,7 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_fire_query_searches_explicit_archives_separates_languages_and_reports_unindexed(self):
         calls=[]
         async def fetch(path,*args):
+            if path.startswith('/suggest?'):return b'[]','application/json'
             values=parse_qs(urlsplit(path).query);calls.append(values)
             self.assertNotIn('books.filter.lang',values)
             names=values['books.name']
@@ -31,8 +32,8 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
             return self.xml(names[0])
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             found=await library.search('comment faire un feu')
-        self.assertEqual(len(found),3)
-        self.assertEqual(found.coverage['searched'],3);self.assertEqual(found.coverage['without_fulltext'],1)
+        self.assertEqual(len(found),4)
+        self.assertEqual(found.coverage['searched'],4);self.assertEqual(found.coverage['without_fulltext'],1)
         english=next(c for c in calls if c['books.name']==['manual_en'])
         self.assertEqual(english['pattern'],['fire'])
         self.assertTrue(all(r['id'].startswith('zim:') for r in found))
@@ -40,6 +41,7 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_rejected_batch_retries_individual_archives_without_hiding_success(self):
         catalog=[dict(self.catalog[0],book=name) for name in ['a','broken','b']]
         async def fetch(path,*args):
+            if path.startswith('/suggest?'):return b'[]','application/json'
             names=parse_qs(urlsplit(path).query)['books.name']
             if len(names)>1 or names==['broken']:raise HTTPException(400,'Different languages')
             return self.xml(names[0])
@@ -58,13 +60,16 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_exact_language_filter_includes_multilingual_but_not_unrelated_language(self):
         calls=[]
         async def fetch(path,*args):
+            if path.startswith('/suggest?'):return b'[]','application/json'
             values=parse_qs(urlsplit(path).query);calls.extend(values['books.name']);return self.xml(values['books.name'][0])
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             await library.search('feu',language='fr')
-        self.assertEqual(set(calls),{'wikipedia_fr','multi'})
+        self.assertEqual(set(calls),{'wikipedia_fr','multi','video'})
 
     async def test_duplicate_hits_are_deduplicated_and_unknown_books_rejected(self):
-        async def fetch(path,*args):return self.xml('not_in_catalogue')
+        async def fetch(path,*args):
+            if path.startswith('/suggest?'):return b'[]','application/json'
+            return self.xml('not_in_catalogue')
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             found=await library.search('feu')
         self.assertEqual(found,[])
@@ -77,8 +82,10 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_request_budget_is_bounded_and_unsearched_books_are_disclosed(self):
         catalog=[dict(self.catalog[2],book='multi'+str(i)) for i in range(45)]
-        async def fetch(path,*args):return self.xml(parse_qs(urlsplit(path).query)['books.name'][0])
+        async def fetch(path,*args):
+            if path.startswith('/suggest?'):return b'[]','application/json'
+            return self.xml(parse_qs(urlsplit(path).query)['books.name'][0])
         with patch.object(library,'books',AsyncMock(return_value=catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)) as get:
             found=await library.search('feu')
-        self.assertLessEqual(get.await_count,32);self.assertGreater(found.coverage['not_searched'],0)
+        self.assertLessEqual(get.await_count,36);self.assertGreater(found.coverage['not_searched'],0)
         self.assertEqual(found.coverage['status'],'partial')

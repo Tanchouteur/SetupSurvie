@@ -69,7 +69,7 @@
     }
   }
   function setScope(scope){
-    D.scope=scope;$('library-query').required=scope==='all';
+    D.scope=scope;$('library-query').required=scope==='all';if($('search-collection'))$('search-collection').hidden=scope!=='all';
     for(const node of document.querySelectorAll('[data-library-scope]'))node.setAttribute('aria-pressed',String(node.dataset.libraryScope===scope));
   }
   async function scopedSearch(event){

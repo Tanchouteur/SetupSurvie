@@ -7,10 +7,10 @@ async (page) => {
   await page.request.delete(base+'/api/favorites?source_id='+encodeURIComponent('guide:shelter.en.pdf'),{headers:{Origin:base}});
   await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>search('Shelter'));
-  const pdfResult=page.locator('.result[data-source="guide:shelter.en.pdf#page=6"]');
+  const pdfResult=page.locator('.result[data-source^="guide:shelter.en.pdf#page="]').first();
   await pdfResult.waitFor({state:'visible'});
   await pdfResult.locator('.favorite-toggle').click();
-  await page.waitForFunction(()=>document.querySelector('.result[data-source="guide:shelter.en.pdf#page=6"] .favorite-toggle').getAttribute('aria-pressed')==='true');
+  await pdfResult.locator('.favorite-toggle[aria-pressed="true"]').waitFor();
   await page.locator('[data-library-scope=favorites]').click();
   await page.locator('#library-query').fill('calibration');await page.locator('#library-search').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>[...document.querySelectorAll('.result')].some(n=>n.dataset.source==='guide:shelter.en.pdf#page=6'));

@@ -94,3 +94,5 @@ rubriques de l’entrée principale, les données réelles et les suivis. Les an
 procédures par « Données locales » restent accessibles dans `/classique/` ; leur
 équivalent courant est **Mon appareil → Téléchargements**, avec les inventaires
 dans **Bibliothèque → Collections** et **Mon appareil → Stockage**.
+
+- [Retrouver un document utile et vérifier la recherche depuis le site](recherche-documentaire.md) — guide actuel 0.1.36.

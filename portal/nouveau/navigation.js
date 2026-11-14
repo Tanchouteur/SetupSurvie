@@ -81,7 +81,8 @@
       $('next-collections').hidden=route.tab!=='collections';$('next-learning').hidden=route.tab!=='parcours';$('next-search').hidden=['collections','parcours'].includes(route.tab);
       if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setQuery(query);if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
       if(!['collections','parcours'].includes(route.tab)){
-        $('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';
+        if($('search-collection')?.options.length===1)loadData();
+        $('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';if($('search-collection')){$('search-collection').dataset.requested=route.params.get('collection')||'';$('search-collection').value=route.params.get('collection')||'';}
         const scope=route.tab==='favoris'?'favorites':route.tab==='traductions'?'translations':'all';
         scopeCommand=true;
         const control=document.querySelector(`[data-library-scope="${scope}"]`);
@@ -123,7 +124,7 @@
   };
   readSource=async id=>{
     if(openingSource)return baseRead(id);
-    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('source',id);
+    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}
   };
@@ -174,12 +175,13 @@
     document.querySelectorAll('a[href^="/pdf.html"]').forEach(a=>{const u=new URL(a.href);u.searchParams.set('interface','nouveau');a.href=u.href;});
     document.querySelectorAll('a[href^="/cartes.html"]').forEach(a=>{const u=new URL(a.href);u.searchParams.set('interface','nouveau');a.href=u.href;});
   }
-  document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!applying&&S.user)put('detail:'+node.id,node.open);},true);
+  document.addEventListener('survie:inventory',()=>{if(!S.user)return;for(const detail of document.querySelectorAll('.next-collection-group[id]')){if(detail.dataset.filtering)continue;const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}});
+  document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!applying&&S.user&&!node.dataset.filtering)put('detail:'+node.id,node.open);},true);
   let frame=0;window.addEventListener('scroll',()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;remember();});},{passive:true});
   $('chat-input').addEventListener('input',saveDraft);
   document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.
-  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);skipSearch=true;navigate(route);skipSearch=false;},true);
+  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;},true);
   document.addEventListener('click',event=>{
     if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.closest('#content-download,#routing-download')){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Ce suivi reste en lecture seule.');return;}
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;

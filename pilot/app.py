@@ -415,13 +415,13 @@ async def retired_login(action:str):
 
 
 @app.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160)):
     owner=(await user(request))['id'] if favorites_only else None
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
-            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []
+            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection) if q.strip() else []
     else:
-        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []
+        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection) if q.strip() else []
     return {'results':found,**({'coverage':found.coverage} if isinstance(found,library.SearchResults) else {})}
 
 
@@ -636,7 +636,7 @@ async def publish_translation(identifier:str,value=Depends(user)):
 async def job(identifier:str,value=Depends(user)):
     with store.connect() as db:row=db.execute('SELECT * FROM jobs WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone()
     if not row:raise HTTPException(404,'Demande introuvable.')
-    return {**dict(row),'sources':json.loads(row['sources'])}
+    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{})}
 
 
 @app.post('/api/jobs/{identifier}/cancel')

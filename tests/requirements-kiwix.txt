@@ -1,0 +1,3 @@
+# Synthetic ZIM creation for the real pinned Kiwix protocol smoke only.
+-r requirements.txt
+libzim==3.13.1

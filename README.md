@@ -25,7 +25,7 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 
 ## Commencer
 
-Le portail **0.1.35** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.1.36** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 
@@ -34,6 +34,7 @@ conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive 
 - **Choisir les collections Kiwix** : utiliser la [sélection automatique par thème](docs/bibliotheque/selection-kiwix-par-theme.md), avec inventaire local et budget de téléchargement.
 - **Installer le kit chez Marc** : suivre le [guide du pilote](docs/installation/pilote-marc.md). Le kit hors ligne représente environ 160 Go ; vérifier son manifeste, il n’est pas un petit installateur en ligne.
 - **Préparer une installation depuis le dépôt** : lire les [parcours d’installation](docs/installation/README.md), leurs prérequis et leurs limites.
+- **Trouver un document utile** : lire le [guide de recherche et de vérification depuis le site](docs/utilisation/recherche-documentaire.md).
 - **Utiliser le serveur** : consulter le [guide d’utilisation](docs/utilisation/README.md).
 - **Entretenir une installation existante** : suivre les [sauvegardes, restaurations et mises à jour](docs/exploitation/README.md).
 - **Comprendre une panne et préparer le secours** : lire le [manuel humain](docs/exploitation/manuel-de-secours.md) et le [protocole du disque de secours complet](docs/exploitation/disque-de-secours-hors-ligne.md), dont l’installateur autonome reste à réaliser.

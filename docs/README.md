@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-Index mis à jour le 13 novembre 2026. Commencer par le parcours correspondant au besoin.
+Index mis à jour le 14 novembre 2026. Commencer par le parcours correspondant au besoin.
 
 ## Guides de référence
 
@@ -28,15 +28,17 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
+- [Recherche documentaire et recette depuis le site](utilisation/recherche-documentaire.md) — guide actuel 0.1.36 : pertinence, collections, assistant et vérification Windows sans terminal.
+
 - [Nouvelle interface Windows/Linux](utilisation/nouvelle-interface.md) — guide actuel 0.1.35 : organisation, conversation, suivi réel, navigation et mise à jour normale.
 
 - [Essayer la maquette UX](utilisation/maquette-ux.md) — prototype séparé 0.1.31, navigation mémorisée et exemples fictifs ; portail actuel conservé.
 
 - [Profils locaux, sans mot de passe](utilisation/profils-locaux.md) — accès familial, anciens comptes et liens du menu, depuis 0.1.29.
 
-- [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide du pilote 0.1.18.
+- [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide actuel 0.1.36.
 
-- [Documents, favoris et traductions](utilisation/documents-et-traduction.md) — guide du pilote 0.1.28, lecture PDF, contrôles de traduction et accès de secours.
+- [Documents, favoris et traductions](utilisation/documents-et-traduction.md) — guide actuel 0.1.36, lecture PDF, contrôles de traduction et accès de secours.
 
 - [Paramètres, déplacements et cartes hors ligne](utilisation/parametres-et-cartes.md) — guide du pilote 0.1.10.
 
@@ -62,6 +64,10 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Décisions et besoins
 
+- [Fiabilisation de la recherche et des contenus](decisions/fiabilisation-recherche-et-contenus.md) — chantier demandé par Louis : réalisé, à tester chez Marc et suites à développer.
+
+- [Boîte à idées](decisions/boite-a-idees.md) — évolutions reportées, dont Maison de Solliès-Ville.
+
 - [Plan de refonte UX du portail](decisions/plan-refonte-ux.md) — proposition du 13 novembre 2026 : interface classique conservée, collections directement ouvrables, navigation mémorisée, suivi machine et mobile simplifié ; non implémentée.
 
 - [Questions et décisions](decisions/questions-et-decisions.md)
@@ -84,6 +90,9 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 ### Essais et résultats
 
 - [Consoles spontanées Windows — 14 novembre 2026](essais/2026-11-14-consoles-windows.md) — capture native, mesures NVML et démarrage sans console, 0.1.36.
+- [Moteur de recherche utile — 14 novembre 2026](essais/2026-11-14-moteur-recherche-utile.md) — première consolidation 0.1.36, Kiwix réel sur petites archives générées et orchestration simulée.
+
+- [Retour d’expérience de Marc — 14 novembre 2026](essais/2026-11-14-retour-experience-marc.md) — appel rapporté par Louis, cinq captures, recherche prioritaire et propositions non implémentées.
 
 - [Recherche et confort des conversations — 14 novembre 2026](essais/2026-11-14-recherche-et-conversations.md) — correction Kiwix, limites explicites et conversation lisible, 0.1.35.
 - [Recherche des ressources et cartes directes — 13 novembre 2026](essais/2026-11-13-recherche-collections-et-cartes.md) — filtre Collections, relief local par défaut et non-régression de l’interface 0.1.34.

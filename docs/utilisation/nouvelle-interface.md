@@ -1,6 +1,6 @@
 # La nouvelle interface et l’interface classique
 
-**Guide actuel — 0.1.35, 14 novembre 2026.**
+**Guide actuel — 0.1.36, 14 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -22,6 +22,12 @@ son lecteur Kiwix local, sans question ni recherche préalable. Les guides garde
 leur lecture, leur PDF, leurs favoris et la possibilité de poser une question.
 Le lien Open WebUI reste visible pour les fonctions avancées et ses historiques
 distincts. Les sources originales et l’accès de secours restent disponibles.
+
+Depuis 0.1.36, les archives d’une source connue ou de même titre sont regroupées
+avec des variantes et leurs liens directs conservés. Les groupes ouverts sont
+mémorisés. **Apprendre par thème** indique l’usage de l’ancien onglet Parcours.
+La [recherche documentaire](recherche-documentaire.md) explique le classement,
+les filtres et **Mon appareil → Réglages → Vérifier la recherche**.
 
 Depuis 0.1.34, le champ **Chercher une ressource installée** filtre les
 encyclopédies, livres et guides de Collections par nom, nom de fichier,
@@ -146,4 +152,4 @@ la procédure normale ; le téléchargement de Marc a été déclaré terminé p
 mais ce guide n’en fait pas un contrôle de machine.
 
 Les vérifications et limites de cette livraison sont dans le
-[bilan 0.1.35](../essais/2026-11-14-recherche-et-conversations.md).
+[bilan 0.1.36](../essais/2026-11-14-moteur-recherche-utile.md).

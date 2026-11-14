@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.29, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.1.36, 14 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -40,6 +40,11 @@ Un document sélectionné mais n’ayant donné lieu à aucune question ni tradu
 
 ## Traduire en français
 
+Depuis 0.1.36, le lecteur du portail propose aussi **Traduire en français** en
+haut d’une source anglaise : cela ouvre les commandes de traduction existantes
+dans l’assistant, sans démarrer le traitement automatiquement. Ce n’est pas une
+traduction instantanée de chaque page Kiwix, ni une traduction de vidéo.
+
 1. Associer le document et choisir le modèle dans **Temps à consacrer**.
 2. Déplier **Traduire le document en français**. Pour un PDF, conserver la première page à 1 et la dernière vide pour tout le document, ou choisir une plage, par exemple 1 à 10. Les numéros désignent les pages du fichier PDF, pas forcément la pagination imprimée.
 3. Cliquer sur **Traduire en français**. Une demande simple dans la conversation, comme « traduit moi ce guide en français » ou « peux-tu me traduire le document entièrement en français », déclenche également la traduction complète dédiée. Les autres formulations gardent le traitement habituel de l’assistant ; pour une plage de pages, utiliser les champs du panneau.
@@ -54,6 +59,29 @@ Depuis 0.1.18, le panneau de traduction peut se réduire et défiler sur les éc
 courts pour garder le champ de question et son bouton d’envoi accessibles.
 
 Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
+
+## Taille des documents et livres longs
+
+**Limites relues dans le code 0.1.35 le 14 novembre 2026.** Un PDF de 500 pages
+peut être accepté : la traduction ne charge pas tout le livre dans un seul
+contexte. Le texte est extrait page par page, puis découpé en passages d’environ
+2 200 caractères. Chaque passage terminé est enregistré ; pause et reprise
+explicite conservent ce qui est déjà traduit. Aucun délai garanti ni traduction
+réelle de 500 pages n’est établi par les tests simulés.
+
+Pour les PDF locaux, les limites sont : fichier de **300 millions d’octets au
+maximum (300 Mo décimaux)**, document de **1 200 pages au maximum**, **100 000
+caractères par page** et **5 millions de caractères sur la plage demandée**.
+Un fichier dépassant 1 200 pages est refusé même si la plage choisie est courte ;
+il faut une copie découpée. Une plage peut réduire la quantité totale de texte,
+mais ne contourne pas les autres limites. Un PDF chiffré est refusé. Les pages
+sans texte extractible sont signalées et ne deviennent pas traduites par OCR.
+
+Pour un guide textuel, l’aperçu doit être complet et faire moins de 500 000
+caractères ; pour un article d’archive, moins de 100 000. La traduction intégrale
+d’un aperçu déclaré incomplet est refusée. La mise en page, les images et la
+cohérence d’un terme entre tous les passages d’un livre ne sont pas garanties.
+Cette fonction ne produit pas de sous-titres vidéo.
 
 ## Ce qui est traduit et ce qui reste à vérifier
 

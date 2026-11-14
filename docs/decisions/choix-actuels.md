@@ -117,3 +117,18 @@ l’historique s’ouvre par **Conversations**, l’archive `/classique/` est co
 sans lien dans les menus, et l’accueil demande **Qu’avez-vous envie d’apprendre ?**.
 La recherche Kiwix isole les échecs et expose ses limites au portail et à l’assistant ;
 aucune absence de source sur le feu chez Marc n’est déduite d’un test simulé.
+
+Le 14 novembre 2026, le [retour d’expérience de Marc](../essais/2026-11-14-retour-experience-marc.md)
+rapporté par Louis place la pertinence de la recherche au premier rang : retrouver
+les savoir-faire réellement présents avant de conclure à leur absence ou d’ajouter
+des volumes. Le regroupement lisible des collections, la compréhension de Parcours,
+le français pour pages/vidéos et le délai de l’assistant font partie du besoin.
+Les solutions proposées dans ce compte rendu restent à implémenter et à mesurer.
+L’espace Maison de Solliès-Ville est une [idée reportée](boite-a-idees.md).
+
+Le chantier de [fiabilisation du cœur documentaire](fiabilisation-recherche-et-contenus.md)
+est demandé par Louis le 14 novembre. La 0.1.36 en implémente un premier lot :
+classement commun, filtres, préparation de sources, contexte, regroupements et
+recette depuis le site. La bibliothèque réelle et les modèles de Marc restent
+à qualifier ; sous-titres, traduction de lecture généralisée et profondeur des
+procédures demeurent suivis explicitement, sans réalisation implicite.

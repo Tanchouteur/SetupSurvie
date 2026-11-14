@@ -25,7 +25,7 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done'):
         payloads=[];client_class=httpx.AsyncClient
         def handler(request):
             payloads.append(json.loads(request.content))
@@ -35,9 +35,10 @@ class EvidenceTests(unittest.TestCase):
         with patch.object(engine,'POLICY',POLICY),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
              patch.object(engine.library,'search',AsyncMock(return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
             asyncio.run(engine.run('j','u','c','rapide',attached))
+            self.lookup_calls=engine.library.search.await_args_list
         with store.connect() as db:
             row=dict(db.execute('SELECT * FROM jobs WHERE id="j"').fetchone())
-        self.assertEqual(row['status'],'done',row.get('error'))
+        self.assertEqual(row['status'],expected_status,row.get('error'))
         return payloads,store.messages('c')[-1]
 
     @staticmethod
@@ -64,6 +65,58 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(result['results'],[])
         self.assertEqual(result['coverage']['status'],'unavailable')
         self.assertEqual(answer['sources'],[])
+
+    def test_practical_question_receives_read_documents_before_first_model_call(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        payloads,answer=self.run_chat([{'content':'La source consultée décrit le sujet [1].'}],[self.a])
+        tools=[json.loads(m['content']) for m in payloads[0]['messages'] if m['role']=='tool']
+        self.assertTrue(any(t.get('text')==self.a['text'] for t in tools))
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+
+    def test_model_can_reuse_prepared_subject_with_a_shorter_formulation(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        self.run_chat([self.call('search_library',{'query':'feu'}),{'content':'Source déjà lue [1].'}],[self.a])
+        self.assertEqual(len(self.lookup_calls),1)
+
+    def test_wikipedia_followup_uses_previous_user_subject(self):
+        history=[{'role':'user','content':'Comment faire du feu ?'}, {'role':'assistant','content':'Aucun document, affirmation non établie.'}, {'role':'user','content':'Et dans Wikipédia tu ne trouves rien ?'}]
+        query,collection=engine.document_request(history)
+        self.assertEqual(query,history[0]['content']);self.assertEqual(collection,'wikipedia')
+        specific=history+[{'role':'user','content':'réparer une radio dans Wikipédia'}]
+        self.assertEqual(engine.document_request(specific),('réparer une radio dans Wikipédia','wikipedia'))
+        followups=history+[{'role':'user','content':'Et dans Appropedia ?'},{'role':'user','content':'Et dans Wikipédia ?'}]
+        self.assertEqual(engine.document_request(followups),('Comment faire du feu ?','wikipedia'))
+        self.assertEqual(engine.document_request(history+[{'role':'user','content':'Trouve un document sur les radios dans Wikipédia'}]),('Trouve un document sur les radios dans Wikipédia','wikipedia'))
+        self.assertIsNone(engine.document_request([{'role':'user','content':'Combien font 12 fois 3 ?'}]))
+        self.assertIsNone(engine.document_request([{'role':'user','content':'Cherche un puits proche de moi'}]))
+
+    def test_context_compaction_keeps_latest_question_and_valid_tool_pairs(self):
+        messages=[{'role':'system','content':'Consignes '+('s'*3000)}, {'role':'user','content':'Ancien sujet '+('h'*3000)}, {'role':'assistant','content':'Ancienne réponse '+('a'*3000)}, {'role':'user','content':'Comment construire un abri ?'}]
+        for i in range(4):
+            messages.extend([{'role':'assistant','content':'','thinking':'internal '*3000,'tool_calls':[{'id':str(i),'function':{'name':'read_source','arguments':{'id':'guide:a'}}}]}, {'role':'tool','tool_call_id':str(i),'content':json.dumps({'text':'Passage '*1500,'partial_read':False,'more':False})}])
+        self.assertTrue(engine.fit_context(messages,maximum=6500))
+        self.assertLessEqual(len(json.dumps(messages,ensure_ascii=False).encode()),6500)
+        self.assertTrue(any(m.get('content')=='Comment construire un abri ?' for m in messages))
+        calls={c['id'] for m in messages for c in m.get('tool_calls',[])}
+        self.assertTrue(all(m['tool_call_id'] in calls for m in messages if m['role']=='tool'))
+        self.assertTrue(all('thinking' not in m for m in messages))
+        self.assertTrue(all(json.loads(m['content'])['partial_read'] for m in messages if m['role']=='tool'))
+
+    def test_repeated_searches_are_cached_within_the_same_question(self):
+        self.run_chat([self.call('search_library',{'query':'notice'}),self.call('search_library',{'query':'notice'}),{'content':'Fin sans source lue.'}],[self.a])
+        self.assertEqual(len(self.lookup_calls),1)
+
+    def test_repeated_source_read_uses_the_same_evidence_without_network_reload(self):
+        calls=[]
+        def read(identifier):calls.append(identifier);return self.a
+        _,answer=self.run_chat([self.call('read_source',{'id':'guide:a'}),self.call('read_source',{'id':'guide:a'}),{'content':'Notice consultée [1].'}],read=read)
+        self.assertEqual(calls,['guide:a']);self.assertEqual(len(answer['sources']),1)
+
+    def test_fast_mode_enforces_a_budget_even_if_model_calls_a_disabled_tool(self):
+        messages=[self.call('search_library',{'query':word}) for word in ['premiere','deuxieme','troisieme','quatrieme']]
+        payloads,_=self.run_chat(messages,[self.a],expected_status='incomplete')
+        self.assertEqual(len(self.lookup_calls),3)
+        self.assertEqual(payloads[-1]['tools'],[])
 
     def test_contradictory_documents_keep_both_dates_and_references(self):
         messages=[self.call('read_source',{'id':'guide:a'}),self.call('read_source',{'id':'guide:b'}),
