@@ -1,6 +1,6 @@
 # Référence de pertinence et lecture des articles trouvés
 
-**Bilan en cours — 0.5.0, 14 novembre 2026.** Suite de l’objectif de première
+**Bilan daté — 0.5.0, 14 novembre 2026.** Suite de l’objectif de première
 version fiable du moteur. Les deux photos reçues pendant ce lot sont consultées
 sans copie dans Git. Elles concernent, selon Louis, l’usage de la 0.3.0.
 
@@ -52,8 +52,21 @@ redirection, chaînes relatives, boucle, limite, cible externe, autre archive,
 catalogue, taille et chemin des images.
 
 Chromium via MCP : 45 contrôles de recherche, dont contrôle complet, avis exportés,
-repli de lecture et présentation 1366/390/320 pixels. Les résultats finaux Linux,
-Windows, Kiwix réel et WebKit sont à consigner après exécution.
+repli de lecture et présentation 1366/390/320 pixels. Une capture du contrôle
+complet à 390 pixels a aussi été examinée.
+
+La [CI du code livré](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43603751860)
+est réussie : Linux (408 tests, trois exclus), Windows (dont nouvelle référence
+et lecteur HTTP), Kiwix, routage hors ligne et interface. Chromium **et** WebKit
+passent chacun les 45 contrôles de recherche et les 14 de réglages. Le paquet
+logiciel est construit par la CI ; versions API/manifeste/interface cohérentes.
+
+Kiwix 3.8.1 réel : 29 contrôles sur cinq ZIM générés, 282 587 octets. Les quatre
+nouveaux besoins FR retrouvent leur véritable texte indexé anglais en premier
+avec le filtre adapté, sans se limiter à une suggestion de titre. Un alias ZIM
+rejoint son texte cible ; les tests HTTP distincts vérifient le suivi sécurisé
+par le lecteur Python. Aucun fonds ni modèle n’a été téléchargé pour ces tests.
+Ces résultats ne valident pas le débit du disque de Marc ni Safari sur iPhone.
 
 La CI 0.4.0 relancée sur `main` a révélé une course dans l’attente du test de
 filtrage : `S` pouvait être lu avant son initialisation après navigation. L’attente

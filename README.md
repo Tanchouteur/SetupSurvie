@@ -11,14 +11,14 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **14 novembre 2026**, le pilote **0.5.0** ajoute l’indexation automatique des nouvelles archives vérifiées et le diagnostic de recherche, après l’indexation des archives non recherchables, deux espaces documentaires et
-un contexte IA réglable par modèle, après la refonte de recherche et de
-préparation des sources, les améliorations des conversations et les correctifs
-Windows de démarrage/Docker et des mesures GPU sans console. Le schéma de données
-reste compatible avec le pilote précédent ; les données existantes sont conservées.
-Ce changement de version marque une étape fonctionnelle, pas une offre commerciale
-validée. L’installation complète sur un PC vierge, Safari réel et la recette complète
+Au **14 novembre 2026**, le pilote **0.5.0** propose une recherche locale avec
+indexation automatique, deux espaces documentaires et diagnostic exportable.
+Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
+prise en charge des redirections d’articles. Le contexte IA est réglable par modèle.
+Les données existantes restent compatibles et conservées. La qualité sur le fonds
+réel, l’installation complète sur PC vierge, Safari réel et la recette complète
 hors ligne restent à qualifier ; consulter les [bilans datés](docs/essais/README.md).
+Le pilote n’est pas une offre commerciale validée.
 
 La bibliothèque reste accessible quand le moteur IA est arrêté. Le portail et
 Open WebUI partagent les comptes, avec des historiques de conversations distincts.
