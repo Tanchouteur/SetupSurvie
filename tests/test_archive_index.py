@@ -3,6 +3,10 @@ import asyncio
 import json
 import subprocess
 import sys
+import os
+import shutil
+import venv
+from importlib import metadata
 from pathlib import Path
 import tempfile
 import unittest
@@ -103,3 +107,40 @@ class ArchiveIndexTests(unittest.TestCase):
         archive_index.build_archive(self.zim,self.index)
         plan=retrieval.plan('vélo',library.search_terms('vélo'),library.SYNONYMS,'wikipedia')
         self.assertEqual(archive_index.search(self.index,plan),[])
+
+
+@unittest.skipUnless(HAS_LIBZIM,'Optional libzim reader required')
+class IsolatedArchiveIndexTests(unittest.TestCase):
+    def test_actual_cli_in_venv_with_libzim_only_and_unicode_path_then_reuse(self):
+        root_code=Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory(prefix='ss-isolated-') as folder:
+            root=Path(folder)/'Dossier partagé avec espaces';root.mkdir()
+            isolated=root/'outil';venv.EnvBuilder(with_pip=False).create(isolated)
+            python=isolated/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
+            env={k:v for k,v in os.environ.items() if k not in ('PYTHONPATH','PYTHONHOME','VIRTUAL_ENV')}
+            probe=[str(python),'-I','-X','utf8',str(root_code/'scripts/index_reader_probe.py')]
+            absent=subprocess.run(probe,env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(absent.returncode,1);self.assertEqual(json.loads(absent.stdout)['error'],'reader_missing')
+            site=Path(subprocess.check_output([str(python),'-I','-c','import sysconfig; print(sysconfig.get_paths()["purelib"])'],env=env,text=True).strip())
+            dist=metadata.distribution('libzim')
+            for relative in dist.files:
+                if str(relative).startswith('../'):continue
+                source=dist.locate_file(relative);target=site/relative
+                if source.is_file():target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+            dependency=subprocess.check_output([str(python),'-I','-c','import importlib.util; print(importlib.util.find_spec("fastapi"))'],env=env,text=True).strip()
+            self.assertEqual(dependency,'None','The isolated reader must not inherit web dependencies')
+            self.assertTrue(json.loads(subprocess.check_output(probe,env=env,text=True))['ok'])
+            zims=root/'archives';zims.mkdir()
+            for name,indexed in [('guide_fr',False),('native_fr',True)]:
+                with Creator(zims/(name+'.zim')).config_indexing(indexed,'fra') as creator:
+                    for key,value in {'Title':'Guide fictif','Language':'fra','Name':name}.items():creator.add_metadata(key,value)
+                    creator.add_item(Article('Bicycle','Bicycle repair','Fictional puncture repair example, no real instructions.'))
+            command=[str(python),'-X','utf8',str(root_code/'scripts/index_archives.py'),'--zim-dir',str(zims),'--state-dir',str(root/'etat'),'--workers','2','--reserve-bytes','1000000000']
+            result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(result.returncode,0,result.stderr)
+            report=json.loads(result.stdout);self.assertEqual(report['phase'],'completed');self.assertTrue(report['reader_probe']['ok'])
+            self.assertEqual({r['status'] for r in report['results']},{'ready','kiwix_index'});self.assertEqual(report['articles'],1)
+            published=next((root/'etat/archive-index').glob('*.sqlite'));mtime=published.stat().st_mtime_ns
+            again=subprocess.run(command,env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(again.returncode,0,again.stderr);self.assertEqual(published.stat().st_mtime_ns,mtime)
+            self.assertEqual(json.loads(again.stdout)['error_summary'],{})

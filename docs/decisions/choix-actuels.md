@@ -191,3 +191,11 @@ sous-requêtes en cascade et les replis sur un mot isolé sont filtrés. Les
 [preuves et limites](../essais/2026-11-14-corrections-rapports-recherche.md) restent
 distinctes d’une validation sur le fonds réel. Réorganisation des réglages reportée
 après fiabilisation (IDEE-006), conformément à la demande de Louis.
+
+## Contrôle de l’indexation 0.9.2 — 14 novembre 2026
+
+La préparation seule par pip n’est plus assimilée à un lecteur vérifié : import
+natif et SQLite sont contrôlés dans son environnement isolé. Un échec commun
+arrête le travail avant les archives ; les erreurs individuelles restent distinctes.
+Le [bilan](../essais/2026-11-14-indexation-isolee.md) conserve le résultat Linux
+et les limites : la cause réelle chez Marc attend R1, sans nouveau corpus ajouté.

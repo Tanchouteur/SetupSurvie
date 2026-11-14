@@ -8,8 +8,33 @@ import venv
 
 import setup
 from delivery_paths import locked,destination
+import index_reader_probe
 
 VERSION='3.13.1'
+
+
+class ReaderUnavailable(setup.SetupError):
+    def __init__(self,report):
+        self.report=report
+        self.public_message=index_reader_probe.MESSAGES.get(report.get('error'),index_reader_probe.MESSAGES['probe_unavailable'])
+        super().__init__(self.public_message)
+
+
+def verify(app):
+    hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+    try:
+        process=subprocess.run([str(python(app)),'-I','-X','utf8',str(setup.ROOT/'scripts/index_reader_probe.py')],capture_output=True,text=True,timeout=30,**hidden)
+        if len(process.stdout)>4096:raise ValueError()
+        report=json.loads(process.stdout)
+        if not isinstance(report,dict) or report.get('schema')!=1 or type(report.get('ok')) is not bool:raise ValueError()
+        report={key:value for key,value in report.items() if key in ('schema','ok','python','bits','sqlite','libzim','fts5','error')}
+        if report.get('error') and report['error'] not in index_reader_probe.MESSAGES:raise ValueError()
+        if not report['ok'] or process.returncode:raise ReaderUnavailable(report)
+        if report.get('libzim')!=VERSION or report.get('fts5') is not True:raise ValueError()
+        return report
+    except ReaderUnavailable:raise
+    except subprocess.TimeoutExpired:raise ReaderUnavailable({'schema':1,'ok':False,'error':'probe_timeout'})
+    except (OSError,ValueError,TypeError):raise ReaderUnavailable({'schema':1,'ok':False,'error':'probe_unavailable'})
 
 
 def python(app):return app.work/'search-tools'/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
@@ -73,7 +98,8 @@ def prepare(app,config,*,offline=False,check=lambda:None,force=False):
         validate_cache(cache)
         check();subprocess.run([str(python(app)),'-m','pip','install','--no-index','--find-links',str(cache),
             '-r',str(setup.ROOT/'scripts/requirements-index.txt')],check=True,timeout=300,**hidden)
-        setup.write_json(app.work/'search-tools/reader-ready.json',{'libzim':VERSION},private=True)
+        check();report=verify(app)
+        setup.write_json(app.work/'search-tools/reader-ready.json',{'libzim':VERSION,'probe':report},private=True)
         return True
 
 

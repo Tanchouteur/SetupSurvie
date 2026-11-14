@@ -337,3 +337,13 @@ Le budget du comparatif IA porte sur toute la demande, puis une série de deux
 échecs est interrompue. Les nouvelles observations sont numériques ou catégorielles,
 sans réponse brute, jeton ni raisonnement privé. Voir le
 [bilan](../essais/2026-11-14-corrections-rapports-recherche.md).
+
+## Vérification du lecteur isolé (0.9.2)
+
+`scripts/index_reader_probe.py` reste indépendant de la passerelle Web. Il vérifie
+libzim et SQLite FTS5 sans archive ni réseau. `search_index_tools.py` l’appelle
+dans le Python dédié avant de publier le marqueur prêt ; `index_archives.py` le
+répète avant son pool et enregistre `reader_probe` dans la progression.
+Le superviseur retire le marqueur en cas d’échec, y compris pendant sa récupération.
+Les erreurs d’archives ont un motif borné sans message natif privé. Voir le
+[guide actuel](../utilisation/indexation-archives.md).

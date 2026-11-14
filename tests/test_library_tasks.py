@@ -55,6 +55,17 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(progress,{'phase':'paused','archives':2,'articles':100})
         self.assertEqual(self.manager.status()['search_index']['articles'],100)
 
+    def test_failed_reader_preflight_is_visible_and_invalidates_old_ready_marker(self):
+        state,folder=self.seed(action='index',phase='starting');state['options']={};self.manager.write(state)
+        marker=self.app.work/'search-tools/reader-ready.json';setup.write_json(marker,{'libzim':'3.13.1'})
+        report={'job_id':state['id'],'phase':'partial','archives':135,'completed':0,'articles':0,'results':[],
+                'reader_probe':{'schema':1,'ok':False,'error':'reader_import'},'error_summary':{'reader_import':1}}
+        setup.write_json(self.root/'data/state/pilot/archive-index/progress.json',report)
+        with patch.object(self.manager,'check_storage',return_value=(self.root/'data',None)),patch.object(jobs.subprocess,'Popen',return_value=MagicMock(pid=os.getpid(),wait=lambda:1)):
+            self.manager.run(state['id'])
+        value=self.manager.status();self.assertEqual(value['phase'],'error');self.assertIn('ne parvient pas à se charger',value['message'])
+        self.assertEqual(value['reader_probe']['error'],'reader_import');self.assertFalse(marker.exists())
+
     def test_backup_operation_lock_refuses_new_job_before_spawning(self):
         lock=self.app.work/'library-web/operation.lock';lock.mkdir(parents=True)
         with patch.object(jobs.subprocess,'Popen') as launch:

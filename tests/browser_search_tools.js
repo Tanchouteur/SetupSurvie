@@ -4,7 +4,8 @@ async page=>{
   const check=(ok,text)=>{if(!ok)throw Error(text);checks.push(text);};
   await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.route('**/api/admin/library',r=>r.fulfill({json:{phase:'idle',index_reader_ready:true,index_queue:{pending:2,completed:1,hold:'',settings:{enabled:true,start_hour:22,end_hour:6,workers:0}},search_index:{archives:3,completed:2,articles:123},message:'Fixture d’indexation'}}));
+  let indexState={phase:'idle',index_reader_ready:true,index_queue:{pending:2,completed:1,hold:'',settings:{enabled:true,start_hour:22,end_hour:6,workers:0}},search_index:{archives:3,completed:2,articles:123},message:'Fixture d’indexation'};
+  await page.route('**/api/admin/library',r=>r.fulfill({json:indexState}));
   await page.route('**/api/admin/library/index-settings',r=>{calls.push(r.request().postDataJSON());return r.fulfill({json:{accepted:true}});});
   await page.route('**/api/admin/library/index/*',r=>{calls.push(new URL(r.request().url()).pathname);return r.fulfill({json:{accepted:true}});});
   let contexts=[{model:'gpt-oss:20b',tokens:16384},{model:'gemma4:e4b',tokens:8192}];
@@ -41,5 +42,11 @@ async page=>{
   await page.locator('#next-context-model').selectOption('gemma4:e4b');check(await page.locator('#next-context-size').inputValue()==='8192','Autre modèle conserve son réglage');
   check(await page.locator('#chat-domain').count()===1,'Choix du périmètre dans l’assistant');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:850});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Réglages sans débordement à '+width);}
+  await page.setViewportSize({width:1366,height:900});
+  indexState={...indexState,phase:'error',index_reader_ready:false,reader_probe:{schema:1,ok:false,error:'fts5_unavailable'},message:'Ce Python ne fournit pas la recherche SQLite nécessaire.',search_index:{archives:135,completed:0,articles:0,reader_probe:{schema:1,ok:false,error:'fts5_unavailable'},error_summary:{fts5_unavailable:1},results:[]}};
+  await page.reload();await page.waitForFunction(()=>document.getElementById('next-index-status').textContent.includes('SQLite'));
+  check(await page.locator('#next-index-start').isDisabled(),'Échec de vérification de l’outil empêche un lancement faussement prêt');
+  const failureDownload=page.waitForEvent('download');await page.locator('#next-index-export').click();const failureFile=await failureDownload,blocks=[];for await(const block of await failureFile.createReadStream())blocks.push(block);const failureReport=JSON.parse(Buffer.concat(blocks).toString());
+  check(failureReport.reader_probe.error==='fts5_unavailable'&&failureReport.index.completed===0,'Rapport conserve le contrôle préalable et zéro archive parcourue');
   return {checks:checks.length,results:checks};
 }

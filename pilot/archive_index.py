@@ -18,6 +18,8 @@ FORMAT=1
 
 
 class Paused(Exception):pass
+class StorageReserve(OSError):pass
+class ArchiveChanged(OSError):pass
 
 
 class ArticleText(HTMLParser):
@@ -119,7 +121,7 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
     published=root/(key+'.sqlite');building=root/(key+'.building')
     def check():
         if cancel and Path(cancel).exists():raise Paused()
-        if shutil.disk_usage(root).free<reserve:raise OSError('Espace libre insuffisant pour poursuivre l’indexation.')
+        if shutil.disk_usage(root).free<reserve:raise StorageReserve('Espace libre insuffisant pour poursuivre l’indexation.')
     check();stat=source.stat();archive=Archive(source)
     if archive.has_fulltext_index and not force:return {'archive':source.name,'status':'kiwix_index','articles':0,'has_fulltext_index':True,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns}
     fingerprint=f'{FORMAT}:{archive.uuid}:{stat.st_size}:{stat.st_mtime_ns}'
@@ -162,7 +164,7 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
                 db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(index+1)))
                 db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)));db.commit()
         current=source.stat()
-        if current.st_size!=stat.st_size or current.st_mtime_ns!=stat.st_mtime_ns:raise OSError('Archive modifiée pendant l’indexation ; ancien index conservé.')
+        if current.st_size!=stat.st_size or current.st_mtime_ns!=stat.st_mtime_ns:raise ArchiveChanged('Archive modifiée pendant l’indexation ; ancien index conservé.')
         db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(archive.entry_count)))
         db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)));db.commit()
         db.execute("INSERT INTO articles(articles) VALUES('optimize')");db.commit()

@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Contrôle de l’indexation isolée](2026-11-14-indexation-isolee.md) — 0.9.2, environnement sans dépendances Web ; validation en cours.
+
 - [Corrections des rapports réels](2026-11-14-corrections-rapports-recherche.md) — 0.9.1, délais et replis reproduits ; CI réussie, fonds réel à vérifier.
 
 - [Six dossiers pratiques](2026-11-14-dossiers-pratiques.md) — bilan 0.9.0 ; relecture du fonds réel attendue.

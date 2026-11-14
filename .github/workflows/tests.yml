@@ -48,6 +48,7 @@ jobs:
       - run: python -m pip install -r scripts/requirements-index.txt
       - run: python -m unittest discover -s tests -p test_search_index_queue.py -v
       - run: python -m unittest discover -s tests -p test_search_index_tools.py -v
+      - run: python -m unittest discover -s tests -p test_index_reader_probe.py -v
       - run: python -m unittest discover -s tests -p test_runtime_resources.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_catalog.py -v
       - run: python -m unittest discover -s tests -p test_archive_index.py -v
@@ -80,6 +81,23 @@ jobs:
       - run: python -m unittest discover -s tests -p test_calibration.py -v
       - run: python -m unittest discover -s tests -p test_learning.py -v
       - run: python -m unittest discover -s tests -p test_audit_selection.py -v
+  isolated-index-reader:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The main Windows job covers 3.12; exercise the other kit targets here.
+        python-version: ['3.11', '3.13', '3.14']
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -r tests/requirements.txt -r scripts/requirements-index.txt
+      - run: python -m unittest discover -s tests -p test_archive_index.py -k IsolatedArchiveIndexTests -v
   kiwix-search:
     runs-on: ubuntu-latest
     timeout-minutes: 10

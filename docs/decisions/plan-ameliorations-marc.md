@@ -320,6 +320,9 @@ des commandes ou une CI verte ne suffit pas à clore ces lots. Les
 [corrections 0.9.1](../essais/2026-11-14-corrections-rapports-recherche.md) traitent
 les budgets, la concurrence commune, les replis hors sujet et les diagnostics.
 L’erreur d’indexation et la qualité réelle demandent toujours leurs rapports.
+Le [contrôle isolé 0.9.2](../essais/2026-11-14-indexation-isolee.md) complète L1 :
+prérequis vérifiés dans le Python du lecteur avant les archives, arrêt anticipé
+et diagnostic catégoriel, sans présumer la cause réelle de l’incident.
 
 La [procédure des rapports manuels](../essais/recettes-progressives-marc.md)
 définit R1 à R7, leur disponibilité actuelle et la façon de demander un essai.

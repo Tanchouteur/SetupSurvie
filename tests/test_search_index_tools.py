@@ -33,3 +33,17 @@ class IndexToolsTests(unittest.TestCase):
         marker=self.app.work/'search-tools/reader-ready.json'
         for value in [[],None,'invalid']:
             marker.write_text(json.dumps(value));self.assertFalse(tools.ready(self.app))
+
+    def test_failed_reader_probe_after_install_does_not_publish_ready_marker(self):
+        folder=Path(self.config['data_dir'])/'tools/search-index-wheels';folder.mkdir(parents=True)
+        wheel=folder/'libzim-3.13.1-fixture.whl';wheel.write_bytes(b'fixture')
+        setup.write_json(folder/'manifest.json',{'libzim':tools.VERSION,'files':[{'path':wheel.name,'bytes':wheel.stat().st_size,'sha256':setup.file_hash(wheel)}]})
+        marker=self.app.work/'search-tools/reader-ready.json'
+        report={'schema':1,'ok':False,'error':'reader_import'}
+        with patch.object(tools.venv.EnvBuilder,'create'),patch.object(tools.subprocess,'run'),patch.object(tools,'verify',side_effect=tools.ReaderUnavailable(report)):
+            with self.assertRaises(tools.ReaderUnavailable):tools.prepare(self.app,self.config,offline=True,force=True)
+        self.assertFalse(marker.exists())
+        valid={'schema':1,'ok':True,'libzim':tools.VERSION,'fts5':True}
+        with patch.object(tools.venv.EnvBuilder,'create'),patch.object(tools.subprocess,'run'),patch.object(tools,'verify',return_value=valid):
+            self.assertTrue(tools.prepare(self.app,self.config,offline=True,force=True))
+        self.assertEqual(json.loads(marker.read_text())['probe'],valid)

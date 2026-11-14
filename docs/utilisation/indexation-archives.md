@@ -1,6 +1,6 @@
 # Rendre les archives recherchables
 
-**Guide actuel — 0.4.0, 14 novembre 2026.** L’index complémentaire extrait le texte
+**Guide actuel — 0.9.2, 14 novembre 2026.** L’index complémentaire extrait le texte
 des archives ZIM sans véritable index Kiwix. Il ne modifie pas les originaux,
 ne charge aucun modèle IA et ne transcrit pas les vidéos.
 
@@ -118,3 +118,30 @@ l’index local ne signifie donc pas que tous les index intégrés sont absents.
 Si le suivi signale un échec, télécharger le rapport d’indexation ; éviter les
 relances répétées avant d’en examiner les erreurs. La capture seule ne précise
 ni la cause de l’échec ni les sources effectivement indexées.
+
+## Vérification de l’outil depuis 0.9.2
+
+La préparation vérifie désormais, dans son propre Python isolé, que le lecteur
+prévu se charge et que SQLite peut créer puis interroger son index de texte.
+Cette vérification est aussi exécutée avant chaque nouvelle indexation, y compris
+pour un ancien outil déjà marqué prêt. Elle ne parcourt aucun document et ne
+démarre ni modèle IA ni connexion réseau. Le délai maximal de la vérification
+après installation du lecteur est de trente secondes.
+
+Un échec de ce contrôle arrête le lancement avant les archives : le rapport
+indique zéro archive parcourue, le motif et les versions disponibles. Il distingue
+lecteur absent, import impossible, version/API incompatible et recherche SQLite
+indisponible. Le marqueur prêt est retiré, les anciens index sont conservés.
+**Vérifier / réparer l’outil** reste une action explicite ; si SQLite manque,
+le rapport doit être examiné avant de modifier l’installation Python. Une
+réinstallation de libzim seule ne garantit pas la réparation de ce prérequis.
+
+Le rapport conserve ensuite, pour chaque archive en erreur, une cause limitée :
+réserve d’espace insuffisante, disque plein, fichier absent, accès refusé, source
+modifiée, index SQLite ou lecture de l’archive. Il ne recopie pas les messages
+natifs susceptibles de contenir des chemins privés. Un échec de lecture inconnu
+reste un échec à diagnostiquer, sans conclure automatiquement à une archive corrompue.
+
+Les marqueurs préparés avant 0.9.2 restent reconnus ; leur vérification effective
+a lieu au prochain lancement. Aucun travail lourd n’est relancé par la mise à jour.
+Voir le [bilan des essais isolés](../essais/2026-11-14-indexation-isolee.md).

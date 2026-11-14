@@ -12,6 +12,13 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from pilot import archive_index,durable
 from delivery_paths import locked
 from runtime_resources import index_workers,background_worker
+import index_reader_probe
+
+
+def error_record(source,error):
+    import errno
+    reason='storage_reserve' if isinstance(error,archive_index.StorageReserve) else 'source_changed' if isinstance(error,archive_index.ArchiveChanged) else 'source_missing' if isinstance(error,FileNotFoundError) else 'permission_denied' if isinstance(error,PermissionError) else 'storage_full' if isinstance(error,OSError) and error.errno in (errno.ENOSPC,getattr(errno,'EDQUOT',-1)) else 'reader_import' if isinstance(error,(ImportError,ModuleNotFoundError)) else 'sqlite_error' if isinstance(error,archive_index.sqlite3.Error) else 'archive_error'
+    return {'archive':source.name,'status':'error','error':type(error).__name__,'reason':reason}
 
 
 def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False,reserve=15_000_000_000,selection=None,job_id=None):
@@ -30,18 +37,25 @@ def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False,reserve=15_000_
     def save():durable.write_bytes(root/'progress.json',json.dumps(report,ensure_ascii=False).encode(),private=True)
     with locked(root/'operation.lock'):
         save()
+        report['reader_probe']=index_reader_probe.probe()
+        if not report['reader_probe']['ok']:
+            report['phase']='partial';report['error_summary']={report['reader_probe']['error']:1};save();return report
         with ProcessPoolExecutor(max_workers=workers,initializer=background_worker) as pool:
             pending={pool.submit(archive_index.build_archive,p,root,cancel=cancel,force=force,reserve=reserve):p for p in files}
             for future in as_completed(pending):
                 try:result=future.result()
                 except archive_index.Paused:result={'archive':pending[future].name,'status':'paused'}
-                except Exception as exc:result={'archive':pending[future].name,'status':'error','error':type(exc).__name__}
+                except Exception as exc:result=error_record(pending[future],exc)
                 report['results'].append(result);report['completed']+=1;report['articles']+=result.get('articles',0)
                 if result['status'] in ('ready','kiwix_index'):
                     manifest[result['archive']]=result
                     durable.write_bytes(root/'manifest.json',json.dumps({'schema':1,'archives':manifest},ensure_ascii=False).encode(),private=True)
                 save()
-        report['phase']='paused' if any(r['status']=='paused' for r in report['results']) else 'partial' if any(r['status']=='error' for r in report['results']) else 'completed';save()
+        report['phase']='paused' if any(r['status']=='paused' for r in report['results']) else 'partial' if any(r['status']=='error' for r in report['results']) else 'completed'
+        report['error_summary']={}
+        for result in report['results']:
+            if result.get('reason'):report['error_summary'][result['reason']]=report['error_summary'].get(result['reason'],0)+1
+        save()
     return report
 
 

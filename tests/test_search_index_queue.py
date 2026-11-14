@@ -82,3 +82,11 @@ class SearchIndexQueueTests(unittest.TestCase):
         self.manager.write(state);self.assertEqual(self.manager.current()['phase'],'downloading')
         state['index_pid']=999999998;self.manager.write(state)
         self.assertEqual(self.manager.current()['phase'],'interrupted');self.assertEqual(queue.read(self.data)['hold'],'interrupted')
+
+    def test_finished_probe_failure_is_recovered_without_retaining_a_ready_marker(self):
+        state={'id':'e'*32,'phase':'downloading','action':'index','options':{},'pid':999999999,'identity':'not-live','index_pid':999999998,'index_identity':'not-live'}
+        marker=self.app.work/'search-tools/reader-ready.json';setup.write_json(marker,{'libzim':'3.13.1'})
+        self.manager.write(state)
+        setup.write_json(self.data/'state/pilot/archive-index/progress.json',{'job_id':state['id'],'phase':'partial','reader_probe':{'schema':1,'ok':False,'error':'fts5_unavailable'},'results':[]})
+        value=self.manager.current();self.assertEqual(value['phase'],'error');self.assertIn('SQLite',value['message']);self.assertFalse(marker.exists())
+        self.assertEqual(self.manager.status()['reader_probe']['error'],'fts5_unavailable')

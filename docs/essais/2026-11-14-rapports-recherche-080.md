@@ -51,6 +51,9 @@ une erreur, **135 / 135 archives examinées et 0 article indexé**. Elle n’aff
 les motifs par archive. Le rapport d’indexation est nécessaire pour distinguer
 les archives utilisant leur index natif des erreurs de lecture ou de préparation.
 Zéro article ajouté ne signifie pas que les index natifs sont absents.
+Le [contrôle isolé 0.9.2](2026-11-14-indexation-isolee.md) vérifie les prérequis
+avant le parcours et précise les erreurs futures ; il ne prouve pas la cause
+de cette capture historique.
 
 ## Suite prioritaire
 

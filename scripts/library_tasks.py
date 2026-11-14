@@ -88,6 +88,7 @@ class Manager:
                     if state.get('id') and report.get('job_id')==state['id'] and report.get('phase') in ('completed','partial','paused'):
                         index_queue.acknowledge(root,state.get('options',{}).get('selection',{}),report)
                         state.update(phase={'completed':'completed','partial':'error','paused':'paused'}[report['phase']],message='État de l’indexation récupéré après l’arrêt du superviseur.')
+                        self.reader_failed(report,state)
                         if report['phase']=='partial':index_queue.hold(root,'error')
                         self.write(state);return state
                     index_queue.hold(root,'interrupted')
@@ -97,7 +98,7 @@ class Manager:
 
     def status(self):
         state = self.current()
-        result = {k: state[k] for k in ('phase', 'message', 'options', 'id') if k in state}
+        result = {k: state[k] for k in ('phase', 'message', 'options', 'id', 'reader_probe') if k in state}
         result['index_reader_ready']=self.index_ready()
         result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
         queued=result['index_queue'];waiting=''
@@ -159,6 +160,15 @@ class Manager:
 
     def index_python(self):
         return self.app.work/'search-tools'/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
+
+
+    def reader_failed(self,report,state):
+        result=report.get('reader_probe',{})
+        if result.get('ok') is not False:return False
+        import index_reader_probe
+        (self.app.work/'search-tools/reader-ready.json').unlink(missing_ok=True)
+        state.update(reader_probe=result,phase='error',message=index_reader_probe.MESSAGES.get(result.get('error'),index_reader_probe.MESSAGES['probe_unavailable']))
+        return True
 
     def start(self, action, body):
         with locked(destination(self.app.work, 'library-web/operation.lock')):
@@ -251,6 +261,7 @@ class Manager:
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools
                 search_index_tools.prepare(self.app,self.config,check=check,force=True)
+                state['reader_probe']=json.loads((self.app.work/'search-tools/reader-ready.json').read_text(encoding='utf-8')).get('probe')
                 update('completed','Outil d’indexation prêt. La création des index peut fonctionner hors ligne.')
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
@@ -268,6 +279,10 @@ class Manager:
                 from pilot.archive_index import status as index_status
                 report=index_status(root/'state/pilot/archive-index')
                 if any(r.get('error') in ('ImportError','ModuleNotFoundError') for r in report.get('results',[])):(self.app.work/'search-tools/reader-ready.json').unlink(missing_ok=True)
+                if report.get('job_id')==job and self.reader_failed(report,state):
+                    import search_index_tools
+                    self.write(state)
+                    raise search_index_tools.ReaderUnavailable(report['reader_probe'])
                 if report.get('job_id')==job:index_queue.acknowledge(root,state['options'].get('selection',{}),report)
                 check()
                 if code:raise setup.SetupError('Certaines archives n’ont pas pu être indexées ; consultez le suivi.')
@@ -318,8 +333,9 @@ class Manager:
             update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')
+            if state.get('action') in ('index','index-prepare') and getattr(exc,'report',None):state['reader_probe']=exc.report
             print(type(exc).__name__, str(exc), flush=True)
-            update('error', 'L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')
+            update('error',getattr(exc,'public_message',None) or ('L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.'))
 
 
 if __name__ == '__main__':
