@@ -63,6 +63,10 @@ les dernières tuiles du scénario précédent étaient comptées après remise 
 Les deux documents sont désormais séparés avant de compter, et le scénario sans
 altitude attend aussi que la carte soit prête. Le code cartographique est inchangé.
 
+La recette de confort attend la fin de l’adaptation à chaque taille avant de
+mesurer les éléments : WebKit publie les événements de redimensionnement et de
+viewport de façon asynchrone. Les contraintes de visibilité restent vérifiées.
+
 La recette de confort rejoint la CI Chromium/WebKit ; le test Kiwix rejoint la
 suite Windows. Les résultats de CI sont à lire sur le commit livré.
 

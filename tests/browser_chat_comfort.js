@@ -20,7 +20,14 @@ async page => {
   const layouts=[];
   for(const [width,height] of [[1440,900],[1366,768],[1024,768],[900,600],[390,844],[320,568],[844,390]]){
     await page.setViewportSize({width,height});
-    await page.waitForFunction(()=>document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);
+    // Resize events and visualViewport updates are asynchronous in WebKit.
+    // Measure only after the conversation has fitted the requested viewport.
+    await page.waitForFunction(([width,height])=>{
+      const send=document.getElementById('send-question').getBoundingClientRect();
+      const workspace=document.querySelector('.workspace').getBoundingClientRect();
+      const visible=document.elementFromPoint(send.left+send.width/2,send.top+send.height/2)?.closest('#send-question');
+      return innerWidth===width&&Math.abs(workspace.height-height)<2&&send.bottom<=innerHeight&&send.bottom<=document.getElementById('main').getBoundingClientRect().bottom&&visible;
+    },[width,height]);
     const sizes=await page.evaluate(()=>{const messages=$('chat-messages').getBoundingClientRect(),send=$('send-question').getBoundingClientRect(),composer=$('chat-form').getBoundingClientRect(),nav=$('navigation').getBoundingClientRect();return {height:messages.height,send:send.bottom,composer:composer.height,navTop:nav.top,overflow:document.documentElement.scrollWidth>innerWidth,font:parseFloat(getComputedStyle(document.querySelector('.message')).fontSize),readingWidth:document.querySelector('.message-assistant').getBoundingClientRect().width,mainBottom:$('main').getBoundingClientRect().bottom,sendVisible:!!document.elementFromPoint(send.left+send.width/2,send.top+send.height/2)?.closest('#send-question')};});
     check(sizes.send<=sizes.mainBottom&&sizes.sendVisible,'Bouton Envoyer entièrement visible et non recouvert à '+width+'×'+height);
     check(!sizes.overflow,'Pas de débordement à '+width+'×'+height);
