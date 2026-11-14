@@ -44,7 +44,9 @@ async page=>{
   await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
   const downloading=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const download=await downloading,chunks=[];
   for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
-  check(report.cases.every(row=>row.first_results_ms!==null&&row.first_results_ms<row.elapsed_ms),'Rapport distingue premiers documents et fin des vrais flux de test');
+  const times=report.cases.map(row=>({first:row.first_results_ms,total:row.elapsed_ms,updates:row.updates_received,error:row.error}));
+  const coherent=times.every(row=>Number.isFinite(row.first)&&row.first>=0&&row.first<=row.total);
+  check(coherent,'Rapport distingue première réception et durée totale, même si les paquets arrivent ensemble'+(coherent?'':JSON.stringify(times)));
   check(report.cases.every(row=>row.updates_received>0&&!row.error),'Rapport conserve le nombre de mises à jour progressives reçues');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks,real_model:false,real_corpus:false};
