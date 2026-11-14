@@ -153,14 +153,18 @@ function search(query){document.dispatchEvent(new CustomEvent('survie:scope-rese
 async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
   S.searchAbort?.abort();S.searchAbort=new AbortController();$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
-  try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value),undefined,{signal:S.searchAbort.signal});
-    $('search-message').textContent=`${data.results.length} résultat(s) pour « ${q} »`+(data.coverage?.warning?' · '+data.coverage.warning:'');
+  try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value)+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:S.searchAbort.signal});
+    const selectedCollection=[...($('search-collection')?.options||[])].find(o=>o.value===data.coverage?.collection)?.textContent||({wikipedia:'Wikipédia',appropedia:'Appropedia',wikibooks:'Wikilivres',wikihow:'wikiHow'}[data.coverage?.collection])||data.coverage?.collection;
+    $('search-message').textContent=`${data.results.length} document(s) trouvé(s) pour « ${q} »`+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
     renderLibraryResults(data.results);
     if(!data.results.length)$('search-results').append(element('div',data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
 function renderLibraryResults(results){
-  for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));$('search-results').append(node);}
+  for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind==='guide'?'Guide':'Article'} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}${result.collection?' · '+result.collection:''}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)));
+    if(result.other_matches?.length){const details=element('details',undefined,'other-matches');details.append(element('summary',result.other_matches.length+' autre(s) passage(s) dans ce document'));for(const match of result.other_matches)details.append(button(match.title,()=>readSource(match.id),'text-button'));node.append(details);}
+    $('search-results').append(node);
+  }
   document.dispatchEvent(new CustomEvent('survie:results',{detail:results}));
 }
 
@@ -196,7 +200,7 @@ $('learning-ask').onclick=()=>{
 };
 
 function documentText(source){let text=String(source.text||'');if(/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)&&text.startsWith('Identifiant de source : ')){const end=text.indexOf('\n\n');if(end>=0)text=text.slice(end+2);}const lines=text.split('\n'),norm=x=>x.trim().replace(/[’‘]/g,"'").toLocaleLowerCase();while(lines.length&&(!lines[0].trim()||norm(lines[0])===norm(source.title)))lines.shift();return lines.join('\n');}
-function renderDocument(target,source){const text=documentText(source);if(!text.trim()){target.textContent='Cet aperçu ne contient pas de texte lisible. Ouvrez le document d’origine pour le consulter.';return;}for(const line of text.split('\n')){if(!line.trim())continue;const paragraph=element('p',line);target.append(paragraph);}}
+function renderDocument(target,source){const text=documentText(source);if(source.id?.split('#')[0].endsWith('.md')){renderText(target,text);return;}if(!text.trim()){target.textContent='Cet aperçu ne contient pas de texte lisible. Ouvrez le document d’origine pour le consulter.';return;}for(const line of text.split('\n')){if(!line.trim())continue;const paragraph=element('p',line);target.append(paragraph);}}
 async function readSource(id){
   view('library');document.querySelectorAll('.result').forEach(node=>node.classList.toggle('selected',node.dataset.source===id));S.reader=id;const reader=$('reader');reader.hidden=false;reader.replaceChildren(element('p','Ouverture du document…','muted'));
   document.querySelector('.reading-layout').classList.add('reading');
@@ -206,6 +210,7 @@ async function readSource(id){
     reader.append(actions,element('div',source.id.startsWith('guide:WIKI-FR-')?'EXTRAIT DE WIKIPÉDIA':source.id.startsWith('guide:BOOK-EN-')?'EXTRAIT DE WIKILIVRES':source.kind==='guide'?'GUIDE LOCAL':'ARTICLE DE LA BIBLIOTHÈQUE','eyebrow'),element('h2',source.title));
     reader.append(element('p',sourceDates(source),'source-dates muted small'));
     if(source.images?.length){const images=element('div',undefined,'reader-images');for(const img of source.images.slice(0,4)){const e=element('img');e.src='/api/media?id='+encodeURIComponent(img.id);e.alt=img.alt;e.loading='lazy';images.append(e);}reader.append(images);}
+    if(/^(en|eng)$/.test(source.language||'')){actions.append(button('Traduire en français',()=>{askSource(source);if(S.source?.id===source.id){$('translation-panel').open=true;$('translation-panel').scrollIntoView({block:'nearest'});}},'secondary'));}
     if(source.provenance||source.licence){const details=element('details',undefined,'source-details');details.append(element('summary','Origine et licence du document'));if(source.provenance)details.append(element('p',source.provenance));if(source.licence)details.append(element('p',source.licence));reader.append(details);}const body=element('div',undefined,'reader-body');renderDocument(body,source);reader.append(body);
     if(source.preview)reader.append(element('p','Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
     const original=element('a',source.id.includes('.pdf')?'Lire le PDF illustré →':'Ouvrir le document d’origine →','secondary-link');
@@ -300,8 +305,10 @@ function watch(id){
   clearTimeout(S.poll);S.job=id;$('cancel-job').hidden=false;$('send-question').disabled=true;const pending=message('assistant','Préparation de la réponse…');
   async function poll(){
     try{const job=await api('/jobs/'+encodeURIComponent(id));const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
-      $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`Réponse en cours · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
-      renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':'L’assistant réfléchit ou consulte les documents…'),job.sources);
+      const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
+      const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
+      $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
+      renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':phase+'…'),job.sources);
       if(['done','failed','cancelled','interrupted','incomplete'].includes(job.status)){
         S.job=null;$('cancel-job').hidden=true;$('send-question').disabled=false;
         $('chat-status').textContent=job.error||(job.status==='incomplete'?'Réponse incomplète : essayez une question plus ciblée.':'Réponse terminée. Vous pouvez ouvrir les sources ou poursuivre.');
@@ -327,7 +334,7 @@ async function loadData(){
   try{const data=await api('/inventory');$('data-summary').replaceChildren();for(const [title,text] of [['Collections',String(data.books.length)],['Guides',String(data.guides.length)],['Modèles locaux',String(data.models.length)]]){const card=element('div',undefined,'data-stat');card.append(element('strong',text),element('span',title));$('data-summary').append(card);}
     for(const [kind,id] of [['books','data-books'],['guides','data-guides'],['models','data-models']]){
       const grid=$(id);grid.replaceChildren();
-      for(const item of data[kind]){const card=element('article',undefined,'data-card');card.dataset.catalogSearch=[item.id,item.name,item.title,item.description,item.language,item.version].filter(Boolean).join(' ');card.dataset.inventoryReady=String(!!item.ready);card.append(element('span',item.ready?'Disponible sur cet appareil':'Préparation à vérifier',item.ready?'ready-label':'muted small'),element('h3',item.title||item.name),element('p',[item.language,item.version,bytes(item.bytes)].filter(Boolean).join(' · '),'muted small'));
+      for(const item of data[kind]){const card=element('article',undefined,'data-card');card.dataset.catalogSearch=[item.id,item.name,item.title,item.description,item.language,item.version,item.family,item.variant].filter(Boolean).join(' ');card.dataset.inventoryReady=String(!!item.ready);card.dataset.family=item.family||item.title||item.name||'';card.dataset.variant=item.variant||'';card.dataset.archiveName=item.archive_name||'';card.append(element('span',item.ready?'Disponible sur cet appareil':'Préparation à vérifier',item.ready?'ready-label':'muted small'),element('h3',item.title||item.name),element('p',[item.language,item.version,bytes(item.bytes)].filter(Boolean).join(' · '),'muted small'));
         if(item.description)card.append(element('p',item.description,'small'));
         if(item.ready&&kind==='books'){const link=element('a','Ouvrir cette collection →','text-button');link.href=localServiceURL(item.url,'kiwix');link.target='_blank';link.rel='noopener';card.append(link);}
         if(item.ready&&kind==='guides')card.append(button('Lire le guide →',()=>readSource(item.id),'text-button'));
@@ -335,7 +342,7 @@ async function loadData(){
       }
       if(!data[kind].length)grid.append(element('div','Aucun élément de ce type n’est encore préparé.','empty-panel'));
     }
-    $('data-preparation').textContent=data.note;
+    $('data-preparation').textContent=data.note;document.dispatchEvent(new CustomEvent('survie:inventory',{detail:data}));
   }catch(e){$('data-summary').textContent=e.message;}
 }
 function contentOptions(){return {themes:[...$('content-themes').querySelectorAll('input:checked')].map(e=>e.value),languages:$('content-languages').value.split(','),max_add_gb:Number($('content-budget').value),include_supplements:$('content-supplements').checked};}

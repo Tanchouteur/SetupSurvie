@@ -1,0 +1,117 @@
+"""Real pinned Kiwix + generated archives smaller than 1 MB; no corpus or model.
+Run in a task worktree: python tests/kiwix_search_smoke.py
+Uses task-compose when available, otherwise a unique CI Docker Compose project.
+"""
+import argparse
+import asyncio
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import uuid
+from unittest.mock import patch
+from urllib.parse import urlencode
+
+ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from fastapi import HTTPException
+from libzim.writer import Creator,Item,StringProvider,Hint
+from pilot import library,store
+
+
+class Article(Item):
+    def __init__(self,path,title,text):
+        super().__init__();self.path=path;self.title=title;self.text=text
+    def get_path(self):return self.path
+    def get_title(self):return self.title
+    def get_mimetype(self):return 'text/html'
+    def get_contentprovider(self):
+        return StringProvider('<html><head><meta charset="UTF-8"><title>'+self.title+'</title></head><body><h1>'+self.title+'</h1><p>'+self.text+'</p></body></html>')
+    def get_hints(self):return {Hint.FRONT_ARTICLE:True}
+
+
+def create_archives(folder):
+    specs=[('wikipedia_fr','fra',True,'_ftindex:yes'),('manual_en','eng',True,'_ftindex:yes'),
+           ('multilingual','fra,eng',True,'_ftindex:yes'),('missing_tag_fr','fra',True,''),
+           ('title_only_fr','fra',False,'_ftindex:no')]
+    paths=[]
+    for name,language,indexed,tags in specs:
+        path=folder/(name+'.zim')
+        with Creator(path).config_indexing(indexed,language.split(',')[0]) as creator:
+            metadata={'Name':name,'Title':name,'Language':language,'Creator':'Synthetic test','Publisher':'SetupSurvie tests','Date':'2026-11-14','Description':'Fictional protocol fixture','Tags':tags}
+            for key,value in metadata.items():creator.add_metadata(key,value)
+            creator.set_mainpath('home');creator.add_item(Article('home','Accueil','Index fictif.'))
+            creator.add_item(Article('Techniques_de_production_de_feu','Techniques de production de feu','Friction et percussion. Extrait fictif de test sans instructions pratiques.'))
+            creator.add_item(Article('Fire_making','Fire making','Fire starting. Synthetic text, no practical instructions.'))
+            creator.add_item(Article('Generateur_a_pedales','Fabrication d’un générateur à pédales','Générateur à pédales : construction et contrôles. Extrait fictif sans procédure.'))
+            creator.add_item(Article('Pedal_generator','Pedal generator construction','Pedal generator materials and checks. Fictional fixture.'))
+            creator.add_item(Article('Eau_potable','Guide de potabilisation de l’eau','Eau potable, purification et vérifications. Extrait fictif sans procédure.'))
+            creator.add_item(Article('Shelter_construction','Shelter construction','Shelter construction and roof design. Fictional fixture.'))
+        paths.append(path)
+    if sum(path.stat().st_size for path in paths)>1_000_000:raise RuntimeError('Synthetic fixture exceeded 1 MB')
+    return paths
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path)
+    args=parser.parse_args()
+    image=json.loads((ROOT/'deploy/versions.json').read_text())['images']['kiwix']
+    checks=[]
+    def check(value,label,details=None):
+        if not value:raise AssertionError(label+(': '+json.dumps(details,ensure_ascii=False) if details else ''))
+        checks.append(label)
+    with tempfile.TemporaryDirectory(prefix='.kiwix-search-',dir=ROOT) as temporary:
+        folder=Path(temporary);archives=folder/'zim';archives.mkdir();paths=create_archives(archives)
+        compose=folder/'compose.yaml'
+        compose.write_text('services:\n  kiwix:\n    image: '+image+'\n    user: "0:0"\n    entrypoint: ["/usr/local/bin/kiwix-serve"]\n    volumes:\n      - '+json.dumps(str(archives)+':/data:ro')+'\n    command: '+json.dumps(['--port=8080']+['/data/'+p.name for p in paths])+'\n')
+        command=(['task-compose'] if shutil.which('task-compose') else ['docker','compose','--project-name','setupsurvie-search-'+uuid.uuid4().hex[:10]])+['-f',str(compose)]
+        async def real_get(path,maximum=2_000_000):
+            # HTTP runs inside our synthetic service. No published port, host
+            # credentials, model or user files are needed by the service.
+            process=await asyncio.create_subprocess_exec(*command,'exec','-T','kiwix','wget','-q','-O','-','http://127.0.0.1:8080'+path,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL,cwd=ROOT)
+            try:raw,_=await process.communicate()
+            except asyncio.CancelledError:
+                if process.returncode is None:process.kill()
+                await process.wait();raise
+            if process.returncode:raise HTTPException(404,'Synthetic Kiwix HTTP request failed')
+            if len(raw)>maximum:raise HTTPException(413,'Synthetic response exceeded bound')
+            return raw,'application/json' if path.startswith('/suggest?') else 'application/xml'
+        async def run():
+            for _ in range(60):
+                try:await real_get('/catalog/v2/entries?count=1');break
+                except HTTPException:await asyncio.sleep(.1)
+            else:raise RuntimeError('Synthetic Kiwix did not become ready')
+            with patch.object(store,'ROOT',folder/'state'),patch.object(library,'get',real_get):
+                store.init()
+                check(len(await library.books())==5,'Catalogue reads five actual generated archives')
+                for query in ['faire du feu','allumer un feu','peux-tu m’expliquer comment faire du feu']:
+                    found=await library.search(query)
+                    check(any(r['id']=='zim:wikipedia_fr/Techniques_de_production_de_feu' for r in found),query+' reaches French article')
+                    check(any(r['id']=='zim:manual_en/Fire_making' for r in found),query+' reaches English article')
+                    check(all('<b>' not in r['title'] for r in found),'Highlights do not leak into titles: '+query)
+                for query,expected in [('fabriquer un générateur à pédales','Generateur_a_pedales'),('rendre eau potable','Eau_potable'),('toit abri','Shelter_construction'),('inconnu eau potable','Eau_potable')]:
+                    found=await library.search(query)
+                    check(any(r['id'].endswith('/'+expected) for r in found),query+' reaches an actual indexed technical article',{'ids':[r['id'] for r in found],'coverage':found.coverage})
+                scoped=await library.search('faire du feu dans Wikipédia')
+                check(bool(scoped) and all(r['id'].startswith('zim:wikipedia_fr/') for r in scoped),'Wikipedia is a real archive scope')
+                tagged=await library.search('allumer un feu',collection='missingtagfr')
+                check(bool(tagged) and tagged.coverage['searched']==1,'Missing ftindex tag does not hide a working fulltext index')
+                titles=await library.search('allumer un feu',collection='titleonlyfr')
+                check(any(r.get('match')=='title' for r in titles),'Title fallback works without fulltext index')
+                check(titles.coverage['status']=='partial','Missing fulltext coverage is explicit')
+                source=await library.source('zim:wikipedia_fr/Techniques_de_production_de_feu')
+                check('Friction' in source['text'] and source['language']=='fra','Actual source can be read with its language after retrieval')
+                try:await real_get('/search?'+urlencode({'books.filter.lang':'fra','pattern':'feu','format':'xml'}))
+                except HTTPException:checks.append('Broad multilingual request is rejected by the pinned server')
+        try:
+            subprocess.run([*command,'up','-d'],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
+            asyncio.run(run())
+        finally:subprocess.run([*command,'down','--volumes','--remove-orphans'],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
+        receipt={'passed':True,'kiwix_image':image,'archives':len(paths),'total_bytes':sum(p.stat().st_size for p in paths),'checks':checks,'real_model':False,'real_corpus':False}
+        if args.output:args.output.parent.mkdir(parents=True,exist_ok=True);args.output.write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+'\n')
+        print(json.dumps(receipt,ensure_ascii=False))
+
+
+if __name__=='__main__':main()

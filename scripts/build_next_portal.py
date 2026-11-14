@@ -15,8 +15,8 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.1.35"></script><script defer src="/app.js', 1)
-    source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.1.35"><script defer src="/nouveau/collections.js?v=0.1.35"></script><script defer src="/nouveau/navigation.js?v=0.1.35"></script></head>', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.1.36"></script><script defer src="/app.js', 1)
+    source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.1.36"><script defer src="/nouveau/collections.js?v=0.1.36"></script><script defer src="/nouveau/search-check.js?v=0.1.36"></script><script defer src="/nouveau/navigation.js?v=0.1.36"></script></head>', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
     return source
 

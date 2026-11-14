@@ -42,6 +42,19 @@ def model_inventory():
     return result
 
 
+def collection_labels(stem,title):
+    """Display grouping only; immutable archive identifiers and links stay intact."""
+    prefix=stem.split('_')[0]
+    families={'wikipedia':'Wikipédia','wikibooks':'Wikilivres','vikidia':'Vikidia','appropedia':'Appropedia','canadian-prepper':'Canadian Prepper'}
+    family=families.get(prefix,title)
+    parts=stem.split('_')[2:]
+    if parts and re.fullmatch(r'\d{4}-\d{2}',parts[-1]):parts=parts[:-1]
+    raw=' '.join(parts).replace('-',' ')
+    names={'all':'Collection complète','preppingfood':'Alimentation','preppinggear':'Équipement','preppingsurvival':'Préparation et autonomie'}
+    variant=names.get(raw,raw) or stem
+    return {'family':family,'variant':variant,'archive_name':stem+'.zim'}
+
+
 async def inventory():
     loaded = {book['book']: book for book in await library.books()}
     books = []
@@ -59,11 +72,14 @@ async def inventory():
             kind, lang, version = match.groups()
             language = LANGUAGES.get(lang, lang)
             title = {'wikipedia':'Wikipédia','wikibooks':'Wikilivres','vikidia':'Vikidia pour les enfants','appropedia':'Appropedia : techniques et autonomie'}[kind] + ' — ' + language
+        if not version:
+            date=re.search(r'_(\d{4}-\d{2})$',stem)
+            version=date[1] if date else ''
         ready = complete and bool(book)
         books.append({'id': stem, 'title': title, 'language': language,
-                      'version': version, 'bytes': path.stat().st_size, 'ready': ready,
+                      'version': version, 'bytes': path.stat().st_size, 'ready': ready,**collection_labels(stem,title),
                       'url': '/content/' + stem + '/',
-                      'description': ('Articles encyclopédiques avec leurs illustrations.' if stem.startswith('wikipedia_') else 'Livres pédagogiques et guides pratiques.') if ready else ('Téléchargement incomplet.' if not complete else 'Archive présente, mais le service de lecture ne la propose pas actuellement.')})
+                      'description': (book.get('description') if book and book.get('description') else '') or ('Articles encyclopédiques avec leurs illustrations.' if stem.startswith('wikipedia_') else 'Livres pédagogiques et guides pratiques.') if ready else ('Téléchargement incomplet.' if not complete else 'Archive présente, mais le service de lecture ne la propose pas actuellement.')})
     guides = []
     with store.connect() as db:
         rows = db.execute('SELECT id,title,language FROM documents ORDER BY title').fetchall()

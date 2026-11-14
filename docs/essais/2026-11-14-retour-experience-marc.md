@@ -6,6 +6,11 @@ Les cinq captures sont consultées sans les recopier dans Git. L’une affiche
 explicitement 0.1.34 ; les autres gardent l’ancienne présentation. Elles ne
 prouvent pas que la 0.1.35 a été installée. Aucun changement fonctionnel livré ici.
 
+**Suite :** Louis a demandé la mise en œuvre de ce chantier. La première
+consolidation est décrite dans le [bilan 0.1.36](2026-11-14-moteur-recherche-utile.md),
+avec un [suivi des points encore ouverts](../decisions/fiabilisation-recherche-et-contenus.md).
+Les observations et propositions ci-dessous conservent leur contexte initial.
+
 ## Retour à conserver
 
 | Sujet | Observation rapportée ou visible | Besoin |

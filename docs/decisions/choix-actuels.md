@@ -125,3 +125,10 @@ des volumes. Le regroupement lisible des collections, la compréhension de Parco
 le français pour pages/vidéos et le délai de l’assistant font partie du besoin.
 Les solutions proposées dans ce compte rendu restent à implémenter et à mesurer.
 L’espace Maison de Solliès-Ville est une [idée reportée](boite-a-idees.md).
+
+Le chantier de [fiabilisation du cœur documentaire](fiabilisation-recherche-et-contenus.md)
+est demandé par Louis le 14 novembre. La 0.1.36 en implémente un premier lot :
+classement commun, filtres, préparation de sources, contexte, regroupements et
+recette depuis le site. La bibliothèque réelle et les modèles de Marc restent
+à qualifier ; sous-titres, traduction de lecture généralisée et profondeur des
+procédures demeurent suivis explicitement, sans réalisation implicite.

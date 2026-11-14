@@ -186,7 +186,10 @@ class PilotAPITests(unittest.TestCase):
         with patch.object(engine,'launch'):
             response=self.client.post('/api/questions',json={'message':'Question de test','mode':'rapide'},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);identifier=response.json()['id']
-        self.assertEqual(self.client.get('/api/jobs/'+identifier).status_code,200)
+        with patch.dict(engine.PROGRESS,{identifier:{'stage':'reading','sources_found':3,'sources_read':1}}):
+            state=self.client.get('/api/jobs/'+identifier)
+            self.assertEqual(state.status_code,200);self.assertEqual(state.json()['progress']['stage'],'reading')
+            self.assertEqual(state.json()['progress']['sources_read'],1)
         self.assertEqual(self.client.get('/api/jobs/'+identifier,headers={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}).status_code,404)
         self.assertEqual(self.client.post('/api/jobs/'+identifier+'/cancel',headers={'Origin':'http://testserver'}).status_code,200)
         self.assertEqual(self.client.get('/api/jobs/'+identifier).json()['status'],'cancelled')

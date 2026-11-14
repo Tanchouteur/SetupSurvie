@@ -29,9 +29,15 @@
   const lib=get('view-library'),oldHeading=lib.querySelector('.page-heading');
   oldHeading.replaceWith(header('Un livre, un sujet, une découverte.','Ouvrez une collection directement ou recherchez une information dans les documents.'));
   const libTabs=make('nav','next-tabs');libTabs.setAttribute('aria-label','Rubriques de la bibliothèque');
-  libTabs.innerHTML=[['collections','Collections'],['recherche','Rechercher'],['parcours','Parcours'],['favoris','Mes favoris'],['traductions','Traductions']].map(([p,l])=>route('bibliotheque/'+p,l)).join('');
+  libTabs.innerHTML=[['collections','Collections'],['recherche','Rechercher'],['parcours','Apprendre par thème'],['favoris','Mes favoris'],['traductions','Traductions']].map(([p,l])=>route('bibliotheque/'+p,l)).join('');
   lib.querySelector('.page-heading').after(libTabs);
+  const scope=make('select','');scope.id='search-collection';scope.setAttribute('aria-label','Chercher dans une collection');scope.append(new Option('Toutes les collections',''));scope.addEventListener('change',()=>{scope.dataset.requested=scope.value;});
+  get('search-language').after(scope);
   const learningBrowser=get('learning-browser');
+  learningBrowser.querySelector('summary').textContent='Choisissez un sujet à apprendre';
+  const help=make('p','','Choisissez un sujet, puis ouvrez les documents disponibles. Vous pouvez aussi préparer une question à l’assistant. Cette liste de thèmes ne garantit pas qu’un guide complet soit présent.');learningBrowser.querySelector('summary').after(help);
+  get('learning-level').closest('label').firstChild.textContent='Ce que vous souhaitez apprendre';
+
   const search=make('div','next-library-pane');search.id='next-search';
   for(const child of [...lib.children])if(child!==lib.querySelector('.page-heading')&&child!==libTabs)search.append(child);
   const learning=make('div','next-library-pane');learning.id='next-learning';learningBrowser.open=true;learning.append(learningBrowser);
@@ -73,6 +79,8 @@
   for(const h of settings.querySelectorAll('h2'))if(h.textContent==='Comptes et accès'){h.textContent='Profils de la famille';h.nextElementSibling.textContent='Créez un profil pour ranger les conversations et les favoris de chaque personne.';h.parentElement.querySelector('button').textContent='Gérer les profils';}
   const tools=make('div','next-settings-links');tools.innerHTML=route('appareil/profils','Profils')+route('appareil/connexion','Ouvrir sur un téléphone')+route('appareil/telechargements','Téléchargements');settings.querySelector('.page-heading').after(tools);
   tools.after(make('p','next-mobile-note','Les opérations complexes de préparation et les réglages du moteur se font depuis un ordinateur. Les profils et le suivi restent consultables ici.'));
+  const searchCheck=make('article','panel');searchCheck.innerHTML='<h2>Vérifier la recherche</h2><p>Essayez les recherches pratiques de Marc sur les documents de cet appareil, sans lancer l’assistant IA.</p><button id="next-search-check-open" class="secondary">Vérifier la recherche</button>';settings.append(searchCheck);
+  const searchDialog=make('dialog','next-search-check-dialog');searchDialog.id='next-search-check-dialog';searchDialog.setAttribute('aria-labelledby','next-search-check-title');searchDialog.innerHTML='<h2 id="next-search-check-title">Vérifier la recherche</h2><p>Ouvrez les résultats pour vérifier qu’ils répondent au besoin. Une recherche terminée ne garantit pas la qualité du document.</p><p id="next-search-check-status" role="status" aria-live="polite"></p><progress id="next-search-check-progress" max="8" value="0" aria-label="Recherches de test terminées"></progress><div class="actions"><button id="next-search-check-cancel" class="secondary">Arrêter la vérification</button><button id="next-search-check-export" class="secondary" hidden>Télécharger le rapport</button><button data-close="next-search-check-dialog" class="secondary">Fermer</button></div><p class="small muted">Le rapport liste les recherches de test, leurs délais et les titres trouvés.</p><div id="next-search-check-results"></div>';document.body.append(searchDialog);
   const memory=make('article','panel');memory.innerHTML='<h2>Mémoire de navigation</h2><p>Effacez seulement les onglets, filtres et brouillons mémorisés sur ce navigateur. Vos conversations et favoris sur le serveur sont conservés.</p><button id="next-clear-memory" class="secondary">Effacer la mémoire de navigation</button>';settings.append(memory);
   get('view-chat').querySelector('h1').textContent='Prenons le temps de comprendre.';
   const context=make('div','next-chat-context');

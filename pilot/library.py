@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable
+from . import store,source_metadata,durable,retrieval
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -81,6 +81,7 @@ async def books():
             result.append({'title':e.findtext('a:title',namespaces=ns),'language':fields.get('language',''),'book':link.removeprefix('/content/').strip('/'),
                            'search_id':identifier if re.fullmatch(r'[0-9a-fA-F-]{36}',identifier) else '',
                            'fulltext':False if '_ftindex:no' in tags else True if '_ftindex:yes' in tags else None,
+                           'description':fields.get('summary',''),
                            'archive_date':source_metadata.date_value(e.findtext('a:updated',default='',namespaces=ns),timestamp=True)})
         return Catalog(result)
     except (httpx.HTTPError,ET.ParseError,HTTPException):return Catalog(available=False)
@@ -272,7 +273,7 @@ def search_terms(query):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
-async def search_archives(pattern_for, language, limit):
+async def search_archives(pattern_for, language, limit, *, query_plan=None):
     """Explicit homogeneous archive sets; multilingual archives queried separately.
 
     Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
@@ -286,67 +287,132 @@ async def search_archives(pattern_for, language, limit):
     if not getattr(available,'available',True):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
-    groups={};eligible=[]
-    for book in available:
+    groups={};eligible=[];selected_books=[]
+    # Metadata tags can be absent or stale even when an index exists. Query
+    # announced indexes first, but probe the other archives within the same budget.
+    for book in sorted(available,key=lambda b: 0 if b.get('fulltext') is True else 2 if b.get('fulltext') is False else 1):
+        if query_plan and query_plan.collection and query_plan.collection not in retrieval.normal(book.get('book','')+' '+str(book.get('title',''))).replace(' ',''):continue
         languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
         if requested and requested not in languages:continue
+        selected_books.append(book)
         if book.get('fulltext') is False:
-            report['without_fulltext']+=1;continue
+            report['without_fulltext']+=1
         if not book.get('book'):continue
         key='books.id' if book.get('search_id') else 'books.name'
         value=book.get('search_id') or book['book']
         entry=(len(eligible),book,key,value);eligible.append(entry)
         # Unknown/multilingual metadata must never contaminate a monolingual batch.
-        group=(languages,key, value if len(languages)!=1 else '')
+        group=(languages,key,book.get('fulltext'), value if len(languages)!=1 else '')
         groups.setdefault(group,[]).append(entry)
     batches=[items[i:i+6] for items in groups.values() for i in range(0,len(items),6)]
-    done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(3)
-    async def run(batch, fallback=True):
-        nonlocal calls
+    done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(3);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
+    async def run(batch, fallback=True, pattern_override=None):
+        nonlocal calls,refinement_attempted,refinement_failed,refinement_finished
         lang=requested or ('eng' if all('eng' in re.split(r'[,;\s]+',str(e[1].get('language',''))) for e in batch) else '')
         params=[(batch[0][2],entry[3]) for entry in batch]
-        params += [('pattern',pattern_for(lang)),('format','xml'),('pageLength',limit)]
+        params += [('pattern',pattern_override if pattern_override is not None else pattern_for(lang)),('format','xml'),('pageLength',limit)]
         try:
             async with semaphore:
                 if calls>=32:return
                 calls+=1
+                if pattern_override is not None:refinement_attempted+=1
                 raw,_=await get('/search?'+urlencode(params))
                 tree=ET.fromstring(raw)
+                if pattern_override is not None:refinement_finished+=1
+                # This pinned Kiwix version does not parse Boolean OR reliably.
+                # Gather shorter literal queries for a second pass, after every
+                # archive has had its primary query and title lookup.
+                if not tree.findall('./channel/item') and pattern_override is None and query_plan and len(query_plan.words)>1:
+                    refinements.append((batch,lang))
             done.update(entry[0] for entry in batch)
-            for item in tree.findall('./channel/item'):
+            for position,item in enumerate(tree.findall('./channel/item')):
                 link=item.findtext('link','')
                 if not link.startswith('/content/'):continue
                 stem=unquote(link.removeprefix('/content/')).split('/')[0]
                 book=next((e[1] for e in batch if e[1]['book']==stem),None)
                 if book is None:continue
+                try:identifier=safe_zim_path('zim:'+link.removeprefix('/content/'))
+                except HTTPException:continue
                 text=Text();text.feed(item.findtext('description',''))
-                record={'id':'zim:'+link.removeprefix('/content/'),'title':item.findtext('title',''),
+                record={'id':'zim:'+identifier,'_rank':position,'title':item.findtext('title',''),
                     'excerpt':text.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),
-                    'language':book.get('language',''),'url':link,**source_metadata.metadata(book)}
-                records.setdefault(record['id'],record)
+                    'language':book.get('language',''),'url':link,'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+                prior=records.get(record['id'])
+                if prior is None or prior.get('match')=='title':records[record['id']]=record
         except (httpx.HTTPError,ET.ParseError,HTTPException):
+            if pattern_override is not None:refinement_failed+=1;refinement_finished+=1;return
             if len(batch)>1 and fallback:
                 await asyncio.gather(*(run([entry],False) for entry in batch))
             else:failed.update(entry[0] for entry in batch)
+    title_done=0;title_failed=0
+    async def title_lookup(book):
+        nonlocal title_done,title_failed
+        if not query_plan:return
+        lang='eng' if 'eng' in str(book.get('language','')) and 'fra' not in str(book.get('language','')) else ''
+        term=query_plan.title_en if lang=='eng' else query_plan.title_fr
+        if not term:return
+        try:
+            async with semaphore:
+                raw,_=await get('/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}))
+                values=json.loads(raw)
+                if not isinstance(values,list):raise ValueError('Invalid suggestions')
+            title_done+=1
+            for position,value in enumerate(values[:12]):
+                if not isinstance(value,dict) or value.get('kind')!='path' or not isinstance(value.get('path'),str):continue
+                raw_path=value['path']
+                if raw_path.startswith('//') or re.match(r'^[a-z][a-z0-9+.-]*://',raw_path,re.I):continue
+                path=raw_path.lstrip('/')
+                # Namespace colons (Wikijunior:...) are valid local entry paths.
+                if not path or path.startswith('content/'):continue
+                try:identifier=safe_zim_path('zim:'+book['book']+'/'+path)
+                except HTTPException:continue
+                title=Text();title.feed(str(value.get('value') or value.get('label') or path))
+                record={'id':'zim:'+identifier,'_rank':position,'title':title.text(),'excerpt':'Correspondance dans le titre ; ouvrir la source pour en vérifier le contenu.',
+                        'kind':'article','language':book.get('language',''),'url':'/content/'+quote(identifier,safe='/'),
+                        'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
+                records.setdefault(record['id'],record)
+        except (httpx.HTTPError,HTTPException,ValueError,TypeError):title_failed+=1
+    title_books=[]
+    if query_plan and query_plan.words:
+        priority=lambda b: next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(b.get('book','')).lower()),10)
+        title_books=sorted(selected_books,key=priority)[:4]
+    refinement_planned=0
     try:
-        await asyncio.wait_for(asyncio.gather(*(run(batch) for batch in batches)),timeout=10)
+        async with asyncio.timeout(10):
+            await asyncio.gather(*(run(batch) for batch in batches),*(title_lookup(book) for book in title_books))
+            if query_plan:
+                # Prefer meaningful technical terms over generic request words.
+                terms=[word for _,word in sorted(enumerate(query_plan.words),key=lambda pair:(-len(query_plan.groups[pair[0]]),pair[0]))[:2]]
+                tasks=[(batch,pattern_for(lang,[word])) for batch,lang in refinements for word in terms]
+                refinement_planned=len(tasks)
+                await asyncio.gather(*(run(batch,False,pattern) for batch,pattern in tasks))
     except TimeoutError:pass
+    report.update(refinement_attempted=refinement_attempted,refinement_failed=refinement_failed,refinement_not_searched=max(0,refinement_planned-refinement_finished))
+    report.update(title_searched=title_done,title_failed=title_failed,title_not_searched=len(title_books)-title_done-title_failed)
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
+    report['collections_selected']=len(selected_books)
     messages=[]
+    if query_plan and query_plan.collection and not selected_books:
+        report['status']='partial';messages.append('La collection demandée n’est pas disponible dans le catalogue interrogé. Cela ne prouve pas que le sujet est absent des autres documents.')
+    if refinement_failed or report['refinement_not_searched']:
+        report['status']='partial';messages.append('Certaines reformulations n’ont pas pu être interrogées ; les autres résultats sont conservés.')
+    if title_failed or report['title_not_searched']:
+        report['status']='partial';messages.append('La recherche dans certains titres n’a pas abouti ; les autres résultats sont conservés.')
     if report['failed'] or report['not_searched']:
         report['status']='partial';messages.append('Recherche partielle : certaines encyclopédies n’ont pas pu être interrogées. Aucun résultat ne permet de conclure que le sujet est absent du fonds.')
     if report['without_fulltext']:
-        report['status']='partial';messages.append(str(report['without_fulltext'])+' collection(s) sans index de texte restent consultables directement dans Collections.')
+        report['status']='partial';messages.append(str(report['without_fulltext'])+' collection(s) n’annoncent pas d’index de texte. Elles ont été interrogées dans la limite du budget ; la lecture directe reste disponible dans Collections.')
     if messages:report['warning']=' '.join(messages)
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False):
-    words=search_terms(query)
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection=''):
+    query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
+    words=query_plan.words
+    candidate_limit=min(80,max(20,limit*4))
     results=[]
     if words:
-        groups=['('+' OR '.join('"'+s+'"' for s in SYNONYMS.get(w,[w]))+')' for w in words]
-        expression=' AND '.join(groups)
+        expression=query_plan.fts()
         with store.connect() as db:
             for table in ('documents','passages'):
                 restriction='';parameters=[expression,language,language]
@@ -354,13 +420,17 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                     restriction+=f" AND EXISTS(SELECT 1 FROM favorites f WHERE f.user_id=? AND f.source_id=CASE WHEN instr({table}.id,'#page=')>0 THEN substr({table}.id,1,instr({table}.id,'#page=')-1) ELSE {table}.id END)"
                     parameters.append(favorite_user)
                 if translations_only:restriction+=" AND id LIKE 'guide:TRAD-%'"
-                rows=db.execute(f"SELECT id,title,url,language,snippet({table},4,'','', '…',30) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*parameters,limit)).fetchall()
-                results.extend([{**dict(r),'kind':'guide',**guide_metadata(db,r['id'])} for r in rows])
+                rows=db.execute(f"SELECT id,title,url,language,substr(text,1,20000) AS _text,snippet({table},4,'','', '…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*parameters,candidate_limit)).fetchall()
+                if len(rows)<limit and len(words)>1:
+                    relaxed=[query_plan.fts(relaxed=True),*parameters[1:]]
+                    rows+=db.execute(f"SELECT id,title,url,language,substr(text,1,20000) AS _text,snippet({table},4,'','', '…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*relaxed,candidate_limit)).fetchall()
+                results.extend([{**dict(r),'_rank':position,'kind':'guide',**guide_metadata(db,r['id'])} for position,r in enumerate(rows)])
             if favorite_user is not None and not translations_only:
                 rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
                 results.extend([{**dict(row),'kind':'article'} for row in rows])
-    if favorite_user is not None or translations_only:return results[:limit*2]
-    def pattern_for(lang):
+    if query_plan.collection:results=[r for r in results if query_plan.collection in retrieval.normal(str(r.get('provenance',''))+' '+r['title']+' '+r['id']).replace(' ','')]
+    if favorite_user is not None or translations_only:return retrieval.ordered(results,query_plan,limit*2)
+    def pattern_for(lang,selected_words=None):
         english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
                  'apprendre':'learning','enfant':'children','enfants':'children','maths':'mathematics',
                  'semences':'seeds','graines':'seeds','stocker':'storage','conservation':'preservation','jardin':'garden',
@@ -373,20 +443,15 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                  'puits':'wells','desinfection':'disinfecting','risques':'risks'}
         english.update({'examiner':'examine','malade':'sick','personne':'person'})
         english.update(LEARNING_ENGLISH)
-        english.update({'feu':'fire','allumer':'lighting','camp':'campfire'})
-        translated=[english.get(w,w) if lang=='eng' else w for w in words]
+        english.update({'feu':'fire','allumer':'lighting','camp':'campfire','generateur':'generator','generatrice':'generator','pedale':'pedal','pedales':'pedal'})
+        translated=[english.get(w,w) if lang=='eng' else w for w in (words if selected_words is None else selected_words)]
         return ' '.join(translated) if translated else query
-    articles,coverage=await search_archives(pattern_for,language,limit)
-    norm=lambda value:unicodedata.normalize('NFKD',unquote(value)).encode('ascii','ignore').decode().casefold()
-    results.sort(key=lambda r:norm(r['title'])!=norm(query))
-    articles.sort(key=lambda r:norm(r['title'])!=norm(query))
-    # Preserve both source families instead of filling every slot with guide pages.
-    combined=[];seen=set()
-    for index in range(max(len(results),len(articles))):
-        for family in (results,articles):
-            if index<len(family) and family[index]['id'] not in seen:
-                combined.append(family[index]);seen.add(family[index]['id'])
-    return SearchResults(combined[:limit*2],coverage)
+    articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
+    ordered=retrieval.ordered(results+articles,query_plan,limit*2)
+    coverage['collection']=query_plan.collection
+    coverage['query_terms']=words
+    return SearchResults(ordered,coverage)
+
 
 
 
@@ -426,7 +491,7 @@ async def source(identifier):
         if target.startswith('/content/'):
             images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
     return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],**source_metadata.metadata(book)}
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],'language':book.get('language',''),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
 
 
 def calculate(expression):

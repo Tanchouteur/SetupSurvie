@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.29, 13 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.1.36, 14 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -39,6 +39,11 @@ Les anciennes conversations n’enregistraient pas ce lien : la mise à jour ne 
 Un document sélectionné mais n’ayant donné lieu à aucune question ni traduction reste un brouillon dans le navigateur ; son association n’est pas encore enregistrée sur le serveur.
 
 ## Traduire en français
+
+Depuis 0.1.36, le lecteur du portail propose aussi **Traduire en français** en
+haut d’une source anglaise : cela ouvre les commandes de traduction existantes
+dans l’assistant, sans démarrer le traitement automatiquement. Ce n’est pas une
+traduction instantanée de chaque page Kiwix, ni une traduction de vidéo.
 
 1. Associer le document et choisir le modèle dans **Temps à consacrer**.
 2. Déplier **Traduire le document en français**. Pour un PDF, conserver la première page à 1 et la dernière vide pour tout le document, ou choisir une plage, par exemple 1 à 10. Les numéros désignent les pages du fichier PDF, pas forcément la pagination imprimée.
