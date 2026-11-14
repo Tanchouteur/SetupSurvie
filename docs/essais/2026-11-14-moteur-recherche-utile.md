@@ -76,6 +76,14 @@ surlignage, la lecture réelle de l’article et les requêtes feu, eau, génér
 - Kiwix réel sur archives synthétiques : protocole et lecture ; le test rejoint
   un job CI dédié. Les tests de pertinence rejoignent également Windows.
 
+La [CI du code `6b4641f`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43590006387)
+est entièrement réussie : Linux, Windows, Kiwix réel synthétique, routage et
+interface. La suite navigateur valide le nouveau parcours dans Chromium et
+WebKit, ainsi que les fonctions documentaires et conversations existantes.
+Un ancien test attendait une carte distincte pour la page 6 : il vise désormais
+le document regroupé, tout en conservant la vérification que la recherche précise
+« calibration » retrouve cette page tardive et que les favoris persistent.
+
 ## Limites et suite du chantier
 
 Le classement reste lexical et explicable, avec un vocabulaire fini. Il ne
