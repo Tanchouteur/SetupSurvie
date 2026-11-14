@@ -77,7 +77,7 @@
       if(route.name==='storage')loadData();
     }
     if(route.name==='library'){
-      put('library-tab',route.tab);
+      put('library-tab',route.tab);$('next-domain-controls').hidden=route.tab!=='recherche';$('next-domain-help').hidden=route.tab!=='recherche';
       $('next-collections').hidden=route.tab!=='collections';$('next-learning').hidden=route.tab!=='parcours';$('next-search').hidden=['collections','parcours'].includes(route.tab);
       if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setQuery(query);if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
       if(!['collections','parcours'].includes(route.tab)){
@@ -181,6 +181,7 @@
   $('chat-input').addEventListener('input',saveDraft);
   document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.
+  $('chat-domain').addEventListener('change',()=>put('chat-domain',$('chat-domain').value));
   $('search-domain').addEventListener('change',()=>{put('domain',$('search-domain').value);const route=fromLegacy('library');route.params.set('domain',$('search-domain').value);if($('library-query').value)route.params.set('q',$('library-query').value);navigate(route);});
   $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;},true);
   document.addEventListener('click',event=>{
@@ -213,7 +214,7 @@
   document.addEventListener('survie:conversation',()=>{restoreDraft();if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}});
   document.addEventListener('survie:auth',()=>{
     if(!S.user)return;
-    profileId=S.user.id;draftKey=null;
+    profileId=S.user.id;draftKey=null;$('chat-domain').value=get('chat-domain','resilience');
     const saved=!initialHash?get('last',''):'';
     const target=saved&&parse(saved)||current||parse('#/accueil');
     navigate(target,true);restoreDraft();

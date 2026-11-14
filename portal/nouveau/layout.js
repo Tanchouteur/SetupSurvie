@@ -34,8 +34,10 @@
   const scope=make('select','');scope.id='search-collection';scope.setAttribute('aria-label','Chercher dans une collection');scope.append(new Option('Toutes les collections',''));scope.addEventListener('change',()=>{scope.dataset.requested=scope.value;});
   get('search-language').after(scope);
   const domain=make('label','next-domain','Chercher dans <select id="search-domain" aria-label="Espace documentaire"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="all">Toute la bibliothèque</option></select>');libTabs.after(domain);
+  domain.id='next-domain-controls';
   domain.after(make('p','small muted','Les espaces orientent la recherche à partir du texte disponible. Toute la bibliothèque permet de retrouver aussi les documents non classés. Les collections restent directement ouvrables.'));
   const chatDomain=make('label','next-chat-domain','<span class="sr-only">Sources de l’assistant</span><select id="chat-domain" aria-label="Espace des sources de l’assistant"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="all">Toute la bibliothèque</option></select>');actions.append(chatDomain);
+  domain.nextElementSibling.id='next-domain-help';
   const learningBrowser=get('learning-browser');
   learningBrowser.querySelector('summary').textContent='Choisissez un sujet à apprendre';
   const help=make('p','','Choisissez un sujet, puis ouvrez les documents disponibles. Vous pouvez aussi préparer une question à l’assistant. Cette liste de thèmes ne garantit pas qu’un guide complet soit présent.');learningBrowser.querySelector('summary').after(help);
