@@ -30,3 +30,6 @@ class IndexToolsTests(unittest.TestCase):
         binary=tools.python(self.app);binary.parent.mkdir(parents=True);binary.touch()
         setup.write_json(self.app.work/'search-tools/reader-ready.json',{'libzim':'old'})
         self.assertFalse(tools.ready(self.app))
+        marker=self.app.work/'search-tools/reader-ready.json'
+        for value in [[],None,'invalid']:
+            marker.write_text(json.dumps(value));self.assertFalse(tools.ready(self.app))

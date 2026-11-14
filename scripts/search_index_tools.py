@@ -17,7 +17,9 @@ def python(app):return app.work/'search-tools'/('Scripts/python.exe' if os.name=
 
 def ready(app):
     marker=app.work/'search-tools/reader-ready.json'
-    try:return python(app).is_file() and json.loads(marker.read_text(encoding='utf-8')).get('libzim')==VERSION
+    try:
+        state=json.loads(marker.read_text(encoding='utf-8'))
+        return python(app).is_file() and isinstance(state,dict) and state.get('libzim')==VERSION
     except (OSError,ValueError):return False
 
 
