@@ -37,7 +37,7 @@ le premier appel au modèle. Cette lecture préparatoire figure dans les durées
 
 ## Essai mémoire volontaire sur le PC serveur
 
-1. Choisir **Famille → Mon appareil → Réglages → Mémoire de l’assistant → Mesurer
+1. Choisir **Famille → Mon appareil → Paramètres → Assistant → Options avancées : mémoire et essai du modèle → Mémoire de l’assistant → Mesurer
    un contexte adapté à ce PC**.
 2. Réserver une période disponible, y compris dans Open WebUI. Le moteur doit
    déjà être démarré volontairement, sans mode jeu ni question/traduction en cours.

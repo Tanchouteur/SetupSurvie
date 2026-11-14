@@ -1,6 +1,6 @@
 # La nouvelle interface et l’interface classique
 
-**Guide actuel — 0.1.36, 14 novembre 2026.**
+**Guide actuel — 0.12.0, 14 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -15,7 +15,7 @@ La maquette fictive reste séparée sous `/maquette/`.
 | Bibliothèque | Collections réellement présentes, recherche, parcours, favoris et traductions |
 | Assistant | Conversations, documents associés, traduction, dictée, sources et modes de réponse |
 | Cartes | Accès direct à la carte réelle, aux repères et aux itinéraires existants |
-| Mon appareil | Vue d’ensemble, activité, téléchargements, stockage et réglages |
+| Mon appareil | Vue d’ensemble, travaux en cours et paramètres par usage |
 
 Dans Bibliothèque → Collections, **Ouvrir cette collection** ouvre directement
 son lecteur Kiwix local, sans question ni recherche préalable. Les guides gardent
@@ -27,7 +27,7 @@ Depuis 0.1.36, les archives d’une source connue ou de même titre sont regroup
 avec des variantes et leurs liens directs conservés. Les groupes ouverts sont
 mémorisés. **Apprendre par thème** indique l’usage de l’ancien onglet Parcours.
 La [recherche documentaire](recherche-documentaire.md) explique le classement,
-les filtres et **Mon appareil → Réglages → Vérifier la recherche**.
+les filtres et **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 
 Depuis 0.1.34, le champ **Chercher une ressource installée** filtre les
 encyclopédies, livres et guides de Collections par nom, nom de fichier,
@@ -48,10 +48,12 @@ le masquer ou le réactiver dans Affichage. Une zone dépourvue d’altitudes ga
 son fond de carte ; aucune préparation ou connexion Internet n’est déclenchée.
 Le lien de retour mène à l’accueil, sans écran intermédiaire ni boucle vers la carte.
 
-**Mon appareil → Réglages** reprend lieux, commandes du moteur, ajout de guides,
-profils, accès téléphone/QR code, contexte exact et retours. Le profil Famille
-propose la gestion ; chacun peut le sélectionner sans mot de passe. Il ne s’agit
-pas d’une protection des données entre utilisateurs du réseau.
+**Mon appareil → Paramètres** propose quatre entrées : **Profils et connexion**,
+**Bibliothèque et préparations**, **Assistant**, **Entretien et diagnostics**.
+Les options avancées se déplient ; le suivi reste dans **Travaux en cours**.
+Le [guide des paramètres](parametres-et-appareil.md) donne les chemins et la
+correspondance complète des commandes. Le profil Famille propose la gestion ;
+chacun peut le sélectionner sans mot de passe.
 
 ## Suivre le serveur et les téléchargements
 
@@ -107,7 +109,7 @@ explicite reste prioritaire sur le dernier écran mémorisé.
 
 Le brouillon n’est jamais envoyé automatiquement. Pendant le chargement d’une
 conversation, la saisie attend le bon contexte pour ne pas mélanger les brouillons.
-La suppression de la mémoire locale, dans Réglages, ne supprime pas les données
+La suppression de la mémoire locale, dans Paramètres → Entretien et diagnostics, ne supprime pas les données
 du serveur. Un profil ou document supprimé ne peut pas être recréé depuis cette
 mémoire. Les contrôles de changement de profil et d’onglets périmés restent actifs.
 

@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Paramètres et Mon appareil](utilisation/parametres-et-appareil.md) — guide actuel 0.12.0, quatre usages et correspondance complète des commandes.
+
 - [Fiabilisation des cartes et choix d’accès](essais/2026-11-14-cartes-et-acces.md) — 0.11.0, intégré sur main ; validations et limites.
 
 - [Sous-titres français pour chaque vidéo](essais/protocole-sous-titres-videos.md) — précision du plan L6, inventaire et contrôles réels à réaliser.

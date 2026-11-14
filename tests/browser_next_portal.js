@@ -31,12 +31,12 @@ async page => {
   await page.locator('#navigation [data-route="appareil"]').click();
   await page.waitForFunction(()=>document.querySelector('.next-activity .next-transfer-title').textContent==='Téléchargement en cours');
   assert((await page.locator('#view-monitor .next-transfer-message').textContent()).includes('3.0 Go'),'Vrais volumes API, pas de mesures fictives codées en dur');
-  await page.locator('#next-machine-tabs [data-route="appareil/telechargements"]').click();
+  await page.goto(base+'/#/appareil/telechargements');
   await page.locator('#content-manager').evaluate(d=>d.open=true);
   assert(await page.locator('#content-form').isVisible(),'Préparation documentaire conservée sur ordinateur');
   await page.locator('#content-plan').click();
   assert(!commands.includes('/api/admin/library/plan'),'Pas de préparation concurrente pendant le transfert indépendant');
-  await page.locator('[data-route="appareil/reglages"]').click();
+  await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
   assert(await page.locator('#upload-form').count()===1,'Ajout de guide et réglages conservés');
   await page.locator('#navigation [data-route="assistant"]').click();
   assert(await page.locator('#chat-input').inputValue()==='Brouillon conservé','Brouillon après navigation');
@@ -52,7 +52,7 @@ async page => {
   await classic.waitForSelector('.conversation-link');
   assert((await classic.locator('#conversation-list').textContent()).includes('Question simulée'),'Classique retrouve le même historique');await classic.close();
   await page.setViewportSize({width:390,height:844});await page.locator('#navigation [data-route="appareil"]').click();
-  await page.locator('#next-machine-tabs [data-route="appareil/telechargements"]').click();
+  await page.goto(base+'/#/appareil/telechargements');
   assert(!await page.locator('#geo-download-form').isVisible(),'Préparation complexe retirée sur mobile');
   assert(await page.locator('#view-data .next-activity').isVisible(),'Suivi accessible sur mobile');
   await page.locator('#navigation').getByRole('link',{name:'Cartes',exact:true}).click();

@@ -226,3 +226,16 @@ La [recette R7](../utilisation/verifier-usage-hors-ligne.md) réunit des lecture
 sans IA et des observations humaines distinctes. Aucun résultat automatique
 ne certifie la coupure Internet ou la qualité documentaire. Le contrôle ne
 modifie pas la pause du moteur ; les mesures ne reprennent pas au rechargement.
+
+## Paramètres par usage — 0.12.0
+
+La réorganisation demandée par Louis conserve les commandes dans quatre rubriques :
+profils/connexion, bibliothèque/préparations, assistant, entretien/diagnostics.
+Le suivi reste indépendant dans Mon appareil ; les options techniques sont
+secondaires et les commandes d’arrêt restent accessibles sur téléphone.
+La [correspondance exhaustive](../utilisation/parametres-et-appareil.md) décrit
+les déplacements, sans suppression de fonctionnalité ni migration des données.
+Les moteurs et cartes restent ceux de main, avec la recherche 0.11.1 intégrée avant
+l’UX. Les [essais](../essais/2026-11-14-parametres-ux.md) distinguent fixtures et
+validation physique. Un écran unique de boutons et les duplications de contrôles
+ont été écartés ; les nœuds existants sont déplacés pour conserver leurs événements.

@@ -60,8 +60,8 @@ async page => {
   check(page.url().includes('group%3Agroupederecette'),'Filtre du groupe corrigé enregistré dans l’adresse');
   await page.goBack();await page.waitForURL(/bibliotheque\/recherche$/);
   await page.goBack();await page.waitForSelector('#collection-filter:visible');check(await page.locator('#collection-filter').inputValue()==='énergie pratique','Retour navigateur conserve le filtre de collections renommées');
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
-  const downloading=page.waitForEvent('download');await page.getByRole('button',{name:'Exporter les métadonnées',exact:true}).click();const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/entretien"]').click();
+  await page.locator('#settings-exports > summary').click();const downloading=page.waitForEvent('download');await page.getByRole('button',{name:'Exporter les métadonnées',exact:true}).click();const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.kind==='SetupSurvie documentary metadata'&&report.records.filter(row=>row.id.startsWith('collection:fixture-channel')).length===2,'Métadonnées corrigées exportées');
   check(!('conversations' in report)&&report.records.every(row=>!('text' in row)&&!('user_id' in row)),'Export sans texte des documents ni données de profil');
   for(const id of books)await page.request.delete(base+'/api/admin/library/metadata?'+new URLSearchParams({source_id:'collection:'+id}),{headers});

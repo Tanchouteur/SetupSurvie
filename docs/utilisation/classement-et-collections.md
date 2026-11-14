@@ -62,7 +62,7 @@ Un fichier modifié demande aussi de revoir ses noms corrigés.
 
 ## Conserver les corrections
 
-**Mon appareil → Réglages → Classements et noms corrigés → Exporter les métadonnées**
+**Mon appareil → Paramètres → Entretien et diagnostics → Conserver les classements et les dossiers pratiques → Classements et noms corrigés → Exporter les métadonnées**
 télécharge les références, états et corrections. Il ne contient ni texte des
 documents, ni conversations, ni identité de l’auteur des corrections. Les références
 et noms saisis figurent bien dans ce fichier. L’import de cet export n’est pas

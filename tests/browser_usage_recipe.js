@@ -34,7 +34,7 @@ async page=>{
     await page.locator('#account-button').click();await page.locator('#profile-list').getByRole('button',{name,exact:true}).click();
     await page.waitForFunction(id=>S.authReady&&S.user?.id===id&&S.status,id);
   };
-  await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/appareil/reglages');await ready();
+  await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/appareil/entretien');await ready();
   const initial=calls.length;await open();
   check(calls.slice(initial).every(call=>!call.url.includes('/api/search?')&&!call.url.includes('/api/source?')),'Ouvrir le contrôle ne lance pas ses recherches');
   check(await page.locator('[data-usage-step]').count()===14&&await page.locator('[data-usage-step]').evaluateAll(nodes=>nodes.every(node=>node.value==='unperformed')),'Toutes les observations humaines commencent à Non effectué');

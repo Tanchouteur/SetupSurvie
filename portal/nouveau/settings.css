@@ -1,0 +1,30 @@
+/* Settings share the portal’s palette, panels and native controls. */
+.next-interface .settings-destinations{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.next-interface .settings-destination{display:flex;flex-direction:column;gap:6px;padding:22px;margin-bottom:16px;background:var(--paper);border:1px solid var(--line);border-radius:15px;text-decoration:none;min-width:0}
+.next-interface .settings-destinations .settings-destination{margin:0}
+.next-interface .settings-destination:hover{background:var(--soft);border-color:#92ab91}
+.next-interface .settings-destination strong{font-size:20px;line-height:1.35}
+.next-interface .settings-destination span{font-size:15px}
+.next-interface .settings-destination .settings-arrow{margin-top:auto;padding-top:12px;font-size:14px;font-weight:650}
+.next-interface .settings-heading{max-width:740px;margin:10px 0 24px}
+.next-interface .settings-heading h2{font-size:26px}
+.next-interface .settings-back{display:inline-flex;align-items:center;min-height:44px;margin-bottom:18px}
+.next-interface .settings-advanced{border:1px solid var(--line);background:var(--paper);border-radius:15px;margin:0 0 18px;padding:8px 22px}
+.next-interface .settings-advanced>summary{padding:12px 0}
+.next-interface .settings-advanced>article{border:0;padding:12px 0;margin:0}
+.next-interface .settings-pane .panel>details{margin-top:0}
+.next-interface .settings-pane input,.next-interface .settings-pane select{max-width:100%}
+.next-interface .settings-pane pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:760px){
+ .next-interface .settings-destinations{grid-template-columns:1fr;gap:12px}
+ .next-interface .settings-destination{padding:18px}
+ .next-interface .settings-destination strong{font-size:19px}
+ .next-interface .settings-heading h2{font-size:23px}
+ .next-interface .settings-advanced{padding:6px 16px}
+ .next-interface #engine-controls:not([hidden]){display:flex!important;flex-wrap:wrap}
+ .next-interface #content-pause:not([hidden]),.next-interface #geo-pause:not([hidden]){display:inline-flex!important}
+ .next-interface #next-index-prepare,.next-interface #next-index-start,.next-interface #next-index-settings{display:none!important}
+ .next-interface .next-tabs{flex-wrap:wrap;overflow:visible;gap:4px}
+ .next-interface .next-tabs a{white-space:normal;padding:9px 10px}
+ .next-interface #content-manager::after{content:none}
+}

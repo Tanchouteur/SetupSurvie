@@ -86,7 +86,7 @@ et les [règles de fiabilité](sources-et-fiabilite.md) restent applicables.
 
 ## Export, sauvegarde et relecture du fonds
 
-Famille → Mon appareil → Réglages → **Repères des dossiers pratiques → Exporter
+Famille → Mon appareil → Paramètres → Entretien et diagnostics → Conserver les classements et les dossiers pratiques → **Repères des dossiers pratiques → Exporter
 les dossiers** conserve les objectifs, références, notes, dates et lacunes, sans
 texte complet des originaux ni conversation. Le fichier peut contenir les notes
 saisies par la famille. L’import n’est pas encore proposé.
