@@ -11,13 +11,13 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **12 novembre 2026**, un paquet pilote est préparé et des essais ont été
-réalisés sur le PC Linux de Louis. Le diagnostic de l’installateur et ses protections
-ont aussi été testés sur le Windows de Marc ; voir le [bilan Windows](docs/essais/2026-11-12-installateur-windows-simple.md).
-L’installation complète sur un PC vierge, les usages sur téléphone et la recette
-complète hors ligne restent à valider.
-Le pilote accompagne cette première expérimentation ; l’offre commerciale reste
-à éprouver.
+Au **14 novembre 2026**, le pilote **0.2.0** réunit la refonte de recherche et de
+préparation des sources, les améliorations des conversations et les correctifs
+Windows de démarrage/Docker et des mesures GPU sans console. Le schéma de données
+reste compatible avec le pilote précédent ; les données existantes sont conservées.
+Ce changement de version marque une étape fonctionnelle, pas une offre commerciale
+validée. L’installation complète sur un PC vierge, Safari réel et la recette complète
+hors ligne restent à qualifier ; consulter les [bilans datés](docs/essais/README.md).
 
 La bibliothèque reste accessible quand le moteur IA est arrêté. Le portail et
 Open WebUI partagent les comptes, avec des historiques de conversations distincts.

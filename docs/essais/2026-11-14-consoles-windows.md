@@ -66,3 +66,18 @@ conteneurs créés à 09 h 52 redémarrent sur un refus de lecture de
 permissions. L’accès aux fonds de carte reste disponible ; le routage nécessite
 un diagnostic séparé. Les détails de déploiement restent dans les diagnostics
 locaux, sans publication de données privées.
+
+
+## Intégration après réparation Docker — pilote 0.2.0
+
+La restriction temporaire de publication est levée par Louis après réparation
+Docker ; il autorise fusion, déploiement et push. La refonte moteur de main
+0.1.36 est conservée. Le numéro 0.2.0 est choisi pour cette livraison regroupée,
+sans migration de schéma. Les anciens paragraphes décrivent la chronologie du
+correctif local avant cette nouvelle autorisation.
+
+La suite intégrée avant changement du seul numéro de version exécute 365 tests,
+354 réussites et 11 ignorés sur Windows. La recette PowerShell passe aussi, y
+compris les nouveaux cas refus du GUI sans enregistrement et limitation des
+relances. La réparation Docker et sa sauvegarde froide sont détaillées dans
+WIN-019. La cause initiale de perte du registre reste indéterminée.

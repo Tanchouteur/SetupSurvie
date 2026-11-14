@@ -330,9 +330,9 @@ bibliothèque affiche aussi le nombre de fonds présents : les 100 % d’un plan
 Kiwix/PDF ne signifient plus implicitement que des cartes ont été téléchargées.
 
 
-## Démarrage silencieux et migration des lanceurs — candidat 0.1.36
+## Démarrage silencieux et migration des lanceurs — 0.2.0
 
-Correctif local non publié sur main, en attente d’intégration après la refonte.
+Le correctif local a été intégré à la refonte moteur après autorisation de Louis.
 
 La tâche de surveillance lance `pythonw.exe` avec `windows_background.py`.
 Ce petit lanceur exécute le script PowerShell fixe avec `CREATE_NO_WINDOW`,
@@ -351,3 +351,21 @@ Sur Windows, les mesures NVIDIA utilisent directement la bibliothèque NVML du
 pilote, dans le processus du contrôleur : aucun `nvidia-smi`, PowerShell ou autre
 exécutable de mesure n’est lancé. Si la bibliothèque manque ou échoue, la mesure
 est indisponible, sans repli vers un programme pouvant créer une console.
+
+
+### Éviter les boucles d’erreur Docker
+
+Si Docker est arrêté, les fichiers du programme ne suffisent pas à prouver son
+installation : le lanceur vérifie aussi son emplacement enregistré par Windows.
+Une installation non enregistrée est signalée sans ouvrir le GUI. Pour une
+installation enregistrée mais ne démarrant pas, une seule tentative automatique
+est faite par démarrage Windows. Le journal privé `docker-start-attempt.json`
+conserve cette tentative ; les vérifications suivantes ne rouvrent pas la même
+fenêtre. **Ouvrir SetupSurvie** permet une nouvelle tentative explicite après
+réparation. Un moteur accessible ou un backend déjà en cours n’est pas relancé.
+
+Réparer Docker avec son installateur officiel et les emplacements d’origine,
+après sauvegarde de ses données à l’arrêt. Ne pas désinstaller/réinitialiser ni
+supprimer les distributions WSL pour résoudre une erreur de clés de registre.
+Le [journal WIN-019](../exploitation/journal-incidents-windows.md#win-019--docker-desktop-introuvable-dans-le-registre-et-boîtes-derreur-répétées)
+conserve le cas Windows observé et les validations.

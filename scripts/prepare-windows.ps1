@@ -60,7 +60,15 @@ function Invoke-SurviePreparation {
     foreach ($item in $catalog.installers) {
         $available = switch ($item.id) {
             'python' { [bool](Find-SurviePython) }
-            'docker' { [bool](Find-SurvieDockerDesktop) -or [bool](Get-SurvieDockerType) }
+            'docker' {
+                $desktop=Find-SurvieDockerDesktop; $engine=Get-SurvieDockerType
+                if ($desktop -and -not $engine) {
+                    $directory=[IO.Path]::GetFullPath((Split-Path $desktop)).TrimEnd('\')
+                    $registered=@(Get-SurvieDockerInstallLocations | Where-Object { [IO.Path]::GetFullPath($_).TrimEnd('\') -ieq $directory })
+                    if (-not $registered.Count) { throw 'Fichiers Docker presents mais installation Windows non enregistree. Reparer avec l installateur officiel et le meme emplacement de donnees avant de continuer.' }
+                }
+                [bool]$desktop -or [bool]$engine
+            }
             'ollama' { [bool](Find-SurvieOllama) }
             'git' { [bool](Find-SurvieGit) }
             default { throw 'Composant inconnu dans le catalogue.' }

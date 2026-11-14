@@ -89,7 +89,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
-- [Consoles spontanées Windows — 14 novembre 2026](essais/2026-11-14-consoles-windows.md) — capture native, mesures NVML et démarrage sans console, 0.1.36.
+- [Consoles spontanées Windows — 14 novembre 2026](essais/2026-11-14-consoles-windows.md) — capture native, mesures NVML, réparation Docker et intégration 0.2.0.
 - [Moteur de recherche utile — 14 novembre 2026](essais/2026-11-14-moteur-recherche-utile.md) — première consolidation 0.1.36, Kiwix réel sur petites archives générées et orchestration simulée.
 
 - [Retour d’expérience de Marc — 14 novembre 2026](essais/2026-11-14-retour-experience-marc.md) — appel rapporté par Louis, cinq captures, recherche prioritaire et propositions non implémentées.
