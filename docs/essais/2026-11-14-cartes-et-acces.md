@@ -1,6 +1,6 @@
 # Cartes et choix d’accès — 14 novembre 2026
 
-**Bilan de développement 0.11.0, branche `codex/cartes`.** La recette sur les PC
+**Bilan de livraison 0.11.0, intégré sur `main` par la [PR #9](https://github.com/Tanchouteur/SetupSurvie/pull/9).** La recette sur les PC
 Linux de Louis et Windows de Marc reste distincte des essais décrits ici.
 Références : [itinéraires](../utilisation/points-et-itineraires.md),
 [relief](../utilisation/parametres-et-cartes.md).
@@ -45,8 +45,18 @@ textuel, avec un `code` supplémentaire ; un ancien onglet garde un message lisi
 La suite locale termine **503 tests sans échec, dont 12 ignorés dans le runner**.
 Les six recettes d’interface passent sur **Chromium et WebKit** dans le conteneur
 TEST Playwright 1.58.2, limité à 1 CPU / 2 Go, sans secrets ni données réelles.
-Le paquet de mise à jour 0.11.0 est construit et son manifeste contrôlé ; les
-résultats de CI sont vérifiés séparément.
+Le paquet de mise à jour 0.11.0 est construit ; son manifeste et les empreintes de
+**704 fichiers** sont contrôlés. Les huit jobs de la [CI du code `2444c06`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43636720392)
+réussissent : Linux, Windows, lecteurs isolés Windows Python 3.11/3.13/3.14,
+Kiwix synthétique, OSRM synthétique et navigateurs.
+
+La [CI parallèle de la PR](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43636725747)
+a rencontré un échec isolé dans la recette WebKit de calibration de l’assistant
+(contrôle d’accès sur une requête). Les fichiers concernés sont inchangés par ce
+chantier. L’autre exécution du même commit réussit ; la relance du seul job en
+échec réussit également, sans modification de la recherche ni de l’assistant.
+L’échec initial reste visible dans l’historique de la CI ; il ne constitue pas
+une panne des cartes reproduite sur un PC utilisateur.
 
 - Tests ciblés d’altitude/cache, validation des accès signés, erreurs de moteur,
   autorisations, snapshots et GPX sur petites données synthétiques.
@@ -59,7 +69,8 @@ résultats de CI sont vérifiés séparément.
   CPU, médiane avant/après **198,36 / 135,68 ms** ; cache chaud **0,38 / 0,42 ms**.
   Ce microtest ne mesure ni la fluidité GPU ni les performances des PC réels.
 - Tests OSRM réels étendus dans la CI existante, avec l’image épinglée et le petit
-  réseau OSM synthétique. Résultats distants à compléter après publication.
+  réseau OSM synthétique. Les trois modes réussissent avec un accès confirmé à
+  **111,2 m** du point d’origine ; le point et le raccordement sont conservés.
 
 Les fixtures sont distinctes de vrais contenus : `display-small.pmtiles` est
 reproductible par `tests/make_map_display_fixture.py` avec pmtiles 3.7.0 dans un
@@ -81,7 +92,7 @@ terrain réel. Aucun modèle ni corpus réel téléchargé dans le runner.
    deux onglets et un changement de profil. Aucun raccordement n’est certifié
    praticable par ces essais logiciels.
 
-Pas de déploiement sur les PC dans cette livraison de branche. Safari iPhone
+Pas de déploiement sur les PC dans cette livraison. Safari iPhone
 physique et fonctionnement hors Internet restent à contrôler. Le test automatisé
 WebKit ne remplace pas ces validations.
 
@@ -90,7 +101,9 @@ WebKit ne remplace pas ces validations.
 La branche a repris `main` 0.10.0 après le lot de recette de recherche/lecture,
 sans modifier la navigation ni Compose. Les changements communs concernent les
 routes cartographiques du pilote, la version et quelques renvois documentaires.
-L’intégration sur main se fera séparément du chantier recherche, après contrôle.
+Après les deux CI réussies, les cartes sont intégrées sur main par `e3f8c12`,
+après le lot recherche/lecture 0.10.0. Le contenu intégré est identique à l’arbre
+validé `2444c06` ; seules les présentes notes de validation sont ajoutées ensuite.
 
 **0.11.0** est une évolution fonctionnelle compatible : sélection d’accès et
 nouveaux états d’itinéraire. Le schéma de données et les versions des composants
