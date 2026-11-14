@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Cartes et accès aux itinéraires — 0.11.0](2026-11-14-cartes-et-acces.md) : ombrage transparent, accès confirmés et recette synthétique.
+
 - [Sous-titres français pour chaque vidéo](protocole-sous-titres-videos.md) — protocole R6 cible, récupération/création et validations à développer.
 - [Contrôle d’usage hors ligne](2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable et CI réussie ; usage physique à vérifier.
 - [Journal depuis la 0.2.0](journal-recherche-depuis-020.md) — suivi actuel pour le résumé final.

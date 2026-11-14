@@ -243,13 +243,13 @@ def terrain_etag(signature, z, x, y):
     return '"'+hashlib.sha256(repr(('shade-v1', signature, z, x, y)).encode()).hexdigest()+'"'
 
 
-def terrain_png(z, x, y, signature=None):
+def terrain_shade_png(z, x, y, signature=None):
     if not 8 <= z <= 14 or not 0 <= x < 2**z or not 0 <= y < 2**z:
         raise HTTPException(404, 'Tuile inconnue.')
     signature = terrain_signature() if signature is None else signature
     # Coalesce identical concurrent requests without serializing unrelated tiles.
     with _TERRAIN_LOCKS[hash((z, x, y)) % len(_TERRAIN_LOCKS)]:
-        return _terrain_png(z, x, y, signature)
+        return _terrain_shade_png(z, x, y, signature)
 
 
 def _png(rows, size=256):
@@ -260,7 +260,7 @@ def _png(rows, size=256):
 
 
 @lru_cache(maxsize=128)
-def _terrain_png(z, x, y, signature):
+def _terrain_shade_png(z, x, y, signature):
     size=256
     # One pixel of real neighbouring elevation on each side avoids tile seams.
     longitudes=[(x+(i+.5)/size)/2**z*360-180 for i in range(-1, size+1)]
@@ -280,9 +280,34 @@ def _terrain_png(z, x, y, signature):
                 row.extend((0,0,0,0));continue
             dx=(b-a)/(2*resolution);dy=(d-c)/(2*resolution)
             # Northwest illumination. Flat terrain is transparent, slopes subtle.
-            light=(-dx-dy)/(math.sqrt(2)*math.sqrt(1+dx*dx+dy*dy))
+            light=(dx+dy)/(math.sqrt(2)*math.sqrt(1+dx*dx+dy*dy))
             alpha=min(64, round(abs(light)*90))
             row.extend((255,255,255,alpha) if light>0 else (53,57,44,alpha))
         rows.append(row)
     # Empty/missing tiles are valid transparent raster tiles, cached as well.
     return _png(rows)
+
+
+# Legacy DEM endpoint remains compatible with already-open older map readers.
+def terrain_png(z,x,y):
+    signature=tuple((str(root), (root/'manifest.json').stat().st_mtime_ns) for root,_ in datasets())
+    return _terrain_png(z,x,y,signature)
+
+
+@lru_cache(maxsize=32)
+def _terrain_png(z,x,y,signature):
+    if not 0<=z<=14 or not 0<=x<2**z or not 0<=y<2**z:raise HTTPException(404,'Tuile inconnue.')
+    size=256;rows=[];present=False
+    with Heights() as heights:
+        if not heights.grids:raise HTTPException(404,'Relief non téléchargé.')
+        longitudes=[(x+(i+.5)/size)/2**z*360-180 for i in range(size)]
+        for j in range(size):
+            lat=math.degrees(math.atan(math.sinh(math.pi*(1-2*(y+(j+.5)/size)/2**z))))
+            row=bytearray([0])
+            for lon in longitudes:
+                height=heights.sample(lat,min(lon,179.999999));present|=height is not None
+                v=round(((height or 0)+32768)*256);row.extend(((v>>16)&255,(v>>8)&255,v&255,255 if height is not None else 0))
+            rows.append(row)
+    if not present:raise HTTPException(404,'Zone sans altitude préparée.')
+    def chunk(kind,body):return struct.pack('>I',len(body))+kind+body+struct.pack('>I',zlib.crc32(kind+body))
+    return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',size,size,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b'')

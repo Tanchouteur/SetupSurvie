@@ -71,7 +71,7 @@
   }
   function routePoints(){return stops.map(id=>book.points.find(p=>p.id===id));}
   function selectAccess(index){
-    if(!candidates[index])return;candidateIndex=index;
+    if(!candidates[index])return;candidateIndex=index;map?.pickAccess(null);
     [...$('access-candidates').children].forEach((b,i)=>b.setAttribute('aria-pressed',String(i===index)));
     $('access-confirm').disabled=false;map?.accesses(candidates,accessOrigin,index);
   }
@@ -96,7 +96,7 @@
       $('access-manual').onclick=()=>{const manualTicket=accessVersion;$('access-status').textContent='Cliquez près de la voie à utiliser, à moins de 1 km du point.';map?.pickAccess(p=>{if(manualTicket===accessVersion)chooseAccess(index,p);});};
     }catch(e){if(ticket===accessVersion)$('access-status').textContent=e.message;}
   }
-  $('access-cancel').onclick=()=>{cancelAccess();$('planning-message').textContent='Préparation conservée. Vous pouvez modifier les étapes ou réessayer.';};
+  $('access-cancel').onclick=()=>{cancelAccess();$('route-save-form').hidden=!draft;$('route-review-access').hidden=!(draft||activeRoute);$('planning-message').textContent='Préparation conservée. Vous pouvez modifier les étapes ou réessayer.';};
   $('route-review-access').onclick=()=>{
     cancelAccess();$('route-review-access').hidden=true;
     $('route-save-form').hidden=true;$('route-access').hidden=false;$('route-form').hidden=true;$('access-title').textContent='Quel point souhaitez-vous raccorder autrement ?';
@@ -126,7 +126,10 @@
         }
         if(ticket===request&&$('route-access').hidden)$('route-review-access').hidden=false;
       }else if(['no_route','access_expired'].includes(e.code)){if(e.code==='access_expired'){accessChoices.clear();accessQueries.clear();}$('route-review-access').hidden=false;}
-      $('route-data-action').hidden=!['outside_coverage','not_prepared'].includes(e.code);
+      const engineProblem=['engine_unavailable','engine_timeout','stale_graph','invalid_response'].includes(e.code);
+      $('route-data-action').hidden=!engineProblem&&!['outside_coverage','not_prepared'].includes(e.code);
+      $('route-data-action').href=engineProblem?'/#/appareil':'/#data';
+      $('route-data-action').textContent=engineProblem?'Vérifier l’état de l’appareil →':'Préparer les routes et chemins de cette zone →';
     }finally{calculating=false;$('route-calculate').disabled=book.points.length<2;$('route-form').removeAttribute('aria-busy');}
   }
   $('route-form').onsubmit=event=>{event.preventDefault();calculateRoute();};
@@ -134,7 +137,7 @@
   $('route-save-form').onsubmit=async event=>{event.preventDefault();if(!draft)return;const data=draft,submit=event.submitter;submit.disabled=true;try{const saved=await api('/admin/map-notebook/routes',{draft_id:data.draft_id,list_id:listId,title:$('route-title').value.trim()});draft=null;$('route-save-form').hidden=true;await load();await openRoute(saved.id);$('planning-message').textContent='Trajet enregistré. Il reste consultable sans moteur de calcul ni GPS.';}catch(e){$('planning-message').textContent=e.message;}finally{submit.disabled=false;}};
   $('map-route-chip').onclick=()=>{window.MapUI.showPanel('map-notebook');$('selected-route').scrollIntoView({block:'nearest'});};
   $('notebook-list').onchange=()=>{listId=$('notebook-list').value;clearRoute();render();};$('notebook-refresh').onclick=load;$('clear-map-route').onclick=clearRoute;
-  $('planning-panel').addEventListener('toggle',()=>{if(!$('planning-panel').open)cancelAccess();});
+  $('planning-panel').addEventListener('toggle',()=>{if(!$('planning-panel').open&&!$('route-access').hidden){cancelAccess();$('route-save-form').hidden=!draft;$('route-review-access').hidden=!(draft||activeRoute);}});
   for(const id of ['map-notebook','planning-panel','geo-tools'])$(id).addEventListener('toggle',()=>{requestAnimationFrame(()=>map?.resize());});
   window.addEventListener('survie-map-ready',()=>{map=window.SurvieMap;updateMap();if(activeRoute)map.route(activeRoute.geometry,activeRoute.connectors||[]);});
   if(window.SurvieMap)map=window.SurvieMap;

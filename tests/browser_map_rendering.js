@@ -15,7 +15,7 @@ async page=>{
       return route.fulfill({status:206,headers:{'Content-Range':`bytes ${start}-${end}/${archive.length}`,'Accept-Ranges':'bytes','Content-Type':'application/octet-stream'},body:archive.subarray(start,end+1)});
     }
     // Uniform translucent shade with a missing-data quadrant; no opaque DEM.
-    if(u.pathname.startsWith('/api/geography/terrain/'))return route.fulfill({contentType:'image/png',body:Buffer.from('__SHADE_FIXTURE__','base64')});
+    if(u.pathname.startsWith('/api/geography/shade/'))return route.fulfill({contentType:'image/png',body:Buffer.from('__SHADE_FIXTURE__','base64')});
     const values={
       '/api/profiles/current':{id:'fixture',name:'Famille',role:'admin'},
       '/api/maps':{maps:[{id:'sollies',title:'Carte fictive de test',url:'/api/maps/test/archive',center:[6.1,43.1],bbox:[6,43,6.2,43.2],maxzoom:12,edition:'Fixture',attribution:'Fictional test'}]},

@@ -66,7 +66,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.10.0'
+VERSION='0.11.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -81,7 +81,7 @@ async def origin_check(request,call_next):
         if (request.cookies.get(COOKIE) or request.cookies.get(profiles.COOKIE)) and not origin:
             return Response('Origine requise',status_code=403)
     response=await call_next(request)
-    if not (request.url.path.startswith('/api/geography/terrain/') and response.status_code in (200,304)):
+    if not (request.url.path.startswith('/api/geography/shade/') and response.status_code in (200,304)):
         response.headers['Cache-Control']='no-store'
     response.headers['X-Content-Type-Options']='nosniff'
     return response
@@ -234,14 +234,21 @@ async def terrain_profile(lat1:float,lon1:float,lat2:float,lon2:float,value=Depe
 
 
 @app.get('/api/geography/terrain/{z}/{x}/{y}.png')
-async def terrain_tile(z:int,x:int,y:int,request:Request,value=Depends(user)):
+async def terrain_tile(z:int,x:int,y:int,value=Depends(user)):
+    async with TERRAIN_LOCK:
+        raw=await asyncio.to_thread(geography.terrain_png,z,x,y)
+    return Response(raw,media_type='image/png')
+
+
+@app.get('/api/geography/shade/{z}/{x}/{y}.png')
+async def terrain_shade_tile(z:int,x:int,y:int,request:Request,value=Depends(user)):
     if not 8<=z<=14 or not 0<=x<2**z or not 0<=y<2**z:raise HTTPException(404,'Tuile inconnue.')
     signature=await asyncio.to_thread(geography.terrain_signature)
     etag=geography.terrain_etag(signature,z,x,y)
     headers={'Cache-Control':'private, no-cache','ETag':etag,'Vary':'Cookie, X-Survie-Profile'}
     if request.headers.get('if-none-match')==etag:return Response(status_code=304,headers=headers)
     async with TERRAIN_LOCK:
-        raw=await asyncio.to_thread(geography.terrain_png,z,x,y,signature)
+        raw=await asyncio.to_thread(geography.terrain_shade_png,z,x,y,signature)
     return Response(raw,media_type='image/png',headers=headers)
 
 

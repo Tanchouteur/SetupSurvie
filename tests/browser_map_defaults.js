@@ -9,7 +9,7 @@ async page => {
     if(u.origin!==base){outside.push(r.url());return route.abort();}
     if(!u.pathname.startsWith('/api/'))return route.continue();
     if(r.method()!=='GET')mutations++;
-    if(u.pathname.startsWith('/api/geography/terrain/')){tileRequests++;return route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')});}
+    if(u.pathname.startsWith('/api/geography/shade/')){tileRequests++;return route.fulfill({contentType:'image/png',body:Buffer.from(png,'base64')});}
     const values={
       '/api/profiles/current':{id:'fixture',name:'Famille',role:'admin'},
       '/api/maps':{maps:[]},

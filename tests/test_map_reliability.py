@@ -31,15 +31,18 @@ class TerrainReliabilityTests(unittest.TestCase):
     bundle=terrain_fixtures.GeographyTests.bundle
     def test_transparent_flat_and_missing_terrain_and_private_revalidation(self):
         folder=self.bundle();z=10;x=int((6.1+180)/360*2**z);y=int((1-math.asinh(math.tan(math.radians(43.1)))/math.pi)/2*2**z)
-        raw=geography.terrain_png(z,x,y)
+        raw=geography.terrain_shade_png(z,x,y)
         decoded=pixels(raw)
         self.assertTrue(all(decoded[j*1025+i*4+4]==0 for j in range(256) for i in range(256)))
-        self.assertEqual(set(pixels(geography.terrain_png(z,0,0))),{0})
+        self.assertEqual(set(pixels(geography.terrain_shade_png(z,0,0))),{0})
         gateway.app.dependency_overrides[gateway.user]=lambda:{'id':'test','role':'admin'}
         self.addCleanup(gateway.app.dependency_overrides.clear)
         with TestClient(gateway.app) as client:
-            url=f'/api/geography/terrain/{z}/{x}/{y}.png'
+            url=f'/api/geography/shade/{z}/{x}/{y}.png'
             first=client.get(url)
+            legacy=client.get(f'/api/geography/terrain/{z}/{x}/{y}.png')
+            self.assertEqual(legacy.headers['cache-control'],'no-store')
+            self.assertNotEqual(legacy.content,first.content)
             self.assertEqual(first.headers['cache-control'],'private, no-cache')
             cached=client.get(url,headers={'If-None-Match':first.headers['etag']})
             self.assertEqual(cached.status_code,304)
@@ -51,25 +54,25 @@ class TerrainReliabilityTests(unittest.TestCase):
             newer=client.get(url,headers={'If-None-Match':first.headers['etag']})
             self.assertEqual(newer.status_code,200)
             self.assertNotEqual(first.headers['etag'],newer.headers['etag'])
-            self.assertEqual(client.get('/api/geography/terrain/30/0/0.png').status_code,404)
+            self.assertEqual(client.get('/api/geography/shade/30/0/0.png').status_code,404)
 
     def test_shade_missing_border_no_false_cliff_and_coalesced_generation(self):
         class Heights:
             def __enter__(self):self.grids=True;return self
             def __exit__(self,*args):pass
             def sample(self,lat,lon):return None if lon<0 else lon*1000
-        geography._terrain_png.cache_clear()
+        geography._terrain_shade_png.cache_clear()
         with patch.object(geography,'Heights',Heights),patch.object(geography,'_height_samples',side_effect=lambda h,lats,lons:[[h.sample(lat,lon) for lon in lons] for lat in lats]):
-            shade=pixels(geography.terrain_png(10,512,400,('synthetic-slope',)))
+            shade=pixels(geography.terrain_shade_png(10,512,400,('synthetic-slope',)))
             alphas=[shade[j*1025+i*4+4] for j in range(256) for i in range(256)]
             self.assertTrue(any(alphas));self.assertLessEqual(max(alphas),64)
-            missing=pixels(geography.terrain_png(10,511,400,('synthetic-slope',)))
+            missing=pixels(geography.terrain_shade_png(10,511,400,('synthetic-slope',)))
             self.assertEqual(set(missing),{0})
-        geography._terrain_png.cache_clear()
-        original=geography._terrain_png
-        with patch.object(geography,'_terrain_png',wraps=original) as calls,patch.object(geography,'Heights',Heights),patch.object(geography,'_height_samples',side_effect=lambda h,lats,lons:[[h.sample(lat,lon) for lon in lons] for lat in lats]):
+        geography._terrain_shade_png.cache_clear()
+        original=geography._terrain_shade_png
+        with patch.object(geography,'_terrain_shade_png',wraps=original) as calls,patch.object(geography,'Heights',Heights),patch.object(geography,'_height_samples',side_effect=lambda h,lats,lons:[[h.sample(lat,lon) for lon in lons] for lat in lats]):
             with concurrent.futures.ThreadPoolExecutor(4) as pool:
-                results=list(pool.map(lambda _:geography.terrain_png(10,512,400,('concurrent',)),range(4)))
+                results=list(pool.map(lambda _:geography.terrain_shade_png(10,512,400,('concurrent',)),range(4)))
             self.assertEqual(len(set(results)),1)
             self.assertEqual(original.cache_info().misses,1)
             self.assertEqual(original.cache_info().hits,3)
@@ -118,7 +121,7 @@ class AccessReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('access-hint',json.dumps(result))
 
     async def test_engine_errors_are_actionable_without_fabricated_accesses(self):
-        for data,status,code in [({'code':'NoSegment'},400,'no_access'),({'code':'NoRoute'},400,'no_route'),({'code':'Ok','data_version':'old'},200,'stale_graph'),([],200,'invalid_response')]:
+        for data,status,code in [({'code':'NoSegment'},400,'no_access'),({'code':'NoRoute'},400,'no_route'),({'code':'Ok','data_version':'old'},200,'stale_graph'),([],200,'invalid_response'),({**self.data,'routes':[{**self.data['routes'][0],'geometry':None}]},200,'invalid_response')]:
             with patch.object(routing,'manifest',return_value=self.meta),patch.object(routing.httpx,'AsyncClient',return_value=self.client(data,status)):
                 with self.assertRaises(HTTPException) as error:await routing.calculate(self.points)
                 self.assertEqual(error.exception.detail['code'],code)

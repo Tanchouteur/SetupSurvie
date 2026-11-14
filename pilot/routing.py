@@ -23,7 +23,10 @@ def manifest():
     if not path.is_file() or path.is_symlink() or root.is_symlink() or path.stat().st_size>500_000:return None
     try:
         value=json.loads(path.read_text(encoding='utf-8'))
-        if not value.get('complete') or value.get('engine')!='OSRM' or not value.get('build_id'):return None
+        if not isinstance(value,dict) or not value.get('complete') or value.get('engine')!='OSRM' or not isinstance(value.get('build_id'),str) or not value['build_id']:return None
+        bbox=value.get('bbox')
+        if not isinstance(bbox,list) or len(bbox)!=4 or any(type(v) not in (int,float) or not math.isfinite(v) for v in bbox):return None
+        if not (-180<=bbox[0]<bbox[2]<=180 and -90<=bbox[1]<bbox[3]<=90):return None
         if set(value['profiles'])!=set(MODES):return None
         for item in value['files']:
             relative=Path(item['path']);file=root/relative
@@ -187,4 +190,4 @@ async def calculate(points,mode='foot',speed_kmh=4,avoid_motorways=True):
                 'points':snapped,'connectors':[{'point_index':i,'distance_m':p['offset_m'],'verified':False,'geometry':{'type':'LineString','coordinates':[[p['lon'],p['lat']],[p['snapped_lon'],p['snapped_lat']]]}} for i,p in enumerate(snapped) if p['offset_m']>5],'geometry':geometry,'segments':segments[:250],'avoid_motorways':bool(avoid_motorways),'created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 'coverage':{k:value.get(k) for k in ('bbox','created','build_id','source')},'attribution':value.get('attribution'),'note':NOTE+' Les écarts entre les points choisis et les voies accrochées ne sont pas inclus dans les kilomètres.'}
     except HTTPException:raise
-    except (ValueError,KeyError,TypeError,IndexError):fail(503,'invalid_response','La réponse du moteur local n’est pas valide. Réessayez ; les trajets enregistrés restent consultables.')
+    except (ValueError,KeyError,TypeError,IndexError,AttributeError):fail(503,'invalid_response','La réponse du moteur local n’est pas valide. Réessayez ; les trajets enregistrés restent consultables.')

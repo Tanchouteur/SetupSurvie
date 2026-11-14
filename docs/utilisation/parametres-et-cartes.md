@@ -8,6 +8,23 @@ la présentation conservée sous `/classique/`. Voir le [guide actuel](nouvelle-
 Guide initial du pilote **0.1.10**. Depuis **0.1.11**, voir aussi les [listes de points et itinéraires](points-et-itineraires.md) : préparation sans GPS et consultation mobile. Les téléchargements décrits sont des fonctions du
 logiciel ; leur disponibilité ne prouve pas qu’une zone a été préparée sur un PC.
 
+## Relief et fluidité — depuis 0.11.0
+
+Le relief disponible reste activé par défaut et se masque dans **Affichage**.
+Il utilise un ombrage transparent : les altitudes manquantes laissent le fond
+visible et ne sont pas remplacées par un carré opaque ou une altitude zéro.
+Les outils de mesure continuent à utiliser les données d’altitude originales.
+
+Le navigateur réutilise les tuiles après vérification de leur version auprès du
+serveur. Un changement des données invalide ce cache privé. Masquer le relief ou
+revenir au départ ne reconstruit plus tout le fond ; le trajet et les repères sont
+conservés. Une indisponibilité du relief ne doit pas empêcher la lecture du fond.
+Ces corrections ont des tests synthétiques ; la fluidité sur chaque PC et le cas
+réel de Solliès-Ville restent à contrôler séparément.
+
+Le [guide des itinéraires](points-et-itineraires.md) décrit le choix d’un accès
+proche et les raccordements en pointillés.
+
 ## Paramètres de l’appareil
 
 Avec un compte administrateur, ouvrir **Paramètres** dans le menu. Cette page
