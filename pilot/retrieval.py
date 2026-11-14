@@ -151,7 +151,7 @@ def ordered(items,query,limit):
         combined=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text',''))
         tokens=set(combined.split())
         hits=sum(any(term<=tokens for term in group) for group in query.token_groups)
-        required=max(1,(2*len(query.groups)+2)//3) if query.practical else len(query.groups)
+        required=max(1,(2*len(query.groups)+2)//3)
         excerpt=normal(item.get('excerpt','')+' '+item.get('_text',''))
         title_tokens=set(normal(item.get('title','')).split())
         title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)

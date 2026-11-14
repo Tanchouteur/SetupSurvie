@@ -36,6 +36,10 @@ class Report093Tests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([row['id'] for row in found],['zim:fixture/repair'])
         self.assertTrue(retrieval.ordered(candidates,self.plan('modèle dossier familial'),5))
 
+    def test_two_concrete_concepts_survive_an_extra_unknown_word(self):
+        water={'id':'zim:fixture/water','title':'Guide de potabilisation de l’eau','excerpt':'Traitement de l’eau, fixture fictive.','_query_complete':False}
+        self.assertTrue(retrieval.ordered([water],self.plan('inconnu eau potable'),5))
+
     def test_fire_title_words_are_not_an_ignition_method(self):
         candidates=[{'id':'zim:fixture/unrelated','title':'Fire We Make','excerpt':'Correspondance dans le titre ; ouvrir la source pour en vérifier le contenu.','match':'title'},
                     {'id':'zim:fixture/computer','title':'Fire in the Valley: The Making of the Personal Computer','excerpt':'','_query_complete':True},
