@@ -279,3 +279,27 @@ type/état à l’assistant. Les groupes corrigés filtrent Kiwix et les index S
 Les libellés originaux et identifiants restent inchangés ; l’export ne lit que
 les clés de la surcouche et une liste autorisée de champs. Les erreurs de lecture
 de métadonnées sont signalées sans supprimer les candidats de recherche globale.
+
+## Mesures et calibration — 0.7.0
+
+`assistant_metrics.py` conserve des mesures numériques par travail sous
+`assistant-metrics/`, sans contenu documentaire ou conversationnel. La requête
+transmet son instantané de source et ses durées préparatoires par une mémoire
+éphémère indexée par l’identifiant accepté ; le travail n’effectue pas une seconde
+lecture identique. Les mesures finales sont écrites même après erreur/annulation
+commencée. L’accès et l’export vérifient le propriétaire du travail ; la suppression
+d’une conversation enlève ses mesures. Les traces d’outils existantes restent séparées.
+
+`model_runtime.py` lit les métadonnées locales, jamais `/api/pull`. Le budget réserve
+sortie, schéma des outils et marge de format avant de compacter les messages. La
+limite native de l’architecture principale est distinguée des limites d’un éventuel
+encodeur d’image. Le contexte et placement effectivement chargés restent observés
+séparément du réglage demandé.
+
+`calibration.py` partage le verrou d’inférence avec réponses et traductions. Après
+action Famille, il calibre la taille du texte synthétique puis vérifie froid/chaud,
+volume réellement traité, mémoire et contexte alloué. Une demande normale est
+prioritaire ; pause/pression/annulation interrompent le test sans reprise forcée.
+L’application du résultat est explicite et liée au digest, à la limite native et
+au matériel observé. Les rapports privés restent sous `calibration/`, le réglage
+précédent et le dernier contexte mesuré dans `settings`, sans migration destructive.

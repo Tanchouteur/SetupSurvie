@@ -16,7 +16,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -54,13 +54,15 @@ async def lifespan(app):
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
     yield
+    await calibration.cancel(reason='service_restarted')
     for task in list(translations.ACTIVE.values()):task.cancel()
     if translations.ACTIVE:await asyncio.gather(*list(translations.ACTIVE.values()),return_exceptions=True)
     for task in list(engine.ACTIVE.values()):task.cancel()
+    engine.PENDING.clear()
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.6.0'
+VERSION='0.7.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -586,7 +588,9 @@ async def conversation(identifier:str,value=Depends(user)):
     if not item:raise HTTPException(404,'Conversation introuvable.')
     with store.connect() as db:jobs=[dict(r) for r in db.execute("SELECT id,status,mode FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(identifier,))]
     with store.connect() as db:translated=[dict(r) for r in db.execute('SELECT id,title,source_id,status,created,mode FROM translations WHERE conversation_id=? ORDER BY created DESC',(identifier,))]
-    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'translations':[r['id'] for r in translated],'translation_items':translated}
+    with store.connect() as db:recent=[dict(r) for r in db.execute('SELECT id,mode,status,created FROM jobs WHERE conversation_id=? ORDER BY created DESC LIMIT 20',(identifier,))]
+    measured=[r for r in recent if r['id'] in engine.MEASUREMENTS or assistant_metrics.path(r['id']).is_file()]
+    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'translations':[r['id'] for r in translated],'translation_items':translated,'measurement_jobs':measured}
 
 
 @app.delete('/api/conversations/{identifier}')
@@ -605,6 +609,7 @@ async def delete_conversation(identifier:str,value=Depends(user)):
         db.execute('DELETE FROM conversations WHERE id=? AND user_id=?',(identifier,value['id']))
     for job in jobs:
         (store.ROOT/'traces'/(job['id']+'.json')).unlink(missing_ok=True)
+        assistant_metrics.path(job['id']).unlink(missing_ok=True)
     return {'ok':True}
 
 
@@ -618,6 +623,7 @@ class Question(BaseModel):
 
 @app.post('/api/questions')
 async def question(body:Question,value=Depends(user)):
+    request_started=time.monotonic();reading_ms=0
     if body.mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
     state=await operations.status()
     if not state.get('online') or state.get('operation'):
@@ -626,7 +632,9 @@ async def question(body:Question,value=Depends(user)):
     if conversation_id and not store.owned_conversation(conversation_id,value['id']):raise HTTPException(404,'Conversation introuvable.')
     attached=store.conversation_source(conversation_id) if conversation_id else None
     source_id=body.source_id if 'source_id' in body.model_fields_set else (attached or {}).get('id')
-    source=await library.source(source_id) if source_id else None
+    source=None
+    if source_id:
+        started=time.monotonic();source=await library.source(source_id);reading_ms=round((time.monotonic()-started)*1000)
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         if conversation_id and not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(conversation_id,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
@@ -640,6 +648,7 @@ async def question(body:Question,value=Depends(user)):
         db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation_id,'user',body.message,time.time()))
         identifier=store.new_id();now=time.time()
         db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,value['id'],conversation_id,body.mode,'queued',now,now))
+    engine.PENDING[identifier]={'started':request_started,'preparation_ms':max(0,round((time.monotonic()-request_started)*1000)-reading_ms),'reading_ms':reading_ms,'source':source}
     engine.launch(identifier,value['id'],conversation_id,body.mode,source_id,domain=body.domain)
     return {'id':identifier,'conversation_id':conversation_id}
 
@@ -711,7 +720,16 @@ async def publish_translation(identifier:str,value=Depends(user)):
 async def job(identifier:str,value=Depends(user)):
     with store.connect() as db:row=db.execute('SELECT * FROM jobs WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone()
     if not row:raise HTTPException(404,'Demande introuvable.')
-    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{})}
+    live=engine.MEASUREMENTS.get(identifier)
+    measured=live.live() if live else assistant_metrics.read(identifier)
+    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{}),'measurements':measured}
+
+
+@app.get('/api/jobs/{identifier}/measurements')
+async def job_measurements(identifier:str,value=Depends(user)):
+    found=await job(identifier,value)
+    if not found['measurements']:raise HTTPException(404,'Mesures indisponibles pour cette ancienne réponse.')
+    return {'version':VERSION,**found['measurements']}
 
 
 @app.post('/api/jobs/{identifier}/cancel')
@@ -794,6 +812,52 @@ async def feedback_list(value=Depends(admin)):
 class ContextChoice(BaseModel):
     model:str=Field(max_length=100)
     tokens:Literal[8192,16384,32768,65536]
+
+
+class CalibrationChoice(BaseModel):
+    mode:str=Field(default='rapide',max_length=100)
+    max_context:Literal[16384,32768,65536]=32768
+    reserve_ram_gib:int=Field(default=4,ge=2,le=16)
+    reserve_video_mib:int=Field(default=512,ge=256,le=4096)
+    max_first_text_seconds:int=Field(default=90,ge=10,le=600)
+    trial_timeout_seconds:int=Field(default=600,ge=30,le=900)
+
+
+class CalibrationApply(BaseModel):
+    id:str=Field(pattern=r'^[a-f0-9]{32}$')
+
+
+class ContextModel(BaseModel):
+    model:str=Field(max_length=100)
+
+
+@app.get('/api/admin/assistant/calibration')
+async def get_calibration(value=Depends(admin)):
+    report=await asyncio.to_thread(calibration.status)
+    model=report.get('model')
+    if model in {p['model'] for p in engine.MODES.values()}:
+        report['configured_context']=engine.context_size(model)
+        with store.connect() as db:previous=db.execute('SELECT value FROM settings WHERE key=?',('context:previous:'+model,)).fetchone()
+        report['can_rollback']=bool(previous and str(previous['value']) in ('8192','16384','32768','65536') and str(previous['value'])!=str(report['configured_context']))
+    return {'version':VERSION,**report}
+
+
+@app.post('/api/admin/assistant/calibration/start',status_code=202)
+async def start_calibration(body:CalibrationChoice,value=Depends(admin)):
+    return await calibration.start(body.mode,body.max_context,reserve_ram_bytes=body.reserve_ram_gib*1024**3,reserve_video_bytes=body.reserve_video_mib*1024**2,
+        max_first_text_ms=body.max_first_text_seconds*1000,trial_timeout_seconds=body.trial_timeout_seconds)
+
+
+@app.post('/api/admin/assistant/calibration/stop')
+async def stop_calibration(value=Depends(admin)):return await calibration.cancel()
+
+
+@app.post('/api/admin/assistant/calibration/apply')
+async def apply_calibration(body:CalibrationApply,value=Depends(admin)):return await calibration.apply(body.id)
+
+
+@app.post('/api/admin/assistant/context/rollback')
+async def rollback_context(body:ContextModel,value=Depends(admin)):return await asyncio.to_thread(calibration.rollback,body.model)
 
 
 @app.get('/api/admin/context')

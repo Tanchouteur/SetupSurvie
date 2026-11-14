@@ -11,11 +11,12 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **14 novembre 2026**, le pilote **0.6.0** propose une recherche locale avec
+Au **14 novembre 2026**, le pilote **0.7.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
-noms de collections sont corrigibles et exportables. Le contexte IA est réglable par modèle.
+noms de collections sont corrigibles et exportables. Des rapports de délais et un
+essai mémoire volontaire complètent le contexte IA réglable par modèle.
 Les données existantes restent compatibles et conservées. La qualité sur le fonds
 réel, l’installation complète sur PC vierge, Safari réel et la recette complète
 hors ligne restent à qualifier ; consulter les [bilans datés](docs/essais/README.md).
@@ -27,7 +28,7 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 
 ## Commencer
 
-Le portail **0.6.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.7.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 

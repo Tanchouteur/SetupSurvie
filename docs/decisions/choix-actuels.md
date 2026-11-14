@@ -158,3 +158,10 @@ Les fichiers restent en un exemplaire, sans modification des ZIM. Les correction
 sont liées à la révision locale et exportables sans les textes. La relecture réelle
 du fonds, de ses titres et de ses procédures reste nécessaire ; livrer l’outil
 ne qualifie pas automatiquement toute la bibliothèque.
+
+La 0.7.0 ajoute les [rapports de délais et l’essai mémoire volontaire](../utilisation/mesurer-assistant-et-memoire.md).
+Le plus grand palier terminé avec les marges du scénario peut être proposé, puis
+appliqué explicitement ; aucun remplissage systématique de RAM ni reprise du mode
+jeu. La lecture associée préparée par le portail est réutilisée. Les mesures et
+budgets sont testés sur HTTP simulé ; la vitesse, le contexte stable et la qualité
+des modèles chez Marc attendent toujours R4 réel.

@@ -11,7 +11,7 @@ import tempfile
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
@@ -65,6 +65,7 @@ async def translate(text,mode):
 translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.
 def launch(identifier,*args,domain='all'):
+    engine.PENDING.pop(identifier,None)
     refs=[];answer='Réponse simulée, aucun modèle lancé.'
     if args[-1]:
         with store.connect() as db:
@@ -74,6 +75,9 @@ def launch(identifier,*args,domain='all'):
     with store.connect() as db:
         db.execute('INSERT INTO messages(conversation_id,role,content,sources,created) VALUES(?,?,?,?,?)',(args[1],'assistant',answer,json.dumps(refs),0))
     engine.update(identifier,status='done',answer=answer,sources=refs)
+    measured=assistant_metrics.Measurement(identifier,engine.MODES['rapide']['model'],'rapide',16384).finish('done')
+    measured.update(simulated=True,total_ms=6500,first_text_ms=4400,phases_ms={'queue':100,'search':120,'reading':80,'model_preparation':4100,'writing':2100})
+    durable.write_bytes(assistant_metrics.path(identifier),json.dumps(measured).encode(),private=True)
 engine.launch=launch
 base=BASE
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')

@@ -2,6 +2,8 @@
 
 - [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
+- [Mesurer les délais et la mémoire de l’assistant](utilisation/mesurer-assistant-et-memoire.md) — guide 0.7.0, rapports et essai mémoire volontaire.
+- [Mesures assistant et contexte](essais/2026-11-14-mesures-assistant-et-contexte.md) — bilan 0.7.0, validation en cours.
 - [Classer les documents et nommer les collections](utilisation/classement-et-collections.md) — guide 0.6.0, corrections communes, révisions et export.
 - [Classements et collections corrigibles](essais/2026-11-14-classement-et-collections.md) — bilan 0.6.0, CI réussie ; relecture réelle à faire.
 - [Référence de pertinence et lecture](essais/2026-11-14-reference-recherche-et-lecture.md) — bilan 0.5.0, 32 demandes, lecture redirigée et CI réussie ; fonds réel à vérifier.

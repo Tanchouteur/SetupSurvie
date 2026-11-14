@@ -136,7 +136,7 @@ function message(role,text,sources=[],profile=''){
 }
 function newConversation(){
   if(S.job){toast('Attendez la réponse ou annulez la demande avant d’ouvrir une autre conversation.');view('chat');return;}
-  rememberReading();selectReading(null);S.conversation=null;S.source=null;clearTranslation();showAssociatedSource();$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');
+  rememberReading();selectReading(null);S.conversation=null;S.source=null;clearTranslation();showAssociatedSource();$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');document.dispatchEvent(new CustomEvent('survie:new-conversation'));
 }
 async function openConversation(id){
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
@@ -325,6 +325,7 @@ function watch(id){
   clearTimeout(S.poll);S.job=id;$('cancel-job').hidden=false;$('send-question').disabled=true;const pending=message('assistant','Préparation de la réponse…');
   async function poll(){
     try{const job=await api('/jobs/'+encodeURIComponent(id));const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
+      document.dispatchEvent(new CustomEvent('survie:job',{detail:{...job,id}}));
       const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
       const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
       $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;

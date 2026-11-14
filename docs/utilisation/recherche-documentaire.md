@@ -130,6 +130,11 @@ Le [guide d’indexation](indexation-archives.md) explique la préparation du te
 
 Famille → Mon appareil → Réglages → Mémoire de l’assistant permet de régler le contexte de chaque modèle : 16k par défaut, 8k pour revenir à une petite allocation, puis 32k et 64k pour les essais. Le contexte ne charge pas toute la bibliothèque et n’augmente pas automatiquement selon la RAM disponible. Un grand contexte peut demander plus de mémoire et de temps ; comparer sur le PC cible avant de conserver le réglage. Ce réglage concerne les conversations ; la traduction par passages conserve son budget propre.
 
+Depuis 0.7.0, **Voir les durées** permet de distinguer recherche, lecture et modèle.
+L’[essai mémoire volontaire](mesurer-assistant-et-memoire.md) prépare une proposition
+par paliers, sans remplacer automatiquement le réglage courant. Il respecte la
+pause, les réserves et les demandes prioritaires ; R4 réel reste à exécuter.
+
 ## Diagnostic depuis 0.4.0
 
 Le contrôle court comporte dix recherches, dont « faire du feux » avec Toute la bibliothèque puis Autonomie et résilience, ainsi qu’un diagnostic préalable sans IA. Il distingue Kiwix joignable, catalogue en direct/en cache/ancien/indisponible et les raisons d’échec. L’ancien catalogue utilisé en repli est daté ; sa présence ne prouve pas la disponibilité de toutes les archives. Le diagnostic prépare parfois le cache : son temps est séparé des requêtes suivantes. Depuis 0.5.0, le contrôle complet étend cette recette à 32 demandes versionnées, sans prolonger obligatoirement le contrôle court.

@@ -1,6 +1,7 @@
 # Utiliser le serveur familial
 
 - [Rendre les archives recherchables](indexation-archives.md) — guide 0.4.0.
+- [Mesurer les délais et le contexte de l’assistant](mesurer-assistant-et-memoire.md) — guide 0.7.0 ; essai volontaire sur le PC cible.
 
 Guide du pilote, mis à jour le 14 novembre 2026. Les usages réels chez Marc et sur
 Safari iPhone restent à vérifier sur place.

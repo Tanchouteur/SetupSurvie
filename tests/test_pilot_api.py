@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
-from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory
+from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory,assistant_metrics,calibration
 
 
 class PilotAPITests(unittest.TestCase):
@@ -40,6 +40,30 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(len(response.json()['steps']),6)
             self.assertEqual(self.client.get('/api/conversations').status_code,200)
             launch.assert_not_called()
+
+    def test_calibration_is_explicit_family_only_and_validates_settings(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        self.assertEqual(self.client.get('/api/admin/assistant/calibration').status_code,403)
+        self.assertEqual(self.client.post('/api/admin/assistant/calibration/start',json={},headers=headers).status_code,403)
+        self.client.cookies.clear();self.login('admin')
+        with patch.object(calibration,'start',AsyncMock(return_value={'id':'a'*32,'status':'running'})) as start:
+            response=self.client.get('/api/admin/assistant/calibration');self.assertEqual(response.status_code,200);start.assert_not_called()
+            self.assertEqual(self.client.post('/api/admin/assistant/calibration/start',json={'max_context':999999},headers=headers).status_code,422)
+            self.assertEqual(self.client.post('/api/admin/assistant/calibration/start',json={'mode':'rapide','max_context':32768},headers=headers).status_code,202)
+            self.assertEqual(start.await_args.kwargs['reserve_ram_bytes'],4*1024**3)
+            self.assertEqual(start.await_args.kwargs['reserve_video_bytes'],512*1024**2)
+
+    def test_measurements_export_requires_job_owner_and_excludes_conversation(self):
+        self.login('alice')
+        with store.connect() as db:
+            db.execute('INSERT INTO conversations VALUES(?,?,?,?)',('measure-c','alice','Private title',0))
+            db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',('measure-job','alice','measure-c','rapide','done',0,0))
+        measured=assistant_metrics.Measurement('measure-job','fixture','rapide',16384);measured.finish('done')
+        response=self.client.get('/api/jobs/measure-job/measurements')
+        self.assertEqual(response.status_code,200);self.assertEqual(response.json()['version'],gateway.VERSION)
+        self.assertNotIn('Private title',response.text);self.assertNotIn('alice',response.text);self.assertNotIn('sources',response.json())
+        self.client.cookies.clear();self.login('bob')
+        self.assertEqual(self.client.get('/api/jobs/measure-job/measurements').status_code,404)
 
     def test_metadata_edits_require_family_revision_and_preserve_original_files(self):
         self.login('alice');headers={'Origin':'http://testserver'}

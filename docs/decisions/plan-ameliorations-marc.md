@@ -60,7 +60,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, recette réelle R1 attendue |
 | L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence de 32 demandes, vocabulaire et lecture redirigée 0.5.0 ; R2 réel attendu |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
-| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | À compléter |
+| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | À développer |
@@ -183,6 +183,13 @@ par la seule livraison de ces commandes.
 **Fin technique :** orchestration et budgets testés sans LLM réel dans le runner,
 rapport matériel **R4** disponible ; recommandations automatiques de grande
 allocation activées seulement après mesure correspondante sur le PC cible.
+
+**Implémenté en 0.7.0 :** mesures séparées, export sans contenu privé, lecture associée
+réutilisée, outils inclus dans le budget, limite native, essais synthétiques
+froid/chaud avec marges et volume réellement traité. Le résultat reste une
+proposition à appliquer explicitement, avec retour au réglage précédent. Le
+[guide actuel](../utilisation/mesurer-assistant-et-memoire.md) donne R4 ; les performances
+et la qualité réelles restent à mesurer chez Marc avant de recommander une allocation.
 
 ### L5 — Lecture traduite et livres de 500 pages
 

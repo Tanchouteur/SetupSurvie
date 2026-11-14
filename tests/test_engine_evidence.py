@@ -3,12 +3,13 @@ import asyncio
 import json
 from pathlib import Path
 import tempfile
+import time
 import unittest
 from unittest.mock import AsyncMock,patch
 
 import httpx
 from fastapi import HTTPException
-from pilot import engine,library,store
+from pilot import engine,library,store,assistant_metrics
 
 POLICY=Path(__file__).resolve().parents[1]/'deploy/assistant-system.fr.txt'
 
@@ -25,9 +26,14 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done'):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072):
         payloads=[];client_class=httpx.AsyncClient
         def handler(request):
+            if request.url.path=='/api/version':return httpx.Response(200,json={'version':'0.12.0'})
+            if request.url.path=='/api/tags':return httpx.Response(200,json={'models':[{'name':engine.MODES['rapide']['model'],'digest':'a'*64}]})
+            if request.url.path=='/api/show':return httpx.Response(200,json={'model_info':{'fixture.context_length':native_context}})
+            if request.url.path=='/api/ps':return httpx.Response(200,json={'models':[]})
+            if failure:return httpx.Response(500,json={'error':'Fixture error with private path /not-for-export'})
             payloads.append(json.loads(request.content))
             self.assertLessEqual(len(payloads),len(messages))
             event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
@@ -57,6 +63,36 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(answer['sources'][0]['document_date'],'2010')
         self.assertEqual(len(answer['sources']),1)
         self.assertIn('Je ne sais pas',payloads[0]['messages'][0]['content'])
+
+    def test_measurements_have_no_question_answer_source_text_or_private_reasoning(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Question privée spéciale' WHERE conversation_id='c'")
+        self.run_chat([{'content':'Réponse privée spéciale','thinking':'Raisonnement privé spécial'}])
+        measured=assistant_metrics.read('j');raw=json.dumps(measured,ensure_ascii=False)
+        for word in ('Question privée','Réponse privée','Raisonnement privé','/not-for-export'):self.assertNotIn(word,raw)
+        self.assertEqual(measured['status'],'done');self.assertIsNotNone(measured['first_text_ms'])
+        self.assertGreater(measured['budgets'][0]['tool_estimate'],0)
+        allocation=measured['budgets'][0]
+        self.assertLessEqual(allocation['input_estimate']+allocation['output']+allocation['template_reserve'],allocation['context'])
+
+    def test_failed_model_call_still_persists_sanitized_metrics(self):
+        self.run_chat([],failure=True,expected_status='failed')
+        measured=assistant_metrics.read('j')
+        self.assertEqual(measured['status'],'failed');self.assertEqual(measured['engine_http_status'],500)
+        self.assertEqual(measured['failure'],'engine_http_error');self.assertNotIn('/not-for-export',json.dumps(measured))
+
+    def test_context_uses_native_limit_and_records_the_reduction(self):
+        with store.connect() as db:db.execute('INSERT INTO settings VALUES(?,?)',('context:'+engine.MODES['rapide']['model'],'65536'))
+        payloads,_=self.run_chat([{'content':'Réponse fictive.'}],native_context=16384)
+        self.assertEqual(payloads[0]['options']['num_ctx'],16384)
+        measured=assistant_metrics.read('j');self.assertTrue(measured['context_limited']);self.assertEqual(measured['requested_context'],65536)
+
+    def test_attached_source_prepared_by_request_is_not_fetched_again(self):
+        engine.PENDING['j']={'started':time.monotonic()-.05,'preparation_ms':10,'reading_ms':40,'source':self.a}
+        def forbidden(identifier):raise AssertionError('The already read source must be reused.')
+        _,answer=self.run_chat([{'content':'Notice consultée [1].'}],attached=self.a['id'],read=forbidden)
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+        measured=assistant_metrics.read('j');self.assertEqual(measured['phases_ms']['reading'],40);self.assertEqual(measured['cache_hits']['read'],1)
+        self.assertNotIn('j',engine.PENDING)
 
     def test_failed_archive_search_coverage_reaches_model_even_without_results(self):
         found=library.SearchResults([],{'status':'unavailable','warning':'Recherche incomplète'})
