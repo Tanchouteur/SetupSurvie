@@ -2,7 +2,7 @@
 
 - [Sous-titres français pour chaque vidéo](essais/protocole-sous-titres-videos.md) — précision du plan L6, inventaire et contrôles réels à réaliser.
 - [Vérifier l’usage hors ligne](utilisation/verifier-usage-hors-ligne.md) — contrôle R7 depuis le site, mesures sans IA et étapes humaines séparées.
-- [Contrôle d’usage hors ligne](essais/2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable ; validation en cours.
+- [Contrôle d’usage hors ligne](essais/2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable et CI réussie ; usage physique à vérifier.
 - [Journal depuis la 0.2.0](essais/journal-recherche-depuis-020.md) — suivi des différences, décisions, preuves et validations restantes pour le résumé final.
 - [Rapports réels 0.9.3](essais/2026-11-14-rapports-recherche-093.md) — indexation réussie, recherches encore partielles et comparatif IA interrompu.
 - [Corrections après les rapports 0.9.3](essais/2026-11-14-corrections-rapports-093.md) — 0.9.4, ordonnanceur, précision et contexte ; CI réussie, nouveau contrôle réel attendu.

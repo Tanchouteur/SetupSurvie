@@ -24,6 +24,7 @@ corrections et la CI finales de chaque lot. Toutes ces livraisons sont sur `main
 | 0.9.2 · `8427aad0` | Vérification du lecteur dans son Python isolé, causes d’erreur catégorielles, correction du pool Windows et d’une recherche déclenchée trois fois au chargement | [Bilan](2026-11-14-indexation-isolee.md), 478 tests et CI dont Python Windows 3.11 à 3.14 ; erreurs de fixture UTF-8/création ZIM distinguées du défaut de lancement réel reproduit |
 | 0.9.3 · `faaa6f16` | Exclusions entre indexation, sauvegarde et mise à jour ; verrous par archive pour les processus restants ; conservation des verrous et des index au retour arrière | [Bilan](2026-11-14-index-sauvegarde-et-retour-arriere.md), 486 tests et CI ; un chemin temporaire Windows du test a été corrigé ; première mise à jour depuis une ancienne version à faire après pause effective |
 | 0.9.4 · `c70aabc` | Priorités entre langues et collections pratiques, isolement des grosses archives, replis anticipés, annulation des requêtes sans lecteur, filtrage des faux candidats et contexte des outils allégé | [Bilan](2026-11-14-corrections-rapports-093.md), 495 tests et huit tâches de CI réussies ; filtre corrigé après un refus trop strict sur le Kiwix réel synthétique ; nouveau R2 et relecture humaine attendus chez Marc |
+| 0.10.0 · `85aeeb6` | Contrôle R7 guidé depuis le site : lectures sans IA, observations par profil/version et export distinct, arrêt et conservation des mesures reçues ; préparation de la validation hors ligne | [Bilan](2026-11-14-recette-usage-hors-ligne.md), 495 tests et huit tâches de CI réussies, 32 vérifications par navigateur ; scénario de changement de profil corrigé ; coupure Internet et usage physique non déduits des fixtures |
 
 Les nombres de tests incluent trois tests ignorés sous Linux ; les bilans
 précisent les plateformes réellement essayées. Aucun de ces nombres ne mesure
@@ -39,7 +40,7 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
 - Après les corrections prioritaires 0.9.4, le brouillon R7 est repris en 0.10.0 :
   [contrôle d’usage exportable](2026-11-14-recette-usage-hors-ligne.md), lectures
   bornées, observations par profil/version et absence de reprise automatique.
-  Validation de livraison en cours ; aucune recette physique chez Marc n’en est déduite.
+  Livré avec CI réussie ; aucune recette physique chez Marc n’en est déduite.
 
 ## Décisions conservées ou reportées
 
@@ -63,6 +64,25 @@ doit être validée pour chaque vidéo : le [protocole R6 cible](protocole-sous-
 exige un inventaire et un état par média, contrôles de lecture/synchronisation
 hors ligne, relecture humaine à portée explicite et exceptions visibles. Ce
 complément ne déclare pas l’outillage vidéo ou ces validations déjà réalisés.
+
+## Pour clore la première version fiable de la recherche
+
+L’outillage livré et les tests de développement ne clôturent pas l’objectif.
+Le rapport R1 réel 0.9.3 confirme la terminaison des index ; le R2 de cette même
+version garde 31 recherches partielles sur 32, sans avis humain. Il manque un
+nouveau contrôle complet après les corrections 0.9.4 (également incluses dans
+0.10.0), sa comparaison aux anciens délais/couvertures et l’ouverture humaine
+des résultats prioritaires feu, eau, générateur et vélo. Toute anomalie reproduite
+doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
+une erreur d’accès en absence de source.
+
+Le contrôle R7 prépare la lecture/navigation sans IA et sans Internet ; son
+exécution physique reste à faire sur le PC cible. La qualité réelle, l’accès aux
+originaux et la conservation des données ne sont pas déduits de ses réponses
+simulées. Les choix de grande allocation mémoire et d’aide IA restent limités
+aux mesures disponibles, sans activation par défaut faute de gain démontré.
+Les lots de traduction et de vidéos restent dans le plan global, avec leur
+propre validation ; le présent objectif n’en revendique pas la livraison.
 
 ## Règle de mise à jour
 

@@ -1,6 +1,6 @@
 # Contrôle d’usage hors ligne depuis le portail
 
-**Bilan en cours — 0.10.0, 14 novembre 2026.** Suite de L9 et du rapport R7 du
+**Bilan daté — 0.10.0, 14 novembre 2026.** Suite de L9 et du rapport R7 du
 [plan de fiabilisation](../decisions/plan-ameliorations-marc.md), distincte des
 corrections de classement et d’ordonnancement de la 0.9.4. Le
 [guide actuel](../utilisation/verifier-usage-hors-ligne.md) décrit l’usage.
@@ -44,7 +44,7 @@ Une mémoire navigateur indisponible préserve l’export et affiche la limite.
 La recette navigateur couvre 32 assertions : lectures locales seulement,
 absence de commandes de préparation/inférence, source indisponible, recherche
 partielle, contrôleur absent, arrêt et reçu incomplet, nouvel essai, brouillons,
-changement de profil pendant une demande bloquée, mémoire indisponible, changement
+perte du profil pendant une demande bloquée, mémoire indisponible, changement
 de version au début/à la fin et limites de quinze/quatre-vingt-dix secondes.
 Les horloges de ces deux derniers essais sont simulées ; les requêtes retardées
 appartiennent à la fixture et ne bloquent aucun service réel.
@@ -55,7 +55,11 @@ Chromium via le MCP Playwright réussit ces 32 assertions, avec largeurs 1366,
 navigateur complet local ne trouve pas son Chromium ; le WebKit local manque
 de bibliothèques système. Ces essais ne sont pas comptés comme exécutés : la CI
 Ubuntu prévue avec les dépendances navigateur doit les prendre en charge.
-Résultat de CI à consigner avant publication sur main.
+La [CI sur `151d8dc`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43634019778)
+termine ses huit tâches sans échec : Windows, Linux, lecteurs isolés Windows
+Python 3.11/3.13/3.14, Kiwix synthétique réel, OSRM synthétique et navigateurs.
+Chacun des navigateurs Chromium et WebKit réussit les 32 assertions d’usage,
+ainsi que les 48 vérifications de recherche et les 18 de ses outils existants.
 
 Le premier passage CI réussit sept tâches sur huit, mais interrompt la recette
 navigateur au rechargement après un changement de profil. Le test cumulait une
@@ -63,8 +67,9 @@ sélection par API et un rechargement forcé alors que le portail peut déjà
 recharger un onglet périmé. La recette utilise maintenant le choix de profil de
 l’interface pour les essais d’isolation. Une perte de profil simulée pendant un
 appel bloqué garde un contrôle séparé de l’annulation et de la réponse tardive.
-Ces 32 assertions repassent ensuite dans Chromium via le MCP ; la nouvelle CI
-reste à consigner.
+Ces 32 assertions repassent ensuite dans Chromium via le MCP, puis dans les deux
+navigateurs de la CI ci-dessus. Aucun changement produit n’est requis pour
+corriger cette course du scénario.
 Aucun modèle, gros corpus, panne provoquée sur installation réelle ou coupure
 physique d’Internet n’est utilisé. WebKit ne vaut pas Safari sur iPhone physique.
 

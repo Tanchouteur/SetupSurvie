@@ -1,7 +1,7 @@
 # Essais et résultats
 
 - [Sous-titres français pour chaque vidéo](protocole-sous-titres-videos.md) — protocole R6 cible, récupération/création et validations à développer.
-- [Contrôle d’usage hors ligne](2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable ; validation en cours.
+- [Contrôle d’usage hors ligne](2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable et CI réussie ; usage physique à vérifier.
 - [Journal depuis la 0.2.0](journal-recherche-depuis-020.md) — suivi actuel pour le résumé final.
 - [Rapports réels 0.9.3](2026-11-14-rapports-recherche-093.md) — réception et faits, sans confondre index prêt et recherche complète.
 - [Corrections après les rapports 0.9.3](2026-11-14-corrections-rapports-093.md) — 0.9.4, priorité des appels et volume des réponses ; CI réussie, nouveau contrôle réel attendu.
