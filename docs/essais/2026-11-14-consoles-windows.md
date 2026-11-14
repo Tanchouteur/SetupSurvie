@@ -81,3 +81,17 @@ La suite intégrée avant changement du seul numéro de version exécute 365 tes
 compris les nouveaux cas refus du GUI sans enregistrement et limitation des
 relances. La réparation Docker et sa sauvegarde froide sont détaillées dans
 WIN-019. La cause initiale de perte du registre reste indéterminée.
+
+Le déploiement réel en 0.2.0 est terminé : 626 fichiers logiciels vérifiés,
+127 fichiers d’instantané privé contrôlés et anciens enregistrements conservés.
+Le plan documentaire ne contient aucun ajout restant (181/181). Les tailles des
+modèles, ZIM et cartes, les reçus, réglages et préférences de reprise sont
+inchangés. L’API de santé répond en 0.2.0 sans fonction dégradée ; les 102 guides
+sont indexés. La lecture réelle d’une page PDF, les deux fonds de carte et les
+mesures GPU natives sont vérifiés, sans lancer d’inférence.
+
+Les trois tâches automatiques utilisent `pythonw.exe` et leur dernier résultat
+est zéro. La recherche globale retrouve des sources mais annonce une couverture
+partielle selon le budget et les index disponibles ; cela ne valide pas toutes
+les collections. Le défaut de routage décrit plus haut reste ouvert. Aucun
+redémarrage complet du PC ni essai client Wi-Fi supplémentaire n’est effectué.
