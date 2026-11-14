@@ -1,6 +1,6 @@
 # Comparatif facultatif de recherche avec le modèle local
 
-**Bilan en cours — 0.8.0, 14 novembre 2026.** Lot L8 du
+**Bilan daté — 0.8.0, 14 novembre 2026.** Lot L8 du
 [plan des améliorations de Marc](../decisions/plan-ameliorations-marc.md).
 
 L’outil prépare un comparatif reproductible chez Marc, sans modifier le chemin
@@ -27,6 +27,10 @@ Le [guide actuel](../utilisation/comparer-recherche-ia.md) précise la recette,
 les biais des caches, les données exportées et les critères de décision.
 
 La version mineure 0.8.0 ajoute une expérimentation compatible et des rapports ;
-le schéma existant et les images tierces restent inchangés. Les validations finales
-et le nombre de tests seront consignés après la CI. La qualité, le temps et le
+le schéma existant et les images tierces restent inchangés. La
+[CI du code 5450f17](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43614574719)
+est réussie : **447 tests Python, dont trois ignorés**, contrôles Windows,
+Kiwix sur petites archives et routage synthétique. Chromium et WebKit passent
+chacun les **15 nouveaux contrôles** : départ explicite, arrêt, relecture,
+conservation, export et disposition de 320 à 1 366 pixels. La qualité, le temps et le
 coût mémoire réels chez Marc ne sont pas validés ; le rapport R2/R4 reste attendu.

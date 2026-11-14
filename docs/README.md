@@ -1,7 +1,7 @@
 # Documentation SetupSurvie
 
 - [Comparer une aide IA à la recherche](utilisation/comparer-recherche-ia.md) — guide 0.8.0, essai volontaire et avis humains.
-- [Comparatif de recherche IA](essais/2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0, validation en cours.
+- [Comparatif de recherche IA](essais/2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0, CI réussie ; mesure réelle attendue.
 
 - [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
