@@ -1,6 +1,6 @@
 # Rapports 0.12.0 et suite du moteur de recherche
 
-**Bilan de développement 0.13.0 — 14 novembre 2026, CI à confirmer.** Les deux exports transmis par Louis
+**Bilan de développement 0.13.0 — 14 novembre 2026, CI réussie.** Les deux exports transmis par Louis
 à 21:42/21:43 UTC restent dans les pièces jointes privées. Aucun corpus volumineux
 n’est copié dans le runner ; ses environ 8,7 Go libres demandent des fixtures
 minuscules. Cette contrainte de test n’est pas une limitation du produit cible.
@@ -102,7 +102,7 @@ empêcher une recherche. Voir le [guide de référence](../exploitation/cache-et
   traitement ; aucune modification de sa configuration n’est nécessaire.
 - **19 tests d’installation ciblés réussis** après ajout du budget cache ; Compose
   Windows, Linux CPU et Linux GPU acceptent la valeur de 8 Go. Aucune installation
-  système réelle n’est lancée. La CI Windows et navigateur reste à confirmer.
+  système réelle n’est lancée. La CI Windows et navigateur est confirmée dans la validation finale ci-dessous.
 
 Les médias, corpus et réponses des fixtures sont fictifs. Aucun modèle, ZIM du
 fonds ou vidéo YouTube n’est téléchargé ; les environnements natifs temporaires
@@ -111,7 +111,8 @@ WebKit dépend de la CI ; un test réel Safari iPhone n’a pas été exécuté.
 
 ## Livraison et limites restantes
 
-CI, intégration main et audit du paquet : à compléter après exécution.
+Le code `a8efbdc` et son paquet CI sont validés ; voir la validation finale ci-dessous.
+La livraison est destinée à main. Aucun déploiement sur les PC n’est effectué par cet essai.
 Le prochain R2 doit mesurer le fonds réel à froid puis à chaud, la couverture et
 les appels réutilisés, puis ouvrir feu/eau/générateur/vélo et quelques sujets de
 culture. Les avis humains sont nécessaires pour qualifier l’utilité. Le rapport
@@ -179,3 +180,31 @@ Après ajout des fermetures de fixtures, les contrôles Windows ont tous réussi
 lecture déjà terminée, non une perte du document. Les verrous explicites ci-dessus
 remplacent les délais de scénario ; les 18 contrôles Chromium réussissent à nouveau.
 La CI finale doit confirmer aussi WebKit, avec les mêmes assertions d’usage.
+
+## Validation finale de la livraison
+
+Le code **`a8efbdc`** réussit les **huit jobs de CI** : Linux, contrôles Windows,
+Kiwix natif et 135 archives générées, lecteur isolé Python 3.11/3.13/3.14,
+routage synthétique et navigateurs. La
+[campagne complète](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43652127671)
+confirme **452 assertions comptées dans les recettes ciblées par navigateur**,
+sur Chromium et WebKit, dont recherche 50, flux 18 et paramètres 175. La campagne
+locale finale réussit 521 tests, trois ignorés. Ces contrôles ne remplacent pas
+Windows chez Marc, la lecture humaine des articles ou Safari iPhone réel.
+
+Le paquet issu de cette CI a été téléchargé et déballé avec le lecteur existant :
+**729 fichiers acceptés**, version **0.13.0**, schéma privé **1**, taille compressée
+**6 580 875 octets**. Tous les fichiers sont comparés octet par octet au commit
+`a8efbdc`, pas seulement les modules principaux. Les nouveaux modules, scripts,
+recettes et guides sont inclus ; aucun ZIM, modèle, cache SQLite ou média vidéo.
+Empreinte du paquet CI audité :
+`d95dbe12d41bf04c8ff56f84efde9b27047809a5cd65a9a5dd56bad164a332d5`.
+Les compléments ultérieurs concernent seulement ce bilan et ses renvois ; aucun
+code n’est modifié pour rédiger le résultat. La procédure normale de mise à jour
+reste la référence, avec sauvegarde et conservation des index existants.
+
+**Objectif réel encore à vérifier :** nouveau rapport R2 sur les 755 Go de Marc,
+délais de première réception/fin, couverture à froid et à chaud, ouverture et avis
+sur les sources prioritaires. Les valeurs 0.12.0 décrivent le défaut initial ;
+les petits ZIM valident les mécanismes corrigés sans prédire ce gain matériel.
+La suite vidéos/traduction reste étudiée, avec inventaire et traitements à développer.

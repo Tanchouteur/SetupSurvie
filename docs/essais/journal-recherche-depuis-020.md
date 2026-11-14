@@ -91,11 +91,12 @@ et coordination des fichiers partagés. Cette consigne actualise l’attente ini
 ## Pour clore la première version fiable de la recherche
 
 L’outillage livré et les tests de développement ne clôturent pas l’objectif.
-Le rapport R1 réel 0.9.3 confirme la terminaison des index. Le nouveau R2 0.10.0
-garde 31 recherches partielles sur 32, sans avis humain ; la comparaison révèle
-une médiane de 12,3 s contre 6,4 s. Il faut préparer les compléments rendus
-nécessaires par les langues incompatibles, comparer le prochain R2 détaillé et
-ouvrir humainement les résultats prioritaires feu, eau, générateur et vélo. Toute anomalie reproduite
+Le rapport R1 réel 0.12.0 confirme les 135 archives examinées et les 15 compléments
+locaux prêts, dont les archives multilingues. Son R2 reste partiel dans les 32 cas,
+avec 31 échéances atteintes et une médiane de 12,586 s. Le prochain R2 doit mesurer
+la correction progressive et le cache 0.13.0, sans refaire toute l’extraction pour
+ce seul changement. Il faut encore ouvrir humainement les résultats prioritaires
+feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
 une erreur d’accès en absence de source.
 
@@ -155,3 +156,10 @@ Des tests bloquent volontairement le thread pour vérifier la fin correcte.
 Les durées des premières réponses restent celles de la réception, y compris
 lorsque plusieurs paquets arrivent ensemble. Voir le même bilan pour les preuves
 et les écarts entre première campagne et correction finale.
+
+La [CI finale 0.13.0](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43652127671)
+réussit les huit jobs sur `a8efbdc` : Windows, Linux, archives, lecteurs isolés,
+routage et navigateurs. Les recettes ciblées comptent 452 assertions par navigateur,
+dont recherche 50, flux 18 et paramètres 175 ; la campagne locale termine à 521 tests,
+trois ignorés. Les 729 fichiers du paquet CI sont déballés et comparés au commit.
+Le nouveau R2 réel et les avis humains restent nécessaires pour fermer l’objectif.

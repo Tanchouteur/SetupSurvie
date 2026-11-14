@@ -1,5 +1,9 @@
 # Index multilingues et rapport de recherche détaillé
 
+**Suite reçue :** les [rapports réels 0.12.0](2026-11-14-recherche-0120-et-travail-nocturne.md)
+confirment les 15 compléments locaux prêts et l’absence des anciens HTTP 400.
+Les résultats et attentes ci-dessous restent ceux de la livraison 0.11.1.
+
 **Bilan daté — correction compatible 0.11.1, 14 novembre 2026.** Répond au
 [rapport réel 0.10.0](2026-11-14-rapport-recherche-0100.md) et à la demande d’un
 contrôle plus bavard. La base reprend les cartes 0.11.0 intégrées sur main,
