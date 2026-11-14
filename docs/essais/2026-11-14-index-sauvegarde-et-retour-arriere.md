@@ -1,6 +1,6 @@
 # Conserver les index pendant la maintenance
 
-**Bilan en cours — version corrective 0.9.3, 14 novembre 2026.** Suite L1/L9 de
+**Bilan daté — version corrective 0.9.3, 14 novembre 2026.** Suite L1/L9 de
 la fiabilisation du moteur. Ce travail ne résout ni ne reconstitue l’incident
 des 135 archives de Marc, dont le rapport R1 reste attendu.
 
@@ -57,7 +57,17 @@ l’index précédent. Un autre test bloque une tâche déjà enregistrée penda
 maintenance. L’interruption d’une sauvegarde libère aussi ses verrous et ne la
 présente pas comme terminée. Aucun processus utilisateur ou service réel n’est tué.
 
-Suite complète, CI Windows/Linux et navigation à consigner avant publication.
+Les 486 tests locaux passent, dont trois ignorés. La
+[CI du code livré](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43625480527)
+sur `a77699c` réussit ses huit travaux : Linux, Windows Python 3.12, lecteur isolé
+Windows 3.11/3.13/3.14, Kiwix réel synthétique, calcul de trajet synthétique et
+interface Chromium/WebKit. Chaque navigateur passe 48 contrôles de recherche et
+18 de préparation/indexation. `git diff --check`, 276 liens locaux et leurs
+ancres sont vérifiés sur les documents modifiés.
+La première recette Windows a détecté une comparaison du chemin temporaire court
+avec son équivalent canonique dans le nouveau test de retour arrière. Les chemins
+de la fixture sont désormais résolus comme ceux de l’installation ; aucun défaut
+du verrou ou de la copie n’est déduit de cet échec d’instrumentation.
 Les services de restauration sont simulés ; l’essai SQLite n’est ni une
 réinstallation de Windows ni une copie autonome de tout le serveur. Les formats,
 versions tierces et schémas de données sont inchangés : le niveau correctif `z`

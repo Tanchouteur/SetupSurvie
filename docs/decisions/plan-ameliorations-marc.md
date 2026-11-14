@@ -7,7 +7,7 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
 | Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports 0.2.0 puis 0.8.0 reçus le 14 novembre ; échecs réels à corriger et relecture humaine encore attendue |
-| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Index manuel 0.3.0 et préparation automatique 0.4.0 ; création sur le fonds de Marc non exécutée |
+| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Manuel 0.3.0, automatique 0.4.0, lecteur isolé corrigé 0.9.2 et maintenance 0.9.3 ; tentative réelle en erreur, rapport R1 attendu |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
@@ -16,7 +16,7 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Accès au moteur existant livré ; lecture traduite intégrée Kiwix/PDF à développer |
 | Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | À développer et qualifier sur les archives réelles |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
-| Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Libellé clarifié ; contenu guidé à construire et relire |
+| Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |
 | Maison de Solliès-Ville | Équipements réels, notices, entretien ; stocks éventuels | Reporté, IDEE-001 |
 
 ## Choix retenus et pistes écartées
@@ -58,15 +58,15 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
-| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, recette réelle R1 attendue |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence de 32 demandes, vocabulaire et lecture redirigée 0.5.0 ; R2 réel attendu |
+| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, lecteur isolé Windows corrigé 0.9.2, exclusions de maintenance 0.9.3 ; incident réel R1 à diagnostiquer |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence 32 cas et lecture 0.5.0 ; budgets, concurrence et replis corrigés 0.9.1, relance au chargement 0.9.2 ; nouveau R2 attendu |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
-| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | À réaliser progressivement |
+| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot et conservation des index 0.9.3 ; scénario/export R7 et recette réelle intégrée encore à faire |
 
 ### L1 — Installation, téléchargements et indexation automatique
 

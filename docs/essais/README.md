@@ -1,6 +1,6 @@
 # Essais et résultats
 
-- [Conservation des index pendant la maintenance](2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, sauvegarde et écrivains restants ; validation en cours.
+- [Conservation des index pendant la maintenance](2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI Windows/Linux et navigateurs réussie ; fonds et matériel réels distincts.
 
 - [Contrôle de l’indexation isolée](2026-11-14-indexation-isolee.md) — 0.9.2, CI et environnements isolés Windows/Linux réussis ; diagnostic réel de Marc encore attendu.
 
