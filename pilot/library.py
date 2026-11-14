@@ -327,7 +327,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 # This pinned Kiwix version does not parse Boolean OR reliably.
                 # Gather shorter literal queries for a second pass, after every
                 # archive has had its primary query and title lookup.
-                if not tree.findall('./channel/item') and pattern_override is None and query_plan and len(query_plan.words)>1:
+                if not tree.findall('./channel/item') and pattern_override is None and query_plan and (len(query_plan.words)>1 or query_plan.action):
                     refinements.append((batch,lang))
             done.update(entry[0] for entry in batch)
             for position,item in enumerate(tree.findall('./channel/item')):
