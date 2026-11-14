@@ -29,6 +29,15 @@ class LibraryMonitorTests(unittest.TestCase):
 
     def result(self):return monitor.snapshot(self.root,self.work)
 
+    def test_index_activity_tracks_live_child_and_does_not_report_it_as_download(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'index','phase':'downloading','pid':101,'identity':{'path':'old','created':'0'},'index_pid':202,'index_identity':self.identity})
+        self.write(self.root/'state/pilot/archive-index/progress.json',{'archives':3,'completed':2,'articles':40,'results':[{'error':'SECRET'}]})
+        value=self.result();self.assertEqual(value['phase'],'indexing');self.assertTrue(value['worker_alive']);self.assertEqual(value['index_progress']['articles'],40)
+        self.assertNotIn('SECRET',json.dumps(value))
+        self.write(self.work/'library-web/state.json',{'id':'b'*32,'action':'index-prepare','phase':'downloading','pid':202,'identity':self.identity})
+        self.assertEqual(self.result()['phase'],'index_preparation')
+
     def test_shared_size_reads_a_tiny_file_while_its_writer_is_open(self):
         path=self.root/'tiny.part'
         with path.open('wb') as writer:

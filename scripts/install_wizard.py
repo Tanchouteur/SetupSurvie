@@ -108,7 +108,7 @@ def source_records(kit):
         return [(entry, path) for entry, path in entries
                 if entry['path'].startswith(('app/', 'payload/'))], manifest
     from pilot_update import FOLDERS, FILES
-    paths = [p for name in (*FOLDERS, 'vendor/discovery')
+    paths = [p for name in (*FOLDERS, 'vendor/discovery','vendor/search-index')
              for p in (setup.ROOT/name).rglob('*')
              if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix != '.pyc']
     install_files = (*FILES, 'Installer-SetupSurvie.cmd', 'Mettre-a-jour-SetupSurvie.cmd', '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd')
@@ -192,6 +192,11 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
                 copy_checked(source, target, entry)
                 if number % 100 == 0 or number == len(targets):
                     print(f'Copie contrôlée : {number}/{len(targets)} fichiers', flush=True)
+            if kit:
+                import search_index_queue
+                for entry,source,target in targets:
+                    if entry['path'].startswith('payload/library/zim/'):
+                        search_index_queue.enqueue(data,{'path':entry['path'].removeprefix('payload/'),'sha256':entry['sha256']})
             durable.sync_tree(application,sync_files=False)
             if data.exists():durable.sync_tree(data,sync_files=False)
             state['status'] = 'configuring'

@@ -211,7 +211,10 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
                     if stopped():raise DownloadPaused()
                     repair_tls(item['url'])
                     state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
-                with metadata:record_download(root,item,state)
+                with metadata:
+                    record_download(root,item,state)
+                    import search_index_queue
+                    search_index_queue.enqueue(root,item)
                 return {'id':item['id'],'status':state}
             except DownloadPaused:
                 stop.set();raise

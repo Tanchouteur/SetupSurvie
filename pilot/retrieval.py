@@ -113,6 +113,16 @@ def rank(item,query,position=0):
     return score
 
 
+def match_quality(item,query):
+    title=set(normal(item.get('title','')).split())
+    text=set(normal(item.get('excerpt','')+' '+item.get('_text','')).split())
+    title_hits=sum(any(term<=title for term in group) for group in query.token_groups)
+    text_hits=sum(any(term<=text for term in group) for group in query.token_groups)
+    if title_hits==len(query.groups) and title_hits:return 'subject'
+    if text_hits:return 'mention'
+    return 'uncertain'
+
+
 def ordered(items,query,limit):
     ranked=sorted(enumerate(items),key=lambda pair:(-rank(pair[1],query,pair[0]),pair[1].get('id','')))
     result=[];seen=set();parents={}
@@ -121,6 +131,7 @@ def ordered(items,query,limit):
         if item['id'] in seen:continue
         seen.add(item['id'])
         clean={k:v for k,v in item.items() if not k.startswith('_')}
+        clean['match_quality']=match_quality(item,query)
         parent=item['id'].split('#page=')[0]
         if '/appropedia' in item['id'] or item['id'].startswith('zim:appropedia'):
             parent=re.sub(r'/(?:[a-z]{2,3}(?:-[a-z]+)?)$','',parent)

@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import sys
 import time
+import subprocess
 
 import setup
 from pilot import durable
@@ -110,6 +111,10 @@ def export_lab(destination,english=True):
         copy(setup.ROOT/name,'app/'+name)
     for path in sorted((lab.MOUNT/'tools/discovery-wheels').iterdir()):
         if path.is_file():copy(path,'app/vendor/discovery/'+path.name)
+    index_wheels=data/'tools/search-index-wheels'
+    if index_wheels.is_dir():
+        for path in sorted(index_wheels.iterdir()):
+            if path.is_file() and not path.is_symlink() and path.suffix in ('.whl','.json'):copy(path,'app/vendor/search-index/'+path.name)
     setup.write_json(dest/'manifest.json',{'schema':1,'kind':'SetupSurvie public pilot kit','files':records,
         'models':sorted({p['model'] for p in profiles}),'english_wikipedia':english,
         'notice':'Aucun compte, secret, historique ni certificat privé du PC source. Python, Docker Desktop, Ollama et pilote NVIDIA requis sur Windows.'})
@@ -150,8 +155,19 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
         if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
+    import search_index_queue
+    for entry,path in entries:
+        if entry['path'].startswith('payload/library/zim/'):
+            target=data/Path(entry['path']).relative_to('payload')
+            if setup.file_hash(target)!=entry['sha256']:raise setup.SetupError('Copie de l’archive non conforme ; indexation non lancée.')
+            search_index_queue.enqueue(data,{'path':entry['path'].removeprefix('payload/'),'sha256':entry['sha256']})
     durable.sync_tree(application);durable.sync_tree(data)
-    app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True);app.up(c);app.verify(c)
+    app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True)
+    import search_index_tools
+    try:
+        if not search_index_tools.prepare(app,c,offline=True):print('Indexation complémentaire : outil absent du kit, préparation nécessaire dans les réglages.')
+    except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):print('Outil d’indexation incompatible ou incomplet ; les autres documents restent disponibles. Réessayez dans les réglages.')
+    app.up(c);app.verify(c)
     app.install_windows_shortcuts(c,startup=startup)
     app.addresses(c)
     print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
@@ -178,6 +194,14 @@ def refresh_app(root):
         relative='app/vendor/discovery/'+source.name;dest=root/relative;dest.parent.mkdir(parents=True,exist_ok=True)
         if source.resolve()!=dest.resolve():shutil.copyfile(source,dest)
         records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
+    index_wheels=Path(os.environ.get('SURVIE_INDEX_WHEELS',setup.ROOT/'vendor/search-index'))
+    if not index_wheels.is_dir():index_wheels=root/'app/vendor/search-index'
+    if index_wheels.is_dir():
+        for source in sorted(index_wheels.iterdir()):
+            if not source.is_file() or source.is_symlink() or source.suffix not in ('.whl','.json'):continue
+            relative='app/vendor/search-index/'+source.name;dest=root/relative;dest.parent.mkdir(parents=True,exist_ok=True)
+            if source.resolve()!=dest.resolve():shutil.copyfile(source,dest)
+            records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
     manifest['files']=records;setup.write_json(root/'manifest.json',manifest)
     print('Application du kit mise à jour ; données lourdes conservées.')
 

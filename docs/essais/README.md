@@ -1,6 +1,7 @@
 # Essais et résultats
 
 - [Recettes progressives chez Marc](recettes-progressives-marc.md) — protocole prévu, outils actuels et rapports à développer.
+- [Indexation automatique et diagnostic](2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0.
 - [Rapport de Marc, indexation et espaces](2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0.
 
 Les rapports conservent leurs résultats et limites à la date de l’essai. Un ancien nombre de tests ou de ressources ne décrit pas nécessairement la livraison suivante.

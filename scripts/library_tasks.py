@@ -17,6 +17,7 @@ import kiwix_select
 import geography_data
 import routing_prepare
 import setup
+import search_index_queue as index_queue
 from delivery_paths import destination, locked
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
@@ -79,6 +80,17 @@ class Manager:
                 # The worker can finish between the first read and the PID check.
                 state = self.read()
                 if state['phase'] not in ACTIVE:return state
+                if state.get('action')=='index':
+                    child=state.get('index_pid');identity=state.get('index_identity')
+                    if child and identity and discovery.identity(child)==identity:return state
+                    from pilot.archive_index import status as index_status
+                    root=Path(self.config['data_dir']);report=index_status(root/'state/pilot/archive-index')
+                    if state.get('id') and report.get('job_id')==state['id'] and report.get('phase') in ('completed','partial','paused'):
+                        index_queue.acknowledge(root,state.get('options',{}).get('selection',{}),report)
+                        state.update(phase={'completed':'completed','partial':'error','paused':'paused'}[report['phase']],message='État de l’indexation récupéré après l’arrêt du superviseur.')
+                        if report['phase']=='partial':index_queue.hold(root,'error')
+                        self.write(state);return state
+                    index_queue.hold(root,'interrupted')
                 state.update(phase='interrupted', message='Opération interrompue. Préparez une nouvelle sélection pour reprendre les fichiers partiels.')
                 self.write(state)
         return state
@@ -87,6 +99,7 @@ class Manager:
         state = self.current()
         result = {k: state[k] for k in ('phase', 'message', 'options', 'id') if k in state}
         result['index_reader_ready']=self.index_ready()
+        result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
@@ -108,8 +121,24 @@ class Manager:
                     result['progress']['active'] = [{k: entry[k] for k in ('id','title','bytes','total','status') if k in entry} for entry in value.get('active',[])]
         return result
 
+    def auto_index(self):
+        root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
+        allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not index_queue.gaming(self.app.work)
+        if state['phase'] in ACTIVE:
+            if state.get('action')=='index' and state.get('options',{}).get('automatic') and not allowed:
+                self.pause(automatic=True)
+            return
+        if state['phase'] not in ('idle','completed') and not (state['phase']=='paused' and state.get('action')=='index' and state.get('options',{}).get('automatic')):return
+        if not allowed or not queue['pending'] or queue.get('hold') or not self.index_ready():return
+        try:
+            # Never start during any CLI/web content publication or backup.
+            with locked(destination(root,'catalog/content.lock')),locked(destination(root,'catalog/publication.lock')):
+                self.start('index',{'automatic':True})
+        except setup.SetupError:return
+
     def index_ready(self):
-        return self.index_python().is_file() and (self.app.work/'search-tools/reader-ready.json').is_file()
+        import search_index_tools
+        return search_index_tools.ready(self.app)
 
     def index_python(self):
         return self.app.work/'search-tools'/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
@@ -125,7 +154,11 @@ class Manager:
         self.check_storage()
         if action in ('index','index-prepare'):
             if action=='index' and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
-            state={'id':uuid.uuid4().hex,'phase':'starting','options':{}}
+            automatic=body.get('automatic') is True
+            root=Path(self.config['data_dir'])
+            selection=index_queue.read(root)['pending'] if action=='index' else {}
+            if action=='index' and not automatic:index_queue.hold(root,'')
+            state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':automatic,'selection':selection}}
             self.paths(state['id']).mkdir(parents=True)
         elif action in ('geography','routing'):
             options = geography_data.validate(body)
@@ -174,10 +207,11 @@ class Manager:
             state.update(phase='error', message='Le transfert n’a pas pu démarrer. Réessayez depuis le PC serveur.')
             self.write(state); raise
 
-    def pause(self):
+    def pause(self,automatic=False):
         state = self.current()
         if state['phase'] not in ('starting', 'planning', 'downloading'):
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
+        if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')
         (self.paths(state['id']) / 'cancel').touch()
 
     def run(self, job):
@@ -197,24 +231,26 @@ class Manager:
             check()
             if state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
-                import venv
-                environment=self.app.work/'search-tools'
-                venv.EnvBuilder(with_pip=False).create(environment)
-                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
-                subprocess.run([str(self.index_python()),'-m','ensurepip','--upgrade'],check=True,timeout=120,**hidden)
-                wheels=self.app.work/'search-tools-wheels';wheels.mkdir(exist_ok=True)
-                commands=[[str(self.index_python()),'-m','pip','download','--only-binary=:all:','--no-deps','--dest',str(wheels),'-r',str(setup.ROOT/'scripts/requirements-index.txt')],
-                    [str(self.index_python()),'-m','pip','install','--no-index','--find-links',str(wheels),'-r',str(setup.ROOT/'scripts/requirements-index.txt')]]
-                if list(wheels.glob('libzim-3.13.1-*.whl')):commands=commands[1:]
-                for command in commands:
-                    check();subprocess.run(command,check=True,timeout=300,**hidden)
-                setup.write_json(environment/'reader-ready.json',{'libzim':'3.13.1'},private=True)
+                import search_index_tools
+                search_index_tools.prepare(self.app,self.config,check=check,force=True)
                 update('completed','Outil d’indexation prêt. La création des index peut fonctionner hors ligne.')
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
-                process=subprocess.Popen([str(self.index_python()),str(setup.ROOT/'scripts/index_archives.py'),'--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel')],**hidden)
+                command=[str(self.index_python()),str(setup.ROOT/'scripts/index_archives.py'),'--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel'),'--job-id',job]
+                if state['options'].get('automatic'):
+                    selection=folder/'index-selection.json'
+                    setup.write_json(selection,[Path(p).name for p in state['options']['selection']],private=True)
+                    command+=['--selection',str(selection)]
+                workers=index_queue.read(root)['settings']['workers']
+                if workers:command+=['--workers',str(workers)]
+                process=subprocess.Popen(command,**hidden)
+                state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
                 code=process.wait()
+                from pilot.archive_index import status as index_status
+                report=index_status(root/'state/pilot/archive-index')
+                if any(r.get('error') in ('ImportError','ModuleNotFoundError') for r in report.get('results',[])):(self.app.work/'search-tools/reader-ready.json').unlink(missing_ok=True)
+                if report.get('job_id')==job:index_queue.acknowledge(root,state['options'].get('selection',{}),report)
                 check()
                 if code:raise setup.SetupError('Certaines archives n’ont pas pu être indexées ; consultez le suivi.')
                 update('completed','Indexation terminée. Les nouveaux passages sont disponibles dans la recherche.')
@@ -263,6 +299,7 @@ class Manager:
         except (Paused, content.DownloadPaused):
             update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
+            if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')
             print(type(exc).__name__, str(exc), flush=True)
             update('error', 'L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')
 

@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles
 
 
@@ -66,6 +67,24 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/admin/library/index/start',json={},headers=headers).status_code,200)
             command.assert_awaited_once_with('index')
         self.assertEqual(self.client.get('/api/search?q=feu&domain=unknown').status_code,422)
+
+    def test_index_schedule_is_family_only_and_uses_validated_fixed_command(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        self.assertEqual(self.client.post('/api/admin/library/index-settings',json={'enabled':True},headers=headers).status_code,403)
+        self.client.cookies.clear();self.login('admin')
+        with patch.object(operations,'library_command',AsyncMock(return_value={'accepted':True})) as command:
+            self.assertEqual(self.client.post('/api/admin/library/index-settings',json={'enabled':True,'start_hour':22,'end_hour':6,'workers':2},headers=headers).status_code,200)
+            command.assert_awaited_once_with('index-settings',{'enabled':True,'start_hour':22,'end_hour':6,'workers':2})
+        self.assertEqual(self.client.post('/api/admin/library/index-settings',json={'workers':17},headers=headers).status_code,422)
+
+    def test_search_diagnostic_is_read_only_and_reports_safe_catalogue_errors(self):
+        catalog=library.Catalog(available=False,error='catalog_timeout')
+        with patch.object(library,'books',AsyncMock(return_value=catalog)),patch.object(library,'get',AsyncMock(side_effect=HTTPException(404,'Fixture unavailable'))),patch.object(engine,'launch') as launch:
+            result=self.client.get('/api/library/search-diagnostic')
+        self.assertEqual(result.status_code,200)
+        self.assertEqual(result.json()['catalog']['error'],'catalog_timeout')
+        self.assertEqual(result.json()['kiwix']['state'],'unavailable')
+        launch.assert_not_called()
 
     def test_uploaded_document_preserves_declared_dates_and_rejects_impossible_dates(self):
         self.login('admin');headers={'Origin':'http://testserver'}

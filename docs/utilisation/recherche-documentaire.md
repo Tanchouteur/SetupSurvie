@@ -100,3 +100,9 @@ Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. 
 Le [guide d’indexation](indexation-archives.md) explique la préparation du texte des ZIM non recherchables et la pause. Le [bilan du rapport de Marc](../essais/2026-11-14-recherche-index-et-espaces.md) distingue les améliorations du moteur de leurs validations sur son fonds.
 
 Famille → Mon appareil → Réglages → Mémoire de l’assistant permet de régler le contexte de chaque modèle : 16k par défaut, 8k pour revenir à une petite allocation, puis 32k et 64k pour les essais. Le contexte ne charge pas toute la bibliothèque et n’augmente pas automatiquement selon la RAM disponible. Un grand contexte peut demander plus de mémoire et de temps ; comparer sur le PC cible avant de conserver le réglage. Ce réglage concerne les conversations ; la traduction par passages conserve son budget propre.
+
+## Diagnostic depuis 0.4.0
+
+Le rapport comporte dix recherches, dont « faire du feux » avec Toute la bibliothèque puis Autonomie et résilience, ainsi qu’un diagnostic préalable sans IA. Il distingue Kiwix joignable, catalogue en direct/en cache/ancien/indisponible et les raisons d’échec. L’ancien catalogue utilisé en repli est daté ; sa présence ne prouve pas la disponibilité de toutes les archives. Le diagnostic prépare parfois le cache : son temps est séparé des requêtes suivantes.
+
+Un avertissement visible précède les résultats incomplets. Une « mention du sujet dans le texte » n’est pas une preuve que le document explique sa réalisation. La couverture porte sur les textes disponibles, pas sur les paroles de vidéos, les scans sans OCR ni la qualité d’une procédure. Voir le [guide d’indexation automatique](indexation-archives.md).

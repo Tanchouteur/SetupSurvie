@@ -1,13 +1,15 @@
 /* Optional preparation runs on the server; closing this page never stops a job. */
 (() => {
-  let models=[],loaded=false,busy=false;
+  let models=[],loaded=false,busy=false,indexLoaded=false,indexReport=null;
   async function refresh(){
     if(document.hidden||$('view-settings').hidden||S.user?.role!=='admin'||busy)return;
     busy=true;
     try{
-      const data=await api('/admin/library'),index=data.search_index||{};
-      $('next-index-status').textContent=(data.message||'')+' · Index : '+(index.completed||0)+' / '+(index.archives||0)+' archives examinées · '+(index.articles||0)+' articles indexés.';
-      $('next-index-start').disabled=!data.index_reader_ready; $('next-index-prepare').disabled=!!data.index_reader_ready;
+      const data=await api('/admin/library'),index=data.search_index||{},queue=data.index_queue||{};
+      indexReport={version:S.status?.version,created:new Date().toISOString(),phase:data.phase,message:data.message,index_reader_ready:data.index_reader_ready,index_queue:queue,index};
+      $('next-index-status').textContent=(data.message||'')+' · Index : '+(index.completed||0)+' / '+(index.archives||0)+' archives examinées · '+(index.articles||0)+' articles indexés.'+(queue.pending?' '+queue.pending+' archive(s) en attente.':'')+(queue.hold?' Reprise explicite nécessaire après pause, interruption ou erreur.':'');
+      if(!indexLoaded&&queue.settings){const opts=queue.settings;$('next-index-auto').checked=opts.enabled;$('next-index-from').value=String(opts.start_hour);$('next-index-until').value=String(opts.end_hour);$('next-index-workers').value=String(opts.workers);indexLoaded=true;}
+      $('next-index-start').disabled=!data.index_reader_ready; $('next-index-prepare').disabled=['starting','planning','downloading','refreshing'].includes(data.phase);$('next-index-prepare').textContent=data.index_reader_ready?'Vérifier / réparer l’outil':'Préparer l’outil · Internet requis';
       $('next-index-pause').disabled=!['starting','planning','downloading'].includes(data.phase);
       if(!loaded){
         models=(await api('/admin/context')).models;const select=$('next-context-model');select.replaceChildren();for(const row of models)select.append(new Option(row.model,row.model));
@@ -16,6 +18,14 @@
     }catch(error){$('next-index-status').textContent=error.message;}
     finally{busy=false;}
   }
+  for(let hour=0;hour<24;hour++)for(const id of ['next-index-from','next-index-until'])$(id).append(new Option(String(hour).padStart(2,'0')+' h',String(hour)));
+  $('next-index-settings').onsubmit=async event=>{
+    event.preventDefault();try{await api('/admin/library/index-settings',{enabled:$('next-index-auto').checked,start_hour:Number($('next-index-from').value),end_hour:Number($('next-index-until').value),workers:Number($('next-index-workers').value)});$('next-index-settings-status').textContent='Préparation automatique enregistrée.';await refresh();}
+    catch(error){$('next-index-settings-status').textContent=error.message;}
+  };
+  $('next-index-export').onclick=()=>{
+    if(!indexReport)return;const url=URL.createObjectURL(new Blob([JSON.stringify(indexReport,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='setupsurvie-indexation-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
   for(const [id,action] of [['prepare','prepare'],['start','start'],['pause','pause']])$('next-index-'+id).onclick=async()=>{
     try{await api('/admin/library/index/'+action,{});$('next-index-status').textContent='Commande transmise au PC serveur.';await refresh();}
     catch(error){$('next-index-status').textContent=error.message;}

@@ -43,7 +43,7 @@ async def native(path,payload=None,token=None):
     if path=='/api/v1/auths/signout':return {'ok':True}
     raise ValueError(path)
 accounts.native=native
-async def books():return []
+async def books(**kwargs):return []
 library.books=books
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status

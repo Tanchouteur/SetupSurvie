@@ -2,7 +2,8 @@
 
 - [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — programme complet L1–L9, décisions, critères de fin et validations progressives.
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
-- [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.3.0.
+- [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.4.0, automatisation et pause.
+- [Indexation automatique et diagnostic](essais/2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0, validation en cours.
 - [Rapport de Marc et indexation](essais/2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0 et limites.
 
 Index mis à jour le 14 novembre 2026. Commencer par le parcours correspondant au besoin.

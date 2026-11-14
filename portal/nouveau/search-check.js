@@ -3,7 +3,7 @@
   const open=document.getElementById('next-search-check-open'),dialog=document.getElementById('next-search-check-dialog');
   if(!open||!dialog)return;
   const status=document.getElementById('next-search-check-status'),results=document.getElementById('next-search-check-results'),meter=document.getElementById('next-search-check-progress'),cancel=document.getElementById('next-search-check-cancel'),download=document.getElementById('next-search-check-export');
-  const cases=[{query:'allumer un feu'},{query:'faire du feu'},{query:'techniques de production de feu',collection:'wikipedia'},{query:'fabriquer un générateur à pédales'},{query:'rendre eau potable'},{query:'toit abri'},{query:'réparer un vélo'},{query:'conserver les graines'}];
+  const cases=[{query:'allumer un feu'},{query:'faire du feu'},{query:'techniques de production de feu',collection:'wikipedia'},{query:'fabriquer un générateur à pédales'},{query:'rendre eau potable'},{query:'toit abri'},{query:'réparer un vélo'},{query:'conserver les graines'},{query:'faire du feux',domain:'all'},{query:'faire du feux',domain:'resilience'}];
   let controller=null,report=null;
   cancel.onclick=()=>controller?.abort();dialog.addEventListener('close',()=>controller?.abort());
   async function read(path){
@@ -19,13 +19,15 @@
     report={created:new Date().toISOString(),version:null,status:'running',cases:[]};controller=new AbortController();open.disabled=true;results.replaceChildren();meter.value=0;meter.max=cases.length;download.hidden=true;cancel.hidden=false;
     if(!dialog.open)dialog.showModal();
     try{
+      status.textContent='Vérification des services documentaires…';
       try{report.version=(await read('/health')).version;}catch(error){if(error.name==='AbortError')throw error;}
+      try{report.diagnostic=await read('/library/search-diagnostic');}catch(error){if(error.name==='AbortError')throw error;report.diagnostic={error:error.message};}
       for(const [index,item] of cases.entries()){
         if(controller.signal.aborted)break;
         status.textContent=(index+1)+' / '+cases.length+' — '+item.query;
-        const started=performance.now(),record={...item},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.collection?' · Wikipédia':'')));results.append(article);
+        const started=performance.now(),record={...item},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.collection?' · Wikipédia':'')+(item.domain==='resilience'?' · Autonomie et résilience':'')));results.append(article);
         try{
-          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:'all'});
+          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:item.domain||'all'});
           const data=await read('/search?'+params);record.elapsed_ms=Math.round(performance.now()-started);record.coverage=data.coverage||null;
           record.results=(data.results||[]).slice(0,5).map(row=>({id:row.id,title:row.title,language:row.language,collection:row.collection,match:row.match,url:row.url,excerpt:row.excerpt,domains:row.domains}));
           article.append(element('p',record.results.length+' document(s) affiché(s) · '+(record.elapsed_ms/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s.','small muted'));

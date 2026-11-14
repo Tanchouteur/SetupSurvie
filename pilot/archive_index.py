@@ -45,28 +45,63 @@ def connect(path,readonly=False):
 
 def status(root):
     path=Path(root)/'progress.json'
-    try:return json.loads(path.read_text(encoding='utf-8'))
+    try:
+        if path.stat().st_size>4_000_000:raise ValueError()
+        value=json.loads(path.read_text(encoding='utf-8'))
+        if not isinstance(value,dict) or ('results' in value and not isinstance(value['results'],list)):raise ValueError()
+        return value
     except (OSError,ValueError):return {'phase':'not_prepared','archives':0,'articles':0}
 
 
-def search(root,plan,language='',limit=40):
-    if not plan.groups:return []
+def manifest(root,source_dir=None):
+    try:
+        path=Path(root)/'manifest.json'
+        if path.stat().st_size>4_000_000:raise ValueError()
+        records=json.loads(path.read_text(encoding='utf-8'))['archives']
+        if not isinstance(records,dict):raise ValueError()
+    except (OSError,ValueError,KeyError,TypeError):records={r['archive']:r for r in status(root).get('results',[]) if isinstance(r,dict) and r.get('archive')}
+    result={}
+    for name,record in records.items():
+        if not isinstance(name,str) or not isinstance(record,dict):continue
+        if record.get('status') not in ('ready','kiwix_index'):continue
+        if source_dir is not None and Path(source_dir).is_dir():
+            path=Path(source_dir)/name
+            if Path(name).name!=name or not path.is_file():continue
+            stat=path.stat()
+            if (record.get('bytes'),record.get('mtime_ns'))!=(stat.st_size,stat.st_mtime_ns):continue
+        result[name]=record
+    return result
+
+
+class Matches(list):
+    def __init__(self,values=(),coverage=None):super().__init__(values);self.coverage=coverage or {}
+
+
+def search(root,plan,language='',limit=40,source_dir=None):
+    if not plan.groups:return Matches()
     deadline=time.monotonic()+3
     def one(path):
         try:
             with connect(path.resolve(),True) as db:
                 db.set_progress_handler(lambda:int(time.monotonic()>deadline),1000)
                 meta=json.loads(db.execute('SELECT value FROM metadata WHERE key=?',('source',)).fetchone()[0])
-                if plan.collection and plan.collection not in retrieval.normal(meta['book']+' '+meta['title']).replace(' ',''):return []
+                if plan.collection and plan.collection not in retrieval.normal(meta['book']+' '+meta['title']).replace(' ',''):return [],'excluded'
+                if source_dir is not None and Path(source_dir).is_dir():
+                    source=Path(source_dir)/(meta['book']+'.zim')
+                    if not source.is_file():return [],'outdated'
+                    stat=source.stat();_,size,mtime=meta['fingerprint'].rsplit(':',2)
+                    if (stat.st_size,stat.st_mtime_ns)!=(int(size),int(mtime)):return [],'outdated'
                 lang={'fra':'fr','eng':'en'}.get(language,language)
                 rows=db.execute("SELECT path,title,language,substr(text,1,4000) AS _text,snippet(articles,2,'','','…',45) AS excerpt FROM articles WHERE articles MATCH ? AND (?='' OR language=?) ORDER BY bm25(articles,0,3,1,0) LIMIT ?",(plan.fts(),lang,lang,limit)).fetchall()
                 return [{'id':'zim:'+meta['book']+'/'+r['path'],'title':r['title'],'language':r['language'],'excerpt':r['excerpt'],'_text':r['_text'],
-                    'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i} for i,r in enumerate(rows)]
-        except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return []
+                    'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i} for i,r in enumerate(rows)],'searched'
+        except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return [],'failed'
     paths=list(Path(root).glob('*.sqlite'))
-    if not paths:return []
+    if not paths:return Matches(coverage={'searched':0,'failed':0,'outdated':0})
     with ThreadPoolExecutor(max_workers=min(8,max(1,os.cpu_count() or 1))) as pool:
-        return [row for values in pool.map(one,paths) for row in values]
+        values=list(pool.map(one,paths))
+        coverage={key:sum(status==key for _,status in values) for key in ('searched','failed','outdated')}
+        return Matches([row for rows,_ in values for row in rows],coverage)
 
 
 def metadata(archive,key,default=''):
@@ -84,14 +119,14 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
         if cancel and Path(cancel).exists():raise Paused()
         if shutil.disk_usage(root).free<reserve:raise OSError('Espace libre insuffisant pour poursuivre l’indexation.')
     check();stat=source.stat();archive=Archive(source)
-    if archive.has_fulltext_index and not force:return {'archive':source.name,'status':'kiwix_index','articles':0}
+    if archive.has_fulltext_index and not force:return {'archive':source.name,'status':'kiwix_index','articles':0,'has_fulltext_index':True,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns}
     fingerprint=f'{FORMAT}:{archive.uuid}:{stat.st_size}:{stat.st_mtime_ns}'
     book=source.stem;info={'book':book,'title':metadata(archive,'Title',book),'language':metadata(archive,'Language'),'fingerprint':fingerprint}
     if published.is_file():
         try:
             with connect(published,True) as db:
                 old=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
-                if old['fingerprint']==fingerprint:return {'archive':source.name,'status':'ready','articles':int(db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone()[0])}
+                if old['fingerprint']==fingerprint:return {'archive':source.name,'status':'ready','has_fulltext_index':bool(archive.has_fulltext_index),'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':int(db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone()[0])}
         except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):pass
     if building.exists():
         try:
@@ -130,4 +165,4 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
         db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)));db.commit()
         db.execute("INSERT INTO articles(articles) VALUES('optimize')");db.commit()
     durable.sync_file(building);durable.publish(building,published)
-    return {'archive':source.name,'status':'ready','articles':count,'skipped_entries':skipped}
+    return {'archive':source.name,'status':'ready','has_fulltext_index':bool(archive.has_fulltext_index),'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':count,'skipped_entries':skipped}

@@ -57,8 +57,8 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
-| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | À développer |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | À développer |
+| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, recette réelle R1 attendue |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture implémentés en 0.4.0 ; pertinence étendue et R2 à poursuivre |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | À compléter |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | À compléter |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -299,3 +299,5 @@ Maison de Solliès-Ville reste reportée (IDEE-001). Refonte complète des carte
 changement de matériel, nouvel installateur système autonome et préparation du
 disque de secours complet ne sont pas ajoutés implicitement à ce programme.
 Les possibilités existantes et leurs données sont préservées.
+
+La [livraison 0.4.0](../essais/2026-11-14-indexation-automatique-et-diagnostic.md) couvre l’indexation automatique et le diagnostic. Les essais matériels restent distincts ; les autres exigences du plan ne sont pas clôturées par cette seule livraison.

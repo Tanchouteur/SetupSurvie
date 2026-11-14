@@ -637,6 +637,10 @@ def main(argv=None):
         if not args.offline:
             app.compose(c, "pull")
         app.prepare(c, args.offline)
+        import search_index_tools
+        try:
+            if not search_index_tools.prepare(app,c,offline=args.offline):print('Indexation complémentaire à préparer depuis les réglages ; bibliothèque disponible.')
+        except (OSError,ValueError,SetupError,subprocess.SubprocessError):print('Outil d’indexation non préparé ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
         app.up(c)
         if not args.offline:
             existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])

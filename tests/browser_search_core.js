@@ -60,12 +60,12 @@ async page => {
   await page.setViewportSize({width:1366,height:768});
   await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
   const postsBefore=writes.length;await page.locator('#next-search-check-open').click();
-  await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===8);
-  check(await page.locator('#next-search-check-results .search-check-case').count()===8,'Recette des huit recherches disponible depuis le site');
+  await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
+  check(await page.locator('#next-search-check-results .search-check-case').count()===10,'Recette des dix recherches disponible depuis le site');
   check(writes.length===postsBefore,'Recette de recherche sans appel de calcul ni téléchargement');
   const downloading=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const saved=await downloading;
   const chunks=[];for await(const chunk of await saved.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
-  check(report.status==='measured'&&report.cases.length===8,'Rapport exporté sans confondre mesure et validation');
+  check(report.status==='measured'&&report.cases.length===10,'Rapport exporté sans confondre mesure et validation');
   check(report.version===await page.evaluate(()=>S.status.version),'Version réelle du serveur dans le rapport');
   check(!('conversations' in report)&&!('user' in report),'Rapport limité aux recherches de test');
   await page.screenshot({path:'/artifacts/controle-recherche.png',fullPage:true});
@@ -73,7 +73,7 @@ async page => {
   await page.route('**/api/search?*',async r=>{await new Promise(resolve=>setTimeout(resolve,250));await r.fulfill({json:{results:[],coverage:{status:'complete'}}}).catch(()=>{});});
   const requested=page.waitForRequest(r=>r.url().includes('/api/search?'));await page.locator('#next-search-check-open').click();await requested;await page.locator('#next-search-check-cancel').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('Vérification arrêtée'));
-  check(await page.locator('#next-search-check-progress').evaluate(e=>e.value<8),'Arrêt des vérifications encore en cours');
+  check(await page.locator('#next-search-check-progress').evaluate(e=>e.value<10),'Arrêt des vérifications encore en cours');
   const partialDownload=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const partial=await partialDownload,partialChunks=[];for await(const chunk of await partial.createReadStream())partialChunks.push(chunk);
   check(JSON.parse(Buffer.concat(partialChunks).toString()).status==='cancelled','Rapport partiel explicitement marqué après arrêt');
   await page.locator('[data-close="next-search-check-dialog"]').click();

@@ -251,3 +251,7 @@ sur archives générées et les limites de transfert au fonds de Marc.
 ## Index complémentaires — 0.3.0
 
 Les ZIM restent en lecture seule. `scripts/index_archives.py` extrait leur texte avec libzim 3.13.1 dans un environnement hôte optionnel, publie un SQLite FTS5 par archive sous `state/pilot/archive-index` et reprend les curseurs validés. Le pilote requête ces fichiers en lecture seule en parallèle de Kiwix ; les requêtes n’importent pas libzim. Les opérations passent par les mêmes droits Famille, service de contrôle, verrous et suivi que les préparations documentaires. Voir le [guide](../utilisation/indexation-archives.md).
+
+## Préparation automatique et catalogue — 0.4.0
+
+Les producteurs de fichiers vérifiés écrivent la file `catalog/search-index-queue.json` sous verrou. Le contrôleur lance un seul travail documentaire lorsque publication et téléchargement sont libres. Les pauses volontaires et interruptions restent explicites ; les reports horaires et le mode jeu gardent leur logique propre. Le manifeste cumulatif des index conserve les résultats des lots précédents. Le catalogue Kiwix utilise un cache court partagé entre appels et un instantané daté, sans masquer les erreurs derrière une liste vide valide. Les diagnostics exposent des codes sûrs, pas les corps HTTP ni les secrets.

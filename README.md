@@ -11,7 +11,7 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **14 novembre 2026**, le pilote **0.3.0** ajoute l’indexation des archives non recherchables, deux espaces documentaires et
+Au **14 novembre 2026**, le pilote **0.4.0** ajoute l’indexation automatique des nouvelles archives vérifiées et le diagnostic de recherche, après l’indexation des archives non recherchables, deux espaces documentaires et
 un contexte IA réglable par modèle, après la refonte de recherche et de
 préparation des sources, les améliorations des conversations et les correctifs
 Windows de démarrage/Docker et des mesures GPU sans console. Le schéma de données
@@ -26,7 +26,7 @@ Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été
 
 ## Commencer
 
-Le portail **0.3.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.4.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 

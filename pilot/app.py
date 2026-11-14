@@ -60,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.3.0'
+VERSION='0.4.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -116,6 +116,18 @@ class LibrarySelection(BaseModel):
 
 class LibraryDownload(BaseModel):
     id:str=Field(pattern='^[a-f0-9]{32}$')
+
+
+class IndexSettings(BaseModel):
+    enabled:bool=True
+    start_hour:int=Field(default=0,ge=0,le=23)
+    end_hour:int=Field(default=0,ge=0,le=23)
+    workers:int=Field(default=0,ge=0,le=16)
+
+
+@app.post('/api/admin/library/index-settings')
+async def set_index_settings(body:IndexSettings,value=Depends(admin)):
+    return await operations.library_command('index-settings',body.model_dump())
 
 
 @app.post('/api/admin/library/index/{action}')
@@ -417,6 +429,24 @@ async def webui_profile(value=Depends(user)):
 @app.post('/api/auth/{action}')
 async def retired_login(action:str):
     raise HTTPException(410,'Les mots de passe et codes de secours ont été remplacés par les profils. Rechargez la page puis choisissez votre profil.')
+
+
+@app.get('/api/library/search-diagnostic')
+async def search_diagnostic():
+    async def server():
+        started=time.monotonic()
+        try:
+            await asyncio.wait_for(library.get('/'),3)
+            return {'state':'reachable','elapsed_ms':round((time.monotonic()-started)*1000)}
+        except (TimeoutError,HTTPException):return {'state':'unavailable','elapsed_ms':round((time.monotonic()-started)*1000)}
+        except Exception:return {'state':'unavailable','elapsed_ms':round((time.monotonic()-started)*1000)}
+    catalog,access=await asyncio.gather(library.books(refresh=True),server())
+    info=catalog.info() if isinstance(catalog,library.Catalog) else {'state':'live','collections':len(catalog)}
+    report=await asyncio.to_thread(library.index_report)
+    return {'version':VERSION,'created':time.time(),'kiwix':access,'catalog':info,
+            'guides':{'indexed':report.get('indexed',0),'status':report.get('status')},
+            'archive_index':library.archive_index.status(store.ROOT/'archive-index'),
+            'notice':'Diagnostic sans IA. Mesure de préparation distincte des recherches suivantes.'}
 
 
 @app.get('/api/search')

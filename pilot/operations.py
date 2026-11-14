@@ -62,7 +62,7 @@ async def command(action,force=False):
 
 
 async def library_command(action=None,body=None):
-    if action not in (None,'plan','download','pause','geography','routing','index','index-prepare'):raise HTTPException(400,'Action documentaire inconnue.')
+    if action not in (None,'plan','download','pause','geography','routing','index','index-prepare','index-settings'):raise HTTPException(400,'Action documentaire inconnue.')
     try:
         if not TOKEN:raise ValueError()
         async with httpx.AsyncClient(trust_env=False,timeout=8) as client:

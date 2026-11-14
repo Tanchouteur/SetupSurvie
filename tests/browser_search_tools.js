@@ -4,7 +4,8 @@ async page=>{
   const check=(ok,text)=>{if(!ok)throw Error(text);checks.push(text);};
   await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.route('**/api/admin/library',r=>r.fulfill({json:{phase:'idle',index_reader_ready:true,search_index:{archives:3,completed:2,articles:123},message:'Fixture d’indexation'}}));
+  await page.route('**/api/admin/library',r=>r.fulfill({json:{phase:'idle',index_reader_ready:true,index_queue:{pending:2,completed:1,hold:'',settings:{enabled:true,start_hour:22,end_hour:6,workers:0}},search_index:{archives:3,completed:2,articles:123},message:'Fixture d’indexation'}}));
+  await page.route('**/api/admin/library/index-settings',r=>{calls.push(r.request().postDataJSON());return r.fulfill({json:{accepted:true}});});
   await page.route('**/api/admin/library/index/*',r=>{calls.push(new URL(r.request().url()).pathname);return r.fulfill({json:{accepted:true}});});
   let contexts=[{model:'gpt-oss:20b',tokens:16384},{model:'gemma4:e4b',tokens:8192}];
   await page.route('**/api/admin/context',async r=>{
@@ -25,8 +26,14 @@ async page=>{
   await page.goBack();await page.waitForFunction(()=>document.querySelector('#search-domain').value==='all');check(true,'Retour navigateur restaure le périmètre');
   await page.locator('#navigation [data-route="appareil"]').click();await page.locator('[data-route="appareil/reglages"]').click();
   await page.waitForFunction(()=>document.querySelector('#next-index-status').textContent.includes('123'));
-  check(await page.locator('#next-index-prepare').isDisabled(),'Outil déjà préparé reconnu');
+  check((await page.locator('#next-index-prepare').textContent()).includes('réparer'),'Outil déjà préparé reconnu et réparable');
   await page.locator('#next-index-start').click();check(calls.includes('/api/admin/library/index/start'),'Indexation lancée par la commande dédiée');
+  await page.locator('#next-index-settings').locator('..').locator('summary').click();
+  await page.locator('#next-index-from').selectOption('23');await page.locator('#next-index-settings').evaluate(f=>f.requestSubmit());
+  await page.waitForFunction(()=>document.getElementById('next-index-settings-status').textContent.includes('enregistrée'));
+  check(calls.some(row=>row.enabled===true&&row.start_hour===23&&row.end_hour===6),'Plage nocturne transmise au serveur');
+  const downloading=page.waitForEvent('download');await page.locator('#next-index-export').click();const download=await downloading,parts=[];for await(const chunk of await download.createReadStream())parts.push(chunk);const report=JSON.parse(Buffer.concat(parts).toString());
+  check(report.index_queue.pending===2&&!('conversations' in report),'Rapport d’indexation exporté sans conversations');
   await page.locator('#next-context-size').selectOption('32768');await page.locator('#next-context-form').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>document.querySelector('#next-context-status').textContent.includes('enregistré'));
   check(calls.some(row=>row.model==='gpt-oss:20b'&&row.tokens===32768),'Contexte sauvegardé par modèle');

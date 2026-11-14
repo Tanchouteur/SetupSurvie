@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index
+from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -51,7 +51,9 @@ class Text(HTMLParser):
 async def get(path, maximum=2_000_000):
     async with httpx.AsyncClient(trust_env=False,timeout=25,follow_redirects=False) as client:
         async with client.stream('GET',KIWIX+path) as response:
-            if response.status_code!=200:raise HTTPException(404,'Document indisponible.')
+            if response.status_code!=200:
+                error=HTTPException(404,'Document indisponible.');error.upstream_status=response.status_code
+                raise error
             body=bytearray()
             async for chunk in response.aiter_bytes():
                 body.extend(chunk)
@@ -59,9 +61,7 @@ async def get(path, maximum=2_000_000):
             return bytes(body),response.headers.get('content-type','application/octet-stream')
 
 
-class Catalog(list):
-    def __init__(self, values=(), available=True):
-        super().__init__(values);self.available=available
+Catalog=kiwix_catalog.Catalog
 
 
 class SearchResults(list):
@@ -69,23 +69,8 @@ class SearchResults(list):
         super().__init__(values);self.coverage=coverage or {}
 
 
-async def books():
-    try:
-        raw,_=await get('/catalog/v2/entries?count=-1')
-        root=ET.fromstring(raw);ns={'a':'http://www.w3.org/2005/Atom'}
-        result=[]
-        for e in root.findall('a:entry',ns):
-            link=next((l.get('href','') for l in e.findall('a:link',ns) if l.get('type')=='text/html'),'')
-            fields={child.tag.rsplit('}',1)[-1]:child.text or '' for child in e}
-            tags=fields.get('tags','').split(';')
-            identifier=fields.get('id','').removeprefix('urn:uuid:')
-            result.append({'title':e.findtext('a:title',namespaces=ns),'language':fields.get('language',''),'book':link.removeprefix('/content/').strip('/'),
-                           'search_id':identifier if re.fullmatch(r'[0-9a-fA-F-]{36}',identifier) else '',
-                           'fulltext':False if '_ftindex:no' in tags else True if '_ftindex:yes' in tags else None,
-                           'description':fields.get('summary',''),
-                           'archive_date':source_metadata.date_value(e.findtext('a:updated',default='',namespaces=ns),timestamp=True)})
-        return Catalog(result)
-    except (httpx.HTTPError,ET.ParseError,HTTPException):return Catalog(available=False)
+async def books(*,refresh=False):
+    return await kiwix_catalog.load(store.ROOT,KIWIX,get,refresh=refresh)
 
 
 INDEX_LOCK=threading.RLock()
@@ -282,9 +267,10 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     from urllib.parse import urlencode
     report={'status':'complete','searched':0,'failed':0,'without_fulltext':0,'not_searched':0}
     try:
-        available=await asyncio.wait_for(books(),timeout=3)
+        available=await asyncio.wait_for(books(),timeout=6)
     except (TimeoutError,httpx.HTTPError,HTTPException):
         available=Catalog(available=False)
+    report['catalog']=available.info() if isinstance(available,Catalog) else {'state':'live','collections':len(available)}
     if not getattr(available,'available',True):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
@@ -295,13 +281,20 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         name=retrieval.normal(str(book.get('book',''))+' '+str(book.get('title','')))
         preferred=next((i for i,term in enumerate(('wikibooks','wikihow','appropedia','wikipedia','outdoors','diy','gardening','bicycles','trueprepper')) if term in name),20)
         return (book.get('fulltext') is False,preferred,'fra' not in str(book.get('language','')))
-    for book in sorted(available,key=priority):
+    manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
+    report['locally_indexed']=0
+    for original in sorted(available,key=priority):
+        book=dict(original)
+        known=manifests.get(book.get('book',''),{})
+        if known.get('has_fulltext_index') is True:book['fulltext']=True
         if query_plan and query_plan.collection and query_plan.collection not in retrieval.normal(book.get('book','')+' '+str(book.get('title',''))).replace(' ',''):continue
         languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
         if requested and requested not in languages:continue
         selected_books.append(book)
-        if book.get('fulltext') is False:
+        if book.get('fulltext') is False and known.get('status')!='ready':
             report['without_fulltext']+=1
+        if known.get('status')=='ready' and known.get('has_fulltext_index') is False:
+            report['locally_indexed']+=1;continue
         if not book.get('book'):continue
         key='books.id' if book.get('search_id') else 'books.name'
         value=book.get('search_id') or book['book']
@@ -397,6 +390,10 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
     messages=[]
+    if report['catalog']['state']=='stale':
+        report['status']='partial';messages.append('Le catalogue répond mal ; la dernière liste connue est utilisée. Sa date figure dans le diagnostic.')
+    if not selected_books and not (query_plan and query_plan.collection):
+        report['status']='partial';messages.append('Aucune encyclopédie disponible dans le catalogue interrogé ; les guides restent consultables.')
     if query_plan and query_plan.collection and not selected_books:
         report['status']='partial';messages.append('La collection demandée n’est pas disponible dans le catalogue interrogé. Cela ne prouve pas que le sujet est absent des autres documents.')
     if refinement_failed or report['refinement_not_searched']:
@@ -453,7 +450,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
-    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit))
+    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,Path(os.environ.get('ZIM_DIR','/zim'))))
     try:
         articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
         local=await local_task
@@ -467,6 +464,11 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
     if domain!='all':combined=[r for r in combined if domain in r['domains']]
     ordered=await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2)
+    coverage['local_query']=getattr(local,'coverage',{})
+    if any(coverage['local_query'].get(key,0) for key in ('failed','outdated')):
+        if coverage['status']=='complete':coverage['status']='partial'
+        coverage['warning']=coverage.get('warning','')+' Certains index locaux sont indisponibles ou périmés ; relancez leur préparation.'
+    coverage['coverage_scope']='searchable_text'
     coverage['domain']=domain
     coverage['local_index']=archive_index.status(store.ROOT/'archive-index')
     coverage['parallelism']=max(3,min(12,(os.cpu_count() or 2)*2))

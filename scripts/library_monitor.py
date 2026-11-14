@@ -103,6 +103,8 @@ def snapshot(root, work, *, now=None):
         # A verified independent worker takes precedence over a stale web record.
         transfer_alive = owner_status(transfer) if transfer else None
         web_alive = owner_status(web) if web else None
+        if web.get('action')=='index' and web_alive is not True and web.get('index_pid'):
+            if owner_status({'pid':web['index_pid'],'identity':web.get('index_identity')}) is True:web_alive=True
         if transfer and (transfer_alive is True or not web.get('id') or web_alive is not True):
             owner, alive, source = transfer, transfer_alive, transfer_source
             plan_path = allowed_plan(transfer['plan'], root, work)
@@ -110,12 +112,18 @@ def snapshot(root, work, *, now=None):
         elif web.get('id') and re.fullmatch('[a-f0-9]{32}', web['id']):
             owner, alive, source = web, web_alive, 'web'
             started = web.get('started_at', 0)
-            if web.get('action') in ('geography', 'routing', 'plan'):
+            if web.get('action') in ('geography', 'routing', 'plan','index','index-prepare'):
                 phase = web.get('phase', 'unknown')
                 if phase in ('starting', 'planning', 'downloading', 'refreshing') and alive is False:
                     phase = 'interrupted'
+                extra={}
+                if web['action']=='index':
+                    progress=read_json(root/'state/pilot/archive-index/progress.json',{})
+                    if isinstance(progress,dict):extra={key:progress.get(key,0) for key in ('archives','completed','articles') if type(progress.get(key,0)) is int}
+                    if phase=='downloading':phase='indexing'
+                elif web['action']=='index-prepare' and phase=='downloading':phase='index_preparation'
                 return {**base, 'source': source, 'phase': phase,
-                        'kind': web['action'], 'worker_alive': alive}
+                        'kind': web['action'], 'worker_alive': alive,'index_progress':extra}
             plan_path = allowed_plan(work / 'library-web' / web['id'] / 'plan.json', root, work)
         else:
             return base

@@ -71,6 +71,34 @@ class ArchiveIndexTests(unittest.TestCase):
         report=json.loads(result.stdout);self.assertEqual(report['phase'],'completed');self.assertEqual(report['workers'],2)
         self.assertTrue(self.query())
 
+    def test_automatic_queue_worker_publishes_real_index_and_acknowledges_only_selection(self):
+        import hashlib
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
+        import setup,search_index_queue as queue,library_tasks as jobs
+        data=self.root/'data';app=setup.Installation(self.root/'private');config=app.init('linux',data,cpu=True)
+        target=data/'library/zim/manual_fr.zim';self.zim.rename(target)
+        queue.enqueue(data,{'path':'library/zim/manual_fr.zim','sha256':setup.file_hash(target)})
+        manager=jobs.Manager(app,config,'compose');job='c'*32;folder=manager.paths(job);folder.mkdir(parents=True);(folder/'ready').touch()
+        manager.write({'id':job,'phase':'starting','action':'index','options':{'automatic':True,'selection':queue.read(data)['pending']}})
+        real_popen=subprocess.Popen
+        def fixture_popen(command,**kwargs):return real_popen([*command,'--reserve-bytes','1000000000','--workers','2'],**kwargs)
+        with patch.object(manager,'check_storage',return_value=(data,None)),patch.object(manager,'index_python',return_value=Path(sys.executable)),patch.object(jobs.subprocess,'Popen',side_effect=fixture_popen):manager.run(job)
+        self.assertEqual(manager.read()['phase'],'completed')
+        self.assertEqual(queue.summary(data)['pending'],0)
+        self.assertTrue(list((data/'state/pilot/archive-index').glob('*.sqlite')))
+        self.assertIn('manual_fr.zim',archive_index.manifest(data/'state/pilot/archive-index'))
+
+    def test_outdated_source_and_broken_database_are_reported_instead_of_silent_empty_results(self):
+        archive_index.build_archive(self.zim,self.index)
+        plan=retrieval.plan('crevaison',library.search_terms('crevaison'),library.SYNONYMS)
+        self.assertTrue(archive_index.search(self.index,plan,source_dir=self.root))
+        self.zim.rename(self.root/'removed.zim')
+        found=archive_index.search(self.index,plan,source_dir=self.root)
+        self.assertFalse(found);self.assertEqual(found.coverage['outdated'],1)
+        next(self.index.glob('*.sqlite')).write_bytes(b'not a database')
+        found=archive_index.search(self.index,plan)
+        self.assertFalse(found);self.assertEqual(found.coverage['failed'],1)
+
     def test_incompatible_collection_is_not_returned(self):
         archive_index.build_archive(self.zim,self.index)
         plan=retrieval.plan('vélo',library.search_terms('vélo'),library.SYNONYMS,'wikipedia')

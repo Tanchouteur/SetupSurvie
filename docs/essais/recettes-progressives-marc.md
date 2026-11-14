@@ -7,7 +7,7 @@ qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/pla
 ## Ce qui est utilisable maintenant
 
 Depuis 0.3.0 : **Famille → Mon appareil → Réglages → Vérifier la recherche**, puis
-**Télécharger le rapport**. Les huit recherches n’appellent aucun modèle et le
+**Télécharger le rapport**. Depuis 0.4.0, les dix recherches n’appellent aucun modèle et le
 rapport exporte version, délais, couverture, résultats et extraits. Pour les ZIM
 sans index réel, la [création/reprise manuelle](../utilisation/indexation-archives.md)
 est disponible au même endroit. Ces deux opérations sont distinctes.
@@ -20,8 +20,8 @@ exiger TeamViewer ni un accès distant de développement pour lancer les recette
 
 | Rapport | Quand le demander | Ce qu’il doit mesurer | État de l’outil |
 | --- | --- | --- | --- |
-| R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | Suivi partiel actuel ; export complet à développer |
-| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; compléter avec état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Huit cas disponibles ; diagnostic et comparaison étendus à développer |
+| R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | Rapport d’indexation disponible en 0.4.0 |
+| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; compléter avec état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Dix cas et diagnostic disponibles en 0.4.0 ; référence de pertinence étendue à poursuivre |
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Fiche de relecture à développer ; observation manuelle possible |
 | R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Réglages et certaines traces existent ; rapport et calibration à développer |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |

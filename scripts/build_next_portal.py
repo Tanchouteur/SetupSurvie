@@ -15,10 +15,10 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.3.0"></script><script defer src="/app.js', 1)
-    source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.3.0"><script defer src="/nouveau/collections.js?v=0.3.0"></script><script defer src="/nouveau/search-check.js?v=0.3.0"></script><script defer src="/nouveau/search-tools.js?v=0.3.0"></script><script defer src="/nouveau/navigation.js?v=0.3.0"></script></head>', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.4.0"></script><script defer src="/app.js', 1)
+    source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.4.0"><script defer src="/nouveau/collections.js?v=0.4.0"></script><script defer src="/nouveau/search-check.js?v=0.4.0"></script><script defer src="/nouveau/search-tools.js?v=0.4.0"></script><script defer src="/nouveau/navigation.js?v=0.4.0"></script></head>', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
-    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.3.0')
+    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.4.0')
     return source
 
 

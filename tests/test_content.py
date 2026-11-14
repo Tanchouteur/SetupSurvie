@@ -24,6 +24,19 @@ class ContentTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         self.raw=b'%PDF-document-content'
         self.item={'id':'book','path':'library/guides/book.pdf','url':'https://example.org/book.pdf','bytes':len(self.raw),'sha256':hashlib.sha256(self.raw).hexdigest()}
+    def test_verified_zim_download_enqueues_indexing_but_bad_hash_does_not(self):
+        import search_index_queue
+        item={**self.item,'path':'library/zim/book.zim','title':'Tiny fixture'}
+        from unittest.mock import patch
+        import content_mirrors
+        with patch.object(content_mirrors,'network_open',return_value=Response(self.raw)):
+            content.download(self.root,[item],reserve=0)
+        self.assertEqual(search_index_queue.summary(self.root)['pending'],1)
+        bad={**item,'path':'library/zim/bad.zim','id':'bad','sha256':'0'*64}
+        with patch.object(content_mirrors,'network_open',return_value=Response(self.raw)):
+            with self.assertRaises(setup.SetupError):content.download(self.root,[bad],reserve=0)
+        self.assertEqual(search_index_queue.summary(self.root)['pending'],1)
+
     def test_resume_verified_file_and_idempotent_repeat(self):
         part=content.destination(self.root,self.item['path']+'.part');part.parent.mkdir(parents=True);part.write_bytes(self.raw[:5])
         def opener(req,**kwargs):
