@@ -37,7 +37,7 @@ try {
     try { $health=Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/health' -TimeoutSec 3; $ready=$health.ok -and $health.version -eq $release.version } catch { }
     if (-not $ready) {
         # No dependency on Docker install-settings.json, which may disappear.
-        Start-SurvieDocker
+        Start-SurvieDocker -Automatic:($Startup -and -not $OpenBrowser) -WorkDir $WorkDir
         & $runtime.python -X utf8 (Join-Path $application 'scripts\setup.py') --work-dir $WorkDir up
         if ($LASTEXITCODE -ne 0) { throw 'Services indisponibles ; nouvel essai automatique dans cinq minutes.' }
     }

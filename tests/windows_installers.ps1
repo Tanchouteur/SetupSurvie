@@ -56,6 +56,7 @@ function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } 
 & {
     . (Join-Path $root 'scripts\windows-common.ps1')
     $portable = Join-Path $env:TEMP ('survie-tools-' + [guid]::NewGuid())
+    function Get-SurvieDockerInstallLocations { return @() }
     $null = New-Item -ItemType Directory -Path (Join-Path $portable 'resources\bin') -Force
     $cli = Join-Path $portable 'resources\bin\docker.exe'
     $desktop = Join-Path $portable 'Docker Desktop.exe'
@@ -80,6 +81,38 @@ function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } 
         # $portable is an explicitly created child of TEMP, never an arbitrary path.
         if ((Split-Path $portable) -ne $env:TEMP) { throw 'Unexpected fixture path' }
         Remove-Item -LiteralPath $portable -Recurse -Force
+    }
+}
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    $fixture=Join-Path $env:TEMP ('survie-docker-start-'+[guid]::NewGuid())
+    New-Item -ItemType Directory -Path $fixture | Out-Null
+    try {
+        $script:desktopFixture=Join-Path $fixture 'Docker Desktop.exe'
+        Set-Content -LiteralPath $script:desktopFixture -Value 'fixture only'
+        $script:launches=0; $script:checks=0; $script:registered=$false
+        function Find-SurvieDockerDesktop { return $script:desktopFixture }
+        function Get-SurvieDockerInstallLocations { if ($script:registered) { return (Split-Path $script:desktopFixture) }; return @() }
+        function Get-SurvieDockerType { $script:checks++; if ($script:checks -gt 1) { return 'linux' }; return $null }
+        function Get-Process { param($Name,$ErrorAction) return @() }
+        function Get-CimInstance { param($ClassName) return @{LastBootUpTime=[datetime]'2026-11-01T10:00:00'} }
+        function Start-Process { param($FilePath,$WindowStyle) $script:launches++ }
+        function Start-Sleep { param($Seconds) }
+        $failed=$false
+        try { Start-SurvieDocker -Automatic -WorkDir $fixture } catch { $failed=$true }
+        Assert ($failed -and $script:launches -eq 0) 'Missing registration must never open the broken GUI'
+        $script:registered=$true;$script:checks=0
+        Start-SurvieDocker -Automatic -WorkDir $fixture
+        Assert ($script:launches -eq 1) 'Registered Docker can be started once'
+        $script:checks=0;$failed=$false
+        try { Start-SurvieDocker -Automatic -WorkDir $fixture } catch { $failed=$true }
+        Assert ($failed -and $script:launches -eq 1) 'A second automatic attempt in the same boot must not open another GUI'
+        $script:checks=0
+        Start-SurvieDocker -WorkDir $fixture
+        Assert ($script:launches -eq 2) 'Explicit manual recovery remains available'
+    } finally {
+        if ((Split-Path $fixture) -ne $env:TEMP) { throw 'Unexpected Docker fixture path' }
+        Remove-Item -LiteralPath $fixture -Recurse -Force
     }
 }
 function Initialize-SurvieTools { }

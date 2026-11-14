@@ -82,8 +82,21 @@ function Find-SurvieGit {
     return $null
 }
 
+function Get-SurvieDockerInstallLocations {
+    foreach ($hive in @('HKCU:','HKLM:')) {
+        foreach ($key in @('SOFTWARE\Docker Inc.\Docker Desktop','SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Docker Desktop','SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Docker Desktop')) {
+            $value=Get-ItemProperty -LiteralPath ($hive+'\'+$key) -ErrorAction SilentlyContinue
+            if (-not $value) { continue }
+            foreach ($name in @('InstallLocation','InstallPath')) {
+                $property=$value.PSObject.Properties[$name]
+                if ($property -and $property.Value) { [string]$property.Value }
+            }
+        }
+    }
+}
+
 function Find-SurvieDockerDesktop {
-    $candidates = @(
+    $candidates = @((Get-SurvieDockerInstallLocations | ForEach-Object { Join-Path $_ 'Docker Desktop.exe' })) + @(
         (Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'),
         (Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\Docker Desktop.exe')
     )
@@ -130,12 +143,29 @@ function Get-SurvieDockerType {
 }
 
 function Start-SurvieDocker {
+    param([switch]$Automatic,[string]$WorkDir)
     $kind = Get-SurvieDockerType
     if ($kind -eq 'linux') { return }
     if ($kind) { throw 'Docker utilise les conteneurs Windows. Choisissez les conteneurs Linux dans Docker Desktop.' }
     $desktop = Find-SurvieDockerDesktop
     if (-not $desktop) { throw 'Docker Desktop manque. Relancez 1-Preparer-le-PC.cmd.' }
-    Start-Process -FilePath $desktop -WindowStyle Hidden | Out-Null
+    $directory=[IO.Path]::GetFullPath((Split-Path $desktop)).TrimEnd('\')
+    $registered=@(Get-SurvieDockerInstallLocations | Where-Object { [IO.Path]::GetFullPath($_).TrimEnd('\') -ieq $directory })
+    if (-not $registered.Count) { throw 'Docker Desktop est present mais son installation Windows est absente ou incoherente. Reparez Docker avec son installateur officiel ; aucun lancement automatique effectue.' }
+    $running=@(Get-Process -Name 'Docker Desktop','com.docker.backend' -ErrorAction SilentlyContinue | Where-Object { try { $_.Path -and [IO.Path]::GetFullPath($_.Path).StartsWith($directory+'\',[StringComparison]::OrdinalIgnoreCase) } catch { $false } })
+    if (-not $running.Count) {
+        if ($Automatic -and -not $WorkDir) { throw 'Dossier prive requis pour limiter les tentatives automatiques Docker.' }
+        if ($WorkDir) {
+            $attempt=Join-Path $WorkDir 'docker-start-attempt.json'
+            $boot=(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToUniversalTime().ToString('o')
+            if ($Automatic -and (Test-Path -LiteralPath $attempt)) {
+                $last=Get-Content -LiteralPath $attempt -Raw -Encoding UTF8 | ConvertFrom-Json
+                if ($last.boot -eq $boot) { throw 'Docker a deja ete lance automatiquement depuis ce demarrage Windows. Verifier le journal puis utiliser Ouvrir SetupSurvie pour une reprise explicite.' }
+            }
+            @{boot=$boot;desktop=$desktop;attempted=(Get-Date).ToUniversalTime().ToString('o')} | ConvertTo-Json | Set-Content -LiteralPath $attempt -Encoding UTF8
+        }
+        Start-Process -FilePath $desktop -WindowStyle Hidden | Out-Null
+    }
     Write-Host 'Docker Desktop démarre. Validez son accueil et sa licence si nécessaire.'
     for ($attempt = 0; $attempt -lt 90; $attempt++) {
         Start-Sleep -Seconds 2
