@@ -65,7 +65,7 @@
       try{await api('/admin/library/collection-labels',{collection_id:item.id,revision:item.labels_revision,family:family.value,variant:variant.value},{method:'PUT'});dialog.close();await loadData();toast('Noms conservés sur cet appareil.');}
       catch(error){status.textContent=error.message;}finally{save.disabled=false;}
     };
-    dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+    document.dispatchEvent(new CustomEvent('survie:dialog',{detail:dialog}));dialog.showModal();
   }
 
   let lastInventory=null;

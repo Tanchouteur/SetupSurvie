@@ -41,8 +41,10 @@ async page => {
   for(const [index,id] of books.entries()){
     const card=page.locator('[data-collection-id="'+id+'"]');const parent=card.locator('xpath=ancestor::details[contains(@class,"next-collection-group")]');if(await parent.count())await parent.evaluate(e=>e.open=true);
     await card.getByRole('button',{name:'Modifier les noms',exact:true}).click();
-    const dialog=page.locator('#catalogue-collection-dialog');await dialog.locator('[name="family"]').fill('Groupe de recette');await dialog.locator('[name="variant"]').fill(index?'Alimentation pratique':'Énergie pratique');
-    await dialog.getByRole('button',{name:'Enregistrer les noms',exact:true}).click();await dialog.waitFor({state:'detached'});
+    const dialog=page.locator('#catalogue-collection-dialog');
+    if(index===0){await page.goBack();await dialog.waitFor({state:'hidden'});await page.goForward();await dialog.waitFor({state:'visible'});check(await dialog.isVisible(),'Précédent et Suivant ferment et rouvrent le dialogue de noms');}
+    await dialog.locator('[name="family"]').fill('Groupe de recette');await dialog.locator('[name="variant"]').fill(index?'Alimentation pratique':'Énergie pratique');
+    await dialog.getByRole('button',{name:'Enregistrer les noms',exact:true}).click();await dialog.waitFor({state:'hidden'});
     await page.waitForFunction(id=>[...document.querySelectorAll('#data-books .data-card')].find(n=>n.dataset.collectionId===id)?.dataset.family==='Groupe de recette',id);
   }
   const group=page.locator('.next-collection-group').filter({hasText:'Groupe de recette'});await group.evaluate(e=>e.open=true);await page.waitForTimeout(80);

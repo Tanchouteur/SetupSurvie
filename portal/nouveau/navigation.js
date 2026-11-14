@@ -202,13 +202,17 @@
     popping=false;
   });
   // Dialog closure participates in Back/Forward, without recording typed values.
-  for(const dialog of document.querySelectorAll('dialog')){
+  const observedDialogs=new WeakSet();
+  function observeDialog(dialog){
+    if(observedDialogs.has(dialog))return;observedDialogs.add(dialog);
     new MutationObserver(()=>{
       if(popping)return;
       if(dialog.open&&history.state?.dialog!==dialog.id){remember();history.pushState({...history.state,dialog:dialog.id},'',location.href);}
       else if(!dialog.open&&history.state?.dialog===dialog.id)history.back();
     }).observe(dialog,{attributes:true,attributeFilter:['open']});
   }
+  for(const dialog of document.querySelectorAll('dialog'))observeDialog(dialog);
+  document.addEventListener('survie:dialog',event=>{if(event.detail instanceof HTMLDialogElement)observeDialog(event.detail);});
   document.addEventListener('survie:source',()=>{decorateLinks();const back=$('reader').querySelector('.reader-actions button');if(back)back.onclick=()=>{const route=fromLegacy('library');route.params.delete('source');navigate(route);};});
   document.addEventListener('survie:results',()=>{decorateLinks();if(pendingRestore&&pendingRestore.hash===location.hash){restorePosition(pendingRestore.state);pendingRestore=null;}});
   document.addEventListener('survie:conversation',()=>{restoreDraft();if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}});
