@@ -5,6 +5,10 @@ la capture de Marc indiquant 135 archives examinées, zéro article ajouté et
 une erreur. Son rapport détaillé n’est pas encore reçu ; aucune cause exacte
 de cet incident n’est revendiquée par cette livraison.
 
+**Suite reçue après ce bilan :** le [rapport réel 0.9.3](2026-11-14-rapports-recherche-093.md)
+confirme ensuite 135/135 archives terminées sans erreur. Il ne permet pas
+d’attribuer rétrospectivement la cause de l’ancien échec.
+
 ## Vérification de l’hypothèse
 
 Les anciens tests lançaient le lecteur avec le Python de développement, qui

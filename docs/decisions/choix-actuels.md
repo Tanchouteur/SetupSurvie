@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-Référence mise à jour le 12 novembre 2026 à partir des consignes de Louis et des
+Référence mise à jour le 14 novembre 2026 à partir des consignes de Louis et des
 guides du pilote. L’[historique des échanges](questions-et-decisions.md) reste
 conservé ; ses premières hypothèses matérielles et fonctionnelles ne priment pas
 sur les précisions ci-dessous.
@@ -10,7 +10,7 @@ sur les précisions ci-dessous.
 | Première étape | Pilote accompagné chez Marc ; recueillir les retours avant de considérer l’offre commerciale validée |
 | Usages | Bibliothèque familiale, assistant local, enseignement et préparation aux services dégradés ; aucun sinistre présumé |
 | PC de Louis | Linux Bazzite, Ryzen 9, RTX 2060 **6 Go**, 32 Go RAM ; laboratoire de développement |
-| PC de Marc | Windows, RTX 5060 **8 Go**, **32 Go RAM** ; préserver ses usages habituels |
+| PC de Marc | Windows, RTX 5060 Ti **8 Go**, **32 Go RAM** ; GPU détecté dans les [rapports du 14 novembre](../essais/2026-11-14-rapports-recherche-093.md), auparavant noté RTX 5060 ; préserver ses usages habituels |
 | Budget documentaire | **Aucun plafond logiciel chez Marc** ; laboratoire de Louis limité à 500 Go décimaux hors modèles et caches. Marc vise le fonds utile complet, préparé directement chez lui si nécessaire (Louis, 12 novembre 2026) |
 | Stockage du laboratoire | SSD de 4 To ; image de 590 milliards d’octets, sous le plafond global de **600 Go**, avec au moins 15 Go libres |
 | Accès local | Nom demandé **survie.local**, accès par IP et QR code maintenus ; mDNS à tester sur les clients |

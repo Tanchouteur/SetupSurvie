@@ -1,6 +1,6 @@
 # Corrections après les rapports réels 0.9.3
 
-**Bilan en cours — version corrective 0.9.4, 14 novembre 2026.** Répond aux
+**Bilan daté — version corrective 0.9.4, 14 novembre 2026.** Répond aux
 [trois rapports reçus](2026-11-14-rapports-recherche-093.md). L’indexation réelle
 est terminée ; les recherches partielles et les correspondances faibles restent
 le problème à traiter. Aucune mesure de pertinence sur le fonds complet n’est
@@ -78,7 +78,24 @@ Les nouveaux tests couvrent un catalogue simulé de 134 collections, les tags
 contredits par l’index réel, les langues prioritaires, l’isolement des grosses
 archives, les reformulations avant les lots généraux, l’annulation partagée,
 les faux candidats, le volume de réponse et le cache d’intention de l’assistant.
-La référence de 32 demandes est conservée. Suite complète et CI à consigner.
+La référence de 32 demandes est conservée.
+Le premier essai Kiwix réel a également refusé « inconnu eau potable » : le filtre
+exigeait tous les concepts pour les demandes non pratiques. Le seuil conserve
+désormais une majorité de concepts concrets, sans rétablir la confiance aveugle
+dans le marqueur de requête native. Ce cas positif et le cas négatif de propulsion
+restent vérifiés séparément. Les 31 contrôles Kiwix passent ensuite sur cinq ZIM
+générés de 283 260 octets au total, sans modèle ni corpus réel.
+
+La suite locale termine **495 tests, dont trois ignorés sous Linux**, sans échec.
+Les huit tâches de la [CI sur `dd108e8`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43630834195)
+réussissent : Linux, Windows, lecteurs isolés Windows Python 3.11/3.13/3.14,
+Kiwix réel synthétique, routage OSRM synthétique et navigateurs. Le contrôle
+d’interface comprend 48 vérifications de recherche et 18 de ses outils sur
+chacun des navigateurs Chromium et WebKit ; il ne remplace pas Safari sur iPhone.
+Le premier passage de routage a échoué au téléchargement de l’image épinglée
+avec une connexion réinitialisée ; la relance sur le même code réussit, sans
+modification du routage. Les liens documentaires locaux et `git diff --check`
+sont vérifiés avant publication.
 
 **Niveau 0.9.4 retenu :** corrections compatibles du moteur existant, sans nouvel
 écran, changement d’image tierce ni migration de données. Le comparatif IA reste

@@ -4,6 +4,10 @@
 la fiabilisation du moteur. Ce travail ne résout ni ne reconstitue l’incident
 des 135 archives de Marc, dont le rapport R1 reste attendu.
 
+**Suite reçue après ce bilan :** le [rapport réel 0.9.3](2026-11-14-rapports-recherche-093.md)
+termine les 135 archives sans erreur ; les recherches restent partielles. Les
+résultats de maintenance simulée ci-dessous restent distincts de cette exécution.
+
 ## Défaut reproduit
 
 Avec le code 0.9.2, une sauvegarde privée termine et publie `backup.json` alors

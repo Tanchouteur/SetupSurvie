@@ -2,11 +2,11 @@
 
 - [Journal depuis la 0.2.0](essais/journal-recherche-depuis-020.md) — suivi des différences, décisions, preuves et validations restantes pour le résumé final.
 - [Rapports réels 0.9.3](essais/2026-11-14-rapports-recherche-093.md) — indexation réussie, recherches encore partielles et comparatif IA interrompu.
-- [Corrections après les rapports 0.9.3](essais/2026-11-14-corrections-rapports-093.md) — 0.9.4, ordonnanceur, précision et contexte ; validation en cours.
+- [Corrections après les rapports 0.9.3](essais/2026-11-14-corrections-rapports-093.md) — 0.9.4, ordonnanceur, précision et contexte ; CI réussie, nouveau contrôle réel attendu.
 
 - [Conservation des index pendant la maintenance](essais/2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI réussie ; exclusions, restauration SQLite et retour arrière testés sur petites données.
 
-- [Contrôle de l’indexation isolée](essais/2026-11-14-indexation-isolee.md) — 0.9.2, lancement Windows corrigé, prérequis et CI réussis ; rapport du fonds réel attendu.
+- [Contrôle de l’indexation isolée](essais/2026-11-14-indexation-isolee.md) — 0.9.2, lancement Windows corrigé et CI réussie ; terminaison réelle reçue en 0.9.3.
 
 - [Corrections des rapports réels](essais/2026-11-14-corrections-rapports-recherche.md) — 0.9.1, CI réussie ; contrôle du fonds Windows réel encore attendu.
 

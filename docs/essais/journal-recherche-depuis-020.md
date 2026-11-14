@@ -23,18 +23,13 @@ corrections et la CI finales de chaque lot. Toutes ces livraisons sont sur `main
 | 0.9.1 · `3b73822d` | Corrections après rapports 0.8.0 : appels Kiwix partagés et bornés, cache court, erreurs détaillées, moins de replis sur un seul mot ; budget IA appliqué à toute la demande et arrêt après deux échecs | [Bilan](2026-11-14-corrections-rapports-recherche.md), 469 tests et CI ; ne prouve pas la correction de l’indexation réelle |
 | 0.9.2 · `8427aad0` | Vérification du lecteur dans son Python isolé, causes d’erreur catégorielles, correction du pool Windows et d’une recherche déclenchée trois fois au chargement | [Bilan](2026-11-14-indexation-isolee.md), 478 tests et CI dont Python Windows 3.11 à 3.14 ; erreurs de fixture UTF-8/création ZIM distinguées du défaut de lancement réel reproduit |
 | 0.9.3 · `faaa6f16` | Exclusions entre indexation, sauvegarde et mise à jour ; verrous par archive pour les processus restants ; conservation des verrous et des index au retour arrière | [Bilan](2026-11-14-index-sauvegarde-et-retour-arriere.md), 486 tests et CI ; un chemin temporaire Windows du test a été corrigé ; première mise à jour depuis une ancienne version à faire après pause effective |
+| 0.9.4 · `c70aabc` | Priorités entre langues et collections pratiques, isolement des grosses archives, replis anticipés, annulation des requêtes sans lecteur, filtrage des faux candidats et contexte des outils allégé | [Bilan](2026-11-14-corrections-rapports-093.md), 495 tests et huit tâches de CI réussies ; filtre corrigé après un refus trop strict sur le Kiwix réel synthétique ; nouveau R2 et relecture humaine attendus chez Marc |
 
 Les nombres de tests incluent trois tests ignorés sous Linux ; les bilans
 précisent les plateformes réellement essayées. Aucun de ces nombres ne mesure
 la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du disque.
 
 ## Retours réels et changements de priorité
-
-La correction 0.9.4 est en préparation : priorité entre langues, reformulations
-des collections pratiques, annulation des appels sans lecteur, filtrage des
-correspondances et résumé des index dans les outils. Son
-[bilan](2026-11-14-corrections-rapports-093.md) consigne les causes reproduites,
-la piste booléenne écartée et les vérifications avant publication.
 
 - Rapports 0.8.0 : recherches partielles, index non préparés, comparatif IA expiré,
   puis capture d’échec d’indexation. [Analyse datée](2026-11-14-rapports-recherche-080.md).

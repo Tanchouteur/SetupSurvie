@@ -38,7 +38,7 @@ sont prêts. Les index locaux interrogés ne sont signalés ni illisibles ni pé
 - Aucun des 32 cas n’a encore d’avis humain enregistré. Le rang utile et la
   qualité d’une procédure ne sont pas certifiés par les titres exportés.
 
-Le code courant interroge de petits lots, avec un budget global de six secondes,
+Le code 0.9.3 interroge de petits lots, avec un budget global de six secondes,
 deux appels plein texte et deux appels de titres en parallèle. Les raffinements
 attendent la fin de tous les lots et ne sont jamais tentés dans ce rapport.
 Les erreurs concernent aussi des lots mêlant collections prioritaires et générales.
@@ -68,3 +68,7 @@ la priorité des collections et le budget avant d’en changer les valeurs.
 Consigner chaque correction dans le [journal depuis 0.2.0](journal-recherche-depuis-020.md).
 La recette R7 en préparation reste non livrée tant que ces corrections prioritaires
 ne sont pas traitées ; les tests de corpus et de modèle restent sur le PC cible.
+
+**Suite :** les [corrections 0.9.4](2026-11-14-corrections-rapports-093.md)
+reproduisent ces défauts sur petites données et passent la CI ; un nouveau
+contrôle sans IA chez Marc doit encore établir leur effet sur le fonds complet.

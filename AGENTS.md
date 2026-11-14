@@ -53,7 +53,8 @@ Les API Ollama `11435` et de contrôle `11436` ne doivent pas être exposées au
 ## Matériel, stockage et données privées
 
 Louis : Linux Bazzite, Ryzen 9, RTX 2060 **6 Go**, 32 Go de RAM.
-Marc : Windows, RTX 5060 **8 Go**, **32 Go de RAM**. Des GPU plus gros pourront
+Marc : Windows, RTX 5060 Ti **8 Go**, **32 Go de RAM** (GPU détecté dans les
+rapports du 14 novembre 2026, auparavant noté RTX 5060). Des GPU plus gros pourront
 suivre. Les mesures Linux ne prédisent pas les performances Windows de Marc.
 
 Sur le PC de Louis, toute donnée volumineuse doit rester sur le SSD de 4 To,
