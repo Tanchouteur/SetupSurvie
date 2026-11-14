@@ -36,6 +36,7 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
         p=patch.object(library,'GUIDES',guides);p.start();self.addCleanup(p.stop)
         p=patch.object(library,'books',AsyncMock(return_value=[]));p.start();self.addCleanup(p.stop)
         store.init();library.index_guides()
+        self.addAsyncCleanup(library.kiwix_queries.close)
 
     async def test_practical_queries_rank_expected_documents_first_across_domains_and_variants(self):
         cases=[('faire du feu','feu'),('comment faire un feu','feu'),('allumer un feu','feu'),('peux tu m’expliquer comment faire du feu','feu'),('faire des feux','feu'),('techniques de feu','feu'),

@@ -25,6 +25,7 @@ class SearchReferenceTests(unittest.IsolatedAsyncioTestCase):
         for target, name, value in [(store,'ROOT',root/'state'), (library,'GUIDES',guides), (library,'books',AsyncMock(return_value=[]))]:
             patched = patch.object(target,name,value); patched.start(); self.addCleanup(patched.stop)
         store.init(); library.index_guides()
+        self.addAsyncCleanup(library.kiwix_queries.close)
 
     async def verify_cases(self, verification):
         for case in REFERENCE['cases']:

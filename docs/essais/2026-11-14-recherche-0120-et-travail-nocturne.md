@@ -161,3 +161,11 @@ le cache disque, dont il ne mesure pas la vitesse ; son ordre reste vérifié.
 La nouvelle campagne locale termine à 521 tests, trois ignorés, et les 28 contrôles
 Kiwix à 135 archives, dont la réutilisation disque après effacement de la mémoire,
 réussissent encore. CI finale et nouvel audit du paquet à confirmer.
+
+Un passage Windows suivant a identifié quatre anciennes suites qui supprimaient
+leur dossier temporaire avant la fermeture du moteur. Elles enregistrent maintenant
+le nettoyage asynchrone du cache avant celui des fichiers, comme le service le fait
+à l’arrêt. Les assertions de recherche et leurs données ne changent pas. Ce second
+écart concernait le cycle de vie des fixtures ; il reste distingué du premier
+thread survivant à l’annulation. La persistance disque est testée séparément sur
+les vrais petits ZIM et avec les threads volontairement retenus.

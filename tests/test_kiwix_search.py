@@ -17,6 +17,7 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
                       {'book':'manual_en','language':'eng','fulltext':True,'title':'Manual'},
                       {'book':'multi','language':'eng,fra','fulltext':True,'title':'Multilingue'},
                       {'book':'video','language':'fra','fulltext':False,'title':'Vidéos'}]
+        self.addAsyncCleanup(library.kiwix_queries.close)
 
     def xml(self,book,title='Feu de camp'):
         return f'<rss><channel><item><title>{title}</title><link>/content/{book}/Feu_de_camp</link><description>Extrait fictif sur le sujet demandé.</description></item></channel></rss>'.encode(), 'application/xml'

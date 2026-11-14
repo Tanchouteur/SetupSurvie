@@ -20,6 +20,7 @@ class CatalogueTests(unittest.IsolatedAsyncioTestCase):
             patched=patch.object(target,name,value);patched.start();self.addCleanup(patched.stop)
         env=patch.dict(os.environ,{'ZIM_DIR':str(self.zims)});env.start();self.addCleanup(env.stop)
         store.init();library.index_guides()
+        self.addAsyncCleanup(library.kiwix_queries.close)
 
     def save(self,item=None,domains=None,kind='procedure',status='reviewed'):
         item=item or self.item;fingerprint=catalogue.revision(item['id'],self.guides,self.zims)
