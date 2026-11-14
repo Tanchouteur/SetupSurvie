@@ -71,8 +71,11 @@ hauteur pouvait précéder le changement de media query et oublier la barre du b
 Le portail recalcule désormais aussi lors de ce changement et des variations de
 taille de la navigation. Les contraintes de visibilité restent vérifiées.
 
-La recette de confort rejoint la CI Chromium/WebKit ; le test Kiwix rejoint la
-suite Windows. Les résultats de CI sont à lire sur le commit livré.
+La [CI du code `14e3fa3`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43580399207)
+est entièrement réussie : Linux, suite Windows, routage synthétique et interface.
+La suite interface couvre cartes, profils, documents, conversations et traductions
+dans Chromium et WebKit ; les 37 contrôles de confort passent dans les deux moteurs.
+Le test Kiwix fait aussi partie de la suite Windows.
 
 ## Limites et recette sur la machine cible
 
