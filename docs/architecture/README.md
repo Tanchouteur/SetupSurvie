@@ -314,3 +314,14 @@ la recherche normale ne dépend pas de ce module optionnel. Rapports durables pr
 dans `search-experiments/`, pas de reprise automatique ni de réglage modifié.
 `pilot/search-reference.json` est la référence embarquée ; le générateur de portail
 produit sa copie statique. Voir le [guide](../utilisation/comparer-recherche-ia.md).
+
+## Dossiers de lecture pratique (0.9.0)
+
+`pilot/practical.py` lit les six objectifs et points dans `deploy/kiwix-themes.json`.
+Les API publiques `/api/library/dossiers` et `/{id}` sont indépendantes de l’IA ;
+`/{id}/search` déclenche seulement les recherches documentaires explicites.
+Famille modifie les références via `/api/admin/library/dossiers/{id}/references`,
+avec révision du dossier et du fichier source. `settings`, préfixe `dossier:v1:`,
+conserve les notes communes sans migration. Export via `/api/admin/library/dossiers-export`.
+Une erreur du module optionnel laisse les autres chemins accessibles. Le
+[guide](../utilisation/dossiers-pratiques.md) décrit la reprise et les limites.

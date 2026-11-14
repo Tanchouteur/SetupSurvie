@@ -64,7 +64,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
-| L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | À développer |
+| L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | À réaliser progressivement |
 
@@ -255,6 +255,13 @@ avec les archives de Marc et compréhension réelle vérifiées par **R6**.
 **Fin technique :** six dossiers navigables, liens contrôlés et statut de chaque
 ressource explicite. Un dossier peut rester incomplet si une source manque,
 mais doit nommer la lacune et sa prochaine action. Utilité réelle : **R3**.
+
+**Implémenté en 0.9.0 :** six dossiers adressables, recherche ciblée volontaire,
+repères humains avec source/page/section, dates et révision, lacunes et prochaine
+action. Les anciennes notes sont à revoir après changement du fichier ; conflit
+d’édition refusé, retrait et export sans modification des originaux. Le
+[guide](../utilisation/dossiers-pratiques.md) précise la relecture réelle R3 :
+aucun guide complet, présence locale ni acquisition supplémentaire n’est présumé.
 
 ### L8 — Évaluer une aide IA à la recherche
 

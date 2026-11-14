@@ -65,7 +65,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.8.0'
+VERSION='0.9.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -504,6 +504,47 @@ async def learning_paths():
 
 @app.get('/api/source')
 async def source(id:str):return await library.source(id)
+
+
+class PracticalReference(BaseModel):
+    source_id:str=Field(min_length=1,max_length=2000)
+    source_revision:str=Field(pattern=r'^[a-f0-9]{64}$')
+    dossier_revision:int=Field(ge=0)
+    sections:list[str]=Field(min_length=1,max_length=6)
+    note:str=Field(min_length=1,max_length=700)
+    locator:str=Field(min_length=1,max_length=200)
+    reviewed:bool=False
+
+
+@app.get('/api/library/dossiers')
+async def practical_dossiers():
+    with optional_feature('practical') as module:return await asyncio.to_thread(module.overview)
+
+
+@app.get('/api/library/dossiers/{identifier}')
+async def practical_dossier(identifier:str):
+    with optional_feature('practical') as module:return await asyncio.to_thread(module.dossier,identifier)
+
+
+@app.get('/api/library/dossiers/{identifier}/search')
+async def practical_sources(identifier:str):
+    with optional_feature('practical') as module:return await module.search(identifier)
+
+
+@app.put('/api/admin/library/dossiers/{identifier}/references')
+async def save_practical_reference(identifier:str,body:PracticalReference,value=Depends(admin)):
+    with optional_feature('practical') as module:
+        return await module.save(identifier,body.source_id,body.source_revision,body.dossier_revision,body.sections,body.note,body.locator,body.reviewed)
+
+
+@app.delete('/api/admin/library/dossiers/{identifier}/references/{entry_id}')
+async def remove_practical_reference(identifier:str,entry_id:str,revision:int=Query(ge=0),value=Depends(admin)):
+    with optional_feature('practical') as module:return await asyncio.to_thread(module.remove,identifier,entry_id,revision)
+
+
+@app.get('/api/admin/library/dossiers-export')
+async def export_practical_dossiers(value=Depends(admin)):
+    with optional_feature('practical') as module:return {'version':VERSION,**await asyncio.to_thread(module.export)}
 
 
 class SourceClassification(BaseModel):

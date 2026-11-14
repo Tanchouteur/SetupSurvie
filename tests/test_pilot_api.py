@@ -41,6 +41,24 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(self.client.get('/api/conversations').status_code,200)
             launch.assert_not_called()
 
+    def test_practical_dossiers_read_without_engine_and_edits_require_family_and_current_revision(self):
+        with patch.object(operations,'status',side_effect=AssertionError('No engine needed')):
+            result=self.client.get('/api/library/dossiers');self.assertEqual(result.status_code,200);self.assertEqual(len(result.json()['dossiers']),6)
+            self.assertEqual(self.client.get('/api/library/dossiers/abri').json()['reviewed_sections'],0)
+        library.GUIDES.mkdir(parents=True,exist_ok=True);(library.GUIDES/'tiny.en.txt').write_text('Fictional shelter drawing, no real instructions.')
+        library.index_guides();fingerprint=catalogue.revision('guide:tiny.en.txt',library.GUIDES,self.root/'zim')
+        body={'source_id':'guide:tiny.en.txt','source_revision':fingerprint,'dossier_revision':0,'sections':['plans'],'note':'Dessin fictif.','locator':'Section A','reviewed':True};headers={'Origin':'http://testserver'}
+        self.login('alice')
+        self.assertEqual(self.client.put('/api/admin/library/dossiers/abri/references',json=body,headers=headers).status_code,403)
+        self.assertEqual(self.client.get('/api/admin/library/dossiers-export').status_code,403)
+        self.client.cookies.clear();self.login('admin')
+        saved=self.client.put('/api/admin/library/dossiers/abri/references',json=body,headers=headers);self.assertEqual(saved.status_code,200)
+        self.assertEqual(saved.json()['reviewed_sections'],1)
+        self.assertEqual(self.client.put('/api/admin/library/dossiers/abri/references',json=body,headers=headers).status_code,409)
+        exported=self.client.get('/api/admin/library/dossiers-export');self.assertEqual(exported.json()['version'],gateway.VERSION);self.assertNotIn('Fictional shelter drawing',exported.text)
+        entry=saved.json()['evidence'][0]['id'];self.assertEqual(self.client.delete('/api/admin/library/dossiers/abri/references/'+entry+'?revision=1',headers=headers).status_code,200)
+        self.assertTrue((library.GUIDES/'tiny.en.txt').is_file())
+
     def test_calibration_is_explicit_family_only_and_validates_settings(self):
         self.login('alice');headers={'Origin':'http://testserver'}
         self.assertEqual(self.client.get('/api/admin/assistant/calibration').status_code,403)

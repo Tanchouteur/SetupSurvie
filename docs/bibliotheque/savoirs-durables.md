@@ -1,6 +1,6 @@
 # Savoirs et savoir-faire durables
 
-**Guide actuel — pilote 0.1.19, 12 novembre 2026.** Besoins transmis par Marc,
+**Guide actuel — besoins du 12 novembre, complété en 0.9.0 le 14 novembre 2026.** Besoins transmis par Marc,
 intégrés aux thèmes, aux parcours et aux règles de l’assistant. Le corpus reste
 à enrichir et à examiner : une collection repérée ne valide pas chaque procédé.
 
@@ -31,6 +31,15 @@ plans, conditions, mesures de contrôle, limites, entretien et alternatives. Les
 actes de soin et procédés à risque doivent préciser les compétences et moyens
 nécessaires. Les [règles de fiabilité](../utilisation/sources-et-fiabilite.md)
 s’appliquent aussi à ces domaines.
+
+## Dossiers pratiques depuis 0.9.0
+
+Les [six dossiers de lecture](../utilisation/dossiers-pratiques.md) organisent
+feu, eau, abri, générateur à pédales, crevaison et graines. Leurs objectifs,
+recherches et points à examiner partagent `deploy/kiwix-themes.json`. Les repères
+humains sont conservés dans l’état local avec leur source et localisation.
+Les commandes sont livrées ; les procédures, plans et lacunes du fonds réel
+restent à examiner. Un compteur de repères ne certifie pas une couverture complète.
 
 ## Ce qui est intégré au logiciel
 

@@ -173,3 +173,11 @@ mesurer reformulation bilingue et reclassement sur le modèle local. Les avis hu
 cas réservés, faux positifs, couverture et budget de délai conditionnent la décision.
 L’aide reste désactivée dans la recherche ordinaire ; l’index sémantique est reporté
 jusqu’au bénéfice établi par R2/R4 réel. Aucun nouveau modèle n’est imposé.
+
+## Dossiers pratiques 0.9.0 — 14 novembre 2026
+
+Six objectifs de lecture sont retenus dans Apprendre par thème. Les
+[repères](../utilisation/dossiers-pratiques.md) sont ajoutés explicitement après
+examen d’une source, avec localisation et révision ; les points non documentés
+restent visibles. Une qualification automatique sur le titre seul est écartée.
+L’enrichissement du fonds attend des lacunes confirmées et les droits examinés.

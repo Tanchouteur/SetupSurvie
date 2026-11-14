@@ -147,3 +147,10 @@ Famille peut [comparer une aide IA à la recherche](comparer-recherche-ia.md),
 avec reformulations bilingues, reclassement et relecture humaine. Cette expérience
 n’ajoute aucun appel au modèle dans la recherche habituelle ; l’intégration reste
 reportée jusqu’à une mesure réelle favorable et répétée.
+
+## Un objectif pratique depuis 0.9.0
+
+Dans **Apprendre par thème**, les [six dossiers pratiques](dossiers-pratiques.md)
+organisent la recherche puis les pages ou sections réellement examinées. Chaque
+point sans référence reste explicitement à documenter. Les repères ne remplacent
+ni la lecture de l’original ni la qualification du fonds réel.

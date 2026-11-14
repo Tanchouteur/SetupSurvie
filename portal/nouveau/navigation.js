@@ -104,6 +104,7 @@
     else if(route.name!=='chat'){$('main').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
     put('last',urlFor(route.section,route.tab,route.params));
     fitNextChat();pollActivity();
+    document.dispatchEvent(new CustomEvent('survie:route',{detail:{section:route.section,tab:route.tab,params:Object.fromEntries(route.params)}}));
   }
   function navigate(route,replace=false){
     if(!route)return;

@@ -1249,5 +1249,93 @@
       "label": "Transmettre",
       "description": "Schémas, plans, vocabulaire, exercices, erreurs fréquentes et critères de réussite."
     }
+  ],
+  "practical_sections": [
+    {
+      "id": "prerequisites",
+      "label": "Prérequis et limites"
+    },
+    {
+      "id": "materials",
+      "label": "Matériel et outils"
+    },
+    {
+      "id": "plans",
+      "label": "Schémas et plans, si nécessaires"
+    },
+    {
+      "id": "steps",
+      "label": "Étapes documentées"
+    },
+    {
+      "id": "checks",
+      "label": "Contrôles et critères de réussite"
+    },
+    {
+      "id": "maintenance",
+      "label": "Entretien ou conservation"
+    }
+  ],
+  "practical_dossiers": [
+    {
+      "id": "feu",
+      "title": "Comprendre les techniques d’allumage",
+      "goal": "Comparer les techniques de production de feu et retrouver leurs conditions d’utilisation.",
+      "queries": [
+        "techniques de production de feu",
+        "guide de survie faire du feu"
+      ],
+      "scope": "Étudier les méthodes, les conditions et les limites avant toute réalisation."
+    },
+    {
+      "id": "eau",
+      "title": "Étudier le traitement de l’eau",
+      "goal": "Distinguer les traitements, leurs moyens de contrôle et les informations nécessaires pour les choisir.",
+      "queries": [
+        "rendre eau potable",
+        "traitement eau filtration"
+      ],
+      "scope": "Un document ne certifie pas à lui seul la qualité de l’eau disponible."
+    },
+    {
+      "id": "abri",
+      "title": "Préparer un projet d’abri",
+      "goal": "Trouver une méthode adaptée, ses plans, ses matériaux et ses conditions d’application.",
+      "queries": [
+        "construire un abri",
+        "shelter construction"
+      ],
+      "scope": "Les plans doivent correspondre aux matériaux, au terrain et aux contraintes du projet."
+    },
+    {
+      "id": "generateur-pedales",
+      "title": "Construire un générateur à pédales",
+      "goal": "Distinguer le principe de fonctionnement d’un véritable guide de fabrication.",
+      "queries": [
+        "fabriquer un générateur à pédales",
+        "pedal generator construction"
+      ],
+      "scope": "Chercher les pièces, le montage, les schémas et les contrôles, au-delà de la présentation historique."
+    },
+    {
+      "id": "velo",
+      "title": "Réparer une crevaison de vélo",
+      "goal": "Retrouver une procédure, les outils nécessaires et les contrôles après réparation.",
+      "queries": [
+        "réparer une crevaison de vélo",
+        "bicycle puncture repair"
+      ],
+      "scope": "Identifier le type de roue et de chambre à air concerné dans la source."
+    },
+    {
+      "id": "graines",
+      "title": "Conserver les graines pour les prochains semis",
+      "goal": "Trouver des repères sur la sélection, la conservation et le contrôle des semences.",
+      "queries": [
+        "conserver les graines",
+        "seed storage preservation"
+      ],
+      "scope": "Distinguer la conservation des semences de la conservation des aliments."
+    }
   ]
 }

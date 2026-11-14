@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Dossiers pratiques](utilisation/dossiers-pratiques.md) — guide 0.9.0, objectifs et références examinées.
+- [Six dossiers pratiques](essais/2026-11-14-dossiers-pratiques.md) — bilan 0.9.0, validation en cours.
+
 - [Comparer une aide IA à la recherche](utilisation/comparer-recherche-ia.md) — guide 0.8.0, essai volontaire et avis humains.
 - [Comparatif de recherche IA](essais/2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0, CI réussie ; mesure réelle attendue.
 

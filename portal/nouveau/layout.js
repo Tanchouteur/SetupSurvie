@@ -45,7 +45,7 @@
 
   const search=make('div','next-library-pane');search.id='next-search';
   for(const child of [...lib.children])if(child!==lib.querySelector('.page-heading')&&child!==libTabs&&child!==domain&&child!==domain.nextElementSibling)search.append(child);
-  const learning=make('div','next-library-pane');learning.id='next-learning';learningBrowser.open=true;learning.append(learningBrowser);
+  const learning=make('div','next-library-pane');learning.id='next-learning';learningBrowser.open=false;learning.append(learningBrowser);
   const collections=make('div','next-library-pane');collections.id='next-collections';
   collections.append(make('p','muted','Ces collections sont réellement présentes sur le serveur. Leur disponibilité de lecture est vérifiée séparément de leur téléchargement.'));
   const filter=make('form','next-collection-filter');filter.id='collection-filter-form';
