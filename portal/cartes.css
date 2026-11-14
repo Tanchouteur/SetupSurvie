@@ -11,3 +11,12 @@
 .map-route-chip{position:absolute;left:18px;bottom:34px;box-shadow:var(--shadow);background:#fff7e9;border-color:#d8b986;color:#7e4f27;z-index:4}.map-route-chip:hover{background:#f9ecd4}@media(max-width:760px){.map-route-chip{left:12px;bottom:82px;max-width:calc(100% - 24px);font-size:12px}.map-panel-open .map-route-chip{display:none}}@media print{.map-route-chip{display:none!important}}
 
 .map-profile-list{display:grid;gap:10px;margin:16px 0}.map-profile-list button{text-align:left;overflow-wrap:anywhere}
+
+/* Access selection stays inside the existing itinerary panel. */
+.route-advanced{padding:10px 0;font-size:13px}.route-advanced summary{cursor:pointer;color:var(--green);padding:8px 0}.route-advanced label{margin-top:12px}
+#route-access{padding-top:8px;font-size:13px}#access-candidates{display:grid;gap:8px;margin:16px 0}#access-candidates button{text-align:left;overflow-wrap:anywhere;font-size:13px}#access-candidates button[aria-pressed=true]{border-color:var(--green);background:#edf3e8;box-shadow:inset 3px 0 var(--green)}#route-review-access{font-size:12px;margin-top:12px}#route-access a{font-size:12px}
+@media print{#route-access,#route-review-access{display:none!important}}
+
+#planning-panel:has(#route-access:not([hidden]))>p,#planning-panel:has(#route-access:not([hidden])) #planning-message{display:none}
+
+.map-print-image{display:none}@media print{.map-print-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:fill}#map{z-index:1}#map canvas{visibility:hidden}}

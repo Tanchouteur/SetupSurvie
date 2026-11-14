@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Fiabilisation des cartes et choix d’accès](essais/2026-11-14-cartes-et-acces.md) — 0.11.0, branche dédiée ; validations et limites.
+
 - [Sous-titres français pour chaque vidéo](essais/protocole-sous-titres-videos.md) — précision du plan L6, inventaire et contrôles réels à réaliser.
 - [Vérifier l’usage hors ligne](utilisation/verifier-usage-hors-ligne.md) — contrôle R7 depuis le site, mesures sans IA et étapes humaines séparées.
 - [Contrôle d’usage hors ligne](essais/2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable et CI réussie ; usage physique à vérifier.

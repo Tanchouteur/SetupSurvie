@@ -14,7 +14,7 @@ from urllib.parse import quote,urlparse
 
 from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,File,Form,Query
 from pydantic import BaseModel,Field
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse,JSONResponse
 
 from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration
 
@@ -66,8 +66,15 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.10.0'
+VERSION='0.11.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
+
+
+@app.exception_handler(routing.RoutingError)
+async def routing_error_response(request:Request,exc:routing.RoutingError):
+    # Keep detail a string for older tabs/API consumers; code is additive.
+    return JSONResponse(status_code=exc.status_code,content={
+        'detail':exc.detail['message'],'code':exc.detail['code']},headers=exc.headers)
 
 
 @app.middleware('http')
@@ -81,7 +88,8 @@ async def origin_check(request,call_next):
         if (request.cookies.get(COOKIE) or request.cookies.get(profiles.COOKIE)) and not origin:
             return Response('Origine requise',status_code=403)
     response=await call_next(request)
-    response.headers['Cache-Control']='no-store'
+    if not (request.url.path.startswith('/api/geography/shade/') and response.status_code in (200,304)):
+        response.headers['Cache-Control']='no-store'
     response.headers['X-Content-Type-Options']='nosniff'
     return response
 
@@ -239,6 +247,18 @@ async def terrain_tile(z:int,x:int,y:int,value=Depends(user)):
     return Response(raw,media_type='image/png')
 
 
+@app.get('/api/geography/shade/{z}/{x}/{y}.png')
+async def terrain_shade_tile(z:int,x:int,y:int,request:Request,value=Depends(user)):
+    if not 8<=z<=14 or not 0<=x<2**z or not 0<=y<2**z:raise HTTPException(404,'Tuile inconnue.')
+    signature=await asyncio.to_thread(geography.terrain_signature)
+    etag=geography.terrain_etag(signature,z,x,y)
+    headers={'Cache-Control':'private, no-cache','ETag':etag,'Vary':'Cookie, X-Survie-Profile'}
+    if request.headers.get('if-none-match')==etag:return Response(status_code=304,headers=headers)
+    async with TERRAIN_LOCK:
+        raw=await asyncio.to_thread(geography.terrain_shade_png,z,x,y,signature)
+    return Response(raw,media_type='image/png',headers=headers)
+
+
 class MapList(BaseModel):
     title: str = Field(min_length=1,max_length=100)
 
@@ -253,6 +273,7 @@ class MapPoint(BaseModel):
 
 
 class RoutePoint(BaseModel):
+    access_token: str | None = Field(default=None,max_length=6000)
     lat: float = Field(ge=-85,le=85,allow_inf_nan=False)
     lon: float = Field(ge=-180,lt=180,allow_inf_nan=False)
     title: str = Field(default='Étape',max_length=120)
@@ -309,6 +330,21 @@ async def delete_map_point(identifier:str,value=Depends(admin)):
 @app.get('/api/routing')
 async def routing_status(value=Depends(user)):
     return await asyncio.to_thread(routing.status)
+
+
+class AccessRequest(BaseModel):
+    lat: float = Field(ge=-85,le=85,allow_inf_nan=False)
+    lon: float = Field(ge=-180,lt=180,allow_inf_nan=False)
+    mode: Literal['foot','motorcycle','car'] = 'foot'
+    avoid_motorways: bool = True
+    near: list[float] | None = Field(default=None,min_length=2,max_length=2)
+
+
+@app.post('/api/admin/map-notebook/accesses')
+async def map_accesses(body:AccessRequest,value=Depends(admin)):
+    if not store.limit('accesses:'+value['id'],maximum=30,period=60):raise HTTPException(429,'Attendez un instant avant de chercher un accès.')
+    try:return await routing.accesses(body.lat,body.lon,body.mode,body.avoid_motorways,body.near)
+    except ValueError as exc:raise HTTPException(422,str(exc))
 
 
 @app.post('/api/admin/map-notebook/calculate')

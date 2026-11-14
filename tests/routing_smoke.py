@@ -61,10 +61,21 @@ async def main():
                                     print('Synthetic service',candidate,(details.stdout or '')[-2500:],(details.stderr or '')[-2500:],flush=True)
                             raise
                         await asyncio.sleep(1)
+            access_results={}
+            for mode in ('foot','motorcycle','car'):
+                proposal=await routing.accesses(43.099,6.1,mode)
+                assert proposal['candidates'],(mode,proposal)
+                candidate=proposal['candidates'][0]
+                assert 100<candidate['distance_m']<1000,candidate
+                selected=await routing.calculate([{'lat':43.099,'lon':6.1,'title':'Point éloigné','access_token':candidate['token']},
+                                                 {'lat':43.1,'lon':6.104,'title':'Arrivée'}],mode,4 if mode=='foot' else 40)
+                assert selected['connectors'] and selected['points'][0]['lat']==43.099
+                assert selected['points'][0]['access_selected']
+                access_results[mode]=candidate['distance_m']
             assert results['foot']['distance_m'] < results['motorcycle']['distance_m'] < results['car']['distance_m'],{m:r['distance_m'] for m,r in results.items()}
             assert results['foot']['duration_s']==round(results['foot']['distance_m']/4*3.6)
             assert all(len(r['geometry']['coordinates'])>=2 for r in results.values())
-            print(json.dumps({'passed':True,'synthetic_osm_bytes':(ROOT/'fixtures/maps/routing-small.osm').stat().st_size,'distance_m':{m:r['distance_m'] for m,r in results.items()},'no_llm':True,'no_real_documents':True}))
+            print(json.dumps({'passed':True,'synthetic_osm_bytes':(ROOT/'fixtures/maps/routing-small.osm').stat().st_size,'distance_m':{m:r['distance_m'] for m,r in results.items()},'access_offsets_m':access_results,'no_llm':True,'no_real_documents':True}))
         finally:
             if started:app.compose(config,'down','--volumes','--remove-orphans')
 
