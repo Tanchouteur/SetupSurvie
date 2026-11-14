@@ -77,3 +77,11 @@ La première CI du commit `064a44f` valide Linux, Windows, Kiwix réel et le
 routage ; la recette navigateur a repéré la signature de son moteur simulé
 non actualisée pour le paramètre de périmètre. Fixture corrigée et CI relancée ;
 ce constat ne correspondait pas à une erreur du moteur réel.
+
+## Recette finale de la livraison
+
+La [CI du commit b1df766](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43594485911) est entièrement réussie : Linux, transferts/mises à jour Windows, indexation réelle de petites archives et CLI multiprocessus, Kiwix 3.8.1, routage et campagne navigateur Chromium/WebKit. La signature de la fixture et les espacements du petit écran ont été corrigés sans abaisser les critères de lecture.
+
+Essai TEST supplémentaire dans l’image Playwright 1.58.2 : 37 contrôles de confort, 12 contrôles des périmètres/réglages et 29 contrôles du portail dans chacun des deux moteurs. Les services et fichiers temporaires de cet essai ont été supprimés. Une émulation WebKit ne vaut pas un essai physique sur iPhone.
+
+Le rapport réel de Marc reste la référence avant changement ; la création des index et la mesure après installation doivent encore être exécutées sur son PC.

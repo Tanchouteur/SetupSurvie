@@ -54,3 +54,5 @@ Objectif : source utile parmi les cinq premiers résultats, variantes proches
 cohérentes, quiz accessoire derrière une procédure disponible et absence annoncée
 avec prudence. Les délais cibles sont à fixer sur la référence Windows réelle.
 Chaque lot met à jour ce suivi et ses guides ; conserver les bilans datés.
+
+La livraison initiale 0.3.0 et sa CI Windows/Linux/Chromium/WebKit sont décrites dans le [bilan vérifié](../essais/2026-11-14-recherche-index-et-espaces.md#recette-finale-de-la-livraison). Le suivi conserve explicitement les tâches non réalisées et la recette encore attendue sur le fonds réel.
