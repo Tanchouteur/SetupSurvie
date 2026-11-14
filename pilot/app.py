@@ -14,7 +14,7 @@ from urllib.parse import quote,urlparse
 
 from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,File,Form,Query
 from pydantic import BaseModel,Field
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse,JSONResponse
 
 from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration
 
@@ -68,6 +68,13 @@ async def lifespan(app):
 
 VERSION='0.11.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
+
+
+@app.exception_handler(routing.RoutingError)
+async def routing_error_response(request:Request,exc:routing.RoutingError):
+    # Keep detail a string for older tabs/API consumers; code is additive.
+    return JSONResponse(status_code=exc.status_code,content={
+        'detail':exc.detail['message'],'code':exc.detail['code']},headers=exc.headers)
 
 
 @app.middleware('http')

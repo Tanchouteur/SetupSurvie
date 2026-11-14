@@ -27,7 +27,7 @@ async page => {
       data={build_id:'fixture',candidates:[{lat:p.lat,lon:p.lon+.003,label:'Chemin du test',distance_m:244,token:'chosen-1'},{lat:p.lat+.002,lon:p.lon,label:'Autre accès',distance_m:222,token:'chosen-2'}]};
     }else if(path==='/api/admin/map-notebook/calculate'){
       const body=req.postDataJSON();if(delay)await new Promise(r=>setTimeout(r,500));
-      if(failure==='engine_unavailable'||(failure&&!body.points[0].access_token))return route.fulfill({status:failure==='engine_unavailable'?503:422,json:{detail:{code:failure,message:failure==='engine_unavailable'?'Moteur local indisponible. Réessayez.':'Choisissez un accès proche.'}}});
+      if(failure==='engine_unavailable'||(failure&&!body.points[0].access_token))return route.fulfill({status:failure==='engine_unavailable'?503:422,json:{code:failure,detail:failure==='engine_unavailable'?'Moteur local indisponible. Réessayez.':'Choisissez un accès proche.'}});
       data={...body,draft_id:'d'.repeat(32),distance_m:2400,duration_s:2160,points:body.points.map((p,i)=>({...p,snapped_lat:p.lat,snapped_lon:p.lon+(i?0:.003),offset_m:i?0:244})),geometry:{type:'LineString',coordinates:[[6.103,43.1],[6.11,43.11]]},connectors:[{distance_m:244,geometry:{type:'LineString',coordinates:[[6.1,43.1],[6.103,43.1]]}}],segments:[],note:'Kilomètres sur les voies uniquement.'};
     }
     return route.fulfill({json:data});

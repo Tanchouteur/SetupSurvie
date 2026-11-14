@@ -404,8 +404,8 @@ choisi dans les 1 000 m ; `near: [latitude, longitude]` restreint la recherche a
 100 m autour d’un clic manuel. Le calcul accepte un `access_token` facultatif par
 étape. Les jetons signés sont liés au point, mode, évitements, graphe et délai de
 quinze minutes ; ils deviennent invalides après redémarrage. Les erreurs de routage
-possèdent `detail.code` et `detail.message` ; le portail lit aussi les anciens
-messages textuels. Les limites restent 12 calculs et 30 recherches d’accès par
+conservent `detail` textuel et ajoutent un champ `code` stable ; le portail lit
+aussi les réponses structurées `detail.code` / `detail.message` des essais. Les limites restent 12 calculs et 30 recherches d’accès par
 minute et par profil.
 
 Les instantanés JSON des nouveaux trajets ajoutent `connectors` et

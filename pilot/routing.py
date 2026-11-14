@@ -46,8 +46,12 @@ def status():
 _ACCESS_KEY=secrets.token_bytes(32)
 
 
+class RoutingError(HTTPException):
+    """Categorical internal error, serialized with a legacy string detail."""
+
+
 def fail(status, code, message, **extra):
-    raise HTTPException(status, {'code':code, 'message':message, **extra})
+    raise RoutingError(status, {'code':code, 'message':message, **extra})
 
 
 def access_token(payload):

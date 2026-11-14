@@ -37,7 +37,8 @@ Les accès proches demandés par Louis sont confirmés explicitement dans le pan
 existant. Ils restent distincts des points enregistrés et des liaisons non
 vérifiées. Les erreurs locales sont catégorisées ; une panne moteur ne produit pas
 de propositions artificielles. Les anciens trajets et les profils sans mot de
-passe restent compatibles.
+passe restent compatibles. Les erreurs HTTP conservent leur champ `detail`
+textuel, avec un `code` supplémentaire ; un ancien onglet garde un message lisible.
 
 ## Vérifications de développement
 

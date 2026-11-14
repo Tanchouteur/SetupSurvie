@@ -173,6 +173,14 @@ class AccessExportTests(unittest.TestCase):
         with TestClient(gateway.app) as client:
             self.assertEqual(client.post('/api/admin/map-notebook/accesses',json={'lat':43,'lon':6}).status_code,403)
             gateway.app.dependency_overrides[gateway.user]=lambda:{'id':'family','role':'admin'}
+            with patch.object(routing,'manifest',return_value=None):
+                for endpoint,body in [('/api/admin/map-notebook/accesses',{'lat':43,'lon':6}),
+                                      ('/api/admin/map-notebook/calculate',{'points':[{'lat':43,'lon':6},{'lat':43.01,'lon':6.01}]})]:
+                    failure=client.post(endpoint,json=body)
+                    self.assertEqual(failure.status_code,409)
+                    self.assertIsInstance(failure.json()['detail'],str)
+                    self.assertEqual(failure.json()['code'],'not_prepared')
+                    self.assertEqual(failure.headers['cache-control'],'no-store')
             with patch.object(routing,'accesses',side_effect=AssertionError('Rejected before engine')):
                 for body in [{'lat':90,'lon':6},{'lat':43,'lon':6,'near':[1,2,3]},{'lat':43,'lon':6,'mode':'aircraft'}]:
                     self.assertEqual(client.post('/api/admin/map-notebook/accesses',json=body).status_code,422)
