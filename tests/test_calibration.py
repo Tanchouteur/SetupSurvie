@@ -100,3 +100,17 @@ class CalibrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_immediate_cancel_does_not_look_like_a_restart(self):
         await calibration.start('rapide');await calibration.cancel()
         self.assertEqual(calibration.status()['status'],'cancelled');self.assertEqual(calibration.status()['reason'],'user_cancelled')
+
+    async def test_apply_refuses_hardware_change_and_result_replaced_during_read(self):
+        report=await self.finish()
+        original=operations.status
+        async def changed(**kwargs):
+            state=await original(**kwargs);state['memory']['total']=16*1024**3;return state
+        with patch.object(operations,'status',AsyncMock(side_effect=changed)):
+            with self.assertRaises(HTTPException):await calibration.apply(report['id'])
+        describe=model_runtime.describe
+        async def replaced(*args,**kwargs):
+            value=await describe(*args,**kwargs);calibration.save({**report,'id':'b'*32});return value
+        with patch.object(model_runtime,'describe',side_effect=replaced):
+            with self.assertRaises(HTTPException):await calibration.apply(report['id'])
+        self.assertEqual(engine.context_size(self.model),8192)

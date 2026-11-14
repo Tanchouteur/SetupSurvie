@@ -232,6 +232,7 @@ async def apply(identifier):
     hardware={'ram_total':state.get('memory',{}).get('total'),'gpus':[{'name':g.get('name'),'total':g.get('total')} for g in state.get('gpus',[])]}
     if hardware!=report.get('hardware'):raise HTTPException(409,'Le matériel observé a changé. Refaites l’essai sur ce PC.')
     if not runtime.get('native_context') or context>runtime['native_context']:raise HTTPException(409,'Le modèle n’annonce plus ce contexte.')
+    if running() or status().get('id')!=identifier:raise HTTPException(409,'Un autre essai a commencé. Attendez sa fin avant de choisir un résultat.')
     previous=engine.context_size(model)
     with store.connect() as db:
         records=[('context:'+model,str(context)),('context:tested:'+model,json.dumps({'context':context,'digest':runtime['digest'],'calibration':identifier}))]
