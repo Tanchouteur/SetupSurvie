@@ -86,7 +86,10 @@
         const scope=route.tab==='favoris'?'favorites':route.tab==='traductions'?'translations':'all';
         scopeCommand=true;
         const control=document.querySelector(`[data-library-scope="${scope}"]`);
-        if(!skipSearch&&control&&(scope!=='all'||route.params.has('q')))control.click();
+        // Both startup listeners activate the route before the profile response;
+        // the auth event restores it once more. Search only after that response,
+        // including its anonymous fallback, rather than sending three requests.
+        if(S.authReady&&!skipSearch&&control&&(scope!=='all'||route.params.has('q')))control.click();
         else document.dispatchEvent(new CustomEvent('survie:scope-reset'));
         scopeCommand=false;
         const source=route.params.get('source');

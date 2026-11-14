@@ -31,7 +31,14 @@ async page => {
   await page.locator('#library-search').evaluate(f=>f.requestSubmit());await page.waitForSelector('#search-results .result');
   check(searches.at(-1).collection==='wikipedia','Filtre de collection transmis au moteur commun');
   check(page.url().includes('collection=wikipedia'),'Filtre de collection dans l’adresse');
-  await page.reload();await page.waitForSelector('#search-results .result');
+  const beforeReload=searches.length;let releaseProfile;
+  const profileGate=new Promise(resolve=>releaseProfile=resolve);
+  await page.route('**/api/profiles/current',async route=>{await profileGate;await route.continue();});
+  await page.reload();await page.waitForFunction(()=>document.readyState==='complete'&&!S.authReady);
+  check(searches.length===beforeReload,'Rechargement sans recherche automatique avant le profil');
+  releaseProfile();await page.waitForFunction(()=>S.authReady);await page.waitForSelector('#search-results .result');
+  await page.unroute('**/api/profiles/current');
+  check(searches.length===beforeReload+1,'Une seule recherche automatique au rechargement');
   check(searches.at(-1).collection==='wikipedia','Filtre conservé au rechargement avant chargement de l’inventaire');
   await page.waitForFunction(()=>document.getElementById('search-message').textContent.includes('indisponible')&&document.querySelector('#search-results .result'));
   check((await page.locator('#search-message').textContent()).includes('indisponible'),'Recherche partielle expliquée');
@@ -118,5 +125,9 @@ async page => {
   });
   check((await page.locator('#search-message').textContent()).includes('nouvelle-demande'),'La réponse tardive ne remplace pas la dernière requête');
   check(await page.locator('#search-results .result').first().getAttribute('data-source')==='guide:nouvelle-demande','Les résultats correspondent à la requête actuelle');
+  await page.route('**/api/profiles/current',route=>route.fulfill({status:503,json:{detail:'Fixture sans profil'}}));
+  await page.goto(base+'/?fixture=public#/bibliotheque/recherche?q=recherche-publique');
+  await page.waitForFunction(()=>S.authReady&&!S.user&&document.getElementById('search-message').textContent.includes('recherche-publique')&&document.getElementById('search-message').textContent.includes('trouvé'));
+  check(await page.locator('#search-message').textContent().then(text=>text.includes('recherche-publique')),'Recherche publique conservée si le profil ne répond pas');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
 }
