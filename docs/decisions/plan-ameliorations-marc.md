@@ -219,6 +219,12 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 
 ### L6 — Vidéos et sous-titres français hors ligne
 
+**Précision de Louis du 14 novembre :** valider la récupération ou la création
+des sous-titres français **pour chaque vidéo**, pas seulement quelques exemples.
+Le [protocole R6 cible](../essais/protocole-sous-titres-videos.md) définit les
+preuves, les exceptions visibles et la différence entre contrôle technique et
+relecture humaine. L’outillage vidéo reste à développer.
+
 - Inventorier médias et pistes réellement présents dans les ZIM, avec langue et
   format ; fournir ce relevé avant de présumer qu’il faut tout transcrire.
 - Exposer d’abord les VTT/SRT existants dans un lecteur local avec sélection de
@@ -237,6 +243,10 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 **Fin technique :** piste existante, piste manquante, interruption, reprise,
 synchronisation et lecture sans moteur testées sur petits médias. Compatibilité
 avec les archives de Marc et compréhension réelle vérifiées par **R6**.
+Le rapport du fonds réel doit rendre compte de toutes les vidéos inventoriées :
+piste française récupérée/créée, état des contrôles et de la relecture, ou motif
+d’indisponibilité. Une archive non examinée et une vidéo en erreur ne disparaissent
+pas du bilan ; une seule piste générée n’établit pas la fin du lot.
 
 ### L7 — Savoir-faire pratiques et apprentissage
 

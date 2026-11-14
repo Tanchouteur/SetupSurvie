@@ -1,5 +1,6 @@
 # Documentation SetupSurvie
 
+- [Sous-titres français pour chaque vidéo](essais/protocole-sous-titres-videos.md) — précision du plan L6, inventaire et contrôles réels à réaliser.
 - [Vérifier l’usage hors ligne](utilisation/verifier-usage-hors-ligne.md) — contrôle R7 depuis le site, mesures sans IA et étapes humaines séparées.
 - [Contrôle d’usage hors ligne](essais/2026-11-14-recette-usage-hors-ligne.md) — 0.10.0, recette exportable ; validation en cours.
 - [Journal depuis la 0.2.0](essais/journal-recherche-depuis-020.md) — suivi des différences, décisions, preuves et validations restantes pour le résumé final.

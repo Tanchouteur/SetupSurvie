@@ -58,6 +58,12 @@ du [plan](../decisions/plan-ameliorations-marc.md), pas des fonctions déclarée
 terminées par ce journal. Maison de Solliès-Ville et réorganisation générale des
 réglages sont tracées pour plus tard dans la [boîte à idées](../decisions/boite-a-idees.md).
 
+Louis précise ensuite que la récupération ou la création des sous-titres français
+doit être validée pour chaque vidéo : le [protocole R6 cible](protocole-sous-titres-videos.md)
+exige un inventaire et un état par média, contrôles de lecture/synchronisation
+hors ligne, relecture humaine à portée explicite et exceptions visibles. Ce
+complément ne déclare pas l’outillage vidéo ou ces validations déjà réalisés.
+
 ## Règle de mise à jour
 
 Pour chaque suite : ajouter différence concrète, cause vérifiée ou hypothèse,
