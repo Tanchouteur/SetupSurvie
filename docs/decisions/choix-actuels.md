@@ -209,3 +209,13 @@ CLI/Web, y compris un processus d’extraction restant après son superviseur.
 Les verrous OS ne sont pas restaurés comme des données ni supprimés pendant le
 nettoyage. Les [preuves et limites](../essais/2026-11-14-index-sauvegarde-et-retour-arriere.md)
 restent distinctes d’un essai du fonds de Marc ou d’une restauration physique complète.
+
+## Rapports réels 0.9.3 et corrections 0.9.4
+
+L’indexation réelle est terminée : 134 index natifs et un index local de 120 articles.
+Les 31 recherches partielles sur 32 motivent la priorité entre langues, les replis
+pratiques précoces, l’isolement des grosses archives et une phase bornée à douze
+secondes. Les réponses des outils ne répètent plus le manifeste des 135 archives
+dans le contexte du modèle. Les [corrections et leurs limites](../essais/2026-11-14-corrections-rapports-093.md)
+restent distinctes d’une nouvelle mesure sur le fonds. La reformulation IA n’a pas
+abouti dans les deux essais reçus ; aucun gain ni panne mémoire n’en est conclu.

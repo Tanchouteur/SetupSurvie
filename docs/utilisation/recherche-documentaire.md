@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.9.2, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.9.4, 14 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -21,6 +21,13 @@ le sujet du titre et du passage ; pour une demande pratique, les mentions de qui
 d’histoire ou de prévention seules passent après les correspondances plus directes.
 Il s’agit d’un classement, pas d’une validation du contenu ni d’un filtre qui cache
 les documents de prévention lorsqu’on les recherche précisément.
+
+Depuis 0.9.4, une demande pratique écarte les correspondances dont l’action
+n’est pas étayée, notamment un exercice de prix de vélo proposé pour une réparation.
+Les collections spécialisées et les reformulations utiles sont interrogées tôt.
+La phase de recherche dans les archives peut durer jusqu’à douze secondes ;
+les autres préparations peuvent s’ajouter. Un avertissement de couverture
+partielle reste significatif, même si des documents utiles ont déjà été trouvés.
 
 Les pages d’un même PDF sont regroupées. **Autres passages dans ce document**
 permet d’ouvrir les autres pages retenues. **Lire le PDF** conserve les illustrations ;
@@ -92,7 +99,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.9.2** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.9.4** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Réglages → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,

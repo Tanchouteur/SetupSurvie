@@ -6,8 +6,8 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports 0.2.0 puis 0.8.0 reçus le 14 novembre ; échecs réels à corriger et relecture humaine encore attendue |
-| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | Manuel 0.3.0, automatique 0.4.0, lecteur isolé corrigé 0.9.2 et maintenance 0.9.3 ; tentative réelle en erreur, rapport R1 attendu |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports 0.2.0, 0.8.0 et 0.9.3 reçus ; 31 recherches partielles sur 32 dans le dernier, relecture humaine encore attendue |
+| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | R1 réel 0.9.3 terminé sans erreur : 134 index natifs, un index local de 120 articles ; pause/reprise et nouveau lot réels restent à vérifier |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
@@ -58,8 +58,8 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
-| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémentation 0.4.0, lecteur isolé Windows corrigé 0.9.2, exclusions de maintenance 0.9.3 ; incident réel R1 à diagnostiquer |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | Diagnostic/cache/couverture 0.4.0 ; référence 32 cas et lecture 0.5.0 ; budgets, concurrence et replis corrigés 0.9.1, relance au chargement 0.9.2 ; nouveau R2 attendu |
+| L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.9.3 reçu : expirations et correspondances faibles ; ordonnanceur, filtrage et volume des outils corrigés en 0.9.4, nouvelle mesure attendue |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -327,6 +327,12 @@ le venv Windows reproduit en CI, sans présumer la cause réelle de l’incident
 La [conservation des index 0.9.3](../essais/2026-11-14-index-sauvegarde-et-retour-arriere.md)
 complète L1/L9 : exclusion des écrivains pendant sauvegarde et retour arrière,
 processus d’extraction restants et fichiers de verrou conservés.
+Les [rapports réels 0.9.3](../essais/2026-11-14-rapports-recherche-093.md) confirment
+ensuite l’indexation terminée sans erreur. Les recherches restent partielles et
+le comparatif IA expire après deux tentatives. Les
+[corrections 0.9.4](../essais/2026-11-14-corrections-rapports-093.md) ciblent ces
+faits ; le [journal depuis 0.2.0](../essais/journal-recherche-depuis-020.md) trace
+les livraisons et les décisions pour le résumé final demandé par Louis.
 
 La [procédure des rapports manuels](../essais/recettes-progressives-marc.md)
 définit R1 à R7, leur disponibilité actuelle et la façon de demander un essai.

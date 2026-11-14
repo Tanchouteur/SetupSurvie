@@ -363,3 +363,16 @@ et `index_archives.build_one` les détient pendant chaque extraction. La mainten
 acquiert aussi ces verrous pour exclure les processus restants et les départs tardifs.
 Les instantanés excluent les `.lease` des états ; le retour arrière conserve les
 inodes existants, y compris ceux détenus par son propre contexte de maintenance.
+
+## Ordonnancement et volume des recherches (0.9.4)
+
+`library.search_archives` ordonne les lots entre langues après correction des tags
+par les index réels, isole les grosses archives et limite les lots compatibles à
+douze. Deux consommateurs prennent les reformulations des collections pratiques
+avant les lots généraux restants ; l’échéance est de douze secondes, 32 appels au
+maximum. Les titres privilégient la diversité des familles. `kiwix_queries`
+annule un appel partagé seulement au départ de son dernier lecteur.
+`coverage.local_index` résume les compteurs et diagnostics sans répéter le manifeste
+par archive ; l’API d’administration et le rapport d’indexation gardent le détail.
+Le cache d’une question de l’assistant réutilise son intention préparée si le modèle
+la raccourcit au seul sujet, sans confondre deux actions explicites.

@@ -41,6 +41,7 @@ CONCEPTS={
  'legume':{'terms':['legume','legumes','vegetable','vegetables'],'fr':['legumes'],'en':['vegetables']},
  'affutage':{'terms':['affutage','affuter','aiguiser','sharpening','sharpen'],'fr':['affutage'],'en':['sharpening']},
  'outil':{'terms':['outil','outils','tool','tools'],'fr':['outil'],'en':['tool']},
+ 'fixation':{'terms':['fixer','fixation','fixing','attach','attaching','securing'],'fr':['fixation'],'en':['fixing']},
 }
 
 
@@ -75,6 +76,7 @@ def plan(query,words,synonyms,collection=''):
     if any(w in CONCEPTS['feu']['terms'] for w in terms):terms=[w for w in terms if w not in ('start','starting','make','making','produce')]
     if 'radio' in terms:terms=[w for w in terms if w!='poste']
     action=next((name for name,pattern in INTENTS.items() if re.search(pattern,raw)), '')
+    if practical and any(word in CONCEPTS['feu']['terms'] for word in terms) and not action:action='ignite'
     if action in ('repair','preserve'):
         terms=[w for w in terms if w not in CONCEPTS['reparation' if action=='repair' else 'conservation']['terms']] or terms
     groups=[];dedup=[]
@@ -146,10 +148,23 @@ def ordered(items,query,limit):
     for _,item in ranked:
         exercise=item.get('classification',{}).get('document_type')=='exercise' or re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(item.get('title','')))
         if exercise and query.practical and not re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(query.original)):continue
-        tokens=set(normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')).split())
+        combined=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text',''))
+        tokens=set(combined.split())
         hits=sum(any(term<=tokens for term in group) for group in query.token_groups)
-        required=max(1,(2*len(query.groups)+2)//3)
-        if hits<required and not item.get('_query_complete'):continue
+        required=max(1,(2*len(query.groups)+2)//3) if query.practical else len(query.groups)
+        excerpt=normal(item.get('excerpt','')+' '+item.get('_text',''))
+        title_tokens=set(normal(item.get('title','')).split())
+        title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)
+        native_without_excerpt=item.get('_query_complete') and not excerpt and title_hits>0
+        if hits<required and not native_without_excerpt:continue
+        if query.practical and query.action:
+            evidence=INTENTS[query.action]
+            named_device=query.action=='build' and (not excerpt or item.get('match')=='title') and len(query.groups)>1 and title_hits==len(query.groups)
+            classification=item.get('classification',{})
+            human_manual=title_hits>0 and classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual')
+            if not re.search(evidence,combined) and not named_device and not human_manual:continue
+        template=bool(re.search(r'\b(modele a remplir|modele a completer|template to fill|fill in this template)\b',excerpt[:2000]))
+        if query.practical and template and not title_hits and not re.search(r'\b(modele|template|inventaire|inventory)\b',normal(query.original)):continue
         if item.get('match')=='title' and re.search(r'(song|single|album)',normal(item.get('excerpt',''))) and query.practical:continue
         if item['id'] in seen:continue
         seen.add(item['id'])
@@ -169,12 +184,13 @@ def ordered(items,query,limit):
 
 
 INTENTS={
- 'repair':r'\b(reparer|reparation|repair|repairing|maintenance|entretien|entretenir|recoudre|ravauder|mending)\b',
- 'preserve':r'\b(conserver|conservation|stocker|storage|preserving|preservation|saving|save)\b',
+ 'repair':r'\b(reparer|reparation|repair|repairing|maintenance|entretien|entretenir|recoudre|ravauder|mending|sewing|couture|stitching|rustine|remplacer|remplacement|changement|replace|replacement)\b',
+ 'preserve':r'\b(conserver|conservation|stocker|stockage|storage|store|storing|preserve|preserving|preservation|saving|save)\b',
  'purify':r'\b(potable|potabilisation|potabiliser|purifier|purification|filtrer|filtration|disinfection|desinfection|purifying|treatment|traitement)\b',
  'build':r'\b(fabriquer|fabrication|construire|construction|build|building|assembly|assemble|diy)\b',
  'install':r'\b(installer|installation|install|installing)\b',
  'sharpen':r'\b(affutage|affuter|aiguiser|sharpen|sharpening)\b',
+ 'ignite':r'\b(allumer|allumage|amadou|tinder|campfire|feu de camp|ignition|ignite|friction|percussion|production de feu|faire du feu|fire making|fire starting|start a fire|lighting a fire|making a fire)\b',
 }
 
 def article_language(item):

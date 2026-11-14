@@ -2,6 +2,7 @@
 
 - [Journal depuis la 0.2.0](essais/journal-recherche-depuis-020.md) — suivi des différences, décisions, preuves et validations restantes pour le résumé final.
 - [Rapports réels 0.9.3](essais/2026-11-14-rapports-recherche-093.md) — indexation réussie, recherches encore partielles et comparatif IA interrompu.
+- [Corrections après les rapports 0.9.3](essais/2026-11-14-corrections-rapports-093.md) — 0.9.4, ordonnanceur, précision et contexte ; validation en cours.
 
 - [Conservation des index pendant la maintenance](essais/2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI réussie ; exclusions, restauration SQLite et retour arrière testés sur petites données.
 

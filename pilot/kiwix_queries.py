@@ -38,11 +38,19 @@ async def request(root,endpoint,path,kind,reader):
     task=shared['flights'].get(key)
     if task is None:
         task=asyncio.create_task(fetch());shared['flights'][key]=task
+        task.search_waiters=0
         def finished(value):
             if shared['flights'].get(key) is value:shared['flights'].pop(key,None)
             if not value.cancelled():value.exception()
         task.add_done_callback(finished)
-    return await asyncio.shield(task),False
+    task.search_waiters+=1
+    try:return await asyncio.shield(task),False
+    finally:
+        task.search_waiters-=1
+        if task.search_waiters==0 and not task.done():
+            if shared['flights'].get(key) is task:shared['flights'].pop(key,None)
+            task.cancel()
+            await asyncio.gather(task,return_exceptions=True)
 
 
 async def close():

@@ -2,6 +2,7 @@
 
 - [Journal depuis la 0.2.0](journal-recherche-depuis-020.md) — suivi actuel pour le résumé final.
 - [Rapports réels 0.9.3](2026-11-14-rapports-recherche-093.md) — réception et faits, sans confondre index prêt et recherche complète.
+- [Corrections après les rapports 0.9.3](2026-11-14-corrections-rapports-093.md) — 0.9.4, priorité des appels et volume des réponses ; validation en cours.
 
 - [Conservation des index pendant la maintenance](2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI Windows/Linux et navigateurs réussie ; fonds et matériel réels distincts.
 

@@ -30,6 +30,12 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
 
 ## Retours réels et changements de priorité
 
+La correction 0.9.4 est en préparation : priorité entre langues, reformulations
+des collections pratiques, annulation des appels sans lecteur, filtrage des
+correspondances et résumé des index dans les outils. Son
+[bilan](2026-11-14-corrections-rapports-093.md) consigne les causes reproduites,
+la piste booléenne écartée et les vérifications avant publication.
+
 - Rapports 0.8.0 : recherches partielles, index non préparés, comparatif IA expiré,
   puis capture d’échec d’indexation. [Analyse datée](2026-11-14-rapports-recherche-080.md).
 - Rapports 0.9.3 reçus ensuite : indexation terminée sans erreur, mais 31 recherches

@@ -148,7 +148,7 @@ def search_key(query,language='',favorite_user=None,collection='',domain='all'):
 
 
 async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all'):
-    references={};answer='';tool_trace=[];metrics=[];interrupted=False;search_cache={};read_cache={}
+    references={};answer='';tool_trace=[];metrics=[];interrupted=False;search_cache={};read_cache={};prepared_key=None
     selected=MODES[mode];requested=context_size(selected['model']);measured=assistant_metrics.Measurement(identifier,selected['model'],mode,requested)
     prepared_request=PENDING.pop(identifier,{})
     if prepared_request:
@@ -196,7 +196,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 try:
                     with measured.during('search'):found=await library.search(query[:200],limit=5,collection=collection,domain=domain)
                     measured.value['sources_found']=len(found)
-                    search_cache[search_key(query[:200],collection=collection,domain=domain)]=found
+                    prepared_key=search_key(query[:200],collection=collection,domain=domain);search_cache[prepared_key]=found
                     progress(identifier,'reading',sources_found=len(found))
                     record_tool('search_library',arguments,search_value(found),True)
                     # Read two leading, distinct documents. The model gets actual
@@ -273,6 +273,11 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                                 progress(identifier,'searching')
                                 query=str(arguments.get('query',''))[:200];language=arguments.get('language','');owner=user_id if arguments.get('favorites_only') is True else None;collection=str(arguments.get('collection',''))[:160]
                                 key=search_key(query,language,owner,collection,domain)
+                                if key not in search_cache and prepared_key in search_cache and not key[4] and key[:4]+key[5:]==prepared_key[:4]+prepared_key[5:]:
+                                    # A model may shorten the current user's repair/
+                                    # ignition request to its subject. Keep the user's
+                                    # prepared intent rather than repeat a broader search.
+                                    key=prepared_key
                                 if key not in search_cache:
                                     with measured.during('search'):search_cache[key]=await library.search(query,language,limit=5,favorite_user=owner,collection=collection,domain=domain)
                                 else:measured.value['cache_hits']['search']+=1

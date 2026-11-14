@@ -114,6 +114,11 @@ class EvidenceTests(unittest.TestCase):
         self.run_chat([self.call('search_library',{'query':'feu'}),{'content':'Source déjà lue [1].'}],[self.a])
         self.assertEqual(len(self.lookup_calls),1)
 
+    def test_an_explicit_change_of_action_is_not_the_prepared_search(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment réparer un vélo ?' WHERE conversation_id='c'")
+        self.run_chat([self.call('search_library',{'query':'construire un vélo'}),{'content':'Autre action demandée.'}],[self.a])
+        self.assertEqual(len(self.lookup_calls),2)
+
     def test_wikipedia_followup_uses_previous_user_subject(self):
         history=[{'role':'user','content':'Comment faire du feu ?'}, {'role':'assistant','content':'Aucun document, affirmation non établie.'}, {'role':'user','content':'Et dans Wikipédia tu ne trouves rien ?'}]
         query,collection=engine.document_request(history)

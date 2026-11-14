@@ -53,6 +53,7 @@ def create_archives(folder):
             creator.add_item(Article('Solar_panel','Solar panel installation','Solar panel installation and electrical checks. Fictional fixture without instructions.'))
             creator.add_item(Article('Vegetable_canning','Vegetable canning and food preservation','Canning vegetables for food storage. Fictional fixture without instructions.'))
             creator.add_item(Article('Tool_sharpening','Tool sharpening','Tool sharpening and maintenance. Fictional fixture without instructions.'))
+            creator.add_item(Article('Fictional_propulsion','Propulsion quantique fictive','Propulsion quantique : mots de test, sans technologie réelle.'))
             creator.add_redirection('Fire_alias','Alias de production de feu','Techniques_de_production_de_feu',{})
         paths.append(path)
     if sum(path.stat().st_size for path in paths)>1_000_000:raise RuntimeError('Synthetic fixture exceeded 1 MB')
@@ -114,6 +115,10 @@ def main():
                 check('Friction' in source['text'] and source['language'] in ('fr','fra'),'Actual source can be read with its language after retrieval')
                 alias=await library.source('zim:wikipedia_fr/Fire_alias')
                 check('Friction' in alias['text'] and alias['id'].endswith('/Fire_alias'),'A generated Kiwix alias reaches its actual target')
+                native,_=await real_get('/search?'+urlencode({'books.name':'wikipedia_fr','pattern':'propulsion quantique','format':'xml'}))
+                check(b'Fictional_propulsion' in native,'Two literal words reach the generated native document')
+                native,_=await real_get('/search?'+urlencode({'books.name':'wikipedia_fr','pattern':'propulsion AND quantique','format':'xml'}))
+                check(b'Fictional_propulsion' not in native,'Do not force Boolean AND unsupported by the pinned parser')
                 try:await real_get('/search?'+urlencode({'books.filter.lang':'fra','pattern':'feu','format':'xml'}))
                 except HTTPException:checks.append('Broad multilingual request is rejected by the pinned server')
         try:

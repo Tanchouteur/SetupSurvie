@@ -303,13 +303,22 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     requested={'fr':'fra','en':'eng'}.get(language,language)
     groups={};eligible=[];selected_books=[]
     saved_labels=catalogue.snapshot()
+    manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
     def priority(book):
         name=retrieval.normal(str(book.get('book',''))+' '+str(book.get('title','')))
+        known=manifests.get(book.get('book',''),{})
+        indexed=known.get('has_fulltext_index') is True or book.get('fulltext') is not False
         preferred=next((i for i,term in enumerate(('wikibooks','wikihow','appropedia','wikipedia','outdoors','diy','gardening','bicycles','trueprepper')) if term in name),20)
-        return (book.get('fulltext') is False,preferred,'fra' not in str(book.get('language','')))
-    manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
+        subjects=' '.join(query_plan.words) if query_plan else ''
+        targeted=any(re.search(pattern,subjects) and any(term in name for term in sources) for pattern,sources in (
+            (r'\b(velo|velos|bicycle|bicycles|crevaison|puncture)\b',('bicycles','wikibooks','wikihow')),
+            (r'\b(couture|vetement|recoudre|clothes|mending)\b',('crafts','wikihow','wikibooks')),
+            (r'\b(graines|semences|seed|seeds|compost|jardin)\b',('gardening','wikihow','wikibooks')),
+            (r'\b(generateur|generator|pedale|pedales|solaire|solar)\b',('appropedia','energypedia','lowtech')),
+            (r'\b(plomberie|fuite|leak)\b',('diy','wikihow'))))
+        return (not indexed,not targeted,preferred,'fra' not in str(book.get('language','')))
     report['locally_indexed']=0
     for original in sorted(available,key=priority):
         book=dict(original)
@@ -328,9 +337,13 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         value=book.get('search_id') or book['book']
         entry=(len(eligible),book,key,value);eligible.append(entry)
         # Unknown/multilingual metadata must never contaminate a monolingual batch.
-        group=(languages,key,book.get('fulltext'), value if len(languages)!=1 else '')
+        large=known.get('bytes',0)>=10_000_000_000 or 'wikipedia_' in book['book'].lower()
+        group=(languages,key,book.get('fulltext'), value if len(languages)!=1 or large else '')
         groups.setdefault(group,[]).append(entry)
-    batches=[items[i:i+6] for items in groups.values() for i in range(0,len(items),6)]
+    # Preserve priority across language groups. Previously every French batch
+    # preceded the first English practical collection. Large archives get their
+    # own request so their timeout cannot hide the five small archives beside it.
+    batches=sorted([items[i:i+12] for items in groups.values() for i in range(0,len(items),12)],key=lambda batch:batch[0][0])
     done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(2);title_semaphore=asyncio.Semaphore(2);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
     errors=[];error_counts={};cache_hits=0
     def failure(error,kind,books,elapsed):
@@ -358,7 +371,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 # This pinned Kiwix version does not parse Boolean OR reliably.
                 # Gather shorter literal queries for a second pass, after every
                 # archive has had its primary query and title lookup.
-                if not tree.findall('./channel/item') and pattern_override is None and query_plan and (len(query_plan.words)>1 or query_plan.action):
+                if not tree.findall('./channel/item') and pattern_override is None and query_plan and (len(query_plan.words)>1 or query_plan.action in ('repair','preserve','purify','install','sharpen')):
                     refinements.append((batch,lang))
             done.update(entry[0] for entry in batch)
             for position,item in enumerate(tree.findall('./channel/item')):
@@ -414,24 +427,47 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
             title_failed+=1;failure(error,'title',[book],started)
     title_books=[]
     if query_plan and query_plan.words:
-        priority=lambda b: next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(b.get('book','')).lower()),10)
-        title_books=sorted(selected_books,key=priority)[:4]
+        def title_priority(book):return next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(book.get('book','')).lower()),10)
+        ordered_books=sorted(selected_books,key=title_priority);families=set()
+        for book in ordered_books:
+            family=next((name for name in ('wikipedia','appropedia','wikibooks','wikihow') if name in str(book.get('book','')).lower()),book['book'])
+            if family not in families:title_books.append(book);families.add(family)
+            if len(title_books)==4:break
+        for book in ordered_books:
+            if len(title_books)==4:break
+            if book not in title_books:title_books.append(book)
     refinement_planned=0;deadline_exceeded=False
+    import heapq
+    pending=[(1,index,batch,None) for index,batch in enumerate(batches)]
+    heapq.heapify(pending);scheduled=set();sequence=len(pending)
+    terms=[word for _,word in sorted(enumerate(query_plan.words),key=lambda pair:(-len(query_plan.groups[pair[0]]),pair[0]))[:2]] if query_plan else []
+    def schedule_refinements(core_only):
+        nonlocal sequence,refinement_planned
+        for batch,lang in refinements:
+            core=any(any(name in entry[1]['book'].lower() for name in ('wikibooks','wikihow','appropedia','outdoors','diy','crafts','gardening','bicycles','trueprepper')) for entry in batch)
+            if core_only and not core:continue
+            for word in terms:
+                pattern=pattern_for(lang,[word]);key=(tuple(entry[0] for entry in batch),pattern)
+                if pattern==pattern_for(lang):continue
+                if key in scheduled:continue
+                scheduled.add(key);sequence+=1;refinement_planned+=1
+                heapq.heappush(pending,(0 if core else 2,sequence,batch,pattern))
+    async def consume():
+        while pending:
+            _,_,batch,pattern=heapq.heappop(pending)
+            await run(batch,pattern is None,pattern)
+            schedule_refinements(True)
     try:
-        async with asyncio.timeout(6):
-            await asyncio.gather(*(title_lookup(book) for book in title_books),*(run(batch) for batch in batches))
-            if query_plan:
-                # Prefer meaningful technical terms over generic request words.
-                terms=[word for _,word in sorted(enumerate(query_plan.words),key=lambda pair:(-len(query_plan.groups[pair[0]]),pair[0]))[:2]]
-                tasks=[(batch,pattern_for(lang,[word])) for batch,lang in refinements for word in terms]
-                refinement_planned=len(tasks)
-                await asyncio.gather(*(run(batch,False,pattern) for batch,pattern in tasks))
+        async with asyncio.timeout(12):
+            await asyncio.gather(*(title_lookup(book) for book in title_books),consume(),consume())
+            schedule_refinements(False)
+            await asyncio.gather(consume(),consume())
     except TimeoutError:deadline_exceeded=True
     report.update(refinement_attempted=refinement_attempted,refinement_failed=refinement_failed,refinement_not_searched=max(0,refinement_planned-refinement_finished))
     report.update(title_searched=title_done,title_failed=title_failed,title_not_searched=len(title_books)-title_done-title_failed)
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
-    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,deadline_exceeded=deadline_exceeded,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
+    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,deadline_exceeded=deadline_exceeded,deadline_ms=12000,primary_requests=calls-refinement_attempted,request_limit=32,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
     messages=[]
     if report['catalog']['state']=='stale':
         report['status']='partial';messages.append('Le catalogue répond mal ; la dernière liste connue est utilisée. Sa date figure dans le diagnostic.')
@@ -535,7 +571,8 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     if not metadata_available:
         if coverage['status']=='complete':coverage['status']='partial'
         coverage['warning']=coverage.get('warning','')+' Certains classements corrigés ne sont pas disponibles ; le classement automatique reste utilisé pour ces documents.'
-    coverage['local_index']=archive_index.status(store.ROOT/'archive-index')
+    progress=archive_index.status(store.ROOT/'archive-index')
+    coverage['local_index']={key:progress[key] for key in ('phase','archives','completed','articles','workers','started','reader_probe','error_summary') if key in progress}
     coverage['parallelism']=4
     coverage['collection']=query_plan.collection
     coverage['query_terms']=words
