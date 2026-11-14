@@ -49,6 +49,9 @@
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function fitNextChat(){if(current?.name!=='chat')return;const viewport=window.visualViewport;const height=viewport?.height||innerHeight;const top=$('view-chat').getBoundingClientRect().top-(viewport?.offsetTop||0);const nav=mobileNav.matches?$('main-navigation').getBoundingClientRect().height:0;document.documentElement.style.setProperty('--next-chat-height',Math.max(160,height-top-nav)+'px');}
   window.addEventListener('resize',fitNextChat,{passive:true});window.visualViewport?.addEventListener('resize',fitNextChat,{passive:true});
+  // WebKit may publish resize before the media-query change. Refit when the
+  // mobile navigation actually changes so it cannot cover the composer.
+  mobileNav.addEventListener('change',fitNextChat);new ResizeObserver(fitNextChat).observe($('main-navigation'));
   function activate(route,restoring=false){
     if(!route)return;
     if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html?interface=nouveau');return;}

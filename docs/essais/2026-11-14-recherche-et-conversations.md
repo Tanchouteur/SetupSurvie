@@ -65,7 +65,11 @@ altitude attend aussi que la carte soit prête. Le code cartographique est incha
 
 La recette de confort attend la fin de l’adaptation à chaque taille avant de
 mesurer les éléments : WebKit publie les événements de redimensionnement et de
-viewport de façon asynchrone. Les contraintes de visibilité restent vérifiées.
+viewport de façon asynchrone. La reproduction locale dans un conteneur WebKit
+a ensuite confirmé un défaut réel au passage du bureau au mobile : le calcul de
+hauteur pouvait précéder le changement de media query et oublier la barre du bas.
+Le portail recalcule désormais aussi lors de ce changement et des variations de
+taille de la navigation. Les contraintes de visibilité restent vérifiées.
 
 La recette de confort rejoint la CI Chromium/WebKit ; le test Kiwix rejoint la
 suite Windows. Les résultats de CI sont à lire sur le commit livré.
