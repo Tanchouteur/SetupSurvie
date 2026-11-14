@@ -4,21 +4,27 @@
   const make=(tag,cls,html='')=>{const n=document.createElement(tag);n.className=cls;n.innerHTML=html;return n;};
   const route=(path,label)=>`<a href="#/${path}" data-route="${path}">${label}</a>`;
   const header=(title,text)=>make('div','page-heading',`<div class="eyebrow">VOTRE SERVEUR LOCAL</div><h1>${title}</h1><p>${text}</p>`);
-  const notice=make('div','next-banner','<strong>Nouvelle interface</strong><span>Vos documents et profils habituels, une organisation plus simple.</span><a href="/classique/" id="next-classic">Interface classique ↗</a>');
-  document.body.prepend(notice);
   const nav=make('nav','next-main-nav');nav.id='navigation';nav.setAttribute('aria-label','Navigation principale');
   for(const [path,icon,label] of [['accueil','⌂','Accueil'],['bibliotheque','▤','Bibliothèque'],['assistant','◌','Assistant'],['cartes','⌖','Cartes'],['appareil','◴','Mon appareil']]){
     const a=make('a','nav-item',`<span aria-hidden="true">${icon}</span><span>${label}</span>`);a.href=path==='cartes'?'/cartes.html?interface=nouveau':'#/'+path;if(path!=='cartes')a.dataset.route=path;nav.append(a);
   }
   get('main-navigation').querySelector('nav').replaceWith(nav);
-  const history=make('details','next-history');history.append(make('summary','','Vos conversations'));history.append(document.querySelector('.sidebar-section'));
-  get('view-chat').querySelector('.chat-top').after(history);
+  const history=make('dialog','next-history-dialog');history.id='next-history-dialog';history.setAttribute('aria-labelledby','next-history-title');
+  history.append(make('h2','','Vos conversations'));history.firstChild.id='next-history-title';
+  history.append(document.querySelector('.sidebar-section'));
+  history.append(make('div','actions','<a class="native-webui" href="/">Assistant avancé · Open WebUI ↗</a><a href="/secours.html">Documents de secours ↗</a>'));
+  const close=make('button','secondary','Fermer');close.dataset.close='next-history-dialog';history.append(close);document.body.append(history);
+  const actions=make('div','next-chat-actions'),historyButton=make('button','secondary','Conversations');historyButton.id='next-history-open';historyButton.setAttribute('aria-haspopup','dialog');
+  historyButton.onclick=()=>history.showModal();actions.append(historyButton,get('chat-reset'));get('view-chat').querySelector('.chat-top').append(actions);
+  get('view-chat').querySelector('.native-help')?.remove();
+  get('feedback-button').hidden=true;
+  document.addEventListener('click',event=>{if(history.open&&event.target.closest('.conversation-link'))history.close();});
   get('admin-nav')?.remove(); // Its ID is recreated as a visible-in-Famille settings shortcut.
   const admin=make('button','quiet','Réglages de l’appareil');admin.id='admin-nav';admin.dataset.view='settings';admin.hidden=true;
   document.querySelector('.sidebar-bottom').prepend(admin);
   document.querySelector('.brand').href='#/accueil';document.querySelector('.brand').dataset.route='accueil';
-  document.querySelectorAll('a[href="/maquette/"],a[href="/nouveau/"]').forEach(a=>{a.href='/classique/';a.innerHTML='<strong>Interface classique ↗</strong><small>Retrouver la présentation habituelle.</small>';});
-  get('view-home').querySelector('h1').innerHTML='De quoi avez-vous<br>envie d’apprendre ?';
+  document.querySelectorAll('a[href="/maquette/"],a[href="/nouveau/"],a[href^="/classique/"]').forEach(a=>a.remove());
+  get('view-home').querySelector('h1').innerHTML='Qu’avez-vous<br>envie d’apprendre ?';
   get('view-home').querySelector('.welcome').classList.add('next-welcome');
   const lib=get('view-library'),oldHeading=lib.querySelector('.page-heading');
   oldHeading.replaceWith(header('Un livre, un sujet, une découverte.','Ouvrez une collection directement ou recherchez une information dans les documents.'));
@@ -70,7 +76,7 @@
   const memory=make('article','panel');memory.innerHTML='<h2>Mémoire de navigation</h2><p>Effacez seulement les onglets, filtres et brouillons mémorisés sur ce navigateur. Vos conversations et favoris sur le serveur sont conservés.</p><button id="next-clear-memory" class="secondary">Effacer la mémoire de navigation</button>';settings.append(memory);
   get('view-chat').querySelector('h1').textContent='Prenons le temps de comprendre.';
   const context=make('div','next-chat-context');
-  for(const selector of ['.next-history','.native-help','#inference-banner','#chat-source','#translation-panel','#conversation-picker']){const node=get('view-chat').querySelector(selector);if(node)context.append(node);}
+  for(const selector of ['#inference-banner','#chat-source','#translation-panel','#conversation-picker']){const node=get('view-chat').querySelector(selector);if(node)context.append(node);}
   get('view-chat').querySelector('.chat-top').after(context);
-  const bottom=make('div','next-mobile-tools','<a href="/classique/">Interface classique ↗</a><a class="native-webui" href="/">Open WebUI ↗</a><a href="/secours.html">Documents de secours ↗</a>');document.querySelector('footer').before(bottom);
+  const bottom=make('div','next-mobile-tools','<a class="native-webui" href="/">Open WebUI ↗</a><a href="/secours.html">Documents de secours ↗</a>');document.querySelector('footer').before(bottom);
 })();

@@ -1,6 +1,6 @@
 # La nouvelle interface et l’interface classique
 
-**Guide actuel — 0.1.34, 13 novembre 2026.**
+**Guide actuel — 0.1.35, 14 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -105,6 +105,12 @@ La suppression de la mémoire locale, dans Réglages, ne supprime pas les donné
 du serveur. Un profil ou document supprimé ne peut pas être recréé depuis cette
 mémoire. Les contrôles de changement de profil et d’onglets périmés restent actifs.
 
+Depuis 0.1.35, **Conversations** ouvre l’historique et les dossiers dans une
+fenêtre dédiée. Choisir une conversation ferme cette fenêtre et conserve son
+adresse pour Précédent/Suivant. La réponse occupe une colonne de lecture limitée,
+avec un texte de 16 pixels et une saisie compacte qui reste accessible.
+L’accueil propose **Qu’avez-vous envie d’apprendre ?**.
+
 ## Téléphone
 
 La barre du bas donne accès aux cinq rubriques. Recherche, documents, assistant,
@@ -117,9 +123,11 @@ Les pages natives PDF et Cartes gardent un lien de retour vers l’interface don
 elles proviennent. La dictée conserve ses prérequis HTTPS et navigateur.
 Safari iPhone réel reste à essayer ; les tests WebKit ne le remplacent pas.
 
-## Revenir à l’interface classique
+## Présentation précédente conservée
 
-Cliquer sur **Interface classique**, ou ouvrir `/classique/` sur le même serveur.
+Les boutons de retour à l’interface classique et **Faire un retour** ont été
+retirés de la nouvelle interface à la demande de Louis. Pour comparer
+ponctuellement, ouvrir directement `/classique/` sur le même serveur.
 Elle conserve ses propres HTML, CSS et scripts. Les lecteurs tiers volumineux et
 les API sont partagés ; profils, conversations, favoris et données ne sont pas
 copiés. Une bascule n’arrête aucune opération et ne restaure aucune base.
@@ -138,4 +146,4 @@ la procédure normale ; le téléchargement de Marc a été déclaré terminé p
 mais ce guide n’en fait pas un contrôle de machine.
 
 Les vérifications et limites de cette livraison sont dans le
-[bilan 0.1.32](../essais/2026-11-13-interface-fonctionnelle.md).
+[bilan 0.1.35](../essais/2026-11-14-recherche-et-conversations.md).

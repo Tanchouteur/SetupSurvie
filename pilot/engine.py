@@ -34,9 +34,11 @@ TOOLS=[
     spec('calculate','Calcul arithmétique exact. Opérations + - * / // (quotient entier) % (reste) ** et parenthèses. Utilise-le pour vérifier les calculs numériques.',{'expression':{'type':'string'}},['expression']),
     spec('convert_units','Conversion vérifiée entre unités compatibles : mm cm m km ; mL L m3 ; g kg ; J kJ MJ Wh kWh ; s min h.',{'value':{'type':'number'},'from_unit':{'type':'string'},'to_unit':{'type':'string'}},['value','from_unit','to_unit']),
 ]
+SYSTEM_SEARCH_NOTE=' Une recherche en erreur ou partielle, une collection sans index ou une absence de résultat ne prouvent jamais que tout le fonds est dépourvu d’information. Lis coverage et annonce ses limites. Pour une procédure pratique, cherche et lis une source directement pertinente ; un document de prévention des risques ne valide pas à lui seul une méthode de réalisation.'
 ACTIVE={}
 LOCK=asyncio.Semaphore(1)
 SYSTEM_APPENDIX='Les outils permettent de rechercher/lire les sources locales, calculer, convertir et interroger la géographie téléchargée. Pour les lieux, conserve les liens map_url et annonce les données absentes. Aucune position GPS en direct, aucun trafic ou état des lieux en direct. Ne déduis jamais la potabilité ou l’accès actuel des seuls repères cartographiques. Cite les sources sous la forme [1], [2], etc. en reprenant les numéros fournis. Ne cite aucune source non reçue. Utilise calculate pour les calculs, même simples.'
+SYSTEM_APPENDIX+=SYSTEM_SEARCH_NOTE
 SYSTEM_APPENDIX+=' Une référence avec consulted=false est un résultat de recherche, pas une source lue : appelle read_source avant de la citer. Pour chaque document cité, indique sa date document_date et son édition si disponibles ; sinon dis « date du document inconnue ». collected_at est la collecte locale et archive_date la date annoncée par le catalogue de l’archive : elles ne datent pas l’article ou le document. Signale les déductions comme telles. Si les sources consultées ne permettent pas de conclure, dis « Je ne sais pas d’après les documents disponibles » et précise ce qui manque.'
 
 
@@ -136,7 +138,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
                             elif name=='distance_between':value={'distance_m':geography.distance(**arguments),'note':'À vol d’oiseau, sans itinéraire.'}
                             elif name=='search_library':
                                 found=await library.search(str(arguments.get('query',''))[:200],arguments.get('language',''),limit=3,favorite_user=user_id if arguments.get('favorites_only') is True else None)
-                                value=[{**reference(references,item),'excerpt':item.get('excerpt','')[:1000]} for item in found[:5]]
+                                value={'results':[{**reference(references,item),'excerpt':item.get('excerpt','')[:1000]} for item in found[:5]],'coverage':getattr(found,'coverage',{})}
                             elif name=='read_source':
                                 item=await library.source(str(arguments.get('id','')));ref=reference(references,item,True)
                                 offset=max(0,min(int(arguments.get('offset',0)),100000))

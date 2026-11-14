@@ -6,7 +6,9 @@ async page => {
   await page.goto('about:blank');await page.context().clearCookies();
   await page.route('**/api/activity',r=>r.fulfill({json:{phase:'downloading',source:'windows',observed_at:Date.now()/1000,worker_alive:true,total_bytes:10000000000,verified_bytes:3000000000,total_count:4,verified_count:1,active:[{id:'book',title:'Collection fixture',bytes:1000000000,total:2000000000,phase:'downloading'}]}}));
   await page.setViewportSize({width:1440,height:950});await page.goto(base+'/#/accueil');await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
-  assert(await page.locator('.next-banner').count()===1,'Nouvelle interface par défaut');
+  assert(await page.locator('#navigation').isVisible(),'Nouvelle interface par défaut');
+  assert(!await page.locator('#feedback-button').isVisible(),'Bouton de retour retiré');
+  assert(await page.locator('a[href^="/classique/"]').count()===0,'Liens classiques retirés des menus');
   await page.locator('#navigation [data-route="bibliotheque"]').click();
   await page.locator('[data-route="bibliotheque/collections"]').click();
   await page.locator('#collection-filter').fill('');

@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.1.18, 12 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.1.35, 14 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -27,6 +27,22 @@ En cas de contradiction, il doit citer les deux sources, expliquer leur désacco
 et leurs conditions connues, puis signaler l’impossibilité de trancher si nécessaire.
 La source la plus récente n’a pas automatiquement raison. Une réponse d’IA ne
 garantit pas à elle seule l’exactitude ni l’actualité des documents.
+
+## Quand une recherche est incomplète
+
+Depuis 0.1.35, une erreur Kiwix ne se transforme plus silencieusement en absence
+de résultat. Les résultats des guides et des encyclopédies qui répondent sont
+conservés. Un message signale les recherches en échec, interrompues ou les
+collections sans index de texte. Ces dernières restent ouvrables dans Collections.
+L’assistant reçoit les mêmes limites avec ses résultats de recherche.
+
+Une recherche complète signifie que les archives sélectionnées ont répondu,
+pas que chaque passage a été lu ni que les mots choisis couvrent tout le sujet.
+Le filtre de langue restreint cette sélection. Des synonymes français/anglais
+aident notamment pour « feu », mais ne traduisent pas arbitrairement toute question.
+Pour une procédure pratique, l’assistant doit lire une référence directement
+pertinente : un document de prévention des incendies ne suffit pas à justifier
+une méthode d’allumage. Les consignes ne garantissent pas le comportement d’un modèle.
 
 ## Comprendre les dates affichées
 

@@ -110,3 +110,10 @@ normale sur Windows/Linux, son téléchargement étant terminé. Depuis 0.1.32,
 l’entrée principale utilise la nouvelle organisation ; la classique reste
 accessible sans retour de base et la maquette demeure fictive. Les validations
 simulées et recettes physiques restent distinguées dans le [bilan](../essais/2026-11-13-interface-fonctionnelle.md).
+
+Le 14 novembre 2026, Louis demande une conversation plus confortable, le retrait
+de **Faire un retour** et des boutons de retour classique. Depuis 0.1.35,
+l’historique s’ouvre par **Conversations**, l’archive `/classique/` est conservée
+sans lien dans les menus, et l’accueil demande **Qu’avez-vous envie d’apprendre ?**.
+La recherche Kiwix isole les échecs et expose ses limites au portail et à l’assistant ;
+aucune absence de source sur le feu chez Marc n’est déduite d’un test simulé.

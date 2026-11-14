@@ -45,6 +45,13 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(self.client.get('/api/library/learning').status_code,503)
         self.assertEqual(self.client.get('/api/search?q=').json(),{'results':[]})
 
+    def test_search_reports_incomplete_archive_coverage_without_hiding_guide_results(self):
+        found=library.SearchResults([{'id':'guide:test','title':'Test'}],{'status':'partial','failed':1,'warning':'Recherche partielle'})
+        with patch.object(library,'search',AsyncMock(return_value=found)):
+            data=self.client.get('/api/search?q=feu').json()
+        self.assertEqual(data['results'][0]['id'],'guide:test')
+        self.assertEqual(data['coverage']['status'],'partial')
+
     def test_uploaded_document_preserves_declared_dates_and_rejects_impossible_dates(self):
         self.login('admin');headers={'Origin':'http://testserver'}
         response=self.client.post('/api/admin/guides',files={'file':('notice.txt',b'Volume : 40 litres.','text/plain')},

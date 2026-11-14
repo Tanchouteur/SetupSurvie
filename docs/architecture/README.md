@@ -1,6 +1,6 @@
 # Architecture du pilote
 
-Vue de référence documentaire au 13 novembre 2026. Elle décrit les rôles des
+Vue de référence documentaire au 14 novembre 2026. Elle décrit les rôles des
 composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
 | Composant | Responsabilité | Entrées du dépôt |
@@ -207,3 +207,20 @@ Depuis 0.1.34, `portal/nouveau/collections.js` filtre uniquement les cartes de
 l’inventaire déjà affichées ; leurs actions restent attachées aux mêmes éléments.
 Le routeur mémorise le filtre et ouvre directement la page native Cartes.
 Le relief repose sur les tuiles locales existantes, sans nouvelle source réseau.
+
+## Recherche Kiwix depuis 0.1.35
+
+`pilot/library.py` sélectionne explicitement les archives par identifiant Kiwix,
+ou par nom en repli, plutôt qu’un filtre global de langue. Les lots de six
+archives ont les mêmes métadonnées de langue ; les archives multilingues ou sans
+langue connue restent isolées. Un lot refusé est retenté archive par archive.
+Trois requêtes au plus sont simultanées, avec 32 appels au plus, trois secondes
+pour le catalogue puis dix pour les recherches. Les succès déjà reçus sont conservés.
+
+`/api/search` et l’outil `search_library` transmettent `coverage` : état, nombres
+d’archives interrogées, en échec, non interrogées et sans index, avec un message
+explicite si nécessaire. Les recherches limitées aux favoris ou traductions
+conservent leur périmètre propre. Guides et articles sont alternés avant la limite
+finale pour éviter que les seuls guides masquent les encyclopédies.
+Les états décrivent la recherche, pas une validation documentaire ou une lecture.
+Voir le [bilan et les limites](../essais/2026-11-14-recherche-et-conversations.md).

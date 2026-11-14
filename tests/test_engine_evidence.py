@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock,patch
 
 import httpx
 from fastapi import HTTPException
-from pilot import engine,store
+from pilot import engine,library,store
 
 POLICY=Path(__file__).resolve().parents[1]/'deploy/assistant-system.fr.txt'
 
@@ -33,7 +33,7 @@ class EvidenceTests(unittest.TestCase):
             event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
         with patch.object(engine,'POLICY',POLICY),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
-             patch.object(engine.library,'search',AsyncMock(return_value=found or [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
+             patch.object(engine.library,'search',AsyncMock(return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
             asyncio.run(engine.run('j','u','c','rapide',attached))
         with store.connect() as db:
             row=dict(db.execute('SELECT * FROM jobs WHERE id="j"').fetchone())
@@ -49,13 +49,21 @@ class EvidenceTests(unittest.TestCase):
                   {'content':'Le document indique 10 kg (2010, édition A) [1]. Citation non lue [2], inventée [99].'}]
         payloads,answer=self.run_chat(messages,[{**self.a,'document_date':'2026'},self.b])
         search_result=json.loads(payloads[1]['messages'][-1]['content'])
-        self.assertFalse(search_result[0]['consulted'])
+        self.assertFalse(search_result['results'][0]['consulted'])
         read_result=json.loads(payloads[2]['messages'][-1]['content'])
         self.assertTrue(read_result['consulted']);self.assertEqual(read_result['document_date'],'2010')
         self.assertEqual(answer['sources'][0]['number'],1)
         self.assertEqual(answer['sources'][0]['document_date'],'2010')
         self.assertEqual(len(answer['sources']),1)
         self.assertIn('Je ne sais pas',payloads[0]['messages'][0]['content'])
+
+    def test_failed_archive_search_coverage_reaches_model_even_without_results(self):
+        found=library.SearchResults([],{'status':'unavailable','warning':'Recherche incomplète'})
+        payloads,answer=self.run_chat([self.call('search_library',{'query':'feu'}),{'content':'La recherche est incomplète.'}],found)
+        result=json.loads(payloads[1]['messages'][-1]['content'])
+        self.assertEqual(result['results'],[])
+        self.assertEqual(result['coverage']['status'],'unavailable')
+        self.assertEqual(answer['sources'],[])
 
     def test_contradictory_documents_keep_both_dates_and_references(self):
         messages=[self.call('read_source',{'id':'guide:a'}),self.call('read_source',{'id':'guide:b'}),

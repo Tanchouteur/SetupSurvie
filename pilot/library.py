@@ -1,5 +1,6 @@
 """Read-only local knowledge tools and a rebuildable guide index."""
 import ast
+import asyncio
 from fractions import Fraction
 from html.parser import HTMLParser
 import math
@@ -57,6 +58,16 @@ async def get(path, maximum=2_000_000):
             return bytes(body),response.headers.get('content-type','application/octet-stream')
 
 
+class Catalog(list):
+    def __init__(self, values=(), available=True):
+        super().__init__(values);self.available=available
+
+
+class SearchResults(list):
+    def __init__(self, values=(), coverage=None):
+        super().__init__(values);self.coverage=coverage or {}
+
+
 async def books():
     try:
         raw,_=await get('/catalog/v2/entries?count=-1')
@@ -64,10 +75,15 @@ async def books():
         result=[]
         for e in root.findall('a:entry',ns):
             link=next((l.get('href','') for l in e.findall('a:link',ns) if l.get('type')=='text/html'),'')
-            result.append({'title':e.findtext('a:title',namespaces=ns),'language':e.findtext('a:language',namespaces=ns),'book':link.removeprefix('/content/'),
+            fields={child.tag.rsplit('}',1)[-1]:child.text or '' for child in e}
+            tags=fields.get('tags','').split(';')
+            identifier=fields.get('id','').removeprefix('urn:uuid:')
+            result.append({'title':e.findtext('a:title',namespaces=ns),'language':fields.get('language',''),'book':link.removeprefix('/content/').strip('/'),
+                           'search_id':identifier if re.fullmatch(r'[0-9a-fA-F-]{36}',identifier) else '',
+                           'fulltext':False if '_ftindex:no' in tags else True if '_ftindex:yes' in tags else None,
                            'archive_date':source_metadata.date_value(e.findtext('a:updated',default='',namespaces=ns),timestamp=True)})
-        return result
-    except (httpx.HTTPError,ET.ParseError,HTTPException):return []
+        return Catalog(result)
+    except (httpx.HTTPError,ET.ParseError,HTTPException):return Catalog(available=False)
 
 
 INDEX_LOCK=threading.RLock()
@@ -214,7 +230,8 @@ SYNONYMS.update({
 SYNONYMS.update({'examiner':['examiner','examine','examining','examination'],
                  'malade':['malade','malades','sick','patient'],
                  'personne':['personne','person','people']})
-TERM_ALIASES={'stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
+SYNONYMS.update({'feu':['feu','feux','fire','campfire'],'allumer':['allumer','allumage','lighting','ignite'],'camp':['camp','camping','campfire']})
+TERM_ALIASES={'feux':'feu','stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
               'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
               'pompes':'pompe','velos':'velo','cartes':'carte','soudure':'soudage'}
 
@@ -255,6 +272,75 @@ def search_terms(query):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 
 
+async def search_archives(pattern_for, language, limit):
+    """Explicit homogeneous archive sets; multilingual archives queried separately.
+
+    Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
+    """
+    from urllib.parse import urlencode
+    report={'status':'complete','searched':0,'failed':0,'without_fulltext':0,'not_searched':0}
+    try:
+        available=await asyncio.wait_for(books(),timeout=3)
+    except (TimeoutError,httpx.HTTPError,HTTPException):
+        available=Catalog(available=False)
+    if not getattr(available,'available',True):
+        return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
+    requested={'fr':'fra','en':'eng'}.get(language,language)
+    groups={};eligible=[]
+    for book in available:
+        languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
+        if requested and requested not in languages:continue
+        if book.get('fulltext') is False:
+            report['without_fulltext']+=1;continue
+        if not book.get('book'):continue
+        key='books.id' if book.get('search_id') else 'books.name'
+        value=book.get('search_id') or book['book']
+        entry=(len(eligible),book,key,value);eligible.append(entry)
+        # Unknown/multilingual metadata must never contaminate a monolingual batch.
+        group=(languages,key, value if len(languages)!=1 else '')
+        groups.setdefault(group,[]).append(entry)
+    batches=[items[i:i+6] for items in groups.values() for i in range(0,len(items),6)]
+    done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(3)
+    async def run(batch, fallback=True):
+        nonlocal calls
+        lang=requested or ('eng' if all('eng' in re.split(r'[,;\s]+',str(e[1].get('language',''))) for e in batch) else '')
+        params=[(batch[0][2],entry[3]) for entry in batch]
+        params += [('pattern',pattern_for(lang)),('format','xml'),('pageLength',limit)]
+        try:
+            async with semaphore:
+                if calls>=32:return
+                calls+=1
+                raw,_=await get('/search?'+urlencode(params))
+                tree=ET.fromstring(raw)
+            done.update(entry[0] for entry in batch)
+            for item in tree.findall('./channel/item'):
+                link=item.findtext('link','')
+                if not link.startswith('/content/'):continue
+                stem=unquote(link.removeprefix('/content/')).split('/')[0]
+                book=next((e[1] for e in batch if e[1]['book']==stem),None)
+                if book is None:continue
+                text=Text();text.feed(item.findtext('description',''))
+                record={'id':'zim:'+link.removeprefix('/content/'),'title':item.findtext('title',''),
+                    'excerpt':text.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),
+                    'language':book.get('language',''),'url':link,**source_metadata.metadata(book)}
+                records.setdefault(record['id'],record)
+        except (httpx.HTTPError,ET.ParseError,HTTPException):
+            if len(batch)>1 and fallback:
+                await asyncio.gather(*(run([entry],False) for entry in batch))
+            else:failed.update(entry[0] for entry in batch)
+    try:
+        await asyncio.wait_for(asyncio.gather(*(run(batch) for batch in batches)),timeout=10)
+    except TimeoutError:pass
+    report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
+    messages=[]
+    if report['failed'] or report['not_searched']:
+        report['status']='partial';messages.append('Recherche partielle : certaines encyclopédies n’ont pas pu être interrogées. Aucun résultat ne permet de conclure que le sujet est absent du fonds.')
+    if report['without_fulltext']:
+        report['status']='partial';messages.append(str(report['without_fulltext'])+' collection(s) sans index de texte restent consultables directement dans Collections.')
+    if messages:report['warning']=' '.join(messages)
+    return list(records.values()),report
+
+
 async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False):
     words=search_terms(query)
     results=[]
@@ -274,37 +360,34 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                 rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
                 results.extend([{**dict(row),'kind':'article'} for row in rows])
     if favorite_user is not None or translations_only:return results[:limit*2]
-    available=await books()
-    langs=sorted({x['language'] for x in available if x['language'] and (not language or x['language']=={'fr':'fra','en':'eng'}.get(language,language))})
-    for lang in langs:
-        try:
-            from urllib.parse import urlencode
-            english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
-                     'apprendre':'learning','enfant':'children','enfants':'children','maths':'mathematics',
-                     'semences':'seeds','graines':'seeds','stocker':'storage','conservation':'preservation','jardin':'garden',
-                     'potager':'vegetable garden','sol':'soil','greffe':'grafting','abeilles':'bees','poules':'chickens',
-                     'dents':'teeth','dentaire':'dental','douleur':'pain','psychologique':'psychological','plantes':'plants',
-                     'champignons':'mushrooms','toxiques':'poisonous','antenne':'antenna','batterie':'battery','pompe':'pump',
-                     'menuiserie':'carpentry','couture':'sewing','soudage':'welding','plomberie':'plumbing',
-                     'velo':'bicycle','reparation':'repair','electricite':'electrical','lecture':'reading','ecriture':'writing',
-                     'calcul':'arithmetic','carte':'map','incendie':'fire','inondation':'flood',
-                     'puits':'wells','desinfection':'disinfecting','risques':'risks'}
-            english.update({'examiner':'examine','malade':'sick','personne':'person'})
-            english.update(LEARNING_ENGLISH)
-            translated=[english.get(w,w) if lang=='eng' else w for w in words]
-            pattern=' '.join(translated) if translated else query
-            raw,_=await get('/search?'+urlencode({'books.filter.lang':lang,'pattern':pattern,'format':'xml','pageLength':limit}))
-            for item in ET.fromstring(raw).findall('./channel/item'):
-                link=item.findtext('link','')
-                if not link.startswith('/content/'):continue
-                p=Text();p.feed(item.findtext('description',''))
-                results.append({'id':'zim:'+link.removeprefix('/content/'),'title':item.findtext('title',''),
-                    'excerpt':p.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),'language':lang,'url':link,
-                    **source_metadata.metadata(next((b for b in available if b['book']==unquote(link.removeprefix('/content/')).split('/')[0]),{}))})
-        except (httpx.HTTPError,ET.ParseError,HTTPException):continue
-    norm=lambda s:unquote(s).casefold().replace('é','e').replace('è','e')
+    def pattern_for(lang):
+        english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
+                 'apprendre':'learning','enfant':'children','enfants':'children','maths':'mathematics',
+                 'semences':'seeds','graines':'seeds','stocker':'storage','conservation':'preservation','jardin':'garden',
+                 'potager':'vegetable garden','sol':'soil','greffe':'grafting','abeilles':'bees','poules':'chickens',
+                 'dents':'teeth','dentaire':'dental','douleur':'pain','psychologique':'psychological','plantes':'plants',
+                 'champignons':'mushrooms','toxiques':'poisonous','antenne':'antenna','batterie':'battery','pompe':'pump',
+                 'menuiserie':'carpentry','couture':'sewing','soudage':'welding','plomberie':'plumbing',
+                 'velo':'bicycle','reparation':'repair','electricite':'electrical','lecture':'reading','ecriture':'writing',
+                 'calcul':'arithmetic','carte':'map','incendie':'fire','inondation':'flood',
+                 'puits':'wells','desinfection':'disinfecting','risques':'risks'}
+        english.update({'examiner':'examine','malade':'sick','personne':'person'})
+        english.update(LEARNING_ENGLISH)
+        english.update({'feu':'fire','allumer':'lighting','camp':'campfire'})
+        translated=[english.get(w,w) if lang=='eng' else w for w in words]
+        return ' '.join(translated) if translated else query
+    articles,coverage=await search_archives(pattern_for,language,limit)
+    norm=lambda value:unicodedata.normalize('NFKD',unquote(value)).encode('ascii','ignore').decode().casefold()
     results.sort(key=lambda r:norm(r['title'])!=norm(query))
-    return results[:limit*2]
+    articles.sort(key=lambda r:norm(r['title'])!=norm(query))
+    # Preserve both source families instead of filling every slot with guide pages.
+    combined=[];seen=set()
+    for index in range(max(len(results),len(articles))):
+        for family in (results,articles):
+            if index<len(family) and family[index]['id'] not in seen:
+                combined.append(family[index]);seen.add(family[index]['id'])
+    return SearchResults(combined[:limit*2],coverage)
+
 
 
 def safe_zim_path(identifier):

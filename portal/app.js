@@ -154,9 +154,9 @@ async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
   S.searchAbort?.abort();S.searchAbort=new AbortController();$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
   try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value),undefined,{signal:S.searchAbort.signal});
-    $('search-message').textContent=`${data.results.length} résultat(s) pour « ${q} »`;
+    $('search-message').textContent=`${data.results.length} résultat(s) pour « ${q} »`+(data.coverage?.warning?' · '+data.coverage.warning:'');
     renderLibraryResults(data.results);
-    if(!data.results.length)$('search-results').append(element('div','Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
+    if(!data.results.length)$('search-results').append(element('div',data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
 function renderLibraryResults(results){

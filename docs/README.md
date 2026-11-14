@@ -28,7 +28,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Utilisation
 
-- [Nouvelle interface Windows/Linux et retour classique](utilisation/nouvelle-interface.md) — guide actuel 0.1.32 : organisation, suivi réel, navigation et mise à jour normale.
+- [Nouvelle interface Windows/Linux](utilisation/nouvelle-interface.md) — guide actuel 0.1.35 : organisation, conversation, suivi réel, navigation et mise à jour normale.
 
 - [Essayer la maquette UX](utilisation/maquette-ux.md) — prototype séparé 0.1.31, navigation mémorisée et exemples fictifs ; portail actuel conservé.
 
@@ -83,6 +83,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 ### Essais et résultats
 
+- [Recherche et confort des conversations — 14 novembre 2026](essais/2026-11-14-recherche-et-conversations.md) — correction Kiwix, limites explicites et conversation lisible, 0.1.35.
 - [Recherche des ressources et cartes directes — 13 novembre 2026](essais/2026-11-13-recherche-collections-et-cartes.md) — filtre Collections, relief local par défaut et non-régression de l’interface 0.1.34.
 
 - [Audit du fonds réel de Marc — 13 novembre 2026](essais/2026-11-13-audit-fonds-marc.md) — volumes, besoins, accès aux vidéos et défaut de recherche Kiwix ; cartes préparées séparément.

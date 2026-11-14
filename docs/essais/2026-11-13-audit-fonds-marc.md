@@ -4,6 +4,10 @@
 Ce rapport distingue fichiers, accès, recherche et validation du contenu. Aucun
 modèle n’a été interrogé et aucun contenu n’a été supprimé.
 
+**Suivi du 14 novembre :** le défaut de recherche décrit ici est corrigé dans le
+code 0.1.35 ; voir le [bilan](2026-11-14-recherche-et-conversations.md). Cette
+correction est testée sur fixtures, sans nouvelle validation du fonds de Marc.
+
 ## Acquisition vérifiée
 
 Le plan contient 181 ajouts pour 753,27 Go ; tous sont reçus. En comptant le

@@ -60,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.1.34'
+VERSION='0.1.35'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -419,8 +419,11 @@ async def search(request:Request,q:str=Query(default='',max_length=200),language
     owner=(await user(request))['id'] if favorites_only else None
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
-            return {'results':await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []}
-    return {'results':await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []}
+            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []
+    else:
+        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only) if q.strip() else []
+    return {'results':found,**({'coverage':found.coverage} if isinstance(found,library.SearchResults) else {})}
+
 
 
 class FavoriteRequest(BaseModel):
