@@ -140,8 +140,12 @@ pas ce code validé. Cet audit ne vaut pas déploiement chez Marc.
 ## Corrections issues de la CI
 
 Le premier scénario WebKit utilisait une phase intermédiaire de 0,8 seconde,
-trop courte pour assurer son observation avant la fin ; le premier scénario de
-lecture attend maintenant 1,8 seconde. Le rapport doit accepter des premiers et
+trop courte pour assurer son observation avant la fin. Un premier allongement
+à 1,8 seconde a permis un passage, mais une autre observation de lecture à
+0,8 seconde restait intermittente. Les scénarios interactifs utilisent finalement
+un verrou explicite du serveur de test : les premiers documents sont envoyés,
+puis le test libère la fin après avoir vérifié lecture, clavier ou arrêt. Ce
+contrôle appartient seulement au serveur de fixtures, pas à l’API du produit. Le rapport doit accepter des premiers et
 derniers paquets reçus ensemble : des durées égales sont légitimes et ne doivent
 pas être transformées en avance artificielle. Les assertions gardent valeurs
 finies, cohérence chronologique et mises à jour effectivement reçues. Le code
@@ -169,3 +173,9 @@ le nettoyage asynchrone du cache avant celui des fichiers, comme le service le f
 écart concernait le cycle de vie des fixtures ; il reste distingué du premier
 thread survivant à l’annulation. La persistance disque est testée séparément sur
 les vrais petits ZIM et avec les threads volontairement retenus.
+
+Après ajout des fermetures de fixtures, les contrôles Windows ont tous réussi sur
+`1770e89`. La dernière anomalie navigateur était l’observation d’une phase de
+lecture déjà terminée, non une perte du document. Les verrous explicites ci-dessus
+remplacent les délais de scénario ; les 18 contrôles Chromium réussissent à nouveau.
+La CI finale doit confirmer aussi WebKit, avec les mêmes assertions d’usage.
