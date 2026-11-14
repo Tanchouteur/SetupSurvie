@@ -54,6 +54,7 @@ async def lifespan(app):
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
     yield
+    await library.kiwix_queries.close()
     try:
         with optional_feature('search_experiment') as module:await module.cancel(reason='service_restarted')
     except HTTPException:pass
@@ -65,7 +66,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.9.0'
+VERSION='0.9.1'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 

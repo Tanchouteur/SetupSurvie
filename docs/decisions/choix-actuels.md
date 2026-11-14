@@ -181,3 +181,13 @@ Six objectifs de lecture sont retenus dans Apprendre par thème. Les
 examen d’une source, avec localisation et révision ; les points non documentés
 restent visibles. Une qualification automatique sur le titre seul est écartée.
 L’enrichissement du fonds attend des lacunes confirmées et les droits examinés.
+
+## Corrections prioritaires 0.9.1 — 14 novembre 2026
+
+Les rapports réels ont montré des recherches partielles et des appels IA expirés.
+Le budget choisi borne désormais toute la demande ; deux échecs arrêtent l’essai.
+Les requêtes Kiwix sont bornées en commun, les erreurs ne déclenchent pas de
+sous-requêtes en cascade et les replis sur un mot isolé sont filtrés. Les
+[preuves et limites](../essais/2026-11-14-corrections-rapports-recherche.md) restent
+distinctes d’une validation sur le fonds réel. Réorganisation des réglages reportée
+après fiabilisation (IDEE-006), conformément à la demande de Louis.

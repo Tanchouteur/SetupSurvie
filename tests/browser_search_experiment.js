@@ -36,6 +36,10 @@ async page=>{
   const downloading=page.waitForEvent('download');await page.locator('#next-experiment-export').click();const saved=await downloading,chunks=[];for await(const c of await saved.createReadStream())chunks.push(c);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.version===version&&report.cases[0].judgments['guide:fixture.en.txt']==='useful','Rapport exporté avec version, méthodes et avis');
   check(report.summary.enabled_by_default===false&&!('messages' in report),'Aucune activation ni conversation dans le comparatif');
+  state.cases[0].methods.rewritten.error='latency_budget';await page.locator('#next-search-experiment > summary').click();await page.locator('#next-search-experiment > summary').click();
+  await page.waitForFunction(()=>document.getElementById('next-experiment-cases').textContent.includes('Délai choisi atteint'));
+  if(!await page.locator('.experiment-case').evaluate(e=>e.open))await page.locator('.experiment-case > summary').click();
+  check((await page.locator('.experiment-case').textContent()).includes('Résultats précédents conservés'),'Délai choisi atteint expliqué sans perdre les résultats');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Comparatif sans débordement à '+width);}
   await page.setViewportSize({width:1366,height:900});await page.reload();await page.waitForFunction(()=>S.authReady&&S.user);if(!await page.locator('#next-search-experiment').evaluate(e=>e.open))await page.locator('#next-search-experiment > summary').click();await page.waitForFunction(()=>document.querySelector('.experiment-case'));
   await page.locator('.experiment-case > summary').click();check(await page.locator('.experiment-candidates select').first().inputValue()==='useful','Avis conservé après rechargement');

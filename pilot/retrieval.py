@@ -28,6 +28,9 @@ CONCEPTS={
  'batterie':{'terms':['batterie','batteries','battery'],'fr':['batterie'],'en':['battery']},
  'semences':{'terms':['semences','semence','graines','graine','seed','seeds'],'fr':['semences'],'en':['seeds']},
  'velo':{'terms':['velo','velos','bicycle','bicycles','bike','bikes'],'fr':['velo'],'en':['bicycle']},
+ 'crevaison':{'terms':['crevaison','crevaisons','puncture','punctures','rustine','patching'],'fr':['crevaison'],'en':['puncture']},
+ 'filtration':{'terms':['filtrer','filtration','filter','filtering','filteration'],'fr':['filtration'],'en':['filtering']},
+ 'fuite':{'terms':['fuite','fuites','leak','leaks','leaking'],'fr':['fuite'],'en':['leak']},
  'eau':{'terms':['eau','water'],'fr':['eau'],'en':['water']},
  'abri':{'terms':['abri','abris','shelter','shelters'],'fr':['abri'],'en':['shelter']},
  'couture':{'terms':['couture','coudre','recoudre','ravauder','sewing','mending'],'fr':['couture'],'en':['sewing']},
@@ -69,6 +72,8 @@ def plan(query,words,synonyms,collection=''):
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
     meaningful=[w for w in terms if w not in ACTIONS]
     if meaningful:terms=meaningful
+    if any(w in CONCEPTS['feu']['terms'] for w in terms):terms=[w for w in terms if w not in ('start','starting','make','making','produce')]
+    if 'radio' in terms:terms=[w for w in terms if w!='poste']
     action=next((name for name,pattern in INTENTS.items() if re.search(pattern,raw)), '')
     if action in ('repair','preserve'):
         terms=[w for w in terms if w not in CONCEPTS['reparation' if action=='repair' else 'conservation']['terms']] or terms
@@ -139,6 +144,12 @@ def ordered(items,query,limit):
     ranked=sorted(enumerate(items),key=lambda pair:(-rank(pair[1],query,pair[0]),pair[1].get('id','')))
     result=[];seen=set();parents={}
     for _,item in ranked:
+        exercise=item.get('classification',{}).get('document_type')=='exercise' or re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(item.get('title','')))
+        if exercise and query.practical and not re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(query.original)):continue
+        tokens=set(normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')).split())
+        hits=sum(any(term<=tokens for term in group) for group in query.token_groups)
+        required=max(1,(2*len(query.groups)+2)//3)
+        if hits<required and not item.get('_query_complete'):continue
         if item.get('match')=='title' and re.search(r'(song|single|album)',normal(item.get('excerpt',''))) and query.practical:continue
         if item['id'] in seen:continue
         seen.add(item['id'])

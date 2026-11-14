@@ -104,7 +104,7 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
             if not path.startswith('/suggest?'):
                 from fastapi import HTTPException
                 raise HTTPException(400,'Fixture: no fulltext')
-            return json.dumps([{'kind':'path','path':p,'label':p} for p in ['A/Fire_making','Wikijunior:Survie','https://evil.invalid/x','../private','%2e%2e/private']]+[{'kind':'pattern','path':'A/not-an-article'}]).encode(),'application/json'
+            return json.dumps([{'kind':'path','path':p,'label':'Fire making — '+p} for p in ['A/Fire_making','Wikijunior:Survie','https://evil.invalid/x','../private','%2e%2e/private']]+[{'kind':'pattern','path':'A/not-an-article'}]).encode(),'application/json'
         with patch.object(library,'books',AsyncMock(return_value=[{'book':'wikipedia_en','title':'Wikipedia','language':'eng','fulltext':True}])),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             found=await library.search('faire du feu')
         self.assertEqual({r['id'] for r in found if r['id'].startswith('zim:')},{'zim:wikipedia_en/A/Fire_making','zim:wikipedia_en/Wikijunior:Survie'})

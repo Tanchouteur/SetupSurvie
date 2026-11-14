@@ -77,7 +77,9 @@ async def guard(options,*,starting=False):
     if not state.get('online') or state.get('operation'):raise Abort('engine_unavailable')
     if engine.ACTIVE or translations.ACTIVE:raise Abort('other_activity')
     memory=state.get('memory',{});available=memory.get('available')
-    if not isinstance(available,(int,float)) or type(memory.get('total')) is not int or memory['total']<=0 or not state.get('control_available'):raise Abort('hardware_unavailable')
+    if not isinstance(available,(int,float)) or type(memory.get('total')) is not int or memory['total']<=0 or not state.get('control_available'):
+        raise Abort('hardware_unavailable',{'control_available':bool(state.get('control_available')),'ram_sample_available':isinstance(available,(int,float)),
+            **{k:state[k] for k in ('control_error','control_http_status','control_elapsed_ms') if k in state}})
     gpus=state.get('gpus',[])
     sample={'ram_available':int(available),'video_available':min((int(g['total']-g['used']) for g in gpus),default=None)}
     if available<options['reserve_ram_bytes']:raise Abort('ram_pressure',sample)

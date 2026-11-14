@@ -316,7 +316,10 @@ validé chez Marc ce qui n’a été essayé que sur données simulées ou en CI
 Les [rapports réels 0.8.0](../essais/2026-11-14-rapports-recherche-080.md) sont reçus :
 32 recherches partielles, comparatif IA interrompu et tentative d’indexation en
 erreur ensuite. Ils rouvrent des corrections prioritaires L1/L2/L8. La livraison
-des commandes ou une CI verte ne suffit pas à clore ces lots.
+des commandes ou une CI verte ne suffit pas à clore ces lots. Les
+[corrections 0.9.1](../essais/2026-11-14-corrections-rapports-recherche.md) traitent
+les budgets, la concurrence commune, les replis hors sujet et les diagnostics.
+L’erreur d’indexation et la qualité réelle demandent toujours leurs rapports.
 
 La [procédure des rapports manuels](../essais/recettes-progressives-marc.md)
 définit R1 à R7, leur disponibilité actuelle et la façon de demander un essai.

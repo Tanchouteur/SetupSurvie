@@ -154,3 +154,22 @@ Dans **Apprendre par thème**, les [six dossiers pratiques](dossiers-pratiques.m
 organisent la recherche puis les pages ou sections réellement examinées. Chaque
 point sans référence reste explicitement à documenter. Les repères ne remplacent
 ni la lecture de l’original ni la qualification du fonds réel.
+
+## Replis et erreurs depuis 0.9.1
+
+Les résultats élargis sur une partie des mots doivent couvrir au moins deux tiers
+des concepts de la demande. Les résultats natifs complets peuvent rester sans
+extrait ; le document doit être ouvert pour vérifier son contenu. Un quiz n’est
+pas proposé pour réaliser une tâche pratique, sauf s’il est explicitement demandé.
+Les termes crevaison, fuite et filtration relient aussi français et anglais.
+
+Les requêtes Kiwix partagent deux voies pour le texte et deux pour les titres,
+même avec plusieurs recherches en cours. Le rapport conserve les causes bornées
+(délai, HTTP, connexion ou format), les collections et la limite de temps atteinte.
+Seules les réponses réussies et valides sont réutilisées pendant quinze secondes,
+avec un compteur explicite. Un timeout ou une surcharge ne provoque plus une
+multiplication de sous-requêtes. Les CPU de l’indexation restent réglables séparément.
+
+Les [rapports réels 0.8.0](../essais/2026-11-14-rapports-recherche-080.md) ont déclenché
+ces corrections. Leur cause finale et le gain sur le fonds Windows restent à
+vérifier avec de nouveaux rapports ; un résultat partiel n’est pas une preuve d’absence.

@@ -61,7 +61,8 @@ class LearningTests(unittest.TestCase):
             return b'<rss><channel/></rss>','application/xml'
         with tempfile.TemporaryDirectory() as folder,patch.object(store,'ROOT',Path(folder)),patch.object(library,'books',AsyncMock(return_value=[{'book':'test','language':'eng'}])),patch.object(library,'get',get):
             store.init();asyncio.run(library.search('comptabilité'))
-        self.assertEqual(parse_qs(urlsplit(requests[0]).query)['pattern'],['accounting'])
+        fulltext=next(path for path in requests if path.startswith('/search?'))
+        self.assertEqual(parse_qs(urlsplit(fulltext).query)['pattern'],['accounting'])
 
 
 if __name__=='__main__':unittest.main()

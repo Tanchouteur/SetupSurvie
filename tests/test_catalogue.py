@@ -15,7 +15,7 @@ class CatalogueTests(unittest.IsolatedAsyncioTestCase):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
         self.root=Path(temporary.name);self.guides=self.root/'guides';self.zims=self.root/'zim';self.guides.mkdir();self.zims.mkdir()
         self.item={'id':'guide:mechanism.fr.txt','title':'Mécanisme à pédales','excerpt':'Principe du mécanisme. Fictional fixture.'}
-        (self.guides/'mechanism.fr.txt').write_text('Principe du mécanisme. Fictional fixture.',encoding='utf-8')
+        (self.guides/'mechanism.fr.txt').write_text('Principe du mécanisme à pédales. Fictional fixture.',encoding='utf-8')
         for target,name,value in [(store,'ROOT',self.root/'state'),(library,'GUIDES',self.guides),(inventory,'ZIMS',self.zims),(library,'books',AsyncMock(return_value=[]))]:
             patched=patch.object(target,name,value);patched.start();self.addCleanup(patched.stop)
         env=patch.dict(os.environ,{'ZIM_DIR':str(self.zims)});env.start();self.addCleanup(env.stop)

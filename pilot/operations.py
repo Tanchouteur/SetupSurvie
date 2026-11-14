@@ -27,13 +27,17 @@ def describe(value):
 async def status(fresh=False):
     global CACHE,UPDATED
     if CACHE and not fresh and time.monotonic()-UPDATED<2:return CACHE
+    problem='';upstream=None;started=time.monotonic()
     try:
-        if not TOKEN:raise ValueError()
+        if not TOKEN:problem='not_configured';raise ValueError()
         async with httpx.AsyncClient(trust_env=False,timeout=5) as client:
             response=await client.get(URL+'/status',headers={'Authorization':'Bearer '+TOKEN})
-            response.raise_for_status();value=response.json()
-    except (httpx.HTTPError,ValueError):
-        value={'online':False,'paused':False,'models':[],'control_available':False,'gpus':[],'memory':{},'disk':{}}
+            upstream=response.status_code;response.raise_for_status();value=response.json()
+            if not isinstance(value,dict):raise ValueError()
+    except (httpx.HTTPError,ValueError) as error:
+        problem=problem or ('timeout' if isinstance(error,httpx.TimeoutException) else 'http_error' if isinstance(error,httpx.HTTPStatusError) else 'connection_error' if isinstance(error,httpx.HTTPError) else 'invalid_response')
+        value={'online':False,'paused':False,'models':[],'control_available':False,'gpus':[],'memory':{},'disk':{},
+               'control_error':problem,'control_http_status':upstream,'control_elapsed_ms':round((time.monotonic()-started)*1000)}
         marker=network.CATALOG/'inference.json'
         if marker.is_file():
             try:

@@ -325,3 +325,15 @@ avec révision du dossier et du fichier source. `settings`, préfixe `dossier:v1
 conserve les notes communes sans migration. Export via `/api/admin/library/dossiers-export`.
 Une erreur du module optionnel laisse les autres chemins accessibles. Le
 [guide](../utilisation/dossiers-pratiques.md) décrit la reprise et les limites.
+
+## Corrections de recherche 0.9.1
+
+`pilot/kiwix_queries.py` partage deux sémaphores texte/titres de capacité deux,
+regroupe les appels identiques et garde uniquement les réponses valides réussies
+pendant quinze secondes (64 réponses, huit millions d’octets au maximum). Le
+service annule les appels restants à son arrêt. `library.search_archives` conserve
+les causes bornées et ne redécoupe un lot qu’après rejet de sélection 400/404/413.
+Le budget du comparatif IA porte sur toute la demande, puis une série de deux
+échecs est interrompue. Les nouvelles observations sont numériques ou catégorielles,
+sans réponse brute, jeton ni raisonnement privé. Voir le
+[bilan](../essais/2026-11-14-corrections-rapports-recherche.md).

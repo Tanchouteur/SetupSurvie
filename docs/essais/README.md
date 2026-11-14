@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Corrections des rapports réels](2026-11-14-corrections-rapports-recherche.md) — 0.9.1, délais et replis reproduits ; validation en cours.
+
 - [Six dossiers pratiques](2026-11-14-dossiers-pratiques.md) — bilan 0.9.0 ; relecture du fonds réel attendue.
 
 - [Comparatif de recherche IA](2026-11-14-comparatif-recherche-ia.md) — bilan 0.8.0 ; mesure réelle attendue.

@@ -54,6 +54,11 @@ Zéro article ajouté ne signifie pas que les index natifs sont absents.
 
 ## Suite prioritaire
 
+Les [corrections 0.9.1](2026-11-14-corrections-rapports-recherche.md) traitent les
+délais, replis et diagnostics reproduits. Elles ne constituent pas une nouvelle
+mesure du fonds Windows ; l’erreur d’indexation réelle attend toujours son export.
+
+
 - Examiner le rapport d’indexation réel et reproduire son erreur sur petites données.
 - Rendre les causes d’échec de recherche exploitables sans journaux privés.
 - Éviter les replis hors sujet, y compris les cas négatifs, sans annoncer le fonds absent.

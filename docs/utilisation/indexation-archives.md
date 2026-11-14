@@ -109,3 +109,12 @@ Commande manuelle équivalente à la préparation locale :
 `--reserve-bytes` règle la réserve en maintenance ; ne pas descendre sous 15 Go
 au laboratoire. Les petits tests CLI choisissent explicitement 1 Go pour ne pas
 dépendre de la capacité de la VM de CI.
+
+## Comprendre les compteurs depuis 0.9.1
+
+Le suivi distingue les archives examinées, celles qui réutilisent leur index Kiwix
+intégré, les index locaux prêts et les archives en erreur. Zéro article ajouté à
+l’index local ne signifie donc pas que tous les index intégrés sont absents.
+Si le suivi signale un échec, télécharger le rapport d’indexation ; éviter les
+relances répétées avant d’en examiner les erreurs. La capture seule ne précise
+ni la cause de l’échec ni les sources effectivement indexées.

@@ -1,6 +1,6 @@
 # Comparer une aide IA à la recherche
 
-**Guide actuel — 0.8.0, 14 novembre 2026.** Essai facultatif pour décider si le
+**Guide actuel — 0.9.1, 14 novembre 2026.** Essai facultatif pour décider si le
 modèle local apporte un gain sur les documents de ce PC. La recherche habituelle
 ne change pas et reste utilisable sans IA. Aucun nouveau modèle n’est téléchargé.
 
@@ -15,9 +15,10 @@ ne change pas et reste utilisable sans IA. Aucun nouveau modèle n’est téléc
    la comparaison ; noter tout changement avant de comparer deux rapports.
 3. Choisir le mode, huit demandes de vérification ou les 32 demandes complètes,
    puis le délai souhaité par recherche : 5, 15, 30 ou 60 secondes. Ce délai sert à
-   évaluer l’intérêt de l’option ; les appels peuvent dépasser ce budget avant
-   leur arrêt technique. Un appel IA est borné entre 30 et 90 secondes selon ce choix,
-   une recherche à 30 secondes, le comparatif complet à une heure.
+   évaluer l’intérêt de l’option et borne désormais l’ensemble de chaque demande :
+   recherche actuelle, IA, recherches complémentaires et reclassement. Les résultats
+   déjà terminés sont conservés. Deux demandes consécutives en erreur arrêtent
+   le comparatif ; le plafond global reste une heure.
 4. **Lancer le comparatif avec l’IA locale** compare trois méthodes sur les mêmes
    demandes. Une question ou une traduction du portail prend la priorité ; une
    pause moteur ou une mémoire insuffisante interrompt les requêtes de l’essai.
@@ -78,7 +79,9 @@ aucun gain n’est déclaré ; cela ne démontre pas que l’IA serait toujours 
 Le temps « Reformulée » inclut le moteur actuel, la génération et les nouvelles
 recherches ; « Reclassée » ajoute le dernier appel IA. La préparation initiale du
 modèle est distincte de ces demandes. Les durées de chargement retournées par le
-moteur sont conservées par appel. Les caches restent en place et la méthode actuelle
+moteur sont conservées par appel. Depuis 0.9.1, les réponses Kiwix réussies ont aussi un cache partagé de quinze
+secondes, borné et signalé dans la couverture ; les erreurs ne sont pas mémorisées.
+Les caches restent en place et la méthode actuelle
 passe en premier : le protocole ne certifie aucune comparaison à froid. Refaire
 l’essai et examiner les variations avant une décision. Il ne valide ni la qualité
 d’une procédure ni un autre modèle ou un autre PC.
@@ -94,6 +97,10 @@ matériel et mémoire libre minimale observée, durées et compteurs techniques.
 La couverture ne recopie pas l’inventaire détaillé de chaque archive : seuls les
 compteurs et états utiles sont conservés. Une utilisation vidéo sans mesure de
 mémoire vidéo empêche de conclure sur cet essai.
+Les compteurs de trames, de caractères de réflexion et de sortie et les premiers
+délais aident à distinguer une attente sans flux d’une génération inachevée ;
+aucun texte de réflexion n’est conservé dans ce rapport. Une panne du contrôleur
+reste distincte d’une mémoire effectivement insuffisante.
 Ils ne contiennent pas de conversations, de raisonnement privé ni de texte complet.
 L’accès au panneau suit le [profil Famille](profils-locaux.md).
 

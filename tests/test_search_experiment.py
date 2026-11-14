@@ -125,6 +125,30 @@ class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
         report=experiment.review(report['id'],'verify-fire',{'guide:useful':'uncertain'})
         self.assertEqual(report['summary']['splits']['verification']['reranked']['fully_judged'],1) # empty negative pool only
 
+    async def test_one_second_budget_cancels_model_and_stops_two_successive_failures(self):
+        self.hang=True
+        started=asyncio.get_running_loop().time();report=await experiment.start('rapide','all',1000)
+        await asyncio.wait_for(experiment.ACTIVE[report['id']],5)
+        report=experiment.status();self.assertEqual(report['reason'],'repeated_failures');self.assertEqual(len(report['cases']),2)
+        self.assertEqual(len(self.calls),2);self.assertLess(asyncio.get_running_loop().time()-started,3)
+        for case in report['cases']:
+            self.assertEqual(case['methods']['rewritten']['error'],'latency_budget')
+            self.assertLess(case['methods']['rewritten']['elapsed_ms'],1300)
+            self.assertEqual(case['methods']['baseline']['ids'],['guide:distractor'])
+        self.assertFalse(report['summary']['enabled_by_default'])
+
+    async def test_finished_stream_has_numerical_progress_without_private_thinking(self):
+        report=await self.finish();call=report['cases'][0]['model_calls'][0]
+        self.assertEqual(call['frames'],1);self.assertGreater(call['thinking_characters'],0);self.assertGreater(call['answer_characters'],0)
+        self.assertIsInstance(call['first_frame_ms'],int);self.assertNotIn('PRIVATE REASONING',json.dumps(report))
+
+    async def test_unavailable_controller_during_model_preserves_diagnostic_not_memory_exhaustion(self):
+        self.hang=True;report=await experiment.start();await asyncio.wait_for(self.started.wait(),2)
+        with patch.object(operations,'status',AsyncMock(return_value={'online':True,'control_available':False,'control_error':'timeout','control_elapsed_ms':5000,'memory':{}})):
+            await asyncio.wait_for(experiment.ACTIVE[report['id']],4)
+        report=experiment.status();self.assertEqual(report['reason'],'hardware_unavailable')
+        self.assertEqual(report['failure_sample']['control_error'],'timeout');self.assertFalse(report['failure_sample']['ram_sample_available'])
+
     async def test_missing_calibration_review_and_known_regression_cannot_validate_option(self):
         report=await self.finish('all')
         for case in report['cases'][1:]:
