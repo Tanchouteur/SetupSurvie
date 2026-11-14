@@ -138,22 +138,23 @@ def fit_context(messages,maximum=24000):
     return size()<=maximum
 
 
-def search_key(query,language='',favorite_user=None,collection=''):
+def search_key(query,language='',favorite_user=None,collection='',domain='all'):
     plan=library.retrieval.plan(query,library.search_terms(query),library.SYNONYMS,collection)
-    return tuple(plan.words),language,favorite_user,plan.collection
+    return tuple(plan.words),language,favorite_user,plan.collection,plan.action,domain
 
 
-async def run(identifier,user_id,conversation_id,mode,source_id=None):
+async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all'):
     references={};answer='';tool_trace=[];metrics=[];interrupted=False;search_cache={};read_cache={}
     try:
         async with LOCK,asyncio.timeout(900):
             update(identifier,status='running');progress(identifier,'preparing')
+            selected=MODES[mode];context=context_size(selected['model'])
             history=store.messages(conversation_id)
-            messages=[{'role':'system','content':POLICY.read_text()+'\n'+SYSTEM_APPENDIX}]
+            messages=[{'role':'system','content':POLICY.read_text()+'\n'+SYSTEM_APPENDIX+' Périmètre documentaire choisi : '+domain+'.'}]
             # Explicitly bound history rather than silently filling the context with UI tools.
             retained=[];size=0
             for message in reversed(history):
-                if size+len(message['content'])>7000:break
+                if size+len(message['content'])>min(64000,context*2):break
                 retained.append({'role':message['role'],'content':message['content']});size+=len(message['content'])
             messages.extend(reversed(retained))
             if not retained:raise ValueError('Question trop longue. Essayez une question plus courte.')
@@ -173,8 +174,8 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
                 started=time.monotonic();query,collection=prepared;progress(identifier,'searching')
                 arguments={'query':query[:200],'collection':collection}
                 try:
-                    found=await library.search(query[:200],limit=5,collection=collection)
-                    search_cache[search_key(query[:200],collection=collection)]=found
+                    found=await library.search(query[:200],limit=5,collection=collection,domain=domain)
+                    search_cache[search_key(query[:200],collection=collection,domain=domain)]=found
                     progress(identifier,'reading',sources_found=len(found))
                     record_tool('search_library',arguments,search_value(found),True)
                     # Read two leading, distinct documents. The model gets actual
@@ -198,12 +199,12 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
                 for step in range(tool_steps+1):
                     if step==tool_steps:
                         messages.append({'role':'system','content':'Le budget de recherche est atteint. Rédige maintenant la réponse finale avec les résultats déjà reçus ; indique les informations qui manquent. Aucun autre appel d’outil n’est disponible.'})
-                    if not fit_context(messages):
+                    if not fit_context(messages,maximum=max(12000,(context-PROFILE_CONFIG['output_tokens']-2048)*3)):
                         interrupted=True;answer='La question et les extraits dépassent la taille disponible. Les sources déjà consultées restent accessibles ; essayez une demande plus courte.';break
                     progress(identifier,'preparing')
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}
                     payload={'model':selected['model'],'messages':messages,'tools':TOOLS if step<tool_steps else [],'think':selected['think'],
-                             'stream':True,'keep_alive':'5m','options':{'num_ctx':PROFILE_CONFIG['context'],'num_predict':PROFILE_CONFIG['output_tokens']}}
+                             'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':PROFILE_CONFIG['output_tokens']}}
                     async with client.stream('POST',OLLAMA+'/api/chat',json=payload) as response:
                         response.raise_for_status()
                         async for line in response.aiter_lines():
@@ -237,8 +238,8 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
                             elif name=='search_library':
                                 progress(identifier,'searching')
                                 query=str(arguments.get('query',''))[:200];language=arguments.get('language','');owner=user_id if arguments.get('favorites_only') is True else None;collection=str(arguments.get('collection',''))[:160]
-                                key=search_key(query,language,owner,collection)
-                                if key not in search_cache:search_cache[key]=await library.search(query,language,limit=5,favorite_user=owner,collection=collection)
+                                key=search_key(query,language,owner,collection,domain)
+                                if key not in search_cache:search_cache[key]=await library.search(query,language,limit=5,favorite_user=owner,collection=collection,domain=domain)
                                 value=search_value(search_cache[key]);progress(identifier,'searching',sources_found=len(search_cache[key]))
                             elif name=='read_source':
                                 progress(identifier,'reading')
@@ -274,7 +275,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
             # Tools are evidence, not private reasoning; retain the trace for feedback/debugging.
             try:
                 path=store.ROOT/'traces'
-                durable.write_bytes(path/(identifier+'.json'),json.dumps({'tools':tool_trace,'model':selected['model'],'think':selected['think'],'metrics':metrics},ensure_ascii=False,indent=2).encode('utf-8'),private=True)
+                durable.write_bytes(path/(identifier+'.json'),json.dumps({'tools':tool_trace,'model':selected['model'],'think':selected['think'],'metrics':metrics,'context':context,'domain':domain},ensure_ascii=False,indent=2).encode('utf-8'),private=True)
             except OSError:
                 logging.getLogger(__name__).warning('Trace de diagnostic non conservée ; la réponse est enregistrée.')
     except asyncio.CancelledError:
@@ -284,8 +285,8 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None):
     finally:ACTIVE.pop(identifier,None);PROGRESS.pop(identifier,None)
 
 
-def launch(identifier,*args):
-    ACTIVE[identifier]=asyncio.create_task(run(identifier,*args))
+def launch(identifier,*args,domain='all'):
+    ACTIVE[identifier]=asyncio.create_task(run(identifier,*args,domain=domain))
     ACTIVE[identifier].add_done_callback(lambda task:ACTIVE.pop(identifier,None))
 
 
@@ -293,3 +294,11 @@ def cancel(identifier):
     task=ACTIVE.get(identifier)
     if task:task.cancel()
     update(identifier,status='cancelled',error='Demande annulée.')
+
+
+def context_size(model):
+    try:
+        with store.connect() as db:row=db.execute('SELECT value FROM settings WHERE key=?',('context:'+model,)).fetchone()
+        value=int(row['value']) if row else PROFILE_CONFIG['context']
+        return value if value in (8192,16384,32768,65536) else PROFILE_CONFIG['context']
+    except (ValueError,TypeError):return PROFILE_CONFIG['context']

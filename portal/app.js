@@ -153,10 +153,11 @@ function search(query){document.dispatchEvent(new CustomEvent('survie:scope-rese
 async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
   S.searchAbort?.abort();S.searchAbort=new AbortController();$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
-  try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value)+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:S.searchAbort.signal});
+  try{const data=await api('/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'all')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:S.searchAbort.signal});
     const selectedCollection=[...($('search-collection')?.options||[])].find(o=>o.value===data.coverage?.collection)?.textContent||({wikipedia:'Wikipédia',appropedia:'Appropedia',wikibooks:'Wikilivres',wikihow:'wikiHow'}[data.coverage?.collection])||data.coverage?.collection;
     $('search-message').textContent=`${data.results.length} document(s) trouvé(s) pour « ${q} »`+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
     renderLibraryResults(data.results);
+    if(data.coverage?.domain&&data.coverage.domain!=='all')$('search-results').append(button('Élargir à toute la bibliothèque',()=>{$('search-domain').value='all';$('search-domain').dispatchEvent(new Event('change'));},'secondary'));
     if(!data.results.length)$('search-results').append(element('div',data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel'));
   }catch(e){if(e.name!=='AbortError')$('search-message').textContent=e.message;}
 }
@@ -297,7 +298,7 @@ async function send(event){
   const text=$('chat-input').value.trim();if(!text)return;
   if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
   $('send-question').disabled=true;
-  try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,conversation_id:S.conversation,source_id:S.source?.id||null});
+  try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_id:S.source?.id||null});
     if(!S.conversation){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
   }catch(e){toast(e.message);$('send-question').disabled=false;}
 }

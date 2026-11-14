@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Rapport de Marc, indexation et espaces](2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0.
+
 Les rapports conservent leurs résultats et limites à la date de l’essai. Un ancien nombre de tests ou de ressources ne décrit pas nécessairement la livraison suivante.
 
 | Document | Périmètre |

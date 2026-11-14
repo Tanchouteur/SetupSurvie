@@ -25,9 +25,9 @@
         status.textContent=(index+1)+' / '+cases.length+' — '+item.query;
         const started=performance.now(),record={...item},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.collection?' · Wikipédia':'')));results.append(article);
         try{
-          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||''});
+          const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:'all'});
           const data=await read('/search?'+params);record.elapsed_ms=Math.round(performance.now()-started);record.coverage=data.coverage||null;
-          record.results=(data.results||[]).slice(0,5).map(row=>({id:row.id,title:row.title,language:row.language,collection:row.collection,match:row.match,url:row.url}));
+          record.results=(data.results||[]).slice(0,5).map(row=>({id:row.id,title:row.title,language:row.language,collection:row.collection,match:row.match,url:row.url,excerpt:row.excerpt,domains:row.domains}));
           article.append(element('p',record.results.length+' document(s) affiché(s) · '+(record.elapsed_ms/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s.','small muted'));
           if(record.coverage?.warning)article.append(element('p',record.coverage.warning,'small'));
           if(!record.results.length)article.append(element('p','Aucun résultat trouvé par cette recherche. Vérifiez les limites indiquées ; cela ne prouve pas que le sujet est absent.'));

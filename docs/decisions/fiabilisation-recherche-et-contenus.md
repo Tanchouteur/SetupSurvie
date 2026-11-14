@@ -2,7 +2,7 @@
 
 **Chantier actuel — 14 novembre 2026.** Louis demande de travailler tous les
 points du retour de Marc et de fiabiliser en priorité le cœur de recherche.
-Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
+Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais les lots, décisions et pistes écartées. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
 observations ; ce suivi distingue réalisation et validations manquantes.
 
 | Point | État | Preuve ou prochaine vérification |
@@ -26,3 +26,7 @@ ferme pas les lignes nécessitant le contenu ou le matériel réels.
 
 Louis peut tester depuis le site sur le Windows de Marc ; son accès TeamViewer
 personnel est déclaré. Aucun accès distant autonome de l’agent n’est établi.
+
+## Suite 0.3.0
+
+Le [rapport réel reçu et le bilan 0.3.0](../essais/2026-11-14-recherche-index-et-espaces.md) motivent la réservation des titres, le parallélisme CPU, le classement par action, les deux périmètres et le contexte réglable. L’[indexation complémentaire](../utilisation/indexation-archives.md) est implémentée ; les index du fonds de Marc ne sont pas créés par le développement dans le runner. Le tableau initial ci-dessus conserve son état 0.1.36 ; le plan lié distingue les suites livrées et non validées.

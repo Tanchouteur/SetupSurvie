@@ -1,5 +1,7 @@
 # Utiliser le serveur familial
 
+- [Rendre les archives recherchables](indexation-archives.md) — guide 0.3.0.
+
 Guide du pilote, mis à jour le 13 novembre 2026. Les usages réels chez Marc et sur
 Safari iPhone restent à vérifier sur place.
 

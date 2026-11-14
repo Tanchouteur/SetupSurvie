@@ -60,7 +60,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.2.0'
+VERSION='0.3.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -116,6 +116,11 @@ class LibrarySelection(BaseModel):
 
 class LibraryDownload(BaseModel):
     id:str=Field(pattern='^[a-f0-9]{32}$')
+
+
+@app.post('/api/admin/library/index/{action}')
+async def index_archives(action:Literal['prepare','start','pause'],value=Depends(admin)):
+    return await operations.library_command({'prepare':'index-prepare','start':'index','pause':'pause'}[action])
 
 
 @app.get('/api/admin/library')
@@ -415,13 +420,13 @@ async def retired_login(action:str):
 
 
 @app.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160)):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all'):
     owner=(await user(request))['id'] if favorites_only else None
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
-            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection) if q.strip() else []
+            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain) if q.strip() else []
     else:
-        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection) if q.strip() else []
+        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain) if q.strip() else []
     return {'results':found,**({'coverage':found.coverage} if isinstance(found,library.SearchResults) else {})}
 
 
@@ -537,6 +542,7 @@ async def delete_conversation(identifier:str,value=Depends(user)):
 class Question(BaseModel):
     message:str=Field(min_length=1,max_length=6000)
     mode:str='rapide'
+    domain:Literal['all','resilience','culture']='all'
     conversation_id:str|None=Field(default=None,max_length=100)
     source_id:str|None=Field(default=None,max_length=2000)
 
@@ -565,7 +571,7 @@ async def question(body:Question,value=Depends(user)):
         db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation_id,'user',body.message,time.time()))
         identifier=store.new_id();now=time.time()
         db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,value['id'],conversation_id,body.mode,'queued',now,now))
-    engine.launch(identifier,value['id'],conversation_id,body.mode,source_id)
+    engine.launch(identifier,value['id'],conversation_id,body.mode,source_id,domain=body.domain)
     return {'id':identifier,'conversation_id':conversation_id}
 
 
@@ -714,3 +720,21 @@ async def feedback(body:Feedback,request:Request,value=Depends(user)):
 @app.get('/api/admin/feedback')
 async def feedback_list(value=Depends(admin)):
     with store.connect() as db:return {'feedback':[dict(r) for r in db.execute('SELECT * FROM feedback ORDER BY created DESC LIMIT 500')]}
+
+
+class ContextChoice(BaseModel):
+    model:str=Field(max_length=100)
+    tokens:Literal[8192,16384,32768,65536]
+
+
+@app.get('/api/admin/context')
+async def get_context(value=Depends(admin)):
+    models=list(dict.fromkeys(p['model'] for p in engine.MODES.values()))
+    return {'models':[{'model':m,'tokens':engine.context_size(m)} for m in models]}
+
+
+@app.post('/api/admin/context')
+async def set_context(body:ContextChoice,value=Depends(admin)):
+    if body.model not in {p['model'] for p in engine.MODES.values()}:raise HTTPException(400,'Modèle inconnu.')
+    with store.connect() as db:db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('context:'+body.model,str(body.tokens)))
+    return {'model':body.model,'tokens':body.tokens}

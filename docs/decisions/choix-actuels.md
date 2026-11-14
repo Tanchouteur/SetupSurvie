@@ -132,3 +132,7 @@ classement commun, filtres, préparation de sources, contexte, regroupements et
 recette depuis le site. La bibliothèque réelle et les modèles de Marc restent
 à qualifier ; sous-titres, traduction de lecture généralisée et profondeur des
 procédures demeurent suivis explicitement, sans réalisation implicite.
+
+## Recherche : suite du 14 novembre 2026
+
+Le [plan actuel](plan-ameliorations-marc.md) retient deux espaces dans un seul produit, indexation complémentaire des ZIM non recherchables, priorité aux savoir-faire et usage parallèle du CPU. La 0.3.0 en livre une première étape, avec contexte réglable par modèle. Les limites et essais manquants sont au [bilan](../essais/2026-11-14-recherche-index-et-espaces.md).

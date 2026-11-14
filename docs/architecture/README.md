@@ -247,3 +247,7 @@ La vérification depuis le site utilise uniquement santé et recherche en GET,
 et produit un rapport côté navigateur. Elle ne proclame pas le fonds validé.
 Le [bilan](../essais/2026-11-14-moteur-recherche-utile.md) détaille le vrai Kiwix
 sur archives générées et les limites de transfert au fonds de Marc.
+
+## Index complémentaires — 0.3.0
+
+Les ZIM restent en lecture seule. `scripts/index_archives.py` extrait leur texte avec libzim 3.13.1 dans un environnement hôte optionnel, publie un SQLite FTS5 par archive sous `state/pilot/archive-index` et reprend les curseurs validés. Le pilote requête ces fichiers en lecture seule en parallèle de Kiwix ; les requêtes n’importent pas libzim. Les opérations passent par les mêmes droits Famille, service de contrôle, verrous et suivi que les préparations documentaires. Voir le [guide](../utilisation/indexation-archives.md).

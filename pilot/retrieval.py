@@ -26,6 +26,8 @@ CONCEPTS={
  'conservation':{'terms':['conservation','conserver','preservation','preserving','storage'],'fr':['conservation'],'en':['preservation']},
  'batterie':{'terms':['batterie','batteries','battery'],'fr':['batterie'],'en':['battery']},
  'semences':{'terms':['semences','semence','graines','graine','seed','seeds'],'fr':['semences'],'en':['seeds']},
+ 'velo':{'terms':['velo','velos','bicycle','bicycles','bike','bikes'],'fr':['velo'],'en':['bicycle']},
+ 'eau':{'terms':['eau','water'],'fr':['eau'],'en':['water']},
  'abri':{'terms':['abri','abris','shelter','shelters'],'fr':['abri'],'en':['shelter']},
 }
 
@@ -39,6 +41,7 @@ class Plan:
     collection:str=''
     title_fr:str=''
     title_en:str=''
+    action:str=''
 
     @cached_property
     def token_groups(self):
@@ -57,6 +60,9 @@ def plan(query,words,synonyms,collection=''):
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
     meaningful=[w for w in terms if w not in ACTIONS]
     if meaningful:terms=meaningful
+    action=next((name for name,pattern in INTENTS.items() if re.search(pattern,raw)), '')
+    if action in ('repair','preserve'):
+        terms=[w for w in terms if w not in CONCEPTS['reparation' if action=='repair' else 'conservation']['terms']] or terms
     groups=[];dedup=[]
     for word in terms:
         concept=next((value for value in CONCEPTS.values() if word in value['terms']),None)
@@ -68,7 +74,7 @@ def plan(query,words,synonyms,collection=''):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
         title_fr.append(concept['fr'][0] if concept else word)
         title_en.append(concept['en'][0] if concept else (next((x for x in reversed(group) if x!=word),word)))
-    return Plan(query,dedup,groups,practical,normal(collection).replace(' ','') or detected,' '.join(title_fr),' '.join(title_en))
+    return Plan(query,dedup,groups,practical,normal(collection).replace(' ','') or detected,' '.join(title_fr),' '.join(title_en),action)
 
 
 def rank(item,query,position=0):
@@ -78,10 +84,20 @@ def rank(item,query,position=0):
     title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)/len(query.groups)
     text_hits=sum(any(term<=text_tokens for term in group) for group in query.token_groups)/len(query.groups)
     score=65*title_hits+25*text_hits+8/(1+item.get('_rank',position))
+    if title_hits<1 and text_hits<1:score-=35
+    if query.action:
+        evidence=INTENTS[query.action]
+        if re.search(evidence,title):score+=28
+        elif re.search(evidence,text):score+=12
+        else:score-=12
+    path=str(item.get('id','')).split('/',1)[-1]
+    if re.search(r'(?:^|/)(?:Category:|Special:|questions/tagged/|tags/)',path,re.I):score-=45
+    if re.search(r'(highest voted|questions tagged|category|categorie)',title):score-=35
     if item.get('language') in ('fr','fra'):score+=2
     canonical=' '.join(query.words)
     if canonical and canonical==title:score+=5 if query.practical else 30
     if query.practical:
+        if any('feu' in group for group in query.groups) and re.search(r'\b(production de feu|faire du feu|allumage|fire making|fire starting|start a fire)\b',title):score+=20
         if re.search(r'\b(construction|fabrication|allumage|production|techniques|guide|instructions|tutorial|making|build|repair|starting)\b',title):score+=15
         if re.search(r'\b(quiz|questionnaire|qcm)\b',title+' '+text):score-=24
         if re.search(r'\b(risques|prevention|incendies|reglementation|histoire|history)\b',title):score-=12
@@ -101,13 +117,40 @@ def ordered(items,query,limit):
     ranked=sorted(enumerate(items),key=lambda pair:(-rank(pair[1],query,pair[0]),pair[1].get('id','')))
     result=[];seen=set();parents={}
     for _,item in ranked:
+        if item.get('match')=='title' and re.search(r'(song|single|album)',normal(item.get('excerpt',''))) and query.practical:continue
         if item['id'] in seen:continue
         seen.add(item['id'])
         clean={k:v for k,v in item.items() if not k.startswith('_')}
         parent=item['id'].split('#page=')[0]
+        if '/appropedia' in item['id'] or item['id'].startswith('zim:appropedia'):
+            parent=re.sub(r'/(?:[a-z]{2,3}(?:-[a-z]+)?)$','',parent)
+        if item['id'].startswith('zim:') and parent in parents:
+            continue
         if '#page=' in item['id'] and parent in parents:
             others=parents[parent].setdefault('other_matches',[])
             if len(others)<5:others.append({k:item.get(k,'') for k in ('id','title','url')})
             continue
         parents[parent]=clean;result.append(clean)
     return result[:limit]
+
+
+INTENTS={
+ 'repair':r'\b(reparer|reparation|repair|repairing|maintenance|entretien|entretenir)\b',
+ 'preserve':r'\b(conserver|conservation|stocker|storage|preserving|preservation|saving|save)\b',
+ 'purify':r'\b(potable|potabilisation|potabiliser|purifier|purification|filtrer|filtration|disinfection|desinfection|purifying|treatment|traitement)\b',
+ 'build':r'\b(fabriquer|fabrication|construire|construction|build|building|assembly|assemble|diy)\b',
+}
+
+def article_language(item):
+    """Wiki translation suffixes describe the article, not its archive language."""
+    language=item.get('language','')
+    if 'appropedia' in item.get('book',item.get('id','')).lower():
+        suffix=re.search(r'/([a-z]{2})(?:-[a-z]+)?$',item.get('id',''))
+        if suffix:return suffix[1]
+    return {'fra':'fr','eng':'en'}.get(language,language)
+
+def domains(item):
+    # Conservative automatic indication; never certifies a procedure.
+    text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
+    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|conservation alimentaire|food preservation)\b',text))
+    return ['resilience'] if resilience else ['culture']

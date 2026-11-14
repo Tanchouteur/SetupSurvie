@@ -1,0 +1,2 @@
+# Optional portable reader; wheels include libzim, no model or corpus.
+libzim==3.13.1

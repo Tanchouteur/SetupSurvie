@@ -102,7 +102,7 @@ def main():
                 check(any(r.get('match')=='title' for r in titles),'Title fallback works without fulltext index')
                 check(titles.coverage['status']=='partial','Missing fulltext coverage is explicit')
                 source=await library.source('zim:wikipedia_fr/Techniques_de_production_de_feu')
-                check('Friction' in source['text'] and source['language']=='fra','Actual source can be read with its language after retrieval')
+                check('Friction' in source['text'] and source['language'] in ('fr','fra'),'Actual source can be read with its language after retrieval')
                 try:await real_get('/search?'+urlencode({'books.filter.lang':'fra','pattern':'feu','format':'xml'}))
                 except HTTPException:checks.append('Broad multilingual request is rejected by the pinned server')
         try:

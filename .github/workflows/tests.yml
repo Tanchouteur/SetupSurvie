@@ -15,6 +15,7 @@ jobs:
       - run: python -m pip install -r tests/requirements.txt
       - run: docker compose version
       - run: docker run --rm -i caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy adapt --config - --adapter caddyfile --validate < deploy/Caddyfile
+      - run: python -m pip install -r scripts/requirements-index.txt
       - run: python -m unittest discover -s tests -v
       - run: python tests/profile_proxy_smoke.py
       - run: python scripts/pilot_update.py build dist/setupsurvie-update.zip
@@ -44,6 +45,9 @@ jobs:
       - run: python -m unittest discover -s tests -p test_content_mirrors.py -v
       - run: python -m unittest discover -s tests -p test_windows_publish.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
+      - run: python -m pip install -r scripts/requirements-index.txt
+      - run: python -m unittest discover -s tests -p test_archive_index.py -v
+      - run: python -m unittest discover -s tests -p test_search_marc_report.py -v
       - run: python -m unittest discover -s tests -p test_kiwix_search.py -v
       - run: python -m unittest discover -s tests -p test_search_relevance.py -v
       - run: python -m unittest discover -s tests -p test_library_monitor.py -v

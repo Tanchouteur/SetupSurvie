@@ -86,6 +86,9 @@ class Manager:
     def status(self):
         state = self.current()
         result = {k: state[k] for k in ('phase', 'message', 'options', 'id') if k in state}
+        result['index_reader_ready']=self.index_ready()
+        from pilot.archive_index import status as index_status
+        result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
         if state.get('id'):
             if state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
@@ -105,6 +108,12 @@ class Manager:
                     result['progress']['active'] = [{k: entry[k] for k in ('id','title','bytes','total','status') if k in entry} for entry in value.get('active',[])]
         return result
 
+    def index_ready(self):
+        return self.index_python().is_file() and (self.app.work/'search-tools/reader-ready.json').is_file()
+
+    def index_python(self):
+        return self.app.work/'search-tools'/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
+
     def start(self, action, body):
         with locked(destination(self.app.work, 'library-web/operation.lock')):
             return self.start_locked(action, body)
@@ -114,7 +123,11 @@ class Manager:
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
         self.check_storage()
-        if action in ('geography','routing'):
+        if action in ('index','index-prepare'):
+            if action=='index' and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
+            state={'id':uuid.uuid4().hex,'phase':'starting','options':{}}
+            self.paths(state['id']).mkdir(parents=True)
+        elif action in ('geography','routing'):
             options = geography_data.validate(body)
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
             self.paths(state['id']).mkdir(parents=True)
@@ -182,7 +195,30 @@ class Manager:
         try:
             root, scope = self.check_storage()
             check()
-            if state['action'] == 'routing':
+            if state['action']=='index-prepare':
+                update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
+                import venv
+                environment=self.app.work/'search-tools'
+                venv.EnvBuilder(with_pip=False).create(environment)
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                subprocess.run([str(self.index_python()),'-m','ensurepip','--upgrade'],check=True,timeout=120,**hidden)
+                wheels=self.app.work/'search-tools-wheels';wheels.mkdir(exist_ok=True)
+                commands=[[str(self.index_python()),'-m','pip','download','--only-binary=:all:','--no-deps','--dest',str(wheels),'-r',str(setup.ROOT/'scripts/requirements-index.txt')],
+                    [str(self.index_python()),'-m','pip','install','--no-index','--find-links',str(wheels),'-r',str(setup.ROOT/'scripts/requirements-index.txt')]]
+                if list(wheels.glob('libzim-3.13.1-*.whl')):commands=commands[1:]
+                for command in commands:
+                    check();subprocess.run(command,check=True,timeout=300,**hidden)
+                setup.write_json(environment/'reader-ready.json',{'libzim':'3.13.1'},private=True)
+                update('completed','Outil d’indexation prêt. La création des index peut fonctionner hors ligne.')
+            elif state['action']=='index':
+                update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                process=subprocess.Popen([str(self.index_python()),str(setup.ROOT/'scripts/index_archives.py'),'--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel')],**hidden)
+                code=process.wait()
+                check()
+                if code:raise setup.SetupError('Certaines archives n’ont pas pu être indexées ; consultez le suivi.')
+                update('completed','Indexation terminée. Les nouveaux passages sont disponibles dans la recherche.')
+            elif state['action'] == 'routing':
                 update('downloading', 'Préparation des routes et chemins hors ligne…')
                 routing_prepare.prepare_area(root, state['options'], backend=self.backend, storage_root=scope, check=check,
                     progress=lambda message: update('downloading', message))
@@ -228,7 +264,7 @@ class Manager:
             update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             print(type(exc).__name__, str(exc), flush=True)
-            update('error', 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')
+            update('error', 'L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.')
 
 
 if __name__ == '__main__':

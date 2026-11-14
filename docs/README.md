@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Plan des améliorations de Marc](decisions/plan-ameliorations-marc.md) — suivi actuel, décisions et pistes écartées.
+- [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.3.0.
+- [Rapport de Marc et indexation](essais/2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0 et limites.
+
 Index mis à jour le 14 novembre 2026. Commencer par le parcours correspondant au besoin.
 
 ## Guides de référence

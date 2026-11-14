@@ -45,6 +45,16 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(folder / 'plan.json', plan)
         return state, folder
 
+    def test_index_requires_finished_reader_preparation_and_reports_progress(self):
+        with self.assertRaises(setup.SetupError):self.manager.start('index',{})
+        binary=self.manager.index_python();binary.parent.mkdir(parents=True);binary.touch()
+        self.assertFalse(self.manager.status()['index_reader_ready'])
+        setup.write_json(self.app.work/'search-tools/reader-ready.json',{'libzim':'3.13.1'})
+        self.assertTrue(self.manager.status()['index_reader_ready'])
+        progress=Path(self.config['data_dir'])/'state/pilot/archive-index/progress.json'
+        setup.write_json(progress,{'phase':'paused','archives':2,'articles':100})
+        self.assertEqual(self.manager.status()['search_index']['articles'],100)
+
     def test_backup_operation_lock_refuses_new_job_before_spawning(self):
         lock=self.app.work/'library-web/operation.lock';lock.mkdir(parents=True)
         with patch.object(jobs.subprocess,'Popen') as launch:

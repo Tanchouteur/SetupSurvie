@@ -82,7 +82,7 @@
       if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setQuery(query);if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
       if(!['collections','parcours'].includes(route.tab)){
         if($('search-collection')?.options.length===1)loadData();
-        $('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';if($('search-collection')){$('search-collection').dataset.requested=route.params.get('collection')||'';$('search-collection').value=route.params.get('collection')||'';}
+        if($('search-domain'))$('search-domain').value=route.params.get('domain')||get('domain','resilience');$('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';if($('search-collection')){$('search-collection').dataset.requested=route.params.get('collection')||'';$('search-collection').value=route.params.get('collection')||'';}
         const scope=route.tab==='favoris'?'favorites':route.tab==='traductions'?'translations':'all';
         scopeCommand=true;
         const control=document.querySelector(`[data-library-scope="${scope}"]`);
@@ -124,7 +124,7 @@
   };
   readSource=async id=>{
     if(openingSource)return baseRead(id);
-    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
+    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}
   };
@@ -181,7 +181,8 @@
   $('chat-input').addEventListener('input',saveDraft);
   document.addEventListener('survie:collection-filter',event=>{const query=event.detail;put('collection-query',query);if(current?.tab==='collections'){if(query)current.params.set('resource',query);else current.params.delete('resource');history.replaceState(history.state,'',urlFor(current.section,current.tab,current.params));put('last',location.hash);}});
   // Capture the validated search before the shared handler clears/updates results.
-  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;},true);
+  $('search-domain').addEventListener('change',()=>{put('domain',$('search-domain').value);const route=fromLegacy('library');route.params.set('domain',$('search-domain').value);if($('library-query').value)route.params.set('q',$('library-query').value);navigate(route);});
+  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;},true);
   document.addEventListener('click',event=>{
     if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.closest('#content-download,#routing-download')){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Ce suivi reste en lecture seule.');return;}
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;

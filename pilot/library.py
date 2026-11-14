@@ -19,16 +19,17 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval
+from . import store,source_metadata,durable,retrieval,archive_index
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
 
 
 class Text(HTMLParser):
-    def __init__(self):super().__init__();self.parts=[];self.skip=0;self.math=0;self.images=[];self.title=[];self.in_title=False
+    def __init__(self):super().__init__();self.parts=[];self.skip=0;self.math=0;self.images=[];self.title=[];self.in_title=False;self.language=''
     def handle_starttag(self,tag,attrs):
         attrs=dict(attrs)
+        if tag=='html':self.language=attrs.get('lang','').split('-')[0]
         if tag in ('script','style','nav'):self.skip+=1
         if tag=='title':self.in_title=True
         if tag=='math':
@@ -290,7 +291,11 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     groups={};eligible=[];selected_books=[]
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
-    for book in sorted(available,key=lambda b: 0 if b.get('fulltext') is True else 2 if b.get('fulltext') is False else 1):
+    def priority(book):
+        name=retrieval.normal(str(book.get('book',''))+' '+str(book.get('title','')))
+        preferred=next((i for i,term in enumerate(('wikibooks','wikihow','appropedia','wikipedia','outdoors','diy','gardening','bicycles','trueprepper')) if term in name),20)
+        return (book.get('fulltext') is False,preferred,'fra' not in str(book.get('language','')))
+    for book in sorted(available,key=priority):
         if query_plan and query_plan.collection and query_plan.collection not in retrieval.normal(book.get('book','')+' '+str(book.get('title',''))).replace(' ',''):continue
         languages=tuple(sorted(set(re.findall(r'[a-z]{2,3}',(book.get('language') or '').lower()))))
         if requested and requested not in languages:continue
@@ -305,7 +310,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         group=(languages,key,book.get('fulltext'), value if len(languages)!=1 else '')
         groups.setdefault(group,[]).append(entry)
     batches=[items[i:i+6] for items in groups.values() for i in range(0,len(items),6)]
-    done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(3);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
+    done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(max(3,min(12,(os.cpu_count() or 2)*2)));title_semaphore=asyncio.Semaphore(2);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
     async def run(batch, fallback=True, pattern_override=None):
         nonlocal calls,refinement_attempted,refinement_failed,refinement_finished
         lang=requested or ('eng' if all('eng' in re.split(r'[,;\s]+',str(e[1].get('language',''))) for e in batch) else '')
@@ -316,7 +321,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                 if calls>=32:return
                 calls+=1
                 if pattern_override is not None:refinement_attempted+=1
-                raw,_=await get('/search?'+urlencode(params))
+                raw,_=await asyncio.wait_for(get('/search?'+urlencode(params)),timeout=3)
                 tree=ET.fromstring(raw)
                 if pattern_override is not None:refinement_finished+=1
                 # This pinned Kiwix version does not parse Boolean OR reliably.
@@ -339,7 +344,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                     'language':book.get('language',''),'url':link,'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
                 prior=records.get(record['id'])
                 if prior is None or prior.get('match')=='title':records[record['id']]=record
-        except (httpx.HTTPError,ET.ParseError,HTTPException):
+        except (TimeoutError,httpx.HTTPError,ET.ParseError,HTTPException):
             if pattern_override is not None:refinement_failed+=1;refinement_finished+=1;return
             if len(batch)>1 and fallback:
                 await asyncio.gather(*(run([entry],False) for entry in batch))
@@ -352,8 +357,8 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
         term=query_plan.title_en if lang=='eng' else query_plan.title_fr
         if not term:return
         try:
-            async with semaphore:
-                raw,_=await get('/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}))
+            async with title_semaphore:
+                raw,_=await asyncio.wait_for(get('/suggest?'+urlencode({'content':book['book'],'term':term,'count':12})),timeout=2)
                 values=json.loads(raw)
                 if not isinstance(values,list):raise ValueError('Invalid suggestions')
             title_done+=1
@@ -371,14 +376,14 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
                         'kind':'article','language':book.get('language',''),'url':'/content/'+quote(identifier,safe='/'),
                         'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
                 records.setdefault(record['id'],record)
-        except (httpx.HTTPError,HTTPException,ValueError,TypeError):title_failed+=1
+        except (TimeoutError,httpx.HTTPError,HTTPException,ValueError,TypeError):title_failed+=1
     title_books=[]
     if query_plan and query_plan.words:
         priority=lambda b: next((i for i,name in enumerate(('wikipedia','appropedia','wikibooks','wikihow')) if name in str(b.get('book','')).lower()),10)
         title_books=sorted(selected_books,key=priority)[:4]
     refinement_planned=0
     try:
-        async with asyncio.timeout(10):
+        async with asyncio.timeout(6):
             await asyncio.gather(*(run(batch) for batch in batches),*(title_lookup(book) for book in title_books))
             if query_plan:
                 # Prefer meaningful technical terms over generic request words.
@@ -406,7 +411,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None):
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection=''):
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all'):
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
     candidate_limit=min(80,max(20,limit*4))
@@ -445,9 +450,26 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         english.update(LEARNING_ENGLISH)
         english.update({'feu':'fire','allumer':'lighting','camp':'campfire','generateur':'generator','generatrice':'generator','pedale':'pedal','pedales':'pedal'})
         translated=[english.get(w,w) if lang=='eng' else w for w in (words if selected_words is None else selected_words)]
+        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction')}.get(query_plan.action)
+        if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
-    articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
-    ordered=retrieval.ordered(results+articles,query_plan,limit*2)
+    local_task=asyncio.create_task(asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit))
+    try:
+        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan)
+        local=await local_task
+    finally:
+        if not local_task.done():local_task.cancel()
+    combined=results+local+articles
+    for item in combined:
+        item['language']=retrieval.article_language(item)
+        item['domains']=retrieval.domains(item)
+    if not language:combined=[r for r in combined if r.get('language','') not in {'hr','uk','he','ru','ar','zh','de','es','pt','it'}]
+    else:combined=[r for r in combined if not r.get('language') or r['language']=={'fra':'fr','eng':'en'}.get(language,language)]
+    if domain!='all':combined=[r for r in combined if domain in r['domains']]
+    ordered=await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2)
+    coverage['domain']=domain
+    coverage['local_index']=archive_index.status(store.ROOT/'archive-index')
+    coverage['parallelism']=max(3,min(12,(os.cpu_count() or 2)*2))
     coverage['collection']=query_plan.collection
     coverage['query_terms']=words
     return SearchResults(ordered,coverage)
@@ -491,7 +513,7 @@ async def source(identifier):
         if target.startswith('/content/'):
             images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
     return {'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],'language':book.get('language',''),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
 
 
 def calculate(expression):

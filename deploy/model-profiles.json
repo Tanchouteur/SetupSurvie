@@ -74,6 +74,6 @@
       "category": "comparison"
     }
   ],
-  "context": 8192,
+  "context": 16384,
   "output_tokens": 4096
 }
