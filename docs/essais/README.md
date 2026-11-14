@@ -1,5 +1,8 @@
 # Essais et résultats
 
+- [Journal depuis la 0.2.0](journal-recherche-depuis-020.md) — suivi actuel pour le résumé final.
+- [Rapports réels 0.9.3](2026-11-14-rapports-recherche-093.md) — réception et faits, sans confondre index prêt et recherche complète.
+
 - [Conservation des index pendant la maintenance](2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI Windows/Linux et navigateurs réussie ; fonds et matériel réels distincts.
 
 - [Contrôle de l’indexation isolée](2026-11-14-indexation-isolee.md) — 0.9.2, CI et environnements isolés Windows/Linux réussis ; diagnostic réel de Marc encore attendu.

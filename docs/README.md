@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Journal depuis la 0.2.0](essais/journal-recherche-depuis-020.md) — suivi des différences, décisions, preuves et validations restantes pour le résumé final.
+- [Rapports réels 0.9.3](essais/2026-11-14-rapports-recherche-093.md) — indexation réussie, recherches encore partielles et comparatif IA interrompu.
+
 - [Conservation des index pendant la maintenance](essais/2026-11-14-index-sauvegarde-et-retour-arriere.md) — 0.9.3, CI réussie ; exclusions, restauration SQLite et retour arrière testés sur petites données.
 
 - [Contrôle de l’indexation isolée](essais/2026-11-14-indexation-isolee.md) — 0.9.2, lancement Windows corrigé, prérequis et CI réussis ; rapport du fonds réel attendu.
