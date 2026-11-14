@@ -1,8 +1,9 @@
 // Human edits persist on the fixture API. Archive navigation itself is simulated.
 async page => {
-  const base='http://10.0.3.2:8769',checks=[],errors=[],headers={Origin:base};
+  const base='http://10.0.3.2:8769',checks=[],errors=[],dossierReads=[],headers={Origin:base};
   const check=(value,label)=>{if(!value)throw Error(label);checks.push(label);};
   page.on('pageerror',error=>errors.push(error.message));
+  page.on('request',request=>{if(request.url().includes('/api/library/dossiers'))dossierReads.push(request.url());});
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   const guide='guide:craft.en.txt',books=['fixture-channel_en_energy_2026-01','fixture-channel_en_food_2026-01'];
   for(const id of [guide,...books.map(id=>'collection:'+id)])await page.request.delete(base+'/api/admin/library/metadata?'+new URLSearchParams({source_id:id}),{headers});
@@ -14,6 +15,7 @@ async page => {
   await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   await page.locator('#search-results .result').filter({hasText:'craft'}).getByRole('button',{name:'Lire le document →',exact:true}).click();
   const editor=page.locator('#reader .catalogue-editor');await editor.locator('summary').click();
+  check(dossierReads.length===0,'Lire et classer un document ne charge pas les dossiers repliés');
   await editor.locator('[name="domain"][value="resilience"]').uncheck();await editor.locator('[name="domain"][value="culture"]').check();
   await editor.locator('[name="document_type"]').selectOption('manual');await editor.getByLabel('J’ai examiné le contenu pour ce classement.').check();
   await editor.getByRole('button',{name:'Enregistrer le classement',exact:true}).click();

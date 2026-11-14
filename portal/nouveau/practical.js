@@ -77,12 +77,16 @@
       try{const data=await api('/library/dossiers/'+encodeURIComponent(target));if(select.value!==target||S.reader!==source.id)return;current=data;field.replaceChildren(legend);for(const section of data.sections){const l=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='section';input.value=section.id;l.append(input,document.createTextNode(section.label));field.append(l);}save.disabled=false;}
       catch(error){message.textContent=error.message;}
     }
-    try{
-      const data=overview||await api('/library/dossiers');if(S.reader!==source.id)return;
-      for(const item of data.dossiers)select.append(new Option(item.title,item.id));
-      const wanted=new URLSearchParams(location.hash.split('?')[1]).get('dossier');if(data.dossiers.some(d=>d.id===wanted))select.value=wanted;
-      select.onchange=selection;await selection();
-    }catch(error){message.textContent=error.message;}
+    let loading=false;
+    details.addEventListener('toggle',async()=>{
+      if(!details.open||select.options.length||loading)return;loading=true;
+      try{
+        const data=overview||await api('/library/dossiers');if(S.reader!==source.id)return;
+        for(const item of data.dossiers)select.append(new Option(item.title,item.id));
+        const wanted=new URLSearchParams(location.hash.split('?')[1]).get('dossier');if(data.dossiers.some(d=>d.id===wanted))select.value=wanted;
+        select.onchange=selection;await selection();
+      }catch(error){message.textContent=error.message;}finally{loading=false;}
+    });
     form.onsubmit=async event=>{
       event.preventDefault();if(!current||select.disabled)return;save.disabled=true;select.disabled=true;
       try{
