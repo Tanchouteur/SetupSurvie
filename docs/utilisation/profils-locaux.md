@@ -35,6 +35,11 @@ connus restent utilisables ; une ancienne identité retrouvée dans les échange
 peut temporairement s’afficher « Profil conservé… ». Actualiser la liste après
 redémarrage des services, sans supprimer les bases.
 
+Dans l’interface 0.12.0, **Mon appareil → Paramètres → Profils et connexion**
+regroupe la gestion des profils et l’accès par téléphone/QR code. Le choix du
+profil reste disponible dans le menu et en haut du téléphone ; aucun mot de passe
+n’est ajouté. Voir le [guide et les liens directs](parametres-et-appareil.md).
+
 ## Les deux liens du menu
 
 - **Lire les documents si le portail ne répond plus** : page simple de fichiers
