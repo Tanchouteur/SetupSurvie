@@ -219,3 +219,10 @@ secondes. Les réponses des outils ne répètent plus le manifeste des 135 archi
 dans le contexte du modèle. Les [corrections et leurs limites](../essais/2026-11-14-corrections-rapports-093.md)
 restent distinctes d’une nouvelle mesure sur le fonds. La reformulation IA n’a pas
 abouti dans les deux essais reçus ; aucun gain ni panne mémoire n’en est conclu.
+
+## Recette d’usage 0.10.0
+
+La [recette R7](../utilisation/verifier-usage-hors-ligne.md) réunit des lectures
+sans IA et des observations humaines distinctes. Aucun résultat automatique
+ne certifie la coupure Internet ou la qualité documentaire. Le contrôle ne
+modifie pas la pause du moteur ; les mesures ne reprennent pas au rechargement.

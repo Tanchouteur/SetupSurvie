@@ -26,6 +26,10 @@ Les futurs diagnostics ci-dessous doivent être livrés avec une commande ou un
 bouton explicite, un arrêt possible et un export JSON lisible par l’agent. Ne pas
 exiger TeamViewer ni un accès distant de développement pour lancer les recettes.
 
+Depuis 0.10.0, **Tester l’usage hors ligne** au même endroit fournit R7 :
+[mesures sans IA et étapes humaines](../utilisation/verifier-usage-hors-ligne.md).
+Arrêt et export sont disponibles ; les étapes non faites restent non effectuées.
+
 ## Rapports à fournir progressivement
 
 | Rapport | Quand le demander | Ce qu’il doit mesurer | État de l’outil |
@@ -35,8 +39,8 @@ exiger TeamViewer ni un accès distant de développement pour lancer les recette
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Corrections/export en 0.6.0, six dossiers et repères exportables en 0.9.0 ; relecture humaine du fonds attendue |
 | R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Comparatif IA 0.9.3 reçu : deux expirations de budget avant premier fragment ; calibration mémoire et phases d’une réponse réelle restent à mesurer |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |
-| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Pistes réellement présentes, langues, lecture, décalage, petits extraits reconnus/traduits et erreurs ; aucune copie automatique de la vidéo complète | Inventaire/export et lecteur à développer |
-| R7 — Usage hors ligne | À chaque livraison pertinente, puis L9 | Navigation, données conservées, fonctions avec IA arrêtée et Internet coupé, reprise, téléphone ; chaque vérification marquée exécutée ou non | Scénario intégré/export à développer |
+| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Protocole cible](protocole-sous-titres-videos.md), précision de Louis du 14 novembre ; inventaire/export et lecteur à développer |
+| R7 — Usage hors ligne | À chaque livraison pertinente, puis L9 | Navigation, données conservées, fonctions avec IA arrêtée et Internet coupé, reprise, téléphone ; chaque vérification marquée exécutée ou non | Recette et export en 0.10.0 ; rapport réel attendu, état IA mesuré et coupure Internet déclarée restent distincts |
 
 Les recettes longues annoncent leur charge et leur possibilité de pause avant
 lancement. Aucun mode jeu n’est levé pour un test. La calibration et la traduction

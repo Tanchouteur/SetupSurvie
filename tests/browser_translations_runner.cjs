@@ -57,13 +57,16 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const practicalPage=await context.newPage();
       const practicalRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_practical.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const practicalResult=await practicalRecipe(practicalPage);await practicalPage.close();
+      const usagePage=await context.newPage();
+      const usageRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_usage_recipe.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/usage-recipe-')+')');
+      const usageResult=await usageRecipe(usagePage);await usagePage.close();
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);
       const nextTranslation=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,next:nextResult,nextTranslation:nextTranslationResult}));
+      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,next:nextResult,nextTranslation:nextTranslationResult}));
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

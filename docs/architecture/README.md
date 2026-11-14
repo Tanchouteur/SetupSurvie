@@ -376,3 +376,14 @@ annule un appel partagé seulement au départ de son dernier lecteur.
 par archive ; l’API d’administration et le rapport d’indexation gardent le détail.
 Le cache d’une question de l’assistant réutilise son intention préparée si le modèle
 la raccourcit au seul sujet, sans confondre deux actions explicites.
+
+## Recette d’usage depuis le navigateur (0.10.0)
+
+`portal/nouveau/usage-recipe.js` utilise uniquement les API de lecture existantes,
+sans commande d’inférence/préparation. Le contrôle comprend au maximum deux
+recherches et deux aperçus, quinze secondes par lecture et 90 secondes au total.
+Le profil, la génération et le contrôleur d’exécution isolent les réponses tardives.
+La version est contrôlée avant/après. Le brouillon local ne persiste pas les
+mesures, qui restent à relancer après rechargement. Le JSON R7 sépare observations
+humaines et mesures, sans texte de source ni manifeste complet. La coupure réseau
+est une déclaration de l’opérateur ; voir le [guide](../utilisation/verifier-usage-hors-ligne.md).

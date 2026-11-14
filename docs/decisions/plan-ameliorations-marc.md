@@ -66,7 +66,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
-| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot et conservation des index 0.9.3 ; scénario/export R7 et recette réelle intégrée encore à faire |
+| L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
 
 ### L1 — Installation, téléchargements et indexation automatique
 
@@ -219,6 +219,12 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 
 ### L6 — Vidéos et sous-titres français hors ligne
 
+**Précision de Louis du 14 novembre :** valider la récupération ou la création
+des sous-titres français **pour chaque vidéo**, pas seulement quelques exemples.
+Le [protocole R6 cible](../essais/protocole-sous-titres-videos.md) définit les
+preuves, les exceptions visibles et la différence entre contrôle technique et
+relecture humaine. L’outillage vidéo reste à développer.
+
 - Inventorier médias et pistes réellement présents dans les ZIM, avec langue et
   format ; fournir ce relevé avant de présumer qu’il faut tout transcrire.
 - Exposer d’abord les VTT/SRT existants dans un lecteur local avec sélection de
@@ -237,6 +243,10 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 **Fin technique :** piste existante, piste manquante, interruption, reprise,
 synchronisation et lecture sans moteur testées sur petits médias. Compatibilité
 avec les archives de Marc et compréhension réelle vérifiées par **R6**.
+Le rapport du fonds réel doit rendre compte de toutes les vidéos inventoriées :
+piste française récupérée/créée, état des contrôles et de la relecture, ou motif
+d’indisponibilité. Une archive non examinée et une vidéo en erreur ne disparaissent
+pas du bilan ; une seule piste générée n’établit pas la fin du lot.
 
 ### L7 — Savoir-faire pratiques et apprentissage
 
@@ -310,6 +320,11 @@ L’index sémantique est reporté tant que ce bénéfice n’est pas établi.
 **Fin technique :** matrice des lots renseignée, CI et livraisons vérifiées,
 aucun échec connu sans décision explicite ; rapport intégré **R7**. Ne pas déclarer
 validé chez Marc ce qui n’a été essayé que sur données simulées ou en CI.
+
+**Outillage R7 en 0.10.0 :** [contrôle d’usage](../utilisation/verifier-usage-hors-ligne.md)
+depuis le site, mesures bornées et observations humaines exportables, brouillon
+par profil/version sans reprise automatique. Il prépare la recette réelle ;
+il ne clôt ni celle-ci ni les lots de traduction et de sous-titres encore prévus.
 
 ## Recettes progressives et conditions de blocage
 
