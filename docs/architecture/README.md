@@ -347,3 +347,8 @@ répète avant son pool et enregistre `reader_probe` dans la progression.
 Le superviseur retire le marqueur en cas d’échec, y compris pendant sa récupération.
 Les erreurs d’archives ont un motif borné sans message natif privé. Voir le
 [guide actuel](../utilisation/indexation-archives.md).
+Le pool conserve la sélection d’exécutable de CPython : substituer le `pythonw.exe`
+du venv Windows empêche son démarrage adapté aux environnements isolés. La recette
+exécute le vrai CLI à deux processus dans un venv sans dépendances Web.
+La restauration automatique d’une recherche par `navigation.js` attend le résultat
+du profil, y compris son repli anonyme, pour éviter les trois requêtes au démarrage.

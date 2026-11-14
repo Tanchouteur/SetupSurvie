@@ -197,5 +197,7 @@ après fiabilisation (IDEE-006), conformément à la demande de Louis.
 La préparation seule par pip n’est plus assimilée à un lecteur vérifié : import
 natif et SQLite sont contrôlés dans son environnement isolé. Un échec commun
 arrête le travail avant les archives ; les erreurs individuelles restent distinctes.
-Le [bilan](../essais/2026-11-14-indexation-isolee.md) conserve le résultat Linux
-et les limites : la cause réelle chez Marc attend R1, sans nouveau corpus ajouté.
+Le [bilan](../essais/2026-11-14-indexation-isolee.md) conserve les essais Linux et
+Windows isolés et la correction du lancement des processus. La cause réelle chez
+Marc attend R1, sans nouveau corpus ajouté. La restauration de recherche déclenche
+une seule requête après lecture du profil, avec repli public si ce dernier échoue.

@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Contrôle de l’indexation isolée](essais/2026-11-14-indexation-isolee.md) — 0.9.2, vérification des prérequis ; validation en cours.
+- [Contrôle de l’indexation isolée](essais/2026-11-14-indexation-isolee.md) — 0.9.2, lancement Windows corrigé, prérequis et CI réussis ; rapport du fonds réel attendu.
 
 - [Corrections des rapports réels](essais/2026-11-14-corrections-rapports-recherche.md) — 0.9.1, CI réussie ; contrôle du fonds Windows réel encore attendu.
 

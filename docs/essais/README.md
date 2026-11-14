@@ -1,6 +1,6 @@
 # Essais et résultats
 
-- [Contrôle de l’indexation isolée](2026-11-14-indexation-isolee.md) — 0.9.2, environnement sans dépendances Web ; validation en cours.
+- [Contrôle de l’indexation isolée](2026-11-14-indexation-isolee.md) — 0.9.2, CI et environnements isolés Windows/Linux réussis ; diagnostic réel de Marc encore attendu.
 
 - [Corrections des rapports réels](2026-11-14-corrections-rapports-recherche.md) — 0.9.1, délais et replis reproduits ; CI réussie, fonds réel à vérifier.
 

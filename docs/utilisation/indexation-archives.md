@@ -144,4 +144,8 @@ reste un échec à diagnostiquer, sans conclure automatiquement à une archive c
 
 Les marqueurs préparés avant 0.9.2 restent reconnus ; leur vérification effective
 a lieu au prochain lancement. Aucun travail lourd n’est relancé par la mise à jour.
+Sous Windows, le lancement des processus conserve aussi le mécanisme Python
+adapté à l’environnement isolé : le remplacement par son `pythonw.exe` pouvait
+bloquer ce démarrage. La préparation vérifie les prérequis ; elle ne garantit
+pas à elle seule que les processus ont ensuite parcouru les archives.
 Voir le [bilan des essais isolés](../essais/2026-11-14-indexation-isolee.md).

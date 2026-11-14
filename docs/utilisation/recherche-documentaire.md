@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.6.0, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.9.2, 14 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -11,6 +11,7 @@ Dans **Bibliothèque → Rechercher**, décrire le besoin : « allumer un feu »
 Le choix de langue permet de chercher en français et en anglais. Le sélecteur
 **Toutes les collections** permet aussi de cibler une source installée, par exemple
 Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/Suivant.
+Le rechargement relance une seule fois la recherche mémorisée avec ses filtres.
 Une formule comme « faire du feu dans Wikipédia » peut également cibler cette source.
 
 La recherche fonctionne sans modèle IA. Elle combine titres, texte des guides,
@@ -91,7 +92,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.6.0** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.9.2** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Réglages → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
