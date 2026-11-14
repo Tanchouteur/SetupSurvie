@@ -74,7 +74,7 @@ def metadata(archive,key,default=''):
     except (KeyError,RuntimeError):return default
 
 
-def build_archive(source,root,*,cancel=None,force=False):
+def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
     """One process owns one archive. Every committed cursor is resumable."""
     from libzim.reader import Archive
     source=Path(source);root=Path(root);durable.mkdir(root)
@@ -82,7 +82,7 @@ def build_archive(source,root,*,cancel=None,force=False):
     published=root/(key+'.sqlite');building=root/(key+'.building')
     def check():
         if cancel and Path(cancel).exists():raise Paused()
-        if shutil.disk_usage(root).free<1_000_000_000:raise OSError('Espace libre insuffisant pour poursuivre l’indexation.')
+        if shutil.disk_usage(root).free<reserve:raise OSError('Espace libre insuffisant pour poursuivre l’indexation.')
     check();stat=source.stat();archive=Archive(source)
     if archive.has_fulltext_index and not force:return {'archive':source.name,'status':'kiwix_index','articles':0}
     fingerprint=f'{FORMAT}:{archive.uuid}:{stat.st_size}:{stat.st_mtime_ns}'

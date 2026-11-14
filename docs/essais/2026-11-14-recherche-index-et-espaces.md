@@ -64,3 +64,16 @@ l’intégralité du fonds ne sont pas validées par les fixtures ou la CI.
 Les sous-titres, la traduction de lecture intégrée, le livre réel de 500 pages,
 la qualification des tutoriels, les variantes encore mal nommées et la calibration
 matérielle restent suivis dans le [plan actuel](../decisions/plan-ameliorations-marc.md).
+
+Vérifications de développement complémentaires : 375 tests unitaires réussis
+(trois sauts préexistants), puis ajout d’un test CLI réel à deux processus.
+Chromium MCP : 29 contrôles de recherche existants, 12 contrôles des nouveaux
+périmètres/réglages et 37 contrôles de confort des conversations, y compris
+320 × 568. Préparation réelle de l’environnement libzim dans un dossier
+temporaire Linux réussie ; seule la réserve disque de 15 Go est simulée pour
+cette petite fixture du runner. Aucun index réel de Marc n’a été préparé.
+
+La première CI du commit `064a44f` valide Linux, Windows, Kiwix réel et le
+routage ; la recette navigateur a repéré la signature de son moteur simulé
+non actualisée pour le paramètre de périmètre. Fixture corrigée et CI relancée ;
+ce constat ne correspondait pas à une erreur du moteur réel.

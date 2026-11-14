@@ -13,7 +13,7 @@ from pilot import archive_index,durable
 from delivery_paths import locked
 
 
-def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False):
+def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False,reserve=15_000_000_000):
     if os.name=='nt':
         windowless=Path(sys.executable).with_name('pythonw.exe')
         if windowless.is_file():multiprocessing.set_executable(str(windowless))
@@ -25,7 +25,7 @@ def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False):
     with locked(root/'operation.lock'):
         save()
         with ProcessPoolExecutor(max_workers=workers) as pool:
-            pending={pool.submit(archive_index.build_archive,p,root,cancel=cancel,force=force):p for p in files}
+            pending={pool.submit(archive_index.build_archive,p,root,cancel=cancel,force=force,reserve=reserve):p for p in files}
             for future in as_completed(pending):
                 try:result=future.result()
                 except archive_index.Paused:result={'archive':pending[future].name,'status':'paused'}
@@ -38,6 +38,8 @@ def run(zim_dir,state_dir,*,cancel=None,workers=None,force=False):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--zim-dir',type=Path,required=True);parser.add_argument('--state-dir',type=Path,required=True)
-    parser.add_argument('--cancel',type=Path);parser.add_argument('--workers',type=int,choices=range(1,17));parser.add_argument('--include-indexed',action='store_true')
-    args=parser.parse_args();result=run(args.zim_dir,args.state_dir,cancel=args.cancel,workers=args.workers,force=args.include_indexed)
+    parser.add_argument('--cancel',type=Path);parser.add_argument('--workers',type=int,choices=range(1,17));parser.add_argument('--include-indexed',action='store_true');parser.add_argument('--reserve-bytes',type=int,default=15_000_000_000)
+    args=parser.parse_args()
+    if args.reserve_bytes<1_000_000_000:parser.error('Marge disque minimale : 1 Go.')
+    result=run(args.zim_dir,args.state_dir,cancel=args.cancel,workers=args.workers,force=args.include_indexed,reserve=args.reserve_bytes)
     print(json.dumps(result,ensure_ascii=False));sys.exit(1 if result['phase']=='partial' else 0)

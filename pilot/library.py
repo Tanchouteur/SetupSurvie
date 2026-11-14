@@ -463,8 +463,8 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     for item in combined:
         item['language']=retrieval.article_language(item)
         item['domains']=retrieval.domains(item)
-    if not language:combined=[r for r in combined if r.get('language','') not in {'hr','uk','he','ru','ar','zh','de','es','pt','it'}]
-    else:combined=[r for r in combined if not r.get('language') or r['language']=={'fra':'fr','eng':'en'}.get(language,language)]
+    allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
+    combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
     if domain!='all':combined=[r for r in combined if domain in r['domains']]
     ordered=await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2)
     coverage['domain']=domain

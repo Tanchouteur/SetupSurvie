@@ -1,6 +1,8 @@
 """Real tiny ZIMs, resumable text index and publication; no downloaded corpus."""
 import asyncio
 import json
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -60,6 +62,14 @@ class ArchiveIndexTests(unittest.TestCase):
         with patch.object(store,'ROOT',self.root/'state'),patch.object(library,'books',AsyncMock(return_value=library.Catalog(available=False))):
             store.init();found=asyncio.run(library.search('crevaison'))
         self.assertTrue(found);self.assertEqual(found[0]['match'],'local_index');self.assertEqual(found.coverage['status'],'unavailable')
+
+    def test_cli_uses_multiple_worker_processes_and_reuses_published_index(self):
+        zim_dir=self.root/'zim';zim_dir.mkdir();self.zim.rename(zim_dir/self.zim.name)
+        result=subprocess.run([sys.executable,str(Path(__file__).resolve().parents[1]/'scripts/index_archives.py'),
+            '--zim-dir',str(zim_dir),'--state-dir',str(self.root/'state'),'--workers','2','--reserve-bytes','1000000000'],capture_output=True,text=True,timeout=30)
+        self.assertEqual(result.returncode,0,result.stderr)
+        report=json.loads(result.stdout);self.assertEqual(report['phase'],'completed');self.assertEqual(report['workers'],2)
+        self.assertTrue(self.query())
 
     def test_incompatible_collection_is_not_returned(self):
         archive_index.build_archive(self.zim,self.index)

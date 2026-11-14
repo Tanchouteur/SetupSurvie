@@ -39,7 +39,7 @@ L’outil lit le HTML, XHTML et texte brut, par passages d’environ 2 400 carac
 Il ignore redirections et contenus non textuels, limite un article à 2 Mo à lire
 et 500 000 caractères à indexer. Il ne transcrit pas l’audio, ne fait pas d’OCR,
 ne traduit pas les vidéos et ne garantit pas la qualité d’une procédure.
-Une marge libre minimale est contrôlée pendant l’écriture ; le contrôle du
+Une marge libre de 15 Go est contrôlée pendant l’écriture depuis le site ; le contrôle du
 stockage du laboratoire reste appliqué avant le lancement. L’espace final
 nécessaire et la durée sur le fonds réel de Marc ne sont pas encore mesurés.
 
@@ -62,3 +62,5 @@ Après préparation de l’environnement, l’opération équivalente est :
 `--include-indexed` reconstruit aussi les archives déjà indexées par Kiwix et
 n’est pas le fonctionnement normal du site. Les deux systèmes utilisent la même
 base SQLite ; seuls les chemins des environnements Python diffèrent.
+
+La commande de maintenance permet `--reserve-bytes` pour une réserve explicite ; ne jamais descendre sous 15 Go dans le laboratoire. Le test CLI sur de minuscules archives temporaires choisit 1 Go pour ne pas dépendre de la capacité de la VM de CI.
