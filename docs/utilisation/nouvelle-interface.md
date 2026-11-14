@@ -89,7 +89,8 @@ aucune base SQLite, ne lit pas de gros contenu et ne touche pas aux verrous.
 
 Le suivi indépendant reste **en lecture seule**. Pendant un transfert Windows
 indépendant actif, la nouvelle interface refuse de lancer une préparation concurrente.
-Pour les tâches web, les commandes existantes restent disponibles sur ordinateur.
+Pour les tâches web, les préparations restent sur ordinateur ; leurs commandes
+de pause restent aussi accessibles sur téléphone.
 Un état trop ancien ou un service absent est signalé, sans conclure que le processus
 est arrêté. Aucune durée restante ni mesure CPU n’est inventée.
 
@@ -153,5 +154,6 @@ le logiciel installé. Attendre la fin ou la pause effective des transferts avan
 la procédure normale ; le téléchargement de Marc a été déclaré terminé par Louis,
 mais ce guide n’en fait pas un contrôle de machine.
 
-Les vérifications et limites de cette livraison sont dans le
-[bilan 0.1.36](../essais/2026-11-14-moteur-recherche-utile.md).
+Les vérifications de cette organisation sont dans le [bilan 0.12.0](../essais/2026-11-14-parametres-ux.md).
+Le [bilan 0.1.36](../essais/2026-11-14-moteur-recherche-utile.md) conserve les
+constats de la précédente évolution documentaire.

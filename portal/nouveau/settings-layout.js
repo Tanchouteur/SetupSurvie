@@ -30,10 +30,10 @@
   panes.acces.append(make('p','small muted','Les profils organisent les données. Toute personne du réseau peut choisir un autre profil et consulter ses données.'));
   panes.bibliotheque.append(link('telechargements','Télécharger des collections et préparer les cartes','Choisir les contenus et suivre les préparations, sans interrompre les travaux en cours.'),link('stockage','Voir les fichiers et l’espace disque','Distinguer les documents et modèles enregistrés de la mémoire utilisée par l’assistant.'));
   const move=(id,pane)=>{const node=get(id).closest('article');panes[pane].append(node);return node;};
-  move('upload-form','bibliotheque').querySelector('details').id='settings-add-guide';
+  const upload=move('upload-form','bibliotheque');upload.querySelector('details').id='settings-add-guide';get('upload-form').before(make('p','next-mobile-note','Pour ajouter un fichier, utilisez un ordinateur.'));
   const index=move('next-index-status','bibliotheque');
   const advanced=(node,id,title)=>{const d=make('details','settings-advanced');d.id=id;d.append(make('summary','',title));node.before(d);d.append(node);return d;};
-  advanced(index,'settings-index','Préparer la recherche dans les archives');
+  advanced(index,'settings-index','Préparer la recherche dans les archives');get('next-index-settings').before(make('p','next-mobile-note','Pour préparer les index ou modifier leur programmation, utilisez un ordinateur. La pause et le rapport restent accessibles ici.'));
   const engine=move('engine-controls','assistant');engine.querySelector('details').open=true;engine.querySelector('summary').textContent='Démarrer ou arrêter l’assistant';engine.querySelector('details').id='settings-engine';
   panes.assistant.prepend(make('p','help-strip','Pour jouer ou libérer la mémoire, arrêtez l’assistant. Sa reprise reste une action explicite. Les documents restent consultables.'));
   const engineState=make('p','small');engineState.id='settings-engine-state';engine.prepend(engineState);

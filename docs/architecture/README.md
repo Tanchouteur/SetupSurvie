@@ -193,6 +193,14 @@ API existantes. `/classique/` conserve ses propres scripts/styles et les mêmes
 données ; `/maquette/` reste fictif. `scripts/build_next_portal.py` génère les
 entrées modernes à partir du balisage classique. `layout.js` déplace les contrôles
 existants avant leur liaison ; `navigation.js` adapte historique et contexte.
+Depuis 0.12.0, `settings-layout.js` s’exécute après la création des panneaux
+fonctionnels et avant la navigation : il déplace une seule fois les nœuds existants,
+sans les cloner, en conservant IDs, événements, ancêtres `article`/`details` et
+`view-settings` attendus par les contrôleurs. `settings.css` complète la charte.
+Les nouvelles sous-rubriques restent des présentations de `view-settings`, sans
+nouvelle API. La route demandée est conservée pendant la lecture du profil ; un
+rechargement retire le marqueur d’un dialogue qui n’est plus ouvert.
+Voir la [correspondance des commandes](../utilisation/parametres-et-appareil.md).
 
 `GET /api/activity` passe par la route interne authentifiée `/activity` du
 contrôleur. `scripts/library_monitor.py` associe identité, plan, reçus et progrès

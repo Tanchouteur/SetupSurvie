@@ -56,7 +56,7 @@
     if(!route)return;
     if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html?interface=nouveau');return;}
     if(['settings','users'].includes(route.name)&&S.user?.role!=='admin'){
-      if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');auth();}else{pendingAdminRoute=route;S.requestedView=route.name;}
+      if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');if(!$('auth-dialog').open)auth();}else{pendingAdminRoute=route;S.requestedView=route.name;}
       return;
     }
     const saved=history.state;
@@ -226,7 +226,7 @@
     profileId=S.user.id;draftKey=null;$('chat-domain').value=get('chat-domain','resilience');
     const saved=!initialHash?get('last',''):'';
     const target=pendingAdminRoute||saved&&parse(saved)||current||parse('#/accueil');
-    if(pendingAdminRoute&&S.user.role==='admin'){pendingAdminRoute=null;S.requestedView=null;if($('auth-dialog').open)$('auth-dialog').close();}
+    if(pendingAdminRoute){pendingAdminRoute=null;S.requestedView=null;if(S.user.role==='admin'&&$('auth-dialog').open)$('auth-dialog').close();}
     navigate(target,true);restoreDraft();
   });
   const baseNew=newConversation;

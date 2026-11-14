@@ -77,6 +77,13 @@ async page => {
   await page.locator('#navigation [data-route="assistant"]').click();
   check(await page.locator('#chat-input').inputValue()==='Brouillon Famille UX','Retour Famille conserve son brouillon');
   check(await page.locator('input[type="password"]').count()===0,'Aucun mot de passe ajouté');
+  await route('entretien');await page.locator('#settings-navigation-memory > summary').click();
+  page.once('dialog',dialog=>dialog.dismiss());await page.locator('#next-clear-memory').click();
+  await page.locator('#navigation [data-route="assistant"]').click();
+  check(await page.locator('#chat-input').inputValue()==='Brouillon Famille UX','Annuler l’effacement conserve les brouillons');
+  await page.goto(base+'/?lat=43.18&lon=6.04&target=departure#settings');await ready();await page.locator('#settings-lieux').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.querySelector('#location-lat').value==='43.18');
+  check(await page.locator('#location-lon').inputValue()==='6.04'&&await page.locator('#location-target').inputValue()==='departure','Retour direct depuis la carte conserve le point à confirmer');
   check(errors.length===0,'Aucune erreur JS : '+errors.join(', '));
   return {checks:checks.length,results:checks};
 }
