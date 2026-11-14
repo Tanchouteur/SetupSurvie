@@ -106,8 +106,18 @@ leur revente. Documenter les lacunes et les droits restant à examiner.
    préserver le travail et examiner le distant avec `git fetch` ; ne pas utiliser
    de reset, stash ou écrasement automatique pour forcer le passage.
 2. Incrémenter la version du logiciel pour chaque livraison fonctionnelle ; garder
-   cohérents la version affichée et les réponses API. Une correction documentaire
-   seule ne nécessite pas de changer la version des images tierces.
+   cohérents la version affichée et les réponses API. Choisir logiquement le niveau
+   dans `x.y.z` selon la portée de la livraison, sans incrémenter systématiquement
+   `z` : `z` pour une correction compatible, `y` pour une nouvelle fonctionnalité
+   compatible ou une évolution fonctionnelle significative, `x` pour une rupture
+   de compatibilité majeure ou le passage assumé à une version stable `1.0.0`.
+   Lorsqu'un niveau augmente, remettre les niveaux inférieurs à zéro. Tant que le
+   projet reste en `0.y.z`, utiliser aussi `y` pour les ruptures de compatibilité
+   et les documenter explicitement ; ne pas annoncer une version stable sans
+   validation correspondante. Justifier le niveau choisi dans le bilan de livraison.
+   Une modification des seules consignes ou de la documentation ne change ni la
+   version du logiciel ni les versions des images tierces. Ne pas renuméroter les
+   anciennes livraisons pour appliquer cette règle rétroactivement.
 3. Vérifier les fichiers inclus, les secrets et les gros fichiers, puis créer des
    commits explicites et pousser la branche concernée. Louis demande que le travail
    soit commité et poussé ; ne pas laisser des changements terminés uniquement en
