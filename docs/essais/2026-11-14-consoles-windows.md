@@ -48,3 +48,21 @@ Trois vérifications réelles du site sain, via le helper installé, sont réuss
 avec interdiction simulée de créer un enfant : aucun PowerShell ni autre helper
 n’est lancé pour ce contrôle périodique. Le paquet candidat a été rangé parmi les
 livraisons locales non publiées, pour ne pas le présenter comme une sortie de main.
+
+
+## Mise à jour locale demandée ensuite par Louis
+
+Après la validation du correctif hôte, Louis demande aussi d’actualiser le site
+encore affiché en 0.1.34. Le candidat local **0.1.36**, construit sur main 0.1.35
+avec le correctif des consoles, est alors déployé entièrement. Main n’est ni
+modifié ni poussé. Les contrôles HTTP par le nom local annoncent 0.1.36 ; 615
+fichiers installés correspondent au paquet. Les 127 fichiers de l’instantané
+privé sont vérifiés et les anciens enregistrements, réglages, bibliothèque et
+cartes sont conservés. Le serveur Ollama garde son processus initial.
+
+Un défaut distinct de routage, préexistant au déploiement, est relevé : les trois
+conteneurs créés à 09 h 52 redémarrent sur un refus de lecture de
+`network.osrm.fileIndex`. Ce déploiement ne modifie pas leurs fichiers ni leurs
+permissions. L’accès aux fonds de carte reste disponible ; le routage nécessite
+un diagnostic séparé. Les détails de déploiement restent dans les diagnostics
+locaux, sans publication de données privées.
