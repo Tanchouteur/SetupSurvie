@@ -131,13 +131,13 @@ class IsolatedArchiveIndexTests(unittest.TestCase):
             self.assertEqual(dependency,'None','The isolated reader must not inherit web dependencies')
             self.assertTrue(json.loads(subprocess.check_output(probe,env=env,text=True))['ok'])
             zims=root/'archives';zims.mkdir()
-            for name,indexed in [('guide_fr',False),('native_fr',True)]:
+            for name,indexed in [('guide_fr',False),('native_fr',True),('native_multi',True)]:
                 # The downloaded archives are created upstream. libzim's Windows
                 # writer cannot create fixtures under an accented directory;
                 # create them separately, then exercise the reader at that path.
                 generated=Path(folder)/(name+'.zim')
                 with Creator(generated).config_indexing(indexed,'fra') as creator:
-                    for key,value in {'Title':'Guide fictif','Language':'fra','Name':name}.items():creator.add_metadata(key,value)
+                    for key,value in {'Title':'Guide fictif','Language':'fra,eng' if name=='native_multi' else 'fra','Name':name}.items():creator.add_metadata(key,value)
                     creator.add_item(Article('Bicycle','Bicycle repair','Fictional puncture repair example, no real instructions.'))
                 generated.rename(zims/generated.name)
             command=[str(python),'-X','utf8',str(root_code/'scripts/index_archives.py'),'--zim-dir',str(zims),'--state-dir',str(root/'etat'),'--workers','2','--reserve-bytes','1000000000']
@@ -155,8 +155,10 @@ class IsolatedArchiveIndexTests(unittest.TestCase):
             result=invoke()
             self.assertEqual(result.returncode,0,result.stderr+'\n'+result.stdout)
             report=json.loads(result.stdout);self.assertEqual(report['phase'],'completed');self.assertTrue(report['reader_probe']['ok'])
-            self.assertEqual({r['status'] for r in report['results']},{'ready','kiwix_index'});self.assertEqual(report['articles'],1)
-            published=next((root/'etat/archive-index').glob('*.sqlite'));mtime=published.stat().st_mtime_ns
+            self.assertEqual({r['status'] for r in report['results']},{'ready','kiwix_index'});self.assertEqual(report['articles'],2)
+            native=next(r for r in report['results'] if r['archive']=='native_multi.zim')
+            self.assertTrue(native['has_fulltext_index']);self.assertFalse(native['kiwix_language_compatible']);self.assertEqual(native['status'],'ready')
+            published={p:p.stat().st_mtime_ns for p in (root/'etat/archive-index').glob('*.sqlite')};self.assertEqual(len(published),2)
             again=invoke()
-            self.assertEqual(again.returncode,0,again.stderr+'\n'+again.stdout);self.assertEqual(published.stat().st_mtime_ns,mtime)
+            self.assertEqual(again.returncode,0,again.stderr+'\n'+again.stdout);self.assertTrue(all(p.stat().st_mtime_ns==mtime for p,mtime in published.items()))
             self.assertEqual(json.loads(again.stdout)['error_summary'],{})

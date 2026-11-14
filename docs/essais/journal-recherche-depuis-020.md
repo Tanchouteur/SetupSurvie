@@ -25,6 +25,7 @@ corrections et la CI finales de chaque lot. Toutes ces livraisons sont sur `main
 | 0.9.3 · `faaa6f16` | Exclusions entre indexation, sauvegarde et mise à jour ; verrous par archive pour les processus restants ; conservation des verrous et des index au retour arrière | [Bilan](2026-11-14-index-sauvegarde-et-retour-arriere.md), 486 tests et CI ; un chemin temporaire Windows du test a été corrigé ; première mise à jour depuis une ancienne version à faire après pause effective |
 | 0.9.4 · `c70aabc` | Priorités entre langues et collections pratiques, isolement des grosses archives, replis anticipés, annulation des requêtes sans lecteur, filtrage des faux candidats et contexte des outils allégé | [Bilan](2026-11-14-corrections-rapports-093.md), 495 tests et huit tâches de CI réussies ; filtre corrigé après un refus trop strict sur le Kiwix réel synthétique ; nouveau R2 et relecture humaine attendus chez Marc |
 | 0.10.0 · `85aeeb6` | Contrôle R7 guidé depuis le site : lectures sans IA, observations par profil/version et export distinct, arrêt et conservation des mesures reçues ; préparation de la validation hors ligne | [Bilan](2026-11-14-recette-usage-hors-ligne.md), 495 tests et huit tâches de CI réussies, 32 vérifications par navigateur ; scénario de changement de profil corrigé ; coupure Internet et usage physique non déduits des fixtures |
+| 0.11.0 · `fcef6dc` | Chantier cartes d’un autre agent : relief transparent et choix d’accès aux itinéraires, intégré sur main avant la suite recherche | [Bilan cartes](2026-11-14-cartes-et-acces.md), validations et limites propres ; les essais sur les deux PC et iPhone physique restent distincts |
 
 Les nombres de tests incluent trois tests ignorés sous Linux ; les bilans
 précisent les plateformes réellement essayées. Aucun de ces nombres ne mesure
@@ -45,6 +46,12 @@ la pertinence du fonds réel, la traduction d’un livre ou la tenue physique du
   mise à jour réel, nouveau script et code de recherche identiques à `main` ;
   transport vérifié, installation chez Marc non vérifiée. Le
   [bilan](2026-11-14-recette-usage-hors-ligne.md#audit-du-paquet-livré) conserve la preuve.
+- Rapport réel 0.10.0 reçu ensuite : encore 31 recherches partielles sur 32,
+  médiane 12,3 s ; des titres utiles remplacent plusieurs faux candidats, sans
+  avis humain enregistré. [Analyse](2026-11-14-rapport-recherche-0100.md).
+  Le refus natif d’une archive multilingue pourtant indexée est reproduit.
+  La [correction 0.11.1](2026-11-14-index-multilingues-et-diagnostic.md) prépare son
+  complément local et un diagnostic plus détaillé, sur la base des cartes intégrées.
 
 ## Décisions conservées ou reportées
 
@@ -69,14 +76,19 @@ exige un inventaire et un état par média, contrôles de lecture/synchronisatio
 hors ligne, relecture humaine à portée explicite et exceptions visibles. Ce
 complément ne déclare pas l’outillage vidéo ou ces validations déjà réalisés.
 
+Louis demande ensuite un [prompt de refonte des paramètres](../decisions/prompt-refonte-parametres.md)
+pour un autre agent : préparation parallèle, fonctions conservées, worktree dédié
+et coordination des fichiers partagés. Cette consigne actualise l’attente initiale
+« après la fiabilisation » ; elle ne déclare pas la refonte déjà réalisée.
+
 ## Pour clore la première version fiable de la recherche
 
 L’outillage livré et les tests de développement ne clôturent pas l’objectif.
-Le rapport R1 réel 0.9.3 confirme la terminaison des index ; le R2 de cette même
-version garde 31 recherches partielles sur 32, sans avis humain. Il manque un
-nouveau contrôle complet après les corrections 0.9.4 (également incluses dans
-0.10.0), sa comparaison aux anciens délais/couvertures et l’ouverture humaine
-des résultats prioritaires feu, eau, générateur et vélo. Toute anomalie reproduite
+Le rapport R1 réel 0.9.3 confirme la terminaison des index. Le nouveau R2 0.10.0
+garde 31 recherches partielles sur 32, sans avis humain ; la comparaison révèle
+une médiane de 12,3 s contre 6,4 s. Il faut préparer les compléments rendus
+nécessaires par les langues incompatibles, comparer le prochain R2 détaillé et
+ouvrir humainement les résultats prioritaires feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
 une erreur d’accès en absence de source.
 

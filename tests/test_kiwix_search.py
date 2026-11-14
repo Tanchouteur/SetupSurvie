@@ -32,8 +32,9 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
             return self.xml(names[0])
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             found=await library.search('comment faire un feu')
-        self.assertEqual(len(found),4)
-        self.assertEqual(found.coverage['searched'],4);self.assertEqual(found.coverage['without_fulltext'],1)
+        self.assertEqual(len(found),3)
+        self.assertEqual(found.coverage['searched'],3);self.assertEqual(found.coverage['without_fulltext'],1)
+        self.assertEqual(found.coverage['native_incompatible'],1)
         english=next(c for c in calls if c['books.name']==['manual_en'])
         self.assertEqual(english['pattern'],['fire'])
         self.assertTrue(all(r['id'].startswith('zim:') for r in found))
@@ -64,7 +65,7 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
             values=parse_qs(urlsplit(path).query);calls.extend(values['books.name']);return self.xml(values['books.name'][0])
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             await library.search('feu',language='fr')
-        self.assertEqual(set(calls),{'wikipedia_fr','multi','video'})
+        self.assertEqual(set(calls),{'wikipedia_fr','video'})
 
     async def test_duplicate_hits_are_deduplicated_and_unknown_books_rejected(self):
         async def fetch(path,*args):
@@ -81,7 +82,7 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(value[0]['fulltext']);self.assertTrue(value[0]['search_id'])
 
     async def test_request_budget_is_bounded_and_unsearched_books_are_disclosed(self):
-        catalog=[dict(self.catalog[2],book='multi'+str(i)) for i in range(45)]
+        catalog=[dict(self.catalog[0],book='wikipedia_fr_'+str(i)) for i in range(45)]
         async def fetch(path,*args):
             if path.startswith('/suggest?'):return b'[]','application/json'
             return self.xml(parse_qs(urlsplit(path).query)['books.name'][0])

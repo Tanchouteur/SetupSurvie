@@ -17,6 +17,11 @@ choisir les résultats utiles ou indiquer qu’aucun ne répond ; laisser les au
 à vérifier puis exporter. La [procédure actuelle](../utilisation/recherche-documentaire.md#vérification-sur-le-windows-de-marc-depuis-le-site)
 distingue mesures et avis humains. Aucun résultat fictif n’est attendu sur le PC réel.
 
+Depuis 0.11.1, ce même contrôle exporte aussi les détails des appels et les
+compléments d’index manquants. Après mise à jour, relancer d’abord **Créer ou
+reprendre les index**, puis envoyer le rapport d’indexation et un contrôle complet.
+Cela examine aussi les archives natives dont Kiwix refuse les langues multiples.
+
 Depuis 0.8.0, le [comparatif facultatif IA](../utilisation/comparer-recherche-ia.md)
 prépare la décision L8 avec trois méthodes, huit ou 32 demandes et avis humains
 conservés. Il charge explicitement un modèle local ; le contrôle sans IA reste
@@ -35,7 +40,7 @@ Arrêt et export sont disponibles ; les étapes non faites restent non effectué
 | Rapport | Quand le demander | Ce qu’il doit mesurer | État de l’outil |
 | --- | --- | --- | --- |
 | R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | Terminaison réelle 0.9.3 reçue : 135/135 sans erreur ; pause/reprise et nouveau petit lot restent à vérifier |
-| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Rapport 32 cas 0.9.3 reçu, 31 partiels et aucun avis humain ; nouvelle mesure après corrections 0.9.4 attendue |
+| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Rapport 32 cas 0.10.0 reçu, 31 partiels et aucun avis humain ; compléments multilingues et diagnostic détaillé 0.11.1 à mesurer |
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Corrections/export en 0.6.0, six dossiers et repères exportables en 0.9.0 ; relecture humaine du fonds attendue |
 | R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Comparatif IA 0.9.3 reçu : deux expirations de budget avant premier fragment ; calibration mémoire et phases d’une réponse réelle restent à mesurer |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |

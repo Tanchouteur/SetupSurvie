@@ -5,6 +5,7 @@ Uses task-compose when available, otherwise a unique CI Docker Compose project.
 import argparse
 import asyncio
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -76,12 +77,15 @@ def main():
         async def real_get(path,maximum=2_000_000):
             # HTTP runs inside our synthetic service. No published port, host
             # credentials, model or user files are needed by the service.
-            process=await asyncio.create_subprocess_exec(*command,'exec','-T','kiwix','wget','-q','-O','-','http://127.0.0.1:8080'+path,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.DEVNULL,cwd=ROOT)
-            try:raw,_=await process.communicate()
+            process=await asyncio.create_subprocess_exec(*command,'exec','-T','kiwix','wget','-S','-O','-','http://127.0.0.1:8080'+path,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.PIPE,cwd=ROOT)
+            try:raw,detail=await process.communicate()
             except asyncio.CancelledError:
                 if process.returncode is None:process.kill()
                 await process.wait();raise
-            if process.returncode:raise HTTPException(404,'Synthetic Kiwix HTTP request failed')
+            if process.returncode:
+                error=HTTPException(404,'Synthetic Kiwix HTTP request failed');status=re.search(rb'HTTP/\S+ (\d+)',detail)
+                if status:error.upstream_status=int(status[1])
+                raise error
             if len(raw)>maximum:raise HTTPException(413,'Synthetic response exceeded bound')
             return raw,'application/json' if path.startswith('/suggest?') else 'application/xml'
         async def run():
@@ -92,6 +96,15 @@ def main():
             with patch.object(store,'ROOT',folder/'state'),patch.object(library,'get',real_get):
                 store.init()
                 check(len(await library.books())==5,'Catalogue reads five actual generated archives')
+                try:await real_get('/search?'+urlencode({'books.name':'multilingual','pattern':'fire','format':'xml'}))
+                except HTTPException as error:check(getattr(error,'upstream_status',None)==400,'Single multilingual archive is rejected with native HTTP 400')
+                else:raise AssertionError('Pinned server unexpectedly accepted multilingual metadata')
+                root=folder/'state/archive-index';complement=library.archive_index.build_archive(archives/'multilingual.zim',root)
+                check(complement['has_fulltext_index'] and not complement['kiwix_language_compatible'] and complement['status']=='ready','Present native index gets a local complement when its language metadata is incompatible')
+                (root/'manifest.json').write_text(json.dumps({'schema':1,'archives':{'multilingual.zim':complement}}))
+                restored=await library.search('faire du feu',collection='multilingual')
+                check(any(row.get('match')=='local_index' and row['id'].startswith('zim:multilingual/') for row in restored),'Local complement restores actual multilingual article retrieval')
+                check(restored.coverage['native_incompatible']==0 and restored.coverage['locally_indexed']==1,'Prepared multilingual collection is no longer an unresolved native failure')
                 for query in ['faire du feu','allumer un feu','peux-tu m’expliquer comment faire du feu']:
                     found=await library.search(query)
                     check(any(r['id']=='zim:wikipedia_fr/Techniques_de_production_de_feu' for r in found),query+' reaches French article')
@@ -120,7 +133,7 @@ def main():
                 native,_=await real_get('/search?'+urlencode({'books.name':'wikipedia_fr','pattern':'propulsion AND quantique','format':'xml'}))
                 check(b'Fictional_propulsion' not in native,'Do not force Boolean AND unsupported by the pinned parser')
                 try:await real_get('/search?'+urlencode({'books.filter.lang':'fra','pattern':'feu','format':'xml'}))
-                except HTTPException:checks.append('Broad multilingual request is rejected by the pinned server')
+                except HTTPException as error:check(getattr(error,'upstream_status',None)==400,'Broad multilingual request is rejected by the pinned server')
         try:
             subprocess.run([*command,'up','-d'],check=True,cwd=ROOT,stdout=subprocess.DEVNULL)
             asyncio.run(run())

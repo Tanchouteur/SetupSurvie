@@ -113,6 +113,10 @@ def metadata(archive,key,default=''):
     except (KeyError,RuntimeError):return default
 
 
+def languages(value):
+    return tuple(sorted(set(re.findall(r'[a-z]{2,3}',str(value).lower()))))
+
+
 def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
     """One process owns one archive. Every committed cursor is resumable."""
     from libzim.reader import Archive
@@ -123,14 +127,19 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
         if cancel and Path(cancel).exists():raise Paused()
         if shutil.disk_usage(root).free<reserve:raise StorageReserve('Espace libre insuffisant pour poursuivre l’indexation.')
     check();stat=source.stat();archive=Archive(source)
-    if archive.has_fulltext_index and not force:return {'archive':source.name,'status':'kiwix_index','articles':0,'has_fulltext_index':True,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns}
+    native_languages=languages(metadata(archive,'Language'))
+    native={'has_fulltext_index':bool(archive.has_fulltext_index),'native_languages':list(native_languages),
+            'kiwix_language_compatible':len(native_languages)==1}
+    if archive.has_fulltext_index and native['kiwix_language_compatible'] and not force:
+        return {'archive':source.name,'status':'kiwix_index','articles':0,**native,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns}
+    reason='forced' if force else 'missing_index' if not archive.has_fulltext_index else 'native_multilingual' if native_languages else 'native_language_missing'
     fingerprint=f'{FORMAT}:{archive.uuid}:{stat.st_size}:{stat.st_mtime_ns}'
     book=source.stem;info={'book':book,'title':metadata(archive,'Title',book),'language':metadata(archive,'Language'),'fingerprint':fingerprint}
     if published.is_file():
         try:
             with connect(published,True) as db:
                 old=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
-                if old['fingerprint']==fingerprint:return {'archive':source.name,'status':'ready','has_fulltext_index':bool(archive.has_fulltext_index),'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':int(db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone()[0])}
+                if old['fingerprint']==fingerprint:return {'archive':source.name,'status':'ready',**native,'index_reason':reason,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':int(db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone()[0])}
         except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):pass
     if building.exists():
         try:
@@ -169,4 +178,4 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
         db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)));db.commit()
         db.execute("INSERT INTO articles(articles) VALUES('optimize')");db.commit()
     durable.sync_file(building);durable.publish(building,published)
-    return {'archive':source.name,'status':'ready','has_fulltext_index':bool(archive.has_fulltext_index),'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':count,'skipped_entries':skipped}
+    return {'archive':source.name,'status':'ready',**native,'index_reason':reason,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':count,'skipped_entries':skipped}

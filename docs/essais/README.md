@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Rapport réel 0.10.0](2026-11-14-rapport-recherche-0100.md) — comparaison des 32 demandes et cause reproduite.
+- [Index multilingues et diagnostic détaillé](2026-11-14-index-multilingues-et-diagnostic.md) — 0.11.1, validation en cours.
 - [Cartes et accès aux itinéraires — 0.11.0](2026-11-14-cartes-et-acces.md) : ombrage transparent, accès confirmés et recette synthétique.
 
 - [Sous-titres français pour chaque vidéo](protocole-sous-titres-videos.md) — protocole R6 cible, récupération/création et validations à développer.
