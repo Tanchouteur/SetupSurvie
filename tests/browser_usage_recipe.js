@@ -27,6 +27,13 @@ async page=>{
   const ready=()=>page.waitForFunction(()=>S.authReady&&S.user&&S.status);
   const open=()=>page.locator('#next-usage-open').click();
   const measured=()=>page.waitForFunction(()=>document.querySelector('#next-usage-status').textContent.includes('Contrôles terminés'));
+  const chooseProfile=async id=>{
+    if(await page.locator('#next-usage-dialog').evaluate(node=>node.open))await page.locator('[data-close="next-usage-dialog"]').click();
+    const profiles=(await(await page.request.get(base+'/api/profiles')).json()).profiles;
+    const name=profiles.find(profile=>profile.id===id).name;
+    await page.locator('#account-button').click();await page.locator('#profile-list').getByRole('button',{name,exact:true}).click();
+    await page.waitForFunction(id=>S.authReady&&S.user?.id===id&&S.status,id);
+  };
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/appareil/reglages');await ready();
   const initial=calls.length;await open();
   check(calls.slice(initial).every(call=>!call.url.includes('/api/search?')&&!call.url.includes('/api/source?')),'Ouvrir le contrôle ne lance pas ses recherches');
@@ -52,11 +59,9 @@ async page=>{
   check(await page.locator('[data-usage-measure]').count()===10,'Fermer et rouvrir conserve les mesures de la page');
   await page.reload();await ready();await open();report=await download();
   check(report.measurements.length===0&&report.status==='draft'&&report.manual.find(row=>row.id==='original').state==='passed'&&report.note==='Observation fictive à conserver','Rechargement retrouve les observations, sans recycler les anciennes mesures');
-  await page.locator('[data-close="next-usage-dialog"]').click();
-  await page.request.post(base+'/api/profiles/select',{data:{id:'local-family'},headers});await page.reload();await ready();await open();
+  await chooseProfile('local-family');await open();
   check(await page.locator('[data-usage-step]').evaluateAll(nodes=>nodes.every(node=>node.value==='unperformed'))&&await page.locator('#next-usage-note').inputValue()==='','Les observations d’un autre profil restent séparées');
-  await page.locator('[data-close="next-usage-dialog"]').click();
-  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});await page.reload();await ready();await open();
+  await chooseProfile('browser');await open();
   check(await page.locator('[data-usage-step="original"]').inputValue()==='passed','Retour au premier profil retrouve son essai');
   degraded=true;await page.locator('#next-usage-run').click();await measured();report=await download();
   check(report.measurements.find(row=>row.id==='resilience').coverage==='partial'&&report.measurements.find(row=>row.id==='diagnostic').state==='unverified','Recherche partielle et catalogue dégradé restent signalés');
@@ -71,11 +76,9 @@ async page=>{
   check(report.status==='measured'&&report.measurements.length===10&&report.context.network==='unknown'&&report.summary.human_reviewed===0,'Nouvel essai repart sans les résultats ni conditions du précédent');
   check((await page.locator('#next-usage-status').textContent()).includes('ne démontre pas un usage sans Internet'),'Une connexion non précisée ne devient pas une preuve hors ligne');
   blockSearch=true;const profileWaiting=page.waitForRequest(request=>request.url().includes('/api/search?'));await page.locator('#next-usage-run').click();await profileWaiting;blockSearch=false;
-  await page.request.post(base+'/api/profiles/select',{data:{id:'local-family'},headers});
-  const profileClosed=await page.evaluate(()=>{S.user={id:'local-family',role:'admin',name:'Famille'};accountUI();const closed=!document.getElementById('next-usage-dialog').open;document.getElementById('next-usage-open').click();document.getElementById('next-usage-run').click();return closed;});
+  const profileClosed=await page.evaluate(()=>{const user=S.user;S.user=null;accountUI();const closed=!document.getElementById('next-usage-dialog').open;S.user=user;accountUI();document.getElementById('next-usage-open').click();document.getElementById('next-usage-run').click();return closed;});
   await measured();while(deferred.length)deferred.shift()();report=await download();
-  check(profileClosed&&report.measurements.length===10&&report.summary.human_reviewed===0,'Changement de profil annule l’ancien contrôle sans interrompre le nouveau');
-  await page.locator('[data-close="next-usage-dialog"]').click();await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});await page.reload();await ready();await open();
+  check(profileClosed&&report.measurements.length===10&&report.summary.human_reviewed===0,'Perte du profil annule l’ancien contrôle sans interrompre sa nouvelle ouverture');
   await page.evaluate(()=>{const save=Storage.prototype.setItem;window.restoreUsageStorage=()=>{Storage.prototype.setItem=save;};Storage.prototype.setItem=function(key,value){if(key.startsWith('survie-usage-v1:'))throw new DOMException('Fixture full','QuotaExceededError');return save.call(this,key,value);};});
   await page.locator('#next-usage-note').fill('Observation gardée malgré mémoire indisponible');report=await download();
   check((await page.locator('#next-usage-status').textContent()).includes('mémoire de ce navigateur est indisponible')&&report.note==='Observation gardée malgré mémoire indisponible','Mémoire du navigateur indisponible expliquée sans perdre l’export');await page.evaluate(()=>window.restoreUsageStorage());
