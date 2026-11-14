@@ -116,7 +116,9 @@ sans modifier les conversations enregistrées.
    **À vérifier** ; terminer la mesure ne les valide pas automatiquement.
 5. **Télécharger le rapport** conserve la version du serveur, les requêtes, les
    délais et les titres/identifiants des cinq premiers résultats, avec les limites
-   signalées. Le contrôle complet ajoute la version de sa liste et les besoins
+   signalées. Depuis 0.13.0, le délai des premiers documents reçus et le nombre de
+   mises à jour progressives sont séparés de la durée finale ; aucun premier résultat
+   reste une valeur vide. Le contrôle complet ajoute la version de sa liste et les besoins
    visés ; les avis humains et leurs rangs sont conservés séparément des mesures.
    Le rapport ne contient pas l’historique des conversations. Le télécharger avant
    de fermer ou relancer : les avis ne sont pas enregistrés sur le serveur.

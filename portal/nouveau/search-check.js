@@ -7,12 +7,12 @@
   let controller=null,report=null;
   cancel.onclick=()=>controller?.abort();dialog.addEventListener('close',()=>controller?.abort());
 
-  async function read(path,staticFile=false){
+  async function read(path,staticFile=false,onResult=null){
     const request=new AbortController(),parent=controller.signal;let timedOut=false;
     const stop=()=>request.abort();parent.addEventListener('abort',stop,{once:true});
     if(parent.aborted)stop();const timeout=setTimeout(()=>{timedOut=true;request.abort();},90000);
     try{
-      if(!staticFile)return await api(path,undefined,{signal:request.signal,onResult:value=>{if(value.state==='results'&&Array.isArray(value.results))status.textContent='Recherche en cours · '+value.results.length+' document(s) reçu(s). Les autres collections restent en cours d’examen.';}});
+      if(!staticFile)return await api(path,undefined,{signal:request.signal,onResult:value=>{onResult?.(value);if(value.state==='results'&&Array.isArray(value.results))status.textContent='Recherche en cours · '+value.results.length+' document(s) reçu(s). Les autres collections restent en cours d’examen.';}});
       const response=await fetch(path,{signal:request.signal});
       if(!response.ok)throw Error('La liste des recherches de test est indisponible.');
       return await response.json();
@@ -56,13 +56,15 @@
       for(const [index,item] of cases.entries()){
         if(controller.signal.aborted)break;
         status.textContent=(index+1)+' / '+cases.length+' — '+item.query;
-        const started=performance.now(),record={...item,review:{state:'unreviewed'}},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.domain==='resilience'?' · Autonomie et résilience':'')));results.append(article);
+        const started=performance.now(),record={...item,review:{state:'unreviewed'},first_results_ms:null,updates_received:0},article=element('article',undefined,'search-check-case');article.append(element('h3',item.query+(item.domain==='resilience'?' · Autonomie et résilience':'')));results.append(article);
         if(item.need)article.append(element('p',item.need,'small'));
         try{
           const params=new URLSearchParams({q:item.query,language:'',limit:'5',collection:item.collection||'',domain:item.domain||'all',diagnostic:'true',stream:'true'});
-          const data=await read('/search?'+params);record.elapsed_ms=Math.round(performance.now()-started);record.coverage=data.coverage||null;
+          const data=await read('/search?'+params,false,value=>{if(value.state==='results')record.updates_received++;if(value.results?.length&&record.first_results_ms===null)record.first_results_ms=Math.round(performance.now()-started);});record.elapsed_ms=Math.round(performance.now()-started);record.coverage=data.coverage||null;
+          if(data.results?.length&&record.first_results_ms===null)record.first_results_ms=record.elapsed_ms;
           record.results=(data.results||[]).slice(0,5).map(row=>({id:row.id,title:row.title,language:row.language,collection:row.collection,match:row.match,url:row.url,excerpt:row.excerpt,domains:row.domains}));
           article.append(element('p',record.results.length+' document(s) affiché(s) · '+(record.elapsed_ms/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s.','small muted'));
+          if(record.first_results_ms!==null)article.append(element('p','Premiers documents reçus après '+(record.first_results_ms/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s.','small muted'));
           if(record.coverage?.warning)article.append(element('p',record.coverage.warning,'small'));
           if(!record.results.length)article.append(element('p','Aucun résultat trouvé par cette recherche. Vérifiez les limites indiquées ; cela ne prouve pas que le sujet est absent.'));
           const list=element('ol');

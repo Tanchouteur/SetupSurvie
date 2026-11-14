@@ -64,6 +64,8 @@ travail du client et conservent les résultats déjà reçus. Les mises à jour 
 attente sont regroupées, sans accumulation de messages. Le budget natif de ce
 parcours passe de 12 à 60 secondes, chaque plein texte de 3 à 10 secondes et
 chaque titre de 2 à 5 ; le contrôle autorise 90 secondes par demande.
+Il exporte aussi le délai d’arrivée des premiers documents et le nombre de mises
+à jour reçues, séparément de la durée finale.
 Les limites d’appels et de voies simultanées sont conservées, avec couverture
 partielle honnête si nécessaire. Aucun appel IA n’est ajouté.
 
@@ -84,13 +86,16 @@ empêcher une recherche. Voir le [guide de référence](../exploitation/cache-et
   expire avec l’ancien budget mais aboutit avec le nouveau.
 - **35 contrôles Kiwix 3.8.1 réels** sur cinq ZIM fictifs générés, 283 Ko :
   langues multilingues, compléments, requêtes et recherche directe conservés.
-- **27 contrôles à 135 archives**, 8 280 525 octets générés : huit demandes
+- **28 contrôles à 135 archives**, 8 280 525 octets générés : huit demandes
   couvrent feu, générateur, eau, vélo, comète, langue, musique et fractions. Toutes
   les collections éligibles sont examinées sans échec, avec résultats progressifs.
-  Premiers résultats entre 32 et 46 ms, fin entre 1 089 et 2 193 ms sur ces seuls
-  fichiers minuscules. Une répétition à chaud n’ajoute aucun appel HTTP natif.
-- **Chromium MCP : 16 contrôles de flux HTTP réel**, backend et documents de test,
-  puis **49 contrôles existants de recherche** réussis dans un contexte neuf.
+  Premiers résultats entre 29 et 57 ms, fin entre 1 267 et 2 416 ms sur ces seuls
+  fichiers minuscules lors du second passage. Une répétition à chaud n’ajoute
+  aucun appel HTTP natif ; après effacement de la mémoire du processus, le cache
+  disque réutilise aussi les réponses natives réelles sans nouvel appel. La réserve
+  disque est abaissée uniquement pour ces fichiers temporaires de test.
+- **Chromium MCP : 18 contrôles de flux HTTP réel**, backend et documents de test,
+  puis **50 contrôles de recherche** réussis dans un contexte neuf.
   Lecture pendant attente, passages dépliés et focus clavier conservés, arrêt, erreur, rechargement
   et largeurs 1 366/390/320 pixels sont couverts. Pas d’erreur JavaScript observée.
 - **Caddy épinglé réel** : le premier paquet traverse le proxy avant la fin du
@@ -120,3 +125,13 @@ La suite traduction/vidéos est [étudiée et documentée](../decisions/videos-l
 avec sources officielles, ordre de livraison et contrôle par média. L’indexation
 des paroles, l’acquisition de pistes et le lecteur synchronisé ne sont pas livrés
 par cette correction du moteur.
+
+## Audit du paquet candidat
+
+Le paquet du code `dc7c684` a été construit puis déballé avec le lecteur de mise
+à jour : **729 fichiers acceptés**, 6 576 789 octets compressés, version 0.13.0 et
+schéma 1. Les modules cache/flux, le JavaScript et Compose sont identiques au code
+poussé ; aucun ZIM, modèle, base cache ou média vidéo n’est inclus. Empreinte :
+`6243f4c40fedc1249e4767a2d1da620f0d00e122e33883878d8613bc1ad62d46`.
+La mesure supplémentaire des premières réponses et les ajouts de tests suivants
+nécessitent un nouveau paquet final ; cet audit ne vaut pas déploiement chez Marc.

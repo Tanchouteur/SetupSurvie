@@ -14,7 +14,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from libzim.writer import Creator
 from kiwix_search_smoke import Article
-from pilot import library,store,archive_index,kiwix_queries
+from pilot import library,store,archive_index,kiwix_queries,search_cache
 from fastapi import HTTPException
 
 
@@ -70,7 +70,7 @@ def main():
                 try:await get('/catalog/v2/entries?count=1');break
                 except HTTPException:await asyncio.sleep(.1)
             else:raise RuntimeError('Synthetic Kiwix unavailable')
-            with patch.object(store,'ROOT',state),patch.object(library,'get',get),patch.dict('os.environ',{'ZIM_DIR':str(zims)}):
+            with patch.object(store,'ROOT',state),patch.object(library,'get',get),patch.object(search_cache,'RESERVE_BYTES',0),patch.dict('os.environ',{'ZIM_DIR':str(zims)}):
                 store.init();check(len(await library.books())==135,'Actual catalogue contains 135 generated archives')
                 for query,target in [('faire du feu','Fire'),('fabriquer un générateur à pédales','Generator'),('rendre eau potable','Water'),('réparer vélo crevaison','Bicycle'),('trajectoire comète','Comet'),('grammaire conjugaison','Language'),('histoire musique','Music'),('calcul fraction','Fraction')]:
                     started=time.monotonic();first=None;updates=0
@@ -84,6 +84,9 @@ def main():
                     measurements.append({'case':target,'first_results_ms':first,'total_ms':round((time.monotonic()-started)*1000),'updates':updates,'coverage':found.coverage['status']})
                 before=calls;await library.search('faire du feu',budget=60)
                 check(calls==before,'Warm repeated query reuses validated successful responses')
+                await kiwix_queries.close()
+                found=await library.search('faire du feu',budget=60)
+                check(calls==before and found.coverage['cache_hits']>0 and any(row['id'].endswith('/Fire') for row in found),'Disk cache reuses real native responses after clearing process memory')
             await kiwix_queries.close()
         try:
             subprocess.run([*command,'up','-d'],check=True,cwd=ROOT,stdout=subprocess.DEVNULL);asyncio.run(run())

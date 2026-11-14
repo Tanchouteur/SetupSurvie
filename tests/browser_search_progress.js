@@ -39,6 +39,13 @@ async page=>{
     check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Résultats et arrêt accessibles sans débordement à '+width);
     await page.waitForFunction(()=>!document.getElementById('search-stop'));
   }
+  await page.route('**/api/search?*',route=>{const url=new URL(route.request().url());url.searchParams.set('q','fixture-progress-report');return route.continue({url:url.toString()});});
+  await page.goto(base+'/#/appareil/entretien');await page.locator('#next-search-check-open').click();
+  await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
+  const downloading=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const download=await downloading,chunks=[];
+  for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(report.cases.every(row=>row.first_results_ms!==null&&row.first_results_ms<row.elapsed_ms),'Rapport distingue premiers documents et fin des vrais flux de test');
+  check(report.cases.every(row=>row.updates_received>0&&!row.error),'Rapport conserve le nombre de mises à jour progressives reçues');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks,real_model:false,real_corpus:false};
 }

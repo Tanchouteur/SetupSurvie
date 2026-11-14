@@ -81,6 +81,7 @@ async page => {
   const downloading=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const saved=await downloading;
   const chunks=[];for await(const chunk of await saved.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.status==='measured'&&report.cases.length===10,'Rapport exporté sans confondre mesure et validation');
+  check(report.cases.every(row=>Number.isFinite(row.first_results_ms)&&row.first_results_ms<=row.elapsed_ms&&row.updates_received===0),'Délai des premiers résultats mesuré aussi avec le repli JSON');
   check(report.version===await page.evaluate(()=>S.status.version),'Version réelle du serveur dans le rapport');
   check(!('conversations' in report)&&!('user' in report),'Rapport limité aux recherches de test');
   await page.screenshot({path:'/artifacts/controle-recherche.png',fullPage:true});
