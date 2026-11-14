@@ -42,6 +42,14 @@ def index_workers(requested=None):
 
 
 def background_worker():
-    if os.name!='nt':
+    if os.name=='nt':
+        try:
+            import ctypes
+            kernel=ctypes.windll.kernel32
+            kernel.GetCurrentProcess.restype=ctypes.c_void_p
+            kernel.SetPriorityClass.argtypes=(ctypes.c_void_p,ctypes.c_ulong)
+            kernel.SetPriorityClass(kernel.GetCurrentProcess(),0x4000)
+        except (OSError,AttributeError):pass
+    else:
         try:os.nice(5)
         except OSError:pass
