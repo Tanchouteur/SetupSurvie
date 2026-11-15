@@ -179,3 +179,13 @@ Louis propose de faire travailler d’autres agents ; deux
 séparent inventaire vidéo/sous-titres et diagnostic des délais, sur leurs propres
 branches. Aucun de ces chantiers n’est déclaré livré. L’agent principal garde
 le moteur et son intégration. Le prochain R2 et les avis humains restent nécessaires.
+
+La même 0.13.1 corrige aussi un défaut reproduit avec le Kiwix épinglé réel :
+les suggestions JSON encodent les apostrophes et esperluettes en HTML dans leur
+chemin. Elles créaient un faux doublon et un lien illisible, alors que le plein
+texte fournissait la bonne référence. Le décodage unique avant validation réunit
+les identifiants et les liens ; titres seuls et plein texte sont testés en lecture
+réelle. La cause historique des indisponibilités de Marc reste non certifiée sans
+son URL précise. Louis confirme ensuite le lancement des deux agents ; worktrees
+`setupsurvie-videos-inventaire` et `setupsurvie-diagnostic-kiwix` constatés, avec
+périmètres distincts. Le moteur et son intégration restent à la session principale.

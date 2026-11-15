@@ -65,7 +65,10 @@ Si l’aperçu échoue, **Réessayer** relance la lecture ; **Ouvrir le document
 d’origine** essaie le lecteur Kiwix ou PDF directement, dans un nouvel onglet.
 Ce repli ne garantit pas que l’original existe. Copier l’adresse du portail et le
 titre pour signaler un échec persistant ; un résultat trouvé n’est pas encore un
-document lu. Les couleurs des liens à l’intérieur des archives dépendent aussi
+document lu. Depuis 0.13.1, les suggestions contenant des apostrophes ou des
+esperluettes sont décodées avant de construire leur lien. Si une ancienne référence
+reste indisponible, relancer la recherche pour obtenir le lien corrigé. Cette
+correction ne garantit pas l’ouverture de toute archive ou source manquante. Les couleurs des liens à l’intérieur des archives dépendent aussi
 de la source et ne constituent pas un indicateur fiable de disponibilité.
 
 ## Comprendre une recherche partielle

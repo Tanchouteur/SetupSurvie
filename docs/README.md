@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Titres de tâches et mentions générales](essais/2026-11-15-classement-titres-et-intention.md) — correction 0.13.1, vérifications et limites.
+- [Titres de tâches et ouverture des articles](essais/2026-11-15-classement-titres-et-intention.md) — correction 0.13.1, vérifications et limites.
 - [Prompts pour deux agents](decisions/prompts-agents-videos-et-performances.md) — périmètres isolés vidéo/sous-titres et diagnostic Kiwix, proposés à Louis.
 
 - [Recherche progressive et cache](exploitation/cache-et-recherche-progressive.md) — guide 0.13.0, premiers documents, arrêt et budget ajustable.

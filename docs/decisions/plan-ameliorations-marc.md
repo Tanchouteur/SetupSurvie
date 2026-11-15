@@ -397,5 +397,5 @@ Les [vidéos locales 480p](videos-locales-et-recherche.md) ajoutées par Marc da
 
 Deux chantiers parallèles ont été proposés à Louis le 15 novembre :
 [prompts vidéo et performances](prompts-agents-videos-et-performances.md), fichiers
-réservés et branches séparées. Ils ne sont pas déclarés lancés ni livrés tant que
-leurs comptes rendus ne sont pas reçus. L’agent principal garde le moteur.
+réservés et branches séparées. Louis confirme leur lancement ; leurs livrables restent à examiner après
+réception des comptes rendus. L’agent principal garde le moteur.

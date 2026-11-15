@@ -53,6 +53,10 @@ def create_archives(folder):
             creator.add_item(Article('Mending_clothes','Mending clothes','Sewing and mending a garment. Fictional fixture without instructions.'))
             creator.add_item(Article('Solar_panel','Solar panel installation','Solar panel installation and electrical checks. Fictional fixture without instructions.'))
             creator.add_item(Article('Bicycle_repair','Bicycle repair','Bicycle maintenance, fictional fixture without instructions.'))
+            creator.add_item(Article("Compost_et_l'urbanisme","Compost et l'urbanisme",'Compost jardin, chemin fictif de contrôle.'))
+            creator.add_item(Article('Compost & jardin','Compost et jardin','Compost jardin, chemin fictif de contrôle.'))
+            creator.add_item(Article('Compost_été','Compost été','Compost jardin, chemin fictif de contrôle.'))
+            creator.add_item(Article('Compost_&amp;','Compost symbole littéral','Compost jardin, chemin fictif de contrôle.'))
             creator.add_item(Article('Vegetable_canning','Vegetable canning and food preservation','Canning vegetables for food storage. Fictional fixture without instructions.'))
             creator.add_item(Article('Tool_sharpening','Tool sharpening','Tool sharpening and maintenance. Fictional fixture without instructions.'))
             creator.add_item(Article('Fictional_propulsion','Propulsion quantique fictive','Propulsion quantique : mots de test, sans technologie réelle.'))
@@ -143,6 +147,12 @@ def main():
                 titles=await library.search('allumer un feu',collection='titleonlyfr')
                 check(any(r.get('match')=='title' for r in titles),'Title fallback works without fulltext index')
                 check(titles.coverage['status']=='partial','Missing fulltext coverage is explicit')
+                for collection in ('wikipedia','titleonlyfr'):
+                    found=await library.search('compost',limit=20,collection=collection)
+                    check(len(found)==4 and len({row['id'] for row in found})==4,'Escaped paths and a literal entity have no phantom duplicate in '+collection,{'ids':[row['id'] for row in found]})
+                    for row in found:
+                        source=await library.source(row['id'])
+                        check('Compost' in source['text'],'Actual suggested path opens locally: '+row['id'])
                 source=await library.source('zim:wikipedia_fr/Techniques_de_production_de_feu')
                 check('Friction' in source['text'] and source['language'] in ('fr','fra'),'Actual source can be read with its language after retrieval')
                 alias=await library.source('zim:wikipedia_fr/Fire_alias')

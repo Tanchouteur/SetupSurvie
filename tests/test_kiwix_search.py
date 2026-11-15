@@ -1,10 +1,12 @@
 """Kiwix protocol fixtures reproduce multilingual HTTP 400, no corpus/model."""
 import asyncio
+import json
 import tempfile
 import unittest
 from pathlib import Path
+from html import escape
 from unittest.mock import AsyncMock,patch
-from urllib.parse import urlsplit,parse_qs
+from urllib.parse import urlsplit,parse_qs,quote
 from fastapi import HTTPException
 from pilot import library,store
 
@@ -81,6 +83,29 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(library,'get',AsyncMock(return_value=(xml,'application/xml'))):value=await library.books()
         self.assertEqual(value[0]['book'],'test');self.assertEqual(value[0]['language'],'fra')
         self.assertTrue(value[0]['fulltext']);self.assertTrue(value[0]['search_id'])
+
+    async def test_html_escaped_suggestion_paths_share_the_native_fulltext_identity(self):
+        cases=[('Compost_et_l&apos;urbanisme',"Compost_et_l'urbanisme"),('Compost &amp; jardin','Compost & jardin'),
+               ('Compost_&#233;t&#233;','Compost_été'),('Compost_%26amp%3B','Compost_&amp;')]
+        for suggested,expected in cases:
+            with self.subTest(path=suggested):
+                await library.kiwix_queries.close()
+                async def reader(path):
+                    if path.startswith('/suggest?'):return json.dumps([{'kind':'path','value':'Compost','path':suggested}]).encode(),'application/json'
+                    link='/content/wikipedia_fr/'+quote(expected,safe='/')
+                    return ('<rss><channel><item><title>Compost</title><link>'+escape(link)+'</link><description>Compost, extrait fictif.</description></item></channel></rss>').encode(),'application/xml'
+                with patch.object(library,'books',AsyncMock(return_value=self.catalog[:1])),patch.object(library,'get',reader):
+                    found=await library.search('compost')
+                self.assertEqual([row['id'] for row in found],['zim:wikipedia_fr/'+expected])
+
+    async def test_title_only_paths_decode_entities_before_rejecting_unsafe_paths(self):
+        paths=['&#47;&#47;other.invalid/path','https&#58;//other.invalid/path','&#46;&#46;/private','folder/&#46;&#46;/private','folder&#92;private','%252e%252e/private']
+        async def reader(path):
+            if path.startswith('/suggest?'):return json.dumps([{'kind':'path','value':'Compost','path':p} for p in paths]).encode(),'application/json'
+            return b'<rss><channel/></rss>','application/xml'
+        with patch.object(library,'books',AsyncMock(return_value=self.catalog[:1])),patch.object(library,'get',reader):
+            found=await library.search('compost')
+        self.assertEqual(found,[])
 
     async def test_request_budget_is_bounded_and_unsearched_books_are_disclosed(self):
         catalog=[dict(self.catalog[0],book='wikipedia_fr_'+str(i)) for i in range(45)]

@@ -1,6 +1,6 @@
 # Prompts pour deux agents en parallèle
 
-**Coordination proposée à Louis — 15 novembre 2026.** Le moteur, son classement
+**Coordination du 15 novembre 2026 — lancement des deux agents confirmé par Louis.** Le moteur, son classement
 et sa livraison restent pris en charge par l’agent principal. Les deux chantiers
 ci-dessous ont des fichiers distincts. Copier chaque bloc dans une session séparée.
 Les chemins de worktree sont ceux du runner ; ailleurs, créer un équivalent isolé.

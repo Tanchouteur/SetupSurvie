@@ -2,6 +2,7 @@
 import ast
 import asyncio
 from fractions import Fraction
+from html import unescape
 from html.parser import HTMLParser
 import math
 import json
@@ -432,7 +433,10 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             traced('title',[book],term,started,outcome='success',results=len(values),response_bytes=len(raw),cached=cached)
             for position,value in enumerate(values[:12]):
                 if not isinstance(value,dict) or value.get('kind')!='path' or not isinstance(value.get('path'),str):continue
-                raw_path=value['path']
+                # Kiwix 3.8.1 HTML-escapes paths inside its JSON suggestions.
+                # Decode that layer before URL validation, not after unquoting:
+                # a percent-encoded literal "&amp;" remains part of an entry name.
+                raw_path=unescape(value['path'])
                 if raw_path.startswith('//') or re.match(r'^[a-z][a-z0-9+.-]*://',raw_path,re.I):continue
                 path=raw_path.lstrip('/')
                 # Namespace colons (Wikijunior:...) are valid local entry paths.
