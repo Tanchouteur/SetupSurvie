@@ -310,3 +310,10 @@ les règles générales conservées et les limites. Les contextes restent access
 les manuels et titres explicitement pratiques peuvent mieux orienter la demande,
 aucun statut humain ou type certifié n’est créé. Le prochain contrôle réel porte
 sur 0.14.3, qui conserve également les deux correctifs précédents.
+
+La livraison finale réussit 575 tests (trois ignorés), 63 contrôles Kiwix sur
+cinq archives générées et 36 sur 135 minuscules archives. Les 749 fichiers du
+paquet sont comparés au commit `44c280d` avec filtres de checkout, après déballage
+par le lecteur normal. La CI `43699180773` refuse ses huit jobs avant exécution
+pour la restriction GitHub ; les limites Windows, WebKit et fonds réel sont
+conservées dans le bilan, sans déclarer l’objectif de fiabilité humaine clos.

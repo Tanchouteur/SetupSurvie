@@ -75,6 +75,17 @@ leur rang natif ou l’intégralité des candidats ; le nouvel ordre réel reste
 Les budgets 0.14.2, cache et compteurs 0.14.1, schéma privé 1, composants et fichiers
 Web restent inchangés. Pas de nouvelle indexation requise pour corriger ces scores.
 
+Le code `44c280d` est poussé. Le [passage CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43699180773)
+ne lance aucun de ses huit jobs : même restriction de facturation GitHub que
+les deux livraisons précédentes. Aucune relance répétée ou intervention sur le
+compte n’est faite ; Windows et WebKit de cette version ne sont pas déclarés validés.
+
+Le paquet est déballé par le lecteur normal : **749 fichiers**, 6 663 741 octets,
+version 0.14.3 et schéma 1. Tous correspondent au commit avec les filtres de
+checkout Git, dont CRLF des scripts PowerShell. Aucun corpus, modèle, index ou
+état privé n’est inclus. SHA-256 :
+`6dae70a26dbdf29ed5e50b7733f29f5e4439824ef235500228c8ac16b6dea046`.
+
 ## Prochaine mesure
 
 La prochaine recette R2 porte sur **0.14.3**, qui inclut les trois correctifs.
