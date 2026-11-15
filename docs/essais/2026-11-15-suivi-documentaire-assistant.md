@@ -109,6 +109,19 @@ cas d’extraction vide. Les pages générées correspondent au générateur, le
 est syntaxiquement vérifié et les liens documentaires modifiés sont contrôlés.
 `git diff --check` passe. Le paquet et la CI sont consignés après leur exécution.
 
+Le code `496083b` est poussé. La [CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43705794886)
+est refusée avant les huit jobs : GitHub signale des paiements échoués ou une
+limite de dépenses à relever. Aucun test Windows, lecteur Python isolé ou routage
+n’est exécuté par cette campagne. Les 130 assertions par navigateur ci-dessus
+sont des essais locaux, distincts de cette CI non démarrée ; pas de contournement
+de la restriction ni de relance répétée.
+
+Le paquet est déballé par le lecteur normal : **753 fichiers**, 6 681 313 octets,
+version 0.15.0 et schéma compatible 1. Tous les fichiers correspondent au commit
+avec ses filtres de checkout, notamment CRLF pour PowerShell. Aucun modèle,
+archive ZIM, cache, index ou état privé n’est inclus. SHA-256 :
+`88da041ec5e32b1e3fe7fbe52eb6530fe86e302e498f438e8e6721209aff3f45`.
+
 ## Recette réelle restant nécessaire
 
 Mettre à jour normalement vers **0.15.0**. Le prochain R2 sans IA mesure le moteur

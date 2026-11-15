@@ -338,3 +338,10 @@ du runner n’affirment ni bonne utilisation des sources par un vrai modèle, ni
 performance Windows, ni validation de la bibliothèque. L’étude et l’inventaire
 des sous-titres restent réalisés dans leur périmètre ; acquisition et traduction
 des vraies vidéos demeurent distinctes et non annoncées comme terminées.
+
+La suite finale 0.15.0 réussit 593 tests (trois ignorés) et 130 assertions ciblées
+dans chacun de Chromium et WebKit, sans modèle réel. Les 753 fichiers du paquet
+sont déballés et comparés au code `496083b` avec filtres Git. La CI `43705794886`
+ne démarre aucun de ses huit jobs pour la restriction de facturation GitHub.
+Compatibilité Windows réelle et iPhone restent à confirmer ; le bilan précise
+le schéma optionnel compatible et les données privées séparées des mesures.
