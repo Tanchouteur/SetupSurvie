@@ -157,6 +157,32 @@ sans changer modèle ou taille de contexte.
 L’allocation répartit les extraits courts entre plusieurs sources selon le budget ;
 les omissions et lectures partielles restent explicites.
 
+## Relances, conditions et appels d’outils — 0.20.0
+
+`conversation_context.py` conserve seulement des pointeurs bornés vers les sources
+de la dernière réponse : titres, identifiants, ancienne question, sans numéros ni
+extraits hérités. Une relance référentielle relit au plus quatre sources ; une
+sélection explicite reste prioritaire. Une demande explicite d’une autre collection
+prépare sa recherche. Les numéros et observations sont recréés après lecture.
+La reconnaissance linguistique des relances reste une heuristique.
+
+`tool_protocol.py` reconnaît certaines propositions JSON textuelles d’outils
+connus, sans les exécuter. Une reprise native au plus consomme le budget ordinaire ;
+un nouvel échec donne `incomplete` / `tool_protocol`. Les exemples de code demandés
+sont préservés. Les arguments natifs non JSON ou non objets reçoivent une erreur
+d’outil au lieu de perdre toute la conversation. Ce contrôle ne promet pas la
+compatibilité avec tous les formats de tous les modèles.
+
+`procedure_review.py` prépare au plus 48 segments de 30 à 900 caractères, issus
+uniquement des lectures de cette demande et contenant des marqueurs de conditions.
+Un appel JSON contraint (256 tokens, délai 60 s, budget d’entrée vérifié) choisit
+zéro à trois identifiants. Le serveur insère les extraits exacts avant la réponse,
+avec source et échappement du balisage documentaire. Aucun fait réécrit ou segment
+inventé n’est accepté. Un budget trop court, une sortie invalide ou une erreur
+laisse la réponse disponible et enregistre une limite numérique.
+La pertinence, les omissions et les paraphrases ne sont pas certifiées ; ce
+complément ne remplace pas une vérification humaine ou matérielle.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

@@ -176,5 +176,9 @@ Le cas réel montre aussi qu’un guide peut citer la bonne page tout en omettan
 condition de départ. La prochaine vérification doit porter sur prérequis, ordre
 des opérations, paramètres et limites, avec appui sur des extraits exacts. Une
 revue du modèle peut aider mais ne certifie pas le sens ; les essais sur plusieurs
-besoins et les omissions connues restent visibles. Aucun mécanisme de ce type n’est
-annoncé livré par le seul contrôle des références de la 0.19.1.
+besoins et les omissions connues restent visibles. Le seul contrôle des références de la 0.19.1 ne livrait pas ce mécanisme.
+La 0.20.0 ajoute une sélection bornée de conditions, affichées comme extraits
+exacts, et une relecture des sources des relances ; voir le
+[guide de fiabilité](../utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200).
+Les omissions, pertinence et reformulations restent à évaluer ; aucune certification
+d’une procédure ni de la compatibilité de tous les modèles n’en est déduite.

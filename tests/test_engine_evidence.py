@@ -26,7 +26,7 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False,selected=None,search=None):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False,selected=None,search=None,pause_during_review=False):
         payloads=[];client_class=httpx.AsyncClient
         self.loads=[]
         def handler(request):
@@ -44,7 +44,7 @@ class EvidenceTests(unittest.TestCase):
             self.assertLessEqual(len(payloads),len(messages))
             event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
-        with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(return_value={'online':True,'paused':paused})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
+        with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(side_effect=lambda **kw:{'online':True,'paused':paused or pause_during_review and engine.MEASUREMENTS['j'].stage=='procedure_review'})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
              patch.object(engine.library,'search',AsyncMock(side_effect=search,return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
             asyncio.run(engine.run('j','u','c','rapide',attached,source_ids=selected))
             self.lookup_calls=engine.library.search.await_args_list
@@ -56,6 +56,73 @@ class EvidenceTests(unittest.TestCase):
     @staticmethod
     def call(name,arguments):
         return {'tool_calls':[{'function':{'name':name,'arguments':arguments}}]}
+
+    def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self):
+        proposal={'content':'{"name":"search_library","arguments":{"query":"notice"}}'}
+        payloads,answer=self.run_chat([proposal,proposal],expected_status='incomplete')
+        self.assertEqual(len(payloads),2);self.assertEqual(self.lookup_calls,[])
+        self.assertIn('sans réussir à appeler',answer['content'])
+        self.assertEqual(assistant_metrics.read('j')['failure'],'tool_protocol')
+
+    def test_native_retry_can_read_and_answer_after_textual_proposal(self):
+        proposal={'content':'Je vais chercher.\n```json\n{"name":"read_source","arguments":{"id":"guide:a"}}\n```'}
+        payloads,answer=self.run_chat([proposal,self.call('read_source',{'id':'guide:a'}),{'content':'La notice annonce 10 kg [1].'}])
+        self.assertEqual(len(payloads),3);self.assertEqual(len(answer['sources']),1)
+        self.assertEqual(assistant_metrics.read('j')['tool_protocol_retries'],1)
+
+    def test_empty_reply_after_protocol_retry_keeps_the_specific_failure(self):
+        self.run_chat([{'content':'{"name":"calculate","arguments":{"expression":"2+2"}}'},{'content':''},{'content':''}],expected_status='incomplete')
+        self.assertEqual(assistant_metrics.read('j')['failure'],'tool_protocol')
+
+    def test_malformed_native_arguments_return_a_tool_error_and_keep_conversation(self):
+        payloads,answer=self.run_chat([self.call('calculate','not JSON'),{'content':'Le calcul n’a pas abouti.'}])
+        self.assertIn('error',json.loads(payloads[1]['messages'][-1]['content']))
+        call=next(row for row in payloads[1]['messages'] if row.get('tool_calls'))['tool_calls'][0]
+        self.assertEqual(call['function']['arguments'],{})
+        self.assertIn('pas abouti',answer['content'])
+
+    def test_historical_source_pointer_is_reloaded_with_new_numbers(self):
+        with store.connect() as db:
+            db.execute("DELETE FROM messages WHERE conversation_id='c'")
+            db.execute('INSERT INTO messages(conversation_id,role,content,sources,created) VALUES(?,?,?,?,?)',('c','user','Notice A','[]',0))
+            db.execute('INSERT INTO messages(conversation_id,role,content,sources,created) VALUES(?,?,?,?,?)',('c','assistant','Ancienne valeur [42].',json.dumps([{'id':'guide:a','title':'Ancien titre','number':42}]),1))
+            db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',('c','user','Et les conditions ?',2))
+        payloads,answer=self.run_chat([self.call('read_source',{'id':'guide:a'}),{'content':'La source relue annonce 10 kg [1].'}])
+        hints=next(row['content'] for row in payloads[0]['messages'] if 'historical_sources' in row['content'])
+        self.assertIn('consulted": false',hints);self.assertNotIn('number',hints)
+        self.assertEqual(answer['sources'][0]['number'],1);self.assertEqual(answer['sources'][0]['title'],'Notice A')
+
+    def test_followup_without_native_calls_rereads_and_rejects_inherited_citations(self):
+        with store.connect() as db:
+            db.execute("DELETE FROM messages WHERE conversation_id='c'")
+            db.execute('INSERT INTO messages(conversation_id,role,content,sources,created) VALUES(?,?,?,?,?)',('c','assistant','Ancienne réponse [42].',json.dumps([{'id':'guide:a','title':'Ancien titre','number':42}]),0))
+            db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',('c','user','Et les précautions pour cette procédure ?',1))
+        payloads,answer=self.run_chat([{'content':'La notice relue annonce 10 kg [1].'}])
+        self.assertEqual(assistant_metrics.read('j')['continued_sources'],1)
+        packet=json.loads(next(row['content'] for row in payloads[0]['messages'] if row.get('tool_name')=='read_sources'))
+        self.assertEqual(packet['results'][0]['number'],1);self.assertEqual(len(answer['sources']),1)
+
+    def test_unread_numeric_citation_without_search_is_never_treated_as_done(self):
+        _,answer=self.run_chat([{'content':'Ancienne affirmation [42].'}],expected_status='incomplete')
+        self.assertEqual(answer['sources'],[])
+        self.assertNotIn('[42]',answer['content'])
+
+    def test_procedural_review_adds_exact_starting_condition_and_survives_failed_review(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment utiliser le cadran fictif ?' WHERE conversation_id='c'")
+        source={**self.a,'text':'Avant de commencer, sélectionner la ligne supérieure du cadran fictif. Choisir un canal libre.'}
+        _,answer=self.run_chat([{'content':'Choisir un canal libre [1].'},{'content':'{"missing_conditions":["condition-0"]}'}],[source],read=lambda _:source)
+        self.assertIn('> Avant de commencer, sélectionner la ligne supérieure',answer['content'])
+        self.assertEqual(assistant_metrics.read('j')['procedure_review']['selected'],1)
+        _,answer=self.run_chat([{'content':'Choisir un canal libre [1].'},{'content':'JSON indisponible'}],[source],read=lambda _:source)
+        self.assertEqual(answer['content'],'Choisir un canal libre [1].')
+        self.assertEqual(assistant_metrics.read('j')['procedure_review']['status'],'unavailable')
+
+    def test_pause_after_writing_prevents_the_optional_review_call(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment utiliser le cadran fictif ?' WHERE conversation_id='c'")
+        source={**self.a,'text':'Avant de commencer, sélectionner la ligne supérieure du cadran fictif.'}
+        payloads,answer=self.run_chat([{'content':'Réponse fictive conservée [1].'}],[source],read=lambda _:source,pause_during_review=True)
+        self.assertEqual(len(payloads),1);self.assertEqual(answer['content'],'Réponse fictive conservée [1].')
+        self.assertEqual(assistant_metrics.read('j')['procedure_review']['status'],'unavailable')
 
     def test_read_metadata_replaces_search_metadata_and_only_read_citations_are_saved(self):
         messages=[self.call('search_library',{'query':'notice'}),self.call('read_source',{'id':'guide:a'}),
@@ -180,13 +247,13 @@ class EvidenceTests(unittest.TestCase):
 
     def test_empty_extraction_is_not_a_consulted_or_cited_source(self):
         self.a={**self.a,'text':'   '}
-        _,answer=self.run_chat([self.call('read_source',{'id':self.a['id']}),{'content':'Citation fictive non étayée [1].'}])
+        _,answer=self.run_chat([self.call('read_source',{'id':self.a['id']}),{'content':'Citation fictive non étayée [1].'}],expected_status='incomplete')
         self.assertEqual(answer['sources'],[]);self.assertEqual(answer['documentary']['sources_read'],0)
         self.assertEqual(answer['documentary']['failed_reads'],1)
 
     def test_empty_attached_document_is_distinct_from_a_missing_document(self):
         self.a={**self.a,'text':''}
-        payloads,answer=self.run_chat([{'content':'Citation fictive non étayée [1].'}],attached=self.a['id'])
+        payloads,answer=self.run_chat([{'content':'Citation fictive non étayée [1].'}],attached=self.a['id'],expected_status='incomplete')
         self.assertTrue(any('ne fournit pas de texte lisible' in message['content'] for message in payloads[0]['messages']))
         self.assertEqual(answer['sources'],[]);self.assertEqual(answer['documentary']['sources_read'],0)
         self.assertEqual(answer['documentary']['failed_reads'],1)
@@ -376,7 +443,7 @@ class EvidenceTests(unittest.TestCase):
     def test_empty_search_or_failed_read_cannot_create_a_cited_source(self):
         messages=[self.call('search_library',{'query':'inconnue'}),self.call('read_source',{'id':'guide:missing'}),
                   {'content':'Je ne sais pas d’après les documents disponibles. Il manque la notice [1].'}]
-        _,answer=self.run_chat(messages,read=lambda key:(_ for _ in ()).throw(HTTPException(404,'Absent')))
+        _,answer=self.run_chat(messages,read=lambda key:(_ for _ in ()).throw(HTTPException(404,'Absent')),expected_status='incomplete')
         self.assertEqual(answer['sources'],[])
 
     def test_attached_partial_document_carries_edition_and_does_not_turn_archive_date_into_document_date(self):

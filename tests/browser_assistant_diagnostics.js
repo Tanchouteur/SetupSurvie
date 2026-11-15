@@ -9,6 +9,7 @@ async page=>{
     const report=await(await route.fetch()).json();
     report.phases_ms.model_loading=1000;report.phases_ms.model_preparation=3100;
     report.model_preparations=[{status:'ready',duration_ms:1000}];report.model_retries=[{stage:'chat',reason:'empty_response'}];
+    report.phases_ms.procedure_review=1200;report.procedure_review={status:'selected',candidates:3,selected:1,rejected:0};report.continued_sources=2;report.tool_protocol_retries=1;
     report.selected_sources=5;report.prepared_sources=5;report.citation_linking={applied:5,rejected:0};report.phases_ms.source_linking=200;
     await route.fulfill({json:report});
   });
@@ -20,10 +21,12 @@ async page=>{
   const body=page.locator('#next-response-measures-body');check((await body.textContent()).includes('Recherche documentaire')&&(await body.textContent()).includes('Lecture des sources'),'Recherche et lecture distinctes dans les durées');
   check((await body.textContent()).includes('Changement ou reprise du modèle')&&(await body.textContent()).includes('Reprises automatiques'),'Changement et reprise visibles dans les mesures');
   check((await body.textContent()).includes('Documents préparés')&&(await body.textContent()).includes('Liaisons ajoutées aux sources'),'Dossier documentaire et références visibles dans les mesures');
+  check((await body.textContent()).includes('Relecture des conditions de départ')&&(await body.textContent()).includes('Documents repris de la réponse précédente'),'Relances et relecture des conditions visibles dans les mesures');
   const downloading=page.waitForEvent('download');await page.locator('#next-response-measures-export').click();const saved=await downloading,chunks=[];for await(const chunk of await saved.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.version===version&&report.total_ms===6500,'Mesures exportées avec version et temps total');
   check(report.model_retries.length===1&&report.model_preparations[0].status==='ready'&&report.phases_ms.model_loading===1000,'Préparation et reprise présentes dans l’export numérique');
   check(report.selected_sources===5&&report.prepared_sources===5&&report.citation_linking.applied===5&&report.phases_ms.source_linking===200,'Sources préparées et ajout des références exportés sans texte');
+  check(report.procedure_review.selected===1&&report.continued_sources===2&&report.tool_protocol_retries===1,'Conditions et reprises exportées sans extraits de documents');
   check(!JSON.stringify(report).includes('Question de recette privée')&&!JSON.stringify(report).includes('Réponse simulée')&&!('sources' in report),'Export sans question, réponse ni source privée');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.locator('#next-response-measures-dialog').evaluate(e=>e.scrollWidth>e.clientWidth),'Rapport des durées sans débordement à '+width);}
   await page.setViewportSize({width:1366,height:900});await page.locator('[data-close="next-response-measures-dialog"]').click();

@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+La 0.20.0 ajoute la [relecture des conditions de départ et des relances](../utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200).
+Les compléments sont des extraits exacts sélectionnés, sans réécriture de faits.
+Une commande JSON décrite sans exécution reçoit une reprise bornée, puis une erreur
+explicite si nécessaire. La validation réelle reste distincte d’un statut terminé.
+
 La 0.16.0 prépare un [dossier de plusieurs sources](../utilisation/synthese-documentaire.md),
 avec passages liés au sujet, budget partagé avec le modèle et arrêt des boucles
 sans nouvelle lecture. Les essais réels R7 distinguent l’accès aux faits, la

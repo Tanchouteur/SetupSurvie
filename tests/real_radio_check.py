@@ -22,7 +22,7 @@ from real_assistant_check import TestTransport
 
 CASES=[
  ('keypad','Comment verrouiller et déverrouiller le clavier du Baofeng UV-5R ? Est-ce que cela bloque aussi les boutons sur le côté ?', 'Notice française page PDF 34 : # environ deux secondes ; les trois touches latérales ne sont pas verrouillées.'),
- ('memory','Sur un Baofeng UV-5R, comment mémoriser une fréquence simplex dans un canal vide, puis retrouver ce canal ?', 'Notice française page PDF 41 : mode VFO, MEM-CH menu 27, canal vide, confirmation MENU, EXIT, puis VFO/MR pour mode MR. Aucun effacement des canaux existants.'),
+ ('memory','Sur un Baofeng UV-5R, comment mémoriser une fréquence simplex dans un canal vide, puis retrouver ce canal ?', 'Notice française page PDF 41 : ligne supérieure de l’écran et mode VFO, MEM-CH menu 27, canal vide, confirmation MENU, EXIT, puis VFO/MR pour mode MR. Aucun effacement des canaux existants.'),
  ('quarter','Quelle longueur théorique en centimètres pour un brin quart d’onde à 145 MHz ? Et quelles limites pour une vraie antenne de portatif ?', '51,69 cm théoriques, retour de courant/adaptation, antenne raccourcie distincte. Ne pas couper une antenne commerciale.'),
  ('dipole','À 433 MHz, quelle est la longueur théorique totale d’un dipôle demi-onde et celle de chaque bras, en centimètres ?', '34,62 cm au total, environ 17,31 cm par bras ; dimensions théoriques distinctes de l’ajustement réel.'),
  ('quarter-calculated','Calcule avec les documents la longueur théorique en centimètres d’un brin quart d’onde à 147,5 MHz. Distingue le résultat d’une dimension de fabrication.', 'Formule exacte 299792458/(147500000*4)*100 : environ 50,81 cm. Calcul réellement demandé à l’outil, hypothèses et unités conservées ; pas de copie de la ligne 145 MHz ni de dimension universelle.'),
@@ -50,6 +50,7 @@ def scenario(path):
 
 
 async def check(args):
+    if args.follow_up is not None and not 1<=len(args.follow_up)<=2000:raise ValueError('Follow-up exceeds the test bounds.')
     base=Path(__file__).resolve().parents[1]
     external=scenario(args.scenario_file) if args.scenario_file else None
     manual=args.manual.resolve() if args.manual else None
@@ -96,14 +97,18 @@ async def check(args):
              patch.dict(engine.MODES,{'real-radio':profile}),patch.object(engine,'PROFILE_CONFIG',{**engine.PROFILE_CONFIG,'context':16384,'output_tokens':4096}),\
              patch.object(httpx,'AsyncClient',side_effect=lambda **kw:original(transport=TestTransport(4096,args.gpu_layers,6),**kw)):
             store.init();library.index_guides()
+            requests=[]
             for name,question,expected in cases:
                 if args.case and name!=args.case:continue
+                requests.append((name,question,expected,'radio-'+name))
+                if args.follow_up:requests.append((name+'-followup',args.follow_up,'Relance à examiner avec les documents réellement relus, sans héritage des anciens numéros.','radio-'+name))
+            for name,question,expected,conversation in requests:
                 await available();now=time.time();identifier='radio-'+name
                 with store.connect() as db:
-                    db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(identifier,'fixture','Radio check',now));db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(identifier,'user',question,now))
-                    db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,'fixture',identifier,'real-radio','queued',now,now))
+                    db.execute('INSERT OR IGNORE INTO conversations VALUES(?,?,?,?)',(conversation,'fixture','Radio check',now));db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation,'user',question,now))
+                    db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,'fixture',conversation,'real-radio','queued',now,now))
                 print('Starting '+name,flush=True)
-                task=asyncio.create_task(engine.run(identifier,'fixture',identifier,'real-radio',domain=args.domain))
+                task=asyncio.create_task(engine.run(identifier,'fixture',conversation,'real-radio',domain=args.domain))
                 try:
                     while not task.done():
                         await asyncio.wait({task},timeout=20);print(json.dumps({'case':name,'progress':engine.PROGRESS.get(identifier,{}).get('stage'),'elapsed':round(time.time()-now)}),flush=True)
@@ -119,5 +124,5 @@ async def check(args):
     return report
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--model',required=True);parser.add_argument('--domain',choices=('all','resilience','culture'),default='all');parser.add_argument('--think',choices=('true','false','low','medium','high'),default='true');parser.add_argument('--manual',type=Path);parser.add_argument('--scenario-file',type=Path);parser.add_argument('--case');parser.add_argument('--gpu-layers',type=int,choices=range(129),default=0);parser.add_argument('--report',type=Path,required=True)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--model',required=True);parser.add_argument('--domain',choices=('all','resilience','culture'),default='all');parser.add_argument('--think',choices=('true','false','low','medium','high'),default='true');parser.add_argument('--manual',type=Path);parser.add_argument('--scenario-file',type=Path);parser.add_argument('--case');parser.add_argument('--follow-up');parser.add_argument('--gpu-layers',type=int,choices=range(129),default=0);parser.add_argument('--report',type=Path,required=True)
     asyncio.run(check(parser.parse_args()))

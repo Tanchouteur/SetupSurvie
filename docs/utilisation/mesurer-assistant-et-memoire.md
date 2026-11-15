@@ -1,6 +1,6 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.7.0, 14 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.20.0, 15 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 
@@ -11,6 +11,11 @@ la zone de conversation lorsqu’un rapport est disponible. Choisir la demande �
 examiner puis **Télécharger le rapport** pour le transmettre à Louis ou à l’agent.
 Les vingt dernières demandes mesurées de la conversation restent accessibles
 après rechargement. Les anciennes réponses peuvent ne pas avoir de mesures.
+
+Depuis 0.20.0, le rapport distingue aussi la relecture des conditions de départ,
+son état et le nombre d’extraits retenus, les documents repris de la réponse
+précédente et la reprise d’un appel d’outil décrit sans exécution. Ces comptes
+ne contiennent ni conditions citées ni identifiants des documents.
 
 Le rapport distingue préparation de la demande, file d’attente, métadonnées du
 modèle, recherche documentaire, lecture, préparation par le modèle et rédaction.

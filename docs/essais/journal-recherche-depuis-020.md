@@ -1,5 +1,12 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.20.0 : [relances et conditions de départ](2026-11-15-relances-et-conditions.md).
+Les relances relisent les documents au lieu d’hériter des anciens numéros.
+Une relecture de procédure peut ajouter des conditions comme extraits exacts ;
+la condition d’un autre mode choisie pendant les essais reste tracée avec sa correction.
+Les faux appels JSON reçoivent une reprise native, puis un échec explicite si nécessaire.
+Les contrôles de pause et les mesures restent séparés de la fidélité du modèle.
+
 Complément 0.19.1 : [notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md).
 Cas réel UV‑5R demandé par Louis, utilisé pour corriger des défauts généraux :
 procédures non cherchées, recherches citées sans lecture et listes d’étapes coupées.

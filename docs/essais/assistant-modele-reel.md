@@ -154,3 +154,12 @@ pas modifiés par ce choix de laboratoire.
 La recette accepte `--domain resilience` pour vérifier que les mêmes ressources
 restent accessibles dans l’espace pratique. Le défaut reste `all` ; le rapport
 conserve ce choix, qui ne doit pas être déduit du seul titre d’un document.
+
+
+Depuis 0.20.0, `--follow-up "Et les conditions pour cette procédure ?"` ajoute
+une seconde question dans la même conversation après chaque cas choisi.
+Utiliser `--case memory` ou un nom de manifeste pour isoler le besoin. Le rapport
+conserve deux demandes, leurs lectures propres, références, mesures et même
+`conversation_id`. La recette ne doit pas considérer un ancien numéro de citation
+comme une nouvelle lecture. La relecture des conditions reste un choix du modèle,
+à comparer aux textes et prérequis réels ; le statut `done` n’en certifie pas le sens.

@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Relances et conditions de départ](2026-11-15-relances-et-conditions.md) — 0.20.0, lectures propres à chaque réponse et extraits exacts.
+
 - [Notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md) — 0.19.1, vraie notice, dimensions et lectures réellement reçues.
 
 - [Illustrations originales](2026-11-15-illustrations-originales.md) — 0.19.0, sélection réelle, rendu des originaux et références composées.

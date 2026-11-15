@@ -166,6 +166,12 @@ async def figure_answer(identifier,conversation,mode):
     with store.connect() as db:db.execute('INSERT INTO messages(conversation_id,role,content,sources,created,model,mode) VALUES(?,?,?,?,?,?,?)',(conversation,'assistant',answer,json.dumps(sources),time.time(),'fixture-model',mode))
     engine.update(identifier,status='done',answer=answer,sources=sources)
 base=BASE
+@gateway.app.get('/fixture/procedure-review')
+def procedure_review_fixture():
+    from pilot import procedure_review
+    parts=[{'id':'condition-0','source_number':1,'text':'Avant : <img src=x> [1] ![x](https://external.invalid/)'}]
+    text,_=procedure_review.apply('Choisir le canal fictif avec `MENU → 27` [1].',{'missing_conditions':['condition-0']},parts)
+    return {'answer':text,'sources':[{'id':'guide:shelter.en.pdf#page=6','title':'Fixture source','number':1,'pages':[6]}]}
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')
 import uvicorn

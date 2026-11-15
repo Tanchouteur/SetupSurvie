@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Relances et conditions de départ](utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200) — 0.20.0, sources relues, extraits exacts et limites.
+- [Essais des relances et des conditions](essais/2026-11-15-relances-et-conditions.md) — erreurs réelles conservées, corrections et contrôle des outils.
+
 - [Illustrations et références](utilisation/illustrations-et-references.md) — images originales, pages PDF, légendes et limites, 0.19.0.
 - [Essais des illustrations originales](essais/2026-11-15-illustrations-originales.md) — comparaison avec 0.18.0, modèle réel et navigateurs.
 

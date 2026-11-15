@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.15.1, 15 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.20.0, 15 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -66,14 +66,40 @@ Ce suivi ne prouve ni que tous les résultats sont pertinents, ni que le modèle
 a correctement utilisé les passages. La [recette réelle de l’assistant](../essais/recettes-progressives-marc.md)
 et la relecture humaine restent nécessaires.
 
-L’association manuelle du portail porte actuellement sur un seul document. Une
-demande documentaire peut aussi préparer la lecture de deux premières sources
-trouvées et le modèle dispose d’outils pour poursuivre. Cela ne garantit pas une
-synthèse de plusieurs documents ni une lecture de tous les livres. La 0.15.1
-corrige la préparation des demandes de résumé et des relances pratiques ; le
-[programme multi-document et illustrations](../decisions/assistant-recherche-et-synthese.md)
-décrit les fonctions encore à réaliser. Les images affichables dans le lecteur
-ne sont pas actuellement transmises comme images au modèle.
+Le portail permet de [choisir plusieurs documents](documents-et-traduction.md#choisir-les-documents-dune-conversation--0170)
+et de préparer une [synthèse par passages ou une lecture longue](synthese-documentaire.md).
+Les [illustrations originales](illustrations-et-references.md) peuvent être proposées
+sous la réponse. Le modèle reçoit textes et légendes, pas les pixels des images.
+Ces fonctions ne garantissent ni une lecture intégrale ni la fidélité de la réponse.
+
+## Reprendre une discussion et vérifier les conditions de départ — 0.20.0
+
+Une relance telle que « et les conditions pour cette procédure ? » peut faire
+relire jusqu’à quatre documents effectivement consultés dans l’échange précédent.
+Leur ancien numéro n’est pas réutilisé comme une preuve : la nouvelle réponse
+reçoit ses propres lectures et références. Les titres/identifiants historiques
+servent seulement de repères. Une nouvelle question sur un autre sujet continue
+à utiliser la recherche ; la sélection manuelle explicite garde la priorité.
+La détection de relance est limitée : si elle n’est pas reconnue, le modèle peut
+encore relire ces repères avec les outils. Aucun ancien historique n’est réécrit.
+
+Pour une procédure, une courte relecture peut sélectionner jusqu’à trois
+conditions de départ oubliées, parmi les passages déjà lus. Le portail les montre
+**avant la réponse**, sous « À vérifier avant de commencer — extraits des documents ».
+Le logiciel reprend les mots du document, avec leur source ; le modèle choisit
+des segments disponibles et ne peut pas inventer le texte de ce complément.
+Cette vérification peut ajouter du temps, omettre une condition ou répéter une
+condition déjà reformulée. Elle n’est ni exhaustive ni une certification du sens,
+du matériel réel ou de la sécurité de la procédure. Son échec laisse la réponse
+et les documents accessibles ; le rapport des durées en conserve l’état.
+
+Si le modèle décrit une commande JSON sans appeler l’outil, une seule reprise
+lui demande d’utiliser l’interface déclarée. Le texte JSON n’est pas exécuté par
+le logiciel. Si cela échoue encore, la réponse est signalée incomplète avec une
+explication. Les exemples de code/JSON explicitement demandés restent du texte.
+Une référence numérique sans source lue est également refusée, même en l’absence
+de recherche préalable. Cela contrôle la provenance ; une référence valide ne
+prouve toujours pas que l’affirmation est fidèle.
 
 ## Quand une recherche est incomplète
 
