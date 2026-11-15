@@ -224,3 +224,9 @@ initiaux des agents restent datés. La CI et Windows réels des nouveaux outils
 restent non validés à cause du blocage de relance GitHub, distinct des contrôles
 Windows du moteur déjà exécutés. Le prochain rapport réel et les avis humains
 restent nécessaires pour clore l’objectif de fiabilité sur le fonds de Marc.
+
+Le paquet 0.14.0 est vérifié : 741 fichiers acceptés, identiques au code `ba33e8a`,
+avec aide des deux scripts exécutée depuis la copie déballée. Le passage GitHub
+`43689514723` ne lance aucun de ses huit jobs à cause de la restriction du compte ;
+il ne donne aucun résultat d’essai supplémentaire. Les commandes Windows et la
+recette sur le fonds réel restent nécessaires, sans réindexation intégrale imposée.

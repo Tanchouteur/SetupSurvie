@@ -76,7 +76,21 @@ du compte. La [validation 0.13.1](2026-11-15-classement-titres-et-intention.md#v
 distingue aussi ses campagnes navigateur. Aucun nouveau résultat Windows, Safari
 ou vidéo réelle n’est revendiqué par cette intégration sans modification Web.
 
-L’audit du paquet et la publication du commit sont consignés après exécution.
+Le code d’intégration **`ba33e8a`** est poussé. Le nouveau
+[passage CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43689514723)
+termine sans lancer aucun job : les huit jobs n’ont aucune étape exécutée et
+l’annotation GitHub confirme la restriction du compte. Il ne s’agit pas de huit
+tests exécutés en échec et aucun résultat de cette campagne n’est revendiqué.
+
+Le paquet local est construit puis déballé avec le lecteur de mise à jour :
+**741 fichiers acceptés**, version **0.14.0**, schéma **1**,
+**6 632 726 octets** compressés. Chaque fichier est comparé au commit `ba33e8a`.
+Les deux scripts et leurs guides sont présents ; leurs commandes `--help` passent
+également depuis la copie déballée. Aucun modèle, ZIM, média ou cache SQLite.
+Empreinte du paquet audité :
+`a95f2cb46091f9153ac09e9e1701a879078d5fa3b49fafa6a4af3bd5366f1e01`.
+Le complément de bilan final est documentaire seulement ; le code reste identique.
+Aucun déploiement sur les PC de Louis ou Marc n’est effectué.
 
 ## Prochaine validation chez Marc
 
