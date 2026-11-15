@@ -91,6 +91,40 @@ active ; une reprise attend aussi la fin des autres travaux de cette conversatio
 Les calibrations et comparatifs IA cèdent la priorité. Une panne du module
 optionnel ne désactive pas la recherche, la lecture ni les autres conversations.
 
+## Illustrations originales et références — 0.19.0
+
+`pilot/illustrations.py` extrait les légendes HTML5 et anciennes vignettes,
+conserve les images locales de la même archive et prépare des candidats issus
+des seules sources lues. Les PDF proposent les pages retenues, pas un recadrage
+de schéma. Le classement des légendes par sujet et la diversité des sources
+précèdent le plafond de contexte. Les métadonnées non retenues restent hors des
+paquets de lecture et des réponses API ; elles sont gardées dans l’instantané
+privé pour une synthèse longue. Plafonds dans le [guide](../utilisation/illustrations-et-references.md).
+
+Une demande visuelle prépare la sélection avant la rédaction via un petit JSON
+sans pixels ; `source_illustrations` permet aussi au modèle de la demander après
+ses autres lectures. Le serveur valide les identifiants candidats, conserve la
+provenance et refuse les identifiants inventés. Le contrôle ne juge pas le sens
+d’une légende ni le contenu d’une image. Les échecs restent locaux à la fonction.
+Les champs `figures` et `figure_status` sont ajoutés au JSON des sources de
+conversation, sans table ni migration destructive ; schéma de livraison 1.
+
+`portal/source-figures.js` affiche les originaux avec légende et liens. Le rendu
+PDF utilise PDF.js existant, un worker partagé, une file de rendu et des aperçus
+limités à un million de pixels. Les URL temporaires sont libérées au retrait des
+messages ; les ressources se chargent près de la zone visible. Aucun OCR ni
+modèle vision. Les erreurs de ressource n’interrompent pas le portail.
+`GET /api/illustrations/document` vérifie la référence/page et l’empreinte connue
+avant/après le rendu. `/api/media` accepte aussi `source_id` et `revision` pour
+les images d’article : même archive, type image et contrôle de version avant/après
+lecture. Les paramètres historiques sans source restent compatibles.
+
+`research.citation_spans` reconnaît les références simples, groupées et avec page
+hors du code. Les mêmes formes deviennent des boutons dans le portail ; seules
+les pages effectivement retenues bénéficient d’un lien direct vers cette page.
+Une référence inconnue garde le contrôle d’échec. La validité du numéro ne certifie
+ni l’affirmation ni l’usage de la pagination imprimée.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

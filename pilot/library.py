@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache
+from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -703,13 +703,9 @@ async def source(identifier):
     resolved_path=getattr(fetched,'path','/content/'+quote(path,safe='/'))
     p=Text();p.feed(raw.decode(errors='replace'))
     text=p.text()
-    images=[]
-    for image in p.images:
-        target=urljoin(resolved_path,image['src'])
-        if target.startswith('/content/'):
-            images.append({'id':'zim:'+target.removeprefix('/content/'),'alt':image['alt']})
+    images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
     result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images[:10],'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
     catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
 
 

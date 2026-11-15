@@ -262,3 +262,8 @@ sur iPhone physique.
 Depuis 0.18.0, le [parcours de synthèse longue](synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180)
 peut lire les textes choisis par étapes conservées et produire une synthèse
 commune. Il crée sa propre conversation ; la traduction reste une action distincte.
+
+
+Le [guide des illustrations](illustrations-et-references.md) décrit les visuels
+originaux proposés dans l’assistant depuis 0.19.0. Leur affichage conserve
+les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d’OCR.

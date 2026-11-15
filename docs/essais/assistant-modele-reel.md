@@ -1,6 +1,6 @@
 # Tester l’assistant avec un modèle réel
 
-**Recette de développement — 0.16.0, 15 novembre 2026.** Elle complète les tests
+**Recette de développement — actualisée en 0.19.0, 15 novembre 2026.** Elle complète les tests
 simulés ; elle ne s’exécute jamais automatiquement dans la CI. Le runner CPU
 n’accueille aucun modèle. Employer une machine explicitement autorisée, avec
 le moteur déjà installé et un environnement Python isolé contenant
@@ -82,3 +82,29 @@ n’est jamais levée. Elle refuse les autres modèles en cours, sans les arrêt
 Le rapport privé conserve réponses, instantanés de progression, graphe des notes
 et empreinte du code. Relire attribution, unités, pages, limites et omissions ;
 `completed` ne mesure pas cette fidélité. Voir le [bilan](2026-11-15-syntheses-longues-et-reprise.md).
+
+
+## Illustrations originales — 0.19.0
+
+`tests/real_illustrations_check.py` fait lire un PDF de 21 pages et un article HTML
+fictifs, avec deux schémas et un logo à écarter. Le vrai moteur et le vrai modèle
+choisissent des identifiants de visuels, jamais des pixels ; le lecteur de l’article
+est simulé. Aucun contenu externe n’est téléchargé. L’API locale, les six threads,
+le contexte 16k, les plafonds et réserves sont ceux de la recette longue ci-dessus.
+
+```sh
+python tests/real_illustrations_check.py --model gemma4:e4b --gpu-layers 8 \
+  --report /chemin/prive/illustrations.json
+```
+
+Le rapport privé conserve réponse, sources, sélection, mesures et empreintes du
+code, de la recette et du contexte produit. Relire le choix et la prose : deux bons
+identifiants ne suffisent pas si le modèle annonce une impossibilité d’affichage.
+Cette recette ne teste pas le rendu navigateur, protégé par une recette distincte.
+
+Ajouter `--illustrations` à `tests/real_summary_check.py` pour la sélection de deux
+pages originales après lecture intégrale des deux PDF et avant la rédaction longue.
+Le rapport conserve alors aussi les sources réellement enregistrées. Ces essais
+sur fixtures ne valident pas la fidélité d’un vrai livre ou la compréhension des
+schémas. Le [bilan 0.19.0](2026-11-15-illustrations-originales.md) conserve les échecs,
+les modifications retenues et les observations du vrai modèle.

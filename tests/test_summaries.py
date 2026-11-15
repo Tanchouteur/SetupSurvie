@@ -165,6 +165,25 @@ class SummaryTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(ValueError):sm.leaf_notes({'notes':[note]},units)
         with self.assertRaises(ValueError):sm.merged_notes({'notes':[{'text':'bad','supports':[99]}]},[])
 
+    async def test_long_summary_keeps_original_figure_identity_without_exposing_all_candidates(self):
+        source={'id':'zim:book/A/article','title':'Notice fictive','text':'Valeur fictive 17 unités.','images':[{'id':'zim:book/I/schema.svg','caption':'Schéma fictif : 17 unités.'}],'classification':{'revision':'a'*64}}
+        with patch.object(library,'source',AsyncMock(return_value=source)),patch.object(sm,'launch'):
+            item=await sm.create('alice','Compare la valeur et montre son schéma','rapide','c',[source['id']])
+            async def inference(item,messages,**kwargs):
+                value=json.loads(messages[-1]['content'])
+                if 'candidates' in value:return {'selected':[value['candidates'][0]['candidate_id']]},'fake-model'
+                if 'sources' in value:
+                    selected=value['sources'][0]
+                    self.assertEqual(selected['figures'][0]['id'],'zim:book/I/schema.svg')
+                    self.assertNotIn('images',selected);self.assertNotIn('figure_candidates',selected)
+                return await fictional_infer(item,messages,**kwargs)
+            with patch.object(sm,'infer',inference):await sm.run(item['id'])
+        state=sm.status(item['id'],'alice');self.assertEqual(state['status'],'completed',state.get('error'))
+        final=store.messages(item['conversation_id'])[-1]['sources'][0]
+        self.assertEqual(final['figures'][0]['id'],'zim:book/I/schema.svg');self.assertEqual(final['figures'][0]['revision'],'a'*64)
+        self.assertNotIn('images',final);self.assertNotIn('figure_candidates',final)
+        self.assertNotIn('images',state['inputs'][0]['metadata'])
+
     def test_reduction_references_a_note_in_a_mixed_batch_not_every_source(self):
         children=[{'id':2,'result':json.dumps([{'text':'17 unités','source_number':1,'page':21,'quote':'17 unités'}, {'text':'59 unités','source_number':2,'page':21,'quote':'59 unités'}])}]
         notes=sm.merged_notes({'notes':[{'text':'17 unités','supports':['2:0']}]},children)

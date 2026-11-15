@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Illustrations et références](utilisation/illustrations-et-references.md) — images originales, pages PDF, légendes et limites, 0.19.0.
+- [Essais des illustrations originales](essais/2026-11-15-illustrations-originales.md) — comparaison avec 0.18.0, modèle réel et navigateurs.
+
 - [Synthèses longues et reprise](utilisation/synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180) — lecture complète extractible, notes et pause/reprise, 0.18.0.
 - [Essais des synthèses longues](essais/2026-11-15-syntheses-longues-et-reprise.md) — preuves, approches corrigées et limites.
 

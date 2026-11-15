@@ -8,7 +8,7 @@ import hashlib
 import json
 import re
 
-from . import library,retrieval
+from . import library,retrieval,illustrations
 
 
 def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
@@ -22,6 +22,7 @@ def primary_query(query):
     request in conversation for comparisons and any complementary tool calls.
     Do not split abbreviations or decimals, or ordinary literal searches.
     """
+    query=illustrations.topic(query)
     if not synthesis(query):return query
     parts=re.split(r'[.!?;]\s+(?=(?:compare|comparez|cite|citez|donne|donnez|presente|présente|redige|rédige|explique|expliquez|reponds|réponds|utilise|detaille|détaille|fais|montre|write|give|explain|include|use)\b)',query,maxsplit=1,flags=re.I)
     return parts[0] if len(parts)>1 and subject(parts[0]).words else query
@@ -130,9 +131,18 @@ def code_spans(answer):
     return [match.span() for match in re.finditer(r'```[\s\S]*?(?:```|\Z)|~~~[\s\S]*?(?:~~~|\Z)|`[^`\n]*`',answer)]
 
 
-def citation_numbers(answer):
+CITATION=re.compile(r'(?<![\w\\])\[(\d{1,3}(?:\s*[,;]\s*\d{1,3})*)(?:\s*,\s*p(?:age)?s?\.?\s*(\d{1,4}))?\]',re.I)
+
+
+def citation_spans(answer):
     spans=code_spans(answer)
-    return {int(match[1]) for match in re.finditer(r'(?<![\w])\[(\d{1,3})\]',answer) if not any(start<=match.start()<end for start,end in spans)}
+    return [{'start':match.start(),'end':match.end(),'numbers':{int(n) for n in re.split(r'\s*[,;]\s*',match[1])},
+             'page':int(match[2]) if match[2] else None}
+            for match in CITATION.finditer(answer) if not any(start<=match.start()<end for start,end in spans)]
+
+
+def citation_numbers(answer):
+    return {number for part in citation_spans(answer) for number in part['numbers']}
 
 
 def citations_valid(answer,references):

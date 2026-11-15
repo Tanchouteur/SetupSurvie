@@ -11,7 +11,7 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **15 novembre 2026**, le pilote **0.18.0** propose une recherche locale avec
+Au **15 novembre 2026**, le pilote **0.19.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
@@ -31,6 +31,8 @@ pour une même question ; leur sélection est conservée et les PDF peuvent four
 une page pertinente au-delà de leur aperçu de début. Une
 [synthèse longue](docs/utilisation/synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180)
 peut aussi lire les textes choisis par étapes, avec suivi, pause et reprise.
+L’assistant peut proposer les [illustrations originales](docs/utilisation/illustrations-et-references.md)
+des sources consultées, selon leurs légendes, avec accès aux pages PDF entières.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
 noms de collections sont corrigibles et exportables. Des rapports de délais et un

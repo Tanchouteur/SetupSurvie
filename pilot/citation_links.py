@@ -65,6 +65,6 @@ def apply(answer,value,references):
 
 def unverified(answer,references):
     allowed={item['number'] for item in references.values() if item.get('consulted')}
-    spans=research.code_spans(answer)
-    answer=re.sub(r'(?<![\w])\[(\d{1,3})\]',lambda match:match[0] if int(match[1]) in allowed or any(start<=match.start()<end for start,end in spans) else '[référence non vérifiée]',answer)
+    for part in reversed(research.citation_spans(answer)):
+        if not part['numbers']<=allowed:answer=answer[:part['start']]+'[référence non vérifiée]'+answer[part['end']:]
     return answer+'\n\n**Références à vérifier :** le modèle n’a pas relié suffisamment sa synthèse aux passages lus. Les documents consultés restent accessibles dans le suivi documentaire. Ce texte n’est pas une synthèse vérifiée.'

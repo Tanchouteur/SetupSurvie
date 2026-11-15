@@ -2,6 +2,7 @@
 Run in an isolated test environment: python tests/browser_translation_server.py
 """
 import asyncio
+import os
 from contextlib import closing
 import json
 import sqlite3
@@ -12,11 +13,13 @@ import time
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries,illustrations
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
 inventory.ZIMS=root/'zim';inventory.ZIMS.mkdir()
+os.environ['ZIM_DIR']=str(inventory.ZIMS)
+(inventory.ZIMS/'figure-fixture.zim').write_bytes(b'Fictional media identity, not a real archive.')
 for topic in ('energy','food'):(inventory.ZIMS/('fixture-channel_en_'+topic+'_2026-01.zim')).write_bytes(b'Fictional archive metadata fixture, not a real ZIM.')
 accounts.DB_PATH=str(root/'webui-fixture.db')
 with closing(sqlite3.connect(accounts.DB_PATH)) as db:
@@ -35,7 +38,7 @@ for number in range(1,7):
     page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
     text=('Page '+str(number)+'. Shelter dimensions and construction warnings. ')*100
     if number==6:text+=' Appendix rotor calibration.'
-    stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET').encode());page[NameObject('/Contents')]=stream
+    stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET'+(' 20 40 80 30 re S 160 40 80 30 re S 100 55 m 160 55 l S' if number==6 else '')).encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
 (library.GUIDES/'metadata.json').write_text(json.dumps([{'path':'shelter.en.txt','title':'Shelter fixture','language':'en',
     'document_date':'2010-05','edition':'Deuxième édition','collected_at':'2026-11-12','provenance':'Fixture synthétique'}]))
@@ -46,7 +49,20 @@ async def native(path,payload=None,token=None):
     if path=='/api/v1/auths/signout':return {'ok':True}
     raise ValueError(path)
 accounts.native=native
-async def books(**kwargs):return []
+figures_enabled=False
+async def books(**kwargs):return [{'book':'figure-fixture','title':'Collection fictive illustrée','language':'fr'}] if figures_enabled else []
+@gateway.app.post('/fixture/figures')
+async def fixture_figures(enabled:bool=False):
+    global figures_enabled
+    figures_enabled=enabled;return {'enabled':enabled}
+@gateway.app.post('/fixture/figures-change')
+async def fixture_figures_change():
+    path=library.GUIDES/'shelter.en.pdf';path.write_bytes(path.read_bytes()+b'\n');return {'changed':True}
+async def fixture_get(path,**kwargs):
+    if path.endswith('/schema.svg'):return library.Fetched(b'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180"><rect x="20" y="30" width="80" height="80" fill="green"/><path d="M100 70 L240 70" stroke="black"/><text x="20" y="150">17 mm - fixture only</text></svg>','image/svg+xml',path)
+    if path.endswith('/logo.svg'):return library.Fetched(b'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="blue"/></svg>','image/svg+xml',path)
+    return library.Fetched(b'<html lang="fr"><title>Montage fictif</title><p>Montage fictif de rotor, valeur 17 mm.</p><figure><img src="../I/schema.svg" alt="Schema du rotor fictif"><figcaption>Schema original du montage : 17 mm, garder la protection.</figcaption></figure><figure><img src="../I/logo.svg" alt="Logo"><figcaption>Logo publicitaire.</figcaption></figure></html>','text/html',path)
+library.get=fixture_get
 library.books=books
 original_search=library.search
 @gateway.app.post('/fixture/documentary')
@@ -118,6 +134,8 @@ translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.
 def launch(identifier,*args,domain='all',source_ids=None):
     engine.PENDING.pop(identifier,None)
+    if store.messages(args[1])[-1]['content'].startswith('Montre les schémas fixture'):
+        asyncio.create_task(figure_answer(identifier,args[1],args[2]));return
     refs=[];answer='Réponse simulée, aucun modèle lancé.'
     if args[-1]:
         with store.connect() as db:
@@ -138,6 +156,15 @@ async def summary_infer(item,messages,*,schema=None,output=2048):
     if 'sources' in data:return 'Synthèse fictive des documents examinés [1].','fixture-model'
     return {'notes':[{'text':'Regroupement fictif.','supports':[child['id'] for child in data['notes']][:8]}]},'fixture-model'
 summaries.infer=summary_infer
+async def figure_answer(identifier,conversation,mode):
+    refs={}
+    for identifier_source in ('guide:shelter.en.pdf#page=6','zim:figure-fixture/A/article'):
+        source=await library.source(identifier_source);engine.reference(refs,source,True,visual=True)
+    picked=[item for item in illustrations.collect(refs) if item['kind']=='pdf_page' or item['id'].endswith('/schema.svg')]
+    illustrations.attach(refs,picked,'selected');sources=engine.read_references(refs)
+    answer='Montage fictif du rotor [1, p. 6] ; illustration et légende [2].'
+    with store.connect() as db:db.execute('INSERT INTO messages(conversation_id,role,content,sources,created,model,mode) VALUES(?,?,?,?,?,?,?)',(conversation,'assistant',answer,json.dumps(sources),time.time(),'fixture-model',mode))
+    engine.update(identifier,status='done',answer=answer,sources=sources)
 base=BASE
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')

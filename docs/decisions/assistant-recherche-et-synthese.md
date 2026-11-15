@@ -39,7 +39,7 @@ Les essais réels R7 portent sur un corpus fictif ; le [bilan](../essais/2026-11
 distingue les faits retrouvés des erreurs de conclusion encore possibles.
 La 0.17.0 ajoute la sélection manuelle multiple persistante et la lecture d’une
 page pertinente dans les PDF choisis. La 0.18.0 ajoute une lecture longue explicite, des instantanés et notes
-intermédiaires reprenables, puis une synthèse hiérarchique. Illustrations et
+intermédiaires reprenables, puis une synthèse hiérarchique. La 0.19.0 propose les illustrations originales et pages PDF ; vision et
 fidélité sur un corpus représentatif restent à qualifier. Les paragraphes 0.15.x conservent le point de départ daté.
 
 Le moteur d’assistant dispose déjà d’une boucle d’outils : trois étapes en mode
@@ -106,11 +106,15 @@ lien, et préserver mesures, unités et avertissements. La recherche du bon sch�
 et son extraction restent à implémenter et tester ; le seul fait qu’un lecteur
 affiche une image ne prouve pas sa sélection pertinente.
 
-Le lecteur d’articles HTML sait déjà afficher certaines images locales, mais les
-outils de l’assistant transmettent surtout le texte. Les sources PDF n’exposent
-actuellement pas d’illustrations séparées dans `source.images` : la page originale
-reste le moyen de consultation. Il ne faut pas annoncer une extraction de tous
-les schémas PDF comme disponible.
+**Depuis 0.19.0**, le [parcours des illustrations](../utilisation/illustrations-et-references.md)
+propose les images d’articles ZIM et les pages PDF effectivement retenues, avec
+légendes, sources et accès à l’original. La sélection est préparée avant la
+rédaction et peut être complétée après une lecture supplémentaire. Le modèle
+choisit des identifiants délivrés par le serveur ; une page est conservée entière,
+sans extraction automatique du seul dessin. Le [bilan](../essais/2026-11-15-illustrations-originales.md)
+conserve les essais infructueux et les limites. La sélection pertinente n’est
+pas garantie sur tout le fonds ; pages scannées, autres formats et vision restent
+à éprouver ou développer.
 
 Pour **interpréter** une image — repérer des composants, expliquer une flèche ou
 lire les valeurs d’un diagramme — il faut fournir cette image à un modèle adapté

@@ -1,5 +1,13 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.19.0 : [illustrations originales et références](2026-11-15-illustrations-originales.md).
+Les articles lus et pages PDF peuvent fournir des originaux sous les réponses,
+sélectionnés par légende avant rédaction ; aucune interprétation des pixels.
+Le bilan conserve la sélection initiale après prose abandonnée, le vrai changement
+de modèle au premier envoi et les limites de fidélité. Le rejeu long traite 42/42
+passages avec les deux pages originales et leurs références. 704 tests (trois
+ignorés) et 113 contrôles ciblés par navigateur réussis. Aucun sous-titre traité.
+
 Complément 0.18.0 : [lectures longues, notes et reprise](2026-11-15-syntheses-longues-et-reprise.md).
 La sélection peut être lue par étapes conservées, puis synthétisée avec provenance
 et pages. Pause, redémarrage, export et reprise sont distincts de la réponse rapide.

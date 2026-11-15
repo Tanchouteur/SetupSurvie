@@ -1,6 +1,11 @@
 # Synthèses longues, notes et reprise — 0.18.0
 
-**Bilan de développement — 15 novembre 2026.** Nouvelle fonctionnalité compatible,
+**Bilan de développement — 15 novembre 2026.**
+
+Complément : la [0.19.0](2026-11-15-illustrations-originales.md) ajoute les originaux
+et rend cliquables les références composées avec page ; les constats 0.18.0 ci-dessous
+restent historiques.
+ Nouvelle fonctionnalité compatible,
 donc version mineure 0.18.0 ; schéma de livraison 1, profils conseillés et images
 tierces inchangés. Ce bilan ne clôt pas l’objectif d’utilité de l’assistant.
 

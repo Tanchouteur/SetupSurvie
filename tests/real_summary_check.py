@@ -19,6 +19,7 @@ from real_assistant_check import TestTransport
 async def check(args):
     base=Path(__file__).resolve().parents[1];original=httpx.AsyncClient
     report={'schema':1,'kind':'real long summary','fictional_corpus':True,'customer_validation':False,
+        'policy_digest':hashlib.sha256((base/'deploy/assistant-system.fr.txt').read_bytes()).hexdigest(),'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'illustrations_requested':args.illustrations,
         'version':json.loads((base/'deploy/release.json').read_text())['version'],
         'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').glob('*.py')))).hexdigest(),
         'model':args.model,'num_ctx':16384,'num_gpu':args.gpu_layers,'threads':6,'predict':4096,'checkpoint_states':[]}
@@ -43,7 +44,8 @@ async def check(args):
                 page=writer.add_blank_page(width=300,height=400)
                 page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
                 words=f'La notice {index} donne la valeur fictive {value} unites pour le capteur de serre. Ne pas extrapoler ces donnees de test.' if number==21 else 'Introduction historique fictive. Aucun chiffre de capteur dans cette page.'
-                stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+words+') Tj ET').encode());page[NameObject('/Contents')]=stream
+                drawing=' 30 50 60 40 re S 150 50 60 40 re S 90 70 m 150 70 l S' if args.illustrations and number==21 else ''
+                stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+words+') Tj ET'+drawing).encode());page[NameObject('/Contents')]=stream
             writer.write(guides/name);records.append({'path':name,'title':f'Notice fictive de capteur {index}','language':'fr','document_date':'2026-01-01','edition':str(index)})
         (guides/'metadata.json').write_text(json.dumps(records),encoding='utf-8')
         profile={'id':'real-summary','model':args.model,'think':True,'name':'Real fixture'}
@@ -53,7 +55,8 @@ async def check(args):
              patch.object(httpx,'AsyncClient',side_effect=lambda **kw:original(transport=TestTransport(4096,args.gpu_layers,6),**kw)):
             store.init();library.index_guides();started=time.monotonic()
             with patch.object(summaries,'launch'):
-                item=await summaries.create('fixture','Compare les valeurs des deux notices fictives de capteurs de serre et leurs limites. Cite chaque source et sa page.', 'real-summary',source_ids=['guide:'+row['path'] for row in records])
+                question='Compare les valeurs des deux notices fictives de capteurs de serre et leurs limites. Cite chaque source et sa page.'+(' Montre leurs schémas originaux.' if args.illustrations else '')
+                item=await summaries.create('fixture',question, 'real-summary',source_ids=['guide:'+row['path'] for row in records])
             task=asyncio.create_task(summaries.run(item['id']))
             try:
                 while not task.done():
@@ -63,6 +66,7 @@ async def check(args):
                 await task
                 report['elapsed_ms']=round((time.monotonic()-started)*1000);report['result']=summaries.status(item['id'],'fixture')
                 report['export']=summaries.export(item['id'],'fixture')
+                report['saved_sources']=store.messages(item['conversation_id'])[-1]['sources'] if report['result']['status']=='completed' else []
                 with store.connect() as db:report['all_nodes']=[dict(row) for row in db.execute('SELECT * FROM summary_nodes WHERE summary_id=? ORDER BY id',(item['id'],))]
                 save();print(json.dumps({'status':report['result']['status'],'error':report['result']['error'],'elapsed_ms':report['elapsed_ms']}),flush=True)
             finally:
@@ -72,5 +76,5 @@ async def check(args):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--model',required=True);parser.add_argument('--gpu-layers',type=int,choices=range(0,129),default=0);parser.add_argument('--report',type=Path,required=True)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--illustrations',action='store_true');parser.add_argument('--model',required=True);parser.add_argument('--gpu-layers',type=int,choices=range(0,129),default=0);parser.add_argument('--report',type=Path,required=True)
     asyncio.run(check(parser.parse_args()))

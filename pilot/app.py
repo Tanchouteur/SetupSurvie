@@ -70,7 +70,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.18.0'
+VERSION='0.19.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -655,12 +655,34 @@ async def map_archive(identifier:str):
     return FileResponse(path,media_type='application/octet-stream',headers={'Cache-Control':'public, max-age=3600'})
 
 
+def illustration_revision(identifier,expected):
+    current=catalogue.revision(identifier,library.GUIDES,inventory.ZIMS)
+    if expected and current!=expected:raise HTTPException(409,'Le document a changé depuis cette réponse. Ouvrez son original actuel ; cette illustration n’est pas remplacée silencieusement.')
+    return bool(expected and current==expected)
+
+
+@app.get('/api/illustrations/document')
+async def illustration_document(id:str=Query(max_length=2000),revision:str=Query(default='',pattern=r'^(?:[a-f0-9]{64})?$')):
+    match=re.fullmatch(r'(guide:.+\.pdf)#page=([1-9]\d{0,3})',id,re.I)
+    if not match or int(match[2])>1200:raise HTTPException(400,'Référence de page PDF non valide.')
+    canonical=catalogue.canonical(match[1]);key=canonical.removeprefix('guide:')
+    checked=await asyncio.to_thread(illustration_revision,canonical,revision)
+    if not catalogue.revision(canonical,library.GUIDES,inventory.ZIMS):raise HTTPException(404,'Document original indisponible.')
+    return {'url':'/guides/'+quote(key,safe='/'),'page':int(match[2]),'version_checked':checked}
+
+
 @app.get('/api/media')
-async def media(id:str):
+async def media(id:str,source_id:str=Query(default='',max_length=2000),revision:str=Query(default='',pattern=r'^(?:[a-f0-9]{64})?$')):
     path=library.safe_zim_path(id)
+    if source_id:
+        source=library.safe_zim_path(source_id)
+        if source.split('/')[0]!=path.split('/')[0]:raise HTTPException(400,'L’illustration doit appartenir à l’archive de sa source.')
+        await asyncio.to_thread(illustration_revision,source_id,revision)
+    elif revision:raise HTTPException(400,'Indiquez la source de cette illustration.')
     if path.split('/')[0] not in {b['book'] for b in await library.books()}:raise HTTPException(404,'Collection inconnue.')
     data,kind=await library.get('/content/'+quote(path,safe='/'),maximum=8_000_000)
     if not kind.startswith('image/'):raise HTTPException(400,'Ce contenu n’est pas une illustration.')
+    if source_id:await asyncio.to_thread(illustration_revision,source_id,revision)
     return Response(data,media_type=kind,headers={'Content-Security-Policy':"sandbox; default-src 'none'"})
 
 

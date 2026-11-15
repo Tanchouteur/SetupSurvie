@@ -118,12 +118,21 @@ function renderText(target,text,sources=[]){
   // Citations stay clickable, except inside literal code and existing links.
   const walker=document.createTreeWalker(fragment,NodeFilter.SHOW_TEXT),texts=[];
   while(walker.nextNode())if(!walker.currentNode.parentElement?.closest('code,pre,a'))texts.push(walker.currentNode);
+  const citation=/\[(\d{1,3}(?:\s*[,;]\s*\d{1,3})*)(?:\s*,\s*p(?:age)?s?\.?\s*(\d{1,4}))?\]/gi;
   for(const node of texts){
-    const parts=node.textContent.split(/(\[\d+\])/g);if(parts.length===1)continue;
-    const replacement=document.createDocumentFragment();
-    for(const part of parts){const source=/^\[\d+\]$/.test(part)&&sources.find(s=>s.number===Number(part.slice(1,-1)));
-      replacement.append(source?button(part,()=>readSource(source.id),'citation'):document.createTextNode(part));}
-    node.replaceWith(replacement);
+    const text=node.textContent,replacement=document.createDocumentFragment();let last=0;
+    for(const match of text.matchAll(citation)){
+      if(match.index&&/[\p{L}\p{N}_\\]/u.test(text[match.index-1]))continue;
+      replacement.append(document.createTextNode(text.slice(last,match.index)));
+      const numbers=match[1].split(/\s*[,;]\s*/).map(Number),known=numbers.map(number=>sources.find(source=>source.number===number));
+      if(known.every(Boolean))for(const source of known){
+        const page=Number(match[2]),base=source.id.split('#page=')[0],readPage=source.id.endsWith('#page='+page)||source.pages?.includes(page);
+        const target=page&&readPage&&base.startsWith('guide:')&&base.toLowerCase().endsWith('.pdf')?base+'#page='+page:source.id;
+        replacement.append(button('['+source.number+(page?', p. '+page:'')+']',()=>readSource(target),'citation'));
+      }else replacement.append(document.createTextNode(match[0]));
+      last=match.index+match[0].length;
+    }
+    if(last){replacement.append(document.createTextNode(text.slice(last)));node.replaceWith(replacement);}
   }
   for(const table of fragment.querySelectorAll('table')){const wrap=element('div',undefined,'message-table');wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Tableau défilant horizontalement');table.replaceWith(wrap);wrap.append(table);wrap.before(element('p','Faites glisser le tableau pour lire les autres colonnes →','table-scroll-hint'));}
   target.replaceChildren(fragment);
@@ -175,7 +184,7 @@ function message(role,text,sources=[],profile='',observed=null){
   tracking.append(element('p',undefined,'small muted documentary-source-heading'),element('div',undefined,'documentary-sources'));
   node.append(tracking);if(role==='assistant')documentaryStatus(tracking,observed);
   if(sources.length)node.append(sourceChips(sources));
-  $('chat-messages').append(node);return {node,body,tracking};
+  node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources}}));return {node,body,tracking};
 }
 function newConversation(){
   if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
@@ -432,7 +441,7 @@ function watch(id){
   async function poll(){
     try{const job=await api('/jobs/'+encodeURIComponent(id));const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
       document.dispatchEvent(new CustomEvent('survie:job',{detail:{...job,id}}));
-      const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',referencing:'Ajout des références aux documents consultés',switching:'Changement de modèle en cours, votre question est conservée',loading:'Chargement du modèle',retrying:'Reprise automatique, votre question est conservée',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
+      const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',illustrating:'Sélection des illustrations originales',referencing:'Ajout des références aux documents consultés',switching:'Changement de modèle en cours, votre question est conservée',loading:'Chargement du modèle',retrying:'Reprise automatique, votre question est conservée',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
       const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
       $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
       renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':phase+'…'),job.sources);

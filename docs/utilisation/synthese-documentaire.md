@@ -1,6 +1,6 @@
 # Faire une synthèse des documents
 
-**Guide 0.18.0 — 15 novembre 2026.** Les essais simulés et les essais avec un
+**Guide 0.19.0 — 15 novembre 2026.** Les essais simulés et les essais avec un
 modèle réel sont distincts. Le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
 précise leurs résultats ; le corpus fictif ne valide pas celui de Marc.
 
@@ -71,7 +71,7 @@ demande différente conserve les contrôles de disponibilité du moteur document
 Ce budget n’est pas une promesse de durée globale : le chargement et la génération
 du modèle s’y ajoutent, dans le plafond de quinze minutes de la conversation.
 
-**Restent à développer ou qualifier :** illustrations, fidélité des longues
+**Restent à développer ou qualifier :** vision, autres formats d’illustrations, fidélité des longues
 synthèses et choix des modèles sur des essais représentatifs. La sélection
 manuelle multiple est maintenant disponible. Voir le [programme retenu](../decisions/assistant-recherche-et-synthese.md).
 
@@ -127,3 +127,10 @@ conclusion injustifiée. Les contrôles portent sur l’existence des extraits e
 références, pas sur la vérité de chaque phrase. Le [bilan 0.18.0](../essais/2026-11-15-syntheses-longues-et-reprise.md)
 distingue les petites fixtures des essais sur modèle réel ; le fonds de Marc et
 un vrai livre de 500 pages restent à éprouver.
+
+
+Depuis 0.19.0, une demande de schémas peut aussi proposer les
+[illustrations originales](illustrations-et-references.md) des textes retenus,
+y compris après une synthèse longue. Les instantanés conservent leurs références
+et l’empreinte locale connue, pas une copie des images ; leur affichage dépend
+des originaux encore disponibles. Les exports restent textuels.

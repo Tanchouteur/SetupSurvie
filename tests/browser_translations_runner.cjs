@@ -79,6 +79,10 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const summaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_long_summaries.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const summaryResult=await summaryRecipe(summaryPage);await summaryContext.close();
       console.log(JSON.stringify({engine:name,longSummaries:summaryResult}));
+      const figuresContext=await browser.newContext();const figuresPage=await figuresContext.newPage();
+      const figuresRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_source_figures.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/figures-')+')');
+      const figuresResult=await figuresRecipe(figuresPage);await figuresContext.close();
+      console.log(JSON.stringify({engine:name,sourceFigures:figuresResult}));
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);

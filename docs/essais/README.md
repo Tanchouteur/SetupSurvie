@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Illustrations originales](2026-11-15-illustrations-originales.md) — 0.19.0, sélection réelle, rendu des originaux et références composées.
+
 - [Synthèses longues et reprise](2026-11-15-syntheses-longues-et-reprise.md) — 0.18.0, instantanés, notes, reprise et essais réels R7.
 
 - [Documents choisis et pages PDF](2026-11-15-documents-choisis-et-pages-pdf.md) — 0.17.0, sélection multiple persistante, traduction distincte et essais R7.

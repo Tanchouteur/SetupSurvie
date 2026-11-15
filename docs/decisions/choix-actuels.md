@@ -8,7 +8,9 @@ les références sans réécrire les faits ; elle ne certifie pas leur véracit�
 Les profils conseillés restent inchangés. Le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
 conserve aussi les approches essayées puis abandonnées. La sélection manuelle multiple est ajoutée en 0.17.0 ;
 la 0.18.0 ajoute les longues lectures avec notes et reprise explicite.
-Illustrations et fidélité sur de vrais livres restent à qualifier.
+La 0.19.0 ajoute les [illustrations originales](../utilisation/illustrations-et-references.md),
+sélectionnées selon le texte et les légendes. Vision et fidélité sur de vrais livres
+restent à qualifier.
 
 Le R2 réel 0.15.0 reçu ensuite annonce **32 recherches complètes**, médiane de fin
 2,11 s avec cache déjà largement réutilisé, sans avis humain. Les captures
