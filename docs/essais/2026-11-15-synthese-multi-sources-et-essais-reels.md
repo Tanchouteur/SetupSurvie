@@ -49,7 +49,7 @@ Aucune version tierce du projet n’a changé.
 Le digest des fichiers `pilot/*.py` du candidat testé est
 `903ce5fd3fb07b13088db489613a24c08250b36e458fc34f5fd35fdb04102adf`.
 Les rapports sont privés ; les temps ci-dessous incluent préparation et inférence.
-Le candidat final testé après les corrections de fermeture du cache a pour digest
+Le candidat testé après les corrections de fermeture du cache a pour digest
 `a01cdd1fb0d602f8e7a759dcc91f3b302ded96ad517206734128ed8195c26bfd`.
 
 | Code et modèle | Résultat observé | Limites |
@@ -57,7 +57,7 @@ Le candidat final testé après les corrections de fermeture du cache a pour dig
 | 0.15.1, Gemma4 E4B, formulation avec comparaison | 30 807 ms ; zéro notice lue, aucune des cinq valeurs ; affirmation d’absence | Même corpus et options que l’essai partiel 0.16.0 ; un seul passage par formulation, pas un benchmark statistique |
 | 0.16.0, Gemma4 E4B, demande simple | 45 102 ms ; cinq notices lues et cinq associations valeur/notice correctes, références directes | GPU complet ; la marge vidéo a refusé le lancement du cas suivant. Texte trop verbeux et dates non rappelées ; pas une réussite de tous les critères éditoriaux |
 | 0.16.0, Gemma4 E4B, formulation avec comparaison | 70 027 ms ; cinq notices et valeurs correctes, tableau et références directes, nature fictive conservée | Huit couches GPU, six threads, contexte 16k, réflexion activée, sortie maximale 4 096 tokens. Dates non rappelées ; corpus étroit |
-| Candidat final 0.16.0, Gemma après préchargement réel de Llama | 83 606 ms ; passage à Gemma préparé en 4 076 ms, aucune reprise, cinq valeurs, références, dates et éditions correctes | Première demande après changement ; Linux/R7, pas Windows. Ce passage a fourni directement ses références |
+| Candidat 0.16.0 après correction du cache, Gemma après préchargement réel de Llama | 83 606 ms ; passage à Gemma préparé en 4 076 ms, aucune reprise, cinq valeurs, références, dates et éditions correctes | Première demande après changement ; Linux/R7, pas Windows. Ce passage a fourni directement ses références |
 | 0.16.0, Llama3.1 8B, deux formulations | 58 465 / 44 755 ms ; cinq notices lues et cinq valeurs présentes, références ajoutées par l’étape structurée | **Échec de fidélité sur la demande simple** : obsolescence et absence de précision inventées, attribution groupée trop large. La demande avec comparaison associe correctement les cinq valeurs, mais ajoute du texte technique inutile |
 
 Gemma : digest
@@ -75,6 +75,19 @@ Empreintes SHA-256 des rapports privés :
 | Gemma comparaison 0.16.0 | `c91d9680b8b2cfc5072113d309df19c0da3523209663193a50e5701a72a1eb42` |
 | Llama, fragments 0.16.0 | `f5e7f5179a94d69a304a8c2fc7c0d7e68b43fe8a49bd20e24f99fa66685977ad` |
 | Gemma, changement de modèle final | `d364a105b864f6a633c9bb42aa5d1828d7033fa42398c520cbee2648e2fdf137` |
+| Liaison Gemma sans réflexion, étape isolée | `865f7d36bc00730dbc836014aa41818400d79b2700b6d02c881c6c12ae20c6a0` |
+
+Un autre passage après changement de modèle avait correctement rédigé les cinq
+faits et dates mais épuisé les 2 048 tokens de liaison en réflexion : **155 336 ms,
+état incomplet**. Le texte utile restait conservé. La liaison conserve désormais
+le modèle et réduit uniquement sa réflexion (désactivée ou `low`, selon le profil).
+L’étape isolée sur ce brouillon réel et les extraits lus du même corpus a terminé
+en **13 343 ms**, 190 tokens, huit liens admis, zéro rejet. Ce n’est pas un nouvel
+essai complet de conversation. Le contrôle de l’affichage a ensuite repéré que
+des liens ajoutés après le dernier `|` d’un tableau étaient masqués par Markdown :
+ils sont maintenant insérés dans sa dernière cellule. Rejeu de la même proposition
+JSON : cinq lignes, trois cellules chacune, un lien visible par notice. Ce dernier
+correctif serveur ne change ni les fragments transmis au modèle ni leurs identifiants.
 
 ## Pistes explorées, conservées ou abandonnées
 
@@ -94,7 +107,9 @@ Empreintes SHA-256 des rapports privés :
 
 ## Vérifications automatisées et livraison
 
-Runner Linux Python 3.13 : **649 tests, trois ignorés**, sans modèle réel. Ils
+Runner Linux Python 3.13 : **649 tests, trois ignorés**, avant le dernier contrôle
+de cellule de tableau, puis cinq tests ciblés de liaison réussis. Aucun modèle réel
+n’est exécuté dans ces tests. Ils
 couvrent notamment passages tardifs, procédures face à l’historique, UTF-8,
 contexte réduit, cinq sources, doublons, échec de lecture, provenance des
 traductions, annulation, références fictives et outils répétés.

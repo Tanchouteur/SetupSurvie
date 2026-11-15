@@ -21,6 +21,14 @@ class CitationLinkTests(unittest.TestCase):
             linked,report=citation_links.apply(answer,{'citations':[{'fragment_id':identifier,'source_number':number}]},self.refs)
             self.assertEqual(linked,answer);self.assertEqual(report['applied'],0);self.assertEqual(report['rejected'],1)
 
+    def test_citation_inside_last_table_cell_remains_visible_without_an_extra_column(self):
+        answer='| Notice | Valeur | Source |\n| --- | --- | --- |\n| A | 17 unités | Notice A |'
+        part=citation_links.fragments(answer)[-1]
+        linked,report=citation_links.apply(answer,{'citations':[{'fragment_id':part['id'],'source_number':1}]},self.refs)
+        self.assertEqual(linked,answer[:-1].rstrip()+' [1] |')
+        self.assertEqual(report,{'applied':1,'rejected':0})
+        self.assertEqual(part['text'],'| A | 17 unités | Notice A |')
+
     def test_code_is_not_modified_or_mistaken_for_documentary_citations(self):
         answer='```python\nresultat = tableau[1] + tableau[99]\n```'
         linked,report=citation_links.apply(answer,{'citations':[{'fragment_id':'f0','source_number':1}]},self.refs)

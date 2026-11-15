@@ -32,7 +32,8 @@ estimation de l’API à une mesure continue de l’occupation GPU réelle.
 L’outil n’installe aucun modèle et ne change pas le service. Les requêtes ont un
 maintien en mémoire de quinze secondes. L’URL doit être locale. Le rapport est
 privé et contient les réponses, sources, mesures, options demandées, empreinte du
-code Python et identité du modèle. La présence des cinq valeurs est un repère
+code Python, empreinte de la recette, passages transmis et identité du modèle.
+La présence des cinq valeurs est un repère
 automatique ; elle ne valide ni les unités, ni les associations, ni les conclusions.
 
 Lire les réponses : chaque valeur doit correspondre à sa notice ; le modèle ne

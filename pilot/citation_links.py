@@ -16,6 +16,11 @@ def fragments(answer):
             if len(text)<12:continue
             start=line.start()+match.start();end=line.start()+match.end()
             if any(start<right and end>left and (answer[left:left+3] in ('```','~~~') or end<right) for left,right in spans):continue
+            # A citation after a table row's closing pipe creates an extra
+            # column which Markdown renderers can silently discard.
+            if end==line.end() and line[0].lstrip().startswith('|') and line[0].rstrip().endswith('|'):
+                end=line.start()+line[0].rfind('|')
+                while end>start and answer[end-1].isspace():end-=1
             result.append({'id':'f'+str(len(result)),'text':text,'end':end})
     return result
 

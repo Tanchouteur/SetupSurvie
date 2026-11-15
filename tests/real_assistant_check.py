@@ -44,6 +44,7 @@ async def check(args):
     base=Path(__file__).resolve().parents[1]
     report['software_version']=json.loads((base/'deploy/release.json').read_text())['version']
     report['source_digest']=hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest()
+    report['recipe_digest']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     async def available(**kwargs):
         async with original_client(trust_env=False,timeout=5) as client:
             response=await client.get(args.endpoint+'/api/ps');response.raise_for_status()
@@ -114,6 +115,7 @@ async def check(args):
                 if trace.exists():
                     evidence=json.loads(trace.read_text());case['rejected_proposals']=evidence.get('rejected_answers',[])
                     case['citation_proposals']=[item.get('proposals') for item in evidence.get('tools',[]) if item.get('stage')=='citation_linking']
+                    case['read_packets']=[item['result'] for item in evidence.get('tools',[]) if item.get('tool')=='read_sources']
                 report['cases'].append(case)
                 durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
                 print(json.dumps({'name':name,'status':job['status'],'sources_read':measures.get('sources_read') if measures else None,'total_ms':measures.get('total_ms') if measures else None}),flush=True)
@@ -123,7 +125,7 @@ async def check(args):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--endpoint',default='http://127.0.0.1:21434')
+    parser.add_argument('--endpoint',default='http://127.0.0.1:11434')
     parser.add_argument('--model',required=True)
     parser.add_argument('--switch-from',help='Explicitly preload another installed test model, then test the selected model switch.')
     parser.add_argument('--case',choices=('all','simple','natural'),default='all')
