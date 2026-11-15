@@ -228,7 +228,9 @@ horodatées, dans une recherche commune avec les documents. Voir le
 des sous-titres français **pour chaque vidéo**, pas seulement quelques exemples.
 Le [protocole R6 cible](../essais/protocole-sous-titres-videos.md) définit les
 preuves, les exceptions visibles et la différence entre contrôle technique et
-relecture humaine. L’outillage vidéo reste à développer.
+relecture humaine. L’inventaire des fichiers et pistes locales est livré en
+0.14.0 ; acquisition, transcription, traduction, lecteur synchronisé et inventaire
+des vidéos des ZIM restent à développer et qualifier.
 
 - Inventorier médias et pistes réellement présents dans les ZIM, avec langue et
   format ; fournir ce relevé avant de présumer qu’il faut tout transcrire.
@@ -405,3 +407,7 @@ Les deux outils parallèles sont intégrés en 0.14.0 : inventaire vidéo local 
 Leur [bilan commun](../essais/2026-11-15-integration-outils-validation-videos.md)
 conserve les preuves, ajustements et limites. Ils ne constituent pas une validation
 du fonds réel ni une livraison de la traduction ou de l’indexation des paroles.
+
+L’[audit de fin du moteur](../essais/2026-11-15-audit-fin-recherche.md) confronte
+les critères à leurs preuves actuelles et précise le prochain R2 à fournir sur
+le PC réel. Il ne déclare pas le plan complet ou l’objectif terminés.

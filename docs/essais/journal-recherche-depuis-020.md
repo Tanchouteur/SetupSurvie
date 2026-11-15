@@ -230,3 +230,15 @@ avec aide des deux scripts exécutée depuis la copie déballée. Le passage Git
 `43689514723` ne lance aucun de ses huit jobs à cause de la restriction du compte ;
 il ne donne aucun résultat d’essai supplémentaire. Les commandes Windows et la
 recette sur le fonds réel restent nécessaires, sans réindexation intégrale imposée.
+
+## Audit avant clôture — 15 novembre 2026
+
+L’[audit de fin](2026-11-15-audit-fin-recherche.md) vérifie le périmètre réel de
+l’objectif : le dernier R2 reçu reste celui de la 0.12.0, sans avis humain.
+La 0.14.0 publiée n’est pas déclarée validée sur les 755 Go de Marc. La nouvelle
+mesure et l’ouverture des résultats deviennent nécessaires pour conclure ;
+les essais de développement ne remplacent pas ce contrôle. L’étude des sous-titres
+et l’inventaire local sont faits dans leurs périmètres, les traitements suivants
+restent prévus. Les anciens chemins de réglages du protocole de recette sont
+corrigés vers les rubriques actuelles, en distinguant contrôle et indexation.
+Aucun code, schéma ni numéro de version n’est modifié par cet audit documentaire.

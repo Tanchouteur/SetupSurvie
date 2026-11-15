@@ -1,16 +1,18 @@
 # Recettes progressives sur le PC de Marc
 
-**Protocole actuel et suites prévues — 14 novembre 2026.** Louis et Marc testeront au fil des lots.
+**Protocole actuel et suites prévues — 15 novembre 2026.** Louis et Marc testeront au fil des lots.
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
 ## Ce qui est utilisable maintenant
 
-Depuis 0.3.0 : **Famille → Mon appareil → Réglages → Vérifier la recherche**, puis
-**Télécharger le rapport**. Depuis 0.4.0, les dix recherches n’appellent aucun modèle et le
-rapport exporte version, délais, couverture, résultats et extraits. Pour les ZIM
-sans index réel, la [création/reprise manuelle](../utilisation/indexation-archives.md)
-est disponible au même endroit. Ces deux opérations sont distinctes.
+Le contrôle de recherche est disponible depuis 0.3.0. Le chemin actuel est
+**Famille → Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**,
+puis **Télécharger le rapport**. Les recherches de ce contrôle n’appellent aucun
+modèle ; le rapport exporte version, délais, couverture, résultats et extraits.
+La [création/reprise des index](../utilisation/indexation-archives.md) est une
+opération distincte, dans **Paramètres → Bibliothèque et préparations → Préparer
+la recherche dans les archives**.
 
 Depuis 0.5.0, **Contrôle complet · 32 recherches** élargit R2. Après lecture,
 choisir les résultats utiles ou indiquer qu’aucun ne répond ; laisser les autres
@@ -20,7 +22,7 @@ distingue mesures et avis humains. Aucun résultat fictif n’est attendu sur le
 Depuis 0.11.1, ce même contrôle exporte aussi les détails des appels et les
 compléments d’index manquants. Le rapport 0.12.0 confirme maintenant les 135 archives
 examinées, dont 15 compléments locaux prêts. Ne pas refaire cette extraction pour
-le seul changement 0.13.0 : mesurer d’abord le flux progressif et le cache avec le
+la seule mise à jour en 0.14.0 : mesurer d’abord le flux progressif et le cache avec le
 contrôle complet. Il peut attendre 90 secondes par demande et reste annulable.
 Une autre préparation est nécessaire si un contenu ou son édition change.
 

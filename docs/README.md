@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Audit de fin du moteur](essais/2026-11-15-audit-fin-recherche.md) — critères vérifiés et validation réelle encore requise en 0.14.0.
+
 - [Inventaire des vidéos et sous-titres](utilisation/inventaire-videos.md) — outil en lecture seule 0.14.0, état par média et rapports privés.
 - [Diagnostic des délais Kiwix](exploitation/diagnostic-performances-kiwix.md) — outil 0.14.0, une archive, réception et répétition sans effacer les caches.
 - [Intégration des outils des deux agents](essais/2026-11-15-integration-outils-validation-videos.md) — preuves, compatibilité et limites.
