@@ -68,5 +68,3 @@ async def extract(identifier,first_page=1,last_page=None,*,purpose='traduction',
         if purpose!='traduction':
             error.detail=str(error.detail).replace('la traduction','la lecture complète').replace('cette traduction','cette lecture complète').replace('traduction intégrale','lecture complète').replace('traduction partielle','lecture partielle')
         raise
-
-

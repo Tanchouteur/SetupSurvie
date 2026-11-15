@@ -92,7 +92,7 @@ vidéo livré précédemment reste distinct de ces traitements.
 
 ## Rejeu du candidat final
 
-Le candidat incluant les liens vers les pages termine en **74 265 ms** : 42/42
+Le candidat fonctionnel `cad905c` incluant les liens vers les pages termine en **74 265 ms** : 42/42
 passages, sept étapes enregistrées, valeurs 17 et 59 correctement attribuées,
 limites, dates, éditions et pages 21 conservées. Le modèle écrit cette fois les
 références sous la forme `[1, p. 21]` dans le corps, avec `[1]` et `[2]` dans la
