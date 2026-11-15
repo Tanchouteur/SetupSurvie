@@ -109,6 +109,19 @@ Les liens locaux des documents modifiés et leurs ancres sont vérifiés,
 aucune validation Windows de cette correction n’est encore revendiquée.
 La mise à jour conserve le schéma 1 et les composants tiers.
 
+Le code livré est `aa389f1`. Le [passage CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43695594332)
+ne lance aucun des huit jobs : GitHub signale des paiements échoués ou un plafond
+de dépenses à relever. Ce refus intervient avant les tests et ne vaut pas
+validation Windows, lecteurs Python isolés, routage ou WebKit de cette version.
+Les preuves locales ci-dessus sont conservées sans contourner ce réglage du compte.
+
+Le paquet local est déballé par le lecteur normal : **745 fichiers**, 6 650 131
+octets, version 0.14.1 et schéma 1. Chaque fichier est comparé au commit `aa389f1`
+avec les filtres de checkout Git, dont les fins de ligne CRLF imposées aux scripts
+PowerShell. Aide des deux outils exécutée depuis la copie déballée ; aucun ZIM,
+modèle, cache ou état privé inclus. SHA-256 :
+`641965b67d2b704718f05a7b199d9935fbb5d21c3b95ef8c7b0c2d530cafcee8`.
+
 ## Suite et décision matérielle
 
 Après mise à jour normale, relancer le même R2 sans IA en 0.14.1, puis lire les

@@ -267,3 +267,9 @@ Le gain synthétique n’est pas présenté comme un gain Windows. Louis demande
 travailler en autonomie pendant trois heures ; aucune mesure distante, recette
 humaine ou utilisation de tous les CPU n’est inventée. Une prochaine mesure du
 correctif et la lecture des documents restent nécessaires pour clore l’objectif.
+
+La livraison 0.14.1 passe 568 tests locaux (trois ignorés), 90 contrôles Kiwix
+sur petits fonds générés et 68 assertions Chromium. Les 745 fichiers du paquet
+sont déballés et comparés au commit `aa389f1`, avec les fins de ligne du checkout.
+La CI `43695594332` est refusée avant ses huit jobs pour une limite de facturation
+GitHub ; Windows et WebKit de cette correction restent non exécutés en CI.
