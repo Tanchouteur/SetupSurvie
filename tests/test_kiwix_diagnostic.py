@@ -10,6 +10,7 @@ import tempfile
 import threading
 import time
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit
 
@@ -66,6 +67,30 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class DiagnosticTests(unittest.TestCase):
+    def fake_pipe_measure(self,message):
+        class Receive:
+            calls=0
+            def poll(self,timeout):
+                self.calls+=1
+                if self.calls>1:raise BrokenPipeError('Windows named pipe closed')
+                return True
+            def recv(self):return dict(message)
+            def close(self):pass
+        receive=Receive();process=SimpleNamespace(start=lambda:None,is_alive=lambda:False,join=lambda timeout:None)
+        context=SimpleNamespace(Pipe=lambda **_: (receive,SimpleNamespace(close=lambda:None)),Process=lambda **_:process)
+        with patch.object(diagnostic.mp,'get_context',return_value=context):
+            result=diagnostic.measure('http://127.0.0.1/fixture','json',1,time.monotonic()+2)
+        return result,receive.calls
+
+    def test_terminal_result_does_not_poll_a_closed_windows_pipe(self):
+        result,calls=self.fake_pipe_measure({'finished':True,'result_count':1})
+        self.assertEqual(result['status'],'complete');self.assertEqual(result['result_count'],1);self.assertEqual(calls,1)
+
+    def test_early_worker_exit_preserves_partial_measurements_without_raising(self):
+        result,_=self.fake_pipe_measure({'event':{'state':'results','results':[{'id':'fixture'}],'coverage':{'status':'partial'}}})
+        self.assertEqual(result['status'],'error');self.assertEqual(result['error'],'worker_stopped')
+        self.assertEqual(result['result_count'],1);self.assertIsNotNone(result['first_results_ms'])
+
     @classmethod
     def setUpClass(cls):
         cls.server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)

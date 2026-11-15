@@ -35,6 +35,14 @@ Le document associé, déjà lu par le portail pour préparer la question, est r
 en mémoire par la demande. Il ne fait plus une seconde lecture identique avant
 le premier appel au modèle. Cette lecture préparatoire figure dans les durées.
 
+Depuis 0.16.0, le rapport distingue les **documents préparés**, les **liaisons
+ajoutées aux sources** et le temps de cette liaison (`source_linking`). Le dossier
+peut contenir plusieurs sources et des passages loin de leur début. Une liaison
+valide identifie une source effectivement lue ; elle ne certifie pas le sens de
+la réponse. L’export conserve `prepared_sources`, `citation_linking`,
+`citation_revisions` et `stagnant_rounds`, sans ajouter de texte privé. Les anciennes
+mesures n’inventent pas ces champs. Voir le [guide de synthèse](synthese-documentaire.md).
+
 ## Changer de modèle pendant une conversation — 0.15.1
 
 Choisir un autre mode puis envoyer sa question suffit. Le portail indique le

@@ -223,8 +223,9 @@ class EvidenceTests(unittest.TestCase):
 
     def test_summary_without_valid_citations_gets_one_final_revision(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
-        payloads,answer=self.run_chat([{'content':'Première proposition sans référence.'},{'content':'Source lue : charge fictive 10 kg [1].'}],[self.a])
+        payloads,answer=self.run_chat([{'content':'La charge fictive indiquée vaut 10 kg.'},{'content':json.dumps({'citations':[{'fragment_id':'f0','source_number':1}]})}],[self.a])
         self.assertEqual(len(payloads),2);self.assertEqual(payloads[-1]['tools'],[])
+        self.assertIn('format',payloads[-1]);self.assertIn('10 kg. [1]',answer['content'])
         self.assertEqual(assistant_metrics.read('j')['citation_revisions'],1)
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
 
@@ -234,6 +235,12 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn('ne constituent pas une synthèse validée',answer['content'])
         self.assertIn(self.a['text'],answer['content']);self.assertNotIn('[99]',answer['content'])
         self.assertEqual(assistant_metrics.read('j')['failure'],'citation_check')
+
+    def test_missing_link_format_keeps_useful_original_prose_with_a_clear_limit(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
+        _,answer=self.run_chat([{'content':'Le document donne une charge fictive de 10 kg.'},{'content':'JSON de liaison indisponible.'}],[self.a],expected_status='incomplete')
+        self.assertIn('charge fictive de 10 kg',answer['content']);self.assertIn('Références à vérifier',answer['content'])
+        self.assertEqual(answer['sources'],[]);self.assertEqual(answer['documentary']['sources_read'],1)
 
     def test_batch_reading_tool_preserves_independent_source_evidence(self):
         sources={self.a['id']:self.a,self.b['id']:self.b}

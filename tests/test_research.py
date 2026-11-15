@@ -27,6 +27,11 @@ class PassageTests(unittest.TestCase):
         text=('Introductory fictional background. '*200)+'Fire making by friction: fictional wood observation.'
         self.assertTrue(any('friction' in part['text'] for part in research.passages(text,'allumage du feu au frottement',1000)))
 
+    def test_practical_section_precedes_history_even_when_both_mention_the_topic(self):
+        text=('Histoire du générateur à pédales et évolution des objets. '*100)+'\nÉtapes de construction du générateur à pédales. Matériel fictif et outils inventés : repère ZETA, sans consigne de fabrication réelle.'
+        parts=research.passages(text,'fabriquer un générateur à pédales',1000)
+        self.assertTrue(any('ZETA' in part['text'] for part in parts))
+
     def test_whole_tiny_source_and_unicode_budget(self):
         text='Échantillon 🧭 et température.'
         self.assertEqual(research.passages(text,'température',500),[{'text':text,'offset':0,'next_offset':len(text)}])

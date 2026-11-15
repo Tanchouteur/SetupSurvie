@@ -12,7 +12,7 @@ CACHE=OrderedDict()
 async def describe(endpoint,model,*,fresh=False):
     key=(str(store.ROOT),endpoint,model);previous=CACHE.get(key)
     if previous and not fresh and time.monotonic()-previous[0]<60:return dict(previous[1])
-    result={'model':model,'available':False,'installed':False,'native_context':None,'digest':None,'version':None,'running':None,'other_models':0}
+    result={'model':model,'available':False,'installed':False,'native_context':None,'digest':None,'version':None,'running':None,'other_models':0,'tool_schema_placement':'native'}
     try:
         async with httpx.AsyncClient(trust_env=False,timeout=3) as client:
             async with asyncio.timeout(4):
@@ -21,6 +21,8 @@ async def describe(endpoint,model,*,fresh=False):
                 for response in (version,tags,show,ps):response.raise_for_status()
                 listed=next((m for m in tags.json().get('models',[]) if m.get('name',m.get('model'))==model),None)
                 details=show.json();info=details.get('model_info',{})
+                template=details.get('template','')
+                placement='last_user' if isinstance(template,str) and re.search(r'\band\s+\$?\.Tools\s+\$last\b',template) else 'native'
                 lengths=[value for name,value in info.items() if name.endswith('.context_length') and type(value) is int and 0<value<=10_000_000]
                 native=info.get(str(info.get('general.architecture',''))+'.context_length')
                 if type(native) is not int or native not in lengths:native=lengths[0] if len(lengths)==1 else None
@@ -31,7 +33,7 @@ async def describe(endpoint,model,*,fresh=False):
                     native_context=native,digest=digest if re.fullmatch('[a-fA-F0-9]{64}',digest) else None,
                     version=release if re.fullmatch(r'[0-9][a-zA-Z0-9.+-]{0,60}',release) else None,
                     running={k:running.get(k) for k in ('name','digest','size','size_vram','context_length')} if running else None,
-                    other_models=sum(m.get('name',m.get('model'))!=model for m in ps.json().get('models',[])))
+                    other_models=sum(m.get('name',m.get('model'))!=model for m in ps.json().get('models',[])),tool_schema_placement=placement)
     except (TimeoutError,httpx.HTTPError,ValueError,TypeError,AttributeError):pass
     CACHE[key]=(time.monotonic(),result)
     while len(CACHE)>16:CACHE.popitem(last=False)

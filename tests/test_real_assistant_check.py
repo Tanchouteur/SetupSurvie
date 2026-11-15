@@ -1,4 +1,4 @@
-"""The optional real-model recipe must never accidentally use the rented GPU."""
+"""The optional real-model recipe only uses the GPU when explicitly selected."""
 import json
 import unittest
 import httpx

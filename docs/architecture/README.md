@@ -1,6 +1,9 @@
 # Architecture du pilote
 
-## Dossiers documentaires — préparation 0.16.0
+Vue de référence documentaire actualisée le 15 novembre 2026. Elle décrit les rôles
+des composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
+
+## Dossiers documentaires — 0.16.0
 
 `pilot/research.py` choisit des passages correspondant aux concepts bilingues de
 la question, avec positions dans le texte extrait et budget UTF-8. Il distingue
@@ -17,14 +20,18 @@ pas imposée à la première recherche du sujet principal.
 
 Deux tours sans preuve documentaire nouvelle conduisent à la rédaction. Pour une
 synthèse explicite, les références numériques sont contrôlées contre les passages
-consultés, avec une seule reprise finale. Ce contrôle ne vérifie pas le sens.
-Un échec conserve les extraits et l’état incomplet/échoué. Les propositions refusées
+consultés. `citation_links.py` peut demander une association JSON de fragments
+numérotés par le serveur et de sources lues, sans régénération des faits.
+Ce contrôle ne vérifie pas le sens. Un échec conserve le texte utile avec avertissement,
+ou les extraits si une source inconnue est citée, et l’état incomplet/échoué. Les propositions refusées
 restent dans les traces privées, en dehors des mesures numériques.
 Les instructions sont regroupées dans le premier message système pour éviter
 une fin de conversation système sans marqueur de génération dans certains modèles.
+Le lecteur de métadonnées reconnaît aussi les modèles dont le gabarit ne présente
+les outils qu’après le dernier message utilisateur ; leurs définitions de confiance
+restent alors visibles après les résultats d’outils, sans élever ces résultats au rôle système.
 
-Vue de référence documentaire au 14 novembre 2026. Elle décrit les rôles des
-composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
+## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |
 | --- | --- | --- |

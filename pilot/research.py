@@ -35,9 +35,10 @@ def subject(query):return retrieval.plan(query,library.search_terms(query),libra
 
 def passages(text,query,maximum):
     if not text.strip() or maximum<80:return []
-    if len(text.encode('utf-8'))<=maximum:return [{'offset':0,'text':text,'next_offset':len(text)}]
+    if len(text)<=1800 and len(text.encode('utf-8'))<=maximum:return [{'offset':0,'text':text,'next_offset':len(text)}]
     plan=subject(query);groups=plan.token_groups
     width=min(1800,max(80,maximum//2));stride=max(40,width//2)
+    procedure=set('etape etapes materiel outils montage construction fabrication procedure instructions steps materials tools assembly construction building repairing'.split())
     candidates=[]
     for start in range(0,len(text),stride):
         value=text[start:start+width];normalized=retrieval.normal(value);words=set(normalized.split())
@@ -48,7 +49,8 @@ def passages(text,query,maximum):
             anchors.extend(match.start() for word in matched if (match:=re.search(r'\b'+re.escape(word)+r'\b',normalized)))
         center=sum(anchors)/len(anchors) if anchors else 0
         centrality=min(center,max(0,len(normalized)-center))/max(1,len(normalized))
-        score=matches*10+(10 if groups and matches==len(groups) else 0)+centrality
+        practical=len(words&procedure) if matches and plan.practical and plan.action else 0
+        score=matches*10+(10 if groups and matches==len(groups) else 0)+practical+centrality
         candidates.append((score,start,value))
     candidates.sort(key=lambda row:(-row[0],row[1]));selected=[];remaining=maximum
     for score,start,value in candidates:
@@ -123,9 +125,18 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
     return result
 
 
+def code_spans(answer):
+    return [match.span() for match in re.finditer(r'```[\s\S]*?(?:```|\Z)|~~~[\s\S]*?(?:~~~|\Z)|`[^`\n]*`',answer)]
+
+
+def citation_numbers(answer):
+    spans=code_spans(answer)
+    return {int(match[1]) for match in re.finditer(r'(?<![\w])\[(\d{1,3})\]',answer) if not any(start<=match.start()<end for start,end in spans)}
+
+
 def citations_valid(answer,references):
     read={item['number'] for item in references.values() if item.get('consulted')}
-    citations={int(value) for value in re.findall(r'\[(\d{1,3})\]',answer)}
+    citations=citation_numbers(answer)
     return bool(citations&read) and citations<=read
 
 

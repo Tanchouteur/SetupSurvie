@@ -1,5 +1,7 @@
 # Utiliser le serveur familial
 
+- [Faire une synthèse des documents](synthese-documentaire.md) — dossier multi-source, lectures par passages et limites des références, 0.16.0.
+
 - [Inventorier les vidéos et sous-titres locaux](inventaire-videos.md) — outil volontaire en lecture seule, 0.14.0.
 
 - [Rechercher un document](recherche-documentaire.md) — premiers résultats, filtres et contrôle exportable.

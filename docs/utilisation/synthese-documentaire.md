@@ -1,8 +1,8 @@
 # Faire une synthèse des documents
 
-**Guide — préparation de la 0.16.0, 15 novembre 2026.** Les essais simulés et les
-premiers essais avec un modèle réel sont distincts. La livraison et les résultats
-finaux sont consignés dans le bilan ; le corpus fictif ne valide pas celui de Marc.
+**Guide 0.16.0 — 15 novembre 2026.** Les essais simulés et les essais avec un
+modèle réel sont distincts. Le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
+précise leurs résultats ; le corpus fictif ne valide pas celui de Marc.
 
 Dans **Assistant**, décrire le sujet, puis le résultat attendu, par exemple :
 « Fais une synthèse des documents sur la production de feu. Compare les méthodes
@@ -28,19 +28,26 @@ Le premier tour documentaire propose les outils de recherche, lecture et calcul 
 les outils géographiques restent proposés pour une question spatiale et aux tours
 suivants. Deux tours documentaires sans source ni passage nouveau conduisent à la
 rédaction avec les éléments disponibles. Le plafond reste trois tours d’outils en
-réponse rapide et six ailleurs ; une reprise finale de références peut s’y ajouter.
+réponse rapide et six ailleurs ; une étape de liaison des références peut s’y ajouter.
 
 Pour une demande explicite de synthèse, les numéros cités doivent correspondre à
-des sources consultées. Si ce contrôle de format échoue, une seule reprise finale
-est demandée au modèle. Un second échec affiche les extraits consultés avec un
-avertissement, plutôt qu’une synthèse présentée comme aboutie. Ce contrôle ne
-vérifie pas le sens des affirmations : relire les sources et leurs désaccords
-reste nécessaire. Les traductions IA conservent leur avertissement et leur original.
+des sources consultées. Si ce contrôle de format échoue, une étape séparée peut
+relier les fragments de la réponse aux numéros des sources lues. Elle ajoute
+uniquement des références, sans réécrire les faits. Les identifiants de fragments
+et de sources sont contrôlés par le serveur. Cela ne vérifie pas que chaque
+affirmation est vraie ou bien soutenue par la source : relire les documents et
+leurs désaccords reste nécessaire.
+
+Si cette étape échoue, le texte utile reste affiché avec « Références à vérifier »
+et un état incomplet. Une réponse citant une source inconnue est remplacée par
+les extraits consultés. Les traductions IA gardent leur avertissement et leur original.
 
 Une panne du modèle ou un dépassement de temps conserve les extraits disponibles
 et le texte déjà reçu dans la conversation, avec l’état d’échec. Une annulation
-volontaire n’invente pas de nouveau message. **Voir les durées** distingue sources
-trouvées/lues, dossier préparé, reprise de citations et arrêt des répétitions.
+conserve seulement le texte déjà reçu, marqué comme interrompu ; sans texte,
+elle n’invente pas de nouveau message. **Voir les durées** distingue sources
+trouvées/lues, documents préparés, liaisons ajoutées aux sources et temps de liaison.
+L’export numérique conserve aussi l’arrêt des répétitions.
 Les textes de propositions refusées restent dans les traces privées, jamais dans
 l’export numérique des mesures ; aucun raisonnement privé n’est enregistré.
 

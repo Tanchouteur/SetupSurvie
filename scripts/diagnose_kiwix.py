@@ -216,16 +216,22 @@ def measure(url, kind, timeout, total_deadline):
         if message.get('finished') and record['status'] == 'running':
             record['status'] = 'complete'
     try:
+        channel_closed=False
         while time.monotonic() < deadline:
-            if receive.poll(min(.05, max(0, deadline-time.monotonic()))):
-                try:
+            try:
+                if receive.poll(min(.05, max(0, deadline-time.monotonic()))):
                     apply(receive.recv())
-                except EOFError:
+                    if record.get('finished') or record.get('error'):break
+                elif not process.is_alive():
+                    channel_closed=True
                     break
-            elif not process.is_alive():
+            except (EOFError,OSError):
+                # Windows can report a closed named pipe from poll(), before
+                # recv(). Keep any complete result or partial measurements.
+                channel_closed=True
                 break
         if record['status'] == 'running':
-            record.update(status='timeout', error='client_deadline')
+            record.update(status='error' if channel_closed else 'timeout',error='worker_stopped' if channel_closed else 'client_deadline')
     except KeyboardInterrupt:
         record.update(status='cancelled', error='user_cancelled')
     finally:

@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.16.0 : [dossier multi-source et premiers modèles réels](2026-11-15-synthese-multi-sources-et-essais-reels.md).
+La même question comparative lit zéro notice en 0.15.1, cinq en 0.16.0 avec Gemma
+sur le R7. Les faits et références sont corrects sur cet essai fictif ; une autre
+série Llama conserve des conclusions injustifiées. Ce résultat ne clôt pas l’objectif.
+Le bilan trace aussi les deux méthodes de reprise de citations abandonnées.
+
 **Suivi actuel — 15 novembre 2026.** Demandé par Louis pour préparer le résumé
 final. Ce journal suit les livraisons, décisions, preuves et limites ; les bilans
 liés conservent leurs détails et résultats historiques. Une ligne livrée ne

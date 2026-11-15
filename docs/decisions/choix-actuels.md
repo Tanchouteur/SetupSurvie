@@ -1,5 +1,14 @@
 # Choix et contraintes actuels
 
+La 0.16.0 prépare un [dossier de plusieurs sources](../utilisation/synthese-documentaire.md),
+avec passages liés au sujet, budget partagé avec le modèle et arrêt des boucles
+sans nouvelle lecture. Les essais réels R7 distinguent l’accès aux faits, la
+syntaxe des références et la fidélité de la synthèse. Une liaison structurée ajoute
+les références sans réécrire les faits ; elle ne certifie pas leur véracité.
+Les profils conseillés restent inchangés. Le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
+conserve aussi les approches essayées puis abandonnées. Association manuelle
+multiple, longues synthèses intermédiaires et illustrations restent à développer.
+
 Le R2 réel 0.15.0 reçu ensuite annonce **32 recherches complètes**, médiane de fin
 2,11 s avec cache déjà largement réutilisé, sans avis humain. Les captures
 d’assistant montrent encore zéro source consultée. La 0.15.1 corrige un défaut

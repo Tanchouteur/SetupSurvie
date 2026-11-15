@@ -10,6 +10,13 @@ from pilot import assistant_metrics,model_session
 
 
 class MessageFormatTests(unittest.TestCase):
+    def test_legacy_tools_remain_declared_after_a_tool_result(self):
+        messages=[{'role':'system','content':'Policy'},{'role':'user','content':'Question'},{'role':'tool','content':'Untrusted source text'}]
+        tools=[{'type':'function','function':{'name':'read_source'}}]
+        before=json.dumps(messages)
+        result=model_session.chat_messages(messages,tools,'last_user')
+        self.assertIn('read_source',result[0]['content']);self.assertNotIn('Untrusted source text',result[0]['content'])
+        self.assertEqual(result[-1],messages[-1]);self.assertEqual(json.dumps(messages),before)
     def test_late_instructions_do_not_hide_the_generation_header_or_mutate_tool_data(self):
         messages=[{'role':'system','content':'Initial policy'},{'role':'user','content':'Original question'},
                   {'role':'assistant','content':'','tool_calls':[{'function':{'name':'read_sources','arguments':{'ids':['a']}}}]},

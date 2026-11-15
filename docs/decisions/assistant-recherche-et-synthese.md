@@ -31,11 +31,12 @@ le détail exact des outils exécutés sur les deux conversations de Marc.
 
 ## Socle actuel et premier correctif
 
-**Évolution en préparation, 0.16.0 :** le [dossier documentaire](../utilisation/synthese-documentaire.md)
+**Évolution 0.16.0 :** le [dossier documentaire](../utilisation/synthese-documentaire.md)
 remplace la prélecture limitée décrite ci-dessous par des passages de plusieurs
 sources adaptés au contexte. Il ajoute lecture par lot, arrêt des répétitions,
-une reprise de références et un repli sur les extraits. Les premiers essais réels
-R7 portent sur un corpus fictif ; leur résultat et leur portée restent à examiner.
+une liaison structurée des références et la conservation des réponses incomplètes.
+Les essais réels R7 portent sur un corpus fictif ; le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
+distingue les faits retrouvés des erreurs de conclusion encore possibles.
 Association manuelle multiple, longues synthèses intermédiaires et illustrations
 restent à réaliser. Les paragraphes 0.15.x conservent le point de départ daté.
 

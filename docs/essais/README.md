@@ -78,3 +78,5 @@ Les nouvelles validations doivent préciser machine, système, version, commande
 
 Pour installer le pilote actuel, suivre les [guides de référence](../README.md).
 - [Rapports réels de recherche 0.8.0](2026-11-14-rapports-recherche-080.md) — diagnostic transmis par Louis ; corrections prioritaires en cours.
+- [Synthèse multi-source et modèles réels](2026-11-15-synthese-multi-sources-et-essais-reels.md) — 0.16.0, comparaison R7 avec 0.15.1, résultats et limites de fidélité.
+- [Recette de modèle réel](assistant-modele-reel.md) — corpus temporaire, ressources explicites et rapports privés, hors CI.

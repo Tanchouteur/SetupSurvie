@@ -10,7 +10,7 @@ import time
 
 import httpx
 
-from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session,research
+from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session,research,citation_links
 from fastapi import HTTPException
 
 OLLAMA=os.environ.get('OLLAMA_URL','http://ollama:11434').rstrip('/')
@@ -72,7 +72,7 @@ def read_references(references):
 
 
 def cited_sources(answer,references):
-    numbers={int(n) for n in re.findall(r'\[(\d{1,3})\]',answer)}
+    numbers=research.citation_numbers(answer)
     return [{k:v for k,v in item.items() if k!='consulted'} for item in references.values() if item.get('consulted') and item['number'] in numbers]
 
 
@@ -276,11 +276,12 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     state=await operations.status(fresh=True)
                     if state.get('paused') or state.get('operation') or not state.get('online'):
                         raise model_session.Failure('engine_paused' if state.get('paused') or state.get('operation') else 'engine_unavailable')
-                session=model_session.Session(client,OLLAMA,runtime,context,measured,lambda stage:progress(identifier,stage),available)
+                def model_progress(stage):progress(identifier,'referencing' if measured.stage=='source_linking' and stage in ('preparing','loading') else stage)
+                session=model_session.Session(client,OLLAMA,runtime,context,measured,model_progress,available)
                 await session.prepare()
                 tool_steps=3 if mode=='rapide' else 6
-                force_final=False;revised=False;stagnant=0
-                for step in range(tool_steps+2):
+                force_final=False;stagnant=0
+                for step in range(tool_steps+1):
                     if step>=tool_steps or force_final:
                         messages.append({'role':'system','content':'Le budget de recherche est atteint. Rédige maintenant la réponse finale avec les résultats déjà reçus ; indique les informations qui manquent. Aucun autre appel d’outil n’est disponible.'})
                     tools=(initial_tools if step==0 else TOOLS) if step<tool_steps and not force_final else []
@@ -294,7 +295,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     measured.phase('model_preparation')
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}
                     payload={'model':selected['model'],'messages':messages,'tools':tools,'think':selected['think'],
-                             'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':output}}
+                             'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':output,**({'temperature':.2} if prepared or source_id else {})}}
                     async for event in session.chat(payload):
                         message=event.get('message',{})
                         content+=message.get('content','');thinking+=message.get('thinking','')
@@ -311,13 +312,34 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         measured.value['failure']='output_limit'
                         interrupted=True
                     if not calls:
-                        if wants_synthesis and read_references(references) and not research.citations_valid(content,references):
+                        if wants_synthesis and content.strip() and read_references(references) and not research.citations_valid(content,references):
                             rejected_answers.append(content)
-                            if not revised:
-                                revised=True;force_final=True;measured.value['citation_revisions']=1
-                                messages.append({'role':'system','content':'La proposition de synthèse ne fournit pas de références valides aux passages lus. Rédige la synthèse en français en citant leurs numéros [n]. Aucun nouveau document ni fait ne doit être inventé. Si les extraits ne suffisent pas, précise le manque. Les sources consultées sont déjà fournies ; ne prétends pas qu’aucune n’a été consultée.'})
-                                update(identifier,answer='');progress(identifier,'preparing');continue
-                            measured.value['failure']='citation_check';interrupted=True;answer=research.fallback(references);break
+                            link_output=min(output,2048);link_budget=assistant_metrics.budget(context,link_output)
+                            link_messages=citation_links.messages(content,references,link_budget['message_bytes'])
+                            linked=content;link_report={'applied':0,'rejected':0}
+                            if link_messages:
+                                measured.value['citation_revisions']=1
+                                measured.value['budgets'].append({**link_budget,'stage':'source_linking','input_estimate':assistant_metrics.estimate_tokens(link_messages),'fits':True})
+                                measured.phase('source_linking');progress(identifier,'referencing')
+                                link_payload={**payload,'messages':link_messages,'tools':[],
+                                    'format':citation_links.schema([item['number'] for item in references.values() if item.get('consulted')],citation_links.fragments(content)),
+                                    'options':{**payload['options'],'num_predict':link_output,'temperature':0}}
+                                linked_json='';link_event={}
+                                try:
+                                    async for link_event in session.chat(link_payload):linked_json+=(link_event.get('message') or {}).get('content','')
+                                    measured.model_call(link_event)
+                                    links=json.loads(linked_json)
+                                    linked,link_report=citation_links.apply(content,links,references)
+                                    tool_trace.append({'stage':'citation_linking','proposals':links,'result':link_report})
+                                except Exception as error:
+                                    link_report={'applied':0,'rejected':1}
+                                    measured.value['citation_error']='output_limit' if link_event.get('done_reason')=='length' else 'engine_http_error' if isinstance(error,httpx.HTTPStatusError) else 'link_unavailable'
+                            measured.value['citation_linking']=link_report
+                            if link_report['applied'] and not link_report['rejected'] and research.citations_valid(linked,references):answer=linked;break
+                            measured.value['failure']='citation_check';interrupted=True
+                            known={item['number'] for item in references.values() if item.get('consulted')}
+                            fabricated=bool(research.citation_numbers(content)-known)
+                            answer=research.fallback(references) if fabricated or not linked.strip() else citation_links.unverified(linked,references);break
                         answer=content;break
                     if not tools:
                         interrupted=True;answer=content or 'Le budget de recherche est atteint. Les sources consultées restent accessibles ; aucun autre outil n’a été lancé.';break
@@ -415,7 +437,11 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 logging.getLogger(__name__).warning('Trace de diagnostic non conservée ; la réponse est enregistrée.')
     except asyncio.CancelledError:
         outcome='cancelled'
-        update(identifier,status='cancelled',error='Demande annulée.');raise
+        if content.strip():
+            content='Réponse interrompue à votre demande ; les références peuvent être incomplètes.\n\n'+content
+            update(identifier,status='cancelled',answer=content,error='Demande annulée.');save_interrupted(content)
+        else:update(identifier,status='cancelled',error='Demande annulée.')
+        raise
     except TimeoutError:
         outcome='incomplete';measured.value['failure']='time_limit'
         fallback=content or (research.fallback(references) if read_references(references) else '')

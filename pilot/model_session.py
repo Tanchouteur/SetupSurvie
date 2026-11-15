@@ -21,7 +21,7 @@ def failure_kind(value):
     return 'memory_error' if re.search(r'out of memory|insufficient memory|failed to allocate',str(value),re.I) else 'model_error'
 
 
-def chat_messages(messages):
+def chat_messages(messages,tools=(),placement='native'):
     """Keep trusted instructions in one initial system message.
 
     Some installed templates collect every system content but also retain those
@@ -29,9 +29,13 @@ def chat_messages(messages):
     assistant generation header. Tool data and stored history remain untouched.
     """
     systems=[message for message in messages if message.get('role')=='system']
-    if not systems:return messages
-    return [{**systems[0],'content':'\n\n'.join(message.get('content','') for message in systems)},
-            *(message for message in messages if message.get('role')!='system')]
+    result=[{**systems[0],'content':'\n\n'.join(message.get('content','') for message in systems)},
+            *(message for message in messages if message.get('role')!='system')] if systems else list(messages)
+    if tools and placement=='last_user' and result and result[-1].get('role')!='user':
+        description='Outils disponibles pour compléter un manque précis ; sinon rédige avec les résultats reçus :\n'+json.dumps(tools,ensure_ascii=False)
+        if result[0].get('role')=='system':result[0]={**result[0],'content':result[0]['content']+'\n\n'+description}
+        else:result.insert(0,{'role':'system','content':description})
+    return result
 
 
 class Session:
@@ -82,7 +86,7 @@ class Session:
                 self.measurement.value['model_preparations'].append(record)
 
     async def chat(self,payload):
-        payload={**payload,'messages':chat_messages(payload['messages'])}
+        payload={**payload,'messages':chat_messages(payload['messages'],payload.get('tools'),self.runtime.get('tool_schema_placement'))}
         while True:
             produced=False;last={};done=False
             self.notice('loading' if self.runtime.get('available') and not self.loaded else 'preparing')
