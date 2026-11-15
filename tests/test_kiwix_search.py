@@ -87,14 +87,18 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
     async def test_html_escaped_suggestion_paths_share_the_native_fulltext_identity(self):
         cases=[('Compost_et_l&apos;urbanisme',"Compost_et_l'urbanisme"),('Compost &amp; jardin','Compost & jardin'),
                ('Compost_&#233;t&#233;','Compost_été'),('Compost_%26amp%3B','Compost_&amp;')]
-        for suggested,expected in cases:
+        zims=Path(self.temp.name)/'zim';zims.mkdir()
+        for edition,(suggested,expected) in enumerate(cases,1):
             with self.subTest(path=suggested):
+                # Each mocked response is a different archive edition. Keep the
+                # real disk-cache invalidation instead of reusing an old fixture.
+                (zims/'wikipedia_fr.zim').write_bytes(b'x'*edition)
                 await library.kiwix_queries.close()
                 async def reader(path):
                     if path.startswith('/suggest?'):return json.dumps([{'kind':'path','value':'Compost','path':suggested}]).encode(),'application/json'
                     link='/content/wikipedia_fr/'+quote(expected,safe='/')
                     return ('<rss><channel><item><title>Compost</title><link>'+escape(link)+'</link><description>Compost, extrait fictif.</description></item></channel></rss>').encode(),'application/xml'
-                with patch.object(library,'books',AsyncMock(return_value=self.catalog[:1])),patch.object(library,'get',reader):
+                with patch.object(library,'books',AsyncMock(return_value=self.catalog[:1])),patch.object(library,'get',reader),patch.dict('os.environ',{'ZIM_DIR':str(zims)}):
                     found=await library.search('compost')
                 self.assertEqual([row['id'] for row in found],['zim:wikipedia_fr/'+expected])
 

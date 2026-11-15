@@ -89,3 +89,14 @@ puis ouvrir les résultats prioritaires. Les rapports réels et avis humains res
 nécessaires pour clore l’objectif de fiabilité. Les deux chantiers parallèles lancés par Louis
 sont décrits dans les [prompts coordonnés](../decisions/prompts-agents-videos-et-performances.md) ;
 ils ne modifient pas ce moteur et ne sont pas déclarés réalisés.
+
+## Ajustement du test avec cache disque actif
+
+La première CI de la correction de liens a exposé une incohérence du nouveau
+jeu de test : entre quatre sous-cas, il changeait la réponse simulée de la même
+archive sans en changer l’édition. Sur le runner disposant de plus de 15 Go libres,
+le cache disque conservait donc correctement la première réponse. Le test modèle
+maintenant quatre éditions différentes avec un fichier source de taille changée ;
+il conserve le vrai mécanisme d’invalidation, sans désactiver le cache. Les neuf
+tests de protocole réussissent aussi avec réserve de test abaissée pour forcer
+les écritures disque. Le code du produit ne change pas pour cet ajustement.
