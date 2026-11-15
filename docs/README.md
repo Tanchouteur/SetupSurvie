@@ -8,7 +8,7 @@
 
 - [Rapport réel 0.14.0 et traitement progressif](essais/2026-11-15-rapport-0140-et-traitement-progressif.md) — progrès mesurés, lenteur reproduite et correctif 0.14.1.
 
-- [Audit de fin du moteur](essais/2026-11-15-audit-fin-recherche.md) — critères vérifiés et validation réelle encore requise en 0.14.0.
+- [Audit de clôture du moteur en 0.15.0](essais/2026-11-15-audit-recherche-0150.md) — preuves actuelles, limites et [prochaine recette ciblée](essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0150).
 
 - [Inventaire des vidéos et sous-titres](utilisation/inventaire-videos.md) — outil en lecture seule 0.14.0, état par média et rapports privés.
 - [Diagnostic des délais Kiwix](exploitation/diagnostic-performances-kiwix.md) — outil 0.14.0, une archive, réception et répétition sans effacer les caches.

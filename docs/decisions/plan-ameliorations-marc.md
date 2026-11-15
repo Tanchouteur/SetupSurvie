@@ -1,20 +1,20 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu et suivi actuel — 14 novembre 2026.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.15.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | Rapports jusqu’à 0.10.0 reçus ; encore 31 recherches partielles sur 32 et délai médian 12,3 s ; relecture humaine encore attendue |
-| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix réel, progressif, reprenable et pilotable depuis le site | R1 réel 0.9.3 terminé sans erreur : 134 index natifs, un index local de 120 articles ; pause/reprise et nouveau lot réels restent à vérifier |
-| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Implémenté en 0.3.0 ; latence et charge Windows à mesurer |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.14.0 reçu : médiane de première réponse 311 ms et de fin 36,24 s ; 23 recherches partielles ; aucun avis humain. Mesure après correctifs 0.14.1–0.15.0 attendue |
+| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix utilisable, progressif, reprenable et pilotable depuis le site | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs compatibles et 15 compléments, 3 238 articles locaux ; pause/reprise et nouveau lot réels restent à vérifier |
+| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, jusqu’à huit threads SQLite ; traitement réutilisé et mesuré en 0.14.1, plafond long adapté en 0.14.2 ; aucune saturation CPU/HDD établie |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
 | Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
-| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages 0.3.0, mesures et calibration volontaire 0.7.0 ; délais et mémoire réels à mesurer chez Marc |
+| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages et calibration volontaire livrés ; suivi indépendant des recherches/lectures en 0.15.0. Délais, mémoire et qualité d’une réponse réelle restent à vérifier |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Accès au moteur existant livré ; lecture traduite intégrée Kiwix/PDF à développer |
-| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | À développer et qualifier sur les archives réelles |
+| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Étude et protocole conservés ; inventaire local/export livré en 0.14.0. Recherche vidéo, acquisition, transcription, traduction et lecture synchronisée restent à développer et qualifier |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
 | Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |
 | Maison de Solliès-Ville | Équipements réels, notices, entretien ; stocks éventuels | Reporté, IDEE-001 |
@@ -460,3 +460,9 @@ annulations sont testés sans LLM réel. Le prochain contrôle porte sur **0.15.
 qui conserve les corrections de moteur 0.14.1–0.14.3. R2 sans IA, R4 volontaire
 avec modèle et R7 hors ligne restent distincts. Les essais du suivi ne remplacent
 pas les avis humains sur les documents ni la décision matérielle sur le PC réel.
+
+L’[audit de clôture 0.15.0](../essais/2026-11-15-audit-recherche-0150.md) confronte
+chaque critère aux preuves actuelles, puis renvoie à une recette ciblée R2/R4/R7.
+Il remplace comme état courant l’audit initial, sans réécrire ses résultats datés.
+Le périmètre minimal d’étude des sous-titres est atteint ; la fiabilité du moteur
+sur le fonds réel reste conditionnée par les nouveaux rapports et lectures.

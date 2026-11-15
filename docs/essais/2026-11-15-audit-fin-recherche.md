@@ -1,5 +1,9 @@
 # Audit de fin de la première version du moteur
 
+**Bilan initial conservé.** L’[audit 0.15.0](2026-11-15-audit-recherche-0150.md)
+est désormais la référence courante de clôture. Le tableau et les instructions
+ci-dessous gardent l’état et les demandes de l’audit initial, avec leurs compléments.
+
 **État vérifié le 15 novembre 2026, logiciel 0.14.0.** Base publiée : `a390b9c`.
 **Complément après réception du R2 0.14.0 :** ce rapport est désormais analysé
 dans le [bilan et correctif 0.14.1](2026-11-15-rapport-0140-et-traitement-progressif.md).

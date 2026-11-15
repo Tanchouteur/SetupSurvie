@@ -8,7 +8,7 @@
 
 - [R2 réel 0.14.0 et traitement progressif](2026-11-15-rapport-0140-et-traitement-progressif.md) — analyse et correctif 0.14.1, essais synthétiques distincts du PC de Marc.
 
-- [Audit de fin du moteur](2026-11-15-audit-fin-recherche.md) — preuves disponibles, limites et prochain contrôle sur le fonds de Marc.
+- [Audit de clôture en 0.15.0](2026-11-15-audit-recherche-0150.md) — critères, preuves et prochaine validation réelle ; [audit initial 0.14.0](2026-11-15-audit-fin-recherche.md) conservé.
 
 - [Intégration des outils des deux agents](2026-11-15-integration-outils-validation-videos.md) — 0.14.0, tests et limites.
 - [Inventaire vidéo](2026-11-15-inventaire-videos.md) — bilan initial du chantier parallèle.

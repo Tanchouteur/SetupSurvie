@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-**Suivi actuel — 14 novembre 2026.** Demandé par Louis pour préparer le résumé
+**Suivi actuel — 15 novembre 2026.** Demandé par Louis pour préparer le résumé
 final. Ce journal suit les livraisons, décisions, preuves et limites ; les bilans
 liés conservent leurs détails et résultats historiques. Une ligne livrée ne
 signifie pas que le fonctionnement sur tout le fonds de Marc a été validé.
@@ -345,3 +345,25 @@ sont déballés et comparés au code `496083b` avec filtres Git. La CI `43705794
 ne démarre aucun de ses huit jobs pour la restriction de facturation GitHub.
 Compatibilité Windows réelle et iPhone restent à confirmer ; le bilan précise
 le schéma optionnel compatible et les données privées séparées des mesures.
+
+## Audit courant et prochaine recette — 15 novembre 2026, après 0.15.0
+
+L’[audit courant](2026-11-15-audit-recherche-0150.md) confronte l’objectif à la
+préparation des index, la référence, la couverture, la lecture, les caches,
+l’assistant, la conservation des données et la livraison. L’ancien audit 0.14.0
+reste historique. Les tableaux de suivi sont actualisés : ils n’annoncent plus
+à tort comme manquants le R2 0.14.0 ou l’outil d’inventaire vidéo déjà livrés.
+
+La [prochaine recette](recettes-progressives-marc.md#prochaine-validation-ciblée--0150)
+demande d’abord les 32 recherches sans IA et la lecture de quelques sources,
+puis assistant volontaire et usage hors ligne séparément. Le dernier rapport
+présent reste 0.14.0, sans avis humain. Aucun processus distant ni mesure en cours
+n’est inventé. L’étude minimale des sous-titres est réalisée ; le lot vidéo complet
+ne l’est pas. Cette mise à jour documentaire n’ajoute aucun code ni numéro de version
+et ne clôt pas la validation réelle du moteur.
+
+L’audit rejoue également les recettes natives sur le code 0.15.0 exact : 63
+contrôles sur cinq archives générées puis 36 sur 135, tous réussis. Les huit
+recherches du second essai ont une couverture complète. Les fichiers/services
+temporaires sont nettoyés ; aucun résultat de vitesse ou de pertinence du fonds
+Windows n’est déduit de ces petits exemples.

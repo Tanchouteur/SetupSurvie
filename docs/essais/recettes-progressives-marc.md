@@ -4,6 +4,45 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
+## Prochaine validation ciblée — 0.15.0
+
+Faire ces étapes progressivement, sans tout lancer en même temps. La
+[clôture actuelle](2026-11-15-audit-recherche-0150.md) distingue ce qui est déjà
+testé et ce qui nécessite le PC de Marc.
+
+1. Appliquer la mise à jour habituelle et vérifier **0.15.0**. Avec **Famille**,
+   aller dans **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier
+   la recherche → Contrôle complet · 32 recherches**. Ce R2 ne lance pas l’IA et
+   n’exige pas de réindexation intégrale pour ces corrections. Il attend au plus
+   90 secondes par demande ; réserver jusqu’à une cinquantaine de minutes au
+   maximum théorique pour les 32, généralement moins. On peut arrêter et exporter.
+2. Ouvrir les premiers résultats de **feu, eau potable, générateur à pédales,
+   réparation vélo**, puis **radio et installation solaire** qui avaient un tri
+   discutable. Noter seulement ce qui a été lu avec le menu d’avis ; les autres
+   restent à vérifier. Donner le titre et l’adresse complète après clic si un
+   document ne s’ouvre pas. **Télécharger le rapport** avant fermeture. Si les
+   six demandes ne peuvent pas toutes être relues, retourner les avis déjà faits
+   et préciser le reste ; aucun taux de pertinence global n’en est déduit.
+3. À un autre moment, quand l’IA peut être utilisée volontairement, demander
+   **« Comment faire du feu ? »**, puis **« Et dans Wikipédia ? »**. Examiner la
+   ligne de suivi documentaire et ouvrir une source. Le nombre trouvé, la lecture
+   et la citation restent distincts. Exporter **Voir les durées → Télécharger le
+   rapport**, selon le [guide assistant](../utilisation/mesurer-assistant-et-memoire.md).
+   Préciser si la réponse utilise réellement le document ; le rapport numérique
+   ne contient pas son texte. Ne pas lancer de calibration mémoire ou lever le
+   mode jeu pour ce seul essai. La durée d’une réponse réelle reste inconnue.
+4. Quand cela est pratique, faire R7 avec **Vérifier l’usage hors ligne → Tester
+   l’usage hors ligne**, au même endroit. Suivre le [guide](../utilisation/verifier-usage-hors-ligne.md)
+   pour conserver le réseau local, arrêter l’IA et déclarer la coupure Internet.
+   Marquer uniquement les étapes effectuées puis exporter le rapport d’usage.
+
+R2 avec avis humains est le premier retour nécessaire pour juger les dernières
+corrections. R4 mesure le vrai modèle, R7 l’usage effectivement hors ligne. Une
+mesure encore partielle ne prouve pas une panne matérielle : comparer couverture,
+premiers documents, fin, appels natifs et `processing`. Les cas ralentis peuvent
+ensuite faire l’objet du [diagnostic ciblé](../exploitation/diagnostic-performances-kiwix.md),
+sans effacer les caches ni prétendre à un départ froid non établi.
+
 ## Ce qui est utilisable maintenant
 
 Le contrôle de recherche est disponible depuis 0.3.0. Le chemin actuel est
@@ -22,7 +61,7 @@ distingue mesures et avis humains. Aucun résultat fictif n’est attendu sur le
 Depuis 0.11.1, ce même contrôle exporte aussi les détails des appels et les
 compléments d’index manquants. Le rapport 0.12.0 confirme maintenant les 135 archives
 examinées, dont 15 compléments locaux prêts. Ne pas refaire cette extraction pour
-la seule mise à jour en 0.14.0 : mesurer d’abord le flux progressif et le cache avec le
+la seule mise à jour en 0.15.0 : mesurer d’abord le flux progressif et le cache avec le
 contrôle complet. Il peut attendre 90 secondes par demande et reste annulable.
 Une autre préparation est nécessaire si un contenu ou son édition change.
 
@@ -43,12 +82,12 @@ Arrêt et export sont disponibles ; les étapes non faites restent non effectué
 
 | Rapport | Quand le demander | Ce qu’il doit mesurer | État de l’outil |
 | --- | --- | --- | --- |
-| R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | Terminaison réelle 0.9.3 reçue : 135/135 sans erreur ; pause/reprise et nouveau petit lot restent à vérifier |
-| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, essais à froid/à chaud, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur | Rapport 0.12.0 reçu : 32 recherches partielles, 31 échéances atteintes, compléments locaux sans erreur ; correction progressive/cache 0.13.0 à mesurer, avis humains attendus |
+| R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs et 15 compléments prêts ; pause/reprise et nouveau petit lot restent à vérifier |
+| R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, répétitions, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur ; un départ froid doit être établi séparément | Rapport 0.14.0 reçu : premiers résultats à 311 ms de médiane, fin à 36,24 s, 23 recherches partielles ; nouveau contrôle en 0.15.0 et avis humains attendus |
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Corrections/export en 0.6.0, six dossiers et repères exportables en 0.9.0 ; relecture humaine du fonds attendue |
-| R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Comparatif IA 0.9.3 reçu : deux expirations de budget avant premier fragment ; calibration mémoire et phases d’une réponse réelle restent à mesurer |
+| R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Ancien comparatif 0.9.3 interrompu ; phases, suivi documentaire 0.15.0 et sources d’une vraie réponse restent à vérifier. Calibration distincte et volontaire |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |
-| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Protocole cible](protocole-sous-titres-videos.md), précision de Louis du 14 novembre ; inventaire/export et lecteur à développer |
+| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Inventaire/export local](../utilisation/inventaire-videos.md) livré en 0.14.0 ; recette réelle et traitements/lecteur du [protocole cible](protocole-sous-titres-videos.md) restent à faire |
 | R7 — Usage hors ligne | À chaque livraison pertinente, puis L9 | Navigation, données conservées, fonctions avec IA arrêtée et Internet coupé, reprise, téléphone ; chaque vérification marquée exécutée ou non | Recette et export en 0.10.0 ; rapport réel attendu, état IA mesuré et coupure Internet déclarée restent distincts |
 
 Les recettes longues annoncent leur charge et leur possibilité de pause avant
