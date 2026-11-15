@@ -9,6 +9,8 @@ La lecture retrouve aussi les conditions placées après les dix premiers mots
 de la demande ; l’essai solaire final distingue bien démarrage et poursuite.
 L’omission d’un prérequis de procédure et les échecs d’un ancien modèle de code
 restent tracés pour la suite, sans changer les profils conseillés.
+Code `38a373a`, huit jobs CI réussis, 721 tests locaux (trois ignorés),
+797 fichiers du paquet comparés au complément documentaire `309d620`.
 
 Complément 0.19.0 : [illustrations originales et références](2026-11-15-illustrations-originales.md).
 Les articles lus et pages PDF peuvent fournir des originaux sous les réponses,

@@ -232,3 +232,28 @@ lecteurs d’index isolés. Les **413 liens locaux et ancres** des documents du 
 sont contrôlés ; `git diff --check` ne signale pas d’erreur. Aucun essai physique
 Windows/iPhone, téléchargement chez Marc ou validation du matériel radio n’est
 attribué à cette livraison.
+
+
+Les deux demandes solaires sur Qwen montrent également un cas où `done` signifie
+seulement que la génération est finie : un appel `search_library` est écrit dans
+le texte, mais aucune recherche n’est exécutée et aucune source n’est lue. Ce
+format non exécuté reste à traiter dans l’adaptateur/diagnostic du modèle ; il
+n’est pas annoncé comme un test fonctionnel réussi. Les modèles conseillés du
+produit ne sont pas remplacés par ce modèle de comparaison.
+
+Le modèle par défaut GPT-OSS 20B n’a pas été éprouvé dans cette série réelle :
+il n’est pas présent sur la machine d’essai et l’espace actuellement accessible
+au compte de test ne suffit pas à le préparer. Les résultats Gemma ne valident
+pas implicitement GPT-OSS ni les performances du PC client. La validation de ce
+modèle reste dans la suite de la recette.
+
+## Paquet vérifié
+
+Le paquet correspond au commit **`309d6209a8d55eb6abca08c0434686dbbd1ef656`**,
+qui ajoute seulement le bilan au code fonctionnel `38a373a` validé par la CI.
+Après décompression réelle, **797 fichiers** sont comparés aux blobs de ce commit
+avec les filtres Git, sans différence : 15 334 518 octets décompressés,
+ZIP de 6 849 169 octets, SHA-256
+`52adb0c239844766cf132a5a998de3463cc9fc5428b7dc4ea77503b95df952d0`.
+Le reçu est consigné ensuite par un commit documentaire. Le PDF de la notice
+reste séparé de ce paquet et se télécharge volontairement selon le guide.
