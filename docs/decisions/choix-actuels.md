@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+La 0.14.0 intègre deux outils volontaires en lecture seule :
+[inventaire des vidéos](../utilisation/inventaire-videos.md) et
+[diagnostic Kiwix](../exploitation/diagnostic-performances-kiwix.md).
+L’inventaire ne crée ni sous-titres ni index vidéo ; les validations réelles
+et la suite transcription/traduction restent distinctes.
+
 
 Complément 0.13.0 : [recherche progressive et cache reconstructible](../exploitation/cache-et-recherche-progressive.md).
 Louis accepte davantage d’attente si les documents arrivent progressivement ;

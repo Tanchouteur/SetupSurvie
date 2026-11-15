@@ -116,6 +116,27 @@ class DiagnosticTests(unittest.TestCase):
         self.assertEqual(row['coverage']['status'], 'partial')
         self.assertLess(row['elapsed_ms'], 1500)
 
+    def test_report_keeps_measurements_and_trace_without_server_private_payloads(self):
+        hidden = 'PRIVATE_SENTINEL'
+        raw = {'version': 'fixture', 'catalog': {'state': 'live', 'collections': 2, 'raw': hidden},
+               'archive_index': {'phase': 'completed', 'archives': 2, 'results': [{'path': hidden}], 'reader_probe': {'python': hidden}},
+               'private': hidden}
+        clean = diagnostic.diagnostic_data(raw)
+        self.assertEqual(clean['archive_index']['archives'], 2)
+        self.assertNotIn(hidden, json.dumps(clean))
+        coverage = {'status': 'partial', 'searched': 1, 'cache_hits': 2, 'title_failed': 1, 'refinement_not_searched': 2,
+                    'error_counts': {'timeout': 1, hidden: 8},
+                    'trace': [{'stage': 'fulltext', 'pattern': 'eau', 'collections': ['fixture_fr'], 'elapsed_ms': 5, 'raw': hidden}],
+                    'local_index': {'archives': 2, 'results': [{'path': hidden}]}, 'unknown': hidden}
+        clean = diagnostic.coverage_data(coverage)
+        self.assertEqual(clean['trace'][0]['pattern'], 'eau')
+        self.assertEqual(clean['error_counts'], {'timeout': 1})
+        self.assertEqual(clean['cache_hits'], 2)
+        self.assertEqual(clean['title_failed'], 1)
+        self.assertEqual(clean['refinement_not_searched'], 2)
+        self.assertNotIn(hidden, json.dumps(clean))
+        self.assertEqual(diagnostic.coverage_data(None), 'inconnu')
+
     def test_http_invalid_format_size_and_redirect(self):
         for path, kind in [('/error', 'access'), ('/bad', 'xml'), ('/bad', 'json'),
                            ('/bad', 'stream'), ('/incomplete', 'stream'), ('/large', 'access'), ('/redirect', 'access')]:

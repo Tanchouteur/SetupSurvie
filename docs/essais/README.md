@@ -1,5 +1,9 @@
 # Essais et résultats
 
+- [Intégration des outils des deux agents](2026-11-15-integration-outils-validation-videos.md) — 0.14.0, tests et limites.
+- [Inventaire vidéo](2026-11-15-inventaire-videos.md) — bilan initial du chantier parallèle.
+- [Diagnostic des performances](2026-11-15-diagnostic-performances-kiwix.md) — bilan initial du chantier parallèle.
+
 - [Classement, extraits et ouverture des articles](2026-11-15-classement-titres-et-intention.md) — correction de classement 0.13.1.
 
 - [Rapports 0.12.0 et travail nocturne](2026-11-14-recherche-0120-et-travail-nocturne.md) — index prêts, délais et essais de la correction 0.13.0.

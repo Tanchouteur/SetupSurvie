@@ -63,7 +63,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
-| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | À développer |
+| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Inventaire local/rapports intégré en 0.14.0 ; recette réelle, acquisition et traitements suivants à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
@@ -399,3 +399,9 @@ Deux chantiers parallèles ont été proposés à Louis le 15 novembre :
 [prompts vidéo et performances](prompts-agents-videos-et-performances.md), fichiers
 réservés et branches séparées. Louis confirme leur lancement ; leurs livrables restent à examiner après
 réception des comptes rendus. L’agent principal garde le moteur.
+
+Les deux outils parallèles sont intégrés en 0.14.0 : inventaire vidéo local et
+[diagnostic des délais](../exploitation/diagnostic-performances-kiwix.md).
+Leur [bilan commun](../essais/2026-11-15-integration-outils-validation-videos.md)
+conserve les preuves, ajustements et limites. Ils ne constituent pas une validation
+du fonds réel ni une livraison de la traduction ou de l’indexation des paroles.

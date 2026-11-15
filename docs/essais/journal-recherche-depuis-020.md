@@ -206,3 +206,21 @@ du paquet CI sont déballés et comparés au code `557ef73`. Le
 la validation Windows réelle restant à faire. Les outils des deux agents sont
 reçus sur leurs branches, avec tests ciblés revérifiés : inventaire vidéo 20,
 diagnostic Kiwix 8. Leur intégration suit séparément cette correction du moteur.
+
+## Intégration des deux outils — 0.14.0, 15 novembre 2026
+
+Les commits `233ecdb` (diagnostic) et `cbec193` (inventaire vidéo) sont fusionnés
+sur la base du moteur 0.13.1, sans réécrire leur historique. Les outils restent
+volontaires, en lecture seule, sans nouveau bouton ni inférence. Le diagnostic
+conserve mesures et traces utiles dans un export filtré ; l’inventaire fournit un
+état par média et ses annexes, sans modifier les originaux ni prétendre valider
+la langue ou la synchronisation. Les paroles ne sont pas encore indexées et aucun
+sous-titre n’est créé par cette étape. Voir le
+[bilan d’intégration](2026-11-15-integration-outils-validation-videos.md).
+
+Les vingt tests vidéo et les neuf tests de diagnostic passent dans la campagne
+locale de 561 tests, trois ignorés. Les guides et index sont actualisés ; les bilans
+initiaux des agents restent datés. La CI et Windows réels des nouveaux outils
+restent non validés à cause du blocage de relance GitHub, distinct des contrôles
+Windows du moteur déjà exécutés. Le prochain rapport réel et les avis humains
+restent nécessaires pour clore l’objectif de fiabilité sur le fonds de Marc.

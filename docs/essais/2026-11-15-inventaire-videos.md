@@ -1,5 +1,9 @@
 # Inventaire des vidéos — 15 novembre 2026
 
+**Suite :** intégration au paquet 0.14.0 décrite dans le
+[bilan commun](2026-11-15-integration-outils-validation-videos.md). Les constats
+ci-dessous restent ceux de la préparation initiale sur la branche dédiée.
+
 **Bilan de développement sur fixtures minuscules, runner Linux CPU.**
 Branche `codex/videos-inventaire`, créée dans un worktree séparé depuis
 `origin/main` au commit `d57017c`, après `git status` propre et

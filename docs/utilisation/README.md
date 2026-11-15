@@ -1,5 +1,7 @@
 # Utiliser le serveur familial
 
+- [Inventorier les vidéos et sous-titres locaux](inventaire-videos.md) — outil volontaire en lecture seule, 0.14.0.
+
 - [Rechercher un document](recherche-documentaire.md) — premiers résultats, filtres et contrôle exportable.
 
 - [Paramètres et Mon appareil](parametres-et-appareil.md) — suivi, quatre rubriques et options avancées.

@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.13.1, 15 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.14.0, 15 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -115,7 +115,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.13.1** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.14.0** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
@@ -210,3 +210,13 @@ multiplication de sous-requêtes. Les CPU de l’indexation restent réglables s
 Les [rapports réels 0.8.0](../essais/2026-11-14-rapports-recherche-080.md) ont déclenché
 ces corrections. Leur cause finale et le gain sur le fonds Windows restent à
 vérifier avec de nouveaux rapports ; un résultat partiel n’est pas une preuve d’absence.
+
+## Outils complémentaires — 0.14.0
+
+Le [diagnostic de performances Kiwix](../exploitation/diagnostic-performances-kiwix.md)
+mesure une archive choisie et sa répétition, sans IA, en séparant premier résultat,
+fin, cache et couverture. Il ne supprime pas les caches et ne prouve pas un départ
+à froid. L’[inventaire vidéo](inventaire-videos.md) recense médias et pistes locales
+sans modifier les fichiers. Il prépare le futur index vidéo ; il ne rend pas encore
+les paroles recherchables et ne crée pas de sous-titres. Les guides donnent les
+commandes Windows/Linux et les limites des rapports.

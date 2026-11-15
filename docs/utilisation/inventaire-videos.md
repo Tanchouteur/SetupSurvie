@@ -1,6 +1,6 @@
 # Inventorier les vidéos locales
 
-**Guide actuel — outil autonome préparé le 15 novembre 2026.** Testé sur de petits
+**Guide actuel — outil autonome intégré en 0.14.0, 15 novembre 2026.** Testé sur de petits
 fichiers fictifs dans le runner Linux ; recette Windows et fonds de Marc à faire.
 Il prépare l'inventaire prévu dans les [décisions vidéo](../decisions/videos-locales-et-recherche.md)
 et le [protocole par vidéo](../essais/protocole-sous-titres-videos.md).
@@ -13,7 +13,7 @@ sans paquet supplémentaire, Docker, FFmpeg ni yt-dlp.
 
 ## Lancer sous Windows
 
-Utiliser la copie du script de cette branche, depuis le dossier qui contient
+Utiliser la copie du code 0.14.0 ou ultérieure, depuis le dossier qui contient
 `scripts/`. Il n'est pas nécessaire de mettre à jour ou d'arrêter l'application
 en service. Adapter le chemin des vidéos à leur emplacement réel. Exemple
 PowerShell, si les vidéos sont dans `D:\SetupSurvie\donnees\library\video` :

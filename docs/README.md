@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Inventaire des vidéos et sous-titres](utilisation/inventaire-videos.md) — outil en lecture seule 0.14.0, état par média et rapports privés.
+- [Diagnostic des délais Kiwix](exploitation/diagnostic-performances-kiwix.md) — outil 0.14.0, une archive, réception et répétition sans effacer les caches.
+- [Intégration des outils des deux agents](essais/2026-11-15-integration-outils-validation-videos.md) — preuves, compatibilité et limites.
+
 - [Classement, extraits et ouverture des articles](essais/2026-11-15-classement-titres-et-intention.md) — correction 0.13.1, vérifications et limites.
 - [Prompts pour deux agents](decisions/prompts-agents-videos-et-performances.md) — périmètres isolés vidéo/sous-titres et diagnostic Kiwix, proposés à Louis.
 

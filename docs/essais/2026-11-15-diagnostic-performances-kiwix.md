@@ -1,5 +1,9 @@
 # Diagnostic des performances Kiwix Windows/Linux
 
+**Suite :** intégration au paquet 0.14.0 décrite dans le
+[bilan commun](2026-11-15-integration-outils-validation-videos.md). Les constats
+ci-dessous restent ceux de la préparation initiale sur la branche dédiée.
+
 **Bilan daté — 15 novembre 2026.** Script autonome préparé sur la branche
 `codex/diagnostic-kiwix`, issue de `origin/main` (`d57017c`), dans un worktree séparé.
 Pas de fusion de main, de déploiement ni d’accès supposé au PC de Marc.

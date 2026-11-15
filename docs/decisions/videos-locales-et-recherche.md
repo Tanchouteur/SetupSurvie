@@ -1,6 +1,6 @@
 # Vidéos locales dans la recherche commune
 
-**Besoin confirmé par Louis — 14 novembre 2026, réalisation prévue.** Marc a ajouté
+**Besoin confirmé par Louis — 14 novembre 2026 ; inventaire local livré en 0.14.0.** Marc a ajouté
 un dossier `video` dans `library/` pour ses téléchargements YouTube en 480p afin
 de limiter l’espace occupé. Chemin rapporté : **`library/video/`** ; aucun accès
 au disque de Marc n’a été effectué pour en vérifier le contenu.
@@ -108,3 +108,13 @@ Ordre proposé après correction du moteur : inventaire/export vidéo, titres da
 la recherche, récupération de pistes, lecture locale, traduction synchronisée,
 transcription des manques, puis recette complète par vidéo. Chaque étape reste
 utilisable sans forcer la suivante ; aucune étape n’est annoncée livrée ici.
+
+## Première étape intégrée — 0.14.0
+
+L’[outil d’inventaire local](../utilisation/inventaire-videos.md) recense les vidéos
+et pistes SRT/WebVTT associées et produit un état par média, en lecture seule.
+Les contrôles techniques ne valident ni la langue, ni le sens, ni la lecture
+synchronisée. Les médias des ZIM et pistes intégrées aux conteneurs ne sont pas
+examinés par ce premier outil. Le [bilan d’intégration](../essais/2026-11-15-integration-outils-validation-videos.md)
+distingue tests fictifs et recette réelle à exécuter. Recherche par titre ou paroles,
+acquisition, transcription, traduction et lecteur restent à développer.

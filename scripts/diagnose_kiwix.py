@@ -2,6 +2,7 @@
 """Diagnostic HTTP séquentiel, sans IA, Windows/Linux (bibliothèque standard)."""
 import argparse
 import json
+import math
 import multiprocessing as mp
 from pathlib import Path
 import platform
@@ -17,6 +18,73 @@ import runtime_resources
 
 MAX_BYTES = 4 * 1024 * 1024
 UNKNOWN = 'inconnu'
+
+
+def scalars(value, fields):
+    """Export only documented measurements, without arbitrary server payloads."""
+    if not isinstance(value, dict):
+        return {}
+    result = {}
+    for name in fields:
+        item = value.get(name)
+        if name not in value:
+            continue
+        if item is None or isinstance(item, bool) or isinstance(item, int):
+            result[name] = item
+        elif isinstance(item, float) and math.isfinite(item):
+            result[name] = item
+        elif isinstance(item, str):
+            result[name] = item[:200]
+    return result
+
+
+def diagnostic_data(value):
+    result = scalars(value, ('version', 'created'))
+    for name, fields in (
+        ('kiwix', ('state', 'elapsed_ms')),
+        ('catalog', ('state', 'collections', 'age_seconds', 'http_status', 'elapsed_ms')),
+        ('guides', ('indexed', 'status')),
+        ('archive_index', ('phase', 'archives', 'completed', 'articles', 'workers', 'started')),
+    ):
+        if isinstance(value.get(name), dict):
+            result[name] = scalars(value[name], fields)
+    return result
+
+
+def coverage_data(value):
+    if not isinstance(value, dict):
+        return UNKNOWN
+    result = scalars(value, ('status', 'domain', 'collection', 'searched', 'failed',
+        'not_searched', 'collections_selected', 'locally_indexed', 'native_incompatible',
+        'without_fulltext', 'deadline_ms', 'deadline_exceeded', 'primary_requests',
+        'request_limit', 'batch_limit', 'cache_hits', 'cache_ttl_seconds',
+        'cache_disk_ttl_seconds', 'cache_generation', 'refinement_attempted',
+        'refinement_failed', 'refinement_finished', 'refinement_not_searched',
+        'title_searched', 'title_failed', 'title_not_searched', 'running'))
+    for name, fields in (
+        ('catalog', ('state', 'collections', 'age_seconds', 'http_status', 'elapsed_ms')),
+        ('local_query', ('searched', 'failed', 'outdated')),
+        ('local_index', ('phase', 'archives', 'completed', 'articles', 'workers')),
+        ('concurrency', ('fulltext', 'titles', 'shared_across_requests')),
+        ('error_counts', ('timeout', 'invalid_response', 'http_error', 'connection_error')),
+    ):
+        if isinstance(value.get(name), dict):
+            result[name] = scalars(value[name], fields)
+    for name, maximum in (('trace', 40), ('errors', 12)):
+        if not isinstance(value.get(name), list):
+            continue
+        rows = []
+        for item in value[name][:maximum]:
+            if not isinstance(item, dict):
+                continue
+            row = scalars(item, ('stage', 'pattern', 'language', 'elapsed_ms', 'outcome',
+                'results', 'response_bytes', 'cached', 'http_status', 'reason'))
+            if isinstance(item.get('collections'), list):
+                row['collections'] = [book[:300] if isinstance(book, str) and not any(c in book for c in '/\\\x00') else UNKNOWN
+                                      for book in item['collections'][:12]]
+            rows.append(row)
+        result[name] = rows
+    return result
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -95,7 +163,7 @@ def _fetch(send, url, kind, timeout):
                 value = json.loads(raw)
                 if not isinstance(value, dict):
                     raise ValueError('invalid_json_object')
-                emit(data=value)
+                emit(data=diagnostic_data(value))
             elif kind == 'xml':
                 tree = ET.fromstring(raw)
                 if tree.tag != 'rss' or tree.find('channel') is None:
@@ -134,7 +202,7 @@ def measure(url, kind, timeout, total_deadline):
                 record['result_count'] = len(event['results'])
                 if event['results'] and record['first_results_ms'] is None:
                     record['first_results_ms'] = round((time.monotonic()-started)*1000)
-                record['coverage'] = event.get('coverage', UNKNOWN)
+                record['coverage'] = coverage_data(event.get('coverage'))
             if event['state'] == 'done':
                 record['status'] = 'complete'
             elif event['state'] == 'error':
