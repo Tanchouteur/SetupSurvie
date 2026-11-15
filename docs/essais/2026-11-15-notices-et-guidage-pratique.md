@@ -1,6 +1,6 @@
 # Notices et guidage pratique — 0.19.1
 
-**Bilan en cours — 15 novembre 2026.** Correction compatible du parcours documentaire,
+**Bilan de développement — 15 novembre 2026.** Correction compatible du parcours documentaire,
 avec une notice supplémentaire et une fiche française : version corrective 0.19.1,
 schéma de livraison 1, images tierces et profils conseillés inchangés.
 L’objectif d’utilité réelle n’est pas clôt par les seuls tests techniques.
@@ -180,3 +180,55 @@ ordinaires démarrage/poursuite sont rapprochés pour le classement des passages
 sans transformer ces variantes en nouvelles exigences de recherche réseau.
 Les notices radio/antennes sont aussi repérées dans l’espace pratique : la recette
 suivante emploie explicitement ce filtre, pas seulement toute la bibliothèque.
+
+
+## Rejeux favorables et portée réelle
+
+Le rejeu Gemma avec le filtre **Autonomie et résilience** retrouve la notice et
+la fiche d’antenne. Les six demandes terminent : verrouillage page 34 (12 610 ms),
+mémoire page 41 (16 913 ms), quart d’onde (15 632 ms), dipôle (11 416 ms), nouvelle
+fréquence non tabulée (29 571 ms), paramètres manquants (25 021 ms). Les valeurs
+et commandes relues sont correctes dans leur portée, avec l’omission du prérequis
+de ligne supérieure déjà signalée. La longueur à 147,5 MHz est calculée par
+l’outil, environ 50,81 cm ; la fiche ne contient pas une ligne préécrite pour elle.
+Ces durées sont des observations de la configuration R7, pas des délais Windows.
+
+Après correction de la limite des dix mots, le rejeu solaire distingue bien
+**démarrage : PV supérieur de 5 V à la batterie** et **poursuite : PV au moins
+1 V au-dessus**. Il ne répond plus par les tensions d’absorption/Float. L’autre
+question attribue correctement **75 V à la limite PV** et **15 A au courant maximal
+de charge de la batterie**. Les sources citées sont les sections effectivement lues.
+Empreinte Python de ce code :
+`edaed610999b3b672e720617a1dff773d65a87bfce6a60b712cd3619d6969e55` ; contexte produit
+`8c16df9635e72c6fac3c7669c3d45d8c9bfaebf52fcbee3e481825fc8ce7a2e7`.
+
+L’essai est aussi élargi au modèle préexistant **qwen2.5-coder:14b**, sans réflexion,
+avec contexte 16k, 32 couches GPU demandées et les mêmes documents. Ce modèle de
+code ancien n’est pas ajouté aux profils conseillés. Le premier cas donne la
+bonne commande puis se contredit sur les boutons latéraux ; les suivants peuvent
+refuser la réponse ou écrire un appel JSON dans le texte sans l’exécuter. Les
+contrôles conservent ces cas incomplets : une réponse JSON affichée ne devient pas
+un calcul exécuté. Les résultats ne justifient aucun changement automatique de
+modèle et ne prouvent pas qu’un modèle plus gros répond mieux.
+
+La suite reste générale : contrôler prérequis et ordre des étapes, éprouver les
+relances sur les mêmes documents et les formats d’outils réellement produits,
+puis poursuivre traduction et sous-titres. Le lot ajoute des possibilités utiles
+et des corrections vérifiées ; il ne clôt pas la fiabilité de tous les savoir-faire.
+
+
+## Vérifications du candidat final
+
+Le code Python final correspond à l’empreinte R7 `edaed610…d6969e55` ci-dessus.
+La suite locale réussit **721 tests**, dont trois ignorés propres à Windows sur
+le runner Linux ; les nouveaux contrôles de lecture, contexte, références et
+extraction sémantique sont également rejoués séparément. Aucun modèle ni corpus
+réel n’est téléchargé dans ce runner. Les essais R7 et les rapports de modèles
+restent distincts de ces tests simulés.
+
+La [CI du code `38a373a`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43770806320)
+réussit ses huit jobs, dont Windows, les deux navigateurs, Kiwix, routage et
+lecteurs d’index isolés. Les **413 liens locaux et ancres** des documents du lot
+sont contrôlés ; `git diff --check` ne signale pas d’erreur. Aucun essai physique
+Windows/iPhone, téléchargement chez Marc ou validation du matériel radio n’est
+attribué à cette livraison.
