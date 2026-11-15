@@ -122,3 +122,24 @@ le panneau de synthèse est ouvert ; le clic réel est protégé par la recette.
 Une coupure simulée de la lecture finale confirme la récupération automatique
 de la réponse enregistrée, sans nouvel envoi de question ni doublon. Les identifiants
 des messages évitent aussi de la réajouter au rechargement d’une conversation terminée.
+
+## Reçu de livraison
+
+Code **`c32ca4899aed8b49a270287773ffa7699430c50b`**, validé par les huit jobs de la
+[CI complète](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43756201168),
+y compris Windows, navigateurs, Kiwix, routage et lecteurs d’index isolés.
+Les deux candidats précédents `419ecdc` et `f1dd6de` avaient aussi leur CI verte ;
+le dernier ajoute la récupération après une lecture finale interrompue.
+
+Paquet logiciel comparé, après décompression réelle, aux **782 fichiers** du commit
+avec les filtres Git : 15 194 387 octets décompressés, ZIP de 6 793 840 octets,
+SHA-256 `199cadc7a099173f9f3f0dd621f97a8373606d0a7377aa566fdba6ec4d407cbc`.
+Le reçu est ajouté ensuite par un commit documentaire ; le paquet correspond
+au commit fonctionnel ci-dessus. Le dernier code Python ne diffère du candidat
+R7 `cad905c` que par le nettoyage de lignes finales du lecteur ; les correctifs
+suivants concernent l’interface et la recette navigateur.
+
+Aucun déploiement sur les PC clients. Pas de nouvelle préparation du fonds de Marc,
+de modèle téléchargé dans le runner, de changement d’image tierce ni de profil
+conseillé. L’objectif reste actif pour les illustrations, les essais de fidélité
+représentatifs et la suite traduction/sous-titres.
