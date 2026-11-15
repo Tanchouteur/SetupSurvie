@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+La 0.14.3 corrige l’ordre des titres de tâche face aux questions périphériques et
+préserve la correspondance exacte des titres avec mots de liaison. Les sources
+restent accessibles et non certifiées ; le [bilan](../essais/2026-11-15-questions-peripheriques-et-titres-exacts.md)
+distingue les titres réellement observés des extraits et archives de reproduction.
+
 La 0.14.2 adapte le plafond des reformulations aux lots du flux long : un document
 manqué avec 28 appels principaux et seulement quatre variantes est retrouvé dans
 la [reproduction](../essais/2026-11-15-budget-reformulations.md). La concurrence et

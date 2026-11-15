@@ -472,3 +472,10 @@ parcours court conserve 32 appels. Le budget temporel, les sémaphores et les
 conditions de reformulation restent inchangés. `coverage.request_limit` contient
 la valeur effective ; les 40 traces bornées ne comptent pas tous les appels lorsque
 le plafond dépasse 40. Voir la [reproduction](../essais/2026-11-15-budget-reformulations.md).
+
+Depuis 0.14.3, le bonus d’action distingue aussi quantité, question périphérique
+et risques, avec marqueurs de guide, manuel et « how to » au lieu du seul « how ».
+Les demandes contextuelles restent cherchables. La comparaison de titre exact
+accepte la requête originale normalisée et ses mots de liaison ; ces règles ne
+modifient aucune classification humaine. Le [bilan](../essais/2026-11-15-questions-peripheriques-et-titres-exacts.md)
+conserve les cas observés et les limites du classement sans lecture du contenu.

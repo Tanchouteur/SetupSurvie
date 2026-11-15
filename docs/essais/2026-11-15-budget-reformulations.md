@@ -1,5 +1,9 @@
 # Couvrir les reformulations d’une grande bibliothèque
 
+**Suite :** le [tri des titres 0.14.3](2026-11-15-questions-peripheriques-et-titres-exacts.md)
+est corrigé après cette livraison ; il conserve le budget décrit ici et devient
+la version du prochain contrôle réel demandé.
+
 **Bilan daté — 0.14.2, 15 novembre 2026.** Suite du
 [rapport réel 0.14.0](2026-11-15-rapport-0140-et-traitement-progressif.md), après
 réduction du retraitement progressif en 0.14.1. Ce changement traite une autre

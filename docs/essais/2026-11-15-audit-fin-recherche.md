@@ -11,6 +11,9 @@ restent distinctes de cette réception. Le tableau conserve la preuve initiale.
 Le [complément 0.14.2](2026-11-15-budget-reformulations.md) corrige ensuite le
 plafond de variantes du flux long ; le prochain R2 porte sur cette version,
 avec les optimisations 0.14.1 incluses.
+La [correction de titres 0.14.3](2026-11-15-questions-peripheriques-et-titres-exacts.md)
+complète ensuite ces deux changements ; le prochain contrôle est désormais demandé
+sur 0.14.3. Les sources du R2 initial restent sans avis humain.
 Cet audit ne déclare pas l’objectif terminé. Il confronte les critères de recherche
 du [plan](../decisions/plan-ameliorations-marc.md) aux preuves disponibles, après
 intégration des outils des deux agents. Aucun nouveau modèle ni corpus n’est lancé.
@@ -40,7 +43,7 @@ restriction du compte ; il ne vaut ni réussite ni test de code exécuté en éc
 ## Validation demandée par l’audit initial
 
 Le nouveau R2 ci-dessus répond à la demande de mesure 0.14.0. Pour le prochain
-passage, appliquer **0.14.2** et conserver les avis humains ; les étapes suivantes
+passage, appliquer **0.14.3** et conserver les avis humains ; les étapes suivantes
 décrivent la demande initiale, pas un rapport encore manquant en 0.14.0.
 
 1. Appliquer la mise à jour habituelle et vérifier **0.14.0** dans le portail.

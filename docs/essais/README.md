@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Questions périphériques et titres exacts](2026-11-15-questions-peripheriques-et-titres-exacts.md) — 0.14.3, classement et lectures sur petites archives fictives.
+
 - [Budget des reformulations](2026-11-15-budget-reformulations.md) — 0.14.2, plafond adapté au nombre de lots avec concurrence et échéance conservées.
 
 - [R2 réel 0.14.0 et traitement progressif](2026-11-15-rapport-0140-et-traitement-progressif.md) — analyse et correctif 0.14.1, essais synthétiques distincts du PC de Marc.

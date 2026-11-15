@@ -95,7 +95,7 @@ Le rapport R1 réel 0.12.0 confirme les 135 archives examinées et les 15 compl�
 locaux prêts, dont les archives multilingues. Le nouveau R2 0.14.0 est reçu :
 premiers documents à 311 ms de médiane, fin à 36,24 s ; 23 recherches partielles,
 surtout par reformulations limitées. Le prochain R2 doit mesurer le correctif de
-traitement 0.14.1 et le budget adapté 0.14.2, sans refaire toute l’extraction pour ce seul changement.
+traitement 0.14.1, le budget adapté 0.14.2 et le tri 0.14.3, sans refaire toute l’extraction pour ces changements.
 Il faut encore ouvrir humainement les résultats prioritaires
 feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
@@ -295,3 +295,18 @@ cinq petites archives et 36 sur 135 archives fictives. Le paquet de 747 fichiers
 est déballé et comparé au code `61c3f67` avec filtres Git. La CI `43696908343`
 ne lance aucun job pour la même restriction GitHub ; pas de validation Windows
 ou WebKit supplémentaire déclarée. Les numéros et empreintes restent dans le bilan.
+
+## Questions périphériques et titres exacts — 0.14.3
+
+L’examen des premiers titres du même rapport motive une correction de classement,
+distincte du débit : une question de tableau électrique était assimilée à un titre
+d’installation, le diagnostic radio n’avait pas de préférence face à un cas d’écran,
+et la suppression des mots de liaison dans la requête annulait le bonus exact de
+« Histoire du vélo ». Des extraits égaux fictifs reproduisent ces effets ; les
+sources réelles n’ont pas été lues ni qualifiées par cette étape.
+
+Le [bilan](2026-11-15-questions-peripheriques-et-titres-exacts.md) trace les cas,
+les règles générales conservées et les limites. Les contextes restent accessibles,
+les manuels et titres explicitement pratiques peuvent mieux orienter la demande,
+aucun statut humain ou type certifié n’est créé. Le prochain contrôle réel porte
+sur 0.14.3, qui conserve également les deux correctifs précédents.

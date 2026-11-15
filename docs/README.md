@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Questions périphériques et titres exacts](essais/2026-11-15-questions-peripheriques-et-titres-exacts.md) — correctif 0.14.3, sources conservées et lecture réelle encore nécessaire.
+
 - [Budget des reformulations](essais/2026-11-15-budget-reformulations.md) — correctif 0.14.2, source manquée reproduite et plafond adapté aux lots du flux long.
 
 - [Rapport réel 0.14.0 et traitement progressif](essais/2026-11-15-rapport-0140-et-traitement-progressif.md) — progrès mesurés, lenteur reproduite et correctif 0.14.1.

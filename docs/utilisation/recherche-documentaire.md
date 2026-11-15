@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.14.2, 15 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.14.3, 15 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -19,6 +19,11 @@ articles Kiwix, variantes techniques françaises et anglaises et recherches plus
 courtes lorsque la première formulation ne trouve rien. Le classement privilégie
 le sujet du titre et du passage ; pour une demande pratique, les mentions de quiz,
 d’histoire ou de prévention seules passent après les correspondances plus directes.
+Les titres de guide, de manuel, de bricolage « DIY… » et les formulations « comment… » peuvent mieux
+orienter une demande pratique ; les questions sur un détail et les aperçus de
+risques restent accessibles. Un titre bien classé ne garantit pas des instructions
+complètes. Une demande générale identique à un titre conserve aussi ses mots de
+liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
 Il s’agit d’un classement, pas d’une validation du contenu ni d’un filtre qui cache
 les documents de prévention lorsqu’on les recherche précisément. Les extraits
 natifs conservent depuis 0.13.1 les mots surlignés et le texte qui les suit ; ils
@@ -115,7 +120,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.14.2** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.14.3** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,

@@ -52,6 +52,16 @@ def create_archives(folder):
             creator.add_item(Article('Shelter_construction','Shelter construction','Shelter construction and roof design. Fictional fixture.'))
             creator.add_item(Article('Mending_clothes','Mending clothes','Sewing and mending a garment. Fictional fixture without instructions.'))
             creator.add_item(Article('Solar_panel','Solar panel installation','Solar panel installation and electrical checks. Fictional fixture without instructions.'))
+            for key,title,text in [
+                ('Solar_question','Should I upgrade my electrical panel during a solar installation','Fictional solar panel installation question.'),
+                ('Solar_hazards','Occupational hazards of solar panel installation','Fictional solar panel installation overview.'),
+                ('Solar_quantity','How many solar panels should a beginner install?','Fictional solar panel installation question.'),
+                ('Radio_screen','1998-2003 Mazda Radio LCD Screen Repair','Fictional radio repair example.'),
+                ('Radio_howto','How to diagnose and repair a radio?','Fictional radio repair diagnostic example.'),
+                ('Bicycle_history','Histoire du vélo','Fictional bicycle history example.'),
+                ('History_specific','Any help with the History of a Fleetwood Bicycle 1963','Fictional bicycle history example.'),
+                ('History_museum','Pedaling History Bicycle Museum','Fictional bicycle history example.'),
+            ]:creator.add_item(Article(key,title,text))
             creator.add_item(Article('Bicycle_repair','Bicycle repair','Bicycle maintenance, fictional fixture without instructions.'))
             creator.add_item(Article("Compost_et_l'urbanisme","Compost et l'urbanisme",'Compost jardin, chemin fictif de contrôle.'))
             creator.add_item(Article('Compost & jardin','Compost et jardin','Compost jardin, chemin fictif de contrôle.'))
@@ -124,6 +134,15 @@ def main():
                     found=await library.search(query,limit=5,collection='manualen',domain='resilience')
                     check(bool(found) and found[0]['id']=='zim:manual_en/'+expected,query+' ranks its actual English source first',{'ids':[r['id'] for r in found],'coverage':found.coverage})
                     check(found[0].get('match')!='title',query+' has an actual fulltext match, not only a title suggestion')
+                for query,target,context in [
+                    ('installer un panneau solaire','Solar_panel',['Solar_question','Solar_hazards','Solar_quantity']),
+                    ('réparer un poste radio','Radio_howto',['Radio_screen']),
+                    ('histoire du vélo','Bicycle_history',['History_specific','History_museum']),
+                ]:
+                    found=await library.search(query,limit=20,collection='manualen');ids=[row['id'].split('/')[-1] for row in found]
+                    check(bool(ids) and ids[0]==target,query+' prioritizes a direct title over incidental context',{'ids':ids})
+                    check(all(key in ids for key in context),query+' preserves its contextual sources',{'ids':ids})
+                    check('Fictional' in (await library.source('zim:manual_en/'+target))['text'],query+' opens its selected fictional source')
                 guides=folder/'guides';guides.mkdir()
                 for name,title,text in [
                     ('solar.fr.txt','Les panneaux solaires modernes','Analyse fictive : installer un panneau solaire influence le coût de l’énergie, sans procédure.'),

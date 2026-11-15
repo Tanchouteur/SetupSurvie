@@ -11,7 +11,7 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **15 novembre 2026**, le pilote **0.14.2** propose une recherche locale avec
+Au **15 novembre 2026**, le pilote **0.14.3** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
@@ -21,6 +21,8 @@ Le traitement progressif réutilise aussi les textes et métadonnées déjà pr�
 pendant la demande ; le diagnostic sépare ce coût des appels aux encyclopédies.
 Le nombre d’appels autorisés s’adapte aux lots d’archives dans le flux long,
 avec une durée et une concurrence bornées.
+Le tri distingue les titres de tâche, les questions périphériques et les sujets
+généraux, sans certifier le contenu à partir du seul titre.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
 noms de collections sont corrigibles et exportables. Des rapports de délais et un
@@ -47,7 +49,7 @@ avec suivi des travaux et options techniques dépliables.
 
 ## Commencer
 
-Le portail **0.14.2** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.14.3** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 

@@ -131,10 +131,11 @@ def rank(item,query,position=0,*,normalizer=None):
             # An explicit task title should beat a broad subject title whose
             # excerpt merely mentions the action. This is still a reading lead,
             # never evidence that the article contains a verified procedure.
-            contextual=bool(re.search(r'\b(pourquoi|why|histoire|history|historical|origines?|origins?)\b',title))
-            instruction=bool(re.search(r'\b(comment|how|guide|tutorial|instructions|etapes|steps|methode|method)\b',title))
+            contextual=bool(re.search(r'\b(pourquoi|why|histoire|history|historical|origines?|origins?|risques?|dangers?|hazards?|safety|combien)\b|\b((should|do|can) (i|we|you)|does|how (many|much)|faut il|dois je|puis je)\b',title))
+            instruction=bool(re.search(r'\b(comment|guide|tutorial|tutoriels?|manuels?|manuals?|instructions|etapes|steps|methode|method)\b|\bhow (to|(can|do|should) (i|we|you|one))\b',title))
             direct=query.practical and title_hits==1 and len(title_tokens)>1 and (not contextual or instruction)
             score+=55 if direct else 12 if query.practical and contextual and not instruction else 28
+            if direct and (instruction or title.startswith('diy ')):score+=12 # A reading lead, never a verified procedure.
         elif re.search(evidence,text):score+=12
         else:score-=12
     path=str(item.get('id','')).split('/',1)[-1]
@@ -142,7 +143,7 @@ def rank(item,query,position=0,*,normalizer=None):
     if re.search(r'(highest voted|questions tagged|category|categorie)',title):score-=35
     if item.get('language') in ('fr','fra'):score+=2
     canonical=' '.join(query.words)
-    if canonical and canonical==title:score+=5 if query.practical else 30
+    if canonical and (canonical==title or normalize(query.original)==title):score+=5 if query.practical else 30
     if query.practical:
         classification=item.get('classification',{})
         if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
