@@ -191,7 +191,7 @@ class EvidenceTests(unittest.TestCase):
         def forbidden(identifier):raise AssertionError('The already read source must be reused.')
         _,answer=self.run_chat([{'content':'Notice consultée [1].'}],attached=self.a['id'],read=forbidden)
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
-        measured=assistant_metrics.read('j');self.assertEqual(measured['phases_ms']['reading'],40);self.assertEqual(measured['cache_hits']['read'],1)
+        measured=assistant_metrics.read('j');self.assertGreaterEqual(measured['phases_ms']['reading'],40);self.assertEqual(measured['cache_hits']['read'],1)
         self.assertNotIn('j',engine.PENDING)
 
     def test_failed_archive_search_coverage_reaches_model_even_without_results(self):

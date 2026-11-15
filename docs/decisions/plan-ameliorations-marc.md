@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.19.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.20.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -61,7 +61,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
 | L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.15.0 reçu : 32 recherches complètes, fin médiane 2,11 s avec cache largement réutilisé. Demandes de synthèse corrigées en 0.15.1 ; avis humains encore attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
-| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; fidélité sur de vrais livres, vision et R4 Windows restent à qualifier |
+| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; notices/antennes et lecture HTML en 0.19.1 ; relances relues et conditions de départ en 0.20.0. Fidélité sur de vrais livres, vision et R4 Windows restent à qualifier |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Inventaire local/rapports intégré en 0.14.0 ; recette réelle, acquisition et traitements suivants à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |

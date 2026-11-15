@@ -116,7 +116,8 @@ async def check(args):
                     with store.connect() as db:result=dict(db.execute('SELECT * FROM jobs WHERE id=?',(identifier,)).fetchone())
                     result['sources']=json.loads(result['sources']);result.update(name=name,question=question,review_reference=expected,measurements=assistant_metrics.read(identifier))
                     trace=store.ROOT/'traces'/(identifier+'.json')
-                    if trace.exists():result['tool_trace']=json.loads(trace.read_text()).get('tools',[])
+                    if trace.exists():
+                        observed=json.loads(trace.read_text());result['tool_trace']=observed.get('tools',[]);result['rejected_answers']=observed.get('rejected_answers',[])
                     report['cases'].append(result);save();print(json.dumps({'case':name,'status':result['status'],'sources':len(result['sources'])}),flush=True)
                 finally:
                     if not task.done():task.cancel();await asyncio.gather(task,return_exceptions=True)
