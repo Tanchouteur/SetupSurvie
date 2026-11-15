@@ -61,7 +61,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
 | L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.14.0 reçu : premiers documents à 311 ms de médiane, fin à 36,24 s ; 31 recherches sans archive en échec, 23 partielles surtout par reformulations. Traitement 0.14.1, plafond long 0.14.2 et tri des titres 0.14.3 corrigés ; mesure Windows et avis humains attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
-| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
+| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite 0.7.0 ; suivi documentaire indépendant du modèle 0.15.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Inventaire local/rapports intégré en 0.14.0 ; recette réelle, acquisition et traitements suivants à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
@@ -445,3 +445,18 @@ un sujet plus étroit. Les règles sont corrigées sans masquer les contextes,
 changer les types de document ou annoncer des sources lues. Le prochain R2 porte
 donc sur **0.14.3** ; les avis humains restent nécessaires. Ces exemples observés
 ne sont pas présentés comme une nouvelle validation aveugle du fonds réel.
+
+## Faits documentaires indépendants de la réponse — 0.15.0
+
+L’audit du chemin assistant confirme que les limites étaient transmises au modèle,
+sans état indépendant conservé auprès de la réponse. La
+[0.15.0](../essais/2026-11-15-suivi-documentaire-assistant.md) distingue désormais
+résultat proposé, texte consulté et source citée, avec observations et accès aux
+documents lus non cités. Ce suivi ne transforme pas une phrase fausse en réponse
+validée. Il reste replié et ne réorganise ni paramètres ni moteurs.
+
+La conservation privée, les anciens historiques, la panne optionnelle et les
+annulations sont testés sans LLM réel. Le prochain contrôle porte sur **0.15.0**,
+qui conserve les corrections de moteur 0.14.1–0.14.3. R2 sans IA, R4 volontaire
+avec modèle et R7 hors ligne restent distincts. Les essais du suivi ne remplacent
+pas les avis humains sur les documents ni la décision matérielle sur le PC réel.

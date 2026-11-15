@@ -479,3 +479,25 @@ Les demandes contextuelles restent cherchables. La comparaison de titre exact
 accepte la requête originale normalisée et ses mots de liaison ; ces règles ne
 modifient aucune classification humaine. Le [bilan](../essais/2026-11-15-questions-peripheriques-et-titres-exacts.md)
 conserve les cas observés et les limites du classement sans lecture du contenu.
+
+## Suivi documentaire de l’assistant — 0.15.0
+
+`pilot/documentary.py` observe les sorties de recherche et de lecture, sans analyser
+la prose du modèle. Les appels réutilisés partagent leur clé, les résultats et
+sources sont comptés par identifiant. Le résumé versionné borne états et compteurs ;
+les liens consultés sont filtrés séparément et restent privés à la conversation.
+`engine.DOCUMENTARY` sert les observations vivantes sur l’API de demande.
+
+La table optionnelle `documentary_evidence` conserve résumé et liens avec index de
+conversation, référence de message et suppression en cascade. Le message et son
+suivi final partagent la transaction ; la table ne dépend pas d’une clé étrangère
+vers les demandes nettoyables. Les colonnes existantes et le schéma global 1 sont
+conservés. Une table absente n’empêche ni réponse ni lecture d’ancien historique.
+`assistant_metrics` garde seulement les nombres filtrés, utilisables en repli sur
+la demande. L’annulation persiste les observations sans créer de faux message.
+
+Le portail rend un élément `details` replié, mis à jour sans détruire son ouverture
+ou le bouton focalisé. Les sources lues mais non citées restent ouvrables sans
+être ajoutées aux références numérotées. Le [guide](../utilisation/sources-et-fiabilite.md#suivi-des-recherches-et-lectures-dans-lassistant)
+et le [bilan](../essais/2026-11-15-suivi-documentaire-assistant.md) précisent les
+limites : des opérations terminées ne prouvent ni exhaustivité ni bonne réponse.

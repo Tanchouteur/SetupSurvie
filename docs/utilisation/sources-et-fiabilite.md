@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.1.36, 14 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.15.0, 15 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -31,6 +31,40 @@ garantit pas à elle seule l’exactitude ni l’actualité des documents.
 La [référence de recherche](recherche-documentaire.md) décrit le classement
 commun et la préparation des demandes documentaires depuis 0.1.36. Un classement
 élevé ne transforme pas un article général en procédure validée.
+
+## Suivi des recherches et lectures dans l’assistant
+
+Depuis 0.15.0, les nouvelles réponses disposant d’observations documentaires
+affichent une ligne dépliable, par exemple **Recherche limitée · 1 source consultée**.
+Ce suivi est calculé à partir des appels du logiciel, indépendamment des phrases
+du modèle. Il ne corrige pas automatiquement une affirmation erronée de l’IA.
+
+En dépliant, on trouve le périmètre, le nombre de demandes différentes, les
+résultats proposés et les éventuelles lectures en échec ou par passages. Les
+**Documents consultés** ouvrent les sources effectivement lues par les outils,
+même si le modèle ne les a pas citées. Au plus douze liens sont affichés ; les
+comptes restent distincts. Les citations numérotées conservent leur rôle : elles
+désignent les sources lues auxquelles la réponse fait effectivement référence.
+
+**Recherche effectuée** signifie que ces appels ont terminé dans leur périmètre,
+pas que toute la bibliothèque a été lue. **Aucun résultat pour ces recherches**
+n’établit pas une absence générale. **Recherche limitée**, **indisponible** et
+**Couverture non mesurée** gardent leurs limites visibles. **Aucune source consultée**
+permet de distinguer un résultat proposé d’un document dont le texte a été lu.
+Une lecture par passages n’est pas une lecture intégrale, ni une validation des
+conclusions du modèle ou de la sécurité d’une procédure.
+
+La ligne reste repliée au départ et garde son ouverture pendant la réponse.
+Elle est enregistrée avec les nouvelles réponses et revient au rechargement.
+Les anciennes conversations restent intactes, sans inventer de suivi a posteriori.
+En cas d’annulation ou d’échec, le travail observé peut rester consultable dans
+la demande tant qu’elle est conservée ; une réponse finale qui n’a pas été créée
+ne reçoit pas de nouveau message inventé. Une panne de cette fonction optionnelle
+ne doit pas bloquer conversation, bibliothèque ou lecture.
+
+Ce suivi ne prouve ni que tous les résultats sont pertinents, ni que le modèle
+a correctement utilisé les passages. La [recette réelle de l’assistant](../essais/recettes-progressives-marc.md)
+et la relecture humaine restent nécessaires.
 
 ## Quand une recherche est incomplète
 

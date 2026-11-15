@@ -142,11 +142,37 @@ function sourceChips(sources){
   return refs;
 }
 
-function message(role,text,sources=[],profile=''){
+function documentaryStatus(target,data){
+  const statuses={complete:'Recherche effectuée',partial:'Recherche limitée',unavailable:'Recherche indisponible',unknown:'Couverture non mesurée',not_run:'Document consulté'};
+  const counts=['searches','results','sources_read','failed_reads','partial_reads'];
+  const valid=data?.schema===1&&Object.prototype.hasOwnProperty.call(statuses,data.status)&&counts.every(key=>Number.isInteger(data[key])&&data[key]>=0&&data[key]<=10000);
+  target.hidden=!valid||data.status==='not_run'&&!data.sources_read&&!data.failed_reads;
+  if(target.hidden)return;
+  const label=!data.searches&&data.failed_reads?'Lecture limitée':data.status==='complete'&&!data.results?'Aucun résultat pour ces recherches':statuses[data.status];
+  target.querySelector('summary').textContent=label+' · '+(data.sources_read?data.sources_read+' source(s) consultée(s)':'aucune source consultée');
+  const scope={library:'Bibliothèque',targeted:'Périmètre ciblé',favorites:'Favoris',mixed:'Plusieurs périmètres',document:'Document indiqué'}[data.scope]||'Périmètre non mesuré';
+  target.querySelector('.documentary-counts').textContent=scope+' · '+data.searches+' recherche(s) · '+data.results+' résultat(s) proposé(s).';
+  const reading=target.querySelector('.documentary-reading');reading.hidden=!data.failed_reads&&!data.partial_reads;
+  reading.textContent=(data.failed_reads?data.failed_reads+' source(s) n’ont pas pu être lues. ':'')+(data.partial_reads?data.partial_reads+' source(s) ont été consultées par passages.':'');
+  const limit=target.querySelector('.documentary-limits');limit.hidden=data.status==='not_run'||data.status==='complete'&&data.results>0;
+  limit.textContent=data.status==='complete'?'Aucun résultat pour ces recherches ; cela ne prouve pas que le sujet est absent de la bibliothèque.':'Le suivi est incomplet. Il ne permet pas de conclure que le sujet est absent de la bibliothèque.';
+  const sources=Array.isArray(data.consulted_sources)?data.consulted_sources.filter(source=>source&&typeof source.id==='string'&&/^(guide|zim):/.test(source.id)&&typeof source.title==='string').slice(0,12):[];
+  const list=target.querySelector('.documentary-sources'),heading=target.querySelector('.documentary-source-heading');heading.hidden=!sources.length;list.hidden=!sources.length;
+  heading.textContent='Documents consultés · '+sources.length+' lien(s) affiché(s) sur '+data.sources_read;
+  const previous=new Map([...list.querySelectorAll('button')].map(node=>[node.dataset.source,node]));
+  for(const source of sources){let node=previous.get(source.id);if(!node){node=button(source.title,()=>readSource(source.id),'secondary');node.dataset.source=source.id;list.append(node);}else{node.textContent=source.title;previous.delete(source.id);}}
+  for(const node of previous.values())node.remove();
+}
+function message(role,text,sources=[],profile='',observed=null){
   const node=element('article',undefined,'message message-'+role);node.append(element('div',role==='user'?'Vous':(profile||'Assistant'),'message-label'));
   const body=element('div');renderText(body,text,sources);node.append(body);
+  const tracking=element('details',undefined,'documentary-status');tracking.hidden=true;
+  tracking.setAttribute('aria-label','Suivi documentaire de cette réponse');tracking.append(element('summary'));
+  for(const name of ['counts','reading','limits'])tracking.append(element('p',undefined,'small muted documentary-'+name));
+  tracking.append(element('p',undefined,'small muted documentary-source-heading'),element('div',undefined,'documentary-sources'));
+  node.append(tracking);if(role==='assistant')documentaryStatus(tracking,observed);
   if(sources.length)node.append(sourceChips(sources));
-  $('chat-messages').append(node);return {node,body};
+  $('chat-messages').append(node);return {node,body,tracking};
 }
 function newConversation(){
   if(S.job){toast('Attendez la réponse ou annulez la demande avant d’ouvrir une autre conversation.');view('chat');return;}
@@ -155,7 +181,7 @@ function newConversation(){
 async function openConversation(id){
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
   rememberReading();S.loadingConversation=true;
-  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=data.source||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'');view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);if(match)loadTranslation(match.id);else if(!data.translation_items&&data.translations?.length)loadTranslation(data.translations[0]);document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{S.loadingConversation=false;}
+  try{const data=await api('/conversations/'+encodeURIComponent(id));S.conversation=id;S.source=data.source||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'',m.documentary);view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);if(match)loadTranslation(match.id);else if(!data.translation_items&&data.translations?.length)loadTranslation(data.translations[0]);document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{S.loadingConversation=false;}
 }
 function bindExamples(){document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{$('chat-input').value=b.dataset.question;$('chat-input').focus();});}
 async function status(){
@@ -355,6 +381,7 @@ function watch(id){
       const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
       $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
       renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':phase+'…'),job.sources);
+      documentaryStatus(pending.tracking,job.documentary);
       if(['done','failed','cancelled','interrupted','incomplete'].includes(job.status)){
         S.job=null;$('cancel-job').hidden=true;$('send-question').disabled=false;
         $('chat-status').textContent=job.error||(job.status==='incomplete'?'Réponse incomplète : essayez une question plus ciblée.':'Réponse terminée. Vous pouvez ouvrir les sources ou poursuivre.');

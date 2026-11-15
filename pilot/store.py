@@ -58,6 +58,9 @@ def init():
 
     # Optional schema cannot roll back or prevent the core initialization.
     schemas={
+        'documentary':[
+            "CREATE TABLE IF NOT EXISTS documentary_evidence(job_id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,message_id INTEGER UNIQUE REFERENCES messages(id) ON DELETE CASCADE,summary TEXT NOT NULL,sources TEXT NOT NULL DEFAULT '[]')",
+            'CREATE INDEX IF NOT EXISTS documentary_conversation ON documentary_evidence(conversation_id)'],
         'favorites':[
             'CREATE TABLE IF NOT EXISTS favorites(user_id TEXT NOT NULL,source_id TEXT NOT NULL,title TEXT NOT NULL,url TEXT NOT NULL,language TEXT NOT NULL,created REAL NOT NULL,PRIMARY KEY(user_id,source_id))',
             "CREATE VIRTUAL TABLE IF NOT EXISTS favorite_articles USING fts5(user_id UNINDEXED,id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2')"],
@@ -126,7 +129,10 @@ def owned_conversation(identifier, user_id):
 
 def messages(identifier):
     with connect() as db:
-        return [{**dict(row),'sources':json.loads(row['sources'])} for row in db.execute('SELECT * FROM messages WHERE conversation_id=? ORDER BY id', (identifier,))]
+        rows=[{**dict(row),'sources':json.loads(row['sources'])} for row in db.execute('SELECT * FROM messages WHERE conversation_id=? ORDER BY id', (identifier,))]
+    from . import documentary
+    recorded=documentary.for_messages(identifier)
+    return [{**row,**({'documentary':recorded[row['id']]} if row['id'] in recorded else {})} for row in rows]
 
 
 def conversation_source(identifier):

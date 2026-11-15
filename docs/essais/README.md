@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Suivi documentaire de l’assistant](2026-11-15-suivi-documentaire-assistant.md) — 0.15.0, observations, liens consultés et conservation des anciennes conversations.
+
 - [Questions périphériques et titres exacts](2026-11-15-questions-peripheriques-et-titres-exacts.md) — 0.14.3, classement et lectures sur petites archives fictives.
 
 - [Budget des reformulations](2026-11-15-budget-reformulations.md) — 0.14.2, plafond adapté au nombre de lots avec concurrence et échéance conservées.

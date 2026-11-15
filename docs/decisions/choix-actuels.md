@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+La 0.15.0 conserve un [suivi documentaire indépendant du modèle](../essais/2026-11-15-suivi-documentaire-assistant.md) :
+recherches et lectures observées, limites et liens vers les documents consultés
+même sans citation. Le texte du modèle reste distinct et peut encore être faux.
+Les anciennes conversations ne reçoivent pas d’observations inventées ; la table
+optionnelle préserve le schéma compatible 1. La recette réelle R4 reste nécessaire.
+
 La 0.14.3 corrige l’ordre des titres de tâche face aux questions périphériques et
 préserve la correspondance exacte des titres avec mots de liaison. Les sources
 restent accessibles et non certifiées ; le [bilan](../essais/2026-11-15-questions-peripheriques-et-titres-exacts.md)

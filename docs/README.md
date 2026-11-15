@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Suivi documentaire de l’assistant](essais/2026-11-15-suivi-documentaire-assistant.md) — 0.15.0, opérations observées et sources consultées conservées indépendamment du texte du modèle.
+
 - [Questions périphériques et titres exacts](essais/2026-11-15-questions-peripheriques-et-titres-exacts.md) — correctif 0.14.3, sources conservées et lecture réelle encore nécessaire.
 
 - [Budget des reformulations](essais/2026-11-15-budget-reformulations.md) — correctif 0.14.2, source manquée reproduite et plafond adapté aux lots du flux long.
@@ -93,7 +95,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Profils locaux, sans mot de passe](utilisation/profils-locaux.md) — accès familial, anciens comptes et liens du menu, depuis 0.1.29.
 
-- [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide actuel 0.1.36.
+- [Sources, dates et fiabilité des réponses](utilisation/sources-et-fiabilite.md) — guide actuel 0.15.0, suivi de recherche et de lecture indépendant du modèle.
 
 - [Documents, favoris et traductions](utilisation/documents-et-traduction.md) — guide actuel 0.1.36, lecture PDF, contrôles de traduction et accès de secours.
 

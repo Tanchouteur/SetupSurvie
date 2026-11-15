@@ -17,7 +17,13 @@ def read(identifier):
         target=path(identifier)
         if target.stat().st_size>1_000_000:return None
         value=json.loads(target.read_text(encoding='utf-8'))
-        return value if isinstance(value,dict) and value.get('schema')==1 else None
+        if not isinstance(value,dict) or value.get('schema')!=1:return None
+        if 'documentary' in value:
+            from . import documentary
+            observed=documentary.clean(value['documentary'])
+            if observed is None:value.pop('documentary')
+            else:value['documentary']=observed
+        return value
     except (OSError,ValueError):return None
 
 

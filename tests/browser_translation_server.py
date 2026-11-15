@@ -8,10 +8,11 @@ import sqlite3
 from pathlib import Path
 import sys
 import tempfile
+import time
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
@@ -48,6 +49,34 @@ accounts.native=native
 async def books(**kwargs):return []
 library.books=books
 original_search=library.search
+@gateway.app.post('/fixture/documentary')
+async def documentary_fixture(state:str='partial',read_source:bool=True,running:bool=False):
+    if state not in ('partial','complete','unavailable','empty','legacy'):return {'error':'Unknown fixture'}
+    conversation,job=store.new_id(),store.new_id();observed=documentary.Evidence();now=time.time()
+    source=await library.source('guide:shelter.en.txt')
+    if state!='legacy':
+        observed.record('search_library',{}, {'results':[] if state in ('empty','unavailable') else [source], 'coverage':{'status':'complete' if state=='empty' else state}})
+        if read_source and state not in ('empty','unavailable'):observed.record('read_source',{'id':source['id']},{**source,'text':source['text'][:200],'partial_read':True})
+    text='Aucun document n’existe, affirmation fictive volontairement erronée du modèle.'
+    with store.connect() as db:
+        db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation,'browser','Suivi documentaire fictif',now))
+        db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation,'user','Question documentaire fictive',now))
+        db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,answer,created,updated) VALUES(?,?,?,?,?,?,?,?)',(job,'browser',conversation,'rapide','running' if running else 'done',text,now,now))
+        message=None if running else db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation,'assistant',text,now)).lastrowid
+        if state!='legacy':documentary.save(job,observed.summary(),sources=list(observed.consulted.values()),message_id=message,db=db)
+    return {'conversation':conversation,'job':job}
+
+@gateway.app.post('/fixture/documentary-finish')
+async def documentary_finish(job:str):
+    with store.connect() as db:
+        row=db.execute('SELECT * FROM jobs WHERE id=?',(job,)).fetchone()
+        if not row:return {'finished':False}
+        stored=documentary.for_job(job)
+        message=db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(row['conversation_id'],'assistant',row['answer'],0)).lastrowid
+        db.execute("UPDATE jobs SET status='done' WHERE id=?",(job,))
+        if stored:documentary.save(job,stored,sources=stored.get('consulted_sources'),message_id=message,db=db)
+    return {'finished':True}
+
 progress_gates={}
 @gateway.app.post('/fixture/search-gate')
 async def search_gate(query:str,hold:bool=False):

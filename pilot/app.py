@@ -66,7 +66,7 @@ async def lifespan(app):
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
 
 
-VERSION='0.14.3'
+VERSION='0.15.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -806,7 +806,10 @@ async def job(identifier:str,value=Depends(user)):
     if not row:raise HTTPException(404,'Demande introuvable.')
     live=engine.MEASUREMENTS.get(identifier)
     measured=live.live() if live else assistant_metrics.read(identifier)
-    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{}),'measurements':measured}
+    from . import documentary
+    observed=engine.DOCUMENTARY.get(identifier)
+    evidence=observed.view() if observed else documentary.for_job(identifier) or documentary.clean((measured or {}).get('documentary'))
+    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{}),'measurements':measured,**({'documentary':evidence} if evidence else {})}
 
 
 @app.get('/api/jobs/{identifier}/measurements')

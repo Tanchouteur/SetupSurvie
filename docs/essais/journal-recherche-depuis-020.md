@@ -317,3 +317,24 @@ paquet sont comparés au commit `44c280d` avec filtres de checkout, après déba
 par le lecteur normal. La CI `43699180773` refuse ses huit jobs avant exécution
 pour la restriction GitHub ; les limites Windows, WebKit et fonds réel sont
 conservées dans le bilan, sans déclarer l’objectif de fiabilité humaine clos.
+
+## Suivi indépendant du texte du modèle — 0.15.0
+
+L’audit du chemin assistant confirme une limite : `coverage` arrive au modèle,
+mais l’utilisateur n’avait pas d’état indépendant conservé auprès de sa réponse.
+Un test simule une recherche partielle et une source réellement lue, puis une
+affirmation du modèle disant que le document n’existe pas. La nouvelle ligne
+repliée conserve les opérations observées, sans corriger automatiquement la prose.
+
+Les sources lues mais non citées deviennent accessibles dans ce suivi, distinctes
+des références numérotées. Le résumé reste lié à la réponse après rechargement,
+les anciens historiques ne sont pas réinterprétés. Panne de la table optionnelle,
+annulation et suppression sont testées ; les exports de mesures gardent uniquement
+des compteurs, les liens/titres restent privés à la conversation. Voir le
+[bilan](2026-11-15-suivi-documentaire-assistant.md) pour les preuves et limites.
+
+Le prochain R2/R4 porte sur 0.15.0 avec le moteur 0.14.3 conservé. Les essais
+du runner n’affirment ni bonne utilisation des sources par un vrai modèle, ni
+performance Windows, ni validation de la bibliothèque. L’étude et l’inventaire
+des sous-titres restent réalisés dans leur périmètre ; acquisition et traduction
+des vraies vidéos demeurent distinctes et non annoncées comme terminées.

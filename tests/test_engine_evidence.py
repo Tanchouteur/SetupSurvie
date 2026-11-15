@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock,patch
 
 import httpx
 from fastapi import HTTPException
-from pilot import engine,library,store,assistant_metrics
+from pilot import engine,library,store,assistant_metrics,documentary
 
 POLICY=Path(__file__).resolve().parents[1]/'deploy/assistant-system.fr.txt'
 
@@ -26,13 +26,14 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False):
         payloads=[];client_class=httpx.AsyncClient
         def handler(request):
             if request.url.path=='/api/version':return httpx.Response(200,json={'version':'0.12.0'})
             if request.url.path=='/api/tags':return httpx.Response(200,json={'models':[{'name':engine.MODES['rapide']['model'],'digest':'a'*64}]})
             if request.url.path=='/api/show':return httpx.Response(200,json={'model_info':{'fixture.context_length':native_context}})
             if request.url.path=='/api/ps':return httpx.Response(200,json={'models':[]})
+            if cancel_model:raise asyncio.CancelledError()
             if failure:return httpx.Response(500,json={'error':'Fixture error with private path /not-for-export'})
             payloads.append(json.loads(request.content))
             self.assertLessEqual(len(payloads),len(messages))
@@ -101,6 +102,62 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(result['results'],[])
         self.assertEqual(result['coverage']['status'],'unavailable')
         self.assertEqual(answer['sources'],[])
+        self.assertEqual(answer['documentary']['status'],'unavailable')
+        self.assertEqual(answer['documentary']['sources_read'],0)
+
+    def test_model_absence_claim_does_not_replace_observed_search_and_reads(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        found=library.SearchResults([self.a],{'status':'partial','domain':'resilience'})
+        _,answer=self.run_chat([{'content':'Aucun document n’existe dans la bibliothèque, affirmation fictive erronée.'}],found)
+        self.assertIn('affirmation fictive',answer['content'])
+        self.assertEqual(answer['documentary']['status'],'partial');self.assertEqual(answer['documentary']['sources_read'],1)
+        self.assertEqual(answer['documentary']['results'],1);self.assertEqual(answer['documentary']['scope'],'targeted')
+        self.assertEqual(assistant_metrics.read('j')['documentary'],{key:value for key,value in answer['documentary'].items() if key!='consulted_sources'})
+        self.assertEqual(answer['documentary']['consulted_sources'],[{'id':self.a['id'],'title':self.a['title']}])
+        self.assertNotIn(self.a['id'],json.dumps(assistant_metrics.read('j')['documentary']))
+
+    def test_failed_read_is_saved_as_unread_without_becoming_a_citation(self):
+        def unavailable(identifier):raise HTTPException(404,'PRIVATE READ FAILURE')
+        _,answer=self.run_chat([self.call('read_source',{'id':'guide:missing'}),{'content':'Texte fictif sans source lue.'}],read=unavailable)
+        self.assertEqual(answer['documentary']['sources_read'],0);self.assertEqual(answer['documentary']['failed_reads'],1)
+        self.assertEqual(answer['documentary']['status'],'partial');self.assertEqual(answer['sources'],[])
+
+    def test_automatic_read_failure_is_observed_even_if_model_claims_a_procedure(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        def unreadable(identifier):raise HTTPException(404,'PRIVATE FAILED EXTRACTION')
+        found=library.SearchResults([self.a],{'status':'complete'})
+        _,answer=self.run_chat([{'content':'Procédure fictive sans document lu.'}],found,read=unreadable)
+        self.assertEqual(answer['documentary']['status'],'partial');self.assertEqual(answer['documentary']['failed_reads'],1)
+        self.assertEqual(answer['documentary']['sources_read'],0);self.assertEqual(answer['documentary']['consulted_sources'],[])
+        self.assertEqual(answer['sources'],[])
+
+    def test_cancellation_preserves_observed_work_without_fabricating_an_answer(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        with self.assertRaises(asyncio.CancelledError):self.run_chat([],library.SearchResults([self.a],{'status':'partial'}),cancel_model=True)
+        summary=documentary.for_job('j');self.assertEqual(summary['status'],'partial');self.assertEqual(summary['sources_read'],1)
+        self.assertEqual(summary['consulted_sources'],[{'id':self.a['id'],'title':self.a['title']}])
+        self.assertEqual(len(store.messages('c')),1);self.assertNotIn('j',engine.DOCUMENTARY)
+        with store.connect() as db:self.assertEqual(db.execute('SELECT status FROM jobs WHERE id=?',('j',)).fetchone()[0],'cancelled')
+
+    def test_optional_evidence_failure_preserves_the_answer_and_numerical_fallback(self):
+        with store.connect() as db:
+            db.execute('DROP TABLE documentary_evidence');db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
+        _,answer=self.run_chat([{'content':'Texte fictif consulté [1].'}],library.SearchResults([self.a],{'status':'complete'}))
+        self.assertNotIn('documentary',answer);self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+        self.assertEqual(assistant_metrics.read('j')['documentary']['sources_read'],1)
+
+    def test_empty_extraction_is_not_a_consulted_or_cited_source(self):
+        self.a={**self.a,'text':'   '}
+        _,answer=self.run_chat([self.call('read_source',{'id':self.a['id']}),{'content':'Citation fictive non étayée [1].'}])
+        self.assertEqual(answer['sources'],[]);self.assertEqual(answer['documentary']['sources_read'],0)
+        self.assertEqual(answer['documentary']['failed_reads'],1)
+
+    def test_empty_attached_document_is_distinct_from_a_missing_document(self):
+        self.a={**self.a,'text':''}
+        payloads,answer=self.run_chat([{'content':'Citation fictive non étayée [1].'}],attached=self.a['id'])
+        self.assertTrue(any('ne fournit pas de texte lisible' in message['content'] for message in payloads[0]['messages']))
+        self.assertEqual(answer['sources'],[]);self.assertEqual(answer['documentary']['sources_read'],0)
+        self.assertEqual(answer['documentary']['failed_reads'],1)
 
     def test_practical_question_receives_read_documents_before_first_model_call(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
@@ -113,6 +170,7 @@ class EvidenceTests(unittest.TestCase):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
         self.run_chat([self.call('search_library',{'query':'feu'}),{'content':'Source déjà lue [1].'}],[self.a])
         self.assertEqual(len(self.lookup_calls),1)
+        self.assertEqual(store.messages('c')[-1]['documentary']['searches'],1)
 
     def test_an_explicit_change_of_action_is_not_the_prepared_search(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment réparer un vélo ?' WHERE conversation_id='c'")
