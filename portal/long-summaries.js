@@ -19,16 +19,16 @@
   const noteBody=element('div');notes.append(noteBody);
   const pages=element('div',undefined,'translation-actions'),previous=button('Étapes précédentes',()=>load(job,Math.max(0,offset-10)),'secondary'),next=button('Étapes suivantes',()=>load(job,offset+10),'secondary');pages.append(previous,next);
   body.append(actions,state,progress,sources,notes,pages);panel.append(body);$('translation-panel').after(panel);
-  let job=null,offset=0,timer=null,version=0,busy=false,lastState=null;
+  let job=null,offset=0,timer=null,version=0,busy=false;
   const active=value=>['preparing','queued','running'].includes(value);
-  function clear(){clearTimeout(timer);version++;job=null;offset=0;lastState=null;S.summaryActive=false;state.textContent='';sources.replaceChildren();noteBody.replaceChildren();heading.textContent='Lire les documents et préparer une synthèse';for(const node of [pause,resume,download,progress,notes,previous,next])node.hidden=true;start.hidden=false;panel.open=false;refreshSourceChoices();refresh();}
+  function clear(){clearTimeout(timer);version++;job=null;offset=0;S.summaryActive=false;state.textContent='';sources.replaceChildren();noteBody.replaceChildren();heading.textContent='Lire les documents et préparer une synthèse';for(const node of [pause,resume,download,progress,notes,previous,next])node.hidden=true;start.hidden=false;panel.open=false;refreshSourceChoices();refresh();}
   function refresh(){panel.hidden=!selectedSourceChoices().length&&!job;start.disabled=busy||S.sourceChanging||S.loadingConversation||S.sending||!!S.job||!!S.summaryActive;}
   async function load(id,position=0){
     clearTimeout(timer);job=id;offset=position;const generation=++version,conversation=S.conversation,user=S.user?.id;
     try{
       const data=await api('/summaries/'+encodeURIComponent(id)+'?offset='+position);
       if(generation!==version||conversation!==S.conversation||user!==S.user?.id)return;
-      const wasActive=active(lastState);lastState=data.status;S.summaryActive=active(data.status);panel.hidden=false;
+      S.summaryActive=active(data.status);panel.hidden=false;
       const labels={preparing:'Préparation des textes',queued:'En attente du moteur',running:data.pending?'Lecture des passages':'Regroupement et rédaction',paused:'Synthèse en pause',error:'Étape à reprendre',incomplete:'Références à vérifier',completed:'Synthèse terminée'};
       heading.textContent=(labels[data.status]||data.status)+' · '+data.read+'/'+data.total+' passages examinés';
       state.textContent=(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' page(s) sans texte extractible.':'');
@@ -42,15 +42,15 @@
       if(articles.length!==noteBody.children.length||articles.some((article,index)=>noteBody.children[index]!==article))noteBody.replaceChildren(...articles);
       notes.hidden=!data.node_count;previous.hidden=position===0;next.hidden=position+data.nodes.length>=data.node_count;
       refreshSourceChoices();refresh();
-      if(data.status==='completed'&&wasActive){
+      if(data.status==='completed'&&data.message_id&&!$('chat-messages').querySelector('[data-message-id="'+data.message_id+'"]')){
         const history=await api('/conversations/'+encodeURIComponent(conversation));
         if(generation!==version||conversation!==S.conversation||user!==S.user?.id)return;
         const answer=history.messages.find(item=>item.id===data.message_id);
-        if(answer&&!$('chat-messages').querySelector('[data-summary-message="'+id+'"]')){const box=$('chat-messages'),bottom=box.scrollHeight-box.clientHeight-box.scrollTop<24;message('assistant',answer.content,answer.sources,'Synthèse longue · '+(answer.model||'Assistant')).node.dataset.summaryMessage=id;if(bottom)box.scrollTop=box.scrollHeight;rememberReading();}
+        if(answer&&!$('chat-messages').querySelector('[data-summary-message="'+id+'"]')){const box=$('chat-messages'),bottom=box.scrollHeight-box.clientHeight-box.scrollTop<24;const row=message('assistant',answer.content,answer.sources,'Synthèse longue · '+(answer.model||'Assistant'));row.node.dataset.summaryMessage=id;row.node.dataset.messageId=String(answer.id);if(bottom)box.scrollTop=box.scrollHeight;rememberReading();}
         return;
       }
       if(S.summaryActive&&S.view==='chat')timer=setTimeout(()=>load(id,position),2500);
-    }catch(error){if(generation===version){state.textContent=error.message;if(S.view==='chat'&&error.status!==404&&error.status!==401)timer=setTimeout(()=>load(id,position),5000);}}
+    }catch(error){if(generation===version){state.textContent=error.status?error.message:'Connexion interrompue. Le travail reste enregistré ; nouvelle vérification dans quelques secondes.';if(S.view==='chat'&&error.status!==404&&error.status!==401)timer=setTimeout(()=>load(id,position),5000);}}
   }
   async function action(kind){
     if(busy||S.sending||S.sourceChanging||S.loadingConversation||S.job||!needUser())return;

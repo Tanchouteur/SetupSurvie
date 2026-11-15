@@ -37,8 +37,10 @@ async page=>{
     check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Lecture et composition accessibles à '+width);
   }
   await page.setViewportSize({width:1366,height:900});await page.locator('#summary-panel').evaluate(n=>n.open=true);
+  let lostFinalRead=false;await page.route('**/api/conversations/'+conv,async route=>{if(!lostFinalRead){lostFinalRead=true;await route.abort();}else await route.continue();});
   await page.locator('#summary-resume').click();
   await page.waitForFunction(()=>document.querySelector('.message-assistant')?.textContent.includes('Synthèse fictive'),{timeout:30000});
+  check(lostFinalRead,'Une lecture finale interrompue est réessayée sans renvoyer la question');
   check(await page.locator('#summary-panel').evaluate(node=>node.open),'La rédaction terminée ne referme pas le suivi ouvert');
   const completed=await(await page.request.get(base+'/api/summaries/'+id)).json();
   check(completed.status==='completed'&&completed.pending===0,'Lecture et rédaction menées à leur terme');
