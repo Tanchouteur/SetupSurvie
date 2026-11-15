@@ -65,7 +65,7 @@ async def check(args):
         'scenario_documents':[{**meta,'sha256':hashlib.sha256(local.read_bytes()).hexdigest()} for local,meta in external[0]] if external else [],
         'reference_digest':hashlib.sha256((base/'deploy/library-templates/antennes-radio.fr.md').read_bytes()).hexdigest(),
         'scenario_digest':hashlib.sha256(args.scenario_file.read_bytes()).hexdigest() if external else None,
-        'options':{'context':16384,'output':4096,'gpu_layers':args.gpu_layers,'threads':6,'reserve_mib':1536,'think':args.think},'cases':[]}
+        'options':{'context':16384,'output':4096,'gpu_layers':args.gpu_layers,'threads':6,'reserve_mib':1536,'think':args.think,'domain':args.domain},'cases':[]}
     def save():durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
     async def available(**kwargs):
         async with original(trust_env=False,timeout=5) as client:
@@ -103,7 +103,7 @@ async def check(args):
                     db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(identifier,'fixture','Radio check',now));db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(identifier,'user',question,now))
                     db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,'fixture',identifier,'real-radio','queued',now,now))
                 print('Starting '+name,flush=True)
-                task=asyncio.create_task(engine.run(identifier,'fixture',identifier,'real-radio'))
+                task=asyncio.create_task(engine.run(identifier,'fixture',identifier,'real-radio',domain=args.domain))
                 try:
                     while not task.done():
                         await asyncio.wait({task},timeout=20);print(json.dumps({'case':name,'progress':engine.PROGRESS.get(identifier,{}).get('stage'),'elapsed':round(time.time()-now)}),flush=True)
@@ -119,5 +119,5 @@ async def check(args):
     return report
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--model',required=True);parser.add_argument('--think',choices=('true','false','low','medium','high'),default='true');parser.add_argument('--manual',type=Path);parser.add_argument('--scenario-file',type=Path);parser.add_argument('--case');parser.add_argument('--gpu-layers',type=int,choices=range(129),default=0);parser.add_argument('--report',type=Path,required=True)
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--model',required=True);parser.add_argument('--domain',choices=('all','resilience','culture'),default='all');parser.add_argument('--think',choices=('true','false','low','medium','high'),default='true');parser.add_argument('--manual',type=Path);parser.add_argument('--scenario-file',type=Path);parser.add_argument('--case');parser.add_argument('--gpu-layers',type=int,choices=range(129),default=0);parser.add_argument('--report',type=Path,required=True)
     asyncio.run(check(parser.parse_args()))

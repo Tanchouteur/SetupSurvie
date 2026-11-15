@@ -47,7 +47,7 @@ conservés et ne sont pas remplacés par les futurs cas favorables.
    sans inventaire de modèles ni liste exhaustive de verbes d’utilisation.
    Une seconde question reste transmise à l’IA sans imposer tous ses mots à la
    recherche du premier sujet. Les décimales et abréviations restent intactes.
-2. Après une recherche demandée par le modèle, si rien n’a été lu, lire au maximum
+2. Après une recherche demandée par le modèle, lire au maximum
    quatre candidats pertinents dans le budget avant sa rédaction. Une recherche
    seule reste marquée non consultée ; la lecture réelle passe par l’outil commun.
 3. Garder accessibles les autres pages PDF regroupées sous le même résultat,
@@ -146,3 +146,25 @@ le R7 demande le module cryptographique absent et le lecteur long refuse encore
 les PDF protégés ; les deux pages HTML d’assistance essayées refusent la requête
 (HTTP 403). Aucun accès n’est forcé et aucun texte de remplacement n’est inventé.
 Cette limite documentaire reste à traiter ; elle ne devient pas une procédure validée.
+
+
+## Extraction HTML et premier contrôle Windows
+
+Le premier essai Victron utilise bien les documents réels, mais les passages
+reçus proviennent surtout du sommaire/navigation. La différence démarrage/poursuite
+reste donc incomplète. La réponse sur 75/15 retrouve les nombres sans expliciter
+assez que 75 V est la limite photovoltaïque. Aucun de ces cas n’est déclaré validé.
+
+Le lecteur distingue maintenant le contenu sémantique (`article`, sinon `main`)
+des menus et du panneau de recherche ; titre/langue restent conservés. Les documents
+anciens sans ces balises gardent leur lecture, et les traductions générées à
+plusieurs articles gardent toutes les pages. Le plus grand article est une
+heuristique, pas une garantie d’extraction de tout contenu web.
+Les résultats de recherche transmis à l’IA gardent une couverture compacte ;
+les diagnostics techniques n’occupent plus la place des passages. Le périmètre
+reste conservé, avec un test de suivi documentaire ciblé.
+
+La première CI du candidat `4152045` passe Linux mais révèle un défaut de test
+Windows : comparaison du chemin temporaire court `RUNNER~1` à son chemin canonique.
+Le contrôle compare maintenant les chemins résolus, sans changer la validation
+du manifeste ou du dossier autorisé. Le résultat défavorable reste historique.

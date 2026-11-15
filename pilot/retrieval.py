@@ -255,6 +255,6 @@ def article_language(item):
 def domains(item):
     # Conservative automatic indication; never certifies a procedure.
     text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
-    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|food preservation|conserves|canning|solaire|solar|photovoltaic|photovoltaique|affutage|sharpening)\b',text))
+    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|food preservation|conserves|canning|solaire|solar|photovoltaic|photovoltaique|radio|radios|antenne|antennes|communications|telecommunications|affutage|sharpening)\b',text))
     cultural=bool(re.search(r'\b(histoire|history|science|sciences|physique|physics|biologie|biology|mathematiques|mathematics|enseignement|education|geographie|geography|litterature|literature|philosophie|philosophy)\b',text))
     return (['resilience'] if resilience else [])+(['culture'] if cultural or not resilience else [])

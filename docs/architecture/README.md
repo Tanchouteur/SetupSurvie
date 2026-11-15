@@ -132,7 +132,7 @@ sans liste de modèles d’appareils. La première question sert de sujet de rec
 une seconde question garde sa place dans la demande complète mais ne devient pas
 une contrainte lexicale de la première. Décimales/abréviations restent intactes.
 
-Si le modèle demande une recherche sans lire aucun résultat, le moteur prépare
+Si le modèle demande une recherche, le moteur prépare pour les résultats non lus
 un premier paquet de quatre passages candidats au maximum, classés par le moteur
 commun, avant sa rédaction. Les appels/résultats restent des paires complètes ;
 les lectures explicites suivantes, périmètre et budgets restent disponibles.
@@ -142,6 +142,12 @@ Pour une lecture préparatoire automatique, les pages d’un même PDF sont comp
 sur le sujet et le début de section, en écartant les mots du titre répétés partout.
 La meilleure page de chaque document reçoit la priorité ; les pages explicitement
 choisies restent littérales. Les autres passages demeurent accessibles aux outils.
+Le lecteur HTML préfère l’article principal ou le conteneur sémantique `main` ;
+les pages anciennes sans ces balises conservent leur extraction. Les traductions
+générées multi-pages gardent explicitement toutes leurs sections. La sélection
+du plus grand article est une heuristique ; elle ne qualifie pas la couverture
+d’un site entier. La couverture transmise au modèle garde statut, avertissement,
+périmètre et compteurs utiles sans les diagnostics volumineux de chaque appel.
 Le contexte produit est condensé pour garder plus de place aux textes utiles,
 sans changer modèle ou taille de contexte.
 L’allocation répartit les extraits courts entre plusieurs sources selon le budget ;

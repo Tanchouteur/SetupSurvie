@@ -9,6 +9,12 @@ from pilot import engine,research,library,store
 
 
 class PassageTests(unittest.TestCase):
+    def test_start_and_continuation_wording_reaches_the_same_conditions(self):
+        text=('Réglage des tensions de batterie et du courant. '*50)+'\nDémarrage : seuil de 7 unités. Poursuite : seuil de 3 unités.\n'+('Cycle de batterie : autres paramètres. '*50)
+        parts=research.passages(text,'Pour commencer puis continuer, quel seuil faut-il ?',1200)
+        received=' '.join(part['text'] for part in parts)
+        self.assertIn('seuil de 7 unités',received);self.assertIn('seuil de 3 unités',received)
+
     def test_polite_modal_words_do_not_become_documentary_requirements(self):
         plan=research.subject('Quelle longueur d’antenne dois-je utiliser pour mon talkie Baofeng ?')
         self.assertEqual(plan.words,['longueur','antenne','talkie','baofeng'])

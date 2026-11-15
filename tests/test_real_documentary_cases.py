@@ -13,7 +13,7 @@ class DocumentaryScenarioTests(unittest.TestCase):
             root=Path(directory);source=root/'fixture.fr.txt';source.write_text('Fictional local text.')
             manifest=root/'cases.json';data={'documents':[{'path':source.name,'title':'Fixture','language':'fr','sha256':hashlib.sha256(source.read_bytes()).hexdigest()}],'cases':[{'name':'case','question':'Question fictive ?','review_reference':'Aucune validation de contenu réel.'}]}
             manifest.write_text(json.dumps(data));documents,cases=scenario(manifest)
-            self.assertEqual(documents[0][0],source);self.assertEqual(cases[0][0],'case')
+            self.assertEqual(documents[0][0],source.resolve());self.assertEqual(cases[0][0],'case')
             source.write_text('Changed fixture.')
             with self.assertRaises(ValueError):scenario(manifest)
 

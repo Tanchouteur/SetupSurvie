@@ -26,7 +26,7 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False,selected=None):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False,selected=None,search=None):
         payloads=[];client_class=httpx.AsyncClient
         self.loads=[]
         def handler(request):
@@ -45,7 +45,7 @@ class EvidenceTests(unittest.TestCase):
             event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
         with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(return_value={'online':True,'paused':paused})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
-             patch.object(engine.library,'search',AsyncMock(return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
+             patch.object(engine.library,'search',AsyncMock(side_effect=search,return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
             asyncio.run(engine.run('j','u','c','rapide',attached,source_ids=selected))
             self.lookup_calls=engine.library.search.await_args_list
         with store.connect() as db:
@@ -338,6 +338,14 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(json.loads(tools[1]['content'])['results'][0]['passages'][0]['text'],self.a['text'])
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
         self.assertEqual(answer['documentary']['sources_read'],1)
+
+    def test_a_complementary_search_reads_the_new_document_without_rereading_the_first(self):
+        read=[]
+        def source(identifier):read.append(identifier);return {self.a['id']:self.a,self.b['id']:self.b}[identifier]
+        def lookup(query,*args,**kwargs):return [self.a] if query=='first' else [self.b]
+        _,answer=self.run_chat([self.call('search_library',{'query':'first'}),self.call('search_library',{'query':'second'}),{'content':'Les deux notices diffèrent [1] [2].'}],read=source,search=lookup)
+        self.assertEqual(read,[self.a['id'],self.b['id']])
+        self.assertEqual({row['id'] for row in answer['sources']},{self.a['id'],self.b['id']})
 
     def test_failed_automatic_read_cannot_validate_a_search_excerpt_citation(self):
         def missing(identifier):raise HTTPException(404,'PRIVATE READ FAILURE')

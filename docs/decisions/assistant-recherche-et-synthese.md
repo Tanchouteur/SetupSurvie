@@ -170,3 +170,11 @@ avec des commandes de radio codées en dur, ni convertir une formule d’antenne
 longueur universelle. Les essais doivent juger la réponse et son utilité, pas le
 seul nombre d’articles ouverts. Le [bilan](../essais/2026-11-15-notices-et-guidage-pratique.md)
 conserve les résultats défavorables et les corrections communes.
+
+
+Le cas réel montre aussi qu’un guide peut citer la bonne page tout en omettant une
+condition de départ. La prochaine vérification doit porter sur prérequis, ordre
+des opérations, paramètres et limites, avec appui sur des extraits exacts. Une
+revue du modèle peut aider mais ne certifie pas le sens ; les essais sur plusieurs
+besoins et les omissions connues restent visibles. Aucun mécanisme de ce type n’est
+annoncé livré par le seul contrôle des références de la 0.19.1.

@@ -223,7 +223,9 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
             spatial=bool(re.search(r'\b(proche|autour|itineraire|altitude|coordonnees|domicile|chez moi)\b',library.retrieval.normal(current_question)))
             initial_tools=DOCUMENT_TOOLS if (prepared or selected_ids) and not spatial else TOOLS
             def search_value(found):
-                return {'results':[{**reference(references,item),'excerpt':item.get('excerpt','')[:450]} for item in found[:12]],'coverage':getattr(found,'coverage',{})}
+                coverage=getattr(found,'coverage',{})
+                compact={key:coverage[key] for key in ('status','warning','searched','failed','without_fulltext','not_searched','deadline_exceeded','domain') if key in coverage}
+                return {'results':[{**reference(references,item),'excerpt':item.get('excerpt','')[:450]} for item in found[:12]],'coverage':compact}
             def record_tool(name,arguments,value,automatic=False,include_message=True):
                 if name!='read_sources':record_evidence(name,arguments,value,prepared_key if name=='search_library' else None)
                 call_id='prepared-'+str(len(tool_trace))
@@ -378,7 +380,6 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                             measured.value['citation_linking']=link_report
                             if link_report['applied'] and not link_report['rejected'] and research.citations_valid(linked,references):answer=linked;break
                             measured.value['failure']='citation_check';interrupted=True
-                            known={item['number'] for item in references.values() if item.get('consulted')}
                             fabricated=research.unsupported_citations(content,references)
                             answer=research.fallback(references) if fabricated or not linked.strip() else citation_links.unverified(linked,references);break
                         answer=content;break
@@ -453,9 +454,9 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         update(identifier,sources=read_references(references))
                     # A search excerpt is not a reading. Some models stop here
                     # and cite that excerpt despite consulted=false. Prepare a
-                    # small real reading packet before their first final answer.
-                    if search_to_read and not read_references(references):
-                        identifiers=list(dict.fromkeys(search_to_read))[:4]
+                    # small real reading packet, including newly found complements.
+                    identifiers=[candidate for candidate in dict.fromkeys(search_to_read) if not references.get(candidate,{}).get('consulted')][:4]
+                    if identifiers:
                         try:
                             value=await read_batch(identifiers,current_question,automatic=True)
                         except Exception:value={'results':[],'error':'Les documents trouvés n’ont pas pu être lus ; aucun extrait de recherche ne vaut lecture.'}

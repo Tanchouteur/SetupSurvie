@@ -96,6 +96,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_citation_links.py -v
       - run: python -m unittest discover -s tests -p test_real_assistant_check.py -v
       - run: python -m unittest discover -s tests -p test_real_documentary_cases.py -v
+      - run: python -m unittest discover -s tests -p test_html_main_content.py -v
       - run: python -m unittest discover -s tests -p test_documentary_evidence.py -v
       - run: python -m unittest discover -s tests -p test_documentary_requests.py -v
       - run: python -m unittest discover -s tests -p test_calibration.py -v

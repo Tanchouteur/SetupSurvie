@@ -36,7 +36,14 @@ def primary_query(query):
 def clip(text,maximum):return text.encode('utf-8')[:max(0,maximum)].decode('utf-8',errors='ignore')
 
 
-def subject(query):return retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
+def subject(query):
+    plan=retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
+    # Reading a section must recognise ordinary action wording as well as its
+    # heading. This expands passage scoring, not global search requirements.
+    phases=[['demarrage','demarrer','commencer','commence','commencera','start','starting','startup'],
+            ['continuer','continuation','poursuivre','poursuite','continue','continuing']]
+    plan.groups=[list(dict.fromkeys(group+[term for phase in phases if set(group)&set(phase) for term in phase])) for group in plan.groups]
+    return plan
 
 
 def passages(text,query,maximum):
