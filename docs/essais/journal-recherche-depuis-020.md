@@ -6,7 +6,8 @@ sélectionnés par légende avant rédaction ; aucune interprétation des pixels
 Le bilan conserve la sélection initiale après prose abandonnée, le vrai changement
 de modèle au premier envoi et les limites de fidélité. Le rejeu long traite 42/42
 passages avec les deux pages originales et leurs références. 704 tests (trois
-ignorés) et 113 contrôles ciblés par navigateur réussis. Aucun sous-titre traité.
+ignorés) et 113 contrôles ciblés par navigateur réussis. Code `67ab419`, huit jobs CI
+réussis et 791 fichiers du paquet comparés au commit. Aucun sous-titre traité.
 
 Complément 0.18.0 : [lectures longues, notes et reprise](2026-11-15-syntheses-longues-et-reprise.md).
 La sélection peut être lue par étapes conservées, puis synthétisée avec provenance

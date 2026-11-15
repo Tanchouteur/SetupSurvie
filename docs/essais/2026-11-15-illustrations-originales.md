@@ -129,3 +129,15 @@ contexte produit inchangé par rapport au rejeu ordinaire ci-dessus.
   examinées ; page PDF entière et image d’article lisibles après ouverture en grand.
 - `git diff --check` sans erreur ; liens et ancres des documents concernés contrôlés.
 - Aucune recette physique Windows/iPhone ni nouvelle indexation du fonds de Marc.
+
+
+## Reçu de livraison
+
+Code **`67ab419a8e01fe0ea83d27fe4cb0c34256c492f5`**, huit jobs de la
+[CI complète](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43763945216)
+réussis, dont Windows, navigateurs, Kiwix, routage et lecteurs d’index isolés.
+Le paquet est décompressé réellement puis ses **791 fichiers** comparés au commit
+avec les filtres Git : 15 272 123 octets décompressés, ZIP de 6 823 644 octets,
+SHA-256 `ad146503d2cc1a089970f7cb4f1583394a89c2f0459cdd2e16225527d803910e`.
+Ce reçu est ajouté ensuite par un commit documentaire ; le paquet correspond
+au code fonctionnel indiqué. Aucun déploiement client effectué.
