@@ -5,6 +5,10 @@ La même question comparative lit zéro notice en 0.15.1, cinq en 0.16.0 avec Ge
 sur le R7. Les faits et références sont corrects sur cet essai fictif ; une autre
 série Llama conserve des conclusions injustifiées. Ce résultat ne clôt pas l’objectif.
 Le bilan trace aussi les deux méthodes de reprise de citations abandonnées.
+Code livré `82ba549`, huit jobs CI réussis, 650 tests Linux CI (trois ignorés),
+769 fichiers du paquet contrôlés. Deux derniers essais Gemma R7 sur le code livré
+terminent avec cinq notices et leurs valeurs ; les extrapolations et références
+trop larges sont conservées comme limites. Aucun remplacement des profils conseillés.
 
 **Suivi actuel — 15 novembre 2026.** Demandé par Louis pour préparer le résumé
 final. Ce journal suit les livraisons, décisions, preuves et limites ; les bilans

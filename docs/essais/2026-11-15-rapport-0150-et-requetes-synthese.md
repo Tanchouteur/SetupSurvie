@@ -4,6 +4,9 @@
 Louis comprennent un R2 sans IA et deux captures de conversations. Les fichiers
 bruts restent privés ; aucun accès au PC de Marc ni modèle réel n’est lancé ici.
 
+Suite datée : les [essais multi-sources et modèles réels en 0.16.0](2026-11-15-synthese-multi-sources-et-essais-reels.md)
+complètent ce constat ; les validations 0.15.1 ci-dessous restent historiques.
+
 ## Rapport reçu
 
 Le JSON de 971 938 octets est créé le 15 novembre à **11:15:41 UTC**, en version

@@ -4,7 +4,34 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
+## Prochaine validation assistant — 0.16.0
+
+Le dossier multi-source est livré. Les [essais R7](2026-11-15-synthese-multi-sources-et-essais-reels.md)
+confirment des lectures multiples et le changement de modèle sur de petits textes
+fictifs ; ils ne remplacent pas le Windows de Marc. Le développement peut continuer
+sans nouveau R2 complet. Lors d’un usage volontaire après la mise à jour habituelle :
+
+1. Demander une synthèse sur un sujet connu du fonds, par exemple la formulation
+   réelle de Marc sur le feu, puis « Compare les méthodes et cite les documents ».
+   Vérifier quelles sources sont réellement lues, ouvrir un passage et noter une
+   affirmation correctement soutenue ou une extrapolation. Plusieurs sources sont
+   possibles, sans exiger cinq si le fonds utile ou le contexte en fournissent moins.
+2. Après une réponse, changer pour un mode utilisant un autre modèle, puis poser
+   une petite question. La première demande doit aboutir sans la renvoyer à la main.
+3. Exporter **Voir les durées → Télécharger le rapport** pour un cas lent, incomplet
+   ou faux. Préciser le texte de la demande, le mode et la source mal utilisée :
+   le rapport numérique ne contient pas ces textes. Documents préparés, lectures,
+   reprises et liaison des références sont mesurés séparément.
+
+Prévoir plusieurs minutes possibles par question selon le modèle et le contexte ;
+le plafond est quinze minutes, l’annulation reste disponible. Ne pas lever le mode
+jeu ni lancer de réindexation ou calibration pour ce contrôle. Association manuelle
+multiple, illustrations et longues synthèses restent à développer. La fidélité de
+chaque conclusion reste un critère humain, même si les références sont présentes.
+
 ## Prochaine validation assistant — 0.15.1
+
+**Recette historique ; le protocole 0.16.0 ci-dessus est la suite actuelle.**
 
 Le R2 **0.15.0 est reçu** : les 32 recherches sont complètes, médiane finale
 2,11 s avec cache déjà chaud. Ne pas le refaire immédiatement pour poursuivre
@@ -117,7 +144,7 @@ Arrêt et export sont disponibles ; les étapes non faites restent non effectué
 | R1 — Préparation des index | Après L1, premier examen puis nouveau petit lot | Téléchargé/vérifié/indexé, fichiers ignorés, temps, volume des index, erreurs, pause et reprise ; relance inchangée sans nouvelle extraction | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs et 15 compléments prêts ; pause/reprise et nouveau petit lot restent à vérifier |
 | R2 — Recherche et incident | Maintenant avec le bouton existant, puis après L2 et chaque changement important | Requêtes, résultats et couverture ; état Kiwix/catalogue, répétitions, comparaison Toute la bibliothèque / Résilience, requêtes feu et générateur ; un départ froid doit être établi séparément | Rapport 0.15.0 reçu : 32 recherches complètes, première réception médiane 268 ms, fin 2,11 s avec cache largement chaud ; avis humains attendus |
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Corrections/export en 0.6.0, six dossiers et repères exportables en 0.9.0 ; relecture humaine du fonds attendue |
-| R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Captures 0.15.0 : synthèse sans source consultée et constat de changement de modèle défaillant. Correctifs 0.15.1 à vérifier avec les mesures de réponse ; calibration distincte et volontaire |
+| R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Captures 0.15.0 : synthèse sans source consultée et constat de changement de modèle défaillant. Dossier 0.16.0 et essais R7 réalisés sur corpus fictif ; contrôle Windows ci-dessus encore à faire. Calibration distincte et volontaire |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |
 | R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Inventaire/export local](../utilisation/inventaire-videos.md) livré en 0.14.0 ; recette réelle et traitements/lecteur du [protocole cible](protocole-sous-titres-videos.md) restent à faire |
 | R7 — Usage hors ligne | À chaque livraison pertinente, puis L9 | Navigation, données conservées, fonctions avec IA arrêtée et Internet coupé, reprise, téléphone ; chaque vérification marquée exécutée ou non | Recette et export en 0.10.0 ; rapport réel attendu, état IA mesuré et coupure Internet déclarée restent distincts |

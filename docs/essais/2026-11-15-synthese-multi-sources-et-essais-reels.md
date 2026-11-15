@@ -89,6 +89,19 @@ ils sont maintenant insérés dans sa dernière cellule. Rejeu de la même propo
 JSON : cinq lignes, trois cellules chacune, un lien visible par notice. Ce dernier
 correctif serveur ne change ni les fragments transmis au modèle ni leurs identifiants.
 
+Dernier rejeu complet sur le code `82ba549`, digest Python
+`22d109f1bba6057350dddff90b266bbc3e1d9b6ab3b48013756fa0ba674f9ba8` :
+deux demandes terminées en **80 088 / 88 966 ms**, cinq notices lues chacune.
+Le premier cas change réellement de Llama à Gemma (préparation 4 090 ms) ; le
+second ajoute douze liens par l’étape structurée, sans rejet. Les cinq valeurs,
+unités et associations de notices sont correctes, les dates sont présentes.
+**Limites de sens conservées :** le second texte suggère des phases de fonctionnement
+non données dans les notices et sa comparaison des deux extrêmes cite trop
+largement la seule première notice. Ce n’est donc pas une validation éditoriale
+complète. Le rapport contient les passages effectivement transmis et l’empreinte
+de la recette ; SHA-256 du rapport privé :
+`aaef37254e6de6fb5d5937a8f1f01df7216be188fcb0a8ed6dc2e66c9efd80e9`.
+
 ## Pistes explorées, conservées ou abandonnées
 
 - **Conservé :** sélection déterministe de passages, cache de lecture, préparation
@@ -108,8 +121,8 @@ correctif serveur ne change ni les fragments transmis au modèle ni leurs identi
 ## Vérifications automatisées et livraison
 
 Runner Linux Python 3.13 : **649 tests, trois ignorés**, avant le dernier contrôle
-de cellule de tableau, puis cinq tests ciblés de liaison réussis. Aucun modèle réel
-n’est exécuté dans ces tests. Ils
+de cellule de tableau ; **650 tests, trois ignorés** dans la CI Linux finale sur
+Python 3.12. Aucun modèle réel n’est exécuté dans ces tests. Ils
 couvrent notamment passages tardifs, procédures face à l’historique, UTF-8,
 contexte réduit, cinq sources, doublons, échec de lecture, provenance des
 traductions, annulation, références fictives et outils répétés.
@@ -130,6 +143,20 @@ n’avait pas terminé. Le suivi conserve maintenant ces accès jusqu’à ferme
 et l’arrêt du pilote ferme le cache après les travaux de l’assistant. Un nouveau
 test reproduit ce défaut sous Linux aussi : il échoue avant, réussit après.
 Le résultat de la CI finale et le reçu du paquet sont ajoutés après vérification.
+
+**Reçu final :** code `82ba549c9020a1622c4fadf5237369255fa08f9d`,
+[huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43743350113),
+dont Windows, Kiwix natif sur petites archives, routage synthétique, interfaces
+Chromium/WebKit et lecteurs Python 3.11/3.13/3.14. Paquet du code vérifié avec le
+lecteur de mise à jour réel : **769 fichiers, 6 742 510 octets**, aucun écart avec
+les fichiers Git filtrés du commit, aucun modèle, archive ou état utilisateur.
+SHA-256 : `ae6c6314daa193f9a3c4cbb15bdab413ab2944b35da2c6b42d123c087cc77741`.
+
+La CI précédente `a5fd478` a passé Windows mais expiré dans la recette de création
+de profil WebKit après la matrice des paramètres. Un rejeu local a reproduit une
+absence de requête de création après le clic ; la cause n’est pas établie.
+La CI finale a passé cette recette sans changement de l’UX. Cette intermittence
+reste tracée pour le chantier d’interface, sans l’attribuer au moteur documentaire.
 
 **Version mineure 0.16.0 :** nouveau parcours fonctionnel de lecture multi-source,
 sans migration du schéma ni rupture de l’installation. Aucun déploiement chez Marc.
