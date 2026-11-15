@@ -127,6 +127,10 @@ ni l’affirmation ni l’usage de la pagination imprimée.
 
 ## Procédures ordinaires — 0.19.1
 
+Le choix des passages analyse tous les mots utiles de la question bornée, y
+compris après les dix premiers termes ; la limite des requêtes globales reste
+distincte. Les variantes ordinaires démarrage/poursuite servent à ce classement
+de lecture, sans ajouter des exigences aux requêtes réseau.
 Les demandes « comment… » et de dimensions préparent aussi le moteur commun,
 sans liste de modèles d’appareils. La première question sert de sujet de recherche ;
 une seconde question garde sa place dans la demande complète mais ne devient pas

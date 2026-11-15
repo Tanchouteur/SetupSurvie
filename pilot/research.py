@@ -37,7 +37,7 @@ def clip(text,maximum):return text.encode('utf-8')[:max(0,maximum)].decode('utf-
 
 
 def subject(query):
-    plan=retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
+    plan=retrieval.plan(query,library.search_terms(query,maximum=None),library.SYNONYMS)
     # Reading a section must recognise ordinary action wording as well as its
     # heading. This expands passage scoring, not global search requirements.
     phases=[['demarrage','demarrer','commencer','commence','commencera','start','starting','startup'],

@@ -150,3 +150,7 @@ Le mode de réflexion du profil d’essai peut être choisi avec `--think false`
 Le défaut de cette recette est `true` pour les essais Gemma décrits ; ne pas le
 transposer à un modèle dépourvu de cette capacité. Les profils du produit ne sont
 pas modifiés par ce choix de laboratoire.
+
+La recette accepte `--domain resilience` pour vérifier que les mêmes ressources
+restent accessibles dans l’espace pratique. Le défaut reste `all` ; le rapport
+conserve ce choix, qui ne doit pas être déduit du seul titre d’un document.

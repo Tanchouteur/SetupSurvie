@@ -9,6 +9,14 @@ from pilot import engine,research,library,store
 
 
 class PassageTests(unittest.TestCase):
+    def test_decisive_conditions_after_the_first_ten_words_still_select_the_passage(self):
+        question='Sur un contrôleur MPPT 75/15, faut-il la même marge de tension au-dessus de la batterie pour commencer puis continuer la charge ?'
+        text=('Notice du contrôleur MPPT 75/15 : autres tensions de batterie et marge selon le mode. '*35)+'\nDémarrage : écart de 7 unités. Poursuite : écart de 3 unités.\n'+('Tension de batterie, MPPT 75/15 et profils différents. '*35)
+        parts=research.passages(text,question,1600)
+        received=' '.join(part['text'] for part in parts)
+        self.assertIn('écart de 7 unités',received);self.assertIn('écart de 3 unités',received)
+        self.assertIn('commencer',research.subject(question).words);self.assertIn('continuer',research.subject(question).words)
+
     def test_start_and_continuation_wording_reaches_the_same_conditions(self):
         text=('Réglage des tensions de batterie et du courant. '*50)+'\nDémarrage : seuil de 7 unités. Poursuite : seuil de 3 unités.\n'+('Cycle de batterie : autres paramètres. '*50)
         parts=research.passages(text,'Pour commencer puis continuer, quel seuil faut-il ?',1200)

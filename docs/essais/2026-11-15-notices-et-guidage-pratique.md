@@ -168,3 +168,15 @@ La première CI du candidat `4152045` passe Linux mais révèle un défaut de te
 Windows : comparaison du chemin temporaire court `RUNNER~1` à son chemin canonique.
 Le contrôle compare maintenant les chemins résolus, sans changer la validation
 du manifeste ou du dossier autorisé. Le résultat défavorable reste historique.
+
+
+Le second essai solaire après extraction principale garde le mauvais passage.
+Le contrôle de la question révèle une limite distincte : les dix premiers mots
+utiles étaient `smartsolar`, `mppt`, `75`, `15`, `faut`, `meme`, `marge`, `tension`,
+`dessus`, `batterie`. Les actions « commencer » et « continuer » étaient perdues
+pour le classement de lecture. La lecture utilise maintenant la question bornée
+entière ; la limite historique des requêtes globales reste distincte. Les mots
+ordinaires démarrage/poursuite sont rapprochés pour le classement des passages,
+sans transformer ces variantes en nouvelles exigences de recherche réseau.
+Les notices radio/antennes sont aussi repérées dans l’espace pratique : la recette
+suivante emploie explicitement ce filtre, pas seulement toute la bibliothèque.

@@ -302,10 +302,10 @@ def index_report():
     except (OSError,ValueError):return {'documents':[],'indexed':0,'status':'not_available'}
 
 
-def search_terms(query):
+def search_terms(query,maximum=10):
     query=retrieval.search_subject(query)
     words=[unicodedata.normalize('NFKD',w).encode('ascii','ignore').decode().lower() for w in re.findall(r'\w+',query,flags=re.UNICODE)]
-    return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
+    return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:maximum]
 
 
 async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12):
