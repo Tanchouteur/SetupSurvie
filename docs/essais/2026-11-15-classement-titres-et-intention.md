@@ -89,7 +89,8 @@ correction puis réussit. Le contrôle natif supplémentaire vérifie les mots
 surlignés et le texte qui les suit dans le résultat final. Les réponses brutes
 en cache sont relues par ce parseur corrigé ; aucun vidage de cache n’est requis.
 
-CI Windows/Linux, navigateurs et audit du paquet : à compléter après exécution.
+La validation finale ci-dessous précise les jobs CI réussis, l’écart navigateur,
+les essais locaux et l’audit du paquet.
 Les résultats sur les vrais documents de Marc restent à mesurer ; les fixtures
 ne prédisent ni leur ordre final ni la qualité pratique de leur contenu.
 
@@ -118,3 +119,46 @@ maintenant quatre éditions différentes avec un fichier source de taille chang�
 il conserve le vrai mécanisme d’invalidation, sans désactiver le cache. Les neuf
 tests de protocole réussissent aussi avec réserve de test abaissée pour forcer
 les écritures disque. Le code du produit ne change pas pour cet ajustement.
+
+## Validation finale et limites de CI
+
+Code **`557ef73`**, version **0.13.1** : sept jobs CI réussissent, dont Linux,
+Windows, Kiwix et son test à 135 petites archives, lecteurs isolés et routage
+synthétique. Le [passage CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43687052048)
+n’est **pas entièrement vert** : le job navigateur termine sur une erreur réseau
+WebKit d’un contrôle de calibration inchangé, dans la recette avec horloge simulée.
+La relance a été refusée avant exécution par une restriction du compte GitHub ;
+elle ne constitue pas un nouvel essai. La cause précise de cette intermittence
+n’est pas établie par les seuls messages d’erreur.
+
+Un essai local utilise l’image Playwright 1.58.2 déjà présente, identifiant
+`sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d`,
+sans téléchargement ni données réelles. Le serveur Python reste sur le runner ;
+les recettes gardent leurs assertions et leurs fichiers, seules les adresses et
+le démarrage du serveur sont adaptés au conteneur temporaire. La campagne Chromium
+réussit ses **452 assertions ciblées**. La campagne WebKit globale expire pendant
+le contrôle de 32 recherches ; elle n’est donc pas déclarée réussie.
+
+Les quatre recettes concernées sont ensuite exécutées dans des contextes WebKit
+neufs : recherche **50**, flux **18**, usage **32**, paramètres **175**, soit
+**275 assertions**, toutes réussies. Leur délai d’observation est de 60 secondes
+dans cet environnement CPU ; leurs assertions ne changent pas. Les temps observés
+par recette sont environ 14, 18, 18 et 14 secondes. L’isolement supprime la dépendance
+aux autres recettes pour cet essai ; il ne prouve pas la cause de l’échec global.
+Les tests ciblés de protocole, de titres et de référence sont également rejoués
+avec cache disque forcé : **21 tests réussis**. Les conteneurs, petites archives,
+serveur et copies temporaires des outils sont nettoyés.
+
+Le paquet produit par le job Linux est téléchargé et déballé avec le lecteur de
+mise à jour : **732 fichiers acceptés**, version 0.13.1 et schéma 1,
+**6 594 156 octets** compressés. Tous sont comparés au commit `557ef73`.
+Empreinte du paquet CI audité :
+`bd03d555048afd00d42db9d843780fe4ff41b490e80a4c68cd0acbc3362e3b6b`.
+Aucun modèle, ZIM, cache SQLite ou média vidéo n’est livré. Le complément final
+est documentaire seulement ; le code et les recettes vérifiés restent identiques.
+
+Cette livraison est validée pour les mécanismes corrigés dans ces périmètres,
+sans certifier tous les tests WebKit enchaînés, Safari iPhone, le fonds réel ou
+les performances Windows de Marc. La prochaine recette doit encore ouvrir les
+sources et donner des avis humains. Une réindexation complète n’est pas requise
+pour simplement appliquer ces corrections.

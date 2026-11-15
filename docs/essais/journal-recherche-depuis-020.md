@@ -195,3 +195,14 @@ surbrillance faisaient perdre les mots trouvés et la suite de la description.
 Ce cas est reproduit sur le vrai Kiwix, puis protégé avec XML mixte et HTML échappé.
 Le classement reçoit maintenant le passage disponible, sans qualifier son utilité
 pratique automatiquement. Le cache brut reste réutilisable avec le parseur corrigé.
+
+La validation 0.13.1 conserve les écarts au lieu de les masquer : 532 tests Python,
+54 contrôles Kiwix réels et sept jobs CI réussis ; le job navigateur global échoue
+sur WebKit. La relance GitHub est refusée avant exécution. En local, Chromium
+réussit ses 452 assertions ciblées et quatre recettes isolées WebKit leurs 275
+assertions ; la campagne WebKit globale n’est pas déclarée réussie. Les 732 fichiers
+du paquet CI sont déballés et comparés au code `557ef73`. Le
+[bilan détaillé](2026-11-15-classement-titres-et-intention.md) porte les limites et
+la validation Windows réelle restant à faire. Les outils des deux agents sont
+reçus sur leurs branches, avec tests ciblés revérifiés : inventaire vidéo 20,
+diagnostic Kiwix 8. Leur intégration suit séparément cette correction du moteur.
