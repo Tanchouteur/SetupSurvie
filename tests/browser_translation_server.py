@@ -12,7 +12,7 @@ import time
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
-from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary
+from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
@@ -131,6 +131,13 @@ def launch(identifier,*args,domain='all',source_ids=None):
     measured.update(simulated=True,total_ms=6500,first_text_ms=4400,phases_ms={'queue':100,'search':120,'reading':80,'model_preparation':4100,'writing':2100})
     durable.write_bytes(assistant_metrics.path(identifier),json.dumps(measured).encode(),private=True)
 engine.launch=launch
+async def summary_infer(item,messages,*,schema=None,output=2048):
+    await asyncio.sleep(1.5)
+    data=json.loads(messages[-1]['content'])
+    if 'units' in data:return {'notes':[{'unit':unit['position'],'quote':unit['text'].strip()[:100],'text':'Note fictive : '+unit['text'].strip()[:100]} for unit in data['units']]},'fixture-model'
+    if 'sources' in data:return 'Synthèse fictive des documents examinés [1].','fixture-model'
+    return {'notes':[{'text':'Regroupement fictif.','supports':[child['id'] for child in data['notes']][:8]}]},'fixture-model'
+summaries.infer=summary_infer
 base=BASE
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')

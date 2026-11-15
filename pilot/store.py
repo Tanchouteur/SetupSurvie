@@ -58,6 +58,12 @@ def init():
 
     # Optional schema cannot roll back or prevent the core initialization.
     schemas={
+        'summaries':[
+            "CREATE TABLE IF NOT EXISTS summary_jobs(id TEXT PRIMARY KEY,user_id TEXT NOT NULL,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,question TEXT NOT NULL,mode TEXT NOT NULL,status TEXT NOT NULL,error TEXT,created REAL NOT NULL,updated REAL NOT NULL,answer TEXT NOT NULL DEFAULT '',message_id INTEGER REFERENCES messages(id) ON DELETE SET NULL)",
+            "CREATE TABLE IF NOT EXISTS summary_inputs(summary_id TEXT NOT NULL REFERENCES summary_jobs(id) ON DELETE CASCADE,number INTEGER NOT NULL,source_id TEXT NOT NULL,title TEXT NOT NULL,metadata TEXT NOT NULL DEFAULT '{}',status TEXT NOT NULL DEFAULT 'pending',error TEXT,PRIMARY KEY(summary_id,number))",
+            "CREATE TABLE IF NOT EXISTS summary_parts(summary_id TEXT NOT NULL REFERENCES summary_jobs(id) ON DELETE CASCADE,position INTEGER NOT NULL,source_number INTEGER NOT NULL,page INTEGER NOT NULL,offset INTEGER NOT NULL,text TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',PRIMARY KEY(summary_id,position))",
+            "CREATE TABLE IF NOT EXISTS summary_nodes(summary_id TEXT NOT NULL REFERENCES summary_jobs(id) ON DELETE CASCADE,id INTEGER NOT NULL,level INTEGER NOT NULL,children TEXT NOT NULL,result TEXT NOT NULL,model TEXT NOT NULL,parent INTEGER,PRIMARY KEY(summary_id,id))",
+            "UPDATE summary_jobs SET status='paused',error='Le service a redémarré. Reprenez la synthèse pour continuer.' WHERE status IN ('queued','running','preparing')"],
         'associations':[
             'CREATE TABLE IF NOT EXISTS conversation_document_choices(conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,source_id TEXT NOT NULL,title TEXT NOT NULL,position INTEGER NOT NULL,PRIMARY KEY(conversation_id,source_id))'],
         'documentary':[
@@ -184,3 +190,14 @@ def add_conversation_source(db,identifier,source):
     if len(ordered)>12:raise ValueError('Retirez un document de la sélection avant d’en ajouter un autre.')
     try:set_conversation_source_choices(db,identifier,ordered)
     except AssociationUnavailable:set_conversation_source(db,identifier,source)
+
+
+def summary_active(db,conversation):
+    try:return bool(db.execute("SELECT 1 FROM summary_jobs WHERE conversation_id=? AND status IN ('queued','running','preparing')",(conversation,)).fetchone())
+    except sqlite3.OperationalError:return False
+
+
+def conversation_summaries(conversation):
+    try:
+        with connect() as db:return [dict(row) for row in db.execute('SELECT id,status,created FROM summary_jobs WHERE conversation_id=? ORDER BY created DESC LIMIT 20',(conversation,))]
+    except sqlite3.OperationalError:return []

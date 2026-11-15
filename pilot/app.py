@@ -58,6 +58,9 @@ async def lifespan(app):
         with optional_feature('search_experiment') as module:await module.cancel(reason='service_restarted')
     except HTTPException:pass
     await calibration.cancel(reason='service_restarted')
+    try:
+        with optional_feature('summaries') as module:await module.stop_all()
+    except HTTPException:pass
     for task in list(translations.ACTIVE.values()):task.cancel()
     if translations.ACTIVE:await asyncio.gather(*list(translations.ACTIVE.values()),return_exceptions=True)
     for task in list(engine.ACTIVE.values()):task.cancel()
@@ -67,7 +70,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.17.0'
+VERSION='0.18.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -675,7 +678,7 @@ async def conversation(identifier:str,value=Depends(user)):
     with store.connect() as db:translated=[dict(r) for r in db.execute('SELECT id,title,source_id,status,created,mode FROM translations WHERE conversation_id=? ORDER BY created DESC',(identifier,))]
     with store.connect() as db:recent=[dict(r) for r in db.execute('SELECT id,mode,status,created FROM jobs WHERE conversation_id=? ORDER BY created DESC LIMIT 20',(identifier,))]
     measured=[r for r in recent if r['id'] in engine.MEASUREMENTS or assistant_metrics.path(r['id']).is_file()]
-    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'selected_sources':store.conversation_source_choices(identifier),'translations':[r['id'] for r in translated],'translation_items':translated,'measurement_jobs':measured}
+    return {**item,'messages':store.messages(identifier),'jobs':jobs,'source':store.conversation_source(identifier),'selected_sources':store.conversation_source_choices(identifier),'translations':[r['id'] for r in translated],'translation_items':translated,'measurement_jobs':measured,'summary_jobs':store.conversation_summaries(identifier)}
 
 
 @app.delete('/api/conversations/{identifier}')
@@ -684,6 +687,7 @@ async def delete_conversation(identifier:str,value=Depends(user)):
         db.execute('BEGIN IMMEDIATE')
         if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():
             raise HTTPException(404,'Conversation introuvable.')
+        if store.summary_active(db,identifier):raise HTTPException(409,'Mettez la synthèse longue en pause avant de supprimer cette conversation.')
         if db.execute("SELECT 1 FROM translations WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():raise HTTPException(409,'Mettez la traduction en pause avant de supprimer cette conversation.')
         if db.execute("SELECT 1 FROM translations t JOIN settings s ON s.key='auto-translation:'||t.id WHERE t.conversation_id=? AND t.status='completed' AND NOT EXISTS(SELECT 1 FROM settings done WHERE done.key='published-translation:'||t.id)",(identifier,)).fetchone():
             raise HTTPException(409,'L’ajout d’une traduction terminée aux documents locaux reste à finaliser. Réessayez son ajout ou exportez-la avant de supprimer la conversation.')
@@ -713,6 +717,7 @@ async def new_document_conversation(body:AssociatedSources,value=Depends(user)):
         identifier=store.new_id()
         with store.connect() as db:
             db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(identifier,value['id'],('Documents : '+choices[0]['title'])[:80],time.time()))
+            if store.summary_active(db,identifier):raise HTTPException(409,'Mettez la synthèse longue en pause avant de modifier les documents.')
             module.save(db,identifier,choices)
     return {'conversation_id':identifier,'source':choices[0],'selected_sources':choices}
 
@@ -727,6 +732,7 @@ async def associate_sources(identifier:str,body:AssociatedSources,value=Depends(
             if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
             if db.execute("SELECT 1 FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():
                 raise HTTPException(409,'Attendez la réponse en cours ou annulez-la avant de modifier les documents.')
+            if store.summary_active(db,identifier):raise HTTPException(409,'Mettez la synthèse longue en pause avant de modifier les documents.')
             module.save(db,identifier,choices)
     return {'source':choices[0] if choices else None,'selected_sources':choices}
 
@@ -767,6 +773,7 @@ async def question(body:Question,value=Depends(user)):
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         if conversation_id and not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(conversation_id,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
+        if conversation_id and store.summary_active(db,conversation_id):raise HTTPException(409,'La synthèse longue est en cours. Mettez-la en pause avant de poser une autre question ici.')
         if conversation_id and db.execute("SELECT 1 FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(conversation_id,)).fetchone():
             raise HTTPException(409,'Une réponse est déjà en cours dans cette conversation. Attendez sa fin ou annulez-la.')
         if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=20:
@@ -800,8 +807,47 @@ async def associate_source(identifier:str,body:AssociatedSource,value=Depends(us
         if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(identifier,value['id'])).fetchone():raise HTTPException(404,'Conversation introuvable.')
         if db.execute("SELECT 1 FROM jobs WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():
             raise HTTPException(409,'Attendez la réponse en cours ou annulez-la avant de modifier les documents.')
+        if store.summary_active(db,identifier):raise HTTPException(409,'Mettez la synthèse longue en pause avant de modifier les documents.')
         store.set_conversation_source(db,identifier,source)
     return {'source':store.conversation_source(identifier)}
+
+
+class SummaryRequest(BaseModel):
+    question:str=Field(default='Fais une synthèse des informations utiles des documents choisis.',min_length=1,max_length=6000)
+    conversation_id:str|None=Field(default=None,max_length=100)
+    source_ids:list[SourceIdentifier]|None=Field(default=None,max_length=12)
+    mode:str='rapide'
+
+
+class SummaryResume(BaseModel):
+    mode:str|None=Field(default=None,max_length=100)
+
+
+@app.post('/api/summaries',status_code=202)
+async def create_summary(body:SummaryRequest,value=Depends(user)):
+    with optional_feature('summaries') as module:
+        return await module.create(value['id'],body.question,body.mode,body.conversation_id,body.source_ids)
+
+
+@app.get('/api/summaries/{identifier}')
+async def summary_status(identifier:str,offset:int=Query(default=0,ge=0,le=100000),value=Depends(user)):
+    with optional_feature('summaries') as module:return module.status(identifier,value['id'],offset)
+
+
+@app.post('/api/summaries/{identifier}/pause')
+async def pause_summary(identifier:str,value=Depends(user)):
+    with optional_feature('summaries') as module:return await module.pause(identifier,value['id'])
+
+
+@app.post('/api/summaries/{identifier}/resume',status_code=202)
+async def resume_summary(identifier:str,body:SummaryResume,value=Depends(user)):
+    with optional_feature('summaries') as module:return await module.resume(identifier,value['id'],body.mode)
+
+
+@app.get('/api/summaries/{identifier}/export')
+async def export_summary(identifier:str,value=Depends(user)):
+    with optional_feature('summaries') as module:text=module.export(identifier,value['id'])
+    return Response(text,media_type='text/markdown; charset=utf-8',headers={'Content-Disposition':'attachment; filename="synthese-et-notes.md"'})
 
 
 class TranslationRequest(BaseModel):

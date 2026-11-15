@@ -75,7 +75,7 @@ async def guard(options,*,starting=False):
     state=await operations.status(fresh=True)
     if state.get('paused'):raise Abort('paused')
     if not state.get('online') or state.get('operation'):raise Abort('engine_unavailable')
-    if engine.ACTIVE or translations.ACTIVE:raise Abort('other_activity')
+    if engine.ACTIVE or translations.ACTIVE or summary_activity():raise Abort('other_activity')
     memory=state.get('memory',{});available=memory.get('available')
     if not isinstance(available,(int,float)) or type(memory.get('total')) is not int or memory['total']<=0 or not state.get('control_available'):
         raise Abort('hardware_unavailable',{'control_available':bool(state.get('control_available')),'ram_sample_available':isinstance(available,(int,float)),
@@ -197,7 +197,7 @@ async def run(report,options):
     finally:
         if report['trials'] and report['trials'][-1].get('status')=='running':report['trials'][-1].update(status='cancelled' if report['status']=='cancelled' else 'failed',reason=report.get('reason','test_unavailable'))
         # Do not unload a model that a newly queued conversation is about to use.
-        if report['trials'] and not engine.ACTIVE and not translations.ACTIVE and not engine.LOCK.locked():
+        if report['trials'] and not engine.ACTIVE and not translations.ACTIVE and not summary_activity() and not engine.LOCK.locked():
             async with engine.LOCK:await release_model(report)
         report['finished']=time.time()
         try:save(report)
@@ -260,3 +260,8 @@ def rollback(model):
         if previous not in (8192,16384,32768,65536):raise HTTPException(409,'Aucun réglage précédent conservé.')
         db.execute('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',('context:'+model,str(previous)))
     return {'model':model,'tokens':previous}
+
+
+def summary_activity():
+    from . import summaries
+    return bool(summaries.ACTIVE)

@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.18.0 : [lectures longues, notes et reprise](2026-11-15-syntheses-longues-et-reprise.md).
+La sélection peut être lue par étapes conservées, puis synthétisée avec provenance
+et pages. Pause, redémarrage, export et reprise sont distincts de la réponse rapide.
+Le bilan conserve le premier essai incomplet, les références de lots trop larges
+corrigées et les rejeux R7 ; aucun vrai livre de 500 pages ni sous-titre validé.
+
 Complément 0.17.0 : [sélection multiple et pages PDF](2026-11-15-documents-choisis-et-pages-pdf.md).
 Les documents peuvent être choisis et conservés avant une question ; la traduction
 de l’un ne retire pas les autres. Le test réel atteint les pages 6 de cinq PDF

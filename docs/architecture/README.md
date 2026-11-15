@@ -55,6 +55,42 @@ SQLite se fait dans un thread dont l’annulation attend la fermeture. Une page
 explicitement associée n’est pas remplacée ; sans résultat, l’aperçu demeure limité.
 Cette sélection n’est ni un OCR ni une synthèse exhaustive de toutes les pages.
 
+## Lecture longue et notes reprenables — 0.18.0
+
+`pilot/document_text.py` partage l’extraction complète avec les traductions :
+PDF depuis le fichier d’origine, caractères conservés par segments et pages sans
+texte explicites. Un changement de fichier détecté pendant la lecture annule son
+instantané. Pas d’OCR. Les plafonds sont documentés dans le [guide](../utilisation/synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180).
+
+`pilot/summaries.py` enregistre les tâches, entrées, textes et notes dans quatre
+tables optionnelles `summary_*`, sans migration destructive du schéma 1. Le
+parcours crée sa propre conversation, contrôle le profil et partage `engine.LOCK`
+par étape. Il utilise `model_session` pour charger le modèle choisi et reprendre
+un premier échec transitoire ; pas de changement silencieux de modèle/contexte.
+L’arrêt du service attend ses tâches avant de fermer le cache documentaire.
+Redémarrer marque le travail en pause et ne relance aucune inférence.
+
+Chaque note initiale désigne un passage et un extrait dont le serveur vérifie
+la présence exacte, à des différences d’espacement près. Les regroupements
+adressent une note précise par `étape:note`, puis transportent seulement ses
+sources et pages. Le graphe et les extraits originaux restent exportables ;
+aucun raisonnement privé du modèle n’est conservé. Cette vérification de
+provenance ne contrôle pas la fidélité sémantique des notes ni de la synthèse.
+Le texte final et, au besoin, sa liaison de références utilisent les mêmes
+budgets de contexte. Une sortie tronquée, un JSON invalide ou une citation
+inventée ne termine pas son étape. Les brouillons sans références restent
+incomplets et reprenables.
+
+Les routes `/api/summaries` créent le travail ; `/{id}` consulte son suivi,
+`/{id}/pause`, `/{id}/resume` le contrôlent et `/{id}/export` exporte le Markdown.
+`GET /api/conversations/{id}` ajoute `summary_jobs`. La création accepte `question`,
+`mode`, `conversation_id` et/ou `source_ids` ; les références sont copiées au départ.
+Une tâche active par profil et quatre au total sont admises. Les questions,
+changements de sélection et suppressions sont refusés dans sa conversation
+active ; une reprise attend aussi la fin des autres travaux de cette conversation.
+Les calibrations et comparatifs IA cèdent la priorité. Une panne du module
+optionnel ne désactive pas la recherche, la lecture ni les autres conversations.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

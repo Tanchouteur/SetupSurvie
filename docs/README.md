@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Synthèses longues et reprise](utilisation/synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180) — lecture complète extractible, notes et pause/reprise, 0.18.0.
+- [Essais des synthèses longues](essais/2026-11-15-syntheses-longues-et-reprise.md) — preuves, approches corrigées et limites.
+
 - [Choisir plusieurs documents pour l’assistant](utilisation/documents-et-traduction.md#choisir-les-documents-dune-conversation--0170) — sélection persistante, PDF et traduction distincte, 0.17.0.
 
 - [Synthèse de plusieurs documents](utilisation/synthese-documentaire.md) — 0.16.0, passages pertinents, limites de contexte et contrôle des références.

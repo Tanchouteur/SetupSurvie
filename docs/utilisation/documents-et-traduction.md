@@ -257,3 +257,8 @@ ignorés sous Linux**. Le nouveau parcours de contrôle a aussi été exécuté 
 Chromium via Playwright MCP. La CI du commit de livraison exécute les contrôles
 Windows et les parcours Chromium/WebKit ; ces moteurs ne remplacent pas un essai
 sur iPhone physique.
+
+
+Depuis 0.18.0, le [parcours de synthèse longue](synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180)
+peut lire les textes choisis par étapes conservées et produire une synthèse
+commune. Il crée sa propre conversation ; la traduction reste une action distincte.

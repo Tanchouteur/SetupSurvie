@@ -15,57 +15,12 @@ SCHEMA={'type':'object','properties':{'status':{'type':'string','enum':['transla
 NOTICE='Traduction automatique non vérifiée. Consultez l’original, notamment pour les chiffres, tableaux et consignes de sécurité. Les illustrations ne sont pas traduites.'
 
 
-def chunks(text,size=2200):
-    """Preserve every source character; prefer line/word boundaries."""
-    while text:
-        end=min(size,len(text))
-        if end<len(text):
-            sentences=list(re.finditer(r'[.!?;:]\s+',text[:end]))
-            boundary=max(text.rfind('\n',0,end),sentences[-1].end()-1 if sentences else -1)
-            if boundary<=size//2:boundary=text.rfind(' ',0,end)
-            if boundary>size//2:end=boundary+1
-        yield text[:end];text=text[end:]
+from .document_text import chunks
 
 
 async def extract(identifier,first_page=1,last_page=None):
-    # A PDF search result is a page; this operation explicitly translates the whole PDF.
-    base=identifier.split('#page=')[0] if identifier.startswith('guide:') else identifier
-    source=await library.source(base)
-    def read():
-        if base.startswith('guide:') and base.lower().endswith('.pdf'):
-            from pypdf import PdfReader
-            path=library.GUIDES/base.removeprefix('guide:')
-            if any(p.is_symlink() for p in [path,*path.parents]) or not path.resolve().is_relative_to(library.GUIDES.resolve()):
-                raise HTTPException(400,'Chemin de document non valide.')
-            if not path.is_file():raise HTTPException(404,'Document original indisponible.')
-            if path.stat().st_size>300_000_000:raise HTTPException(413,'Ce PDF dépasse la taille prise en charge pour la traduction.')
-            try:reader=PdfReader(path)
-            except Exception:raise HTTPException(422,'Impossible d’ouvrir ce PDF pour en extraire le texte.')
-            if reader.is_encrypted:raise HTTPException(422,'Ce PDF est protégé. Utilisez une copie dont le texte est accessible.')
-            if len(reader.pages)>1200:raise HTTPException(413,'Ce PDF dépasse 1 200 pages. Choisissez un document plus court.')
-            end=last_page or len(reader.pages)
-            if not 1<=first_page<=end<=len(reader.pages):raise HTTPException(422,'La plage demandée ne correspond pas aux pages de ce PDF.')
-            texts=[];total=0
-            for number in range(first_page,end+1):
-                try:text=reader.pages[number-1].extract_text() or ''
-                except Exception:text=''
-                total+=len(text)
-                if len(text)>100_000 or total>5_000_000:raise HTTPException(413,'Ce document contient trop de texte pour cette traduction. Aucune traduction partielle n’a été lancée.')
-                texts.append((number,text))
-        else:
-            if first_page!=1 or last_page is not None:raise HTTPException(422,'Le choix des pages est disponible pour les PDF uniquement.')
-            text=source['text']
-            if source.get('truncated') or len(text)>=(100000 if not base.startswith('guide:') else 500000):
-                raise HTTPException(413,'Cet aperçu est incomplet. La traduction intégrale de ce format n’est pas disponible.')
-            texts=[(1,text)]
-        parts=[]
-        for page,text in texts:
-            if not text.strip():parts.append((page,'','unreadable'))
-            else:parts.extend((page,part,'pending') for part in chunks(text))
-        if not any(status=='pending' for _,_,status in parts):
-            raise HTTPException(422,'Aucun texte extractible. Le document peut être illustré ou nécessiter une reconnaissance de caractères (OCR).')
-        return parts
-    return source,await asyncio.to_thread(read)
+    from . import document_text
+    return await document_text.extract(identifier,first_page,last_page)
 
 
 def publication_state(identifier):
@@ -127,6 +82,7 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
             db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation_id,user_id,('Traduction : '+source['title'])[:80],time.time()))
         try:store.add_conversation_source(db,conversation_id,source)
         except ValueError as error:raise HTTPException(409,str(error)) from None
+        if conversation_id and store.summary_active(db,conversation_id):raise HTTPException(409,'Mettez la synthèse longue en pause avant de traduire dans cette conversation.')
         key=store.new_id();now=time.time()
         db.execute('INSERT INTO translations VALUES(?,?,?,?,?,?,?,?,?,?)',(key,user_id,conversation_id,source['id'],source['title'],mode,'queued',None,now,now))
         snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date')}

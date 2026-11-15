@@ -75,6 +75,10 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const choicesContext=await browser.newContext();const choicesPage=await choicesContext.newPage();
       const choicesRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_document_choices.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const choicesResult=await choicesRecipe(choicesPage);await choicesContext.close();
+      const summaryContext=await browser.newContext();const summaryPage=await summaryContext.newPage();
+      const summaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_long_summaries.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const summaryResult=await summaryRecipe(summaryPage);await summaryContext.close();
+      console.log(JSON.stringify({engine:name,longSummaries:summaryResult}));
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);

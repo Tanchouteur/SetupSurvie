@@ -61,3 +61,24 @@ notices par cinq petits PDF de six pages : chaque valeur utile se trouve à la
 page six. Ces options permettent de vérifier la sélection des pages et leurs
 références ; elles ne prouvent pas la lecture intégrale d’un livre. Les documents
 sont fabriqués dans le répertoire temporaire et ne sont pas conservés dans le dépôt.
+
+## Lecture longue — 0.18.0
+
+`tests/real_summary_check.py` utilise deux petits PDF temporaires de 21 pages,
+avec les deux valeurs à la dernière page, pour éprouver les étapes et leur
+regroupement. L’API est fixée à la boucle locale 11434. Elle ne tourne jamais dans
+la CI et ne télécharge aucun modèle. Exemple sur une machine autorisée disposant
+déjà du modèle et après contrôle des ressources :
+
+```sh
+python tests/real_summary_check.py --model gemma4:e4b --gpu-layers 8 \
+  --report /chemin/prive/synthese-longue.json
+```
+
+Sans `--gpu-layers`, l’essai demande le CPU. Cette recette dédiée utilise six
+threads, contexte 16k, sortie maximale 4 096 tokens, maintien de quinze secondes,
+estimation GPU 8 192 Mio et réserve 1 536 Mio ; la pause d’une installation réelle
+n’est jamais levée. Elle refuse les autres modèles en cours, sans les arrêter.
+Le rapport privé conserve réponses, instantanés de progression, graphe des notes
+et empreinte du code. Relire attribution, unités, pages, limites et omissions ;
+`completed` ne mesure pas cette fidélité. Voir le [bilan](2026-11-15-syntheses-longues-et-reprise.md).

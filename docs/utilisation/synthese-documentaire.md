@@ -1,6 +1,6 @@
 # Faire une synthèse des documents
 
-**Guide 0.17.0 — 15 novembre 2026.** Les essais simulés et les essais avec un
+**Guide 0.18.0 — 15 novembre 2026.** Les essais simulés et les essais avec un
 modèle réel sont distincts. Le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
 précise leurs résultats ; le corpus fictif ne valide pas celui de Marc.
 
@@ -71,6 +71,59 @@ demande différente conserve les contrôles de disponibilité du moteur document
 Ce budget n’est pas une promesse de durée globale : le chargement et la génération
 du modèle s’y ajoutent, dans le plafond de quinze minutes de la conversation.
 
-**Restent à développer :** synthèses intermédiaires pour de longs livres,
-illustrations et choix des modèles sur des essais représentatifs. La sélection
+**Restent à développer ou qualifier :** illustrations, fidélité des longues
+synthèses et choix des modèles sur des essais représentatifs. La sélection
 manuelle multiple est maintenant disponible. Voir le [programme retenu](../decisions/assistant-recherche-et-synthese.md).
+
+## Lire un livre entier par étapes — 0.18.0
+
+Dans la Bibliothèque, choisissez vos documents pour l’assistant. Dans **Assistant**,
+écrivez ce que vous voulez en retenir, ouvrez **Lire les documents et préparer une
+synthèse**, puis cliquez sur **Préparer une synthèse longue**. Sans question saisie,
+le logiciel prépare une synthèse des informations utiles. Le mode choisi dans
+le champ habituel détermine le modèle utilisé.
+
+Une nouvelle conversation conserve ce travail et une copie de la sélection.
+Un PDF entier est lu sur toutes ses pages contenant du texte extractible ;
+une référence à une page précise reste limitée à cette page. Le parcours rapide
+habituel conserve sa lecture par passages liés au sujet. Les aperçus d’articles
+tronqués sont refusés pour la lecture complète, plutôt que présentés comme des
+livres entièrement lus.
+
+Le suivi indique la préparation des textes, les passages examinés, l’attente du
+moteur puis le regroupement et la rédaction. **Mettre en pause** conserve les
+étapes terminées ; **Reprendre avec le modèle choisi** poursuit les étapes restantes.
+Fermer le navigateur laisse le travail continuer. Après un redémarrage du service
+ou une mise en pause du moteur, la reprise est explicite. Aucun modèle n’est
+redémarré de force. On peut ouvrir une autre conversation pendant ce travail ;
+les étapes longues partagent la file du moteur avec les réponses ordinaires.
+
+Les notes intermédiaires conservent leur extrait d’origine, page et position.
+Les regroupements désignent les notes précises dont ils proviennent. Le bouton
+**Télécharger la synthèse et les notes** permet aussi de récupérer le travail
+inachevé. La rédaction conserve les sources et les éditions connues ; une
+liaison séparée peut ajouter des numéros de référence sans réécrire la réponse.
+Si elle échoue, le brouillon reste exportable avec l’état **Références à vérifier**.
+
+Les textes préparés ne sont pas relus depuis une version modifiée lors de la
+reprise. Un document initialement indisponible peut être réessayé. Les documents
+indisponibles et pages sans texte extractible restent signalés, y compris dans
+la réponse finale ; aucune analyse d’image ni OCR n’est effectuée. Les instantanés,
+notes et exports restent rangés dans le profil, sans publication dans la bibliothèque
+partagée. Les profils locaux ne sont pas des comptes protégés par mot de passe.
+Supprimer cette conversation après sa pause supprime aussi ses travaux de synthèse,
+sans supprimer les documents originaux.
+
+La préparation accepte douze références au maximum, jusqu’à 1 200 pages par PDF,
+300 Mo par PDF, cinq millions de caractères par document et vingt millions pour
+le dossier. Chaque étape reçoit un volume borné par le contexte du modèle ;
+elle peut échouer et être reprise sans perdre les étapes précédentes. Un livre
+textuel de 500 pages entre généralement dans ces plafonds, mais sa fidélité,
+son temps de traitement et ses tableaux ne sont pas validés par cette seule taille.
+
+**Passage examiné ne signifie pas fait compris ou conservé.** Le modèle sélectionne
+et compresse les informations ; il peut encore omettre un fait ou produire une
+conclusion injustifiée. Les contrôles portent sur l’existence des extraits et des
+références, pas sur la vérité de chaque phrase. Le [bilan 0.18.0](../essais/2026-11-15-syntheses-longues-et-reprise.md)
+distingue les petites fixtures des essais sur modèle réel ; le fonds de Marc et
+un vrai livre de 500 pages restent à éprouver.
