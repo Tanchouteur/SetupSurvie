@@ -121,3 +121,27 @@ Les reçus du paquet et de la CI sont consignés après publication. Aucun gain 
 réel, aucune synthèse de cinq documents et aucune extraction de schéma PDF ne
 sont déduits de ces tests. Le changement de modèles réel sur Windows reste à
 vérifier avec le [protocole assistant](recettes-progressives-marc.md#prochaine-validation-assistant--0151).
+
+
+## Livraison et limites
+
+Code publié : **`077fbb5fdc7f73001f4b64a51bff62e5dee9d973`**, correction compatible
+0.15.1, schéma privé 1. Les 430 liens/ancres locaux des documents touchés et les
+pages générées sont vérifiés ; `git diff --check` et syntaxe JavaScript réussis.
+
+Le paquet de ce code contient **760 fichiers, 6 709 987 octets**. Déballage par
+le lecteur réel et comparaison de chaque fichier au commit, avec filtres de fin
+de ligne Git, réussis ; aucune archive documentaire, modèle ou base privée inclus.
+SHA-256 : `489f2bc82ab20448e31a83ca6b23eba356ef4debb1d0aa4ec71ab8c17cace9d3`.
+Ces reçus sont un complément documentaire au code, sans nouvelle version.
+
+La [CI 43727204708](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43727204708)
+refuse de démarrer ses huit tâches, sans étape exécutée. L’annotation GitHub
+indique un paiement échoué ou une limite de dépenses à relever. Aucun réglage de
+facturation n’est modifié et aucune validation Windows par cette CI n’est annoncée.
+Les suites Linux et navigateur ci-dessus sont réellement exécutées localement.
+
+Les services et conteneurs d’essai sont nettoyés. Aucun déploiement ni modèle
+réel chez Marc n’est lancé par l’agent. L’objectif reste actif : lecture/synthèse
+multi-source utile à développer, validation humaine du fonds et essai Windows
+progressifs ; traduction et sous-titres après fiabilisation de l’assistant.

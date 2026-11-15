@@ -405,3 +405,9 @@ dans le [bilan daté](2026-11-15-rapport-0150-et-requetes-synthese.md). Aucune i
 réelle, recette Windows ni validation complète de la synthèse n’est annoncée.
 L’objectif d’utilité de l’assistant reste actif ; traduction/sous-titres viennent
 ensuite, avec l’inventaire vidéo déjà livré et les traitements encore prévus.
+
+Reçu de livraison 0.15.1 : code `077fbb5`, paquet 760 fichiers comparé au commit,
+78 contrôles par Chromium et WebKit. La CI `43727204708` ne démarre aucune étape
+pour restriction GitHub de facturation ; les essais locaux restent les preuves
+exécutées. Le bilan conserve empreinte et limites ; aucune validation Windows
+ou inférence réelle supplémentaire n’est attribuée à cette livraison.
