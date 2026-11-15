@@ -102,8 +102,8 @@ et ne doit pas faire attendre une recherche pour charger un modèle.
 
 **Afficher un schéma existant est possible sans modèle vision.** Le logiciel doit
 retrouver l’illustration ou la page d’origine, l’afficher avec sa légende et son
-lien, et préserver mesures, unités et avertissements. La recherche du bon schéma
-et son extraction restent à implémenter et tester ; le seul fait qu’un lecteur
+lien, et préserver mesures, unités et avertissements. La sélection du bon schéma
+et les formats restant à couvrir demandent encore des essais ; le seul fait qu’un lecteur
 affiche une image ne prouve pas sa sélection pertinente.
 
 **Depuis 0.19.0**, le [parcours des illustrations](../utilisation/illustrations-et-references.md)
@@ -158,3 +158,15 @@ pour modifier le moteur. Tester avec HTTP et modèles simulés dans le runner,
 puis avec un modèle réel volontairement lancé sur le PC cible. Le rapport
 **Voir les durées** et une lecture des réponses sont nécessaires pour expliquer
 les échecs réels ; pas d’inférence forcée en mode jeu.
+
+
+## Guidage pratique et matériel — complément 0.19.1
+
+Le [cas Baofeng/antennes](../bibliotheque/baofeng-et-antennes.md) demandé par Louis
+sert de recette sur une vraie notice. Le choix reste général : une demande de
+procédure ordinaire doit chercher puis lire des passages pertinents, et les citer.
+Les mêmes règles valent pour un autre équipement. Ne pas spécialiser le moteur
+avec des commandes de radio codées en dur, ni convertir une formule d’antenne en
+longueur universelle. Les essais doivent juger la réponse et son utilité, pas le
+seul nombre d’articles ouverts. Le [bilan](../essais/2026-11-15-notices-et-guidage-pratique.md)
+conserve les résultats défavorables et les corrections communes.

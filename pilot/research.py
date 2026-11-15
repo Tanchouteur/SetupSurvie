@@ -23,6 +23,11 @@ def primary_query(query):
     Do not split abbreviations or decimals, or ordinary literal searches.
     """
     query=illustrations.topic(query)
+    # The full request stays in history; a second question must not become
+    # mandatory vocabulary for retrieving the first subject. Decimal points
+    # and abbreviations are not sentence separators here.
+    first=re.split(r'[?!]\s+(?=\S)',query,maxsplit=1)[0]
+    if first!=query and subject(first).words:return first
     if not synthesis(query):return query
     parts=re.split(r'[.!?;]\s+(?=(?:compare|comparez|cite|citez|donne|donnez|presente|présente|redige|rédige|explique|expliquez|reponds|réponds|utilise|detaille|détaille|fais|montre|write|give|explain|include|use)\b)',query,maxsplit=1,flags=re.I)
     return parts[0] if len(parts)>1 and subject(parts[0]).words else query
@@ -36,7 +41,7 @@ def subject(query):return retrieval.plan(query,library.search_terms(query),libra
 
 def passages(text,query,maximum):
     if not text.strip() or maximum<80:return []
-    if len(text)<=1800 and len(text.encode('utf-8'))<=maximum:return [{'offset':0,'text':text,'next_offset':len(text)}]
+    if len(text.encode('utf-8'))<=maximum:return [{'offset':0,'text':text,'next_offset':len(text)}]
     plan=subject(query);groups=plan.token_groups
     width=min(1800,max(80,maximum//2));stride=max(40,width//2)
     procedure=set('etape etapes materiel outils montage construction fabrication procedure instructions steps materials tools assembly construction building repairing'.split())
@@ -71,23 +76,29 @@ def candidates(items):
     Prefer another collection before a third document from the same collection,
     but never remove the remaining matches when only one collection is useful.
     """
-    first=[];later=[];documents=set();collections={}
+    first=[];later=[];pages=[];documents=set();collections={};seen=set()
     for item in items:
         identifier=item['id'];base=identifier.split('#page=')[0]
+        if identifier in seen:continue
+        seen.add(identifier)
+        for extra in item.get('other_matches',[])[:5]:
+            page=extra.get('id','')
+            if identifier.startswith('guide:') and base.lower().endswith('.pdf') and re.fullmatch(re.escape(base)+r'#page=[1-9]\d{0,3}',page) and page not in seen:
+                pages.append({**item,**extra,'excerpt':'','other_matches':[]});seen.add(page)
         collection=item.get('collection') or item.get('provenance') or identifier.split('/',1)[0]
         count=collections.get(collection,0);collections[collection]=count+1
         if base in documents or count>=2:later.append(item)
         else:first.append(item)
         documents.add(base)
-    return first+later
+    return first+later+pages
 
 
-async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=None):
+async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=None,prefer_documents=False):
     """Read concurrently, then admit balanced passages in deterministic order."""
     identifiers=list(dict.fromkeys(str(value) for value in identifiers))[:12]
     requested=len(identifiers)
     # Leave enough room per document for identity, offsets and a useful passage.
-    wanted=min(len(identifiers),12,max(1,maximum//950)) if maximum>=650 else 0
+    wanted=min(len(identifiers),12,max(1,maximum//650)) if maximum>=650 else 0
     semaphore=asyncio.Semaphore(3)
     async def load(identifier):
         async with semaphore:
@@ -97,6 +108,34 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
                 return cache[actual]
             except Exception:return None
     loaded=await asyncio.gather(*(load(identifier) for identifier in identifiers)) if wanted else []
+    # Several indexed pages can be grouped under one search hit. Within a
+    # book prefer the section matching the requested topic, not the repeated
+    # device name in every page title. Read other documents before extra pages.
+    groups=subject(primary_query(query)).token_groups
+    def focus(item):
+        if not item or not isinstance(item.get('text'),str):return (-1,-1)
+        title=set(retrieval.normal(re.sub(r' — page \d+$','',item.get('title',''))).split())
+        specific=[group for group in groups if not any(term<=title for term in group)] or groups
+        head=set(retrieval.normal(item['text'][:400]).split());body=set(retrieval.normal(item['text']).split())
+        return (sum(any(term<=head for term in group) for group in specific),sum(any(term<=body for term in group) for group in specific))
+    paired=list(zip(identifiers,loaded));buckets={}
+    for position,(identifier,item) in enumerate(paired):
+        base=identifier.split('#page=')[0]
+        if identifier.startswith('guide:') and '#page=' in identifier:buckets.setdefault(base,[]).append(position)
+    for positions in buckets.values() if prefer_documents else ():
+        if len(positions)>1:
+            best=max(positions,key=lambda position:focus(paired[position][1]))
+            paired[positions[0]],paired[best]=paired[best],paired[positions[0]]
+    # One best page per PDF first, then alternatives if budget permits.
+    first=[];extras=[];seen=set()
+    for pair in paired:
+        identifier=pair[0];base=identifier.split('#page=')[0]
+        if '#page=' in identifier and base in seen:extras.append(pair)
+        else:first.append(pair)
+        seen.add(base)
+    if prefer_documents:wanted=min(wanted,len(first))
+    ordered=first+extras if prefer_documents else paired
+    identifiers=[identifier for identifier,_ in ordered];loaded=[item for _,item in ordered]
     result={'results':[],'failed':0,'omitted':0,'reading':'selected_passages','selection_limited':False}
     fingerprints=set()
     for index,(identifier,item) in enumerate(zip(identifiers,loaded)):
@@ -145,13 +184,44 @@ def citation_numbers(answer):
     return {number for part in citation_spans(answer) for number in part['numbers']}
 
 
+def source_id_citations(answer):
+    code=code_spans(answer)
+    return [match for match in re.finditer(r'\[((?:guide|zim):[^\]\n]{1,2000})\]',answer) if not any(start<=match.start()<end for start,end in code)]
+
+
+def citation_source(identifier,references):
+    source=references.get(identifier)
+    if source:return source
+    page=re.fullmatch(r'(guide:.+\.pdf)#page=([1-9]\d{0,3})',identifier,re.I)
+    if page:
+        source=references.get(page[1])
+        if source and int(page[2]) in source.get('pages',[]):return source
+    return None
+
+
+def normalize_citations(answer,references):
+    for match in reversed(source_id_citations(answer)):
+        source=citation_source(match[1],references)
+        if source and source.get('consulted'):
+            page=re.search(r'#page=([1-9]\d{0,3})$',match[1])
+            label=str(source['number'])+(', p. '+page[1] if page else '')
+            answer=answer[:match.start()]+'['+label+']'+answer[match.end():]
+    return answer
+
+
+def unsupported_citations(answer,references):
+    read={item['number'] for item in references.values() if item.get('consulted')}
+    return bool(citation_numbers(answer)-read) or any(not (citation_source(match[1],references) or {}).get('consulted') for match in source_id_citations(answer))
+
+
 def citations_valid(answer,references):
     read={item['number'] for item in references.values() if item.get('consulted')}
     citations=citation_numbers(answer)
-    return bool(citations&read) and citations<=read
+    return bool(citations&read) and not unsupported_citations(answer,references)
 
 
 def fallback(references):
+    if not any(item.get('consulted') for item in references.values()):return 'Les références trouvées n’ont pas fourni de passage lisible pour vérifier cette réponse. Ouvrez les documents depuis la bibliothèque ou réessayez la lecture ; un extrait de recherche ne suffit pas à valider une procédure.'
     lines=['L’IA n’a pas terminé une synthèse avec des références vérifiables. Voici les extraits effectivement consultés ; ils ne constituent pas une synthèse validée.']
     for item in list(references.values()):
         if not item.get('consulted'):continue

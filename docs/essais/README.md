@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md) — 0.19.1, vraie notice, dimensions et lectures réellement reçues.
+
 - [Illustrations originales](2026-11-15-illustrations-originales.md) — 0.19.0, sélection réelle, rendu des originaux et références composées.
 
 - [Synthèses longues et reprise](2026-11-15-syntheses-longues-et-reprise.md) — 0.18.0, instantanés, notes, reprise et essais réels R7.

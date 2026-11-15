@@ -125,6 +125,28 @@ les pages effectivement retenues bénéficient d’un lien direct vers cette pag
 Une référence inconnue garde le contrôle d’échec. La validité du numéro ne certifie
 ni l’affirmation ni l’usage de la pagination imprimée.
 
+## Procédures ordinaires — 0.19.1
+
+Les demandes « comment… » et de dimensions préparent aussi le moteur commun,
+sans liste de modèles d’appareils. La première question sert de sujet de recherche ;
+une seconde question garde sa place dans la demande complète mais ne devient pas
+une contrainte lexicale de la première. Décimales/abréviations restent intactes.
+
+Si le modèle demande une recherche sans lire aucun résultat, le moteur prépare
+un premier paquet de quatre passages candidats au maximum, classés par le moteur
+commun, avant sa rédaction. Les appels/résultats restent des paires complètes ;
+les lectures explicites suivantes, périmètre et budgets restent disponibles.
+Une référence dans une réponse documentaire ordinaire est contrôlée comme dans
+une synthèse ; un résultat de recherche ne devient jamais implicitement une lecture.
+Pour une lecture préparatoire automatique, les pages d’un même PDF sont comparées
+sur le sujet et le début de section, en écartant les mots du titre répétés partout.
+La meilleure page de chaque document reçoit la priorité ; les pages explicitement
+choisies restent littérales. Les autres passages demeurent accessibles aux outils.
+Le contexte produit est condensé pour garder plus de place aux textes utiles,
+sans changer modèle ou taille de contexte.
+L’allocation répartit les extraits courts entre plusieurs sources selon le budget ;
+les omissions et lectures partielles restent explicites.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

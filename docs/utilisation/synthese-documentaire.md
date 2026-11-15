@@ -134,3 +134,15 @@ Depuis 0.19.0, une demande de schémas peut aussi proposer les
 y compris après une synthèse longue. Les instantanés conservent leurs références
 et l’empreinte locale connue, pas une copie des images ; leur affichage dépend
 des originaux encore disponibles. Les exports restent textuels.
+
+
+## Questions pratiques ordinaires — 0.19.1
+
+Une demande comme « comment régler cet appareil ? » prépare aussi les passages
+pertinents avant la réponse. Les pages supplémentaires regroupées sous un même
+PDF restent disponibles pour cette lecture. Une page qui tient entièrement dans
+son allocation n’est pas coupée entre deux étapes ; les autres lectures restent
+partielles et signalées. La seconde question reste dans la demande complète.
+Une référence pointant vers un résultat seulement trouvé ne suffit pas à valider
+une réponse. Le [cas de recette](../essais/2026-11-15-notices-et-guidage-pratique.md)
+explique les défauts observés sur une vraie notice et les limites restantes.

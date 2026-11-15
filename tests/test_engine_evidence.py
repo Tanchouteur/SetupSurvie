@@ -60,8 +60,8 @@ class EvidenceTests(unittest.TestCase):
     def test_read_metadata_replaces_search_metadata_and_only_read_citations_are_saved(self):
         messages=[self.call('search_library',{'query':'notice'}),self.call('read_source',{'id':'guide:a'}),
                   {'content':'Le document indique 10 kg (2010, édition A) [1]. Citation non lue [2], inventée [99].'}]
-        payloads,answer=self.run_chat(messages,[{**self.a,'document_date':'2026'},self.b])
-        search_result=json.loads(payloads[1]['messages'][-1]['content'])
+        payloads,answer=self.run_chat([*messages,{'content':'{"citations":[]}'}],[{**self.a,'document_date':'2026'},self.b],expected_status='incomplete')
+        search_result=json.loads(next(m['content'] for m in payloads[1]['messages'] if m['role']=='tool' and m.get('tool_name')=='search_library'))
         self.assertFalse(search_result['results'][0]['consulted'])
         read_result=json.loads(payloads[2]['messages'][-1]['content'])
         self.assertTrue(read_result['consulted']);self.assertEqual(read_result['document_date'],'2010')
@@ -140,7 +140,7 @@ class EvidenceTests(unittest.TestCase):
     def test_model_absence_claim_does_not_replace_observed_search_and_reads(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
         found=library.SearchResults([self.a],{'status':'partial','domain':'resilience'})
-        _,answer=self.run_chat([{'content':'Aucun document n’existe dans la bibliothèque, affirmation fictive erronée.'}],found)
+        _,answer=self.run_chat([{'content':'Aucun document n’existe dans la bibliothèque, affirmation fictive erronée.'},{'content':'{"citations":[]}'}],found,expected_status='incomplete')
         self.assertIn('affirmation fictive',answer['content'])
         self.assertEqual(answer['documentary']['status'],'partial');self.assertEqual(answer['documentary']['sources_read'],1)
         self.assertEqual(answer['documentary']['results'],1);self.assertEqual(answer['documentary']['scope'],'targeted')
@@ -293,8 +293,13 @@ class EvidenceTests(unittest.TestCase):
 
     def test_an_explicit_change_of_action_is_not_the_prepared_search(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment réparer un vélo ?' WHERE conversation_id='c'")
-        self.run_chat([self.call('search_library',{'query':'construire un vélo'}),{'content':'Autre action demandée.'}],[self.a])
+        self.run_chat([self.call('search_library',{'query':'construire un vélo'}),{'content':'Autre action demandée [1].'}],[self.a])
         self.assertEqual(len(self.lookup_calls),2)
+
+    def test_equipment_procedures_prepare_without_an_enumerated_device_or_verb(self):
+        for question in ('Comment mémoriser une fréquence dans mon poste ?', 'Comment détartrer cette cafetière ?', 'Sur un modèle inconnu, comment calibrer le capteur ?', 'Quelle longueur de brin faut-il pour ce montage ?', 'À 433 MHz, quelle est la longueur totale du dipôle ?'):
+            self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
+        self.assertIsNone(engine.document_request([{'role':'user','content':'Comment calculer 12 fois 8 ?'}]))
 
     def test_wikipedia_followup_uses_previous_user_subject(self):
         history=[{'role':'user','content':'Comment faire du feu ?'}, {'role':'assistant','content':'Aucun document, affirmation non établie.'}, {'role':'user','content':'Et dans Wikipédia tu ne trouves rien ?'}]
@@ -321,8 +326,26 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(all(json.loads(m['content'])['partial_read'] for m in messages if m['role']=='tool'))
 
     def test_repeated_searches_are_cached_within_the_same_question(self):
-        self.run_chat([self.call('search_library',{'query':'notice'}),self.call('search_library',{'query':'notice'}),{'content':'Fin sans source lue.'}],[self.a])
+        self.run_chat([self.call('search_library',{'query':'notice'}),self.call('search_library',{'query':'notice'}),{'content':'Fin avec la source effectivement lue [1].'}],[self.a])
         self.assertEqual(len(self.lookup_calls),1)
+
+    def test_plain_equipment_question_reads_search_hit_before_the_model_can_stop(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Le clavier du poste est bloqué ; peux-tu rechercher la procédure ?' WHERE conversation_id='c'")
+        payloads,answer=self.run_chat([self.call('search_library',{'query':'verrouillage clavier'}),{'content':'La notice donne la procédure [1].'}],[self.a])
+        tools=[m for m in payloads[-1]['messages'] if m['role']=='tool']
+        self.assertEqual([m['tool_name'] for m in tools],['search_library','read_sources'])
+        self.assertFalse(json.loads(tools[0]['content'])['results'][0]['consulted'])
+        self.assertEqual(json.loads(tools[1]['content'])['results'][0]['passages'][0]['text'],self.a['text'])
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+        self.assertEqual(answer['documentary']['sources_read'],1)
+
+    def test_failed_automatic_read_cannot_validate_a_search_excerpt_citation(self):
+        def missing(identifier):raise HTTPException(404,'PRIVATE READ FAILURE')
+        _,answer=self.run_chat([self.call('search_library',{'query':'notice'}),{'content':'La notice dit ceci [1].'},{'content':'{"citations":[]}'}],[self.a],read=missing,expected_status='incomplete')
+        self.assertEqual(answer['sources'],[])
+        self.assertEqual(answer['documentary']['sources_read'],0)
+        self.assertGreater(answer['documentary']['failed_reads'],0)
+        self.assertNotIn('PRIVATE READ FAILURE',answer['content'])
 
     def test_repeated_source_read_uses_the_same_evidence_without_network_reload(self):
         calls=[]

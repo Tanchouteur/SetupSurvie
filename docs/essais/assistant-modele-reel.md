@@ -108,3 +108,45 @@ Le rapport conserve alors aussi les sources réellement enregistrées. Ces essai
 sur fixtures ne valident pas la fidélité d’un vrai livre ou la compréhension des
 schémas. Le [bilan 0.19.0](2026-11-15-illustrations-originales.md) conserve les échecs,
 les modifications retenues et les observations du vrai modèle.
+
+
+## Procédures sur une vraie notice — 0.19.1
+
+`tests/real_radio_check.py` utilise une notice UV-5R préparée séparément sur la
+machine d’inférence. Le fichier doit correspondre à l’empreinte du catalogue ;
+le script ne le télécharge pas et n’entre pas dans la CI. Il fait une vraie
+recherche, lit les passages et appelle le modèle, avec les réserves, le contexte
+16k, les six threads et le maintien court des autres recettes. Aucun poste radio
+n’est contrôlé. Exemple sur une machine autorisée avec ces prérequis :
+
+```sh
+python tests/real_radio_check.py --model gemma4:e4b --gpu-layers 8 \
+  --manual /chemin/prive/notice-baofeng.pdf --report /chemin/prive/radio.json
+```
+
+`--case keypad`, `memory`, `quarter`, `dipole`, `quarter-calculated` ou
+`unspecified` limite le rejeu à une question ; sinon les six sont jouées. Le script vérifie le PDF avant de
+l’indexer temporairement, puis utilise la fiche d’antenne du dépôt. Les rapports
+restent privés et gardent réponses, outils et références, pas seulement `done`.
+`review_reference` est une grille de relecture, pas une certification automatique.
+Comparer la séquence des touches au PDF et les calculs aux formules, rechercher
+les erreurs de bras/longueur totale, la lecture effective et les paramètres manquants.
+Le [bilan](2026-11-15-notices-et-guidage-pratique.md) conserve les cas défavorables.
+Ce manuel ne représente pas tous les savoir-faire ou tous les appareils.
+
+
+Pour élargir à d’autres domaines sans modifier le moteur, la même recette accepte
+`--scenario-file /dossier/prive/scenarios.json` à la place de `--manual`.
+Le JSON contient `documents` (nom de fichier simple `path`, `title`, `language`,
+`sha256`, métadonnées optionnelles) et `cases` (`name`, `question`, `review_reference`).
+Les fichiers doivent être dans le même dossier que ce manifeste et correspondre
+à leur empreinte ; pas de lien extérieur au dossier ni de téléchargement implicite.
+Douze documents et 32 questions au maximum ; chaque document fait au plus 32 Mo.
+Ce dispositif compare des besoins différents et des modèles déjà installés,
+sans introduire leurs commandes ni leurs réponses dans le moteur du produit.
+
+Le mode de réflexion du profil d’essai peut être choisi avec `--think false`,
+`true`, `low`, `medium` ou `high` selon ce que le modèle installé prend en charge.
+Le défaut de cette recette est `true` pour les essais Gemma décrits ; ne pas le
+transposer à un modèle dépourvu de cette capacité. Les profils du produit ne sont
+pas modifiés par ce choix de laboratoire.

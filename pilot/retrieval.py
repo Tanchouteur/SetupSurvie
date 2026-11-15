@@ -52,7 +52,7 @@ class NormalCache:
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
 ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
 EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y pourquoi why'.split())
-EXTRA_STOP.add('comme')
+EXTRA_STOP.update('comme dois doit doivent devrais devrait devraient pourrais pourrait pouvons pouvez utiliser utilisez utilise utilisation puis ensuite'.split())
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
 # Related technical expressions, not links to hand-picked documents. These also
 # apply to guide retrieval and ranking; a match never certifies a procedure.

@@ -111,7 +111,8 @@ def document_request(history):
     if not plan.words:return None
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw):return None
-    if research.synthesis(question) or illustrations.requested(question):return question,''
+    if research.synthesis(question) or illustrations.requested(question) or re.search(r'\b(comment|how to)\b',raw):return question,''
+    if re.search(r'\b(quell?e?s?)\b.*\b(dimensions?|longueurs?|tailles?)\b',raw):return question,''
     if plan.practical and plan.action:return question,''
     if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
         return question,''
@@ -230,13 +231,13 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     messages.append({'role':'assistant','content':'','tool_calls':[{'id':call_id,'type':'function','function':{'name':name,'arguments':arguments}}]})
                     messages.append({'role':'tool','tool_name':name,'tool_call_id':call_id,'content':json.dumps(value,ensure_ascii=False)})
                 tool_trace.append({'tool':name,'arguments':arguments,'result':value,'automatic':automatic})
-            async def read_batch(identifiers,query,toolset=None):
+            async def read_batch(identifiers,query,toolset=None,*,automatic=False):
                 allocation=assistant_metrics.budget(context,output,toolset or TOOLS)
                 fit_context(messages,maximum=allocation['message_bytes']-1200)
                 maximum=max(0,allocation['message_bytes']-research.size(messages)-1200)
                 with measured.during('reading'):
                     value=await research.read(identifiers,query,maximum,source_cache,lambda item,consulted:reference(references,item,consulted,visual=wants_visual),
-                        on_failed=lambda identifier:record_evidence('read_source',{'id':identifier},{'error':True}))
+                        on_failed=lambda identifier:record_evidence('read_source',{'id':identifier},{'error':True}),prefer_documents=automatic)
                 for row in value['results']:
                     for part in row['passages']:
                         record_evidence('read_source',{'id':row['id'],'offset':part['offset']},{**row,'text':part['text']})
@@ -265,7 +266,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     # receives a compact multi-source reading packet.
                     record_tool('search_library',arguments,search_value(found),True,False)
                     identifiers=[candidate['id'] for candidate in research.candidates(found)[:12]]
-                    value=await read_batch(identifiers,query,initial_tools)
+                    value=await read_batch(identifiers,query,initial_tools,automatic=True)
                     value['coverage']={key:getattr(found,'coverage',{}).get(key) for key in ('status','warning')}
                     value['found']=len(found)
                     value['omitted']+=max(0,len(found)-len(identifiers));value['selection_limited']|=bool(value['omitted'])
@@ -350,7 +351,8 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         measured.value['failure']='output_limit'
                         interrupted=True
                     if not calls:
-                        if wants_synthesis and content.strip() and read_references(references) and not research.citations_valid(content,references):
+                        content=research.normalize_citations(content,references)
+                        if (wants_synthesis or references) and content.strip() and (read_references(references) or research.citation_numbers(content)) and not research.citations_valid(content,references):
                             rejected_answers.append(content)
                             link_output=min(output,2048);link_budget=assistant_metrics.budget(context,link_output)
                             link_messages=citation_links.messages(content,references,link_budget['message_bytes'])
@@ -377,7 +379,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                             if link_report['applied'] and not link_report['rejected'] and research.citations_valid(linked,references):answer=linked;break
                             measured.value['failure']='citation_check';interrupted=True
                             known={item['number'] for item in references.values() if item.get('consulted')}
-                            fabricated=bool(research.citation_numbers(content)-known)
+                            fabricated=research.unsupported_citations(content,references)
                             answer=research.fallback(references) if fabricated or not linked.strip() else citation_links.unverified(linked,references);break
                         answer=content;break
                     if not tools:
@@ -387,6 +389,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         calls=calls[:4]
                     messages.append({'role':'assistant','content':content,'tool_calls':calls})
                     before=(frozenset(evidence.found),frozenset(read_spans))
+                    search_to_read=[]
                     for call in calls[:4]:
                         function=call.get('function',{});name=function.get('name');arguments=function.get('arguments',{})
                         if isinstance(arguments,str):arguments=json.loads(arguments)
@@ -411,6 +414,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                                     with measured.during('search'):search_cache[key]=await library.search(query,language,limit=12,favorite_user=owner,collection=collection,domain=domain,budget=60)
                                 else:measured.value['cache_hits']['search']+=1
                                 value=search_value(search_cache[key]);progress(identifier,'searching',sources_found=len(search_cache[key]))
+                                search_to_read.extend(candidate['id'] for candidate in research.candidates(search_cache[key]))
                                 measured.value['sources_found']=max(measured.value['sources_found'],len(search_cache[key]))
                             elif name=='read_source':
                                 progress(identifier,'reading')
@@ -446,6 +450,16 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         message={'role':'tool','tool_name':name,'content':json.dumps(value,ensure_ascii=False)}
                         if call.get('id'):message['tool_call_id']=call['id']
                         messages.append(message)
+                        update(identifier,sources=read_references(references))
+                    # A search excerpt is not a reading. Some models stop here
+                    # and cite that excerpt despite consulted=false. Prepare a
+                    # small real reading packet before their first final answer.
+                    if search_to_read and not read_references(references):
+                        identifiers=list(dict.fromkeys(search_to_read))[:4]
+                        try:
+                            value=await read_batch(identifiers,current_question,automatic=True)
+                        except Exception:value={'results':[],'error':'Les documents trouvés n’ont pas pu être lus ; aucun extrait de recherche ne vaut lecture.'}
+                        record_tool('read_sources',{'ids':identifiers,'query':current_question[:200]},value,True)
                         update(identifier,sources=read_references(references))
                     after=(frozenset(evidence.found),frozenset(read_spans))
                     documentary_calls=all(call.get('function',{}).get('name') in ('search_library','read_source','read_sources','source_illustrations') for call in calls[:4])

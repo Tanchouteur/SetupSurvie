@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.19.1 : [notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md).
+Cas réel UV‑5R demandé par Louis, utilisé pour corriger des défauts généraux :
+procédures non cherchées, recherches citées sans lecture et listes d’étapes coupées.
+Notice figée et fiche d’antenne ajoutées ; installation chez Marc distincte.
+Les erreurs réelles du premier essai restent dans le bilan, pas masquées par `done`.
+
 Complément 0.19.0 : [illustrations originales et références](2026-11-15-illustrations-originales.md).
 Les articles lus et pages PDF peuvent fournir des originaux sous les réponses,
 sélectionnés par légende avant rédaction ; aucune interprétation des pixels.

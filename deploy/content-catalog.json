@@ -1060,6 +1060,34 @@
       "priority": "P1"
     },
     {
+      "id": "baofeng-uv5r-manual",
+      "title": "Baofeng UV-5R et UV-5RTP : notice commune avec section française",
+      "url": "https://radioddity.s3.amazonaws.com/Baofeng%20UV5R%20%26%20GT-3%20Series%20User%20Manual%20%5BEN%20DE%20IT%20FR%20ES%5D.pdf",
+      "pack": "communications",
+      "topics": [
+        "radio",
+        "talkie-walkie",
+        "Baofeng",
+        "UV-5R",
+        "UV5R",
+        "UV-5RTP",
+        "8 W",
+        "notice",
+        "antenne"
+      ],
+      "edition": "V1.0",
+      "language": "fr",
+      "publisher": "Baofeng / Radioddity",
+      "path": "library/guides/EXT-baofeng-uv5r-series.fr.pdf",
+      "notes": "PDF multilingue constructeur, 60 pages PDF ; partie française pages PDF 31 à 41. Le tableau des puissances page PDF 22 distingue UV-5R 5/1 W et UV-5RTP/GT-3TP 8/4/1 W. Ne garantit pas une correspondance exacte avec toute variante vendue comme UV-5R 8 W ; vérifier le modèle du poste. Date de publication non établie ; les dates internes du PDF ne datent pas son édition.",
+      "bytes": 17968170,
+      "sha256": "bd43cd9b58c311fcf0e0f02eeb4a1e9bbd0fdd1a6deea4150ba9df9c5932e485",
+      "hash_source": "calculated-from-https-source",
+      "commercial_review": true,
+      "licence": "Consultation personnelle ; droits de redistribution, traduction et illustrations à vérifier avant diffusion commerciale.",
+      "priority": "P1"
+    },
+    {
       "id": "radio-maritime",
       "title": "Radio VHF : manuel de préparation au CRR maritime",
       "url": "https://www.anfr.fr/fileadmin/manuel-crr-maritime-25.pdf",

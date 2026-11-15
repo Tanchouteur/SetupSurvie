@@ -9,6 +9,41 @@ from pilot import engine,research,library,store
 
 
 class PassageTests(unittest.TestCase):
+    def test_polite_modal_words_do_not_become_documentary_requirements(self):
+        plan=research.subject('Quelle longueur d’antenne dois-je utiliser pour mon talkie Baofeng ?')
+        self.assertEqual(plan.words,['longueur','antenne','talkie','baofeng'])
+
+    def test_only_known_read_source_ids_become_numbered_citations(self):
+        refs={'guide:manual.pdf#page=34':{'id':'guide:manual.pdf#page=34','number':2,'consulted':True},'guide:unread':{'number':3,'consulted':False}}
+        text=research.normalize_citations('Commande [guide:manual.pdf#page=34]. `Exemple [guide:manual.pdf#page=34]`.',refs)
+        self.assertTrue(text.startswith('Commande [2, p. 34].'))
+        self.assertIn('`Exemple [guide:manual.pdf#page=34]`',text)
+        self.assertTrue(research.citations_valid(text,refs))
+        whole={'guide:book.pdf':{'number':4,'consulted':True,'pages':[21]}}
+        self.assertEqual(research.normalize_citations('[guide:book.pdf#page=21]',whole),'[4, p. 21]')
+        self.assertFalse(research.citations_valid('[4] [guide:book.pdf#page=22]',whole))
+        for invalid in ('[guide:unread]','[guide:invented]','[99]'):
+            self.assertFalse(research.citations_valid(text+' '+invalid,refs))
+
+    def test_a_complete_page_that_fits_is_not_cut_between_the_procedure_steps(self):
+        text='Présentation du réglage. '+('Contexte sans réglage. '*60)+'\nProcédure de calibration\n1. Menu\n2. Choisir le mode zéro\n3. Valider\n'+('Autre mode distinct. '*80)
+        parts=research.passages(text,'Comment calibrer ce capteur ?',len(text.encode('utf-8')))
+        self.assertEqual(parts,[{'offset':0,'text':text,'next_offset':len(text)}])
+        self.assertIn('2. Choisir le mode zéro',parts[0]['text'])
+
+    def test_collapsed_pdf_pages_remain_readable_after_distinct_documents(self):
+        items=[{'id':'guide:manual.pdf#page=38','title':'Manual','excerpt':'Preview from page 38',
+                'other_matches':[{'id':'guide:manual.pdf#page=34','title':'Manual page 34'},{'id':'guide:other.pdf#page=1','title':'Unrelated'}]},
+               {'id':'guide:second.pdf#page=1','title':'Second'}]
+        candidates=research.candidates(items)
+        self.assertEqual([row['id'] for row in candidates],['guide:manual.pdf#page=38','guide:second.pdf#page=1','guide:manual.pdf#page=34'])
+        self.assertEqual(candidates[-1]['excerpt'],'')
+
+    def test_secondary_question_does_not_change_first_subject_or_decimal(self):
+        self.assertEqual(research.primary_query('Comment régler le débit à 2.5 L/min ? Est-ce que cela modifie le bruit ?'),'Comment régler le débit à 2.5 L/min ')
+        self.assertEqual(research.primary_query('Comment verrouiller le clavier ? Et les boutons latéraux ?'),'Comment verrouiller le clavier ')
+        self.assertEqual(research.primary_query('Le Dr. Martin mesure 2.5 unités.'),'Le Dr. Martin mesure 2.5 unités.')
+
     def test_initial_topic_is_separate_from_following_answer_instructions(self):
         for suffix in ('Compare les notices et cite leurs valeurs.','Donne une réponse en français.','Explain the differences.'):
             question='Fais une synthèse des documents sur la serre fictive. '+suffix
@@ -121,3 +156,17 @@ class ReadingTests(unittest.IsolatedAsyncioTestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class ProcedureReadingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_automatic_read_prefers_a_matching_section_over_repeated_device_names(self):
+        pages={
+          'guide:manual.pdf#page=38':{'id':'guide:manual.pdf#page=38','title':'Appareil K7 — page 38','text':'Double veille\n'+('Description des autres fonctions. '*25)+'La calibration du capteur est mentionnée sans procédure.'},
+          'guide:manual.pdf#page=34':{'id':'guide:manual.pdf#page=34','title':'Appareil K7 — page 34','text':'Calibration du capteur\nChoisir zéro. Valider. Garder la protection.'}}
+        def reference(item,consulted):return {'number':list(pages).index(item['id'])+1}
+        found=await research.read(list(pages),'Comment effectuer la calibration du capteur sur l’appareil K7 ?',4000,{},reference,fetch=AsyncMock(side_effect=pages.__getitem__),prefer_documents=True)
+        self.assertEqual([row['id'] for row in found['results']],['guide:manual.pdf#page=34'])
+        self.assertEqual(found['results'][0]['passages'][0]['text'],pages['guide:manual.pdf#page=34']['text'])
+        self.assertEqual(found['omitted'],1)
+        explicit=await research.read(list(pages),'Compare ces deux pages',4000,{},reference,fetch=AsyncMock(side_effect=pages.__getitem__))
+        self.assertEqual([row['id'] for row in explicit['results']],list(pages))
