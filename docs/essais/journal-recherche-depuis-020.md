@@ -5,6 +5,10 @@ Les documents peuvent être choisis et conservés avant une question ; la traduc
 de l’un ne retire pas les autres. Le test réel atteint les pages 6 de cinq PDF
 fictifs avec les cinq valeurs et références correctes. Les limites du premier
 essai textuel, la CI et le reçu de livraison restent tracés dans ce bilan.
+Code livré `4d69283`, huit jobs CI réussis, 665 tests locaux (trois ignorés),
+773 fichiers du paquet comparés au commit et 79 contrôles ciblés par navigateur.
+Le rejeu réel final sur les cinq PDF confirme les cinq pages 6 lues et les bonnes
+valeurs ; dates parfois omises et réponses trop longues restent des limites.
 
 Complément 0.16.0 : [dossier multi-source et premiers modèles réels](2026-11-15-synthese-multi-sources-et-essais-reels.md).
 La même question comparative lit zéro notice en 0.15.1, cinq en 0.16.0 avec Gemma

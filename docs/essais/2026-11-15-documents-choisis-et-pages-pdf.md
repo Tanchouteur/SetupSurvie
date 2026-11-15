@@ -1,6 +1,6 @@
 # Documents choisis et pages pertinentes des PDF
 
-**Bilan daté du 15 novembre 2026 — préparation de la livraison 0.17.0.** Le lot
+**Bilan daté du 15 novembre 2026 — livraison 0.17.0.** Le lot
 rend explicite la sélection de plusieurs documents pour l’assistant. Il ne clôt
 pas la validation du sens de toutes les réponses ni le programme des vidéos.
 
@@ -49,7 +49,16 @@ pas le texte. Cette adaptation suit l’essai défavorable consigné ci-dessous.
   rejouée sur Chromium : association, pause/reprise, export et plage PDF conservés.
   Aucun iPhone physique ni Windows de Marc testé dans le runner.
 - JavaScript vérifié, HTML régénéré, versions API/manifeste 0.17.0 cohérentes.
-  La CI Windows/Linux et le paquet seront consignés dans le reçu de livraison.
+  Le reçu ci-dessous distingue la CI du contrôle du paquet.
+
+**Reçu de livraison :** code `4d69283c9245c472fda56990f0854fcf4ef7cfd8`,
+[huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43749393112),
+dont Windows, Linux, lecteurs isolés Python 3.11/3.13/3.14, Kiwix natif sur petites
+archives, routage synthétique et parcours Chromium/WebKit. Paquet relu avec le
+lecteur réel de mise à jour : **773 fichiers, 6 760 326 octets**, aucun écart avec
+les fichiers filtrés Git du commit, aucun modèle, ZIM ou état utilisateur.
+SHA-256 : `913822970d51b93080a8daf53f3b2863e7c1d3731cb63698c2e358d87b58005a`.
+Les ajouts de bilan après ce code ne changent que la documentation.
 
 ## Essais avec le vrai modèle sur le R7
 
@@ -78,7 +87,17 @@ intégrale des PDF ni la pertinence d’un vrai manuel. SHA-256 du rapport priv�
 digest du code Python : `bdae5285a980678dcbe471df74278da78549a3a5b93fe4120d6c86301b15989c`.
 
 La [recette réelle](assistant-modele-reel.md) ajoute `--selected` et `--pdf-fixture`.
-Le dernier rejeu sur le code à livrer et le reçu final sont ajoutés après contrôle.
+Dernier rejeu sur le code Python à livrer, digest
+`cdb9ed978789d148548fe8a89a8a87b824a0da283034ee28a8321bb7c23bfb4a` :
+les deux formulations terminent en **65 499 / 85 574 ms**, chacune avec les cinq
+pages 6 consultées, les cinq valeurs et leurs associations correctes, avec
+références directes. Aucune étape de liaison supplémentaire n’est nécessaire.
+Les dates ne sont pas rappelées dans ces deux réponses et les avertissements
+restent trop longs : ces critères de qualité demeurent à améliorer. SHA-256 du
+rapport privé : `e90d27aae9e725cbb13c1e6b9ab94f74f06ebada5099923d3e8861c61dcdacbc`.
+L’empreinte de la recette et les passages réellement transmis sont conservés.
+Le reçu ci-dessus porte sur ce code ; le laboratoire et le PC Windows de Marc
+restent deux environnements distincts.
 Les mesures R7 ne prédisent pas la cadence du Windows de Marc. Ces cas servent
 au développement ; aucune évaluation aveugle ni qualité générale n’est revendiquée.
 

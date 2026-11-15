@@ -26,6 +26,9 @@ généraux, sans certifier le contenu à partir du seul titre.
 Les nouvelles réponses de l’assistant conservent aussi un suivi des recherches
 et lectures réellement effectuées, indépendant du texte du modèle, avec accès
 aux documents consultés même lorsqu’ils ne sont pas cités.
+On peut [choisir plusieurs documents](docs/utilisation/documents-et-traduction.md#choisir-les-documents-dune-conversation--0170)
+pour une même question ; leur sélection est conservée et les PDF peuvent fournir
+une page pertinente au-delà de leur aperçu de début.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
 noms de collections sont corrigibles et exportables. Des rapports de délais et un

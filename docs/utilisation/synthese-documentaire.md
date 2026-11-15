@@ -11,8 +11,9 @@ explique la reprise et la traduction séparée de chaque source.
 
 Dans **Assistant**, décrire le sujet, puis le résultat attendu, par exemple :
 « Fais une synthèse des documents sur la production de feu. Compare les méthodes
-et cite les sources. » Le logiciel prépare une recherche documentaire avant le
-premier appel du modèle. La question complète reste transmise au modèle ; une
+et cite les sources. » Sans sélection explicite, le logiciel prépare une recherche
+documentaire avant le premier appel du modèle. Avec une sélection, il commence
+par les passages des documents choisis et peut chercher un complément utile. La question complète reste transmise au modèle ; une
 consigne secondaire ne devient plus obligatoirement un mot à trouver dans le texte.
 
 La préparation peut examiner jusqu’à douze résultats. Elle privilégie des documents

@@ -4,34 +4,38 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation assistant — 0.16.0
+## Prochaine validation assistant — 0.17.0
 
-Le dossier multi-source est livré. Les [essais R7](2026-11-15-synthese-multi-sources-et-essais-reels.md)
+Le dossier multi-source et sa sélection manuelle sont livrés. Les [essais R7](2026-11-15-synthese-multi-sources-et-essais-reels.md)
 confirment des lectures multiples et le changement de modèle sur de petits textes
 fictifs ; ils ne remplacent pas le Windows de Marc. Le développement peut continuer
 sans nouveau R2 complet. Lors d’un usage volontaire après la mise à jour habituelle :
 
-1. Demander une synthèse sur un sujet connu du fonds, par exemple la formulation
+1. Dans la Bibliothèque, choisir deux ou trois documents utiles avec **Choisir
+   pour l’assistant**, puis **Poser une question**. Demander une comparaison,
+   ouvrir une référence et recharger la conversation : la liste doit être conservée.
+   Pour un PDF, vérifier la page effectivement lue ; un livre choisi n’est pas
+   annoncé comme entièrement lu. Retirer une source doit conserver les messages.
+2. Demander une synthèse sur un sujet connu du fonds, par exemple la formulation
    réelle de Marc sur le feu, puis « Compare les méthodes et cite les documents ».
    Vérifier quelles sources sont réellement lues, ouvrir un passage et noter une
    affirmation correctement soutenue ou une extrapolation. Plusieurs sources sont
    possibles, sans exiger cinq si le fonds utile ou le contexte en fournissent moins.
-2. Après une réponse, changer pour un mode utilisant un autre modèle, puis poser
+3. Après une réponse, changer pour un mode utilisant un autre modèle, puis poser
    une petite question. La première demande doit aboutir sans la renvoyer à la main.
-3. Exporter **Voir les durées → Télécharger le rapport** pour un cas lent, incomplet
+4. Exporter **Voir les durées → Télécharger le rapport** pour un cas lent, incomplet
    ou faux. Préciser le texte de la demande, le mode et la source mal utilisée :
    le rapport numérique ne contient pas ces textes. Documents préparés, lectures,
    reprises et liaison des références sont mesurés séparément.
 
 Prévoir plusieurs minutes possibles par question selon le modèle et le contexte ;
 le plafond est quinze minutes, l’annulation reste disponible. Ne pas lever le mode
-jeu ni lancer de réindexation ou calibration pour ce contrôle. Association manuelle
-multiple, illustrations et longues synthèses restent à développer. La fidélité de
-chaque conclusion reste un critère humain, même si les références sont présentes.
+jeu ni lancer de réindexation ou calibration pour ce contrôle. Illustrations et
+longues synthèses intermédiaires restent à développer. La fidélité de chaque conclusion reste un critère humain, même si les références sont présentes.
 
 ## Prochaine validation assistant — 0.15.1
 
-**Recette historique ; le protocole 0.16.0 ci-dessus est la suite actuelle.**
+**Recette historique ; le protocole 0.17.0 ci-dessus est la suite actuelle.**
 
 Le R2 **0.15.0 est reçu** : les 32 recherches sont complètes, médiane finale
 2,11 s avec cache déjà chaud. Ne pas le refaire immédiatement pour poursuivre
