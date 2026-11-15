@@ -52,6 +52,7 @@ def create_archives(folder):
             creator.add_item(Article('Shelter_construction','Shelter construction','Shelter construction and roof design. Fictional fixture.'))
             creator.add_item(Article('Mending_clothes','Mending clothes','Sewing and mending a garment. Fictional fixture without instructions.'))
             creator.add_item(Article('Solar_panel','Solar panel installation','Solar panel installation and electrical checks. Fictional fixture without instructions.'))
+            creator.add_item(Article('Bicycle_repair','Bicycle repair','Bicycle maintenance, fictional fixture without instructions.'))
             creator.add_item(Article('Vegetable_canning','Vegetable canning and food preservation','Canning vegetables for food storage. Fictional fixture without instructions.'))
             creator.add_item(Article('Tool_sharpening','Tool sharpening','Tool sharpening and maintenance. Fictional fixture without instructions.'))
             creator.add_item(Article('Fictional_propulsion','Propulsion quantique fictive','Propulsion quantique : mots de test, sans technologie réelle.'))
@@ -119,6 +120,24 @@ def main():
                     found=await library.search(query,limit=5,collection='manualen',domain='resilience')
                     check(bool(found) and found[0]['id']=='zim:manual_en/'+expected,query+' ranks its actual English source first',{'ids':[r['id'] for r in found],'coverage':found.coverage})
                     check(found[0].get('match')!='title',query+' has an actual fulltext match, not only a title suggestion')
+                guides=folder/'guides';guides.mkdir()
+                for name,title,text in [
+                    ('solar.fr.txt','Les panneaux solaires modernes','Analyse fictive : installer un panneau solaire influence le coût de l’énergie, sans procédure.'),
+                    ('bicycle.fr.txt','Les vélos d’aujourd’hui','Analyse fictive de la réparation des vélos et de leur durée de vie, sans étapes.'),
+                ]:
+                    (guides/name).write_text(text,encoding='utf-8')
+                (guides/'metadata.json').write_text(json.dumps([
+                    {'path':'solar.fr.txt','title':'Les panneaux solaires modernes','language':'fr'},
+                    {'path':'bicycle.fr.txt','title':'Les vélos d’aujourd’hui','language':'fr'},
+                ]),encoding='utf-8')
+                with patch.object(library,'GUIDES',guides):
+                    library.index_guides()
+                    for query,target,background in [('installer un panneau solaire','Solar_panel','solar.fr.txt'),('réparer un vélo','Bicycle_repair','bicycle.fr.txt')]:
+                        for domain in ('all','resilience'):
+                            found=await library.search(query,limit=20,domain=domain)
+                            ids=[row['id'] for row in found]
+                            check(bool(ids) and ids[0].endswith('/'+target),query+' prioritizes the native task title in '+domain,{'ids':ids})
+                            check('guide:'+background in ids,query+' retains the broader guide in '+domain,{'ids':ids})
                 tagged=await library.search('allumer un feu',collection='missingtagfr')
                 check(bool(tagged) and tagged.coverage['searched']==1,'Missing ftindex tag does not hide a working fulltext index')
                 titles=await library.search('allumer un feu',collection='titleonlyfr')

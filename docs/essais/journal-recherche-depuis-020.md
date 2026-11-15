@@ -163,3 +163,19 @@ routage et navigateurs. Les recettes ciblées comptent 452 assertions par naviga
 dont recherche 50, flux 18 et paramètres 175 ; la campagne locale termine à 521 tests,
 trois ignorés. Les 729 fichiers du paquet CI sont déballés et comparés au commit.
 Le nouveau R2 réel et les avis humains restent nécessaires pour fermer l’objectif.
+
+## Précision des titres de tâches — 0.13.1, 15 novembre 2026
+
+L’audit après 0.13.0 reproduit un autre défaut : sur « réparer un vélo » ou
+« installer un panneau solaire », un titre général et un extrait mentionnant
+l’action pouvaient dépasser un titre correspondant directement à la tâche.
+La correction adapte ce poids sans cacher le texte général ni qualifier
+l’article de procédure. Les questions « pourquoi » restent explicatives ;
+« pourquoi et comment » peut conserver une intention pratique. Les preuves et
+limites sont dans le [bilan](2026-11-15-classement-titres-et-intention.md).
+
+Louis propose de faire travailler d’autres agents ; deux
+[prompts coordonnés](../decisions/prompts-agents-videos-et-performances.md)
+séparent inventaire vidéo/sous-titres et diagnostic des délais, sur leurs propres
+branches. Aucun de ces chantiers n’est déclaré livré. L’agent principal garde
+le moteur et son intégration. Le prochain R2 et les avis humains restent nécessaires.

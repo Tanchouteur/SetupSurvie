@@ -5,6 +5,10 @@ Complément 0.13.0 : [recherche progressive et cache reconstructible](../exploit
 Louis accepte davantage d’attente si les documents arrivent progressivement ;
 2 Go est un exemple de cache ajustable et le matériel pourra évoluer après mesure.
 La recherche générale reste centrale ; les six dossiers sont des aides facultatives.
+La 0.13.1 corrige la priorité des titres correspondant à une tâche face aux
+mentions dans des textes généraux, avec distinction des questions « pourquoi ».
+Le classement ne déclare pas automatiquement une procédure qualifiée.
+
 Les [vidéos locales 480p](videos-locales-et-recherche.md) sont à intégrer, avec
 transcriptions horodatées et contrôle français par média ; réalisation prévue.
 

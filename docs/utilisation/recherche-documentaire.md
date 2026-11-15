@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.13.0, 14 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.13.1, 15 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -21,6 +21,14 @@ le sujet du titre et du passage ; pour une demande pratique, les mentions de qui
 d’histoire ou de prévention seules passent après les correspondances plus directes.
 Il s’agit d’un classement, pas d’une validation du contenu ni d’un filtre qui cache
 les documents de prévention lorsqu’on les recherche précisément.
+
+Depuis 0.13.1, pour une tâche pratique, un titre qui associe le sujet recherché
+et l’action demandée passe plus facilement devant un texte général qui ne fait
+que mentionner cette action. Les textes généraux restent consultables. Une demande
+« pourquoi » cherche une explication, tandis que « pourquoi et comment » conserve
+son intention pratique. Ce repère ne certifie pas qu’un article contient toutes
+les étapes, ni qu’il constitue une procédure vérifiée.
+
 
 Depuis 0.9.4, une demande pratique écarte les correspondances dont l’action
 n’est pas étayée, notamment un exercice de prix de vélo proposé pour une réparation.
@@ -102,7 +110,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.13.0** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.13.1** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,

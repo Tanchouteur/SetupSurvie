@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R1/R2 0.12.0 : 135 archives préparées, 15 compléments utilisables ; 32 recherches partielles surtout par délai. Flux progressif et cache durable développés en 0.13.0 ; nouvelle mesure Windows et avis humains attendus |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R1/R2 0.12.0 : 135 archives préparées, 15 compléments utilisables ; 32 recherches partielles surtout par délai. Flux/cache 0.13.0 et priorité des titres de tâches 0.13.1 ; nouvelle mesure Windows et avis humains attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -394,3 +394,8 @@ de budget, pas une limite fonctionnelle ; une évolution matérielle reste envis
 après mesure. Les six dossiers sont facultatifs, la recherche générale reste centrale.
 Les [vidéos locales 480p](videos-locales-et-recherche.md) ajoutées par Marc dans
 `library/video/` sont à intégrer aux documents avec passages horodatés et sous-titres.
+
+Deux chantiers parallèles ont été proposés à Louis le 15 novembre :
+[prompts vidéo et performances](prompts-agents-videos-et-performances.md), fichiers
+réservés et branches séparées. Ils ne sont pas déclarés lancés ni livrés tant que
+leurs comptes rendus ne sont pas reçus. L’agent principal garde le moteur.

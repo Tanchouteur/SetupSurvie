@@ -14,7 +14,7 @@ def normal(text):
 # Intent words are useful for ranking, but must not exclude a book that uses
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
 ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
-EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y'.split())
+EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y pourquoi why'.split())
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
 # Related technical expressions, not links to hand-picked documents. These also
 # apply to guide retrieval and ranking; a match never certifies a procedure.
@@ -69,6 +69,7 @@ def plan(query,words,synonyms,collection=''):
     raw=normal(query)
     detected=next((key for key,aliases in COLLECTIONS.items() if any(re.search(r'\b'+re.escape(normal(alias))+r'\b',raw) for alias in aliases)), '')
     practical=bool(re.search(r'\b(comment|faire|allumer|allumage|fabriquer|fabrication|construire|construction|reparer|reparation|entretenir|entretien|realiser|installer|installation|recoudre|coudre|affuter|aiguiser|techniques|how|build|make|making|repair|tutorial)\b',raw)) and not re.search(r'\b(histoire|archeologie|history|origines)\b',raw)
+    if re.search(r'\b(pourquoi|why)\b',raw) and not re.search(r'\b(comment|how)\b',raw):practical=False
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
     meaningful=[w for w in terms if w not in ACTIONS]
@@ -104,7 +105,14 @@ def rank(item,query,position=0):
     if title_hits<1 and text_hits<1:score-=35
     if query.action:
         evidence=INTENTS[query.action]
-        if re.search(evidence,title):score+=28
+        if re.search(evidence,title):
+            # An explicit task title should beat a broad subject title whose
+            # excerpt merely mentions the action. This is still a reading lead,
+            # never evidence that the article contains a verified procedure.
+            contextual=bool(re.search(r'\b(pourquoi|why|histoire|history|historical|origines?|origins?)\b',title))
+            instruction=bool(re.search(r'\b(comment|how|guide|tutorial|instructions|etapes|steps|methode|method)\b',title))
+            direct=query.practical and title_hits==1 and len(title_tokens)>1 and (not contextual or instruction)
+            score+=55 if direct else 12 if query.practical and contextual and not instruction else 28
         elif re.search(evidence,text):score+=12
         else:score-=12
     path=str(item.get('id','')).split('/',1)[-1]
