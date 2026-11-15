@@ -69,6 +69,17 @@ sur ce correctif sans changement Web. Paquet et CI sont ajoutés après exécuti
 Aucune mesure Windows 0.14.2, relecture humaine ou validation de tous les documents
 de Marc n’est revendiquée.
 
+Le code `61c3f67` est poussé. La [CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43696908343)
+est de nouveau refusée avant ses huit jobs pour une restriction de facturation
+GitHub ; aucune relance répétée ni modification du compte n’est tentée. Les
+résultats locaux ne sont donc pas des validations CI Windows ou WebKit.
+
+Le paquet est déballé avec le lecteur de mise à jour normal : **747 fichiers**,
+6 657 077 octets, version 0.14.2 et schéma 1. Tous les fichiers correspondent au
+commit avec les filtres de checkout, notamment CRLF des scripts PowerShell.
+Aucun modèle, ZIM, index ou état privé n’est inclus. SHA-256 :
+`b554c6f67d9153b9101f2cae1847260e323b508bd3a59398c8c9d5338216d5f2`.
+
 ## Prochaine comparaison réelle
 
 Mettre à jour normalement vers 0.14.2 ; aucun nouvel extrait intégral des archives

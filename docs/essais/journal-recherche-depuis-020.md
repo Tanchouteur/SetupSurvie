@@ -289,3 +289,9 @@ réussite après, échéance et limites. Plus de variantes peuvent prolonger la 
 avec les premiers résultats disponibles pendant ce temps. Cette correction
 complète 0.14.1 sans annoncer que les expirations de titres, la qualité réelle
 ou le matériel du Windows de Marc sont désormais validés.
+
+La suite finale réussit 571 tests (trois ignorés), avec 54 contrôles Kiwix sur
+cinq petites archives et 36 sur 135 archives fictives. Le paquet de 747 fichiers
+est déballé et comparé au code `61c3f67` avec filtres Git. La CI `43696908343`
+ne lance aucun job pour la même restriction GitHub ; pas de validation Windows
+ou WebKit supplémentaire déclarée. Les numéros et empreintes restent dans le bilan.
