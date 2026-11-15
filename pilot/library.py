@@ -399,7 +399,14 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
                 if book is None:continue
                 try:identifier=safe_zim_path('zim:'+link.removeprefix('/content/'))
                 except HTTPException:continue
-                text=Text();text.feed(item.findtext('description',''))
+                text=Text();description=item.find('description')
+                if description is not None:
+                    # Native RSS mixes XML highlight nodes with surrounding text;
+                    # findtext alone drops every match after the first child.
+                    # Keep escaped HTML and actual child markup readable, while
+                    # Text still excludes scripts and styles from the excerpt.
+                    text.feed(description.text or '')
+                    for child in description:text.feed(ET.tostring(child,encoding='unicode',method='html'))
                 record={'id':'zim:'+identifier,'_rank':position,'title':item.findtext('title',''),
                     '_query_complete':pattern_override is None,
                     'excerpt':text.text()[:600],'kind':item.findtext('book/title','Encyclopédie'),

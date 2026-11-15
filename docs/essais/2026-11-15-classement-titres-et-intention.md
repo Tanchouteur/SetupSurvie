@@ -1,4 +1,4 @@
-# Titres de tâches et ouverture des articles
+# Classement, extraits et ouverture des articles
 
 **Bilan de développement — 0.13.1, 15 novembre 2026.** Suite à l’audit du moteur
 après la [livraison 0.13.0](2026-11-14-recherche-0120-et-travail-nocturne.md).
@@ -33,11 +33,11 @@ explication « pourquoi », demande mixte, histoire et sujet différent. Cinq so
 puis réussissent après correction. Les autres protègent les usages voisins. Le type inconnu
 et la provenance par titre restent explicitement conservés.
 
-La campagne complète réussit **531 tests Python, trois ignorés**. Les 32 demandes
+La campagne complète réussit **532 tests Python, trois ignorés**. Les 32 demandes
 de référence existantes, leurs cas de réglage et leurs huit cas de vérification
 ne sont pas réécrits pour s’adapter à la correction. Aucun modèle réel n’est lancé.
 
-Le Kiwix épinglé réel réussit **53 contrôles** sur cinq archives générées,
+Le Kiwix épinglé réel réussit **54 contrôles** sur cinq archives générées,
 **285 477 octets**. Huit contrôles ajoutés mélangent des guides généraux locaux
 et de vrais résultats natifs vélo/solaire ; la tâche nommée arrive en premier
 avec Toute la bibliothèque et Résilience, et le guide général reste retrouvé.
@@ -70,6 +70,24 @@ quatre articles uniques et lisibles, à la fois dans une archive plein texte et
 dans une archive avec titres seuls. La boucle ouvre réellement chaque source.
 Le symptôme de Marc est compatible avec ce défaut ; faute de son URL exacte et
 de recette sur son PC, sa cause historique n’est pas déclarée certaine.
+
+### Extraits natifs tronqués à la première surbrillance
+
+Le même service Kiwix réel renvoie des descriptions XML mixtes, par exemple
+`<description><b>Compost</b> jardin…</description>`. L’ancien `findtext` lisait
+uniquement le texte avant le premier élément enfant, donc une chaîne vide dans
+cet exemple. Le reste du passage et les mots mis en gras n’arrivaient pas au
+classement. La reproduction sur les trois premiers articles montre un extrait
+vide à la lecture initiale malgré le texte réellement présent dans la réponse.
+Ce défaut est distinct d’un document qui n’a réellement pas d’extrait natif.
+
+Le lecteur reprend maintenant le texte initial, les éléments enfants et leurs
+suites dans l’extracteur HTML existant. Les extraits avec HTML échappé gardent
+leur traitement ; scripts/styles restent exclus. Un test à trois formats
+(éléments XML réels, texte avant/après et HTML échappé) reproduit deux échecs avant
+correction puis réussit. Le contrôle natif supplémentaire vérifie les mots
+surlignés et le texte qui les suit dans le résultat final. Les réponses brutes
+en cache sont relues par ce parseur corrigé ; aucun vidage de cache n’est requis.
 
 CI Windows/Linux, navigateurs et audit du paquet : à compléter après exécution.
 Les résultats sur les vrais documents de Marc restent à mesurer ; les fixtures

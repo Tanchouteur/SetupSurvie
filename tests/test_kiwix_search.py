@@ -111,6 +111,28 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
             found=await library.search('compost')
         self.assertEqual(found,[])
 
+    async def test_fulltext_excerpt_keeps_highlighted_words_and_following_text(self):
+        cases=[
+            '<description><b>Bicycle</b> <b>puncture repair</b> : fictional excerpt after the matches.</description>',
+            '<description>Before <b>bicycle</b> <i>puncture repair</i> and after. <script>PRIVATE SCRIPT</script></description>',
+            '<description>&lt;b&gt;Bicycle&lt;/b&gt; puncture repair, escaped HTML excerpt.</description>',
+        ]
+        for edition,description in enumerate(cases):
+            with self.subTest(description=edition):
+                async def reader(path):
+                    if path.startswith('/suggest?'):return b'[]','application/json'
+                    return ('<rss><channel><item><title>Bicycle maintenance</title><link>/content/wikipedia_fr/Repair</link>'+description+'</item></channel></rss>').encode(),'application/xml'
+                book=dict(self.catalog[0],book='wikipedia_fr_'+str(edition))
+                # Unique collection identity also keeps the real response cache isolated.
+                async def scoped(path):
+                    raw,content=await reader(path);return raw.replace(b'wikipedia_fr/',book['book'].encode()+b'/'),content
+                with patch.object(library,'books',AsyncMock(return_value=[book])),patch.object(library,'get',scoped):
+                    found=await library.search('bicycle puncture repair')
+                self.assertEqual(len(found),1)
+                self.assertIn('puncture repair',found[0]['excerpt'].lower())
+                self.assertNotIn('<b>',found[0]['excerpt']);self.assertNotIn('PRIVATE SCRIPT',found[0]['excerpt'])
+                if edition<2:self.assertIn('after',found[0]['excerpt'])
+
     async def test_request_budget_is_bounded_and_unsearched_books_are_disclosed(self):
         catalog=[dict(self.catalog[0],book='wikipedia_fr_'+str(i)) for i in range(45)]
         async def fetch(path,*args):

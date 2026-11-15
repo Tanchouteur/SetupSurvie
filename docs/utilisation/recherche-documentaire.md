@@ -20,7 +20,9 @@ courtes lorsque la première formulation ne trouve rien. Le classement privilég
 le sujet du titre et du passage ; pour une demande pratique, les mentions de quiz,
 d’histoire ou de prévention seules passent après les correspondances plus directes.
 Il s’agit d’un classement, pas d’une validation du contenu ni d’un filtre qui cache
-les documents de prévention lorsqu’on les recherche précisément.
+les documents de prévention lorsqu’on les recherche précisément. Les extraits
+natifs conservent depuis 0.13.1 les mots surlignés et le texte qui les suit ; ils
+ne sont plus coupés au premier mot en gras de la réponse Kiwix.
 
 Depuis 0.13.1, pour une tâche pratique, un titre qui associe le sujet recherché
 et l’action demandée passe plus facilement devant un texte général qui ne fait

@@ -153,6 +153,8 @@ def main():
                     for row in found:
                         source=await library.source(row['id'])
                         check('Compost' in source['text'],'Actual suggested path opens locally: '+row['id'])
+                    if collection=='wikipedia':
+                        check(all('compost' in row['excerpt'].lower() and 'chemin fictif' in row['excerpt'].lower() for row in found),'Native XML excerpts retain highlighted matches and following words')
                 source=await library.source('zim:wikipedia_fr/Techniques_de_production_de_feu')
                 check('Friction' in source['text'] and source['language'] in ('fr','fra'),'Actual source can be read with its language after retrieval')
                 alias=await library.source('zim:wikipedia_fr/Fire_alias')

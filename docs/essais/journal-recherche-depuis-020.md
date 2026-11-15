@@ -189,3 +189,9 @@ réelle. La cause historique des indisponibilités de Marc reste non certifiée 
 son URL précise. Louis confirme ensuite le lancement des deux agents ; worktrees
 `setupsurvie-videos-inventaire` et `setupsurvie-diagnostic-kiwix` constatés, avec
 périmètres distincts. Le moteur et son intégration restent à la session principale.
+
+La lecture des extraits natifs est également corrigée : les éléments XML de
+surbrillance faisaient perdre les mots trouvés et la suite de la description.
+Ce cas est reproduit sur le vrai Kiwix, puis protégé avec XML mixte et HTML échappé.
+Le classement reçoit maintenant le passage disponible, sans qualifier son utilité
+pratique automatiquement. Le cache brut reste réutilisable avec le parseur corrigé.

@@ -1,6 +1,6 @@
 # Essais et résultats
 
-- [Titres de tâches et ouverture des articles](2026-11-15-classement-titres-et-intention.md) — correction de classement 0.13.1.
+- [Classement, extraits et ouverture des articles](2026-11-15-classement-titres-et-intention.md) — correction de classement 0.13.1.
 
 - [Rapports 0.12.0 et travail nocturne](2026-11-14-recherche-0120-et-travail-nocturne.md) — index prêts, délais et essais de la correction 0.13.0.
 
