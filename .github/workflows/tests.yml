@@ -88,7 +88,9 @@ jobs:
       - run: python -m unittest discover -s tests -p test_pdf_assets.py -v
       - run: python -m unittest discover -s tests -p test_source_metadata.py -v
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
+      - run: python -m unittest discover -s tests -p test_model_session.py -v
       - run: python -m unittest discover -s tests -p test_documentary_evidence.py -v
+      - run: python -m unittest discover -s tests -p test_documentary_requests.py -v
       - run: python -m unittest discover -s tests -p test_calibration.py -v
       - run: python -m unittest discover -s tests -p test_learning.py -v
       - run: python -m unittest discover -s tests -p test_audit_selection.py -v

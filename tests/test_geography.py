@@ -92,7 +92,8 @@ class GeographyTests(unittest.TestCase):
     def test_assistant_executes_geo_tool_calls_without_network_or_model(self):
         import asyncio
         from contextlib import asynccontextmanager
-        from pilot import engine
+        from unittest.mock import AsyncMock
+        from pilot import engine,operations
         self.bundle();geography.set_location('home',lat=43.1,lon=6.1)
         policy=self.root/'policy.txt';policy.write_text('Assistant local de test')
         with store.connect() as db:
@@ -106,7 +107,7 @@ class GeographyTests(unittest.TestCase):
                 if len(payloads)==1:
                     message={'tool_calls':[{'function':{'name':'get_location','arguments':{}}},{'function':{'name':'search_nearby','arguments':{'category':'water','radius_km':1}}}]}
                 else:message={'content':'Source test : repère cartographié à vérifier sur place.'}
-                yield json.dumps({'message':message,'done_reason':'stop'})
+                yield json.dumps({'message':message,'done':True,'done_reason':'stop'})
         class Client:
             async def __aenter__(self):return self
             async def __aexit__(self,*args):pass
@@ -114,7 +115,7 @@ class GeographyTests(unittest.TestCase):
             async def stream(self,*args,**kwargs):
                 payloads.append(json.loads(json.dumps(kwargs['json'])))
                 yield Response()
-        with patch.object(engine.httpx,'AsyncClient',return_value=Client()),patch.object(engine,'POLICY',policy):
+        with patch.object(engine.httpx,'AsyncClient',return_value=Client()),patch.object(engine,'POLICY',policy),patch.object(operations,'status',AsyncMock(return_value={'online':True})):
             asyncio.run(engine.run('geo-job','reader','geo','rapide'))
         trace=json.loads((store.ROOT/'traces/geo-job.json').read_text())
         self.assertEqual([t['tool'] for t in trace['tools']],['get_location','search_nearby'])

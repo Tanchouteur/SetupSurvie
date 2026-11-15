@@ -12,6 +12,22 @@ def normal(text):
     return re.sub(r'[^a-z0-9]+',' ',''.join(char for char in decomposed if not unicodedata.combining(char)).lower()).strip()
 
 
+def search_subject(query):
+    """Strip an explicit summary request, preserving technical uses of 'synthesis'."""
+    raw=normal(query)
+    request=re.match(r'^(?:(?:s il te plait|svp|please)\s+)?(?:(?:peux tu|pourrais tu|pouvez vous|could you|can you)\s+)?(?:(?:me|nous)\s+)?(?:'
+                     r'(?:(?:fais|fait|faites|faire|donne|donnez|donner|prepare|preparer|redige|rediger|give|write|make)\s+)(?:(?:moi|nous|me)\s+)?(?:(?:un|une|le|la|a|the)\s+)?(?:synthese|resume|summary|recapitulatif|bilan)'
+                     r'|resume|resumer|summarize|summarise)\b',raw)
+    if not request:return query
+    tail=raw[request.end():].strip();changed=False
+    framing=set('le la les un une de du des d ces mes nos vos informations information info infos documents document sources source articles article the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
+    for _ in range(8):
+        boundary=next((m for m in re.finditer(r'\b(?:au sujet de|a propos de|sur|concernant|about|of|on|de|des|du)\b',tail) if set(tail[:m.start()].split())<=framing),None)
+        if boundary is None or not tail[boundary.end():].strip():break
+        tail=tail[boundary.end():].strip();changed=True
+    return tail if changed else query
+
+
 class NormalCache:
     """Per-search normalization, discarded after completion; no stale global text."""
     MAX_BYTES=32_000_000
@@ -36,11 +52,13 @@ class NormalCache:
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
 ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
 EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y pourquoi why'.split())
+EXTRA_STOP.add('comme')
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
 # Related technical expressions, not links to hand-picked documents. These also
 # apply to guide retrieval and ranking; a match never certifies a procedure.
 CONCEPTS={
  'feu':{'terms':['feu','feux','fire','campfire','allumage','amadou','tinder'],'fr':['production de feu','allumage feu'],'en':['fire making','fire starting']},
+ 'friction':{'terms':['friction','frottement','frottements'],'fr':['frottement'],'en':['friction']},
  'generateur':{'terms':['generateur','generatrice','generator','alternateur'],'fr':['generateur'],'en':['generator']},
  'pedale':{'terms':['pedale','pedales','pedal','pedals','pedaling'],'fr':['pedales'],'en':['pedal']},
  'potable':{'terms':['potable','potabilisation','purification','drinking','purifying'],'fr':['potabilisation eau'],'en':['drinking water']},

@@ -5,14 +5,22 @@ async page=>{
   page.on('pageerror',error=>errors.push(error.message));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   const version=(await(await page.request.get(base+'/api/health')).json()).version;
+  await page.route('**/api/jobs/*/measurements',async route=>{
+    const report=await(await route.fetch()).json();
+    report.phases_ms.model_loading=1000;report.phases_ms.model_preparation=3100;
+    report.model_preparations=[{status:'ready',duration_ms:1000}];report.model_retries=[{stage:'chat',reason:'empty_response'}];
+    await route.fulfill({json:report});
+  });
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/assistant');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   await page.locator('#chat-input').fill('Question de recette privée à ne pas exporter');await page.locator('#chat-form').evaluate(form=>form.requestSubmit());
   await page.waitForFunction(()=>S.conversation&&!S.job&&document.querySelector('#next-response-measures-open')?.hidden===false);
   const conversation=await page.evaluate(()=>S.conversation);
   await page.locator('#next-response-measures-open').click();await page.waitForFunction(()=>document.getElementById('next-response-measures-export').disabled===false);
   const body=page.locator('#next-response-measures-body');check((await body.textContent()).includes('Recherche documentaire')&&(await body.textContent()).includes('Lecture des sources'),'Recherche et lecture distinctes dans les durées');
+  check((await body.textContent()).includes('Changement ou reprise du modèle')&&(await body.textContent()).includes('Reprises automatiques'),'Changement et reprise visibles dans les mesures');
   const downloading=page.waitForEvent('download');await page.locator('#next-response-measures-export').click();const saved=await downloading,chunks=[];for await(const chunk of await saved.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.version===version&&report.total_ms===6500,'Mesures exportées avec version et temps total');
+  check(report.model_retries.length===1&&report.model_preparations[0].status==='ready'&&report.phases_ms.model_loading===1000,'Préparation et reprise présentes dans l’export numérique');
   check(!JSON.stringify(report).includes('Question de recette privée')&&!JSON.stringify(report).includes('Réponse simulée')&&!('sources' in report),'Export sans question, réponse ni source privée');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.locator('#next-response-measures-dialog').evaluate(e=>e.scrollWidth>e.clientWidth),'Rapport des durées sans débordement à '+width);}
   await page.setViewportSize({width:1366,height:900});await page.locator('[data-close="next-response-measures-dialog"]').click();

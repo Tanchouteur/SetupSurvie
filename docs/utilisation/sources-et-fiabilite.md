@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.15.0, 15 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.15.1, 15 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -65,6 +65,15 @@ ne doit pas bloquer conversation, bibliothèque ou lecture.
 Ce suivi ne prouve ni que tous les résultats sont pertinents, ni que le modèle
 a correctement utilisé les passages. La [recette réelle de l’assistant](../essais/recettes-progressives-marc.md)
 et la relecture humaine restent nécessaires.
+
+L’association manuelle du portail porte actuellement sur un seul document. Une
+demande documentaire peut aussi préparer la lecture de deux premières sources
+trouvées et le modèle dispose d’outils pour poursuivre. Cela ne garantit pas une
+synthèse de plusieurs documents ni une lecture de tous les livres. La 0.15.1
+corrige la préparation des demandes de résumé et des relances pratiques ; le
+[programme multi-document et illustrations](../decisions/assistant-recherche-et-synthese.md)
+décrit les fonctions encore à réaliser. Les images affichables dans le lecteur
+ne sont pas actuellement transmises comme images au modèle.
 
 ## Quand une recherche est incomplète
 

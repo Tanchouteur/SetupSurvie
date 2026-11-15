@@ -46,6 +46,7 @@ def create_archives(folder):
             creator.set_mainpath('home');creator.add_item(Article('home','Accueil','Index fictif.'))
             creator.add_item(Article('Techniques_de_production_de_feu','Techniques de production de feu','Friction et percussion. Extrait fictif de test sans instructions pratiques.'))
             creator.add_item(Article('Fire_making','Fire making','Fire starting. Synthetic text, no practical instructions.'))
+            creator.add_item(Article('Fire_by_friction','Fire making by friction','Friction and wood, fictional fire making topic. No actual instructions.'))
             creator.add_item(Article('Generateur_a_pedales','Fabrication d’un générateur à pédales','Générateur à pédales : construction et contrôles. Extrait fictif sans procédure.'))
             creator.add_item(Article('Pedal_generator','Pedal generator construction','Pedal generator materials and checks. Fictional fixture.'))
             creator.add_item(Article('Eau_potable','Guide de potabilisation de l’eau','Eau potable, purification et vérifications. Extrait fictif sans procédure.'))
@@ -120,11 +121,16 @@ def main():
                 restored=await library.search('faire du feu',collection='multilingual')
                 check(any(row.get('match')=='local_index' and row['id'].startswith('zim:multilingual/') for row in restored),'Local complement restores actual multilingual article retrieval')
                 check(restored.coverage['native_incompatible']==0 and restored.coverage['locally_indexed']==1,'Prepared multilingual collection is no longer an unresolved native failure')
-                for query in ['faire du feu','allumer un feu','peux-tu m’expliquer comment faire du feu']:
+                for query in ['faire du feu','allumer un feu','peux-tu m’expliquer comment faire du feu',
+                              'Fait un synthese sur les info des document sur comment faire du feux']:
                     found=await library.search(query)
                     check(any(r['id']=='zim:wikipedia_fr/Techniques_de_production_de_feu' for r in found),query+' reaches French article')
                     check(any(r['id']=='zim:manual_en/Fire_making' for r in found),query+' reaches English article')
                     check(all('<b>' not in r['title'] for r in found),'Highlights do not leak into titles: '+query)
+                friction=await library.search('Des méthodes d’allumage au frottement (comme le feu de bois) ?',limit=20)
+                check(any(row['id']=='zim:wikipedia_fr/Techniques_de_production_de_feu' for row in friction),'Friction request reaches the actual French friction excerpt')
+                check(any(row['id']=='zim:manual_en/Fire_by_friction' for row in friction),'Friction request reaches the actual English friction topic')
+                check('Friction and wood' in (await library.source('zim:manual_en/Fire_by_friction'))['text'],'The selected fictional friction source opens')
                 for query,expected in [('fabriquer un générateur à pédales','Generateur_a_pedales'),('rendre eau potable','Eau_potable'),('toit abri','Shelter_construction'),('inconnu eau potable','Eau_potable')]:
                     found=await library.search(query)
                     check(any(r['id'].endswith('/'+expected) for r in found),query+' reaches an actual indexed technical article',{'ids':[r['id'] for r in found],'coverage':found.coverage})

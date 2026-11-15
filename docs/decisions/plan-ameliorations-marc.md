@@ -1,12 +1,12 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.15.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.15.1.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.14.0 reçu : médiane de première réponse 311 ms et de fin 36,24 s ; 23 recherches partielles ; aucun avis humain. Mesure après correctifs 0.14.1–0.15.0 attendue |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.15.0 reçu : 32 recherches complètes, médiane d’arrivée 268 ms et de fin 2,11 s ; cache largement réutilisé. Avis humains encore absents ; assistant défaillant sur les captures |
 | Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix utilisable, progressif, reprenable et pilotable depuis le site | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs compatibles et 15 compléments, 3 238 articles locaux ; pause/reprise et nouveau lot réels restent à vérifier |
 | Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, jusqu’à huit threads SQLite ; traitement réutilisé et mesuré en 0.14.1, plafond long adapté en 0.14.2 ; aucune saturation CPU/HDD établie |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
@@ -59,9 +59,9 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.14.0 reçu : premiers documents à 311 ms de médiane, fin à 36,24 s ; 31 recherches sans archive en échec, 23 partielles surtout par reformulations. Traitement 0.14.1, plafond long 0.14.2 et tri des titres 0.14.3 corrigés ; mesure Windows et avis humains attendus |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.15.0 reçu : 32 recherches complètes, fin médiane 2,11 s avec cache largement réutilisé. Demandes de synthèse corrigées en 0.15.1 ; avis humains encore attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
-| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite 0.7.0 ; suivi documentaire indépendant du modèle 0.15.0 ; R4 réel attendu |
+| L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports/calibration et suivi 0.15.0 livrés ; captures d’échec de synthèse reçues, préparation corrigée en 0.15.1. Programme multi-source, passages pertinents et boucle bornée retenu ; durées R4 à obtenir |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
 | L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Inventaire local/rapports intégré en 0.14.0 ; recette réelle, acquisition et traitements suivants à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
@@ -466,3 +466,20 @@ chaque critère aux preuves actuelles, puis renvoie à une recette ciblée R2/R4
 Il remplace comme état courant l’audit initial, sans réécrire ses résultats datés.
 Le périmètre minimal d’étude des sous-titres est atteint ; la fiabilité du moteur
 sur le fonds réel reste conditionnée par les nouveaux rapports et lectures.
+
+## Synthèses et boucle d’outils — 15 novembre 2026, après le R2 0.15.0
+
+Le [nouveau rapport et les captures](../essais/2026-11-15-rapport-0150-et-requetes-synthese.md)
+remplacent l’attente d’un premier R2 post-correctifs : le moteur sans IA termine
+les 32 demandes, mais l’assistant échoue encore à préparer les sources pour une
+demande de synthèse. La 0.15.1 corrige les mots de commande devenus obligatoires
+et prépare la relance pratique. Cette cause reproduite n’est pas attribuée au GPU.
+
+Louis précise le besoin : synthétiser plusieurs sources, en choisir plusieurs
+manuellement, retrouver les schémas originaux et éventuellement boucler pour
+compléter les manques. Le [programme assistant](assistant-recherche-et-synthese.md)
+fixe la suite retenue, avec recherche/lecture vérifiables, sélection de passages,
+étapes intermédiaires et limites d’actions/temps. L’auto-évaluation du modèle ne
+certifie pas une réponse. Les profils et le contexte ne sont pas changés sans
+mesure ; la présence d’un bouton de lecture ou d’une image dans le lecteur ne
+prouve pas leur exploitation par le modèle.

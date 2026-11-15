@@ -35,6 +35,35 @@ Le document associé, déjà lu par le portail pour préparer la question, est r
 en mémoire par la demande. Il ne fait plus une seconde lecture identique avant
 le premier appel au modèle. Cette lecture préparatoire figure dans les durées.
 
+## Changer de modèle pendant une conversation — 0.15.1
+
+Choisir un autre mode puis envoyer sa question suffit. Le portail indique le
+chargement, le changement de modèle ou la reprise automatique ; la question reste
+conservée. Si le moteur signale un autre modèle chargé, l’assistant prépare
+explicitement le modèle demandé avant de lui transmettre la conversation. Un
+changement de contexte connu est aussi préparé. Le moteur gère lui-même la place
+libérée par les modèles ; aucune autre application n’est arrêtée.
+
+Une seule reprise automatique est autorisée par demande en cas de réponse vide
+ou d’erreur transitoire avant toute sortie du modèle. Une réponse, une réflexion
+ou un appel d’outil déjà commencé n’est pas rejoué. Une limite de génération ou
+une erreur permanente n’est pas effacée par des tentatives répétées. Une pause ou
+un arrêt demandé empêche la préparation/reprise ; le logiciel ne redémarre pas
+le moteur de force. L’annulation reste disponible.
+
+Le chargement peut attendre jusqu’à 300 secondes sans donnée reçue ; la génération
+avec un modèle chargé garde 180 secondes sans donnée, dans la limite globale de
+15 minutes par demande. Ce sont des plafonds, pas une durée prévue. Une erreur
+persistante garde la question, les sources déjà consultées et le texte reçu.
+Un manque de mémoire reconnu propose de changer de mode ou réduire son contexte.
+
+Le rapport ajoute `model_preparations` (préparations explicites), `model_retries`
+(motif technique borné, sans erreur brute) et la phase `model_loading`.
+Les durées de préparation ne sont pas un benchmark du PC et n’incluent aucune
+preuve de fidélité de la réponse. Cette correction vise les conversations du
+portail ; traduction et comparatif IA conservent leurs traitements propres.
+La validation avec deux vrais modèles sous Windows reste à faire chez Marc.
+
 ## Essai mémoire volontaire sur le PC serveur
 
 1. Choisir **Famille → Mon appareil → Paramètres → Assistant → Options avancées : mémoire et essai du modèle → Mémoire de l’assistant → Mesurer

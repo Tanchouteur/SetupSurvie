@@ -92,10 +92,13 @@ et coordination des fichiers partagés. Cette consigne actualise l’attente ini
 
 L’outillage livré et les tests de développement ne clôturent pas l’objectif.
 Le rapport R1 réel 0.12.0 confirme les 135 archives examinées et les 15 compléments
-locaux prêts, dont les archives multilingues. Le nouveau R2 0.14.0 est reçu :
-premiers documents à 311 ms de médiane, fin à 36,24 s ; 23 recherches partielles,
-surtout par reformulations limitées. Le prochain R2 doit mesurer le correctif de
-traitement 0.14.1, le budget adapté 0.14.2 et le tri 0.14.3, sans refaire toute l’extraction pour ces changements.
+locaux prêts, dont les archives multilingues. Le R2 **0.15.0** reçu le 15 novembre
+confirme désormais les **32 recherches complètes** : première réception médiane
+268 ms, fin médiane 2,11 s, cache largement réutilisé (1 099 traces sur 1 155).
+Ce n’est pas une mesure à froid. Les captures de l’assistant révèlent cependant
+une demande de synthèse transformée en recherche trop restrictive et aucune
+source lue ; le correctif et la suite multi-source sont tracés dans le
+[bilan courant](2026-11-15-rapport-0150-et-requetes-synthese.md).
 Il faut encore ouvrir humainement les résultats prioritaires
 feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
@@ -367,3 +370,38 @@ contrôles sur cinq archives générées puis 36 sur 135, tous réussis. Les hui
 recherches du second essai ont une couverture complète. Les fichiers/services
 temporaires sont nettoyés ; aucun résultat de vitesse ou de pertinence du fonds
 Windows n’est déduit de ces petits exemples.
+
+
+## Rapport réel 0.15.0 et correction conversationnelle — 0.15.1
+
+Le nouveau R2 reçu confirme 32 recherches complètes, 268 ms de première réception
+médiane et 2,11 s de fin, avec cache largement réutilisé. Les mesures ne sont pas
+à froid et les avis humains restent inconnus. Les captures montrent cependant
+une demande de synthèse sans source consultée avec deux modèles différents.
+
+La phrase exacte de Marc imposait `synthese` et `info` au moteur en plus du feu.
+La 0.15.1 sépare désormais instruction de résumé et sujet, conserve la synthèse
+chimique comme vrai sujet et les filtres de collection, rapproche frottement et
+friction et prépare les demandes pratiques avant le premier appel au modèle.
+Le format demandé reste transmis au modèle. Ce défaut logiciel n’est pas résolu
+par un achat de carte graphique.
+
+Le signalement suivant concerne le changement de modèle qui exige deux envois.
+La correction prépare le modèle cible lorsqu’un autre est chargé, gère un seul
+nouvel essai avant toute sortie, affiche chargement/changement/reprise et ajoute
+les mesures numériques correspondantes. Question, sources et texte partiel sont
+conservés ; aucune pause n’est levée, aucune autre application n’est arrêtée.
+La cause exacte du cas Windows reste à confirmer par un rapport réel.
+
+Le [programme retenu](../decisions/assistant-recherche-et-synthese.md) garde le
+travail multi-source, les passages pertinents au-delà du début, l’association
+manuelle de plusieurs documents, les illustrations originales et une boucle
+d’outils bornée qui vérifie l’apport de chaque nouvelle action. Il ne s’agit pas
+d’afficher le raisonnement privé ou de multiplier les appels sans progrès.
+
+Suite finale : 616 tests, trois ignorés Windows ; Kiwix natif : 69 contrôles,
+cinq petites archives générées. Les preuves navigateur, paquet, code et CI sont
+dans le [bilan daté](2026-11-15-rapport-0150-et-requetes-synthese.md). Aucune inférence
+réelle, recette Windows ni validation complète de la synthèse n’est annoncée.
+L’objectif d’utilité de l’assistant reste actif ; traduction/sous-titres viennent
+ensuite, avec l’inventaire vidéo déjà livré et les traitements encore prévus.

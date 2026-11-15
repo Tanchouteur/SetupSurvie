@@ -377,7 +377,7 @@ function watch(id){
   async function poll(){
     try{const job=await api('/jobs/'+encodeURIComponent(id));const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
       document.dispatchEvent(new CustomEvent('survie:job',{detail:{...job,id}}));
-      const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
+      const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',switching:'Changement de modèle en cours, votre question est conservée',loading:'Chargement du modèle',retrying:'Reprise automatique, votre question est conservée',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
       const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
       $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
       renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':phase+'…'),job.sources);

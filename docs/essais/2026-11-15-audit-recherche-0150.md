@@ -1,5 +1,12 @@
 # Clôture de la première version fiable : preuves en 0.15.0
 
+**Complément reçu après cet audit :** le [R2 réel 0.15.0](2026-11-15-rapport-0150-et-requetes-synthese.md)
+est maintenant disponible : 32 recherches complètes, fin médiane 2,11 s avec cache
+largement réutilisé, sans avis humain. Il lève l’attente décrite ci-dessous ; les
+captures révèlent toutefois un échec de l’assistant, étudié et corrigé en partie
+en 0.15.1. Le [programme de synthèse](../decisions/assistant-recherche-et-synthese.md)
+devient le chantier actif ; cet audit conserve ses preuves à sa date initiale.
+
 **Audit daté — 15 novembre 2026, version publiée 0.15.0, `f89bc42`.** Cet audit
 remplace comme état courant l’[audit initial 0.14.0](2026-11-15-audit-fin-recherche.md),
 dont les mesures historiques restent conservées. Il ne déclare pas l’objectif

@@ -283,6 +283,7 @@ def index_report():
 
 
 def search_terms(query):
+    query=retrieval.search_subject(query)
     words=[unicodedata.normalize('NFKD',w).encode('ascii','ignore').decode().lower() for w in re.findall(r'\w+',query,flags=re.UNICODE)]
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:10]
 

@@ -501,3 +501,27 @@ ou le bouton focalisé. Les sources lues mais non citées restent ouvrables sans
 être ajoutées aux références numérotées. Le [guide](../utilisation/sources-et-fiabilite.md#suivi-des-recherches-et-lectures-dans-lassistant)
 et le [bilan](../essais/2026-11-15-suivi-documentaire-assistant.md) précisent les
 limites : des opérations terminées ne prouvent ni exhaustivité ni bonne réponse.
+
+## Préparation des demandes de synthèse — 0.15.1
+
+`retrieval.search_subject` distingue une commande explicite de résumé de son sujet,
+sans bannir « synthèse » des recherches techniques. `library.search_terms` l’utilise
+sur le chemin commun ; la demande originale reste dans `Plan.original` et dans
+la conversation. Les prépositions internes du sujet et les périmètres sont gardés.
+Le concept frottement/friction est bilingue ; le mot de liaison « comme » n’est
+plus un groupe obligatoire. `engine.document_request` prépare aussi les demandes
+pratiques avec action reconnue, après ses exclusions géographiques/calculatoires.
+
+Budget court de l’assistant, lecture de deux premiers documents et association
+unique restent inchangés. Le [programme retenu](../decisions/assistant-recherche-et-synthese.md)
+sépare ce correctif du travail multi-source, de la sélection de passages et de
+la boucle d’outils contrôlée. Aucun modèle ni schéma de données ne change ici.
+
+La session de modèle (`pilot/model_session.py`) prépare le modèle cible par un
+appel local sans messages lorsqu’un autre est chargé ou qu’un contexte connu
+change. Le planificateur Ollama garde la responsabilité du déchargement. La
+session dispose d’une seule reprise pour préparation/flux vide/erreur transitoire
+avant toute sortie, partagée entre tours d’outils ; elle ne rejoue jamais un outil
+et vérifie l’état volontaire du moteur avant préparation/reprise. Les sorties
+partielles et erreurs restent distinctes d’une absence documentaire. Voir le
+[guide des mesures](../utilisation/mesurer-assistant-et-memoire.md).

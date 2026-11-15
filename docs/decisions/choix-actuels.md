@@ -1,5 +1,14 @@
 # Choix et contraintes actuels
 
+Le R2 réel 0.15.0 reçu ensuite annonce **32 recherches complètes**, médiane de fin
+2,11 s avec cache déjà largement réutilisé, sans avis humain. Les captures
+d’assistant montrent encore zéro source consultée. La 0.15.1 corrige un défaut
+reproduit de préparation des demandes de synthèse ; la priorité devient
+l’[utilité documentaire de l’assistant](assistant-recherche-et-synthese.md), avec
+multi-source et boucle d’outils bornée à développer. Ni achat GPU ni changement
+de profil n’est décidé sur la seule base des captures. Voir le
+[bilan](../essais/2026-11-15-rapport-0150-et-requetes-synthese.md).
+
 La 0.15.0 conserve un [suivi documentaire indépendant du modèle](../essais/2026-11-15-suivi-documentaire-assistant.md) :
 recherches et lectures observées, limites et liens vers les documents consultés
 même sans citation. Le texte du modèle reste distinct et peut encore être faux.
@@ -288,3 +297,9 @@ Les moteurs et cartes restent ceux de main, avec la recherche 0.11.1 intégrée 
 l’UX. Les [essais](../essais/2026-11-14-parametres-ux.md) distinguent fixtures et
 validation physique. Un écran unique de boutons et les duplications de contrôles
 ont été écartés ; les nœuds existants sont déplacés pour conserver leurs événements.
+
+- **Reprise après changement de modèle (0.15.1)** : préparation explicite quand
+  un autre modèle est chargé, une seule récupération avant toute sortie, état
+  lisible et mesures exportables. Pas de changement silencieux du modèle/contexte,
+  pas de levée de pause. La cause et le résultat sur le PC Windows restent à
+  confirmer avec les mesures réelles ; voir le [guide assistant](../utilisation/mesurer-assistant-et-memoire.md).

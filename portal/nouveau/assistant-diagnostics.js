@@ -21,7 +21,7 @@
       const report=await api('/jobs/'+encodeURIComponent(id)+'/measurements');if($('next-response-measure').value!==id)return;selectedReport=report;body.replaceChildren();
       if(report.simulated)body.append(element('p','Mesures simulées de la recette, sans modèle réel.','small muted'));
       const phases=report.phases_ms||{};
-      summaryList(body,[['Temps total',seconds(report.total_ms)],['Dans la file d’attente',seconds(phases.queue)],['Recherche documentaire',seconds(phases.search)],['Lecture des sources',seconds(phases.reading)],['Préparation par le modèle',seconds(phases.model_preparation)],['Rédaction',seconds(phases.writing)],['Premier texte généré',seconds(report.first_text_ms)]]);
+      summaryList(body,[['Temps total',seconds(report.total_ms)],['Dans la file d’attente',seconds(phases.queue)],['Recherche documentaire',seconds(phases.search)],['Lecture des sources',seconds(phases.reading)],['Changement ou reprise du modèle',seconds(phases.model_loading)],['Préparation par le modèle',seconds(phases.model_preparation)],['Reprises automatiques',String(report.model_retries?.length||0)],['Rédaction',seconds(phases.writing)],['Premier texte généré',seconds(report.first_text_ms)]]);
       const loads=(report.model_calls||[]).map(call=>call.load_ms).filter(Number.isFinite),load=loads.length?loads.reduce((sum,value)=>sum+value,0):undefined;
       body.append(element('p','Chargement annoncé par le moteur : '+seconds(load)+'. Il est compris dans les phases ci-dessus.','small muted'));
       const allocated=report.runtime_after?.running?.context_length;

@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock,patch
 
 import httpx
 from fastapi import HTTPException
-from pilot import engine,library,store,assistant_metrics,documentary
+from pilot import engine,library,store,assistant_metrics,documentary,operations
 
 POLICY=Path(__file__).resolve().parents[1]/'deploy/assistant-system.fr.txt'
 
@@ -26,20 +26,25 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False):
         payloads=[];client_class=httpx.AsyncClient
+        self.loads=[]
         def handler(request):
             if request.url.path=='/api/version':return httpx.Response(200,json={'version':'0.12.0'})
             if request.url.path=='/api/tags':return httpx.Response(200,json={'models':[{'name':engine.MODES['rapide']['model'],'digest':'a'*64}]})
             if request.url.path=='/api/show':return httpx.Response(200,json={'model_info':{'fixture.context_length':native_context}})
-            if request.url.path=='/api/ps':return httpx.Response(200,json={'models':[]})
+            if request.url.path=='/api/ps':return httpx.Response(200,json={'models':[{'name':'other:local','context_length':8192}] if other_model else []})
             if cancel_model:raise asyncio.CancelledError()
             if failure:return httpx.Response(500,json={'error':'Fixture error with private path /not-for-export'})
-            payloads.append(json.loads(request.content))
+            payload=json.loads(request.content)
+            if not payload.get('messages'):
+                self.loads.append(payload)
+                return httpx.Response(200,json={'done':True,'done_reason':'load'})
+            payloads.append(payload)
             self.assertLessEqual(len(payloads),len(messages))
             event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
-        with patch.object(engine,'POLICY',POLICY),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
+        with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(return_value={'online':True,'paused':paused})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
              patch.object(engine.library,'search',AsyncMock(return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
             asyncio.run(engine.run('j','u','c','rapide',attached))
             self.lookup_calls=engine.library.search.await_args_list
@@ -80,6 +85,25 @@ class EvidenceTests(unittest.TestCase):
         measured=assistant_metrics.read('j')
         self.assertEqual(measured['status'],'failed');self.assertEqual(measured['engine_http_status'],500)
         self.assertEqual(measured['failure'],'engine_http_error');self.assertNotIn('/not-for-export',json.dumps(measured))
+
+    def test_switch_does_not_consume_question_or_duplicate_saved_answer(self):
+        payloads,answer=self.run_chat([{'content':'Notice consultée [1].'}],attached=self.a['id'],other_model=True)
+        self.assertEqual(len(self.loads),1);self.assertEqual(len(payloads),1)
+        self.assertEqual(self.loads[0]['model'],payloads[0]['model'])
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+        self.assertEqual(len(store.messages('c')),2)
+        measured=assistant_metrics.read('j');self.assertEqual(measured['model_preparations'][0]['status'],'ready')
+
+    def test_empty_first_response_is_recovered_within_same_job(self):
+        payloads,answer=self.run_chat([{'content':''},{'content':'Réponse finale fictive.'}])
+        self.assertEqual(payloads[0],payloads[1]);self.assertEqual(len(store.messages('c')),2)
+        self.assertEqual(answer['content'],'Réponse finale fictive.')
+        self.assertEqual(len(assistant_metrics.read('j')['model_retries']),1)
+
+    def test_pause_after_queue_prevents_model_load_and_generation(self):
+        payloads,_=self.run_chat([],other_model=True,paused=True,expected_status='failed')
+        self.assertEqual(payloads,[]);self.assertEqual(self.loads,[])
+        self.assertEqual(assistant_metrics.read('j')['failure'],'engine_paused')
 
     def test_context_uses_native_limit_and_records_the_reduction(self):
         with store.connect() as db:db.execute('INSERT INTO settings VALUES(?,?)',('context:'+engine.MODES['rapide']['model'],'65536'))
@@ -165,6 +189,16 @@ class EvidenceTests(unittest.TestCase):
         tools=[json.loads(m['content']) for m in payloads[0]['messages'] if m['role']=='tool']
         self.assertTrue(any(t.get('text')==self.a['text'] for t in tools))
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+
+    def test_summary_and_friction_requests_prepare_reading_before_first_model_call(self):
+        for question in ('Fait un synthese sur les info des document sur comment faire du feux',
+                         'Des méthodes d’allumage au frottement (comme le feu de bois) ?'):
+            with self.subTest(question=question):
+                with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
+                payloads,answer=self.run_chat([{'content':'Source fictive consultée [1].'}],[self.a])
+                tools=[json.loads(message['content']) for message in payloads[0]['messages'] if message['role']=='tool']
+                self.assertTrue(any(value.get('text')==self.a['text'] for value in tools))
+                self.assertEqual(answer['documentary']['sources_read'],1)
 
     def test_model_can_reuse_prepared_subject_with_a_shorter_formulation(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")

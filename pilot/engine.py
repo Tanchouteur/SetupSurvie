@@ -9,7 +9,7 @@ import time
 
 import httpx
 
-from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary
+from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session
 from fastapi import HTTPException
 
 OLLAMA=os.environ.get('OLLAMA_URL','http://ollama:11434').rstrip('/')
@@ -103,6 +103,7 @@ def document_request(history):
     if not plan.words:return None
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw):return None
+    if plan.practical and plan.action:return question,''
     if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
         return question,''
     return None
@@ -149,7 +150,7 @@ def search_key(query,language='',favorite_user=None,collection='',domain='all'):
 
 
 async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all'):
-    references={};answer='';tool_trace=[];metrics=[];interrupted=False;search_cache={};read_cache={};prepared_key=None
+    references={};answer='';content='';tool_trace=[];metrics=[];interrupted=False;search_cache={};read_cache={};prepared_key=None
     evidence=documentary.Evidence();DOCUMENTARY[identifier]=evidence;evidence_recorded=False
     def record_evidence(name,arguments,value,key=None):
         evidence.record(name,arguments,value,key=key)
@@ -232,6 +233,13 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 metrics.append({'stage':'document_preparation','duration_ms':round((time.monotonic()-started)*1000)})
             selected=MODES[mode]
             async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(180,connect=15)) as client:
+                async def available():
+                    from . import operations
+                    state=await operations.status(fresh=True)
+                    if state.get('paused') or state.get('operation') or not state.get('online'):
+                        raise model_session.Failure('engine_paused' if state.get('paused') or state.get('operation') else 'engine_unavailable')
+                session=model_session.Session(client,OLLAMA,runtime,context,measured,lambda stage:progress(identifier,stage),available)
+                await session.prepare()
                 tool_steps=3 if mode=='rapide' else 6
                 for step in range(tool_steps+1):
                     if step==tool_steps:
@@ -248,23 +256,16 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}
                     payload={'model':selected['model'],'messages':messages,'tools':tools,'think':selected['think'],
                              'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':output}}
-                    async with client.stream('POST',OLLAMA+'/api/chat',json=payload) as response:
-                        response.raise_for_status()
-                        async for line in response.aiter_lines():
-                            if not line:continue
-                            event=json.loads(line)
-                            if event.get('error'):
-                                measured.value['failure']='memory_error' if re.search(r'out of memory|insufficient memory|failed to allocate',str(event['error']),re.I) else 'model_error'
-                                raise RuntimeError('Le moteur IA n’a pas pu terminer cette demande.')
-                            message=event.get('message',{})
-                            content+=message.get('content','');thinking+=message.get('thinking','')
-                            calls.extend(message.get('tool_calls') or [])
-                            done_reason=event.get('done_reason',done_reason)
-                            if content:
-                                if measured.stage!='writing':measured.phase('writing')
-                                measured.text();progress(identifier,'writing')
-                            if content and time.monotonic()-last_save>.4:
-                                update(identifier,answer=content,sources=read_references(references));last_save=time.monotonic()
+                    async for event in session.chat(payload):
+                        message=event.get('message',{})
+                        content+=message.get('content','');thinking+=message.get('thinking','')
+                        calls.extend(message.get('tool_calls') or [])
+                        done_reason=event.get('done_reason',done_reason)
+                        if content:
+                            if measured.stage!='writing':measured.phase('writing')
+                            measured.text();progress(identifier,'writing')
+                        if content and time.monotonic()-last_save>.4:
+                            update(identifier,answer=content,sources=read_references(references));last_save=time.monotonic()
                     metrics.append({key:event.get(key) for key in ('prompt_eval_count','eval_count','load_duration','total_duration','done_reason')})
                     measured.model_call(event);measured.phase('preparation')
                     if done_reason=='length':
@@ -355,8 +356,11 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
         outcome='incomplete';measured.value['failure']='time_limit';update(identifier,status='incomplete',error='Temps maximal atteint. Essayez une question plus ciblée.')
     except Exception as error:
         if isinstance(error,httpx.HTTPStatusError):measured.value.update(failure='engine_http_error',engine_http_status=error.response.status_code)
+        elif isinstance(error,model_session.Failure):measured.value['failure']=error.kind
         elif 'failure' not in measured.value:measured.value['failure']='engine_unavailable'
-        update(identifier,status='failed',error='L’assistant est momentanément indisponible. Vous pouvez réessayer ; la bibliothèque reste accessible.')
+        detail={'engine_paused':'L’assistant a été arrêté ou mis en pause. Votre question est conservée ; reprenez-la après le redémarrage volontaire du moteur.',
+                'memory_error':'Le modèle n’a pas pu obtenir assez de mémoire. Votre question et les sources consultées sont conservées. Essayez un autre mode ou réduisez son contexte dans les paramètres.'}.get(measured.value['failure'],'L’assistant est momentanément indisponible. Votre question et les sources consultées sont conservées ; la bibliothèque reste accessible.')
+        update(identifier,status='failed',error=detail,**({'answer':content} if content else {}))
     finally:
         if not evidence_recorded and (evidence.searches or evidence.reads or evidence.failed):documentary.save(identifier,evidence.summary(),sources=list(evidence.consulted.values()))
         measured.finish(outcome);MEASUREMENTS.pop(identifier,None);ACTIVE.pop(identifier,None);PROGRESS.pop(identifier,None);DOCUMENTARY.pop(identifier,None)
