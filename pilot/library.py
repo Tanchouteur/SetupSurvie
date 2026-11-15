@@ -586,14 +586,20 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         return ' '.join(translated) if translated else query
     saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))
     local_rows=[];current_articles=[];current_coverage={'status':'partial','running':True,'searched':0,'collections_selected':None};update_lock=asyncio.Lock()
-    async def selected(items):
+    annotations=catalogue.SearchAnnotations(GUIDES,zims,saved_metadata);normalize=retrieval.NormalCache()
+    processing={'snapshots':0,'selection_ms':0.0,'selection_cpu_ms':0.0}
+    def selected_sync(items,fresh):
+        started=time.monotonic();cpu=time.thread_time()
         combined=[dict(row) for row in items]
         for item in combined:item['language']=retrieval.article_language(item)
-        metadata_available=catalogue.annotate(combined,GUIDES,zims,saved_metadata)
+        metadata_available=annotations.annotate(combined,fresh=fresh)
         allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
         combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
         if domain!='all':combined=[r for r in combined if domain in r['domains']]
-        return await asyncio.to_thread(retrieval.ordered,combined,query_plan,limit*2),metadata_available
+        ordered=retrieval.ordered(combined,query_plan,limit*2,normalizer=normalize)
+        processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
+        return ordered,metadata_available
+    async def selected(items,*,fresh=False):return await kiwix_queries.disk_io(selected_sync,items,fresh)
     async def notify():
         if not on_update:return
         async with update_lock:
@@ -613,7 +619,9 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         local=await local_task
     finally:
         if not local_task.done():local_task.cancel()
-    ordered,metadata_available=await selected(results+local+articles)
+        await asyncio.gather(local_task,return_exceptions=True)
+    ordered,metadata_available=await selected(results+local+articles,fresh=True)
+    if diagnostic:coverage['processing']={**{key:round(value,2) for key,value in processing.items()},'metadata_evaluations':annotations.evaluated,'source_revision_checks':annotations.source_checks,'normalizations':normalize.misses,'normalization_hits':normalize.hits,'normalization_cache_bytes':normalize.bytes}
     coverage['local_query']=getattr(local,'coverage',{})
     if any(coverage['local_query'].get(key,0) for key in ('failed','outdated')):
         if coverage['status']=='complete':coverage['status']='partial'

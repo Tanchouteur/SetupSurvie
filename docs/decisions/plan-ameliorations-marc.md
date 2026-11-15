@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R1/R2 0.12.0 : 135 archives préparées, 15 compléments utilisables ; 32 recherches partielles surtout par délai. Flux/cache 0.13.0 et priorité des titres de tâches 0.13.1 ; nouvelle mesure Windows et avis humains attendus |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.14.0 reçu : premiers documents à 311 ms de médiane, fin à 36,24 s ; 31 recherches sans archive en échec, 23 partielles surtout par reformulations. Traitement répété corrigé en 0.14.1 ; gain Windows et avis humains attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -411,3 +411,21 @@ du fonds réel ni une livraison de la traduction ou de l’indexation des parole
 L’[audit de fin du moteur](../essais/2026-11-15-audit-fin-recherche.md) confronte
 les critères à leurs preuves actuelles et précise le prochain R2 à fournir sur
 le PC réel. Il ne déclare pas le plan complet ou l’objectif terminés.
+
+## Rapport réel 0.14.0 et suite mesurée — 15 novembre 2026
+
+Louis fournit ensuite le R2 0.14.0 : il remplace l’attente de ce rapport dans
+l’audit initial. Le [bilan](../essais/2026-11-15-rapport-0140-et-traitement-progressif.md)
+distingue progrès de couverture, premières réponses et lenteur finale. Certaines
+demandes entièrement servies par le cache restent lentes ; le retraitement des
+candidats est reproduit et corrigé en 0.14.1 avec mesures de sélection/CPU.
+Le budget global n’est pas dépassé ; le plafond de reformulations et les
+expirations de titres restent visibles. Ni extension aveugle des délais, ni
+achat CPU/SSD n’est présenté comme solution démontrée. Le moteur garde ses
+voies concurrentes, sans annoncer une occupation de tous les cœurs.
+
+Les avis humains sont toujours absents du rapport. Le nouveau R2 doit mesurer
+le correctif 0.14.1, sans réextraire les 135 archives pour ce changement ; puis
+lecture des sources prioritaires, R4 IA volontaire et R7 hors ligne restent
+distincts. Louis étant indisponible trois heures, le développement et les essais
+autonomes avancent sans solliciter de nouvelle recette pendant cette période.

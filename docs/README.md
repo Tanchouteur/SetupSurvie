@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Rapport réel 0.14.0 et traitement progressif](essais/2026-11-15-rapport-0140-et-traitement-progressif.md) — progrès mesurés, lenteur reproduite et correctif 0.14.1.
+
 - [Audit de fin du moteur](essais/2026-11-15-audit-fin-recherche.md) — critères vérifiés et validation réelle encore requise en 0.14.0.
 
 - [Inventaire des vidéos et sous-titres](utilisation/inventaire-videos.md) — outil en lecture seule 0.14.0, état par média et rapports privés.
@@ -9,7 +11,7 @@
 - [Classement, extraits et ouverture des articles](essais/2026-11-15-classement-titres-et-intention.md) — correction 0.13.1, vérifications et limites.
 - [Prompts pour deux agents](decisions/prompts-agents-videos-et-performances.md) — périmètres isolés vidéo/sous-titres et diagnostic Kiwix, proposés à Louis.
 
-- [Recherche progressive et cache](exploitation/cache-et-recherche-progressive.md) — guide 0.13.0, premiers documents, arrêt et budget ajustable.
+- [Recherche progressive et cache](exploitation/cache-et-recherche-progressive.md) — guide 0.14.1, premiers documents, arrêt, mesures et caches distincts.
 - [Rapports 0.12.0 et travail nocturne](essais/2026-11-14-recherche-0120-et-travail-nocturne.md) — préparation réelle et délais ; correction et essais distincts.
 - [Vidéos locales dans la recherche](decisions/videos-locales-et-recherche.md) — besoin confirmé, `library/video/`, réalisation prévue.
 

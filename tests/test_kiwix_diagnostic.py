@@ -125,6 +125,7 @@ class DiagnosticTests(unittest.TestCase):
         self.assertEqual(clean['archive_index']['archives'], 2)
         self.assertNotIn(hidden, json.dumps(clean))
         coverage = {'status': 'partial', 'searched': 1, 'cache_hits': 2, 'title_failed': 1, 'refinement_not_searched': 2,
+                    'processing': {'selection_ms': 12.5, 'selection_cpu_ms': 3.5, 'private': hidden},
                     'error_counts': {'timeout': 1, hidden: 8},
                     'trace': [{'stage': 'fulltext', 'pattern': 'eau', 'collections': ['fixture_fr'], 'elapsed_ms': 5, 'raw': hidden}],
                     'local_index': {'archives': 2, 'results': [{'path': hidden}]}, 'unknown': hidden}
@@ -134,6 +135,7 @@ class DiagnosticTests(unittest.TestCase):
         self.assertEqual(clean['cache_hits'], 2)
         self.assertEqual(clean['title_failed'], 1)
         self.assertEqual(clean['refinement_not_searched'], 2)
+        self.assertEqual(clean['processing'], {'selection_ms': 12.5, 'selection_cpu_ms': 3.5})
         self.assertNotIn(hidden, json.dumps(clean))
         self.assertEqual(diagnostic.coverage_data(None), 'inconnu')
 

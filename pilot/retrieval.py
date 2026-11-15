@@ -1,5 +1,6 @@
 """Small, deterministic query planning and ranking. No model or network required."""
 from dataclasses import dataclass
+from collections import OrderedDict
 from functools import cached_property
 import re
 import unicodedata
@@ -9,6 +10,26 @@ from urllib.parse import unquote
 def normal(text):
     decomposed=unicodedata.normalize('NFKD',unquote(str(text)))
     return re.sub(r'[^a-z0-9]+',' ',''.join(char for char in decomposed if not unicodedata.combining(char)).lower()).strip()
+
+
+class NormalCache:
+    """Per-search normalization, discarded after completion; no stale global text."""
+    MAX_BYTES=32_000_000
+    MAX_ENTRIES=4096
+
+    def __init__(self):self.values=OrderedDict();self.bytes=0;self.hits=0;self.misses=0
+
+    def __call__(self,text):
+        text=str(text)
+        prior=self.values.get(text)
+        if prior is not None:
+            self.hits+=1;self.values.move_to_end(text);return prior[0]
+        self.misses+=1;value=normal(text);size=len(text.encode('utf-8',errors='surrogatepass'))+len(value.encode('utf-8',errors='surrogatepass'))
+        if size<=self.MAX_BYTES:
+            self.values[text]=(value,size);self.bytes+=size
+            while len(self.values)>self.MAX_ENTRIES or self.bytes>self.MAX_BYTES:
+                _,(_,removed)=self.values.popitem(last=False);self.bytes-=removed
+        return value
 
 
 # Intent words are useful for ranking, but must not exclude a book that uses
@@ -95,8 +116,9 @@ def plan(query,words,synonyms,collection=''):
     return Plan(query,dedup,groups,practical,scope,' '.join(title_fr),' '.join(title_en),action)
 
 
-def rank(item,query,position=0):
-    title=normal(item.get('title',''));text=normal(item.get('excerpt','')+' '+item.get('_text',''))
+def rank(item,query,position=0,*,normalizer=None):
+    normalize=normalizer or normal
+    title=normalize(item.get('title',''));text=normalize(item.get('excerpt','')+' '+item.get('_text',''))
     if not query.groups:return 0
     title_tokens=set(title.split());text_tokens=set(text.split())
     title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)/len(query.groups)
@@ -140,9 +162,10 @@ def rank(item,query,position=0):
     return score
 
 
-def match_quality(item,query):
-    title=set(normal(item.get('title','')).split())
-    text=set(normal(item.get('excerpt','')+' '+item.get('_text','')).split())
+def match_quality(item,query,*,normalizer=None):
+    normalize=normalizer or normal
+    title=set(normalize(item.get('title','')).split())
+    text=set(normalize(item.get('excerpt','')+' '+item.get('_text','')).split())
     title_hits=sum(any(term<=title for term in group) for group in query.token_groups)
     text_hits=sum(any(term<=text for term in group) for group in query.token_groups)
     if title_hits==len(query.groups) and title_hits:return 'subject'
@@ -150,18 +173,19 @@ def match_quality(item,query):
     return 'uncertain'
 
 
-def ordered(items,query,limit):
-    ranked=sorted(enumerate(items),key=lambda pair:(-rank(pair[1],query,pair[0]),pair[1].get('id','')))
+def ordered(items,query,limit,*,normalizer=None):
+    normalize=normalizer or NormalCache()
+    ranked=sorted(enumerate(items),key=lambda pair:(-rank(pair[1],query,pair[0],normalizer=normalize),pair[1].get('id','')))
     result=[];seen=set();parents={}
     for _,item in ranked:
-        exercise=item.get('classification',{}).get('document_type')=='exercise' or re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(item.get('title','')))
-        if exercise and query.practical and not re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normal(query.original)):continue
-        combined=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text',''))
+        exercise=item.get('classification',{}).get('document_type')=='exercise' or re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normalize(item.get('title','')))
+        if exercise and query.practical and not re.search(r'\b(quiz|qcm|questionnaire|exercises?|exercices?)\b',normalize(query.original)):continue
+        combined=normalize(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text',''))
         tokens=set(combined.split())
         hits=sum(any(term<=tokens for term in group) for group in query.token_groups)
         required=max(1,(2*len(query.groups)+2)//3)
-        excerpt=normal(item.get('excerpt','')+' '+item.get('_text',''))
-        title_tokens=set(normal(item.get('title','')).split())
+        excerpt=normalize(item.get('excerpt','')+' '+item.get('_text',''))
+        title_tokens=set(normalize(item.get('title','')).split())
         title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)
         native_without_excerpt=item.get('_query_complete') and not excerpt and title_hits>0
         if hits<required and not native_without_excerpt:continue
@@ -172,12 +196,12 @@ def ordered(items,query,limit):
             human_manual=title_hits>0 and classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual')
             if not re.search(evidence,combined) and not named_device and not human_manual:continue
         template=bool(re.search(r'\b(modele a remplir|modele a completer|template to fill|fill in this template)\b',excerpt[:2000]))
-        if query.practical and template and not title_hits and not re.search(r'\b(modele|template|inventaire|inventory)\b',normal(query.original)):continue
-        if item.get('match')=='title' and re.search(r'(song|single|album)',normal(item.get('excerpt',''))) and query.practical:continue
+        if query.practical and template and not title_hits and not re.search(r'\b(modele|template|inventaire|inventory)\b',normalize(query.original)):continue
+        if item.get('match')=='title' and re.search(r'(song|single|album)',normalize(item.get('excerpt',''))) and query.practical:continue
         if item['id'] in seen:continue
         seen.add(item['id'])
         clean={k:v for k,v in item.items() if not k.startswith('_')}
-        clean['match_quality']=match_quality(item,query)
+        clean['match_quality']=match_quality(item,query,normalizer=normalize)
         parent=item['id'].split('#page=')[0]
         if '/appropedia' in item['id'] or item['id'].startswith('zim:appropedia'):
             parent=re.sub(r'/(?:[a-z]{2,3}(?:-[a-z]+)?)$','',parent)

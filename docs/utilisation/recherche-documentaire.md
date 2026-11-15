@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.14.0, 15 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.14.1, 15 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -115,7 +115,7 @@ sans modifier les conversations enregistrées.
 ## Vérification sur le Windows de Marc, depuis le site
 
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
-   puis recharger la page et vérifier **0.14.0** en haut. Un pull du dépôt de maintenance
+   puis recharger la page et vérifier **0.14.1** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
 2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
@@ -143,6 +143,12 @@ sans modifier les conversations enregistrées.
    comprend l’attente ; il ne mesure pas le CPU ou le temps interne de Kiwix.
    La recherche habituelle et les outils de l’assistant ne demandent pas ces
    détails. Les compléments d’index restant à préparer sont identifiés séparément.
+
+   Depuis 0.14.1, le rapport conserve aussi `coverage.processing` : temps de
+   sélection, CPU des threads de sélection et réemplois des textes/métadonnées.
+   Ces mesures servent au diagnostic ; elles ne mesurent pas le CPU de Kiwix ni
+   l’activité du disque. Leur [définition](../exploitation/cache-et-recherche-progressive.md#traitement-des-résultats-et-mesures--depuis-0141)
+   permet de comparer les rapports sans confondre appel rapide et recherche rapide.
 6. Lors d’un usage volontaire de l’assistant, comparer une nouvelle question en
    rapide et sa relance sur Wikipédia. Noter quelle étape prend du temps et les
    sources lues. Ne pas lever le mode jeu ni forcer un démarrage pour cette recette.

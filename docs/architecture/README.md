@@ -453,3 +453,15 @@ Aucune migration des données privées ni changement d’image tiers. Voir le
 [guide d’exploitation](../exploitation/cache-et-recherche-progressive.md).
 La traduction et l’indexation des [vidéos locales](../decisions/videos-locales-et-recherche.md)
 restent un chantier distinct ; le flux actuel ne cherche pas dans leurs paroles.
+
+Depuis 0.14.1, `catalogue.SearchAnnotations` conserve les annotations des candidats
+inchangés pendant une demande et mutualise les révisions par fichier physique,
+avec nouvelle vérification à la sélection finale. `retrieval.NormalCache` borne
+le réemploi du texte normalisé à 4 096 entrées et 32 Mo de charge textuelle.
+Ces caches sont locaux à la demande et ne modifient ni le cache de réponses
+Kiwix ni les scores. La sélection utilise le thread attendu par `disk_io`, y
+compris lors d’une annulation. `coverage.processing` mesure cette phase seulement ;
+le [guide](../exploitation/cache-et-recherche-progressive.md) précise les limites
+des durées réelles, du CPU du thread et des compteurs. Les deux voies plein texte,
+deux voies titres et jusqu’à huit threads SQLite ne sont pas un parallélisme CPU
+illimité ; les contraintes de Kiwix et du stockage restent à mesurer sur la cible.

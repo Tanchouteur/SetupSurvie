@@ -92,10 +92,11 @@ et coordination des fichiers partagés. Cette consigne actualise l’attente ini
 
 L’outillage livré et les tests de développement ne clôturent pas l’objectif.
 Le rapport R1 réel 0.12.0 confirme les 135 archives examinées et les 15 compléments
-locaux prêts, dont les archives multilingues. Son R2 reste partiel dans les 32 cas,
-avec 31 échéances atteintes et une médiane de 12,586 s. Le prochain R2 doit mesurer
-la correction progressive et le cache 0.13.0, sans refaire toute l’extraction pour
-ce seul changement. Il faut encore ouvrir humainement les résultats prioritaires
+locaux prêts, dont les archives multilingues. Le nouveau R2 0.14.0 est reçu :
+premiers documents à 311 ms de médiane, fin à 36,24 s ; 23 recherches partielles,
+surtout par reformulations limitées. Le prochain R2 doit mesurer le correctif de
+traitement 0.14.1, sans refaire toute l’extraction pour ce seul changement.
+Il faut encore ouvrir humainement les résultats prioritaires
 feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
 une erreur d’accès en absence de source.
@@ -242,3 +243,27 @@ et l’inventaire local sont faits dans leurs périmètres, les traitements suiv
 restent prévus. Les anciens chemins de réglages du protocole de recette sont
 corrigés vers les rubriques actuelles, en distinguant contrôle et indexation.
 Aucun code, schéma ni numéro de version n’est modifié par cet audit documentaire.
+
+## R2 0.14.0 reçu et retraitement corrigé — 0.14.1
+
+Le nouveau rapport de Louis lève l’attente décrite dans l’audit précédent. Les
+32 demandes tentent toutes leurs collections ; 31 n’ont aucune archive en échec.
+Les premières réponses arrivent avant une seconde dans 27 cas. La médiane finale
+reste de 36,24 s, sans dépasser le budget global. Seize avertissements concernent
+seulement des reformulations supplémentaires non exécutées ; neuf expirations de
+titres et un lot plein texte en échec restent explicitement visibles.
+
+Deux recherches chaudes gardent 15,8 à 19,6 secondes alors que tous leurs appels
+natifs sont réutilisés et arrondis à zéro milliseconde. Le profil local reproduit
+classification, vérification des fichiers et normalisation des mêmes candidats
+à chaque arrivée. La correction réutilise ce travail pendant une demande,
+revérifie les fichiers à la fin et mesure séparément la sélection et le CPU de
+son thread. Le budget de texte normalisé est ajusté après essai des longs passages,
+sans changer le classement, les budgets natifs, les index ni les images.
+
+Le [bilan](2026-11-15-rapport-0140-et-traitement-progressif.md) conserve les chiffres
+réels, l’identité du rapport, la reproduction et les validations de livraison.
+Le gain synthétique n’est pas présenté comme un gain Windows. Louis demande de
+travailler en autonomie pendant trois heures ; aucune mesure distante, recette
+humaine ou utilisation de tous les CPU n’est inventée. Une prochaine mesure du
+correctif et la lecture des documents restent nécessaires pour clore l’objectif.

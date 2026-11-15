@@ -1,6 +1,13 @@
 # Audit de fin de la première version du moteur
 
 **État vérifié le 15 novembre 2026, logiciel 0.14.0.** Base publiée : `a390b9c`.
+**Complément après réception du R2 0.14.0 :** ce rapport est désormais analysé
+dans le [bilan et correctif 0.14.1](2026-11-15-rapport-0140-et-traitement-progressif.md).
+Il lève l’attente de mesure 0.13/0.14 décrite dans l’audit initial ci-dessous :
+premiers documents à 311 ms de médiane, fin à 36,24 s, 31 recherches couvrant
+toutes leurs archives sans échec, aucun avis humain. La fiabilité finale n’est
+toujours pas déclarée acquise ; correction du traitement et mesures suivantes
+restent distinctes de cette réception. Le tableau conserve la preuve initiale.
 Cet audit ne déclare pas l’objectif terminé. Il confronte les critères de recherche
 du [plan](../decisions/plan-ameliorations-marc.md) aux preuves disponibles, après
 intégration des outils des deux agents. Aucun nouveau modèle ni corpus n’est lancé.
@@ -27,7 +34,11 @@ Les preuves détaillées et les limites sont conservées dans les bilans
 Le dernier passage GitHub de l’intégration n’a exécuté aucun job à cause d’une
 restriction du compte ; il ne vaut ni réussite ni test de code exécuté en échec.
 
-## Validation qui devient nécessaire chez Marc
+## Validation demandée par l’audit initial
+
+Le nouveau R2 ci-dessus répond à la demande de mesure 0.14.0. Pour le prochain
+passage, appliquer **0.14.1** et conserver les avis humains ; les étapes suivantes
+décrivent la demande initiale, pas un rapport encore manquant en 0.14.0.
 
 1. Appliquer la mise à jour habituelle et vérifier **0.14.0** dans le portail.
 2. Avec Famille : **Mon appareil → Paramètres → Entretien et diagnostics →

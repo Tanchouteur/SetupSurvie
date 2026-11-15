@@ -11,12 +11,14 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **15 novembre 2026**, le pilote **0.14.0** propose une recherche locale avec
+Au **15 novembre 2026**, le pilote **0.14.1** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
 volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux et de
 mesurer les délais Kiwix, sans IA ni modification des contenus.
+Le traitement progressif réutilise aussi les textes et métadonnées déjà préparés
+pendant la demande ; le diagnostic sépare ce coût des appels aux encyclopédies.
 Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
 prise en charge des redirections d’articles. Les espaces, types de documents et
 noms de collections sont corrigibles et exportables. Des rapports de délais et un
@@ -43,7 +45,7 @@ avec suivi des travaux et options techniques dépliables.
 
 ## Commencer
 
-Le portail **0.14.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
+Le portail **0.14.1** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
 conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
 

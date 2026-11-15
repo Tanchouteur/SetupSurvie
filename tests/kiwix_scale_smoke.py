@@ -77,11 +77,12 @@ def main():
                     async def update(rows):
                         nonlocal first,updates;updates+=1
                         if rows and first is None:first=round((time.monotonic()-started)*1000)
-                    found=await library.search(query,on_update=update,budget=60)
+                    found=await library.search(query,on_update=update,budget=60,diagnostic=True)
                     check(any(row['id'].endswith('/'+target) for row in found),'Retrieval finds '+target)
                     check(found.coverage['searched']+found.coverage['locally_indexed']==135 and found.coverage['failed']==0 and found.coverage['not_searched']==0,'All 135 collections examined for '+target)
                     check(first is not None and updates>1,'Progressive results delivered for '+target)
-                    measurements.append({'case':target,'first_results_ms':first,'total_ms':round((time.monotonic()-started)*1000),'updates':updates,'coverage':found.coverage['status']})
+                    check(found.coverage['processing']['snapshots']>1,'Processing timing remains available for '+target)
+                    measurements.append({'case':target,'first_results_ms':first,'total_ms':round((time.monotonic()-started)*1000),'updates':updates,'coverage':found.coverage['status'],'processing':found.coverage['processing']})
                 before=calls;await library.search('faire du feu',budget=60)
                 check(calls==before,'Warm repeated query reuses validated successful responses')
                 await kiwix_queries.close()

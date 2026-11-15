@@ -74,9 +74,17 @@ def snapshot():
     return result
 
 
-def classification(item,guides,zims,saved=None):
+def current_revision(key,guides,zims,revisions=None):
+    if revisions is None:return revision(key,guides,zims)
+    kind,path=key.split(':',1)
+    physical=('guide',path) if kind=='guide' else ('zim',path.split('/')[0])
+    if physical not in revisions:revisions[physical]=revision(key,guides,zims)
+    return revisions[physical]
+
+
+def classification(item,guides,zims,saved=None,*,revisions=None):
     saved=snapshot() if saved is None else saved
-    try:key=canonical(item['id']);current=revision(key,guides,zims)
+    try:key=canonical(item['id']);current=current_revision(key,guides,zims,revisions)
     except HTTPException:key='';current=None
     record=saved.get(key)
     automatic={'domains':retrieval.domains({**item,'_text':item.get('_text',item.get('text',''))}),'document_type':'exercise' if re.search(r'\b(quiz|qcm|questionnaire|exercices?|exercises?)\b',retrieval.normal(item.get('title',''))) else 'unknown',
@@ -89,10 +97,34 @@ def classification(item,guides,zims,saved=None):
 
 def annotate(items,guides,zims,saved=None):
     saved=snapshot() if saved is None else saved
+    revisions={}
     for item in items:
-        info=classification(item,guides,zims,saved)
+        info=classification(item,guides,zims,saved,revisions=revisions)
         item['classification']=info;item['domains']=info['domains']
     return saved.available
+
+
+class SearchAnnotations:
+    """Reuse unchanged candidate metadata within a single streaming search."""
+    def __init__(self,guides,zims,saved):
+        self.guides,self.zims,self.saved=guides,zims,saved
+        self.items={};self.revisions={};self.evaluated=0;self.source_checks=0
+
+    def annotate(self,items,*,fresh=False):
+        if fresh:self.revisions.clear()
+        before=len(self.revisions)
+        for item in items:
+            try:key=canonical(item['id']);current=current_revision(key,self.guides,self.zims,self.revisions)
+            except HTTPException:key='';current=None
+            prior=self.items.get(item['id'])
+            if prior and prior[0]==item and prior[1]==current:info=prior[2]
+            else:
+                info=classification(item,self.guides,self.zims,self.saved,revisions=self.revisions);self.evaluated+=1
+                if len(self.items)>=4096:self.items.pop(next(iter(self.items)))
+                self.items[item['id']]=(dict(item),current,info)
+            item['classification']=dict(info);item['domains']=list(info['domains'])
+        self.source_checks+=len(self.revisions)-before
+        return self.saved.available
 
 
 def save(identifier,values,expected,guides,zims):

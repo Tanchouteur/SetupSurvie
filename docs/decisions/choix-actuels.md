@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+La 0.14.1 réduit le retraitement des résultats progressifs et mesure séparément
+sélection et appels natifs, sans changer score ni budgets. Le
+[R2 réel 0.14.0](../essais/2026-11-15-rapport-0140-et-traitement-progressif.md)
+confirme des premiers documents en médiane à 311 ms, mais une fin à 36,24 s et
+des reformulations limitées. Aucun CPU ou HDD saturé n’est établi par ce rapport.
+La correction du traitement est reproduite sur fixtures ; son gain Windows et
+les avis humains restent à vérifier. Le matériel peut évoluer après mesure.
+
 La 0.14.0 intègre deux outils volontaires en lecture seule :
 [inventaire des vidéos](../utilisation/inventaire-videos.md) et
 [diagnostic Kiwix](../exploitation/diagnostic-performances-kiwix.md).

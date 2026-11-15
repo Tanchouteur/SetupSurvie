@@ -66,6 +66,7 @@ def coverage_data(value):
         ('local_query', ('searched', 'failed', 'outdated')),
         ('local_index', ('phase', 'archives', 'completed', 'articles', 'workers')),
         ('concurrency', ('fulltext', 'titles', 'shared_across_requests')),
+        ('processing', ('snapshots', 'selection_ms', 'selection_cpu_ms', 'metadata_evaluations', 'source_revision_checks', 'normalizations', 'normalization_hits', 'normalization_cache_bytes')),
         ('error_counts', ('timeout', 'invalid_response', 'http_error', 'connection_error')),
     ):
         if isinstance(value.get(name), dict):
