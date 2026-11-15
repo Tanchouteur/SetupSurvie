@@ -9,6 +9,18 @@ import httpx
 from pilot import assistant_metrics,model_session
 
 
+class MessageFormatTests(unittest.TestCase):
+    def test_late_instructions_do_not_hide_the_generation_header_or_mutate_tool_data(self):
+        messages=[{'role':'system','content':'Initial policy'},{'role':'user','content':'Original question'},
+                  {'role':'assistant','content':'','tool_calls':[{'function':{'name':'read_sources','arguments':{'ids':['a']}}}]},
+                  {'role':'tool','content':'{"source":"untrusted data"}'},{'role':'system','content':'Final citation instructions'}]
+        before=json.dumps(messages);result=model_session.chat_messages(messages)
+        self.assertEqual(result[0]['content'],'Initial policy\n\nFinal citation instructions')
+        self.assertEqual(result[-1]['role'],'tool');self.assertEqual(result[-1]['content'],messages[-2]['content'])
+        self.assertEqual(len([m for m in result if m['role']=='system']),1)
+        self.assertEqual(json.dumps(messages),before)
+
+
 class SessionTests(unittest.IsolatedAsyncioTestCase):
     async def exercise(self,responses,*,runtime=None,guard=None):
         self.requests=[];self.stages=[];self.measured=assistant_metrics.Measurement('fixture','new:local','rapide',16384)

@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Synthèse de plusieurs documents](utilisation/synthese-documentaire.md) — préparation 0.16.0, passages pertinents, limites de contexte et contrôle des références.
+
 - [Assistant : recherche, synthèse et illustrations](decisions/assistant-recherche-et-synthese.md) — besoin retenu, boucle d’outils bornée et fonctions encore à développer.
 - [R2 0.15.0 et demandes de synthèse](essais/2026-11-15-rapport-0150-et-requetes-synthese.md) — 32 recherches complètes, contraste avec les captures et correctif 0.15.1.
 

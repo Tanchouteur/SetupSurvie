@@ -21,6 +21,19 @@ def failure_kind(value):
     return 'memory_error' if re.search(r'out of memory|insufficient memory|failed to allocate',str(value),re.I) else 'model_error'
 
 
+def chat_messages(messages):
+    """Keep trusted instructions in one initial system message.
+
+    Some installed templates collect every system content but also retain those
+    messages in their loop. A trailing system message can then suppress the
+    assistant generation header. Tool data and stored history remain untouched.
+    """
+    systems=[message for message in messages if message.get('role')=='system']
+    if not systems:return messages
+    return [{**systems[0],'content':'\n\n'.join(message.get('content','') for message in systems)},
+            *(message for message in messages if message.get('role')!='system')]
+
+
 class Session:
     def __init__(self,client,endpoint,runtime,context,measurement,notice,guard):
         self.client=client;self.endpoint=endpoint;self.runtime=runtime;self.context=context
@@ -69,6 +82,7 @@ class Session:
                 self.measurement.value['model_preparations'].append(record)
 
     async def chat(self,payload):
+        payload={**payload,'messages':chat_messages(payload['messages'])}
         while True:
             produced=False;last={};done=False
             self.notice('loading' if self.runtime.get('available') and not self.loaded else 'preparing')

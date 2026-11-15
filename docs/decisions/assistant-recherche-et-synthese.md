@@ -31,6 +31,14 @@ le détail exact des outils exécutés sur les deux conversations de Marc.
 
 ## Socle actuel et premier correctif
 
+**Évolution en préparation, 0.16.0 :** le [dossier documentaire](../utilisation/synthese-documentaire.md)
+remplace la prélecture limitée décrite ci-dessous par des passages de plusieurs
+sources adaptés au contexte. Il ajoute lecture par lot, arrêt des répétitions,
+une reprise de références et un repli sur les extraits. Les premiers essais réels
+R7 portent sur un corpus fictif ; leur résultat et leur portée restent à examiner.
+Association manuelle multiple, longues synthèses intermédiaires et illustrations
+restent à réaliser. Les paragraphes 0.15.x conservent le point de départ daté.
+
 Le moteur d’assistant dispose déjà d’une boucle d’outils : trois étapes en mode
 rapide, six dans les autres modes. La préparation documentaire lit automatiquement
 au plus deux premiers documents, avec des passages de début limités à 2 200

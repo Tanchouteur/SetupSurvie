@@ -57,7 +57,7 @@ class Evidence:
             if scope=='favorites' and status=='unknown' and not value.get('error'):status='complete'
             self.searches[key]=(status,scope)
             results=value.get('results');results=results if isinstance(results,list) else []
-            for item in results[:5]:
+            for item in results[:12]:
                 if isinstance(item,dict) and isinstance(item.get('id'),str):self.found.add(item['id'])
         elif name=='read_source':
             identifier=str(arguments.get('id',''));offset=arguments.get('offset',0)

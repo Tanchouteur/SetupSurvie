@@ -105,6 +105,14 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(payloads,[]);self.assertEqual(self.loads,[])
         self.assertEqual(assistant_metrics.read('j')['failure'],'engine_paused')
 
+    def test_model_failure_keeps_read_excerpts_in_reopened_history(self):
+        _,answer=self.run_chat([],attached=self.a['id'],failure=True,expected_status='failed')
+        self.assertEqual(answer['role'],'assistant');self.assertIn(self.a['text'],answer['content'])
+        self.assertIn('ne constituent pas une synthèse validée',answer['content'])
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+        self.assertEqual(answer['documentary']['sources_read'],1)
+        self.assertEqual(assistant_metrics.read('j')['status'],'failed')
+
     def test_context_uses_native_limit_and_records_the_reduction(self):
         with store.connect() as db:db.execute('INSERT INTO settings VALUES(?,?)',('context:'+engine.MODES['rapide']['model'],'65536'))
         payloads,_=self.run_chat([{'content':'Réponse fictive.'}],native_context=16384)
@@ -187,7 +195,7 @@ class EvidenceTests(unittest.TestCase):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
         payloads,answer=self.run_chat([{'content':'La source consultée décrit le sujet [1].'}],[self.a])
         tools=[json.loads(m['content']) for m in payloads[0]['messages'] if m['role']=='tool']
-        self.assertTrue(any(t.get('text')==self.a['text'] for t in tools))
+        self.assertTrue(any(part['text']==self.a['text'] for t in tools for row in t.get('results',[]) for part in row.get('passages',[])))
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
 
     def test_summary_and_friction_requests_prepare_reading_before_first_model_call(self):
@@ -197,8 +205,48 @@ class EvidenceTests(unittest.TestCase):
                 with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
                 payloads,answer=self.run_chat([{'content':'Source fictive consultée [1].'}],[self.a])
                 tools=[json.loads(message['content']) for message in payloads[0]['messages'] if message['role']=='tool']
-                self.assertTrue(any(value.get('text')==self.a['text'] for value in tools))
+                self.assertTrue(any(part['text']==self.a['text'] for value in tools for row in value.get('results',[]) for part in row.get('passages',[])))
                 self.assertEqual(answer['documentary']['sources_read'],1)
+
+    def test_summary_reads_five_documents_with_late_passages_before_generation(self):
+        question='Fais une synthèse des documents sur la température du compost'
+        with store.connect() as db:
+            db.execute("UPDATE messages SET content=? WHERE role='user'",(question,))
+            db.execute('INSERT INTO settings VALUES(?,?)',('context:'+engine.MODES['rapide']['model'],'32768'))
+        sources={f'guide:{i}':{'id':f'guide:{i}','title':f'Document fictif {i}','text':('Introduction sans rapport. '*300)+f'\nCompost et température : valeur fictive {i}.\n'} for i in range(5)}
+        payloads,answer=self.run_chat([{'content':'Les documents présentent des observations différentes [1] [2] [3] [4] [5].'}],list(sources.values()),read=sources.__getitem__)
+        packets=[json.loads(message['content']) for message in payloads[0]['messages'] if message['role']=='tool']
+        rows=[row for packet in packets for row in packet.get('results',[]) if row.get('passages')]
+        self.assertEqual(len(rows),5)
+        for row in rows:self.assertTrue(any('valeur fictive' in part['text'] and (part['offset']>3000 or not row['partial_read']) for part in row['passages']))
+        self.assertEqual(len(answer['sources']),5);self.assertEqual(answer['documentary']['sources_read'],5)
+
+    def test_summary_without_valid_citations_gets_one_final_revision(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
+        payloads,answer=self.run_chat([{'content':'Première proposition sans référence.'},{'content':'Source lue : charge fictive 10 kg [1].'}],[self.a])
+        self.assertEqual(len(payloads),2);self.assertEqual(payloads[-1]['tools'],[])
+        self.assertEqual(assistant_metrics.read('j')['citation_revisions'],1)
+        self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+
+    def test_failed_reference_revision_returns_actual_excerpts_without_certifying_summary(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
+        _,answer=self.run_chat([{'content':'Source inventée [99].'},{'content':'Encore inventée [99].'}],[self.a],expected_status='incomplete')
+        self.assertIn('ne constituent pas une synthèse validée',answer['content'])
+        self.assertIn(self.a['text'],answer['content']);self.assertNotIn('[99]',answer['content'])
+        self.assertEqual(assistant_metrics.read('j')['failure'],'citation_check')
+
+    def test_batch_reading_tool_preserves_independent_source_evidence(self):
+        sources={self.a['id']:self.a,self.b['id']:self.b}
+        payloads,answer=self.run_chat([self.call('read_sources',{'ids':list(sources),'query':'charge fictive'}),{'content':'Charges différentes [1] [2].'}],read=sources.__getitem__)
+        packet=json.loads(payloads[1]['messages'][-1]['content']);self.assertEqual(len(packet['results']),2)
+        self.assertEqual(answer['documentary']['sources_read'],2)
+
+    def test_two_rounds_without_new_evidence_stop_repeated_research(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE role='user'")
+        payloads,_=self.run_chat([self.call('search_library',{'query':'feu'}),self.call('search_library',{'query':'feu'}),{'content':'Source disponible [1].'}],[self.a])
+        self.assertEqual(len(self.lookup_calls),1)
+        self.assertEqual(payloads[-1]['tools'],[])
+        self.assertEqual(assistant_metrics.read('j')['research_stop'],'no_new_evidence')
 
     def test_model_can_reuse_prepared_subject_with_a_shorter_formulation(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment faire du feu ?' WHERE conversation_id='c'")
@@ -266,7 +314,7 @@ class EvidenceTests(unittest.TestCase):
     def test_attached_partial_document_carries_edition_and_does_not_turn_archive_date_into_document_date(self):
         source={**self.a,'document_date':'','archive_date':'2026-05','text':'Première page. '*500}
         payloads,answer=self.run_chat([{'content':'Date du document inconnue ; édition A [1]. Cet extrait ne permet pas de conclure.'}],read=lambda _:source,attached='guide:a')
-        attached=payloads[0]['messages'][1]['content']
+        attached=payloads[0]['messages'][0]['content']
         self.assertIn('"document_date": ""',attached)
         self.assertIn('"archive_date": "2026-05"',attached)
         self.assertIn('Le texte peut être incomplet',attached)

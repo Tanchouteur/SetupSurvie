@@ -1,5 +1,28 @@
 # Architecture du pilote
 
+## Dossiers documentaires — préparation 0.16.0
+
+`pilot/research.py` choisit des passages correspondant aux concepts bilingues de
+la question, avec positions dans le texte extrait et budget UTF-8. Il distingue
+les documents/pages, élimine les textes identiques et conserve les avertissements
+de traduction. `read_sources` est un outil de lecture par lot, limité à douze
+candidats et trois lectures simultanées. Le cache de sources est propre à la demande.
+
+La préparation appelle le moteur commun avec le budget documentaire long et
+adapte le dossier à la place restante, sans changer modèle ou contexte conseillé.
+Le premier tour documentaire spécialise les outils ; les autres outils restent
+disponibles aux tours suivants et dès le départ pour une demande géographique.
+Une consigne secondaire de réponse reste dans la conversation complète et n’est
+pas imposée à la première recherche du sujet principal.
+
+Deux tours sans preuve documentaire nouvelle conduisent à la rédaction. Pour une
+synthèse explicite, les références numériques sont contrôlées contre les passages
+consultés, avec une seule reprise finale. Ce contrôle ne vérifie pas le sens.
+Un échec conserve les extraits et l’état incomplet/échoué. Les propositions refusées
+restent dans les traces privées, en dehors des mesures numériques.
+Les instructions sont regroupées dans le premier message système pour éviter
+une fin de conversation système sans marqueur de génération dans certains modèles.
+
 Vue de référence documentaire au 14 novembre 2026. Elle décrit les rôles des
 composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
