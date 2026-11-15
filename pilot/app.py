@@ -54,7 +54,6 @@ async def lifespan(app):
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
     yield
-    await library.kiwix_queries.close()
     try:
         with optional_feature('search_experiment') as module:await module.cancel(reason='service_restarted')
     except HTTPException:pass
@@ -64,6 +63,8 @@ async def lifespan(app):
     for task in list(engine.ACTIVE.values()):task.cancel()
     engine.PENDING.clear()
     if engine.ACTIVE:await asyncio.gather(*list(engine.ACTIVE.values()),return_exceptions=True)
+    # Close the documentary cache after jobs stop creating new requests.
+    await library.kiwix_queries.close()
 
 
 VERSION='0.16.0'

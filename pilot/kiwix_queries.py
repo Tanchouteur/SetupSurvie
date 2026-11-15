@@ -15,7 +15,7 @@ MAX_ENTRIES=256
 
 def state():
     loop=asyncio.get_running_loop()
-    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{},'pending':OrderedDict(),'writer':None}
+    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{},'retiring':set(),'pending':OrderedDict(),'writer':None}
     return STATES[loop]
 
 
@@ -83,6 +83,7 @@ async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
         task.search_waiters=0
         def finished(value):
             if shared['flights'].get(flight_key) is value:shared['flights'].pop(flight_key,None)
+            shared['retiring'].discard(value)
             if not value.cancelled():value.exception()
         task.add_done_callback(finished)
     task.search_waiters+=1
@@ -90,6 +91,10 @@ async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
     finally:
         task.search_waiters-=1
         if task.search_waiters==0 and not task.done():
+            # Stop sharing the cancelled request immediately, but retain its
+            # file user until disk_io has really joined the executor thread.
+            # A sibling's gather cancellation may return before this finally.
+            shared['retiring'].add(task)
             if shared['flights'].get(flight_key) is task:shared['flights'].pop(flight_key,None)
             task.cancel()
             await asyncio.gather(task,return_exceptions=True)
@@ -98,7 +103,7 @@ async def request(root,endpoint,path,kind,reader,*,generation='',timeout=None):
 async def close():
     shared=STATES.pop(asyncio.get_running_loop(),None)
     if shared:
-        tasks=list(shared['flights'].values())
+        tasks=list(set(shared['flights'].values())|shared['retiring'])
         for task in tasks:task.cancel()
         await asyncio.gather(*tasks,return_exceptions=True)
         if shared['writer']:await asyncio.gather(shared['writer'],return_exceptions=True)

@@ -46,3 +46,10 @@ contradiction documentaire, les illustrations ou la qualité d’une procédure.
 Une validation réelle doit encore employer des besoins variés et des sources
 relues, avec le modèle et le PC Windows cibles. Voir le
 [bilan des premiers essais](2026-11-15-synthese-multi-sources-et-essais-reels.md).
+
+Pour vérifier un changement de modèle dans la première demande, ajouter
+`--switch-from llama3.1:8b --case natural`, en nommant un autre modèle **déjà installé**.
+Ollama doit d’abord être au repos. La recette précharge uniquement ce modèle
+d’essai, puis laisse l’assistant préparer le modèle sélectionné. Le rapport
+conserve `switch_from` et les préparations mesurées. Cette option ne décharge
+aucun modèle tiers et ne lève pas une pause d’une installation réelle.

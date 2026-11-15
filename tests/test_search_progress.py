@@ -128,6 +128,25 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(asyncio.CancelledError):await task
             self.assertTrue(closed.is_set())
 
+    async def test_shutdown_joins_a_cancelled_disk_reader_after_it_leaves_shared_flights(self):
+        entered=threading.Event();release=threading.Event();closed=threading.Event()
+        def reader(*args):
+            entered.set()
+            try:release.wait(5)
+            finally:closed.set()
+        with patch.object(search_cache,'read',reader):
+            task=asyncio.create_task(kiwix_queries.request(store.ROOT,'fixture','/search?q=retiring','fulltext',AsyncMock(),generation='a'))
+            try:
+                self.assertTrue(await asyncio.to_thread(entered.wait,1));task.cancel();await asyncio.sleep(.02)
+                # A deadline's gather may return after another sibling cancels,
+                # while this request is still joining its open file user.
+                self.assertFalse(kiwix_queries.state()['flights'])
+                stopping=asyncio.create_task(kiwix_queries.close());await asyncio.sleep(.02)
+                self.assertFalse(stopping.done());self.assertFalse(closed.is_set())
+            finally:release.set()
+            with self.assertRaises(asyncio.CancelledError):await task
+            await stopping;self.assertTrue(closed.is_set())
+
     async def test_native_response_after_old_three_second_limit_can_finish_in_extended_search(self):
         book={'book':'fixture_fr','language':'fra','fulltext':True}
         async def reader(path):

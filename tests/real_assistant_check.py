@@ -48,14 +48,16 @@ async def check(args):
         async with original_client(trust_env=False,timeout=5) as client:
             response=await client.get(args.endpoint+'/api/ps');response.raise_for_status()
             loaded=response.json().get('models',[])
-            if any(row.get('name',row.get('model'))!=args.model for row in loaded):raise RuntimeError('Another model is in use; test stopped.')
+            owned={args.model}
+            if preloaded:owned.add(args.switch_from)
+            if any(row.get('name',row.get('model')) not in owned for row in loaded):raise RuntimeError('Another model is in use; test stopped.')
             if args.gpu_layers:
                 raw=await asyncio.to_thread(subprocess.check_output,['nvidia-smi','--query-gpu=memory.free','--format=csv,noheader,nounits'],text=True,timeout=5)
                 free=int(raw.splitlines()[0]);owned=sum(row.get('size_vram',0) for row in loaded)//1024**2
                 if free<args.gpu_reserve_mib or free+owned<args.gpu_expected_mib+args.gpu_reserve_mib:
                     raise RuntimeError('Insufficient free VRAM for this test and its reserve.')
         return {'online':True,'paused':False}
-    original_client=httpx.AsyncClient
+    original_client=httpx.AsyncClient;preloaded=False
     with tempfile.TemporaryDirectory(prefix='setupsurvie-real-cpu-') as directory:
         root=Path(directory);guides=root/'guides';guides.mkdir()
         records=[]
@@ -71,6 +73,18 @@ async def check(args):
              patch.dict(engine.MODES,{'real-local':profile}),patch.object(engine,'PROFILE_CONFIG',{**engine.PROFILE_CONFIG,'context':args.context,'output_tokens':args.predict}),\
              patch.object(operations,'status',available),patch.object(httpx,'AsyncClient',side_effect=lambda **kw:original_client(transport=TestTransport(args.predict,args.gpu_layers,args.threads),**kw)):
             store.init();library.index_guides()
+            if args.switch_from:
+                # Only preload into an idle Ollama instance. Do not unload any
+                # third-party model to make this optional test possible.
+                await available()
+                async with original_client(trust_env=False,timeout=300,transport=TestTransport(args.predict,args.gpu_layers,args.threads)) as client:
+                    current=await client.get(args.endpoint+'/api/ps');current.raise_for_status()
+                    if current.json().get('models'):raise RuntimeError('Switch check requires an idle model service.')
+                    response=await client.post(args.endpoint+'/api/chat',json={'model':args.switch_from,'messages':[],
+                        'stream':False,'keep_alive':'15s','options':{'num_ctx':args.context}})
+                    response.raise_for_status();loaded=response.json()
+                    if loaded.get('done_reason')!='load':raise RuntimeError('Switch preparation did not load the test model.')
+                preloaded=True;report['switch_from']=args.switch_from
             questions=[('simple','Fais une synthèse des documents sur le suivi des capteurs de la serre fictive'),
                        ('natural','Fais une synthèse des documents sur le suivi des capteurs de la serre fictive. Compare les notices et cite leurs valeurs.')]
             for index,(name,question) in enumerate(questions,1):
@@ -111,6 +125,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--endpoint',default='http://127.0.0.1:21434')
     parser.add_argument('--model',required=True)
+    parser.add_argument('--switch-from',help='Explicitly preload another installed test model, then test the selected model switch.')
     parser.add_argument('--case',choices=('all','simple','natural'),default='all')
     parser.add_argument('--context',type=int,choices=(16384,32768),default=16384)
     parser.add_argument('--predict',type=int,choices=range(256,4097),default=1536)

@@ -49,12 +49,15 @@ Aucune version tierce du projet n’a changé.
 Le digest des fichiers `pilot/*.py` du candidat testé est
 `903ce5fd3fb07b13088db489613a24c08250b36e458fc34f5fd35fdb04102adf`.
 Les rapports sont privés ; les temps ci-dessous incluent préparation et inférence.
+Le candidat final testé après les corrections de fermeture du cache a pour digest
+`a01cdd1fb0d602f8e7a759dcc91f3b302ded96ad517206734128ed8195c26bfd`.
 
 | Code et modèle | Résultat observé | Limites |
 | --- | --- | --- |
 | 0.15.1, Gemma4 E4B, formulation avec comparaison | 30 807 ms ; zéro notice lue, aucune des cinq valeurs ; affirmation d’absence | Même corpus et options que l’essai partiel 0.16.0 ; un seul passage par formulation, pas un benchmark statistique |
 | 0.16.0, Gemma4 E4B, demande simple | 45 102 ms ; cinq notices lues et cinq associations valeur/notice correctes, références directes | GPU complet ; la marge vidéo a refusé le lancement du cas suivant. Texte trop verbeux et dates non rappelées ; pas une réussite de tous les critères éditoriaux |
 | 0.16.0, Gemma4 E4B, formulation avec comparaison | 70 027 ms ; cinq notices et valeurs correctes, tableau et références directes, nature fictive conservée | Huit couches GPU, six threads, contexte 16k, réflexion activée, sortie maximale 4 096 tokens. Dates non rappelées ; corpus étroit |
+| Candidat final 0.16.0, Gemma après préchargement réel de Llama | 83 606 ms ; passage à Gemma préparé en 4 076 ms, aucune reprise, cinq valeurs, références, dates et éditions correctes | Première demande après changement ; Linux/R7, pas Windows. Ce passage a fourni directement ses références |
 | 0.16.0, Llama3.1 8B, deux formulations | 58 465 / 44 755 ms ; cinq notices lues et cinq valeurs présentes, références ajoutées par l’étape structurée | **Échec de fidélité sur la demande simple** : obsolescence et absence de précision inventées, attribution groupée trop large. La demande avec comparaison associe correctement les cinq valeurs, mais ajoute du texte technique inutile |
 
 Gemma : digest
@@ -71,6 +74,7 @@ Empreintes SHA-256 des rapports privés :
 | Gemma simple 0.16.0 | `b2020d955b6b7e9ba33445205fa10c30848d06a7e2c01f6df148f8d27d62590a` |
 | Gemma comparaison 0.16.0 | `c91d9680b8b2cfc5072113d309df19c0da3523209663193a50e5701a72a1eb42` |
 | Llama, fragments 0.16.0 | `f5e7f5179a94d69a304a8c2fc7c0d7e68b43fe8a49bd20e24f99fa66685977ad` |
+| Gemma, changement de modèle final | `d364a105b864f6a633c9bb42aa5d1828d7033fa42398c520cbee2648e2fdf137` |
 
 ## Pistes explorées, conservées ou abandonnées
 
@@ -90,7 +94,7 @@ Empreintes SHA-256 des rapports privés :
 
 ## Vérifications automatisées et livraison
 
-Runner Linux Python 3.13 : **647 tests, trois ignorés**, sans modèle réel. Ils
+Runner Linux Python 3.13 : **649 tests, trois ignorés**, sans modèle réel. Ils
 couvrent notamment passages tardifs, procédures face à l’historique, UTF-8,
 contexte réduit, cinq sources, doublons, échec de lecture, provenance des
 traductions, annulation, références fictives et outils répétés.
@@ -104,7 +108,13 @@ La première CI du candidat `bf0dca1` a passé sept jobs puis échoué sous Wind
 `poll()` sur un canal fermé levait `BrokenPipeError` après une réponse du processus
 de diagnostic. Le lecteur conserve maintenant le résultat reçu et distingue
 fermeture prématurée et échéance. Deux simulations reproduisent ces situations.
-Le résultat de la nouvelle CI et le reçu du paquet sont ajoutés après vérification.
+
+La seconde CI sur `f2e4594` a ensuite exposé un accès SQLite encore ouvert après
+annulation : le résultat réseau n’était plus mutualisé, mais son thread disque
+n’avait pas terminé. Le suivi conserve maintenant ces accès jusqu’à fermeture,
+et l’arrêt du pilote ferme le cache après les travaux de l’assistant. Un nouveau
+test reproduit ce défaut sous Linux aussi : il échoue avant, réussit après.
+Le résultat de la CI finale et le reçu du paquet sont ajoutés après vérification.
 
 **Version mineure 0.16.0 :** nouveau parcours fonctionnel de lecture multi-source,
 sans migration du schéma ni rupture de l’installation. Aucun déploiement chez Marc.

@@ -38,6 +38,11 @@ et de sources sont contrôlés par le serveur. Cela ne vérifie pas que chaque
 affirmation est vraie ou bien soutenue par la source : relire les documents et
 leurs désaccords reste nécessaire.
 
+Cette petite étape conserve le modèle choisi et réduit sa réflexion : désactivée
+si le modèle accepte ce réglage, ou niveau `low` pour les profils à niveaux.
+La rédaction de la réponse garde le réglage du mode demandé. Le but est d’éviter
+que la seule mise en références épuise toute sa sortie avant de fournir le JSON.
+
 Si cette étape échoue, le texte utile reste affiché avec « Références à vérifier »
 et un état incomplet. Une réponse citant une source inconnue est remplacée par
 les extraits consultés. Les traductions IA gardent leur avertissement et leur original.

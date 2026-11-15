@@ -322,6 +322,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                                 measured.value['budgets'].append({**link_budget,'stage':'source_linking','input_estimate':assistant_metrics.estimate_tokens(link_messages),'fits':True})
                                 measured.phase('source_linking');progress(identifier,'referencing')
                                 link_payload={**payload,'messages':link_messages,'tools':[],
+                                    'think':'low' if selected['think'] in ('low','medium','high') else False,
                                     'format':citation_links.schema([item['number'] for item in references.values() if item.get('consulted')],citation_links.fragments(content)),
                                     'options':{**payload['options'],'num_predict':link_output,'temperature':0}}
                                 linked_json='';link_event={}

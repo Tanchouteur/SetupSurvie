@@ -226,8 +226,16 @@ class EvidenceTests(unittest.TestCase):
         payloads,answer=self.run_chat([{'content':'La charge fictive indiquée vaut 10 kg.'},{'content':json.dumps({'citations':[{'fragment_id':'f0','source_number':1}]})}],[self.a])
         self.assertEqual(len(payloads),2);self.assertEqual(payloads[-1]['tools'],[])
         self.assertIn('format',payloads[-1]);self.assertIn('10 kg. [1]',answer['content'])
+        self.assertEqual(payloads[-1]['think'],'low')
         self.assertEqual(assistant_metrics.read('j')['citation_revisions'],1)
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
+
+    def test_link_format_does_not_spend_the_answer_thinking_budget(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
+        with patch.dict(engine.MODES,{'rapide':{**engine.MODES['rapide'],'model':'gemma4:e4b','think':True}}):
+            payloads,_=self.run_chat([{'content':'La charge fictive vaut 10 kg.'},{'content':json.dumps({'citations':[{'fragment_id':'f0','source_number':1}]})}],[self.a])
+        self.assertIs(payloads[0]['think'],True);self.assertIs(payloads[1]['think'],False)
+        self.assertEqual(payloads[0]['model'],payloads[1]['model'])
 
     def test_failed_reference_revision_returns_actual_excerpts_without_certifying_summary(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
