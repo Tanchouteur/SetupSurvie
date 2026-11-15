@@ -465,3 +465,10 @@ le [guide](../exploitation/cache-et-recherche-progressive.md) précise les limit
 des durées réelles, du CPU du thread et des compteurs. Les deux voies plein texte,
 deux voies titres et jusqu’à huit threads SQLite ne sont pas un parallélisme CPU
 illimité ; les contraintes de Kiwix et du stockage restent à mesurer sur la cible.
+
+Depuis 0.14.2, le plafond d’appels plein texte du parcours long s’adapte aux lots
+natifs et à leurs deux termes de reformulation au plus, avec plancher 32. Le
+parcours court conserve 32 appels. Le budget temporel, les sémaphores et les
+conditions de reformulation restent inchangés. `coverage.request_limit` contient
+la valeur effective ; les 40 traces bornées ne comptent pas tous les appels lorsque
+le plafond dépasse 40. Voir la [reproduction](../essais/2026-11-15-budget-reformulations.md).

@@ -1,5 +1,9 @@
 # Rapport réel 0.14.0 et coût du traitement progressif
 
+**Suite :** la [0.14.2](2026-11-15-budget-reformulations.md) adapte ensuite le
+plafond des reformulations du flux long. Les budgets conservés décrits ici
+correspondent au correctif 0.14.1, pas à une promesse sur les versions suivantes.
+
 **Bilan daté — 15 novembre 2026 ; correction 0.14.1.** Le rapport de Louis est
 analysé avant modification du moteur. Les mesures du PC de Marc et les essais
 synthétiques du runner ci-dessous restent distincts. Aucun modèle, gros corpus

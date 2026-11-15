@@ -59,7 +59,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | Ordre | Lot | Livrable attendu | Dépendance principale | État |
 | --- | --- | --- | --- | --- |
 | L1 | Indexation automatique | Installation et nouveaux téléchargements alimentent une préparation persistante et visible | Socle 0.3.0 | Implémenté et corrigé jusqu’à 0.9.3 ; terminaison réelle reçue, nouveau lot et reprise réels à vérifier |
-| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.14.0 reçu : premiers documents à 311 ms de médiane, fin à 36,24 s ; 31 recherches sans archive en échec, 23 partielles surtout par reformulations. Traitement répété corrigé en 0.14.1 ; gain Windows et avis humains attendus |
+| L2 | Recherche fiable et diagnostic | Couverture réelle, échecs expliqués, comparaison de pertinence et délais | L1 pour la couverture complète ; diagnostic développable immédiatement | R2 0.14.0 reçu : premiers documents à 311 ms de médiane, fin à 36,24 s ; 31 recherches sans archive en échec, 23 partielles surtout par reformulations. Traitement répété corrigé en 0.14.1 et plafond long adapté en 0.14.2 ; mesure Windows et avis humains attendus |
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Rapports, budgets et calibration explicite implémentés en 0.7.0 ; R4 réel attendu |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | À développer |
@@ -429,3 +429,11 @@ le correctif 0.14.1, sans réextraire les 135 archives pour ce changement ; puis
 lecture des sources prioritaires, R4 IA volontaire et R7 hors ligne restent
 distincts. Louis étant indisponible trois heures, le développement et les essais
 autonomes avancent sans solliciter de nouvelle recette pendant cette période.
+
+La [suite 0.14.2](../essais/2026-11-15-budget-reformulations.md) reproduit aussi
+une source manquée par le plafond fixe de 32 appels. Le flux long autorise les
+variantes prévues selon le nombre de lots, avec la même concurrence et la même
+échéance ; l’assistant court reste compatible. Le prochain R2 demandé porte donc
+sur **0.14.2**, qui contient également les optimisations 0.14.1. Son temps final
+peut augmenter pour couvrir davantage de variantes ; mesurer couverture et
+premiers documents, sans comparer seulement la durée de fin.

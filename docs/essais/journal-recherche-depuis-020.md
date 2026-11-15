@@ -95,7 +95,7 @@ Le rapport R1 réel 0.12.0 confirme les 135 archives examinées et les 15 compl�
 locaux prêts, dont les archives multilingues. Le nouveau R2 0.14.0 est reçu :
 premiers documents à 311 ms de médiane, fin à 36,24 s ; 23 recherches partielles,
 surtout par reformulations limitées. Le prochain R2 doit mesurer le correctif de
-traitement 0.14.1, sans refaire toute l’extraction pour ce seul changement.
+traitement 0.14.1 et le budget adapté 0.14.2, sans refaire toute l’extraction pour ce seul changement.
 Il faut encore ouvrir humainement les résultats prioritaires
 feu, eau, générateur et vélo. Toute anomalie reproduite
 doit être corrigée ou faire l’objet d’une décision explicite, sans transformer
@@ -273,3 +273,19 @@ sur petits fonds générés et 68 assertions Chromium. Les 745 fichiers du paque
 sont déballés et comparés au commit `aa389f1`, avec les fins de ligne du checkout.
 La CI `43695594332` est refusée avant ses huit jobs pour une limite de facturation
 GitHub ; Windows et WebKit de cette correction restent non exécutés en CI.
+
+## Plafond adapté aux grandes bibliothèques — 0.14.2
+
+Le même R2 0.14.0 montrait 16 avertissements dus seulement à des reformulations
+non exécutées. Une reproduction à 28 lots principaux retrouve exactement le
+blocage : les quatre appels restants ne peuvent atteindre un document d’une
+archive tardive. Le flux long adapte désormais son plafond aux lots et aux
+deux variantes prévues au plus ; il garde deux voies plein texte et 60 secondes.
+L’assistant court garde douze secondes et 32 appels. La répétition utilise
+également le cache, sans nouvel appel HTTP dans le scénario simulé.
+
+Le [bilan](2026-11-15-budget-reformulations.md) garde échec avant correction,
+réussite après, échéance et limites. Plus de variantes peuvent prolonger la fin,
+avec les premiers résultats disponibles pendant ce temps. Cette correction
+complète 0.14.1 sans annoncer que les expirations de titres, la qualité réelle
+ou le matériel du Windows de Marc sont désormais validés.

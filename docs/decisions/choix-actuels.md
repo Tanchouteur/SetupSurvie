@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+La 0.14.2 adapte le plafond des reformulations aux lots du flux long : un document
+manqué avec 28 appels principaux et seulement quatre variantes est retrouvé dans
+la [reproduction](../essais/2026-11-15-budget-reformulations.md). La concurrence et
+les 60 secondes sont conservées ; le JSON court et l’assistant gardent leurs
+limites précédentes. Davantage de couverture peut prolonger la durée finale.
+
 La 0.14.1 réduit le retraitement des résultats progressifs et mesure séparément
 sélection et appels natifs, sans changer score ni budgets. Le
 [R2 réel 0.14.0](../essais/2026-11-15-rapport-0140-et-traitement-progressif.md)

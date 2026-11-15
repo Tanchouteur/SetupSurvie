@@ -349,6 +349,11 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     # preceded the first English practical collection. Large archives get their
     # own request so their timeout cannot hide the five small archives beside it.
     batches=sorted([items[i:i+12] for items in groups.values() for i in range(0,len(items),12)],key=lambda batch:batch[0][0])
+    terms=[word for _,word in sorted(enumerate(query_plan.words),key=lambda pair:(-len(query_plan.groups[pair[0]]),pair[0]))[:2]] if query_plan else []
+    # The long progressive search must allow one primary and at most two existing
+    # refinements per batch. Its deadline and shared lanes still bound the work.
+    # Keep the short assistant/legacy path's existing ceiling.
+    request_limit=32 if budget<=12 else max(32,len(batches)*(1+len(terms)))
     done=set();failed=set();records={};calls=0;semaphore=asyncio.Semaphore(2);title_semaphore=asyncio.Semaphore(2);refinements=[];refinement_attempted=0;refinement_failed=0;refinement_finished=0
     errors=[];error_counts={};cache_hits=0;trace=[]
     async def notify():
@@ -377,7 +382,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
         started=time.monotonic()
         try:
             async with semaphore:
-                if calls>=32:return
+                if calls>=request_limit:return
                 calls+=1
                 if pattern_override is not None:refinement_attempted+=1
                 (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/search?'+urlencode(params),'fulltext',get,generation=generation,timeout=10 if budget>12 else 3);cache_hits+=cached
@@ -475,7 +480,6 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     import heapq
     pending=[(1,index,batch,None) for index,batch in enumerate(batches)]
     heapq.heapify(pending);scheduled=set();sequence=len(pending)
-    terms=[word for _,word in sorted(enumerate(query_plan.words),key=lambda pair:(-len(query_plan.groups[pair[0]]),pair[0]))[:2]] if query_plan else []
     def schedule_refinements(core_only):
         nonlocal sequence,refinement_planned
         for batch,lang in refinements:
@@ -503,7 +507,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
     report['native_incompatible']=len(incompatible)
-    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,cache_disk_ttl_seconds=search_cache.MAX_AGE,cache_generation=generation[:16],deadline_exceeded=deadline_exceeded,deadline_ms=round(budget*1000),primary_requests=calls-refinement_attempted,request_limit=32,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
+    report.update(errors=errors,error_counts=error_counts,cache_hits=cache_hits,cache_ttl_seconds=kiwix_queries.TTL,cache_disk_ttl_seconds=search_cache.MAX_AGE,cache_generation=generation[:16],deadline_exceeded=deadline_exceeded,deadline_ms=round(budget*1000),primary_requests=calls-refinement_attempted,request_limit=request_limit,batch_limit=12,concurrency={'fulltext':2,'titles':2,'shared_across_requests':True})
     messages=[]
     if report['catalog']['state']=='stale':
         report['status']='partial';messages.append('Le catalogue répond mal ; la dernière liste connue est utilisée. Sa date figure dans le diagnostic.')
