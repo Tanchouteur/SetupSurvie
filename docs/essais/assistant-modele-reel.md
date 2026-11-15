@@ -54,3 +54,10 @@ Ollama doit d’abord être au repos. La recette précharge uniquement ce modèl
 d’essai, puis laisse l’assistant préparer le modèle sélectionné. Le rapport
 conserve `switch_from` et les préparations mesurées. Cette option ne décharge
 aucun modèle tiers et ne lève pas une pause d’une installation réelle.
+
+Depuis 0.17.0, `--selected` donne une sélection explicite de cinq notices à
+l’assistant, sans recherche préparatoire globale. `--pdf-fixture` remplace ces
+notices par cinq petits PDF de six pages : chaque valeur utile se trouve à la
+page six. Ces options permettent de vérifier la sélection des pages et leurs
+références ; elles ne prouvent pas la lecture intégrale d’un livre. Les documents
+sont fabriqués dans le répertoire temporaire et ne sont pas conservés dans le dépôt.

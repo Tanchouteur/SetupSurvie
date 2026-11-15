@@ -661,6 +661,25 @@ def guide_metadata(db,identifier):
     return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path)}
 
 
+def focused_page(identifier,query):
+    """Choose an already indexed page inside this PDF only, never a new corpus.
+
+    Keep explicit page selections literal. Missing index/matches preserve the
+    original limited preview; this does not claim that every page was read.
+    """
+    if not identifier.startswith('guide:') or not identifier.lower().endswith('.pdf'):return identifier
+    plan=retrieval.plan(query,search_terms(query),SYNONYMS)
+    if not plan.words:return identifier
+    with store.connect() as db:
+        for relaxed in (False,True):
+            rows=db.execute("SELECT id,title,url,language,text AS _text FROM passages WHERE passages MATCH ? AND substr(id,1,?)=? AND substr(id,?,6)='#page=' ORDER BY bm25(passages) LIMIT 12",
+                (plan.fts(relaxed=relaxed),len(identifier),identifier,len(identifier)+1)).fetchall()
+            if rows:
+                ordered=retrieval.ordered([dict(row) for row in rows],plan,1)
+                if ordered:return ordered[0]['id']
+    return identifier
+
+
 async def source(identifier):
     if identifier.startswith('guide:'):
         with store.connect() as db:

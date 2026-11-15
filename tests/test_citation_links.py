@@ -1,5 +1,6 @@
 """Source links cannot rewrite prose or invent references from model JSON."""
 import unittest
+import json
 from pilot import citation_links,engine,research
 
 
@@ -42,6 +43,14 @@ class CitationLinkTests(unittest.TestCase):
         self.assertIn('Ne réécris aucun fait',messages[0]['content'])
         self.assertNotIn('Non lu',messages[1]['content'])
         self.assertIsNone(citation_links.messages('x'*4000,self.refs,2000))
+
+    def test_numerical_table_rows_are_sent_before_boilerplate_with_their_original_ids(self):
+        answer='Présentation fictive des documents.\n| Notice | Valeur |\n| --- | --- |\n| A | 17 unités |\n| B | 23 unités |'
+        parts=citation_links.fragments(answer)
+        packet=json.loads(citation_links.messages(answer,self.refs,4000)[1]['content'])
+        self.assertEqual(packet['fragments'][0]['text'],'| A | 17 unités |')
+        self.assertEqual(packet['fragments'][0]['id'],parts[-2]['id'])
+        self.assertEqual(citation_links.schema([1,2],parts)['properties']['citations']['maxItems'],24)
 
 
 if __name__=='__main__':unittest.main()

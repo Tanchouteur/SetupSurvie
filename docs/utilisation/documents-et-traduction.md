@@ -28,15 +28,46 @@ Depuis 0.1.29, les [profils locaux](profils-locaux.md) remplacent les mots de pa
 Les données dites privées ci-dessous restent hors du fonds public, mais toute
 personne du réseau peut choisir leur profil pour les consulter.
 
-## Garder un document dans une conversation
+## Choisir les documents d’une conversation — 0.17.0
 
-Depuis la Bibliothèque, ouvrir un document puis **Poser une question sur ce document**. Le document est enregistré côté serveur avec la première question, ou au démarrage d’une traduction. Rouvrir la conversation, recharger la page ou changer d’appareil avec le même compte conserve ensuite cette association.
+Dans les résultats de la **Bibliothèque**, utiliser **Choisir pour l’assistant**
+pour les documents à comparer. Le même bouton existe dans le lecteur textuel.
+Le premier choix crée une conversation enregistrée, sans démarrer l’IA ; les
+suivants s’y ajoutent. Le bandeau indique le nombre choisi et **Poser une question**
+ouvre l’assistant. La sélection accepte douze références au maximum ; une page
+précise de PDF peut être choisie séparément. Cette limite de dossier n’est pas une
+limite de taille de la bibliothèque.
 
-Le bandeau **Document associé** permet d’ouvrir la source ou de la **Retirer**. Le retrait est également conservé. Retirer le document ne supprime pas les passages déjà traduits. Une source absente ne devient pas disponible simplement parce que son titre est enregistré ; retirer ou remplacer une référence indisponible avant de poser une nouvelle question.
+Dans l’assistant, la liste des documents reste repliée pour laisser la réponse
+lisible. La déplier pour ouvrir ou retirer un document. La sélection est conservée
+côté serveur après rechargement et à la réouverture de la conversation sur un autre
+appareil avec le même profil. Retirer une référence ne supprime ni le fichier,
+ni les messages, ni les traductions déjà faites. Créer une **Nouvelle conversation**
+commence sans reprendre les documents de la précédente.
 
-Les anciennes conversations n’enregistraient pas ce lien : la mise à jour ne peut pas deviner le document initial à partir de plusieurs citations. Pour réassocier une source à une conversation existante, ouvrir cette conversation, consulter le document dans la Bibliothèque, puis choisir **Associer à la conversation ouverte**.
+**Poser une question sur ce document** conserve son rôle : ouvrir une nouvelle
+conversation autour de cette seule source. Un document ainsi choisi reste un
+brouillon jusqu’à la première question ou traduction. Pour composer une sélection
+persistante avant la question, préférer **Choisir pour l’assistant**.
 
-Un document sélectionné mais n’ayant donné lieu à aucune question ni traduction reste un brouillon dans le navigateur ; son association n’est pas encore enregistrée sur le serveur.
+Le dossier choisi est lu par passages adaptés à la question. Pour un PDF entier,
+le moteur peut retrouver une page tardive déjà indexée dans ce fichier ; une page
+explicitement choisie reste cette page. Sans correspondance indexée, le début
+limité reste disponible et signalé. Le modèle ne lit pas automatiquement tous
+les livres. Le suivi distingue les sources choisies, préparées et réellement
+consultées ; un document illisible ne valide aucune citation et ne bloque pas
+les autres. Voir le [guide de synthèse](synthese-documentaire.md).
+
+Pendant une réponse, attendre sa fin ou l’annuler pour modifier la sélection.
+Le serveur refuse aussi un deuxième envoi concurrent dans la même conversation.
+Une référence déjà choisie mais devenue indisponible reste retirable. Une nouvelle
+référence qui ne s’ouvre pas n’écrase pas la sélection précédente.
+
+Les anciennes conversations à un document sont reprises. La compatibilité avec
+l’ancien champ d’API `source` est conservée ; la liste s’appelle `selected_sources`.
+Les conversations plus anciennes sans association ne sont pas reconstituées à
+partir de leurs citations. Depuis une conversation ouverte, revenir à la
+Bibliothèque puis choisir les documents voulus.
 
 ## Traduire en français
 
@@ -45,7 +76,11 @@ haut d’une source anglaise : cela ouvre les commandes de traduction existantes
 dans l’assistant, sans démarrer le traitement automatiquement. Ce n’est pas une
 traduction instantanée de chaque page Kiwix, ni une traduction de vidéo.
 
-1. Associer le document et choisir le modèle dans **Temps à consacrer**.
+1. Choisir le document et le modèle dans **Temps à consacrer**. Avec plusieurs
+   documents associés, sélectionner **Document à traduire** dans le panneau.
+   La traduction traite ce seul document et conserve les autres choix.
+   Le sélecteur permet ensuite de préparer une autre traduction, sans supprimer
+   les passages de la précédente.
 2. Déplier **Traduire le document en français**. Pour un PDF, conserver la première page à 1 et la dernière vide pour tout le document, ou choisir une plage, par exemple 1 à 10. Les numéros désignent les pages du fichier PDF, pas forcément la pagination imprimée.
 3. Cliquer sur **Traduire en français**. Une demande simple dans la conversation, comme « traduit moi ce guide en français » ou « peux-tu me traduire le document entièrement en français », déclenche également la traduction complète dédiée. Les autres formulations gardent le traitement habituel de l’assistant ; pour une plage de pages, utiliser les champs du panneau.
 4. Suivre le nombre de passages traduits. Les passages se consultent par groupes de dix, avec leur page/section, le modèle utilisé et un accès à l’original.

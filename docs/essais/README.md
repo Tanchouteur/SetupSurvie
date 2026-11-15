@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Documents choisis et pages PDF](2026-11-15-documents-choisis-et-pages-pdf.md) — 0.17.0, sélection multiple persistante, traduction distincte et essais R7.
+
 - [Synthèse multi-source et modèles réels](2026-11-15-synthese-multi-sources-et-essais-reels.md) — 0.16.0, comparaison R7 avec 0.15.1, résultats et limites de fidélité.
 - [Recette de modèle réel](assistant-modele-reel.md) — corpus temporaire, ressources explicites et rapports privés, hors CI.
 

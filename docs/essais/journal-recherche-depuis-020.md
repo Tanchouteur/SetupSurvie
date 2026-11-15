@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.17.0 : [sélection multiple et pages PDF](2026-11-15-documents-choisis-et-pages-pdf.md).
+Les documents peuvent être choisis et conservés avant une question ; la traduction
+de l’un ne retire pas les autres. Le test réel atteint les pages 6 de cinq PDF
+fictifs avec les cinq valeurs et références correctes. Les limites du premier
+essai textuel, la CI et le reçu de livraison restent tracés dans ce bilan.
+
 Complément 0.16.0 : [dossier multi-source et premiers modèles réels](2026-11-15-synthese-multi-sources-et-essais-reels.md).
 La même question comparative lit zéro notice en 0.15.1, cinq en 0.16.0 avec Gemma
 sur le R7. Les faits et références sont corrects sur cet essai fictif ; une autre

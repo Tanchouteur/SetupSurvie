@@ -31,6 +31,30 @@ Le lecteur de métadonnées reconnaît aussi les modèles dont le gabarit ne pr�
 les outils qu’après le dernier message utilisateur ; leurs définitions de confiance
 restent alors visibles après les résultats d’outils, sans élever ces résultats au rôle système.
 
+## Sélection documentaire persistante — 0.17.0
+
+`conversation_document_choices` conserve la liste ordonnée privée des références,
+avec cascade sur la conversation. La table historique `conversation_sources`
+conserve le premier document pour les anciens lecteurs. Aucune conversation ou
+traduction existante n’est convertie destructivement ; le schéma de livraison
+reste 1. L’absence de la table optionnelle laisse utilisable l’association simple.
+Après un retour à un ancien code, une référence principale retirée ou différente
+ne ressuscite pas automatiquement la liste multiple précédente.
+
+L’API `POST /api/conversations` crée une conversation avec une sélection sans IA ;
+`PUT /api/conversations/{id}/sources` remplace cette liste après contrôle du profil.
+Les questions acceptent `source_ids`, et conservent le champ historique `source_id`.
+Le serveur refuse les changements et les doubles questions pendant une réponse.
+La lecture réelle au moment de la demande reste distincte du titre enregistré.
+Les métadonnées et textes documentaires passent par les résultats d’outils, sans
+être élevés au rôle système. La traduction choisit son document et conserve les autres.
+
+Pour un PDF entier, `focused_page` interroge uniquement ses passages déjà indexés,
+avec le vocabulaire commun, puis conserve l’identité de la page retenue. Le travail
+SQLite se fait dans un thread dont l’annulation attend la fermeture. Une page
+explicitement associée n’est pas remplacée ; sans résultat, l’aperçu demeure limité.
+Cette sélection n’est ni un OCR ni une synthèse exhaustive de toutes les pages.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

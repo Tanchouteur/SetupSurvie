@@ -116,7 +116,7 @@ async def translate(text,mode):
     return 'Construction d’un abri. Conservez les dimensions et les avertissements.\n'+text.replace('Page','Section').replace('Shelter','Abri').replace('construction warnings','avertissements de construction'),engine.MODES[mode]['model']
 translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.
-def launch(identifier,*args,domain='all'):
+def launch(identifier,*args,domain='all',source_ids=None):
     engine.PENDING.pop(identifier,None)
     refs=[];answer='Réponse simulée, aucun modèle lancé.'
     if args[-1]:

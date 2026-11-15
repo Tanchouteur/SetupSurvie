@@ -37,8 +37,9 @@ sources adaptés au contexte. Il ajoute lecture par lot, arrêt des répétition
 une liaison structurée des références et la conservation des réponses incomplètes.
 Les essais réels R7 portent sur un corpus fictif ; le [bilan](../essais/2026-11-15-synthese-multi-sources-et-essais-reels.md)
 distingue les faits retrouvés des erreurs de conclusion encore possibles.
-Association manuelle multiple, longues synthèses intermédiaires et illustrations
-restent à réaliser. Les paragraphes 0.15.x conservent le point de départ daté.
+La 0.17.0 ajoute la sélection manuelle multiple persistante et la lecture d’une
+page pertinente dans les PDF choisis. Longues synthèses intermédiaires et
+illustrations restent à réaliser. Les paragraphes 0.15.x conservent le point de départ daté.
 
 Le moteur d’assistant dispose déjà d’une boucle d’outils : trois étapes en mode
 rapide, six dans les autres modes. La préparation documentaire lit automatiquement

@@ -133,7 +133,8 @@
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}
   };
-  openConversation=async id=>{
+  openConversation=async (id,options)=>{
+    if(options?.silent)return baseOpen(id,options);
     if(S.job&&S.conversation!==id){toast('Attendez la réponse ou annulez la demande avant de changer de conversation.');return;}
     saveDraft();
     const route=fromLegacy('chat');route.params.set('conversation',id);

@@ -72,12 +72,15 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const modelContext=await browser.newContext();const modelPage=await modelContext.newPage();
       const modelRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_model_switch.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const modelResult=await modelRecipe(modelPage);await modelContext.close();
+      const choicesContext=await browser.newContext();const choicesPage=await choicesContext.newPage();
+      const choicesRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_document_choices.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      const choicesResult=await choicesRecipe(choicesPage);await choicesContext.close();
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);
       const nextTranslation=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
-      if(errors.length)throw Error(errors.join('\n'));
+      if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
       console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
       await context.close();await browser.close();browser=null;
     }

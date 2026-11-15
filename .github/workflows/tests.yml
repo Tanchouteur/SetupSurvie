@@ -90,6 +90,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
       - run: python -m unittest discover -s tests -p test_model_session.py -v
       - run: python -m unittest discover -s tests -p test_research.py -v
+      - run: python -m unittest discover -s tests -p test_associations.py -v
       - run: python -m unittest discover -s tests -p test_citation_links.py -v
       - run: python -m unittest discover -s tests -p test_real_assistant_check.py -v
       - run: python -m unittest discover -s tests -p test_documentary_evidence.py -v

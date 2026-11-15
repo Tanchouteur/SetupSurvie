@@ -40,7 +40,7 @@ class TestTransport(httpx.AsyncBaseTransport):
 async def check(args):
     report={'schema':1,'kind':'SetupSurvie real assistant check','created':time.time(),'model':args.model,
             'inference_options':{'num_gpu':args.gpu_layers,'num_thread':args.threads,'num_predict':args.predict,'num_ctx':args.context,'think':args.think},
-            'fictional_corpus':True,'real_model':True,'cases':[],'customer_hardware_validation':False}
+            'fictional_corpus':True,'pdf_fixture':args.pdf_fixture,'real_model':True,'cases':[],'customer_hardware_validation':False}
     base=Path(__file__).resolve().parents[1]
     report['software_version']=json.loads((base/'deploy/release.json').read_text())['version']
     report['source_digest']=hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest()
@@ -63,9 +63,19 @@ async def check(args):
         root=Path(directory);guides=root/'guides';guides.mkdir()
         records=[]
         for index,value in enumerate((17,23,31,43,59),1):
-            name=f'notice-{index}.fr.txt'
+            name=f'notice-{index}.fr.'+('pdf' if args.pdf_fixture else 'txt')
             text=('Contexte historique fictif sans consigne pratique. '*100)+f'\nSuivi des capteurs de la serre fictive : la notice {index} donne la valeur inventée {value} unités. Ce sont des données de test, pas des mesures réelles.\n'
-            (guides/name).write_text(text,encoding='utf-8')
+            if args.pdf_fixture:
+                from pypdf import PdfWriter
+                from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
+                writer=PdfWriter()
+                for page_number in range(1,7):
+                    page=writer.add_blank_page(width=300,height=400)
+                    page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
+                    words=f'Suivi des capteurs de la serre fictive : la notice {index} donne la valeur inventee {value} unites. Donnees de test, pas des mesures reelles.' if page_number==6 else 'Contexte fictif sans mesure ni instruction pratique.'
+                    stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+words+') Tj ET').encode());page[NameObject('/Contents')]=stream
+                writer.write(guides/name)
+            else:(guides/name).write_text(text,encoding='utf-8')
             records.append({'path':name,'title':f'Suivi des capteurs de la serre fictive — notice {index}','language':'fr','document_date':'2026-01-01','edition':str(index)})
         (guides/'metadata.json').write_text(json.dumps(records),encoding='utf-8')
         profile={'id':'real-local','name':'Essai local réel','model':args.model,'think':args.think}
@@ -96,7 +106,10 @@ async def check(args):
                     db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation,'user',question,now))
                     db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(identifier,'fixture',conversation,'real-local','queued',now,now))
                 print('Starting real model case:',name,flush=True)
-                task=asyncio.create_task(engine.run(identifier,'fixture',conversation,'real-local'))
+                selected=['guide:'+row['path'] for row in records] if args.selected else None
+                if selected:
+                    with store.connect() as db:store.set_conversation_source_choices(db,conversation,[{'id':'guide:'+row['path'],'title':row['title']} for row in records])
+                task=asyncio.create_task(engine.run(identifier,'fixture',conversation,'real-local',source_ids=selected))
                 while not task.done():
                     done,_=await asyncio.wait({task},timeout=20)
                     if done:break
@@ -106,6 +119,7 @@ async def check(args):
                 with store.connect() as db:job=dict(db.execute('SELECT * FROM jobs WHERE id=?',(identifier,)).fetchone())
                 measures=assistant_metrics.read(identifier);answer=job.get('answer') or ''
                 case={'name':name,'question':question,'status':job['status'],'error':job.get('error'),'answer':answer,
+                      'selection':'manual' if selected else 'automatic',
                       'sources':json.loads(job.get('sources') or '[]'),'measurements':measures,
                       'expected_fictional_values_present':[value for value in (17,23,31,43,59) if str(value) in answer]}
                 async with original_client(trust_env=False,timeout=5) as client:
@@ -129,6 +143,8 @@ def main():
     parser.add_argument('--model',required=True)
     parser.add_argument('--switch-from',help='Explicitly preload another installed test model, then test the selected model switch.')
     parser.add_argument('--case',choices=('all','simple','natural'),default='all')
+    parser.add_argument('--selected',action='store_true',help='Read an explicit five-document selection instead of the initial library search.')
+    parser.add_argument('--pdf-fixture',action='store_true',help='Use six-page fictional PDFs with the useful facts on page six.')
     parser.add_argument('--context',type=int,choices=(16384,32768),default=16384)
     parser.add_argument('--predict',type=int,choices=range(256,4097),default=1536)
     parser.add_argument('--think',choices=('false','true','low','medium','high'),default='false')

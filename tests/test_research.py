@@ -1,9 +1,11 @@
 """Real passage selection and byte budgets on tiny invented documents."""
 import asyncio
+from pathlib import Path
+import tempfile
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock,patch
 
-from pilot import engine,research
+from pilot import engine,research,library,store
 
 
 class PassageTests(unittest.TestCase):
@@ -53,6 +55,21 @@ class PassageTests(unittest.TestCase):
 
 
 class ReadingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_selected_pdf_reaches_an_indexed_late_page_and_retains_its_page_identity(self):
+        with tempfile.TemporaryDirectory() as directory,patch.object(store,'ROOT',Path(directory)):
+            store.init()
+            with store.connect() as db:
+                for identifier,text in [('guide:notice.pdf','Préface seulement.'),('guide:notice.pdf#page=2','Contexte sans mesure.'),('guide:notice.pdf#page=48','Compost et température : valeur fictive 42 unités.'),('guide:other.pdf#page=49','Compost et température : autre mesure fictive 99 unités.')]:
+                    table='passages' if '#page=' in identifier else 'documents'
+                    db.execute('INSERT INTO '+table+' VALUES(?,?,?,?,?)',(identifier,'Notice fictive','/fixture.pdf','fr',text))
+            refs={}
+            packet=await research.read(['guide:notice.pdf'],'température du compost',4000,{},lambda item,read:engine.reference(refs,item,read))
+            self.assertEqual(packet['results'][0]['id'],'guide:notice.pdf#page=48')
+            self.assertIn('42 unités',packet['results'][0]['passages'][0]['text'])
+            self.assertTrue(packet['results'][0]['partial_read']);self.assertNotIn('guide:other.pdf#page=49',refs)
+            self.assertEqual(library.focused_page('guide:notice.pdf#page=2','température du compost'),'guide:notice.pdf#page=2')
+            self.assertEqual(library.focused_page('guide:notice.pdf','sujet inexistant'),'guide:notice.pdf')
+
     async def test_five_distinct_sources_fit_and_all_refs_address_received_text(self):
         refs={};cache={}
         async def fetch(identifier):return {'id':identifier,'title':identifier,'text':identifier+'\n'+('Préface fictive. '*400)+'\nCompost et température : '+identifier}

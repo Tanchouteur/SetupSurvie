@@ -58,6 +58,8 @@ def init():
 
     # Optional schema cannot roll back or prevent the core initialization.
     schemas={
+        'associations':[
+            'CREATE TABLE IF NOT EXISTS conversation_document_choices(conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,source_id TEXT NOT NULL,title TEXT NOT NULL,position INTEGER NOT NULL,PRIMARY KEY(conversation_id,source_id))'],
         'documentary':[
             "CREATE TABLE IF NOT EXISTS documentary_evidence(job_id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,message_id INTEGER UNIQUE REFERENCES messages(id) ON DELETE CASCADE,summary TEXT NOT NULL,sources TEXT NOT NULL DEFAULT '[]')",
             'CREATE INDEX IF NOT EXISTS documentary_conversation ON documentary_evidence(conversation_id)'],
@@ -145,3 +147,40 @@ def set_conversation_source(db,identifier,source):
     if source:
         db.execute('INSERT INTO conversation_sources VALUES(?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET source_id=excluded.source_id,title=excluded.title',(identifier,source['id'],source['title']))
     else:db.execute('DELETE FROM conversation_sources WHERE conversation_id=?',(identifier,))
+    try:db.execute('DELETE FROM conversation_document_choices WHERE conversation_id=?',(identifier,))
+    except sqlite3.OperationalError:pass # Legacy single-document use remains available.
+
+
+class AssociationUnavailable(RuntimeError):pass
+
+
+def conversation_source_choices(identifier,db=None):
+    if db is None:
+        with connect() as connection:return conversation_source_choices(identifier,connection)
+    primary=db.execute('SELECT source_id AS id,title FROM conversation_sources WHERE conversation_id=?',(identifier,)).fetchone()
+    if not primary:return []
+    try:rows=[dict(row) for row in db.execute('SELECT source_id AS id,title FROM conversation_document_choices WHERE conversation_id=? ORDER BY position',(identifier,))]
+    except sqlite3.OperationalError:rows=[]
+    # A rollback can leave the new table intact while an old client changes the
+    # legacy association. Never resurrect choices after that explicit change.
+    if not rows or rows[0]['id']!=primary['id']:return [dict(primary)]
+    return [dict(primary),*rows[1:]]
+
+
+def set_conversation_source_choices(db,identifier,sources):
+    sources=list({source['id']:source for source in sources}.values())
+    if len(sources)>12:raise ValueError('Douze documents au maximum par conversation.')
+    if len(sources)>1 and not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='conversation_document_choices'").fetchone():
+        raise AssociationUnavailable('La sélection de plusieurs documents est momentanément indisponible.')
+    set_conversation_source(db,identifier,sources[0] if sources else None)
+    if len(sources)>1:
+        db.executemany('INSERT INTO conversation_document_choices VALUES(?,?,?,?)',[(identifier,source['id'],source['title'],position) for position,source in enumerate(sources)])
+
+
+def add_conversation_source(db,identifier,source):
+    # Starting a translation chooses its source without discarding the others.
+    choices=conversation_source_choices(identifier,db)
+    ordered=[source,*[item for item in choices if item['id']!=source['id']]]
+    if len(ordered)>12:raise ValueError('Retirez un document de la sélection avant d’en ajouter un autre.')
+    try:set_conversation_source_choices(db,identifier,ordered)
+    except AssociationUnavailable:set_conversation_source(db,identifier,source)

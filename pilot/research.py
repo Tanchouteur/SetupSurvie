@@ -91,8 +91,9 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
     async def load(identifier):
         async with semaphore:
             try:
-                if identifier not in cache:cache[identifier]=await asyncio.wait_for((fetch or library.source)(identifier),timeout=8)
-                return cache[identifier]
+                actual=await library.kiwix_queries.disk_io(library.focused_page,identifier,primary_query(query)) if fetch is None and identifier.lower().endswith('.pdf') else identifier
+                if actual not in cache:cache[actual]=await asyncio.wait_for((fetch or library.source)(actual),timeout=8)
+                return cache[actual]
             except Exception:return None
     loaded=await asyncio.gather(*(load(identifier) for identifier in identifiers)) if wanted else []
     result={'results':[],'failed':0,'omitted':0,'reading':'selected_passages','selection_limited':False}
@@ -108,7 +109,7 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
         remaining=maximum-size(result)-150
         allocation=remaining//max(1,min(wanted-len(result['results']),len(loaded)-index))
         # Reserve source metadata before selecting text. Do not mark it read yet.
-        metadata={key:item.get(key,'') for key in ('id','title','language','document_date','edition')}
+        metadata={key:item.get(key,'') for key in ('id','title','language','document_date','edition','archive_date','collected_at','provenance')}
         metadata.update({key:item[key] for key in ('is_ai_translation','original_id','original_title','original_document_date','original_edition','translation_notice') if key in item})
         parts=passages(item['text'],query,max(0,allocation-size(metadata)-220))
         if not parts:continue

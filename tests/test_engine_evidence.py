@@ -26,7 +26,7 @@ class EvidenceTests(unittest.TestCase):
         self.a={'id':'guide:a','title':'Notice A','language':'fr','text':'Charge annoncée : 10 kg.','document_date':'2010','edition':'A'}
         self.b={'id':'guide:b','title':'Notice B','language':'fr','text':'Charge annoncée : 20 kg.','document_date':'2024','edition':'B'}
 
-    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False):
+    def run_chat(self,messages,found=None,read=None,attached=None,expected_status='done',failure=False,native_context=131072,cancel_model=False,other_model=False,paused=False,selected=None):
         payloads=[];client_class=httpx.AsyncClient
         self.loads=[]
         def handler(request):
@@ -46,7 +46,7 @@ class EvidenceTests(unittest.TestCase):
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
         with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(return_value={'online':True,'paused':paused})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
              patch.object(engine.library,'search',AsyncMock(return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
-            asyncio.run(engine.run('j','u','c','rapide',attached))
+            asyncio.run(engine.run('j','u','c','rapide',attached,source_ids=selected))
             self.lookup_calls=engine.library.search.await_args_list
         with store.connect() as db:
             row=dict(db.execute('SELECT * FROM jobs WHERE id="j"').fetchone())
@@ -230,6 +230,28 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(assistant_metrics.read('j')['citation_revisions'],1)
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
 
+    def test_chosen_five_sources_are_read_without_search_and_source_text_stays_in_tool_data(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur la température du compost' WHERE role='user'")
+        sources={f'guide:{i}':{'id':f'guide:{i}','title':'Notice fictive '+str(i),'text':('Préface fictive sans consigne. '*200)+f'\nCompost et température : valeur fictive {i}. DOCUMENT-INSTRUCTION-FICTIVE-IGNORER.\n'} for i in range(5)}
+        payloads,answer=self.run_chat([{'content':'Cinq observations fictives [1] [2] [3] [4] [5].'}],read=sources.__getitem__,selected=list(sources))
+        self.assertEqual(self.lookup_calls,[]);self.assertEqual(answer['documentary']['sources_read'],5)
+        system='\n'.join(message['content'] for message in payloads[0]['messages'] if message['role']=='system')
+        self.assertNotIn('DOCUMENT-INSTRUCTION-FICTIVE-IGNORER',system)
+        packet=json.loads(next(message['content'] for message in payloads[0]['messages'] if message['role']=='tool'))
+        self.assertEqual(len(packet['results']),5)
+        for row in packet['results']:self.assertTrue(any('valeur fictive' in part['text'] for part in row['passages']))
+        measured=assistant_metrics.read('j');self.assertEqual(measured['selected_sources'],5);self.assertEqual(measured['prepared_sources'],5)
+
+    def test_an_unavailable_chosen_document_does_not_block_other_reads(self):
+        sources={self.a['id']:self.a,self.b['id']:self.b}
+        def read(identifier):
+            if identifier not in sources:raise HTTPException(404,'Fictional unavailable source')
+            return sources[identifier]
+        _,answer=self.run_chat([{'content':'Charges différentes [1] [2].'}],read=read,selected=['guide:missing',*sources])
+        self.assertEqual(answer['documentary']['sources_read'],2);self.assertEqual(answer['documentary']['failed_reads'],1)
+        self.assertEqual({source['id'] for source in answer['sources']},set(sources))
+        self.assertEqual(assistant_metrics.read('j')['selected_sources'],3)
+
     def test_link_format_does_not_spend_the_answer_thinking_budget(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
         with patch.dict(engine.MODES,{'rapide':{**engine.MODES['rapide'],'model':'gemma4:e4b','think':True}}):
@@ -329,10 +351,10 @@ class EvidenceTests(unittest.TestCase):
     def test_attached_partial_document_carries_edition_and_does_not_turn_archive_date_into_document_date(self):
         source={**self.a,'document_date':'','archive_date':'2026-05','text':'Première page. '*500}
         payloads,answer=self.run_chat([{'content':'Date du document inconnue ; édition A [1]. Cet extrait ne permet pas de conclure.'}],read=lambda _:source,attached='guide:a')
-        attached=payloads[0]['messages'][0]['content']
-        self.assertIn('"document_date": ""',attached)
-        self.assertIn('"archive_date": "2026-05"',attached)
-        self.assertIn('Le texte peut être incomplet',attached)
+        packet=json.loads(next(message['content'] for message in payloads[0]['messages'] if message['role']=='tool'))
+        attached=packet['results'][0]
+        self.assertEqual(attached['document_date'],'');self.assertEqual(attached['archive_date'],'2026-05')
+        self.assertEqual(attached['edition'],'A');self.assertTrue(attached['partial_read'])
         self.assertEqual(answer['sources'][0]['document_date'],'')
 
     def test_search_alone_is_not_exposed_to_the_browser_as_read_evidence(self):

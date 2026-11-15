@@ -43,6 +43,11 @@ la réponse. L’export conserve `prepared_sources`, `citation_linking`,
 `citation_revisions` et `stagnant_rounds`, sans ajouter de texte privé. Les anciennes
 mesures n’inventent pas ces champs. Voir le [guide de synthèse](synthese-documentaire.md).
 
+Depuis 0.17.0, **Documents choisis** (`selected_sources`) compte la sélection
+explicite avant la lecture. Ce nombre peut dépasser le nombre lu si une source
+échoue ou si le contexte limite le dossier. Un PDF choisi peut conduire à une
+page pertinente, dont l’identité apparaît dans les sources consultées.
+
 ## Changer de modèle pendant une conversation — 0.15.1
 
 Choisir un autre mode puis envoyer sa question suffit. Le portail indique le

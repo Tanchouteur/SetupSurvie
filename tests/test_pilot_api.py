@@ -194,8 +194,11 @@ class PilotAPITests(unittest.TestCase):
             conv=created['conversation_id']
             saved=self.client.get('/api/conversations/'+conv).json()
             self.assertEqual(saved['source']['id'],'guide:guide.en.txt')
-            self.client.post('/api/questions',json={'message':'Et ensuite ?','conversation_id':conv},headers=headers)
+            self.assertEqual(self.client.post('/api/questions',json={'message':'Et ensuite ?','conversation_id':conv},headers=headers).status_code,409)
+            with store.connect() as db:db.execute("UPDATE jobs SET status='done'")
+            self.assertEqual(self.client.post('/api/questions',json={'message':'Et ensuite ?','conversation_id':conv},headers=headers).status_code,200)
             self.assertEqual(launch.call_args.args[-1],'guide:guide.en.txt')
+        with store.connect() as db:db.execute("UPDATE jobs SET status='done'")
         self.assertEqual(self.client.put('/api/conversations/'+conv+'/source',json={'source_id':None},headers=headers).status_code,200)
         self.assertIsNone(self.client.get('/api/conversations/'+conv).json()['source'])
         with patch.object(library,'source',new_callable=AsyncMock) as source:

@@ -125,7 +125,8 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
         if not conversation_id:
             conversation_id=store.new_id()
             db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation_id,user_id,('Traduction : '+source['title'])[:80],time.time()))
-        store.set_conversation_source(db,conversation_id,source)
+        try:store.add_conversation_source(db,conversation_id,source)
+        except ValueError as error:raise HTTPException(409,str(error)) from None
         key=store.new_id();now=time.time()
         db.execute('INSERT INTO translations VALUES(?,?,?,?,?,?,?,?,?,?)',(key,user_id,conversation_id,source['id'],source['title'],mode,'queued',None,now,now))
         snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date')}
