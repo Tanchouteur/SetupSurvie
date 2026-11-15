@@ -44,8 +44,8 @@ pas le texte. Cette adaptation suit l’essai défavorable consigné ci-dessous.
   réel. Tests nouveaux d’API, persistance, isolation par profil, traduction,
   sélection illisible, repli sans table optionnelle, pause, doubles envois et
   lecture réelle des passages indexés tardifs.
-- Chromium et WebKit : **77 contrôles ciblés par navigateur**, dont sélection
-  multiple 17, confort 37 et mesures 23. La traduction existante a également été
+- Chromium et WebKit : **79 contrôles ciblés par navigateur**, dont sélection
+  multiple 19, confort 37 et mesures 23. La traduction existante a également été
   rejouée sur Chromium : association, pause/reprise, export et plage PDF conservés.
   Aucun iPhone physique ni Windows de Marc testé dans le runner.
 - JavaScript vérifié, HTML régénéré, versions API/manifeste 0.17.0 cohérentes.

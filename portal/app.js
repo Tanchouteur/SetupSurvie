@@ -1,6 +1,6 @@
 /* All data and actions use the local server. No external assets or browser-stored tokens. */
 const $=id=>document.getElementById(id);
-const S={view:'home',user:null,conversation:null,source:null,sources:[],sourceChanging:false,job:null,poll:null,status:null,searchAbort:null,translation:null,translationOffset:0};
+const S={view:'home',user:null,conversation:null,source:null,sources:[],sourceChanging:false,sending:false,job:null,poll:null,status:null,searchAbort:null,translation:null,translationOffset:0};
 const EMPTY=$('chat-messages').innerHTML;
 let contentTimer=null,contentState=null,contentInitialized=false,contentCommandBusy=false;
 const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',settings:'Paramètres',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Profils locaux'};
@@ -175,11 +175,12 @@ function message(role,text,sources=[],profile='',observed=null){
   $('chat-messages').append(node);return {node,body,tracking};
 }
 function newConversation(){
-  if(S.sourceChanging){toast('Attendez la fin du choix des documents.');return;}
+  if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
   if(S.job){toast('Attendez la réponse ou annulez la demande avant d’ouvrir une autre conversation.');view('chat');return;}
   rememberReading();selectReading(null);S.conversationLoad=(S.conversationLoad||0)+1;S.loadingConversation=false;S.conversation=null;S.source=null;S.sources=[];clearTranslation();showAssociatedSource();$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');document.dispatchEvent(new CustomEvent('survie:new-conversation'));
 }
 async function openConversation(id,{silent=false}={}){
+  if(S.sending){toast('La question est en cours d’envoi.');return;}
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
   rememberReading();S.loadingConversation=true;const load=S.conversationLoad=(S.conversationLoad||0)+1;
   try{const data=await api('/conversations/'+encodeURIComponent(id));if(load!==S.conversationLoad)return;S.conversation=id;S.sources=data.selected_sources||(data.source?[data.source]:[]);S.source=S.sources[0]||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages)message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'',m.documentary);if(!silent)view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);if(match)loadTranslation(match.id);else if(!data.translation_items&&data.translations?.length)loadTranslation(data.translations[0]);document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));if(!silent)restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{if(load===S.conversationLoad){S.loadingConversation=false;refreshSourceChoices();}}
@@ -290,7 +291,7 @@ async function readSource(id){
   }
 }
 function askSource(source){
-  if(S.sourceChanging){toast('Attendez la fin du choix des documents.');return;}
+  if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
   if(S.job){toast('Attendez la réponse en cours ou annulez-la.');return;}
   newConversation();S.source=source;S.sources=[source];showAssociatedSource();view('chat');$('chat-input').focus();
 }
@@ -298,18 +299,19 @@ let translationTimer=null,translationVersion=0,translationBusy=false;
 function clearTranslation(){clearTimeout(translationTimer);translationVersion++;S.translation=null;S.translationSource=null;S.translationOffset=0;$('translation-panel').open=false;$('translation-parts').replaceChildren();$('translation-status').textContent='';$('translation-summary').textContent='Traduire le document en français';$('translation-progress').hidden=true;$('translation-progress').value=0;$('translation-progress').max=1;document.dispatchEvent(new CustomEvent('survie:translation-clear'));for(const id of ['translation-pause','translation-resume','translation-export','translation-previous','translation-next'])$(id).hidden=true;$('translation-start').hidden=false;$('translation-first').value='1';$('translation-last').value='';}
 function selectedSourceChoices(){return S.sources?.length?S.sources:S.source?[S.source]:[];}
 function sourceChoiceButton(source){
-  const b=button('',()=>toggleSourceChoice(source),'secondary source-choice-action');b.dataset.choiceId=source.id;const chosen=selectedSourceChoices().some(item=>item.id===source.id);b.textContent=chosen?'Choisi pour l’assistant':'Choisir pour l’assistant';b.setAttribute('aria-pressed',String(chosen));b.disabled=!!(S.sourceChanging||S.job||S.loadingConversation);return b;
+  const b=button('',()=>toggleSourceChoice(source),'secondary source-choice-action');b.dataset.choiceId=source.id;const chosen=selectedSourceChoices().some(item=>item.id===source.id);b.textContent=chosen?'Choisi pour l’assistant':'Choisir pour l’assistant';b.setAttribute('aria-pressed',String(chosen));b.disabled=!!(S.sourceChanging||S.sending||S.job||S.loadingConversation);return b;
 }
 function refreshSourceChoices(){
   const ids=new Set(selectedSourceChoices().map(source=>source.id));
+  if($('translation-target'))$('translation-target').disabled=!!(S.sourceChanging||S.sending||translationBusy);
   for(const b of document.querySelectorAll('.source-choice-action')){
-    b.disabled=!!(S.sourceChanging||S.job||S.loadingConversation);
+    b.disabled=!!(S.sourceChanging||S.sending||S.job||S.loadingConversation);
     if(b.dataset.choiceId){const chosen=ids.has(b.dataset.choiceId);b.setAttribute('aria-pressed',String(chosen));b.textContent=chosen?'Choisi pour l’assistant':'Choisir pour l’assistant';}
   }
 }
 async function changeSourceChoices(choices){
   if(!needUser())return false;
-  if(S.job||S.sourceChanging||S.loadingConversation){toast('Attendez la fin du travail en cours avant de modifier les documents.');return false;}
+  if(S.job||S.sourceChanging||S.sending||S.loadingConversation){toast('Attendez la fin du travail en cours avant de modifier les documents.');return false;}
   const conversation=S.conversation,user=S.user.id,primary=S.source?.id;S.sourceChanging=true;refreshSourceChoices();
   try{
     const data=conversation?await api('/conversations/'+encodeURIComponent(conversation)+'/sources',{source_ids:choices.map(source=>source.id)},{method:'PUT'}):choices.length?await api('/conversations',{source_ids:choices.map(source=>source.id)}):{source:null,selected_sources:[]};
@@ -342,7 +344,7 @@ function showAssociatedSource(){
     const label=element('label','Document à traduire');label.id='translation-target-label';target=element('select');target.id='translation-target';label.append(target);$('translation-range').before(label);
     target.onchange=()=>{S.source=selectedSourceChoices().find(source=>source.id===target.value)||null;clearTranslation();showAssociatedSource();};
   }
-  target.replaceChildren();for(const source of choices){const option=element('option',source.title);option.value=source.id;target.append(option);}target.value=S.source?.id||'';
+  target.replaceChildren();for(const source of choices){const option=element('option',source.title);option.value=source.id;target.append(option);}target.value=S.source?.id||'';target.disabled=!!(S.sourceChanging||S.sending||translationBusy);
   $('translation-target-label').hidden=choices.length<2;
   $('translation-panel').hidden=!S.source&&!S.translation;
   $('translation-start').disabled=!S.source||translationBusy||S.sourceChanging;$('translation-range').hidden=!S.source?.id.toLowerCase().split('#page=')[0].endsWith('.pdf')||!!S.translation;
@@ -401,7 +403,7 @@ async function translationAction(action){
     }
     await loadTranslation(data.id,0);$('translation-panel').open=true;return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
-  finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;}
+  finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;refreshSourceChoices();}
 }
 $('translation-start').onclick=()=>translationAction('start');$('translation-pause').onclick=()=>translationAction('pause');$('translation-resume').onclick=()=>translationAction('resume');
 $('translation-previous').onclick=()=>loadTranslation(S.translation,Math.max(0,S.translationOffset-10));$('translation-next').onclick=()=>loadTranslation(S.translation,S.translationOffset+10);
@@ -411,13 +413,14 @@ function wholeDocumentTranslation(text){
   return /^(?:(?:peux[- ]tu|peut tu|pourrais[- ]tu)\s+)?(?:me\s+)?tradui(?:s|t|re|sez)\s+(?:moi\s+)?(?:(?:ce|le|tout le)\s+)?(?:document|guide|livre|manuel)(?:\s+(?:entierement|en francais|entier|complet|stp|ici))*[.!?]?$/.test(normalized);
 }
 async function send(event){
-  event.preventDefault();if(!needUser()||S.job||S.sourceChanging)return;
+  event.preventDefault();if(!needUser()||S.job||S.sourceChanging||S.sending)return;
   const text=$('chat-input').value.trim();if(!text)return;
   if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
-  $('send-question').disabled=true;
+  S.sending=true;$('send-question').disabled=true;refreshSourceChoices();
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
     if(!S.conversation||!$('chat-messages').querySelector('.message')){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
   }catch(e){toast(e.message);$('send-question').disabled=false;}
+  finally{S.sending=false;refreshSourceChoices();}
 }
 function watch(id){
   clearTimeout(S.poll);S.job=id;refreshSourceChoices();$('cancel-job').hidden=false;$('send-question').disabled=true;const pending=message('assistant','Préparation de la réponse…');

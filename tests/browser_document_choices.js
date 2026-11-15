@@ -25,7 +25,12 @@ async page=>{
   await page.setViewportSize({width:1366,height:900});
   const fresh=await page.context().newPage();await fresh.goto(base+'/#/assistant?conversation='+conversation);await fresh.waitForFunction(id=>S.conversation===id&&!S.loadingConversation,conversation);
   check(await fresh.evaluate(()=>S.sources.length===3),'Sélection enregistrée côté serveur retrouvée dans un autre onglet');await fresh.close();
+  let sendRelease;const sendGate=new Promise(resolve=>sendRelease=resolve);
+  await page.route('**/api/questions',async route=>{const response=await route.fetch();await sendGate;await route.fulfill({response});});
   await page.locator('#chat-input').fill('Compare les documents fictifs choisis et cite leurs différences.');await page.locator('#send-question').click();
+  await page.waitForFunction(()=>S.sending===true);
+  check(await page.locator('#chat-source .source-choice-action').evaluateAll(nodes=>nodes.every(node=>node.disabled)),'Sélection verrouillée pendant l’envoi de la question');
+  await page.locator('#chat-reset').click();check(await page.evaluate(()=>S.conversation)!==null,'Nouvelle conversation différée pendant l’envoi');sendRelease();
   await page.waitForFunction(()=>!S.job&&document.querySelector('.message-assistant'));
   check(requests.length===1&&requests[0].source_ids.length===3&&!('source_id' in requests[0]),'Une seule question transmet tous les documents choisis');
   await page.reload();await page.waitForFunction(id=>S.conversation===id&&!S.loadingConversation,conversation);

@@ -135,6 +135,7 @@
   };
   openConversation=async (id,options)=>{
     if(options?.silent)return baseOpen(id,options);
+    if(S.sending){toast('La question est en cours d’envoi.');return;}
     if(S.job&&S.conversation!==id){toast('Attendez la réponse ou annulez la demande avant de changer de conversation.');return;}
     saveDraft();
     const route=fromLegacy('chat');route.params.set('conversation',id);
