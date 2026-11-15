@@ -118,3 +118,5 @@
 
 /* Explicit document choices stay compact above the conversation. */
 .chosen-documents{width:100%;min-width:0}.chosen-documents>summary{cursor:pointer;font-weight:600;padding:6px 0}.chosen-documents-list{max-height:min(150px,22vh);overflow:auto}.chosen-document{display:flex;gap:12px;justify-content:space-between;align-items:center;border-top:1px solid #dce6d5}.chosen-document>button:first-child{min-width:0;flex:1}.chosen-document>button:last-child{flex:none}.chosen-documents>p{margin:6px 0;font-size:12px}.library-chosen-documents{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;border:1px solid #dce6d5;background:#eef3eb;border-radius:10px;margin:12px 0}.library-chosen-documents[hidden]{display:none}#translation-target-label{font-size:13px;margin:8px 0}#translation-target{max-width:100%;font-size:13px}
+/* Keep long-reading controls still when leaving the mobile question field. */
+@media(max-width:760px){.next-interface.chat-open:has(#summary-panel[open]) .chat-top{display:flex}.next-interface.chat-open:has(#summary-panel[open]) .native-help{display:block}}

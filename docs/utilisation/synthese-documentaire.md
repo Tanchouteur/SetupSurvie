@@ -117,9 +117,9 @@ sans supprimer les documents originaux.
 La préparation accepte douze références au maximum, jusqu’à 1 200 pages par PDF,
 300 Mo par PDF, cinq millions de caractères par document et vingt millions pour
 le dossier. Chaque étape reçoit un volume borné par le contexte du modèle ;
-elle peut échouer et être reprise sans perdre les étapes précédentes. Un livre
-textuel de 500 pages entre généralement dans ces plafonds, mais sa fidélité,
-son temps de traitement et ses tableaux ne sont pas validés par cette seule taille.
+elle peut échouer et être reprise sans perdre les étapes précédentes. Le nombre de pages ne suffit pas à garantir qu’un livre de 500 pages entre
+dans ces plafonds ; sa fidélité, son temps de traitement et ses tableaux restent
+à éprouver sur de vrais documents.
 
 **Passage examiné ne signifie pas fait compris ou conservé.** Le modèle sélectionne
 et compresse les informations ; il peut encore omettre un fait ou produire une

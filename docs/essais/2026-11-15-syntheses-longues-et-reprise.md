@@ -107,8 +107,14 @@ Les essais précédents et leurs limites restent conservés : ce rejeu ne les ef
 
 - 686 tests unitaires réussis, dont trois ignorés propres à Windows sur le runner
   Linux ; les 21 tests ciblés du nouveau parcours passent aussi séparément.
-- 95 contrôles par Chromium et WebKit : synthèse longue 16, sélection 19,
+- 97 contrôles par Chromium et WebKit : synthèse longue 18, sélection 19,
   confort 37 et diagnostic 23. Les liens de dernière page sont réellement ouverts.
 - 418 liens locaux et ancres vérifiés dans les documents concernés ; `git diff --check`
   sans erreur. Aucun modèle ni corpus lourd téléchargé dans le runner CPU.
 - Aucune installation, mise à jour ni validation physique Windows/iPhone chez Marc.
+
+Le suivi conserve maintenant les extraits dépliés lors des actualisations et
+ajoute la réponse finale sans recharger la conversation. Le parcours commence
+aussi sur écran mobile : quitter le champ de question déplaçait l’en-tête pendant
+le clic et pouvait faire viser le mauvais contrôle. L’en-tête reste stable lorsque
+le panneau de synthèse est ouvert ; le clic réel est protégé par la recette.

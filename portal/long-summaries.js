@@ -35,12 +35,20 @@
       progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.read+data.unreadable;
       start.hidden=true;pause.hidden=!S.summaryActive;resume.hidden=S.summaryActive||data.status==='completed';download.hidden=false;download.href='/api/summaries/'+encodeURIComponent(id)+'/export';
       sources.replaceChildren();for(const source of data.inputs){const row=element('p',undefined,'small');row.append(button('['+source.number+'] '+source.title,()=>readSource(source.source_id),'text-button'),document.createTextNode(' — '+(source.error||({pending:'Texte à préparer',ready:'Texte conservé pour cette synthèse',unavailable:'Indisponible'}[source.status]||source.status))));sources.append(row);}
-      noteBody.replaceChildren();for(const step of data.nodes){const article=element('article',undefined,'translation-part');article.append(element('h3','Étape '+(step.id+1)+(step.level?' · regroupement':' · lecture')));
+      const existing=new Map([...noteBody.children].map(node=>[node.dataset.stepId,node])),articles=[];
+      for(const step of data.nodes){let article=existing.get(String(step.id));if(article){articles.push(article);continue;}article=element('article',undefined,'translation-part');article.dataset.stepId=String(step.id);articles.push(article);article.append(element('h3','Étape '+(step.id+1)+(step.level?' · regroupement':' · lecture')));
         for(const note of step.notes){article.append(element('p',note.text));if(note.quote){const quote=element('details');quote.append(element('summary','Source ['+note.source_number+'], page/section '+note.page),element('blockquote',note.quote));const source=data.inputs.find(source=>source.number===note.source_number);if(source){const base=source.source_id.split('#page=')[0],target=base.startsWith('guide:')&&base.toLowerCase().endsWith('.pdf')?base+'#page='+note.page:source.source_id;quote.append(button('Consulter ce passage dans l’original',()=>readSource(target),'text-button'));}article.append(quote);}}
-        if(!step.notes.length)article.append(element('p','Aucune information retenue pour la demande dans ces passages.','small muted'));noteBody.append(article);}
+        if(!step.notes.length)article.append(element('p','Aucune information retenue pour la demande dans ces passages.','small muted'));}
+      if(articles.length!==noteBody.children.length||articles.some((article,index)=>noteBody.children[index]!==article))noteBody.replaceChildren(...articles);
       notes.hidden=!data.node_count;previous.hidden=position===0;next.hidden=position+data.nodes.length>=data.node_count;
       refreshSourceChoices();refresh();
-      if(data.status==='completed'&&wasActive){await openConversation(conversation,{silent:true});return;}
+      if(data.status==='completed'&&wasActive){
+        const history=await api('/conversations/'+encodeURIComponent(conversation));
+        if(generation!==version||conversation!==S.conversation||user!==S.user?.id)return;
+        const answer=history.messages.find(item=>item.id===data.message_id);
+        if(answer&&!$('chat-messages').querySelector('[data-summary-message="'+id+'"]')){const box=$('chat-messages'),bottom=box.scrollHeight-box.clientHeight-box.scrollTop<24;message('assistant',answer.content,answer.sources,'Synthèse longue · '+(answer.model||'Assistant')).node.dataset.summaryMessage=id;if(bottom)box.scrollTop=box.scrollHeight;rememberReading();}
+        return;
+      }
       if(S.summaryActive&&S.view==='chat')timer=setTimeout(()=>load(id,position),2500);
     }catch(error){if(generation===version){state.textContent=error.message;if(S.view==='chat'&&error.status!==404&&error.status!==401)timer=setTimeout(()=>load(id,position),5000);}}
   }

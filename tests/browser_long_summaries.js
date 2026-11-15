@@ -4,6 +4,7 @@ async page=>{
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   page.on('pageerror',e=>errors.push(e.message));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
+  await page.setViewportSize({width:390,height:844});
   await page.goto(base+'/#/assistant');await page.waitForFunction(()=>S.user&&!S.loadingConversation);
   await page.locator('#chat-reset').click();
   await page.evaluate(async()=>{await attachToConversation({id:'guide:shelter.en.pdf',title:'PDF fictif complet'});});
@@ -11,6 +12,7 @@ async page=>{
   check(!await page.locator('#summary-panel').evaluate(n=>n.open),'Le suivi reste replié au départ');
   await page.locator('#summary-panel').evaluate(n=>n.open=true);
   await page.locator('#chat-input').fill('Compare les informations fictives du PDF entier.');
+  await page.waitForFunction(()=>!S.loadingConversation&&!S.sourceChanging&&!S.sending);
   await page.locator('#summary-start').click();
   await page.waitForFunction(()=>S.summaryActive&&!S.sending);
   const conv=await page.evaluate(()=>S.conversation);
@@ -18,8 +20,12 @@ async page=>{
   await page.waitForFunction(()=>document.getElementById('summary-status').textContent.length>0);
   check(await page.locator('#chat-source .source-choice-action').evaluateAll(nodes=>nodes.every(n=>n.disabled)),'Choix figés pendant la lecture longue');
   await page.locator('#summary-panel').evaluate(n=>n.open=true);
+  await page.waitForFunction(()=>document.querySelector('#summary-notes article details'));
+  await page.locator('#summary-notes').evaluate(node=>node.open=true);
+  await page.locator('#summary-notes article details').first().evaluate(node=>node.open=true);
   await page.locator('#summary-pause').click();
   await page.waitForFunction(()=>!S.summaryActive&&document.getElementById('summary-status').textContent.includes('pause'));
+  check(await page.locator('#summary-notes article details').first().evaluate(node=>node.open),'Les extraits ouverts restent ouverts pendant le suivi et la pause');
   const paused=await(await page.request.get(base+'/api/summaries/'+id)).json();
   check(paused.status==='paused','Pause conservée côté serveur');
   await page.reload();await page.waitForFunction(()=>S.conversation&&!S.loadingConversation&&document.getElementById('summary-export').getAttribute('href'));
@@ -33,6 +39,7 @@ async page=>{
   await page.setViewportSize({width:1366,height:900});await page.locator('#summary-panel').evaluate(n=>n.open=true);
   await page.locator('#summary-resume').click();
   await page.waitForFunction(()=>document.querySelector('.message-assistant')?.textContent.includes('Synthèse fictive'),{timeout:30000});
+  check(await page.locator('#summary-panel').evaluate(node=>node.open),'La rédaction terminée ne referme pas le suivi ouvert');
   const completed=await(await page.request.get(base+'/api/summaries/'+id)).json();
   check(completed.status==='completed'&&completed.pending===0,'Lecture et rédaction menées à leur terme');
   check(completed.read===completed.total&&completed.total>6,'PDF entier lu au-delà de son aperçu');
