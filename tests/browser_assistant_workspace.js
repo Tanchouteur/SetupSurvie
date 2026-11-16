@@ -1,7 +1,7 @@
 async page=>{
  const base='http://10.0.3.2:8769',checks=[],errors=[];
  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};page.on('pageerror',e=>errors.push(e.message));
- await page.setViewportSize({width:1440,height:950});await page.goto(base+'/#/assistant');await page.waitForFunction(()=>S.authReady&&S.user);
+ await page.setViewportSize({width:1440,height:950});await page.goto(base+'/#/assistant');await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady&&S.user);
  check(await page.locator('#assistant-history').isVisible()&&await page.locator('#assistant-documents').isVisible(),'Deux volets PC visibles');
  check(await page.locator('#chat-input').isVisible(),'Discussion et saisie au centre');
  await page.locator('#assistant-folder-create').click();await page.locator('#assistant-editor input').fill('Potager '+Date.now());await page.locator('#assistant-editor button[type=submit]').click();
@@ -15,7 +15,7 @@ async page=>{
  check(await page.locator('#chat-title').innerText()===title,'Conversation renommée sans nouvel envoi');
  const renamed=page.locator('#conversation-list .conversation-row').filter({has:page.getByRole('button',{name:title,exact:true})});await renamed.locator('summary').click();
  const folder=await renamed.locator('select option').last().getAttribute('value');await renamed.locator('select').selectOption(folder);
- await page.waitForTimeout(150);await page.reload();await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+ await page.waitForTimeout(150);await page.reload();await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady&&S.user&&!S.loadingConversation);
  const stored=await page.request.get(base+'/api/conversations?folder='+folder);check((await stored.json()).conversations.some(c=>c.id===id),'Classement conservé au rechargement');
  await page.locator('#assistant-history input[type=search]').fill(title);await page.waitForFunction(()=>document.querySelectorAll('#conversation-list .conversation-row').length===1);check(true,'Recherche dans les conversations');
  await page.locator('#chat-reset').click();check(await page.locator('#conversation-list [aria-current=true]').count()===0,'Nouvelle discussion retire l’ancienne sélection');

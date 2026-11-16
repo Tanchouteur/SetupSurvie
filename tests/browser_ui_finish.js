@@ -6,7 +6,7 @@ async (page) => {
   page.on('pageerror', e => errors.push(e.message));
   await page.request.post(base + '/api/profiles/select', {data:{id:'browser'}, headers:{Origin:base}});
   await page.setViewportSize({width:1920, height:1080});
-  await page.goto(base + '/#/assistant'); await page.waitForFunction(() => S.authReady && S.user);
+  await page.goto(base + '/#/assistant'); await page.waitForFunction(() => typeof S!=='undefined' && S.authReady && S.user);
   await page.locator('#chat-reset').click();
   await page.evaluate(() => {
     $('chat-title').textContent = 'Une question longue, avec plusieurs documents et des explications à retrouver dans la conversation';
@@ -45,6 +45,7 @@ async (page) => {
       await page.locator('[data-assistant-zone=history]').click();
       await page.locator('[data-close-panel=history]').click();
       check(await page.locator('#chat-input').isVisible(), 'Retour à la saisie sans bouton intermédiaire à '+width);
+      await page.locator('#chat-input').focus();check(await page.locator('[data-assistant-zone=documents]').isVisible(),'Volets accessibles pendant la saisie à '+width);
     }
     check(await fit(), 'Conversation peuplée sans débordement à '+width);
     check(await page.locator('#chat-reset').isVisible(), 'Nouvelle discussion accessible à '+width);
@@ -53,7 +54,7 @@ async (page) => {
   for (const width of [1440,1024,390,320]) {
     await page.setViewportSize({width, height:950});
     for (const route of ['reglages','acces','bibliotheque','assistant','entretien']) {
-      await page.goto(base + '/#/appareil/'+route); await page.reload(); await page.waitForFunction(() => S.authReady && S.user);
+      await page.goto(base + '/#/appareil/'+route); await page.reload(); await page.waitForFunction(() => typeof S!=='undefined' && S.authReady && S.user);
       const cards=await page.locator('.settings-pane:not([hidden]) .settings-destination').evaluateAll(ns => ns.filter(n=>n.getClientRects().length).map(n=>({
         height:n.getBoundingClientRect().height,
         valid:!!n.querySelector('strong')?.textContent && !!n.querySelector('span.muted')?.textContent && !!n.querySelector('.settings-arrow')?.textContent,
@@ -65,7 +66,7 @@ async (page) => {
     }
     await page.goto(base + '/#/bibliotheque/recherche?q=Shelter'); await page.waitForSelector('#search-results .result');
     check(await fit(), 'Recherche et libellés masqués sans débordement à '+width);
-    await page.goto(base + '/#/bibliotheque/collections'); await page.waitForFunction(()=>S.authReady);
+    await page.goto(base + '/#/bibliotheque/collections'); await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady);
     const help=page.getByRole('button',{name:'Comprendre le filtre des collections',exact:true});
     await help.click();
     check(await help.getAttribute('aria-expanded')==='true', 'Aide facultative disponible à '+width);

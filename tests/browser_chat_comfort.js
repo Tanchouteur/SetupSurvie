@@ -5,7 +5,7 @@ async page => {
   page.on('pageerror',e=>errors.push(e.message));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.setViewportSize({width:1440,height:900});await page.goto(base+'/#/assistant');
-  await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+  await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady&&S.user&&!S.loadingConversation);
   await page.locator('#chat-reset').click();
   await page.waitForFunction(()=>!S.conversation&&!S.source&&!S.translation);
   await page.evaluate(()=>{
