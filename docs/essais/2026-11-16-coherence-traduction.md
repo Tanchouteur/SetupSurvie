@@ -1,6 +1,6 @@
 # Vocabulaire et cohérence des traductions longues
 
-**Bilan daté — candidat 0.32.0, 16 novembre 2026.** Nouvelle fonction compatible,
+**Bilan daté — 0.32.0, 16 novembre 2026.** Nouvelle fonction compatible,
 incrément mineur après 0.31.0. Les modèles, images et empreintes des dépendances
 restent inchangés. Guide actuel : [documents et traduction](../utilisation/documents-et-traduction.md#garder-les-mêmes-mots-dans-un-document--0320).
 
@@ -143,3 +143,18 @@ l’état complet dans l’assertion. Ce test d’arrêt ne constitue pas une me
 performance disque ; les assertions d’arrêt, conservation d’un passage et reprise
 volontaire restent inchangées. Les six tests de vocabulaire/budget sont ajoutés
 explicitement au job Windows. Le rejeu complet est indiqué après son exécution.
+
+La suite Linux du code `9c86208b474e1d550843f3de0ebae0382050ed1a` passe
+**905 tests en 55,719 s, 6 ignorés** dans le CI avec libzim préparé. Aucun
+avertissement de transport ou boucle asynchrone fermée n’est repéré dans ce journal.
+L’éditeur mobile a été relu : le champ français et l’enregistrement sont accessibles
+par défilement à l’intérieur du panneau, sans masquer la saisie de conversation.
+
+## Validation complète
+
+Les **huit jobs CI** du code `9c86208b474e1d550843f3de0ebae0382050ed1a`
+réussissent : [exécution 43916719961](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43916719961).
+Cela inclut les tests Windows de traduction/vocabulaire, les lecteurs isolés,
+la recherche Kiwix, le routage et toute la recette navigateur. Le premier échec
+Windows reste documenté ci-dessus. Les ajouts suivants concernent la documentation.
+Aucun déploiement sur un PC utilisateur n’est effectué par cette livraison.

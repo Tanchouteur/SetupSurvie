@@ -5,6 +5,36 @@ points du retour de Marc et de fiabiliser en priorité le cœur de recherche.
 Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais le programme L1–L9, décisions, critères de fin et pistes écartées. Les [recettes progressives](../essais/recettes-progressives-marc.md) précisent les rapports à demander et les blocages à annoncer. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
 observations ; ce suivi distingue réalisation et validations manquantes.
 
+## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.32.0
+
+L’objectif actif reste l’utilité réelle de l’assistant et une première version
+fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
+un CI vert ne suffit pas à qualifier tout le fonds réel. Le tableau historique
+plus bas conserve le point de départ du 14 novembre ; le [plan L1–L9](plan-ameliorations-marc.md)
+et les bilans liés sont les références de réalisation.
+
+| Partie | Preuve actuelle | Ce qui reste concret |
+| --- | --- | --- |
+| Recherche classique et index | R2 Marc 0.25.0 : 32 demandes, 31 avec résultats ; 120 index natifs compatibles et 15 compléments pour 135 archives. [Rapport et limites](../essais/2026-11-16-rapports-marc-0250.md) | Avis humains manquants, couverture encore partielle dans ce rapport, ouverture de résultats prioritaires et mesure après SSD à faire sur Marc |
+| Assistant documentaire | [Essai R7 0.32.0](../essais/2026-11-16-coherence-traduction.md#contrôle-connexe-du-changement-de-modèle-et-des-sources) : première demande après changement de cible, cinq PDF effectivement lus en page 6, cinq valeurs référencées, 14,461 s | Le changement avec coexistence de modèles ne prouve pas l’éviction sous saturation ni les refus de démarrage Windows ; exporter les traces d’un cas réel si nécessaire |
+| Traductions longues | 40 pages fictives terminées sur Marc ; vocabulaire personnel figé et repère borné 0.32.0 ; chapitre réel de notice, 9 passages et reprise/lecture testés sur R7 | Cohérence complète d’un livre réel de 500 pages et sémantique de chaque passage non certifiées ; poursuivre la relecture progressive, sans transformer les contrôles numériques en certificat |
+| Vidéos locales | Index/lecteur, traduction et transcription audio hors ligne ; [récupération YouTube 0.31.0](../essais/2026-11-16-acquisition-sous-titres.md) réelle sur R7 puis pistes conservées | Inventaire et parcours des médias dans les ZIM à implémenter ; contenu de `library/video/` de Marc, codecs, mots et alignement de chaque vidéo encore à vérifier |
+| Mesures et conservation | Exports lisibles avec version/heure, ressources/contextes, [diagnostic de refus](../essais/2026-11-16-diagnostic-refus-demarrage.md), arrêt/reprise/suppression des traductions et paquet comparé à Git | Les observations après erreur restent distinctes de l’instant exact de la panne ; aucun test humain non exécuté n’est compté comme réussi |
+
+Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0320)
+évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
+un accès TeamViewer détenu par Louis ne devient pas un accès autonome de l’agent.
+Tant qu’un développement ou une vérification autonome utile reste possible, ces
+validations externes ne bloquent pas la poursuite du travail. La conclusion sur
+sa machine exige toutefois ses observations effectives.
+
+Les [prochains objectifs UX et campagne de fiabilité globale](choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026),
+notamment restauration sur deux supports physiques, restent distincts et ne sont
+pas lancés par ce suivi. Aucune étude ou étape minimale n’est utilisée pour
+annoncer l’objectif actif achevé.
+
+## Point de départ historique — 14 novembre 2026
+
 | Point | État | Preuve ou prochaine vérification |
 | --- | --- | --- |
 | Recherche commune, classement pratique, titres et requêtes FR/EN | Implémenté en 0.1.36, testé sur petites fixtures | Recette du fonds réel depuis le site de Marc ; repérer les sources manquées avant de compléter le fonds |
