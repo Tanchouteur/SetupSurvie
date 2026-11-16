@@ -137,3 +137,13 @@ sur le runner, dont deux réservés à Windows ignorés ; tous les autres passen
 La version vidéo 0.26.0 `9a7e687` est conservée. API/release/README concordent.
 La suite globale et la CI de cet ensemble suivent ; aucune validation physique
 HDD vers SSD n’est encore acquise.
+
+
+Le premier CI intégré `a62bc6d` passe les nouveaux tests de transfert sous Windows,
+puis détecte une recette de raccourcis qui attendait encore quatre liens par
+installation. Le transfert ajoute légitimement un cinquième lien. Le test attend
+maintenant les dix liens pour deux installations, conserve la comparaison des
+anciens octets et contrôle aussi que chaque raccourci de transfert vise son propre
+dossier privé. Aucun écrasement des raccourcis source n'est accepté.
+Suite locale intégrée : **854 tests, six spécifiques Windows ignorés**, sans échec,
+en 171,775 s. Le test des raccourcis Windows corrigé attend son rejeu CI.

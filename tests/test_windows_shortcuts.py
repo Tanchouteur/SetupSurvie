@@ -56,8 +56,18 @@ class WindowsShortcutTests(unittest.TestCase):
             subprocess.run([*command, '-WorkDir', str(second), '-Startup'], check=True, capture_output=True)
             for path, content in initial.items():
                 self.assertEqual(path.read_bytes(), content)
-            # Open, stop, monitor and update shortcuts for each installation.
-            self.assertEqual(len(list(desktop.glob('*.lnk'))), 8)
+            # Open, stop, monitor, update and transfer for each installation.
+            self.assertEqual(len(list(desktop.glob('*.lnk'))), 10)
+            transfer_links=list(desktop.glob('Transf*.lnk'))
+            self.assertEqual(len(transfer_links),2)
+            arguments=[]
+            for link in transfer_links:
+                literal=str(link).replace("'","''")
+                arguments.append(self.ps("$s=(New-Object -ComObject WScript.Shell).CreateShortcut('"+literal+"'); $s.Arguments | ConvertTo-Json -Compress"))
+            for work in (first,second):
+                literal=str(work).replace("'","''")
+                canonical=self.ps("(Resolve-Path -LiteralPath '"+literal+"').Path | ConvertTo-Json -Compress")
+                self.assertTrue(any(canonical in text and 'transfer-windows.ps1' in text for text in arguments))
             self.assertEqual(len(list(desktop.glob('Suivi*.lnk'))), 2)
             self.assertEqual(len(list(startup.glob('*.lnk'))), 2)
             subprocess.run([*command, '-WorkDir', str(second), '-DisableStartup'], check=True, capture_output=True)
