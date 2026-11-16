@@ -37,13 +37,13 @@ réservés à Windows), avant les dernières précisions de suivi/limite d’ape
 CI finale et paquet restent à consigner.
 
 Une fixture créée pour ce dépôt, aplat vert VP8/WebM de douze secondes, 1 135 octets,
-est réellement décodée dans Chromium et WebKit. Vingt contrôles par navigateur :
+est réellement décodée dans Chromium et WebKit. Vingt-deux contrôles par navigateur :
 indexation depuis Collections, piste absente, recherche commune, accès à huit
 secondes, pistes française/anglaise/désactivée, position conservée, aucune IA de
 lecture, tailles 1366/390/320, pause en quittant et export par vidéo. Un premier
 rejeu a révélé que l’ancien état « terminé » pouvait être lu immédiatement après
 un nouveau lancement ; l’état serveur et le message de l’interface sont maintenant
-changés avant l’attente asynchrone. Les assertions de lecture sont conservées.
+changés avant l’attente asynchrone. Le filtre vidéo invalide aussi sa réponse précédente dès une nouvelle saisie. La recette de l’ancien inventaire cible maintenant ses trois livres/guides simulés ; les médias réels de la fixture ont leur propre recette. Les 18 contrôles de collections et 22 contrôles vidéo passent par navigateur, sans retirer une assertion de recherche ou de lecture.
 
 ## Modèle réel
 
