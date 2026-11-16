@@ -76,6 +76,16 @@ Une première recette navigateur attendait une fonction asynchrone avec un outil
 qui ne la réévaluait pas correctement ; elle attend désormais le nouveau travail
 effectif. Les anciennes pistes terminées ne valident pas une nouvelle traduction.
 
+## Reçu du paquet logiciel
+
+Paquet reconstruit depuis le commit documentaire
+`e16d10380fc863f7b5075620bd011e332832edb7`, après validation du code ci-dessus :
+**924 fichiers**, **7 510 564 octets** compressés, **16 700 474 octets** décompressés,
+SHA-256 `d128eba2f42af4a2c52358abdede7c47ca9b1761d22edac48e787b899c0bc806`.
+Les octets de chaque entrée ont été comparés au même commit Git avec ses filtres,
+puis aux tailles/empreintes de `update.json`. Aucun modèle, corpus ou état utilisateur
+n’est inclus. Ce reçu référence le commit source du paquet, pas son propre ajout.
+
 ## Limites conservées
 
 Aucune vidéo ou ZIM réelle de Marc examinée. Les résultats synthétiques ne
