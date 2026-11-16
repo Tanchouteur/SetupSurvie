@@ -146,3 +146,11 @@ dans Chromium et WebKit après la correction du suivi mémoire. Valider le runti
 emballé et qualifier les vrais MP4 restent nécessaires après livraison. Acquisition de sous-titres en ligne, inventaire et
 préparation des vidéos/pistes des ZIM restent distincts et non achevés. Une bonne
 traduction de cet exemple n'est pas la validation de chaque vidéo de la bibliothèque.
+
+Paquet `setupsurvie-0260-validated.zip`, commit documentaire `ce8eb98` :
+**861 fichiers**, 7 068 572 octets compressés, 15 914 768 octets décompressés.
+Chaque fichier est suivi par Git et comparé octet par octet au commit filtré
+puis au manifeste. SHA-256 :
+`58cf787cd9f5ef4b8d548083bb3cefb200683046c359bd87ebf556255fa3fe3e`.
+Ce reçu est ajouté après construction. Aucun modèle, média de recette ou rapport
+privé n'est inclus. Aucun déploiement ni validation physique Windows ou iPhone.
