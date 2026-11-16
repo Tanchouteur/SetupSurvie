@@ -204,14 +204,6 @@ et la qualité réelles restent à mesurer chez Marc avant de recommander une al
 
 ### L5 — Lecture traduite et livres de 500 pages
 
-**Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
-`library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.
-La traduction de pistes présentes livrée en 0.24.0 est intermédiaire ; le besoin
-L6 reste MP4 → audio → transcription horodatée → français → recherche/lecteur.
-Inventorier aussi les vidéos et pistes effectivement contenues dans les archives
-ZIM, sans annoncer leur présence ni leur traduction avant examen. Le code 0.24.0
-ne les prépare pas. Cette précision ne remplace pas la demande d’essai sur 40 pages.
-
 **Demande complémentaire de Louis, 16 novembre 2026 — implémentée en 0.25.0 :** un essai volontaire de traduction
 longue sur un document de **40 pages**, qui mesure durée totale, progression,
 débit, temps par passage/page, contexte demandé/chargé, tokens et ressources
@@ -254,6 +246,14 @@ traduction partielle/refusée présentée comme complète. Durée et fidélité 
 réel restent distinctes de l’essai synthétique ; rapport **R5**.
 
 ### L6 — Vidéos et sous-titres français hors ligne
+
+**Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
+`library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.
+La traduction de pistes présentes livrée en 0.24.0 est intermédiaire ; le besoin
+L6 reste MP4 → audio → transcription horodatée → français → recherche/lecteur.
+Inventorier aussi les vidéos et pistes effectivement contenues dans les archives
+ZIM, sans annoncer leur présence ni leur traduction avant examen. Le code 0.24.0
+ne les prépare pas. Cette précision ne remplace pas la demande d’essai sur 40 pages.
 
 **Extension confirmée le 14 novembre :** inclure les vidéos YouTube 480p ajoutées
 par Marc dans `library/video/`, leurs métadonnées puis leurs transcriptions
