@@ -106,7 +106,7 @@ Les **huit jobs CI** du dernier code
 Les versions intermédiaires ont été relues à partir de leurs journaux ; le
 transport encore ouvert malgré un job vert a été corrigé avant cette référence.
 
-Paquet vérifié au commit `7c54155ae4b2c6e02ac0addaab12a28c27e586df` :
+Paquet préliminaire vérifié au commit `7c54155ae4b2c6e02ac0addaab12a28c27e586df` :
 **901 fichiers**, **7 437 960 octets** compressés et **16 506 726 octets**
 décompressés. Chaque entrée est comparée à Git et au manifeste (taille et SHA-256).
 SHA-256 du paquet :
@@ -114,3 +114,14 @@ SHA-256 du paquet :
 Le paquet contient la référence fonctionnelle ; ce reçu documentaire est ajouté
 ensuite. Aucun original, rapport utilisateur, modèle ou gros corpus n’est versionné.
 Aucun déploiement ou redémarrage chez Marc n’est effectué par cette livraison.
+
+### Réconciliation de main et paquet final
+
+La note de Louis `9c1151d` sur les prochains objectifs UX et fiabilité est
+conservée intégralement par fusion normale. Cette note ne lance pas ces objectifs
+futurs. Les changements après le code CI validé portent uniquement sur la documentation.
+Le paquet est reconstruit après cette fusion pour emporter aussi ces consignes.
+
+Paquet final au commit `bb97ffbacb4746afb8415b4428a2302c26cf0b30` : **901 fichiers**, **7439657 octets** compressés,
+**16511344 octets** décompressés, tous comparés à Git et au manifeste.
+SHA-256 : `b9888cf0b492fff02e70b9e7bdac3c871704ad55b3cba4db9ce7871ad7607cda`.
