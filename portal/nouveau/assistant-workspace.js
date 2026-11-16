@@ -93,7 +93,7 @@
   function record(data){for(const s of data?.consulted_sources||[])if(typeof s.id==='string'&&typeof s.title==='string')evidence.set(s.id,s);drawEvidence();}
   document.addEventListener('survie:conversation',event=>{evidence.clear();for(const m of event.detail.messages||[])record(m.documentary);drawEvidence();body.dataset.zone='discussion';refreshZones();});
   document.addEventListener('survie:message',event=>record(event.detail.observed));
-  document.addEventListener('survie:translation-command',()=>{if(S.view==='chat'){body.dataset.right='open';body.dataset.zone='documents';refreshZones();}});
+  for(const name of ['survie:translation-command','survie:summary-command'])document.addEventListener(name,()=>{if(S.view==='chat'){body.dataset.right='open';body.dataset.zone='documents';refreshZones();}});
   document.addEventListener('survie:job',()=>{for(const node of $('chat-messages').querySelectorAll('.documentary-sources button[data-source]'))evidence.set(node.dataset.source,{id:node.dataset.source,title:node.textContent});drawEvidence();});
   document.addEventListener('survie:source-choices',()=>{empty.hidden=!!selectedSourceChoices().length;});
   document.addEventListener('survie:new-conversation',()=>{evidence.clear();drawEvidence();$('chat-title').textContent='Nouvelle discussion';body.dataset.zone='discussion';refreshZones();});

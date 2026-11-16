@@ -60,7 +60,7 @@
       if(generation!==version||conversation!==S.conversation||user!==S.user?.id)return;
       S.sending=false;
       if(kind==='start'){$('chat-input').value='';await openConversation(data.conversation_id);await histories();}
-      await load(data.id);panel.open=true;
+      await load(data.id);panel.open=true;document.dispatchEvent(new CustomEvent('survie:summary-command',{detail:{action:kind,id:data.id}}));
     }catch(error){toast(error.message);state.textContent=error.message;}
     finally{busy=false;S.sending=false;refreshSourceChoices();refresh();}
   }
