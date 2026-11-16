@@ -42,6 +42,8 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.32.1** reprend les [corrections de la recette Windows](../essais/2026-11-16-integration-corrections-windows.md) : reconfiguration des routeurs pendant une mise à jour et réponses de refus du contrôleur. Le [bilan sur le PC de Marc](../essais/2026-11-16-campagne-windows-marc.md) distingue installation active, environnements isolés et limites physiques.
+
 La **0.32.0** ajoute le [vocabulaire facultatif et le repère entre passages](../utilisation/documents-et-traduction.md#garder-les-mêmes-mots-dans-un-document--0320), conservés par travail. Les termes restent des préférences à relire ; le contrôle des nombres reconnaît les libellés PDF joints.
 
 La **0.31.0** ajoute la [récupération des sous-titres YouTube](../utilisation/videos-locales.md#récupérer-les-pistes-youtube--0310), à la demande avec Internet, puis lecture/recherche hors ligne et traduction locale optionnelle. La référence doit correspondre au média ; les ZIM et la qualification des vidéos de Marc restent ouverts.

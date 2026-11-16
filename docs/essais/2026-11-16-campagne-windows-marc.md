@@ -121,6 +121,13 @@ cache persistant dans ce test. Le moteur de recherche est identique.
 
 ## Intégration et limites
 
+**Complément de l’agent principal :** la branche est reprise sur la 0.32.0 par
+fusion normale pour une livraison **0.32.1**, correction compatible. Le vocabulaire,
+les contrôles de traduction version 3 et les reçus antérieurs sont conservés.
+Le [bilan d’intégration](2026-11-16-integration-corrections-windows.md) distingue
+les tests de développement de ce compte rendu réalisé sur Windows.
+
+
 La branche `codex/campagne-windows-20261116` conserve la version 0.31.0
 comme référence d’essai. L’agent principal attribuera la version de
 livraison à l’intégration. Examiner les conflits éventuels dans
