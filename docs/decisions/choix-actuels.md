@@ -1,5 +1,12 @@
 # Choix et contraintes actuels
 
+La 0.22.0 ajoute un [diagnostic commun des lenteurs](../exploitation/diagnostic-complet-performances.md) :
+recherches répétées, rédaction seule, recherche/lecture/réponse et documents déjà
+sélectionnés, avec compteurs natifs du serveur. Le cache n’est pas vidé, le modèle
+n’est pas déchargé et les réglages ne sont pas changés. Les constats restent
+distincts des causes possibles et des mesures manquantes. Les demandes de synthèse
+courte avec « documents de la bibliothèque » conservent leur sujet de recherche.
+
 La 0.21.0 ajoute la [lecture française depuis l’original](../utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210),
 sans inférence pour ouvrir une traduction publiée. Les versions anciennes ou dont
 la correspondance est inconnue restent à comparer ; aucune traduction d’image

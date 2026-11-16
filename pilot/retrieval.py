@@ -16,11 +16,11 @@ def search_subject(query):
     """Strip an explicit summary request, preserving technical uses of 'synthesis'."""
     raw=normal(query)
     request=re.match(r'^(?:(?:s il te plait|svp|please)\s+)?(?:(?:peux tu|pourrais tu|pouvez vous|could you|can you)\s+)?(?:(?:me|nous)\s+)?(?:'
-                     r'(?:(?:fais|fait|faites|faire|donne|donnez|donner|prepare|preparer|redige|rediger|give|write|make)\s+)(?:(?:moi|nous|me)\s+)?(?:(?:un|une|le|la|a|the)\s+)?(?:synthese|resume|summary|recapitulatif|bilan)'
+                     r'(?:(?:fais|fait|faites|faire|donne|donnez|donner|prepare|preparer|redige|rediger|give|write|make)\s+)(?:(?:moi|nous|me)\s+)?(?:(?:un|une|le|la|a|the)\s+)?(?:(?:court|courte|bref|breve|detaille|detaillee|rapide|short|brief|detailed)\s+)?(?:synthese|resume|summary|recapitulatif|bilan)'
                      r'|resume|resumer|summarize|summarise)\b',raw)
     if not request:return query
     tail=raw[request.end():].strip();changed=False
-    framing=set('le la les un une de du des d ces mes nos vos informations information info infos documents document sources source articles article the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
+    framing=set('le la les un une de du des d ces mes nos vos informations information info infos documents document sources source articles article bibliotheque library the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
     for _ in range(8):
         boundary=next((m for m in re.finditer(r'\b(?:au sujet de|a propos de|sur|concernant|about|of|on|de|des|du)\b',tail) if set(tail[:m.start()].split())<=framing),None)
         if boundary is None or not tail[boundary.end():].strip():break

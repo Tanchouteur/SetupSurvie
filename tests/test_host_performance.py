@@ -43,7 +43,7 @@ class CounterTests(unittest.TestCase):
         self.assertIn('disk_counters_unavailable',second['issues'])
 
     def test_pdh_uses_english_counter_paths_and_checks_values(self):
-        functions={name:Mock(return_value=0) for name in ('PdhOpenQueryW','PdhAddEnglishCounterW','PdhCollectQueryData','PdhCloseQuery','PdhGetFormattedCounterArrayW')}
+        functions={name:Mock(return_value=0) for name in ('PdhOpenQueryW','PdhAddEnglishCounterW','PdhCollectQueryData','PdhCloseQuery','PdhGetFormattedCounterArrayW','PdhGetFormattedCounterValue')}
         library=type('DLL',(),functions)();texts=[]
         def opened(name,user,query):query._obj.value=123;return 0
         def added(query,path,user,handle):texts.append(path);handle._obj.value=len(texts);return 0

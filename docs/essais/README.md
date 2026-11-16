@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Diagnostic complet des performances](2026-11-16-diagnostic-complet-performances.md) — 0.22.0, bouton, compteurs natifs, rapport et essai R7.
+
 - [Lecture française intégrée](2026-11-16-lecture-francaise-integree.md) — 0.21.0, plages PDF, articles et originaux modifiés.
 
 - [Traduction : contexte et reprise](2026-11-16-traduction-contexte-et-reprise.md) — 0.20.1, modèle préparé, 500 pages fictives et trous d’extraction.

@@ -18,7 +18,7 @@ class Found(list):coverage={'status':'partial','searched':2,'failed':1,'processi
 class PerformanceTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
-        self.calls=[];self.pause=False;self.fail=False;self.hang=False;self.started=asyncio.Event()
+        self.calls=[];self.pause=False;self.fail=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
         for module,key,value in [(store,'ROOT',Path(temp.name)),(perf,'ACTIVE',{}),(perf,'REPORTS',{}),(perf,'INTERVAL',.01),(perf,'BASELINE',.01),
                                  (engine,'LOCK',asyncio.Semaphore(1)),(engine,'ACTIVE',{}),(translations,'ACTIVE',{}),(engine,'MEASUREMENTS',{})]:
             self.mock(module,key,value)
@@ -35,7 +35,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
         async def run(job,user,conversation,mode,**kw):
             if self.hang:self.started.set();await asyncio.Event().wait()
             measured=assistant_metrics.Measurement(job,'model',mode,8192)
-            measured.value.update(documentary={'schema':1,'status':'partial','scope':'library','searches':1,'results':2,'sources_read':1,'failed_reads':0,'partial_reads':1})
+            measured.value.update(documentary={'schema':1,'status':'partial','scope':'library','searches':1,'results':2,'sources_read':0 if self.no_reads else 1,'failed_reads':0,'partial_reads':1})
             measured.finish('done')
             with store.connect() as db:db.execute("UPDATE jobs SET status='done',answer='PRIVATE answer from documents' WHERE id=?",(job,))
         self.mock(engine,'run',run)
@@ -77,6 +77,26 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(report['steps']),11)
         self.assertTrue(all(r['status']=='not_run' and r['reason']=='paused' for r in report['steps'][6:]))
         self.assertNotIn('/api/chat',self.calls)
+
+    async def test_finished_answer_without_reading_is_not_a_successful_reading_measurement(self):
+        self.no_reads=True;report=await self.finish()
+        self.assertEqual(report['reason'],'completed_with_gaps')
+        for row in report['steps'][8:]:
+            self.assertEqual(row['response_status'],'done')
+            self.assertFalse(row['reading_performed']);self.assertEqual(row['coverage_limit'],'no_sources_read')
+
+    def test_restarted_campaign_removes_only_its_temporary_conversation(self):
+        conversation,job=store.new_id(),store.new_id()
+        with store.connect() as db:
+            db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation,'family','Essai temporaire de performances',0))
+            db.execute('INSERT INTO conversations VALUES(?,?,?,?)',('keep-user','family','Document personnel',0))
+            db.execute('INSERT INTO jobs(id,user_id,conversation_id,mode,status,created,updated) VALUES(?,?,?,?,?,?,?)',(job,'family',conversation,'rapide','running',0,0))
+        perf.durable.write_bytes(perf.location().with_name('active-job.json'),json.dumps({'conversation':conversation,'job':job}).encode(),private=True)
+        perf.save({'schema':1,'status':'running','steps':[],'samples':[]})
+        self.assertEqual(perf.status()['reason'],'service_restarted')
+        with store.connect() as db:
+            self.assertIsNone(db.execute('SELECT id FROM conversations WHERE id=?',(conversation,)).fetchone())
+            self.assertIsNotNone(db.execute("SELECT id FROM conversations WHERE id='keep-user'").fetchone())
 
     async def test_model_memory_failure_kept_and_does_not_abort_classical_report(self):
         self.fail=True;report=await self.finish()

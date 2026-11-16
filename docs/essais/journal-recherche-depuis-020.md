@@ -1,5 +1,12 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.22.0 : [diagnostic commun des lenteurs](2026-11-16-diagnostic-complet-performances.md).
+Un bouton lance les recherches répétées, rédaction seule, réponse documentaire
+et réponse avec documents choisis. CPU/disques/RAM/GPU et phases sont exportables,
+sans textes privés ni déchargement forcé. Le premier essai réel a révélé une
+formulation de synthèse mal nettoyée ; la correction et le résultat négatif restent
+tracés, avec les limites de transposition au PC de Marc.
+
 Complément 0.21.0 : [lecture française intégrée](2026-11-16-lecture-francaise-integree.md).
 Les versions publiées se lisent depuis l’original, sans lancer de modèle.
 PDF et texte français conservent les pages ; les éditions modifiées/inconnues
@@ -7,9 +14,9 @@ restent explicites et les brouillons privés. L’essai R7 garde l’avertisseme
 d’extraction ; le sens et les illustrations ne sont pas déclarés validés.
 
 Demande du 16 novembre : [diagnostic des lenteurs en un clic](../decisions/diagnostic-lenteurs-en-un-clic.md).
-Les mesures existantes ne suffisent pas à conclure CPU/HDD/VRAM. La campagne
-serveur, les compteurs manquants et le rapport unique restent à implémenter,
-sans présenter ce plan comme une fonction déjà livrée.
+La campagne serveur et le rapport unique sont implémentés en 0.22.0. Les compteurs
+manquants restent explicites et aucune saturation CPU/HDD/VRAM chez Marc n’est
+affirmée avant son rapport.
 
 Complément 0.20.1 : [traduction et reprise](2026-11-16-traduction-contexte-et-reprise.md).
 La traduction reprend le contexte configuré et la préparation/reprise du modèle.

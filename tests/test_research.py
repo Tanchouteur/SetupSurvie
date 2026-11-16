@@ -65,6 +65,11 @@ class PassageTests(unittest.TestCase):
         question='Fais une synthèse sur le Dr. Martin et la mesure 2.5. Cite les sources.'
         self.assertEqual(research.primary_query(question),'Fais une synthèse sur le Dr. Martin et la mesure 2.5')
         self.assertEqual(research.primary_query('Capteur 2.5. Compare versions'),'Capteur 2.5. Compare versions')
+        question='Fais une courte synthèse des documents de la bibliothèque sur les techniques pour faire du feu. Cite uniquement les sources lues.'
+        self.assertEqual(research.primary_query(question),'Fais une courte synthèse des documents de la bibliothèque sur les techniques pour faire du feu')
+        self.assertEqual(research.retrieval.search_subject(research.primary_query(question)),'les techniques pour faire du feu')
+        self.assertEqual(research.retrieval.search_subject('Write a brief summary of the documents about solar panels'),'solar panels')
+        self.assertEqual(research.retrieval.search_subject('La synthèse chimique du méthanol'),'La synthèse chimique du méthanol')
 
     def test_answer_late_in_document_replaces_unrelated_introduction_with_exact_offsets(self):
         text=('Historique fictif sans rapport.\n'*300)+'\nCompost : la température fictive mesurée vaut 42 unités.\n'+('Autre contexte.\n'*60)

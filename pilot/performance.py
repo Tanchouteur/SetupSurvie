@@ -6,6 +6,8 @@ forced unloads. Reports contain counters and fixed test labels, never source tex
 import asyncio
 import json
 import math
+import re
+import sqlite3
 import sys
 import time
 import uuid
@@ -42,7 +44,9 @@ def load():
         if location().stat().st_size>16_000_000:raise ValueError()
         report=json.loads(location().read_text(encoding='utf-8'))
         if not isinstance(report,dict) or report.get('schema')!=1:raise ValueError()
-        if report.get('status')=='running':report.update(status='interrupted',reason='service_restarted')
+        if report.get('status')=='running':
+            report.update(status='interrupted',reason='service_restarted')
+            recover_temporary_job()
         return report
     except (OSError,ValueError):return {'schema':1,'status':'not_started','steps':[],'samples':[]}
 
@@ -62,7 +66,7 @@ def competing():
     return bool(module and module.running())
 
 
-def number(value):return type(value) in (int,float) and math.isfinite(value) and value>=0
+def number(value):return type(value) in (int,float) and 0<=value<=1e20 and math.isfinite(value)
 
 
 def numeric_metrics(value):
@@ -104,7 +108,7 @@ async def watch(awaitable,timeout,*,guard=False):
 
 
 async def samples(report,started):
-    used=0
+    used=0;previous=None
     while True:
         before=time.monotonic()
         try:value=await operations.performance()
@@ -113,7 +117,9 @@ async def samples(report,started):
         measured=engine.MEASUREMENTS.get(report.get('_job'))
         # Correlate with the pilot's monotonic clock, not a remote wall clock.
         sample={'elapsed_ms':round((before-started)*1000),'request_ms':round((time.monotonic()-before)*1000),'step':step,
+                'interval_since_previous_ms':round((before-previous)*1000) if previous is not None else None,
                 'phase':measured.stage if measured else report.get('current_phase'),'competing_application_activity':competing(),**value}
+        previous=before
         size=len(json.dumps(sample))
         if len(report['samples'])<1202 and used+size<12_000_000:
             report['samples'].append(sample);used+=size
@@ -160,7 +166,10 @@ async def generation(row,report):
             measured.value['runtime_after']=await model_runtime.describe(engine.OLLAMA,report['model'],fresh=True)
             row.update(answer_characters=characters,thinking_characters=thinking)
             if not last.get('done') or not characters:raise calibration.Abort('incomplete_output')
-        finally:row['metrics']=numeric_metrics(measured.live())
+            measured.value['status']='done'
+        finally:
+            if measured.value['status']=='running':measured.value['status']='incomplete'
+            row['metrics']=numeric_metrics(measured.live())
 
 
 def cleanup(conversation,job):
@@ -171,9 +180,24 @@ def cleanup(conversation,job):
     for directory in ('assistant-metrics','traces'):(store.ROOT/directory/(job+'.json')).unlink(missing_ok=True)
 
 
+def recover_temporary_job():
+    marker=location().with_name('active-job.json')
+    try:
+        if marker.stat().st_size>1024:return
+        value=json.loads(marker.read_text());conversation,job=value.get('conversation'),value.get('job')
+        if not all(isinstance(identifier,str) and re.fullmatch(r'[0-9a-f-]{36}',identifier) for identifier in (conversation,job)):return
+        with store.connect() as db:
+            row=db.execute('SELECT c.title FROM conversations c JOIN jobs j ON j.conversation_id=c.id WHERE c.id=? AND j.id=?',(conversation,job)).fetchone()
+        if row and row['title']=='Essai temporaire de performances':cleanup(conversation,job)
+        marker.unlink(missing_ok=True)
+    except (OSError,ValueError,sqlite3.Error):pass
+
+
 async def documentary_trial(row,report,user):
     await ai_guard()
     conversation,job=store.new_id(),store.new_id();now=time.time();report['_job']=job
+    marker=location().with_name('active-job.json')
+    durable.write_bytes(marker,json.dumps({'conversation':conversation,'job':job}).encode(),private=True)
     with store.connect() as db:
         db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation,user,'Essai temporaire de performances',now))
         db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation,'user',QUESTION,now))
@@ -189,7 +213,7 @@ async def documentary_trial(row,report,user):
         if not state or state['status']!='done':raise calibration.Abort('incomplete_output')
     finally:
         if 'metrics' not in row:row['metrics']=numeric_metrics(assistant_metrics.read(job))
-        report.pop('_job',None);cleanup(conversation,job)
+        report.pop('_job',None);cleanup(conversation,job);marker.unlink(missing_ok=True)
 
 
 def interpretation(report):

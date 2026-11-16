@@ -1,8 +1,11 @@
 # Diagnostic des lenteurs en un clic
 
-**Demande de Louis, 16 novembre 2026 — proposition retenue, non livrée.**
-Le traitement de la lecture française est en cours ; ce chantier de mesure
-complète ensuite l’objectif de fiabilité de la recherche et de l’assistant.
+**Demande de Louis, 16 novembre 2026 — implémentée dans le candidat 0.22.0.**
+Le [guide actuel](../exploitation/diagnostic-complet-performances.md) décrit le
+bouton, les onze étapes, les limites et le rapport. Les mesures Windows de Marc
+restent attendues ; le [bilan](../essais/2026-11-16-diagnostic-complet-performances.md)
+sépare fixtures, compteurs natifs et modèle réel du R7. Le texte ci-dessous conserve
+le raisonnement de la demande initiale.
 
 Louis souhaite lancer depuis le site une seule campagne, puis exporter son
 rapport pour déterminer ce qui ralentit la recherche documentaire et l’IA :
@@ -17,8 +20,8 @@ activité réelle, ni annoncer un composant coupable sans mesure suffisante.
 - Mesures de l’assistant : phases, tokens, durées déclarées par Ollama, contexte,
   modèles chargés et reprises ; calibration mémoire distincte et volontaire.
 - Contrôleur natif : RAM disponible, GPU utilisé et activité NVIDIA lorsqu’elle
-  est disponible, espace disque. Il ne mesure pas encore les compteurs d’activité
-  CPU/disque nécessaires au diagnostic demandé.
+  est disponible, espace disque. Les compteurs d’activité CPU/disque sont ajoutés
+  dans le contrôleur 0.22.0, sans déduire une cause de la seule occupation mémoire.
 
 ## Résultat attendu
 

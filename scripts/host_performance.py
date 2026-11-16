@@ -85,6 +85,7 @@ class WindowsCounters:
         'write_bytes_per_second':r'\PhysicalDisk(*)\Disk Write Bytes/sec','read_latency_seconds':r'\PhysicalDisk(*)\Avg. Disk sec/Read',
         'write_latency_seconds':r'\PhysicalDisk(*)\Avg. Disk sec/Write','idle_percent':r'\PhysicalDisk(*)\% Idle Time',
         'average_queue':r'\PhysicalDisk(*)\Avg. Disk Queue Length'}
+    SCALARS={'pages_input_per_second':r'\Memory\Pages Input/sec','pages_output_per_second':r'\Memory\Pages Output/sec'}
 
     def __init__(self,loader=windows_library):
         self.library=loader('pdh.dll');self.query=ctypes.c_void_p();self.counters={}
@@ -94,8 +95,9 @@ class WindowsCounters:
         self.add=bind('PdhAddEnglishCounterW',[ctypes.c_void_p,ctypes.c_wchar_p,ctypes.c_size_t,ctypes.POINTER(ctypes.c_void_p)])
         self.collect=bind('PdhCollectQueryData',[ctypes.c_void_p]);self.close=bind('PdhCloseQuery',[ctypes.c_void_p])
         self.array=bind('PdhGetFormattedCounterArrayW',[ctypes.c_void_p,ctypes.c_uint32,ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_uint32),ctypes.c_void_p])
+        self.scalar=bind('PdhGetFormattedCounterValue',[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_void_p,ctypes.POINTER(CounterValue)])
         if self.open(None,0,ctypes.byref(self.query)):raise OSError('PDH unavailable.')
-        for key,path in self.PATHS.items():
+        for key,path in {**self.PATHS,**self.SCALARS}.items():
             handle=ctypes.c_void_p()
             if not self.add(self.query,path,0,ctypes.byref(handle)):self.counters[key]=handle
 
@@ -103,6 +105,11 @@ class WindowsCounters:
         if self.collect(self.query):return {}
         result={}
         for key,handle in self.counters.items():
+            if key in self.SCALARS:
+                value=CounterValue()
+                if not self.scalar(handle,0x200,None,ctypes.byref(value)) and value.status in (0,1) and math.isfinite(value.doubleValue) and 0<=value.doubleValue<1e16:
+                    result[key]={'_Total':value.doubleValue}
+                continue
             size=ctypes.c_uint32();count=ctypes.c_uint32()
             code=self.array(handle,0x200|0x800,ctypes.byref(size),ctypes.byref(count),None)
             if code!=0x800007D2 or not 0<size.value<=4_000_000:continue
@@ -150,6 +157,7 @@ class Sampler:
                         except (OSError,AttributeError):pass
                     self.windows=None
                 cpus=raw.get('cpu',{});total=cpus.get('_Total');cores=[{'id':name,'percent':round(min(100,value),2)} for name,value in cpus.items() if name!='_Total']
+                result['memory_page_io']={key:raw[key]['_Total'] for key in WindowsCounters.SCALARS if '_Total' in raw.get(key,{})}
                 result['cpu']={'logical_processors':os.cpu_count(),'percent':round(min(100,total),2) if total is not None else None,'cores':cores}
                 if total is None:
                     try:current['cpus']=windows_cpu_times();delta=cpu_delta(current['cpus'].get('cpu',{}),previous.get('cpus',{}).get('cpu'))

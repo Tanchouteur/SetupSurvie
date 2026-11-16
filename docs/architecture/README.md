@@ -1,5 +1,21 @@
 # Architecture du pilote
 
+## Diagnostic commun des performances — 0.22.0
+
+`pilot/performance.py` orchestre une campagne administrative explicite et bornée,
+sans dépendre de l’onglet navigateur. Recherche commune puis vrai moteur assistant,
+avec une réponse supplémentaire sur les documents déjà sélectionnés. Les réponses
+temporaires sont nettoyées ; seuls les compteurs autorisés sont exportés.
+L’API `/api/admin/performance` fournit le suivi compact, `/report` les échantillons ;
+`/start` et `/stop` sont des actions explicites. Le module reste optionnel.
+
+Le pont authentifié `operations.performance` lit `/performance` du contrôleur
+natif. `scripts/host_performance.py` collecte CPU/disques/pagination Linux ou PDH
+Windows, sans processus auxiliaire sur Windows. RAM/GPU réutilisent les mesures
+du contrôleur avec âge indiqué. Absence, première mesure et correspondance de
+volume inconnue restent explicites. Ni ports publics supplémentaires ni changement
+de protocole de données : schéma produit 1. Voir le [guide de mesure](../exploitation/diagnostic-complet-performances.md).
+
 Vue de référence documentaire actualisée le 15 novembre 2026. Elle décrit les rôles
 des composants ; les [bilans](../essais/README.md) indiquent les validations réalisées.
 
