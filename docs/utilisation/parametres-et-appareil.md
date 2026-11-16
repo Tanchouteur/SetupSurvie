@@ -1,6 +1,6 @@
 # Paramètres et Mon appareil
 
-**Guide actuel — 0.12.0, 14 novembre 2026.** Les profils sont toujours sans mot
+**Guide actuel — 0.25.0, 16 novembre 2026.** Les profils sont toujours sans mot
 de passe. Choisir **Famille** pour modifier les réglages partagés ; ce profil est
 librement accessible et ne protège pas la confidentialité entre personnes du réseau.
 
@@ -12,15 +12,18 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
 - **Travaux en cours** : progression, fichiers, dernière observation et accès aux
   téléchargements. Un transfert Windows indépendant reste suivi en lecture seule.
-- **Paramètres** : choisir l’une des quatre rubriques ci-dessous. Ouvrir une page,
+- **Paramètres** : choisir l’une des cinq rubriques ci-dessous. Ouvrir une page,
   déplier une option ou recharger ne lance aucun travail.
 
 | Rubrique | Pour quoi faire ? |
 | --- | --- |
 | Profils et connexion | Créer/gérer les profils, afficher le QR code, copier l’adresse du site ou imprimer la fiche pour un autre appareil |
 | Bibliothèque et préparations | Ajouter un guide, télécharger des collections, préparer les cartes et la recherche, consulter le stockage, changer les lieux de référence |
-| Assistant | Démarrer/arrêter le moteur ; ouvrir les options avancées de mémoire, essais et instructions |
-| Entretien et diagnostics | Vérifier la recherche et l’usage hors ligne, comparer une aide IA volontaire, exporter les classements/dossiers et consulter les anciens retours |
+| Assistant | Démarrer/arrêter le moteur ; ouvrir le réglage manuel du contexte et les instructions |
+| Tests et diagnostics | Mesurer les lenteurs, vérifier la recherche, comparer une aide IA, tester la mémoire et une traduction de 40 pages, vérifier l’usage hors ligne |
+| Entretien et données | Exporter les classements/dossiers, gérer les repères du navigateur et consulter les anciens retours |
+
+Les tests sont rangés en cinq rubriques dépliables : lenteurs, recherche (avec son comparatif IA), mémoire, traduction longue et usage hors ligne. Le [guide du test de 40 pages](../exploitation/test-traduction-40-pages.md) explique la durée, le rapport et la reprise. Le lien depuis Assistant mène à l’essai mémoire ; le réglage du contexte reste dans Assistant.
 
 Les options techniques se déplient. Leur état ouvert/fermé est mémorisé par
 profil dans ce navigateur. Les liens **Tous les paramètres** et de retour à la
@@ -61,7 +64,7 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 
 | Ancien emplacement et commandes | Destination actuelle et niveau |
 | --- | --- |
-| Réglages : raccourcis profils, connexion, téléchargements, état ; doublon « Gérer les profils » | Quatre entrées du hub ; profils/connexion dans **Profils et connexion**, téléchargements dans **Bibliothèque et préparations**, état dans **Vue d’ensemble** ; raccourcis redondants retirés |
+| Réglages : raccourcis profils, connexion, téléchargements, état ; doublon « Gérer les profils » | Cinq entrées du hub ; profils/connexion dans **Profils et connexion**, téléchargements dans **Bibliothèque et préparations**, état dans **Vue d’ensemble** ; raccourcis redondants retirés |
 | Profils : nom, créer, liste des profils et actions proposées par le serveur ; changement via le nom dans le menu | **Profils et connexion → Gérer les profils** ; choix du profil toujours dans le menu/en haut du téléphone |
 | Connexion : QR code, imprimer, adresse directe, copier, adresse sécurisée | **Profils et connexion → Ouvrir sur un téléphone** |
 | Lieux : domicile/départ, adresse, recherche locale ou IGN, rechercher, résultats, confirmer, vérifier sur carte | **Bibliothèque et préparations → Changer le domicile ou le point de départ** ; modification sur ordinateur |
@@ -71,15 +74,15 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 | Index : préparer/vérifier/réparer l’outil, créer/reprendre, mettre en pause, exporter le rapport | **Bibliothèque et préparations → Préparer la recherche dans les archives**, dépliable ; suivi/pause/rapport sur téléphone |
 | Index automatique : activer, heure début/fin, processus parallèles, enregistrer | Sous la même préparation, **Préparation automatique après téléchargement**, sur ordinateur |
 | Contexte : modèle, 8k/16k/32k/64k, enregistrer | **Assistant → Options avancées : mémoire et essai du modèle** |
-| Essai mémoire : mode, plafond, lancer, arrêter, appliquer, revenir au réglage précédent, exporter | Sous les options avancées, **Mesurer un contexte adapté à ce PC** ; essai volontaire, aucune IA à l’ouverture |
+| Essai mémoire : mode, plafond, lancer, arrêter, appliquer, revenir au réglage précédent, exporter | **Tests et diagnostics → Mesurer un contexte adapté à ce PC** ; essai volontaire, aucune IA à l’ouverture |
 | Instructions exactes et contexte produit affiché | **Assistant → Instructions transmises aux modèles**, dépliable ; lecture seule |
-| Contrôle recherche : court/complet, ouvrir, résultats et liens, avis humains, arrêt/export/fermeture du dialogue | **Entretien et diagnostics → Vérifier la recherche** ; dialogue inchangé |
+| Contrôle recherche : court/complet, ouvrir, résultats et liens, avis humains, arrêt/export/fermeture du dialogue | **Tests et diagnostics → Recherche** ; dialogue inchangé |
 | Comparatif IA : modèle, demandes, budget, lancer, arrêter, exporter, cas et avis humains | Sous **Vérifier la recherche → Comparer une aide IA à la recherche**, dépliable ; toujours facultatif |
-| Usage hors ligne : ouvrir, conditions réseau/appareil, lancer, arrêter, exporter, nouvel essai, fermer ; étapes humaines, observation | **Entretien et diagnostics → Vérifier l’usage hors ligne**, panneau distinct ; dialogue conservé |
-| Classements et noms : exporter les métadonnées | **Entretien et diagnostics → Conserver les classements et les dossiers pratiques** |
+| Usage hors ligne : ouvrir, conditions réseau/appareil, lancer, arrêter, exporter, nouvel essai, fermer ; étapes humaines, observation | **Tests et diagnostics → Usage hors ligne**, panneau distinct ; dialogue conservé |
+| Classements et noms : exporter les métadonnées | **Entretien et données → Conserver les classements et les dossiers pratiques** |
 | Dossiers pratiques : exporter les dossiers | Même rubrique dépliable ; édition des références toujours dans la bibliothèque |
-| Mémoire de navigation : effacer onglets/filtres/brouillons locaux | **Entretien et diagnostics → Effacer les repères de ce navigateur** ; confirmation avant effacement, données serveur conservées |
-| Retours déjà enregistrés : actualiser/lire | **Entretien et diagnostics → Consulter les retours déjà enregistrés**, secondaire ; aucune création de retour réintroduite |
+| Mémoire de navigation : effacer onglets/filtres/brouillons locaux | **Entretien et données → Effacer les repères de ce navigateur** ; confirmation avant effacement, données serveur conservées |
+| Retours déjà enregistrés : actualiser/lire | **Entretien et données → Consulter les retours déjà enregistrés**, secondaire ; aucune création de retour réintroduite |
 | Téléchargements : thèmes, langues, maximum à ajouter, suppléments culturels, chercher les contenus | **Bibliothèque et préparations → Télécharger des collections et préparer les cartes → Enrichir la bibliothèque**, ordinateur |
 | Sélection : collections proposées, besoins à vérifier, télécharger, pause, actualiser, progression | Même page de téléchargements ; suivi/pause du portail disponibles sur téléphone |
 | Géographie : zones préparées, ouvrir la carte, actualiser, arrêter | Même page → **Préparer des cartes, adresses et itinéraires**, dépliable ; suivi/pause sur téléphone |
@@ -108,7 +111,10 @@ Toutes les adresses sont relatives à l’adresse locale de votre installation.
 | `/#/appareil/acces` | Profils et connexion |
 | `/#/appareil/bibliotheque` | Bibliothèque et préparations |
 | `/#/appareil/assistant` | Commandes et options de l’assistant |
-| `/#/appareil/entretien` | Diagnostics et exports |
+| `/#/appareil/entretien` | Entretien et données, lien vers les tests |
+| `/#/appareil/tests` | Tests et diagnostics, cinq rubriques dépliables |
+| `/#/appareil/tests?test=translation` | Test de traduction sur 40 pages |
+| `/#/appareil/tests?test=memory` | Essai mémoire, réglage manuel conservé dans Assistant |
 | `/#/appareil/lieux` | Lieux de référence |
 
 Les anciens fragments `#settings`, `#users`, `#connect`, `#data`, `#monitor` restent

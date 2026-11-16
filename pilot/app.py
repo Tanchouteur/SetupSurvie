@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('translation_benchmark') as module:await module.pause(reason='service_restarted')
+    except HTTPException:pass
+    try:
         with optional_feature('captions') as module:await module.stop_all()
     except HTTPException:pass
     try:
@@ -79,7 +82,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.24.0'
+VERSION='0.25.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -778,6 +781,35 @@ class CaptionRequest(BaseModel):
 
 class CaptionResume(BaseModel):
     mode:str|None=Field(default=None,max_length=50)
+
+
+class TranslationBenchmarkRequest(BaseModel):
+    mode:str=Field(default='rapide',max_length=50)
+
+
+@app.get('/api/admin/translation-benchmark')
+async def get_translation_benchmark(value=Depends(admin)):
+    with optional_feature('translation_benchmark') as module:return await asyncio.to_thread(module.status)
+
+
+@app.get('/api/admin/translation-benchmark/report')
+async def report_translation_benchmark(value=Depends(admin)):
+    with optional_feature('translation_benchmark') as module:return await asyncio.to_thread(module.status,True)
+
+
+@app.post('/api/admin/translation-benchmark/start',status_code=202)
+async def start_translation_benchmark(body:TranslationBenchmarkRequest,value=Depends(admin)):
+    with optional_feature('translation_benchmark') as module:return await module.start(body.mode,VERSION)
+
+
+@app.post('/api/admin/translation-benchmark/pause')
+async def pause_translation_benchmark(value=Depends(admin)):
+    with optional_feature('translation_benchmark') as module:return await module.pause()
+
+
+@app.post('/api/admin/translation-benchmark/resume',status_code=202)
+async def resume_translation_benchmark(body:CaptionResume,value=Depends(admin)):
+    with optional_feature('translation_benchmark') as module:return await module.resume(body.mode)
 
 
 @app.get('/api/admin/video-captions')

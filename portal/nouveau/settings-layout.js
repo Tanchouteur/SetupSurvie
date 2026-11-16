@@ -11,6 +11,7 @@
     ['bibliotheque','Bibliothèque et préparations.','Ajouter des documents et préparer leur consultation hors ligne.'],
     ['assistant','L’assistant, à votre rythme.','Garder la main sur l’assistant et la mémoire du PC.'],
     ['entretien','Entretien et diagnostics.','Comprendre un problème et conserver un rapport avant une intervention.'],
+    ['tests','Tests et diagnostics.','Choisissez un test selon votre question. Ouvrir cette page ne lance aucun calcul.'],
     ['lieux','Vos lieux de référence.','Le domicile et le point de départ servent aux cartes et à l’assistant.']
   ]){
     const pane=make('div','settings-pane');pane.id='settings-'+key;pane.dataset.settingsPane=key;pane.hidden=true;pane.dataset.title=title;pane.dataset.description=description;
@@ -24,7 +25,8 @@
     ['acces','Profils et connexion','Gérer les profils, afficher le QR code et l’adresse du site.'],
     ['bibliotheque','Bibliothèque et préparations','Ajouter un guide, télécharger des collections, préparer la recherche et les cartes.'],
     ['assistant','Assistant','Démarrer ou arrêter l’assistant ; ajuster ses réglages avancés.'],
-    ['entretien','Entretien et diagnostics','Vérifier la recherche et l’usage hors ligne, exporter les rapports.']
+    ['tests','Tests et diagnostics','Mesurer recherche, IA, mémoire ou traduction ; vérifier l’usage hors ligne.'],
+    ['entretien','Entretien et données','Exporter les classements et gérer les repères de ce navigateur.']
   ])hub.append(link(key,title,description));
   panes.acces.append(link('profils','Gérer les profils','Créer un profil pour ranger conversations et favoris, sans mot de passe.'),link('connexion','Ouvrir sur un téléphone','Afficher le QR code, copier l’adresse ou imprimer la fiche de connexion.'));
   panes.acces.append(make('p','small muted','Les profils organisent les données. Toute personne du réseau peut choisir un autre profil et consulter ses données.'));
@@ -39,12 +41,16 @@
   const engineState=make('p','small');engineState.id='settings-engine-state';engine.prepend(engineState);
   panes.assistant.append(link('ensemble','Voir l’état et la mémoire du PC','Consulter les mesures, sans démarrer l’assistant.'));
   advanced(move('next-context-form','assistant'),'settings-context','Options avancées : mémoire et essai du modèle');
+  const memory=get('next-calibration-form').closest('details');memory.id='settings-test-memory';memory.classList.add('settings-advanced');panes.tests.append(memory);
+  panes.assistant.append(link('tests?test=memory','Tester la mémoire de l’assistant','Comparer les contextes 16k/32k avec des mesures, sans changer le réglage automatiquement.'));
   const policy=move('assistant-policy','assistant').querySelector('details');policy.id='settings-policy';policy.querySelector('summary').textContent='Instructions transmises aux modèles';
   panes.assistant.append(make('p','small muted','Le temps de réponse se choisit dans la conversation. Les essais avancés utilisent l’IA uniquement après votre commande.'));
-  const check=move('next-search-check-open','entretien');
-  const performance=move('next-performance-start','entretien');panes.entretien.querySelector('.settings-heading').after(performance);
+  const check=move('next-search-check-open','tests');advanced(check,'settings-test-search','Recherche : vérifier les résultats et comparer l’aide IA');
+  const performance=move('next-performance-start','tests');advanced(performance,'settings-test-performance','Lenteurs : recherche, IA et ressources du PC');
   // Keep each feature’s article ancestor: its controller may append controls to it.
-  const offline=make('article','panel');offline.append(make('h2','','Vérifier l’usage hors ligne'),make('p','','Réunir les contrôles et vos observations dans un rapport, sans IA.'),get('next-usage-open'));check.after(offline);
+  const offline=make('article','panel');offline.append(make('h2','','Vérifier l’usage hors ligne'),make('p','','Réunir les contrôles et vos observations dans un rapport, sans IA.'),get('next-usage-open'));panes.tests.append(offline);advanced(offline,'settings-test-offline','Usage hors ligne : vérifier les fonctions disponibles');
+  if(get('next-translation-benchmark')){const translation=move('next-translation-benchmark-start','tests');advanced(translation,'settings-test-translation','Traduction : mesurer un document de 40 pages');}
+  panes.entretien.prepend(link('tests','Tests et diagnostics','Retrouver les vérifications de recherche, de mémoire, de traduction et d’usage hors ligne.'));
   const exports=make('details','settings-advanced');exports.id='settings-exports';exports.append(make('summary','','Conserver les classements et les dossiers pratiques'));panes.entretien.append(exports);
   for(const title of ['Classements et noms corrigés','Repères des dossiers pratiques']){
     const panel=[...settings.querySelectorAll('article')].find(n=>n.querySelector('h2')?.textContent===title);if(panel)exports.append(panel);
@@ -71,13 +77,14 @@
   const geo=get('geo-datasets').closest('article');advanced(geo,'settings-map-preparation','Préparer des cartes, adresses et itinéraires');
   // Primary mobile actions remain usable; only long preparation forms stay on PC.
   for(const [target,text] of [['view-data','Sur téléphone, consultez le suivi et mettez en pause les préparations du portail. Le choix de nouveaux contenus ou de zones se fait sur ordinateur.'],['settings-bibliotheque','L’ajout d’un fichier et la préparation des archives se font sur ordinateur. Le suivi et les rapports restent accessibles sur téléphone.'],['settings-lieux','Les lieux enregistrés restent consultables ici. Pour modifier une adresse ou ses coordonnées, utilisez un ordinateur.']])get(target).append(make('p','next-mobile-note',text));
-  window.SettingsLayout={show(tab){
+  window.SettingsLayout={show(tab,test){
     for(const [key,pane] of Object.entries(panes)){pane.hidden=key!==tab;pane.querySelector('.settings-heading').hidden=key!=='reglages';}
     const pane=panes[tab]||panes.reglages;
-    settings.querySelector('.page-heading h1').textContent=tab==='reglages'?'Paramètres':({acces:'Profils et connexion',bibliotheque:'Bibliothèque et préparations',assistant:'Assistant',entretien:'Entretien et diagnostics',lieux:'Vos lieux de référence'}[tab]||'Paramètres');
+    settings.querySelector('.page-heading h1').textContent=tab==='reglages'?'Paramètres':({acces:'Profils et connexion',bibliotheque:'Bibliothèque et préparations',assistant:'Assistant',tests:'Tests et diagnostics',entretien:'Entretien et données',lieux:'Vos lieux de référence'}[tab]||'Paramètres');
     document.title=settings.querySelector('.page-heading h1').textContent+' · SetupSurvie';
     settings.querySelector('.page-heading p').textContent=tab==='reglages'?'Pour les réglages partagés, choisissez le profil Famille, sans mot de passe.':pane.dataset.description;
     back.hidden=tab==='reglages';
+    if(tab==='tests'&&['performance','search','memory','translation','offline'].includes(test))get('settings-test-'+test).open=true;
     get('settings-engine-state').textContent=get('engine-state').textContent+' · '+get('engine-detail').textContent;
   }};
   new MutationObserver(()=>{get('settings-engine-state').textContent=get('engine-state').textContent+' · '+get('engine-detail').textContent;}).observe(get('view-monitor').querySelector('.engine-panel'),{childList:true,subtree:true,characterData:true});

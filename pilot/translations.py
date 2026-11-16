@@ -119,10 +119,15 @@ async def translate(text,mode,*,on_metrics=None):
         async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(180,connect=15)) as client:
             session=model_session.Session(client,engine.OLLAMA,runtime,context,measured,lambda stage:None,available)
             await session.prepare()
+            measured.phase('model_preparation')
             async for last in session.chat(payload):
-                answer+=last.get('message',{}).get('content','')
+                text=last.get('message',{}).get('content','')
+                if text:measured.text();measured.phase('writing')
+                answer+=text
                 if len(answer)>40000:raise ValueError('La réponse dépasse la taille prévue ; le passage reste à traduire.')
             measured.model_call(last or {})
+            measured.phase('metadata')
+            measured.value['runtime_after']=await model_runtime.describe(engine.OLLAMA,selected['model'],fresh=True)
     except model_session.Failure as error:
         measured.value['failure']=error.kind
         raise ValueError('Le moteur a interrompu la traduction. Les passages terminés restent conservés ; reprenez après vérification du moteur.') from None

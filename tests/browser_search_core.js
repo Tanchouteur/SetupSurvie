@@ -73,8 +73,8 @@ async page => {
   }
   check((await page.locator('[data-route="bibliotheque/parcours"]').textContent()).includes('Apprendre par thème'),'Parcours renommé par son usage');
   await page.setViewportSize({width:1366,height:768});
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/entretien"]').click();
-  const postsBefore=writes.length;await page.locator('#next-search-check-open').click();
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/tests"]').click();
+  const postsBefore=writes.length;if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
   check(await page.locator('#next-search-check-results .search-check-case').count()===10,'Recette des dix recherches disponible depuis le site');
   check(writes.length===postsBefore,'Recette de recherche sans appel de calcul ni téléchargement');
@@ -87,7 +87,7 @@ async page => {
   await page.screenshot({path:'/artifacts/controle-recherche.png',fullPage:true});
   await page.locator('[data-close="next-search-check-dialog"]').click();
   await page.locator('#next-search-check-suite').selectOption('extended');
-  await page.locator('#next-search-check-open').click();
+  if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===32);
   check(await page.locator('#next-search-check-results .search-check-case').count()===32,'Contrôle complet des 32 demandes disponible');
   check(writes.length===postsBefore,'Contrôle complet sans appel de calcul ni téléchargement');
@@ -106,13 +106,13 @@ async page => {
   await page.setViewportSize({width:1366,height:768});
   await page.locator('[data-close="next-search-check-dialog"]').click();
   await page.route('**/nouveau/search-reference.json?*',r=>r.fulfill({json:{schema:99,cases:[]}}));
-  await page.locator('#next-search-check-open').click();
+  if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('doit être mise à jour'));
   check(!await page.locator('#next-search-check-open').isDisabled(),'Liste de tests invalide expliquée et relance possible');
   await page.locator('[data-close="next-search-check-dialog"]').click();
   await page.unroute('**/nouveau/search-reference.json?*');await page.locator('#next-search-check-suite').selectOption('short');
   await page.route('**/api/search?*',async r=>{await new Promise(resolve=>setTimeout(resolve,250));await r.fulfill({json:{results:[],coverage:{status:'complete'}}}).catch(()=>{});});
-  const requested=page.waitForRequest(r=>r.url().includes('/api/search?'));await page.locator('#next-search-check-open').click();await requested;await page.locator('#next-search-check-cancel').click();
+  const requested=page.waitForRequest(r=>r.url().includes('/api/search?'));if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();await requested;await page.locator('#next-search-check-cancel').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('Vérification arrêtée'));
   check(await page.locator('#next-search-check-progress').evaluate(e=>e.value<10),'Arrêt des vérifications encore en cours');
   const partialDownload=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const partial=await partialDownload,partialChunks=[];for await(const chunk of await partial.createReadStream())partialChunks.push(chunk);

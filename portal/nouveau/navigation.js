@@ -2,7 +2,7 @@
 (() => {
   const sections={home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',activity:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
   const routes={accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
-  const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',lieux:'settings'};
+  const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings'};
   const libraryTabs=['collections','recherche','parcours','favoris','traductions'];
   const namespace='survie-next-v1:',ttl=7*86400000;
   let current=null,applying=false,popping=false,scopeCommand=false,activityTimer=null,inventoryAt=0,historyReady=false,openingSource=false,skipSearch=false,lastActivity=null,activityRequest=null,pendingRestore=null;
@@ -73,7 +73,7 @@
       if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     }
     if(route.section==='appareil'){
-      if(route.name==='settings')window.SettingsLayout.show(route.tab);
+      if(route.name==='settings')window.SettingsLayout.show(route.tab,route.params.get('test'));
       document.querySelector('#view-'+route.name+' .page-heading').after($('next-machine-tabs'));put('machine-tab',route.tab);
       if(route.name==='storage')loadData();
     }
@@ -104,6 +104,7 @@
       if(S.user&&id&&S.conversation!==id&&!S.loadingConversation)openConversation(id);
     }
     for(const detail of document.querySelectorAll('#view-'+route.name+' details[id]')){const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}
+    if(route.section==='appareil'&&route.tab==='tests'&&['performance','search','memory','translation','offline'].includes(route.params.get('test')))document.getElementById('settings-test-'+route.params.get('test')).open=true;
     if(restoring)restorePosition(saved);
     else if(route.name!=='chat'){$('main').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
     put('last',urlFor(route.section,route.tab,route.params));

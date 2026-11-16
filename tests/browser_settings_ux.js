@@ -3,7 +3,7 @@ async page => {
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   const ready=()=>page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   const reload=async()=>{await page.waitForLoadState('networkidle');await page.reload({waitUntil:'domcontentloaded'});await ready();};
-  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash==='#/appareil/'+tab,tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
+  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash==='#/appareil/'+tab,tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','tests','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(['POST','PUT','DELETE','PATCH'].includes(r.method()))commands.push(new URL(r.url()).pathname);});
   let state={online:false,paused:true,message:'Mode jeu · assistant en pause',models:[],gpus:[],memory:{},disk:{},jobs:{},control_available:true};
@@ -11,9 +11,9 @@ async page => {
   await page.route('**/api/admin/inference/*',r=>{const start=r.request().url().endsWith('/start');state={...state,online:start,paused:!start,message:start?'Assistant disponible':'Assistant arrêté'};return r.fulfill({json:{ok:true}});});
   await page.route('**/api/activity',r=>r.fulfill({json:{phase:'downloading',source:'windows',observed_at:Date.now()/1000,worker_alive:true,total_bytes:10000,verified_bytes:3000,total_count:4,verified_count:1,active:[{id:'fixture',title:'Collection simulée en cours',bytes:3000,total:10000}]}}));
   await page.setViewportSize({width:1440,height:950});await route('reglages');
-  check(await page.locator('#settings-reglages .settings-destination').count()===4,'Quatre entrées par usage');
+  check(await page.locator('#settings-reglages .settings-destination').count()===5,'Cinq entrées par usage, avec Tests et diagnostics');
   const commandStart=commands.length;
-  for(const tab of ['acces','profils','connexion','reglages','bibliotheque','telechargements','stockage','assistant','entretien','lieux','ensemble','activite']){
+  for(const tab of ['acces','profils','connexion','reglages','bibliotheque','telechargements','stockage','assistant','tests','entretien','lieux','ensemble','activite']){
     await route(tab);
     check(await page.locator('#view-'+({profils:'users',connexion:'connect',telechargements:'data',stockage:'storage',ensemble:'monitor',activite:'activity'}[tab]||'settings')).isVisible(),'Lien direct '+tab);
     check(await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return new Set(ids).size===ids.length;}),'IDs uniques dans '+tab);
@@ -30,7 +30,8 @@ async page => {
   await page.locator('#settings-index > summary').click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('survie-next-v1:'+S.user.id+':detail:settings-index'))?.value===true);await reload();
   check(await page.locator('#settings-index').evaluate(n=>n.open),'Préparation avancée mémorisée');
   await page.locator('#navigation [data-route="assistant"]').click();await page.locator('#chat-input').fill('Brouillon conversation UX');
-  await page.locator('#navigation [data-route="appareil"]').click();await route('entretien');
+  await page.locator('#navigation [data-route="appareil"]').click();await route('tests');
+  if(!await page.locator('#settings-test-offline').evaluate(n=>n.open))await page.locator('#settings-test-offline > summary').click();
   await page.locator('#next-usage-open').click();check(await page.locator('#next-usage-dialog').isVisible(),'Contrôle hors ligne toujours branché');
   await page.locator('#next-usage-dialog [data-close]').click();await page.waitForFunction(()=>!document.querySelector('#next-usage-dialog').open);
   await page.locator('#navigation [data-route="assistant"]').click();check(await page.locator('#chat-input').inputValue()==='Brouillon conversation UX','Brouillon conservé après paramètres et dialogue');
@@ -45,7 +46,7 @@ async page => {
   check(commands.filter(p=>p==='/api/admin/inference/start').length===1&&commands.filter(p=>p==='/api/admin/inference/stop').length===1,'Un seul événement par commande déplacée, API simulée');
   for(const width of [320,390,760,820,1440]){
     await page.setViewportSize({width,height:950});
-    for(const tab of ['reglages','acces','bibliotheque','assistant','entretien','lieux','activite','telechargements','stockage','connexion','profils','ensemble']){
+    for(const tab of ['reglages','acces','bibliotheque','assistant','tests','entretien','lieux','activite','telechargements','stockage','connexion','profils','ensemble']){
       await route(tab);
       check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Sans débordement '+width+' / '+tab);
     }

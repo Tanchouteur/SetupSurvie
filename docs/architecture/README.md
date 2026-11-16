@@ -1,5 +1,18 @@
 # Architecture du pilote
 
+## Essai de traduction longue — 0.25.0
+
+`translation_benchmark.py` génère un PDF fictif, partage `document_text.pdf_texts`,
+`chunks`, `translations.translate` et les contrôles ordinaires. L’état privé est
+séparé des conversations/traductions publiables ; rapport numérique, texte de
+travail et PDF sont conservés séparément. Les écritures sont durables et les
+passages acquis ne sont pas regénérés lors d’une reprise explicite. Le thread
+d’extraction est rejoint à l’annulation et le verrou d’inférence est partagé
+par passage. Une garde contrôlée pendant l’appel donne priorité à l’usage normal
+et au mode jeu. Le dernier rapport contient les mesures après chaque tentative.
+Le sous-menu Tests déplace les nœuds existants dans `view-settings`, avec liens
+de requête pour ouvrir une rubrique précise, état mémorisé et historique conservés.
+
 ## Préparation des sous-titres — 0.24.0
 
 `pilot/captions.py` garde file, segments, contrôles et propositions refusées dans

@@ -46,7 +46,7 @@ async page=>{
     await gate(query,false);await page.waitForFunction(()=>!document.getElementById('search-stop'));
   }
   await page.route('**/api/search?*',route=>{const url=new URL(route.request().url());url.searchParams.set('q','fixture-progress-report');return route.continue({url:url.toString()});});
-  await page.goto(base+'/#/appareil/entretien');await page.locator('#next-search-check-open').click();
+  await page.goto(base+'/#/appareil/tests?test=search');await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-progress').value===10);
   const downloading=page.waitForEvent('download');await page.locator('#next-search-check-export').click();const download=await downloading,chunks=[];
   for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());

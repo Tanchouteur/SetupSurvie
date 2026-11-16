@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.24.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.25.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -204,8 +204,15 @@ et la qualité réelles restent à mesurer chez Marc avant de recommander une al
 
 ### L5 — Lecture traduite et livres de 500 pages
 
-**Demande complémentaire de Louis, 16 novembre 2026 — à implémenter après la
-préparation des sous-titres en cours :** ajouter un essai volontaire de traduction
+**Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
+`library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.
+La traduction de pistes présentes livrée en 0.24.0 est intermédiaire ; le besoin
+L6 reste MP4 → audio → transcription horodatée → français → recherche/lecteur.
+Inventorier aussi les vidéos et pistes effectivement contenues dans les archives
+ZIM, sans annoncer leur présence ni leur traduction avant examen. Le code 0.24.0
+ne les prépare pas. Cette précision ne remplace pas la demande d’essai sur 40 pages.
+
+**Demande complémentaire de Louis, 16 novembre 2026 — implémentée en 0.25.0 :** un essai volontaire de traduction
 longue sur un document de **40 pages**, qui mesure durée totale, progression,
 débit, temps par passage/page, contexte demandé/chargé, tokens et ressources
 CPU/disque/RAM/VRAM disponibles, avec interruptions/erreurs exportables. Employer
@@ -219,7 +226,9 @@ avec recherche, IA, mémoire, traduction longue et usage hors ligne clairement
 nommés. Préserver les identifiants/contrôleurs existants, les liens directs,
 historique navigateur, mémorisation et accès au profil Famille ; ne pas refondre
 à nouveau tous les paramètres pour ce seul ajout. Le menu et l’essai ne sont pas
-annoncés livrés avec 0.24.0.
+annoncés livrés avec 0.24.0. La 0.25.0 les ajoute ; le
+[bilan](../essais/2026-11-16-test-traduction-40-pages.md) conserve l’essai R7 complet,
+ses limites et le premier refus de la garde de test.
 
 - Intégrer « Lire en français / Voir l’original » au lecteur du portail, puis aux
   articles Kiwix ouverts via celui-ci. Pour les PDF, proposer une vue textuelle

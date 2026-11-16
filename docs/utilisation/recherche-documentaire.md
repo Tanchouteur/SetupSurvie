@@ -134,7 +134,7 @@ sans modifier les conversations enregistrées.
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
    puis recharger la page et vérifier **0.15.1** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
-2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
+2. Choisir **Famille**, puis **Mon appareil → Paramètres → Tests et diagnostics → Recherche → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
    puis lancer. Les résultats arrivent progressivement ; le contrôle attend au maximum
    90 secondes par demande. Le contrôle complet peut prendre plusieurs dizaines de minutes. Ils interrogent les documents réels,

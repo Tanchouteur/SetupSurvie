@@ -7,7 +7,7 @@ automatiquement les documents, les sauvegardes ou toute l’installation.
 
 ## Préparer et lancer l’essai
 
-1. Depuis le profil **Famille**, ouvrir **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier l’usage
+1. Depuis le profil **Famille**, ouvrir **Mon appareil → Paramètres → Tests et diagnostics → Usage hors ligne → Vérifier l’usage
    hors ligne → Tester l’usage hors ligne**.
 2. Pour un essai sans Internet, couper l’accès à Internet du serveur et de
    l’appareil de consultation, tout en conservant leur réseau local. Ne pas

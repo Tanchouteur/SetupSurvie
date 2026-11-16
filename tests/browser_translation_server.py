@@ -176,8 +176,10 @@ async def library_command(action=None,payload=None):
             'plan':{'count':0,'remaining_download_bytes':0,'library_bytes':0,'missing_themes':[],'candidates':[],
                     'learning_coverage':[{'id':'sciences','label':rules['sciences']['label'],'references':1,'local_references':0,'skills_to_review':['Algèbre'],'status':'references_to_review'}]}}
 operations.library_command=library_command
-async def translate(text,mode):
+async def translate(text,mode,*,on_metrics=None):
     await asyncio.sleep(.5)
+    if on_metrics:on_metrics({'context':16384,'requested_context':16384,'runtime_after':{'running':{'context_length':16384}},
+        'model_calls':[{'prompt_eval_count':300,'eval_count':400,'load_ms':2,'eval_ms':450}]})
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
     if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']
