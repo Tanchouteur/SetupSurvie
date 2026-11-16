@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.20.1, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.21.0, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -68,6 +68,41 @@ l’ancien champ d’API `source` est conservée ; la liste s’appelle `selecte
 Les conversations plus anciennes sans association ne sont pas reconstituées à
 partir de leurs citations. Depuis une conversation ouverte, revenir à la
 Bibliothèque puis choisir les documents voulus.
+
+## Lire une version française déjà terminée — 0.21.0
+
+Dans un document du portail, **Lire en français** apparaît lorsqu’une traduction
+terminée a déjà été ajoutée aux documents partagés. Le bouton lit ce texte
+localement, sans chercher sur Internet ni charger un modèle. **Voir l’original**
+revient au texte source. Les articles Kiwix sont concernés lorsqu’ils sont ouverts
+par le lecteur du portail ; l’interface Kiwix ouverte directement n’est pas modifiée.
+
+Le lecteur PDF propose aussi **Lire en français**, puis **Voir le PDF original**.
+Le texte français reste lié aux numéros de pages du fichier original. Les flèches
+parcourent les pages traduites ; une page absente de la plage reste annoncée comme
+non traduite. Revenir au PDF conserve la page et ses illustrations originales.
+Le texte français ne reproduit pas la mise en page et ne traduit pas les dessins.
+Le choix français peut être retrouvé au rechargement dans le même navigateur.
+
+Si plusieurs versions partagées existent, un sélecteur affiche leur date et
+l’édition originale connue. Une différence de taille/date du fichier original
+signale **original modifié**. Une ancienne traduction dont la correspondance n’a
+pas été enregistrée reste **à comparer**. Dans ces deux cas, l’ouverture de la
+version française demande un choix explicite dans le lecteur ; elle n’est pas
+associée automatiquement à la nouvelle édition. Ce contrôle utilise un repère
+local de taille/date, pas une empreinte complète du PDF ou du ZIM : il ne certifie
+pas que deux contenus identiques en taille/date soient identiques en sens.
+
+Les avertissements suivent le texte français, y compris ceux sur les touches
+manquantes. Les documents partagés restent lisibles après suppression de la
+conversation. Les brouillons et anciennes traductions restées privées ne sont
+pas exposés par ce lecteur. Ouvrir **Lire en français** ne relance aucune traduction ;
+pour préparer une nouvelle version, utiliser le panneau de traduction ci-dessous.
+
+Si la version française ne s’ouvre pas, revenir à l’original ou réessayer. Une
+panne de cette option ne bloque ni l’original, ni les PDF, ni la recherche. Les
+fichiers partagés restent également ouvrables depuis la Bibliothèque. Le modèle
+peut être arrêté pendant cette lecture.
 
 ## Traduire en français
 

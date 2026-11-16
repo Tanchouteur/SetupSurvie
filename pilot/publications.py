@@ -20,7 +20,7 @@ NOTICE='Traduction IA non vérifiée. Comparez les nombres, unités, tableaux et
 
 
 def reserve(db, identifier, user_id, source, auto_publish=False):
-    metadata={key:source.get(key,'') for key in ('document_date','edition','provenance','licence','collected_at','archive_date')}
+    metadata={key:source.get(key,'') for key in ('document_date','edition','provenance','licence','collected_at','archive_date','source_revision')}
     db.execute('INSERT OR IGNORE INTO translation_publications(translation_id,user_id,source_id,title,source_meta,auto_publish) VALUES(?,?,?,?,?,?)',
                (identifier,user_id,source['id'],source['title'],json.dumps(metadata,ensure_ascii=False),int(auto_publish)))
 
@@ -96,7 +96,9 @@ def _publish(identifier,user_id):
         db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?) ON CONFLICT(path) DO UPDATE SET title=excluded.title,language=excluded.language,provenance=excluded.provenance,licence=excluded.licence',
                    (path,title,'fr',NOTICE+' Original : '+record['title'],'Droits de l’original à respecter ; aucune autorisation supplémentaire de redistribution.'))
         db.execute('INSERT INTO guide_dates VALUES(?,?,?,?) ON CONFLICT(path) DO NOTHING',(path,stamp,'Traduction IA non vérifiée',collected))
-        db.execute('UPDATE translation_publications SET published_path=?,error=NULL WHERE translation_id=?',(path,identifier))
+        source_meta['published_sha256']=hashlib.sha256(payload).hexdigest()
+        source_meta['published_pages']=sorted(pages)
+        db.execute('UPDATE translation_publications SET published_path=?,source_meta=?,error=NULL WHERE translation_id=?',(path,json.dumps(source_meta,ensure_ascii=False),identifier))
     library.index_guides()
     with store.connect() as db:
         if not db.execute('SELECT 1 FROM documents WHERE id=?',('guide:'+path,)).fetchone():raise RuntimeError('Indexation du document non terminée.')

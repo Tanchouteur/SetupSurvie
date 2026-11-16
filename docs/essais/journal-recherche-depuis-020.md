@@ -1,5 +1,16 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.21.0 : [lecture française intégrée](2026-11-16-lecture-francaise-integree.md).
+Les versions publiées se lisent depuis l’original, sans lancer de modèle.
+PDF et texte français conservent les pages ; les éditions modifiées/inconnues
+restent explicites et les brouillons privés. L’essai R7 garde l’avertissement
+d’extraction ; le sens et les illustrations ne sont pas déclarés validés.
+
+Demande du 16 novembre : [diagnostic des lenteurs en un clic](../decisions/diagnostic-lenteurs-en-un-clic.md).
+Les mesures existantes ne suffisent pas à conclure CPU/HDD/VRAM. La campagne
+serveur, les compteurs manquants et le rapport unique restent à implémenter,
+sans présenter ce plan comme une fonction déjà livrée.
+
 Complément 0.20.1 : [traduction et reprise](2026-11-16-traduction-contexte-et-reprise.md).
 La traduction reprend le contexte configuré et la préparation/reprise du modèle.
 L’essai de 500 pages reste synthétique ; deux pages réelles sont traduites après

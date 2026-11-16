@@ -51,7 +51,14 @@ async def native(path,payload=None,token=None):
     raise ValueError(path)
 accounts.native=native
 figures_enabled=False
-async def books(**kwargs):return [{'book':'figure-fixture','title':'Collection fictive illustrée','language':'fr'}] if figures_enabled else []
+reader_article_enabled=False
+async def books(**kwargs):return ([{'book':'figure-fixture','title':'Collection fictive illustrée','language':'fr'}] if figures_enabled else [])+([{'book':'reader-fixture','title':'Collection fictive anglaise','language':'en'}] if reader_article_enabled else [])
+@gateway.app.post('/fixture/reader-article')
+async def reader_article(enabled:bool=False):
+    global reader_article_enabled
+    reader_article_enabled=enabled
+    if enabled:(inventory.ZIMS/'reader-fixture.zim').write_bytes(b'Fictional article archive identity.')
+    return {'enabled':enabled}
 @gateway.app.post('/fixture/figures')
 async def fixture_figures(enabled:bool=False):
     global figures_enabled
@@ -60,6 +67,7 @@ async def fixture_figures(enabled:bool=False):
 async def fixture_figures_change():
     path=library.GUIDES/'shelter.en.pdf';path.write_bytes(path.read_bytes()+b'\n');return {'changed':True}
 async def fixture_get(path,**kwargs):
+    if '/reader-fixture/' in path:return library.Fetched(b'<html lang="en"><title>English article fixture</title><article><h1>English article fixture</h1><p>The fictional rotor has 17 marks.</p></article></html>','text/html',path)
     if path.endswith('/schema.svg'):return library.Fetched(b'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180"><rect x="20" y="30" width="80" height="80" fill="green"/><path d="M100 70 L240 70" stroke="black"/><text x="20" y="150">17 mm - fixture only</text></svg>','image/svg+xml',path)
     if path.endswith('/logo.svg'):return library.Fetched(b'<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="40" fill="blue"/></svg>','image/svg+xml',path)
     return library.Fetched(b'<html lang="fr"><title>Montage fictif</title><p>Montage fictif de rotor, valeur 17 mm.</p><figure><img src="../I/schema.svg" alt="Schema du rotor fictif"><figcaption>Schema original du montage : 17 mm, garder la protection.</figcaption></figure><figure><img src="../I/logo.svg" alt="Logo"><figcaption>Logo publicitaire.</figcaption></figure></html>','text/html',path)
@@ -131,6 +139,7 @@ async def translate(text,mode):
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
     if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']
+    if text.startswith('English article fixture'):return 'Article fictif : le rotor comporte 17 repères. <img src=x onerror=fixture()>',engine.MODES[mode]['model']
     return 'Construction d’un abri. Conservez les dimensions et les avertissements.\n'+text.replace('Page','Section').replace('Shelter','Abri').replace('construction warnings','avertissements de construction'),engine.MODES[mode]['model']
 translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.

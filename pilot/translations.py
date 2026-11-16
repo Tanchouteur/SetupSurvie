@@ -85,7 +85,7 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
         if conversation_id and store.summary_active(db,conversation_id):raise HTTPException(409,'Mettez la synthèse longue en pause avant de traduire dans cette conversation.')
         key=store.new_id();now=time.time()
         db.execute('INSERT INTO translations VALUES(?,?,?,?,?,?,?,?,?,?)',(key,user_id,conversation_id,source['id'],source['title'],mode,'queued',None,now,now))
-        snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date')}
+        snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date','source_revision')}
         db.execute('INSERT INTO settings VALUES(?,?)',('auto-translation:'+key,json.dumps(snapshot,ensure_ascii=False)))
         db.executemany('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',[(key,n,page,text,state) for n,(page,text,state) in enumerate(parts)])
     try:

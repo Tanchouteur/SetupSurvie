@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Lecture française intégrée](utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210) — 0.21.0, version publiée dans les lecteurs portail/PDF.
+
+- [Diagnostic des lenteurs en un clic](decisions/diagnostic-lenteurs-en-un-clic.md) — demande retenue du 16 novembre, non livrée ; CPU/disque et phases IA à réunir.
+
 - [Traduction : contexte, reprise et texte incomplet](essais/2026-11-16-traduction-contexte-et-reprise.md) — 0.20.1, essai réel et contrôle synthétique de 500 pages.
 
 - [Relances et conditions de départ](utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200) — 0.20.0, sources relues, extraits exacts et limites.

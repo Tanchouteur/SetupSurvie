@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Lecture française intégrée](2026-11-16-lecture-francaise-integree.md) — 0.21.0, plages PDF, articles et originaux modifiés.
+
 - [Traduction : contexte et reprise](2026-11-16-traduction-contexte-et-reprise.md) — 0.20.1, modèle préparé, 500 pages fictives et trous d’extraction.
 
 - [Relances et conditions de départ](2026-11-15-relances-et-conditions.md) — 0.20.0, lectures propres à chaque réponse et extraits exacts.

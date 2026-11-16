@@ -3,6 +3,8 @@
 This extracts text, not illustrations or OCR. Missing text is explicit. The
 caller stores the snapshot before inference; it must not mix originals on resume.
 """
+import os
+from pathlib import Path
 import re
 from fastapi import HTTPException
 from . import library
@@ -23,6 +25,8 @@ def chunks(text,size=2200):
 async def extract(identifier,first_page=1,last_page=None,*,purpose='traduction',chunk_size=2200):
     # A PDF search result is a page; this operation explicitly translates the whole PDF.
     base=identifier.split('#page=')[0] if identifier.startswith('guide:') else identifier
+    revision=lambda:library.catalogue.revision(base,library.GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+    before=revision()
     source=await library.source(base)
     def read():
         if base.startswith('guide:') and base.lower().endswith('.pdf'):
@@ -63,7 +67,11 @@ async def extract(identifier,first_page=1,last_page=None,*,purpose='traduction',
             raise HTTPException(422,'Aucun texte extractible. Le document peut être illustré ou nécessiter une reconnaissance de caractères (OCR).')
         return parts
     # Join the file reader on cancellation before a caller can delete its state.
-    try:return source,await library.kiwix_queries.disk_io(read)
+    try:
+        parts=await library.kiwix_queries.disk_io(read)
+        after=revision()
+        if before and before!=after:raise HTTPException(409,'Le document a changé pendant la lecture. Reprenez après son enregistrement.')
+        return {**source,'id':library.catalogue.canonical(base),'source_revision':before or ''},parts
     except HTTPException as error:
         if purpose!='traduction':
             error.detail=str(error.detail).replace('la traduction','la lecture complète').replace('cette traduction','cette lecture complète').replace('traduction intégrale','lecture complète').replace('traduction partielle','lecture partielle')
