@@ -158,3 +158,10 @@ Cela inclut les tests Windows de traduction/vocabulaire, les lecteurs isolés,
 la recherche Kiwix, le routage et toute la recette navigateur. Le premier échec
 Windows reste documenté ci-dessus. Les ajouts suivants concernent la documentation.
 Aucun déploiement sur un PC utilisateur n’est effectué par cette livraison.
+
+Paquet final vérifié au commit `84bd2e124037de445ba19bbca0ac374cdaa7329d` : **907 fichiers**,
+**7459897 octets** compressés, **16566275 octets** décompressés. Chaque entrée est
+comparée aux octets Git filtrés et au manifeste (taille/SHA-256).
+SHA-256 : `8650ac9b8d8f569a4a9ffe76dde8fc0e2889d6fac17d2395ab23fceda98df6cc`.
+Le reçu est ajouté après construction ; aucun modèle, corpus ou rapport privé
+n’est inclus dans Git. La branche temporaire est retirée après intégration vérifiée.
