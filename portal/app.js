@@ -211,7 +211,7 @@ function message(role,text,sources=[],profile='',observed=null){
   tracking.append(element('p',undefined,'small muted documentary-source-heading'),element('div',undefined,'documentary-sources'));
   node.append(tracking);if(role==='assistant')documentaryStatus(tracking,observed);
   if(sources.length)node.append(sourceChips(sources));
-  node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources}}));return {node,body,tracking};
+  node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources,observed}}));return {node,body,tracking};
 }
 function newConversation(){
   if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
