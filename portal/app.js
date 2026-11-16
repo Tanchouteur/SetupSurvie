@@ -214,7 +214,7 @@ async function runSearch(event){
     $('search-results').setAttribute('aria-busy',String(ongoing));
     $('search-message').classList.toggle('search-warning',!ongoing&&partial);
     const count=`${data.results.length} document(s) trouvé(s) pour « ${q} »`;
-    const label=ongoing?(data.results.length?'Recherche en cours — '+count+'. D’autres résultats peuvent encore arriver.':'Recherche en cours — aucun résultat pour le moment pour « '+q+' ».'):
+    const label=ongoing?(data.results.length?'Recherche en cours — '+count+'. D’autres résultats peuvent encore arriver.':'Recherche en cours — aucun résultat pour le moment.'):
       (partial?'Recherche terminée, mais incomplète — ':'Recherche terminée — ')+(data.results.length?count:partial?'aucun résultat dans la partie interrogée.':'aucun résultat trouvé pour « '+q+' ».');
     $('search-message').textContent=label+(ongoing&&Number.isFinite(data.coverage?.collections_selected)?' · '+((data.coverage.searched||0)+(data.coverage.locally_indexed||0))+' / '+data.coverage.collections_selected+' collections examinées':'')+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
     const signature=JSON.stringify(data.results);if($('search-results').dataset.signature!==signature){

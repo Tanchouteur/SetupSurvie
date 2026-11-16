@@ -110,6 +110,12 @@ au clavier restent conservés. Trente-huit contrôles par Chromium et WebKit pas
 contre le petit flux HTTP de test, dont les quatre fins sans résultat. Aucun délai
 ou résultat du fonds réel n'est déduit de cette fixture.
 
+Le contrôle WebKit CI a aussi révélé que le texte interne des options natives
+débordait de leurs listes à 320 pixels, alors que leurs rectangles visibles
+tenaient dans la page. Le correctif borne ce contenu dans les seuls libellés
+des tests et conserve un indicateur de focus à l'intérieur des listes. Le
+débordement global de la page n'est pas masqué ; le contrôle complet reste requis.
+
 ## Suite
 
 La demande vidéo est précisée : les nouveaux médias de Marc seront des MP4
