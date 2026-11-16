@@ -100,6 +100,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const summaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_long_summaries.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const summaryResult=await summaryRecipe(summaryPage);await summaryContext.close();
       console.log(JSON.stringify({engine:name,longSummaries:summaryResult}));
+      const frenchLifecycleContext=await browser.newContext(),frenchLifecyclePage=await frenchLifecycleContext.newPage();
+      const frenchLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_french_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,frenchLifecycle:await frenchLifecycleRecipe(frenchLifecyclePage)}));await frenchLifecycleContext.close();
       const figureLifecycleContext=await browser.newContext(),figureLifecyclePage=await figureLifecycleContext.newPage();
       const figureLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_figure_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,figureLifecycle:await figureLifecycleRecipe(figureLifecyclePage)}));await figureLifecycleContext.close();

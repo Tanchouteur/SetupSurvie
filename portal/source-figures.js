@@ -1,7 +1,7 @@
 /* Original illustrations only. Selection uses captions; pixels are not interpreted. */
 (()=>{
   'use strict';
-  const urls=new Map(),tasks=new Set();let queue=Promise.resolve(),pdfLibrary=null,worker=null,departing=false;
+  const urls=new Map(),tasks=new Set();let queue=Promise.resolve(),pdfLibrary=null,worker=null,departing=false,lifecycle=0;
   function addURL(img,blob){const url=URL.createObjectURL(blob);urls.set(img,url);img.src=url;}
   new MutationObserver(records=>{for(const record of records)for(const node of record.removedNodes)if(node.nodeType===1&&!node.isConnected){if(node.matches('.source-figure'))observer.unobserve(node);for(const figure of node.querySelectorAll('.source-figure'))observer.unobserve(figure);}for(const [img,url] of urls)if(!img.isConnected){URL.revokeObjectURL(url);urls.delete(img);}}).observe($('chat-messages'),{childList:true,subtree:true});
   const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting&&!departing){observer.unobserve(entry.target);const run=entry.target.loadOriginal;if(run)queue=queue.then(()=>!departing&&entry.target.isConnected?run():undefined).catch(()=>{});}},{rootMargin:'200px'});
@@ -12,11 +12,11 @@
     return false;
   }
   async function pdfImage(item,img,status){
-    const query='?id='+encodeURIComponent(item.id)+'&revision='+encodeURIComponent(item.revision||'');
+    const generation=lifecycle,query='?id='+encodeURIComponent(item.id)+'&revision='+encodeURIComponent(item.revision||'');
     const checked=await api('/illustrations/document'+query);
-    if(departing||!img.isConnected)return;
+    if(departing||generation!==lifecycle||!img.isConnected)return;
     if(!pdfLibrary)pdfLibrary=await import('/vendor/pdfjs/pdf.mjs');
-    if(departing||!img.isConnected)return;
+    if(departing||generation!==lifecycle||!img.isConnected)return;
     if(!worker){pdfLibrary.GlobalWorkerOptions.workerSrc='/vendor/pdfjs/pdf.worker.mjs';worker=new pdfLibrary.PDFWorker();}
     let task=null,canvas=null;
     try{
@@ -24,13 +24,13 @@
       tasks.add(task);
       const document=await task.promise,page=await document.getPage(checked.page),initial=page.getViewport({scale:1});
       const scale=Math.min(900/initial.width,1200/initial.height,Math.sqrt(1_000_000/(initial.width*initial.height))),viewport=page.getViewport({scale});
-      if(departing||!img.isConnected)return;
+      if(departing||generation!==lifecycle||!img.isConnected)return;
       canvas=window.document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
       await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
       await api('/illustrations/document'+query); // Refuse a changed source, including during rendering.
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
       if(!blob)throw Error('Aperçu PDF indisponible.');
-      if(!departing&&img.isConnected){addURL(img,blob);status.textContent=checked.version_checked?'Page originale · ouvrir le PDF pour agrandir.':'Page originale · version du fichier non vérifiable.';}
+      if(!departing&&generation===lifecycle&&img.isConnected){addURL(img,blob);status.textContent=checked.version_checked?'Page originale · ouvrir le PDF pour agrandir.':'Page originale · version du fichier non vérifiable.';}
     }finally{if(canvas)canvas.width=canvas.height=0;if(task){tasks.delete(task);await task.destroy();}}
   }
   function card(item,source){
@@ -44,10 +44,10 @@
     const original=element('a','Ouvrir l’original en grand','secondary-link');original.href=item.kind==='pdf_page'?'/pdf.html?id='+encodeURIComponent(item.id):'/api/media?id='+encodeURIComponent(item.id)+'&source_id='+encodeURIComponent(source.id)+'&revision='+encodeURIComponent(item.revision||'');original.target='_blank';original.rel='noopener';actions.append(original);caption.append(actions);
     img.onerror=()=>{img.hidden=true;status.textContent='Ce visuel est indisponible ou son document a changé. Consultez le document source.';};
     figure.loadOriginal=async()=>{
-      try{
+      const generation=lifecycle;try{
         if(item.kind==='pdf_page')await pdfImage(item,img,status);
         else{img.onload=()=>{status.textContent='Illustration originale · sélection d’après la légende.';};img.src=original.href;}
-      }catch(error){img.hidden=true;status.textContent=error.status?error.message:'L’aperçu ne peut pas être affiché. Ouvrez le document source.';}
+      }catch(error){if(departing||generation!==lifecycle)return;img.hidden=true;status.textContent=error.status?error.message:'L’aperçu ne peut pas être affiché. Ouvrez le document source.';}
     };
     const preview=element('a');preview.href=original.href;preview.target='_blank';preview.rel='noopener';preview.append(img);figure.append(preview,status,caption);observer.observe(figure);return figure;
   }
@@ -67,5 +67,6 @@
   document.addEventListener('survie:message',event=>show(event.detail.node,event.detail.sources));
   document.addEventListener('survie:job',event=>{if(['done','incomplete','failed','cancelled','interrupted'].includes(event.detail.status))show($('chat-messages').lastElementChild,event.detail.sources);});
   for(const node of $('chat-messages').children)show(node,node.sourceReferences);
-  window.addEventListener('pagehide',()=>{departing=true;observer.disconnect();for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();for(const task of tasks)task.destroy().catch(()=>{});worker?.destroy();});
+  window.addEventListener('pagehide',()=>{departing=true;lifecycle++;observer.disconnect();for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();for(const task of tasks)task.destroy().catch(()=>{});tasks.clear();worker?.destroy();worker=null;});
+  window.addEventListener('pageshow',event=>{if(event.persisted){departing=false;queue=Promise.resolve();for(const figure of document.querySelectorAll('.source-figure'))observer.observe(figure);}});
 })();

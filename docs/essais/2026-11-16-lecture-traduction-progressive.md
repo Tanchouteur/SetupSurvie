@@ -73,3 +73,13 @@ fenêtre. Le choix de fermeture est maintenant enregistré avant la fermeture,
 et la restauration automatique ne se fait qu’à la première lecture du travail.
 La recette vérifie fermeture, pause, rechargement et retour sans retirer les
 assertions de navigation ou d’erreur JavaScript.
+
+Le rejeu local des illustrations rencontre ensuite la même famille d’erreur sur
+la vérification facultative de version française : ce module avait son propre
+`fetch`, hors du suivi commun des requêtes de page. Il annule maintenant ses
+requêtes au départ et refuse de démarrer une vérification tardive. Les aperçus
+et cette vérification peuvent repartir après un retour depuis le cache du
+navigateur. Une seconde recette retient réellement une requête puis contrôle son
+annulation et sa reprise après `pageshow` ; l’original reste lisible.
+Les recettes normales des illustrations et du lecteur bilingue repassent sur
+Chromium et WebKit, sans filtrer les erreurs de page.
