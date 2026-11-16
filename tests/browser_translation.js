@@ -1,6 +1,7 @@
 // Playwright MCP recipe, paired with browser_translation_server.py only.
 async (page) => {
   const base='http://10.0.3.2:8769';
+  const documents=async()=>{const pane=page.locator('#assistant-documents');if(await pane.count()&&!await pane.isVisible())await page.locator('[data-assistant-zone=documents]').click();};
   await page.unrouteAll({behavior:'wait'});
   await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
@@ -27,7 +28,7 @@ async (page) => {
     layouts.push({width,height,...valid});
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);
-  await page.locator('#translation-panel').evaluate(e=>e.open=true);
+  await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
   await page.locator('#chat-mode').selectOption('moyenne');await page.locator('#translation-resume').click();
   await page.waitForFunction(done=>Number(document.querySelector('#translation-progress').value)>done,before.done);
   await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
@@ -40,7 +41,7 @@ async (page) => {
   if(!await page.locator('#chat-source').isHidden())throw Error('Retrait non conservé');
   await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
   await page.getByRole('button',{name:'Poser une question sur ce document',exact:true}).click();
-  await page.locator('#translation-panel').evaluate(e=>e.open=true);
+  await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
   await page.locator('#translation-first').fill('3');await page.locator('#translation-last').fill('5');
   await page.locator('#translation-start').click();
   await page.waitForFunction(()=>Number(document.querySelector('#translation-progress').value)>=1);

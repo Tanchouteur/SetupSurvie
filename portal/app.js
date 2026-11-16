@@ -533,7 +533,7 @@ async function translationAction(action){
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
       if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
     }
-    await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;return true;
+    await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-command',{detail:{action,id:data.id}}));return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
   finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;translationStop.disabled=translationDelete.disabled=false;refreshSourceChoices();}
 }

@@ -16,7 +16,7 @@
   const canonical=id=>id.replace(/#page=\d+$/,'');
   async function mount(source,host,actions){
     destroy?.();
-    if(source.is_ai_translation||source.kind==='video'||!source.id?.match(/^(guide|zim):/))return;
+    if(source.is_ai_translation||source.language==='fr'||source.kind==='video'||!source.id?.match(/^(guide|zim):/))return;
     const owner=session.user?.id;if(!owner)return;
     const root=node('section',undefined,'reader-work');root.id='reader-work';root.hidden=true;
     root.setAttribute('aria-label','Traduction du document');
@@ -80,7 +80,7 @@
         if(part.quality?.status==='blocked')n.append(node('p','Proposition refusée : elle ne compte pas comme traduction et n’est pas publiée.','reader-work-notice'));
         if(part.source_text){const compare=node('details');compare.append(node('summary','Comparer avec le texte original'),node('pre',part.source_text));n.append(compare);}
         if(part.candidate){const candidate=node('details');candidate.append(node('summary','Proposition refusée · ne pas utiliser'),node('p',part.candidate));n.append(candidate);}
-        const original=node('a','Consulter la page originale');original.href=originalURL(data.source_id+(pdf?'#page='+part.page:''));original.target='_blank';original.rel='noopener';n.append(original);
+        const original=node('a','Consulter la page originale');original.href=originalURL(canonical(data.source_id)+(pdf?'#page='+part.page:''));original.target='_blank';original.rel='noopener';n.append(original);
         if(row){const opened=[...row.querySelectorAll('details')].map(d=>d.open);n.querySelectorAll('details').forEach((d,i)=>d.open=opened[i]);row.replaceWith(n);keyed.delete(String(part.position));}else parts.append(n);
       }
       for(const n of keyed.values())n.remove();
@@ -118,16 +118,17 @@
   if(!portal){
     const id=new URLSearchParams(location.search).get('id')||'',nav=document.querySelector('header nav');
     if(/^guide:.+\.pdf(?:#page=\d+)?$/i.test(id)&&nav){
-      const open=action('Traduire ce PDF',()=>{},'secondary');nav.append(open);
+      const open=action('Traduire ce PDF',()=>{},'secondary');open.disabled=true;nav.append(open);
       const dialog=node('dialog');dialog.id='pdf-translation-work';dialog.setAttribute('aria-label','Traduction du PDF');
       const close=action('Revenir au PDF',()=>dialog.close());const placeholder=node('div',undefined,'reader-body');dialog.append(close,placeholder);document.body.append(dialog);
       open.onclick=()=>dialog.showModal();
       Promise.all([request('/profiles/current'),request('/status')]).then(async([profile,status])=>{
         session.user=profile;session.status=status;
         const source=await request('/source?id='+encodeURIComponent(canonical(id)));
+        if(source.language==='fr'||source.is_ai_translation){open.hidden=true;return;}
         await mount(source,dialog,nav);
         const trigger=nav.querySelector('[data-document-action=translate]');
-        if(trigger){trigger.hidden=true;open.onclick=()=>{dialog.showModal();const panel=get('reader-work');if(panel.hidden)trigger.click();};}
+        if(trigger){trigger.hidden=true;open.disabled=false;open.onclick=()=>{dialog.showModal();const panel=get('reader-work');if(panel.hidden)trigger.click();};}
       }).catch(()=>{open.disabled=true;open.textContent='Traduction indisponible';});
       window.addEventListener('focus',async()=>{try{const current=await request('/profiles/current');if(current.id!==session.user?.id){destroy?.();dialog.close();open.disabled=true;open.textContent='Profil modifié : rechargez le lecteur';}}catch(_){}});
     }
