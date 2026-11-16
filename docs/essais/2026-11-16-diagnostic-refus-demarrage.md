@@ -1,0 +1,47 @@
+# Comprendre les essais refusés avant lancement
+
+**Bilan du candidat 0.30.0 — 16 novembre 2026.** Suite aux refus intermittents
+signalés oralement par Louis pendant les essais Windows 0.25.0. Les cinq rapports
+ne permettent pas de reconstruire toutes les tentatives antérieures ; cette
+livraison fournit les observations qui manquaient, sans annoncer leur cause.
+
+Les contrôles mémoire, comparatif IA, performances et traduction de 40 pages
+conservent désormais leurs refus HTTP 409/429/503 sur un mode connu, même quand
+aucun travail n’a pu être créé. Leurs erreurs d’origine et leur code HTTP restent
+identiques. Le diagnostic facultatif ne doit pas remplacer un refus s’il échoue.
+L’enregistrement est borné aux vingt derniers refus dans un fichier privé.
+
+Chaque observation distingue : modèle/mode/contexte choisis, type d’essai et
+heure/version ; état du contrôleur, commande start/stop en cours et marge RAM/VRAM
+observée ; réponses indépendantes des API locales version, modèles chargés et
+modèles installés. Un contrôleur qui annonce hors ligne peut ainsi être comparé
+à l’API moteur qui répond. Aucun appel de chargement, téléchargement, arrêt ou
+inférence n’est envoyé par le diagnostic. Les mesures mémoire portent sur le PC
+entier et sont prises après le refus, pas exactement à l’instant de sa décision.
+
+Le contrôleur hôte conserve aussi un résumé borné de sa dernière commande :
+action, cible Windows/Linux, début/fin, durée, étape et catégorie d’échec. Les
+étapes sont garde de transfert, commande au service, attente API et terminé.
+Aucun message d’exception libre, chemin, environnement, jeton ou log brut n’est
+conservé dans cet export. Les anciens contrôleurs peuvent omettre ce champ,
+explicitement non mesuré jusqu’à leur mise à jour.
+
+Depuis **Paramètres → Tests et diagnostics → Mémoire et contexte**, utiliser
+**Télécharger le diagnostic de démarrage** si un lancement d’essai refuse le
+moteur. Le fichier associe les refus enregistrés à une nouvelle observation
+actuelle, sans les confondre. Son nom contient type, version, date et heure.
+Ouvrir le sous-menu ne lance pas ce contrôle ni une inférence.
+
+## Vérifications
+
+**47 tests ciblés** réussissent sur le runner CPU : appels GET strictement bornés,
+champs autorisés, absence de textes privés, rétention de vingt refus, erreur
+facultative qui ne masque pas la réponse, accès Famille et état hôte de commande
+réussie/échouée. Aucun modèle ou corpus n’est téléchargé. Les essais navigateur,
+la suite et la CI finale suivent. Aucun nouveau diagnostic physique de Marc
+n’est présenté comme exécuté.
+
+Version **y**, fonctionnalité de diagnostic compatible et données séparées ;
+aucune migration, modification des modèles ou changement de marge de mémoire.
+Les réglages et le mode jeu restent respectés. Référence actuelle :
+[mesures et mémoire](../utilisation/mesurer-assistant-et-memoire.md).

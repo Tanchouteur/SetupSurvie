@@ -92,3 +92,17 @@
   document.addEventListener('toggle',event=>{if(event.target===$('next-calibration-form').closest('details'))refresh();},true);
   setInterval(refresh,1500);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',()=>{request?.abort();refresh();});
 })();
+
+/* Read-only evidence even when a test was refused before creating its report. */
+(()=>{
+  const body=document.querySelector('#next-calibration-form').parentElement;
+  const note=element('p','Si un essai indique « moteur indisponible », ce diagnostic conserve les refus récents et vérifie l’état actuel. Il ne démarre ni l’assistant ni un modèle.','small muted');
+  const state=element('p',undefined,'small');state.id='next-startup-report-status';state.setAttribute('role','status');
+  const exportReport=button('Télécharger le diagnostic de démarrage',async()=>{
+    const owner=S.user?.id;exportReport.disabled=true;state.textContent='Lecture de l’état du moteur…';
+    try{const report=await api('/admin/assistant/startup-report?'+new URLSearchParams({mode:$('next-calibration-mode').value}));
+      if(S.user?.id!==owner)return;downloadReport(report,'demarrage-ia');state.textContent='Diagnostic téléchargé. Aucun modèle n’a été chargé par ce contrôle.';
+    }catch(error){if(S.user?.id===owner)state.textContent=error.message;}
+    finally{exportReport.disabled=false;}
+  },'secondary');exportReport.id='next-startup-report-export';body.append(note,exportReport,state);
+})();

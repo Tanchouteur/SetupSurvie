@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
-from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory,assistant_metrics,calibration,search_experiment
+from pilot import accounts, app as gateway, engine, library, operations,store,translations,profiles,catalogue,inventory,assistant_metrics,calibration,search_experiment,startup_diagnostic
 
 
 class PilotAPITests(unittest.TestCase):
@@ -31,6 +31,19 @@ class PilotAPITests(unittest.TestCase):
     def login(self,who='alice'):
         response=self.client.post('/api/profiles/select',json={'id':who},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);return response
+
+    def test_refused_calibration_is_recorded_and_diagnostic_requires_family(self):
+        self.login('admin');headers={'Origin':'http://testserver'}
+        snapshot={'controller':{'online':False},'ollama':{},'model_loaded_by_this_check':False}
+        with patch.object(startup_diagnostic,'snapshot',AsyncMock(return_value=snapshot)),patch.object(calibration,'start',AsyncMock(side_effect=HTTPException(409,'Moteur indisponible'))):
+            response=self.client.post('/api/admin/assistant/calibration/start',json={'mode':'rapide'},headers=headers)
+            self.assertEqual(response.status_code,409);self.assertEqual(response.json()['detail'],'Moteur indisponible')
+            report=self.client.get('/api/admin/assistant/startup-report?mode=rapide')
+        self.assertEqual(report.status_code,200);data=report.json()
+        self.assertEqual(data['version'],gateway.VERSION);self.assertEqual(len(data['refused_attempts']),1)
+        self.assertEqual(data['refused_attempts'][0]['action'],'calibration');self.assertFalse(data['current']['model_loaded_by_this_check'])
+        self.login('alice')
+        self.assertEqual(self.client.get('/api/admin/assistant/startup-report').status_code,403)
 
     def test_learning_paths_are_read_only_and_available_without_an_ai_session(self):
         with patch.object(engine,'launch') as launch,patch.object(operations,'status',side_effect=AssertionError('No engine needed')):

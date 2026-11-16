@@ -880,3 +880,19 @@ indépendantes. Le verrou de publication est acquis pour éviter une écriture
 concurrente. La publication attend aussi son thread après annulation avant de
 relâcher ce verrou : une coroutine annulée n’est pas une preuve d’arrêt du thread.
 Les contrôles principaux se déplacent avec le lecteur ; leurs IDs restent uniques.
+
+## Refus avant lancement et diagnostic — 0.30.0
+
+`startup_diagnostic.observe()` entoure les quatre créations de test et conserve
+les refus 409/429/503 d’un mode connu, sans modifier le code HTTP/message originel.
+Le fichier privé `startup-diagnostic.json` garde vingt observations au maximum.
+Les objets libres sont filtrés par champs/types/enums avant écriture ; aucune
+URL locale, liste de noms de modèles supplémentaires ou trace d’exception n’est
+exportée. Les probes utilisent seulement GET version/ps/tags en parallèle,
+avec délais courts ; pas de show/pull/chat/generate.
+
+Le contrôleur écrit `last-engine-diagnostic.json` même après une commande en
+échec, avec étape et durée, et expose uniquement ce résumé autorisé dans status.
+L’export admin `/admin/assistant/startup-report` combine historique et nouvel
+instantané ; les deux dates restent explicites. Il n’est pas interrogé au
+chargement de l’interface et ne change aucun état du moteur.

@@ -586,3 +586,11 @@ La refonte générale des conversations et le catalogue de modèles restent dist
 Branche d’un autre agent conservée par fusion normale : [bilan 0.28.1](2026-11-16-integration-routage-windows.md).
 Les trois routeurs Windows lisent les graphes sous leur UID/GID de préparation.
 Version compatible après 0.28.0 ; aucune nouvelle donnée cartographique ni image.
+
+## 16 novembre — diagnostic des lancements refusés, candidat 0.30.0
+
+Les refus reçus avant création d’un essai laissaient un trou dans les rapports
+de Marc. [Nouvelle collecte bornée](2026-11-16-diagnostic-refus-demarrage.md) :
+état après refus et état lors de l’export séparés, commande hôte avec étape,
+mémoire et API locale interrogées sans chargement ni inférence. Les causes
+anciennes restent inconnues ; cette instrumentation ne les déclare pas résolues.

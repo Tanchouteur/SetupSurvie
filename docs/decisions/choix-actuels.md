@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+Le candidat **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)
+et fournit un diagnostic exportable en lecture seule. Les états contrôleur/API
+et les marges mémoire sont distingués ; les anciennes pannes non enregistrées
+ne sont pas reconstituées. Ni reprise forcée ni baisse des réserves mémoire.
+
 La **0.29.0** ajoute [arrêt et suppression des travaux de traduction](../utilisation/documents-et-traduction.md#gérer-une-traduction--0290),
 avec reprise volontaire et conservation des originaux, conversations et guides
 déjà partagés. Les contrôles sont accessibles aussi pendant la lecture dédiée.
