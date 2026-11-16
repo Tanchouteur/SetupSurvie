@@ -151,7 +151,7 @@ def plan(app, dest):
     total=sum(r['bytes'] for r in items['files'])
     parent=dest
     while not parent.exists():parent=parent.parent
-    return {'schema':1,'kind':KIND,'id':uuid.uuid4().hex,'source':{k:str(v) for k,v in source.items()},
+    return {'schema':1,'kind':KIND,'id':uuid.uuid4().hex,'source':{k:str(v) for k,v in source.items()},'source_aliases':{'application':str(config.get('app_dir',source['application'])),'data':str(config['data_dir']),'private':str(app.work)},
             'release':read(source['application']/'deploy/release.json') if (source['application']/'deploy/release.json').is_file() else {'version':'unknown'},'destination':str(dest),'target':config['target'],'phase':'planned','created':time.time(),
             'inventory':items,'bytes':total,'free_bytes':shutil.disk_usage(parent).free,
             'prerequisites':prerequisites(config), 'host':host, 'checks':{}, 'adapted':[]}
@@ -371,7 +371,9 @@ def translate_paths(value, mapping):
     if isinstance(value,str):
         for old,new in sorted(mapping.items(),key=lambda p:len(p[0]),reverse=True):
             for variant in (old,old.replace('\\','/'),old.replace('/','\\')):
-                if value==variant or value.startswith(variant+'/') or value.startswith(variant+'\\'):
+                compared=value.casefold() if os.name=='nt' else value
+                prefix=variant.casefold() if os.name=='nt' else variant
+                if compared==prefix or compared.startswith(prefix+'/') or compared.startswith(prefix+'\\'):
                     return new+value[len(variant):].replace('\\','/')
     return value
 
@@ -385,6 +387,7 @@ def prepare(dest):
         plan_path=dest/'adaptation.json'
         if not plan_path.exists() or read(plan_path).get('destination')!=str(dest) or journal['phase']=='prepared':
             mapping={old:(dest/role).as_posix() for role,old in journal['source'].items()}
+            mapping.update({old:(dest/role).as_posix() for role,old in journal.get('source_aliases',{}).items()})
             if journal.get('destination') and journal['destination']!=str(dest):
                 for role in journal['source']:mapping[str(Path(journal['destination'])/role)]=(dest/role).as_posix()
             edits={};texts={}

@@ -24,7 +24,7 @@ def no_services(app,config):
 class TransferTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name)
+        self.root=Path(self.temp.name).resolve()
         self.appdir=self.root/'Source é été'/'application';self.data=self.root/'Source é été'/'données';self.work=self.root/'Source é été'/'privé'
         for path in (self.appdir/'scripts',self.data/'state/pilot',self.data/'library/guides',self.work,self.data/'state/openwebui'):path.mkdir(parents=True)
         (self.appdir/'scripts/transfer.py').write_text('# fixture')
@@ -135,7 +135,7 @@ transfer.transfer(setup.Installation(sys.argv[2]),Path(sys.argv[3]),stop_context
         self.copy()
         original=setup.write_json
         def fail(path,value,**kwargs):
-            if str(path).endswith('private/settings.json'):raise OSError('fixture outage')
+            if Path(path).parts[-2:]==('private','settings.json'):raise OSError('fixture outage')
             return original(path,value,**kwargs)
         with patch.object(setup,'write_json',side_effect=fail),self.assertRaises(OSError):transfer.prepare(self.dest)
         transfer.prepare(self.dest);transfer.verify_copy(self.dest)

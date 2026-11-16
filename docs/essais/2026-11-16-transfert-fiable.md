@@ -60,6 +60,12 @@ node tests/transfer_browser_smoke.js
 Le test Node attend le paquet Playwright sous `/opt/transfer-test/node_modules`.
 Aucun accès Docker, secret ou état réel n’est monté dans ce conteneur.
 
+Premier passage CI Windows : trois échecs de fixtures, dus à l’alias court
+`RUNNER~1` et à une injection d’erreur utilisant un séparateur `/` sur Windows.
+Les chemins des fixtures sont normalisés et l’injection utilise les composants
+de `Path`. L’adaptateur conserve aussi les alias de chemins source et compare
+leur casse selon Windows. Ces échecs sont distincts d’un transfert réel sur SSD.
+
 ## Recette Windows restant à réaliser chez Marc
 
 1. Relever version installée, lettres des volumes, disque physique, type du
