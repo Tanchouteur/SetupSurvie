@@ -11,7 +11,7 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **16 novembre 2026**, le pilote **0.27.0** propose une recherche locale avec
+Au **16 novembre 2026**, le pilote **0.27.1** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
