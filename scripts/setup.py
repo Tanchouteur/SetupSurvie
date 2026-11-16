@@ -194,7 +194,10 @@ class Installation:
             base += ["-f", str(ROOT / "compose.linux.yaml")]
             if not c["cpu"]:
                 base += ["-f", str(ROOT / "compose.gpu.yaml")]
-        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():base += ['--profile','routing']
+        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():
+            if c["target"] == "windows":
+                base += ["-f", str(ROOT / "deploy/compose.routing-windows.yaml")]
+            base += ["--profile", "routing"]
         return base + list(args)
 
     def compose(self, c, *args, capture=False, timeout=None):

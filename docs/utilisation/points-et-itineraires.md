@@ -112,6 +112,13 @@ lanceur du laboratoire et son actualisation de bibliothèque les relancent aussi
 Le moteur vérifie l’identifiant de préparation renvoyé par OSRM : un service
 resté sur l’ancien graphe est refusé, sans inventer un trajet de remplacement.
 
+Sous Windows, les conteneurs utilisent le même identifiant Linux que la
+préparation des graphes (1000:1000) pour lire les index dont l’accès est
+limité à leur propriétaire. Les graphes restent montés en lecture seule.
+Après l’installation de la mise à jour qui apporte ce correctif,
+utiliser **Arrêter SetupSurvie**, puis **Ouvrir SetupSurvie**, pour recréer
+les conteneurs d’itinéraires avec la nouvelle configuration.
+
 ## Petits chemins et limites
 
 Les sentiers, pistes et petits chemins présents dans le fond OpenStreetMap sont
