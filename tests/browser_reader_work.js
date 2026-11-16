@@ -8,7 +8,7 @@ async page=>{
  await page.waitForFunction(()=>document.querySelector('#reader-work-parts .translation-part p')?.textContent.startsWith('Construction'));
  await page.locator('#reader-work').getByRole('button',{name:'Mettre en pause',exact:true}).click();await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));
  const compare=page.locator('#reader-work-parts details').first();await compare.locator('summary').click();check(await compare.evaluate(n=>n.open),'Comparer l’original pendant la lecture');
- const readingURL=page.url();await page.locator('#navigation [data-view=chat]').click();await page.goto(readingURL);await page.locator('#reader [data-document-action=translate]').click();await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));check(true,'Retrouver la traduction après une autre rubrique');
+ const readingURL=page.url();await page.locator('#navigation [data-route=assistant]').click();await page.goto(readingURL);await page.locator('#reader [data-document-action=translate]').click();await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));check(true,'Retrouver la traduction après une autre rubrique');
  await page.reload();await page.waitForFunction(()=>S.authReady&&S.user);await page.locator('#reader').getByRole('button',{name:'Traduction : ouvrir ou reprendre',exact:true}).click();
  await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));
  check(await page.locator('#reader-work-choice').inputValue()===job,'Travail retrouvé par original sans reprise automatique');

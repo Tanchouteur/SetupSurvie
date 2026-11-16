@@ -56,7 +56,7 @@
     navigation.append(previous,next);
     root.append(heading,select,config,notice,state,progress,controls,explanation,parts,navigation);host.querySelector('.reader-body').before(root);
     const trigger=actions.querySelector('[data-document-action=translate]')||action('Traduire en français',()=>{},'secondary');
-    trigger.dataset.documentAction='translate';if(!trigger.isConnected)actions.append(trigger);
+    trigger.dataset.documentAction='translate';trigger.disabled=true;if(!trigger.isConnected)actions.append(trigger);
     let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null;
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
     const resumePolling=()=>{if(!document.hidden&&!root.hidden&&valid()&&job)load(job,offset);};
@@ -65,7 +65,7 @@
     const labels={queued:'En attente du moteur',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
     function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=true;previous.hidden=next.hidden=true;config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
     function choose(){select.replaceChildren(new Option('Nouvelle traduction',''));for(const item of items)select.append(new Option((labels[item.status]||item.status)+' · '+new Date(item.created*1000).toLocaleDateString('fr-FR'),item.id));select.value=job||'';}
-    async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}}
+    async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}finally{if(valid())trigger.disabled=false;}}
     function newWork(){clearTimeout(timer);version++;job=null;offset=0;parts.replaceChildren();state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
     trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();root.hidden=!root.hidden;
       if(!root.hidden){if(!job&&items.length){job=items[0].id;select.value=job;}if(job)load(job,offset);root.scrollIntoView({block:'start'});}else{clearTimeout(timer);version++;}},true);
@@ -113,7 +113,7 @@
         if(!valid())return;job=data.id||job;await discover();await load(job,action==='start'?0:offset);
       }catch(e){if(valid())state.textContent=e.message;}finally{busy=false;if(valid())for(const b of controls.querySelectorAll('button'))b.disabled=false;}
     }
-    pending();discover();
+    pending();await discover();
   }
   if(!portal){
     const id=new URLSearchParams(location.search).get('id')||'',nav=document.querySelector('header nav');
