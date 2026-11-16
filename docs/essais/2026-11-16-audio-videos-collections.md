@@ -118,6 +118,13 @@ il n’est pas compté comme validation générale.
 
 Le reçu de paquet après comparaison de chaque fichier avec Git accompagne
 l’intégration successive sur `main`, sans écraser la livraison UX.
+Le paquet `/tmp/setupsurvie-0350-validated.zip` est construit au commit
+`9a8557ae8daccf0e62d5fc2c5241cffdde350d51` : **952 fichiers**, **7 591 640 octets**
+compressés et **16 910 247 octets** décompressés. SHA-256 :
+`faeb287655d8df6aebd2c7dcc13b8bc39fdf75a80f8595571a0aec6d00935a46`.
+Chaque contenu correspond à `git cat-file --filters` de ce commit et aux taille/
+empreinte du manifeste. Le présent reçu est ajouté ensuite ; le paquet ne prétend
+pas contenir le commit qui décrit son propre contrôle.
 Le [guide](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0350)
 porte les commandes courantes. Aucun média réel de Marc n’est examiné ici : mots,
 langue, codecs et alignement de chaque vidéo restent à qualifier. Les lecteurs
