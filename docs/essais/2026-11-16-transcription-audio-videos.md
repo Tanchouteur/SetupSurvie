@@ -126,7 +126,9 @@ limité à sa rubrique visible, sa requête est annulée au départ de la page e
 réponse ne peut pas remplir un autre profil. La recette conserve son contrôle
 d'erreurs et vérifie aussi l'absence de consultation d'un essai mémoire replié.
 
-Valider le parcours navigateur et le runtime emballé, terminer la CI et le paquet,
+Les quinze contrôles audio et vingt contrôles de traduction longue passent
+dans Chromium et WebKit après la correction du suivi mémoire. Valider le runtime
+emballé, terminer la dernière CI et le paquet,
 puis qualifier les vrais MP4. Acquisition de sous-titres en ligne, inventaire et
 préparation des vidéos/pistes des ZIM restent distincts et non achevés. Une bonne
 traduction de cet exemple n'est pas la validation de chaque vidéo de la bibliothèque.
