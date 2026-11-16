@@ -29,7 +29,7 @@ et la restauration complète sur PC vierge restent des travaux distincts.
 
 | Lot | État et critères de sortie |
 | --- | --- |
-| Référence et retour | Référence finale 0.33.0 avec vidéos et référence initiale 0.32.1 archivées ; retour avec sauvegarde des données récentes testé sur fixtures et base SQLite réelle, pas sur les PC physiques |
+| Référence et retour | Référence finale 0.33.1 avec vidéos et correctif de recherche et référence initiale 0.32.1 archivées ; retour avec sauvegarde des données récentes testé sur fixtures et base SQLite réelle, pas sur les PC physiques |
 | Fondations | Implémentées : aides facultatives, variables CSS, titres concrets, lecture prioritaire, navigation au clavier |
 | Lecteurs | Implémentés : traduction dans le lecteur portail et PDF dédié, travaux retrouvés par original, comparaison, pages, commandes et exports préservés |
 | Assistant | Implémenté : trois zones repliables, dossiers personnels, déplacement, recherche et renommage ; tâches distinctes du temps de réponse |
@@ -64,7 +64,8 @@ a été intégré avant l’UX. La refonte porte donc la version **0.34.0** : un
 évolution fonctionnelle significative, avec API et données existantes compatibles.
 Aucune version ni empreinte d’image tierce n’a changé.
 
-Le paquet de retour recommandé est la **0.33.0**, qui conserve les ajouts vidéo.
+Le correctif de recherche 0.33.1 (`fafc21e`) a ensuite été repris. Le paquet de
+retour recommandé est donc la **0.33.1**, qui conserve aussi les ajouts vidéo.
 La 0.32.1 reste la référence historique précédant les deux chantiers. Consulter
 la [procédure de retour](../exploitation/retour-version-avant-refonte.md).
 

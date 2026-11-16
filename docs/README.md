@@ -8,6 +8,8 @@
 - [Refonte UX évolutive](decisions/refonte-ux-evolutive.md) — chantier PC/téléphone, traduction dans le lecteur, composants et coordination.
 - [Retour à la version précédente](exploitation/retour-version-avant-refonte.md) — procédure conservant les données récentes.
 
+- [Demande pratique et prix](essais/2026-11-16-intention-pratique-et-prix.md) — 0.33.1, classement des actions courtes, tarifs toujours retrouvables et limites.
+
 - [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
 - [Validation des vidéos de collections](essais/2026-11-16-videos-collections.md) — 0.33.0, huit jobs CI et preuves natives/lecteur/navigateurs séparées du fonds réel.
 - [Coordination UX et vidéos](decisions/coordination-ux-et-videos.md) — branches séparées, contrats et intégrations successives.

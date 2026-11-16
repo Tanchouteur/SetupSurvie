@@ -49,6 +49,10 @@ portail/PDF, reprise et travaux personnels, aides facultatives et composants
 Le [bilan](../essais/2026-11-16-refonte-ux.md) distingue recette technique, usage
 humain restant à mesurer et PC physiques non mis à jour par cette livraison.
 
+La **0.33.1** corrige le [classement des actions et des prix](../essais/2026-11-16-intention-pratique-et-prix.md),
+avec demandes courtes et variantes de remplacement. Les titres restent des pistes
+à lire, jamais un certificat de procédure.
+
 La **0.33.0** ajoute l’[examen des vidéos des collections](inventaire-videos-zim.md),
 leur lecture et les pistes internes dans la recherche commune, puis leur
 préparation française. Audio interne et qualification réelle de chaque vidéo

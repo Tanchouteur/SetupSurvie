@@ -27,7 +27,7 @@ ni fidélité d’un modèle, ni facilité perçue par un utilisateur novice.
 | Régler et diagnostiquer | Mon appareil → Paramètres/Tests : profils, réseau/QR, bibliothèque, assistant, entretien, export, calibration et essais volontaires | `browser_settings_ux`, `browser_assistant_diagnostics`, `browser_startup_diagnostic`, `browser_performance`, `browser_translation_benchmark` |
 | Changer de personne | Nom du profil, en haut sur PC et téléphone ; Famille sans mot de passe ; IDs et historiques conservés | `browser_profiles`, tests API profil et onglets périmés |
 | Accéder aux fonctions avancées et au secours | Outils sur PC, liens de navigation sur téléphone : Open WebUI et `/secours.html` | `browser_ux_foundations`, `browser_next_portal` ; aucune dépendance à l’IA |
-| Mettre à jour et revenir | Mise à jour normale ; retour volontaire au paquet 0.33.0 conservant les données récentes | 19 tests `test_pilot_update`, vérification de compatibilité SQLite ; machines physiques restant à qualifier |
+| Mettre à jour et revenir | Mise à jour normale ; retour volontaire au paquet 0.33.1 conservant les données récentes | 19 tests `test_pilot_update`, vérification de compatibilité SQLite ; machines physiques restant à qualifier |
 
 ## Ajouter une fonction sans nouvelle refonte
 
@@ -55,7 +55,7 @@ Les composants optionnels doivent échouer sans bloquer les fonctions de base.
 
 ## Comparer l’usage avant et après
 
-Référence technique : version 0.33.0 avec les mêmes contenus, profil et machine.
+Référence technique : version 0.33.1 avec les mêmes contenus, profil et machine.
 Faire réaliser sans indiquer le chemin : trouver et lire un document, traduire
 une plage puis la retrouver, ranger une discussion, vérifier les documents lus,
 ouvrir une vidéo, retrouver un transfert et changer de profil. Relever réussite

@@ -1,7 +1,8 @@
 # Refonte UX intégrée — 0.34.0
 
 **Bilan technique — 16 novembre 2026.** Livraison préparée sur
-`codex/refonte-ux`, après intégration du lot vidéo 0.33.0 (`3dd2409`).
+`codex/refonte-ux`, après intégration du lot vidéo 0.33.0 (`3dd2409`), puis du correctif de
+recherche 0.33.1 (`fafc21e`).
 Les preuves ci-dessous portent sur le code et des services de test ; elles ne
 constituent pas une mise à jour du PC de Marc ou de Louis ni une validation
 humaine de l’ergonomie.
@@ -87,9 +88,9 @@ aucune donnée utilisateur ni ressource lourde n’est incluse.
 
 ## Retour et limites
 
-Les deux références sont archivées hors Git et leurs tags sont poussés :
+Les trois références sont archivées hors Git et leurs tags sont poussés :
 `ux-reference-0.32.1` (avant les deux chantiers) et `ux-reference-0.33.0` (avec
-les vidéos). Le [guide de retour](../exploitation/retour-version-avant-refonte.md)
+les vidéos), puis `ux-reference-0.33.1` (retour recommandé, avec le correctif de recherche). Le [guide de retour](../exploitation/retour-version-avant-refonte.md)
 donne empreintes et procédure. Le retour sauvegarde les données actuelles puis
 remplace le code ; il ne remet pas d’anciennes conversations à la place des récentes.
 

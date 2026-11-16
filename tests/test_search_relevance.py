@@ -55,6 +55,18 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
         for query,key in [('quiz botanique','botanique'),('risques incendies Var','var'),('histoire cyclisme','cyclisme'),('métallurgie','metaux')]:
             with self.subTest(query=query):self.assertEqual((await library.search(query))[0]['id'],'guide:'+key+'.fr.txt')
 
+    async def test_real_guide_index_distinguishes_a_repair_request_from_a_price_request(self):
+        rows=[('bicycle-task.fr.txt','Mécanique vélo/Réparer un pneu','Texte de recette fictif : réparer un pneu de vélo, 17 repères inventés. Aucun conseil réel.'),
+              ('bicycle-prices.fr.txt','Prix de réparation d’un vélo','Extrait fictif des prix de réparation du vélo, aucune procédure.')]
+        metadata=json.loads((library.GUIDES/'metadata.json').read_text())
+        for path,title,text in rows:
+            (library.GUIDES/path).write_text(text);metadata.append({'path':path,'title':title,'language':'fr'})
+        (library.GUIDES/'metadata.json').write_text(json.dumps(metadata));library.index_guides()
+        tasks=await library.search('réparer un vélo')
+        self.assertEqual(tasks[0]['id'],'guide:bicycle-task.fr.txt');self.assertIn('guide:bicycle-prices.fr.txt',[item['id'] for item in tasks])
+        read=await library.source(tasks[0]['id']);self.assertIn('17 repères inventés',read['text'])
+        prices=await library.search('prix de réparation d’un vélo');self.assertEqual(prices[0]['id'],'guide:bicycle-prices.fr.txt')
+
     async def test_different_pdf_pages_group_without_losing_navigation(self):
         with store.connect() as db:
             for page in [2,8,12]:db.execute('INSERT INTO passages VALUES(?,?,?,?,?)',(f'guide:manual.pdf#page={page}',f'Manuel — page {page}',f'/guides/manual.pdf#page={page}','fr','Feu, techniques et production. Extrait fictif.'))
