@@ -1,0 +1,63 @@
+// Published French fixture text only; no native inference or customer corpus.
+async page=>{
+  const base='http://10.0.3.2:8769',checks=[],calls=[],errors=[],headers={Origin:base};
+  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
+  page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push({url:request.url(),method:request.method()}));
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
+  await page.goto(base+'/#/bibliotheque');await page.waitForFunction(()=>S.authReady&&S.user);
+  const response=await page.request.post(base+'/api/translations',{data:{source_id:'guide:shelter.en.pdf',mode:'rapide',first_page:2,last_page:3},headers});check(response.ok(),'Traduction fictive préparée par le parcours existant');const item=await response.json();
+  await page.evaluate(async id=>{const deadline=performance.now()+30000;while(performance.now()<deadline){const value=await(await fetch('/api/translations/'+id)).json();if(value.status==='completed'&&value.publication.source_id)return;await new Promise(resolve=>setTimeout(resolve,100));}throw Error('Traduction fictive non terminée.');},item.id);
+  await page.goto(base+'/#/bibliotheque');await page.waitForFunction(()=>S.authReady&&S.user);
+  await page.evaluate(()=>readSource('guide:shelter.en.pdf#page=3'));
+  const reader=page.locator('#reader'),french=reader.getByRole('button',{name:'Lire en français',exact:true});await french.waitFor({state:'visible'});
+  const before=calls.length;await french.click();await reader.locator('.french-reading-part').first().waitFor();
+  check(await reader.locator('.reader-body').isHidden(),'Le texte original laisse la place à la version française');
+  check((await reader.locator('.french-reading-text').textContent()).includes('Section 3'),'La page française correspond à la page originale demandée');
+  check((await reader.locator('.french-reading-notice').first().textContent()).includes('non vérifiée'),'La traduction conserve sa limite de fidélité');
+  check(calls.slice(before).every(row=>row.method==='GET'),'Lire la version terminée ne lance aucune traduction ni question');
+  await reader.getByRole('button',{name:'Page traduite précédente'}).click();await page.waitForFunction(()=>document.querySelector('#reader .french-reading-text')?.textContent.includes('Section 2'));
+  await reader.getByRole('button',{name:'Voir l’original',exact:true}).click();await page.waitForFunction(()=>S.reader==='guide:shelter.en.pdf#page=2'&&document.querySelector('#reader .reader-body')?.hidden===false);
+  check(await reader.locator('.reader-body').isVisible(),'Retour à l’original sur la même page française');
+  await french.click();await reader.locator('.french-reading-part').first().waitFor();await page.reload();
+  await page.waitForFunction(()=>document.querySelector('#reader .french-reading-part')?.textContent.includes('Section 2'));
+  check(await page.locator('#reader .reader-body').isHidden(),'Le choix français est retrouvé après rechargement');
+  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Lecture française sans débordement à '+width);}
+  await page.setViewportSize({width:1366,height:900});
+  await reader.locator('.french-reading-pages input').fill('4');await reader.locator('.french-reading-pages input').dispatchEvent('change');
+  await reader.getByRole('button',{name:'Ouvrir la première page traduite'}).waitFor();
+  check((await reader.locator('.french-reading-status').textContent()).includes('pas dans la plage'),'Une page non traduite reste explicitement absente');
+  await reader.getByRole('button',{name:'Ouvrir la première page traduite'}).click();await page.waitForFunction(()=>document.querySelector('#reader .french-reading-part')?.textContent.includes('Section 2'));
+  await page.evaluate(()=>localStorage.clear());
+  await page.route('**/api/library/french-reading?*',async route=>{const value=await(await route.fetch()).json();for(const row of value.translations)row.freshness='changed';await route.fulfill({json:value});});
+  await page.evaluate(()=>readSource('guide:shelter.en.pdf#page=3'));await french.waitFor({state:'visible'});await french.click();
+  check((await reader.locator('.french-reading-status').textContent()).includes('a changé'),'Un original modifié n’est pas associé silencieusement');
+  check(await reader.locator('.french-reading-part').count()===0,'L’ancienne version attend une ouverture explicite');
+  await reader.getByRole('button',{name:'Lire cette version en gardant cette limite'}).click();await reader.locator('.french-reading-part').first().waitFor();
+  await page.unroute('**/api/library/french-reading?*');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto(base+'/pdf.html?id='+encodeURIComponent('guide:shelter.en.pdf#page=3'));
+  await page.locator('#pdf-french').waitFor({state:'visible'});await page.waitForFunction(()=>!document.getElementById('pdf-next').disabled);
+  await page.locator('#pdf-french').click();await page.locator('#pdf-reading-area .french-reading-part').first().waitFor();
+  check(await page.locator('#pdf-container').isHidden(),'Le lecteur PDF ouvre son texte français sans quitter la page');
+  check(await page.locator('.pdf-controls').isHidden(),'Les outils du PDF original laissent la place à la pagination française');
+  await page.getByRole('button',{name:'Page traduite précédente'}).click();await page.waitForFunction(()=>document.getElementById('pdf-page').value==='2'&&document.querySelector('.french-reading-part')?.textContent.includes('Section 2'));
+  await page.getByRole('button',{name:'Voir le PDF original'}).click();
+  check(await page.locator('#pdf-container').isVisible()&&await page.locator('#pdf-page').inputValue()==='2','Retour au PDF illustré sur la bonne page');
+  await page.locator('#pdf-french').click();await page.locator('.french-reading-part').first().waitFor();
+  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'PDF français sans débordement à '+width);}
+  const removed=await page.request.delete(base+'/api/conversations/'+item.conversation_id,{headers});check(removed.ok(),'Suppression de la conversation de traduction terminée : '+removed.status()+' '+await removed.text());
+  const lookup=await page.request.get(base+'/api/library/french-reading?'+new URLSearchParams({original_id:'guide:shelter.en.pdf'}));check((await lookup.json()).translations.length>0,'Version française toujours lisible après suppression de conversation');
+  check((await page.request.post(base+'/fixture/reader-article?enabled=true',{headers})).ok(),'Article fictif activé avec origine explicite');
+  await page.goto(base+'/#/bibliotheque');await page.waitForFunction(()=>S.authReady&&S.user);
+  const article=await page.request.post(base+'/api/translations',{data:{source_id:'zim:reader-fixture/A/article',mode:'rapide'},headers});check(article.ok(),'Traduction fictive d’un article d’archive préparée : '+article.status()+(article.ok()?'':' '+await article.text()));const translatedArticle=await article.json();
+  await page.evaluate(async id=>{const end=performance.now()+30000;while(performance.now()<end){const state=await(await fetch('/api/translations/'+id)).json();if(state.status==='completed'&&state.publication.source_id)return;await new Promise(resolve=>setTimeout(resolve,100));}throw Error('Article non traduit.');},translatedArticle.id);
+  await page.evaluate(()=>readSource('zim:reader-fixture/A/article'));await french.waitFor({state:'visible'});await french.click();await reader.locator('.french-reading-part').first().waitFor();
+  check((await reader.locator('.french-reading-text').textContent()).includes('17 repères'),'Un article Kiwix ouvert par le portail retrouve son texte français');
+  check(await reader.locator('.french-reading-text img,.french-reading-text script').count()===0,'Le texte français ne devient pas du HTML exécutable');
+  check(await reader.locator('.french-reading-pages').isHidden(),'L’article ne montre pas de pagination PDF inutile');
+  await page.route('**/api/library/french-reading?*',route=>route.fulfill({status:503,json:{detail:'Fixture unavailable'}}));
+  await page.evaluate(()=>readSource('guide:craft.en.txt'));await reader.locator('.reader-body').waitFor({state:'visible'});
+  check((await reader.locator('.reader-body').textContent()).includes('Sewing'),'Une panne de la lecture française ne bloque pas l’original');
+  await page.unroute('**/api/library/french-reading?*');await page.request.post(base+'/fixture/reader-article?enabled=false',{headers});
+  check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
+}

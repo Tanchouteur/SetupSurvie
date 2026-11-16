@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+La 0.21.0 ajoute la [lecture française depuis l’original](../utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210),
+sans inférence pour ouvrir une traduction publiée. Les versions anciennes ou dont
+la correspondance est inconnue restent à comparer ; aucune traduction d’image
+ni relecture humaine du sens n’est déduite de cette fonction.
+
 La 0.20.0 ajoute la [relecture des conditions de départ et des relances](../utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200).
 Les compléments sont des extraits exacts sélectionnés, sans réécriture de faits.
 Une commande JSON décrite sans exécution reçoit une reprise bornée, puis une erreur

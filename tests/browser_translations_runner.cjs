@@ -86,6 +86,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const procedureContext=await browser.newContext();const procedurePage=await procedureContext.newPage();
       const procedureRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_procedure_review.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,procedureReview:await procedureRecipe(procedurePage)}));await procedureContext.close();
+      const bilingualContext=await browser.newContext();const bilingualPage=await bilingualContext.newPage();
+      const bilingualRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_bilingual_reader.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,bilingualReader:await bilingualRecipe(bilingualPage)}));await bilingualContext.close();
       const nextPage=await context.newPage();
       const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const nextResult=await nextRecipe(nextPage);

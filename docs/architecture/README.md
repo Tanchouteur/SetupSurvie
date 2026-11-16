@@ -197,6 +197,40 @@ Les contrôles de fidélité conservent leurs seuils et comparaisons ; leur vers
 ajoute un avertissement pour certains blancs de touches/valeurs et caractères de
 remplacement du texte source. Les rapports historiques ne sont pas recalculés.
 
+## Lecture française intégrée — 0.21.0
+
+`translation_reader.py` propose deux API publiques de lecture seule :
+`GET /api/library/french-reading?original_id=…` liste au plus douze versions
+publiées ; `GET /api/library/french-page?id=…&original_id=…&page=…` lit une page.
+La seconde vérifie le lien traduction/original et ne lit que le fichier HTML
+partagé, jamais `translation_parts`, les brouillons, candidats refusés ou comptes.
+Les réponses ne contiennent ni identité ni conversation. Les API et le client
+refusent la réutilisation d’un cache HTTP périmé.
+
+L’extraction conserve un repère `stat-v1` stable avant/après lecture ; un changement
+observé refuse l’instantané. Le repère d’origine, les pages publiées et le SHA-256
+du fichier partagé sont ajoutés aux métadonnées JSON existantes, sans migration
+des anciennes données. Une source modifiée ou une ancienne correspondance inconnue
+reste explicite. Ce repère taille/date n’est pas un hash de tout le fonds.
+La publication reste indépendante de la conversation et garde les règles de
+partage/annulation de la version précédente.
+
+Lister les versions ne parse pas les livres. À l’ouverture d’une page française,
+le module contrôle chemin, absence de liens symboliques, taille bornée, stabilité
+du fichier et empreinte publiée lorsqu’elle existe. Il extrait uniquement les
+paragraphes français et avertissements des sections. Un cache reconstructible
+conserve au plus seize fichiers et 64 millions d’octets de fichiers lus, avec
+chemin/taille/date/empreinte comme clé ; ce n’est pas une limite mesurée de RAM.
+Un fichier modifié ne devient pas silencieusement une traduction validée.
+
+`bilingual-reader.js` s’ajoute aux événements de lecture du portail et à la page
+PDF, avec CSS séparée. Le texte est rendu par `textContent`, sans interprétation
+HTML des documents. L’original reste accessible en échec. La pagination PDF et
+les pages françaises se synchronisent sans appeler l’IA. Le choix de langue est
+mémorisé dans le navigateur ; le routeur existant conserve la navigation documentaire.
+Aucune intégration dans l’interface native Kiwix, traduction d’image, glossaire ou
+transcription vidéo n’est ajoutée par ce lot.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

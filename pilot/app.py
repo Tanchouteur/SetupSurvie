@@ -70,7 +70,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.20.1'
+VERSION='0.21.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -548,6 +548,16 @@ async def learning_paths():
 
 @app.get('/api/source')
 async def source(id:str):return await library.source(id)
+
+
+@app.get('/api/library/french-reading')
+async def french_reading(original_id:str=Query(min_length=1,max_length=2000)):
+    with optional_feature('translation_reader') as module:return JSONResponse(await asyncio.to_thread(module.choices,original_id),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/library/french-page')
+async def french_page(id:str=Query(min_length=1,max_length=2000),original_id:str=Query(min_length=1,max_length=2000),page:int=Query(default=1,ge=1,le=1200)):
+    with optional_feature('translation_reader') as module:return JSONResponse(await asyncio.to_thread(module.page,id,original_id,page),headers={'Cache-Control':'no-store'})
 
 
 class PracticalReference(BaseModel):

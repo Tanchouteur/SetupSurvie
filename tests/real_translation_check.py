@@ -98,6 +98,13 @@ async def check(args):
                 if checkpoint_done:
                     report['checkpoint']['completed_parts_preserved']=all(any(row['position']==position and row['translated']==text for row in state['parts']) for position,text in report['checkpoint']['saved_parts'])
                     save()
+                if args.verify_reader and state['publication']['source_id']:
+                    from pilot import translation_reader
+                    choices=translation_reader.choices(state['source_id'])
+                    pages=[translation_reader.page(state['publication']['source_id'],state['source_id'],number) for number in range(args.first,args.last+1)]
+                    report['reader']={'choices':choices,'pages':pages,'all_translated_parts_match':all(
+                        page.get('parts')==[row['translated'] if row['status']=='done' else '[Texte non extractible : consultez la page originale.]' for row in state['parts'] if row['page']==page['page']]
+                        for page in pages)};save()
             finally:
                 if not task.done():task.cancel();await asyncio.gather(task,return_exceptions=True)
                 translations.ACTIVE.pop(item['id'],None)
@@ -111,4 +118,5 @@ if __name__=='__main__':
     parser.add_argument('--gpu-layers',type=int,choices=range(129),default=0);parser.add_argument('--think',choices=('true','false','low','medium','high'),default='true');parser.add_argument('--report',type=Path,required=True)
     parser.add_argument('--pause-after',type=int)
     parser.add_argument('--preload-model')
+    parser.add_argument('--verify-reader',action='store_true')
     asyncio.run(check(parser.parse_args()))
