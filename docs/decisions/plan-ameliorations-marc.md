@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.23.1.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.24.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -24,7 +24,7 @@ l’encodage complet du dossier ; le contexte reste à comparer à 16k/32k chez 
 | Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
 | Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages/calibration et suivi indépendant livrés ; budget documentaire corrigé en 0.23.1 après échecs avant modèle. Mémoire/délais Windows reçus ; comparaison 16k/32k et fidélité sur fonds réel encore à qualifier |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Lecture des versions publiées depuis le portail/PDF préparée en 0.21.0 et intégrée avec 0.22.0 ; origine/édition modifiée explicite. Glossaire et fidélité d’un livre réel restent à qualifier |
-| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire local/export 0.14.0 ; recherche titres/pistes, lecteur horodaté et rapport par vidéo 0.23.0. Acquisition, transcription, traduction synchronisée, ZIM et recette du fonds réel restent à développer/qualifier |
+| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire local/export 0.14.0 ; index/lecteur 0.23.0 ; traduction synchronisée reprenable 0.24.0. Acquisition, transcription, ZIM et recette de chaque vidéo réelle restent ouvertes |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
 | Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |
 | Maison de Solliès-Ville | Équipements réels, notices, entretien ; stocks éventuels | Reporté, IDEE-001 |
@@ -73,7 +73,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; notices/antennes et lecture HTML en 0.19.1 ; relances relues et conditions de départ en 0.20.0. Fidélité sur de vrais livres, vision et R4 Windows restent à qualifier |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | Cycle du modèle, contexte réglé, avertissement des trous d’extraction et 500 pages synthétiques en 0.20.1 ; lecture française intégrée portail/PDF en 0.21.0 ; glossaire et livre réel restent à faire |
-| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Inventaire local/rapports intégré en 0.14.0 ; recette réelle, acquisition et traitements suivants à faire |
+| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 ; acquisition, transcription, ZIM et recette du fonds à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
@@ -203,6 +203,23 @@ proposition à appliquer explicitement, avec retour au réglage précédent. Le
 et la qualité réelles restent à mesurer chez Marc avant de recommander une allocation.
 
 ### L5 — Lecture traduite et livres de 500 pages
+
+**Demande complémentaire de Louis, 16 novembre 2026 — à implémenter après la
+préparation des sous-titres en cours :** ajouter un essai volontaire de traduction
+longue sur un document de **40 pages**, qui mesure durée totale, progression,
+débit, temps par passage/page, contexte demandé/chargé, tokens et ressources
+CPU/disque/RAM/VRAM disponibles, avec interruptions/erreurs exportables. Employer
+un document d’essai clairement identifié et le vrai moteur de traduction, sans
+publier ses sorties parmi les connaissances familiales. Prévoir arrêt et reprise,
+respect du mode jeu et conservation des résultats déjà mesurés. L’essai mesure
+la performance ; contrôles techniques et fidélité du sens restent distincts.
+
+Regrouper les commandes de vérification dans un sous-menu **Tests et diagnostics**,
+avec recherche, IA, mémoire, traduction longue et usage hors ligne clairement
+nommés. Préserver les identifiants/contrôleurs existants, les liens directs,
+historique navigateur, mémorisation et accès au profil Famille ; ne pas refondre
+à nouveau tous les paramètres pour ce seul ajout. Le menu et l’essai ne sont pas
+annoncés livrés avec 0.24.0.
 
 - Intégrer « Lire en français / Voir l’original » au lecteur du portail, puis aux
   articles Kiwix ouverts via celui-ci. Pour les PDF, proposer une vue textuelle

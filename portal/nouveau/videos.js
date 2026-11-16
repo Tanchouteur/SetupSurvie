@@ -2,7 +2,7 @@
 (() => {
   const panel=element('section');panel.id='next-videos';panel.innerHTML='<h2>Vidéos locales</h2><p class="small muted">Les titres et descriptions se cherchent avec le filtre ci-dessus. La recherche dans les documents retrouve aussi les paroles dont les sous-titres sont indexés.</p><div id="next-videos-admin" class="actions"><button id="next-videos-index" class="secondary">Actualiser les vidéos et leurs sous-titres</button><button id="next-videos-stop" class="secondary" hidden>Arrêter l’inventaire</button><button id="next-videos-report" class="secondary">Télécharger le rapport vidéo</button></div><p id="next-videos-status" class="small" role="status"></p><div id="next-videos-list" class="collections"></div><button id="next-videos-more" class="secondary" hidden>Voir les vidéos suivantes</button>';
   $('next-collections').append(panel);
-  const states={french_available:'Sous-titres français présents · à vérifier',source_only:'Sous-titres dans la langue source',missing:'Sous-titres à préparer',invalid:'Sous-titres présents mais illisibles',unknown:'Langue des sous-titres à identifier'};
+  const states={french_available:'Sous-titres français présents · à vérifier',french_prepared:'Français préparé localement · relecture à faire',source_only:'Sous-titres dans la langue source',missing:'Sous-titres à préparer',invalid:'Sous-titres présents mais illisibles',unknown:'Langue des sous-titres à identifier'};
   let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
   async function refresh(append=false){
     if(!S.authReady||!S.user)return;
@@ -17,10 +17,12 @@
       const target=$('next-videos-list');if(!append){target.replaceChildren();offset=0;}
       for(const item of data.videos){
         const card=element('article',undefined,'data-card');card.append(element('h3',item.title),element('p',item.collection||'Vidéo locale','small muted'),element('p',states[item.subtitle_status]||'État inconnu','small'),button('Voir la vidéo →',()=>readSource(item.id),'secondary'));
+        card.dataset.videoId=item.id;
         if(item.available===false){card.querySelector('button').disabled=true;card.append(element('p','Fichier modifié ou absent : actualisez l’inventaire avant de l’ouvrir.','small catalogue-warning'));}
         target.append(card);
       }
       offset+=data.videos.length;$('next-videos-more').hidden=offset>=data.total;
+      document.dispatchEvent(new CustomEvent('survie:video-cards',{detail:data.videos}));
     }catch(error){if(current===version)$('next-videos-status').textContent=error.message;}
   }
   async function command(action){
@@ -38,6 +40,7 @@
   document.addEventListener('survie:collection-filter',()=>{version++;$('next-videos-list').hidden=true;clearTimeout(timer);timer=setTimeout(()=>refresh(),250);});
   new MutationObserver(()=>{if(!$('next-collections').hidden)refresh();}).observe($('next-collections'),{attributes:true,attributeFilter:['hidden']});
   document.addEventListener('survie:auth',()=>{version++;refresh();});
+  document.addEventListener('survie:videos-changed',()=>refresh());
   setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&!$('next-collections').hidden)refresh();},1500);
   document.addEventListener('survie:source',event=>{
     if(activeMedia){activeMedia.pause();activeMedia=null;}
@@ -50,9 +53,9 @@
     player.addEventListener('timeupdate',remember);player.addEventListener('pause',remember);
     const notice=element('p',source.video_notice,'small catalogue-warning');
     const usable=(source.tracks||[]).filter(t=>t.status==='passed');let defaultChosen=false;
-    for(const track of usable){const node=element('track');node.kind='subtitles';node.src=track.url;node.srclang=track.language||'und';node.label=(track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue'}[track.origin]||track.origin);node.default=!defaultChosen&&track.language.startsWith('fr');defaultChosen||=node.default;player.append(node);}
+    for(const track of usable){const node=element('track');node.kind='subtitles';node.src=track.url;node.srclang=track.language||'und';node.label=(track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale'}[track.origin]||track.origin);node.default=!defaultChosen&&track.language.startsWith('fr');defaultChosen||=node.default;player.append(node);}
     const select=element('select');select.setAttribute('aria-label','Sous-titres de la vidéo');select.append(new Option('Sans sous-titres','off'));
-    usable.forEach((track,index)=>select.append(new Option((track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue'}[track.origin]||track.origin),String(index))));
+    usable.forEach((track,index)=>select.append(new Option((track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale'}[track.origin]||track.origin),String(index))));
     const french=usable.findIndex(track=>track.language.startsWith('fr'));select.value=french>=0?String(french):'off';
     function apply(){for(let i=0;i<player.textTracks.length;i++)player.textTracks[i].mode=select.value===String(i)?'showing':'disabled';}
     select.onchange=apply;player.addEventListener('loadedmetadata',()=>{const duration=player.duration,wanted=source.position_ms?source.position_ms/1000:saved?.revision===source.video_revision&&Number.isFinite(saved.seconds)?saved.seconds:0;if(wanted>0&&Number.isFinite(duration))player.currentTime=Math.min(wanted,Math.max(0,duration-.1));apply();});

@@ -1,5 +1,10 @@
 # Vidéos locales dans la recherche commune
 
+**Complément 0.24.0, 16 novembre 2026 :** traduction française synchronisée des
+pistes locales présentes, file durable et publication des sorties complètes ;
+voir le [guide actuel](../utilisation/videos-locales.md). Acquisition et
+transcription des manques, ZIM et relecture du fonds complet restent ouvertes.
+
 **Complément du 16 novembre 2026 — 0.23.0 :** le [guide actuel](../utilisation/videos-locales.md)
 décrit l’index volontaire des titres/descriptions et pistes locales, la recherche
 commune, le lecteur et l’export par vidéo. Acquisition, transcription, traduction

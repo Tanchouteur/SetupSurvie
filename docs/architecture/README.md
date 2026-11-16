@@ -1,5 +1,20 @@
 # Architecture du pilote
 
+## Préparation des sous-titres — 0.24.0
+
+`pilot/captions.py` garde file, segments, contrôles et propositions refusées dans
+`video-captions.db`, séparé du magasin principal. Les fichiers complets sont dans
+`video-captions/UUID/fr.vtt`, avec identifiant strict et contrôle des liens.
+La publication est conditionnelle à un état encore actif, puis l’index vidéo est
+actualisé. Le thread de publication est rejoint même à l’annulation. Une panne
+entre fichier et état laisse un brouillon, jamais une piste implicitement prête.
+
+L’édition source est calculée sur les originaux et leurs pistes, sans les sorties
+préparées. L’index ne rattache que les sorties complètes pour cette édition et
+dont l’empreinte de texte correspond à la publication. Les lecteurs ordinaires
+restent sans IA et les originaux montés en lecture seule. Les pistes françaises
+préparées gardent origine/langue source et avertissement dans les outils de l’IA.
+
 ## Budget des dossiers documentaires — 0.23.1
 
 `engine.read_batch` réserve l’encadrement réel de l’appel `read_sources`, notamment

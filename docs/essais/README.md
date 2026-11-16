@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Traduction française des sous-titres](2026-11-16-traduction-sous-titres.md) — 0.24.0, reprise, indexation et pistes complètes.
+
 - [Rapport de performances de Marc et contexte](2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, dossier documentaire, marge de contexte et observations matérielles.
 
 - [Vidéos locales et passages](2026-11-16-videos-locales-et-passages.md) — 0.23.0, pistes locales, lecteur et mélange de sources avec modèle réel.

@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos locales
 
-**Guide actuel — 0.23.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.24.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
 à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -44,7 +44,42 @@ transcode pas automatiquement le fichier. Un message explique un échec de lectu
 Chromium et WebKit ont lu une petite fixture VP8/WebM ; cela ne certifie pas les
 codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
-## Utilisation par l’assistant
+## Préparer une piste française depuis le site — 0.24.0
+
+Choisir **Famille → Bibliothèque → Collections → Vidéos locales**. Sur une vidéo,
+ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
+les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres français**,
+sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
+piste exploitable reste à récupérer ou transcrire : ce bouton n’invente pas ses paroles.
+
+Le suivi compte les segments terminés. **Mettre en pause** conserve ces segments ;
+**Reprendre** utilise le modèle choisi pour les segments restants. Un redémarrage,
+un mode jeu ou un moteur arrêté attend une reprise explicite. Fermer l’onglet
+n’arrête pas un traitement en cours. Les questions et traductions documentaires
+partagent la file IA ; celle-ci est libérée entre les petits lots de sous-titres.
+Les essais de performance/calibration refusent une préparation concurrente.
+
+Les horodatages sont copiés de la source, jamais inventés par le modèle. Un lot
+perdant un segment ou modifiant son ordre est refusé. Les changements détectés de
+nombres/unités bloquent la publication ; négations et longueurs suspectes peuvent
+produire des avertissements. **Télécharger le rapport** conserve segments source,
+traduction, propositions refusées, modèle et contrôles. Ce rapport contient du
+texte de la vidéo et doit rester privé. Le rapport vidéo général inclut aussi
+l’état des préparations, sans le texte des segments.
+
+Seule une piste complète, passant les contrôles techniques, rejoint le lecteur et
+la recherche. L’index est actualisé après publication ; si un inventaire était
+déjà actif, relancer **Actualiser les vidéos et leurs sous-titres**. Le lecteur
+propose **fr · traduction locale**, garde la piste source et permet de désactiver
+les sous-titres. La lecture fonctionne ensuite sans Internet ni IA.
+
+Comparer début, milieu, fin et passages techniques avec l’original. Une piste
+préparée n’est pas une traduction relue, ni une preuve de bonne synchronisation.
+Une modification du média ou de sa piste source empêche de reprendre l’ancien
+brouillon et retire l’association de l’ancienne traduction après actualisation.
+Les anciens fichiers et brouillons restent conservés pour comparaison.
+
+## Utilisation des paroles par l’assistant
 
 Une question ordinaire peut chercher et lire des sous-titres et des documents,
 avec références et horodatages. On peut choisir la vidéo pour l’assistant comme
@@ -54,9 +89,8 @@ et ne comprend pas les gestes grâce au seul texte des sous-titres.
 
 L’aperçu contient au plus 80 segments et 100 000 caractères à partir du passage
 demandé ; la lecture partielle reste signalée. La synthèse longue et la traduction
-intégrale de vidéos ne sont pas encore préparées : elles refusent cet aperçu au
-lieu de perdre silencieusement ses horodatages. La création/traduction synchronisée
-des pistes est un chantier distinct. Les favoris et classements humains gardent
+documentaire intégrale refusent cet aperçu au lieu de perdre ses horodatages.
+La traduction synchronisée utilise le parcours vidéo ci-dessus. Les favoris et classements humains gardent
 la même référence vidéo ; un classement humain ne certifie pas la procédure.
 
 ## Rapport et sous-titres manquants
@@ -69,8 +103,8 @@ Une piste distante annoncée dans `.info.json` n’est pas disponible hors ligne
 
 Sans piste exploitable, le média reste lisible et cherchable par ses métadonnées,
 avec **Sous-titres à préparer**. Il ne disparaît pas du rapport. Récupération en
-ligne, transcription des manques, traduction synchronisée et validation réelle
-de chaque vidéo restent à développer/exécuter selon le
+ligne, transcription des manques et validation réelle de chaque vidéo restent
+à développer/exécuter selon le
 [protocole R6](../essais/protocole-sous-titres-videos.md).
 
 ## Installation et conservation
@@ -87,3 +121,8 @@ index reste utilisable tant que le nouveau n’est pas terminé. Les statuts et
 révisions de taille/date détectent des changements observés, pas toute altération
 possible. L’[outil d’inventaire en ligne de commande](inventaire-videos.md) reste
 disponible, sans modifier cet index du site.
+
+Les préparations sont dans `state/pilot/video-captions.db` et
+`state/pilot/video-captions/`. Les originaux de `library/video/` restent montés
+en lecture seule. Sauvegarder tout l’état du pilote conserve les brouillons,
+contrôles et pistes publiées. Les mises à jour de code ne les suppriment pas.

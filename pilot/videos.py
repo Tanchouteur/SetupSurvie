@@ -52,15 +52,28 @@ def identity(value):
 
 
 def stat_revision(payload):
-    entries=[payload['path'],payload['metadata']['path'],*[track['path'] for track in payload['tracks']]]
+    entries=[(payload['path'],None),(payload['metadata']['path'],None),*[(track['path'],track) for track in payload['tracks']]]
     values=[]
-    for relative in entries:
+    for relative,track in entries:
         try:
-            path=safe_file(relative);info=path.stat();values.append([relative,info.st_size,info.st_mtime_ns])
+            path=track_file(track) if track is not None else safe_file(relative);info=path.stat();values.append([relative,info.st_size,info.st_mtime_ns])
         except HTTPException:
             if relative==payload['metadata']['path'] and payload['metadata']['status']=='missing':values.append([relative,None]);continue
             return None
     return hashlib.sha256(json.dumps(values,ensure_ascii=False).encode()).hexdigest()
+
+
+def original_revision(payload):
+    return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job')]})
+
+
+def track_file(track):
+    if track.get('prepared_job'):
+        from . import captions
+        path=captions.track_file(track['prepared_job'])
+        if not path.is_file():raise HTTPException(404,'Cette piste préparée n’est plus disponible.')
+        return path
+    return safe_file(track['path'])
 
 
 def row(identifier):
@@ -87,7 +100,8 @@ def public(payload,revision):
         'collected_at':'','archive_date':'','provenance':source.get('channel') or 'Fichier vidéo local','licence':'Droits d’usage à vérifier.',
         'url':'/api/videos/media?id='+key,'images':[],'tracks':[
             {'id':index,'language':track['language_declared'] or '', 'origin':track['origin'],'status':track['technical_status'],
-             'warnings':track['warnings'],'errors':track['errors'][:10],'url':'/api/videos/track?id='+key+'&track='+str(index)}
+             'warnings':track['warnings'],'errors':track['errors'][:10],'translation_notice':track.get('translation_notice',''),
+             'source_language':track.get('source_language',''),'url':'/api/videos/track?id='+key+'&track='+str(index)}
             for index,track in enumerate(payload['tracks'])],
         'video_notice':NOTICE,'audio_verified':False,'human_review':'not_performed'}
 
@@ -107,6 +121,7 @@ def source(identifier):
             cues=db.execute('SELECT start_ms,end_ms,text,language FROM video_text WHERE id=? AND track=? AND end_ms>? ORDER BY CAST(start_ms AS INTEGER) LIMIT 80',(key,str(track),position)).fetchall()
         else:cues=[]
     text='\n'.join(f'[{int(c["start_ms"])//60000:02d}:{(int(c["start_ms"])//1000)%60:02d}] {c["text"]}' for c in cues)
+    if candidates and candidates[0][1].get('translation_notice'):result['video_notice']=candidates[0][1]['translation_notice']+' '+NOTICE
     result.update(text=text[:100000],position_ms=position,text_truncated=bool(len(text)>100000 or cues and len(cues)>=80),preview=True,
                   transcription_available=bool(cues),language=cues[0]['language'] if cues else result['language'])
     if not text:result['text']=''
@@ -169,6 +184,13 @@ def scan():
                 db.execute('DELETE FROM media');db.execute('DELETE FROM video_text')
                 for item in found['videos']:
                     if STOP.is_set():raise InterruptedError()
+                    try:
+                        from . import captions
+                        prepared=captions.prepared_tracks(item);item['tracks'].extend(prepared)
+                        if prepared:
+                            item['subtitle_status']='french_prepared'
+                            item['next_action']='Lire la piste française préparée et vérifier langue, sens et synchronisation avec l’original.'
+                    except Exception:report['errors'].append({'id':item['inventory_id'],'reason':'prepared_captions_unavailable'})
                     key=item['inventory_id'];version=stat_revision(item)
                     if not version:report['errors'].append({'id':key,'reason':'source_changed'});continue
                     db.execute('INSERT INTO media VALUES(?,?,?,?)',(key,item['path'],version,json.dumps(item,ensure_ascii=False)))
@@ -176,7 +198,7 @@ def scan():
                     db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],language,'metadata',0,0,(item['description'] or '')[:100000]))
                     for index,track in enumerate(item['tracks']):
                         if track['technical_status']!='passed':continue
-                        parsed=inventory.inspect_subtitle(safe_file(track['path']),item['media']['duration_seconds_declared'],include_cues=True)
+                        parsed=inventory.inspect_subtitle(track_file(track),item['media']['duration_seconds_declared'],include_cues=True)
                         if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise ValueError('subtitle_changed')
                         for cue in parsed['cues']:
                             db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],track['language_declared'] or '',str(index),cue['start_ms'],cue['end_ms'],cue['text']))
@@ -218,7 +240,7 @@ def webvtt(key,index):
     if not 0<=index<len(payload['tracks']):raise HTTPException(404,'Piste introuvable.')
     track=payload['tracks'][index]
     if track['technical_status']!='passed':raise HTTPException(422,'Cette piste ne passe pas les contrôles techniques. Consultez son rapport.')
-    parsed=inventory.inspect_subtitle(safe_file(track['path']),payload['media']['duration_seconds_declared'],include_cues=True)
+    parsed=inventory.inspect_subtitle(track_file(track),payload['media']['duration_seconds_declared'],include_cues=True)
     if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise HTTPException(409,'Cette piste a changé ; actualisez les vidéos.')
     def stamp(ms):return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d}.{ms%1000:03d}'
     return 'WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in parsed['cues'])+'\n'

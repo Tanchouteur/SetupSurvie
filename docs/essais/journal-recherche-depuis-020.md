@@ -1,5 +1,12 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.24.0 : [traduction synchronisée des pistes locales](2026-11-16-traduction-sous-titres.md).
+File durable, pause/reprise, contrôles, horodatages conservés, publication des
+seules pistes complètes et indexation commune. Six segments réels traduits sur
+Gemma sont relus ; récupération en ligne, transcription et fonds réel restent
+à traiter. Louis demande ensuite un essai mesuré sur 40 pages et un sous-menu
+« Tests et diagnostics » ; ils restent explicitement prévus au plan.
+
 Complément 0.23.1 : [rapport réel de performances et budget documentaire](2026-11-16-rapport-performances-marc-0220.md).
 Deux réponses trouvaient/lisaient des sources mais dépassaient le budget avant
 appel au modèle. L’encodage complet et les identifiants sont désormais réservés

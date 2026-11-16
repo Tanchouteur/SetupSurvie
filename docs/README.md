@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Préparer les sous-titres français](utilisation/videos-locales.md#préparer-une-piste-française-depuis-le-site--0240) — 0.24.0, traduction synchronisée des pistes présentes et reprise.
+- [Essais de traduction des sous-titres](essais/2026-11-16-traduction-sous-titres.md) — modèle réel, contrôles et limites.
+
 - [Rapport de performances de Marc et budget documentaire](essais/2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, défaut de contexte reproduit, mesures RAM/disque/IA et limites.
 
 - [Vidéos locales et sous-titres](utilisation/videos-locales.md) — 0.23.0, recherche des passages et lecteur local ; préparation des pistes manquantes encore distincte.

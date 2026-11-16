@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+La 0.24.0 prépare en français une piste locale déjà présente, par segments
+reprenables, sans changer ses temps ni l’original. Les pistes complètes passent
+au lecteur et à la recherche ; les refus restent dans le rapport. Voir le
+[guide vidéo](../utilisation/videos-locales.md). Acquisition, transcription des
+manques et relecture du fonds réel restent distinctes et non achevées.
+
 La 0.23.1 corrige le [budget des dossiers documentaires](../essais/2026-11-16-rapport-performances-marc-0220.md)
 après le rapport Windows 0.22.0 : des sources trouvées et lues ne tenaient plus
 dans le message final. L’encodage et les identifiants sont réservés avant lecture,

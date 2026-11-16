@@ -274,7 +274,7 @@ async def run(report,cases):
     finally:
         report['finished']=time.time()
         # Selected model only; never interfere with a queued question or a pause.
-        if report.get('model_contacted') and not engine.ACTIVE and not calibration.translations.ACTIVE and not calibration.summary_activity() and not engine.LOCK.locked():
+        if report.get('model_contacted') and not engine.ACTIVE and not calibration.translations.ACTIVE and not calibration.summary_activity() and not calibration.caption_activity() and not engine.LOCK.locked():
             async with engine.LOCK:await calibration.release_model(report)
         try:save(report)
         except OSError:pass

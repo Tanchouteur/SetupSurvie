@@ -1,13 +1,16 @@
 # Sous-titres français : validation de chaque vidéo
 
-**Protocole cible retenu — 14 novembre 2026, outillage partiel en 0.23.0.** Louis demande
+**Protocole cible retenu — 14 novembre 2026, outillage partiel en 0.24.0.** Louis demande
 explicitement que la récupération ou la création de sous-titres français soit
 validée pour chaque vidéo. Ce document complète le
 [lot L6](../decisions/plan-ameliorations-marc.md#l6--vidéos-et-sous-titres-français-hors-ligne)
 et le rapport R6 ; ce n’est pas le bilan d’un inventaire ou d’un essai réel.
 
 Le [parcours local 0.23.0](../utilisation/videos-locales.md) fournit index, lecteur
-et rapport par vidéo pour les pistes déjà présentes. Les préparations manquantes
+et rapport par vidéo pour les pistes déjà présentes. La 0.24.0 ajoute la
+traduction synchronisée des pistes locales, avec pause/reprise et publication des
+seules pistes complètes ; voir le [bilan](2026-11-16-traduction-sous-titres.md).
+L’acquisition et la transcription des pistes manquantes
 et la validation du fonds complet restent les exigences ci-dessous ; une piste
 techniquement lisible n’est pas déclarée relue ou traduite fidèlement.
 

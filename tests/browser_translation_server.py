@@ -14,7 +14,8 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
 from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries,illustrations
-from pilot import videos
+from pilot import videos,captions
+import re
 import shutil
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
@@ -30,6 +31,35 @@ def fixture_videos():
     (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:03,000\nIntroduction fictive.\n\n2\n00:00:08,000 --> 00:00:10,000\nMontage du rotor fictif, cote inventée 17 mm.\n')
     (videos.ROOT/'cours.en.vtt').write_text('WEBVTT\n\n00:08.000 --> 00:10.000\nImaginary rotor assembly, fictional 17 mm.\n')
     return {'ready':True}
+
+caption_gate=None
+@gateway.app.post('/fixture/captions')
+async def fixture_captions(enabled:bool=True,hold:bool=True):
+    global caption_gate
+    await captions.stop_all()
+    if not enabled:
+        for path in videos.ROOT.glob('caption-preparation.*'):path.unlink()
+        videos.STOP.clear();await asyncio.to_thread(videos.scan);return {'ready':False}
+    videos.ROOT.mkdir(exist_ok=True)
+    shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'caption-preparation.webm')
+    (videos.ROOT/'caption-preparation.info.json').write_text(json.dumps({'title':'Préparation française fictive','language':'en','duration':12}))
+    (videos.ROOT/'caption-preparation.en.srt').write_text('\n\n'.join(str(i+1)+'\n'+captions.stamp(i*200).replace('.',',')+' --> '+captions.stamp(i*200+150).replace('.',',')+'\n'+f'Fictional bearing {17+i} mm.' for i in range(40))+'\n')
+    caption_gate=asyncio.Event() if hold else None
+    videos.STOP.clear();await asyncio.to_thread(videos.scan)
+    import hashlib
+    return {'ready':True,'video':'video:'+hashlib.sha256(b'caption-preparation.webm').hexdigest()}
+
+@gateway.app.post('/fixture/captions-release')
+async def fixture_captions_release():
+    global caption_gate
+    if caption_gate:caption_gate.set()
+    caption_gate=None;return {'released':True}
+
+async def caption_translation(parts,mode):
+    if caption_gate is not None and parts[0]['position']>=16:await caption_gate.wait()
+    await asyncio.sleep(.2)
+    return [{'id':row['position'],'text':'Roulement fictif de '+re.search(r'(\d+) mm',row['source_text'])[1]+' mm.'} for row in parts],'fixture-caption-model',{'context':16384}
+captions.translate_batch=caption_translation
 os.environ['ZIM_DIR']=str(inventory.ZIMS)
 (inventory.ZIMS/'figure-fixture.zim').write_bytes(b'Fictional media identity, not a real archive.')
 for topic in ('energy','food'):(inventory.ZIMS/('fixture-channel_en_'+topic+'_2026-01.zim')).write_bytes(b'Fictional archive metadata fixture, not a real ZIM.')

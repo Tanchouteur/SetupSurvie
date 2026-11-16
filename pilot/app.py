@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('captions') as module:await module.stop_all()
+    except HTTPException:pass
+    try:
         with optional_feature('videos') as module:await module.stop()
     except HTTPException:pass
     try:
@@ -76,7 +79,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.23.1'
+VERSION='0.24.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -760,7 +763,46 @@ async def stop_videos(value=Depends(admin)):
 
 @app.get('/api/admin/videos/report')
 async def report_videos(value=Depends(admin)):
-    with optional_feature('videos') as module:return {'version':VERSION,**await asyncio.to_thread(module.status)}
+    with optional_feature('videos') as module:result={'version':VERSION,**await asyncio.to_thread(module.status)}
+    try:
+        with optional_feature('captions') as module:result['subtitle_preparations']=await asyncio.to_thread(module.listing,None)
+    except HTTPException:result['subtitle_preparations_unavailable']=True
+    return result
+
+
+class CaptionRequest(BaseModel):
+    id:str=Field(min_length=1,max_length=2000,pattern=r'^video:[a-f0-9]{64}$')
+    track:int=Field(ge=0,le=999)
+    mode:str=Field(default='rapide',max_length=50)
+
+
+class CaptionResume(BaseModel):
+    mode:str|None=Field(default=None,max_length=50)
+
+
+@app.get('/api/admin/video-captions')
+async def list_video_captions(value=Depends(admin)):
+    with optional_feature('captions') as module:return {'jobs':await asyncio.to_thread(module.listing)}
+
+
+@app.post('/api/admin/video-captions',status_code=202)
+async def create_video_captions(body:CaptionRequest,value=Depends(admin)):
+    with optional_feature('captions') as module:return await module.create(body.id,body.track,body.mode)
+
+
+@app.get('/api/admin/video-captions/{identifier}/report')
+async def report_video_captions(identifier:str,value=Depends(admin)):
+    with optional_feature('captions') as module:return {'version':VERSION,**await asyncio.to_thread(module.status,identifier,full=True)}
+
+
+@app.post('/api/admin/video-captions/{identifier}/pause')
+async def pause_video_captions(identifier:str,value=Depends(admin)):
+    with optional_feature('captions') as module:return await module.pause(identifier)
+
+
+@app.post('/api/admin/video-captions/{identifier}/resume',status_code=202)
+async def resume_video_captions(identifier:str,body:CaptionResume,value=Depends(admin)):
+    with optional_feature('captions') as module:return await module.resume(identifier,body.mode)
 
 
 @app.get('/api/videos/media')

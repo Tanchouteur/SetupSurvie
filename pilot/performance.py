@@ -62,6 +62,8 @@ def status(full=False):
 
 def competing():
     if engine.ACTIVE or translations.ACTIVE or calibration.running() or calibration.summary_activity():return True
+    captions=sys.modules.get(__package__+'.captions')
+    if captions and captions.running():return True
     module=sys.modules.get(__package__+'.search_experiment')
     return bool(module and module.running())
 

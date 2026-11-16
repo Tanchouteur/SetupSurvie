@@ -1,0 +1,59 @@
+// Real local queue/index/API and decoded fixture clip; translation is simulated.
+async page=>{
+  const base='http://10.0.3.2:8769',headers={Origin:base},checks=[],calls=[],errors=[];
+  const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
+  page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push(request.url()));
+  await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
+  const fixture=await(await page.request.post(base+'/fixture/captions',{headers})).json();
+  await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+  const card=page.locator('#next-videos-list article').filter({has:page.getByRole('heading',{name:'Préparation française fictive'})});await card.waitFor();
+  check(!calls.some(url=>url.includes('/api/chat')),'Ouvrir les vidéos ne lance aucune inférence');
+  if(!await card.locator('details').evaluate(details=>details.open))await card.locator('details summary').click();
+  check(await card.locator('select[aria-label="Piste source à traduire"]').inputValue()==='0','La piste source anglaise est choisie explicitement');
+  const previous=(await(await page.request.get(base+'/api/admin/video-captions')).json()).jobs.map(job=>job.id);
+  await card.getByRole('button',{name:'Traduire les sous-titres',exact:true}).click();
+  let current;
+  for(let i=0;i<100&&!current;i++){
+    const result=await(await page.request.get(base+'/api/admin/video-captions')).json();
+    current=result.jobs.find(job=>!previous.includes(job.id)&&job.video_id===fixture.video&&job.done===16&&['queued','running'].includes(job.status));
+    if(!current)await page.waitForTimeout(100);
+  }
+  check(!!current,'La préparation courante atteint seize segments conservés');
+  await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('16 / 40'),current.id);
+  check(await page.locator('#next-caption-preparation').getAttribute('open')!==null,'Le suivi s’ouvre après le lancement');
+  let job=page.locator('[data-caption-job="'+current.id+'"]');
+  await job.getByRole('button',{name:'Mettre en pause',exact:true}).click();
+  await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('En pause'),current.id);
+  check((await job.textContent()).includes('16 / 40'),'La pause garde les seize segments déjà traduits');
+  const stillEnglish=await(await page.request.get(base+'/api/source?id='+encodeURIComponent(fixture.video))).json();
+  check(stillEnglish.language==='en'&&!stillEnglish.tracks.some(track=>track.language==='fr'),'Un brouillon partiel ne devient pas une piste française');
+  await page.request.post(base+'/fixture/captions-release',{headers});await job.getByRole('button',{name:'Reprendre',exact:true}).click();
+  await page.waitForFunction(id=>{const text=document.querySelector('[data-caption-job="'+id+'"]')?.textContent||'';return text.includes('40 / 40')&&text.includes('Piste française préparée');},current.id);
+  let indexed=false;
+  for(let i=0;i<100&&!indexed;i++){
+    const response=await page.request.get(base+'/api/source?id='+encodeURIComponent(fixture.video));
+    indexed=response.ok()&&(await response.json()).language==='fr';if(!indexed)await page.waitForTimeout(100);
+  }
+  check(indexed,'La piste complète est indexée après la traduction');
+  check((await job.textContent()).includes('relecture à faire'),'La piste terminée garde sa limite de validation humaine');
+  const found=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();
+  check(found.results.some(row=>row.id.startsWith(fixture.video)),'Les paroles françaises préparées rejoignent la recherche commune');
+  await page.evaluate(id=>readSource(id+'#t=2000'),fixture.video);const player=page.locator('#reader video');await player.waitFor();await player.evaluate(video=>video.play());
+  await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v?.videoWidth===96&&[...v.textTracks].some(track=>track.language==='fr'&&track.cues?.length===40);});
+  await player.evaluate(video=>video.pause());
+  check(await player.evaluate(video=>[...video.textTracks].some(track=>track.language==='fr'&&track.mode==='showing')),'Le lecteur décode le média et affiche la nouvelle piste française');
+  check((await page.locator('#reader').textContent()).includes('Traduction locale automatique'),'L’origine automatique reste visible dans le lecteur');
+  await page.locator('#reader select[aria-label="Sous-titres de la vidéo"]').selectOption('0');
+  check(await player.evaluate(video=>video.textTracks[0].language==='en'&&video.textTracks[0].mode==='showing'),'La piste anglaise d’origine reste sélectionnable');
+  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Aucun débordement à '+width);}
+  await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+  if(!await page.locator('#next-caption-preparation').evaluate(details=>details.open))await page.locator('#next-caption-preparation summary').click();
+  job=page.locator('[data-caption-job="'+current.id+'"]');
+  const downloading=page.waitForEvent('download');await job.getByRole('button',{name:'Télécharger le rapport',exact:true}).click();
+  const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(report.total===40&&report.parts.length===40&&report.human_review==='not_performed','Le rapport garde tous les segments et distingue la relecture humaine');
+  check(report.parts[10].start_ms===2000&&report.parts[10].end_ms===2150,'Les horodatages sont ceux de la piste source');
+  check(!calls.some(url=>url.includes('/api/chat')||url.includes('/api/admin/inference')),'Le navigateur ne commande ni démarrage moteur ni appel direct à l’IA');
+  await page.request.post(base+'/fixture/captions?enabled=false',{headers});
+  check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks,real_translation:false};
+}
