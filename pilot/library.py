@@ -715,7 +715,9 @@ def focused_page(identifier,query):
 async def source(identifier):
     if identifier.startswith('video:'):
         from . import videos
-        return await kiwix_queries.disk_io(videos.source,identifier)
+        result=await kiwix_queries.disk_io(videos.source,identifier)
+        catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        return result
     if identifier.startswith('guide:'):
         with store.connect() as db:
             table='passages' if '#page=' in identifier else 'documents'

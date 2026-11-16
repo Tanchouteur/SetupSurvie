@@ -120,7 +120,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(favorites.listing('family')[0]['kind'],'video')
         current=catalogue.revision(self.id,library.GUIDES,self.root/'zim')
         info=catalogue.save(self.id,{'domains':['resilience'],'document_type':'procedure','status':'reviewed'},current,library.GUIDES,self.root/'zim')
-        source=videos.source(self.id);catalogue.annotate([source],library.GUIDES,self.root/'zim')
+        source=await library.source(self.id)
         self.assertEqual(source['classification']['method'],'human')
         with patch.object(library,'books',AsyncMock(return_value=[])):
             found=await library.search('rotor',favorite_user='family')
