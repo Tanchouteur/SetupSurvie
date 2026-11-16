@@ -23,7 +23,7 @@ class LongTranslationTests(unittest.IsolatedAsyncioTestCase):
                 store.init();library.index_guides();item=await translations.create('fixture','guide:'+path.name,None,'rapide')
                 self.assertEqual(item['total'],500);self.assertEqual(item['pages'],500)
                 calls=0
-                async def first_pass(text,mode):
+                async def first_pass(text,mode,**kwargs):
                     nonlocal calls
                     calls+=1
                     if calls==8:raise ValueError('Controlled interruption of the synthetic test.')
@@ -34,7 +34,7 @@ class LongTranslationTests(unittest.IsolatedAsyncioTestCase):
                 # A source replacement must not contaminate the saved snapshot.
                 path.write_bytes(b'Replaced fixture, deliberately unreadable.')
                 await translations.resume(item['id'],'fixture','moyenne')
-                async def remaining(text,mode):
+                async def remaining(text,mode,**kwargs):
                     self.assertNotIn('Replaced fixture',text)
                     return text.replace('Fictional page','Page fictive').replace('No practical instructions.','Aucun conseil pratique.'),'fixture-two'
                 with patch.object(translations,'translate',side_effect=remaining):await translations.run(item['id'])

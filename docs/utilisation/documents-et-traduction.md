@@ -177,6 +177,46 @@ Un refus explicite, une réponse vide, un format inexploitable ou une réponse i
 
 Limites actuelles : PDF accessible de 300 Mo maximum, 1 200 pages maximum, 100 000 caractères par page et cinq millions de caractères pour la plage choisie. Un PDF protégé est refusé explicitement. Pour les autres guides et articles, le texte intégral disponible dans l’index ou le lecteur est utilisé ; un aperçu atteignant sa limite de taille est refusé plutôt que présenté comme un document entièrement traduit. Les plages de pages sont réservées aux PDF. Aucun OCR automatique ni traduction d’un ZIM entier n’est ajouté.
 
+## Garder les mêmes mots dans un document — 0.32.0
+
+Dans le panneau de traduction, ouvrir **Mots à traduire de la même façon
+(facultatif)**. **Ajouter un mot**, indiquer le terme original et sa forme
+française, puis **Enregistrer ces mots** avant de lancer la traduction. La liste
+peut rester vide ; il n’est pas nécessaire de la remplir pour traduire.
+Un exemple de mécanique est `bearing` → `roulement` ; un même mot peut avoir
+un autre sens selon le document. Ces choix ne sont pas une validation technique.
+
+La liste (40 entrées au maximum) appartient au profil choisi et se réutilise dans
+ses prochaines traductions. Chaque travail prend une copie des choix à son
+lancement. Modifier ensuite la liste ne change ni les passages déjà traduits ni
+ceux encore à faire dans ce travail. Le panneau distingue les mots du travail
+et les préférences pour la suite. Les mots non enregistrés demandent de les
+sauvegarder avant de lancer la traduction. Retirer toutes les entrées et
+enregistrer rétablit une traduction sans vocabulaire imposé pour les travaux futurs.
+
+Seuls les mots ou expressions repérés dans le passage courant sont proposés au
+modèle ; aucun remplacement automatique n’est fait dans le texte. Si la forme
+française demandée n’est pas retrouvée, un avertissement invite à relire le
+passage. Il peut aussi s’agir d’une flexion grammaticale correcte ; cet avertissement
+ne bloque donc pas à lui seul. Il suit le texte exporté et les versions partagées.
+La liste complète reste dans le travail privé et son export, sans être publiée
+comme un glossaire familial indépendant.
+
+Pour les nouvelles traductions, le modèle reçoit aussi la fin du passage traduit
+juste avant (600 caractères source et français au maximum chacun). Ce repère
+reste séparé du texte à traduire et n’est pas une source supplémentaire. Il est
+retiré si le contexte disponible est trop petit ; les contrôles du passage courant
+continuent à refuser les nombres ajoutés, même s’ils figuraient dans le repère.
+Une page sans texte extractible interrompt ce lien avec le passage précédent.
+Le modèle peut néanmoins se tromper : la cohérence du vocabulaire et du sens
+reste à relire, notamment sur un livre long.
+
+La liste et la progression restent sur le serveur lors d’une pause ou d’un
+redémarrage ; aucune inférence ne reprend automatiquement. Les anciennes
+traductions gardent leur fonctionnement, sans emprunter les mots enregistrés plus
+tard. Supprimer un travail enlève sa copie de vocabulaire, tout en gardant la
+liste réutilisable du profil, l’original et toute version déjà partagée.
+
 ## Contrôles de traduction — depuis 0.1.28
 
 Chaque **nouveau passage** passe des contrôles locaux avant d’être enregistré
@@ -210,6 +250,15 @@ certains trous du texte source, comme une touche dessinée dans un PDF devenue
 la page originale ; le seul contrôle des nombres ne rend pas cette commande
 utilisable. La détection est partielle et peut donner de faux positifs ; elle
 ne réalise aucun OCR. Les anciens rapports gardent leur version et leurs résultats.
+
+La version **3** des contrôles (0.32.0) reconnaît aussi les chiffres joints à un
+libellé par l’extraction PDF : `Chapter4` et `Chapitre 4` portent le même nombre.
+Une modification vers `Chapitre 5` ou de `X7` vers `X8` reste bloquante. Les
+seuils de longueur, négations et unités ne changent pas. La consigne préserve
+aussi les noms inscrits sur les touches et boutons. Si une inscription reconnue
+comme `CALL` est remplacée par `APPEL`, un avertissement demande de comparer
+l’original et l’appareil ; toutes les inscriptions et interfaces ne sont pas
+reconnues automatiquement.
 
 Les unités reconnues forment une liste limitée (masses, volumes, longueurs,
 durées, températures, quelques unités électriques et pressions). Les tableaux,

@@ -32,6 +32,16 @@ class PilotAPITests(unittest.TestCase):
         response=self.client.post('/api/profiles/select',json={'id':who},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);return response
 
+    def test_translation_terms_belong_to_selected_profile_and_do_not_start_a_job(self):
+        headers={'Origin':'http://testserver'};self.login('alice')
+        with patch.object(translations,'launch') as launch:
+            result=self.client.put('/api/translation-terms',json={'terms':[{'source':'bearing','french':'roulement'}]},headers=headers)
+            self.assertEqual(result.status_code,200);self.assertEqual(len(result.json()['terms']),1)
+            self.assertEqual(self.client.put('/api/translation-terms',json={'terms':[{'source':'bearing','french':''}]},headers=headers).status_code,422)
+            self.login('bob');self.assertEqual(self.client.get('/api/translation-terms').json()['terms'],[])
+            self.login('alice');self.assertEqual(self.client.get('/api/translation-terms').json()['terms'][0]['french'],'roulement')
+            launch.assert_not_called()
+
     def test_subtitle_acquisition_requires_admin_validates_inputs_and_preserves_optional_isolation(self):
         from pilot import caption_acquisition as acquired
         headers={'Origin':'http://testserver'};body={'id':'video:'+'a'*64,'reference':'https://youtu.be/abcDEF_12-3','language':'fr','translate_french':False}

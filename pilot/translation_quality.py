@@ -7,8 +7,10 @@ from decimal import Decimal, InvalidOperation
 import re
 import unicodedata
 
-VERSION=2
-NUMBER=r'(?<![\w])(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
+VERSION=3
+# PDF extraction often joins a label and its number ("Chapter4", "X7").
+# Count that number on both sides, including when French restores the space.
+NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 UNIT_ALIASES={
     'mètres':'m','mètre':'m','centimeters':'cm','centimetres':'cm','centimètres':'cm','centimeter':'cm','centimetre':'cm','centimètre':'cm',
@@ -64,4 +66,9 @@ def assess(source,translated):
         add('unchanged','error','Le passage est identique à l’original ; aucune traduction exploitable détectée.')
     if re.search(r'\b(not|never|without|neither|no)\b|\b\w+n[’\x27]t\b',source,re.I) and not re.search(r'\b(pas|jamais|sans|aucun|aucune|ni|interdit|interdite|éviter|évitez|non)\b|\bn[’\x27]',translated,re.I):
         add('negation','warning','Une négation de l’original n’a pas d’équivalent français repéré. Vérifiez le sens de la consigne.')
+    labels=set()
+    for match in re.finditer(r'\b([A-Z][A-Z0-9_/-]{1,19})\s+(?:buttons?|keys?)\b|\b(?:[Bb]utton|[Kk]ey)\s+([A-Z][A-Z0-9_/-]{1,19})\b',source):
+        labels.add(match.group(1) or match.group(2))
+    missing=[label for label in sorted(labels) if not re.search(r'(?<!\w)'+re.escape(label)+r'(?!\w)',translated,re.I)]
+    if missing:add('control_labels','warning','Une inscription de touche ou bouton n’a pas été retrouvée : '+', '.join(missing)+'. Comparez l’original et les inscriptions sur l’appareil.')
     return {'version':VERSION,'status':'blocked' if any(i['severity']=='error' for i in issues) else 'warning' if issues else 'checked','issues':issues}

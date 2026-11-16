@@ -88,7 +88,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.31.0'
+VERSION='0.32.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -1089,6 +1089,27 @@ class TranslationRequest(BaseModel):
 
 class TranslationResume(BaseModel):
     mode:str|None=None
+
+
+class TranslationTerm(BaseModel):
+    source:str=Field(min_length=1,max_length=100)
+    french:str=Field(min_length=1,max_length=100)
+
+
+class TranslationTermsRequest(BaseModel):
+    terms:list[TranslationTerm]=Field(max_length=40)
+
+
+@app.get('/api/translation-terms')
+async def get_translation_terms(value=Depends(user)):
+    from . import translation_terms
+    return await asyncio.to_thread(translation_terms.profile,value['id'])
+
+
+@app.put('/api/translation-terms')
+async def save_translation_terms(body:TranslationTermsRequest,value=Depends(user)):
+    from . import translation_terms
+    return await asyncio.to_thread(translation_terms.save,value['id'],[row.model_dump() for row in body.terms])
 
 
 @app.post('/api/translations',status_code=202)

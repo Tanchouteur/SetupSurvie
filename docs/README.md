@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.
+
 - [Deux prochains objectifs](decisions/choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026) — simplifier toute l’expérience sans perdre de fonctions, puis mener une campagne autonome de fiabilité réelle incluant copie et restauration complètes hors ligne. Priorités à réaliser.
 
 - [Acquisition des sous-titres](decisions/acquisition-sous-titres.md) — choix de la 0.31.0 ; [essais et limites](essais/2026-11-16-acquisition-sous-titres.md).

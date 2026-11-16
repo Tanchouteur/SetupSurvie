@@ -8,6 +8,18 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_device_button_labels_are_kept_or_flagged_without_certifying_other_words(self):
+        source='Press the CALL button. Press the EXIT key to cancel.'
+        self.assertEqual(quality.assess(source,'Appuyez sur le bouton CALL. Appuyez sur EXIT pour annuler.')['status'],'checked')
+        report=quality.assess(source,'Appuyez sur le bouton APPEL. Appuyez sur SORTIE pour annuler.')
+        self.assertEqual(report['status'],'warning');self.assertEqual(report['issues'][0]['code'],'control_labels')
+
+    def test_joined_pdf_labels_keep_their_numbers_when_french_restores_a_space(self):
+        result=quality.assess('See Chapter4. The indicator X7 is off.','Voir le Chapitre 4. Le voyant X7 est éteint.')
+        self.assertEqual(result['status'],'checked')
+        for target in ('Voir le Chapitre 5. Le voyant X7 est éteint.','Voir le Chapitre 4. Le voyant X8 est éteint.'):
+            self.assertEqual(quality.assess('See Chapter4. The indicator X7 is off.',target)['status'],'blocked')
+
     def test_numbers_and_units_allow_decimal_comma_spacing_and_translated_names(self):
         for source,target in [
             ('Use 1.5 liters for 1 000 grams.','Utilisez 1,5 litre pour 1000 grammes.'),
@@ -46,7 +58,7 @@ class TokenChecksTests(unittest.TestCase):
     def test_missing_pdf_key_glyphs_warn_even_with_all_numbers_preserved(self):
         for text in ['Press the         key to enter the menu.', 'Enter                 on the numerical keypad.', 'Appuyez sur la touche         pour confirmer.', 'An unknown glyph: \ufffd.']:
             report=quality.assess(text,'Traduction fictive sans restitution des touches.')
-            self.assertEqual(report['version'],2)
+            self.assertEqual(report['version'],3)
             self.assertIn('source_gaps',{row['code'] for row in report['issues']})
         self.assertNotIn('source_gaps',{row['code'] for row in quality.assess('Press the MENU key.','Appuyez sur MENU.')['issues']})
 

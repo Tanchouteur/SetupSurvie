@@ -17,7 +17,7 @@ import time
 from unittest.mock import AsyncMock,patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import httpx
-from pilot import durable,engine,library,operations,store,translations
+from pilot import durable,engine,library,operations,store,translations,translation_terms
 from real_assistant_check import TestTransport
 
 
@@ -26,12 +26,14 @@ async def check(args):
     if not source.is_file() or source.suffix.lower()!='.pdf' or source.stat().st_size>32_000_000:raise ValueError('An existing PDF of at most 32 MB is required.')
     if hashlib.sha256(source.read_bytes()).hexdigest()!=args.sha256:raise ValueError('Source hash mismatch.')
     if not 1<=args.first<=args.last<=args.first+9:raise ValueError('Choose at most ten original pages.')
+    vocabulary=translation_terms.validate(json.loads(args.terms_file.read_text())) if args.terms_file else []
     base=Path(__file__).resolve().parents[1];original=httpx.AsyncClient;measures=[]
     report={'schema':1,'kind':'SetupSurvie real translation check','version':json.loads((base/'deploy/release.json').read_text())['version'],
         'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),
         'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'model':args.model,'customer_hardware_validation':False,
         'source':{'sha256':args.sha256,'bytes':source.stat().st_size,'title':args.title,'provenance':args.provenance},
-        'pages':{'first':args.first,'last':args.last},'options':{'gpu_layers':args.gpu_layers,'threads':6,'context':16384,'think':args.think},'measurements':measures}
+        'pages':{'first':args.first,'last':args.last},'options':{'gpu_layers':args.gpu_layers,'threads':6,'context':16384,'think':args.think},'measurements':measures,
+        'terms':vocabulary}
     def save():durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
     async def available(**kwargs):
         async with original(trust_env=False,timeout=5) as client:
@@ -67,7 +69,12 @@ async def check(args):
                 return {'online':True,'paused':False}
             return await previous_available(**kwargs)
         available=with_owned_preload
-    async def observed_translate(text,mode):return await actual_translate(text,mode,on_metrics=measures.append)
+    async def observed_translate(text,mode,**kwargs):
+        external=kwargs.pop('on_metrics',None)
+        def record_metrics(report):
+            measures.append(report)
+            if external:external(report)
+        return await actual_translate(text,mode,on_metrics=record_metrics,**kwargs)
     with tempfile.TemporaryDirectory(prefix='ss-translation-real-') as directory:
         root=Path(directory);guides=root/'guides';guides.mkdir();shutil.copyfile(source,guides/'original.en.pdf')
         (guides/'metadata.json').write_text(json.dumps([{'path':'original.en.pdf','title':args.title,'language':'en','provenance':args.provenance,'licence':'Temporary private test; commercial redistribution not established.'}]))
@@ -77,7 +84,7 @@ async def check(args):
              patch.object(engine,'PROFILE_CONFIG',{**engine.PROFILE_CONFIG,'context':16384,'output_tokens':4096}),\
              patch.object(httpx,'AsyncClient',side_effect=lambda **kw:original(transport=TestTransport(4096,args.gpu_layers,6),**kw)),\
              patch.object(translations,'translate',side_effect=observed_translate),patch.object(translations,'launch'):
-            store.init();library.index_guides();item=await translations.create('fixture','guide:original.en.pdf',None,'real-translation',args.first,args.last)
+            store.init();library.index_guides();translation_terms.save('fixture',vocabulary);item=await translations.create('fixture','guide:original.en.pdf',None,'real-translation',args.first,args.last)
             if args.pause_after is not None and not 1<=args.pause_after<item['total']:raise ValueError('Pause checkpoint must leave at least one pending fragment.')
             task=asyncio.create_task(translations.run(item['id']));started=time.monotonic()
             translations.ACTIVE[item['id']]=task;checkpoint_done=False
@@ -119,4 +126,5 @@ if __name__=='__main__':
     parser.add_argument('--pause-after',type=int)
     parser.add_argument('--preload-model')
     parser.add_argument('--verify-reader',action='store_true')
+    parser.add_argument('--terms-file',type=Path,help='Optional private JSON list of source/french terms for this trial.')
     asyncio.run(check(parser.parse_args()))

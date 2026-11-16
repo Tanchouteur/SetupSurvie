@@ -919,3 +919,25 @@ inclut l’état sans les paroles ; le rapport dédié est privé et contient le
 bruts. Sauvegarde/transfert emportent cet état avec les autres états du pilote.
 Voir le [guide](../utilisation/videos-locales.md) et les
 [preuves et limites](../essais/2026-11-16-acquisition-sous-titres.md).
+
+## Cohérence des traductions — 0.32.0
+
+`translation_terms.py` conserve les termes par profil dans `settings`, puis une
+copie immuable dans `translation_guidance` (clé étrangère à `translations`,
+suppression en cascade). Les anciennes lignes sans copie n’adoptent pas les
+nouveaux réglages. GET/PUT `/translation-terms` lisent seulement le profil choisi ;
+ils ne lancent ni modèle ni traduction.
+
+Chaque fragment reçoit ses termes présents et au plus les 600 derniers caractères
+source/français du fragment immédiatement précédent terminé. Les données sont
+séparées du passage courant dans le message utilisateur ; aucune substitution
+de mots après génération. Ce contexte est retiré avant appel s’il dépasse le
+budget. Le contrôle conserve les termes proposés, la position précédente proposée
+et l’usage effectif du repère rapporté par l’appel (inconnu si non mesuré).
+Les mesures numériques ne contiennent pas les termes ou extraits.
+
+Une forme française non repérée produit un avertissement, sans certifier une erreur
+sémantique. Les nombres/unités restent bloquants. Le contrôle version 3 inclut les
+nombres joints à des lettres, pour ne pas rejeter l’espace rétabli dans `Chapter4`.
+Les rapports antérieurs et les publications existantes restent conservés. La file,
+la pause, l’arrêt et la publication complète gardent leurs contrats.

@@ -67,7 +67,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_error_then_resume_uses_saved_snapshot_and_keeps_finished_parts(self):
         item=await self.create();calls=0
-        async def fail_second(text,mode):
+        async def fail_second(text,mode,**kwargs):
             nonlocal calls
             calls+=1
             if calls==2:raise ValueError('Refus test : essayez un autre mode.')
@@ -84,7 +84,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_pause_cancels_inflight_fragment_and_preserves_previous_translation(self):
         item=await self.create();started=asyncio.Event()
-        async def wait(text,mode):started.set();await asyncio.Event().wait()
+        async def wait(text,mode,**kwargs):started.set();await asyncio.Event().wait()
         with patch.object(tr,'translate',side_effect=wait):
             tr.launch(item['id']);await asyncio.wait_for(started.wait(),1)
             state=await tr.pause(item['id'],'alice')
@@ -94,7 +94,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_stop_preserves_done_parts_and_resumes_only_explicitly(self):
         item=await self.create();started=asyncio.Event();calls=0
-        async def translate(text,mode):
+        async def translate(text,mode,**kwargs):
             nonlocal calls
             calls+=1
             if calls==1:return 'Eau propre.','fixture'
@@ -114,7 +114,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         item=await self.create();started=asyncio.Event();finished=asyncio.Event()
         from pilot import publications
         with store.connect() as db:publications.reserve(db,item['id'],'alice',{'id':self.source,'title':'Private draft metadata'},True)
-        async def wait(text,mode):
+        async def wait(text,mode,**kwargs):
             started.set()
             try:await asyncio.Event().wait()
             finally:finished.set()
@@ -146,7 +146,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_resume_cannot_recreate_work_while_deletion_joins_its_worker(self):
         item=await self.create();started=asyncio.Event();cancelling=asyncio.Event();release=asyncio.Event()
-        async def translate(text,mode):
+        async def translate(text,mode,**kwargs):
             started.set()
             try:await asyncio.Event().wait()
             finally:cancelling.set();await release.wait()

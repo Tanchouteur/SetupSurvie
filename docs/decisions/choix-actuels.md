@@ -42,6 +42,8 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.32.0** ajoute le [vocabulaire facultatif et le repère entre passages](../utilisation/documents-et-traduction.md#garder-les-mêmes-mots-dans-un-document--0320), conservés par travail. Les termes restent des préférences à relire ; le contrôle des nombres reconnaît les libellés PDF joints.
+
 La **0.31.0** ajoute la [récupération des sous-titres YouTube](../utilisation/videos-locales.md#récupérer-les-pistes-youtube--0310), à la demande avec Internet, puis lecture/recherche hors ligne et traduction locale optionnelle. La référence doit correspondre au média ; les ZIM et la qualification des vidéos de Marc restent ouverts.
 
 La **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)

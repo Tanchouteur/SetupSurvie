@@ -84,6 +84,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const controlsContext=await browser.newContext(),controlsPage=await controlsContext.newPage();
       const controlsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_controls.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,translationControls:await controlsRecipe(controlsPage)}));await controlsContext.close();
+      const termsContext=await browser.newContext(),termsPage=await termsContext.newPage();
+      const termsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_terms.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,translationTerms:await termsRecipe(termsPage)}));await termsContext.close();
       const experimentPage=await context.newPage();
       const experimentRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_experiment.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const experimentResult=await experimentRecipe(experimentPage);await experimentPage.close();
