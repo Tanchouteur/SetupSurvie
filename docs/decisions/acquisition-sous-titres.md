@@ -47,7 +47,23 @@ dans le futur lecteur et vérifié sur les pistes effectivement récupérées.
 Neuf tests sans réseau passent : références, priorité de langue/origine,
 chevauchement, conservation des mots, refus des temps invalides, volume et fermeture
 de réponse, session explicite et refus d'un autre domaine avant transport.
-Cela ne valide pas la compatibilité réelle avec YouTube.
+Ils ne certifient pas la fidélité des paroles ni tous les comportements du fournisseur.
+
+## Premier essai réel, sans intégration au portail
+
+Depuis le R7, avec youtube-transcript-api 1.2.4 installé dans le seul environnement
+de recette et la même fonction : récupération sur la vidéo publique
+[présentation rapide de Kiwix](https://www.youtube.com/watch?v=4p2HsIAqitg), en
+**813 ms**. Le fournisseur propose une piste `fr-FR` déclarée automatique :
+185 segments retenus et 182 ajustements de durée pour les chevauchements. Aucun
+média téléchargé, modèle chargé, compte ou proxy utilisé, ni méthode de traduction
+en ligne appelée. Le rapport brut reste privé sous
+`audio-transcription/report-provider-first.json` du laboratoire R7.
+
+Cette récupération prouve que cette requête fonctionne depuis ce réseau à cette
+date. Elle ne valide pas l'alignement avec un MP4 local, la fidélité du français,
+les droits de redistribution, tous les téléchargements de Marc ou la disponibilité
+future du fournisseur. Le site ne propose pas encore cette fonction.
 
 ## Suite nécessaire
 
