@@ -152,3 +152,11 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['causal_conclusion'],'needs_analysis')
         self.assertEqual(len(result['observations']),2)
         self.assertNotIn('vram',json.dumps(result))
+
+    def test_retry_and_load_durations_export_without_raw_engine_errors(self):
+        value=perf.numeric_metrics({'model_preparations':[{'duration_ms':123,'status':'ready','error':'PRIVATE'}],
+            'model_retries':[{'stage':'loading','reason':'memory_error','http_status':503,'message':'PRIVATE'}],
+            'budgets':[{'context':8192,'prompt':'PRIVATE'}]})
+        self.assertEqual(value['model_preparations'][0],{'duration_ms':123,'status':'ready'})
+        self.assertEqual(value['model_retries'][0]['reason'],'memory_error')
+        self.assertEqual(value['budgets'],[{'context':8192}]);self.assertNotIn('PRIVATE',json.dumps(value))

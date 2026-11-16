@@ -78,6 +78,11 @@ def numeric_metrics(value):
     for key in ('status','failure'):
         if isinstance(value.get(key),str) and value[key].replace('_','').isalnum():result[key]=value[key][:64]
     result['model_calls']=[{k:v for k,v in call.items() if k in ('prompt_eval_count','prompt_eval_cached_count','eval_count','load_ms','prompt_eval_ms','eval_ms','total_ms') and number(v)} for call in value.get('model_calls',[])[:100]]
+    result['model_preparations']=[{k:v for k,v in call.items() if (k=='duration_ms' and number(v)) or (k=='status' and v in ('failed','ready'))} for call in value.get('model_preparations',[])[:4]]
+    result['model_retries']=[{k:v for k,v in call.items() if (k=='http_status' and number(v)) or
+        (k=='stage' and v in ('chat','loading')) or (k=='reason' and v in ('transport','http_error','memory_error','empty_response','stream_interrupted','model_error','invalid_model_load'))}
+        for call in value.get('model_retries',[])[:4]]
+    result['budgets']=[{k:v for k,v in entry.items() if number(v)} for entry in value.get('budgets',[])[:100]]
     for key in ('runtime','runtime_after'):
         runtime=value.get(key,{})
         result[key]={k:runtime[k] for k in ('native_context','other_models','available','installed') if k in runtime}
@@ -137,7 +142,14 @@ async def classical(row,report):
     if row['query']==QUERIES[0] and not report.get('_selected'):
         report['_selected']=list(dict.fromkeys(item['id'] for item in found if isinstance(item.get('id'),str)))[:3]
     row.update(results=len(found),first_result_ms=first,
-               coverage={k:coverage[k] for k in ('status','searched','failed','not_searched','without_fulltext','deadline_exceeded','cache_hits','parallelism','processing') if k in coverage})
+               coverage={k:coverage[k] for k in ('status','searched','failed','not_searched','without_fulltext','deadline_exceeded','cache_hits','parallelism','processing',
+                   'primary_requests','request_limit','refinement_attempted','refinement_failed','refinement_not_searched','title_searched','title_failed','title_not_searched',
+                   'concurrency','local_query','cache_ttl_seconds','cache_disk_ttl_seconds','deadline_ms','error_counts') if k in coverage})
+    row['native_calls']=[{k:v for k,v in call.items() if (k in ('elapsed_ms','results','response_bytes','http_status') and number(v)) or
+        (k=='cached' and isinstance(v,bool)) or (k=='stage' and v in ('fulltext','title','refinement')) or
+        (k=='outcome' and v in ('success','error')) or (k=='reason' and v in ('timeout','invalid_response','http_error','connection_error'))}
+        for call in coverage.get('trace',[])[:40]]
+    row['native_calls_limited']=len(row['native_calls'])>=40
     if first is None and found:row['first_result_ms']=round((time.monotonic()-start)*1000)
 
 
@@ -300,8 +312,9 @@ async def step(row,report,call,timeout,guard=False):
 async def start(mode,user,version):
     if mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
     if running() or competing() or engine.LOCK.locked():raise HTTPException(409,'Une réponse ou un essai est déjà en cours. Attendez sa fin.')
+    recover_temporary_job()
     report={'schema':1,'kind':'SetupSurvie performance diagnostic','protocol':1,'version':version,'id':uuid.uuid4().hex,'created':time.time(),
-            'status':'running','mode':mode,'planned_steps':11,'model':engine.MODES[mode]['model'],'configured_context':engine.context_size(engine.MODES[mode]['model']),
+            'status':'running','mode':mode,'planned_steps':11,'model':engine.MODES[mode]['model'],'think':engine.MODES[mode]['think'],'configured_context':engine.context_size(engine.MODES[mode]['model']),
             'settings':{'maximum_seconds':DEADLINE,'sample_interval_seconds':INTERVAL,'search_budget_seconds':120,'generation_output_tokens':512,
                         'documentary_output_tokens':engine.PROFILE_CONFIG['output_tokens'],'cache_cleared':False,'model_unloaded':False},'steps':[],'samples':[]}
     save(report);report['_monotonic']=time.monotonic();REPORTS[report['id']]=report
