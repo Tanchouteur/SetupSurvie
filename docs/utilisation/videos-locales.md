@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos locales
 
-**Guide du candidat 0.26.0 — 16 novembre 2026.** La version publiée 0.25.0 ne reconnaît pas encore les MP4 sans piste. Les fichiers restent dans
+**Guide actuel — 0.26.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
 à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -79,7 +79,7 @@ Une modification du média ou de sa piste source empêche de reprendre l’ancie
 brouillon et retire l’association de l’ancienne traduction après actualisation.
 Les anciens fichiers et brouillons restent conservés pour comparaison.
 
-## Créer les sous-titres depuis un MP4 seul — candidat 0.26.0
+## Créer les sous-titres depuis un MP4 seul — 0.26.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos locales**, actualiser les
 vidéos. Sur un média sans piste exploitable, ouvrir **Créer les sous-titres depuis
@@ -109,7 +109,7 @@ Comparez les passages utiles, en particulier nombres, noms techniques et négati
 avec la vidéo. La reconnaissance peut se tromper, mal estimer les temps ou manquer
 une langue/un son ; elle ne décrit pas les gestes ni les images. Une vidéo sans
 audio ou sans parole reconnue ne reçoit pas de sous-titre vide présenté comme prêt.
-Les résultats réels limités du candidat sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
+Les résultats réels limités de cette version sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
 
 ## Utilisation des paroles par l’assistant
 
