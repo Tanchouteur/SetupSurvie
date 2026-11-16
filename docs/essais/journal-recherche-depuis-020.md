@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-Candidat 0.33.0 : [vidéos des collections](2026-11-16-videos-collections.md), examen
+0.33.0 : [vidéos des collections](2026-11-16-videos-collections.md), examen
 volontaire/reprenable des ZIM, lecture par portions, paroles horodatées dans la
 recherche et préparation française depuis une piste interne. Preuves natives,
 Kiwix réel miniature et navigateur séparées des validations du fonds de Marc.

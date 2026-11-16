@@ -1,6 +1,7 @@
 # Documentation SetupSurvie
 
 - [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
+- [Validation des vidéos de collections](essais/2026-11-16-videos-collections.md) — 0.33.0, huit jobs CI et preuves natives/lecteur/navigateurs séparées du fonds réel.
 - [Coordination UX et vidéos](decisions/coordination-ux-et-videos.md) — branches séparées, contrats et intégrations successives.
 - [Intégration des corrections Windows](essais/2026-11-16-integration-corrections-windows.md) — 0.32.1, contrôleur et routeurs après mise à jour ; bilan réel distinct.
 

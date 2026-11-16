@@ -21,7 +21,7 @@ et les bilans liés sont les références de réalisation.
 | Vidéos locales et collections | Index/lecteur, traduction et transcription audio hors ligne ; [récupération YouTube 0.31.0](../essais/2026-11-16-acquisition-sous-titres.md) réelle sur R7 puis pistes conservées ; [examen ZIM 0.33.0](../essais/2026-11-16-videos-collections.md), pistes internes dans la recherche/lecteur et préparation française | Audio des vidéos internes à raccorder ; contenu réel de Marc, codecs, mots et alignement de chaque vidéo encore à vérifier |
 | Mesures et conservation | Exports lisibles avec version/heure, ressources/contextes, [diagnostic de refus](../essais/2026-11-16-diagnostic-refus-demarrage.md), arrêt/reprise/suppression des traductions et paquet comparé à Git | Les observations après erreur restent distinctes de l’instant exact de la panne ; aucun test humain non exécuté n’est compté comme réussi |
 
-Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0320)
+Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0330)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
 un accès TeamViewer détenu par Louis ne devient pas un accès autonome de l’agent.
 Tant qu’un développement ou une vérification autonome utile reste possible, ces

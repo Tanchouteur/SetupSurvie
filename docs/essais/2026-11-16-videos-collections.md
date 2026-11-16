@@ -1,6 +1,6 @@
 # Vidéos des collections : inventaire, lecture et recherche
 
-**Bilan du candidat 0.33.0 — 16 novembre 2026.** Le numéro mineur correspond à
+**Bilan de la 0.33.0 — 16 novembre 2026.** Le numéro mineur correspond à
 un nouveau parcours compatible ; aucune migration destructive ni version de
 composant tiers changée. Les corrections Windows 0.32.1 sont conservées.
 Ce document décrit le développement et ses preuves, pas une mise à jour du PC de Marc.
@@ -48,8 +48,26 @@ Les recettes ciblées **Chromium et WebKit** passent ensuite **58 contrôles par
 navigateur** : vidéos locales 22, archives 17, préparation française 19.
 La suite locale passe **933 tests en 214,886 s, 6 ignorés** avant le dernier
 complément du suivi hôte. Après ce complément, les **14 tests ciblés** des
-archives/API/transport passent en 2,473 s. La CI du code final et le reçu de
-paquet seront consignés après leur fin.
+archives/API/transport passent en 2,473 s. La CI du code final est consignée
+ci-dessous ; le reçu de paquet suit son propre commit source.
+
+## Intégration vérifiée
+
+La [PR nº 12](https://github.com/Tanchouteur/SetupSurvie/pull/12) est fusionnée
+normalement le 16 novembre, main `0313640a9349986f283986b7006f899236a5bbd2`.
+Le code `519f7c6b490828c380e86877b3986bcb51669998` passe les **huit jobs** de la
+[CI finale](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43934469853).
+Linux : **934 tests en 85,149 s, 6 ignorés**. Windows : nouveaux essais natifs
+**9 tests en 4,004 s**, API/index/transport **14 en 4,704 s**, superviseur **4 en
+0,299 s**, puis régressions existantes. Les recettes complètes des deux navigateurs
+passent, dont 17 contrôles du nouveau parcours par navigateur. Un second passage
+local des trois recettes ciblées confirme **58 contrôles par navigateur** sur le
+code final. Cela reste distinct d’un Safari réel ou du Windows de Marc.
+
+Les exécutions push/PR redondantes remplacées ont été annulées ; le lien ci-dessus
+désigne la validation PR complète du code final. Les huit jobs du premier code
+`c06ce4c` passent également (run `43934142424`), mais les essais Windows ajoutés
+sont jugés sur le run final, pas sur le précédent.
 
 Le premier test HTTP utilisait le `wget` minimal de l’image Kiwix, qui refuse
 lui-même un HTTP 206. Le test passe maintenant par une requête HTTP brute avec
