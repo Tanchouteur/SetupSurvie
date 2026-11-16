@@ -17,6 +17,7 @@
 .next-interface .settings-pane pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 .next-interface #settings-tests,.next-interface #settings-tests>details,.next-interface #settings-tests form{min-width:0;max-width:100%}
 .next-interface #settings-tests form{grid-template-columns:minmax(0,1fr)}
+.next-interface #settings-tests select{overflow:hidden;text-overflow:ellipsis}
 .next-interface #settings-tests button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:760px){
  .next-interface .settings-destinations{grid-template-columns:1fr;gap:12px}
