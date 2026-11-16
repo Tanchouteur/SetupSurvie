@@ -126,3 +126,14 @@ n’est livrée par ce lot. Ces travaux gardent leurs protocoles et limites dist
 Le passage mineur **0.20.0** correspond aux nouveaux comportements compatibles de
 relance et de relecture des conditions ; schéma des données 1 et images tierces
 inchangés, sans annonce de version stable.
+
+
+## Reçu du paquet — 16 novembre 2026
+
+Paquet logiciel comparé après extraction au commit `07d009d83a889543d212640f1a90cb335b1d9c4e` :
+**805 fichiers**, 6867790 octets compressés, 15382729 octets
+décompressés. SHA-256 :
+`8347c5d94dc864ca5f5583a75246ce7e8ddfd1e04f3f1a4dd1c083f7a1454638`.
+La comparaison porte sur chaque octet de fichier avec les filtres Git du commit.
+Le reçu documentaire est ajouté ensuite, sans modification du code validé.
+Aucune mise à jour sur le PC de Marc n’a été lancée.
