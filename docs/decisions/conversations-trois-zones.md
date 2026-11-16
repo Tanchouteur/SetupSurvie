@@ -70,3 +70,6 @@ qui appelle le moteur local et refuse les références cloud. Le contrôleur du 
 ne propose pas encore une file dédiée de téléchargement de modèles. Le futur
 menu doit donc réutiliser ces distinctions, ajouter suivi/reprise et vérification
 de présence, sans confondre changement de mode et acquisition d’un modèle.
+
+Mission préparée : [prompt de refonte](prompt-refonte-conversations.md). Les choix
+de dossiers, profondeur et parcours restent à préciser avant le développement.
