@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
+- [Coordination UX et vidéos](decisions/coordination-ux-et-videos.md) — branches séparées, contrats et intégrations successives.
 - [Intégration des corrections Windows](essais/2026-11-16-integration-corrections-windows.md) — 0.32.1, contrôleur et routeurs après mise à jour ; bilan réel distinct.
 
 - [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.

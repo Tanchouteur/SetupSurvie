@@ -80,6 +80,15 @@ class Manager:
                 # The worker can finish between the first read and the PID check.
                 state = self.read()
                 if state['phase'] not in ACTIVE:return state
+                if state.get('action')=='video-inventory':
+                    child=state.get('index_pid');identity=state.get('index_identity')
+                    if child and identity and discovery.identity(child)==identity:return state
+                    report_path=Path(self.config['data_dir'])/'state/pilot/zim-videos/progress.json'
+                    try:report=json.loads(report_path.read_text(encoding='utf-8'))
+                    except (OSError,ValueError):report={}
+                    if report.get('job_id')==state.get('id') and report.get('phase') in ('completed','partial','paused'):
+                        state.update(phase={'completed':'completed','partial':'error','paused':'paused'}[report['phase']],message='État de l’inventaire vidéo récupéré après l’arrêt du superviseur.')
+                        self.write(state);return state
                 if state.get('action')=='index':
                     child=state.get('index_pid');identity=state.get('index_identity')
                     if child and identity and discovery.identity(child)==identity:return state
@@ -137,6 +146,8 @@ class Manager:
         root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
         allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not index_queue.gaming(self.app.work)
         if state['phase'] in ACTIVE:
+            if state.get('action')=='video-inventory' and index_queue.gaming(self.app.work):
+                self.pause(automatic=True)
             if state.get('action')=='index' and state.get('options',{}).get('automatic') and not allowed:
                 self.pause(automatic=True)
             return
@@ -179,8 +190,9 @@ class Manager:
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
         self.check_storage()
-        if action in ('index','index-prepare'):
-            if action=='index' and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
+        if action in ('index','index-prepare','video-inventory'):
+            if action in ('index','video-inventory') and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
+            if action=='video-inventory' and index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’inventaire vidéo après la pause ; les résultats terminés restent disponibles.')
             automatic=body.get('automatic') is True
             root=Path(self.config['data_dir'])
             selection=index_queue.read(root)['pending'] if action=='index' else {}
@@ -263,6 +275,19 @@ class Manager:
                 search_index_tools.prepare(self.app,self.config,check=check,force=True)
                 state['reader_probe']=json.loads((self.app.work/'search-tools/reader-ready.json').read_text(encoding='utf-8')).get('probe')
                 update('completed','Outil d’indexation prêt. La création des index peut fonctionner hors ligne.')
+            elif state['action']=='video-inventory':
+                update('downloading','Examen des vidéos et pistes dans les collections, sans Internet ni IA…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                command=[str(self.index_python()),'-X','utf8',str(setup.ROOT/'scripts/inventory_zim_videos.py'),
+                    '--zim-dir',str(root/'library/zim'),'--state-dir',str(root/'state/pilot'),'--cancel',str(folder/'cancel'),'--job-id',job]
+                workers=index_queue.read(root)['settings']['workers']
+                if workers:command+=['--workers',str(workers)]
+                process=subprocess.Popen(command,**hidden)
+                state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
+                code=process.wait();check()
+                report=json.loads((root/'state/pilot/zim-videos/progress.json').read_text(encoding='utf-8'))
+                if code or report.get('job_id')!=job or report.get('phase')!='completed':raise setup.SetupError('Certaines collections n’ont pas pu être examinées. Les inventaires terminés restent disponibles ; consultez le rapport vidéo.')
+                update('completed','Inventaire des vidéos terminé. Leur présence ne valide pas leur lecture ou leurs sous-titres.')
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}

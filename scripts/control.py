@@ -233,7 +233,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings'):
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory','/library/video-inventory-pause'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
@@ -249,6 +249,9 @@ class Handler(BaseHTTPRequestHandler):
                     if self.path=='/library/index-settings':
                         import search_index_queue
                         search_index_queue.settings(Path(self.server.config['data_dir']),body)
+                    elif self.path=='/library/video-inventory-pause':
+                        if self.server.library.current().get('action')!='video-inventory':raise setup.SetupError('Aucun inventaire des vidéos de collections n’est en cours.')
+                        self.server.library.pause()
                     elif self.path=='/library/pause':self.server.library.pause()
                     else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
                 self.respond(202,{'accepted':True})

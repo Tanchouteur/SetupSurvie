@@ -1,6 +1,6 @@
 /* Existing local captions only. Playback never starts inference or a download. */
 (() => {
-  const panel=element('section');panel.id='next-videos';panel.innerHTML='<h2>Vidéos locales</h2><p class="small muted">Les titres et descriptions se cherchent avec le filtre ci-dessus. La recherche dans les documents retrouve aussi les paroles dont les sous-titres sont indexés.</p><div id="next-videos-admin" class="actions"><button id="next-videos-index" class="secondary">Actualiser les vidéos et leurs sous-titres</button><button id="next-videos-stop" class="secondary" hidden>Arrêter l’inventaire</button><button id="next-videos-report" class="secondary">Télécharger le rapport vidéo</button></div><p id="next-videos-status" class="small" role="status"></p><div id="next-videos-list" class="collections"></div><button id="next-videos-more" class="secondary" hidden>Voir les vidéos suivantes</button>';
+  const panel=element('section');panel.id='next-videos';panel.innerHTML='<h2>Vidéos de la bibliothèque</h2><p class="small muted">Les titres et descriptions se cherchent avec le filtre ci-dessus. La recherche dans les documents retrouve aussi les paroles dont les sous-titres sont indexés.</p><div id="next-videos-admin" class="actions"><button id="next-videos-index" class="secondary">Actualiser les vidéos et leurs sous-titres</button><button id="next-videos-stop" class="secondary" hidden>Arrêter l’inventaire</button><button id="next-videos-report" class="secondary">Télécharger le rapport vidéo</button></div><p id="next-videos-status" class="small" role="status"></p><div id="next-videos-list" class="collections"></div><button id="next-videos-more" class="secondary" hidden>Voir les vidéos suivantes</button>';
   $('next-collections').append(panel);
   const states={french_available:'Sous-titres français présents · à vérifier',french_prepared:'Français préparé localement · relecture à faire',source_transcribed:'Paroles transcrites localement · relecture à faire',source_only:'Sous-titres dans la langue source',missing:'Sous-titres à préparer',invalid:'Sous-titres présents mais illisibles',unknown:'Langue des sous-titres à identifier'};
   let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
@@ -18,6 +18,7 @@
       for(const item of data.videos){
         const card=element('article',undefined,'data-card');card.append(element('h3',item.title),element('p',item.collection||'Vidéo locale','small muted'),element('p',states[item.subtitle_status]||'État inconnu','small'),button('Voir la vidéo →',()=>readSource(item.id),'secondary'));
         card.dataset.videoId=item.id;
+        if(item.archive_article){const link=element('a','Ouvrir l’article d’origine →','text-button');link.href=originalSourceURL(item.archive_article);link.target='_blank';link.rel='noopener';card.append(link);}
         if(item.available===false){card.querySelector('button').disabled=true;card.append(element('p','Fichier modifié ou absent : actualisez l’inventaire avant de l’ouvrir.','small catalogue-warning'));}
         target.append(card);
       }

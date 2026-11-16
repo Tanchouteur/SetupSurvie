@@ -64,6 +64,14 @@ class ControlTests(unittest.TestCase):
         self.assertEqual(value['phase'],'idle')
         self.assertTrue(any(t['id']=='energie' for t in value['themes']))
 
+    def test_archive_video_pause_cannot_pause_an_unrelated_download(self):
+        with patch.object(self.server.library,'current',return_value={'action':'download'}),patch.object(self.server.library,'pause') as pause:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.post('/library/video-inventory-pause',control.key(self.c))
+            self.assertEqual(error.exception.code,409);pause.assert_not_called()
+        with patch.object(self.server.library,'current',return_value={'action':'video-inventory'}),patch.object(self.server.library,'pause') as pause:
+            with self.post('/library/video-inventory-pause',control.key(self.c)) as response:self.assertEqual(response.status,202)
+            pause.assert_called_once_with()
+
     def test_performance_counters_are_authenticated_and_never_start_engine(self):
         import host_performance
         data={'schema':1,'source':'host_controller','cpu':{'percent':25},'disks':[]}

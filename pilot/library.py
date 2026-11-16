@@ -672,8 +672,8 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     coverage['collection']=query_plan.collection
     coverage['query_terms']=words
     coverage['videos']=video_coverage
-    if video_coverage['status'] in ('not_indexed','unavailable'):
-        coverage['status']='partial';coverage['warning']=coverage.get('warning','')+' La recherche des vidéos locales n’est pas préparée ou ne répond pas. Actualisez les vidéos depuis Collections.'
+    if video_coverage['status'] in ('not_indexed','unavailable','partial'):
+        coverage['status']='partial';coverage['warning']=coverage.get('warning','')+' La recherche des vidéos est incomplète ou doit être actualisée. Consultez leur préparation dans Collections ; les résultats disponibles restent utilisables.'
     return SearchResults(ordered,coverage)
 
 
