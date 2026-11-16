@@ -19,6 +19,18 @@ async page=>{
   check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
   check((await page.locator('#search-message').textContent()).includes('2 document(s)'),'Dernière réponse complète les résultats');
   const request=async query=>{await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
+  for(const suffix of ['complete','partial','stop','error']){
+    const query='fixture-progress-empty-'+suffix;await gate(query,true);await request(query);
+    await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours — aucun résultat pour le moment')&&document.querySelector('#search-stop'));
+    check(!(await page.locator('#search-message').textContent()).includes('0 document(s) trouvé(s)'),'Aucun résultat provisoire annoncé comme un total final : '+suffix);
+    check((await page.locator('#search-results .empty-panel').textContent()).includes('La recherche continue'),'Attente expliquée aussi dans la liste vide : '+suffix);
+    if(suffix==='stop')await page.locator('#search-stop').click();
+    await gate(query,false);await page.waitForFunction(()=>!document.getElementById('search-stop'));
+    const message=await page.locator('#search-message').textContent(),empty=await page.locator('#search-results .empty-panel').textContent();
+    check(!message.includes('Recherche en cours')&&!empty.includes('La recherche continue'),'Aucun faux suivi actif après la fin ou interruption : '+suffix);
+    check(await page.locator('#search-results').getAttribute('aria-busy')==='false','Fin de traitement accessible aux lecteurs d’écran : '+suffix);
+    check(suffix==='complete'?message.includes('Recherche terminée — aucun résultat trouvé'):suffix==='partial'?message.includes('Recherche terminée, mais incomplète'):message.includes(suffix==='stop'?'arrêtée':'interrompue'),'Fin complète, partielle, arrêt et erreur distingués : '+suffix);
+  }
   await gate('fixture-progress-stop',true);await request('fixture-progress-stop');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
   await page.locator('#search-stop').click();
   check((await page.locator('#search-message').textContent()).includes('résultats reçus sont conservés'),'Arrêt annoncé comme incomplet avec résultats conservés');

@@ -100,6 +100,16 @@ et erreurs libres de ces composants restent exclus. La fin du diagnostic signale
 aussi une couverture limitée si une recherche classique est partielle.
 Quatorze tests ciblés passent, dont les nouveaux cas de couverture et de confidentialité.
 
+## Recherche vide pendant l'attente
+
+Louis demande de ne pas confondre absence provisoire et résultat final. Le message
+commence désormais par « Recherche en cours — aucun résultat pour le moment ».
+La fin complète, partielle, l'arrêt et l'erreur retirent tous l'attente, dans le
+statut et dans la liste vide. Les résultats reçus, passages ouverts et navigation
+au clavier restent conservés. Trente-huit contrôles par Chromium et WebKit passent
+contre le petit flux HTTP de test, dont les quatre fins sans résultat. Aucun délai
+ou résultat du fonds réel n'est déduit de cette fixture.
+
 ## Suite
 
 La demande vidéo est précisée : les nouveaux médias de Marc seront des MP4

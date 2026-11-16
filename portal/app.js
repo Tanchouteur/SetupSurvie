@@ -206,12 +206,17 @@ async function status(){
 function search(query){document.dispatchEvent(new CustomEvent('survie:scope-reset'));$('library-query').value=query;view('library');runSearch();}
 async function runSearch(event){
   event?.preventDefault();const q=$('library-query').value.trim();if(!q)return;
-  S.searchAbort?.abort();const controller=new AbortController();S.searchAbort=controller;$('search-message').textContent='Recherche dans vos documents…';$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
+  S.searchAbort?.abort();const controller=new AbortController();S.searchAbort=controller;$('search-message').textContent='Recherche en cours — aucun résultat pour le moment. Les collections sont en cours d’examen.';$('search-message').classList.remove('search-warning');$('search-results').setAttribute('aria-busy','true');$('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');$('search-results').replaceChildren();
   function display(data){
     if(controller.signal.aborted||S.searchAbort!==controller)return;
     const selectedCollection=[...($('search-collection')?.options||[])].find(o=>o.value===data.coverage?.collection)?.textContent||({wikipedia:'Wikipédia',appropedia:'Appropedia',wikibooks:'Wikilivres',wikihow:'wikiHow'}[data.coverage?.collection])||data.coverage?.collection;
-    $('search-message').classList.toggle('search-warning',!!data.coverage?.status&&data.coverage.status!=='complete');
-    $('search-message').textContent=`${data.results.length} document(s) trouvé(s) pour « ${q} »`+(data.state==='results'?' · Recherche en cours'+(Number.isFinite(data.coverage?.collections_selected)?' · '+((data.coverage.searched||0)+(data.coverage.locally_indexed||0))+' / '+data.coverage.collections_selected+' collections examinées':''):'')+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
+    const ongoing=data.state==='results',partial=!!data.coverage?.status&&data.coverage.status!=='complete';
+    $('search-results').setAttribute('aria-busy',String(ongoing));
+    $('search-message').classList.toggle('search-warning',!ongoing&&partial);
+    const count=`${data.results.length} document(s) trouvé(s) pour « ${q} »`;
+    const label=ongoing?(data.results.length?'Recherche en cours — '+count+'. D’autres résultats peuvent encore arriver.':'Recherche en cours — aucun résultat pour le moment pour « '+q+' ».'):
+      (partial?'Recherche terminée, mais incomplète — ':'Recherche terminée — ')+(data.results.length?count:partial?'aucun résultat dans la partie interrogée.':'aucun résultat trouvé pour « '+q+' ».');
+    $('search-message').textContent=label+(ongoing&&Number.isFinite(data.coverage?.collections_selected)?' · '+((data.coverage.searched||0)+(data.coverage.locally_indexed||0))+' / '+data.coverage.collections_selected+' collections examinées':'')+(data.coverage?.collection?' · Collection : '+selectedCollection:'')+(data.coverage?.warning?' · '+data.coverage.warning:'');
     const signature=JSON.stringify(data.results);if($('search-results').dataset.signature!==signature){
       const cards=[...$('search-results').querySelectorAll('.result')],opened=new Set(cards.filter(card=>card.querySelector('details[open]')).map(card=>card.dataset.source));
       const active=document.activeElement,focused=active?.closest('#search-results .result'),controls='a,button,summary,input,select',position=focused?[...focused.querySelectorAll(controls)].indexOf(active):-1,source=focused?.dataset.source;
@@ -220,12 +225,13 @@ async function runSearch(event){
     }
     $('search-results').querySelectorAll('.search-extra').forEach(node=>node.remove());
     if(data.coverage?.domain&&data.coverage.domain!=='all'){const wider=button('Élargir à toute la bibliothèque',()=>{$('search-domain').value='all';$('search-domain').dispatchEvent(new Event('change'));},'secondary search-extra');$('search-results').append(wider);}
-    if(!data.results.length)$('search-results').append(element('div',data.state==='results'?'Recherche en cours ; les premiers documents apparaîtront ici.':data.coverage?.status&&data.coverage.status!=='complete'?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel search-extra'));
+    if(!data.results.length)$('search-results').append(element('div',ongoing?'Aucun résultat pour le moment. La recherche continue ; les premiers documents apparaîtront ici.':partial?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat trouvé. La recherche est terminée. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel search-extra'));
   }
   $('search-results').dataset.signature='';
-  $('search-stop')?.remove();const stop=button('Arrêter la recherche',()=>{controller.abort();if(S.searchAbort===controller){$('search-message').textContent='Recherche arrêtée. Les résultats reçus sont conservés ; la recherche peut être incomplète.';stop.remove();}},'secondary');stop.id='search-stop';$('search-message').after(stop);
+  function interrupted(message){$('search-message').textContent=message;$('search-message').classList.add('search-warning');$('search-results').setAttribute('aria-busy','false');const empty=$('search-results').querySelector('.empty-panel.search-extra');if(empty)empty.textContent='Aucun résultat reçu avant l’interruption. La recherche est incomplète ; vous pouvez la relancer.';}
+  $('search-stop')?.remove();const stop=button('Arrêter la recherche',()=>{controller.abort();if(S.searchAbort===controller){interrupted('Recherche arrêtée. Les résultats reçus sont conservés ; la recherche peut être incomplète.');stop.remove();}},'secondary');stop.id='search-stop';$('search-message').after(stop);
   try{const data=await api('/search?q='+encodeURIComponent(q)+'&stream=true&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'all')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal,onResult:display});display(data);
-  }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)$('search-message').textContent=e.message;}
+  }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)interrupted(e.message);}
   finally{stop.remove();}
 }
 function videoTimestamp(ms){const seconds=Math.floor((Number(ms)||0)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}

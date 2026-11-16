@@ -159,12 +159,13 @@ async def progressive_search(query,*args,on_update=None,**kwargs):
     first={'id':'guide:shelter.en.txt','title':'Premier document fictif','kind':'guide','language':'en','excerpt':'First synthetic document.',
            'other_matches':[{'id':'guide:shelter.en.pdf#page=2','title':'Passage fictif'}]}
     final={'id':'guide:craft.en.txt','title':'Second document fictif','kind':'guide','language':'en','excerpt':'Second synthetic document.'}
-    if on_update:await on_update(library.SearchResults([first],{'status':'partial','running':True,'domain':'all','searched':1,'collections_selected':3}))
+    empty=query.startswith('fixture-progress-empty')
+    if on_update:await on_update(library.SearchResults([] if empty else [first],{'status':'partial','running':True,'domain':'all','searched':1,'collections_selected':3}))
     gate=progress_gates.get(query)
     if gate:await gate.wait()
     else:await asyncio.sleep(.8)
     if query.endswith('error'):raise RuntimeError('PRIVATE FIXTURE FAILURE')
-    return library.SearchResults([first,final],{'status':'complete','domain':'all','searched':3,'collections_selected':3})
+    return library.SearchResults([] if empty else [first,final],{'status':'partial' if query.endswith('partial') else 'complete','domain':'all','searched':3,'collections_selected':3})
 library.search=progressive_search
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status
