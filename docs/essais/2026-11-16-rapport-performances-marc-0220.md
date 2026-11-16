@@ -129,6 +129,13 @@ ignorés**, en 136,9 s. Code fonctionnel `7801964`,
 routage synthétique et recettes Chromium/WebKit. Aucun modèle réel ne tourne en CI.
 Le paquet est comparé au commit avec les filtres Git de fins de ligne Windows ;
 le reçu final ci-dessous identifie sa version documentaire exacte.
+
+Paquet `setupsurvie-0231-validated.zip`, commit documentaire `25aae6c`,
+**837 fichiers**, 6 973 142 octets compressés et 15 656 776 octets décompressés ;
+tous les octets comparés au commit filtré et au manifeste :
+`1a1815a30bbf9536dad4393f500e975d6b3af81173c069361fe4360a15661b8d`.
+Le présent reçu est ajouté après construction. Données privées, modèles, corpus
+et rapports réels ne sont pas inclus. Aucun déploiement sur les PC clients.
 Le rapport de Marc précède ce correctif : il ne le valide pas. La fidélité sur
 tout le fonds et le coût de 32k sous Windows restent à mesurer.
 
