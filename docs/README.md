@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Campagne Windows chez Marc du 16 novembre 2026](essais/2026-11-16-campagne-windows-marc.md) — contrôles du portail actif, essais isolés, défauts reproduits et limites de la restauration.
+
 - [Deux prochains objectifs](decisions/choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026) — simplifier toute l’expérience sans perdre de fonctions, puis mener une campagne autonome de fiabilité réelle incluant copie et restauration complètes hors ligne. Priorités à réaliser.
 
 - [Acquisition des sous-titres](decisions/acquisition-sous-titres.md) — choix de la 0.31.0 ; [essais et limites](essais/2026-11-16-acquisition-sous-titres.md).
