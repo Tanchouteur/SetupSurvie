@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — chantier isolé non livré, inventaire reprenable en développement ; site et lecteur restent à raccorder.
+
 - [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.
 
 - [Deux prochains objectifs](decisions/choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026) — simplifier toute l’expérience sans perdre de fonctions, puis mener une campagne autonome de fiabilité réelle incluant copie et restauration complètes hors ligne. Priorités à réaliser.
