@@ -16,7 +16,7 @@ def build():
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
     source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.11.1"></script><script defer src="/app.js', 1)
-    source=source.replace('</head>','<script defer src="/source-figures.js?v=0.23.0"></script></head>')
+    source=source.replace('</head>','<script defer src="/source-figures.js?v=0.28.0"></script></head>')
     source=source.replace('</head>','<script defer src="/long-summaries.js?v=0.23.0"></script></head>')
     source=source.replace('</head>','<link rel="stylesheet" href="/bilingual-reader.css?v=0.23.0"><script defer src="/bilingual-reader.js?v=0.23.0"></script></head>')
     source=source.replace('</head>', '<script defer src="/nouveau/videos.js?v=0.26.1"></script><script defer src="/nouveau/captions.js?v=0.26.1"></script><script defer src="/nouveau/transcriptions.js?v=0.26.1"></script></head>')

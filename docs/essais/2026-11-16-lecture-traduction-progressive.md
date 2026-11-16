@@ -54,3 +54,22 @@ largeurs d’écran. Les premiers essais Chromium/WebKit passent ; une recette r
 la fenêtre de lecture, sa fermeture et sa restauration. La CI finale est encore
 en cours. Aucun nouveau délai ou résultat de fidélité du
 modèle de Marc n’est revendiqué.
+
+## Incidents conservés pendant les recettes
+
+Le premier ensemble intégré `40886ba` réussit la lecture progressive sur les
+deux navigateurs, puis rencontre une erreur WebKit de chargement du worker PDF
+pendant la recette des illustrations originales. L’import différé pouvait
+reprendre après `pagehide` et créer un worker alors que la page quittait son
+origine. Le correctif vérifie le départ et la présence de l’image après import,
+arrête la file d’aperçus et détruit les tâches PDF en cours. Le fournisseur PDF.js
+et ses versions restent inchangés. Une recette retarde réellement l’import,
+déclenche le départ puis vérifie qu’aucun worker n’est créé tardivement.
+La relecture normale des illustrations et la CI finale restent requises.
+
+Le lecteur dédié a également révélé une course à la fermeture : une actualisation
+pouvait relire l’état « ouvert » avant l’événement de fermeture et rouvrir la
+fenêtre. Le choix de fermeture est maintenant enregistré avant la fermeture,
+et la restauration automatique ne se fait qu’à la première lecture du travail.
+La recette vérifie fermeture, pause, rechargement et retour sans retirer les
+assertions de navigation ou d’erreur JavaScript.
