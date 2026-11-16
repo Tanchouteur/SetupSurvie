@@ -18,7 +18,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.temp.name);guides=self.root/'guides';guides.mkdir()
         (guides/'manual.en.txt').write_text('Keep water clean.\n'*300)
         for obj,name,value in [(store,'ROOT',self.root/'state'),(library,'GUIDES',guides),
-                               (operations,'status',AsyncMock(return_value={'online':True})),(engine,'LOCK',asyncio.Semaphore(1))]:
+                               (operations,'status',AsyncMock(return_value={'online':True})),(engine,'LOCK',asyncio.Semaphore(1)),(tr,'CONTROL_LOCK',asyncio.Lock())]:
             p=patch.object(obj,name,value);p.start();self.addCleanup(p.stop)
         store.init();library.index_guides()
         self.source='guide:manual.en.txt'
@@ -140,6 +140,21 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         result=await tr.delete(item['id'],'alice')
         self.assertEqual(result['publication']['source_id'],public['source_id']);self.assertEqual(path.read_bytes(),before)
         self.assertTrue((await library.source(public['source_id']))['text'])
+
+    async def test_resume_cannot_recreate_work_while_deletion_joins_its_worker(self):
+        item=await self.create();started=asyncio.Event();cancelling=asyncio.Event();release=asyncio.Event()
+        async def translate(text,mode):
+            started.set()
+            try:await asyncio.Event().wait()
+            finally:cancelling.set();await release.wait()
+        with patch.object(tr,'translate',side_effect=translate):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            deleting=asyncio.create_task(tr.delete(item['id'],'alice'));await asyncio.wait_for(cancelling.wait(),2)
+            resuming=asyncio.create_task(tr.resume(item['id'],'alice'));await asyncio.sleep(.01)
+            self.assertFalse(deleting.done());self.assertFalse(resuming.done())
+            release.set();await asyncio.wait_for(deleting,2)
+            with self.assertRaises(HTTPException) as error:await resuming
+            self.assertEqual(error.exception.status_code,404);self.assertNotIn(item['id'],tr.ACTIVE)
 
     async def test_restart_pauses_and_does_not_resume_inference_automatically(self):
         item=await self.create();store.init()
