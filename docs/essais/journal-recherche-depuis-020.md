@@ -6,6 +6,9 @@ Une relecture de procédure peut ajouter des conditions comme extraits exacts ;
 la condition d’un autre mode choisie pendant les essais reste tracée avec sa correction.
 Les faux appels JSON reçoivent une reprise native, puis un échec explicite si nécessaire.
 Les contrôles de pause et les mesures restent séparés de la fidélité du modèle.
+Code `b9b1051`, huit jobs CI réussis, 742 tests (trois ignorés) et 33 contrôles
+par navigateur réussis. Un échec de citation sur six demandes radio, puis un rejeu
+réussi, restent explicitement tracés ; aucune fiabilité universelle annoncée.
 
 Complément 0.19.1 : [notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md).
 Cas réel UV‑5R demandé par Louis, utilisé pour corriger des défauts généraux :
