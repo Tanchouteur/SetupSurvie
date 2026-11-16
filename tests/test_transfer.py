@@ -250,4 +250,39 @@ class ActivationTests(unittest.TestCase):
             with self.assertRaises(setup.SetupError):transfer.validate_mounts(fake,self.config)
 
 
+    def test_routing_services_without_docker_healthcheck_are_validated_as_running(self):
+        routes=self.data/'library/maps/routing/current';routes.mkdir(parents=True);(routes/'manifest.json').write_text('{}')
+        containers=[]
+        for service in ('open-webui','kiwix','pilot','portal','router-foot','router-motorcycle','router-car'):
+            state={'Running':True}
+            if not service.startswith('router-'):state['Health']={'Status':'healthy'}
+            containers.append({'Config':{'Labels':{'com.docker.compose.service':service}},
+                'Mounts':[{'Type':'bind','Source':str(self.data)}],'State':state})
+        with patch.object(self.app,'compose',return_value=' '.join('container-'+str(i) for i in range(7))),patch.object(setup,'run',side_effect=lambda *a,**kw:json.dumps(containers)):
+            transfer.validate_mounts(self.app,self.config)
+            containers[-1]['State']['Running']=False
+            with self.assertRaises(setup.SetupError):transfer.validate_mounts(self.app,self.config)
+
+    def test_video_jobs_generated_tracks_and_speech_cache_are_preserved_together(self):
+        state=self.data/'state/pilot';job='audio-fixture-id';track=state/'video-transcriptions'/job/'source.vtt';track.parent.mkdir(parents=True)
+        track.write_text('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nDo not open.\n')
+        with closing(sqlite3.connect(state/'video-transcriptions.db')) as db:
+            db.execute('CREATE TABLE jobs(id TEXT PRIMARY KEY,status TEXT,progress_ms INTEGER)')
+            db.execute('INSERT INTO jobs VALUES(?,?,?)',(job,'paused',60000));db.commit()
+        french=state/'video-captions'/'translation-fixture-id'/'fr.vtt';french.parent.mkdir(parents=True);french.write_text('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nNe pas ouvrir.\n')
+        cache=self.data/'state/openwebui/cache/whisper/faster-whisper-small';cache.mkdir(parents=True);(cache/'model.bin').write_bytes(b'tiny-model-fixture-no-inference')
+        self.copy();transfer.prepare(self.dest);transfer.verify_copy(self.dest)
+        for original in (track,french,cache/'model.bin'):
+            copied=self.dest/'data'/original.relative_to(self.data)
+            self.assertEqual(original.read_bytes(),copied.read_bytes())
+        with closing(sqlite3.connect(self.dest/'data/state/pilot/video-transcriptions.db')) as db:
+            self.assertEqual(db.execute('SELECT * FROM jobs').fetchone(),(job,'paused',60000))
+
+    def test_source_rollback_is_refused_during_another_source_operation(self):
+        self.copy()
+        with transfer.locked(self.work/'update.lock'):
+            with self.assertRaises(setup.SetupError):transfer.rollback(self.dest)
+        self.assertTrue((self.work/'transfer-guard.json').exists())
+
+
 if __name__=="__main__":unittest.main()

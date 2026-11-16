@@ -38,6 +38,7 @@ jobs:
       - run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_installers.ps1
       - run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_updates.ps1
       - run: python -m unittest discover -s tests -p test_transfer.py -v
+      - run: python -m unittest discover -s tests -p test_transfer_readiness.py -v
       - run: python -m unittest discover -s tests -p test_transfer_windows.py -v
       - run: python -m unittest discover -s tests -p test_windows_update.py -v
       - run: python -m unittest discover -s tests -p test_windows_resume.py -v

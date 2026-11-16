@@ -57,6 +57,15 @@ Ses ajouts Compose (`versions.json`), Linux, API, portail et versions doivent
 être conservés. Aucun de ces fichiers n’a été copié depuis cette branche vers
 la nôtre ; cette lecture ne vaut pas fusion ni accord de l’autre agent.
 
+## Revue indépendante
+
+Les dix-huit tests initiaux passent dans le runner. La revue reproduit puis
+corrige le refus des routeurs OSRM sans HEALTHCHECK et le retour source pendant
+maintenance. Un nouveau contrôle conserve ensemble les états vidéo, pistes et
+cache Whisper. L'horloge du test de délai Kiwix est rendue déterministe sans
+changer le moteur. La [preuve datée](../essais/2026-11-16-transfert-fiable.md)
+distingue ces tests de la recette physique non exécutée.
+
 ## Intégration à effectuer
 
 1. Vérifier le dépôt et récupérer `origin/main` sans écraser de travail.

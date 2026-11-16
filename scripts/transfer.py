@@ -550,8 +550,15 @@ def validate_mounts(app, config):
     ids=app.compose(config,'ps','--quiet',capture=True).split()
     if not ids:raise setup.SetupError('Aucun service destination démarré.')
     info=json.loads(setup.run(['docker','inspect',*ids],capture=True))
+    core={'open-webui','kiwix','pilot','portal'}
+    routers={'router-foot','router-motorcycle','router-car'} if (Path(config['data_dir'])/'library/maps/routing/current/manifest.json').is_file() else set()
+    required_services=core|routers
+    found=set()
     source_roots=[setup.safe_path(config['data_dir']),setup.ROOT.resolve()]
     for container in info:
+        service=container.get('Config',{}).get('Labels',{}).get('com.docker.compose.service')
+        if service not in required_services or service in found:raise setup.SetupError('Service absent, inattendu ou en double après transfert.')
+        found.add(service)
         for mount in container.get('Mounts',[]):
             if mount.get('Type')!='bind':raise setup.SetupError('Volume non inventorié ; validation refusée.')
             source=mount['Source'].replace('/run/desktop/mnt/host/','').replace('/host_mnt/','')
@@ -563,11 +570,26 @@ def validate_mounts(app, config):
                 for variant in (expected,expected.replace(':/','/')):
                     if normalized==variant or normalized.startswith(variant+'/'):accepted=True
             if not accepted:raise setup.SetupError('Montage extérieur à la destination ; validation refusée.')
-        if container.get('State',{}).get('Health',{}).get('Status')!='healthy':
+        state=container.get('State',{})
+        if state.get('Running') is not True:raise setup.SetupError('Service arrêté après transfert.')
+        # OSRM has no Docker HEALTHCHECK in the pinned image/Compose. Its HTTP
+        # readiness is checked by transfer_document_probe, from the pilot network.
+        if service in core and state.get('Health',{}).get('Status')!='healthy':
             raise setup.SetupError('Service non sain après transfert.')
+    if found!=required_services:raise setup.SetupError('Certains services requis manquent après transfert.')
 
 
 def rollback(dest):
+    dest=setup.safe_path(dest);journal=read(dest/'transfer.json')
+    if journal.get('kind')!=KIND:raise setup.SetupError('Transfert non reconnu.')
+    source_work=Path(journal['source']['private'])
+    # A return cannot remove the source fence while copy/update/activation is
+    # still using it. Nonblocking OS leases report the competing operation.
+    with locked(dest/'operation.lock'),locked(source_work/'update.lock'),locked(source_work/'transfer.lock'):
+        return rollback_locked(dest)
+
+
+def rollback_locked(dest):
     dest=setup.safe_path(dest);journal=read(dest/'transfer.json')
     if journal.get('kind')!=KIND:raise setup.SetupError('Transfert non reconnu.')
     source_work=Path(journal['source']['private'])

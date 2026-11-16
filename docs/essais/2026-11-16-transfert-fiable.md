@@ -104,3 +104,28 @@ réussis**, dont un ajout manuel pendant la copie refusé avant publication.
 La recette Tk et les quatre ouvertures Chromium/WebKit locales ont été
 réexécutées avec succès. La synchronisation du retrait du garde-fou utilise
 également `durable.sync_directory` lorsque le système le permet.
+
+## Revue complémentaire avant intégration
+
+Le rejeu indépendant des dix-huit tests ciblés réussit. Deux cas supplémentaires
+échouent d'abord : OSRM ne possède pas de HEALTHCHECK Docker dans l'image et le
+Compose épinglés, mais la validation l'exigeait pour tous les services ; un retour
+à la source pouvait aussi retirer son garde-fou pendant une opération source.
+
+Le contrôle vérifie désormais les quatre services principaux sains, les trois
+routeurs attendus en fonctionnement lorsque le graphe est préparé, l'absence de
+service manquant ou en double et les montages. Le pilote vérifie ensuite une
+réponse `nearest` de chacun des trois moteurs locaux ; aucun serveur distant
+n'est utilisé. Un routeur arrêté ou sans graphe exploitable refuse la bascule.
+
+Le retour acquiert les verrous d'opération destination et de maintenance/transfert
+source avant de retirer le garde-fou. Un verrou détenu refuse le retour ; aucun
+propriétaire inconnu n'est arrêté. Les nouveaux tests vérifient ces deux défauts,
+les réponses locales de routage et la copie conjointe des états vidéo 0.26.0 :
+base de transcription en pause, IDs, pistes source/française et cache Whisper.
+
+Le test de budget global Kiwix utilise maintenant une horloge contrôlée pour
+exercer la même échéance. Il ne repose plus sur un sommeil de 30 ms contre une
+limite de 20 ms, sensible à l'ordonnanceur Windows. Aucune limite moteur n'est
+modifiée et le contrôle de budget n'est pas retiré. La recette physique chez Marc
+et la reconstruction d'un Windows vierge restent non exécutées.
