@@ -23,3 +23,11 @@ de cartes n’est lancé par l’agent. Les permissions réelles du disque Windo
 Marc restent à contrôler après mise à jour et recréation de ses services.
 
 Guide actuel : [points et itinéraires](../utilisation/points-et-itineraires.md).
+
+## Validation d’intégration
+
+Les **huit jobs CI** de `1d1696494be0257b975a2be6042a8e9c6d179547`
+réussissent : [exécution 43880285891](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43880285891).
+Les **43 tests locaux ciblés** réussissent en 7,442 s. Le routage Windows réel
+chez Marc et son redémarrage restent à vérifier ; aucune intervention sur son
+installation n’est exécutée ici.
