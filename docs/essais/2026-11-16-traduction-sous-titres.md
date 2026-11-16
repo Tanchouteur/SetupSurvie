@@ -1,6 +1,6 @@
 # Traduction française des pistes locales — 16 novembre 2026
 
-**Bilan candidat 0.24.0.** Nouvelle fonction compatible, donc niveau mineur.
+**Bilan de livraison 0.24.0.** Nouvelle fonction compatible, donc niveau mineur.
 Le [guide actuel](../utilisation/videos-locales.md) décrit la commande depuis
 Collections. Le [protocole R6](protocole-sous-titres-videos.md) reste la référence
 pour la validation de chaque vraie vidéo ; ce bilan ne la remplace pas.
@@ -66,7 +66,28 @@ La transcription de l’audio et l’acquisition en ligne ne sont pas exercées.
 Rapport privé `report-gemma4-captions.json`, empreinte Python du premier essai :
 `93985d41ef64d97a7c1ffa69b6e850ece674651367d21ee694b03796f52a77bc`.
 La protection de pause pendant publication et le rapport global ont ensuite été
-complétés et testés séparément ; un rejeu final et le reçu de livraison suivent.
+complétés et testés séparément. Un dernier contrôle a relevé que toute la durée
+était rangée dans « file d’attente » ; la mesure distingue désormais préparation,
+premier texte, rédaction et contexte observé après génération.
+
+Rejeu final privé `report-gemma4-captions-measured.json` : six traductions à nouveau
+correctes sur les mêmes repères, 8 457 ms pour l’appel mesuré, dont 4 865 ms de
+chargement et 3 027 ms de génération annoncés. Contexte chargé 16 384, entrée réelle
+271 tokens, sortie 209 tokens. Empreinte Python finale :
+`7183942f7d945aef73c589e8f30426532126896396e07b3dcf4e8268a573e285`.
+Le coût d’une vidéo réelle, la qualité vocale et la traduction de longs contenus
+ne se déduisent pas de ces six segments. La suite locale compte 802 tests Python,
+quatre réservés à Windows ignorés ; les treize tests de préparation passent après
+le dernier ajustement de mesure. Les contrôles CI et le paquet sont consignés
+après terminaison.
+
+Code fonctionnel `8775e03`, [huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43834177218) :
+802 tests Python (quatre réservés à Windows ignorés sous Linux), treize tests de
+préparation réussis aussi sous Windows et dix-neuf contrôles de préparation dans
+chacun des navigateurs Chromium et WebKit. Les autres recettes existantes passent.
+WebKit émulé ne valide pas Safari sur un iPhone physique. Captures du parcours
+ordinateur/téléphone relues ; aucune interface carte ou recherche documentaire
+n’est refondue. Aucun déploiement sur les PC clients.
 
 ## Encore à faire
 
