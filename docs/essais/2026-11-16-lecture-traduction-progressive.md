@@ -108,3 +108,9 @@ Captures de la recette, avec données fictives et sans génération réelle :
 [téléphone 390 px](images/traduction-progressive-0280-mobile.png).
 La CI finale de cette dernière correction est encore en cours ; ne pas confondre
 ces contrôles locaux avec une nouvelle traduction exécutée chez Marc.
+
+La restauration du lecteur réutilise aussi l’entrée d’historique courante, afin
+que chaque rechargement ne rajoute pas une étape de retour. Un événement de
+fermeture arrivé tardivement ne referme pas le repère d’une fenêtre rouverte par
+Avancer. La recette renforcée vérifie la taille de l’historique, Retour/Avancer
+et Échap, soit **24 contrôles de lecture par navigateur**.

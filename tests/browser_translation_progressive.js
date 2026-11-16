@@ -43,10 +43,12 @@ async page=>{
   check(await page.evaluate(()=>S.translationOffset===10),'La mise en pause conserve la page de lecture');
   check(await page.evaluate(id=>{const data=JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id));return data[id].offset===10&&Object.keys(data[id]).every(key=>['offset','open','updated'].includes(key));},id),'La mémoire de lecture garde seulement le groupe lu et sa date');
   stage='ouvrir la lecture';await page.locator('#translation-reading-open').click();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
+  const historyLength=await page.evaluate(()=>history.length);
   stage='retrouver la lecture après rechargement';const sent=commands.length;await page.reload();await page.waitForFunction(()=>S.translationOffset===10&&document.querySelector('#translation-parts article')?.dataset.position==='10');
   await page.locator('#translation-panel').evaluate(node=>node.open=true);
   await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
   check(true,'La fenêtre de lecture est retrouvée après rechargement');
+  check(await page.evaluate(()=>history.length)===historyLength,'Restaurer la lecture ne rajoute pas une étape à l’historique');
   check(commands.length===sent,'Recharger la lecture ne relance aucune traduction');
   check(await page.evaluate(()=>S.translationOffset===10),'Le groupe de passages lu est retrouvé après rechargement');
   stage='revenir au début';await page.locator('#translation-reading-first').click();await page.waitForFunction(()=>document.querySelector('#translation-parts article')?.dataset.position==='0');
@@ -54,6 +56,10 @@ async page=>{
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:900});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Suivi et lecture adaptés à '+width);}
   stage='fermer avec le retour navigateur';await page.goBack();await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
   check(await page.locator('#translation-panel #translation-parts').count()===1,'Retour navigateur ferme la lecture et retrouve les passages dans le panneau');
+  await page.goForward();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
+  check(await page.evaluate(()=>translationReadingState(S.translation).open),'Avancer dans le navigateur retrouve la lecture ouverte et son repère');
+  await page.keyboard.press('Escape');await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
+  check(await page.evaluate(()=>!translationReadingState(S.translation).open),'Échap ferme la lecture et conserve ce choix');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks,real_inference:false};
   }catch(error){const state=await page.evaluate(()=>({dialog:document.getElementById('translation-reading-dialog')?.open,history:history.state,offset:S.translationOffset,translation:S.translation,reading:JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user?.id)),status:document.getElementById('translation-status')?.textContent,hash:location.hash}));throw Error(stage+' : '+error.message+' '+JSON.stringify(state));}
