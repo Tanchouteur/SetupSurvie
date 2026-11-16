@@ -56,3 +56,10 @@ réussissent : [exécution 43919149637](https://github.com/Tanchouteur/SetupSurv
 La suite Linux compte **906 tests en 56,668 s, 6 ignorés**. Le job Windows,
 les lecteurs isolés, la recherche Kiwix, les routeurs et le navigateur sont réussis.
 Aucun redémarrage ni déploiement chez Marc n’est exécuté par l’agent principal.
+
+Paquet vérifié au commit `dc11a5be46d0208b276d17c3d638afa2b9dfec0f` : **909 fichiers**, **7469463 octets**
+compressés et **16587944 octets** décompressés. Chaque entrée est comparée à Git
+et au manifeste (taille et SHA-256).
+SHA-256 : `a697b9df68c769b0866db8c8152b17b4e57a2bc05130f22d586f789f3f8ea42e`.
+Ce reçu documentaire suit la construction. Aucun modèle, corpus, rapport privé
+ou donnée réelle de Marc n’est ajouté à Git.
