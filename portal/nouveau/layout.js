@@ -3,7 +3,7 @@
   const get=id=>document.getElementById(id);
   const make=(tag,cls,html='')=>{const n=document.createElement(tag);n.className=cls;n.innerHTML=html;return n;};
   const route=(path,label)=>`<a href="#/${path}" data-route="${path}">${label}</a>`;
-  const header=(title,text)=>make('div','page-heading',`<div class="eyebrow">VOTRE SERVEUR LOCAL</div><h1>${title}</h1><p>${text}</p>`);
+  const header=(title,text)=>make('div','page-heading',`<h1>${title}</h1><p>${text}</p>`);
   const nav=make('nav','next-main-nav');nav.id='navigation';nav.setAttribute('aria-label','Navigation principale');
   for(const [path,icon,label] of [['accueil','⌂','Accueil'],['bibliotheque','▤','Bibliothèque'],['assistant','◌','Assistant'],['cartes','⌖','Cartes'],['appareil','◴','Mon appareil']]){
     const a=make('a','nav-item',`<span aria-hidden="true">${icon}</span><span>${label}</span>`);a.href=path==='cartes'?'/cartes.html?interface=nouveau':'#/'+path;if(path!=='cartes')a.dataset.route=path;nav.append(a);
@@ -27,7 +27,7 @@
   get('view-home').querySelector('h1').innerHTML='Qu’avez-vous<br>envie d’apprendre ?';
   get('view-home').querySelector('.welcome').classList.add('next-welcome');
   const lib=get('view-library'),oldHeading=lib.querySelector('.page-heading');
-  oldHeading.replaceWith(header('Un livre, un sujet, une découverte.','Ouvrez une collection directement ou recherchez une information dans les documents.'));
+  oldHeading.replaceWith(header('Bibliothèque','Ouvrez une collection directement ou recherchez une information dans les documents.'));
   const libTabs=make('nav','next-tabs');libTabs.setAttribute('aria-label','Rubriques de la bibliothèque');
   libTabs.innerHTML=[['collections','Collections'],['recherche','Rechercher'],['parcours','Apprendre par thème'],['favoris','Mes favoris'],['traductions','Traductions']].map(([p,l])=>route('bibliotheque/'+p,l)).join('');
   lib.querySelector('.page-heading').after(libTabs);
@@ -63,9 +63,9 @@
   maps.append(header('Vos repères, autour de vous.','Retrouvez les cartes locales, vos points et les itinéraires préparés.'));
   maps.append(make('article','panel next-map-intro','<h2>Cartes hors ligne</h2><p>Le fond de carte, les adresses, le relief et le réseau d’itinéraires sont préparés séparément. La présence d’un fond ne signifie pas que toutes ces données sont disponibles.</p><a class="button" href="/cartes.html?interface=nouveau">Ouvrir les cartes et mes repères →</a><p class="next-mobile-note">Sur téléphone, privilégiez la consultation des lieux et trajets préparés. Les outils complexes de création restent sur ordinateur.</p>'));
   get('main').append(maps);
-  const activity=make('section','view');activity.id='view-activity';activity.hidden=true;activity.append(header('Ce que fait l’appareil.','Le suivi des préparations est indépendant de l’assistant et du navigateur.'));get('main').append(activity);
-  get('view-monitor').querySelector('.page-heading').replaceWith(header('Comprendre ce qui se passe.','Ce sont les mesures du PC qui héberge SetupSurvie, même lorsque vous consultez cette page depuis un téléphone.'));
-  get('view-data').querySelector('.page-heading').replaceWith(header('Les téléchargements et préparations.','Suivez les transferts en cours avant d’ajouter de nouveaux contenus.'));
+  const activity=make('section','view');activity.id='view-activity';activity.hidden=true;activity.append(header('Travaux en cours','Le suivi des préparations est indépendant de l’assistant et du navigateur.'));get('main').append(activity);
+  get('view-monitor').querySelector('.page-heading').replaceWith(header('État de l’appareil','Ce sont les mesures du PC qui héberge SetupSurvie, même lorsque vous consultez cette page depuis un téléphone.'));
+  get('view-data').querySelector('.page-heading').replaceWith(header('Téléchargements et préparations','Suivez les transferts en cours avant d’ajouter de nouveaux contenus.'));
   // Inventory grids moved to Library/Storage; remove only the now-empty headings.
   for(const node of [...get('view-data').children]){
     if(node.tagName==='H2'||node.classList.contains('section-top'))node.remove();
@@ -79,7 +79,7 @@
     get(target).querySelector('.page-heading').after(block);
   }
   const services=make('article','panel');services.id='next-services';services.innerHTML='<h2>Les fonctions disponibles</h2><p id="next-service-health" role="status">Vérification des services…</p>';get('view-monitor').querySelector('.engine-panel').before(services);
-  const settings=get('view-settings');settings.querySelector('.page-heading h1').textContent='Préparer et entretenir l’appareil.';
+  const settings=get('view-settings');settings.querySelector('.page-heading h1').textContent='Paramètres';
   settings.querySelector('.page-heading p').textContent='Ces commandes sont proposées dans le profil Famille, librement accessible sur le réseau local.';
   for(const h of settings.querySelectorAll('h2'))if(h.textContent==='Comptes et accès'){h.textContent='Profils de la famille';h.nextElementSibling.textContent='Créez un profil pour ranger les conversations et les favoris de chaque personne.';h.parentElement.querySelector('button').textContent='Gérer les profils';}
   const tools=make('div','next-settings-links');tools.innerHTML=route('appareil/profils','Profils')+route('appareil/connexion','Ouvrir sur un téléphone')+route('appareil/telechargements','Téléchargements');settings.querySelector('.page-heading').after(tools);

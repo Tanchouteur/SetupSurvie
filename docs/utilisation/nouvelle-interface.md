@@ -1,5 +1,10 @@
 # La nouvelle interface et l’interface classique
 
+**Candidat UX 0.33.0 :** titres directs, aides facultatives au clic/survol/clavier,
+lecture prioritaire et collections plus proches sur PC et téléphone. Le travail
+complet (traduction dans le lecteur et assistant en trois zones) reste en cours :
+voir le [suivi UX](../decisions/refonte-ux-evolutive.md).
+
 **Guide actuel — 0.12.0, 14 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme

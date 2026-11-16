@@ -1,5 +1,10 @@
 # Documentation SetupSurvie
 
+- [Fondations UX et retour volontaire](essais/2026-11-16-fondations-ux.md) — premier lot candidat, tests et limites.
+
+- [Refonte UX évolutive](decisions/refonte-ux-evolutive.md) — chantier PC/téléphone, traduction dans le lecteur, composants et coordination.
+- [Retour à la version précédente](exploitation/retour-version-avant-refonte.md) — procédure candidate conservant les données récentes.
+
 - [Intégration des corrections Windows](essais/2026-11-16-integration-corrections-windows.md) — 0.32.1, contrôleur et routeurs après mise à jour ; bilan réel distinct.
 
 - [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.

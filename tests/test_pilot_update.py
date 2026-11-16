@@ -107,6 +107,48 @@ class UpdateTests(unittest.TestCase):
         self.assert_static_data()
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
 
+    def test_voluntary_rollback_preserves_recent_data_and_allows_updating_again(self):
+        # Real package verification and filesystem swaps, simulated services only.
+        with patch.object(setup,'ROOT',self.root):
+            old_package=self.base/'old.zip';old_digest=update.build(old_package)
+        self.run_update()
+        recent=b'new conversations after successful update'
+        (self.data/'state/pilot/pilot.db').write_bytes(recent)
+        service=Services(self.app,self.c);service.starts=1
+        with patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose'):
+            operation=update.apply(self.app,old_package,old_digest,service,rollback=True)
+        self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1')
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),recent)
+        self.assertEqual((operation/'snapshot/data/state/pilot/pilot.db').read_bytes(),recent)
+        self.assert_static_data()
+        with patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose'):
+            update.apply(self.app,self.package,self.digest,service)
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),recent)
+        self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.2')
+
+    def test_rollback_refuses_newer_or_identical_package_before_stopping(self):
+        service=Services(self.app,self.c)
+        with patch.object(setup,'ROOT',self.root),self.assertRaises(setup.SetupError):
+            update.apply(self.app,self.package,self.digest,service,rollback=True)
+        self.assertEqual(service.stops,0)
+        self.run_update()
+        with patch.object(setup,'ROOT',self.root),self.assertRaises(setup.SetupError):
+            update.apply(self.app,self.package,self.digest,service,rollback=True)
+        self.assertEqual(service.stops,0)
+
+    def test_failed_voluntary_rollback_restores_recent_data_and_newer_code(self):
+        with patch.object(setup,'ROOT',self.root):
+            old_package=self.base/'old.zip';old_digest=update.build(old_package)
+        self.run_update()
+        recent=b'preserve this recent state on failed downgrade'
+        (self.data/'state/pilot/pilot.db').write_bytes(recent)
+        service=Services(self.app,self.c,fail=True)
+        with patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose'),self.assertRaises(setup.SetupError):
+            update.apply(self.app,old_package,old_digest,service,rollback=True)
+        self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.2')
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),recent)
+        self.assert_static_data()
+
     def test_active_cli_index_refuses_update_before_stop_or_incomplete_journal(self):
         service=Services(self.app,self.c);index=self.data/'state/pilot/archive-index'
         with locked(index/'operation.lock'),patch.object(setup,'ROOT',self.root),patch.object(self.app,'compose') as compose:

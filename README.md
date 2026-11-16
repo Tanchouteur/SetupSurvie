@@ -11,7 +11,13 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **16 novembre 2026**, le pilote **0.32.1** propose une recherche locale avec
+Le [chantier UX](docs/decisions/refonte-ux-evolutive.md) commence par les composants
+communs, des titres directs et une lecture plus accessible sur PC et téléphone.
+Le [retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
+les données récentes ; ces premiers éléments ne constituent pas la refonte complète.
+
+
+Au **16 novembre 2026**, le candidat **0.33.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils

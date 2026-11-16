@@ -1,0 +1,81 @@
+# Refonte UX évolutive
+
+**Chantier en cours — 16 novembre 2026.** Louis autorise les changements de parcours,
+la conception visuelle et une livraison autonome. Il demande une attention égale
+au PC et au téléphone, des titres concrets, une aide courte et contextuelle,
+la traduction dans le lecteur et un retour à la version précédente. Une seule
+interface doit être active ; aucune double interface n’est nécessaire au retour.
+
+## Direction et limites
+
+Conserver nom et logo feu/livre ; choisir les changements visuels selon l’utilité.
+Les cinq destinations restent Accueil, Bibliothèque, Assistant, Cartes, Appareil.
+Sur PC, privilégier le travail côte à côte et les claviers à 1024, 1366, 1440 et
+1920 px ; sur téléphone, une seule zone à la fois à 320/390 px. Une largeur de
+lecture bornée reste nécessaire sur grand écran. Safari physique reste distinct.
+
+La traduction se prépare et se lit dans le lecteur, avec original, pages,
+comparaison et travaux persistants. Les synthèses, illustrations et sous-titres
+s’intègrent aux contenus concernés. Toutes les capacités actuelles sont conservées,
+notamment exports, pauses, reprises explicites, limites, publication et avertissements.
+L’assistant comporte conversations à gauche, discussion au centre et documents à
+droite sur PC ; les volets se replient. Les modes et les tâches restent distincts.
+
+Pas de nouvelle inférence ni téléchargement lourd pour la recette du runner.
+Pas de réécriture du moteur pour obtenir une disposition. Le catalogue de modèles
+et la restauration complète sur PC vierge restent des travaux distincts.
+
+## Lots et état réel
+
+| Lot | État et critères de sortie |
+| --- | --- |
+| Référence et retour | Tag `ux-reference-0.32.1` (`da125ca`), ZIP conservé ; commande `rollback` testée sur petites données, pas sur les PC physiques |
+| Fondations | Candidat : composants d’aide, variables CSS, titres concrets, lecture prioritaire, recettes PC/téléphone |
+| Lecteurs | À faire : traduction sur place, retrouver les travaux sans détour par la discussion, liens aux versions et pages |
+| Assistant | À faire : trois zones, dossiers personnels simples, recherche/renommage, tâches et modèles d’essai distincts |
+| Cohérence complète | À faire : accueil/reprise, vidéos, cartes et appareil avec les mêmes composants et états |
+| Livraison générale | À faire : inventaire exhaustif, recette avant/après, paquet final et intégration successive dans main |
+
+Ces états ne certifient pas la simplicité réelle pour Marc. Une recette humaine
+reste préparée séparément, sans conditionner la livraison technique autonome.
+
+## Extension des fonctions
+
+`portal/nouveau/ux-system.js` fournit les primitives communes et
+`ux-system.css` leurs règles. `SurvieUI.help(libellé, texte)` produit une aide
+facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
+importantes d’une action restent écrites directement dans son parcours.
+Les composants n’appellent pas les moteurs et ne lancent aucune opération.
+
+Toute nouvelle fonction précise sa destination, ses commandes, ses états,
+son aide et sa recette. Utiliser les composants existants avant d’en ajouter.
+Les modules partagent l’identifiant et l’état serveur d’un même travail.
+Les sélecteurs ne doivent pas dépendre du texte visible. Les pages générées restent
+produites par `scripts/build_next_portal.py`, jamais modifiées isolément.
+
+## Coordination du chantier parallèle
+
+Branche interface : `codex/refonte-ux`, worktree séparé. L’autre chantier porte sur
+le moteur et les vidéos/sous-titres. Ne pas modifier son worktree.
+Les fichiers communs comprennent le générateur HTML, `pilot/app.py`, les lecteurs
+et les clés de cache. Réconcilier leurs modifications puis intégrer successivement
+sur main, avec tests après chaque intégration. La version candidate 0.33.0 doit
+être réévaluée si main reçoit une livraison avant l’intégration UX.
+
+Le paquet de retour 0.32.1 conserve l’état antérieur aux deux chantiers ; avant
+la livraison finale, retenir et archiver aussi la dernière base intégrée contenant
+les améliorations moteur/vidéo à conserver. Ne pas revenir à 0.32.1 en prétendant
+retrouver des capacités ajoutées après cette référence.
+
+## Méthode et références
+
+- [Divulgation progressive, NN/G](https://www.nngroup.com/articles/progressive-disclosure/) : fréquence, regroupement et découverte des options ; ne pas tout enfermer dans des accordéons.
+- [Accessibilité cognitive, W3C](https://www.w3.org/WAI/WCAG2/supplemental/objectives/o1-understandable/) : titres, commandes et relations explicites.
+- [Human–AI Interaction, CHI 2019](https://www.microsoft.com/en-us/research/wp-content/uploads/2019/01/Guidelines-for-Human-AI-Interaction-camera-ready.pdf) : compréhension, contrôle et correction.
+- [GOV.UK, composants](https://design-system.service.gov.uk/community/contribution-criteria/) : composants cohérents, réutilisables et éprouvés.
+- [GOV.UK, essais utilisateurs](https://www.gov.uk/service-manual/user-research/using-moderated-usability-testing) : tâches sans indice, réussite, erreurs et hésitations.
+- Skills consultés : [Frontend Design](https://github.com/anthropics/skills/tree/main/skills/frontend-design) et [Web Design Guidelines](https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines), adaptés au français et au hors ligne.
+
+Comparer les mêmes tâches et contenus avant/après. Séparer interaction, recherche
+et inférence. Aucun score de clics ou audit automatique ne certifie à lui seul la
+facilité d’usage. Les preuves datées indiquent version, environnement et limites.

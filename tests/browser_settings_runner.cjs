@@ -9,7 +9,7 @@ const base=process.env.UX_BASE||'http://127.0.0.1:8782',out=process.env.UX_ARTIF
   const browser=await engine.launch({headless:true});
   try{
    results[name]={};
-   for(const file of ['browser_settings_ux.js','browser_next_portal.js','browser_search_core.js','browser_search_tools.js','browser_catalogue.js','browser_assistant_diagnostics.js','browser_search_experiment.js','browser_practical.js','browser_usage_recipe.js']){
+   for(const file of ['browser_ux_foundations.js','browser_settings_ux.js','browser_next_portal.js','browser_search_core.js','browser_search_tools.js','browser_catalogue.js','browser_assistant_diagnostics.js','browser_search_experiment.js','browser_practical.js','browser_usage_recipe.js']){
     if(process.env.UX_RECIPE&&file!==process.env.UX_RECIPE)continue;
     const context=await browser.newContext();const page=await context.newPage();page.setDefaultTimeout(30000);
     const recipe=eval('('+fs.readFileSync(path.join(__dirname,file),'utf8').replaceAll('http://10.0.3.2:8769',base).replaceAll('/artifacts/',out+'/')+')');
