@@ -78,3 +78,8 @@ est prêt ; la direction à trois zones est validée, les détails dossiers/prof
 et raccourcis restent à préciser avec Louis. Le menu des modèles à télécharger
 est conservé dans ce cadrage comme lot séparé, sans téléchargement effectué.
 Aucune mise à jour du PC de Marc ni suppression de ses travaux n’a été lancée.
+
+Paquet vérifié au commit `08f0af647017f4b8629985e21bffb1966a230acb` : **888 fichiers**,
+**7395228 octets** compressés, **16388441 octets** décompressés.
+Tous les octets sont comparés aux fichiers Git filtrés et au manifeste.
+SHA-256 : `5bfabe0c59b18d469857fd7e018a13c0b7e1e034d08a46cd1d3860c93f7f6879`.
