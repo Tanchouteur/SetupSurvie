@@ -1,6 +1,6 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.23.1, 16 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.25.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 
@@ -92,8 +92,8 @@ La validation avec deux vrais modèles sous Windows reste à faire chez Marc.
 
 ## Essai mémoire volontaire sur le PC serveur
 
-1. Choisir **Famille → Mon appareil → Paramètres → Assistant → Options avancées : mémoire et essai du modèle → Mémoire de l’assistant → Mesurer
-   un contexte adapté à ce PC**.
+1. Choisir **Famille → Paramètres → Tests et diagnostics → Mesurer un contexte
+   adapté à ce PC**. Le réglage manuel reste dans **Assistant → Options avancées**.
 2. Réserver une période disponible, y compris dans Open WebUI. Le moteur doit
    déjà être démarré volontairement, sans mode jeu ni question/traduction en cours.
    Les mesures de mémoire du contrôleur doivent être disponibles.

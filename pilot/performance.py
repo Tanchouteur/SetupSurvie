@@ -27,7 +27,7 @@ QUESTION='Fais une courte synthèse des documents de la bibliothèque sur les te
 REASONS={**calibration.REASONS,'model_not_installed':'Le modèle choisi n’est pas installé localement.',
     'measurement_failed':'Une mesure a échoué. Les autres résultats sont conservés.',
     'completed':'Mesures terminées. Téléchargez le rapport pour l’analyse.',
-    'completed_with_gaps':'Mesures terminées avec des étapes manquantes. Le rapport les indique.'}
+    'completed_with_gaps':'Mesures terminées avec des étapes manquantes ou une couverture documentaire limitée. Le rapport les indique.'}
 
 
 def running():return any(not task.done() for task in ACTIVE.values())
@@ -64,6 +64,8 @@ def competing():
     if engine.ACTIVE or translations.ACTIVE or calibration.running() or calibration.summary_activity():return True
     captions=sys.modules.get(__package__+'.captions')
     if captions and captions.running():return True
+    benchmark=sys.modules.get(__package__+'.translation_benchmark')
+    if benchmark and benchmark.running():return True
     module=sys.modules.get(__package__+'.search_experiment')
     return bool(module and module.running())
 
@@ -157,6 +159,23 @@ async def classical(row,report):
                coverage={k:coverage[k] for k in ('status','searched','failed','not_searched','without_fulltext','deadline_exceeded','cache_hits','parallelism','processing',
                    'primary_requests','request_limit','refinement_attempted','refinement_failed','refinement_not_searched','title_searched','title_failed','title_not_searched',
                    'concurrency','local_query','cache_ttl_seconds','cache_disk_ttl_seconds','deadline_ms','error_counts') if k in coverage})
+    # These components can make the whole search partial even when every native
+    # archive succeeds. Never export their free-form errors, paths or titles.
+    details=row['coverage']
+    if coverage.get('metadata_status') in ('ready','degraded'):details['metadata_status']=coverage['metadata_status']
+    if coverage.get('coverage_scope')=='searchable_text':details['coverage_scope']='searchable_text'
+    for name,key,states,counters in (
+        ('videos','status',('not_run','not_available','not_indexed','unavailable','partial','complete'),('results','stale_results')),
+        ('catalog','state',('live','cached','stale','unavailable'),('collections','age_seconds')),
+        ('local_index','phase',('not_started','running','paused','interrupted','failed','completed'),('archives','completed','articles','workers')),
+    ):
+        component=coverage.get(name)
+        if not isinstance(component,dict):continue
+        value={field:component[field] for field in counters if number(component.get(field))}
+        if component.get(key) in states:value[key]=component[key]
+        if value:details[name]=value
+    for key in ('collections_selected','native_incompatible'):
+        if number(coverage.get(key)):details[key]=coverage[key]
     row['native_calls']=[{k:v for k,v in call.items() if (k in ('elapsed_ms','results','response_bytes','http_status') and number(v)) or
         (k=='cached' and isinstance(v,bool)) or (k=='stage' and v in ('fulltext','title','refinement')) or
         (k=='outcome' and v in ('success','error')) or (k=='reason' and v in ('timeout','invalid_response','http_error','connection_error'))}
@@ -292,7 +311,8 @@ async def run(report,user):
             if ai_reason or not report.get('_selected'):
                 row.update(status='not_run',reason=ai_reason or 'no_search_candidates');report['steps'].append(row)
             else:await step(row,report,documentary_trial(row,report,user),920,guard=True)
-            gaps=any(row.get('status')!='completed' or row.get('coverage_limit') for row in report['steps'])
+            gaps=any(row.get('status')!='completed' or row.get('coverage_limit') or
+                     row.get('coverage',{}).get('status')=='partial' for row in report['steps'])
             report.update(status='completed',reason='completed_with_gaps' if gaps else 'completed')
     except asyncio.CancelledError:report.update(status='cancelled',reason=report.pop('_cancel_reason','user_cancelled'))
     except TimeoutError:report.update(status='interrupted',reason='time_limit')

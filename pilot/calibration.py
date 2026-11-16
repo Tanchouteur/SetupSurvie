@@ -47,7 +47,7 @@ def competing_trial():
     # An optional module can be absent; if it is running, it is already loaded.
     import sys
     return any(module is not None and module.running() for module in
-               (sys.modules.get(__package__+'.'+name) for name in ('search_experiment','performance')))
+               (sys.modules.get(__package__+'.'+name) for name in ('search_experiment','performance','translation_benchmark')))
 
 
 def location():return store.ROOT/'calibration/latest.json'

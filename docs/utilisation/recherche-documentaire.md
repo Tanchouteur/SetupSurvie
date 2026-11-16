@@ -1,12 +1,12 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.15.1, 15 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.25.0, 16 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
 Pour examiner une lenteur, le [diagnostic complet](../exploitation/diagnostic-complet-performances.md)
 ajouté en 0.22.0 mesure recherche, assistant et ressources depuis un seul bouton
-dans Paramètres → Entretien et diagnostics. Le rapport de pertinence ci-dessous
+dans Paramètres → Tests et diagnostics → Lenteurs. Le rapport de pertinence ci-dessous
 reste distinct : des mesures rapides ne prouvent pas qu’un résultat est utile.
 
 ## Chercher dans la bibliothèque
@@ -18,6 +18,13 @@ Le choix de langue permet de chercher en français et en anglais. Le sélecteur
 Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/Suivant.
 Le rechargement relance une seule fois la recherche mémorisée avec ses filtres.
 Une formule comme « faire du feu dans Wikipédia » peut également cibler cette source.
+
+**« Recherche en cours — aucun résultat pour le moment »** signifie que les
+collections sont encore interrogées. Ce n'est pas une conclusion d'absence de
+document. Les résultats arrivent progressivement ; on peut déjà les lire.
+La fin est annoncée explicitement : recherche terminée, ou terminée mais incomplète
+si certaines sources n'ont pas pu être interrogées. Un arrêt ou une erreur conserve
+les résultats reçus et retire le message d'attente, même si la liste est encore vide.
 
 La recherche fonctionne sans modèle IA. Elle combine titres, texte des guides,
 articles Kiwix, variantes techniques françaises et anglaises et recherches plus
@@ -134,7 +141,7 @@ sans modifier les conversations enregistrées.
 1. Appliquer la [mise à jour habituelle](../exploitation/mises-a-jour-et-bibliotheque-pilote.md),
    puis recharger la page et vérifier **0.15.1** en haut. Un pull du dépôt de maintenance
    seul ne met pas à jour le logiciel installé.
-2. Choisir **Famille**, puis **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
+2. Choisir **Famille**, puis **Mon appareil → Paramètres → Tests et diagnostics → Recherche → Vérifier la recherche**.
 3. Choisir **Contrôle court · 10 recherches** ou **Contrôle complet · 32 recherches**,
    puis lancer. Les résultats arrivent progressivement ; le contrôle attend au maximum
    90 secondes par demande. Le contrôle complet peut prendre plusieurs dizaines de minutes. Ils interrogent les documents réels,

@@ -159,12 +159,13 @@ async def progressive_search(query,*args,on_update=None,**kwargs):
     first={'id':'guide:shelter.en.txt','title':'Premier document fictif','kind':'guide','language':'en','excerpt':'First synthetic document.',
            'other_matches':[{'id':'guide:shelter.en.pdf#page=2','title':'Passage fictif'}]}
     final={'id':'guide:craft.en.txt','title':'Second document fictif','kind':'guide','language':'en','excerpt':'Second synthetic document.'}
-    if on_update:await on_update(library.SearchResults([first],{'status':'partial','running':True,'domain':'all','searched':1,'collections_selected':3}))
+    empty=query.startswith('fixture-progress-empty')
+    if on_update:await on_update(library.SearchResults([] if empty else [first],{'status':'partial','running':True,'domain':'all','searched':1,'collections_selected':3}))
     gate=progress_gates.get(query)
     if gate:await gate.wait()
     else:await asyncio.sleep(.8)
     if query.endswith('error'):raise RuntimeError('PRIVATE FIXTURE FAILURE')
-    return library.SearchResults([first,final],{'status':'complete','domain':'all','searched':3,'collections_selected':3})
+    return library.SearchResults([] if empty else [first,final],{'status':'partial' if query.endswith('partial') else 'complete','domain':'all','searched':3,'collections_selected':3})
 library.search=progressive_search
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status
@@ -176,8 +177,10 @@ async def library_command(action=None,payload=None):
             'plan':{'count':0,'remaining_download_bytes':0,'library_bytes':0,'missing_themes':[],'candidates':[],
                     'learning_coverage':[{'id':'sciences','label':rules['sciences']['label'],'references':1,'local_references':0,'skills_to_review':['Algèbre'],'status':'references_to_review'}]}}
 operations.library_command=library_command
-async def translate(text,mode):
+async def translate(text,mode,*,on_metrics=None):
     await asyncio.sleep(.5)
+    if on_metrics:on_metrics({'context':16384,'requested_context':16384,'runtime_after':{'running':{'context_length':16384}},
+        'model_calls':[{'prompt_eval_count':300,'eval_count':400,'load_ms':2,'eval_ms':450}]})
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
     if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']

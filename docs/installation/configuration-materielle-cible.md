@@ -33,14 +33,22 @@ RAM**, sous Bazzite. Les rapports Windows de Marc identifient une RTX 5060 Ti
 ou un remplacement déjà réalisé. Les résultats du R7 avec une RTX 4080 ne
 prédisent pas ceux d’une RTX 5060 Ti ayant la même capacité vidéo.
 
+Louis indique aussi un **HDD** et un processeur de la famille **Core Ultra 5**
+pour Marc ; le diagnostic ne les identifie pas lui-même et la référence exacte
+du CPU reste à relever.
+
 Les constats et leurs limites sont conservés dans les
 [choix actuels](../decisions/choix-actuels.md), le
-[bilan Linux du 11 novembre](../essais/bilan-pilote-2026-11-11.md) et le
-[rapport Windows de Marc reçu le 16 novembre](../essais/2026-11-16-rapport-performances-marc-0220.md).
+[bilan Linux du 11 novembre](../essais/bilan-pilote-2026-11-11.md) et les
+[rapports Windows 0.22.0](../essais/2026-11-16-rapport-performances-marc-0220.md)
+et [0.24.0](../essais/2026-11-16-rapport-performances-marc-0240.md), reçus le
+16 novembre.
 Les anciennes appellations « RTX 5060 » dans les bilans restent datées ; la
 précision « Ti 8 Go » vient des rapports ultérieurs.
 
-## Ce que le rapport de Marc permet déjà de dire
+## Observations datées chez Marc
+
+### Campagne 0.22.0 : premières recherches et chargement
 
 Le rapport porte sur SetupSurvie **0.22.0**, GPT-OSS 20B, contexte **16 384** et
 Ollama **0.40.16**. Il rapproche les données du disque `D:` d’environ **4 To**,
@@ -67,10 +75,36 @@ de contexte logiciel dépassé. Ce défaut a été corrigé en 0.23.1 ; il ne pr
 pas un manque de RAM ou de puissance. Conserver cette distinction avant de
 comparer les performances de versions différentes.
 
+### Campagne 0.24.0 : coût CPU après réutilisation des caches
+
+Le [bilan plus récent](../essais/2026-11-16-rapport-performances-marc-0240.md)
+porte sur le même modèle et la même version Ollama, avec **32 768 tokens de
+contexte demandé, transmis et chargé**. Le logiciel et le contexte ont changé
+ensemble ; ce n’est pas une comparaison matérielle isolée avec 0.22.0.
+
+| Phase observée | Mesure du rapport | Conséquence pour le dimensionnement |
+| --- | --- | --- |
+| Recherches avec appels Kiwix déjà en cache, dès le premier passage | Fin en **3,1 à 6,5 s** ; classement : environ **2,3 à 5,8 s de CPU** dans le fil de sélection | Le CPU représente une part importante du coût restant lorsque les accès Kiwix sont cachés |
+| Première rédaction seule | **122,0 s**, dont **111,4 s de chargement** ; disque actif à **98 %** en médiane, environ **133 Mo/s** lus | Le stockage reste une piste forte pour le démarrage du modèle |
+| Rédaction répétée et synthèses | CPU médian autour de **56 %**, certains cœurs vers **96 à 98 %** ; modèle partiellement en VRAM ; génération généralement **25 à 26 tokens/s** | Examiner CPU et placement après chargement ; le SSD ne promet pas le même gain sur la rédaction |
+| Trois synthèses | Minimum de **7,06 à 7,33 Gio de RAM disponibles** ; occupation vidéo totale jusqu’à environ **7,54 Gio** ; aucun échec mémoire | Scénarios terminés en 32k chargé, sans essai remplissant toute cette fenêtre |
+
+Les réponses documentaires naturelles durent **106,6 s puis 55,4 s**, avec
+recherche, lecture, préparation, rédaction et parfois un second appel de liaison
+des citations. Une partie de l’attente vient donc du parcours logiciel et du
+calcul, même après chargement. Les compteurs d’archives n’expliquent pas à eux
+seuls la couverture globale restée partielle.
+
+La faible activité disque des recherches de cette campagne (médianes 3 à 7 %)
+est observée sur peu d’échantillons. Les caches étaient déjà utilisés : ces
+résultats ne démontrent ni un remplacement du disque ni une disparition de son
+coût sur des archives non cachées. Les minima mémoire des deux campagnes ne
+mesurent pas isolément le coût du passage de 16k à 32k.
+
 ## Rôle du processeur dans notre usage
 
-Le processeur fait fonctionner le portail, les services et les traitements
-locaux : recherche dans les index, extraction et préparation des textes,
+Le processeur fait fonctionner les services qui répondent au portail et les
+traitements locaux : recherche dans les index, extraction et préparation des textes,
 classement des résultats, indexation et gestion des documents. Leur coût varie
 avec les sources et les travaux en cours. Si une phase attend surtout le disque,
 un CPU plus puissant peut rester en attente lui aussi.
@@ -99,8 +133,8 @@ autres usages vidéo comptent ; l’augmentation de mémoire liée aux requêtes
 parallèles est décrite par [Ollama](https://docs.ollama.com/faq#how-does-ollama-handle-concurrent-requests).
 Les profils conseillés restent ceux du projet jusqu’à comparaison réelle.
 
-Les **32 Go de RAM** sont la base de départ souhaitée ; le rapport actuel ne
-valide pas toutes les charges avec cette capacité. Les **64 Go** visent plus de
+Les **32 Go de RAM** sont la base de départ souhaitée ; les campagnes actuelles
+ne valident pas toutes les charges avec cette capacité. Les **64 Go** visent plus de
 marge pour les services, le cache des fichiers et les traitements, sans remplacer
 la VRAM. Leur effet sur les temps et la stabilité reste à mesurer. La fenêtre
 native annoncée d’un modèle ne vaut pas contexte confortable sur la machine.
@@ -137,7 +171,8 @@ la recherche dans nos archives. La copie de secours reste à prévoir sur un
    stockage avant d’attribuer le coût restant au CPU.
 4. Comparer les contextes avec l’[essai mémoire volontaire](../utilisation/mesurer-assistant-et-memoire.md#essai-mémoire-volontaire-sur-le-pc-serveur).
    Consigner chargement, premier texte, débit, RAM/VRAM et placement, sans supposer
-   que 32k tient confortablement parce que 16k a fonctionné.
+   que toute une fenêtre 32k tient confortablement parce qu’un contexte chargé
+   de cette taille a déjà été observé avec une entrée plus courte.
 5. Ajouter ici un lien vers chaque nouveau bilan daté, puis réviser les décisions
    si les observations le justifient. Conserver les résultats défavorables et
    les anciennes conditions d’essai.

@@ -8,6 +8,13 @@ après mesures. Ce sont des orientations de la future cible, sans achat ni
 validation matérielle annoncés ; les configurations observées ci-dessous restent
 distinctes. La fiche relie les relevés de Marc et les limites d’interprétation.
 
+La 0.25.0 regroupe les vérifications dans **Paramètres → Tests et diagnostics**,
+avec un [essai de traduction sur 40 pages](../exploitation/test-traduction-40-pages.md).
+Le document fictif est extrait/traduit réellement, avec reprise et mesures
+numériques ; il n’est pas publié dans la bibliothèque. Les réglages courants
+de mémoire restent dans Assistant. Le besoin vidéo porte aussi sur des MP4 seuls
+et des médias des ZIM ; transcription/récupération restent à développer.
+
 La 0.24.0 prépare en français une piste locale déjà présente, par segments
 reprenables, sans changer ses temps ni l’original. Les pistes complètes passent
 au lecteur et à la recherche ; les refus restent dans le rapport. Voir le

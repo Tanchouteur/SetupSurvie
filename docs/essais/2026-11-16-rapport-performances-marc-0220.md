@@ -1,5 +1,10 @@
 # Rapport de performances de Marc et budget documentaire
 
+**Suite :** le [rapport réel 0.24.0](2026-11-16-rapport-performances-marc-0240.md)
+observe les trois réponses terminées et 32k chargé. Code et réglage ayant changé
+ensemble, il ne mesure pas l'effet isolé de chacun. Le bilan ci-dessous conserve
+les résultats et limites de la campagne 0.22.0.
+
 **Analyse du rapport reçu le 16 novembre 2026 — correctif 0.23.1.** Rapport
 0.22.0, protocole 1, onze étapes, 411 045 ms, 136 échantillons dont 135 avec
 ressources du PC. Les données brutes restent privées et hors Git.

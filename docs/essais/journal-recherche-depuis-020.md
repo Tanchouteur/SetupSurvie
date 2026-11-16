@@ -1,5 +1,21 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Rapport réel 0.24.0 : [analyse des performances chez Marc](2026-11-16-rapport-performances-marc-0240.md).
+Contexte 32k réellement chargé et trois réponses documentaires terminées, avec
+9, 10 et 3 sources lues. Les recherches déjà en cache terminent en 3–6,5 s ;
+le chargement initial du modèle prend 111 s et la liaison des citations jusqu'à
+36 s. Une lecture échoue dans le premier dossier ; la couverture reste partielle
+sans cause détaillée exportée. Le texte des réponses et l'effet isolé du contexte
+ne sont pas validés par ces seules mesures. HDD et famille Core Ultra 5 sont
+déclarés par Louis, pas identifiés par ce rapport. Aucun achat réalisé.
+
+Complément 0.25.0 : [essai de traduction sur 40 pages](2026-11-16-test-traduction-40-pages.md)
+et sous-menu Tests et diagnostics. PDF fictif de 9 600 mots, extraction et moteur
+habituels, pause/reprise, rapport numérique par page/session et ressources.
+Essai réel Gemma R7 terminé en 8 min 34 s ; performance Windows et fidélité d’un
+vrai livre restent distinctes. Les MP4 seuls de Marc devront encore être transcrits,
+et les pistes présentes dans les ZIM restent à examiner ; 0.24.0 ne clôt pas L6.
+
 Complément 0.24.0 : [traduction synchronisée des pistes locales](2026-11-16-traduction-sous-titres.md).
 File durable, pause/reprise, contrôles, horodatages conservés, publication des
 seules pistes complètes et indexation commune. Six segments réels traduits sur

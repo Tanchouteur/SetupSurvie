@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Test de traduction de 40 pages](2026-11-16-test-traduction-40-pages.md) — 0.25.0, reprise, menu des tests et essai réel R7.
+
 - [Traduction française des sous-titres](2026-11-16-traduction-sous-titres.md) — 0.24.0, reprise, indexation et pistes complètes.
 
 - [Rapport de performances de Marc et contexte](2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, dossier documentaire, marge de contexte et observations matérielles.

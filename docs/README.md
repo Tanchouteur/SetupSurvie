@@ -1,5 +1,10 @@
 # Documentation SetupSurvie
 
+- [Performances réelles de Marc en 0.24.0](essais/2026-11-16-rapport-performances-marc-0240.md) — 32k chargé, synthèses terminées, coût du chargement et des citations ; cache et couverture à distinguer.
+
+- [Test de traduction sur 40 pages](exploitation/test-traduction-40-pages.md) — 0.25.0, vrai PDF d’essai, reprise et rapport de ressources.
+- [Tests et diagnostics](utilisation/parametres-et-appareil.md) — vérifications regroupées, commandes et liens conservés.
+
 - [Préparer les sous-titres français](utilisation/videos-locales.md#préparer-une-piste-française-depuis-le-site--0240) — 0.24.0, traduction synchronisée des pistes présentes et reprise.
 - [Essais de traduction des sous-titres](essais/2026-11-16-traduction-sous-titres.md) — modèle réel, contrôles et limites.
 

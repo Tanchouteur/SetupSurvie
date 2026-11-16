@@ -38,8 +38,8 @@ async page=>{
   await page.route('**/api/admin/assistant/calibration/stop',r=>{calls.push('stop');state={...state,status:'cancelled',message:'Essai arrêté à votre demande.'};return r.fulfill({json:state});});
   await page.route('**/api/admin/assistant/calibration/apply',r=>{calls.push({apply:r.request().postDataJSON()});state={...state,configured_context:32768,can_rollback:true};return r.fulfill({json:{model:state.model,tokens:32768,previous:16384}});});
   await page.route('**/api/admin/assistant/context/rollback',r=>{calls.push('rollback');state={...state,configured_context:16384,can_rollback:false};return r.fulfill({json:{model:state.model,tokens:16384}});});
-  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/assistant"]').click();
-  if(!await page.locator('#settings-context').evaluate(node=>node.open))await page.locator('#settings-context > summary').click();await page.locator('.context-trial > summary').click();await page.waitForFunction(()=>document.getElementById('next-calibration-mode').options.length>0);
+  await page.locator('#navigation [data-route="appareil"]').click();await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();await page.locator('#settings-reglages a[href="#/appareil/tests"]').click();
+  if(!await page.locator('#settings-test-memory').evaluate(node=>node.open))await page.locator('#settings-test-memory > summary').click();await page.waitForFunction(()=>document.getElementById('next-calibration-mode').options.length>0);
   check(calls.length===0,'Ouvrir les réglages ne lance pas d’essai');
   await page.locator('#next-calibration-limit').selectOption('65536');await page.locator('#next-calibration-form').evaluate(form=>form.requestSubmit());
   await page.waitForFunction(()=>document.getElementById('next-calibration-stop').hidden===false);
@@ -57,6 +57,21 @@ async page=>{
   check(calibrationReport.recommendation===32768&&!('messages' in calibrationReport),'Rapport mémoire exportable sans messages');
   await page.locator('#next-calibration-rollback').click();await page.waitForFunction(()=>document.getElementById('next-calibration-results').textContent.includes('Réglage courant : 16k'));
   check(calls.includes('rollback'),'Retour au réglage précédent disponible');
-  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Essai mémoire sans débordement à '+width);}
+  for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:844});
+    // Let responsive layout settle, then inspect native select overflow too:
+    // WebKit can propagate option text beyond a bounded select's border box.
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,null,{timeout:5000}).catch(()=>{});
+    const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
+      overflowing:[...document.querySelectorAll('body *')].filter(node=>{const r=node.getBoundingClientRect();return r.width&&r.right>innerWidth+.5;}).map(node=>({tag:node.tagName,id:node.id,
+        class:typeof node.className==='string'?node.className:'',right:node.getBoundingClientRect().right,width:node.getBoundingClientRect().width,
+        parent:node.closest('[id]')?.id,text:node.textContent.slice(0,90)})).slice(-20),
+      internal:[...document.querySelectorAll('body *')].filter(node=>node.clientWidth&&node.scrollWidth>node.clientWidth+1).map(node=>({tag:node.tagName,id:node.id,
+        client:node.clientWidth,scroll:node.scrollWidth,overflow:getComputedStyle(node).overflowX,text:node.textContent.slice(0,90)})).slice(-20),
+      textOverflow:(()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),rows=[];let node;while(node=walker.nextNode()){
+        const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();if(r.width&&r.right>innerWidth+.5)rows.push({parent:node.parentElement?.tagName,id:node.parentElement?.closest('[id]')?.id,right:r.right,text:node.textContent.slice(0,90)});
+      }return rows.slice(-20);})()}));
+    check(layout.scroll<=layout.width,'Essai mémoire sans débordement à '+width+(layout.scroll>layout.width?' '+JSON.stringify(layout):''));
+  }
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
 }

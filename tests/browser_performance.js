@@ -11,7 +11,7 @@ async page=>{
   });
   await page.route('**/api/admin/performance/stop',route=>{calls.push('stop');state={...state,status:'cancelled',message:'Essai arrêté à votre demande.'};return route.fulfill({json:state});});
   await page.route('**/api/admin/performance/report',route=>route.fulfill({json:{...state,samples:[{source:'host_controller',available:true,elapsed_ms:3000,cpu:{percent:75,max_core_percent:99},disks:[{id:'0 D:',data_disk:true,busy_percent:80}],memory:{available:8*1024**3},gpus:[{used:7*1024**3,total:8*1024**3}]}]}}));
-  await page.goto(base+'/#/appareil/entretien');await page.waitForFunction(()=>S.authReady&&document.getElementById('next-performance-mode').options.length>0);
+  await page.goto(base+'/#/appareil/tests?test=performance');await page.waitForFunction(()=>S.authReady&&document.getElementById('next-performance-mode').options.length>0);
   const panel=page.locator('#next-performance');await panel.waitFor({state:'visible'});
   check(calls.length===0,'Ouvrir Entretien ne lance aucun essai');
   check(await panel.locator('#next-performance-export').isDisabled(),'Pas de faux rapport avant le premier essai');
@@ -19,7 +19,7 @@ async page=>{
   check(calls.length===1&&calls[0].start.mode==='rapide','Une seule commande lance la campagne avec le mode choisi');
   check(await page.locator('#next-performance-start').isDisabled(),'Le double lancement est désactivé');
   check((await page.locator('#next-performance-status').textContent()).includes('Lecture'),'Étape de travail affichée pendant les mesures');
-  await page.goto(base+'/#/bibliotheque');await page.goto(base+'/#/appareil/entretien');await page.locator('#next-performance-stop').waitFor({state:'visible'});
+  await page.goto(base+'/#/bibliotheque');await page.goto(base+'/#/appareil/tests?test=performance');await page.locator('#next-performance-stop').waitFor({state:'visible'});
   check(calls.length===1,'Naviguer et recharger retrouve le test sans le relancer');
   await page.locator('#next-performance-stop').click();await page.waitForFunction(()=>document.getElementById('next-performance-status').textContent.includes('arrêté'));
   check(calls.includes('stop'),'Le bouton d’arrêt conserve le rapport partiel');

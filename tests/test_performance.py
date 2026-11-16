@@ -61,7 +61,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
     async def test_full_campaign_separates_repeats_exports_no_private_text_and_cleans_jobs(self):
         report=await self.finish()
         self.assertEqual(report['status'],'completed',report)
-        self.assertEqual(report['reason'],'completed')
+        self.assertEqual(report['reason'],'completed_with_gaps')
         self.assertEqual([r['kind'] for r in report['steps']],['classical']*6+['generation']*2+['documentary']*2+['selected_documentary'])
         self.assertEqual(self.calls[:6],[q for q in perf.QUERIES for _ in (1,2)])
         self.assertTrue(report['samples']);self.assertEqual(report['samples'][0]['reason'],'controller_update_required')
@@ -71,6 +71,27 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             for table in ('conversations','jobs','messages'):self.assertEqual(db.execute('SELECT count(*) FROM '+table).fetchone()[0],0)
             self.assertIsNone(db.execute("SELECT value FROM settings WHERE key LIKE 'context:%'").fetchone())
         self.assertEqual(perf.status()['sample_count'],len(report['samples']));self.assertNotIn('samples',perf.status())
+
+    async def test_partial_search_exports_component_states_without_paths_or_error_text(self):
+        self.mock(Found,'coverage',{'status':'partial','searched':120,'failed':0,'metadata_status':'degraded',
+            'coverage_scope':'searchable_text','collections_selected':135,'native_incompatible':0,
+            'videos':{'status':'not_indexed','results':0,'path':'PRIVATE-video','error':'PRIVATE-error'},
+            'catalog':{'state':'stale','collections':135,'age_seconds':60,'error':'PRIVATE-catalog'},
+            'local_index':{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4,'started':'PRIVATE-time','reader_probe':{'path':'PRIVATE-reader'}}})
+        report=await self.finish();coverage=report['steps'][0]['coverage']
+        self.assertEqual(report['status'],'completed');self.assertEqual(report['reason'],'completed_with_gaps')
+        self.assertEqual(coverage['videos'],{'status':'not_indexed','results':0})
+        self.assertEqual(coverage['catalog'],{'state':'stale','collections':135,'age_seconds':60})
+        self.assertEqual(coverage['local_index'],{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4})
+        self.assertEqual(coverage['metadata_status'],'degraded');self.assertNotIn('PRIVATE',json.dumps(report))
+
+    async def test_complete_search_does_not_invent_missing_component_measurements(self):
+        self.mock(Found,'coverage',{'status':'complete','searched':135,'failed':0,
+            'videos':{'status':'PRIVATE-unknown','results':None},'catalog':None})
+        report=await self.finish();coverage=report['steps'][0]['coverage']
+        self.assertEqual(report['reason'],'completed')
+        for key in ('videos','catalog','local_index','metadata_status'):self.assertNotIn(key,coverage)
+        self.assertNotIn('PRIVATE',json.dumps(report))
 
     async def test_pause_runs_classical_but_never_contacts_model(self):
         self.pause=True;report=await self.finish()
