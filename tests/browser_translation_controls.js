@@ -1,0 +1,46 @@
+// Ordinary resumable translation and private deletion, fixture model only.
+async page=>{
+ const base='http://10.0.3.2:8769',checks=[],errors=[],commands=[];
+ const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
+ page.on('pageerror',error=>errors.push(error.message));
+ page.on('request',request=>{if(request.method()!=='GET'&&request.url().includes('/api/translations'))commands.push({method:request.method(),path:new URL(request.url()).pathname});});
+ await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
+ await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/assistant');await page.waitForFunction(()=>S.user&&S.authReady&&!S.loadingConversation);
+ await page.locator('#chat-reset').click();
+ await page.evaluate(()=>attachToConversation({id:'guide:shelter.en.txt',title:'Guide fictif'}));
+ await page.locator('#translation-panel').evaluate(node=>node.open=true);await page.locator('#translation-start').click();
+ await page.waitForFunction(()=>S.translation&&document.getElementById('translation-progress').value>=1);
+ const id=await page.evaluate(()=>S.translation),conversation=await page.evaluate(()=>S.conversation);
+ await page.locator('#translation-reading-open').click();
+ check(await page.locator('#translation-reading-dialog #translation-pause').isVisible()&&await page.locator('#translation-reading-dialog #translation-stop').isVisible(),'Pause et arrêt accessibles pendant la lecture');
+ await page.locator('#translation-pause').click();await page.waitForFunction(()=>document.getElementById('translation-summary').textContent.includes('En pause'));
+ let report=await(await page.request.get(base+'/api/translations/'+id)).json();const first=report.done;
+ check(report.status==='paused'&&first>0&&first<report.total,'Pause garde les passages et la suite en attente');
+ check(await page.locator('#translation-reading-dialog #translation-resume').isVisible(),'Reprise accessible depuis le lecteur');
+ await page.locator('#translation-resume').click();await page.waitForFunction(n=>document.getElementById('translation-progress').value>n,first);
+ await page.locator('#translation-stop').click();await page.waitForFunction(()=>document.getElementById('translation-summary').textContent.includes('Arrêtée'));
+ report=await(await page.request.get(base+'/api/translations/'+id)).json();const stopped=report.done;
+ check(report.status==='stopped'&&stopped>=first,'Arrêt conserve les passages terminés et un état explicite');
+ const before=commands.length;await page.reload();await page.waitForFunction(()=>S.translation&&document.getElementById('translation-summary').textContent.includes('Arrêtée'));
+ report=await(await page.request.get(base+'/api/translations/'+id)).json();
+ check(report.status==='stopped'&&report.done===stopped&&commands.length===before,'Rechargement ne reprend pas une traduction arrêtée');
+ await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
+ await page.locator('#translation-resume').click();await page.waitForFunction(n=>document.getElementById('translation-progress').value>n,stopped);
+ check(commands.filter(x=>x.path.endsWith('/resume')).length===2,'Une traduction arrêtée repart sur commande explicite');
+ await page.locator('#translation-pause').click();await page.waitForFunction(()=>document.getElementById('translation-summary').textContent.includes('En pause'));
+ page.once('dialog',dialog=>dialog.dismiss());await page.locator('#translation-delete').click();
+ check((await page.request.get(base+'/api/translations/'+id)).ok(),'Annuler la confirmation garde le travail');
+ const deleting=commands.filter(x=>x.method==='DELETE').length;
+ page.once('dialog',async dialog=>{check(dialog.message().includes('document original')&&dialog.message().includes('version déjà partagée'),'La confirmation précise les éléments conservés');await dialog.accept();});
+ await page.locator('#translation-delete').click();await page.waitForFunction(()=>S.translation===null);
+ check(commands.filter(x=>x.method==='DELETE').length===deleting+1,'Une seule suppression est transmise');
+ check((await page.request.get(base+'/api/translations/'+id)).status()===404,'Le travail privé et ses passages ne sont plus consultables');
+ check((await page.request.get(base+'/api/source?id=guide%3Ashelter.en.txt')).ok(),'Le document original reste consultable');
+ const saved=await(await page.request.get(base+'/api/conversations/'+conversation)).json();
+ check(saved.translation_items.length===0,'La conversation subsiste sans référence au travail supprimé');
+ check(!await page.locator('#translation-choice option[value="'+id+'"]').count(),'Le sélecteur ne garde pas une traduction supprimée');
+ check(await page.evaluate(id=>!JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id)||'{}')[id],id),'Le repère local de lecture du travail supprimé est aussi retiré');
+ await page.locator('#translation-start').waitFor({state:'visible'});check(true,'Le document peut recevoir une nouvelle traduction');
+ check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
+ return {checks:checks.length,results:checks,real_inference:false};
+}

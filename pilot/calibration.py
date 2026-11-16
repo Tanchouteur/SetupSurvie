@@ -75,7 +75,14 @@ def save(report):
 async def guard(options,*,starting=False):
     state=await operations.status(fresh=True)
     if state.get('paused'):raise Abort('paused')
-    if not state.get('online') or state.get('operation'):raise Abort('engine_unavailable')
+    if not state.get('online') or state.get('operation'):
+        # Retain bounded observations, never the host's free-form error/log.
+        sample={'online':bool(state.get('online')),'control_available':bool(state.get('control_available'))}
+        if state.get('operation') in ('start','stop'):sample['operation']=state['operation']
+        for name in ('control_http_status','control_elapsed_ms'):
+            if type(state.get(name)) is int:sample[name]=state[name]
+        if state.get('control_error') in ('timeout','http_error','connection_error','invalid_response','not_configured'):sample['control_error']=state['control_error']
+        raise Abort('engine_unavailable',sample)
     if engine.ACTIVE or translations.ACTIVE or summary_activity() or caption_activity():raise Abort('other_activity')
     memory=state.get('memory',{});available=memory.get('available')
     if not isinstance(available,(int,float)) or type(memory.get('total')) is not int or memory['total']<=0 or not state.get('control_available'):
@@ -104,8 +111,12 @@ async def trial(report,context,temperature,options):
     row['minimum_free']=await guard(options)
     async def generate():
         answer='';last={}
-        async with asyncio.timeout(options['trial_timeout_seconds']),httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(60,connect=10)) as client:
+        # The cold model can take two minutes to load on Marc's HDD. Keep the
+        # socket idle limit aligned with the explicit trial deadline; the outer
+        # timeout and the one-second guard below still bound and cancel work.
+        async with asyncio.timeout(options['trial_timeout_seconds']),httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(options['trial_timeout_seconds'],connect=10)) as client:
             if temperature=='cold':
+                row['stage']='unloading'
                 response=await client.post(engine.OLLAMA+'/api/generate',json={'model':report['model'],'keep_alive':0,'stream':False})
                 response.raise_for_status()
                 response=await client.get(engine.OLLAMA+'/api/ps');response.raise_for_status()
@@ -115,10 +126,12 @@ async def trial(report,context,temperature,options):
             material=prompt(context,target);row['prompt_utf8_bytes']=len(material.encode('utf-8'))
             payload={'model':report['model'],'messages':[{'role':'user','content':material}],'think':engine.MODES[report['mode']]['think'],
                 'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':1 if temperature=='probe' else 1024,'temperature':0}}
+            row['stage']='model_request'
             async with client.stream('POST',engine.OLLAMA+'/api/chat',json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line:continue
+                    row['stage']='model_stream'
                     last=json.loads(line)
                     if last.get('error'):raise Abort('model_error')
                     text=last.get('message',{}).get('content','')
@@ -127,6 +140,7 @@ async def trial(report,context,temperature,options):
             measured.model_call(last)
         if not last.get('done') or (temperature!='probe' and (last.get('done_reason')!='stop' or answer.strip().strip('.')!='OK')):raise Abort('incomplete_output')
         if temperature=='warm' and (measured.first_text is None or measured.first_text>options['max_first_text_ms']):raise Abort('slow_response')
+        row['stage']='runtime_check'
         runtime=await model_runtime.describe(engine.OLLAMA,report['model'],fresh=True)
         if runtime.get('digest')!=report['runtime']['digest']:raise Abort('model_changed')
         placement=runtime.get('running') or {}
@@ -146,7 +160,13 @@ async def trial(report,context,temperature,options):
             snapshot=await guard(options)
             for key,value in snapshot.items():
                 if value is not None:row['minimum_free'][key]=min(row['minimum_free'][key],value) if row['minimum_free'][key] is not None else value
-        await task;row['status']='passed'
+        await task;row.update(status='passed',stage='completed')
+    except (httpx.HTTPError,TimeoutError,ValueError) as error:
+        # No exception text: it may contain paths, URLs or source material.
+        kind='http_timeout' if isinstance(error,httpx.TimeoutException) else 'trial_timeout' if isinstance(error,TimeoutError) else 'http_error' if isinstance(error,httpx.HTTPStatusError) else 'connection_error' if isinstance(error,httpx.HTTPError) else 'invalid_response'
+        row['failure']={'kind':kind,'stage':row.get('stage'),'exception':type(error).__name__}
+        if isinstance(error,httpx.HTTPStatusError):row['failure']['http_status']=error.response.status_code
+        raise
     finally:
         if not task.done():task.cancel()
         await asyncio.gather(task,return_exceptions=True)
@@ -186,14 +206,17 @@ async def run(report,options):
                     for temperature in ('cold','warm'):await trial(report,context,temperature,options)
                     report['recommendation']=context;save(report)
                 except (Abort,TimeoutError,httpx.HTTPError,ValueError) as error:
-                    reason=str(error) if isinstance(error,Abort) else 'timeout' if isinstance(error,TimeoutError) else 'model_error'
+                    reason=str(error) if isinstance(error,Abort) else 'timeout' if isinstance(error,(TimeoutError,httpx.TimeoutException)) else 'model_error'
                     report['trials'][-1].update(status='failed',reason=reason)
                     if isinstance(error,Abort) and error.sample:report['trials'][-1]['failure_free']=error.sample
                     report['reason']=reason;break
             report['status']='completed'
-    except Abort as error:report.update(status='interrupted',reason=str(error))
+    except Abort as error:
+        report.update(status='interrupted',reason=str(error))
+        if error.sample:report['failure_sample']=error.sample
     except asyncio.CancelledError:report.update(status='cancelled',reason='user_cancelled')
     except TimeoutError:report.update(status='interrupted',reason='time_limit')
+    except httpx.HTTPError as error:report.update(status='failed',reason='timeout' if isinstance(error,httpx.TimeoutException) else 'model_error')
     except Exception:report.update(status='failed',reason='test_unavailable')
     finally:
         if report['trials'] and report['trials'][-1].get('status')=='running':report['trials'][-1].update(status='cancelled' if report['status']=='cancelled' else 'failed',reason=report.get('reason','test_unavailable'))

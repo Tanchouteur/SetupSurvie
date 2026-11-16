@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.21.0, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.29.0, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -321,3 +321,53 @@ commune. Il crée sa propre conversation ; la traduction reste une action distin
 Le [guide des illustrations](illustrations-et-references.md) décrit les visuels
 originaux proposés dans l’assistant depuis 0.19.0. Leur affichage conserve
 les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d’OCR.
+
+## Lire pendant que le document se traduit — 0.28.0
+
+Déplier le panneau de traduction dans la conversation. Dès qu’un passage est
+terminé, son texte français apparaît : vous pouvez commencer à lire pendant que
+les suivants sont préparés. Le suivi indique les pages/sections entièrement
+traduites, les pages commencées et celle en cours, en plus des passages. Une page
+illustrée sans texte exploitable reste signalée, sans être comptée comme traduite.
+
+Les actualisations ne referment plus une comparaison avec l’original et ne
+remplacent pas un passage déjà prêt. **Passages suivants/précédents** parcourent
+le texte par groupes de dix. **Lire les derniers passages traduits** rejoint
+volontairement la fin disponible ; **Lire depuis le début** revient au premier
+groupe. L’arrivée d’une nouvelle page ne vous déplace pas automatiquement.
+
+**Lire le texte français** ouvre une fenêtre de lecture dédiée, avec le suivi
+et le texte ; la saisie de conversation ne réduit plus la place disponible.
+**Fermer la lecture**, Échap ou le retour du navigateur la ferment sans arrêter
+la traduction. Le navigateur peut retrouver cette fenêtre après rechargement.
+
+Le navigateur retrouve le groupe de passages lu après rechargement ou retour à
+la conversation, pour ce profil et cette traduction. Pause et reprise gardent
+cette position. Sur un autre appareil, le travail traduit est conservé côté
+serveur, mais cette position locale n’est pas transférée automatiquement.
+Lire ou recharger ne reprend pas une traduction en pause.
+
+Le brouillon en cours reste dans la conversation. Sa publication dans les
+traductions partagées attend la fin du traitement ; les avertissements de
+traduction automatique restent visibles dès les premiers passages.
+
+## Gérer une traduction — 0.29.0
+
+Les commandes se trouvent dans le panneau de traduction et dans **Lire le texte
+français** pendant la lecture :
+
+- **Mettre en pause** interrompt le passage en cours et conserve les précédents.
+- **Arrêter la traduction** conserve aussi le texte, avec l’état **Arrêtée**.
+  Elle ne repart pas en rechargeant la page ou en redémarrant le serveur.
+- **Reprendre avec le modèle choisi** poursuit seulement les passages restants,
+  après pause, arrêt ou erreur, lorsque le moteur est disponible.
+- **Supprimer la traduction** retire définitivement ce travail privé et ses
+  passages après confirmation. L’original, la conversation et toute traduction
+  déjà partagée dans la bibliothèque restent conservés. Le message de
+  confirmation rappelle cette différence. On peut ensuite lancer un nouveau
+  travail sur le même document.
+
+Arrêter ou supprimer annule et attend le traitement en cours. Aucune de ces
+commandes ne décharge un modèle utilisé ailleurs ni ne force le mode jeu. Les
+versions partagées sont des documents indépendants : leur retrait de la
+bibliothèque ne fait pas partie de la suppression du travail dans la conversation.

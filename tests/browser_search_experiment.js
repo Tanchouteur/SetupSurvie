@@ -34,6 +34,7 @@ async page=>{
   await page.locator('.experiment-candidates select').first().selectOption('useful');await page.waitForFunction(()=>document.getElementById('next-experiment-summary').textContent.includes('1 cas entièrement relus'));
   check(calls.some(c=>c.case_id==='verify-fire'&&c.judgments?.['guide:fixture.en.txt']==='useful'),'Avis humain enregistré par document et demande');
   const downloading=page.waitForEvent('download');await page.locator('#next-experiment-export').click();const saved=await downloading,chunks=[];for await(const c of await saved.createReadStream())chunks.push(c);const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(/^setupsurvie-comparatif-ia.*-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(saved.suggestedFilename()),'Nom du rapport lisible avec type, version et heure précise');
   check(report.version===version&&report.cases[0].judgments['guide:fixture.en.txt']==='useful','Rapport exporté avec version, méthodes et avis');
   check(report.summary.enabled_by_default===false&&!('messages' in report),'Aucune activation ni conversation dans le comparatif');
   state.cases[0].methods.rewritten.error='latency_budget';await page.locator('#next-search-experiment > summary').click();await page.locator('#next-search-experiment > summary').click();

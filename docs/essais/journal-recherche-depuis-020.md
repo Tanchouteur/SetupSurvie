@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Candidat 0.27.0 : [transfert fiable](2026-11-16-transfert-fiable.md), développé
+par le chantier parallèle puis relu et joint à la 0.26.0. Copie vérifiée/reprenable,
+relocalisation et garde-fous, état vidéo conservé ; refus OSRM sans HEALTHCHECK
+et concurrence du retour corrigés. CI intégrée et déplacement réel HDD/SSD
+restent distincts des tests ciblés.
+
 Candidat 0.26.0 : [transcription audio et français](2026-11-16-transcription-audio-videos.md),
 unités reprenables, original intact et pistes complètes indexées. Premier refus
 réel conservé ; consigne de traduction des fragments précisée. Rejeu MP4 synthétique
@@ -541,3 +547,50 @@ Reçu de livraison 0.15.1 : code `077fbb5`, paquet 760 fichiers comparé au comm
 pour restriction GitHub de facturation ; les essais locaux restent les preuves
 exécutées. Le bilan conserve empreinte et limites ; aucune validation Windows
 ou inférence réelle supplémentaire n’est attribuée à cette livraison.
+
+## 16 novembre — rapports 0.25.0 et correction 0.26.1
+
+Analyse des cinq rapports Windows : [bilan daté](2026-11-16-rapports-marc-0250.md).
+Le test mémoire avait un délai HTTP de 60 s contradictoire avec ses 600 s prévus ;
+il est corrigé, sans modifier les réserves ni le contexte. Traduction fictive
+40/40 en 13 min 04 s ; génération et chargement distingués. Les exports portent
+un nom lisible avec type, version et heure précise. Les erreurs de démarrage
+avant essai restent à identifier et ne sont pas déclarées toutes résolues.
+
+## 16 novembre — lecture pendant la traduction, candidat 0.28.0
+
+Louis demande un suivi clair et la lecture au fur et à mesure. Le [bilan](2026-11-16-lecture-traduction-progressive.md)
+distingue l’ancien aperçu existant, les améliorations du confort et les essais.
+La refonte générale des conversations sera cadrée avec Louis après cette livraison.
+
+## Priorité conservée après les rapports 0.25.0
+
+Les refus « moteur indisponible » avant création d’un essai n’ont pas tous une
+trace dans les rapports fournis. Prévoir une collecte bornée de ces refus
+(modèle/contexte sélectionnés, état frais du contrôleur, commande de démarrage
+en cours, disponibilité Ollama et marges mémoire), sans log libre ni conversation.
+Le correctif de délai mémoire ne constitue pas une preuve de résolution de tous
+les démarrages Windows. Ni abaissement silencieux de réserve ni reprise forcée
+du mode jeu ne sont retenus pour faire passer les mesures.
+
+## 16 novembre — commandes des traductions, candidat 0.29.0
+
+Louis complète la demande de lecture par pause, arrêt, reprise et suppression.
+[Bilan et validations](2026-11-16-commandes-traduction.md) : conserver les passages
+après arrêt, ne pas reprendre au rechargement, supprimer le travail privé après
+confirmation en gardant l’original et les versions publiées indépendantes.
+La refonte générale des conversations et le catalogue de modèles restent distincts.
+
+## 16 novembre — intégration cartes après lecture 0.28.0
+
+Branche d’un autre agent conservée par fusion normale : [bilan 0.28.1](2026-11-16-integration-routage-windows.md).
+Les trois routeurs Windows lisent les graphes sous leur UID/GID de préparation.
+Version compatible après 0.28.0 ; aucune nouvelle donnée cartographique ni image.
+
+## 16 novembre — diagnostic des lancements refusés, candidat 0.30.0
+
+Les refus reçus avant création d’un essai laissaient un trou dans les rapports
+de Marc. [Nouvelle collecte bornée](2026-11-16-diagnostic-refus-demarrage.md) :
+état après refus et état lors de l’export séparés, commande hôte avec étape,
+mémoire et API locale interrogées sans chargement ni inférence. Les causes
+anciennes restent inconnues ; cette instrumentation ne les déclare pas résolues.

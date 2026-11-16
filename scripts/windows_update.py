@@ -15,11 +15,14 @@ def install_launcher(app, config):
         raise setup.SetupError('Le lanceur de mise à jour exige une application installée, pas un dépôt de développement.')
     base = application.parent
     launcher = destination(base, 'Mettre-a-jour-SetupSurvie.cmd')
+    transfer_launcher = destination(base, 'Transferer-SetupSurvie.cmd')
+    if transfer_launcher.exists() and 'rem SetupSurvie managed transfer' not in transfer_launcher.read_text(encoding='utf-8-sig'):
+        raise setup.SetupError('Un lanceur de transfert existe déjà et ne nous appartient pas. Aucun remplacement.')
     if launcher.exists():
         previous = launcher.read_text(encoding='utf-8-sig')
         if 'rem SetupSurvie managed updater' not in previous and 'maintenance\\mettre-a-jour.ps1' not in previous:
             raise setup.SetupError('Le fichier Mettre-a-jour-SetupSurvie.cmd existe et ne nous appartient pas. Aucun remplacement effectué.')
-    for name in ('update-windows.ps1', 'windows-common.ps1'):
+    for name in ('update-windows.ps1', 'windows-common.ps1', 'transfer-windows.ps1'):
         source = setup.ROOT/'scripts'/name
         target = destination(base, 'maintenance/'+name)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -38,6 +41,9 @@ def install_launcher(app, config):
         temporary = destination(base, 'Mettre-a-jour-SetupSurvie.cmd.tmp')
         temporary.write_bytes(payload)
         temporary.replace(launcher)
+    from pilot import durable
+    durable.write_bytes(destination(base, 'Transferer-SetupSurvie.cmd'),
+        b'@echo off\r\nrem SetupSurvie managed transfer\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0maintenance\\transfer-windows.ps1" %*\r\nif errorlevel 1 pause\r\n')
     import windows_autostart
     windows_autostart.refresh(app, config)
 

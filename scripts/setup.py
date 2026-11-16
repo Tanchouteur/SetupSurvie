@@ -194,10 +194,16 @@ class Installation:
             base += ["-f", str(ROOT / "compose.linux.yaml")]
             if not c["cpu"]:
                 base += ["-f", str(ROOT / "compose.gpu.yaml")]
-        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():base += ['--profile','routing']
+        if (Path(c['data_dir'])/'library/maps/routing/current/manifest.json').is_file():
+            if c["target"] == "windows":
+                base += ["-f", str(ROOT / "deploy/compose.routing-windows.yaml")]
+            base += ["--profile", "routing"]
         return base + list(args)
 
     def compose(self, c, *args, capture=False, timeout=None):
+        if args and args[0] in ("up","start","restart","run","exec"):
+            import transfer
+            transfer.guard(self.work)
         return run(self.command(c, *args), capture=capture, timeout=timeout,env=self.environment())
 
     @staticmethod
@@ -262,6 +268,8 @@ class Installation:
             return json.load(response)
 
     def start_native(self, c):
+        import transfer
+        transfer.guard(self.work)
         if c["target"] != "windows":
             return
         if (self.work/'inference-paused.json').exists():
@@ -393,6 +401,8 @@ class Installation:
         print('Raccourcis Ouvrir / Arrêter / Mettre à jour créés'+(' ; démarrage à l’ouverture de session activé.' if startup else ' ; démarrage automatique désactivé.'))
 
     def up(self, c):
+        import transfer
+        transfer.guard(self.work)
         journal=self.work/'update.json'
         if journal.exists():
             try:state=json.loads(journal.read_text(encoding='utf-8'))

@@ -1,0 +1,10 @@
+# Match the UID/GID used by routing_prepare.py to build the Windows graphs.
+# Some OSRM indices are readable only by their owner on the Docker Desktop mount.
+
+services:
+  router-foot:
+    user: "1000:1000"
+  router-motorcycle:
+    user: "1000:1000"
+  router-car:
+    user: "1000:1000"

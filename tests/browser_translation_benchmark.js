@@ -28,6 +28,7 @@ async page=>{
   check((await page.locator('#next-translation-benchmark-result').textContent()).includes('9 600')||(await page.locator('#next-translation-benchmark-result').textContent()).includes('9 600'),'Volume réel du PDF affiché');
   const downloadEvent=page.waitForEvent('download');await page.locator('#next-translation-benchmark-export').click();
   const download=await downloadEvent,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(/^setupsurvie-traduction-40-pages.*-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(download.suggestedFilename()),'Nom du rapport lisible avec type, version et heure précise');
   check(report.pages_done===40&&report.page_timings.length===40&&report.sessions.length===2,'Rapport par page et deux sessions de travail');
   check(report.parts.some(row=>row.metrics?.runtime_after?.running?.context_length===16384),'Contexte observé inclus dans le rapport');
   check(report.samples.length>0&&report.fixture.source_words===9600,'Échantillons matériels et volume source conservés');

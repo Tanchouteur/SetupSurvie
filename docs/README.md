@@ -1,6 +1,21 @@
 # Documentation SetupSurvie
 
 - [Acquisition des sous-titres](decisions/acquisition-sous-titres.md) — chantier non livré, première brique et étapes restantes.
+- [Diagnostic des essais refusés](essais/2026-11-16-diagnostic-refus-demarrage.md) — 0.30.0, refus conservés et état actuel séparé, sans charger un modèle.
+
+- [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — 0.29.0, pause/arrêt/reprise et suppression du travail privé.
+
+- [Correctif d’itinéraires Windows](essais/2026-11-16-integration-routage-windows.md) — 0.28.1, intégration de la branche fournie et limites de validation.
+
+- [Prompt de refonte des conversations](decisions/prompt-refonte-conversations.md) — préparation, périmètre validé et fonctions à préserver.
+- [Conversations en trois zones et modèles hors ligne](decisions/conversations-trois-zones.md) — direction validée par Louis ; détails à cadrer avant refonte générale.
+- [Bilan et recette du transfert](essais/2026-11-16-transfert-fiable.md) — résultats, échecs et validations Windows restantes.
+- [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.
+- [Transférer une installation vers un SSD](exploitation/transfert-installation.md) — parcours local, reprise, bascule et retour à la source ; recette Windows réelle restante.
+
+- [Lecture progressive des traductions](essais/2026-11-16-lecture-traduction-progressive.md) — 0.28.0, progression par page et lecture conservée pendant le travail.
+
+- [Rapports Windows de Marc en 0.25.0](essais/2026-11-16-rapports-marc-0250.md) — calibration, recherche, comparatif et 40 pages ; corrections 0.26.1 et limites.
 
 - [Des MP4 seuls aux sous-titres](essais/2026-11-16-transcription-audio-videos.md) — 0.26.0, reconnaissance locale, reprise et essai R7.
 

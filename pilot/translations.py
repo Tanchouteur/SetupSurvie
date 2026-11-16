@@ -10,6 +10,7 @@ import httpx
 from . import engine,library,operations,store,assistant_metrics,model_runtime,model_session
 
 ACTIVE={}
+CONTROL_LOCK=asyncio.Lock()
 SCHEMA={'type':'object','properties':{'status':{'type':'string','enum':['translated','refused']},
         'translation':{'type':'string'}},'required':['status','translation'],'additionalProperties':False}
 NOTICE='Traduction automatique non vérifiée. Consultez l’original, notamment pour les chiffres, tableaux et consignes de sécurité. Les illustrations ne sont pas traduites.'
@@ -50,11 +51,17 @@ def status(identifier,user_id,offset=0):
         counts={r['status']:r['n'] for r in db.execute('SELECT status,count(*) AS n FROM translation_parts WHERE translation_id=? GROUP BY status',(identifier,))}
         rows=db.execute('SELECT position,page,source_text,translated,status,model FROM translation_parts WHERE translation_id=? ORDER BY position LIMIT 10 OFFSET ?',(identifier,offset)).fetchall()
         checks={r['position']:dict(r) for r in db.execute('SELECT position,report,candidate FROM translation_checks WHERE translation_id=?',(identifier,))}
-        pages=db.execute('SELECT count(DISTINCT page) FROM translation_parts WHERE translation_id=?',(identifier,)).fetchone()[0]
+        page_rows=db.execute("SELECT page,count(*) AS total,sum(status='done') AS done,sum(status='unreadable') AS unreadable,min(CASE WHEN status='pending' THEN position END) AS pending,max(CASE WHEN status='done' THEN position END) AS last_done FROM translation_parts WHERE translation_id=? GROUP BY page ORDER BY page",(identifier,)).fetchall()
+        pages=len(page_rows)
     reports=[json.loads(r['report']) for r in checks.values()]
     parts=[{**dict(r),'quality':json.loads(checks[r['position']]['report']) if r['position'] in checks else {'status':'unchecked','issues':[]},'candidate':checks.get(r['position'],{}).get('candidate','')} for r in rows]
     return {**item,'total':sum(counts.values()),'done':counts.get('done',0),'unreadable':counts.get('unreadable',0),
-            'pages':pages,'parts':parts,'quality':{'checked':sum(r['status']=='checked' for r in reports),'warnings':sum(r['status']=='warning' for r in reports),'blocked':sum(r['status']=='blocked' for r in reports)},'offset':offset,'notice':NOTICE,'publication':publication_state(identifier)}
+            'pages':pages,'pages_done':sum(r['done']==r['total'] for r in page_rows),
+            'pages_partial':sum(0<r['done']<r['total'] for r in page_rows),
+            'pages_unreadable':sum(r['unreadable']>0 for r in page_rows),
+            'current_page':next((r['page'] for r in page_rows if r['pending'] is not None),None),
+            'last_done_position':max((r['last_done'] for r in page_rows if r['last_done'] is not None),default=None),
+            'parts':parts,'quality':{'checked':sum(r['status']=='checked' for r in reports),'warnings':sum(r['status']=='warning' for r in reports),'blocked':sum(r['status']=='blocked' for r in reports)},'offset':offset,'notice':NOTICE,'publication':publication_state(identifier)}
 
 
 def update(identifier,status,error=None):
@@ -196,6 +203,10 @@ def launch(identifier):
 
 
 async def pause(identifier,user_id):
+    async with CONTROL_LOCK:return await _pause(identifier,user_id)
+
+
+async def _pause(identifier,user_id):
     item=owned(identifier,user_id)
     if item['status'] in ('queued','running'):
         update(identifier,'paused','Traduction mise en pause. Les passages terminés sont conservés.')
@@ -205,17 +216,56 @@ async def pause(identifier,user_id):
 
 
 async def resume(identifier,user_id,mode=None):
+    async with CONTROL_LOCK:return await _resume(identifier,user_id,mode)
+
+
+async def _resume(identifier,user_id,mode=None):
     owned(identifier,user_id);await available()
     if mode is not None and mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         item=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()
         if not item:raise HTTPException(404,'Traduction introuvable.')
-        if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette traduction est déjà active ou terminée.')
+        if item['status'] not in ('paused','stopped','error'):raise HTTPException(409,'Cette traduction est déjà active ou terminée.')
         if db.execute("SELECT 1 FROM translations WHERE user_id=? AND status IN ('queued','running')",(user_id,)).fetchone():raise HTTPException(409,'Une autre traduction est en cours pour votre compte.')
         if db.execute("SELECT count(*) FROM translations WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'La file des traductions est pleine.')
         db.execute("UPDATE translations SET status='queued',mode=?,error=NULL,updated=? WHERE id=?",(mode or item['mode'],time.time(),identifier))
     launch(identifier);return status(identifier,user_id)
+
+
+async def stop(identifier,user_id):
+    async with CONTROL_LOCK:
+        item=owned(identifier,user_id)
+        if item['status']!='completed':
+            update(identifier,'stopped','Traduction arrêtée. Les passages terminés restent lisibles ; une reprise volontaire est possible.')
+        task=ACTIVE.get(identifier)
+        if task:
+            task.cancel();await asyncio.gather(task,return_exceptions=True)
+            if ACTIVE.get(identifier) is task:ACTIVE.pop(identifier,None)
+        return status(identifier,user_id)
+
+
+async def delete(identifier,user_id):
+    """Delete the private task, never the original or an independent publication."""
+    async with CONTROL_LOCK:
+        item=owned(identifier,user_id)
+        if item['status']!='completed':update(identifier,'stopped','Suppression demandée.')
+        task=ACTIVE.get(identifier)
+        if task:
+            task.cancel();await asyncio.gather(task,return_exceptions=True)
+            if ACTIVE.get(identifier) is task:ACTIVE.pop(identifier,None)
+        from . import publications
+        async with publications.LOCK:
+            publication=publication_state(identifier)
+            # Completed public files are independent and survive task deletion.
+            # Their provenance table is deliberately not a translation child.
+            with store.connect() as db:
+                db.execute('DELETE FROM settings WHERE key=?',('auto-translation:'+identifier,))
+                db.execute('DELETE FROM translations WHERE id=? AND user_id=?',(identifier,user_id))
+                if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='translation_publications'").fetchone():
+                    db.execute('DELETE FROM translation_publications WHERE translation_id=? AND published_path IS NULL',(identifier,))
+        return {'deleted':True,'id':identifier,'conversation_id':item['conversation_id'],'publication':publication,
+                'notice':'Travail privé supprimé. Le document original et toute version déjà partagée dans la bibliothèque sont conservés.'}
 
 
 def export(identifier,user_id):

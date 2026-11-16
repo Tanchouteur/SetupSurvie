@@ -1,6 +1,6 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.25.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.30.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 
@@ -152,3 +152,22 @@ Les [champs de durée d’Ollama](https://docs.ollama.com/api/chat), les
 et le [contexte des modèles chargés](https://docs.ollama.com/api/ps) définissent
 les données lues. Les tests du runner sont simulés ; le rapport **R4 réel** sur
 Windows reste nécessaire avant de recommander un grand contexte chez Marc.
+
+## Si un test refuse de démarrer — 0.30.0
+
+Dans **Paramètres → Tests et diagnostics → Mémoire et contexte**, cliquer sur
+**Télécharger le diagnostic de démarrage**. Le rapport contient les vingt derniers
+refus de tests enregistrés (mémoire, comparatif, performances, 40 pages), puis
+l’état actuel du moteur. Le nom du fichier précise la version et l’heure.
+
+Le contrôle lit les états ; il ne démarre pas l’IA et ne charge aucun modèle.
+Les conversations, questions et logs bruts ne sont pas inclus. Les indications
+permettent de voir si le contrôleur répond, si une commande est encore en cours,
+si le modèle choisi est installé/chargé et combien de mémoire reste disponible.
+Elles ne certifient ni la qualité d’une réponse ni la cause d’un incident.
+
+Les refus antérieurs à cette livraison restent inconnus. Les données sont prises
+après un refus, puis de nouveau lors de l’export ; l’état a pu changer entre les
+deux. Le dernier démarrage du service n’est renseigné que si le contrôleur a été
+mis à jour avec cette fonction. Ne pas relancer plusieurs fois un test pour
+fabriquer un succès : conserver le diagnostic du premier refus utile.

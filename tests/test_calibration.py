@@ -14,7 +14,7 @@ class CalibrationTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
         self.model=engine.MODES['rapide']['model'];self.digest='a'*64;self.loaded=False;self.context=0;self.native=65536
-        self.pause=False;self.pressure=False;self.hang=False;self.cloud=False;self.calls=[];self.started=asyncio.Event();self.release=asyncio.Event()
+        self.pause=False;self.pressure=False;self.hang=False;self.cloud=False;self.calls=[];self.timeouts=[];self.chat_failure=None;self.started=asyncio.Event();self.release=asyncio.Event()
         for target,name,value in [(store,'ROOT',Path(temporary.name)),(engine,'LOCK',asyncio.Semaphore(1)),(engine,'ACTIVE',{}),(translations,'ACTIVE',{}),(calibration,'ACTIVE',{}),(model_runtime,'CACHE',{})]:
             p=patch.object(target,name,value);p.start();self.addCleanup(p.stop)
         store.init()
@@ -34,6 +34,8 @@ class CalibrationTests(unittest.IsolatedAsyncioTestCase):
                 payload=json.loads(request.content);self.assertEqual(payload,{'model':self.model,'keep_alive':0,'stream':False});self.loaded=False
                 return httpx.Response(200,json={'done':True,'done_reason':'unload'})
             self.assertEqual(request.url.path,'/api/chat');payload=json.loads(request.content);self.assertNotIn('tools',payload)
+            self.timeouts.append(request.extensions['timeout'])
+            if self.chat_failure:raise self.chat_failure
             self.context=payload['options']['num_ctx'];self.loaded=True;self.started.set()
             if self.hang:await self.release.wait()
             text=payload['messages'][0]['content'];tokens=int(len(text.encode('utf-8'))/4)
@@ -57,6 +59,26 @@ class CalibrationTests(unittest.IsolatedAsyncioTestCase):
         calibration.rollback(self.model);self.assertEqual(engine.context_size(self.model),8192)
         self.assertTrue(calibration.location().with_name(report['id']+'.json').is_file())
         self.assertNotIn('/api/pull',self.calls);self.assertNotIn('messages',json.dumps(report));self.assertNotIn('Repère',json.dumps(report))
+
+    async def test_cold_probe_uses_the_trial_deadline_instead_of_sixty_seconds(self):
+        report=await self.finish(16384)
+        self.assertEqual(report['status'],'completed')
+        self.assertTrue(self.timeouts)
+        self.assertTrue(all(t['read']==600 and t['connect']==10 for t in self.timeouts))
+
+    async def test_http_timeout_keeps_its_stage_without_private_exception_text(self):
+        self.chat_failure=httpx.ReadTimeout('private model path and content')
+        report=await self.finish(16384)
+        self.assertEqual(report['status'],'failed');self.assertEqual(report['reason'],'timeout')
+        self.assertEqual(report['trials'][0]['failure'],{'kind':'http_timeout','stage':'model_request','exception':'ReadTimeout'})
+        self.assertNotIn('private model',json.dumps(report))
+        self.assertEqual(engine.context_size(self.model),8192)
+
+    async def test_unavailable_engine_records_bounded_observations(self):
+        with patch.object(operations,'status',AsyncMock(return_value={'online':False,'operation':'start','control_available':False,'control_error':'timeout','control_elapsed_ms':5001,'error':'private raw log'})):
+            with self.assertRaises(calibration.Abort) as caught:await calibration.guard({})
+        self.assertEqual(caught.exception.sample,{'online':False,'control_available':False,'operation':'start','control_error':'timeout','control_elapsed_ms':5001})
+        self.assertNotIn('private',str(caught.exception.sample))
 
     async def test_pressure_stops_higher_context_without_changing_saved_choice(self):
         self.pressure=True;report=await self.finish(65536)

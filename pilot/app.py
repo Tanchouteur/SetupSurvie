@@ -16,7 +16,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse,JSONResponse,StreamingResponse
 
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream
+from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream,startup_diagnostic
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -85,7 +85,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.26.0'
+VERSION='0.30.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -839,7 +839,8 @@ async def report_translation_benchmark(value=Depends(admin)):
 
 @app.post('/api/admin/translation-benchmark/start',status_code=202)
 async def start_translation_benchmark(body:TranslationBenchmarkRequest,value=Depends(admin)):
-    with optional_feature('translation_benchmark') as module:return await module.start(body.mode,VERSION)
+    async with startup_diagnostic.observe('translation_benchmark',body.mode,VERSION):
+        with optional_feature('translation_benchmark') as module:return await module.start(body.mode,VERSION)
 
 
 @app.post('/api/admin/translation-benchmark/pause')
@@ -1070,6 +1071,16 @@ async def resume_translation(identifier:str,body:TranslationResume,value=Depends
     return await translations.resume(identifier,value['id'],body.mode)
 
 
+@app.post('/api/translations/{identifier}/stop')
+async def stop_translation(identifier:str,value=Depends(user)):
+    return await translations.stop(identifier,value['id'])
+
+
+@app.delete('/api/translations/{identifier}')
+async def delete_translation(identifier:str,value=Depends(user)):
+    return await translations.delete(identifier,value['id'])
+
+
 @app.get('/api/translations/{identifier}/export')
 async def export_translation(identifier:str,value=Depends(user)):
     text=translations.export(identifier,value['id'])
@@ -1212,7 +1223,8 @@ async def get_performance_report(value=Depends(admin)):
 
 @app.post('/api/admin/performance/start',status_code=202)
 async def start_performance(body:PerformanceChoice,value=Depends(admin)):
-    with optional_feature('performance') as module:return await module.start(body.mode,value['id'],VERSION)
+    async with startup_diagnostic.observe('performance',body.mode,VERSION):
+        with optional_feature('performance') as module:return await module.start(body.mode,value['id'],VERSION)
 
 
 @app.post('/api/admin/performance/stop')
@@ -1247,9 +1259,10 @@ async def get_search_experiment(value=Depends(admin)):
 
 @app.post('/api/admin/search-experiment/start',status_code=202)
 async def start_search_experiment(body:SearchExperimentChoice,value=Depends(admin)):
-    with optional_feature('search_experiment') as module:
-        report=await module.start(body.mode,body.suite,body.latency_budget_seconds*1000)
-        report['version']=VERSION;module.save(report);return report
+    async with startup_diagnostic.observe('search_experiment',body.mode,VERSION):
+        with optional_feature('search_experiment') as module:
+            report=await module.start(body.mode,body.suite,body.latency_budget_seconds*1000)
+            report['version']=VERSION;module.save(report);return report
 
 
 @app.post('/api/admin/search-experiment/stop')
@@ -1273,10 +1286,16 @@ async def get_calibration(value=Depends(admin)):
     return {'version':VERSION,**report}
 
 
+@app.get('/api/admin/assistant/startup-report')
+async def get_startup_report(mode:str|None=None,value=Depends(admin)):
+    return await startup_diagnostic.report(VERSION,mode)
+
+
 @app.post('/api/admin/assistant/calibration/start',status_code=202)
 async def start_calibration(body:CalibrationChoice,value=Depends(admin)):
-    return await calibration.start(body.mode,body.max_context,reserve_ram_bytes=body.reserve_ram_gib*1024**3,reserve_video_bytes=body.reserve_video_mib*1024**2,
-        max_first_text_ms=body.max_first_text_seconds*1000,trial_timeout_seconds=body.trial_timeout_seconds)
+    async with startup_diagnostic.observe('calibration',body.mode,VERSION):
+        return await calibration.start(body.mode,body.max_context,reserve_ram_bytes=body.reserve_ram_gib*1024**3,reserve_video_bytes=body.reserve_video_mib*1024**2,
+            max_first_text_ms=body.max_first_text_seconds*1000,trial_timeout_seconds=body.trial_timeout_seconds)
 
 
 @app.post('/api/admin/assistant/calibration/stop')

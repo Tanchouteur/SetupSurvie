@@ -109,7 +109,13 @@ def _publish(identifier,user_id):
 
 async def publish(identifier,user_id):
     async with LOCK:
-        try:return await asyncio.to_thread(_publish,identifier,user_id)
+        task=asyncio.create_task(asyncio.to_thread(_publish,identifier,user_id))
+        try:return await asyncio.shield(task)
+        except asyncio.CancelledError:
+            # Cancelling to_thread does not stop its filesystem writes. Join it
+            # before releasing LOCK or allowing the private work to be deleted.
+            await asyncio.gather(task,return_exceptions=True)
+            raise
         except Exception as exc:
             with store.connect() as db:db.execute('UPDATE translation_publications SET error=? WHERE translation_id=?',('Ajout aux documents locaux interrompu. La traduction privée est conservée ; réessayez.',identifier))
             raise

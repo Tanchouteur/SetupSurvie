@@ -113,6 +113,6 @@
     if(!report||controller)return;
     const reviewed=report.manual.filter(row=>['passed','failed'].includes(row.state)).length;
     const data={...report,summary:{automatic_measured:report.measurements.length,automatic_failed:report.measurements.filter(row=>row.state==='failed').length,human_reviewed:reviewed,human_failed:report.manual.filter(row=>row.state==='failed').length,human_not_applicable:report.manual.filter(row=>row.state==='not_applicable').length,human_unperformed:report.manual.filter(row=>row.state==='unperformed').length,human_total:manual.length},notice:'Mesures techniques et observations humaines distinctes. Ni validation automatique du contenu ni preuve de coupure Internet. Les conversations et textes des documents sont exclus ; votre observation est incluse.'};
-    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-usage-'+report.created.slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    downloadReport(data,'usage');
   };
 })();

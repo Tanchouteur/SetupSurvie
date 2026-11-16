@@ -92,6 +92,26 @@ class ControlTests(unittest.TestCase):
             operating.name='nt';self.app.start_native({**self.c,'target':'windows'})
             launch.assert_not_called()
 
+    def test_engine_worker_keeps_a_bounded_failed_start_stage_without_logs(self):
+        with patch.object(self.app,'compose',side_effect=setup.SetupError('PRIVATE PATH SECRET')):
+            self.server.worker('start',False)
+        saved=json.loads((self.app.work/'last-engine-diagnostic.json').read_text())
+        self.assertEqual(saved['status'],'failed');self.assertEqual(saved['stage'],'service_command')
+        self.assertEqual(saved['error_kind'],'SetupError');self.assertGreaterEqual(saved['elapsed_ms'],0)
+        self.assertTrue((self.app.work/'inference-paused.json').exists());self.assertIsNone(self.server.operation)
+        self.assertNotIn('PRIVATE',json.dumps(saved))
+        with patch.object(control,'hardware',return_value={}),patch.object(self.app,'request',return_value={'version':'fixture','models':[]}):
+            state=self.server.status()
+        self.assertEqual(state['last_engine_action'],saved)
+
+    def test_successful_start_records_completion_without_model_loading(self):
+        with patch.object(self.app,'compose') as compose,patch.object(self.app,'request',return_value={'version':'0.40.16'}) as request:
+            self.server.worker('start',False)
+        saved=json.loads((self.app.work/'last-engine-diagnostic.json').read_text())
+        self.assertEqual(saved['status'],'completed');self.assertEqual(saved['stage'],'completed')
+        self.assertTrue(all('/api/version' in call.args[0] for call in request.call_args_list))
+        compose.assert_called_once_with(self.c,'up','-d','--pull','never','ollama')
+
     def test_slow_controller_stop_keeps_identity_and_refuses_duplicate(self):
         marker=self.app.work/'control-process.json';identity={'path':'owned','created':'1'}
         setup.write_json(marker,{'pid':123,'identity':identity})

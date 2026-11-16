@@ -49,7 +49,7 @@
   $('next-performance-export').onclick=async()=>{
     if(busy)return;busy=true;const id=S.user?.id;
     try{const value=await api('/admin/performance/report');if(id!==S.user?.id)return;
-      const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-performances-'+value.id+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      downloadReport(value,'performances-'+value.mode);
     }catch(error){$('next-performance-status').textContent=error.message;}finally{busy=false;}
   };
   setInterval(refresh,2000);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',refresh);refresh();

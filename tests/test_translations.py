@@ -18,7 +18,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.root=Path(self.temp.name);guides=self.root/'guides';guides.mkdir()
         (guides/'manual.en.txt').write_text('Keep water clean.\n'*300)
         for obj,name,value in [(store,'ROOT',self.root/'state'),(library,'GUIDES',guides),
-                               (operations,'status',AsyncMock(return_value={'online':True})),(engine,'LOCK',asyncio.Semaphore(1))]:
+                               (operations,'status',AsyncMock(return_value={'online':True})),(engine,'LOCK',asyncio.Semaphore(1)),(tr,'CONTROL_LOCK',asyncio.Lock())]:
             p=patch.object(obj,name,value);p.start();self.addCleanup(p.stop)
         store.init();library.index_guides()
         self.source='guide:manual.en.txt'
@@ -39,6 +39,20 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         parts=list(tr.chunks(text))
         self.assertEqual(''.join(parts),text)
         self.assertTrue(all(0<len(p)<=2200 for p in parts))
+
+    async def test_page_progress_keeps_partial_and_unreadable_pages_distinct(self):
+        item=await self.create()
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(item['id'],))
+            for position,page,status in [(0,1,'done'),(1,1,'pending'),(2,2,'done'),(3,3,'unreadable'),(4,4,'pending')]:
+                db.execute('INSERT INTO translation_parts(translation_id,position,page,source_text,translated,status) VALUES(?,?,?,?,?,?)',(item['id'],position,page,'Fictional source','Texte fictif' if status=='done' else '',status))
+        data=tr.status(item['id'],'alice')
+        self.assertEqual((data['pages'],data['pages_done'],data['pages_partial'],data['pages_unreadable']),(4,1,1,1))
+        self.assertEqual(data['current_page'],1);self.assertEqual(data['last_done_position'],2)
+        with store.connect() as db:db.execute("UPDATE translation_parts SET status='done',translated='Suite fictive' WHERE translation_id=? AND position=1",(item['id'],))
+        data=tr.status(item['id'],'alice')
+        self.assertEqual(data['pages_done'],2);self.assertEqual(data['pages_partial'],0);self.assertEqual(data['current_page'],4)
+        with self.assertRaises(HTTPException):tr.status(item['id'],'bob')
 
     async def test_completion_is_private_saved_and_exportable_after_restart(self):
         item=await self.create()
@@ -77,6 +91,73 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['status'],'paused');self.assertEqual(state['done'],0)
         self.assertNotIn(item['id'],tr.ACTIVE)
         store.init();self.assertEqual(tr.status(item['id'],'alice')['status'],'paused')
+
+    async def test_stop_preserves_done_parts_and_resumes_only_explicitly(self):
+        item=await self.create();started=asyncio.Event();calls=0
+        async def translate(text,mode):
+            nonlocal calls
+            calls+=1
+            if calls==1:return 'Eau propre.','fixture'
+            started.set();await asyncio.Event().wait()
+        with patch.object(tr,'translate',side_effect=translate):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            stopped=await tr.stop(item['id'],'alice')
+        self.assertEqual(stopped['status'],'stopped');self.assertEqual(stopped['done'],1)
+        self.assertNotIn(item['id'],tr.ACTIVE);store.init()
+        self.assertEqual(tr.status(item['id'],'alice')['status'],'stopped')
+        with patch.object(tr,'launch') as launch:
+            resumed=await tr.resume(item['id'],'alice')
+            self.assertEqual(resumed['status'],'queued');launch.assert_called_once_with(item['id'])
+        self.assertEqual(tr.status(item['id'],'alice')['parts'][0]['translated'],'Eau propre.')
+
+    async def test_delete_joins_worker_and_removes_only_owned_private_work(self):
+        item=await self.create();started=asyncio.Event();finished=asyncio.Event()
+        from pilot import publications
+        with store.connect() as db:publications.reserve(db,item['id'],'alice',{'id':self.source,'title':'Private draft metadata'},True)
+        async def wait(text,mode):
+            started.set()
+            try:await asyncio.Event().wait()
+            finally:finished.set()
+        with patch.object(tr,'translate',side_effect=wait):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            with self.assertRaises(HTTPException):await tr.delete(item['id'],'bob')
+            result=await tr.delete(item['id'],'alice')
+        self.assertTrue(result['deleted']);self.assertTrue(finished.is_set());self.assertNotIn(item['id'],tr.ACTIVE)
+        self.assertTrue((library.GUIDES/'manual.en.txt').is_file())
+        with self.assertRaises(HTTPException):tr.status(item['id'],'alice')
+        with store.connect() as db:
+            for table in ('translations','translation_parts','translation_checks'):
+                column='id' if table=='translations' else 'translation_id'
+                self.assertEqual(db.execute('SELECT count(*) FROM '+table+' WHERE '+column+'=?',(item['id'],)).fetchone()[0],0)
+            self.assertFalse(db.execute('SELECT 1 FROM settings WHERE key=?',('auto-translation:'+item['id'],)).fetchone())
+            self.assertFalse(db.execute('SELECT 1 FROM translation_publications WHERE translation_id=?',(item['id'],)).fetchone())
+            self.assertTrue(db.execute('SELECT 1 FROM conversations WHERE id=?',('c',)).fetchone())
+
+    async def test_delete_keeps_an_already_published_translation(self):
+        from pilot import publications
+        item=await self.create()
+        with patch.object(tr,'translate',AsyncMock(return_value=('Eau propre.','fixture'))):await tr.run(item['id'])
+        public=publications.state(item['id'])
+        self.assertTrue(public['source_id'])
+        path=library.GUIDES/public['source_id'][6:];before=path.read_bytes()
+        result=await tr.delete(item['id'],'alice')
+        self.assertEqual(result['publication']['source_id'],public['source_id']);self.assertEqual(path.read_bytes(),before)
+        self.assertTrue((await library.source(public['source_id']))['text'])
+
+    async def test_resume_cannot_recreate_work_while_deletion_joins_its_worker(self):
+        item=await self.create();started=asyncio.Event();cancelling=asyncio.Event();release=asyncio.Event()
+        async def translate(text,mode):
+            started.set()
+            try:await asyncio.Event().wait()
+            finally:cancelling.set();await release.wait()
+        with patch.object(tr,'translate',side_effect=translate):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            deleting=asyncio.create_task(tr.delete(item['id'],'alice'));await asyncio.wait_for(cancelling.wait(),2)
+            resuming=asyncio.create_task(tr.resume(item['id'],'alice'));await asyncio.sleep(.01)
+            self.assertFalse(deleting.done());self.assertFalse(resuming.done())
+            release.set();await asyncio.wait_for(deleting,2)
+            with self.assertRaises(HTTPException) as error:await resuming
+            self.assertEqual(error.exception.status_code,404);self.assertNotIn(item['id'],tr.ACTIVE)
 
     async def test_restart_pauses_and_does_not_resume_inference_automatically(self):
         item=await self.create();store.init()
@@ -156,3 +237,23 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class PublicationCancellationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cancelled_publication_joins_its_filesystem_thread(self):
+        import threading
+        from pilot import publications
+        entered=threading.Event();release=threading.Event();finished=threading.Event()
+        def writer(*args):
+            entered.set()
+            try:release.wait(3)
+            finally:finished.set()
+            return {'source_id':'guide:fixture'}
+        with patch.object(publications,'LOCK',asyncio.Lock()),patch.object(publications,'_publish',side_effect=writer):
+            task=asyncio.create_task(publications.publish('fixture','alice'))
+            self.assertTrue(await asyncio.to_thread(entered.wait,1));task.cancel()
+            await asyncio.sleep(.02)
+            self.assertFalse(task.done());self.assertTrue(publications.LOCK.locked())
+            release.set()
+            with self.assertRaises(asyncio.CancelledError):await task
+            self.assertTrue(finished.is_set());self.assertFalse(publications.LOCK.locked())

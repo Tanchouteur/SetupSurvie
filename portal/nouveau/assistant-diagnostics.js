@@ -2,7 +2,6 @@
 (() => {
   const seconds=value=>Number.isFinite(value)?(value/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s':'Non mesuré';
   const modeName=mode=>S.status?.modes?.find(item=>item.id===mode)?.name||mode;
-  function download(report,name){const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function summaryList(target,rows){const list=element('dl',undefined,'assistant-measures');for(const [label,value] of rows)list.append(element('dt',label),element('dd',value));target.append(list);}
 
   let jobs=[],owner=null,selectedReport=null;
@@ -32,7 +31,7 @@
     }catch(error){body.replaceChildren(element('p',error.message,'error'));}
   }
   $('next-response-measure').onchange=loadMeasure;
-  $('next-response-measures-export').onclick=()=>{if(selectedReport)download(selectedReport,'setupsurvie-assistant-'+$('next-response-measure').value+'.json');};
+  $('next-response-measures-export').onclick=()=>{if(selectedReport)downloadReport(selectedReport,'assistant-'+selectedReport.mode);};
   document.addEventListener('survie:new-conversation',()=>{owner=S.conversation;jobs=[];open.hidden=true;});
   document.addEventListener('survie:conversation',event=>{owner=event.detail.id;jobs=event.detail.measurement_jobs||[];open.hidden=!jobs.length;});
   document.addEventListener('survie:job',event=>{
@@ -88,8 +87,22 @@
       renderCalibration(await api('/admin/assistant/calibration'));if(name==='apply'||name==='rollback')toast('Contexte enregistré pour les prochaines réponses.');
     }catch(error){$('next-calibration-status').textContent=error.message;}finally{busy=false;}
   };
-  $('next-calibration-export').onclick=()=>{if(calibrationReport)download(calibrationReport,'setupsurvie-memoire-'+calibrationReport.id+'.json');};
+  $('next-calibration-export').onclick=()=>{if(calibrationReport)downloadReport(calibrationReport,'memoire-'+calibrationReport.mode);};
   window.addEventListener('pagehide',()=>request?.abort());
   document.addEventListener('toggle',event=>{if(event.target===$('next-calibration-form').closest('details'))refresh();},true);
   setInterval(refresh,1500);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',()=>{request?.abort();refresh();});
+})();
+
+/* Read-only evidence even when a test was refused before creating its report. */
+(()=>{
+  const body=document.querySelector('#next-calibration-form').parentElement;
+  const note=element('p','Si un essai indique « moteur indisponible », ce diagnostic conserve les refus récents et vérifie l’état actuel. Il ne démarre ni l’assistant ni un modèle.','small muted');
+  const state=element('p',undefined,'small');state.id='next-startup-report-status';state.setAttribute('role','status');
+  const exportReport=button('Télécharger le diagnostic de démarrage',async()=>{
+    const owner=S.user?.id;exportReport.disabled=true;state.textContent='Lecture de l’état du moteur…';
+    try{const report=await api('/admin/assistant/startup-report?'+new URLSearchParams({mode:$('next-calibration-mode').value}));
+      if(S.user?.id!==owner)return;downloadReport(report,'demarrage-ia');state.textContent='Diagnostic téléchargé. Aucun modèle n’a été chargé par ce contrôle.';
+    }catch(error){if(S.user?.id===owner)state.textContent=error.message;}
+    finally{exportReport.disabled=false;}
+  },'secondary');exportReport.id='next-startup-report-export';body.append(note,exportReport,state);
 })();

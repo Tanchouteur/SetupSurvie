@@ -54,6 +54,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const diagnosticPage=await context.newPage();
       const diagnosticRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_assistant_diagnostics.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const diagnosticResult=await diagnosticRecipe(diagnosticPage);await diagnosticPage.close();
+      const startupContext=await browser.newContext(),startupPage=await startupContext.newPage();
+      const startupRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_startup_diagnostic.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,startupDiagnostic:await startupRecipe(startupPage)}));await startupContext.close();
       const requestContext=await browser.newContext(),requestPage=await requestContext.newPage();
       const requestRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_request_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,requestLifecycle:await requestRecipe(requestPage)}));await requestContext.close();
@@ -72,6 +75,12 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const benchmarkContext=await browser.newContext(),benchmarkPage=await benchmarkContext.newPage();
       const benchmarkRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_benchmark.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,translationBenchmark:await benchmarkRecipe(benchmarkPage)}));await benchmarkContext.close();
+      const progressiveContext=await browser.newContext(),progressivePage=await progressiveContext.newPage();
+      const progressiveRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_progressive.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,progressiveTranslation:await progressiveRecipe(progressivePage)}));await progressiveContext.close();
+      const controlsContext=await browser.newContext(),controlsPage=await controlsContext.newPage();
+      const controlsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_controls.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,translationControls:await controlsRecipe(controlsPage)}));await controlsContext.close();
       const experimentPage=await context.newPage();
       const experimentRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_experiment.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const experimentResult=await experimentRecipe(experimentPage);await experimentPage.close();
@@ -97,6 +106,15 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const summaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_long_summaries.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const summaryResult=await summaryRecipe(summaryPage);await summaryContext.close();
       console.log(JSON.stringify({engine:name,longSummaries:summaryResult}));
+      const frenchLifecycleContext=await browser.newContext(),frenchLifecyclePage=await frenchLifecycleContext.newPage();
+      const frenchLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_french_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,frenchLifecycle:await frenchLifecycleRecipe(frenchLifecyclePage)}));await frenchLifecycleContext.close();
+      const figureLifecycleContext=await browser.newContext(),figureLifecyclePage=await figureLifecycleContext.newPage();
+      const figureLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_figure_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,figureLifecycle:await figureLifecycleRecipe(figureLifecyclePage)}));await figureLifecycleContext.close();
+      const figureWorkerContext=await browser.newContext(),figureWorkerPage=await figureWorkerContext.newPage();
+      const figureWorkerRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_figure_worker_start.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,figureWorkerStart:await figureWorkerRecipe(figureWorkerPage)}));await figureWorkerContext.close();
       const figuresContext=await browser.newContext();const figuresPage=await figuresContext.newPage();
       const figuresRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_source_figures.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/figures-')+')');
       const figuresResult=await figuresRecipe(figuresPage);await figuresContext.close();

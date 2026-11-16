@@ -84,6 +84,6 @@
   download.onclick=()=>{
     if(!report)return;
     report.review_summary={reviewed:report.cases.filter(row=>row.review.state!=='unreviewed').length,useful:report.cases.filter(row=>row.review.state==='useful').length,total:report.cases.length};
-    const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='setupsurvie-recherche-'+report.created.slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    downloadReport(report,'recherche-'+(report.suite==='extended'?'complete':'courte'));
   };
 })();

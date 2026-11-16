@@ -35,6 +35,7 @@ async page=>{
   await page.waitForFunction(()=>document.getElementById('next-index-settings-status').textContent.includes('enregistrée'));
   check(calls.some(row=>row.enabled===true&&row.start_hour===23&&row.end_hour===6),'Plage nocturne transmise au serveur');
   const downloading=page.waitForEvent('download');await page.locator('#next-index-export').click();const download=await downloading,parts=[];for await(const chunk of await download.createReadStream())parts.push(chunk);const report=JSON.parse(Buffer.concat(parts).toString());
+  check(/^setupsurvie-indexation.*-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(download.suggestedFilename()),'Nom du rapport lisible avec type, version et heure précise');
   check(report.index_queue.pending===2&&!('conversations' in report),'Rapport d’indexation exporté sans conversations');
   await page.goto(base+'/#/appareil/assistant');await page.locator('#settings-context > summary').click();await page.locator('#next-context-size').selectOption('32768');await page.locator('#next-context-form').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>document.querySelector('#next-context-status').textContent.includes('enregistré'));

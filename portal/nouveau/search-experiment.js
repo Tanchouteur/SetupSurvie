@@ -57,5 +57,5 @@
     catch(error){$('next-experiment-status').textContent=error.message;}finally{busy=false;$('next-experiment-start').disabled=report?.status==='running';}
   };
   $('next-experiment-stop').onclick=async()=>{if(busy)return;busy=true;epoch++;try{render(await api('/admin/search-experiment/stop',{}));}catch(error){$('next-experiment-status').textContent=error.message;}finally{busy=false;}};
-  $('next-experiment-export').onclick=()=>{if(!report)return;const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),a=element('a');a.href=url;a.download='setupsurvie-comparatif-'+report.id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  $('next-experiment-export').onclick=()=>{if(!report)return;downloadReport(report,'comparatif-ia-'+report.mode+'-'+report.suite);};
 })();

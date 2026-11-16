@@ -22,6 +22,7 @@ def run(work_dir, *, open_browser=False):
     work=Path(work_dir).resolve()
     if state.get('kind')!='SetupSurvie managed Windows startup' or Path(state['work_dir']).resolve()!=work:
         raise ValueError('Configuration de démarrage incohérente.')
+    if (work/'transfer-guard.json').exists():return 1
     config=json.loads((work/'settings.json').read_text(encoding='utf-8-sig'))
     if not open_browser:
         if (work/'startup-paused.json').exists():return 0

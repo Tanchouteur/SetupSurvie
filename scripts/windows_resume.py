@@ -63,6 +63,7 @@ def configure(work_dir, selection, jobs=2):
 
 def run(work_dir, *, probe=False):
     app,config=runtime(work_dir)
+    if (app.work/"transfer-guard.json").exists():return "transfer_paused"
     import setup,content_retry
     from delivery_paths import locked
     root=setup.safe_path(config['data_dir'])

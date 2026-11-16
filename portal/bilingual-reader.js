@@ -3,7 +3,19 @@
   'use strict';
   const node=(tag,text,cls)=>{const value=document.createElement(tag);if(text!==undefined)value.textContent=text;if(cls)value.className=cls;return value;};
   const button=(text,action)=>{const value=node('button',text);value.type='button';value.onclick=action;return value;};
-  async function get(path){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);try{const response=await fetch('/api/library/'+path,{signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('La version française ne peut pas être ouverte pour le moment.');return await response.json();}finally{clearTimeout(timer);}}
+  class PageDeparture extends Error{}
+  const requests=new Set(),navigationRequests=new WeakSet();let departing=false;
+  function cancelRequests(){for(const controller of requests){navigationRequests.add(controller);controller.abort();}}
+  window.addEventListener('beforeunload',cancelRequests);
+  window.addEventListener('pagehide',()=>{departing=true;cancelRequests();});
+  window.addEventListener('pageshow',event=>{if(event.persisted)departing=false;});
+  async function get(path){
+    if(departing)throw new PageDeparture();
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);requests.add(controller);
+    try{const response=await fetch('/api/library/'+path,{signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('La version française ne peut pas être ouverte pour le moment.');return await response.json();}
+    catch(error){if(navigationRequests.has(controller))throw new PageDeparture();throw error;}
+    finally{clearTimeout(timer);requests.delete(controller);}
+  }
   function mount(original,host,trigger,modeChanged,pdf=false,synchronize=false){
     const panel=node('section',undefined,'french-reading');panel.hidden=true;panel.setAttribute('aria-label','Lecture en français');host.append(panel);
     const actions=node('div',undefined,'french-reading-actions'),back=button(synchronize?'Voir le PDF original':'Voir l’original',()=>showOriginal());actions.append(back);
@@ -22,7 +34,7 @@
     pageInput.onchange=()=>go(Number(pageInput.value));
     versions.onchange=()=>{active=choices.find(row=>row.id===versions.value);confirmed=null;lastRequest=null;load();};
     async function load(){
-      if(!active||!panel.isConnected)return;
+      if(departing||!active||!panel.isConnected)return;
       panel.hidden=false;reading=true;modeChanged(true);trigger.setAttribute('aria-pressed','true');
       const page=Number(pageInput.value)||1,request=active.id+':'+page;
       if(request===lastRequest)return;lastRequest=request;const own=++requestNumber;body.replaceChildren();
@@ -34,7 +46,7 @@
       status.textContent='Ouverture du texte français…';
       try{
         const data=await get('french-page?'+new URLSearchParams({id:active.id,original_id:base,page:String(page)}));
-        if(own!==requestNumber||!panel.isConnected||!reading)return;
+        if(departing||own!==requestNumber||!panel.isConnected||!reading)return;
         if(Array.isArray(data.pages)){active.pages=data.pages;previous.disabled=!data.pages.some(value=>value<page);next.disabled=!data.pages.some(value=>value>page);}
         notice.textContent=data.notice||notice.textContent;
         if(!data.available){status.textContent='Cette page n’est pas dans la plage traduite. Pages disponibles : '+active.pages.join(', ')+'.';if(active.pages.length)body.append(button('Ouvrir la première page traduite',()=>go(active.pages[0])));return;}
@@ -42,18 +54,19 @@
         for(const warning of data.warnings||[])body.append(node('p',warning,'french-reading-notice'));
         for(const text of data.parts||[])body.append(node('p',text,'french-reading-part'));
         remember('french');
-      }catch(_){if(own===requestNumber&&panel.isConnected){status.textContent='Le texte français est indisponible. Vous pouvez revenir à l’original.';lastRequest=null;body.append(button('Réessayer',()=>load()));}}
+      }catch(error){if(error instanceof PageDeparture){lastRequest=null;return;}if(!departing&&own===requestNumber&&panel.isConnected){status.textContent='Le texte français est indisponible. Vous pouvez revenir à l’original.';lastRequest=null;body.append(button('Réessayer',()=>load()));}}
     }
     trigger.onclick=()=>{if(reading){showOriginal();return;}if(!active)active=choices[0];versions.value=active?.id||'';load();};
     trigger.setAttribute('aria-pressed','false');
     if(synchronize)window.addEventListener('survie:pdf-page',event=>{if(panel.isConnected){pageInput.value=String(event.detail.page);if(reading)load();}});
-    get('french-reading?'+new URLSearchParams({original_id:base})).then(data=>{
-      if(!panel.isConnected)return;choices=Array.isArray(data.translations)?data.translations:[];
+    function discover(){get('french-reading?'+new URLSearchParams({original_id:base})).then(data=>{
+      if(departing||!panel.isConnected)return;choices=Array.isArray(data.translations)?data.translations:[];
       if(!choices.length){panel.remove();return;}
-      for(const choice of choices){const option=node('option',new Date(choice.published_at*1000).toLocaleDateString('fr-FR')+' · '+(choice.original_edition||'édition inconnue')+(choice.freshness==='changed'?' · original modifié':choice.freshness==='unknown'?' · à comparer':''));option.value=choice.id;versions.append(option);}
+      versions.replaceChildren();for(const choice of choices){const option=node('option',new Date(choice.published_at*1000).toLocaleDateString('fr-FR')+' · '+(choice.original_edition||'édition inconnue')+(choice.freshness==='changed'?' · original modifié':choice.freshness==='unknown'?' · à comparer':''));option.value=choice.id;versions.append(option);}
       versionLabel.hidden=choices.length<2;active=choices[0];trigger.hidden=false;notice.textContent=data.notice||notice.textContent;
       try{const saved=JSON.parse(localStorage.getItem(key)||'null');const found=choices.find(row=>row.id===saved?.translation);if(found)active=found;versions.value=active.id;if(saved?.mode==='french'&&active.freshness==='unchanged')load();}catch(_){}
-    }).catch(()=>{panel.remove();});
+    }).catch(error=>{if(!(error instanceof PageDeparture))panel.remove();});}
+    discover();window.addEventListener('pageshow',event=>{if(event.persisted&&panel.isConnected){lastRequest=null;discover();}});
     return panel;
   }
   document.addEventListener('survie:source',event=>{

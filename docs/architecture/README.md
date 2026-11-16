@@ -841,3 +841,58 @@ avant toute sortie, partagée entre tours d’outils ; elle ne rejoue jamais un 
 et vérifie l’état volontaire du moteur avant préparation/reprise. Les sorties
 partielles et erreurs restent distinctes d’une absence documentaire. Voir le
 [guide des mesures](../utilisation/mesurer-assistant-et-memoire.md).
+
+## Lecture pendant une traduction — 0.28.0
+
+`translations.status()` conserve l’accès par propriétaire et la pagination de dix
+passages ; ses compteurs ajoutent pages entièrement terminées, pages partielles,
+pages illisibles, page en attente et dernière position traduite. Un passage ou
+une page illisible ne compte pas comme traduit. Aucun texte ne passe au modèle
+pour produire ces compteurs.
+
+Le portail conserve les éléments DOM inchangés pendant le rafraîchissement. Le
+lecteur dédié déplace les mêmes éléments `translation-parts` et leurs commandes
+vers `translation-reading-content`, puis les remet à leur place à la fermeture ;
+il ne faut pas cloner leurs IDs lors d’une future refonte. Le repère local par
+profil/traduction contient seulement offset, ouverture et date, avec cent entrées
+au maximum. Une seule restauration d’ouverture par chargement évite une course
+avec la fermeture. Les travaux et textes restent côté serveur ; la mémoire du
+navigateur ne commande jamais une reprise d’inférence.
+
+Les requêtes de la page et du lecteur bilingue sont annulées dès `beforeunload`,
+puis à `pagehide`. L’aperçu PDF possède son port Worker dès sa création, attend
+le signal de disponibilité avant de le confier à PDF.js et peut donc le terminer
+même pendant son chargement. Le traitement reste dans un Worker natif ; ni
+PDF.js ni ses composants épinglés ne sont modifiés. La file d’aperçus abandonne
+sa génération précédente après navigation. Les lecteurs savent repartir après
+`pageshow` persistant quand le navigateur réutilise la page. Les annulations du
+port connu sont prises en charge localement ; les erreurs du composant actif
+ne sont pas filtrées globalement. Les recettes simulent ces états et conservent
+les essais natifs de rendu et les assertions d’erreur.
+
+## Contrôle des traductions — 0.29.0
+
+Les routes pause, stop, resume et DELETE d’un travail partagent `CONTROL_LOCK`.
+L’arrêt conserve `stopped`, repris seulement explicitement ; l’initialisation ne
+le réécrit pas comme une tâche à reprendre automatiquement. La suppression rejoint
+le worker avant de supprimer la ligne et ses enfants, et garde les publications
+indépendantes. Le verrou de publication est acquis pour éviter une écriture
+concurrente. La publication attend aussi son thread après annulation avant de
+relâcher ce verrou : une coroutine annulée n’est pas une preuve d’arrêt du thread.
+Les contrôles principaux se déplacent avec le lecteur ; leurs IDs restent uniques.
+
+## Refus avant lancement et diagnostic — 0.30.0
+
+`startup_diagnostic.observe()` entoure les quatre créations de test et conserve
+les refus 409/429/503 d’un mode connu, sans modifier le code HTTP/message originel.
+Le fichier privé `startup-diagnostic.json` garde vingt observations au maximum.
+Les objets libres sont filtrés par champs/types/enums avant écriture ; aucune
+URL locale, liste de noms de modèles supplémentaires ou trace d’exception n’est
+exportée. Les probes utilisent seulement GET version/ps/tags en parallèle,
+avec délais courts ; pas de show/pull/chat/generate.
+
+Le contrôleur écrit `last-engine-diagnostic.json` même après une commande en
+échec, avec étape et durée, et expose uniquement ce résumé autorisé dans status.
+L’export admin `/admin/assistant/startup-report` combine historique et nouvel
+instantané ; les deux dates restent explicites. Il n’est pas interrogé au
+chargement de l’interface et ne change aucun état du moteur.

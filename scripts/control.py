@@ -23,6 +23,18 @@ import library_monitor
 def key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
 
 
+def clean_engine_diagnostic(value):
+    if not isinstance(value,dict):return {}
+    enums={'action':('start','stop'),'stage':('transfer_guard','service_command','waiting_for_api','completed'),
+           'status':('running','completed','failed'),'target':('windows','linux'),
+           'error_kind':('SetupError','OSError','ValueError','TimeoutExpired','CalledProcessError','PermissionError','other_error')}
+    result={name:value[name] for name,allowed in enums.items() if value.get(name) in allowed}
+    for name in ('created','finished','elapsed_ms'):
+        if type(value.get(name)) in (int,float) and 0<=value[name]<10**13:result[name]=value[name]
+    if type(value.get('forced')) is bool:result['forced']=value['forced']
+    return result
+
+
 def publish(app,c,state,reason=''):
     setup.write_json(Path(c['data_dir'])/'catalog/inference.json',{'state':state,'reason':reason,'updated':time.time()})
 
@@ -82,8 +94,15 @@ class Server(ThreadingHTTPServer):
             online=bool(version.get('version'))
             models=[{k:m.get(k) for k in ('name','size','size_vram','context_length')} for m in self.app.request('http://127.0.0.1:11435/api/ps',timeout=1).get('models',[])]
         except (OSError,ValueError):pass
+        diagnostic={}
+        try:
+            path=self.app.work/'last-engine-diagnostic.json'
+            if path.stat().st_size<=4096:
+                saved=json.loads(path.read_text(encoding='utf-8'))
+                diagnostic=clean_engine_diagnostic(saved)
+        except (OSError,ValueError,TypeError):pass
         return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,
-                'operation':operation,'error':error,'control_available':True}
+                'operation':operation,'error':error,'control_available':True,'last_engine_action':diagnostic}
 
     def activity(self):
         with self.lock:
@@ -119,11 +138,15 @@ class Server(ThreadingHTTPServer):
 
     def worker(self,action,force):
         app,c=self.app,self.config
+        started=time.monotonic();diagnostic={'action':action,'forced':bool(force),'created':time.time(),'stage':'transfer_guard','status':'running','target':c['target']}
         try:
+            import transfer
+            transfer.guard(app.work)
             marker=app.work/'inference-paused.json'
             if action=='stop':
                 setup.write_json(marker,{'reason':'user_pause'},private=True);publish(app,c,'paused','user_pause')
             elif marker.exists():marker.unlink()
+            diagnostic['stage']='service_command'
             if self.backend=='lab':
                 import linux_lab as lab
                 lab.podman('start' if action=='start' else 'stop',lab.PREFIX+'ollama',capture=True)
@@ -133,6 +156,7 @@ class Server(ThreadingHTTPServer):
             elif action=='start':app.compose(c,'up','-d','--pull','never','ollama')
             else:app.compose(c,'stop','ollama')
             if action=='start':
+                diagnostic['stage']='waiting_for_api'
                 for _ in range(45):
                     try:
                         app.request('http://127.0.0.1:11435/api/version',timeout=1);break
@@ -140,11 +164,16 @@ class Server(ThreadingHTTPServer):
                 else:raise setup.SetupError('Délai de démarrage dépassé.')
                 publish(app,c,'online')
             setup.write_json(app.work/'last-engine-action.json',{'action':action,'forced':force,'time':time.time()},private=True)
-        except Exception:
+            diagnostic.update(status='completed',stage='completed')
+        except Exception as error:
+            diagnostic.update(status='failed',error_kind=type(error).__name__ if type(error).__name__ in ('SetupError','OSError','ValueError','TimeoutExpired','CalledProcessError','PermissionError') else 'other_error')
             with self.lock:self.operation_error='La commande a échoué. Consultez les diagnostics sur le PC serveur.'
             if action=='start':
                 setup.write_json(app.work/'inference-paused.json',{'reason':'start_failed'},private=True);publish(app,c,'paused','start_failed')
         finally:
+            diagnostic.update(elapsed_ms=round((time.monotonic()-started)*1000),finished=time.time())
+            try:setup.write_json(app.work/'last-engine-diagnostic.json',clean_engine_diagnostic(diagnostic),private=True)
+            except OSError:pass
             with self.lock:self.operation=None
 
 
@@ -197,6 +226,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def start(app,c,backend='compose'):
+    import transfer
+    transfer.guard(app.work)
     marker=app.work/'control-process.json'
     version=json.loads((setup.ROOT/'deploy/release.json').read_text())['version']
     if marker.exists():
