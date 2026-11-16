@@ -42,7 +42,11 @@ PDF.js observée lorsque le conteneur original était caché a conduit à diffé
 ses opérations de défilement jusqu’au retour à l’original ; les pages restent
 synchronisées. L’émulation WebKit ne remplace pas un essai iPhone réel.
 
-La CI du commit de livraison reste à consigner après sa terminaison.
+La lecture française a été intégrée dans la livraison 0.22.0 avec le diagnostic
+commun. Les 28 contrôles passent dans Chromium et WebKit ; les
+[huit jobs finaux](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43818175933)
+sont réussis. Les candidats 0.21.0 ont révélé un débordement WebKit ensuite corrigé ;
+aucune version 0.21.0 n’a été intégrée séparément dans `main`.
 
 ## Essai réel
 

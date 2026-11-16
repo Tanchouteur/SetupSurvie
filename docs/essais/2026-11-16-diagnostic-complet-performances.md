@@ -1,6 +1,6 @@
 # Diagnostic commun des lenteurs — 16 novembre 2026
 
-**Bilan de développement du candidat 0.22.0.** Le [guide actuel](../exploitation/diagnostic-complet-performances.md)
+**Bilan de livraison 0.22.0.** Le [guide actuel](../exploitation/diagnostic-complet-performances.md)
 décrit son utilisation ; la [demande initiale](../decisions/diagnostic-lenteurs-en-un-clic.md)
 reste conservée. Nouvelle fonction compatible : niveau mineur, schéma 1 et
 versions des images tierces inchangés. Aucun déploiement sur les PC clients.
@@ -25,8 +25,8 @@ Tests ciblés : deltas CPU/disques, remise à zéro, premier échantillon, compt
 manquants, PDH anglais, pont authentifié, absence de fuite privée, pause,
 annulation immédiate/en cours, redémarrage et nettoyage limité au test.
 Une réponse terminée sans lecture effective est signalée séparément.
-L’API exige Famille et un GET ne lance aucune inférence. Les compteurs Windows
-natifs sont ajoutés à la CI Windows ; résultat final à consigner.
+L’API exige Famille et un GET ne lance aucune inférence. Le contrôle natif Windows
+et les onze tests de campagne passent dans le job Windows.
 
 Quinze contrôles passent dans Chromium et WebKit : ouverture sans action,
 lancement unique, suivi, navigation, arrêt, export, erreur mémoire visible et
@@ -64,7 +64,21 @@ Le nettoyage après crash a ensuite été complété et vérifié par tests simu
 
 ## Suite de la qualification
 
-Consigner CI, suite complète et paquet après vérification. Recevoir ensuite
-le JSON de Marc : composants limitants encore inconnus. Windows réel de Marc,
+Code fonctionnel `1badd20`, [huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43818175933) :
+777 tests Python (quatre réservés à Windows ignorés sous Linux), 15 contrôles de
+diagnostic et 28 contrôles de lecture française par navigateur, plus les recettes
+complètes existantes. Le contrôle natif Windows est réussi ; ce n’est pas une
+mesure sur le PC de Marc. La suite locale avant le dernier ajout de contrôle
+comptait 776 tests, puis les seize tests ciblés sont repassés (un Windows ignoré).
+Les liens documentaires locaux et `git diff --check` sont vérifiés.
+
+Les premiers candidats 0.21.0 n’ont pas été publiés séparément : une recette
+WebKit a révélé un débordement de 15 pixels sans boîte DOM dépassante ; son contenu
+est désormais borné horizontalement dans le lecteur français. Une temporisation
+seule ne le corrigeait pas. Un autre essai CI a échoué sur la création de profil
+de la recette UX ; aucun succès n’en a été déduit. Les huit jobs finaux du code
+0.22.0 passent, y compris tous ces parcours, sans suppression d’assertion.
+
+Recevoir ensuite le JSON de Marc : composants limitants encore inconnus. Windows réel de Marc,
 iPhone réel, gros corpus, pic matériel continu et fidélité générale des réponses
 ne sont pas validés par ces essais. Traduction et sous-titres restent ouverts.

@@ -1,6 +1,6 @@
 # Diagnostic des lenteurs en un clic
 
-**Demande de Louis, 16 novembre 2026 — implémentée dans le candidat 0.22.0.**
+**Demande de Louis, 16 novembre 2026 — livrée en 0.22.0.**
 Le [guide actuel](../exploitation/diagnostic-complet-performances.md) décrit le
 bouton, les onze étapes, les limites et le rapport. Les mesures Windows de Marc
 restent attendues ; le [bilan](../essais/2026-11-16-diagnostic-complet-performances.md)
