@@ -198,9 +198,37 @@ class InstallationTests(unittest.TestCase):
                 self.assertTrue(any(p['published']=='3000' and p['target']==3000 for p in services['portal']['ports']))
                 self.assertEqual(Path(services['portal']['volumes'][2]['source']), Path(c['data_dir']) / 'catalog')
                 self.assertEqual('ollama' in services, target == 'linux')
+                self.assertNotIn('router-car', services)
                 if target == 'linux':
                     gpu = services['ollama'].get('deploy', {}).get('resources', {}).get('reservations', {}).get('devices', [])
                     self.assertEqual(bool(gpu), not cpu)
+
+    def test_compose_windows_routes_as_graph_owner(self):
+        graph = Path(self.config['data_dir']) / 'library/maps/routing/current'
+        graph.mkdir(parents=True)
+        (graph / 'manifest.json').write_text('{}', encoding='utf-8')
+        for target in ('windows', 'linux'):
+            with self.subTest(target=target):
+                config = dict(self.config, target=target, cpu=True)
+                self.app.render(config)
+                result = subprocess.run(
+                    self.app.command(config, 'config', '--format', 'json'),
+                    capture_output=True, text=True, env=self.app.environment(), check=True,
+                )
+                services = json.loads(result.stdout)['services']
+                for mode in ('foot', 'motorcycle', 'car'):
+                    service = services['router-' + mode]
+                    self.assertNotIn('ports', service)
+                    mount, = service['volumes']
+                    self.assertTrue(mount['read_only'])
+                    self.assertEqual(mount['type'], 'bind')
+                    self.assertEqual(Path(mount['source']), graph / mode)
+                    self.assertEqual(service['command'][-1], '/data/network.osrm')
+                    self.assertEqual(service['cap_drop'], ['ALL'])
+                    if target == 'windows':
+                        self.assertEqual(service['user'], '1000:1000')
+                    else:
+                        self.assertNotIn('user', service)
 
 
 if __name__ == '__main__':

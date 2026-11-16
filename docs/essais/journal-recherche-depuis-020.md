@@ -580,3 +580,9 @@ Louis complète la demande de lecture par pause, arrêt, reprise et suppression.
 après arrêt, ne pas reprendre au rechargement, supprimer le travail privé après
 confirmation en gardant l’original et les versions publiées indépendantes.
 La refonte générale des conversations et le catalogue de modèles restent distincts.
+
+## 16 novembre — intégration cartes après lecture 0.28.0
+
+Branche d’un autre agent conservée par fusion normale : [bilan 0.28.1](2026-11-16-integration-routage-windows.md).
+Les trois routeurs Windows lisent les graphes sous leur UID/GID de préparation.
+Version compatible après 0.28.0 ; aucune nouvelle donnée cartographique ni image.
