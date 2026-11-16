@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — candidat 0.29.0, pause/arrêt/reprise et suppression du travail privé.
+- [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — 0.29.0, pause/arrêt/reprise et suppression du travail privé.
 
 - [Correctif d’itinéraires Windows](essais/2026-11-16-integration-routage-windows.md) — 0.28.1, intégration de la branche fournie et limites de validation.
 

@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-Le candidat **0.29.0** ajoute [arrêt et suppression des travaux de traduction](../utilisation/documents-et-traduction.md#gérer-une-traduction--0290),
+La **0.29.0** ajoute [arrêt et suppression des travaux de traduction](../utilisation/documents-et-traduction.md#gérer-une-traduction--0290),
 avec reprise volontaire et conservation des originaux, conversations et guides
 déjà partagés. Les contrôles sont accessibles aussi pendant la lecture dédiée.
 

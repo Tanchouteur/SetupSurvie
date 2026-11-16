@@ -1,6 +1,6 @@
 # Pause, arrêt, reprise et suppression d’une traduction
 
-**Bilan du candidat 0.29.0 — 16 novembre 2026.** Demande de Louis après la lecture
+**Bilan de livraison 0.29.0 — 16 novembre 2026.** Demande de Louis après la lecture
 progressive 0.28.0 ; ne constitue pas la refonte globale des conversations.
 
 Pause et reprise existaient. La livraison ajoute **Arrêter la traduction** et
@@ -61,3 +61,20 @@ Le groupe de lecture local est aussi retiré après fermeture du lecteur lors de
 la suppression : la fermeture ne recrée plus le repère juste effacé. La recette
 de commande vérifie ce point, soit **16 contrôles par navigateur**. Les autres
 recettes et les données déjà partagées restent conservées.
+
+## Validation de livraison
+
+Les **huit jobs CI** du code `0dcd36f2005795f28927e4395dd3986173724cc4`
+réussissent : [exécution 43882806582](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43882806582).
+La matrice complète inclut les commandes, la lecture progressive, les originaux
+illustrés et la navigation. Windows, les index et le routage sont également
+vérifiés. La branche inclut le correctif de cartes Windows 0.28.1.
+Une exécution précédente (`d38d1ac`) avait échoué dans la suite navigateur ; son
+extrait `--log-failed` n’est pas disponible ici. Le résultat vert revendiqué est
+celui du dernier code exécuté, sans conclure à une cause non observée de cet échec.
+
+Le [prompt de refonte des conversations](../decisions/prompt-refonte-conversations.md)
+est prêt ; la direction à trois zones est validée, les détails dossiers/profondeur
+et raccourcis restent à préciser avec Louis. Le menu des modèles à télécharger
+est conservé dans ce cadrage comme lot séparé, sans téléchargement effectué.
+Aucune mise à jour du PC de Marc ni suppression de ses travaux n’a été lancée.
