@@ -97,3 +97,12 @@ class ArchiveVideoTests(unittest.TestCase):
             report=json.loads(completed.stdout);self.assertEqual(report['phase'],'completed');self.assertEqual(report['results'][0]['status'],state)
             self.assertEqual(report['network_requests'],0);self.assertFalse(report['media_extracted']);self.assertEqual(report['results'][0]['video_resources'],2)
         self.assertEqual(self.zim.read_bytes(),before)
+
+    def test_cli_unexamined_archive_path_keeps_global_coverage_partial(self):
+        (self.root/'directory.zim').mkdir();script=Path(__file__).resolve().parents[1]/'scripts/inventory_zim_videos.py'
+        result=subprocess.run([sys.executable,str(script),'--zim-dir',str(self.root),'--state-dir',str(self.root/'cli-state'),
+            '--workers','1','--reserve-bytes','1000000','--job-id','fixture-job'],capture_output=True,text=True,timeout=30)
+        self.assertEqual(result.returncode,0,result.stderr);report=json.loads(result.stdout)
+        self.assertEqual(report['job_id'],'fixture-job');self.assertEqual(report['phase'],'partial');self.assertEqual(report['archives'],2)
+        self.assertEqual(report['unexamined'],[{'archive':'directory.zim','reason':'link_or_not_file'}])
+        self.assertEqual(report['completed'],1);self.assertEqual(report['results'][0]['video_resources'],2)

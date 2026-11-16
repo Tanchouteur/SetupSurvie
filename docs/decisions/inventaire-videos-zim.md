@@ -30,10 +30,11 @@ Elle réutilise le lecteur isolé existant et ses petits caches hors ligne. Elle
 ne modifie pas l’index texte ni les originaux. Son exécution n’est pas encore
 proposée depuis le site et ne tourne pas automatiquement après une mise à jour.
 
-Huit tests locaux passent sur le lecteur libzim **3.13.1**, avec de petites ZIM
+Neuf tests locaux passent sur le lecteur libzim **3.13.1**, avec de petites ZIM
 générées : index texte natif sans oubli des vidéos, liens internes/distants,
 bonne association des pistes, pages dépassant la limite, reprise après pause,
-édition remplacée, sortie paginée bornée et commande multiprocessus réutilisable.
+édition remplacée, sortie paginée bornée, commande multiprocessus réutilisable et chemin d’archive
+non examiné conservé dans une couverture globale partielle.
 Les fixtures binaires sont délibérément minuscules et non décodables ; ces essais
 ne prouvent pas la lecture vidéo. Le test de redirection de piste est conservé
 avec son résultat dans les journaux privés de développement.

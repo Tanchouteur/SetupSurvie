@@ -36,6 +36,7 @@ def resolve(article,reference,base=''):
         # network URL by filename against a coincidentally present local media.
         try:base_url=urlsplit(base)
         except ValueError:return {'status':'invalid_reference'}
+        if base_url.scheme not in ('','http','https'):return {'status':'unsupported_reference'}
         if base_url.scheme or base_url.netloc:return {'status':'remote_reference','url':reference,'base':base}
     decoded=unquote(parsed.path)
     if '\\' in decoded or any(ord(c)<32 for c in decoded):return {'status':'invalid_reference'}
@@ -111,7 +112,8 @@ def summary(db):
         video_resources=db.execute("SELECT count(*) FROM resources WHERE category='video'").fetchone()[0],
         subtitle_resources=db.execute("SELECT count(*) FROM resources WHERE category='subtitle'").fetchone()[0],
         video_references=db.execute('SELECT count(*) FROM video_refs').fetchone()[0],
-        skipped_html=db.execute('SELECT count(*) FROM issues').fetchone()[0])
+        issues_count=db.execute('SELECT count(*) FROM issues').fetchone()[0],
+        skipped_html=db.execute("SELECT count(*) FROM issues WHERE reason='html_too_large'").fetchone()[0])
     return value
 
 
@@ -174,7 +176,7 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         value=summary(db)
     del archive
     durable.sync_file(building);durable.publish(building,published)
-    return {**value,'status':'partial' if value['skipped_html'] else 'completed','file':published.name}
+    return {**value,'status':'partial' if value['issues_count'] else 'completed','file':published.name}
 
 
 def references(path,offset=0,limit=50):
