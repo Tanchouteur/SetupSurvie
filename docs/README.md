@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Acquisition des sous-titres](decisions/acquisition-sous-titres.md) — chantier non livré, première brique et étapes restantes.
+- [Acquisition des sous-titres](decisions/acquisition-sous-titres.md) — choix de la 0.31.0 ; [essais et limites](essais/2026-11-16-acquisition-sous-titres.md).
 - [Diagnostic des essais refusés](essais/2026-11-16-diagnostic-refus-demarrage.md) — 0.30.0, refus conservés et état actuel séparé, sans charger un modèle.
 
 - [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — 0.29.0, pause/arrêt/reprise et suppression du travail privé.

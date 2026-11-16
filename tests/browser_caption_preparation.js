@@ -8,7 +8,8 @@ async page=>{
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
   const card=page.locator('#next-videos-list article').filter({has:page.getByRole('heading',{name:'Préparation française fictive'})});await card.waitFor();
   check(!calls.some(url=>url.includes('/api/chat')),'Ouvrir les vidéos ne lance aucune inférence');
-  if(!await card.locator('details').evaluate(details=>details.open))await card.locator('details summary').click();
+  const preparation=card.locator('details').filter({hasText:'Préparer une piste française'});
+  if(!await preparation.evaluate(details=>details.open))await preparation.locator('summary').click();
   check(await card.locator('select[aria-label="Piste source à traduire"]').inputValue()==='0','La piste source anglaise est choisie explicitement');
   const previous=(await(await page.request.get(base+'/api/admin/video-captions')).json()).jobs.map(job=>job.id);
   await card.getByRole('button',{name:'Traduire les sous-titres',exact:true}).click();
@@ -47,7 +48,7 @@ async page=>{
   check(await player.evaluate(video=>video.textTracks[0].language==='en'&&video.textTracks[0].mode==='showing'),'La piste anglaise d’origine reste sélectionnable');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Aucun débordement à '+width);}
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
-  if(!await page.locator('#next-caption-preparation').evaluate(details=>details.open))await page.locator('#next-caption-preparation summary').click();
+  if(!await page.locator('#next-caption-preparation').evaluate(details=>details.open))await page.locator('#next-caption-preparation > summary').click();
   job=page.locator('[data-caption-job="'+current.id+'"]');
   const downloading=page.waitForEvent('download');await job.getByRole('button',{name:'Télécharger le rapport',exact:true}).click();
   const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());

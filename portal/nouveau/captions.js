@@ -1,6 +1,6 @@
 /* Explicit preparation, independent of reading a video. No automatic inference. */
 (() => {
-  const area=element('details');area.id='next-caption-preparation';area.innerHTML='<summary>Préparer les sous-titres français</summary><p class="small">Traduisez une piste source depuis sa vidéo. Les temps restent ceux de l’original. Les pistes terminées deviennent utilisables sans IA ; la relecture du sens reste à faire.</p><label>Modèle pour la préparation<select id="next-caption-mode"></select></label><p id="next-caption-message" class="small" role="status"></p><div id="next-caption-jobs"></div>';
+  const area=element('details');area.id='next-caption-preparation';area.innerHTML='<summary>Préparer les sous-titres</summary><p class="small">Traduisez une piste source depuis sa vidéo. Les temps restent ceux de l’original. Les pistes terminées deviennent utilisables sans IA ; la relecture du sens reste à faire.</p><label>Modèle pour la préparation<select id="next-caption-mode"></select></label><p id="next-caption-message" class="small" role="status"></p><div id="next-caption-jobs"></div>';
   $('next-videos').append(area);
   area.hidden=true;
   let jobs=[],owner=null,loading=false,busy=false,version=0;

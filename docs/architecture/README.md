@@ -896,3 +896,26 @@ Le contrôleur écrit `last-engine-diagnostic.json` même après une commande en
 L’export admin `/admin/assistant/startup-report` combine historique et nouvel
 instantané ; les deux dates restent explicites. Il n’est pas interrogé au
 chargement de l’interface et ne change aucun état du moteur.
+
+## Acquisition de pistes vidéo — 0.31.0
+
+Les routes admin `/video-acquisitions` isolent la récupération YouTube dans
+`caption_acquisition.py`. Aucun réseau à l’import, à la lecture ou à l’ouverture
+de Collections. Un enfant à environnement minimal exécute `caption_fetch_worker` ;
+son délai et sa sortie sont bornés, la pause et l’arrêt du service le rejoignent.
+`provider_subtitles` choisit une piste existante ; aucune traduction distante n’est
+appelée. La bibliothèque réutilise celle de l’image Open WebUI épinglée.
+
+La base privée `video-acquisition.db` et `video-acquisition/UUID/` conservent état,
+rapport brut et WebVTT complet. Le résumé dans SQLite évite de relire les paroles
+complètes à chaque suivi. La source locale est recontrôlée avant publication ;
+les éditions modifiées ne récupèrent pas une ancienne piste. Deux requêtes réseau
+au maximum ; commandes pause/reprise sérialisées. Le changement de schéma ajoute
+seulement un résumé nullable aux premiers candidats, sans supprimer de données.
+
+Le scan joint les pistes complètes, puis la file `captions` peut préparer le
+français. Un arrêt IA n’efface pas la piste source acquise. Le rapport vidéo général
+inclut l’état sans les paroles ; le rapport dédié est privé et contient les temps
+bruts. Sauvegarde/transfert emportent cet état avec les autres états du pilote.
+Voir le [guide](../utilisation/videos-locales.md) et les
+[preuves et limites](../essais/2026-11-16-acquisition-sous-titres.md).

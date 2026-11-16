@@ -18,6 +18,7 @@ from fastapi import HTTPException
 from . import captions,durable,engine,provider_subtitles,store,video_inventory,videos
 
 ACTIVE={}
+CONTROL_LOCK=asyncio.Lock()
 NOTICE='Sous-titres récupérés sur YouTube, non relus. Langue et origine sont déclarées par le fournisseur. Les intervalles qui se chevauchent sont ajustés pour l’affichage ; vérifiez l’alignement avec votre vidéo locale.'
 REASONS={'provider_tool_unavailable':'L’outil de récupération des sous-titres manque dans cette installation.',
     'provider_blocked':'YouTube refuse cette récupération. Aucun contournement n’est lancé ; la reconnaissance audio locale reste possible.',
@@ -41,6 +42,8 @@ def connect():
         title TEXT NOT NULL,provider_id TEXT NOT NULL,identity_basis TEXT NOT NULL,language TEXT NOT NULL,origin TEXT NOT NULL,
         preferred_language TEXT NOT NULL,mode TEXT NOT NULL,translate_french INTEGER NOT NULL,status TEXT NOT NULL,error TEXT,
         created REAL NOT NULL,updated REAL NOT NULL,published_hash TEXT,index_status TEXT,translation_job TEXT)''')
+    if 'result_summary' not in {row[1] for row in db.execute('PRAGMA table_info(jobs)')}:
+        db.execute('ALTER TABLE jobs ADD COLUMN result_summary TEXT')
     try:
         with db:yield db
     finally:db.close()
@@ -78,11 +81,14 @@ def status(identifier,full=False):
         update(identifier,'paused','Récupération interrompue ; reprenez-la explicitement avec Internet.');item=get(identifier)
     result={key:item[key] for key in ('id','video_id','title','status','error','created','updated','index_status','translation_job')}
     result.update(notice=NOTICE,human_review='not_performed')
+    if item['result_summary']:
+        try:result.update(json.loads(item['result_summary']))
+        except ValueError:result['provider_report_unavailable']=True
     private=files(identifier)/'provider.json'
-    if private.is_file() and not video_inventory.is_link(private):
+    if full and private.is_file() and not video_inventory.is_link(private):
         try:
             value=json.loads(private.read_text());result.update(language=value['track']['language'],origin=value['track']['origin'],cues=len(value['cues']),timing_adjustments=len(value['timing_adjustments']))
-            if full:result.update(provider_result=value)
+            result.update(provider_result=value)
         except (OSError,ValueError,KeyError):result['provider_report_unavailable']=True
     if full:result.update(source_revision=item['source_revision'],provider_id=item['provider_id'],identity_basis=item['identity_basis'],published_hash=item['published_hash'])
     return result
@@ -152,7 +158,8 @@ def publish(identifier,value):
     if checked['technical_status']!='passed' or len(checked['cues'])!=len(cues):raise ValueError('invalid_provider_cues')
     with connect() as db:
         if db.execute('SELECT status FROM jobs WHERE id=?',(identifier,)).fetchone()[0]!='running':return False
-        db.execute("UPDATE jobs SET status='completed',published_hash=?,updated=?,index_status='pending' WHERE id=?",(checked['text_utf8_sha256'],time.time(),identifier))
+        summary=json.dumps({'language':language,'origin':origin,'cues':len(cues),'timing_adjustments':len(adjustments)})
+        db.execute("UPDATE jobs SET status='completed',published_hash=?,updated=?,index_status='pending',result_summary=? WHERE id=?",(checked['text_utf8_sha256'],time.time(),summary,identifier))
     return True
 
 
@@ -199,6 +206,10 @@ def launch(identifier):
 
 
 async def create(video_id,reference='',language='',origin='',mode='rapide',translate_french=True):
+    async with CONTROL_LOCK:return await _create(video_id,reference,language,origin,mode,translate_french)
+
+
+async def _create(video_id,reference,language,origin,mode,translate_french):
     if mode not in engine.MODES:raise HTTPException(400,'Mode IA inconnu.')
     if (language and not provider_subtitles.LANG.fullmatch(language)) or origin not in ('','provided','automatic'):raise HTTPException(400,'Choisissez une langue et une origine valides.')
     _,payload,_=await asyncio.to_thread(videos.row,video_id)
@@ -220,6 +231,10 @@ async def create(video_id,reference='',language='',origin='',mode='rapide',trans
 
 
 async def pause(identifier):
+    async with CONTROL_LOCK:return await _pause(identifier)
+
+
+async def _pause(identifier):
     if get(identifier)['status'] in ('queued','running'):
         update(identifier,'paused','Récupération mise en pause ; reprenez-la explicitement avec Internet.')
         task=ACTIVE.get(identifier)
@@ -228,6 +243,10 @@ async def pause(identifier):
 
 
 async def resume(identifier):
+    async with CONTROL_LOCK:return await _resume(identifier)
+
+
+async def _resume(identifier):
     item=get(identifier)
     if item['status'] in ('queued','running') and identifier not in ACTIVE:status(identifier);item=get(identifier)
     if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette récupération est déjà active ou terminée.')
@@ -249,15 +268,18 @@ def prepared_tracks(payload):
     result=[];languages=set()
     for item in rows:
         try:
-            private=files(item['id'])/'provider.json'
-            if video_inventory.is_link(private):continue
-            value=json.loads(private.read_text());language=value['track']['language']
+            if item['result_summary']:summary=json.loads(item['result_summary'])
+            else:
+                private=files(item['id'])/'provider.json'
+                if video_inventory.is_link(private):continue
+                value=json.loads(private.read_text());summary={**value['track'],'timing_adjustments':len(value['timing_adjustments'])}
+            language=summary['language']
             if language in languages:continue
             parsed=video_inventory.inspect_subtitle(track_file(item['id']),payload['media']['duration_seconds_declared'])
             if parsed['technical_status']!='passed' or parsed['text_utf8_sha256']!=item['published_hash']:continue
             result.append({'path':item['id']+'/source.vtt','acquired_job':item['id'],'source_revision':revision,
-                'language_declared':language,'language_basis':'provider_declared','origin':value['track']['origin'],
-                'acquisition_notice':NOTICE,'timing_adjustments':len(value['timing_adjustments']),'provider':'youtube',**parsed})
+                'language_declared':language,'language_basis':'provider_declared','origin':summary['origin'],
+                'acquisition_notice':NOTICE,'timing_adjustments':summary['timing_adjustments'],'provider':'youtube',**parsed})
             languages.add(language)
         except (OSError,ValueError,KeyError,HTTPException):continue
     return result

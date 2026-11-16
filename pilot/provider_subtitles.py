@@ -110,12 +110,7 @@ def retrieve(identifier,preferred='',language='',origin=''):
     except ImportError:raise ValueError('provider_tool_unavailable') from None
 
     class PublicSession(requests.Session):
-        def send(self,request,**kwargs):
-            target=urlsplit(request.url);host=(target.hostname or '').lower()
-            if target.scheme!='https' or not (host=='youtube.com' or host.endswith('.youtube.com')) or target.username or target.password or target.port not in (None,443):
-                raise ValueError('unexpected_provider_endpoint')
-            kwargs.update(timeout=(10,15),stream=True)
-            response=super().send(request,**kwargs)
+        def bounded(self,response):
             try:
                 chunks=[];size=0
                 for chunk in response.iter_content(65536):
@@ -123,8 +118,22 @@ def retrieve(identifier,preferred='',language='',origin=''):
                     if size>20_000_000:raise ValueError('provider_response_too_large')
                     chunks.append(chunk)
                 response._content=b''.join(chunks);response._content_consumed=True
-                return response
             finally:response.close()
+
+        def resolve_redirects(self,response,request,**kwargs):
+            # requests consumes redirect bodies even for Response.next().
+            # Bound the initial body before delegating that operation.
+            self.bounded(response)
+            yield from super().resolve_redirects(response,request,**kwargs)
+
+        def send(self,request,**kwargs):
+            target=urlsplit(request.url);host=(target.hostname or '').lower()
+            if target.scheme!='https' or not (host=='youtube.com' or host.endswith('.youtube.com')) or target.username or target.password or target.port not in (None,443):
+                raise ValueError('unexpected_provider_endpoint')
+            kwargs.update(timeout=(10,15),stream=True)
+            response=super().send(request,**kwargs)
+            self.bounded(response)
+            return response
 
     try:
         with PublicSession() as session:
@@ -132,11 +141,10 @@ def retrieve(identifier,preferred='',language='',origin=''):
             transcripts=list(YouTubeTranscriptApi(http_client=session).list(identifier))
             if len(transcripts)>1000:raise ValueError('provider_response_too_large')
             descriptions=[metadata(track) for track in transcripts]
-            if language:
-                choices=[track for track in transcripts if track.language_code==language and (not origin or metadata(track)['origin']==origin)]
-                if not choices:raise ValueError('provider_track_unavailable')
-                selected=choose(choices,preferred)
-            else:selected=choose(transcripts,preferred)
+            choices=[track for track in transcripts if (not language or track.language_code.lower()==language.lower() or
+                '-' not in language and track.language_code.lower().startswith(language.lower()+'-')) and (not origin or metadata(track)['origin']==origin)]
+            if not choices:raise ValueError('provider_track_unavailable')
+            selected=choose(choices,preferred)
             raw=selected.fetch().to_raw_data();cues,adjustments=checked_cues(raw)
             return {'video_id':identifier,'provider':'youtube','tool_version':importlib.metadata.version('youtube-transcript-api'),
                 'track':metadata(selected),'available_tracks':descriptions,'raw_provider_cues':raw,'cues':cues,'timing_adjustments':adjustments,

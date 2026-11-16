@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos locales
 
-**Guide actuel — 0.26.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.31.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
 à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -48,7 +48,7 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 Choisir **Famille → Bibliothèque → Collections → Vidéos locales**. Sur une vidéo,
 ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
-les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres français**,
+les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres**,
 sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
 piste exploitable utilise le parcours audio ci-dessous ; ce bouton de traduction seul ne connaît pas ses paroles.
 
@@ -79,6 +79,42 @@ Une modification du média ou de sa piste source empêche de reprendre l’ancie
 brouillon et retire l’association de l’ancienne traduction après actualisation.
 Les anciens fichiers et brouillons restent conservés pour comparaison.
 
+## Récupérer les pistes YouTube — 0.31.0
+
+Dans **Famille → Bibliothèque → Collections → Vidéos locales**, ouvrir
+**Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
+laisser le champ vide ; sinon, copier l’adresse exacte de la vidéo correspondante.
+Le logiciel ne cherche pas cette adresse depuis un titre approximatif.
+Choisir la piste automatique, française ou anglaise, puis **Récupérer les sous-titres**.
+Cette commande nécessite Internet ; elle ne télécharge pas la vidéo.
+
+Le choix automatique privilégie le français, puis la langue déclarée de la vidéo,
+puis l’anglais. Dans une même langue, une piste déclarée fournie est prioritaire
+sur une piste automatique. « Français » accepte aussi une variante comme `fr-FR`.
+Une langue annoncée par YouTube ne prouve pas que la piste a été relue.
+
+Le suivi est sous **Préparer les sous-titres → Suivre la récupération des sous-titres
+YouTube**. **Mettre en pause** arrête la requête ; **Reprendre avec Internet** la
+relance à votre demande. Fermer la page ne l’arrête pas ; après un redémarrage,
+la reprise reste explicite. Un refus du fournisseur ou une piste absente reste
+une erreur expliquée, avec la création locale depuis l’audio comme autre possibilité.
+Aucun contournement de blocage n’est exécuté.
+
+Seule la piste complète contrôlée rejoint le lecteur et la recherche. Elle reste
+ensuite utilisable sans Internet ni IA. La case **Traduire ensuite en français si
+nécessaire** utilise le modèle local choisi si la piste récupérée est dans une autre
+langue. Si le moteur est arrêté ou en pause, la piste source reste disponible ;
+lancer sa traduction depuis la vidéo après avoir rétabli le moteur. Une récupération
+terminée n’atteste pas que sa traduction est elle aussi terminée.
+
+Les intervalles qui se chevauchent sont raccourcis pour l’affichage, sans retirer
+les mots ; les temps bruts et chaque ajustement restent dans le rapport privé.
+**Télécharger le rapport de récupération** contient donc des paroles de la vidéo.
+Le lecteur affiche l’origine et demande de vérifier l’alignement avec votre média
+local : une autre édition ou un montage peut avoir des temps différents. Les
+originaux restent intacts. Les pistes et leurs états suivent la sauvegarde et le
+transfert de l’installation ; aucun compte YouTube n’est nécessaire pour ce parcours.
+
 ## Créer les sous-titres depuis un MP4 seul — 0.26.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos locales**, actualiser les
@@ -94,7 +130,7 @@ le bouton ne télécharge rien. Une fois préparée, elle fonctionne hors ligne,
 sur le processeur du serveur. La traduction française utilise aussi un modèle
 local installé et volontairement démarré. La pause IA est respectée.
 
-Le suivi est dans **Préparer les sous-titres français → Suivre la création des
+Le suivi est dans **Préparer les sous-titres → Suivre la création des
 sous-titres depuis l’audio**. **Mettre en pause** garde les passages terminés ;
 **Reprendre** continue les autres. Fermer la page ne stoppe pas le serveur, mais
 un redémarrage attend une reprise explicite. Aucun sous-titre partiel n’est annoncé

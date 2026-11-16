@@ -1,5 +1,7 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.31.0 : [récupération des pistes YouTube](2026-11-16-acquisition-sous-titres.md), commande explicite depuis le site, file durable, pause/reprise, contrôle de la source et index des pistes complètes ; traduction française locale optionnelle. Récupération réelle R7 en 1,386 s, aucun média téléchargé. ZIM, alignement du fonds de Marc et fidélité restent à qualifier.
+
 Candidat 0.27.0 : [transfert fiable](2026-11-16-transfert-fiable.md), développé
 par le chantier parallèle puis relu et joint à la 0.26.0. Copie vérifiée/reprenable,
 relocalisation et garde-fous, état vidéo conservé ; refus OSRM sans HEALTHCHECK

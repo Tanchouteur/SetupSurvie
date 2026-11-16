@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('caption_acquisition') as module:await module.stop_all()
+    except HTTPException:pass
+    try:
         with optional_feature('transcriptions') as module:await module.stop_all()
     except HTTPException:pass
     try:
@@ -85,7 +88,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.30.0'
+VERSION='0.31.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -776,6 +779,9 @@ async def report_videos(value=Depends(admin)):
     try:
         with optional_feature('transcriptions') as module:result['transcriptions']=await asyncio.to_thread(module.listing,None)
     except HTTPException:result['transcriptions_unavailable']=True
+    try:
+        with optional_feature('caption_acquisition') as module:result['subtitle_acquisitions']=await asyncio.to_thread(module.listing,None)
+    except HTTPException:result['subtitle_acquisitions_unavailable']=True
     return result
 
 
@@ -794,6 +800,40 @@ class TranscriptionRequest(BaseModel):
     language:str=Field(default='',max_length=3,pattern=r'^(?:[a-z]{2,3})?$')
     mode:str=Field(default='rapide',max_length=50)
     translate_french:bool=True
+
+
+class AcquisitionRequest(BaseModel):
+    id:str=Field(min_length=1,max_length=2000,pattern=r'^video:[a-f0-9]{64}$')
+    reference:str=Field(default='',max_length=2000)
+    language:str=Field(default='',max_length=40,pattern=r'^(?:[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)?$')
+    origin:str=Field(default='',pattern=r'^(?:provided|automatic)?$')
+    mode:str=Field(default='rapide',max_length=50)
+    translate_french:bool=True
+
+
+@app.get('/api/admin/video-acquisitions')
+async def list_video_acquisitions(value=Depends(admin)):
+    with optional_feature('caption_acquisition') as module:return {'jobs':await asyncio.to_thread(module.listing)}
+
+
+@app.post('/api/admin/video-acquisitions',status_code=202)
+async def create_video_acquisition(body:AcquisitionRequest,value=Depends(admin)):
+    with optional_feature('caption_acquisition') as module:return await module.create(body.id,body.reference,body.language,body.origin,body.mode,body.translate_french)
+
+
+@app.get('/api/admin/video-acquisitions/{identifier}/report')
+async def report_video_acquisition(identifier:str,value=Depends(admin)):
+    with optional_feature('caption_acquisition') as module:return {'version':VERSION,**await asyncio.to_thread(module.status,identifier,True)}
+
+
+@app.post('/api/admin/video-acquisitions/{identifier}/pause')
+async def pause_video_acquisition(identifier:str,value=Depends(admin)):
+    with optional_feature('caption_acquisition') as module:return await module.pause(identifier)
+
+
+@app.post('/api/admin/video-acquisitions/{identifier}/resume',status_code=202)
+async def resume_video_acquisition(identifier:str,value=Depends(admin)):
+    with optional_feature('caption_acquisition') as module:return await module.resume(identifier)
 
 
 @app.get('/api/admin/video-transcriptions')

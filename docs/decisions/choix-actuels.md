@@ -1,5 +1,7 @@
 # Choix et contraintes actuels
 
+La **0.31.0** ajoute la [récupération des sous-titres YouTube](../utilisation/videos-locales.md#récupérer-les-pistes-youtube--0310), à la demande avec Internet, puis lecture/recherche hors ligne et traduction locale optionnelle. La référence doit correspondre au média ; les ZIM et la qualification des vidéos de Marc restent ouverts.
+
 La **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)
 et fournit un diagnostic exportable en lecture seule. Les états contrôleur/API
 et les marges mémoire sont distingués ; les anciennes pannes non enregistrées

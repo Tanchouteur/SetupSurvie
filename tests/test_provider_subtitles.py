@@ -54,7 +54,7 @@ class ProviderSubtitleTests(unittest.TestCase):
 
 
 class ProviderRetrievalTests(unittest.TestCase):
-    def environment(self,*,url='https://www.youtube.com/watch?v='+ID,large=False):
+    def environment(self,*,url='https://www.youtube.com/watch?v='+ID,large=False,track_language='fr'):
         import contextlib
         import importlib.metadata
         import itertools
@@ -74,7 +74,7 @@ class ProviderRetrievalTests(unittest.TestCase):
             def list(self,identifier):
                 assert identifier==ID and not self.http_client.trust_env and self.http_client.max_redirects==4
                 self.http_client.send(SimpleNamespace(url=url))
-                french=track('fr');french.fetch=lambda:SimpleNamespace(to_raw_data=lambda:[{'start':1,'duration':2,'text':'Ne pas ouvrir le capot.'}])
+                french=track(track_language);french.fetch=lambda:SimpleNamespace(to_raw_data=lambda:[{'start':1,'duration':2,'text':'Ne pas ouvrir le capot.'}])
                 return [french]
         stack=contextlib.ExitStack();stack.enter_context(patch.dict(sys.modules,{'requests':SimpleNamespace(Session=Session),'youtube_transcript_api':SimpleNamespace(YouTubeTranscriptApi=API)}))
         stack.enter_context(patch.object(importlib.metadata,'version',return_value='1.2.4-fixture'))
@@ -87,6 +87,13 @@ class ProviderRetrievalTests(unittest.TestCase):
         self.assertEqual(result['cues'][0]['text'],'Ne pas ouvrir le capot.');self.assertEqual(result['raw_provider_cues'][0]['start'],1)
         self.assertFalse(result['online_translation_requested']);self.assertEqual(result['human_review'],'not_performed')
         self.assertEqual(calls[0][1],{'timeout':(10,15),'stream':True});self.assertEqual(closed,[True])
+
+    def test_french_choice_accepts_a_provider_regional_variant_and_honors_origin(self):
+        context,calls,closed=self.environment(track_language='fr-FR')
+        with context:result=subtitles.retrieve(ID,language='fr',origin='provided')
+        self.assertEqual(result['track']['language'],'fr-FR')
+        context,calls,closed=self.environment(track_language='fr-FR')
+        with context,self.assertRaisesRegex(ValueError,'provider_track_unavailable'):subtitles.retrieve(ID,origin='automatic')
 
     def test_arbitrary_endpoint_is_rejected_before_transport(self):
         context,calls,closed=self.environment(url='https://127.0.0.1/private')

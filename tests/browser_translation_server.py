@@ -14,7 +14,7 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
 from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries,illustrations
-from pilot import videos,captions,transcriptions
+from pilot import videos,captions,transcriptions,caption_acquisition,provider_subtitles
 import re
 import shutil
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
@@ -22,6 +22,40 @@ temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(t
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
 inventory.ZIMS=root/'zim';inventory.ZIMS.mkdir()
 videos.ROOT=root/'video'
+acquisition_gate=None
+acquisition_blocked=False
+class AcquisitionWorker:
+    async def fetch(self,command):
+        if acquisition_gate:await acquisition_gate.wait()
+        if acquisition_blocked:raise ValueError('provider_blocked')
+        rows=[{'start':1,'duration':2,'text':'Fictional bearing 17 mm.'},{'start':4,'duration':2,'text':'Fictional bearing 19 mm.'}]
+        cues,changes=provider_subtitles.checked_cues(rows)
+        return {'video_id':command['id'],'provider':'youtube','tool_version':'fixture','track':{'language':'en','origin':'provided'},
+            'available_tracks':[],'raw_provider_cues':rows,'cues':cues,'timing_adjustments':changes,'human_review':'not_performed','online_translation_requested':False}
+    async def close(self):pass
+caption_acquisition.FetchWorker=AcquisitionWorker
+
+@gateway.app.post('/fixture/acquisitions')
+async def fixture_acquisitions(hold:bool=True,blocked:bool=False,enabled:bool=True,reset:bool=False):
+    global acquisition_gate,acquisition_blocked
+    await caption_acquisition.stop_all();acquisition_gate=asyncio.Event() if hold else None;acquisition_blocked=blocked
+    videos.ROOT.mkdir(exist_ok=True)
+    if reset:
+        with caption_acquisition.connect() as db:db.execute('DELETE FROM jobs')
+    if enabled and (reset or not (videos.ROOT/'acquisition.webm').exists()):
+        shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'acquisition.webm')
+        (videos.ROOT/'acquisition.info.json').write_text(json.dumps({'title':'Récupération source fictive','language':'en','duration':12,'extractor':'Youtube','id':'abcDEF_12-3'}))
+    elif not enabled:
+        for path in videos.ROOT.glob('acquisition.*'):path.unlink()
+    videos.STOP.clear();await asyncio.to_thread(videos.scan);return {'ready':enabled}
+
+@gateway.app.post('/fixture/acquisitions-release')
+async def fixture_acquisitions_release():
+    global acquisition_gate,acquisition_blocked
+    acquisition_blocked=False
+    if acquisition_gate:acquisition_gate.set()
+    acquisition_gate=None;return {'released':True}
+
 @gateway.app.post('/fixture/videos')
 def fixture_videos():
     videos.ROOT.mkdir(exist_ok=True)

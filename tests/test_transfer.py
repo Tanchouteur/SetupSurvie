@@ -270,13 +270,19 @@ class ActivationTests(unittest.TestCase):
             db.execute('CREATE TABLE jobs(id TEXT PRIMARY KEY,status TEXT,progress_ms INTEGER)')
             db.execute('INSERT INTO jobs VALUES(?,?,?)',(job,'paused',60000));db.commit()
         french=state/'video-captions'/'translation-fixture-id'/'fr.vtt';french.parent.mkdir(parents=True);french.write_text('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nNe pas ouvrir.\n')
+        acquired=state/'video-acquisition'/'provider-fixture-id'/'source.vtt';acquired.parent.mkdir(parents=True);acquired.write_bytes(track.read_bytes())
+        provider=acquired.with_name('provider.json');provider.write_text('{"provider":"youtube","human_review":"not_performed"}')
+        with closing(sqlite3.connect(state/'video-acquisition.db')) as db:
+            db.execute('CREATE TABLE jobs(id TEXT PRIMARY KEY,status TEXT)');db.execute('INSERT INTO jobs VALUES(?,?)',('provider-fixture-id','completed'));db.commit()
         cache=self.data/'state/openwebui/cache/whisper/faster-whisper-small';cache.mkdir(parents=True);(cache/'model.bin').write_bytes(b'tiny-model-fixture-no-inference')
         self.copy();transfer.prepare(self.dest);transfer.verify_copy(self.dest)
-        for original in (track,french,cache/'model.bin'):
+        for original in (track,french,acquired,provider,cache/'model.bin'):
             copied=self.dest/'data'/original.relative_to(self.data)
             self.assertEqual(original.read_bytes(),copied.read_bytes())
         with closing(sqlite3.connect(self.dest/'data/state/pilot/video-transcriptions.db')) as db:
             self.assertEqual(db.execute('SELECT * FROM jobs').fetchone(),(job,'paused',60000))
+        with closing(sqlite3.connect(self.dest/'data/state/pilot/video-acquisition.db')) as db:
+            self.assertEqual(db.execute('SELECT * FROM jobs').fetchone(),('provider-fixture-id','completed'))
 
     def test_source_rollback_is_refused_during_another_source_operation(self):
         self.copy()

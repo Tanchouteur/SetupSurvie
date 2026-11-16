@@ -1,100 +1,62 @@
 # Récupérer les sous-titres déjà proposés par la source
 
-**Chantier en cours — 16 novembre 2026.** Complément de L6, non livré et non
-accessible depuis le site. Le candidat de transcription 0.26.0 reste un chantier
-distinct ; le numéro de cette prochaine fonction sera fixé après synchronisation
-avec main et coordination du transfert de disque.
+**Choix actuel — 0.31.0, 16 novembre 2026.** Complément de L6 : récupération
+explicite depuis le site, puis conservation locale, index et traduction française
+optionnelle. Le [guide vidéo](../utilisation/videos-locales.md) décrit le parcours ;
+le [bilan daté](../essais/2026-11-16-acquisition-sous-titres.md) sépare les preuves
+réelles, simulées et les validations restantes. Les vidéos des ZIM demandent un
+chantier distinct ; aucune couverture du fonds de Marc n’est certifiée.
 
-## Choix de réalisation
+## Source et dépendance retenues
 
-L'image Open WebUI épinglée inclut déjà `youtube-transcript-api==1.2.4` selon son
+L’image Open WebUI épinglée inclut déjà `youtube-transcript-api==1.2.4` dans son
 [manifeste amont](https://github.com/open-webui/open-webui/blob/v0.12.5/backend/requirements.txt).
-Cette bibliothèque permet de lister les pistes YouTube, distinguer celles déclarées
-fournies et automatiques, puis récupérer texte et temps sans télécharger le média.
-Voir sa [référence versionnée](https://github.com/jdepoix/youtube-transcript-api/tree/v1.2.4).
-La présence d'une langue ou d'une origine déclarée ne prouve ni fidélité ni droits
-de redistribution. Le manifeste n'est pas un nouvel essai du conteneur Windows.
+La [référence versionnée](https://github.com/jdepoix/youtube-transcript-api/tree/v1.2.4)
+permet de lister les pistes, distinguer celles déclarées fournies/automatiques et
+récupérer texte et temps sans télécharger le média. Le manifeste ne constitue pas
+un nouvel essai de l’image sous Windows ; une dépendance absente produit une erreur
+locale expliquée. Aucune image tierce n’est changée par cette livraison.
 
-La piste retenue évite pour l'instant un outil de téléchargement supplémentaire.
-`yt-dlp` a été examiné comme solution plus large ; il ne devient pas une dépendance
-pour récupérer seulement les paroles. Le besoin reste une action explicite avec
-Internet, puis un usage local sans Internet. Hors ligne, absence de piste ou refus
-du fournisseur, la transcription audio locale reste l'autre parcours ; aucun
-blocage distant ne doit être présenté comme une absence de parole dans le média.
+`yt-dlp` a été envisagé comme solution plus générale. Il n’est pas ajouté pour
+ce seul besoin. Aucune traduction en ligne, authentification YouTube, reprise de
+cookies ou proxy d’environnement, ni contournement d’un blocage fournisseur n’est
+prévu. Hors ligne, piste absente ou fournisseur bloqué : le parcours de
+reconnaissance audio locale 0.26.0 reste disponible après sa préparation.
 
-## Première partie codée, hors parcours utilisateur
+## Choix et contrôles
 
-`pilot/provider_subtitles.py` valide les références YouTube et les métadonnées
-source ; une URL arbitraire n'est jamais passée à un téléchargeur. La fonction
-réseau n'est appelée ni à l'import ni à l'ouverture de Collections. Une session
-ne reprend pas les identifiants/proxies d'environnement ; domaines, délais et
-volume de réponse sont bornés. Les erreurs libres, URLs et cookies du fournisseur
-ne deviennent pas des messages publics. Aucun proxy ou contournement de blocage
-n'est prévu.
+La référence provient des métadonnées YouTube associées ou d’une adresse exacte
+saisie volontairement. Elle n’est jamais devinée par titre. L’utilisateur reste
+responsable de choisir le média correspondant ; le logiciel ne compare pas toutes
+ses images ou son audio avec la source distante.
 
-Une piste française disponible est prioritaire, puis la langue parlée déclarée,
-puis l'anglais. Dans une même langue, la piste déclarée fournie passe avant celle
-déclarée automatique. Aucune traduction en ligne n'est demandée implicitement.
-Les autres langues pourront passer dans la file de traduction locale.
+Choix automatique : français, puis langue parlée déclarée, puis anglais ; piste
+fournie avant automatique dans la même langue. Un choix de langue explicite
+accepte sa variante régionale. La langue et l’origine déclarées ne prouvent ni
+fidélité humaine ni droit de redistribution.
 
-Les lignes et temps bruts sont conservés dans le rapport privé du candidat. Les lignes au
-même début sont jointes sans retirer leurs mots ; les autres chevauchements
-raccourcissent uniquement le temps d'affichage jusqu'au début suivant. Chaque
-ajustement reste enregistré. Des valeurs invalides ou un texte trop grand sont
-refusés au lieu de devenir une piste vide « réussie ». Ce choix doit être montré
-dans le futur lecteur et vérifié sur les pistes effectivement récupérées.
+Les lignes partageant un début sont jointes sans retirer leurs mots ; les autres
+chevauchements raccourcissent seulement la durée d’affichage. Le rapport privé
+conserve temps bruts et ajustements. Temps, ordre ou volumes invalides ne deviennent
+pas une piste vide « réussie ». Le lecteur demande de vérifier l’alignement local.
 
-Neuf tests sans réseau passent : références, priorité de langue/origine,
-chevauchement, conservation des mots, refus des temps invalides, volume et fermeture
-de réponse, session explicite et refus d'un autre domaine avant transport.
-Ils ne certifient pas la fidélité des paroles ni tous les comportements du fournisseur.
+Un enfant réseau borné produit une piste complète ; pause et arrêt du service
+le rejoignent. La publication recontrôle la révision du média. Les originaux
+restent intacts. La piste complète rejoint l’index ; sa traduction française
+utilise ensuite la file locale si demandée. Un arrêt IA conserve la piste source.
+Les états SQLite et les pistes suivent les sauvegardes et le transfert de disque.
 
-## File durable en cours de développement
+## Étapes historiques et essai réel
 
-`caption_acquisition.py` conserve les récupérations dans une base distincte et
-utilise un enfant réseau borné, sans environnement de secrets. Une pause rejoint
-cet enfant ; la publication recontrôle la source locale et ne rend disponible
-qu'une piste complète validée. Les pistes originales restent intactes. Une
-récupération terminée peut ensuite alimenter la traduction française locale et
-l'index commun ; la lecture des vidéos ne déclenche pas de réseau.
+Le premier essai R7, avant raccordement au portail, a récupéré en **813 ms** la
+piste `fr-FR` déclarée automatique de la [présentation rapide de Kiwix](https://www.youtube.com/watch?v=4p2HsIAqitg) :
+185 segments, 182 ajustements de durée, sans média téléchargé ni modèle chargé.
+Son rapport reste privé dans `audio-transcription/report-provider-first.json` du
+laboratoire R7. Les neuf tests de sélection et cinq tests de file initiaux
+utilisaient des fournisseurs/modèles simulés ; ils ne validaient alors pas le site.
 
-Cinq tests sur fixtures passent : conservation des paroles brutes et originaux,
-source/français indexés, pause/reprise explicite, fournisseur bloqué puis réessai,
-référence absente sans recherche par titre et média local changé pendant la
-réponse. Le raccordement dans les lecteurs est codé mais les routes, commandes
-utilisateur, arrêt du service et qualification complète ne sont pas encore ajoutés.
-Ce chantier reste non livré ; il n'appartient pas à la 0.27.0 de transfert.
-
-## Premier essai réel, sans intégration au portail
-
-Depuis le R7, avec youtube-transcript-api 1.2.4 installé dans le seul environnement
-de recette et la même fonction : récupération sur la vidéo publique
-[présentation rapide de Kiwix](https://www.youtube.com/watch?v=4p2HsIAqitg), en
-**813 ms**. Le fournisseur propose une piste `fr-FR` déclarée automatique :
-185 segments retenus et 182 ajustements de durée pour les chevauchements. Aucun
-média téléchargé, modèle chargé, compte ou proxy utilisé, ni méthode de traduction
-en ligne appelée. Le rapport brut reste privé sous
-`audio-transcription/report-provider-first.json` du laboratoire R7.
-
-Cette récupération prouve que cette requête fonctionne depuis ce réseau à cette
-date. Elle ne valide pas l'alignement avec un MP4 local, la fidélité du français,
-les droits de redistribution, tous les téléchargements de Marc ou la disponibilité
-future du fournisseur. Le site ne propose pas encore cette fonction.
-
-## Suite nécessaire
-
-- Ajouter la file durable, l'arrêt et la reprise, la publication conditionnelle et
-  la conservation des originaux. Vérifier source locale inchangée et identité de la
-  vidéo distante ; ne pas deviner un identifiant depuis un titre quelconque.
-- Intégrer récupération et choix de langue dans les commandes vidéo existantes,
-  avec résultat compréhensible et export privé ; ne pas ajouter un écran technique.
-- Joindre la piste complète à l'index et au lecteur, puis sa traduction française
-  locale lorsqu'elle est nécessaire. Tester suppression/changement de source,
-  interruption, réponse tardive et panne réseau.
-- Exécuter une recette réelle de récupération et de lecture ; les refus et limites
-  du fournisseur sont aussi des résultats. Aucun contenu de Marc n'est disponible
-  dans le runner pour cette validation.
-- Inventorier et traiter les vidéos/pistes contenues dans les ZIM séparément. Le
-  blocage anti-robot de la page de spécification consultée ne permet pas de déduire
-  l'absence de pistes dans ces archives ; utiliser la bibliothèque libzim épinglée
-  et de petites archives générées pour développer le parcours.
+Le rejeu 0.31.0 avec le choix explicite « français » accepte cette piste `fr-FR`
+en **1 386 ms**. Les mêmes 185 segments et 182 ajustements sont conservés, sans
+traduction distante demandée. Rapport privé `report-provider-031.json`. Cette
+observation datée n’atteste ni disponibilité future du fournisseur, ni alignement
+avec un MP4 de Marc, ni fidélité ou droits de redistribution.

@@ -32,6 +32,29 @@ class PilotAPITests(unittest.TestCase):
         response=self.client.post('/api/profiles/select',json={'id':who},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);return response
 
+    def test_subtitle_acquisition_requires_admin_validates_inputs_and_preserves_optional_isolation(self):
+        from pilot import caption_acquisition as acquired
+        headers={'Origin':'http://testserver'};body={'id':'video:'+'a'*64,'reference':'https://youtu.be/abcDEF_12-3','language':'fr','translate_french':False}
+        self.login('alice')
+        with patch.object(acquired,'create',AsyncMock(return_value={'id':'job','status':'queued'})) as create:
+            self.assertEqual(self.client.post('/api/admin/video-acquisitions',json=body,headers=headers).status_code,403)
+            self.assertEqual(self.client.get('/api/admin/video-acquisitions').status_code,403)
+            self.assertEqual(self.client.get('/api/admin/video-acquisitions/job/report').status_code,403)
+            self.assertEqual(self.client.post('/api/admin/video-acquisitions/job/resume',json={},headers=headers).status_code,403)
+            create.assert_not_awaited();self.login('admin')
+            self.assertEqual(self.client.post('/api/admin/video-acquisitions',json={**body,'language':'fr<script>'},headers=headers).status_code,422)
+            response=self.client.post('/api/admin/video-acquisitions',json=body,headers=headers)
+            self.assertEqual(response.status_code,202);create.assert_awaited_once_with(body['id'],body['reference'],'fr','','rapide',False)
+        with patch.object(acquired,'listing',return_value=[]),patch.object(acquired,'status',return_value={'id':'job','status':'paused'}):
+            self.assertEqual(self.client.get('/api/admin/video-acquisitions').json(),{'jobs':[]})
+            self.assertEqual(self.client.get('/api/admin/video-acquisitions/job/report').json()['version'],gateway.VERSION)
+        for action in ('pause','resume'):
+            with patch.object(acquired,action,AsyncMock(return_value={'status':'paused'})) as call:
+                self.assertIn(self.client.post('/api/admin/video-acquisitions/job/'+action,json={},headers=headers).status_code,(200,202));call.assert_awaited_once_with('job')
+        with patch.object(acquired,'listing',side_effect=OSError('Fixture unavailable')):
+            self.assertEqual(self.client.get('/api/admin/video-acquisitions').status_code,503)
+            self.assertEqual(self.client.get('/api/health').status_code,200)
+
     def test_refused_calibration_is_recorded_and_diagnostic_requires_family(self):
         self.login('admin');headers={'Origin':'http://testserver'}
         snapshot={'controller':{'online':False},'ollama':{},'model_loaded_by_this_check':False}
