@@ -20,7 +20,7 @@ def search_subject(query):
                      r'|resume|resumer|summarize|summarise)\b',raw)
     if not request:return query
     tail=raw[request.end():].strip();changed=False
-    framing=set('le la les un une de du des d ces mes nos vos informations information info infos documents document sources source articles article bibliotheque library the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
+    framing=set('le la les un une de du des d et and ces mes nos vos informations information info infos documents document sources source articles article videos video transcriptions transcripts captions bibliotheque library the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
     for _ in range(8):
         boundary=next((m for m in re.finditer(r'\b(?:au sujet de|a propos de|sur|concernant|about|of|on|de|des|du)\b',tail) if set(tail[:m.start()].split())<=framing),None)
         if boundary is None or not tail[boundary.end():].strip():break
@@ -221,14 +221,16 @@ def ordered(items,query,limit,*,normalizer=None):
         seen.add(item['id'])
         clean={k:v for k,v in item.items() if not k.startswith('_')}
         clean['match_quality']=match_quality(item,query,normalizer=normalize)
-        parent=item['id'].split('#page=')[0]
+        parent=item['id'].split('#page=')[0].split('#t=')[0]
         if '/appropedia' in item['id'] or item['id'].startswith('zim:appropedia'):
             parent=re.sub(r'/(?:[a-z]{2,3}(?:-[a-z]+)?)$','',parent)
         if item['id'].startswith('zim:') and parent in parents:
             continue
-        if '#page=' in item['id'] and parent in parents:
+        if ('#page=' in item['id'] or item['id'].startswith('video:')) and parent in parents:
             others=parents[parent].setdefault('other_matches',[])
-            if len(others)<5:others.append({k:item.get(k,'') for k in ('id','title','url')})
+            if len(others)<5:
+                fields=('id','title','url')+(('kind','position_ms','language') if item['id'].startswith('video:') else ())
+                others.append({k:item.get(k,'') for k in fields})
             continue
         parents[parent]=clean;result.append(clean)
     return result[:limit]

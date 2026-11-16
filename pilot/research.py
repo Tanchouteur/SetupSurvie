@@ -158,6 +158,7 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
         # Reserve source metadata before selecting text. Do not mark it read yet.
         metadata={key:item.get(key,'') for key in ('id','title','language','document_date','edition','archive_date','collected_at','provenance')}
         metadata.update({key:item[key] for key in ('is_ai_translation','original_id','original_title','original_document_date','original_edition','translation_notice') if key in item})
+        if item.get('kind')=='video':metadata.update(video_notice=item.get('video_notice',''),position_ms=item.get('position_ms',0),reading_scope='local_captions_only_no_pixels_or_audio_interpretation')
         parts=passages(item['text'],query,max(0,allocation-size(metadata)-220))
         if not parts:continue
         entry={**metadata,'passages':parts,'partial_read':bool(item.get('preview') or item.get('text_truncated') or sum(len(p['text']) for p in parts)<len(item['text'])),'text_limit_reached':bool(item.get('text_truncated'))}
@@ -193,7 +194,7 @@ def citation_numbers(answer):
 
 def source_id_citations(answer):
     code=code_spans(answer)
-    return [match for match in re.finditer(r'\[((?:guide|zim):[^\]\n]{1,2000})\]',answer) if not any(start<=match.start()<end for start,end in code)]
+    return [match for match in re.finditer(r'\[((?:guide|zim|video):[^\]\n]{1,2000})\]',answer) if not any(start<=match.start()<end for start,end in code)]
 
 
 def citation_source(identifier,references):

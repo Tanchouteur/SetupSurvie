@@ -17,7 +17,7 @@ def clean_sources(raw):
         for item in raw[:12]:
             if not isinstance(item,dict):continue
             identifier,title=item.get('id'),item.get('title')
-            if not isinstance(identifier,str) or not identifier.startswith(('guide:','zim:')) or len(identifier)>2000 or identifier in seen:continue
+            if not isinstance(identifier,str) or not identifier.startswith(('guide:','zim:','video:')) or len(identifier)>2000 or identifier in seen:continue
             if not isinstance(title,str) or not title.strip():continue
             candidate={'id':identifier,'title':title[:400]}
             try:(identifier+candidate['title']).encode('utf-8')

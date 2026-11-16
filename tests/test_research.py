@@ -70,6 +70,7 @@ class PassageTests(unittest.TestCase):
         self.assertEqual(research.retrieval.search_subject(research.primary_query(question)),'les techniques pour faire du feu')
         self.assertEqual(research.retrieval.search_subject('Write a brief summary of the documents about solar panels'),'solar panels')
         self.assertEqual(research.retrieval.search_subject('La synthèse chimique du méthanol'),'La synthèse chimique du méthanol')
+        self.assertEqual(research.retrieval.search_subject('Fais une synthèse des documents et vidéos sur le rotor fictif'),'le rotor fictif')
 
     def test_answer_late_in_document_replaces_unrelated_introduction_with_exact_offsets(self):
         text=('Historique fictif sans rapport.\n'*300)+'\nCompost : la température fictive mesurée vaut 42 unités.\n'+('Autre contexte.\n'*60)

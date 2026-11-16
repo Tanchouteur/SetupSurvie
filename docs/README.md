@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Vidéos locales et sous-titres](utilisation/videos-locales.md) — 0.23.0, recherche des passages et lecteur local ; préparation des pistes manquantes encore distincte.
+
 - [Lecture française intégrée](utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210) — 0.21.0, version publiée dans les lecteurs portail/PDF.
 
 - [Mesurer les lenteurs en un clic](exploitation/diagnostic-complet-performances.md) — 0.22.0, recherche, IA et ressources du serveur dans un rapport unique.

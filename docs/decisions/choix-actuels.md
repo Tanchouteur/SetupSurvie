@@ -1,5 +1,12 @@
 # Choix et contraintes actuels
 
+La 0.23.0 ajoute les [vidéos locales](../utilisation/videos-locales.md) à la recherche
+commune et au lecteur. L’indexation est volontaire après téléchargement, sans
+modifier les originaux ; une piste absente n’est pas une parole lue. L’assistant
+peut comparer sous-titres et documents, avec leurs références et limites, sans
+voir les gestes. Acquisition, transcription et traduction synchronisée restent
+distinctes ; la validation de chaque vidéo de Marc n’est pas déclarée réalisée.
+
 La 0.22.0 ajoute un [diagnostic commun des lenteurs](../exploitation/diagnostic-complet-performances.md) :
 recherches répétées, rédaction seule, recherche/lecture/réponse et documents déjà
 sélectionnés, avec compteurs natifs du serveur. Le cache n’est pas vidé, le modèle

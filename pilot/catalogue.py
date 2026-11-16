@@ -15,10 +15,13 @@ TYPES={'unknown','overview','explanation','procedure','exercise','manual'}
 
 
 def canonical(identifier):
-    if not isinstance(identifier,str) or len(identifier)>2000 or not identifier.startswith(('guide:','zim:','collection:')):
+    if not isinstance(identifier,str) or len(identifier)>2000 or not identifier.startswith(('guide:','zim:','video:','collection:')):
         raise HTTPException(400,'Référence documentaire invalide.')
     kind,path=identifier.split(':',1)
     if kind=='guide':path=re.sub(r'#page=\d+$','',path)
+    if kind=='video':
+        from . import videos
+        return 'video:'+videos.identity(identifier)[0]
     for _ in range(3):
         decoded=unquote(path)
         if decoded==path:break
@@ -31,6 +34,9 @@ def canonical(identifier):
 
 def revision(identifier,guides,zims):
     key=canonical(identifier);kind,path=key.split(':',1)
+    if kind=='video':
+        from . import videos
+        return videos.revision(key)
     root=Path(guides if kind=='guide' else zims)
     relative=path if kind=='guide' else path.split('/')[0]+'.zim'
     target=root/relative
@@ -77,7 +83,7 @@ def snapshot():
 def current_revision(key,guides,zims,revisions=None):
     if revisions is None:return revision(key,guides,zims)
     kind,path=key.split(':',1)
-    physical=('guide',path) if kind=='guide' else ('zim',path.split('/')[0])
+    physical=('guide',path) if kind=='guide' else ('video',path) if kind=='video' else ('zim',path.split('/')[0])
     if physical not in revisions:revisions[physical]=revision(key,guides,zims)
     return revisions[physical]
 

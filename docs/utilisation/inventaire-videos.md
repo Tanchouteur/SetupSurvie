@@ -1,5 +1,11 @@
 # Inventorier les vidéos locales
 
+Depuis 0.23.0, le [parcours du site](videos-locales.md) prépare un index séparé et
+lit les médias/pistes locales. La commande ci-dessous reste un inventaire en
+lecture seule ; elle ne lance pas cette préparation du site. Son parseur standard
+est partagé avec `pilot/video_inventory.py` ; conserver la copie du dépôt, pas
+le seul fichier lanceur, pour l’exécuter.
+
 **Guide actuel — outil autonome intégré en 0.14.0, 15 novembre 2026.** Testé sur de petits
 fichiers fictifs dans le runner Linux ; recette Windows et fonds de Marc à faire.
 Il prépare l'inventaire prévu dans les [décisions vidéo](../decisions/videos-locales-et-recherche.md)

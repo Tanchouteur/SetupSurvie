@@ -11,7 +11,7 @@ def canonical(identifier):
 def listing(user_id, language=''):
     with store.connect() as db:
         rows=db.execute("SELECT source_id AS id,title,url,language,created FROM favorites WHERE user_id=? AND (?='' OR language IN (?,?)) ORDER BY created DESC",(user_id,language,language,{'fr':'fra','en':'eng'}.get(language,language))).fetchall()
-        return [{**dict(row),'kind':'guide' if row['id'].startswith('guide:') else 'article','excerpt':'',
+        return [{**dict(row),'kind':'guide' if row['id'].startswith('guide:') else 'video' if row['id'].startswith('video:') else 'article','excerpt':'',
                  **(library.guide_metadata(db,row['id']) if row['id'].startswith('guide:') else {})} for row in rows]
 
 

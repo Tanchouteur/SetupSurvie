@@ -1,5 +1,24 @@
 # Architecture du pilote
 
+## Vidéos et sous-titres locaux — 0.23.0
+
+`pilot/video_inventory.py` partage le parseur standard avec le lanceur
+`scripts/library_videos.py`. `pilot/videos.py` publie un index SQLite/FTS séparé
+dans `state/pilot/videos.db`, avec métadonnées et segments par piste. Actualisation
+explicite, annulation par événement rejoint, transaction globale et rapport R6
+par vidéo ; une interruption laisse l’index précédent. Aucun original n’est écrit.
+Le montage `library/video:/videos:ro` reste indépendant des guides/ZIM et ne change
+pas le schéma du magasin principal. Une recherche vidéo optionnelle défaillante
+est signalée sans supprimer les résultats documentaires.
+
+Les identifiants `video:HASH#t=MILLISECONDES&track=N` sont opaques et gardent le
+passage/la piste réellement trouvés. Résolution limitée au catalogue local et aux
+fichiers réguliers vérifiés, détection des changements média/métadonnées/pistes.
+L’API média accepte les plages HTTP ; l’API piste normalise SRT/WebVTT en texte
+WebVTT échappé. Le lecteur n’effectue ni inférence, ni accès Internet, ni transcodage.
+Les outils IA reçoivent des paroles avec horodatages et limites, sans pixels.
+Voir le [guide](../utilisation/videos-locales.md) pour les limites et procédures.
+
 ## Diagnostic commun des performances — 0.22.0
 
 `pilot/performance.py` orchestre une campagne administrative explicite et bornée,

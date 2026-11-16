@@ -34,7 +34,7 @@ def read(db,identifier):
         records=[]
         for row in value['evidence']:
             if not re.fullmatch('[a-f0-9]{32}',row['id']) or not re.fullmatch('[a-f0-9]{64}',row['source_revision']):raise ValueError()
-            if not row['source_id'].startswith(('guide:','zim:')) or not row['sections'] or not set(row['sections'])<=allowed:raise ValueError()
+            if not row['source_id'].startswith(('guide:','zim:','video:')) or not row['sections'] or not set(row['sections'])<=allowed:raise ValueError()
             catalogue.canonical(row['source_id'])
             if any(not isinstance(row[k],str) or len(row[k])>limit for k,limit in [('note',700),('locator',200),('title',400)]):raise ValueError()
             records.append({**{k:row[k] for k in ('id','source_id','source_revision','sections','note','locator','title')},
@@ -84,7 +84,7 @@ async def save(identifier,source_id,expected_source,expected_dossier,sections,no
     _,definition_sections=definition(identifier)
     if not reviewed or not sections or len(set(sections))!=len(sections) or not set(sections)<={s['id'] for s in definition_sections}:raise HTTPException(400,'Choisissez les points réellement examinés dans le document.')
     if not isinstance(note,str) or not note.strip() or len(note)>700 or not isinstance(locator,str) or not locator.strip() or len(locator)>200:raise HTTPException(400,'Ajoutez un bref repère et la page ou section où le retrouver.')
-    if not source_id.startswith(('guide:','zim:')):raise HTTPException(400,'Référence de document invalide.')
+    if not source_id.startswith(('guide:','zim:','video:')):raise HTTPException(400,'Référence de document invalide.')
     catalogue.canonical(source_id)
     if catalogue.revision(source_id,library.GUIDES,inventory.ZIMS)!=expected_source:raise HTTPException(409,'Le fichier a changé ou est absent. Rouvrez le document avant d’ajouter ce repère.')
     source=await library.source(source_id)
