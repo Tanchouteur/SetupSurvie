@@ -119,6 +119,13 @@ l'image épinglée par ce seul relevé du manifeste amont.
 
 ## Travail restant
 
+Le premier CI complet du code `e14b156` réussit. Un rejeu local Chromium/WebKit
+termine les quinze contrôles audio, puis relève une erreur de requête mémoire
+pendant la navigation du test de traduction. Le suivi de calibration est désormais
+limité à sa rubrique visible, sa requête est annulée au départ de la page et une
+réponse ne peut pas remplir un autre profil. La recette conserve son contrôle
+d'erreurs et vérifie aussi l'absence de consultation d'un essai mémoire replié.
+
 Valider le parcours navigateur et le runtime emballé, terminer la CI et le paquet,
 puis qualifier les vrais MP4. Acquisition de sous-titres en ligne, inventaire et
 préparation des vidéos/pistes des ZIM restent distincts et non achevés. Une bonne

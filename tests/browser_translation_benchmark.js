@@ -1,9 +1,10 @@
 // Actual 40-page PDF extraction and resumable queue; model output is simulated.
 async page=>{
-  const base='http://10.0.3.2:8769',checks=[],commands=[],errors=[],headers={Origin:base};
+  const base='http://10.0.3.2:8769',checks=[],commands=[],errors=[],headers={Origin:base};let memoryRequests=0;
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   page.on('pageerror',error=>errors.push(error.message));
   page.on('request',r=>{if(r.method()==='POST'&&r.url().includes('/admin/translation-benchmark/'))commands.push(r.url().split('/').pop());});
+  page.on('request',r=>{if(new URL(r.url()).pathname==='/api/admin/assistant/calibration')memoryRequests++;});
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   await page.goto(base+'/#/appareil/reglages');await page.waitForFunction(()=>S.authReady&&S.user);
   await page.locator('#settings-reglages a[href="#/appareil/tests"]').click();await page.waitForURL('**/#/appareil/tests');
@@ -31,6 +32,7 @@ async page=>{
   check(report.parts.some(row=>row.metrics?.runtime_after?.running?.context_length===16384),'Contexte observé inclus dans le rapport');
   check(report.samples.length>0&&report.fixture.source_words===9600,'Échantillons matériels et volume source conservés');
   check(!JSON.stringify(report).includes('The narrator')&&!('translated' in report),'Aucun texte de traduction dans le rapport numérique');
+  check(memoryRequests===0,'La rubrique traduction ne consulte pas un essai mémoire replié');
   await page.goto(base+'/#/appareil/tests?test=memory');check(await page.locator('#next-calibration-form').isVisible(),'Essai mémoire dans le même sous-menu');
   await page.goBack();await page.waitForURL('**/#/appareil/tests?test=translation');check(await page.locator('#settings-test-translation').isVisible(),'Retour navigateur retrouve le test de traduction');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:900});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Test lisible à '+width);}

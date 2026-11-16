@@ -43,7 +43,7 @@
 
   const details=element('details',undefined,'context-trial');details.innerHTML='<summary>Mesurer un contexte adapté à ce PC</summary><p>L’essai utilise uniquement le modèle déjà installé et un texte fictif. Il peut durer jusqu’à une heure. Gardez ce moment pour les mesures ; une nouvelle question ou le mode jeu arrête l’essai. La bibliothèque reste consultable.</p><p class="small muted">Le modèle choisi est chargé puis déchargé pour comparer les essais à froid et à chaud. Le réglage courant reste conservé jusqu’à votre choix.</p><form id="next-calibration-form"><label>Mode à mesurer<select id="next-calibration-mode"></select></label><label>Comparer jusqu’à<select id="next-calibration-limit"><option value="16384">16k tokens</option><option value="32768" selected>32k tokens</option><option value="65536">64k tokens, si le modèle le permet</option></select></label><button id="next-calibration-start" type="submit">Lancer l’essai avec l’IA locale</button></form><p id="next-calibration-status" role="status"></p><div id="next-calibration-results"></div><div class="actions"><button id="next-calibration-stop" class="secondary" hidden>Arrêter l’essai</button><button id="next-calibration-apply" hidden>Utiliser le contexte mesuré</button><button id="next-calibration-rollback" class="secondary" hidden>Revenir au réglage précédent</button><button id="next-calibration-export" class="secondary" hidden>Télécharger le rapport mémoire</button></div>';
   $('next-context-form').closest('article').append(details);
-  let calibrationReport=null,busy=false,refreshing=false;
+  let calibrationReport=null,busy=false,refreshing=false,request=null;
   function fillModes(){
     const select=$('next-calibration-mode');if(select.options.length||!S.status?.modes?.length)return;
     for(const mode of S.status.modes)select.append(new Option(mode.name,mode.id));
@@ -68,8 +68,11 @@
     }
   }
   async function refresh(){
-    fillModes();if(document.hidden||$('view-settings').hidden||S.user?.role!=='admin'||refreshing||busy)return;
-    refreshing=true;try{renderCalibration(await api('/admin/assistant/calibration'));}catch(error){$('next-calibration-status').textContent=error.message;}finally{refreshing=false;}
+    fillModes();if(document.hidden||$('view-settings').hidden||!$('next-calibration-form').closest('details').open||!$('next-calibration-form').getClientRects().length||S.user?.role!=='admin'||refreshing||busy)return;
+    const controller=new AbortController(),profile=S.user.id;request=controller;refreshing=true;
+    try{const report=await api('/admin/assistant/calibration',undefined,{signal:controller.signal});if(S.user?.id===profile&&!controller.signal.aborted)renderCalibration(report);}
+    catch(error){if(error.name!=='AbortError'&&S.user?.id===profile)$('next-calibration-status').textContent=error.message;}
+    finally{if(request===controller)request=null;refreshing=false;}
   }
   $('next-calibration-form').onsubmit=async event=>{
     event.preventDefault();if(busy)return;busy=true;$('next-calibration-start').disabled=true;
@@ -86,5 +89,7 @@
     }catch(error){$('next-calibration-status').textContent=error.message;}finally{busy=false;}
   };
   $('next-calibration-export').onclick=()=>{if(calibrationReport)download(calibrationReport,'setupsurvie-memoire-'+calibrationReport.id+'.json');};
-  setInterval(refresh,1500);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',refresh);
+  window.addEventListener('pagehide',()=>request?.abort());
+  document.addEventListener('toggle',event=>{if(event.target===$('next-calibration-form').closest('details'))refresh();},true);
+  setInterval(refresh,1500);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',()=>{request?.abort();refresh();});
 })();
