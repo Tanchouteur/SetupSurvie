@@ -57,6 +57,13 @@ async page=>{
   check(calibrationReport.recommendation===32768&&!('messages' in calibrationReport),'Rapport mémoire exportable sans messages');
   await page.locator('#next-calibration-rollback').click();await page.waitForFunction(()=>document.getElementById('next-calibration-results').textContent.includes('Réglage courant : 16k'));
   check(calls.includes('rollback'),'Retour au réglage précédent disponible');
-  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Essai mémoire sans débordement à '+width);}
+  for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:844});
+    const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
+      overflowing:[...document.querySelectorAll('body *')].filter(node=>{const r=node.getBoundingClientRect();return r.width&&r.right>innerWidth+.5;}).map(node=>({tag:node.tagName,id:node.id,
+        class:typeof node.className==='string'?node.className:'',right:node.getBoundingClientRect().right,width:node.getBoundingClientRect().width,
+        parent:node.closest('[id]')?.id,text:node.textContent.slice(0,90)})).slice(-20)}));
+    check(layout.scroll<=layout.width,'Essai mémoire sans débordement à '+width+(layout.scroll>layout.width?' '+JSON.stringify(layout):''));
+  }
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
 }
