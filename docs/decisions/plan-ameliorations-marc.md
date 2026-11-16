@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.30.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.31.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -9,7 +9,7 @@ chargement, réserve mémoire et couverture partielle. La 0.26.1 corrige le dél
 d’essai mémoire ; la 0.27.0 ajoute le transfert contrôlé vers SSD. La
 [lecture progressive 0.28.0](../essais/2026-11-16-lecture-traduction-progressive.md)
 est livrée, puis ses commandes pause/arrêt/reprise/suppression en 0.29.0.
-La 0.30.0 instrumente les refus de tests avant lancement. Ces livraisons ne clôturent ni les essais humains
+La 0.30.0 instrumente les refus de tests avant lancement. La 0.31.0 ajoute la récupération volontaire des pistes YouTube, puis leur conservation hors ligne et traduction locale optionnelle. Ces livraisons ne clôturent ni les essais humains
 restants, ni la qualification de toutes les sources et vidéos.
 
 La 0.22.0 ajoute le [diagnostic des lenteurs en un clic](../exploitation/diagnostic-complet-performances.md).
@@ -33,7 +33,7 @@ l’encodage complet du dossier ; le contexte reste à comparer à 16k/32k chez 
 | Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Budget documentaire corrigé en 0.23.1 ; contexte 32k observé sur Marc. Sonde interrompue par ancien délai HTTP de 60 s, corrigé en 0.26.1 ; calibration à refaire. Comparatif 0.25.0 arrêté pour réserve RAM. Refus de démarrage avant essai encore à diagnostiquer |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Lecture des versions publiées depuis le portail/PDF préparée en 0.21.0 et intégrée avec 0.22.0 ; origine/édition modifiée explicite. Glossaire et fidélité d’un livre réel restent à qualifier |
 | Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire/index/lecteur et traduction synchronisée livrés ; transcription CPU des MP4 depuis 0.26.0, testée sur R7. Récupération explicite YouTube depuis le site en 0.31.0, piste conservée hors ligne puis traduction locale optionnelle. ZIM et qualification de chaque vidéo réelle restent ouvertes ; vidéos Marc non indexées dans R2 0.25.0 |
-| Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | 40 pages/9 600 mots fictifs terminés sur Marc en environ 13 min 04 s ; contrôles automatiques sans avertissement, sens non certifié. Lecture pendant traduction candidate 0.28.0 ; vrai livre de 500 pages et cohérence terminologique encore non validés |
+| Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | 40 pages/9 600 mots fictifs terminés sur Marc en environ 13 min 04 s ; contrôles automatiques sans avertissement, sens non certifié. Lecture pendant traduction livrée en 0.28.0 ; vrai livre de 500 pages et cohérence terminologique encore non validés |
 | Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |
 | Transfert vers SSD | Copier, reprendre, vérifier et basculer en gardant la source | Livré en 0.27.0, contrôles Linux/Windows simulés et petite copie ; transfert réel de Marc et reconstruction d’un PC vierge non validés |
 | Conversations | Trois zones et raccourcis de tâches | Direction validée par Louis : [base](conversations-trois-zones.md). Dossiers, profondeur et parcours à préciser avant refonte globale ; lecteur de traduction 0.28.0 distinct |
@@ -84,7 +84,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; notices/antennes et lecture HTML en 0.19.1 ; relances relues et conditions de départ en 0.20.0. Fidélité sur de vrais livres, vision et R4 Windows restent à qualifier |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | Cycle du modèle, contexte réglé, avertissement des trous d’extraction et 500 pages synthétiques en 0.20.1 ; lecture française intégrée portail/PDF en 0.21.0 ; glossaire et livre réel restent à faire |
-| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 et transcription MP4 0.26.0 ; acquisition en branche de travail, ZIM et recette du fonds à faire |
+| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 et transcription MP4 0.26.0 ; récupération YouTube 0.31.0 ; ZIM et recette du fonds à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |

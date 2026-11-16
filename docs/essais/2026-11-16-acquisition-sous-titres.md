@@ -1,6 +1,6 @@
 # Acquisition des sous-titres depuis le site
 
-**Bilan daté — candidat 0.31.0, 16 novembre 2026.** Nouvelle fonction compatible :
+**Bilan daté — 0.31.0, 16 novembre 2026.** Nouvelle fonction compatible :
 incrément mineur après 0.30.0, sans modification des images tierces ou suppression
 de données. La branche reprend main 0.30.0 par fusion normale ; cartes Windows,
 transfert, commandes de traduction et diagnostic de démarrage sont conservés.
@@ -97,3 +97,20 @@ Le job Linux du dernier code `b9ad6f78c14f0a169195ab76580ea3a1a69fd908`
 passe **896 tests en 73,526 s, 6 ignorés** avec libzim préparé dans le CI.
 Son journal ne contient plus les avertissements de transport ci-dessus.
 Les résultats du CI complet sont liés ci-dessous après sa fin.
+
+## Validation et reçu de livraison
+
+Les **huit jobs CI** du dernier code
+`b9ad6f78c14f0a169195ab76580ea3a1a69fd908` réussissent :
+[exécution 43907486406](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43907486406).
+Les versions intermédiaires ont été relues à partir de leurs journaux ; le
+transport encore ouvert malgré un job vert a été corrigé avant cette référence.
+
+Paquet vérifié au commit `7c54155ae4b2c6e02ac0addaab12a28c27e586df` :
+**901 fichiers**, **7 437 960 octets** compressés et **16 506 726 octets**
+décompressés. Chaque entrée est comparée à Git et au manifeste (taille et SHA-256).
+SHA-256 du paquet :
+`47dd52352e66673e9a32da1bc9ec3348ab2f080f14d6e69657c5ba0ce93d67b8`.
+Le paquet contient la référence fonctionnelle ; ce reçu documentaire est ajouté
+ensuite. Aucun original, rapport utilisateur, modèle ou gros corpus n’est versionné.
+Aucun déploiement ou redémarrage chez Marc n’est effectué par cette livraison.
