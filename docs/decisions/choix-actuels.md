@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-Le candidat **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)
+La **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)
 et fournit un diagnostic exportable en lecture seule. Les états contrôleur/API
 et les marges mémoire sont distingués ; les anciennes pannes non enregistrées
 ne sont pas reconstituées. Ni reprise forcée ni baisse des réserves mémoire.

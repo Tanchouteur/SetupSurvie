@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Diagnostic des essais refusés](essais/2026-11-16-diagnostic-refus-demarrage.md) — candidat 0.30.0, refus conservés et état actuel séparé, sans charger un modèle.
+- [Diagnostic des essais refusés](essais/2026-11-16-diagnostic-refus-demarrage.md) — 0.30.0, refus conservés et état actuel séparé, sans charger un modèle.
 
 - [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — 0.29.0, pause/arrêt/reprise et suppression du travail privé.
 

@@ -1,6 +1,6 @@
 # Comprendre les essais refusés avant lancement
 
-**Bilan du candidat 0.30.0 — 16 novembre 2026.** Suite aux refus intermittents
+**Bilan de livraison 0.30.0 — 16 novembre 2026.** Suite aux refus intermittents
 signalés oralement par Louis pendant les essais Windows 0.25.0. Les cinq rapports
 ne permettent pas de reconstruire toutes les tentatives antérieures ; cette
 livraison fournit les observations qui manquaient, sans annoncer leur cause.
@@ -64,3 +64,17 @@ sur tous les systèmes l’écriture privée dans le dossier d’état, puis les
 0600 sur POSIX uniquement. Le contrôle d’accès Famille et le filtrage des champs
 restent vérifiés sous Windows aussi. Aucune validation d’ACL Windows n’est
 revendiquée, ni modification globale des permissions de l’installation.
+
+## Validation de livraison
+
+Les **huit jobs CI** du code `0dc13c9cb28caaa9dd60a7ac4636aac49902dcfa`
+réussissent : [exécution 43898807431](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43898807431).
+Cela inclut le test corrigé sous Windows et la matrice complète Chromium/WebKit.
+La suite locale a terminé **873 tests en 172,001 s**, avec **16 ignorés** pour
+lecteur optionnel et Windows ; les six tests ciblés du diagnostic sont ensuite
+rejoués après l’ajout de la catégorie de refus et l’ajustement des permissions.
+Les guides, noms de fichiers et contrôles de la 0.29.0 restent conservés.
+
+Aucun essai réel de démarrage chez Marc n’est exécuté pour cette livraison.
+Le prochain refus doit être accompagné de ce diagnostic, pour relier commande
+hôte, réponse de l’API et mémoire plutôt que d’attribuer sa cause par supposition.
