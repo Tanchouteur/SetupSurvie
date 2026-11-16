@@ -43,11 +43,27 @@ class TokenChecksTests(unittest.TestCase):
         source='Disconnect the installation and check the cable. '*4
         self.assertEqual(quality.assess(source,source)['status'],'blocked')
 
+    def test_missing_pdf_key_glyphs_warn_even_with_all_numbers_preserved(self):
+        for text in ['Press the         key to enter the menu.', 'Enter                 on the numerical keypad.', 'Appuyez sur la touche         pour confirmer.', 'An unknown glyph: \ufffd.']:
+            report=quality.assess(text,'Traduction fictive sans restitution des touches.')
+            self.assertEqual(report['version'],2)
+            self.assertIn('source_gaps',{row['code'] for row in report['issues']})
+        self.assertNotIn('source_gaps',{row['code'] for row in quality.assess('Press the MENU key.','Appuyez sur MENU.')['issues']})
+
 
 class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp=fixtures.TranslationTests.asyncSetUp
     asyncTearDown=fixtures.TranslationTests.asyncTearDown
     create=fixtures.TranslationTests.create
+    async def test_source_gaps_warning_survives_publication_and_export(self):
+        from pilot import library
+        (library.GUIDES/'manual.en.txt').write_text('Press the         key to enter the menu.',encoding='utf-8');library.index_guides()
+        item=await self.create()
+        with patch.object(translations,'translate',AsyncMock(return_value=('Appuyez sur la touche         pour accéder au menu.','fixture'))):await translations.run(item['id'])
+        state=translations.status(item['id'],'alice');self.assertEqual(state['status'],'completed');self.assertEqual(state['quality']['warnings'],1)
+        self.assertIn('touches dessinées',translations.export(item['id'],'alice'))
+        published=await library.source(state['publication']['source_id'])
+        self.assertIn('touches dessinées',published['text'])
     async def test_bad_measure_stays_pending_private_and_retry_uses_original_snapshot(self):
         (self.root/'guides/manual.en.txt').write_text('Use 10 mg. Do not exceed the limit.',encoding='utf-8')
         from pilot import library

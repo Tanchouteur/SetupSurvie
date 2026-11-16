@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Traduction : contexte et reprise](2026-11-16-traduction-contexte-et-reprise.md) — 0.20.1, modèle préparé, 500 pages fictives et trous d’extraction.
+
 - [Relances et conditions de départ](2026-11-15-relances-et-conditions.md) — 0.20.0, lectures propres à chaque réponse et extraits exacts.
 
 - [Notices et guidage pratique](2026-11-15-notices-et-guidage-pratique.md) — 0.19.1, vraie notice, dimensions et lectures réellement reçues.

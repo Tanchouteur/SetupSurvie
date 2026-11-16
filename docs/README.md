@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Traduction : contexte, reprise et texte incomplet](essais/2026-11-16-traduction-contexte-et-reprise.md) — 0.20.1, essai réel et contrôle synthétique de 500 pages.
+
 - [Relances et conditions de départ](utilisation/sources-et-fiabilite.md#reprendre-une-discussion-et-vérifier-les-conditions-de-départ--0200) — 0.20.0, sources relues, extraits exacts et limites.
 - [Essais des relances et des conditions](essais/2026-11-15-relances-et-conditions.md) — erreurs réelles conservées, corrections et contrôle des outils.
 

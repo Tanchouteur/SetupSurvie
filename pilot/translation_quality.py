@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 import re
 import unicodedata
 
-VERSION=1
+VERSION=2
 NUMBER=r'(?<![\w])(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 UNIT_ALIASES={
@@ -46,6 +46,10 @@ def assess(source,translated):
     source=normalized(source);translated=normalized(translated)
     issues=[]
     def add(code,severity,message):issues.append({'code':code,'severity':severity,'message':message})
+    # PDF manuals sometimes draw key names as images; extraction leaves a hole
+    # in "Press the         key". Numeric equality cannot validate that command.
+    if re.search(r'\b(?:press|enter|push|appuyez|appuyer|saisissez|entrez)[^\n.!?]{0,60}[ \t]{4,}(?:keys?|buttons?|to|on|and|pour|sur|et)\b',source,re.I) or '\ufffd' in source:
+        add('source_gaps','warning','Le texte original extrait contient des blancs ou caractères manquants, possiblement des touches dessinées. Comparez la page originale ; les commandes manquantes ne sont pas reconstituées.')
     left=Counter(number(m.group()) for m in NUMBERS.finditer(source))
     right=Counter(number(m.group()) for m in NUMBERS.finditer(translated))
     if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')

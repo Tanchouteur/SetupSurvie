@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.20.1 : [traduction et reprise](2026-11-16-traduction-contexte-et-reprise.md).
+La traduction reprend le contexte configuré et la préparation/reprise du modèle.
+L’essai de 500 pages reste synthétique ; deux pages réelles sont traduites après
+pause/reprise. Les touches dessinées perdues par extraction sont désormais signalées
+comme avertissement version 2, sans reconstitution de commande.
+
 Complément 0.20.0 : [relances et conditions de départ](2026-11-15-relances-et-conditions.md).
 Les relances relisent les documents au lieu d’hériter des anciens numéros.
 Une relecture de procédure peut ajouter des conditions comme extraits exacts ;

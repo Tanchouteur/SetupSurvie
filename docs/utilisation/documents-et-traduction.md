@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.1.36, 14 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.20.1, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -95,14 +95,26 @@ courts pour garder le champ de question et son bouton d’envoi accessibles.
 
 Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
 
+Depuis 0.20.1, chaque passage reprend le **contexte configuré pour son modèle**,
+limité par la capacité annoncée par le moteur local. Il ne revient plus toujours
+à 8k. La sortie et une marge de format restent réservées ; un passage dépassant
+ce budget est refusé sans être coupé silencieusement. Le changement de modèle ou
+de contexte est préparé avant l’envoi du texte, avec une reprise bornée en cas
+d’accusé de chargement vide. Cela préserve le passage à traduire, sans modifier
+le modèle choisi ni lever une pause. Ce mécanisme ne garantit pas le fonctionnement
+de tous les modèles ni le respect du sens ; les contrôles de traduction restent
+nécessaires. Les réglages de contexte se trouvent dans
+[Paramètres → Assistant](mesurer-assistant-et-memoire.md).
+
 ## Taille des documents et livres longs
 
 **Limites relues dans le code 0.1.35 le 14 novembre 2026.** Un PDF de 500 pages
 peut être accepté : la traduction ne charge pas tout le livre dans un seul
 contexte. Le texte est extrait page par page, puis découpé en passages d’environ
 2 200 caractères. Chaque passage terminé est enregistré ; pause et reprise
-explicite conservent ce qui est déjà traduit. Aucun délai garanti ni traduction
-réelle de 500 pages n’est établi par les tests simulés.
+explicite conservent ce qui est déjà traduit. Un essai de 500 pages fictives vérifie désormais les instantanés, l’interruption,
+la reprise et la dernière page publiée, avec traduction simulée. Il ne prouve
+aucun délai garanti ni fidélité d’un vrai livre de 500 pages.
 
 Pour les PDF locaux, les limites sont : fichier de **300 millions d’octets au
 maximum (300 Mo décimaux)**, document de **1 200 pages au maximum**, **100 000
@@ -138,7 +150,7 @@ comme traduit. Ils ne demandent ni Internet ni seconde inférence.
 | Résultat | Comportement et action |
 | --- | --- |
 | Nombres ajoutés, perdus ou modifiés ; association nombre/unité reconnue différente ; long texte identique à la source | Passage refusé, traitement interrompu. La proposition reste visible comme **refusée, ne pas utiliser** ; elle ne compte pas comme traduite et n’est pas publiée. Choisir un autre mode puis **Reprendre**. Les passages terminés restent conservés |
-| Réponse beaucoup plus courte ou longue ; négation anglaise sans équivalent français repéré | Passage conservé avec **À relire**. L’avertissement apparaît dans la conversation, l’export et le document local partagé. Comparer à la source |
+| Réponse beaucoup plus courte ou longue ; négation anglaise sans équivalent français repéré ; blancs ou caractères manquants dans une commande extraite | Passage conservé avec **À relire**. L’avertissement apparaît dans la conversation, l’export et le document local partagé. Comparer à la source |
 | Aucune anomalie repérée | Passage conservé avec la mention **Contrôles limités**. Cela ne valide pas son sens ni sa fidélité |
 | Ancien passage déjà traduit | **Pas de contrôle enregistré**. Il n’est pas présenté comme validé rétroactivement ; les anciennes publications restent inchangées |
 
@@ -156,6 +168,13 @@ unités, sans conversion. Les contrôles tolèrent notamment `1.5` / `1,5`, `1 0
 bloquer le passage. Il n’existe pas de bouton pour accepter silencieusement une
 proposition refusée. Si un autre mode reste bloqué, conserver l’original et
 l’export des passages terminés ; une traduction manuelle reste nécessaire.
+
+Depuis la version **2** de ces contrôles (0.20.1), un avertissement signale aussi
+certains trous du texte source, comme une touche dessinée dans un PDF devenue
+« Press the         key ». Le programme ne reconstitue pas la touche. Comparer
+la page originale ; le seul contrôle des nombres ne rend pas cette commande
+utilisable. La détection est partielle et peut donner de faux positifs ; elle
+ne réalise aucun OCR. Les anciens rapports gardent leur version et leurs résultats.
 
 Les unités reconnues forment une liste limitée (masses, volumes, longueurs,
 durées, températures, quelques unités électriques et pressions). Les tableaux,

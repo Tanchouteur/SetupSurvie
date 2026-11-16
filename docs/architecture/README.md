@@ -183,6 +183,20 @@ laisse la réponse disponible et enregistre une limite numérique.
 La pertinence, les omissions et les paraphrases ne sont pas certifiées ; ce
 complément ne remplace pas une vérification humaine ou matérielle.
 
+## Cycle du modèle de traduction — 0.20.1
+
+`translations.translate` utilise désormais les métadonnées locales fraîches,
+le contexte configuré limité par le modèle, le budget d’entrée/sortie commun et
+`model_session.Session` pour la préparation et la reprise bornée. Le texte du
+passage reste inchangé lors d’un essai supplémentaire. La file commune reste
+libérée entre fragments ; une pause observée pendant la préparation laisse le
+travail en pause, sans le transformer en traduction terminée.
+La recette réelle peut observer des mesures numériques par rappel local ; ce
+n’est pas un nouvel export de mesures de traduction dans le produit.
+Les contrôles de fidélité conservent leurs seuils et comparaisons ; leur version 2
+ajoute un avertissement pour certains blancs de touches/valeurs et caractères de
+remplacement du texte source. Les rapports historiques ne sont pas recalculés.
+
 ## Composants
 
 | Composant | Responsabilité | Entrées du dépôt |

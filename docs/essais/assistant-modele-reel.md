@@ -163,3 +163,17 @@ conserve deux demandes, leurs lectures propres, références, mesures et même
 `conversation_id`. La recette ne doit pas considérer un ancien numéro de citation
 comme une nouvelle lecture. La relecture des conditions reste un choix du modèle,
 à comparer aux textes et prérequis réels ; le statut `done` n’en certifie pas le sens.
+
+
+## Recette réelle de traduction — 0.20.1
+
+Sur le R7 autorisé, `tests/real_translation_check.py` accepte un PDF déjà présent
+`--source`, son `--sha256`, son `--title`, sa `--provenance`, une plage de dix pages
+au maximum `--first` / `--last`, le `--model` installé et un `--report` privé.
+Les options `--gpu-layers` et `--think` sont explicites ; aucune inférence dans la CI.
+`--pause-after 1` interrompt puis reprend après un passage terminé, si d’autres
+restent. `--preload-model` teste un changement avec un autre modèle déjà installé,
+en exigeant un moteur sans modèle chargé au départ. Le modèle préchargé par la
+recette expire naturellement ou suit l’ordonnanceur ; aucun arrêt forcé.
+Le rapport contient des textes sources/traduits et doit rester privé. Les contrôles
+techniques, la traduction terminée et une relecture humaine sont des états distincts.

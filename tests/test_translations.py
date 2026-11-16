@@ -97,6 +97,11 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(HTTPException):await tr.resume(item['id'],'alice')
             launch.assert_not_called()
 
+    async def test_pause_detected_during_fragment_preparation_is_still_a_pause(self):
+        item=await self.create()
+        with patch.object(tr,'translate',AsyncMock(side_effect=HTTPException(503,'Mode jeu : reprendre volontairement.'))):await tr.run(item['id'])
+        state=tr.status(item['id'],'alice');self.assertEqual(state['status'],'paused');self.assertEqual(state['done'],0)
+
     async def test_other_accounts_cannot_start_on_or_resume_another_conversation(self):
         with self.assertRaises(HTTPException):await tr.create('bob',self.source,'c','rapide')
         item=await self.create()
@@ -144,7 +149,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(payload['messages'][1],{'role':'user','content':'Water source text'})
                 event={'message':{'content':json.dumps(result)},'done':True,'done_reason':reason}
                 return httpx.Response(200,content=(json.dumps(event)+'\n').encode())
-            with patch.object(tr.httpx,'AsyncClient',side_effect=lambda **kw:real_client(transport=httpx.MockTransport(handler),**kw)):
+            with patch.object(tr.model_runtime,'describe',AsyncMock(return_value={'available':False,'native_context':None})),patch.object(tr.httpx,'AsyncClient',side_effect=lambda **kw:real_client(transport=httpx.MockTransport(handler),**kw)):
                 if ok:self.assertEqual((await tr.translate('Water source text','rapide'))[0],'Texte français.')
                 else:
                     with self.assertRaises(ValueError):await tr.translate('Water source text','rapide')

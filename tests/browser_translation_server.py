@@ -30,6 +30,7 @@ with closing(sqlite3.connect(accounts.DB_PATH)) as db:
 (library.GUIDES/'craft.en.txt').write_text('Sewing and mending clothes. Rope making and tool sharpening. Tiny fictional fixture, not a practical manual.',encoding='utf-8')
 (library.GUIDES/'quality-bad.en.txt').write_text('Use 10 mg. Do not exceed the limit.',encoding='utf-8')
 (library.GUIDES/'quality-short.en.txt').write_text('Quality short fixture. '+'Disconnect the power and inspect the wiring. '*12,encoding='utf-8')
+(library.GUIDES/'quality-gaps.en.txt').write_text('Press the         key to enter the menu.',encoding='utf-8')
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
 writer=PdfWriter()
@@ -129,6 +130,7 @@ async def translate(text,mode):
     await asyncio.sleep(.5)
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
+    if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']
     return 'Construction d’un abri. Conservez les dimensions et les avertissements.\n'+text.replace('Page','Section').replace('Shelter','Abri').replace('construction warnings','avertissements de construction'),engine.MODES[mode]['model']
 translations.translate=translate
 # Chat is simulated separately; it never contacts a real model.
