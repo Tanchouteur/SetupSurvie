@@ -62,7 +62,10 @@ avec l’avertissement `source_gaps`. Le rapport ne relève aucune reprise HTTP.
 Empreinte Python du code :
 `bc88a62874301c317d7d7fb2e41d7fb461eeb1e87475b1dbe146ef62daa65c8b`.
 Le modèle de départ n’a pas été arrêté de force ; aucun poids n’a été téléchargé.
-La CI finale reste à consigner une fois terminée. Aucun gain de vitesse Windows
+Le commit fonctionnel `b6f29f22cf58ef9ee0e37662ceb535dbb9191cdd` réussit
+les [huit jobs CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43810078753).
+La suite finale confirme 750 tests locaux, trois ignorés spécifiques à Windows.
+Aucun gain de vitesse Windows
 n’est déduit de ces mesures Linux.
 
 ## Vérifications et limites
