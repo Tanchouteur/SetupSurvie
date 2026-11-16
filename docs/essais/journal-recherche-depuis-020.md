@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Candidat 0.27.0 : [transfert fiable](2026-11-16-transfert-fiable.md), développé
+par le chantier parallèle puis relu et joint à la 0.26.0. Copie vérifiée/reprenable,
+relocalisation et garde-fous, état vidéo conservé ; refus OSRM sans HEALTHCHECK
+et concurrence du retour corrigés. CI intégrée et déplacement réel HDD/SSD
+restent distincts des tests ciblés.
+
 Candidat 0.26.0 : [transcription audio et français](2026-11-16-transcription-audio-videos.md),
 unités reprenables, original intact et pistes complètes indexées. Premier refus
 réel conservé ; consigne de traduction des fragments précisée. Rejeu MP4 synthétique

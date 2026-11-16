@@ -129,3 +129,11 @@ exercer la même échéance. Il ne repose plus sur un sommeil de 30 ms contre un
 limite de 20 ms, sensible à l'ordonnanceur Windows. Aucune limite moteur n'est
 modifiée et le contrôle de budget n'est pas retiré. La recette physique chez Marc
 et la reconstruction d'un Windows vierge restent non exécutées.
+
+
+Le candidat intégré prend la version **0.27.0**, fonctionnalité significative
+compatible, sans migration de données. Vingt-cinq contrôles ciblés sont exécutés
+sur le runner, dont deux réservés à Windows ignorés ; tous les autres passent.
+La version vidéo 0.26.0 `9a7e687` est conservée. API/release/README concordent.
+La suite globale et la CI de cet ensemble suivent ; aucune validation physique
+HDD vers SSD n’est encore acquise.

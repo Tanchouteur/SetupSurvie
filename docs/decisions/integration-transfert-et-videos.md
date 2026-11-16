@@ -83,3 +83,12 @@ distingue ces tests de la recette physique non exécutée.
 Les tests sur fixtures ne valident pas le déplacement physique chez Marc. La
 reconstruction complète d’un autre Windows sans prérequis et la conversion
 Windows/Linux restent des travaux distincts du protocole de secours.
+
+## Synchronisation effectuée pour la recette 0.27.0
+
+La revue `38374f4` est jointe au main vidéo `9a7e687`, sans rebase ni perte des
+ajouts Compose/API/portail/CI. La version candidate devient 0.27.0 : nouvelle
+fonction de transfert compatible, donc niveau mineur. API, release et README
+sont alignés. Les transcriptions et traductions ne sont pas relancées au transfert.
+Le contrôle d’intégration conserve base en pause, IDs, pistes et cache Whisper.
+La suite complète et la CI doivent encore valider cet ensemble avant fusion.
