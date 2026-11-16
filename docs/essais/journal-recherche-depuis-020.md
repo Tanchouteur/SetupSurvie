@@ -541,3 +541,12 @@ Reçu de livraison 0.15.1 : code `077fbb5`, paquet 760 fichiers comparé au comm
 pour restriction GitHub de facturation ; les essais locaux restent les preuves
 exécutées. Le bilan conserve empreinte et limites ; aucune validation Windows
 ou inférence réelle supplémentaire n’est attribuée à cette livraison.
+
+## 16 novembre — rapports 0.25.0 et correction 0.26.1
+
+Analyse des cinq rapports Windows : [bilan daté](2026-11-16-rapports-marc-0250.md).
+Le test mémoire avait un délai HTTP de 60 s contradictoire avec ses 600 s prévus ;
+il est corrigé, sans modifier les réserves ni le contexte. Traduction fictive
+40/40 en 13 min 04 s ; génération et chargement distingués. Les exports portent
+un nom lisible avec type, version et heure précise. Les erreurs de démarrage
+avant essai restent à identifier et ne sont pas déclarées toutes résolues.

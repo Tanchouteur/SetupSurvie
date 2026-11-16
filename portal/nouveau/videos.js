@@ -34,7 +34,7 @@
   }
   $('next-videos-index').onclick=()=>command('index');$('next-videos-stop').onclick=()=>command('stop');$('next-videos-more').onclick=()=>refresh(true);
   $('next-videos-report').onclick=async()=>{
-    try{const report=await api('/admin/videos/report'),url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-videos-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+    try{const report=await api('/admin/videos/report');downloadReport(report,'videos');}
     catch(error){$('next-videos-status').textContent=error.message;}
   };
   document.addEventListener('survie:collection-filter',()=>{version++;$('next-videos-list').hidden=true;clearTimeout(timer);timer=setTimeout(()=>refresh(),250);});

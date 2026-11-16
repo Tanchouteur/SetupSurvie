@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Rapports Windows de Marc en 0.25.0](essais/2026-11-16-rapports-marc-0250.md) — calibration, recherche, comparatif et 40 pages ; corrections 0.26.1 et limites.
+
 - [Des MP4 seuls aux sous-titres](essais/2026-11-16-transcription-audio-videos.md) — 0.26.0, reconnaissance locale, reprise et essai R7.
 
 - [Performances réelles de Marc en 0.24.0](essais/2026-11-16-rapport-performances-marc-0240.md) — 32k chargé, synthèses terminées, coût du chargement et des citations ; cache et couverture à distinguer.

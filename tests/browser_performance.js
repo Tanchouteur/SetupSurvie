@@ -29,6 +29,7 @@ async page=>{
   const downloading=page.waitForEvent('download');await page.locator('#next-performance-export').click();const saved=await downloading,chunks=[];
   for await(const chunk of await saved.createReadStream())chunks.push(chunk);
   const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(/^setupsurvie-performances.*-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(saved.suggestedFilename()),'Nom du rapport lisible avec type, version et heure précise');
   check(report.samples[0].source==='host_controller'&&report.steps.length===3,'Export des étapes et des ressources du serveur dans un fichier');
   check(report.samples[0].disks[0].data_disk&&report.samples[0].cpu.max_core_percent===99,'Compteurs disque et CPU par cœur présents dans le rapport');
   check(!('answer' in report)&&!('messages' in report),'Rapport numérique sans conversation ni réponse');

@@ -23,7 +23,7 @@ async page=>{
     const id=new URL(route.request().url()).searchParams.get('id');
     return degraded&&id.startsWith('zim:')?answer(route,{detail:'Fixture inaccessible'},404):answer(route,{id,text:'SOURCE_SENTINEL',preview:true});
   });
-  const download=async()=>{const pending=page.waitForEvent('download');await page.locator('#next-usage-export').click();const file=await pending,parts=[];for await(const chunk of await file.createReadStream())parts.push(chunk);return JSON.parse(Buffer.concat(parts).toString());};
+  const download=async()=>{const pending=page.waitForEvent('download');await page.locator('#next-usage-export').click();const file=await pending,parts=[];for await(const chunk of await file.createReadStream())parts.push(chunk);check(/^setupsurvie-usage-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(file.suggestedFilename()),'Nom du rapport usage avec version et heure');return JSON.parse(Buffer.concat(parts).toString());};
   const ready=()=>page.waitForFunction(()=>S.authReady&&S.user&&S.status);
   const open=()=>page.locator('#next-usage-open').click();
   const measured=()=>page.waitForFunction(()=>document.querySelector('#next-usage-status').textContent.includes('Contrôles terminés'));

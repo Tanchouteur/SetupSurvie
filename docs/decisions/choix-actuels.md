@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+La **0.26.1** corrige le délai de calibration mémoire et rend les noms de rapports
+versionnés et horodatés. Les [cinq rapports Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md)
+distinguent chargement lent, pression mémoire et recherche vidéo non préparée ;
+ils ne valident pas tous les démarrages du moteur. Le contexte reste inchangé.
+
 Le [0.26.0 de transcription](../essais/2026-11-16-transcription-audio-videos.md)
 réutilise Whisper small préparé pour la dictée, sur CPU, puis la traduction
 locale existante. Les fichiers vidéo restent intacts et les étapes sont reprenables.

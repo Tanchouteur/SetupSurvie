@@ -34,7 +34,7 @@
   for(const name of ['start','pause','resume'])$('next-translation-benchmark-'+name).onclick=()=>action(name);
   $('next-translation-benchmark-export').onclick=async()=>{
     try{const id=S.user?.id,value=await api('/admin/translation-benchmark/report');if(S.user?.id!==id)return;
-      const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-traduction-40-pages-'+value.id+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      downloadReport(value,'traduction-40-pages-'+value.mode);
     }catch(error){$('next-translation-benchmark-status').textContent=error.message;}
   };
   setInterval(refresh,2000);document.addEventListener('survie:auth',refresh);document.addEventListener('survie:route',refresh);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});
