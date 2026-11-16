@@ -1,6 +1,6 @@
 # Essai de traduction de 40 pages et sous-menu des tests
 
-**Bilan candidat 0.25.0 — 16 novembre 2026.** Nouvelle fonction compatible et
+**Bilan de livraison 0.25.0 — 16 novembre 2026.** Nouvelle fonction compatible et
 organisation des vérifications, donc version mineure. Guides actuels :
 [test de traduction](../exploitation/test-traduction-40-pages.md) et
 [paramètres](../utilisation/parametres-et-appareil.md).
@@ -116,10 +116,27 @@ tenaient dans la page. Le correctif borne ce contenu dans les seuls libellés
 des tests et conserve un indicateur de focus à l'intérieur des listes. Le
 débordement global de la page n'est pas masqué ; le contrôle complet reste requis.
 
+## Vérification finale
+
+Code fonctionnel `10cdb1b`, [huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43847688249) :
+810 tests Python Linux en 56,75 s, dont quatre contrôles réservés à Windows ignorés ;
+contrôles Windows, Kiwix natif, lecteurs d'index isolés, routage synthétique et
+recettes Chromium/WebKit. Les dix-neuf contrôles du nouveau test de traduction,
+les trente-huit de recherche progressive et les vingt-cinq de mesures de l'assistant
+passent dans chaque navigateur. Les essais simulés ne lancent aucun modèle réel.
+
+La suite locale précédente de 808 tests est complétée par les quatorze tests
+ciblés de performances, après l'ajout des deux cas de couverture. Le test réel
+R7 de quarante pages reste la preuve d'inférence distincte décrite ci-dessus.
+La dernière correction WebKit limite le contenu des listes dans leurs libellés ;
+l'attente de redimensionnement seule, puis le masquage propre à la liste seule,
+avaient échoué en CI. Ces résultats défavorables ont conduit au diagnostic précis.
+Aucun essai physique iPhone ni déploiement sur les PC clients n'est annoncé.
+
 ## Suite
 
 La demande vidéo est précisée : les nouveaux médias de Marc seront des MP4
 YouTube seuls. La traduction de pistes présentes 0.24.0 est intermédiaire ;
 transcription des MP4, récupération de pistes, vidéos/pistes des ZIM et relecture
 du fonds restent ouvertes. Le test de 40 pages ne clôt pas ces besoins ni le
-glossaire et la fidélité d’un vrai livre long. CI et reçu de paquet suivent.
+glossaire et la fidélité d’un vrai livre long. Le reçu de paquet est ajouté après construction.
