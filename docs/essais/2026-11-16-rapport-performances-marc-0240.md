@@ -31,6 +31,15 @@ des questions naturelles. Le premier dossier comporte aussi une lecture échoué
 La campagne exporte des mesures numériques, sans texte des réponses : l'utilité,
 la fidélité et le détail de cet échec ne sont donc pas vérifiés par ce fichier.
 
+## Retour humain après la campagne
+
+Louis indique ensuite avoir posé une question à l'assistant et être satisfait
+par sa réponse en 0.24.0. C'est un retour d'usage positif, distinct des mesures.
+La pièce jointe montre uniquement une recherche documentaire « talkie walkie »
+en cours, quinze collections sur 135, sans résultat encore affiché ; elle ne
+contient pas la réponse de l'assistant. Aucun contrôle supplémentaire de citation
+ou de fidélité ne lui est donc attribué.
+
 ## Recherche classique : cache utilisé dès le premier passage
 
 | Recherche | Premier passage | Répétition | Première réception observée |
