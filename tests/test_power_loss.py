@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from contextlib import ExitStack, contextmanager
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
@@ -24,6 +25,22 @@ class PowerLossTests(unittest.TestCase):
         self.root = Path(temp.name).resolve()
         self.ready = self.root / 'ready'
 
+    @contextmanager
+    def released_lease(self, path, lock=delivery_paths.locked):
+        # Windows can signal process termination before it finishes closing
+        # the handles for its file locks. Retry only after the test child exits.
+        deadline = time.monotonic() + 2
+        with ExitStack() as stack:
+            while True:
+                try:
+                    stack.enter_context(lock(path))
+                    break
+                except setup.SetupError as exc:
+                    if os.name != 'nt' or not isinstance(exc.__cause__, PermissionError) or time.monotonic() >= deadline:
+                        raise
+                    time.sleep(0.025)
+            yield
+
     def test_os_lease_releases_on_kill_and_blocks_other_writers_while_alive(self):
         lock = self.root / 'operation.lock'
         code = '''
@@ -39,7 +56,7 @@ with locked(Path(sys.argv[2])):
                 with content.locked(lock):pass
             self.assertTrue(delivery_paths.process_alive(process.pid))
         crash_after_ready(code, [lock, self.ready], self.ready, active)
-        with content.locked(lock):
+        with self.released_lease(lock, content.locked):
             with self.assertRaises(setup.SetupError):
                 with delivery_paths.locked(lock):pass
         self.assertTrue(lock.with_name(lock.name + '.lease').exists())
@@ -176,7 +193,7 @@ with content.locked(root/'catalog/content.lock'):
         def opener(request,**kwargs):
             self.assertEqual(request.headers['Range'],f'bytes={half}-')
             return Response(raw[half:])
-        with content.locked(self.root/'catalog/content.lock'):
+        with self.released_lease(self.root/'catalog/content.lock', content.locked):
             self.assertEqual(content.transfer(self.root,item,opener),'downloaded')
         self.assertEqual(target.read_bytes(),raw);self.assertFalse(partial.exists())
 
@@ -215,17 +232,7 @@ backup(app,config,sys.argv[3])
             with self.assertRaises(setup.SetupError):
                 with delivery_paths.locked(index_lock):pass
         crash_after_ready(code,[app.work,destination,self.ready],self.ready,index_excluded)
-        # Windows can signal process termination before it finishes closing
-        # the handles for its file locks. Keep the lease and wait for that cleanup.
-        deadline=time.monotonic()+2
-        while True:
-            try:
-                with delivery_paths.locked(index_lock):pass
-                break
-            except setup.SetupError as exc:
-                if os.name!='nt' or not isinstance(exc.__cause__,PermissionError) or time.monotonic()>=deadline:
-                    raise
-                time.sleep(0.025)
+        with self.released_lease(index_lock):pass
         self.assertTrue(index_lock.with_name(index_lock.name+'.lease').exists())
         self.assertFalse((destination/'backup.json').exists())
         complete=self.root/'complete'
