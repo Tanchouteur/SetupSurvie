@@ -41,6 +41,13 @@ reste préparée séparément, sans conditionner la livraison technique autonome
 
 ## Extension des fonctions
 
+**Consigne durable de Louis — 16 novembre 2026 :** conserver cette rigueur dans
+les prochains choix de design. Chaque ajout garde des commandes compréhensibles,
+une lecture confortable, une destination cohérente et des états visibles. Le
+suivi doit distinguer travail en cours, résultat provisoire, fin et erreur. Une
+nouvelle capacité ne justifie pas à elle seule un nouvel écran ou une nouvelle
+commande permanente ; partir de l’usage et des composants déjà présents.
+
 `portal/nouveau/ux-system.js` fournit les primitives communes et
 `ux-system.css` leurs règles. `SurvieUI.help(libellé, texte)` produit une aide
 facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
