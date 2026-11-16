@@ -152,13 +152,18 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_model_never_returns_timestamps_or_reorders_cues(self):
         original=httpx.AsyncClient;payloads=[]
+        response_cues=[{'id':2,'text':'Texte français'}]
         def handler(request):
             payload=json.loads(request.content);payloads.append(payload)
-            return httpx.Response(200,content=json.dumps({'message':{'content':json.dumps({'status':'translated','cues':[{'id':2,'text':'Texte français'}]})},'done':True,'done_reason':'stop'}).encode()+b'\n')
+            return httpx.Response(200,content=json.dumps({'message':{'content':json.dumps({'status':'translated','cues':response_cues})},'done':True,'done_reason':'stop'}).encode()+b'\n')
         with patch.object(captions.model_runtime,'describe',AsyncMock(return_value={'available':True,'installed':True,'native_context':16384,'running':None,'other_models':0})),\
              patch.object(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs)):
             with self.assertRaises(captions.CandidateError):await self.real_translate([{'position':0,'source_text':'17 mm'}],'rapide')
-        self.assertEqual(len(payloads),1);self.assertNotIn('start_ms',payloads[0]['messages'][1]['content'])
+            response_cues[:]=[{'id':0,'text':'Le rotor mesure 17 mm.'}]
+            result,model,metrics=await self.real_translate([{'position':0,'source_text':'17 mm'}],'rapide')
+        self.assertEqual(result[0]['id'],0);self.assertEqual(metrics['status'],'done');self.assertIn('writing',metrics['phases_ms'])
+        self.assertIn('runtime_after',metrics);self.assertIsNotNone(metrics['first_text_ms'])
+        self.assertEqual(len(payloads),2);self.assertNotIn('start_ms',payloads[0]['messages'][1]['content'])
 
     async def test_api_requires_family_and_report_does_not_start_inference(self):
         from pilot import app as gateway

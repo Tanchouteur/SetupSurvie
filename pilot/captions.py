@@ -151,8 +151,11 @@ async def translate_batch(parts,mode):
         async with httpx.AsyncClient(trust_env=False) as client:
             session=model_session.Session(client,engine.OLLAMA,runtime,context,measured,lambda stage:None,translations.available)
             await session.prepare()
+            measured.phase('model_preparation')
             async for last in session.chat(payload):
-                answer+=last.get('message',{}).get('content','')
+                text=last.get('message',{}).get('content','')
+                if text:measured.text();measured.phase('writing')
+                answer+=text
                 if len(answer)>40000:raise ValueError('Réponse trop longue : les segments restent à préparer.')
             measured.model_call(last or {})
     except model_session.Failure:raise ValueError('Le moteur a interrompu la traduction ; les segments terminés restent conservés.') from None
@@ -167,7 +170,10 @@ async def translate_batch(parts,mode):
         row['text']=re.sub(r'\s+',' ',row['text']).strip()
         if not row['text'] or '\x00' in row['text'] or len(row['text'])>6000 or re.match(r"(?i)^(?:je suis d[ée]sol[ée]|i cannot help|je ne peux pas (?:vous |t[’'])?aider)",row['text']):
             raise CandidateError('Un segment est vide, refusé ou trop long ; il reste à préparer.',answer)
-    return rows,selected['model'],measured.live()
+    measured.phase('metadata')
+    measured.value['runtime_after']=await model_runtime.describe(engine.OLLAMA,selected['model'],fresh=True)
+    measured.phase('finished');report=measured.live();report['status']='done'
+    return rows,selected['model'],report
 
 
 def pending_batch(identifier):
