@@ -515,6 +515,10 @@
     evidence.clear();
     drawEvidence();
     $("chat-title").textContent = "Nouvelle discussion";
+    $("chat-title").removeAttribute("title");
+    for (const node of list.querySelectorAll(".conversation-link")) {
+      node.setAttribute("aria-current", "false");
+    }
     body.dataset.zone = "discussion";
     refreshZones();
   });
