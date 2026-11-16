@@ -47,7 +47,8 @@ class ControlTests(unittest.TestCase):
 
     def test_unauthorized_and_unknown_routes_never_execute(self):
         with patch.object(self.server,'change') as change:
-            for token,path,code in [(None,'/start',401),('bad','/stop',401),(None,'/library/plan',401),(control.key(self.c),'/run',404)]:
+            for token,path,code in [(None,'/start',401),('bad','/stop',401),('bad-é','/start',401),
+                                    (None,'/library/plan',401),(control.key(self.c),'/run',404)]:
                 with self.assertRaises(urllib.error.HTTPError) as error:self.post(path,token,{'command':'anything'})
                 self.assertEqual(error.exception.code,code)
             change.assert_not_called()

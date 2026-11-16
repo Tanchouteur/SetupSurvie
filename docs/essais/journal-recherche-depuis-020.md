@@ -1,5 +1,7 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.32.1 : [corrections reproduites sous Windows](2026-11-16-integration-corrections-windows.md), configuration des routeurs remise en conformité pendant une mise à jour, refus HTTP du contrôleur et essais de verrous/cache isolés. Branche fournie fusionnée sans réécriture ; aucun déploiement sur le PC actif par cette intégration.
+
 0.32.0 : [cohérence entre passages traduits](2026-11-16-coherence-traduction.md), vocabulaire facultatif par profil copié au départ du travail, repère borné et contrôles des chiffres joints aux libellés PDF. Les essais et limites de fidélité restent distincts.
 
 0.31.0 : [récupération des pistes YouTube](2026-11-16-acquisition-sous-titres.md), commande explicite depuis le site, file durable, pause/reprise, contrôle de la source et index des pistes complètes ; traduction française locale optionnelle. Récupération réelle R7 en 1,386 s, aucun média téléchargé. ZIM, alignement du fonds de Marc et fidélité restent à qualifier.

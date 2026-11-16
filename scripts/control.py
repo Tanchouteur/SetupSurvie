@@ -178,14 +178,45 @@ class Server(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
+    MAX_POST_BYTES = 1024
+
     def log_message(self,*args):pass
     def respond(self,code,value):
         raw=json.dumps(value,ensure_ascii=False).encode();self.send_response(code)
         self.send_header('Content-Type','application/json');self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def authorized(self):
-        if not hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+key(self.server.config)):
+        supplied = self.headers.get('Authorization', '').encode('latin-1')
+        expected = ('Bearer ' + key(self.server.config)).encode('ascii')
+        if not hmac.compare_digest(supplied, expected):
+            if self.command == 'POST':
+                self.discard_rejected_body()
             self.respond(401,{'detail':'Accès non autorisé.'});return False
         return True
+    def discard_rejected_body(self):
+        # Closing with a body still queued can reset the connection on Windows.
+        # Drain only small requests and bound the total time spent on a refusal.
+        try:
+            remaining = int(self.headers.get('Content-Length', '0'))
+        except ValueError:
+            return
+        if not 0 < remaining <= self.MAX_POST_BYTES:
+            return
+        deadline = time.monotonic() + 0.25
+        previous_timeout = self.connection.gettimeout()
+        try:
+            while remaining:
+                budget = deadline - time.monotonic()
+                if budget <= 0:
+                    break
+                self.connection.settimeout(budget)
+                chunk = self.rfile.read1(remaining)
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+        except OSError:
+            pass
+        finally:
+            self.connection.settimeout(previous_timeout)
     def do_GET(self):
         if not self.authorized():return
         if self.path=='/performance':
@@ -202,10 +233,13 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings'):self.respond(404,{'detail':'Commande inconnue.'});return
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings'):
+            self.discard_rejected_body()
+            self.respond(404,{'detail':'Commande inconnue.'})
+            return
         try:
             length=int(self.headers.get('Content-Length','0'))
-            if not 0<=length<=1024:raise ValueError()
+            if not 0<=length<=self.MAX_POST_BYTES:raise ValueError()
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return

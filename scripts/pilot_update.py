@@ -114,6 +114,15 @@ class Services:
         try:discovery.start(self.app,self.c)
         except (setup.SetupError,OSError,ValueError) as exc:print('Nom local indisponible ; accès IP conservé :',exc)
         self.app.compose(self.c,'exec','-T','pilot','python','-m','pilot.configure')
+        graph=Path(self.c['data_dir'])/'library/maps/routing/current/manifest.json'
+        if self.c['target']=='windows' and graph.is_file():
+            try:
+                # Compose replaces existing routers when their configuration changes.
+                # Keep this optional service outside the portal's rollback criteria.
+                self.app.compose(self.c,'up','-d','--no-deps','--pull','never',
+                                 'router-foot','router-motorcycle','router-car',timeout=90)
+            except setup.SetupError:
+                print('Routage local indisponible après la mise à jour ; consulter les journaux Docker.')
     def check(self,version):
         for _ in range(30):
             try:
