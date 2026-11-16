@@ -59,8 +59,15 @@ Le petit média synthétique et l’archive ZIM native de test restent des fixtu
 | Analyse statique | Syntaxe JavaScript et `git diff --check` réussis |
 
 La suite Python et la recette ciblée réunie Chromium/WebKit ont réussi. Le
-stockage et les dépendances figées de 0.33.1 sont identiques à ceux de 0.33.0. La CI
-complète est encore suivie avant l’intégration ; son reçu sera inscrit avant clôture.
+stockage et les dépendances figées de 0.33.1 sont identiques à ceux de 0.33.0.
+La CI du code final `512d5509f4b4ecb95bb0598deb575f0c77184556` valide les
+huit catégories : Linux, Windows, lecteurs isolés Python 3.11/3.13/3.14, Kiwix,
+routage hors ligne et navigation Chromium/WebKit. Le
+[job navigateur de la PR](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43948040290/job/133582786876)
+confirme aussi 41/16/13 contrôles des nouvelles recettes sur chaque moteur. Le
+[run de branche](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43948052740)
+porte notamment la validation Windows. Les deux exécutions visent ce même code ;
+les seuls changements suivants de clôture portent sur la documentation.
 Les recettes nouvelles sont incluses dans le lanceur navigateur réellement appelé
 par la CI, et pas seulement dans un lanceur local facultatif.
 
