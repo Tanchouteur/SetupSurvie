@@ -11,17 +11,16 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Le [chantier UX](docs/decisions/refonte-ux-evolutive.md) commence par les composants
-communs, des titres directs et une lecture plus accessible sur PC et téléphone.
-Le [retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
-les données récentes ; ces premiers éléments ne constituent pas la refonte complète.
+La [refonte UX](docs/decisions/refonte-ux-evolutive.md) organise les conversations,
+les documents et la traduction dans leurs parcours, sur PC et téléphone. Le
+[retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
+les données récentes et une référence de la version précédente.
 
-
-Au **16 novembre 2026**, le candidat **0.33.0** propose une recherche locale avec
+Au **16 novembre 2026**, le candidat **0.34.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
-volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux et de
+volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux ou inclus dans les collections ZIM et de
 mesurer les délais Kiwix, sans IA ni modification des contenus.
 Le traitement progressif réutilise aussi les textes et métadonnées déjà préparés
 pendant la demande ; le diagnostic sépare ce coût des appels aux encyclopédies.

@@ -4,7 +4,31 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
+## Prochaine validation ciblée — 0.33.0
+
+Après la mise à jour habituelle, choisir une collection connue contenant des
+vidéos. Dans **Bibliothèque → Collections → Vidéos de la bibliothèque → Vidéos
+dans les collections**, lancer **Examiner ou reprendre les collections**. L’outil
+d’archives doit déjà être préparé dans **Paramètres → Bibliothèque**. Attendre la
+fin de l’examen puis celle de la mise à jour du lecteur, ou mettre en pause et
+reprendre à votre convenance. Télécharger le rapport des collections en cas
+d’interruption ; les index texte déjà existants ne remplacent pas cet examen.
+
+Lire une vidéo incluse et vérifier un passage d’une piste existante. Rechercher
+un mot de ces paroles, confirmer l’horodatage et l’ouverture de l’article d’origine.
+Sur une piste non française, essayer une courte préparation française puis
+comparer le texte et les temps. Une vidéo seulement liée à Internet ou un lecteur
+JavaScript peut rester non couvert ; la transcription audio des médias internes
+n’est pas encore raccordée. Un titre trouvé ne prouve pas la connaissance des paroles.
+
+Les contrôles assistant/traduction documentaire de la recette précédente restent
+utiles au fil de l’usage. Inutile de refaire un R2 ou tous les benchmarks pour
+chaque vidéo. Cette procédure n’annonce aucun nouvel essai réalisé sur Marc.
+
 ## Prochaine validation ciblée — 0.32.0
+
+**Étape précédente conservée.** Le parcours 0.33.0 ci-dessus complète maintenant
+les vidéos ZIM ; les limites de la 0.32.0 ci-dessous décrivent cette version antérieure.
 
 La recherche classique, l’indexation, les lectures et les modèles disposent déjà
 de rapports ; le R2 0.25.0 n’a aucun avis humain de pertinence et garde une couverture
@@ -42,7 +66,7 @@ Le [guide des rapports](../utilisation/mesurer-assistant-et-memoire.md) et le
 
 ## Validation assistant — 0.17.0 (historique)
 
-**Étape conservée avec sa date ; la recette 0.32.0 ci-dessus est la suite actuelle.**
+**Étape conservée avec sa date ; les recettes 0.33.0 et 0.32.0 ci-dessus portent la suite.**
 
 Le dossier multi-source et sa sélection manuelle sont livrés. Les [essais R7](2026-11-15-synthese-multi-sources-et-essais-reels.md)
 confirment des lectures multiples et le changement de modèle sur de petits textes

@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('archive_videos') as module:await module.stop_all()
+    except HTTPException:pass
+    try:
         with optional_feature('caption_acquisition') as module:await module.stop_all()
     except HTTPException:pass
     try:
@@ -88,7 +91,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.33.0'
+VERSION='0.34.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -810,6 +813,26 @@ async def get_videos(offset:int=Query(default=0,ge=0,le=1000000),limit:int=Query
     with optional_feature('videos') as module:return await asyncio.to_thread(module.listing,offset,limit,q)
 
 
+@app.get('/api/zim-videos')
+async def get_zim_videos(value=Depends(user)):
+    with optional_feature('archive_videos') as module:return await module.status()
+
+
+@app.post('/api/admin/zim-videos/start',status_code=202)
+async def start_zim_videos(value=Depends(admin)):
+    with optional_feature('archive_videos') as module:return await module.start()
+
+
+@app.post('/api/admin/zim-videos/pause',status_code=202)
+async def pause_zim_videos(value=Depends(admin)):
+    return await operations.library_command('video-inventory-pause',{})
+
+
+@app.get('/api/admin/zim-videos/report')
+async def report_zim_videos(value=Depends(admin)):
+    with optional_feature('archive_videos') as module:return {'version':VERSION,**await module.status()}
+
+
 @app.post('/api/admin/videos/index',status_code=202)
 async def index_videos(value=Depends(admin)):
     with optional_feature('videos') as module:return await module.start()
@@ -969,9 +992,11 @@ async def resume_video_captions(identifier:str,body:CaptionResume,value=Depends(
 
 
 @app.get('/api/videos/media')
-async def video_media(id:str=Query(pattern=r'^[a-f0-9]{64}$')):
+async def video_media(request:Request,id:str=Query(pattern=r'^[a-f0-9]{64}$')):
     with optional_feature('videos') as module:
         _,payload,_=await asyncio.to_thread(module.row,'video:'+id)
+        if payload.get('provider')=='zim':
+            with optional_feature('archive_videos') as archives:return await archives.media_response(payload,request.headers.get('range'))
         path=await asyncio.to_thread(module.safe_file,payload['path'])
         types={'.mp4':'video/mp4','.m4v':'video/mp4','.webm':'video/webm','.ogv':'video/ogg','.mov':'video/quicktime','.mkv':'video/x-matroska','.avi':'video/x-msvideo'}
         return FileResponse(path,media_type=types.get(path.suffix.lower(),'application/octet-stream'),content_disposition_type='inline')

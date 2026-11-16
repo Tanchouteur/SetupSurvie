@@ -52,8 +52,13 @@ def identity(value):
 
 
 def stat_revision(payload):
-    entries=[(payload['path'],None),(payload['metadata']['path'],None),*[(track['path'],track) for track in payload['tracks']]]
     values=[]
+    if payload.get('provider')=='zim':
+        from . import archive_videos
+        revision=archive_videos.original_revision(payload)
+        if not revision:return None
+        values.append(['archive',revision]);entries=[(track['path'],track) for track in payload['tracks'] if track['technical_status']=='passed']
+    else:entries=[(payload['path'],None),(payload['metadata']['path'],None),*[(track['path'],track) for track in payload['tracks']]]
     for relative,track in entries:
         try:
             path=track_file(track) if track is not None else safe_file(relative);info=path.stat();values.append([relative,info.st_size,info.st_mtime_ns])
@@ -64,10 +69,16 @@ def stat_revision(payload):
 
 
 def original_revision(payload):
+    if payload.get('provider')=='zim':
+        from . import archive_videos
+        return archive_videos.original_revision(payload)
     return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job') and not track.get('transcription_job') and not track.get('acquired_job')]})
 
 
 def track_file(track):
+    if track.get('archive_cache'):
+        from . import archive_videos
+        return archive_videos.track_file(track)
     if track.get('acquired_job'):
         from . import caption_acquisition
         path=caption_acquisition.track_file(track['acquired_job'])
@@ -105,6 +116,7 @@ def public(payload,revision):
     declared=source.get('upload_date_declared') or ''
     date=declared[:4]+'-'+declared[4:6]+'-'+declared[6:] if re.fullmatch(r'\d{8}',declared) else ''
     return {'id':'video:'+key,'kind':'video','title':payload['title'][:400],'collection':source.get('channel') or payload['collection'],
+        'archive_video':payload.get('provider')=='zim','archive_name':payload.get('archive'),'archive_article':('zim:'+payload['book']+'/'+payload['articles'][0]) if payload.get('provider')=='zim' and payload.get('articles') else None,
         'language':media.get('language_declared') or '', 'duration_seconds':media.get('duration_seconds_declared'),
         'subtitle_status':payload['subtitle_status'],'video_revision':revision,'document_date':date,'edition':'',
         'collected_at':'','archive_date':'','provenance':source.get('channel') or 'Fichier vidéo local','licence':'Droits d’usage à vérifier.',
@@ -142,7 +154,7 @@ def source(identifier):
 
 def search(plan,language='',limit=40):
     if not plan.words:return [],{'status':'not_run'}
-    if not ROOT.is_dir():return [],{'status':'not_available'}
+    if not ROOT.is_dir() and not (store.ROOT/'videos.db').is_file():return [],{'status':'not_available'}
     if status()['phase']=='not_started':return [],{'status':'not_indexed'}
     with connect() as db:
         rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,snippet(video_text,6,'','', '…',45) AS excerpt,text AS _text FROM video_text WHERE video_text MATCH ? AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY bm25(video_text) LIMIT ?",
@@ -158,7 +170,9 @@ def search(plan,language='',limit=40):
                         transcription_origin=payload['tracks'][int(candidate['track'])]['origin'] if candidate['track']!='metadata' else 'metadata_only')
             if plan.collection and plan.collection not in retrieval.normal(data['collection']).replace(' ',''):continue
             result.append(data)
-    return result,{'status':'partial' if stale else 'complete','stale_results':stale,'results':len(result),'scope':'indexed_local_titles_and_sidecars'}
+    from . import archive_videos
+    archives=archive_videos.coverage()
+    return result,{'status':'partial' if stale or archives['status'] in ('not_indexed','partial') else 'complete','stale_results':stale,'results':len(result),'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
 
 
 def status():
@@ -190,8 +204,19 @@ def scan():
         def save():durable.write_bytes(store.ROOT/'videos-report.json',json.dumps(report,ensure_ascii=False).encode(),private=True)
         save()
         try:
-            if not ROOT.is_dir() or inventory.is_link(ROOT):raise ValueError('video_directory_unavailable')
-            found=inventory.inventory(ROOT,cancelled=STOP.is_set)
+            from . import archive_videos
+            archive_report=archive_videos.progress()
+            archived=list(archive_videos.items(report['errors']))
+            if not ROOT.is_dir() or inventory.is_link(ROOT):
+                if not archived:raise ValueError('video_directory_unavailable')
+                found={'videos':[],'skipped':[],'errors':[],'unexamined':[],'limitations':[]}
+            else:found=inventory.inventory(ROOT,cancelled=STOP.is_set)
+            found['videos'].extend(archived)
+            report['archive_inventory_job']=archive_report.get('job_id') if archive_report['phase'] in ('completed','partial') else None
+            report['archive_inventory_finished']=archive_report.get('finished')
+            report['archive_inventory_phase']=archive_report['phase']
+            found['limitations']=[text.replace(' et vidéos dans les ZIM','') for text in found['limitations']]
+            found['limitations'].append('Collections : médias et pistes explicites des pages HTML examinées ; lecteurs JavaScript, sens et synchronisation non certifiés.')
             with connect() as db:
                 db.execute('DELETE FROM media');db.execute('DELETE FROM video_text')
                 for item in found['videos']:
@@ -232,8 +257,11 @@ def scan():
                     if time.monotonic()-last_saved>2:
                         save();last_saved=time.monotonic()
                 if STOP.is_set():raise InterruptedError()
+                fresh=archive_videos.progress()
+                if fresh.get('job_id')!=archive_report.get('job_id') or fresh.get('finished')!=archive_report.get('finished'):report['archive_inventory_job']=None
             report.update(phase='completed',skipped=found['skipped'],inventory_errors=found['errors'],unexamined=found['unexamined'],limitations=found['limitations'],
                           per_video=[{'id':'video:'+item['inventory_id'],'path':item['path'],'title':item['title'],'subtitle_status':item['subtitle_status'],
+                                      'archive':item.get('archive'),'provider':item.get('provider','local'),
                                       'media':item['media'],'source':{key:item['source'].get(key) for key in ('id','extractor','channel','upload_date_declared')},
                                       'revision':stat_revision(item),'same_source_paths':item['same_source_paths'],
                                       'tracks':[{key:track[key] for key in ('language_declared','origin','technical_status','errors','warnings')} for track in item['tracks']],

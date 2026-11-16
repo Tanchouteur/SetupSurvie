@@ -42,6 +42,12 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.33.0** ajoute l’[examen des vidéos des collections](inventaire-videos-zim.md),
+leur lecture et les pistes internes dans la recherche commune, puis leur
+préparation française. Audio interne et qualification réelle de chaque vidéo
+restent ouverts. Louis autorise la [refonte UX en parallèle](coordination-ux-et-videos.md),
+avec branches séparées et intégrations successives.
+
 La **0.32.1** reprend les [corrections de la recette Windows](../essais/2026-11-16-integration-corrections-windows.md) : reconfiguration des routeurs pendant une mise à jour et réponses de refus du contrôleur. Le [bilan sur le PC de Marc](../essais/2026-11-16-campagne-windows-marc.md) distingue installation active, environnements isolés et limites physiques.
 
 La **0.32.0** ajoute le [vocabulaire facultatif et le repère entre passages](../utilisation/documents-et-traduction.md#garder-les-mêmes-mots-dans-un-document--0320), conservés par travail. Les termes restent des préférences à relire ; le contrôle des nombres reconnaît les libellés PDF joints.

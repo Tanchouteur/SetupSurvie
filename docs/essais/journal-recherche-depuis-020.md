@@ -1,5 +1,13 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.33.0 : [vidéos des collections](2026-11-16-videos-collections.md), examen
+volontaire/reprenable des ZIM, lecture par portions, paroles horodatées dans la
+recherche et préparation française depuis une piste interne. Preuves natives,
+Kiwix réel miniature et navigateur séparées des validations du fonds de Marc.
+La reconnaissance audio des médias internes reste ouverte. La
+[refonte UX parallèle](../decisions/coordination-ux-et-videos.md) est autorisée
+sur une branche distincte ; aucune fonction existante à perdre à l’intégration.
+
 0.32.1 : [corrections reproduites sous Windows](2026-11-16-integration-corrections-windows.md), configuration des routeurs remise en conformité pendant une mise à jour, refus HTTP du contrôleur et essais de verrous/cache isolés. Branche fournie fusionnée sans réécriture ; aucun déploiement sur le PC actif par cette intégration.
 
 0.32.0 : [cohérence entre passages traduits](2026-11-16-coherence-traduction.md), vocabulaire facultatif par profil copié au départ du travail, repère borné et contrôles des chiffres joints aux libellés PDF. Les essais et limites de fidélité restent distincts.

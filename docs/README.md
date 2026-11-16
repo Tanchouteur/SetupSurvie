@@ -5,6 +5,9 @@
 - [Refonte UX évolutive](decisions/refonte-ux-evolutive.md) — chantier PC/téléphone, traduction dans le lecteur, composants et coordination.
 - [Retour à la version précédente](exploitation/retour-version-avant-refonte.md) — procédure candidate conservant les données récentes.
 
+- [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
+- [Validation des vidéos de collections](essais/2026-11-16-videos-collections.md) — 0.33.0, huit jobs CI et preuves natives/lecteur/navigateurs séparées du fonds réel.
+- [Coordination UX et vidéos](decisions/coordination-ux-et-videos.md) — branches séparées, contrats et intégrations successives.
 - [Intégration des corrections Windows](essais/2026-11-16-integration-corrections-windows.md) — 0.32.1, contrôleur et routeurs après mise à jour ; bilan réel distinct.
 
 - [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.
