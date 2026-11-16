@@ -562,3 +562,13 @@ avant essai restent à identifier et ne sont pas déclarées toutes résolues.
 Louis demande un suivi clair et la lecture au fur et à mesure. Le [bilan](2026-11-16-lecture-traduction-progressive.md)
 distingue l’ancien aperçu existant, les améliorations du confort et les essais.
 La refonte générale des conversations sera cadrée avec Louis après cette livraison.
+
+## Priorité conservée après les rapports 0.25.0
+
+Les refus « moteur indisponible » avant création d’un essai n’ont pas tous une
+trace dans les rapports fournis. Prévoir une collecte bornée de ces refus
+(modèle/contexte sélectionnés, état frais du contrôleur, commande de démarrage
+en cours, disponibilité Ollama et marges mémoire), sans log libre ni conversation.
+Le correctif de délai mémoire ne constitue pas une preuve de résolution de tous
+les démarrages Windows. Ni abaissement silencieux de réserve ni reprise forcée
+du mode jeu ne sont retenus pour faire passer les mesures.

@@ -1,8 +1,15 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.25.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — candidat 0.28.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
+
+La [recette Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md) distingue
+chargement, réserve mémoire et couverture partielle. La 0.26.1 corrige le délai
+d’essai mémoire ; la 0.27.0 ajoute le transfert contrôlé vers SSD. La
+[lecture progressive 0.28.0](../essais/2026-11-16-lecture-traduction-progressive.md)
+est en validation finale. Ces livraisons ne clôturent ni les essais humains
+restants, ni la qualification de toutes les sources et vidéos.
 
 La 0.22.0 ajoute le [diagnostic des lenteurs en un clic](../exploitation/diagnostic-complet-performances.md).
 Son rapport distingue recherche, lecture, génération et compteurs natifs du
@@ -16,17 +23,20 @@ l’encodage complet du dossier ; le contexte reste à comparer à 16k/32k chez 
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
-| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.15.0 reçu : 32 recherches complètes, médiane d’arrivée 268 ms et de fin 2,11 s ; cache largement réutilisé. Avis humains encore absents ; assistant défaillant sur les captures |
-| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix utilisable, progressif, reprenable et pilotable depuis le site | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs compatibles et 15 compléments, 3 238 articles locaux ; pause/reprise et nouveau lot réels restent à vérifier |
-| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, jusqu’à huit threads SQLite ; cache et traitement mesurés. Rapport Windows 0.22.0 : activité disque forte sur premières recherches, CPU total non saturé ; type HDD/SSD non identifié et cause exclusive non prouvée |
+| Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.25.0 reçu : 32 demandes, 31 avec résultats ; arrivée médiane 363 ms, fin médiane 34,96 s. Couverture partielle (vidéos non indexées, quelques délais). Aucun des 32 avis de pertinence renseigné ; les anciens résultats plus chauds restent datés |
+| Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix utilisable, progressif, reprenable et pilotable depuis le site | Diagnostic 0.25.0 : préparation terminée pour 135 archives, 120 index natifs compatibles et 15 compléments, 3 238 articles locaux ; pause/reprise et nouveau lot physiques restent à vérifier |
+| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, requêtes SQLite parallèles, cache mesuré. HDD confirmé par Louis ; chargement modèle de 113 s en 0.25.0, distinct de la génération. NVMe attendu ; bénéfice réel de la migration à mesurer |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
 | Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
-| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages/calibration et suivi indépendant livrés ; budget documentaire corrigé en 0.23.1 après échecs avant modèle. Mémoire/délais Windows reçus ; comparaison 16k/32k et fidélité sur fonds réel encore à qualifier |
+| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Budget documentaire corrigé en 0.23.1 ; contexte 32k observé sur Marc. Sonde interrompue par ancien délai HTTP de 60 s, corrigé en 0.26.1 ; calibration à refaire. Comparatif 0.25.0 arrêté pour réserve RAM. Refus de démarrage avant essai encore à diagnostiquer |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Lecture des versions publiées depuis le portail/PDF préparée en 0.21.0 et intégrée avec 0.22.0 ; origine/édition modifiée explicite. Glossaire et fidélité d’un livre réel restent à qualifier |
-| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire local/export 0.14.0 ; index/lecteur 0.23.0 ; traduction synchronisée reprenable 0.24.0. Acquisition, transcription, ZIM et recette de chaque vidéo réelle restent ouvertes |
-| Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
+| Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire/index/lecteur et traduction synchronisée livrés ; transcription CPU des MP4 depuis 0.26.0, testée sur R7. Acquisition fournisseur en branche de travail, sans interface livrée. ZIM et qualification de chaque vidéo réelle restent ouvertes ; vidéos Marc non indexées dans R2 0.25.0 |
+| Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | 40 pages/9 600 mots fictifs terminés sur Marc en environ 13 min 04 s ; contrôles automatiques sans avertissement, sens non certifié. Lecture pendant traduction candidate 0.28.0 ; vrai livre de 500 pages et cohérence terminologique encore non validés |
 | Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |
+| Transfert vers SSD | Copier, reprendre, vérifier et basculer en gardant la source | Livré en 0.27.0, contrôles Linux/Windows simulés et petite copie ; transfert réel de Marc et reconstruction d’un PC vierge non validés |
+| Conversations | Trois zones et raccourcis de tâches | Direction validée par Louis : [base](conversations-trois-zones.md). Dossiers, profondeur et parcours à préciser avant refonte globale ; lecteur de traduction 0.28.0 distinct |
+| Stock de modèles hors ligne | Choisir davantage de modèles à télécharger | Demande ajoutée le 16 novembre, IDEE-009 ; catalogue et menu à réaliser, distincts des trois modes et du modèle chargé |
 | Maison de Solliès-Ville | Équipements réels, notices, entretien ; stocks éventuels | Reporté, IDEE-001 |
 
 ## Choix retenus et pistes écartées
