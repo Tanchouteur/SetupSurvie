@@ -127,6 +127,12 @@ def fit_context(messages,maximum=24000):
     for message in messages:message.pop('thinking',None)
     if size()<=maximum:return True
     for message in messages:
+        if message.get('role')!='tool':continue
+        try:value=json.loads(message['content'])
+        except (ValueError,TypeError):continue
+        message['content']=json.dumps(value,ensure_ascii=False,separators=(',',':'))
+    if size()<=maximum:return True
+    for message in messages:
         if message['role']=='tool':
             try:value=json.loads(message['content'])
             except (ValueError,TypeError):continue
@@ -140,7 +146,7 @@ def fit_context(messages,maximum=24000):
                                 part['text']=part['text'][:300];part['next_offset']=part['offset']+len(part['text'])
                             row['partial_read']=True
                     else:value['results']=[{k:(v[:160] if k=='excerpt' and isinstance(v,str) else v) for k,v in row.items()} for row in value['results'][:3]]
-                message['content']=json.dumps(value,ensure_ascii=False)
+                message['content']=json.dumps(value,ensure_ascii=False,separators=(',',':'))
     current=max((i for i,m in enumerate(messages) if m['role']=='user'),default=-1)
     for index in range(current):
         message=messages[index]
