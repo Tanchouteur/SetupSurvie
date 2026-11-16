@@ -1,8 +1,12 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 15 novembre 2026 — 0.21.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.22.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
+
+La 0.22.0 ajoute le [diagnostic des lenteurs en un clic](../exploitation/diagnostic-complet-performances.md).
+Son rapport distingue recherche, lecture, génération et compteurs natifs du
+serveur ; les causes matérielles chez Marc restent à établir avec son rapport.
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
@@ -13,7 +17,7 @@ La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds ré
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
 | Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
 | Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages et calibration volontaire livrés ; suivi indépendant des recherches/lectures en 0.15.0. Délais, mémoire et qualité d’une réponse réelle restent à vérifier |
-| Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Accès au moteur existant livré ; lecture traduite intégrée Kiwix/PDF à développer |
+| Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Lecture des versions publiées depuis le portail/PDF préparée en 0.21.0 et intégrée avec 0.22.0 ; origine/édition modifiée explicite. Glossaire et fidélité d’un livre réel restent à qualifier |
 | Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Étude et protocole conservés ; inventaire local/export livré en 0.14.0. Recherche vidéo, acquisition, transcription, traduction et lecture synchronisée restent à développer et qualifier |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |
 | Apprendre par thème | Objectifs concrets, prérequis, documents, étapes et lacunes | Six dossiers et repères humains livrés en 0.9.0 ; qualification des sources réelles à faire |

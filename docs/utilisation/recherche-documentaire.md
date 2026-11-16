@@ -4,6 +4,11 @@
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
+Pour examiner une lenteur, le [diagnostic complet](../exploitation/diagnostic-complet-performances.md)
+ajouté en 0.22.0 mesure recherche, assistant et ressources depuis un seul bouton
+dans Paramètres → Entretien et diagnostics. Le rapport de pertinence ci-dessous
+reste distinct : des mesures rapides ne prouvent pas qu’un résultat est utile.
+
 ## Chercher dans la bibliothèque
 
 Dans **Bibliothèque → Rechercher**, décrire le besoin : « allumer un feu »,
