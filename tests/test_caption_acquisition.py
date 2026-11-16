@@ -116,7 +116,7 @@ class CaptionAcquisitionTests(unittest.IsolatedAsyncioTestCase):
     async def test_early_database_without_summary_keeps_completed_tracks_after_upgrade(self):
         result=await self.finish(await acquired.create(self.video,translate_french=False))
         with acquired.connect() as db:db.execute('ALTER TABLE jobs DROP COLUMN result_summary')
-        reopened=acquired.status(result['id'],True)
+        reopened=(await asyncio.gather(*(asyncio.to_thread(acquired.status,result['id'],True) for _ in range(8))))[0]
         self.assertEqual(reopened['published_hash'],result['published_hash']);self.assertEqual(reopened['status'],'completed')
         self.assertEqual(len(acquired.prepared_tracks(videos.row(self.video)[1])),1)
 

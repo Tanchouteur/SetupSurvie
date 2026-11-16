@@ -41,9 +41,11 @@ def connect():
     db.execute('''CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,video_id TEXT NOT NULL,source_revision TEXT NOT NULL,
         title TEXT NOT NULL,provider_id TEXT NOT NULL,identity_basis TEXT NOT NULL,language TEXT NOT NULL,origin TEXT NOT NULL,
         preferred_language TEXT NOT NULL,mode TEXT NOT NULL,translate_french INTEGER NOT NULL,status TEXT NOT NULL,error TEXT,
-        created REAL NOT NULL,updated REAL NOT NULL,published_hash TEXT,index_status TEXT,translation_job TEXT)''')
+        created REAL NOT NULL,updated REAL NOT NULL,published_hash TEXT,index_status TEXT,translation_job TEXT,result_summary TEXT)''')
     if 'result_summary' not in {row[1] for row in db.execute('PRAGMA table_info(jobs)')}:
-        db.execute('ALTER TABLE jobs ADD COLUMN result_summary TEXT')
+        try:db.execute('ALTER TABLE jobs ADD COLUMN result_summary TEXT')
+        except sqlite3.OperationalError:
+            if 'result_summary' not in {row[1] for row in db.execute('PRAGMA table_info(jobs)')}:raise
     try:
         with db:yield db
     finally:db.close()
