@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.32.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.35.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -84,7 +84,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; notices/antennes et lecture HTML en 0.19.1 ; relances relues et conditions de départ en 0.20.0. Fidélité sur de vrais livres, interprétation visuelle et R4 Windows restent à qualifier |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | Cycle du modèle, contexte réglé, avertissement des trous d’extraction et 500 pages synthétiques en 0.20.1 ; lecture française intégrée portail/PDF en 0.21.0 ; vocabulaire personnel et repère borné entre passages en 0.32.0 ; fidélité d’un livre réel reste à qualifier |
-| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 et transcription MP4 0.26.0 ; récupération YouTube 0.31.0 ; ZIM et recette du fonds à faire |
+| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes 0.24.0, transcription MP4 0.26.0, récupération YouTube 0.31.0, inventaire ZIM 0.33.0 et audio inclus 0.35.0 ; recette de chaque vidéo du fonds réel à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
@@ -263,7 +263,10 @@ la reconnaissance locale et sa reprise ; un MP4 synthétique atteint le françai
 et l’index sur le R7. Navigateurs et CI sont vérifiés ; runtime installé chez Marc et fonds réel
 restent à valider. La récupération YouTube **0.31.0** et le parcours
 [vidéos/pistes ZIM **0.33.0**](inventaire-videos-zim.md) complètent cette étape.
-Audio des médias internes et qualification réelle de chaque vidéo restent ouverts.
+L’[audio des médias inclus **0.35.0**](audio-videos-zim.md) raccorde
+ensuite la reconnaissance au suivi existant. Les [preuves](../essais/2026-11-16-audio-videos-collections.md)
+séparent pistes simulées, lecteur Kiwix réel et modèles réels du R7. La
+qualification de chaque vidéo du fonds de Marc reste ouverte.
 
 **Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
 `library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.
@@ -283,8 +286,8 @@ des sous-titres français **pour chaque vidéo**, pas seulement quelques exemple
 Le [protocole R6 cible](../essais/protocole-sous-titres-videos.md) définit les
 preuves, les exceptions visibles et la différence entre contrôle technique et
 relecture humaine. L’inventaire des fichiers et pistes locales est livré en
-0.14.0 ; acquisition, transcription, traduction, lecteur synchronisé et inventaire
-des vidéos des ZIM restent à développer et qualifier. La 0.23.0 ajoute entre-temps
+0.14.0 ; à cette date, acquisition, transcription, traduction, lecteur synchronisé
+et inventaire des vidéos ZIM restaient à développer et qualifier. La 0.23.0 ajoute ensuite
 l’index volontaire des pistes locales, leur lecteur et le rapport par média :
 voir le [guide actuel](../utilisation/videos-locales.md). Les états « piste disponible »
 et « validation humaine » restent séparés.

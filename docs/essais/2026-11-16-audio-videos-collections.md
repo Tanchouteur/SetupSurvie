@@ -1,6 +1,6 @@
 # Audio des vidéos incluses : source, français et recherche
 
-**Bilan du candidat 0.35.0 — 16 novembre 2026.** Nouvelle capacité compatible,
+**Bilan de livraison 0.35.0 — 16 novembre 2026.** Nouvelle capacité compatible,
 sans migration destructive ni changement d’image ou de modèle épinglé. Le niveau
 mineur correspond au parcours audio désormais utilisable sur les médias ZIM.
 Les corrections moteur 0.33.1 restent conservées. Aucun déploiement client réalisé.
@@ -9,7 +9,7 @@ La refonte UX est livrée d’abord en 0.34.0 sur `main` (`2782165`, PR nº 13).
 Le candidat audio initial portait aussi 0.34.0 ; il devient 0.35.0 après reprise
 normale de cette refonte. Les rapports privés R7 ci-dessous gardent leur version
 d’exécution initiale ; ils ne sont pas renumérotés rétroactivement. La CI de
-l’état réuni est relancée après cette réconciliation.
+l’état réuni est relancée après cette réconciliation et passe les huit jobs.
 
 ## Ce qui change
 
@@ -38,11 +38,19 @@ Ce sont des octets transférés, éventuellement relus, pas des compteurs du dis
 - **954 tests locaux en 250,080 s, 6 ignorés**, dont sept cas de lecture par
   portions, cinq parcours sur vraies petites archives avec ASR/français simulés,
   échec audio, source remplacée, reprise, protocoles et bornes de fin de média.
+- **Après reprise de l’UX : 962 tests en 200,704 s, 6 ignorés**, aucun échec.
+  Les modules du parcours audio restent identiques à ceux de l’essai R7 v4 ;
+  les ajouts UX et la version API sont testés ensemble dans ce second passage.
 - **Chromium et WebKit : 67 contrôles par navigateur**, sur quatre recettes
   ciblées : archive avec piste 17, archive audio 16, audio local 15, traduction
   de piste 19. Les codecs sont réellement décodés sur un petit WebM vert ; voix,
   modèles et contrôleur hôte y sont simulés. Les formats de Marc et Safari réel
   ne sont pas qualifiés par ces essais.
+  Les mêmes 67 contrôles par navigateur sont rejoués après la fusion UX. Une
+  capture Chromium 1366 × 900, `ss035-audio-video-ux-pc.png` dans les artefacts
+  privés du runner, est aussi examinée : commandes audio repliées dans la carte
+  du média, préparation française et avertissement de durée visibles à l’ouverture,
+  aucun débordement horizontal. Aucun modèle n’est démarré pour cette capture.
 - **Kiwix réel épinglé 3.8.1 : dix contrôles**, archive générée de 36 675 octets,
   média de 1 135 octets. Le lecteur produit relit l’identité et des plages avec
   ETag via les vrais octets HTTP du service. `nc` sert seulement de transport vers
@@ -97,7 +105,19 @@ paroles restent privés sous `setupsurvie-test/audio-transcription/`.
 
 ## Livraison et limites
 
-CI du code final, intégration et reçu de paquet seront consignés après validation.
+Les huit [jobs CI du code final](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43950604434)
+passent au commit `f8bce46d12fb14adfa87eae1c4cb8b8fff238696`, après la fusion
+de l’UX : Linux, Windows, lecteurs isolés Python 3.11/3.13/3.14, vrai Kiwix,
+routage hors ligne et navigation complète Chromium/WebKit. La suite Linux CI
+compte **962 tests en 97,825 s, 6 ignorés** ; la nouvelle recette audio conserve
+ses seize contrôles sur chacun des deux navigateurs. Les ajouts qui suivent
+ce commit sont documentaires, dont la reprise du reçu UX `6bfdc0c` et la consigne
+durable de design de Louis. Le premier CI audio `43949417262`, sur le candidat
+isolé `3387bc2`, est annulé comme remplacé par cet essai complet réconcilié ;
+il n’est pas compté comme validation générale.
+
+Le reçu de paquet après comparaison de chaque fichier avec Git accompagne
+l’intégration successive sur `main`, sans écraser la livraison UX.
 Le [guide](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0350)
 porte les commandes courantes. Aucun média réel de Marc n’est examiné ici : mots,
 langue, codecs et alignement de chaque vidéo restent à qualifier. Les lecteurs

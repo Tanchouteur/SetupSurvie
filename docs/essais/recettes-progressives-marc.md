@@ -4,7 +4,37 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation ciblée — 0.33.0
+## Prochaine validation ciblée — 0.35.0
+
+Après mise à jour habituelle, choisir une courte vidéo incluse dans une collection
+déjà examinée, sans sous-titres. Inutile de relancer un examen terminé si la
+collection n’a pas changé. Dans sa carte, ouvrir **Créer les sous-titres depuis
+l’audio**, choisir la langue et conserver **Préparer aussi la version française**
+si elle est utile. Kiwix doit fonctionner et l’outil de reconnaissance avoir été
+préparé ; une ressource manquante doit rester signalée, sans téléchargement implicite.
+
+Lancer une fois, mettre en pause après un passage terminé puis reprendre.
+Vérifier que les passages conservés restent présents, attendre séparément la fin
+de la reconnaissance et celle du français. Télécharger le rapport audio si une
+étape échoue. Il contient les paroles et reste privé ; son nom indique version,
+date et heure. Les anciennes pistes et l’original ne doivent pas être effacés.
+
+Lire début, milieu, fin et un passage technique : mots, chiffres, négations et
+temps à comparer à l’audio. Chercher un mot français de la piste et vérifier que
+le résultat ouvre la bonne vidéo au bon passage. Après préparation, cette lecture
+et cette recherche ne doivent demander ni Internet ni modèle IA. Une revue par
+extraits ne devient pas une validation intégrale. Signaler le titre et l’adresse
+du lecteur avec le rapport en cas d’erreur ; poursuivre les autres vidéos au fil
+de l’usage, sans annoncer tout le fonds qualifié après ce seul exemple.
+
+Le [guide actuel](../utilisation/videos-locales.md) précise le parcours. Les
+contrôles documentaires ci-dessous restent utiles ; inutile de refaire tous les
+benchmarks. Ce protocole ne constitue pas un essai déjà réalisé chez Marc.
+
+## Validation ciblée précédente — 0.33.0
+
+**Étape historique :** l’audio des médias inclus est raccordé ensuite en 0.35.0.
+Les limites ci-dessous décrivent la version 0.33.0 au moment de sa livraison.
 
 Après la mise à jour habituelle, choisir une collection connue contenant des
 vidéos. Dans **Bibliothèque → Collections → Vidéos de la bibliothèque → Vidéos
@@ -212,7 +242,7 @@ Arrêt et export sont disponibles ; les étapes non faites restent non effectué
 | R3 — Collections et utilité | Après L3 puis L7 | Noms compréhensibles, accès direct, type réel du document, présence des étapes/plans/matériel ; signalement des lacunes | Corrections/export en 0.6.0, six dossiers et repères exportables en 0.9.0 ; relecture humaine du fonds attendue |
 | R4 — Assistant et matériel | Après L4, à un moment convenu sans autre charge lourde | Modèle/digest, contexte, attente/chargement/recherche/lecture/rédaction, mémoire, erreurs ; comparer 16k/32k et davantage si admis | Captures 0.15.0 : synthèse sans source consultée et constat de changement de modèle défaillant. Dossier 0.16.0 et essais R7 réalisés sur corpus fictif ; contrôle Windows ci-dessus encore à faire. Calibration distincte et volontaire |
 | R5 — Traduction | Après L5, page puis chapitre puis livre long | Langue, volume, pages, progression/reprise, erreurs de contrôle, durée et relecture de passages choisis ; original et traduction comparables | Traduction par passages existante ; rapport de recette à développer |
-| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Inventaire/export local](../utilisation/inventaire-videos.md) livré en 0.14.0 ; recette réelle et traitements/lecteur du [protocole cible](protocole-sous-titres-videos.md) restent à faire |
+| R6 — Vidéos | Inventaire au début de L6, lecture à sa fin | Une ligne par vidéo : piste française récupérée ou créée, couverture, synchronisation/lecture hors ligne, contrôles et relecture ; erreurs et vidéos non traitées visibles | [Inventaire/export local](../utilisation/inventaire-videos.md) et [traitements/lecteur](../utilisation/videos-locales.md) disponibles ; qualification de chaque vidéo réelle selon le [protocole cible](protocole-sous-titres-videos.md) encore à faire |
 | R7 — Usage hors ligne | À chaque livraison pertinente, puis L9 | Navigation, données conservées, fonctions avec IA arrêtée et Internet coupé, reprise, téléphone ; chaque vérification marquée exécutée ou non | Recette et export en 0.10.0 ; rapport réel attendu, état IA mesuré et coupure Internet déclarée restent distincts |
 
 Les recettes longues annoncent leur charge et leur possibilité de pause avant

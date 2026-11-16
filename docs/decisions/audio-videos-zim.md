@@ -1,6 +1,6 @@
 # Reconnaissance audio des vidéos internes
 
-**Référence du candidat 0.35.0 — 16 novembre 2026.** La reconnaissance des médias
+**Référence actuelle 0.35.0 — 16 novembre 2026.** La reconnaissance des médias
 inclus est maintenant raccordée à la commande audio existante, avec suivi,
 pause/reprise, préparation française optionnelle et index. Le
 [guide actuel](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0350)
@@ -17,7 +17,7 @@ Un cache de lecture de 256 Kio n’est pas une limite de taille des vidéos ni d
 cache documentaire. Les métriques HTTP ne sont pas des mesures d’octets disque.
 
 Les paragraphes suivants conservent l’étape de conception et ses observations
-avant raccordement ; leur futur ne décrit pas l’état du candidat ci-dessus.
+avant raccordement ; leur futur ne décrit pas l’état livré ci-dessus.
 
 ## Historique : prototype isolé
 

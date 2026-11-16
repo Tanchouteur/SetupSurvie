@@ -27,7 +27,7 @@ courtes reconnues sans « comment ». Le retour de Marc sur le prix de réparati
 du vélo est reproduit sur petits textes ; l’article exact et sa pertinence réelle
 restent à vérifier. Ce correctif ne clôt pas la validation du fonds complet.
 
-Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0330)
+Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0350)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
 un accès TeamViewer détenu par Louis ne devient pas un accès autonome de l’agent.
 Tant qu’un développement ou une vérification autonome utile reste possible, ces
