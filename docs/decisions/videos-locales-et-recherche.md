@@ -1,5 +1,11 @@
 # Vidéos locales dans la recherche commune
 
+**Complément du 16 novembre 2026 — 0.23.0 :** le [guide actuel](../utilisation/videos-locales.md)
+décrit l’index volontaire des titres/descriptions et pistes locales, la recherche
+commune, le lecteur et l’export par vidéo. Acquisition, transcription, traduction
+synchronisée, ZIM et relecture du fonds de Marc restent à faire. L’étude ci-dessous
+est conservée avec sa date ; elle ne remplace pas ce guide.
+
 **Besoin confirmé par Louis — 14 novembre 2026 ; inventaire local livré en 0.14.0.** Marc a ajouté
 un dossier `video` dans `library/` pour ses téléchargements YouTube en 480p afin
 de limiter l’espace occupé. Chemin rapporté : **`library/video/`** ; aucun accès
@@ -97,8 +103,9 @@ prépare pas de sous-titres ni une traduction partagée du livre. Références M
 Le moteur documentaire existant découpe déjà un livre en passages enregistrés.
 Un livre de 500 pages n’est donc pas envoyé en une seule question : les
 [limites actuelles](../utilisation/documents-et-traduction.md#taille-des-documents-et-livres-longs)
-restent celles de l’extraction et du volume, avec contexte de traduction propre
-de 8 192 tokens, distinct du réglage de conversation. Aucune traduction réelle de
+restent celles de l’extraction et du volume. L’étude initiale décrivait un contexte
+fixe de 8 192 tokens ; depuis 0.20.1, la traduction reprend le contexte configuré,
+borné par le modèle et ses budgets. Aucune traduction réelle de
 500 pages n’est validée. L5 doit ajouter comparaison original/français, glossaire
 et cohérence entre passages, puis mesurer chapitre et livre, sans annoncer que
 le seul contexte agrandi résout la cohérence. Conserver les contrôles actuels de
@@ -116,5 +123,6 @@ et pistes SRT/WebVTT associées et produit un état par média, en lecture seule
 Les contrôles techniques ne valident ni la langue, ni le sens, ni la lecture
 synchronisée. Les médias des ZIM et pistes intégrées aux conteneurs ne sont pas
 examinés par ce premier outil. Le [bilan d’intégration](../essais/2026-11-15-integration-outils-validation-videos.md)
-distingue tests fictifs et recette réelle à exécuter. Recherche par titre ou paroles,
-acquisition, transcription, traduction et lecteur restent à développer.
+distingue tests fictifs et recette réelle à exécuter. Recherche par titre ou paroles
+et lecteur ont ensuite été ajoutés en 0.23.0 ; acquisition, transcription et
+traduction synchronisée restent à développer.

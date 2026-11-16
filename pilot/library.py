@@ -558,7 +558,16 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
     candidate_limit=min(80,max(20,limit*4))
-    results=[]
+    results=[];video_coverage={'status':'not_run'}
+    if not translations_only:
+        try:
+            from . import videos
+            video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit)
+            if favorite_user is not None:
+                with store.connect() as db:video_favorites={row['source_id'].split('#t=')[0] for row in db.execute('SELECT source_id FROM favorites WHERE user_id=?',(favorite_user,))}
+                video_rows=[item for item in video_rows if item['id'].split('#t=')[0] in video_favorites]
+            results.extend(video_rows)
+        except Exception:video_coverage={'status':'unavailable'}
     if words:
         expression=query_plan.fts()
         with store.connect() as db:
@@ -662,6 +671,9 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     coverage['parallelism']=4
     coverage['collection']=query_plan.collection
     coverage['query_terms']=words
+    coverage['videos']=video_coverage
+    if video_coverage['status'] in ('not_indexed','unavailable'):
+        coverage['status']='partial';coverage['warning']=coverage.get('warning','')+' La recherche des vidéos locales n’est pas préparée ou ne répond pas. Actualisez les vidéos depuis Collections.'
     return SearchResults(ordered,coverage)
 
 
@@ -701,6 +713,9 @@ def focused_page(identifier,query):
 
 
 async def source(identifier):
+    if identifier.startswith('video:'):
+        from . import videos
+        return await kiwix_queries.disk_io(videos.source,identifier)
     if identifier.startswith('guide:'):
         with store.connect() as db:
             table='passages' if '#page=' in identifier else 'documents'

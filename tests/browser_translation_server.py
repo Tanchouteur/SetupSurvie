@@ -14,10 +14,22 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
 from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries,illustrations
+from pilot import videos
+import shutil
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
 temporary=tempfile.TemporaryDirectory(prefix='translation-browser-');root=Path(temporary.name)
 store.ROOT=root/'state';library.GUIDES=root/'guides';library.GUIDES.mkdir()
 inventory.ZIMS=root/'zim';inventory.ZIMS.mkdir()
+videos.ROOT=root/'video'
+@gateway.app.post('/fixture/videos')
+def fixture_videos():
+    videos.ROOT.mkdir(exist_ok=True)
+    shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'cours.webm')
+    shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'sans-piste.webm')
+    (videos.ROOT/'cours.info.json').write_text(json.dumps({'title':'Fabrication du rotor fictif','language':'en','duration':12,'channel':'Chaîne de test','description':'Vidéo synthétique, aucun guide pratique.'}))
+    (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:03,000\nIntroduction fictive.\n\n2\n00:00:08,000 --> 00:00:10,000\nMontage du rotor fictif, cote inventée 17 mm.\n')
+    (videos.ROOT/'cours.en.vtt').write_text('WEBVTT\n\n00:08.000 --> 00:10.000\nImaginary rotor assembly, fictional 17 mm.\n')
+    return {'ready':True}
 os.environ['ZIM_DIR']=str(inventory.ZIMS)
 (inventory.ZIMS/'figure-fixture.zim').write_bytes(b'Fictional media identity, not a real archive.')
 for topic in ('energy','food'):(inventory.ZIMS/('fixture-channel_en_'+topic+'_2026-01.zim')).write_bytes(b'Fictional archive metadata fixture, not a real ZIM.')

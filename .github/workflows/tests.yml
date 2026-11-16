@@ -85,6 +85,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_translations.py -v
       - run: python -m unittest discover -s tests -p test_translation_runtime.py -v
       - run: python -m unittest discover -s tests -p test_host_performance.py -v
+      - run: python -m unittest discover -s tests -p test_library_videos.py -v
+      - run: python -m unittest discover -s tests -p test_local_videos.py -v
       - run: python -m unittest discover -s tests -p test_performance.py -v
       - run: python -m unittest discover -s tests -p test_control.py -v
       - run: python -m unittest discover -s tests -p test_translation_reader.py -v

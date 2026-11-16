@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('videos') as module:await module.stop()
+    except HTTPException:pass
+    try:
         with optional_feature('performance') as module:await module.cancel(reason='service_restarted')
     except HTTPException:pass
     try:
@@ -73,7 +76,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.22.0'
+VERSION='0.23.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -621,7 +624,7 @@ class CollectionLabels(BaseModel):
 
 @app.put('/api/admin/library/classification')
 async def set_classification(body:SourceClassification,value=Depends(admin)):
-    if not body.source_id.startswith(('guide:','zim:')):raise HTTPException(400,'Référence de document invalide.')
+    if not body.source_id.startswith(('guide:','zim:','video:')):raise HTTPException(400,'Référence de document invalide.')
     with optional_feature('catalogue') as module:
         return await asyncio.to_thread(module.save,body.source_id,{'domains':body.domains,'document_type':body.document_type,'status':'reviewed' if body.reviewed else 'corrected'},body.revision,library.GUIDES,inventory.ZIMS)
 
@@ -737,7 +740,43 @@ async def delete_conversation(identifier:str,value=Depends(user)):
     return {'ok':True}
 
 
-SourceIdentifier=Annotated[str,Field(min_length=1,max_length=2000,pattern=r'^(guide|zim):.+$')]
+SourceIdentifier=Annotated[str,Field(min_length=1,max_length=2000,pattern=r'^(guide|zim|video):.+$')]
+
+
+@app.get('/api/videos')
+async def get_videos(offset:int=Query(default=0,ge=0,le=1000000),limit:int=Query(default=30,ge=1,le=100),q:str=Query(default='',max_length=160),value=Depends(user)):
+    with optional_feature('videos') as module:return await asyncio.to_thread(module.listing,offset,limit,q)
+
+
+@app.post('/api/admin/videos/index',status_code=202)
+async def index_videos(value=Depends(admin)):
+    with optional_feature('videos') as module:return await module.start()
+
+
+@app.post('/api/admin/videos/stop')
+async def stop_videos(value=Depends(admin)):
+    with optional_feature('videos') as module:return await module.stop()
+
+
+@app.get('/api/admin/videos/report')
+async def report_videos(value=Depends(admin)):
+    with optional_feature('videos') as module:return {'version':VERSION,**await asyncio.to_thread(module.status)}
+
+
+@app.get('/api/videos/media')
+async def video_media(id:str=Query(pattern=r'^[a-f0-9]{64}$')):
+    with optional_feature('videos') as module:
+        _,payload,_=await asyncio.to_thread(module.row,'video:'+id)
+        path=await asyncio.to_thread(module.safe_file,payload['path'])
+        types={'.mp4':'video/mp4','.m4v':'video/mp4','.webm':'video/webm','.ogv':'video/ogg','.mov':'video/quicktime','.mkv':'video/x-matroska','.avi':'video/x-msvideo'}
+        return FileResponse(path,media_type=types.get(path.suffix.lower(),'application/octet-stream'),content_disposition_type='inline')
+
+
+@app.get('/api/videos/track')
+async def video_track(id:str=Query(pattern=r'^[a-f0-9]{64}$'),track:int=Query(ge=0,le=999)):
+    with optional_feature('videos') as module:
+        text=await asyncio.to_thread(module.webvtt,id,track)
+        return Response(text,media_type='text/vtt',headers={'Cache-Control':'no-store'})
 
 
 class AssociatedSources(BaseModel):

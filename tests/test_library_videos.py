@@ -10,9 +10,7 @@ import unittest
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts/library_videos.py'
-SPEC = importlib.util.spec_from_file_location('library_videos', SCRIPT)
-videos = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(videos)
+from pilot import video_inventory as videos
 SRT = '1\n00:00:00,000 --> 00:00:01,000\nBonjour\n'
 VTT = 'WEBVTT\n\nchapitre\n00:00.000 --> 00:01.000 align:start\nHello\n'
 

@@ -168,7 +168,7 @@ function documentaryStatus(target,data){
   reading.textContent=(data.failed_reads?data.failed_reads+' source(s) n’ont pas pu être lues. ':'')+(data.partial_reads?data.partial_reads+' source(s) ont été consultées par passages.':'');
   const limit=target.querySelector('.documentary-limits');limit.hidden=data.status==='not_run'||data.status==='complete'&&data.results>0;
   limit.textContent=data.status==='complete'?'Aucun résultat pour ces recherches ; cela ne prouve pas que le sujet est absent de la bibliothèque.':'Le suivi est incomplet. Il ne permet pas de conclure que le sujet est absent de la bibliothèque.';
-  const sources=Array.isArray(data.consulted_sources)?data.consulted_sources.filter(source=>source&&typeof source.id==='string'&&/^(guide|zim):/.test(source.id)&&typeof source.title==='string').slice(0,12):[];
+  const sources=Array.isArray(data.consulted_sources)?data.consulted_sources.filter(source=>source&&typeof source.id==='string'&&/^(guide|zim|video):/.test(source.id)&&typeof source.title==='string').slice(0,12):[];
   const list=target.querySelector('.documentary-sources'),heading=target.querySelector('.documentary-source-heading');heading.hidden=!sources.length;list.hidden=!sources.length;
   heading.textContent='Documents consultés · '+sources.length+' lien(s) affiché(s) sur '+data.sources_read;
   const previous=new Map([...list.querySelectorAll('button')].map(node=>[node.dataset.source,node]));
@@ -229,7 +229,7 @@ async function runSearch(event){
   finally{stop.remove();}
 }
 function renderLibraryResults(results){
-  for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind==='guide'?'Guide':'Article'} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}${result.collection?' · '+result.collection:''}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button('Lire le document →',()=>readSource(result.id)),sourceChoiceButton(result));
+  for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind==='guide'?'Guide':result.kind==='video'?'Vidéo':'Article'} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}${result.collection?' · '+result.collection:''}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button(result.kind==='video'?'Voir la vidéo →':'Lire le document →',()=>readSource(result.id)),sourceChoiceButton(result));
     if(result.match_quality&&result.match_quality!=='subject')node.append(element('p',result.match_quality==='mention'?'Mention du sujet dans le texte ; vérifiez que ce passage répond au besoin.':'Correspondance à vérifier en ouvrant le document.','small muted'));
     if(result.other_matches?.length){const details=element('details',undefined,'other-matches');details.append(element('summary',result.other_matches.length+' autre(s) passage(s) dans ce document'));for(const match of result.other_matches)details.append(button(match.title,()=>readSource(match.id),'text-button'));node.append(details);}
     $('search-results').append(node);
@@ -285,14 +285,14 @@ async function readSource(id){
   try{const source=await api('/source?id='+encodeURIComponent(id));if(S.reader!==id)return;reader.replaceChildren();
     const actions=element('div',undefined,'reader-actions');actions.append(button('← Résultats',()=>{reader.hidden=true;document.querySelector('.reading-layout').classList.remove('reading');},'secondary'),button('Poser une question sur ce document',()=>askSource(source)));
     actions.append(sourceChoiceButton(source));if(S.conversation)actions.append(button('Revenir à la conversation',()=>view('chat'),'text-button'));
-    reader.append(actions,element('div',source.id.startsWith('guide:WIKI-FR-')?'EXTRAIT DE WIKIPÉDIA':source.id.startsWith('guide:BOOK-EN-')?'EXTRAIT DE WIKILIVRES':source.kind==='guide'?'GUIDE LOCAL':'ARTICLE DE LA BIBLIOTHÈQUE','eyebrow'),element('h2',source.title));
+    reader.append(actions,element('div',source.id.startsWith('guide:WIKI-FR-')?'EXTRAIT DE WIKIPÉDIA':source.id.startsWith('guide:BOOK-EN-')?'EXTRAIT DE WIKILIVRES':source.kind==='guide'?'GUIDE LOCAL':source.kind==='video'?'VIDÉO LOCALE':'ARTICLE DE LA BIBLIOTHÈQUE','eyebrow'),element('h2',source.title));
     reader.append(element('p',sourceDates(source),'source-dates muted small'));
     if(source.images?.length){const images=element('div',undefined,'reader-images');for(const img of source.images.slice(0,4)){const e=element('img');e.src='/api/media?id='+encodeURIComponent(img.id);e.alt=img.alt;e.loading='lazy';images.append(e);}reader.append(images);}
-    if(/^(en|eng)$/.test(source.language||'')){actions.append(button('Traduire en français',()=>{askSource(source);if(S.source?.id===source.id){$('translation-panel').open=true;$('translation-panel').scrollIntoView({block:'nearest'});}},'secondary'));}
+    if(source.kind!=='video'&&/^(en|eng)$/.test(source.language||'')){actions.append(button('Traduire en français',()=>{askSource(source);if(S.source?.id===source.id){$('translation-panel').open=true;$('translation-panel').scrollIntoView({block:'nearest'});}},'secondary'));}
     if(source.provenance||source.licence){const details=element('details',undefined,'source-details');details.append(element('summary','Origine et licence du document'));if(source.provenance)details.append(element('p',source.provenance));if(source.licence)details.append(element('p',source.licence));reader.append(details);}const body=element('div',undefined,'reader-body');renderDocument(body,source);reader.append(body);
-    if(source.preview)reader.append(element('p','Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
+    if(source.preview)reader.append(element('p',source.kind==='video'?'Aperçu des sous-titres à partir du passage choisi ; la lecture complète du média reste disponible dans le lecteur.':'Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
     const original=element('a',source.id.includes('.pdf')?'Lire le PDF illustré →':'Ouvrir le document d’origine →','secondary-link');
-    const archiveLink=/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)?source.text.match(/Original illustré local : (https?:\/\/[^\s]+)/):null;if(archiveLink){try{const path=new URL(archiveLink[1]).pathname;if(path.startsWith('/content/')){original.href=localServiceURL(path,'kiwix');original.textContent='Voir la page illustrée d’origine →';}}catch(_){}}if(!original.hasAttribute('href')&&source.id.startsWith('guide:'))original.href=source.url;else if(!original.hasAttribute('href')){original.href=localServiceURL(source.url,'kiwix');}original.target='_blank';original.rel='noopener';actions.append(original);document.dispatchEvent(new CustomEvent('survie:source',{detail:source}));
+    const archiveLink=/^guide:(?:WIKI-FR-|BOOK-EN-)/.test(source.id)?source.text.match(/Original illustré local : (https?:\/\/[^\s]+)/):null;if(archiveLink){try{const path=new URL(archiveLink[1]).pathname;if(path.startsWith('/content/')){original.href=localServiceURL(path,'kiwix');original.textContent='Voir la page illustrée d’origine →';}}catch(_){}}if(!original.hasAttribute('href')&&(source.id.startsWith('guide:')||source.kind==='video'))original.href=source.url;else if(!original.hasAttribute('href')){original.href=localServiceURL(source.url,'kiwix');}original.target='_blank';original.rel='noopener';actions.append(original);document.dispatchEvent(new CustomEvent('survie:source',{detail:source}));
   }catch(e){
     if(S.reader!==id)return;
     const message=element('p','L’aperçu de ce document n’a pas pu être ouvert.','error'),actions=element('div',undefined,'reader-actions');
@@ -360,7 +360,7 @@ function showAssociatedSource(){
   target.replaceChildren();for(const source of choices){const option=element('option',source.title);option.value=source.id;target.append(option);}target.value=S.source?.id||'';target.disabled=!!(S.sourceChanging||S.sending||translationBusy);
   $('translation-target-label').hidden=choices.length<2;
   $('translation-panel').hidden=!S.source&&!S.translation;
-  $('translation-start').disabled=!S.source||translationBusy||S.sourceChanging;$('translation-range').hidden=!S.source?.id.toLowerCase().split('#page=')[0].endsWith('.pdf')||!!S.translation;
+  $('translation-start').disabled=!S.source||S.source.id.startsWith('video:')||translationBusy||S.sourceChanging;$('translation-range').hidden=!S.source?.id.toLowerCase().split('#page=')[0].endsWith('.pdf')||!!S.translation;
   refreshSourceChoices();document.dispatchEvent(new CustomEvent('survie:source-choices'));
 }
 async function attachToConversation(source){

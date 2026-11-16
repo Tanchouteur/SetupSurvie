@@ -27,7 +27,7 @@ PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
              'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE'}
-DIRECTORIES = ("library/zim", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
+DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
 os.environ['HF_HUB_OFFLINE'] = '0'
@@ -151,6 +151,7 @@ class Installation:
         return config
 
     def render(self, c):
+        (Path(c['data_dir'])/'library/video').mkdir(parents=True,exist_ok=True)
         values = {"DATA_DIR": c["data_dir"], "BIND_ADDRESS": c["bind"],
                   "OLLAMA_BASE_URL": "http://ollama:11434" if c["target"] == "linux" else "http://host.docker.internal:11435",
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],

@@ -184,6 +184,7 @@ def container_specifications(c):
                    '-v', f'{MOUNT}/data/state/pilot:/pilot-data',
                    '-v', f'{MOUNT}/data/state/openwebui:/webui-data:ro',
                    '-v', f'{MOUNT}/data/library/zim:/zim:ro',
+                   '-v', f'{MOUNT}/data/library/video:/videos:ro',
                    '-v', f'{MOUNT}/data/models:/models:ro',
                    '-v', f'{MOUNT}/data/catalog:/catalog:ro',
                    '-v', f'{MOUNT}/data/library/guides:/guides',
@@ -193,7 +194,7 @@ def container_specifications(c):
                    'WEBUI_SECRET_KEY':c['secret'],'WEBUI_URL':'http://open-webui:8080',
                    'OLLAMA_URL':'http://ollama:11434','KIWIX_URL':'http://kiwix:8080',
                    'PILOT_SEARCH_CACHE_BYTES':os.environ.get('PILOT_SEARCH_CACHE_BYTES','2000000000'),
-                   'GUIDES_DIR':'/guides','ASSISTANT_POLICY':'/srv/system.fr.txt'}),
+                   'VIDEO_DIR':'/videos','GUIDES_DIR':'/guides','ASSISTANT_POLICY':'/srv/system.fr.txt'}),
     }
 
 

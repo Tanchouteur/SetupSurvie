@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Vidéos locales et passages](2026-11-16-videos-locales-et-passages.md) — 0.23.0, pistes locales, lecteur et mélange de sources avec modèle réel.
+
 - [Diagnostic complet des performances](2026-11-16-diagnostic-complet-performances.md) — 0.22.0, bouton, compteurs natifs, rapport et essai R7.
 
 - [Lecture française intégrée](2026-11-16-lecture-francaise-integree.md) — 0.21.0, plages PDF, articles et originaux modifiés.

@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.23.0 : [vidéos locales et passages](2026-11-16-videos-locales-et-passages.md).
+Les pistes présentes sont indexées et lues depuis le site avec horodatage ; les
+titres sans piste restent distincts. Un essai Gemma compare un guide à une piste
+fictive et conserve leur désaccord, sans inventer une observation des images.
+Récupération, création et traduction synchronisée des pistes restent à faire.
+
 Complément 0.22.0 : [diagnostic commun des lenteurs](2026-11-16-diagnostic-complet-performances.md).
 Un bouton lance les recherches répétées, rédaction seule, réponse documentaire
 et réponse avec documents choisis. CPU/disques/RAM/GPU et phases sont exportables,

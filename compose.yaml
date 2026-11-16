@@ -97,6 +97,7 @@ services:
       KIWIX_URL: http://kiwix:8080
       PILOT_SEARCH_CACHE_BYTES: ${PILOT_SEARCH_CACHE_BYTES:-2000000000}
       GUIDES_DIR: /guides
+      VIDEO_DIR: /videos
       ASSISTANT_POLICY: /srv/system.fr.txt
     volumes:
       - ./pilot:/srv/pilot:ro
@@ -108,6 +109,7 @@ services:
       - ${DATA_DIR}/library/guides:/guides
       - ${DATA_DIR}/library/maps:/maps:ro
       - ${DATA_DIR}/library/zim:/zim:ro
+      - ${DATA_DIR}/library/video:/videos:ro
       - ${DATA_DIR}/models:/models:ro
       - ${DATA_DIR}/catalog:/catalog:ro
     extra_hosts:

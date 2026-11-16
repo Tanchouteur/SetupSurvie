@@ -23,6 +23,9 @@ def chunks(text,size=2200):
 
 
 async def extract(identifier,first_page=1,last_page=None,*,purpose='traduction',chunk_size=2200):
+    if identifier.startswith('video:'):
+        message='La traduction synchronisée des sous-titres sera préparée séparément ; traduire cet aperçu ferait perdre les horodatages.' if purpose=='traduction' else 'La lecture intégrale des vidéos n’est pas encore préparée. La question ordinaire peut utiliser les passages de sous-titres indexés.'
+        raise HTTPException(422,message)
     # A PDF search result is a page; this operation explicitly translates the whole PDF.
     base=identifier.split('#page=')[0] if identifier.startswith('guide:') else identifier
     revision=lambda:library.catalogue.revision(base,library.GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
