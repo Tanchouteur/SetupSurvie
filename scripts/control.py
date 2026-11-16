@@ -233,7 +233,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings'):
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return

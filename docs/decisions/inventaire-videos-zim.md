@@ -27,8 +27,12 @@ références et entrées illisibles restent des limites explicites de couverture
 `scripts/inventory_zim_videos.py` fournit une commande de développement explicite,
 avec bail OS, réserve disque, processus par archive et rapport de progression.
 Elle réutilise le lecteur isolé existant et ses petits caches hors ligne. Elle
-ne modifie pas l’index texte ni les originaux. Son exécution n’est pas encore
-proposée depuis le site et ne tourne pas automatiquement après une mise à jour.
+ne modifie pas l’index texte ni les originaux. Le contrôleur hôte reconnaît ce
+travail via le lecteur isolé, refuse le mode jeu et une préparation absente,
+conserve pause et rapport terminal en cas de perte du superviseur. Quatre tests
+simulés du superviseur passent, sans redémarrage de services. Les routes et
+commandes du portail ne sont pas encore raccordées ; aucune préparation
+vidéo ne tourne automatiquement après une mise à jour.
 
 Neuf tests locaux passent sur le lecteur libzim **3.13.1**, avec de petites ZIM
 générées : index texte natif sans oubli des vidéos, liens internes/distants,
