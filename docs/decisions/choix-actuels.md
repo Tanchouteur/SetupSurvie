@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+Le **16 novembre 2026**, Louis ouvre une [configuration matérielle cible évolutive](../installation/configuration-materielle-cible.md) :
+NVIDIA **16 Go de VRAM**, probablement RTX **5060 Ti 16 Go** ; **32 Go de RAM
+au moins**, puis **64 Go selon les prix**, DDR4 ou DDR5 selon la plateforme ;
+**SSD NVMe de 2 To au moins, PCIe 4.0 minimum**. Le processeur reste à déterminer
+après mesures. Ce sont des orientations de la future cible, sans achat ni
+validation matérielle annoncés ; les configurations observées ci-dessous restent
+distinctes. La fiche relie les relevés de Marc et les limites d’interprétation.
+
 La 0.24.0 prépare en français une piste locale déjà présente, par segments
 reprenables, sans changer ses temps ni l’original. Les pistes complètes passent
 au lecteur et à la recherche ; les refus restent dans le rapport. Voir le

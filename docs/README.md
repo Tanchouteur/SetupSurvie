@@ -97,6 +97,7 @@ Index mis à jour le 16 novembre 2026. Commencer par le parcours correspondant a
 | --- | --- |
 | Utiliser le serveur en famille | [Utilisation](utilisation/README.md) |
 | Installer depuis le kit ou le dépôt | [Installation](installation/README.md) |
+| Préparer la configuration matérielle cible | [Choix provisoires et mesures](installation/configuration-materielle-cible.md) |
 | Sauvegarder, restaurer et mettre à jour | [Exploitation](exploitation/README.md) |
 | Comprendre une panne sans IA | [Manuel de secours](exploitation/manuel-de-secours.md) |
 | Préparer un disque de secours complet Windows/Linux | [Protocole cible hors ligne](exploitation/disque-de-secours-hors-ligne.md) |

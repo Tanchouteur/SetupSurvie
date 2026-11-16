@@ -52,6 +52,12 @@ Les API Ollama `11435` et de contrôle `11436` ne doivent pas être exposées au
 
 ## Matériel, stockage et données privées
 
+La [configuration matérielle cible](docs/installation/configuration-materielle-cible.md)
+rassemble les orientations de Louis du 16 novembre 2026 et les observations à
+compléter. La cible future reste distincte des machines observées ci-dessous ;
+le processeur n’est pas encore choisi. Mettre cette référence à jour avec les
+nouveaux bilans matériels, sans convertir une hypothèse en résultat validé.
+
 Louis : Linux Bazzite, Ryzen 9, RTX 2060 **6 Go**, 32 Go de RAM.
 Marc : Windows, RTX 5060 Ti **8 Go**, **32 Go de RAM** (GPU détecté dans les
 rapports du 14 novembre 2026, auparavant noté RTX 5060). Des GPU plus gros pourront

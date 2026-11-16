@@ -3,6 +3,13 @@
 Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
 
+## Préparer le matériel
+
+La [configuration cible évolutive](configuration-materielle-cible.md), ouverte le
+16 novembre 2026, rassemble les choix provisoires de Louis et les observations
+matérielles. Elle distingue la future cible des PC déjà utilisés et laisse le
+processeur à déterminer après mesures. Ce n’est pas un minimum logiciel validé.
+
 ## Windows : installation et mise à jour (0.1.21)
 
 Depuis le dépôt, lancer **`Installer-SetupSurvie.cmd`**. La préparation du PC puis
