@@ -47,16 +47,17 @@ Le petit média synthétique et l’archive ZIM native de test restent des fixtu
 | Dernier contrôle API | 32 tests réussis, dont propriétaires des dossiers et métadonnées personnelles |
 | Retour volontaire | 19 tests réussis : données récentes conservées, refus identique/plus récent et restauration de la version quittée si échec |
 | Compatibilité de stockage avec 0.33.0 | Base SQLite réelle ouverte par l’ancien puis le nouveau code : messages, titres, classement et traduction conservés |
-| Fondations UX | 41 contrôles Chromium : PC 1024/1366/1440/1920, mobile 320/390, clavier et aide |
-| Espace assistant | 16 contrôles Chromium : création, renommage, classement, persistance, recherche, volets et petites largeurs |
-| Traduction dans les lecteurs | 11 contrôles Chromium et 11 WebKit ciblés : lecture en place, conversation préservée, comparaison, pause/rechargement, PDF dédié |
-| Confort conversation | 38 contrôles Chromium, dont écran court 320×568 et paysage 844×390 |
+| Fondations UX | 41 contrôles par moteur, Chromium et WebKit : PC 1024/1366/1440/1920, mobile 320/390, clavier et aide |
+| Espace assistant | 16 contrôles par moteur, Chromium et WebKit : création, renommage, classement, persistance, recherche, volets et petites largeurs |
+| Traduction dans les lecteurs | 13 contrôles par moteur, Chromium et WebKit : lecture en place, conversation préservée, comparaison, pause/rechargement, changement de rubrique, titre visible et PDF dédié |
+| Confort conversation | 38 contrôles par moteur, Chromium et WebKit, dont écran court 320×568 et paysage 844×390 |
+| Synthèse et traduction ordinaires | Synthèse longue : 19 contrôles par moteur ; cycle association/pause/reprise/export et plage PDF réussi sur les deux moteurs, à quatre tailles |
 | Portail et paramètres | 29 et 182 contrôles Chromium après réconciliation des modules |
 | Génération et Compose | Pages générées et configurations Windows CPU/GPU/routeurs vérifiées ; aucun service cible démarré |
 | Analyse statique | Syntaxe JavaScript et `git diff --check` réussis |
 
-La suite finale et la recette réunie Chromium/WebKit sont encore en cours à la
-rédaction de ce bilan ; leur résultat et la CI seront inscrits avant clôture.
+La suite Python et la recette ciblée réunie Chromium/WebKit ont réussi. La CI
+complète est encore suivie avant l’intégration ; son reçu sera inscrit avant clôture.
 Les recettes nouvelles sont incluses dans le lanceur navigateur réellement appelé
 par la CI, et pas seulement dans un lanceur local facultatif.
 
@@ -65,13 +66,24 @@ traduction devenu variable, ou supposant le formulaire de recherche visible
 pendant la lecture. Elles utilisent désormais l’action stable et le retour aux
 résultats. Le chargement complet d’un PDF ne se termine pas toujours sous WebKit :
 la recette attend le DOM puis les contrôles utiles. Les contrôles de lecture et
-de retour restent exécutés.
+de retour restent exécutés. Le parcours complet a aussi révélé un chevauchement
+des commandes sur petit écran : le volet Documents défile désormais sans réduire
+son contenu sous le bloc des sources. Le retour à un lecteur pendant une recherche
+a été corrigé, avec une recette dédiée et conservation du périmètre de recherche.
 
 Le Playwright MCP a servi à la navigation, aux captures et aux essais ciblés.
 Les suites locales utilisent ensuite Chromium/WebKit du conteneur TEST
 Playwright 1.58.2, avec seulement le code et les fixtures, sans secrets ni GPU.
 Le serveur dédié est au port 18769 ; l’adaptation locale des adresses de fixture
 est extérieure au dépôt. Les tests CI gardent leur serveur standard au port 8769.
+
+## Paquet logiciel
+
+Le candidat a été construit et audité : 943 fichiers, environ 7,21 Mio, empreintes
+du manifeste vérifiées, nouveaux modules et lanceur de retour inclus. Les
+dépendances figées sont identiques au paquet 0.33.0. La livraison finale est
+reconstruite après clôture documentaire, avec son fichier SHA-256 associé ;
+aucune donnée utilisateur ni ressource lourde n’est incluse.
 
 ## Retour et limites
 
