@@ -170,6 +170,18 @@ def search_key(query,language='',favorite_user=None,collection='',domain='all'):
     return tuple(plan.words),language,favorite_user,plan.collection,plan.action,domain
 
 
+def tool_messages(name,arguments,value,call_id):
+    return [{'role':'assistant','content':'','tool_calls':[{'id':call_id,'type':'function','function':{'name':name,'arguments':arguments}}]},
+            {'role':'tool','tool_name':name,'tool_call_id':call_id,'content':json.dumps(value,ensure_ascii=False,separators=(',',':'))}]
+
+
+def quoted_packet_size(value):
+    # A JSON tool result is itself a string inside the chat JSON. Quotes,
+    # backslashes and newlines occupy space twice at this boundary.
+    content=json.dumps(value,ensure_ascii=False,separators=(',',':'))
+    return len(json.dumps(content,ensure_ascii=False).encode('utf-8'))-2
+
+
 async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all',source_ids=None):
     references={};answer='';content='';tool_trace=[];rejected_answers=[];metrics=[];interrupted=False;search_cache={};read_cache={};source_cache={};read_spans=set();prepared_key=None
     evidence=documentary.Evidence();DOCUMENTARY[identifier]=evidence;evidence_recorded=False
@@ -239,16 +251,19 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 if name!='read_sources':record_evidence(name,arguments,value,prepared_key if name=='search_library' else None)
                 call_id='prepared-'+str(len(tool_trace))
                 if include_message:
-                    messages.append({'role':'assistant','content':'','tool_calls':[{'id':call_id,'type':'function','function':{'name':name,'arguments':arguments}}]})
-                    messages.append({'role':'tool','tool_name':name,'tool_call_id':call_id,'content':json.dumps(value,ensure_ascii=False)})
+                    messages.extend(tool_messages(name,arguments,value,call_id))
                 tool_trace.append({'tool':name,'arguments':arguments,'result':value,'automatic':automatic})
             async def read_batch(identifiers,query,toolset=None,*,automatic=False):
                 allocation=assistant_metrics.budget(context,output,toolset or TOOLS)
-                fit_context(messages,maximum=allocation['message_bytes']-1200)
-                maximum=max(0,allocation['message_bytes']-research.size(messages)-1200)
+                frame=tool_messages('read_sources',{'ids':identifiers,'query':query[:1200]},{},'prepared-'+str(len(tool_trace)))
+                framing=research.size(messages+frame)-research.size(messages)
+                fit_context(messages,maximum=allocation['message_bytes']-framing-1200)
+                maximum=max(0,allocation['message_bytes']-research.size(messages+frame)-1200)
                 with measured.during('reading'):
                     value=await research.read(identifiers,query,maximum,source_cache,lambda item,consulted:reference(references,item,consulted,visual=wants_visual),
-                        on_failed=lambda identifier:record_evidence('read_source',{'id':identifier},{'error':True}),prefer_documents=automatic)
+                        on_failed=lambda identifier:record_evidence('read_source',{'id':identifier},{'error':True}),prefer_documents=automatic,packet_size=quoted_packet_size)
+                measured.value.setdefault('reading_packets',[]).append({'framing_bytes':framing,'maximum_bytes':maximum,'encoded_bytes':quoted_packet_size(value),
+                    'sources':len(value['results']),'omitted':value['omitted'],'failed':value['failed']})
                 for row in value['results']:
                     for part in row['passages']:
                         record_evidence('read_source',{'id':row['id'],'offset':part['offset']},{**row,'text':part['text']})

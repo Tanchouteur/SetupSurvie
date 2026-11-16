@@ -156,7 +156,24 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
     def test_retry_and_load_durations_export_without_raw_engine_errors(self):
         value=perf.numeric_metrics({'model_preparations':[{'duration_ms':123,'status':'ready','error':'PRIVATE'}],
             'model_retries':[{'stage':'loading','reason':'memory_error','http_status':503,'message':'PRIVATE'}],
-            'budgets':[{'context':8192,'prompt':'PRIVATE'}]})
+            'context_limited':True,'requested_context':32768,'context':16384,
+            'runtime_after':{'running':{'context_length':16384,'size_vram':123,'model':'PRIVATE'}},
+            'reading_packets':[{'maximum_bytes':4600,'encoded_bytes':4200,'sources':4,'omitted':8,'failed':0,'text':'PRIVATE'}],
+            'budgets':[{'context':16384,'input_estimate':10000,'output':4096,'template_reserve':2048,'fits':True,'prompt':'PRIVATE'},
+                       {'context':16384,'input_estimate':10688,'output':4096,'template_reserve':2048,'fits':False}]})
         self.assertEqual(value['model_preparations'][0],{'duration_ms':123,'status':'ready'})
         self.assertEqual(value['model_retries'][0]['reason'],'memory_error')
-        self.assertEqual(value['budgets'],[{'context':8192}]);self.assertNotIn('PRIVATE',json.dumps(value))
+        self.assertEqual(value['requested_context'],32768);self.assertEqual(value['context'],16384);self.assertTrue(value['context_limited'])
+        self.assertEqual(value['runtime_after']['running']['context_length'],16384)
+        self.assertEqual(value['reading_packets'],[{'maximum_bytes':4600,'encoded_bytes':4200,'sources':4,'omitted':8,'failed':0}])
+        self.assertEqual(value['budgets'][0]['remaining_estimate'],240);self.assertTrue(value['budgets'][0]['fits'])
+        self.assertEqual(value['budgets'][1]['overflow_estimate'],448);self.assertFalse(value['budgets'][1]['fits'])
+        self.assertNotIn('PRIVATE',json.dumps(value))
+
+    async def test_requested_context_stays_visible_when_native_limit_reduces_it(self):
+        self.mock(engine,'context_size',lambda model:32768)
+        report=await self.finish()
+        for row in report['steps'][6:8]:
+            self.assertEqual(row['metrics']['requested_context'],32768)
+            self.assertEqual(row['metrics']['context'],8192)
+            self.assertTrue(row['metrics']['context_limited'])

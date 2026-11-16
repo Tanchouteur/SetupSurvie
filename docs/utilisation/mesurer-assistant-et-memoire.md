@@ -1,6 +1,6 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.20.0, 15 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.23.1, 16 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 
@@ -35,6 +35,14 @@ le fonctionnement actuel des [profils locaux](profils-locaux.md). Les anciennes
 traces privées d’outils restent séparées de cet export. Les mesures se conservent
 également après une erreur ou une annulation commencée. Un redémarrage brutal peut
 laisser une mesure incomplète ; aucun résultat physique sur coupure n’est revendiqué.
+
+Depuis 0.23.1, les dossiers documentaires réservent aussi la place des identifiants
+d’archives et de l’encodage des outils avant de retenir les passages. Les sources
+écartées par manque de place restent signalées ; le contexte réglé et la place
+réservée à la réponse ne sont pas changés automatiquement. Le
+[diagnostic complet](../exploitation/diagnostic-complet-performances.md#fenêtre-de-contexte-de-lia)
+exporte ces volumes et la marge estimée de contexte, en plus du contexte chargé
+et des comptes de tokens effectivement annoncés par le moteur.
 
 Le document associé, déjà lu par le portail pour préparer la question, est réutilisé
 en mémoire par la demande. Il ne fait plus une seconde lecture identique avant

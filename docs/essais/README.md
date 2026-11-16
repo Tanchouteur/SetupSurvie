@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Rapport de performances de Marc et contexte](2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, dossier documentaire, marge de contexte et observations matérielles.
+
 - [Vidéos locales et passages](2026-11-16-videos-locales-et-passages.md) — 0.23.0, pistes locales, lecteur et mélange de sources avec modèle réel.
 
 - [Diagnostic complet des performances](2026-11-16-diagnostic-complet-performances.md) — 0.22.0, bouton, compteurs natifs, rapport et essai R7.

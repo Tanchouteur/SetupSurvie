@@ -100,9 +100,10 @@ def candidates(items):
     return first+later+pages
 
 
-async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=None,prefer_documents=False):
+async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=None,prefer_documents=False,packet_size=None):
     """Read concurrently, then admit balanced passages in deterministic order."""
     identifiers=list(dict.fromkeys(str(value) for value in identifiers))[:12]
+    measure=packet_size or size
     requested=len(identifiers)
     # Leave enough room per document for identity, offsets and a useful passage.
     wanted=min(len(identifiers),12,max(1,maximum//650)) if maximum>=650 else 0
@@ -153,18 +154,24 @@ async def read(identifiers,query,maximum,cache,reference,*,fetch=None,on_failed=
             continue
         digest=hashlib.sha256(item['text'].encode('utf-8')).digest()
         if digest in fingerprints:continue
-        remaining=maximum-size(result)-150
-        allocation=remaining//max(1,min(wanted-len(result['results']),len(loaded)-index))
+        remaining=maximum-measure(result)-150
         # Reserve source metadata before selecting text. Do not mark it read yet.
         metadata={key:item.get(key,'') for key in ('id','title','language','document_date','edition','archive_date','collected_at','provenance')}
         metadata.update({key:item[key] for key in ('is_ai_translation','original_id','original_title','original_document_date','original_edition','translation_notice') if key in item})
         if item.get('kind')=='video':metadata.update(video_notice=item.get('video_notice',''),position_ms=item.get('position_ms',0),reading_scope='local_captions_only_no_pixels_or_audio_interpretation')
-        parts=passages(item['text'],query,max(0,allocation-size(metadata)-220))
+        metadata_bytes=measure(metadata)
+        # Long identities must reduce the number of slots before text is split.
+        # Otherwise the best-ranked sources get no passage budget and only the
+        # last few candidates can fit once the denominator has decreased.
+        minimum=metadata_bytes+220+min(300,len(item['text'].encode('utf-8')))
+        slots=max(1,min(wanted-len(result['results']),len(loaded)-index,remaining//minimum))
+        allocation=remaining//slots
+        parts=passages(item['text'],query,max(0,allocation-metadata_bytes-220))
         if not parts:continue
         entry={**metadata,'passages':parts,'partial_read':bool(item.get('preview') or item.get('text_truncated') or sum(len(p['text']) for p in parts)<len(item['text'])),'text_limit_reached':bool(item.get('text_truncated'))}
         # References can contain extra private metadata; transmit a compact view.
         probe={**entry,'number':999}
-        if size({**result,'results':result['results']+[probe]})>maximum:continue
+        if measure({**result,'results':result['results']+[probe]})>maximum:continue
         received='\n[…]\n'.join(part['text'] for part in parts)
         excerpt='\n[…]\n'.join(part['text'] for part in passages(received,query,600))
         ref=reference({**item,'excerpt':excerpt},True)

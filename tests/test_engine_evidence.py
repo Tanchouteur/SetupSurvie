@@ -42,7 +42,8 @@ class EvidenceTests(unittest.TestCase):
                 return httpx.Response(200,json={'done':True,'done_reason':'load'})
             payloads.append(payload)
             self.assertLessEqual(len(payloads),len(messages))
-            event={'message':messages[len(payloads)-1],'done':True,'done_reason':'stop'}
+            message=messages[len(payloads)-1]
+            event={'message':message(payload) if callable(message) else message,'done':True,'done_reason':'stop'}
             return httpx.Response(200,content=json.dumps(event).encode()+b'\n')
         with patch.object(engine,'POLICY',POLICY),patch.object(operations,'status',AsyncMock(side_effect=lambda **kw:{'online':True,'paused':paused or pause_during_review and engine.MEASUREMENTS['j'].stage=='procedure_review'})),patch.object(engine.httpx,'AsyncClient',side_effect=lambda **kw:client_class(transport=httpx.MockTransport(handler),**kw)),\
              patch.object(engine.library,'search',AsyncMock(side_effect=search,return_value=found if found is not None else [])),patch.object(engine.library,'source',AsyncMock(side_effect=read or (lambda identifier:self.a))):
@@ -391,6 +392,35 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(all(m['tool_call_id'] in calls for m in messages if m['role']=='tool'))
         self.assertTrue(all('thinking' not in m for m in messages))
         self.assertTrue(all(json.loads(m['content'])['partial_read'] for m in messages if m['role']=='tool'))
+
+    def test_long_archive_identifiers_fit_before_model_call_without_changing_context_or_question(self):
+        question='Fais une synthèse des documents sur les techniques pour faire du feu.'
+        with store.connect() as db:db.execute('UPDATE messages SET content=? WHERE conversation_id=\'c\'',(question,))
+        sources=[{'id':'zim:encyclopedie/A/'+str(i)+'-'+'path'*35,
+            'title':'Techniques pour faire du feu — '+str(i)+' titre "fr" \\ '*8,'language':'fr',
+            'document_date':'2026','edition':'Édition complète '+str(i),'provenance':'Origine fictive '+('a'*100),
+            'text':(f'Notice fictive {i}, technique pour faire du feu : friction et percussion, valeur inventée {i+10} unités. '*40)} for i in range(12)]
+        byid={source['id']:source for source in sources}
+        def answer(payload):
+            packet=json.loads(next(message['content'] for message in payload['messages'] if message.get('tool_name')=='read_sources'))
+            return {'content':'\n'.join('La notice de recette mentionne la friction ['+str(row['number'])+'].' for row in packet['results'])}
+        with patch.object(engine,'PROFILE_CONFIG',{**engine.PROFILE_CONFIG,'context':16384,'output_tokens':4096}):
+            payloads,saved=self.run_chat([answer],sources,read=lambda key:byid[key])
+        self.assertEqual(len(payloads),1);payload=payloads[0]
+        self.assertEqual(payload['options']['num_ctx'],16384);self.assertEqual(payload['options']['num_predict'],4096)
+        self.assertTrue(any(message.get('content')==question for message in payload['messages']))
+        packet=json.loads(next(message['content'] for message in payload['messages'] if message.get('tool_name')=='read_sources'))
+        self.assertGreaterEqual(len(packet['results']),3);self.assertTrue(packet['selection_limited'])
+        self.assertEqual(packet['results'][0]['id'],sources[0]['id'])
+        for row in packet['results']:
+            self.assertEqual(row['title'],byid[row['id']]['title']);self.assertEqual(row['edition'],byid[row['id']]['edition'])
+            for part in row['passages']:self.assertEqual(part['text'],byid[row['id']]['text'][part['offset']:part['next_offset']])
+        measured=assistant_metrics.read('j');self.assertEqual(measured['status'],'done')
+        self.assertEqual(measured['sources_read'],len(packet['results']))
+        allocation=measured['budgets'][0]
+        self.assertLessEqual(allocation['input_estimate']+allocation['output']+allocation['template_reserve'],allocation['context'])
+        self.assertLessEqual(measured['reading_packets'][0]['encoded_bytes'],measured['reading_packets'][0]['maximum_bytes'])
+        self.assertEqual(len(saved['sources']),len(packet['results']))
 
     def test_repeated_searches_are_cached_within_the_same_question(self):
         self.run_chat([self.call('search_library',{'query':'notice'}),self.call('search_library',{'query':'notice'}),{'content':'Fin avec la source effectivement lue [1].'}],[self.a])

@@ -73,6 +73,7 @@ def numeric_metrics(value):
     """Allowlist: future metrics fields must not accidentally export user content."""
     if not isinstance(value,dict):return {}
     result={k:v for k,v in value.items() if k in ('total_ms','first_text_ms','requested_context','context','sources_found','sources_read','prepared_sources','selected_sources','continued_sources') and number(v)}
+    if type(value.get('context_limited')) is bool:result['context_limited']=value['context_limited']
     for key in ('phases_ms','cache_hits'):
         result[key]={k:v for k,v in value.get(key,{}).items() if isinstance(k,str) and len(k)<=64 and number(v)}
     for key in ('status','failure'):
@@ -82,7 +83,16 @@ def numeric_metrics(value):
     result['model_retries']=[{k:v for k,v in call.items() if (k=='http_status' and number(v)) or
         (k=='stage' and v in ('chat','loading')) or (k=='reason' and v in ('transport','http_error','memory_error','empty_response','stream_interrupted','model_error','invalid_model_load'))}
         for call in value.get('model_retries',[])[:4]]
-    result['budgets']=[{k:v for k,v in entry.items() if number(v)} for entry in value.get('budgets',[])[:100]]
+    result['budgets']=[]
+    for entry in value.get('budgets',[])[:100]:
+        budget={k:v for k,v in entry.items() if number(v)}
+        if type(entry.get('fits')) is bool:budget['fits']=entry['fits']
+        if all(number(entry.get(k)) for k in ('context','input_estimate','output','template_reserve')):
+            remaining=entry['context']-entry['input_estimate']-entry['output']-entry['template_reserve']
+            budget.update(remaining_estimate=max(0,remaining),overflow_estimate=max(0,-remaining))
+        result['budgets'].append(budget)
+    result['reading_packets']=[{k:v for k,v in entry.items() if k in ('framing_bytes','maximum_bytes','encoded_bytes','sources','omitted','failed') and number(v)}
+                              for entry in value.get('reading_packets',[])[:100]]
     for key in ('runtime','runtime_after'):
         runtime=value.get(key,{})
         result[key]={k:runtime[k] for k in ('native_context','other_models','available','installed') if k in runtime}
@@ -158,9 +168,10 @@ async def generation(row,report):
         await ai_guard()
         runtime=await model_runtime.describe(engine.OLLAMA,report['model'],fresh=True)
         if not runtime.get('available') or not runtime.get('installed'):raise calibration.Abort('model_not_installed')
-        context=min(engine.context_size(report['model']),runtime['native_context']) if runtime.get('native_context') else engine.context_size(report['model'])
-        measured=assistant_metrics.Measurement('performance',report['model'],report['mode'],context)
-        measured.value['runtime']=runtime
+        requested=engine.context_size(report['model'])
+        context=min(requested,runtime['native_context']) if runtime.get('native_context') else requested
+        measured=assistant_metrics.Measurement('performance',report['model'],report['mode'],requested)
+        measured.value.update(context=context,context_limited=context<requested,runtime=runtime)
         try:
           async with httpx.AsyncClient(trust_env=False) as client:
             def notice(stage):report['current_phase']=stage

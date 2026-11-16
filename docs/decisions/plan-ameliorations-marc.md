@@ -1,22 +1,28 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.23.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.23.1.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
 La 0.22.0 ajoute le [diagnostic des lenteurs en un clic](../exploitation/diagnostic-complet-performances.md).
 Son rapport distingue recherche, lecture, génération et compteurs natifs du
-serveur ; les causes matérielles chez Marc restent à établir avec son rapport.
+serveur ; les premières observations réelles sont détaillées ci-dessous.
+
+Le [rapport Windows 0.22.0](../essais/2026-11-16-rapport-performances-marc-0220.md)
+est reçu : premières recherches fortement associées à l’activité disque,
+chargement initial GPT‑OSS d’environ 108 s, rédaction chaude d’environ 9 s et
+deux échecs logiciels de budget avant appel IA. Le correctif 0.23.1 compte
+l’encodage complet du dossier ; le contexte reste à comparer à 16k/32k chez Marc.
 
 | Lot | Décision et résultat attendu | État |
 | --- | --- | --- |
 | Mesurer le fonds réel | Comparer les recherches naturelles aux sources réellement utiles ; distinguer absent, non indexé, mal classé et panne | R2 0.15.0 reçu : 32 recherches complètes, médiane d’arrivée 268 ms et de fin 2,11 s ; cache largement réutilisé. Avis humains encore absents ; assistant défaillant sur les captures |
 | Indexation manquante | Index local SQLite du texte des ZIM dépourvus d’index Kiwix utilisable, progressif, reprenable et pilotable depuis le site | R1 0.12.0 et état 0.14.0 : 135 archives, 120 index natifs compatibles et 15 compléments, 3 238 articles locaux ; pause/reprise et nouveau lot réels restent à vérifier |
-| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, jusqu’à huit threads SQLite ; traitement réutilisé et mesuré en 0.14.1, plafond long adapté en 0.14.2 ; aucune saturation CPU/HDD établie |
+| Recherche et CPU | Réserver les titres, prioriser les collections utiles, paralléliser selon les CPU et conserver le site réactif | Deux voies plein texte et deux titres partagées, jusqu’à huit threads SQLite ; cache et traitement mesurés. Rapport Windows 0.22.0 : activité disque forte sur premières recherches, CPU total non saturé ; type HDD/SSD non identifié et cause exclusive non prouvée |
 | Deux espaces | Autonomie et résilience par défaut, Savoirs et culture, et recherche globale ; fichiers conservés une seule fois | Filtres 0.3.0, corrections humaines persistantes 0.6.0 ; catalogue éditorial réel à relire |
 | Utilité des résultats | Distinguer une présentation d’une procédure, qualifier étapes, matériel et schémas ; compléter les lacunes confirmées | Intention réparation/conservation/potabilisation améliorée ; qualification humaine des guides et fabrication à faire |
 | Collections | Regrouper source/chaîne et nommer les variantes sans casser l’ouverture directe | Regroupement conservé, noms et groupes corrigeables en 0.6.0 ; révision éditoriale de toutes les variantes à faire |
-| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages et calibration volontaire livrés ; suivi indépendant des recherches/lectures en 0.15.0. Délais, mémoire et qualité d’une réponse réelle restent à vérifier |
+| Assistant et contexte | Recherche commune, citations lues, contexte par modèle et réduction cohérente de l’historique | Réglages/calibration et suivi indépendant livrés ; budget documentaire corrigé en 0.23.1 après échecs avant modèle. Mémoire/délais Windows reçus ; comparaison 16k/32k et fidélité sur fonds réel encore à qualifier |
 | Traduction de lecture | Lire en français / Voir l’original, traduction locale conservée dans les lecteurs | Lecture des versions publiées depuis le portail/PDF préparée en 0.21.0 et intégrée avec 0.22.0 ; origine/édition modifiée explicite. Glossaire et fidélité d’un livre réel restent à qualifier |
 | Vidéos | Inventorier les pistes, exposer les sous-titres existants, puis transcription/traduction synchronisée locale | Inventaire local/export 0.14.0 ; recherche titres/pistes, lecteur horodaté et rapport par vidéo 0.23.0. Acquisition, transcription, traduction synchronisée, ZIM et recette du fonds réel restent à développer/qualifier |
 | Livres longs | Reprise, contrôles techniques, terminologie et essai progressif jusqu’à 500 pages | Moteur existant par passages ; cohérence et livre réel non validés |

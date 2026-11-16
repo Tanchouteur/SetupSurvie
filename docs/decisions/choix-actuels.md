@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+La 0.23.1 corrige le [budget des dossiers documentaires](../essais/2026-11-16-rapport-performances-marc-0220.md)
+après le rapport Windows 0.22.0 : des sources trouvées et lues ne tenaient plus
+dans le message final. L’encodage et les identifiants sont réservés avant lecture,
+sans changer le contexte de Marc. Le diagnostic distingue fenêtre demandée,
+transmise/chargée et marge estimée. L’essai 16k/32k reste à mesurer sous Windows.
+
 La 0.23.0 ajoute les [vidéos locales](../utilisation/videos-locales.md) à la recherche
 commune et au lecteur. L’indexation est volontaire après téléchargement, sans
 modifier les originaux ; une piste absente n’est pas une parole lue. L’assistant

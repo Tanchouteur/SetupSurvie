@@ -1,5 +1,13 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Complément 0.23.1 : [rapport réel de performances et budget documentaire](2026-11-16-rapport-performances-marc-0220.md).
+Deux réponses trouvaient/lisaient des sources mais dépassaient le budget avant
+appel au modèle. L’encodage complet et les identifiants sont désormais réservés
+avant admission des passages, avec priorité conservée et omissions explicites.
+Le diagnostic exporte volume du dossier et marge de contexte estimée. Le rapport
+mesure environ 5 Gio de RAM libres après chargement ; comparer 16k/32k reste utile,
+sans attribuer une lenteur au seul manque de RAM ou de VRAM.
+
 Complément 0.23.0 : [vidéos locales et passages](2026-11-16-videos-locales-et-passages.md).
 Les pistes présentes sont indexées et lues depuis le site avec horodatage ; les
 titres sans piste restent distincts. Un essai Gemma compare un guide à une piste

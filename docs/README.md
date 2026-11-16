@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Rapport de performances de Marc et budget documentaire](essais/2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, défaut de contexte reproduit, mesures RAM/disque/IA et limites.
+
 - [Vidéos locales et sous-titres](utilisation/videos-locales.md) — 0.23.0, recherche des passages et lecteur local ; préparation des pistes manquantes encore distincte.
 
 - [Lecture française intégrée](utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210) — 0.21.0, version publiée dans les lecteurs portail/PDF.
@@ -84,7 +86,7 @@
 - [Indexation automatique et diagnostic](essais/2026-11-14-indexation-automatique-et-diagnostic.md) — bilan 0.4.0, CI Linux/Windows et navigateurs réussie ; recette du fonds réel à faire.
 - [Rapport de Marc et indexation](essais/2026-11-14-recherche-index-et-espaces.md) — bilan 0.3.0 et limites.
 
-Index mis à jour le 14 novembre 2026. Commencer par le parcours correspondant au besoin.
+Index mis à jour le 16 novembre 2026. Commencer par le parcours correspondant au besoin.
 
 ## Guides de référence
 

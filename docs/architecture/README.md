@@ -1,5 +1,18 @@
 # Architecture du pilote
 
+## Budget des dossiers documentaires — 0.23.1
+
+`engine.read_batch` réserve l’encadrement réel de l’appel `read_sources`, notamment
+ses identifiants, avant lecture. `research.read` accepte une mesure de paquet :
+le moteur compte le JSON compact puis son encodage comme chaîne du message outil.
+Les appels hors conversation conservent la mesure standard. Le nombre de places
+tient compte des métadonnées avant de répartir les passages, pour garder les
+candidats prioritaires. Références et preuves ne sont enregistrées qu’après
+admission ; aucun extrait déjà déclaré lu n’est retiré pour masquer le dépassement.
+`reading_packets` exporte des volumes et comptes, sans identifiant ni texte.
+Le diagnostic ajoute marge/dépassement estimés et conserve le contexte demandé
+quand la limite native réduit le contexte transmis. Réglages et schémas inchangés.
+
 ## Vidéos et sous-titres locaux — 0.23.0
 
 `pilot/video_inventory.py` partage le parseur standard avec le lanceur

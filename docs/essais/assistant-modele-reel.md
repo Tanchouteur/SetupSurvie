@@ -1,6 +1,6 @@
 # Tester l’assistant avec un modèle réel
 
-**Recette de développement — actualisée en 0.19.0, 15 novembre 2026.** Elle complète les tests
+**Recette de développement — actualisée en 0.23.1, 16 novembre 2026.** Elle complète les tests
 simulés ; elle ne s’exécute jamais automatiquement dans la CI. Le runner CPU
 n’accueille aucun modèle. Employer une machine explicitement autorisée, avec
 le moteur déjà installé et un environnement Python isolé contenant
@@ -47,6 +47,20 @@ contradiction documentaire, les illustrations ou la qualité d’une procédure.
 Une validation réelle doit encore employer des besoins variés et des sources
 relues, avec le modèle et le PC Windows cibles. Voir le
 [bilan des premiers essais](2026-11-15-synthese-multi-sources-et-essais-reels.md).
+
+## Identifiants longs et budget documentaire — 0.23.1
+
+`tests/real_context_check.py --model gemma4:e4b --context 16384 --report /chemin/prive/contexte.json`
+exerce l’orchestrateur avec douze sources fictives aux identifiants/métadonnées
+longs, puis un vrai modèle déjà installé. La recherche et les textes sont simulés,
+sans archive téléchargée. Le dossier doit tenir dans le contexte, atteindre le
+modèle et conserver des citations lues ; la fidélité se relit séparément. Le code
+de la recette explicite 32 couches GPU, six threads, 4 096 tokens de sortie,
+réserve 1 536 Mio et estimation vidéo 8 192 Mio. Adapter ces constantes si une
+autre machine est autorisée ; cette recette GPU ne tourne jamais dans le runner CPU.
+Elle refuse les autres modèles chargés et n’en décharge aucun. `--context 32768`
+change seulement cet essai, sans régler le logiciel. Le rapport privé conserve
+les propositions rejetées et les mesures ; un échec de citation reste un échec.
 
 Pour vérifier un changement de modèle dans la première demande, ajouter
 `--switch-from llama3.1:8b --case natural`, en nommant un autre modèle **déjà installé**.
