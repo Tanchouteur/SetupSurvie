@@ -45,7 +45,30 @@
       ]
     });
     const style=item=>{const s=baseStyle(item);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/shade/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
-    const map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, maxTileCacheSize: 96, trackResize: false});
+    let map;
+    try {
+      map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, maxTileCacheSize: 96, trackResize: false});
+    } catch (_) {
+      // A renderer failure is not a missing download or lost notebook.
+      const message = 'Le navigateur ne peut pas utiliser l’affichage graphique nécessaire à la carte. Essayez un autre navigateur ou vérifiez son accélération graphique. Les lieux et trajets enregistrés sont conservés.';
+      status.textContent = message;
+      const notice = document.createElement('section');
+      notice.className = 'map-renderer-fallback';
+      notice.setAttribute('role', 'alert');
+      const title = document.createElement('h2');
+      title.textContent = 'La carte ne peut pas s’afficher';
+      const explanation = document.createElement('p');
+      explanation.textContent = message;
+      const back = document.createElement('a');
+      back.href = new URLSearchParams(location.search).get('interface') === 'nouveau'
+        ? '/nouveau/#/bibliotheque' : '/index.html#library';
+      back.textContent = 'Revenir à la bibliothèque';
+      notice.append(title, explanation, back);
+      document.querySelector('.map-stage').append(notice);
+      document.getElementById('no-basemap').hidden = true;
+      for (const control of document.querySelectorAll('.map-workspace button, .map-workspace input, .map-workspace select')) control.disabled = true;
+      return;
+    }
     // Capture a fresh frame only for printing; normal rendering keeps the
     // default non-preserved drawing buffer (MapLibre 5 canvas attributes).
     const printImage=document.createElement('img');printImage.className='map-print-image';printImage.alt='Carte du trajet préparé';

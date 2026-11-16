@@ -51,10 +51,11 @@ async (page) => {
     check(await page.locator('#chat-reset').isVisible(), 'Nouvelle discussion accessible à '+width);
   }
   await page.request.post(base + '/api/profiles/select', {data:{id:'local-family'},headers:{Origin:base}});
+  await page.goto('about:blank');
   for (const width of [1440,1024,390,320]) {
     await page.setViewportSize({width, height:950});
     for (const route of ['reglages','acces','bibliotheque','assistant','entretien']) {
-      await page.goto(base + '/#/appareil/'+route); await page.reload(); await page.waitForFunction(() => typeof S!=='undefined' && S.authReady && S.user);
+      await page.goto(base + '/#/appareil/'+route); await page.waitForFunction(() => typeof S!=='undefined' && S.authReady && S.user);await page.locator('#settings-'+route).waitFor({state:'visible'});
       const cards=await page.locator('.settings-pane:not([hidden]) .settings-destination').evaluateAll(ns => ns.filter(n=>n.getClientRects().length).map(n=>({
         height:n.getBoundingClientRect().height,
         valid:!!n.querySelector('strong')?.textContent && !!n.querySelector('span.muted')?.textContent && !!n.querySelector('.settings-arrow')?.textContent,
