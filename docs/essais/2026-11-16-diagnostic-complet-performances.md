@@ -79,6 +79,14 @@ seule ne le corrigeait pas. Un autre essai CI a échoué sur la création de pro
 de la recette UX ; aucun succès n’en a été déduit. Les huit jobs finaux du code
 0.22.0 passent, y compris tous ces parcours, sans suppression d’assertion.
 
+Le paquet de maintenance a été construit au complément documentaire
+`f7363846b1795442cf6128d7e64476182bc3ab0f`, décompressé avec le validateur réel et
+ses **825 fichiers** comparés octet par octet au contenu Git filtré de ce commit.
+6 933 348 octets compressés, 15 558 070 octets décompressés ; SHA-256 :
+`c9ff67babe2563eef6f440c451c2e7358412ca15aa0c9d0481e3df21ac18de59`.
+Le présent reçu a été ajouté après cette construction. Comptes, conversations,
+modèles, corpus et rapports privés ne sont pas inclus dans le paquet logiciel.
+
 Recevoir ensuite le JSON de Marc : composants limitants encore inconnus. Windows réel de Marc,
 iPhone réel, gros corpus, pic matériel continu et fidélité générale des réponses
 ne sont pas validés par ces essais. Traduction et sous-titres restent ouverts.
