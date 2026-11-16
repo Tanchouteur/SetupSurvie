@@ -58,6 +58,27 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'state/openwebui/cache/file').read_bytes(),b'cache-sentinel')
         self.assertEqual((self.data/'state/pilot/archive-index/text.sqlite').read_bytes(),b'index-sentinel')
         self.assertTrue((self.work/'inference-paused.json').exists())
+
+    def test_windows_update_reconciles_only_prepared_routers(self):
+        graph=self.data/'library/maps/routing/current/manifest.json'
+        graph.parent.mkdir(parents=True)
+        config={**self.c,'target':'windows'}
+        routers=('router-foot','router-motorcycle','router-car')
+        request=(config,'up','-d','--no-deps','--pull','never',*routers)
+        with patch.object(self.app,'render'),patch.object(self.app,'compose') as compose, \
+                patch('control.start'),patch('discovery.start'):
+            update.Services(self.app,config).start()
+            self.assertFalse(any(call.args[-3:]==routers for call in compose.call_args_list))
+            graph.write_text('{}',encoding='utf-8')
+            def start_service(*args,**kwargs):
+                if args==request:
+                    raise setup.SetupError('OSRM unavailable')
+            compose.side_effect=start_service
+            with patch('builtins.print') as report:
+                update.Services(self.app,config).start()
+            compose.assert_called_with(*request,timeout=90)
+            self.assertIn('Routage local indisponible',report.call_args.args[0])
+            self.assertTrue((self.work/'inference-paused.json').exists())
     def test_update_changes_code_and_preserves_accounts_models_and_pause(self):
         result,service=self.run_update()
         self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.2')
