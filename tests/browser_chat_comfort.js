@@ -37,10 +37,12 @@ async page => {
     layouts.push({width,height,...sizes});
   }
   await page.setViewportSize({width:1440,height:900});
-  await page.locator('#next-history-open').click();
-  check(await page.locator('#next-history-dialog').isVisible(),'Historique accessible dans une fenêtre dédiée');
-  await page.locator('[data-close="next-history-dialog"]').click();
-  await page.waitForFunction(()=>!document.getElementById('next-history-dialog').open);
+  const historyButton=page.locator('[data-assistant-zone="history"]');
+  const visible=await page.locator('#assistant-history').isVisible();
+  await historyButton.click();
+  check(await page.locator('#assistant-history').isVisible()!==visible,'Volet des conversations repliable');
+  await historyButton.click();
+  check(await page.locator('#assistant-history').isVisible()===visible,'Volet retrouvé sans quitter la discussion');
   await page.screenshot({path:'/artifacts/conversation-confort-pc.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'/artifacts/conversation-confort-mobile.png',fullPage:true});
   await page.route('**/api/search?*',r=>r.fulfill({json:{results:[],coverage:{status:'unavailable',warning:'Les encyclopédies n’ont pas pu être interrogées. La recherche est incomplète.'}}}));

@@ -1,6 +1,6 @@
-# La nouvelle interface et l’interface classique
+# Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.12.0, 14 novembre 2026.**
+**Guide actuel — 0.34.0, 16 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -20,8 +20,9 @@ La maquette fictive reste séparée sous `/maquette/`.
 Dans Bibliothèque → Collections, **Ouvrir cette collection** ouvre directement
 son lecteur Kiwix local, sans question ni recherche préalable. Les guides gardent
 leur lecture, leur PDF, leurs favoris et la possibilité de poser une question.
-Le lien Open WebUI reste visible pour les fonctions avancées et ses historiques
-distincts. Les sources originales et l’accès de secours restent disponibles.
+Sur PC, **Outils** donne accès à **Open WebUI**, aux fonctions avancées et au
+secours documentaire. Sur téléphone, les liens restent dans la navigation.
+Open WebUI conserve son historique distinct. Les sources originales et l’accès de secours restent disponibles.
 
 Depuis 0.1.36, les archives d’une source connue ou de même titre sont regroupées
 avec des variantes et leurs liens directs conservés. Les groupes ouverts sont
@@ -114,15 +115,46 @@ La suppression de la mémoire locale, dans Paramètres → Entretien et diagnost
 du serveur. Un profil ou document supprimé ne peut pas être recréé depuis cette
 mémoire. Les contrôles de changement de profil et d’onglets périmés restent actifs.
 
-Depuis 0.1.35, **Conversations** ouvre l’historique et les dossiers dans une
-fenêtre dédiée. Choisir une conversation ferme cette fenêtre et conserve son
-adresse pour Précédent/Suivant. La réponse occupe une colonne de lecture limitée,
-avec un texte de 16 pixels et une saisie compacte qui reste accessible.
-L’accueil propose **Qu’avez-vous envie d’apprendre ?**.
+## L’assistant sur ordinateur
+
+La barre de navigation principale est en haut. L’assistant utilise l’espace disponible :
+
+- **Conversations** à gauche : nouvelle discussion, recherche dans les titres et messages, dossiers personnels et liste paginée. Le menu d’une conversation permet de la renommer, de la déplacer ou de la supprimer. Supprimer un dossier conserve ses conversations.
+- **Discussion** au centre : messages, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
+- **Documents** à droite : documents choisis pour travailler, traduction et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
+
+Les boutons **Conversations** et **Documents** replient les volets pour agrandir
+la discussion. **Discussion** referme les deux. Les choix documentaires ne sont
+pas une preuve de lecture par l’IA ; un ancien échange sans suivi ne reçoit pas
+une liste de lectures inventée. La commande **Traduire** ouvre la bibliothèque
+pour choisir un document, sans lancer le moteur.
+
+À l’accueil, **Reprendre** donne accès au dernier document ouvert dans ce
+navigateur et à la discussion mémorisée, pour le profil courant. Dans **Mon
+appareil → Travaux en cours**, **Vos traductions et synthèses** rassemble les
+travaux récents du profil. **Actualiser vos travaux** relit leur état ; il ne
+reprend aucun traitement.
+
+## Lire et traduire sur place
+
+Dans un document anglais, **Traduire en français** ouvre la préparation à côté
+du texte. Si des travaux existent, le bouton devient **Traduction : ouvrir ou
+reprendre**. Choisir un travail existant ou une nouvelle traduction, vérifier
+les pages et le mode, puis démarrer explicitement. Les passages terminés restent
+lisibles pendant le travail, avec **Comparer avec l’original**, les avertissements,
+la pause, la reprise, l’arrêt et le téléchargement. La conversation courante
+reste inchangée ; un lien ouvre celle du travail si nécessaire.
+
+Dans le lecteur PDF dédié, **Traduire ce PDF** ouvre les mêmes commandes et
+**Revenir au PDF** retrouve le fichier en place. **Lire en français** conserve
+son rôle : lire une version déjà publiée, sans relancer une traduction. Voir le
+[guide documentaire](documents-et-traduction.md) pour publication, confidentialité
+et limites des contrôles automatiques.
 
 ## Téléphone
 
-La barre du bas donne accès aux cinq rubriques. Recherche, documents, assistant,
+La barre du bas donne accès aux cinq rubriques. Dans l’assistant, les boutons
+Conversations, Discussion et Documents montrent une seule zone à la fois. Recherche, documents, assistant,
 cartes réelles et suivis restent accessibles. La sélection documentaire, les
 préparations de zones et les commandes complexes restent sur ordinateur, avec
 une indication dans la page. Les restrictions existantes des cartes pour la
@@ -154,6 +186,7 @@ le logiciel installé. Attendre la fin ou la pause effective des transferts avan
 la procédure normale ; le téléchargement de Marc a été déclaré terminé par Louis,
 mais ce guide n’en fait pas un contrôle de machine.
 
-Les vérifications de cette organisation sont dans le [bilan 0.12.0](../essais/2026-11-14-parametres-ux.md).
+Les vérifications de la refonte sont dans le [bilan 0.34.0](../essais/2026-11-16-refonte-ux.md).
+Le [bilan 0.12.0](../essais/2026-11-14-parametres-ux.md) conserve les résultats historiques des paramètres.
 Le [bilan 0.1.36](../essais/2026-11-14-moteur-recherche-utile.md) conserve les
 constats de la précédente évolution documentaire.

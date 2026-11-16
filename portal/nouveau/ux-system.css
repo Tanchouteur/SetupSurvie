@@ -1,0 +1,70 @@
+/* Interface foundations. Shared tokens and behavior, independent of feature engines. */
+.next-interface {
+  --ux-space-1: .375rem;
+  --ux-space-2: .75rem;
+  --ux-space-3: 1.25rem;
+  --ux-space-4: 2rem;
+  --ux-radius: .625rem;
+  --ux-reading-width: 76ch;
+  --ux-help-background: #173f32;
+  --ux-help-text: #fff;
+  --ux-focus: #875016;
+  --muted: #506252;
+}
+.next-interface .eyebrow { display:none; }
+.next-interface .page-heading { margin-bottom:var(--ux-space-3); }
+.next-interface .page-heading h1 { font-size:clamp(1.5rem,3vw,2rem);line-height:1.25; }
+.next-interface .page-heading p { margin:.5rem 0 0;max-width:var(--ux-reading-width); }
+.next-interface .next-tabs { margin-bottom:var(--ux-space-3);gap:.25rem; }
+.next-interface .next-collection-filter { padding:var(--ux-space-2);margin:0 0 var(--ux-space-3); }
+.next-interface .next-collection-filter label { display:flex;align-items:center;gap:.5rem; }
+.next-interface #collection-filter-help,
+.next-interface #next-domain-help { display:none; }
+.next-interface #next-collections>p.muted { display:none; }
+.next-interface .reader { scroll-margin-top:1rem; }
+.next-interface .reader-body { max-width:var(--ux-reading-width);font-size:1rem;line-height:1.7; }
+.next-interface .reader-actions { margin-bottom:var(--ux-space-3); }
+.next-interface #view-library:has(#next-search:not([hidden]) #reader:not([hidden]))>.page-heading,
+.next-interface #view-library:has(#next-search:not([hidden]) #reader:not([hidden]))>.next-tabs,
+.next-interface #view-library:has(#next-search:not([hidden]) #reader:not([hidden]))>#next-domain-controls,
+.next-interface #view-library:has(#next-search:not([hidden]) #reader:not([hidden])) #library-search { display:none; }
+.ux-help { position:relative;display:inline-flex;align-items:center;vertical-align:middle;flex:none; }
+.next-interface .ux-help-trigger { display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;padding:0;background:transparent;color:var(--green);border:1px solid var(--line);border-radius:50%;font:600 1rem/1 sans-serif; }
+.ux-help-content { position:absolute;left:0;bottom:100%;z-index:80;width:min(18rem,calc(100vw - 3rem));padding:.875rem;background:var(--ux-help-background);color:var(--ux-help-text);border-radius:var(--ux-radius);font-size:.875rem;font-weight:400;line-height:1.5;box-shadow:0 .25rem 1rem #0002; }
+.ux-help-content[hidden] { display:none; }
+.next-interface :focus-visible { outline:3px solid var(--ux-focus);outline-offset:3px; }
+.next-interface .data-card h3 { font-size:1.125rem;overflow-wrap:anywhere; }
+@media(max-width:760px) {
+  .next-interface .view { padding-top:1rem; }
+  .next-interface .page-heading h1 { font-size:1.5rem; }
+  .next-interface .next-tabs { gap:0;flex-wrap:wrap;padding-bottom:.5rem; }
+  .next-interface .next-tabs a { min-height:44px;padding:.625rem .75rem; }
+  .next-interface .next-collection-filter { border:0;padding:0;background:transparent; }
+  .next-interface .next-collection-search input { flex-basis:auto;width:1%; }
+  .next-interface .next-collection-search button { min-height:48px; }
+  .next-interface .ux-help-content { position:fixed;left:1rem;right:1rem;bottom:calc(90px + env(safe-area-inset-bottom));width:auto; }
+  .next-interface .composer-controls label { display:inline-flex;align-items:center;gap:.25rem;font-size:.8125rem; }
+}
+@media(prefers-reduced-motion:reduce) { .next-interface *, .next-interface *::before,.next-interface *::after { scroll-behavior:auto!important;transition:none!important;animation:none!important; } }
+.next-interface .next-collection-filter label { justify-content:flex-start;text-align:left;flex-direction:row; }
+.next-interface .ux-help-trigger { margin:0; }
+@media(min-width:761px) {
+  .next-interface .view:not(.chat-view) { max-width:1440px;margin-inline:auto;padding:1.5rem 2.5rem 2.5rem; }
+  .next-interface .page-heading h1 { font-size:2rem; }
+  .next-interface .data-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:1rem; }
+  .next-interface .next-collection-filter { max-width:60rem; }
+  .next-interface .next-collection-search { flex-wrap:nowrap; }
+  .next-interface .next-collection-search input { flex:1; }
+  .next-interface .reader { padding:1.5rem 2rem; }
+  .next-interface .reader-actions { align-items:center; }
+  .next-interface .reader-body { margin-inline:auto; }
+  .next-interface .composer { max-width:var(--ux-reading-width); }
+}
+.ux-resume { display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0; }
+.ux-personal-work { margin-top:1.5rem; }
+.ux-personal-work h2 { font-size:1.25rem; }
+.ux-work-row { padding:.75rem 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere; }
+.ux-work-row p { margin:.375rem 0; }
+@media(min-width:761px) {
+ .next-interface .reader,.next-interface .reader-work { scroll-margin-top:92px; }
+}

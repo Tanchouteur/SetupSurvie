@@ -8,11 +8,14 @@ async page=>{
   await page.goto(base+'/#/assistant');await page.waitForFunction(()=>S.user&&!S.loadingConversation);
   await page.locator('#chat-reset').click();
   await page.evaluate(async()=>{await attachToConversation({id:'guide:shelter.en.pdf',title:'PDF fictif complet'});});
+  await page.locator('[data-assistant-zone=documents]').click();
   check(await page.locator('#summary-panel').isVisible(),'Synthèse longue proposée après le choix des documents');
   check(!await page.locator('#summary-panel').evaluate(n=>n.open),'Le suivi reste replié au départ');
   await page.locator('#summary-panel').evaluate(n=>n.open=true);
+  await page.locator('[data-assistant-zone=discussion]').click();
   await page.locator('#chat-input').fill('Compare les informations fictives du PDF entier.');
   await page.waitForFunction(()=>!S.loadingConversation&&!S.sourceChanging&&!S.sending);
+  await page.locator('[data-assistant-zone=documents]').click();
   await page.locator('#summary-start').click();
   await page.waitForFunction(()=>S.summaryActive&&!S.sending);
   const conv=await page.evaluate(()=>S.conversation);

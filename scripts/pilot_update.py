@@ -199,7 +199,7 @@ def recover_locked(app,journal,services):
     j['phase']='rolled_back';setup.write_json(journal,j,private=True)
 
 
-def apply(app,package,digest,services=None):
+def apply(app,package,digest,services=None,*,rollback=False):
     import transfer
     transfer.guard(app.work)
     c=app.load();root=setup.safe_path(c.get('app_dir',setup.ROOT));data=setup.safe_path(c['data_dir'])
@@ -218,7 +218,9 @@ def apply(app,package,digest,services=None):
         staged=operation/'new';previous=operation/'previous';snapshot=operation/'snapshot'
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)
-        if version_tuple(manifest['release']['version'])<=version_tuple(old_release['version']):raise setup.SetupError('Version déjà installée ou plus ancienne ; aucun remplacement effectué.')
+        available=version_tuple(manifest['release']['version']);installed=version_tuple(old_release['version'])
+        if (not rollback and available<=installed) or (rollback and available>=installed):
+            raise setup.SetupError('Choisissez une version strictement antérieure pour le retour.' if rollback else 'Version déjà installée ou plus ancienne ; aucun remplacement effectué.')
         if manifest['release']['data_schema']!=old_release['data_schema']:raise setup.SetupError('Migration de schéma non prise en charge par cette mise à jour.')
         for relative in ('deploy/versions.json','deploy/discovery-packages.json'):
             if json.loads((root/relative).read_text(encoding='utf-8'))!=json.loads((staged/relative).read_text(encoding='utf-8')):raise setup.SetupError('Ce paquet exige de nouvelles dépendances ; utiliser une livraison dédiée.')
@@ -245,19 +247,20 @@ def apply(app,package,digest,services=None):
                 try:recover_locked(app,journal,services)
                 except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
                 raise
-        print('Mise à jour terminée :',j['new_version'],'; données conservées. Sauvegarde privée :',operation)
+        print('Retour terminé :' if rollback else 'Mise à jour terminée :',j['new_version'],'; données conservées. Sauvegarde privée :',operation)
         return operation
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);sub=p.add_subparsers(dest='action',required=True)
     b=sub.add_parser('build');b.add_argument('output')
-    a=sub.add_parser('apply');a.add_argument('package');a.add_argument('--sha256',required=True);a.add_argument('--work-dir',required=True)
+    for action in ('apply','rollback'):
+        a=sub.add_parser(action);a.add_argument('package');a.add_argument('--sha256',required=True);a.add_argument('--work-dir',required=True)
     r=sub.add_parser('recover');r.add_argument('--work-dir',required=True)
     args=p.parse_args()
     if args.action=='build':build(args.output);return
     app=setup.Installation(args.work_dir)
-    if args.action=='apply':apply(app,args.package,args.sha256)
+    if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
     else:
         # Recovery and application share the same OS lease, including after a crash.
         with locked(app.work/'update.lock'):

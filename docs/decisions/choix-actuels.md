@@ -42,6 +42,13 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.34.0** réalise la [refonte UX](refonte-ux-evolutive.md) : assistant en trois
+zones sur PC, dossiers et recherche de conversations, traduction dans les lecteurs
+portail/PDF, reprise et travaux personnels, aides facultatives et composants
+évolutifs. Les fonctions vidéo 0.33.0 et les données existantes sont conservées.
+Le [bilan](../essais/2026-11-16-refonte-ux.md) distingue recette technique, usage
+humain restant à mesurer et PC physiques non mis à jour par cette livraison.
+
 La **0.33.1** corrige le [classement des actions et des prix](../essais/2026-11-16-intention-pratique-et-prix.md),
 avec demandes courtes et variantes de remplacement. Les titres restent des pistes
 à lire, jamais un certificat de procédure.

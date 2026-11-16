@@ -211,7 +211,7 @@ function message(role,text,sources=[],profile='',observed=null){
   tracking.append(element('p',undefined,'small muted documentary-source-heading'),element('div',undefined,'documentary-sources'));
   node.append(tracking);if(role==='assistant')documentaryStatus(tracking,observed);
   if(sources.length)node.append(sourceChips(sources));
-  node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources}}));return {node,body,tracking};
+  node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources,observed}}));return {node,body,tracking};
 }
 function newConversation(){
   if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
@@ -323,7 +323,7 @@ async function readSource(id){
     reader.append(actions,element('div',source.id.startsWith('guide:WIKI-FR-')?'EXTRAIT DE WIKIPÉDIA':source.id.startsWith('guide:BOOK-EN-')?'EXTRAIT DE WIKILIVRES':source.kind==='guide'?'GUIDE LOCAL':source.kind==='video'?'VIDÉO LOCALE':'ARTICLE DE LA BIBLIOTHÈQUE','eyebrow'),element('h2',source.title));
     reader.append(element('p',sourceDates(source),'source-dates muted small'));
     if(source.images?.length){const images=element('div',undefined,'reader-images');for(const img of source.images.slice(0,4)){const e=element('img');e.src='/api/media?id='+encodeURIComponent(img.id);e.alt=img.alt;e.loading='lazy';images.append(e);}reader.append(images);}
-    if(source.kind!=='video'&&/^(en|eng)$/.test(source.language||'')){actions.append(button('Traduire en français',()=>{askSource(source);if(S.source?.id===source.id){$('translation-panel').open=true;$('translation-panel').scrollIntoView({block:'nearest'});}},'secondary'));}
+    if(source.kind!=='video'&&/^(en|eng)$/.test(source.language||'')){const translate=button('Traduire en français',()=>{askSource(source);if(S.source?.id===source.id){$('translation-panel').open=true;$('translation-panel').scrollIntoView({block:'nearest'});}},'secondary');translate.dataset.documentAction='translate';actions.append(translate);}
     if(source.provenance||source.licence){const details=element('details',undefined,'source-details');details.append(element('summary','Origine et licence du document'));if(source.provenance)details.append(element('p',source.provenance));if(source.licence)details.append(element('p',source.licence));reader.append(details);}const body=element('div',undefined,'reader-body');renderDocument(body,source);reader.append(body);
     if(source.preview)reader.append(element('p',source.kind==='video'?'Aperçu des sous-titres à partir du passage choisi ; la lecture complète du média reste disponible dans le lecteur.':'Aperçu du début du livre. La recherche retrouve aussi les pages suivantes dont le texte est lisible. Ouvrez le PDF pour consulter l’ensemble des pages et illustrations.','muted small'));
     const original=element('a',source.id.includes('.pdf')?'Lire le PDF illustré →':'Ouvrir le document d’origine →','secondary-link');
@@ -533,7 +533,7 @@ async function translationAction(action){
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
       if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
     }
-    await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;return true;
+    await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-command',{detail:{action,id:data.id}}));return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
   finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;translationStop.disabled=translationDelete.disabled=false;refreshSourceChoices();}
 }

@@ -1,6 +1,6 @@
 # Paramètres et Mon appareil
 
-**Guide actuel — 0.25.0, 16 novembre 2026.** Les profils sont toujours sans mot
+**Guide actuel — 0.34.0, 16 novembre 2026.** Les profils sont toujours sans mot
 de passe. Choisir **Famille** pour modifier les réglages partagés ; ce profil est
 librement accessible et ne protège pas la confidentialité entre personnes du réseau.
 
@@ -12,6 +12,8 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
 - **Travaux en cours** : progression, fichiers, dernière observation et accès aux
   téléchargements. Un transfert Windows indépendant reste suivi en lecture seule.
+  **Vos traductions et synthèses** retrouve les travaux récents du profil ;
+  l’actualisation ne les reprend pas et ne les montre pas dans le suivi global.
 - **Paramètres** : choisir l’une des cinq rubriques ci-dessous. Ouvrir une page,
   déplier une option ou recharger ne lance aucun travail.
 

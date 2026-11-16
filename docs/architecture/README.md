@@ -1,5 +1,33 @@
 # Architecture du pilote
 
+## Interface et organisation — 0.34.0
+
+Les trois zones de `assistant-workspace` déplacent les contrôles existants sans
+dupliquer leurs IDs ; les événements vidéo/document/profil restent partagés.
+`ux-system` fournit l’aide facultative, les variables de présentation, la reprise
+et les travaux personnels. Les commandes sont repérées par ID ou `data-*`, jamais
+par le titre traduit d’un panneau. Le générateur produit les deux entrées HTML.
+
+`reader-work` utilise un même contrôleur pour le lecteur du portail et le PDF
+dédié. Il observe les travaux du profil et ne remplace pas `S.conversation` pour
+préparer une traduction. Les API existantes restent responsables de l’inférence,
+de la qualité, des interruptions et de la publication. Quitter la page arrête
+l’observation ; revenir ne reprend pas le traitement. Un module optionnel absent
+doit laisser la lecture, la recherche et les conversations utilisables.
+
+`conversation_organization.py` ajoute paresseusement deux tables (dossiers et
+classement) sans modifier les colonnes historiques de conversations. Un titre
+manuel utilise les réglages existants. Les nouvelles routes dossiers/titre/
+classement vérifient toujours le propriétaire ; supprimer un dossier ne supprime
+pas ses conversations. La recherche échappe les métacaractères LIKE et pagine
+par 100. Sans paramètres, l’ancienne liste reste disponible en repli si le module
+optionnel manque. Le contrat de données demeure `data_schema: 1`.
+
+`document_workspace.py` expose uniquement les métadonnées des travaux du profil
+via `/api/document-work?source_id=...` et `/api/my-work`. Les instantanés privés et
+les propositions refusées ne deviennent pas des documents publics par ces routes.
+Voir l’[inventaire des parcours](../decisions/inventaire-parcours-ux.md).
+
 ## Transcription audio — 0.26.0
 
 `transcriptions.py` garde les unités dans une base privée distincte et pilote un

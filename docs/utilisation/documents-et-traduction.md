@@ -106,22 +106,18 @@ peut être arrêté pendant cette lecture.
 
 ## Traduire en français
 
-Depuis 0.1.36, le lecteur du portail propose aussi **Traduire en français** en
-haut d’une source anglaise : cela ouvre les commandes de traduction existantes
-dans l’assistant, sans démarrer le traitement automatiquement. Ce n’est pas une
-traduction instantanée de chaque page Kiwix, ni une traduction de vidéo.
+Depuis **0.34.0**, les commandes restent dans le lecteur du portail. Dans le
+lecteur PDF dédié, **Traduire ce PDF** les ouvre sans quitter le fichier. Ouvrir
+ces commandes ne démarre aucun calcul. Ce n’est pas une traduction instantanée
+de chaque page Kiwix ni une traduction de vidéo.
 
-1. Choisir le document et le modèle dans **Temps à consacrer**. Avec plusieurs
-   documents associés, sélectionner **Document à traduire** dans le panneau.
-   La traduction traite ce seul document et conserve les autres choix.
-   Le sélecteur permet ensuite de préparer une autre traduction, sans supprimer
-   les passages de la précédente.
-2. Déplier **Traduire le document en français**. Pour un PDF, conserver la première page à 1 et la dernière vide pour tout le document, ou choisir une plage, par exemple 1 à 10. Les numéros désignent les pages du fichier PDF, pas forcément la pagination imprimée.
-3. Cliquer sur **Traduire en français**. Une demande simple dans la conversation, comme « traduit moi ce guide en français » ou « peux-tu me traduire le document entièrement en français », déclenche également la traduction complète dédiée. Les autres formulations gardent le traitement habituel de l’assistant ; pour une plage de pages, utiliser les champs du panneau.
-4. Suivre le nombre de passages traduits. Les passages se consultent par groupes de dix, avec leur page/section, le modèle utilisé et un accès à l’original.
-5. **Mettre en pause** interrompt le passage en cours. Choisir au besoin un autre modèle, puis **Reprendre avec le modèle choisi** : les passages terminés sont conservés, seul le travail restant est repris.
-6. Une fois le traitement terminé, la nouvelle traduction est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de relancer un ajout échoué. Les différentes traductions d’une conversation restent sélectionnables.
-7. **Télécharger le texte français** enregistre un fichier texte, même si la traduction est partielle. Les passages manquants y sont explicitement indiqués.
+1. Dans une source anglaise, cliquer sur **Traduire en français**, ou **Traduction : ouvrir ou reprendre** si un travail existe. Choisir un travail à retrouver ou une nouvelle traduction. Les travaux sont ceux du profil courant, pour cet original ; une traduction limitée à des pages reste identifiée comme telle.
+2. Choisir le temps de réponse. Pour un nouveau travail PDF, conserver la première page à 1 et la dernière vide pour tout le document, ou indiquer une plage. Les numéros désignent les pages du fichier, pas forcément la pagination imprimée. Les options permettent aussi de modifier les termes anglais/français avant le départ ; enregistrer les changements.
+3. Cliquer sur **Démarrer la traduction**. Une conversation associée conserve le travail, sans remplacer la discussion en cours. Un lien permet de l’ouvrir. Les conversations existantes gardent également leurs commandes de traduction : une demande comme « traduit moi ce guide en français » peut déclencher la traduction dédiée. Avec plusieurs documents choisis, ce traitement porte sur le seul document indiqué.
+4. Lire les passages terminés par groupes de dix, avec page/section, modèle utilisé, contrôle enregistré et **Comparer avec l’original**. La progression ne ferme pas les comparaisons ouvertes. Les propositions refusées restent signalées et séparées du texte traduit.
+5. **Mettre en pause** conserve les passages terminés. Choisir au besoin un autre mode puis reprendre explicitement le reste. **Arrêter** conserve les passages terminés. **Supprimer ce travail** demande confirmation ; supprimer le travail privé n’efface ni l’original ni une version déjà publiée.
+6. Une nouvelle traduction terminée est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de retenter un ajout échoué. Les anciennes traductions privées restent privées jusqu’à publication explicite.
+7. Télécharger le texte français permet aussi de conserver une traduction partielle ; les passages manquants y sont indiqués. Retrouver les travaux récents dans **Mon appareil → Travaux en cours → Mes traductions et synthèses**, ou depuis leur original.
 
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 
