@@ -175,10 +175,14 @@ class DiagnosticTests(unittest.TestCase):
     def test_global_budget_stops_following_steps(self):
         args = self.args()
         args.max_seconds = .02
+        clock=[0.0]
         def slow(*_):
-            time.sleep(.03)
+            clock[0]+=.03
             return {'status': 'timeout'}
-        report = diagnostic.run(args, slow)
+        # Exercise the actual global-budget branch without depending on the
+        # Windows scheduler or its 20/30 ms timer granularity.
+        with patch.object(diagnostic.time,'monotonic',side_effect=lambda:clock[0]):
+            report = diagnostic.run(args, slow)
         self.assertEqual(report['status'], 'budget_exhausted')
         self.assertEqual(len(report['steps']), 1)
 

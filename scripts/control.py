@@ -120,6 +120,8 @@ class Server(ThreadingHTTPServer):
     def worker(self,action,force):
         app,c=self.app,self.config
         try:
+            import transfer
+            transfer.guard(app.work)
             marker=app.work/'inference-paused.json'
             if action=='stop':
                 setup.write_json(marker,{'reason':'user_pause'},private=True);publish(app,c,'paused','user_pause')
@@ -197,6 +199,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def start(app,c,backend='compose'):
+    import transfer
+    transfer.guard(app.work)
     marker=app.work/'control-process.json'
     version=json.loads((setup.ROOT/'deploy/release.json').read_text())['version']
     if marker.exists():

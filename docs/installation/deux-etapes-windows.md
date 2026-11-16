@@ -4,6 +4,10 @@
 testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
 Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
 
+## Déplacer une installation déjà en service
+
+Utiliser **Transférer SetupSurvie**, installé avec les lanceurs de maintenance ; voir le [parcours SSD](../exploitation/transfert-installation.md). Ne pas réinstaller par-dessus la source et ne pas déplacer le disque virtuel Docker par une copie de dossier.
+
 ## Commencer avec un seul fichier
 
 Double-cliquer sur **`Installer-SetupSurvie.cmd`**. Il vérifie et prépare le PC,

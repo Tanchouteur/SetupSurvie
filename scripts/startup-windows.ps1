@@ -3,6 +3,7 @@ param([Parameter(Mandatory=$true)][string]$WorkDir,[switch]$OpenBrowser,[switch]
 $ErrorActionPreference='Stop'
 $mutex=$null; $owned=$false
 try {
+    if (Test-Path -LiteralPath (Join-Path $WorkDir 'transfer-guard.json')) { throw 'Transfert en cours : reprendre ou revenir a la source depuis Transferer SetupSurvie.' }
     $runtime=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'startup-settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($runtime.kind -ne 'SetupSurvie managed Windows startup' -or $runtime.work_dir -ne $WorkDir) { throw 'Configuration de demarrage incoherente.' }
     $mutex=New-Object Threading.Mutex($false,('Local\'+$runtime.task_name))
