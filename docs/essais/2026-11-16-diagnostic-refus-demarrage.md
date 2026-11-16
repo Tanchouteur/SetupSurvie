@@ -78,3 +78,8 @@ Les guides, noms de fichiers et contrôles de la 0.29.0 restent conservés.
 Aucun essai réel de démarrage chez Marc n’est exécuté pour cette livraison.
 Le prochain refus doit être accompagné de ce diagnostic, pour relier commande
 hôte, réponse de l’API et mémoire plutôt que d’attribuer sa cause par supposition.
+
+Paquet vérifié au commit `410a5acd54f66ae968ab5c5665bb010c53ed3a13` : **892 fichiers**,
+**7407831 octets** compressés, **16420191 octets** décompressés.
+Tous les octets sont comparés aux fichiers Git filtrés et au manifeste.
+SHA-256 : `19ecb210e37f9f583fd3d3dc1d962d74093707218df7146131a996a7dc7edfe4`.
