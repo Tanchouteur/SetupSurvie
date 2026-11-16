@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('transcriptions') as module:await module.stop_all()
+    except HTTPException:pass
+    try:
         with optional_feature('translation_benchmark') as module:await module.pause(reason='service_restarted')
     except HTTPException:pass
     try:
@@ -82,7 +85,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.25.0'
+VERSION='0.26.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -770,6 +773,9 @@ async def report_videos(value=Depends(admin)):
     try:
         with optional_feature('captions') as module:result['subtitle_preparations']=await asyncio.to_thread(module.listing,None)
     except HTTPException:result['subtitle_preparations_unavailable']=True
+    try:
+        with optional_feature('transcriptions') as module:result['transcriptions']=await asyncio.to_thread(module.listing,None)
+    except HTTPException:result['transcriptions_unavailable']=True
     return result
 
 
@@ -781,6 +787,40 @@ class CaptionRequest(BaseModel):
 
 class CaptionResume(BaseModel):
     mode:str|None=Field(default=None,max_length=50)
+
+
+class TranscriptionRequest(BaseModel):
+    id:str=Field(min_length=1,max_length=2000,pattern=r'^video:[a-f0-9]{64}$')
+    language:str=Field(default='',max_length=3,pattern=r'^(?:[a-z]{2,3})?$')
+    mode:str=Field(default='rapide',max_length=50)
+    translate_french:bool=True
+
+
+@app.get('/api/admin/video-transcriptions')
+async def list_video_transcriptions(value=Depends(admin)):
+    with optional_feature('transcriptions') as module:
+        runtime=await asyncio.to_thread(module.model_config)
+        return {'jobs':await asyncio.to_thread(module.listing),'available':runtime['available'],'message':runtime.get('message','')}
+
+
+@app.post('/api/admin/video-transcriptions',status_code=202)
+async def create_video_transcription(body:TranscriptionRequest,value=Depends(admin)):
+    with optional_feature('transcriptions') as module:return await module.create(body.id,body.language,body.mode,body.translate_french)
+
+
+@app.get('/api/admin/video-transcriptions/{identifier}/report')
+async def report_video_transcription(identifier:str,value=Depends(admin)):
+    with optional_feature('transcriptions') as module:return {'version':VERSION,**await asyncio.to_thread(module.status,identifier,True)}
+
+
+@app.post('/api/admin/video-transcriptions/{identifier}/pause')
+async def pause_video_transcription(identifier:str,value=Depends(admin)):
+    with optional_feature('transcriptions') as module:return await module.pause(identifier)
+
+
+@app.post('/api/admin/video-transcriptions/{identifier}/resume',status_code=202)
+async def resume_video_transcription(identifier:str,value=Depends(admin)):
+    with optional_feature('transcriptions') as module:return await module.resume(identifier)
 
 
 class TranslationBenchmarkRequest(BaseModel):

@@ -1,5 +1,11 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Candidat 0.26.0 : [transcription audio et français](2026-11-16-transcription-audio-videos.md),
+unités reprenables, original intact et pistes complètes indexées. Premier refus
+réel conservé ; consigne de traduction des fragments précisée. Rejeu MP4 synthétique
+R7 terminé en 22 s et sept couples de texte relus. Pas de validation Windows,
+de vidéos réelles ou de récupération en ligne annoncée.
+
 Rapport réel 0.24.0 : [analyse des performances chez Marc](2026-11-16-rapport-performances-marc-0240.md).
 Contexte 32k réellement chargé et trois réponses documentaires terminées, avec
 9, 10 et 3 sources lues. Les recherches déjà en cache terminent en 3–6,5 s ;

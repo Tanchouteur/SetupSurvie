@@ -1,6 +1,16 @@
 # Choix et contraintes actuels
 
-Le 16 novembre 2026, le [transfert vers SSD](../exploitation/transfert-installation.md) est développé dans `codex/transfert-fiable`, isolé du chantier vidéo 0.26.0. Inventaire, reprise, adaptation et bascule locale sont testés sur fixtures ; Windows réel, secours autonome sur PC vierge et conversion Windows/Linux restent à qualifier. La version finale est réservée à l’intégration après synchronisation.
+Le [transfert vers SSD](../exploitation/transfert-installation.md) rejoint la
+base vidéo 0.26.0 pour préparer la 0.27.0. Inventaire, reprise, adaptation et
+bascule locale sont testés sur fixtures ; Windows réel, secours autonome sur PC
+vierge et conversion Windows/Linux restent à qualifier. La revue ajoute les
+contrôles de routage et le refus du retour pendant une maintenance.
+
+La [0.26.0 de transcription](../essais/2026-11-16-transcription-audio-videos.md)
+réutilise Whisper small préparé pour la dictée, sur CPU, puis la traduction
+locale existante. Les fichiers vidéo restent intacts et les étapes sont reprenables.
+L’acquisition en ligne, les vidéos des ZIM et les essais Windows réels restent
+à réaliser.
 
 Le **16 novembre 2026**, Louis ouvre une [configuration matérielle cible évolutive](../installation/configuration-materielle-cible.md) :
 NVIDIA **16 Go de VRAM**, probablement RTX **5060 Ti 16 Go** ; **32 Go de RAM

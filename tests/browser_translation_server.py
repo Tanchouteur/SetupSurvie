@@ -14,7 +14,7 @@ BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
 from pilot import accounts,app as gateway,engine,library,operations,store,translations,learning,inventory,assistant_metrics,durable,documentary,summaries,illustrations
-from pilot import videos,captions
+from pilot import videos,captions,transcriptions
 import re
 import shutil
 engine.POLICY=BASE/'deploy/assistant-system.fr.txt'
@@ -60,6 +60,40 @@ async def caption_translation(parts,mode):
     await asyncio.sleep(.2)
     return [{'id':row['position'],'text':'Roulement fictif de '+re.search(r'(\d+) mm',row['source_text'])[1]+' mm.'} for row in parts],'fixture-caption-model',{'context':16384}
 captions.translate_batch=caption_translation
+audio_gate=None
+audio_enabled=False
+transcriptions.UNIT_MS=2000
+transcriptions.model_config=lambda:({'available':True,'model_path':'/fixture/not-a-model','model':{'repository':'fixture','revision':'fixture'},
+    'runtime':{},'device':'cpu','compute_type':'int8','threads':1} if audio_enabled else {'available':False,'message':'Reconnaissance simulée non activée.'})
+class AudioWorker:
+    async def call(self,command):
+        if command['action']=='probe':return {'audio_present':True,'duration_ms':4000}
+        start=command['start_ms']
+        if audio_gate is not None and start>=2000:await audio_gate.wait()
+        await asyncio.sleep(.2)
+        return {'cues':[{'start_ms':start+100,'end_ms':start+800,'text':f'Fictional bearing {17+start//2000} mm.'}],
+            'language':'en','language_probability':.99,'eof':start>=2000,'last_decoded_ms':4000,'warnings':[],'raw_segments':[]}
+    async def close(self):pass
+transcriptions.Worker=AudioWorker
+
+@gateway.app.post('/fixture/transcriptions')
+async def fixture_transcriptions(hold:bool=True,enabled:bool=True):
+    global audio_gate,audio_enabled
+    await transcriptions.stop_all();audio_enabled=enabled;audio_gate=asyncio.Event() if hold else None
+    if enabled:
+        videos.ROOT.mkdir(exist_ok=True)
+        shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'audio-preparation.webm')
+        (videos.ROOT/'audio-preparation.info.json').write_text(json.dumps({'title':'Paroles fictives sans piste','language':'en','duration':12}))
+    else:
+        for path in videos.ROOT.glob('audio-preparation.*'):path.unlink()
+    videos.STOP.clear();await asyncio.to_thread(videos.scan)
+    return {'enabled':enabled,'real_recognition':False}
+
+@gateway.app.post('/fixture/transcriptions-release')
+async def fixture_transcriptions_release():
+    global audio_gate
+    if audio_gate:audio_gate.set()
+    audio_gate=None;return {'released':True}
 os.environ['ZIM_DIR']=str(inventory.ZIMS)
 (inventory.ZIMS/'figure-fixture.zim').write_bytes(b'Fictional media identity, not a real archive.')
 for topic in ('energy','food'):(inventory.ZIMS/('fixture-channel_en_'+topic+'_2026-01.zim')).write_bytes(b'Fictional archive metadata fixture, not a real ZIM.')

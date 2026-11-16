@@ -64,6 +64,8 @@ def competing():
     if engine.ACTIVE or translations.ACTIVE or calibration.running() or calibration.summary_activity():return True
     captions=sys.modules.get(__package__+'.captions')
     if captions and captions.running():return True
+    speech=sys.modules.get(__package__+'.transcriptions')
+    if speech and speech.running():return True
     benchmark=sys.modules.get(__package__+'.translation_benchmark')
     if benchmark and benchmark.running():return True
     module=sys.modules.get(__package__+'.search_experiment')

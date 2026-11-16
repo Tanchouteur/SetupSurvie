@@ -47,7 +47,7 @@ def competing_trial():
     # An optional module can be absent; if it is running, it is already loaded.
     import sys
     return any(module is not None and module.running() for module in
-               (sys.modules.get(__package__+'.'+name) for name in ('search_experiment','performance','translation_benchmark')))
+               (sys.modules.get(__package__+'.'+name) for name in ('search_experiment','performance','translation_benchmark','transcriptions')))
 
 
 def location():return store.ROOT/'calibration/latest.json'
@@ -198,7 +198,7 @@ async def run(report,options):
     finally:
         if report['trials'] and report['trials'][-1].get('status')=='running':report['trials'][-1].update(status='cancelled' if report['status']=='cancelled' else 'failed',reason=report.get('reason','test_unavailable'))
         # Do not unload a model that a newly queued conversation is about to use.
-        if report['trials'] and not engine.ACTIVE and not translations.ACTIVE and not summary_activity() and not caption_activity() and not engine.LOCK.locked():
+        if report['trials'] and not engine.ACTIVE and not translations.ACTIVE and not summary_activity() and not caption_activity() and not competing_trial() and not engine.LOCK.locked():
             async with engine.LOCK:await release_model(report)
         report['finished']=time.time()
         try:save(report)

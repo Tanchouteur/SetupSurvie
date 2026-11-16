@@ -61,7 +61,7 @@
     for(const item of event.detail){
       const card=[...$('next-videos-list').children].find(card=>card.dataset.videoId===item.id);if(!card||item.available===false)continue;
       const tracks=item.tracks.filter(track=>track.status==='passed'&&track.language&&!track.language.startsWith('fr')&&track.origin!=='local_translation');
-      if(!tracks.length){if(item.subtitle_status==='missing')card.append(element('p','Aucune piste à traduire. Récupération ou transcription des paroles encore nécessaire.','small muted'));continue;}
+      if(!tracks.length){if(item.subtitle_status==='missing')card.append(element('p','La vidéo n’a pas encore de piste source. Utilisez « Créer les sous-titres depuis l’audio ».','small muted'));continue;}
       const details=element('details');details.append(element('summary','Préparer une piste française'));
       const label=element('label','Piste source'),select=element('select');select.setAttribute('aria-label','Piste source à traduire');
       tracks.forEach(track=>select.append(new Option(track.language+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue'}[track.origin]||track.origin),String(track.id))));label.append(select);

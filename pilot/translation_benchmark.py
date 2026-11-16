@@ -79,6 +79,8 @@ def status(full=False):
 
 def competing():
     if engine.ACTIVE or translations.ACTIVE or calibration.running() or calibration.summary_activity() or calibration.caption_activity() or performance.running():return True
+    speech=sys.modules.get(__package__+'.transcriptions')
+    if speech and speech.running():return True
     experiment=sys.modules.get(__package__+'.search_experiment')
     return bool(experiment and experiment.running())
 
