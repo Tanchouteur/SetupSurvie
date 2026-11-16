@@ -32,7 +32,8 @@ async (page) => {
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);
   await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
-  await page.locator('#chat-mode').selectOption('moyenne');await page.locator('#translation-resume').click();
+  if(await page.locator('#assistant-workspace').count()&&await page.locator('#chat-mode').isHidden())await page.locator('[data-assistant-zone=discussion]').click();
+  await page.locator('#chat-mode').selectOption('moyenne');await documents();await page.locator('#translation-resume').click();
   await page.waitForFunction(done=>Number(document.querySelector('#translation-progress').value)>done,before.done);
   await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
   const after=await(await page.request.get(base+'/api/translations/'+id)).json();
