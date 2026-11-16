@@ -100,6 +100,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_translation_reader.py -v
       - run: python -m unittest discover -s tests -p test_translation_long_book.py -v
       - run: python -m unittest discover -s tests -p test_translation_quality.py -v
+      - run: python -m unittest discover -s tests -p test_translation_terms.py -v
       - run: python -m unittest discover -s tests -p test_document_library.py -v
       - run: python -m unittest discover -s tests -p test_pdf_assets.py -v
       - run: python -m unittest discover -s tests -p test_source_metadata.py -v

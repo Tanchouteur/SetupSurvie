@@ -100,7 +100,14 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             if calls==1:return 'Eau propre.','fixture'
             started.set();await asyncio.Event().wait()
         with patch.object(tr,'translate',side_effect=translate):
-            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            tr.launch(item['id']);waiting=asyncio.create_task(started.wait())
+            try:
+                # This is a state/cancellation test, not a two-second disk
+                # benchmark. Windows durable writes may reach part two later.
+                await asyncio.wait({waiting,tr.ACTIVE[item['id']]},timeout=10,return_when=asyncio.FIRST_COMPLETED)
+                self.assertTrue(started.is_set(),tr.status(item['id'],'alice'))
+            finally:
+                waiting.cancel();await asyncio.gather(waiting,return_exceptions=True)
             stopped=await tr.stop(item['id'],'alice')
         self.assertEqual(stopped['status'],'stopped');self.assertEqual(stopped['done'],1)
         self.assertNotIn(item['id'],tr.ACTIVE);store.init()

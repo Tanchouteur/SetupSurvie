@@ -1,10 +1,48 @@
 # Recettes progressives sur le PC de Marc
 
-**Protocole actuel et suites prévues — 15 novembre 2026.** Louis et Marc testeront au fil des lots.
+**Protocole actuel et suites prévues — 16 novembre 2026.** Louis et Marc testeront au fil des lots.
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation assistant — 0.17.0
+## Prochaine validation ciblée — 0.32.0
+
+La recherche classique, l’indexation, les lectures et les modèles disposent déjà
+de rapports ; le R2 0.25.0 n’a aucun avis humain de pertinence et garde une couverture
+partielle. Les essais R7 0.32.0 complètent les petits corpus et un chapitre réel,
+sans remplacer le PC Windows de Marc. Inutile de relancer tous les diagnostics
+ou une indexation complète pour chacun des contrôles suivants.
+
+1. Après mise à jour habituelle, choisir deux ou trois documents connus et utiles,
+   puis demander une comparaison. Ouvrir une référence et confirmer qu’elle soutient
+   réellement une information de la réponse. Une source sélectionnée n’est pas
+   automatiquement une source lue, ni un livre entier.
+2. Après cette réponse, passer à un mode utilisant un autre modèle et poser une
+   petite question. La première demande doit aboutir sans renvoi manuel. En cas
+   d’erreur, noter l’heure et le mode puis exporter **Voir les durées** si disponible.
+   Dans **Paramètres → Entretien et diagnostics → Tests et diagnostics → Mémoire
+   et contexte**, **Télécharger le diagnostic de démarrage** fournit l’état actuel
+   en lecture seule. Les refus enregistrés de tests sont distincts de cette demande
+   réelle : le diagnostic ne reconstitue pas un échec ancien de conversation.
+3. Sur un document familier, traduire quelques pages avec un ou deux mots choisis
+   facultativement, mettre en pause puis reprendre. Comparer début, milieu et fin,
+   chiffres, noms de touches et avertissements à l’original. Exporter les passages
+   si une erreur de sens est repérée ; les contrôles limités ne certifient pas la fidélité.
+4. Pour les MP4 présents dans `library/video/`, actualiser les vidéos depuis les
+   Collections. Utiliser une piste existante, la récupération YouTube avec Internet
+   ou la création depuis l’audio déjà préparée. Lire quelques passages et contrôler
+   mots/temps/français, puis retrouver un mot des paroles dans la recherche. Les
+   vidéos des ZIM ne sont pas encore couvertes par ce parcours.
+
+Ces contrôles se font au fil de l’usage, pas tous en même temps. Garder le mode
+jeu et ne lancer une préparation d’IA qu’au moment souhaité. Le déplacement réel
+vers SSD, la restauration complète sans source et la refonte générale appartiennent
+aux prochains objectifs documentés ; ils ne sont pas déclarés exécutés ici.
+Le [guide des rapports](../utilisation/mesurer-assistant-et-memoire.md) et le
+[guide vidéo](../utilisation/videos-locales.md) portent les commandes actuelles.
+
+## Validation assistant — 0.17.0 (historique)
+
+**Étape conservée avec sa date ; la recette 0.32.0 ci-dessus est la suite actuelle.**
 
 Le dossier multi-source et sa sélection manuelle sont livrés. Les [essais R7](2026-11-15-synthese-multi-sources-et-essais-reels.md)
 confirment des lectures multiples et le changement de modèle sur de petits textes

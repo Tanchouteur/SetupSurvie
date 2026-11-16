@@ -131,3 +131,15 @@ coexistent encore dans l’observation finale : ce résultat prouve une demande
 après changement de cible dans ces conditions, pas l’éviction sous saturation
 ni la disparition de tous les refus sur le Windows de Marc. Aucun autre modèle
 n’est déchargé pour l’essai ; expiration naturelle après quinze secondes.
+
+## Qualification Windows et attente de l’arrêt
+
+Le premier CI `43915284961` du code `f641025` échoue sous Windows dans
+`test_stop_preserves_done_parts_and_resumes_only_explicitly` : l’attente de
+deux secondes du second passage expire. Les autres scénarios de traduction de
+ce fichier passent. Le test est corrigé pour attendre soit l’événement du second
+passage, soit la fin inattendue du travail, avec un plafond de dix secondes et
+l’état complet dans l’assertion. Ce test d’arrêt ne constitue pas une mesure de
+performance disque ; les assertions d’arrêt, conservation d’un passage et reprise
+volontaire restent inchangées. Les six tests de vocabulaire/budget sont ajoutés
+explicitement au job Windows. Le rejeu complet est indiqué après son exécution.
