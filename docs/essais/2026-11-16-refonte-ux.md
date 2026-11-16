@@ -44,7 +44,7 @@ Le petit média synthétique et l’archive ZIM native de test restent des fixtu
 
 | Contrôle | Résultat enregistré |
 | --- | --- |
-| Suite finale `python -m unittest discover -s tests -v` | 942 tests, aucun échec, 6 ignorés, environ 204 s |
+| Suite finale `python -m unittest discover -s tests -v` | 947 tests, aucun échec, 6 ignorés, environ 248 s après reprise de 0.33.1 |
 | Dernier contrôle API | 32 tests réussis, dont propriétaires des dossiers et métadonnées personnelles |
 | Retour volontaire | 19 tests réussis : données récentes conservées, refus identique/plus récent et restauration de la version quittée si échec |
 | Compatibilité de stockage avec 0.33.0 | Base SQLite réelle ouverte par l’ancien puis le nouveau code : messages, titres, classement et traduction conservés |
@@ -53,11 +53,13 @@ Le petit média synthétique et l’archive ZIM native de test restent des fixtu
 | Traduction dans les lecteurs | 13 contrôles par moteur, Chromium et WebKit : lecture en place, conversation préservée, comparaison, pause/rechargement, changement de rubrique, titre visible et PDF dédié |
 | Confort conversation | 38 contrôles par moteur, Chromium et WebKit, dont écran court 320×568 et paysage 844×390 |
 | Synthèse et traduction ordinaires | Synthèse longue : 19 contrôles par moteur ; cycle association/pause/reprise/export et plage PDF réussi sur les deux moteurs, à quatre tailles |
+| Suivi documentaire WebKit | 25 contrôles réussis après correction du repli de conversations pendant le rechargement |
 | Portail et paramètres | 29 et 182 contrôles Chromium après réconciliation des modules |
 | Génération et Compose | Pages générées et configurations Windows CPU/GPU/routeurs vérifiées ; aucun service cible démarré |
 | Analyse statique | Syntaxe JavaScript et `git diff --check` réussis |
 
-La suite Python et la recette ciblée réunie Chromium/WebKit ont réussi. La CI
+La suite Python et la recette ciblée réunie Chromium/WebKit ont réussi. Le
+stockage et les dépendances figées de 0.33.1 sont identiques à ceux de 0.33.0. La CI
 complète est encore suivie avant l’intégration ; son reçu sera inscrit avant clôture.
 Les recettes nouvelles sont incluses dans le lanceur navigateur réellement appelé
 par la CI, et pas seulement dans un lanceur local facultatif.
@@ -80,7 +82,8 @@ est extérieure au dépôt. Les tests CI gardent leur serveur standard au port 8
 
 ## Paquet logiciel
 
-Le candidat a été construit et audité : 943 fichiers, environ 7,21 Mio, empreintes
+Le candidat précédant le dernier correctif de recherche a été construit et
+audité : 943 fichiers, environ 7,21 Mio, empreintes
 du manifeste vérifiées, nouveaux modules et lanceur de retour inclus. Les
 dépendances figées sont identiques au paquet 0.33.0. La livraison finale est
 reconstruite après clôture documentaire, avec son fichier SHA-256 associé ;

@@ -68,7 +68,7 @@
     try{
       let data,organization,degraded=false;
       try{[data,organization]=await Promise.all([api('/conversations?'+new URLSearchParams({folder,q:search.value,offset:String(offset)})),api('/conversation-folders')]);}
-      catch(_){data=await api('/conversations');organization={folders:[]};degraded=true;folder='all';offset=0;}
+      catch(e){if(e.name==='AbortError'||own!==generation||S.user?.id!==owner)return;data=await api('/conversations');organization={folders:[]};degraded=true;folder='all';offset=0;}
       if(own!==generation||S.user?.id!==owner)return;folderItems=organization.folders;
       if(folder!=='all'&&folder!=='unfiled'&&!folderItems.some(f=>f.id===folder)){folder='all';offset=0;return histories();}
       folders.replaceChildren(folderButton('all','Toutes les conversations'),folderButton('unfiled','Sans dossier'));
@@ -89,6 +89,7 @@
     }catch(e){if(own===generation)folderState.textContent=e.message+' Les conversations restent accessibles depuis leur adresse.';}
   };
   search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{offset=0;histories();},250);};
+  const leave=()=>{generation++;clearTimeout(timer);};window.addEventListener('beforeunload',leave);window.addEventListener('pagehide',leave);window.addEventListener('pageshow',event=>{if(event.persisted)histories();});
   function drawEvidence(){used.replaceChildren();for(const source of evidence.values())used.append(button(source.title,()=>readSource(source.id),'text-button'));if(!evidence.size)used.append(element('p','Les sources réellement consultées apparaîtront ici après une réponse.','small muted'));}
   function record(data){for(const s of data?.consulted_sources||[])if(typeof s.id==='string'&&typeof s.title==='string')evidence.set(s.id,s);drawEvidence();}
   document.addEventListener('survie:conversation',event=>{evidence.clear();for(const m of event.detail.messages||[])record(m.documentary);drawEvidence();body.dataset.zone='discussion';refreshZones();});
