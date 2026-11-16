@@ -66,7 +66,12 @@ async page=>{
     const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
       overflowing:[...document.querySelectorAll('body *')].filter(node=>{const r=node.getBoundingClientRect();return r.width&&r.right>innerWidth+.5;}).map(node=>({tag:node.tagName,id:node.id,
         class:typeof node.className==='string'?node.className:'',right:node.getBoundingClientRect().right,width:node.getBoundingClientRect().width,
-        parent:node.closest('[id]')?.id,text:node.textContent.slice(0,90)})).slice(-20)}));
+        parent:node.closest('[id]')?.id,text:node.textContent.slice(0,90)})).slice(-20),
+      internal:[...document.querySelectorAll('body *')].filter(node=>node.clientWidth&&node.scrollWidth>node.clientWidth+1).map(node=>({tag:node.tagName,id:node.id,
+        client:node.clientWidth,scroll:node.scrollWidth,overflow:getComputedStyle(node).overflowX,text:node.textContent.slice(0,90)})).slice(-20),
+      textOverflow:(()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),rows=[];let node;while(node=walker.nextNode()){
+        const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();if(r.width&&r.right>innerWidth+.5)rows.push({parent:node.parentElement?.tagName,id:node.parentElement?.closest('[id]')?.id,right:r.right,text:node.textContent.slice(0,90)});
+      }return rows.slice(-20);})()}));
     check(layout.scroll<=layout.width,'Essai mémoire sans débordement à '+width+(layout.scroll>layout.width?' '+JSON.stringify(layout):''));
   }
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
