@@ -31,8 +31,30 @@ relus ; il ne s’agit pas d’un total d’octets uniques.
   utilisant directement cet UUID répond 404 ; garder le nom de collection pour
   la lecture et vérifier son identité par le catalogue. Aucun corpus téléchargé.
 
-Ces preuves ne valident ni un décodeur, ni la reconnaissance ou le français.
+Ces premières preuves portent sur les échanges HTTP ; reconnaissance et français
+ne sont pas validés par ces contrôles.
 L’interface garde pour l’instant le parcours audio sur les MP4 locaux seulement.
+
+### Complément réel PyAV sur le R7
+
+Le runtime déjà installé **PyAV 14.0.1** lit ensuite le même audio AAC en local
+et à travers `RangeReader` : mêmes quatre trames après déplacement près de
+58 secondes, première trame à **57,984 s**. Le MP4 synthétique de **267 806 octets**
+est complété d’un bloc MP4 `free` de 8 Mio ; taille testée **8 656 422 octets**.
+Ce remplissage n’est pas une vraie vidéo à haut débit. **786 432 octets** média
+sont transférés en trois portions, plus une requête catalogue ; cache de 256 Kio,
+trois réutilisations, **56 ms** de lecture/contrôles sur ce serveur HTTP simulé du
+R7, hors préparation et arrêt du simulateur. Ce n’est pas une mesure du disque.
+La liste distante forcée HLS est refusée avant toute ouverture secondaire.
+Aucun modèle, Internet, reconnaissance ou français n’est utilisé pour cet essai.
+
+Le premier contrôle utilisait un déplacement global du conteneur : sur ce média,
+il revenait à la première image-clé et l’audio repartait à zéro. Le second utilise
+le flux audio pour le déplacement ; il conserve ses temps natifs. Ce résultat
+guide le futur raccordement de `speech_worker.py` ; il n’en annonce pas la correction.
+Les rapports privés `report-archive-ranges-0340.json` et `...-v2.json` restent sur
+le R7. La recette opt-in `tests/real_archive_media_check.py` permet de reproduire
+le contrôle sans modèle, avec un petit MP4 synthétique déjà présent.
 
 ## Raccordement restant
 
