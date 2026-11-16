@@ -114,3 +114,9 @@ que chaque rechargement ne rajoute pas une étape de retour. Un événement de
 fermeture arrivé tardivement ne referme pas le repère d’une fenêtre rouverte par
 Avancer. La recette renforcée vérifie la taille de l’historique, Retour/Avancer
 et Échap, soit **24 contrôles de lecture par navigateur**.
+
+Le suivi distingue enfin un premier passage encore attendu d’un traitement
+terminé sans texte extractible : ce dernier ne promet pas une traduction future,
+ne remplit pas la barre de passages traduits et garde son original consultable.
+La recette complète de lecture atteint **26 contrôles sur chacun des deux
+navigateurs**, avec historique, Échap et document illisible.

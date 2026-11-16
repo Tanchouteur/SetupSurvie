@@ -13,11 +13,11 @@ async page=>{
     const item=await api('/translations',{source_id:S.source.id,conversation_id:S.conversation,mode:'rapide'});
     await api('/translations/'+item.id+'/pause',{});return item.id;
   });
-  let done=2,reads=0,paused=false;
+  let done=2,reads=0,paused=false,scan=false;
   await page.route('**/api/translations/'+id+'?*',route=>{
     reads++;const offset=Number(new URL(route.request().url()).searchParams.get('offset')||0);
-    const parts=Array.from({length:30},(_,position)=>({position,page:position+1,source_text:'Source fictive '+position,translated:position<done?'Passage français fictif '+position:'',status:position<done?'done':'pending',quality:{status:'checked',issues:[]},model:position<done?'fixture-model':''}));
-    return route.fulfill({json:{id,source_id:'guide:shelter.en.txt',title:'Livre fictif',status:paused?'paused':'running',notice:'Traduction automatique fictive, non vérifiée.',total:30,done,unreadable:0,pages:30,pages_done:done,pages_partial:0,pages_unreadable:0,current_page:done+1,last_done_position:done-1,offset,parts:parts.slice(offset,offset+10),quality:{warnings:0},publication:{automatic:false}}});
+    const parts=Array.from({length:30},(_,position)=>({position,page:position+1,source_text:scan?'':'Source fictive '+position,translated:position<done?'Passage français fictif '+position:'',status:scan?'unreadable':position<done?'done':'pending',quality:{status:scan?'unchecked':'checked',issues:[]},model:position<done?'fixture-model':''}));
+    return route.fulfill({json:{id,source_id:'guide:shelter.en.txt',title:'Livre fictif',status:scan?'completed':paused?'paused':'running',notice:'Traduction automatique fictive, non vérifiée.',total:30,done,unreadable:scan?30:0,pages:30,pages_done:done,pages_partial:0,pages_unreadable:scan?30:0,current_page:scan?null:done+1,last_done_position:done?done-1:null,offset,parts:parts.slice(offset,offset+10),quality:{warnings:0},publication:{automatic:false}}});
   });
   await page.evaluate(async id=>{await loadTranslation(id);document.getElementById('translation-panel').open=true;},id);
   stage='ouvrir la lecture';await page.locator('#translation-reading-open').click();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
@@ -60,6 +60,9 @@ async page=>{
   check(await page.evaluate(()=>translationReadingState(S.translation).open),'Avancer dans le navigateur retrouve la lecture ouverte et son repère');
   await page.keyboard.press('Escape');await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
   check(await page.evaluate(()=>!translationReadingState(S.translation).open),'Échap ferme la lecture et conserve ce choix');
+  stage='signaler un document sans texte traduit';scan=true;done=0;await page.evaluate(id=>loadTranslation(id,0),id);
+  check((await page.locator('#translation-reading-status').textContent()).includes('Aucun passage français')&&!(await page.locator('#translation-reading-status').textContent()).includes('pas encore prêt'),'Un document sans texte extractible ne promet pas une arrivée de traduction');
+  check(await page.locator('#translation-reading-open').isDisabled()&&await page.locator('#translation-progress').evaluate(node=>node.value===0),'Les pages illisibles ne deviennent ni lecture disponible ni passages traduits');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks,real_inference:false};
   }catch(error){const state=await page.evaluate(()=>({dialog:document.getElementById('translation-reading-dialog')?.open,history:history.state,offset:S.translationOffset,translation:S.translation,reading:JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user?.id)),status:document.getElementById('translation-status')?.textContent,hash:location.hash}));throw Error(stage+' : '+error.message+' '+JSON.stringify(state));}
