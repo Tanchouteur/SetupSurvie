@@ -24,7 +24,9 @@ async page=>{
   check((await body.textContent()).includes('Relecture des conditions de départ')&&(await body.textContent()).includes('Documents repris de la réponse précédente'),'Relances et relecture des conditions visibles dans les mesures');
   const names=await page.evaluate(()=>{const start=new Date(2026,10,16,14,35,7),report={version:'0.26.1',created:start.toISOString()};return [reportFilename('memoire-rapide',report),reportFilename('memoire-rapide',{...report,created:start.getTime()/1000}),reportFilename('memoire-rapide',{...report,created:new Date(start.getTime()+60000).toISOString()})];});
   check(names[0]==='setupsurvie-memoire-rapide-v0.26.1-2026-11-16_14h35m07s.json'&&names[1]===names[0]&&names[2]!==names[0],'Date locale identique pour les anciens formats et essais de minutes différentes distingués');
+  await page.evaluate(()=>{document.addEventListener('click',event=>{if(event.target.matches('a[download]'))window.reportDownloadInsideDialog=!!event.target.closest('dialog[open]');},true);});
   const downloading=page.waitForEvent('download');await page.locator('#next-response-measures-export').click();const saved=await downloading,chunks=[];for await(const chunk of await saved.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
+  check(await page.evaluate(()=>window.reportDownloadInsideDialog===true),'Le téléchargement reste dans le dialogue actif et hors du contenu inerte');
   check(/^setupsurvie-assistant.*-v[^/]+-\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s\.json$/.test(saved.suggestedFilename()),'Nom du rapport lisible avec type, version et heure précise');
   check(report.version===version&&report.total_ms===6500,'Mesures exportées avec version et temps total');
   check(report.model_retries.length===1&&report.model_preparations[0].status==='ready'&&report.phases_ms.model_loading===1000,'Préparation et reprise présentes dans l’export numérique');

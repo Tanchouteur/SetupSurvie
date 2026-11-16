@@ -147,3 +147,10 @@ anciens octets et contrôle aussi que chaque raccourci de transfert vise son pro
 dossier privé. Aucun écrasement des raccourcis source n'est accepté.
 Suite locale intégrée : **854 tests, six spécifiques Windows ignorés**, sans échec,
 en 171,775 s. Le test des raccourcis Windows corrigé attend son rejeu CI.
+
+L’ensemble conserve la correction mémoire et les noms de rapports 0.26.1.
+Le contrôle Windows intégré réussit. Le contrôle WebKit complet rencontre encore
+un export de recette après rechargement ; le lien de téléchargement est désormais
+attaché au dialogue actif, car le reste du document est inerte lorsqu’il est
+modal. Une assertion contrôle cette appartenance. Le rejeu complet reste requis,
+sans déclarer l’incident résolu sur ce seul changement.
