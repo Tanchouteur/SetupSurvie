@@ -110,3 +110,23 @@ Marc. Le protocole avant/après de l’inventaire prévoit tâches sans indice,
 réussite, hésitations et erreurs ; les temps d’inférence sont séparés de la
 navigation. Aucun gain humain chiffré n’est inventé. La campagne de fiabilité et
 le disque de secours complet restent l’autre objectif prévu, hors de cette refonte.
+
+
+## Reçu d’intégration et contrôle après fusion
+
+La [PR nº 13](https://github.com/Tanchouteur/SetupSurvie/pull/13) est fusionnée sur
+`main` au commit `278216558f9a9884fd8641eeff14f24ef791978d`. Son arbre correspond
+à la branche livrée ; les seuls écarts avec le code CI `512d550` sont le README
+et ce bilan. Le run de branche cité ci-dessus s’est terminé avec **huit jobs verts**.
+
+Sur le commit intégré, la suite complète a été rejouée dans le runner : **947
+tests, aucun échec, 6 ignorés, environ 193 s**. Les 21 fichiers JavaScript/CJS
+modifiés depuis 0.33.1 passent aussi l’analyse syntaxique Node ; génération HTML,
+liens locaux de la livraison et `git diff --check` sont vérifiés. La CI de main
+est visible dans le [run d’intégration](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43949892103) ;
+son état reste consultable séparément de la preuve verte avant fusion.
+
+Le paquet final est reconstruit hors Git sous
+`/srv/happier/workspaces/tasks/setupsurvie-ux-reference/SetupSurvie-0.34.0.zip`,
+avec `SetupSurvie-0.34.0.zip.sha256`. Cette livraison publie le logiciel et les
+guides ; elle n’exécute pas de mise à jour sur les PC utilisateurs.
