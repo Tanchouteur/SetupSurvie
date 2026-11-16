@@ -76,3 +76,10 @@ Suite locale : **895 tests en 181,639 s, 16 ignorés** (libzim optionnel et
 procédures Windows absents du runner). Après la correction de concurrence du
 premier schéma, les **11 tests de file/processus passent en 3,385 s**. Le CI
 complet du dernier code reste la référence d’intégration ci-dessous.
+
+Le CI Linux de `fc65bde` réussissait mais signalait un transport stdout encore
+ouvert après le test de sortie enfant trop grande (Python 3.12). Le correctif
+rejoint aussi le drainage du canal sans conserver de texte supplémentaire, et
+protège cette fermeture contre une annulation. Les trois tests d’enfant réel
+exigent désormais un retour de processus et une fin de flux. Le passage local
+en avertissements de ressources stricts est conservé dans `/tmp/ss031-child-drain.log`.

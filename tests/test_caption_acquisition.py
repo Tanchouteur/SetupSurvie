@@ -139,7 +139,8 @@ class FetchWorkerProcessTests(unittest.IsolatedAsyncioTestCase):
                 return await asyncio.wait_for(task,5)
             finally:
                 await worker.close()
-                if worker.process:self.assertIsNotNone(worker.process.returncode)
+                if worker.process:
+                    self.assertIsNotNone(worker.process.returncode);self.assertTrue(worker.process.stdout.at_eof())
 
     async def test_actual_child_receives_json_without_parent_secrets(self):
         result=await self.execute("import json,sys,os; command=json.load(sys.stdin); print(json.dumps({'ok':True,'result':{'id':command['id'],'has_secret':'PROVIDER_SECRET_FIXTURE' in os.environ}}))")

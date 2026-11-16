@@ -108,7 +108,7 @@ def current_source(item):
 
 
 class FetchWorker:
-    def __init__(self):self.process=None
+    def __init__(self):self.process=None;self.closing=None
 
     async def fetch(self,command):
         # No user environment, cookie, token or proxy is passed to this child.
@@ -136,11 +136,32 @@ class FetchWorker:
         return value['result']
 
     async def close(self):
-        if self.process is not None and self.process.returncode is None:
-            try:self.process.terminate()
-            except ProcessLookupError:pass
+        if self.process is None:return
+        if self.closing is None:self.closing=asyncio.create_task(self._close())
+        try:await asyncio.shield(self.closing)
+        except asyncio.CancelledError:
+            await asyncio.shield(self.closing);raise
+
+    async def _close(self):
+        async def discard_output():
+            while await self.process.stdout.read(65536):pass
+        # wait() alone can leave the read pipe open after an oversized response,
+        # especially on Python 3.12. Drain without retaining any further bytes.
+        draining=asyncio.create_task(discard_output())
+        if self.process.stdin and not self.process.stdin.is_closing():self.process.stdin.close()
+        try:
+            if self.process.returncode is None:
+                try:self.process.terminate()
+                except ProcessLookupError:pass
             try:await asyncio.wait_for(self.process.wait(),5)
-            except TimeoutError:self.process.kill();await self.process.wait()
+            except TimeoutError:
+                if self.process.returncode is None:
+                    try:self.process.kill()
+                    except ProcessLookupError:pass
+                await self.process.wait()
+            await draining
+        finally:
+            if not draining.done():draining.cancel();await asyncio.gather(draining,return_exceptions=True)
 
 
 def publish(identifier,value):
