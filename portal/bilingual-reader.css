@@ -2,3 +2,4 @@
 
 .pdf-controls[hidden]{display:none}
 .french-reading{min-width:0;overflow-wrap:anywhere}.french-reading-actions>*{min-width:0;max-width:100%}.french-reading-actions label{flex:1 1 240px}.french-reading-actions select{width:100%}
+.french-reading{overflow-x:hidden}
