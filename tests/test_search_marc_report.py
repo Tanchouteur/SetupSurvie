@@ -32,7 +32,11 @@ class MarcReportTests(unittest.TestCase):
                 if path.startswith('/suggest?'):
                     title_started.set();return b'[]','application/json'
                 await title_started.wait();return b'<rss><channel/></rss>','application/xml'
-            with patch.object(library,'books',AsyncMock(return_value=catalog)),patch.object(library,'get',get):
+            # The test coordinates the simulated network requests. A persistent
+            # cache hit may skip the title request that releases the full-text one.
+            with tempfile.TemporaryDirectory() as d,patch.object(store,'ROOT',Path(d)), \
+                    patch.object(library.search_cache,'budget',return_value=0), \
+                    patch.object(library,'books',AsyncMock(return_value=catalog)),patch.object(library,'get',get):
                 return await asyncio.wait_for(library.search_archives(lambda lang:'feu','',5,query_plan=self.plan('faire du feu')),1)
         _,coverage=asyncio.run(run());self.assertGreater(coverage['title_searched'],0)
 

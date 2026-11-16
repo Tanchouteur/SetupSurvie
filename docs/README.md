@@ -1,6 +1,7 @@
 # Documentation SetupSurvie
 
 - [Cohérence des traductions](essais/2026-11-16-coherence-traduction.md) — 0.32.0, mots choisis, contexte borné et faux blocage des libellés PDF corrigé.
+- [Campagne Windows chez Marc du 16 novembre 2026](essais/2026-11-16-campagne-windows-marc.md) — contrôles du portail actif, essais isolés, défauts reproduits et limites de la restauration.
 
 - [Deux prochains objectifs](decisions/choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026) — simplifier toute l’expérience sans perdre de fonctions, puis mener une campagne autonome de fiabilité réelle incluant copie et restauration complètes hors ligne. Priorités à réaliser.
 
