@@ -1,6 +1,6 @@
 # Demande pratique et résultats de prix
 
-**Bilan du candidat 0.33.1 — 16 novembre 2026.** Correctif compatible de
+**Bilan de la 0.33.1 — 16 novembre 2026.** Correctif compatible de
 classement, sans nouvelle fonction d’interface ni migration. Le niveau correctif
 correspond à une intention déjà annoncée qui était incomplètement reconnue.
 
@@ -38,7 +38,14 @@ Les questions « pourquoi » seules et les demandes historiques gardent leur tra
   prix : **9 tests en 2,231 s**. Les textes sont fictifs, aucun modèle ni corpus
   réel téléchargé. Aucun changement de la file IA ou des sources consultées.
 
-La CI finale, l’intégration et le reçu de paquet seront ajoutés après validation.
+Le code `636cff2ffd908e201a3d2108427e27f06b275c19` passe les **huit jobs** de la
+[CI complète](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43938878549),
+dont Windows et les recettes Chromium/WebKit existantes. Linux : **939 tests en
+89,239 s, 6 ignorés**. Les tests d’API locaux passent également : **31 tests en
+11,123 s**. Les seuls ajouts après ce code validé concernent les bilans et le reçu
+de paquet ; aucun nouveau résultat humain ni inférence n’est revendiqué.
+
+L’intégration sur main est par avance rapide, sans réécriture de l’historique.
 La [coordination UX](../decisions/coordination-ux-et-videos.md) conserve son périmètre :
 le code fonctionnel de ce lot change `pilot/retrieval.py` ; `pilot/app.py` ne change
 que la version. Aucun écran, contrôleur hôte, carte ou générateur HTML modifié.

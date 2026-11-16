@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-Candidat 0.33.1 : [demande pratique et résultats de prix](2026-11-16-intention-pratique-et-prix.md),
+0.33.1 : [demande pratique et résultats de prix](2026-11-16-intention-pratique-et-prix.md),
 prix de réparation séparés des indices de procédure, actions courtes reconnues,
 variante de remplacement et tests FR/EN/index réel. Les tarifs restent accessibles
 quand on les cherche ; aucune procédure déclarée vérifiée d’après son seul titre.
