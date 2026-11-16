@@ -54,7 +54,7 @@
       const referenceLabel=element('label','Adresse YouTube (si elle n’est pas déjà associée)'),reference=element('input');reference.type='text';reference.maxLength=2000;reference.placeholder='https://www.youtube.com/watch?v=…';referenceLabel.append(reference);
       const languageLabel=element('label','Piste à récupérer'),language=element('select');
       for(const [value,text] of [['','Choix automatique · français en priorité'],['fr','Français'],['en','Anglais']])language.append(new Option(text,value));languageLabel.append(language);
-      const translation=element('label'),checkbox=element('input');translation.style.flexDirection='row';translation.style.alignItems='center';translation.style.gap='8px';checkbox.type='checkbox';checkbox.checked=true;checkbox.style.width='auto';checkbox.style.flex='0 0 auto';translation.append(checkbox,document.createTextNode('Traduire ensuite en français si nécessaire'));
+      const translation=element('label',undefined,'video-caption-check'),checkbox=element('input');checkbox.type='checkbox';checkbox.checked=true;translation.append(checkbox,document.createTextNode('Traduire ensuite en français si nécessaire'));
       details.append(referenceLabel,languageLabel,translation,element('p','Nécessite Internet. La référence doit correspondre à cette vidéo ; le logiciel ne la devine pas depuis son titre. Aucun média n’est téléchargé.','small'),button('Récupérer les sous-titres',()=>command(item.id,'create',{reference:reference.value.trim(),language:language.value,translate_french:checkbox.checked}),'secondary'));card.append(details);
     }
     refresh();

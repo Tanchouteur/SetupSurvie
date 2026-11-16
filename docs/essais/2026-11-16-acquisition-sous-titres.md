@@ -66,3 +66,13 @@ Une première exécution a révélé un sélecteur de test trop large (`details`
 ajout de la commande : il cible désormais explicitement la préparation française.
 Les assertions de traduction et de lecture restent conservées. WebKit n’est pas
 un essai de Safari sur un téléphone réel.
+
+La vérification visuelle mobile a aussi repéré une case trop grande dans les
+commandes audio/récupération. Une règle limitée à ces commandes rétablit une
+case compacte et un libellé cliquable de hauteur confortable ; le cache des
+fichiers concernés est actualisé. Aucun écran général de conversation n’est refait.
+
+Suite locale : **895 tests en 181,639 s, 16 ignorés** (libzim optionnel et
+procédures Windows absents du runner). Après la correction de concurrence du
+premier schéma, les **11 tests de file/processus passent en 3,385 s**. Le CI
+complet du dernier code reste la référence d’intégration ci-dessous.

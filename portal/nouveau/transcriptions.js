@@ -57,7 +57,7 @@
       const details=element('details');details.append(element('summary','Créer les sous-titres depuis l’audio'));
       const label=element('label','Langue parlée'),language=element('select');language.setAttribute('aria-label','Langue parlée dans la vidéo');
       for(const [value,text] of [['','Détection automatique'],['en','Anglais'],['fr','Français']])language.append(new Option(text,value));label.append(language);
-      const translation=element('label'),checkbox=element('input');translation.style.flexDirection='row';translation.style.alignItems='center';translation.style.gap='8px';checkbox.type='checkbox';checkbox.checked=true;checkbox.style.width='auto';checkbox.style.flex='0 0 auto';translation.append(checkbox,document.createTextNode('Préparer aussi la version française'));
+      const translation=element('label',undefined,'video-caption-check'),checkbox=element('input');checkbox.type='checkbox';checkbox.checked=true;translation.append(checkbox,document.createTextNode('Préparer aussi la version française'));
       details.append(label,translation,element('p','La préparation peut durer longtemps. Elle garde les passages terminés et reprend à votre demande après une pause.','small'),button('Créer les sous-titres',()=>command(item.id,'create',{language:language.value,translate_french:checkbox.checked}),'secondary'));card.append(details);
     }
     refresh();
