@@ -2,6 +2,11 @@
 
 > Archive — document conservé pour retracer les propositions et le prototype initial. Les constats et commandes décrivent cette étape ; pour installer le pilote actuel, suivre le [guide Marc](../installation/pilote-marc.md).
 
+**Référence actuelle, 16 novembre 2026 :** Louis conserve SetupSurvie comme base.
+L'[étude des apports utiles de NOMAD](../decisions/apports-nomad.md) compare
+la version 0.35.0 et le code NOMAD relu en novembre. Les fonctions annoncées
+comme à préparer ci-dessous décrivent le prototype d'octobre, pas l'état actuel.
+
 Étude du 30 octobre 2026. Lecture de documentation et de code, sans installation ni test fonctionnel. NOMAD inspecté au commit `54ee30a44902e5c252b477f8685c26ec3064ab72` du 5 octobre 2026, associé aux notes de version v1.35.1. Les évolutions ultérieures nécessiteront une nouvelle vérification.
 
 ## Conclusion

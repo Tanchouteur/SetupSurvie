@@ -1,5 +1,14 @@
 # Choix et contraintes actuels
 
+## Base conservée et apports de NOMAD — 16 novembre 2026
+
+Louis retient **SetupSurvie comme base** et demande d'identifier les apports utiles
+de NOMAD. L'[étude actuelle](apports-nomad.md) recommande de simplifier la
+préparation existante, d'étudier un contrôle régulier des liens du catalogue et
+de qualifier Kolibri pour les cours/exercices. Ce classement est une proposition
+technique ; il ne lance ni développement ni installation et ne remplace pas les
+deux objectifs ci-dessous. La comparaison d'octobre reste historique.
+
 ## Deux prochains objectifs — décision de Louis du 16 novembre 2026
 
 **Statut : priorités à réaliser et à qualifier, sans validation annoncée par cette
