@@ -5,6 +5,7 @@ without loading libzim. Existing native text indexes are not video inventories.
 """
 from contextlib import contextmanager
 import hashlib
+import html
 from html.parser import HTMLParser
 import json
 from pathlib import Path
@@ -14,9 +15,9 @@ import sqlite3
 import time
 from urllib.parse import unquote,urlsplit
 
-from . import durable
+from . import durable,video_inventory
 
-FORMAT=1
+FORMAT=3
 MAX_HTML=2_000_000
 MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
@@ -106,11 +107,73 @@ def fingerprint(source,archive):
     return {'format':FORMAT,'uuid':str(archive.uuid),'bytes':info.st_size,'mtime_ns':info.st_mtime_ns}
 
 
+def cache_track(root,source,path,webvtt):
+    def linked(path):
+        try:return video_inventory.is_link(path)
+        except FileNotFoundError:return False
+    folder=Path(root)/'tracks'
+    if linked(folder):raise ValueError('Track cache link refused')
+    durable.mkdir(folder);data=webvtt.encode()
+    key=hashlib.sha256((source['archive']+json.dumps(source['revision'],sort_keys=True)+path).encode()+data).hexdigest();cache=folder/(key+'.vtt')
+    if linked(cache):raise ValueError('Track cache link refused')
+    if not cache.exists() or cache.read_bytes()!=data:durable.write_bytes(cache,data,private=True)
+    return key,cache
+
+
+def video_items(db,root,source,check=lambda:None):
+    """Export complete checked tracks, never original video bytes, for the portal."""
+    revision=source['revision'];archive=source['archive'];book=source['book'];seen=set();items={}
+    refs=db.execute('SELECT * FROM video_refs ORDER BY article,position')
+    def resource(ref,category):
+        if ref['resolved']['status']!='internal':return None
+        path=ref['resolved']['path'];alias=db.execute('SELECT target FROM aliases WHERE path=?',(path,)).fetchone()
+        if alias:path=alias[0]
+        row=db.execute('SELECT * FROM resources WHERE path=? AND category=?',(path,category)).fetchone()
+        return dict(row) if row else None
+    for row in refs:
+        check()
+        value=json.loads(row['payload']);sources=[item for ref in value['sources'] if (item:=resource(ref,'video'))]
+        if not sources:continue
+        path=sources[0]['path'];seen.update(item['path'] for item in sources)
+        item=items.setdefault(path,{'title':row['title'] or path.rsplit('/',1)[-1],'articles':[],'tracks':[]})
+        if row['article'] not in item['articles']:item['articles'].append(row['article'])
+        for ref in value['tracks']:
+            found=resource(ref,'subtitle')
+            if found and not any(track['source_path']==found['path'] for track in item['tracks']):
+                item['tracks'].append({'source_path':found['path'],'language_declared':ref.get('language_declared') or None})
+    for row in db.execute("SELECT path FROM resources WHERE category='video'"):
+        if row[0] not in seen:items.setdefault(row[0],{'title':row[0].rsplit('/',1)[-1],'articles':[],'tracks':[]})
+    db.execute('DELETE FROM video_items')
+    for path,value in items.items():
+        check()
+        key=hashlib.sha256(('zim:'+archive+'/'+path).encode()).hexdigest();tracks=[]
+        media=db.execute('SELECT size,mimetype FROM resources WHERE path=?',(path,)).fetchone()
+        for track in value['tracks']:
+            row=db.execute('SELECT * FROM subtitles WHERE path=?',(track['source_path'],)).fetchone()
+            report=json.loads(row['report']) if row else {'technical_status':'invalid','errors':['piste_non_examinee'],'warnings':[]}
+            report.setdefault('warnings',[])
+            if report['technical_status']=='passed':
+                cache_key,cache=cache_track(root,source,track['source_path'],row['webvtt'])
+                report=video_inventory.inspect_subtitle(cache)
+                track.update(path='zim-videos/tracks/'+cache.name,archive_cache=cache_key)
+            else:track['path']='unavailable:'+track['source_path']
+            tracks.append({**track,'origin':'unknown','language_basis':'html_track_declared',**report})
+        usable=[track for track in tracks if track['technical_status']=='passed']
+        state='french_available' if any((t['language_declared'] or '').lower().startswith('fr') for t in usable) else 'source_only' if usable else 'invalid' if tracks else 'missing'
+        payload={'inventory_id':key,'provider':'zim','path':path,'archive':archive,'book':book,'archive_revision':revision,'articles':value['articles'],
+            'title':value['title'],'description':'','collection':source['title'],'metadata':{'path':'','status':'missing'},'same_source_paths':[],
+            'media':{'present':True,'format':Path(path).suffix.lower().lstrip('.'),'mimetype':media['mimetype'],'size_bytes':media['size'],'duration_seconds_declared':None,'language_declared':None},
+            'source':{'id':None,'extractor':'zim','channel':source['title'],'upload_date_declared':None},'tracks':tracks,'subtitle_status':state,
+            'validation':{'human_review':'not_performed'},'next_action':'Comparer les paroles et horodatages au média original.'}
+        db.execute('INSERT INTO video_items VALUES(?,?)',(key,json.dumps(payload,ensure_ascii=False)))
+
+
 def summary(db):
     value=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
     value.update(entries_examined=int(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0]),
         video_resources=db.execute("SELECT count(*) FROM resources WHERE category='video'").fetchone()[0],
         subtitle_resources=db.execute("SELECT count(*) FROM resources WHERE category='subtitle'").fetchone()[0],
+        usable_tracks=db.execute('SELECT count(*) FROM subtitles WHERE usable=1').fetchone()[0],
         video_references=db.execute('SELECT count(*) FROM video_refs').fetchone()[0],
         issues_count=db.execute('SELECT count(*) FROM issues').fetchone()[0],
         skipped_html=db.execute("SELECT count(*) FROM issues WHERE reason='html_too_large'").fetchone()[0])
@@ -131,8 +194,11 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
     key=hashlib.sha256(source.name.encode()).hexdigest()[:24];published=root/(key+'.sqlite');building=root/(key+'.building')
     if published.exists():
         with connect(published,True) as db:
-            value=summary(db)
-            if value['revision']==revision:return {**value,'status':'reused','file':published.name}
+            prior=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
+            if prior['revision']==revision:
+                for row in db.execute('SELECT path,webvtt FROM subtitles WHERE usable=1'):
+                    check();cache_track(root,prior,row['path'],row['webvtt'])
+                return {**summary(db),'status':'reused','file':published.name}
     if building.exists():
         with connect(building,True) as db:prior=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
         if prior['revision']!=revision:
@@ -143,9 +209,14 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         db.executescript('''CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS resources(path TEXT PRIMARY KEY,category TEXT NOT NULL,mimetype TEXT NOT NULL,size INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS aliases(path TEXT PRIMARY KEY,target TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS subtitles(path TEXT PRIMARY KEY,usable INTEGER NOT NULL,report TEXT NOT NULL,webvtt TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS subtitle_cues(path TEXT NOT NULL,position INTEGER NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,text TEXT NOT NULL,PRIMARY KEY(path,position));
+            CREATE TABLE IF NOT EXISTS video_items(id TEXT PRIMARY KEY,payload TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS video_refs(article TEXT NOT NULL,position INTEGER NOT NULL,title TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(article,position));
             CREATE TABLE IF NOT EXISTS issues(path TEXT PRIMARY KEY,reason TEXT NOT NULL);''')
-        db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('source',json.dumps({'archive':source.name,'book':source.stem,'revision':revision,'entries':archive.entry_count})))
+        try:title=archive.get_metadata('Title').decode('utf-8',errors='replace')[:400]
+        except (KeyError,RuntimeError):title=source.stem
+        db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('source',json.dumps({'archive':source.name,'book':source.stem,'title':title,'revision':revision,'entries':archive.entry_count})))
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('cursor','0'));db.commit()
         cursor=int(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0])
         for index in range(cursor,archive.entry_count):
@@ -157,6 +228,21 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
                     db.execute('INSERT OR REPLACE INTO aliases VALUES(?,?)',(entry.path,item.path))
                 elif mime.startswith('video/') or mime in ('text/vtt','application/x-subrip') or entry.path.lower().endswith(('.vtt','.srt')):
                     db.execute('INSERT OR REPLACE INTO resources VALUES(?,?,?,?)',(entry.path,'video' if mime.startswith('video/') else 'subtitle',mime,item.size))
+                    if not mime.startswith('video/'):
+                        if item.size>video_inventory.MAX_SIDECAR_BYTES:
+                            report={'technical_status':'invalid','errors':['fichier_annexe_trop_gros'],'cue_count':0};cues=[]
+                        else:
+                            try:
+                                content=bytes(item.content).decode('utf-8-sig')
+                                report=video_inventory.inspect_subtitle_text(content,'vtt' if mime=='text/vtt' or entry.path.lower().endswith('.vtt') else 'srt',include_cues=True)
+                                cues=report.pop('cues')
+                            except UnicodeError:report={'technical_status':'invalid','errors':['encodage_non_utf8'],'cue_count':0};cues=[]
+                        usable=report['technical_status']=='passed'
+                        def stamp(ms):return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d}.{ms%1000:03d}'
+                        webvtt='WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in cues)+'\n' if usable else ''
+                        db.execute('INSERT OR REPLACE INTO subtitles VALUES(?,?,?,?)',(entry.path,int(usable),json.dumps(report,ensure_ascii=False),webvtt))
+                        db.execute('DELETE FROM subtitle_cues WHERE path=?',(entry.path,))
+                        db.executemany('INSERT INTO subtitle_cues VALUES(?,?,?,?,?)',[(entry.path,n,c['start_ms'],c['end_ms'],c['text']) for n,c in enumerate(cues)])
                 elif mime in ('text/html','application/xhtml+xml'):
                     if item.size>MAX_HTML:db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'html_too_large'));continue
                     parser=Videos();parser.feed(bytes(item.content).decode('utf-8',errors='replace'));parser.close()
@@ -171,6 +257,9 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
             if (index+1)%checkpoint==0:
                 db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(index+1),));db.commit()
         db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(archive.entry_count),));db.commit()
+        check()
+        if fingerprint(source,archive)!=revision:raise ArchiveChanged()
+        video_items(db,root,json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0]),check);db.commit()
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
         value=summary(db)
@@ -196,5 +285,8 @@ def references(path,offset=0,limit=50):
                     expected='video' if group=='sources' else 'subtitle'
                     ref['availability']='present' if resource and resource['category']==expected else 'missing_or_unsupported'
                     if resource:ref['resource']=dict(resource)
+                    if resource and group=='tracks':
+                        check=db.execute('SELECT report FROM subtitles WHERE path=?',(target,)).fetchone()
+                        ref['checks']=json.loads(check[0]) if check else {'technical_status':'invalid','errors':['piste_non_examinee']}
             result.append({**value,'article':row['article'],'position':row['position'],'title':row['title']})
         return {'summary':summary(db),'items':result,'total':db.execute('SELECT count(*) FROM video_refs').fetchone()[0],'offset':offset}

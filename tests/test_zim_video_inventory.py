@@ -40,28 +40,18 @@ class ArchiveVideoTests(unittest.TestCase):
         self.create()
 
     def create(self,extra=False):
-        class Resource(Item):
-            def __init__(self,path,mime,text):super().__init__();self.path=path;self.mime=mime;self.text=text
-            def get_path(self):return self.path
-            def get_title(self):return 'Fictional video course' if self.mime=='text/html' else self.path
-            def get_mimetype(self):return self.mime
-            def get_contentprovider(self):return StringProvider(self.text)
-            def get_hints(self):return {Hint.FRONT_ARTICLE:self.mime=='text/html'}
-        with Creator(self.zim).config_indexing(True,'eng') as creator:
-            for k,v in {'Title':'Fictional video inventory','Name':'video-fixture','Language':'eng'}.items():creator.add_metadata(k,v)
-            creator.set_mainpath('A/course.html')
-            creator.add_item(Resource('A/course.html','text/html','<video><source src="../media/clip.webm"><track src="../tracks/alias.vtt" srclang="en"><track src="missing.fr.vtt" srclang="fr"></video><video src="https://example.invalid/remote.mp4"></video>'))
-            creator.add_item(Resource('media/clip.webm','video/webm',b'tiny media fixture, deliberately not decoded'))
-            creator.add_item(Resource('tracks/en.vtt','text/vtt','WEBVTT\n\n00:01.000 --> 00:02.000\nFictional 17 mm.\n'))
-            creator.add_redirection('tracks/alias.vtt','Track alias','tracks/en.vtt',{})
-            creator.add_item(Resource('media/unlinked.mp4','video/mp4',b'orphan fixture'))
-            if extra:creator.add_item(Resource('media/new.mp4','video/mp4',b'new fixture'))
+        from zim_video_fixture import create
+        create(self.zim,extra=extra)
 
     def test_native_text_index_does_not_skip_media_and_local_presence_is_not_decoding(self):
         result=inventory.build(self.zim,self.state);self.assertEqual(result['status'],'completed');self.assertEqual(result['video_resources'],2)
         data=inventory.references(self.state/result['file']);first=data['items'][0]
         self.assertEqual(first['title'],'Fictional video course');self.assertEqual(first['sources'][0]['availability'],'present')
-        self.assertEqual(first['tracks'][0]['availability'],'present');self.assertEqual(first['tracks'][1]['availability'],'missing_or_unsupported')
+        self.assertEqual(first['tracks'][0]['availability'],'present');self.assertEqual(first['tracks'][0]['checks']['technical_status'],'passed');self.assertEqual(first['tracks'][1]['availability'],'missing_or_unsupported')
+        self.assertEqual(result['usable_tracks'],1)
+        with inventory.connect(self.state/result['file'],True) as db:
+            self.assertIn('Fictional 17 mm.',db.execute('SELECT webvtt FROM subtitles WHERE usable=1').fetchone()[0])
+            self.assertEqual(db.execute('SELECT start_ms,end_ms,text FROM subtitle_cues').fetchone()[:],(1000,2000,'Fictional 17 mm.'))
         self.assertEqual(data['items'][1]['sources'][0]['resolved']['status'],'remote_reference')
         self.assertEqual(inventory.build(self.zim,self.state)['status'],'reused')
         with self.assertRaises(ValueError):inventory.references(self.state/result['file'],limit=101)

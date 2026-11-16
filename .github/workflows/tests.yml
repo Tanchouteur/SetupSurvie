@@ -149,8 +149,11 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r tests/requirements-kiwix.txt
       # Only locally generated synthetic archives, never a downloaded corpus/LLM.
+      - run: python -m unittest discover -s tests -p 'test_archive_video*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_zim_video_inventory.py' -v
       - run: python tests/kiwix_search_smoke.py --output /tmp/kiwix-search-receipt.json
       - run: python tests/kiwix_scale_smoke.py --output /tmp/kiwix-scale-receipt.json
+      - run: python tests/kiwix_video_smoke.py --output /tmp/kiwix-video-receipt.json
   offline-routing:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -176,5 +179,5 @@ jobs:
       - run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
       - run: /tmp/setupsurvie-browser/node_modules/.bin/playwright install --with-deps chromium webkit
       - run: node tests/browser_maps_runner.cjs
-      - run: python -m pip install -r tests/requirements.txt
+      - run: python -m pip install -r tests/requirements-kiwix.txt
       - run: node tests/browser_translations_runner.cjs

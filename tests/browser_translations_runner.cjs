@@ -66,6 +66,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const videosContext=await browser.newContext(),videosPage=await videosContext.newPage();
       const videosRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_local_videos.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,localVideos:await videosRecipe(videosPage)}));await videosContext.close();
+      const archiveContext=await browser.newContext(),archivePage=await archiveContext.newPage();
+      const archiveRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_archive_videos.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,archiveVideos:await archiveRecipe(archivePage)}));await archiveContext.close();
       const captionsContext=await browser.newContext(),captionsPage=await captionsContext.newPage();
       const captionsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_caption_preparation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,captionPreparation:await captionsRecipe(captionsPage)}));await captionsContext.close();

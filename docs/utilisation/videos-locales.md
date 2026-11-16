@@ -1,9 +1,9 @@
 # Retrouver et lire les vidéos locales
 
-**Guide actuel — 0.31.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.33.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
-concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
-à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
+concerne les fichiers locaux et, après examen volontaire, les médias présents
+dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
 
 ## Préparer depuis le site
 
@@ -37,6 +37,41 @@ La lecture, le changement de piste et les déplacements dans le média fonctionn
 sans Internet ni IA. La position est mémorisée par profil et navigateur pour la
 même révision ; un passage explicitement trouvé prend priorité sur cette position.
 Quitter le lecteur met la vidéo en pause.
+
+## Vidéos dans les collections ZIM — 0.33.0
+
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque →
+Vidéos dans les collections → Examiner ou reprendre les collections**. L’outil
+d’archives doit avoir été préparé dans **Paramètres → Bibliothèque**. Cet examen
+ne télécharge rien et ne lance pas l’IA. Il peut durer longtemps au premier
+passage ; le nombre de collections terminées et les pistes lisibles sont affichés.
+**Mettre l’examen en pause** conserve les points de reprise. Reprendre reste
+volontaire après un redémarrage ou une pause.
+
+L’examen continue si la page est fermée. Les anciennes données terminées restent
+disponibles pendant le suivant. Ensuite, une mise à jour du lecteur et de la
+recherche prend les pistes en compte. Si le service a redémarré entre-temps,
+**Actualiser le lecteur vidéo** permet de terminer cette étape. Le rapport des
+collections conserve l’examen, les erreurs et les archives non examinées.
+
+Les vidéos effectivement incluses apparaissent avec les fichiers locaux. **Ouvrir
+l’article d’origine** conserve l’accès au document qui les héberge. Le lecteur
+passe par Kiwix sur votre appareil ; un Internet coupé n’empêche pas cette lecture.
+Si Kiwix est arrêté, les textes de pistes déjà préparés restent cherchables,
+mais la lecture du média doit attendre son retour.
+
+Les paroles sont cherchées seulement dans une piste techniquement exploitable.
+Le résultat indique sa langue et ouvre le média au passage trouvé. Une piste
+source interne peut être traduite avec **Préparer une piste française** ; les
+mêmes temps et contrôles que pour un fichier local sont conservés. Ces pistes
+restent automatiques et demandent une comparaison à l’original.
+
+L’examen lit les références explicites des pages HTML ; il n’interprète pas tous
+les lecteurs JavaScript. Un lien distant ne prouve pas que le média est téléchargé.
+Les conteneurs vidéo peuvent aussi contenir des pistes non extraites : elles ne
+sont pas automatiquement prêtes. La création audio des sous-titres des médias
+internes reste à raccorder ; une vidéo sans piste est cherchable par son titre,
+pas par des paroles inventées. Une archive remplacée nécessite un nouvel examen.
 
 Le décodage dépend du format et du navigateur. Un MKV/AVI peut demander un lecteur
 installé : le lien **Ouvrir la vidéo originale** reste disponible. Le logiciel ne
@@ -171,8 +206,9 @@ Une piste distante annoncée dans `.info.json` n’est pas disponible hors ligne
 
 Sans piste exploitable, le média reste lisible et cherchable par ses métadonnées,
 avec **Sous-titres à préparer**. Il ne disparaît pas du rapport. Récupération en
-ligne, transcription des manques et validation réelle de chaque vidéo restent
-à développer/exécuter selon le
+ligne (0.31.0), transcription des MP4 locaux (0.26.0) et examen ZIM (0.33.0) sont
+des parcours distincts. La transcription des médias internes et la validation
+réelle de chaque vidéo restent à développer/exécuter selon le
 [protocole R6](../essais/protocole-sous-titres-videos.md).
 
 ## Installation et conservation

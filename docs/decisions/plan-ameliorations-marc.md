@@ -261,7 +261,9 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 Le [0.26.0](../essais/2026-11-16-transcription-audio-videos.md) ajoute
 la reconnaissance locale et sa reprise ; un MP4 synthétique atteint le français
 et l’index sur le R7. Navigateurs et CI sont vérifiés ; runtime installé chez Marc et fonds réel
-restent à valider. Acquisition en ligne et vidéos/pistes des ZIM restent ouvertes.
+restent à valider. La récupération YouTube **0.31.0** et le parcours
+[vidéos/pistes ZIM **0.33.0**](inventaire-videos-zim.md) complètent cette étape.
+Audio des médias internes et qualification réelle de chaque vidéo restent ouverts.
 
 **Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
 `library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.

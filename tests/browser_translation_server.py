@@ -296,6 +296,8 @@ def procedure_review_fixture():
     parts=[{'id':'condition-0','source_number':1,'text':'Avant : <img src=x> [1] ![x](https://external.invalid/)'}]
     text,_=procedure_review.apply('Choisir le canal fictif avec `MENU → 27` [1].',{'missing_conditions':['condition-0']},parts)
     return {'answer':text,'sources':[{'id':'guide:shelter.en.pdf#page=6','title':'Fixture source','number':1,'pages':[6]}]}
+from archive_video_browser_fixture import install as install_archive_video_fixture
+install_archive_video_fixture(gateway.app,root,BASE)
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')
 import uvicorn

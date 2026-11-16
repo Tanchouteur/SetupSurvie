@@ -1,6 +1,39 @@
 # Vidéos et sous-titres dans les archives ZIM
 
-**Chantier en cours — 16 novembre 2026, non livré.** Complément de L6, distinct
+**Référence du lot 0.33.0 — 16 novembre 2026.** Le parcours comprend maintenant
+la commande volontaire dans Collections, son suivi/pause/reprise, l’index commun,
+la lecture via Kiwix et la préparation française depuis une piste interne.
+Il réutilise le lecteur libzim isolé, sans l’imposer au processus du portail.
+Le [guide utilisateur](../utilisation/videos-locales.md#vidéos-dans-les-collections-zim--0330)
+décrit le parcours courant. La qualification du fonds réel reste distincte de ces
+fonctions ; aucune archive réelle de Marc n’a été examinée dans le runner.
+
+Les médias originaux ne sont pas extraits ni copiés : seuls les petits textes de
+pistes techniquement contrôlés rejoignent un cache et l’index. Le lecteur revalide
+taille/date de l’archive avant de servir le média par portions, sans suivre un lien
+distant. Une archive modifiée exige un nouvel examen. Les contenus sont ensuite
+cherchables avec langue et horodatage ; l’assistant lit les paroles, pas les gestes.
+
+Les pistes utilisables rejoignent le parcours français existant avec mêmes temps,
+pause/reprise et contrôles. Une piste absente reste absente : reconnaissance audio
+des médias internes, interprétation des lecteurs JavaScript et qualification des
+codecs/alignements de chaque vidéo réelle restent à poursuivre. Un simple lien
+YouTube/Vimeo n’est pas une vidéo présente sur cet appareil.
+
+L’état reconstruit est dans `state/pilot/zim-videos/` ; l’index partagé reste
+`state/pilot/videos.db`. Sauvegarde et transfert de tout l’état du pilote les
+incluent. Les originaux restent dans `library/zim/`. L’examen natif ne démarre
+ni modèle ni téléchargement, refuse le mode jeu et garde le dernier inventaire
+publié pendant la reprise du suivant. Le lecteur n’est déclaré à jour qu’après
+prise en compte de la même fin de travail, pas de l’ancien inventaire.
+
+Les preuves et limites sont dans le [bilan du lot](../essais/2026-11-16-videos-collections.md).
+Ce jalon ne clôt ni L6 ni l’objectif global : les mots, langues, temps et besoins
+pratiques du fonds de Marc demandent des observations réelles.
+
+## Historique : première brique avant raccordement au site
+
+**Note de développement conservée — avant le lot 0.33.0.** Complément de L6, distinct
 à la fois de `library/video/` et d’un index documentaire Kiwix natif. Le code
 candidat est isolé sur `codex/zim-video-inventory` ; les commandes du site, la
 lecture et la recherche de ces médias ne sont pas encore raccordées. Aucune

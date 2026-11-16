@@ -11,11 +11,11 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **16 novembre 2026**, le pilote **0.32.1** propose une recherche locale avec
+Au **16 novembre 2026**, le pilote **0.33.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
-volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux et de
+volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux ou inclus dans les collections ZIM et de
 mesurer les délais Kiwix, sans IA ni modification des contenus.
 Le traitement progressif réutilise aussi les textes et métadonnées déjà préparés
 pendant la demande ; le diagnostic sépare ce coût des appels aux encyclopédies.

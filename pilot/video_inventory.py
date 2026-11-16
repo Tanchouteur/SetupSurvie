@@ -60,21 +60,30 @@ def timestamp(value):
 
 
 def inspect_subtitle(path, duration=None, *, include_cues=False):
+    try:content, rev = read_sidecar(path)
+    except (OSError, ValueError, UnicodeError) as exc:
+        result={'format':path.suffix.lower()[1:],'technical_status':'invalid','errors':[str(exc) if not isinstance(exc,OSError) else 'lecture_impossible'],
+            'warnings':[],'cue_count':0,'language_verified':False,'synchronization_verified':False,'translation_verified':False}
+        if include_cues:result['cues']=[]
+        return result
+    return inspect_subtitle_text(content,path.suffix,duration,include_cues=include_cues,source_revision=rev)
+
+
+def inspect_subtitle_text(content, format, duration=None, *, include_cues=False, source_revision=None):
     """Conservative structural checks, never a language or playback validation."""
-    result = {'format': path.suffix.lower()[1:], 'technical_status': 'invalid',
+    result = {'format': format.lower().lstrip('.'), 'technical_status': 'invalid',
               'errors': [], 'warnings': [], 'cue_count': 0,
               'language_verified': False, 'synchronization_verified': False,
               'translation_verified': False}
     cues=[]
     try:
-        content, rev = read_sidecar(path)
-        result['revision'] = rev
+        if source_revision is not None:result['revision'] = source_revision
         result['text_utf8_sha256'] = hashlib.sha256(content.encode('utf-8')).hexdigest()
         if '\x00' in content:
             raise ValueError('caractere_nul')
         content = content.replace('\r\n', '\n').replace('\r', '\n').strip()
         blocks = re.split(r'\n[ \t]*\n', content) if content else []
-        vtt = path.suffix.lower() == '.vtt'
+        vtt = format.lower().lstrip('.') == 'vtt'
         if vtt:
             if not blocks or not re.match(r'^WEBVTT(?:[ \t].*)?(?:\n|$)', blocks[0]):
                 raise ValueError('entete_webvtt_manquante')
