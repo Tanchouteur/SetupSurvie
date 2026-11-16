@@ -6,6 +6,15 @@ est une recommandation technique, sans engagement de réalisation ni de délai.
 Il complète les objectifs de simplification et de fiabilité des
 [choix actuels](choix-actuels.md), sans les remplacer.
 
+**Précision de Louis le même jour :** l'offre visée est un PC vendu avec
+SetupSurvie préinstallé ; son code propre n'est pas publié en open source.
+Le [cadrage commercial](acces-simple-et-offre.md) prévaut sur une lecture de cette
+étude comme proposition d'un logiciel à installer par le client. La préparation
+guidée et le contrôle des liens servent d'abord à préparer et entretenir les
+machines avant livraison. Leur priorité reste subordonnée à l'usage simple de la
+machine livrée, à la fiabilité et à la restauration. Kolibri reste un candidat
+d'enrichissement fonctionnel, sans module retenu pour une offre déjà validée.
+
 ## Périmètre et preuves
 
 Comparaison avec SetupSurvie 0.35.0, code et documentation au commit
@@ -24,7 +33,7 @@ constitue plus la comparaison fonctionnelle de notre version présente.
 
 | Piste | Apport observé chez NOMAD | Existant SetupSurvie | Recommandation et effort relatif |
 | --- | --- | --- | --- |
-| Préparation guidée et stockage | Assistant de première préparation, choix de services/contenus et projection du disque | Installation Windows, sélection par thèmes/langues, volumes, reprise, suivi et garde-fous déjà présents | **P1 : simplifier le parcours existant**, effort moyen ; nouveau catalogue de modèles à cadrer séparément |
+| Préparation guidée et stockage | Assistant de première préparation, choix de services/contenus et projection du disque | Installation Windows, sélection par thèmes/langues, volumes, reprise, suivi et garde-fous déjà présents | **P1 atelier : simplifier la préparation avant livraison**, effort moyen ; nouveau catalogue de modèles à cadrer séparément |
 | Contrôle des liens du catalogue | Vérification CI périodique des URL de collections | Intégrité des téléchargements, audits du fonds local et métadonnées ; aucun contrôle CI périodique des URL distantes identifié dans `tests.yml` | **P1 : préparer un contrôle de maintenance ciblé**, effort faible à moyen ; sans téléchargement lourd |
 | Cours avec exercices et progression | Kolibri proposé comme service de la plateforme | Parcours de savoir-faire, documents éducatifs et aide IA ; pas de suivi scolaire structuré dans ces parcours | **P2 : qualifier un petit module Kolibri optionnel**, effort moyen pour l'essai, plus élevé pour intégrer les profils et le secours |
 | Nouvelles éditions et mises à jour | Réglages séparés pour cœur, applications et contenus, fenêtres horaires et contrôles avant lancement | Mise à jour logicielle avec sauvegarde/retour, téléchargements reprenables et indexation planifiée | **P2 : étudier la visibilité des nouvelles éditions**, effort moyen ; conserver une application explicite |
@@ -56,10 +65,12 @@ espace temporaire ; la seule barre de projection NOMAD ne prouve pas ces contrô
 Conserver les limites physiques du laboratoire et l'absence de plafond
 documentaire logiciel chez Marc.
 
-**Critères avant livraison :** un novice sait ce qui sera ajouté et pourquoi ;
-le retour dans la page ne démarre rien ; choix, interruptions et erreurs restent
-compréhensibles ; pas de copie inutile ; navigation PC/téléphone et reprise
-testées. Distinguer essais simulés, Windows réel et usage humain avec Marc.
+**Critères avant livraison :** la personne préparant le PC sait ce qui sera
+ajouté et pourquoi ; le retour dans la page ne démarre rien ; choix,
+interruptions et erreurs restent compréhensibles ; pas de copie inutile ;
+navigation PC/téléphone et reprise testées. Le client doit pouvoir utiliser les
+ressources préparées sans refaire ce parcours. Distinguer essais simulés,
+Windows réel, recette de la machine livrée et usage humain avec Marc.
 
 Sources NOMAD : [assistant de préparation](https://github.com/Crosstalk-Solutions/project-nomad/blob/c903da48c97bc02f5cdfeff2ebcde00a82dfec8e/admin/app/controllers/easy_setup_controller.ts),
 [projection disque](https://github.com/Crosstalk-Solutions/project-nomad/blob/c903da48c97bc02f5cdfeff2ebcde00a82dfec8e/admin/inertia/components/StorageProjectionBar.tsx),
