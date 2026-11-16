@@ -140,3 +140,11 @@ YouTube seuls. La traduction de pistes présentes 0.24.0 est intermédiaire ;
 transcription des MP4, récupération de pistes, vidéos/pistes des ZIM et relecture
 du fonds restent ouvertes. Le test de 40 pages ne clôt pas ces besoins ni le
 glossaire et la fidélité d’un vrai livre long. Le reçu de paquet est ajouté après construction.
+
+Paquet validé `setupsurvie-0250-validated.zip`, commit documentaire `0745a2a` :
+**851 fichiers**, 7 029 770 octets compressés, 15 809 662 octets décompressés.
+Chaque fichier est suivi par Git et comparé octet par octet au commit avec ses
+filtres de fins de ligne, puis au manifeste. SHA-256 :
+`5d09f8dc8d1973273576ee19e97aabe43c5ed676034a8e63ca4c5579b6dbc428`.
+Ce reçu est ajouté après construction. Aucun rapport privé, modèle ni corpus
+n'est inclus ; aucune mise à jour des PC clients n'a été exécutée ici.
