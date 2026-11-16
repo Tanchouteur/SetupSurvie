@@ -135,3 +135,8 @@ Pause et reprise préexistent et restent disponibles. Louis demande ensuite
 Arrêter et Supprimer : ces commandes constituent le lot suivant ; la présente
 livraison ne les prétend pas déjà implémentées. Arrêter doit conserver les passages,
 Supprimer doit distinguer travail privé, version partagée et original intact.
+
+Paquet vérifié au commit `925aaa318d5b4dbd3c8378118ab510d21084a4cc` : **883 fichiers**,
+**7381545 octets** compressés, **16350457 octets** décompressés.
+Tous les octets sont comparés aux fichiers Git filtrés et au manifeste.
+SHA-256 : `975adc19cf6abd34da2bc7edacb1ca2225abdcbfab84b2141b5e2607ec925a3a`.
