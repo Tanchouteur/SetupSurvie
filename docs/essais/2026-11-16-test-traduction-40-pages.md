@@ -90,6 +90,16 @@ Ces performances ne sont pas celles de GPT‑OSS ou du PC Windows de Marc. La
 structure récurrente du récit, le cache et l’autre activité GPU font partie des
 conditions de mesure, pas d’un benchmark matériel contrôlé.
 
+## Complément après le rapport Windows 0.24.0
+
+Le [rapport de Marc](2026-11-16-rapport-performances-marc-0240.md) montre des
+recherches partielles sans échec d'archive. Le diagnostic exporte désormais les
+états et compteurs autorisés des vidéos, du catalogue, des classements et de
+l'index local. Les champs absents ne deviennent pas des zéros ; chemins, titres
+et erreurs libres de ces composants restent exclus. La fin du diagnostic signale
+aussi une couverture limitée si une recherche classique est partielle.
+Quatorze tests ciblés passent, dont les nouveaux cas de couverture et de confidentialité.
+
 ## Suite
 
 La demande vidéo est précisée : les nouveaux médias de Marc seront des MP4

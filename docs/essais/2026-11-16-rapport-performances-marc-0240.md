@@ -59,6 +59,12 @@ recherche vidéo non préparée peut rendre ce statut partiel dans le moteur, ma
 le présent rapport ne prouve pas que c'est le cas. Ne pas interpréter « zéro
 échec d'archive » comme une preuve que tout le fonds est entièrement interrogeable.
 
+Le candidat 0.25.0 complète l'export avec ces états et compteurs autorisés, sans
+leurs chemins ni messages libres. Une recherche partielle fait désormais signaler
+une couverture limitée à la fin du diagnostic. Les tests utilisent des composants
+simulés distincts, y compris l'absence de mesure et des champs privés à exclure ;
+ils ne déterminent pas rétroactivement la cause du rapport présent.
+
 ## Disque au chargement ; coût du modèle pendant la rédaction
 
 Première rédaction seule : **122,0 s**, dont **111,4 s de chargement** annoncées
