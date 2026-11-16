@@ -10,8 +10,10 @@ async page => {
   }));
   await page.setViewportSize({width:1440,height:950});
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
-  await page.waitForFunction(()=>document.querySelectorAll('#next-collections .data-card').length===3);
-  const field=page.locator('#collection-filter'),visible=()=>page.locator('#next-collections .data-card:visible').count();
+  // This recipe owns the three mocked books/guides. Local media have their own
+  // live catalogue and filtering recipe, not the mocked /api/inventory response.
+  await page.waitForFunction(()=>document.querySelectorAll('#data-books .data-card,#data-guides .data-card').length===3);
+  const field=page.locator('#collection-filter'),visible=()=>page.locator('#data-books .data-card:visible,#data-guides .data-card:visible').count();
   const opening=await page.locator('#data-books a').getAttribute('href');
   check(new URL(opening).pathname==='/content/wikipedia_fr_all/','Lien direct Kiwix conservé');
   await field.fill('ELECTRICITE');check(await visible()===1,'Recherche insensible aux accents et à la casse');

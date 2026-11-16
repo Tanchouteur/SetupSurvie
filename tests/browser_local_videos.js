@@ -11,6 +11,10 @@ async page=>{
   check((await page.locator('#next-videos-list').textContent()).includes('Sous-titres à préparer'),'Vidéo sans piste signalée séparément');
   const found=await(await page.request.get(base+'/api/search?q=rotor&domain=all')).json();const hit=found.results.find(row=>row.kind==='video'&&row.id.includes('#t=8000'));
   check(!!hit,'Le moteur commun retrouve le passage horodaté des sous-titres');
+  await page.goto(base+'/#/bibliotheque/recherche?q=rotor&domain=all');
+  const card=page.locator('.result[data-source^="video:"]').first();await card.waitFor();
+  check((await card.textContent()).includes('Passage à 00:08'),'L’horodatage distingue le passage dans le résultat affiché');
+  check((await card.locator('.other-matches').textContent()).includes('À 00:'),'Les autres passages ne portent pas seulement le même titre');
   const before=calls.length;await page.evaluate(id=>readSource(id),hit.id);
   const player=page.locator('#reader video');await player.waitFor();
   await player.evaluate(v=>v.play());

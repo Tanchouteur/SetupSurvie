@@ -45,6 +45,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
             found=await library.search('fabriquer un générateur à pédales',domain='all')
         self.assertIn('video',{item['kind'] for item in found});self.assertIn('guide',{item['kind'] for item in found})
         video=next(item for item in found if item['kind']=='video');reference={}
+        self.assertTrue(video['other_matches']);self.assertTrue(all(item['kind']=='video' and 'position_ms' in item for item in video['other_matches']))
         packet=await research.read([video['id']],'générateur à pédales',18000,{},lambda item,*args,**kw:engine.reference(reference,item,*args,**kw))
         self.assertEqual(packet['failed'],0);self.assertIn('no_pixels',packet['results'][0]['reading_scope'])
         evidence=documentary.Evidence();evidence.record('read_source',{'id':video['id']},{**await library.source(video['id'])})

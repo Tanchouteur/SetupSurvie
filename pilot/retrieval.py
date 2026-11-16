@@ -228,7 +228,9 @@ def ordered(items,query,limit,*,normalizer=None):
             continue
         if ('#page=' in item['id'] or item['id'].startswith('video:')) and parent in parents:
             others=parents[parent].setdefault('other_matches',[])
-            if len(others)<5:others.append({k:item.get(k,'') for k in ('id','title','url')})
+            if len(others)<5:
+                fields=('id','title','url')+(('kind','position_ms','language') if item['id'].startswith('video:') else ())
+                others.append({k:item.get(k,'') for k in fields})
             continue
         parents[parent]=clean;result.append(clean)
     return result[:limit]

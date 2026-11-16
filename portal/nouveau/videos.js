@@ -10,6 +10,7 @@
     try{
       const data=await api('/videos?offset='+(append?offset:0)+'&q='+encodeURIComponent(q));if(current!==version)return;
       latest=data;$('next-videos-admin').hidden=S.user.role!=='admin';
+      $('next-videos-list').hidden=false;
       const running=data.status.phase==='running';$('next-videos-index').disabled=running||busy;$('next-videos-stop').hidden=!running;
       const phase={not_started:'Actualisez les vidéos pour préparer leur recherche.',running:'Inventaire en cours ; les anciens résultats restent utilisables.',paused:'Inventaire arrêté ; ancien index conservé.',interrupted:'Inventaire interrompu ; relancez-le explicitement.',failed:data.status.error||'Inventaire indisponible.',completed:'Inventaire terminé.'}[data.status.phase]||'';
       $('next-videos-status').textContent=data.total+' vidéo(s) correspondante(s). '+phase+(running?' '+(data.status.videos||0)+' vidéo(s) examinée(s).':'');
@@ -34,7 +35,7 @@
     try{const report=await api('/admin/videos/report'),url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-videos-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
     catch(error){$('next-videos-status').textContent=error.message;}
   };
-  document.addEventListener('survie:collection-filter',()=>{clearTimeout(timer);timer=setTimeout(()=>refresh(),250);});
+  document.addEventListener('survie:collection-filter',()=>{version++;$('next-videos-list').hidden=true;clearTimeout(timer);timer=setTimeout(()=>refresh(),250);});
   new MutationObserver(()=>{if(!$('next-collections').hidden)refresh();}).observe($('next-collections'),{attributes:true,attributeFilter:['hidden']});
   document.addEventListener('survie:auth',()=>{version++;refresh();});
   setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&!$('next-collections').hidden)refresh();},1500);
