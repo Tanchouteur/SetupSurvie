@@ -1,4 +1,6 @@
 # Documentation SetupSurvie
+
+- [Conversations en trois zones et modèles hors ligne](decisions/conversations-trois-zones.md) — direction validée par Louis ; détails à cadrer avant refonte générale.
 - [Bilan et recette du transfert](essais/2026-11-16-transfert-fiable.md) — résultats, échecs et validations Windows restantes.
 - [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.
 - [Transférer une installation vers un SSD](exploitation/transfert-installation.md) — parcours local, reprise, bascule et retour à la source ; recette Windows réelle restante.

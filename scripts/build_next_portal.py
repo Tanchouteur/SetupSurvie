@@ -25,7 +25,7 @@ def build():
     source = source.replace('<body>', '<body class="next-interface">', 1)
     source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.28.0')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.28.0')
-    source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.23.0')
+    source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.28.0')
     return source
 
 

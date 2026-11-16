@@ -400,13 +400,16 @@ function showAssociatedSource(){
 async function attachToConversation(source){
   if(await changeSourceChoices([...selectedSourceChoices().filter(item=>item.id!==source.id),source]))view('chat');
 }
-function translationReading(id,offset){
+function translationReadingState(id){
+  try{const saved=JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id))?.[id];return {offset:Number.isInteger(saved?.offset)?Math.max(0,Math.min(100000,saved.offset)):0,open:saved?.open===true};}catch(_){return {offset:0,open:false};}
+}
+function translationReading(id,offset,open){
   if(!S.user)return 0;
   const key='survie-translation-reading:'+S.user.id;
   try{
     const saved=JSON.parse(localStorage.getItem(key))||{};
-    if(offset===undefined)return Number.isInteger(saved[id]?.offset)?Math.max(0,Math.min(100000,saved[id].offset)):0;
-    saved[id]={offset,updated:Date.now()};
+    if(offset===undefined&&open===undefined)return translationReadingState(id).offset;
+    saved[id]={offset:offset??translationReadingState(id).offset,open:typeof open==='boolean'?open:saved[id]?.open===true,updated:Date.now()};
     const ids=Object.keys(saved).sort((a,b)=>(saved[b].updated||0)-(saved[a].updated||0));
     for(const old of ids.slice(100))delete saved[old];localStorage.setItem(key,JSON.stringify(saved));
   }catch(_){}return 0;
@@ -441,7 +444,36 @@ const translationReadingActions=element('div',undefined,'translation-actions');t
 const translationBeginning=button('Lire depuis le début',()=>loadTranslation(S.translation,0),'secondary');translationBeginning.id='translation-reading-first';
 const translationLatest=button('Lire les derniers passages traduits',()=>loadTranslation(S.translation,Math.floor((S.translationLastDone||0)/10)*10),'secondary');translationLatest.id='translation-reading-latest';
 translationReadingActions.append(translationBeginning,translationLatest);translationReadingStatus.after(translationReadingActions);
-document.addEventListener('survie:translation-clear',()=>{translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
+const translationReader=element('dialog',undefined,'translation-reading-dialog');translationReader.id='translation-reading-dialog';translationReader.setAttribute('aria-labelledby','translation-reading-title');
+translationReader.innerHTML='<header><h2 id="translation-reading-title">Lire le texte français</h2><button id="translation-reading-close" class="secondary">Fermer la lecture</button></header><p id="translation-reading-notice" class="small muted"></p><div id="translation-reading-content"></div>';
+document.body.append(translationReader);
+const translationReadOpen=button('Lire le texte français',()=>openTranslationReader(),'secondary');translationReadOpen.id='translation-reading-open';translationReadOpen.hidden=true;$('translation-summary').after(translationReadOpen);
+const readingNodes=[translationReadingStatus,translationReadingActions,$('translation-parts'),$('translation-previous').parentElement];
+const readingMarkers=readingNodes.map(node=>{const marker=document.createComment('translation-reading-home');node.before(marker);return marker;});
+function moveTranslationReader(open){
+  if(open){for(const node of readingNodes)$('translation-reading-content').append(node);}
+  else readingNodes.forEach((node,index)=>readingMarkers[index].after(node));
+}
+function openTranslationReader(){
+  if(!S.translation||!S.user)return;
+  translationReader.dataset.translationId=S.translation;translationReader.dataset.profileId=S.user.id;
+  translationReading(S.translation,S.translationOffset,true);moveTranslationReader(true);translationReader.showModal();
+}
+function rememberTranslationReaderClosed(){const id=translationReader.dataset.translationId;if(id&&S.user?.id===translationReader.dataset.profileId)translationReading(id,undefined,false);}
+translationReader.addEventListener('close',rememberTranslationReaderClosed);
+translationReader.addEventListener('cancel',rememberTranslationReaderClosed);
+$('translation-reading-close').onclick=()=>{rememberTranslationReaderClosed();translationReader.close();};
+new MutationObserver(()=>{if(!translationReader.open)rememberTranslationReaderClosed();moveTranslationReader(translationReader.open);}).observe(translationReader,{attributes:true,attributeFilter:['open']});
+let translationReaderRestoredFor=null;
+document.addEventListener('survie:translation',event=>{
+  const data=event.detail;translationReadOpen.hidden=false;translationReadOpen.disabled=!data.done;
+  const key=S.user?.id+':'+data.id;
+  if(key!==translationReaderRestoredFor){translationReaderRestoredFor=key;if(data.done&&S.view==='chat'&&!translationReader.open&&translationReadingState(data.id).open)openTranslationReader();}
+  $('translation-reading-title').textContent=data.title;
+  $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:'Traitement terminé. '}[data.status]||'')+(data.notice||'');
+});
+document.addEventListener('survie:view',()=>{if(S.view!=='chat'&&translationReader.open)translationReader.close();});
+document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;translationReadOpen.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
 async function loadTranslation(id,offset){
   if(offset===undefined)offset=id===S.translation?S.translationOffset:translationReading(id);
   clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation,owner=S.user?.id;

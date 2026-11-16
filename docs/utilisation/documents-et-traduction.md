@@ -336,6 +336,11 @@ le texte par groupes de dix. **Lire les derniers passages traduits** rejoint
 volontairement la fin disponible ; **Lire depuis le début** revient au premier
 groupe. L’arrivée d’une nouvelle page ne vous déplace pas automatiquement.
 
+**Lire le texte français** ouvre une fenêtre de lecture dédiée, avec le suivi
+et le texte ; la saisie de conversation ne réduit plus la place disponible.
+**Fermer la lecture**, Échap ou le retour du navigateur la ferment sans arrêter
+la traduction. Le navigateur peut retrouver cette fenêtre après rechargement.
+
 Le navigateur retrouve le groupe de passages lu après rechargement ou retour à
 la conversation, pour ce profil et cette traduction. Pause et reprise gardent
 cette position. Sur un autre appareil, le travail traduit est conservé côté

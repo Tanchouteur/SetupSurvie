@@ -1,7 +1,7 @@
 # Lire pendant une traduction
 
 **Bilan du candidat 0.28.0 — 16 novembre 2026.** Demande de Louis après les
-rapports Windows 0.25.0. La refonte générale des conversations attend son cadrage.
+rapports Windows 0.25.0. La [direction générale des conversations](../decisions/conversations-trois-zones.md) est validée ; les détails attendent encore le cadrage de Louis.
 
 Le panneau ordinaire montrait déjà les dix premiers passages et son compteur.
 Il reconstruisait cependant tous les éléments à chaque actualisation, refermant
@@ -24,6 +24,11 @@ accès au début et au groupe contenant les derniers passages traduits.
 Le groupe de dix passages affiché est mémorisé par profil et traduction dans le
 navigateur, sans texte ni conversation dans cette mémoire. Rechargement et retour
 à la conversation le retrouvent ; pause/reprise ne déplacent pas le lecteur.
+La fenêtre de lecture dédiée libère la place occupée par le formulaire de conversation.
+Son ouverture est aussi retrouvée après rechargement ; Fermer, Échap et retour
+navigateur restent disponibles. La fermeture explicite ne doit pas être annulée
+par une actualisation de progression.
+
 Cette position de lecture n’est pas synchronisée entre appareils ; le travail
 traduit et sa progression restent enregistrés côté serveur et transférables.
 
@@ -45,6 +50,7 @@ le dernier passage et l’accès d’un autre profil. Une recette navigateur sim
 un livre de trente pages avec des arrivées successives : lecture immédiate,
 actualisation sans remplacement du passage déjà lu, comparaison et sélection
 conservées, accès volontaire à la fin, pause, rechargement sans relance et trois
-largeurs d’écran. Une première exécution Chromium réussit ; les autres essais
-et la CI sont encore en cours. Aucun nouveau délai ou résultat de fidélité du
+largeurs d’écran. Les premiers essais Chromium/WebKit passent ; une recette renforcée vérifie aussi
+la fenêtre de lecture, sa fermeture et sa restauration. La CI finale est encore
+en cours. Aucun nouveau délai ou résultat de fidélité du
 modèle de Marc n’est revendiqué.
