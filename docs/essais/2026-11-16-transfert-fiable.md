@@ -87,3 +87,20 @@ CI Windows. Une réussite de cette CI ne vaut pas transfert réel de Marc.
 Le cache d’installateurs ne couvre pas encore tous les prérequis d’un PC vierge.
 La restauration Windows/Linux croisée est refusée. Le disque SSD de travail ne
 remplace pas une sauvegarde séparée et débranchée.
+
+## Résultat CI après correction Windows
+
+Au commit `c9f3789`, les **17 tests de transfert** et les **deux tests Windows de
+syntaxe/diagnostic de volumes** réussissent sur le runner Windows GitHub. Le
+travail Linux, les lecteurs isolés 3.11/3.13/3.14, Kiwix et le routage réussissent.
+Le travail Windows global s’arrête ensuite sur le test existant
+`test_kiwix_diagnostic.test_global_budget_stops_following_steps` (deux étapes au
+lieu d’une avec des délais réels de 20/30 ms). Aucun moteur de recherche ni ce
+test hors périmètre n’a été modifié pour obtenir un passage vert. Ce résultat
+n’est donc pas annoncé comme une CI entièrement réussie.
+
+Après le contrôle final de stabilité de l’inventaire : **18 tests ciblés
+réussis**, dont un ajout manuel pendant la copie refusé avant publication.
+La recette Tk et les quatre ouvertures Chromium/WebKit locales ont été
+réexécutées avec succès. La synchronisation du retrait du garde-fou utilise
+également `durable.sync_directory` lorsque le système le permet.

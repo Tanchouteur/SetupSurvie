@@ -340,6 +340,8 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 if setup.file_hash(archive)!=image_info['sha256']:raise setup.SetupError('Archive Docker corrompue.')
                 journal['images_sha256']=image_info['sha256']
                 journal['images_manifest_sha256']=setup.file_hash(dest/'images.tar.json')
+            if inventory(roots(app,config))['files']!=journal['inventory']['files']:
+                raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             journal['phase']='copied';save(dest,journal)
         bundle_launcher(dest)
         journal['checks']['source_stopped']=True
@@ -521,6 +523,7 @@ def activate(dest):
         journal.setdefault('adapted_hashes',{})['private/settings.json']=setup.file_hash(app.settings_path)
         save(dest,journal)
         (app.work/'transfer-guard.json').unlink()
+        durable.sync_directory(app.work)
         try:
             app.render(config)
             # Document services only: inference remains an explicit user action.

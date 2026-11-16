@@ -84,6 +84,7 @@ class Wizard:
     def launch(self, action):
         if self.busy:return
         self.busy=True
+        self.status.set('Opération en cours ; vérification des fichiers. Sur un gros disque, cela peut durer longtemps.')
         for button in self.actions:button.configure(state='disabled')
         # Read Tk variables only in the UI thread. Worker actions use frozen values.
         work=self.work.get();dest=self.dest.get()

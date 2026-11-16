@@ -112,6 +112,21 @@ transfer.transfer(setup.Installation(sys.argv[2]),Path(sys.argv[3]),stop_context
         (self.data/'new-manual-video.mp4').write_bytes(b'video')
         with self.assertRaisesRegex(setup.SetupError,'source a changé'):self.copy()
 
+    def test_new_source_file_during_copy_prevents_publication(self):
+        original=transfer.copy_file
+        changed=False
+        def mutate(*args,**kwargs):
+            nonlocal changed
+            digest=original(*args,**kwargs)
+            if not changed:
+                (self.data/'late-video.mp4').write_bytes(b'fixture late manual addition')
+                changed=True
+            return digest
+        with patch.object(transfer,'copy_file',side_effect=mutate),self.assertRaisesRegex(setup.SetupError,'changé pendant'):
+            self.copy()
+        self.assertEqual(transfer.read(self.dest/'transfer.json')['phase'],'copying')
+        self.assertTrue((self.work/'transfer-guard.json').exists())
+
     def test_corruption_and_foreign_key_failure(self):
         self.copy();(self.dest/'data/library/guides/été.pdf').write_bytes(b'corrupt')
         with self.assertRaises(setup.SetupError):transfer.verify_copy(self.dest)
