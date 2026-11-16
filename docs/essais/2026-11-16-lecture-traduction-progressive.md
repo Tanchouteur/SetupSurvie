@@ -92,3 +92,19 @@ aussi annulées dès `beforeunload`, avant la désactivation du document, sans
 confirmation ni attente de fin du modèle. **Cinq relectures natives successives
 sous WebKit**, avec les deux rechargements de la recette et sans filtre d’erreur,
 réussissent après cet ajustement. Le PDF reste rendu dans un vrai Worker.
+
+## Recette locale finale
+
+Les six recettes ciblées terminent : **77 contrôles sur Chromium et 77 sur
+WebKit** (lecture progressive, requêtes françaises, import PDF tardif,
+démarrage du Worker, rendu natif des illustrations et lecture bilingue).
+Les annulations de navigation sont distinguées d’un vrai délai de lecture ;
+un abandon avant désactivation conserve ainsi le contrôle facultatif pour un
+retour, tandis qu’un délai réel garde son message de reprise. La reprise depuis
+le cache est simulée par ses événements ; un Safari physique reste à essayer.
+
+Captures de la recette, avec données fictives et sans génération réelle :
+[ordinateur](images/traduction-progressive-0280-pc.png),
+[téléphone 390 px](images/traduction-progressive-0280-mobile.png).
+La CI finale de cette dernière correction est encore en cours ; ne pas confondre
+ces contrôles locaux avec une nouvelle traduction exécutée chez Marc.

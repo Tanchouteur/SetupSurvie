@@ -3,14 +3,17 @@
   'use strict';
   const node=(tag,text,cls)=>{const value=document.createElement(tag);if(text!==undefined)value.textContent=text;if(cls)value.className=cls;return value;};
   const button=(text,action)=>{const value=node('button',text);value.type='button';value.onclick=action;return value;};
-  const requests=new Set();let departing=false;
-  window.addEventListener('beforeunload',()=>{for(const controller of requests)controller.abort();});
-  window.addEventListener('pagehide',()=>{departing=true;for(const controller of requests)controller.abort();});
+  class PageDeparture extends Error{}
+  const requests=new Set(),navigationRequests=new WeakSet();let departing=false;
+  function cancelRequests(){for(const controller of requests){navigationRequests.add(controller);controller.abort();}}
+  window.addEventListener('beforeunload',cancelRequests);
+  window.addEventListener('pagehide',()=>{departing=true;cancelRequests();});
   window.addEventListener('pageshow',event=>{if(event.persisted)departing=false;});
   async function get(path){
-    if(departing)throw new DOMException('Page quittée','AbortError');
+    if(departing)throw new PageDeparture();
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);requests.add(controller);
     try{const response=await fetch('/api/library/'+path,{signal:controller.signal,cache:'no-store'});if(!response.ok)throw Error('La version française ne peut pas être ouverte pour le moment.');return await response.json();}
+    catch(error){if(navigationRequests.has(controller))throw new PageDeparture();throw error;}
     finally{clearTimeout(timer);requests.delete(controller);}
   }
   function mount(original,host,trigger,modeChanged,pdf=false,synchronize=false){
@@ -51,7 +54,7 @@
         for(const warning of data.warnings||[])body.append(node('p',warning,'french-reading-notice'));
         for(const text of data.parts||[])body.append(node('p',text,'french-reading-part'));
         remember('french');
-      }catch(error){if(error.name==='AbortError'&&departing){lastRequest=null;return;}if(!departing&&own===requestNumber&&panel.isConnected){status.textContent='Le texte français est indisponible. Vous pouvez revenir à l’original.';lastRequest=null;body.append(button('Réessayer',()=>load()));}}
+      }catch(error){if(error instanceof PageDeparture){lastRequest=null;return;}if(!departing&&own===requestNumber&&panel.isConnected){status.textContent='Le texte français est indisponible. Vous pouvez revenir à l’original.';lastRequest=null;body.append(button('Réessayer',()=>load()));}}
     }
     trigger.onclick=()=>{if(reading){showOriginal();return;}if(!active)active=choices[0];versions.value=active?.id||'';load();};
     trigger.setAttribute('aria-pressed','false');
@@ -62,7 +65,7 @@
       versions.replaceChildren();for(const choice of choices){const option=node('option',new Date(choice.published_at*1000).toLocaleDateString('fr-FR')+' · '+(choice.original_edition||'édition inconnue')+(choice.freshness==='changed'?' · original modifié':choice.freshness==='unknown'?' · à comparer':''));option.value=choice.id;versions.append(option);}
       versionLabel.hidden=choices.length<2;active=choices[0];trigger.hidden=false;notice.textContent=data.notice||notice.textContent;
       try{const saved=JSON.parse(localStorage.getItem(key)||'null');const found=choices.find(row=>row.id===saved?.translation);if(found)active=found;versions.value=active.id;if(saved?.mode==='french'&&active.freshness==='unchanged')load();}catch(_){}
-    }).catch(error=>{if(error.name!=='AbortError'||!departing)panel.remove();});}
+    }).catch(error=>{if(!(error instanceof PageDeparture))panel.remove();});}
     discover();window.addEventListener('pageshow',event=>{if(event.persisted&&panel.isConnected){lastRequest=null;discover();}});
     return panel;
   }
