@@ -37,7 +37,7 @@ puis l'anglais. Dans une même langue, la piste déclarée fournie passe avant c
 déclarée automatique. Aucune traduction en ligne n'est demandée implicitement.
 Les autres langues pourront passer dans la file de traduction locale.
 
-Les lignes et temps bruts seront conservés dans le rapport privé. Les lignes au
+Les lignes et temps bruts sont conservés dans le rapport privé du candidat. Les lignes au
 même début sont jointes sans retirer leurs mots ; les autres chevauchements
 raccourcissent uniquement le temps d'affichage jusqu'au début suivant. Chaque
 ajustement reste enregistré. Des valeurs invalides ou un texte trop grand sont
@@ -48,6 +48,22 @@ Neuf tests sans réseau passent : références, priorité de langue/origine,
 chevauchement, conservation des mots, refus des temps invalides, volume et fermeture
 de réponse, session explicite et refus d'un autre domaine avant transport.
 Ils ne certifient pas la fidélité des paroles ni tous les comportements du fournisseur.
+
+## File durable en cours de développement
+
+`caption_acquisition.py` conserve les récupérations dans une base distincte et
+utilise un enfant réseau borné, sans environnement de secrets. Une pause rejoint
+cet enfant ; la publication recontrôle la source locale et ne rend disponible
+qu'une piste complète validée. Les pistes originales restent intactes. Une
+récupération terminée peut ensuite alimenter la traduction française locale et
+l'index commun ; la lecture des vidéos ne déclenche pas de réseau.
+
+Cinq tests sur fixtures passent : conservation des paroles brutes et originaux,
+source/français indexés, pause/reprise explicite, fournisseur bloqué puis réessai,
+référence absente sans recherche par titre et média local changé pendant la
+réponse. Le raccordement dans les lecteurs est codé mais les routes, commandes
+utilisateur, arrêt du service et qualification complète ne sont pas encore ajoutés.
+Ce chantier reste non livré ; il n'appartient pas à la 0.27.0 de transfert.
 
 ## Premier essai réel, sans intégration au portail
 

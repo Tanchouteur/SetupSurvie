@@ -64,10 +64,15 @@ def stat_revision(payload):
 
 
 def original_revision(payload):
-    return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job') and not track.get('transcription_job')]})
+    return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job') and not track.get('transcription_job') and not track.get('acquired_job')]})
 
 
 def track_file(track):
+    if track.get('acquired_job'):
+        from . import caption_acquisition
+        path=caption_acquisition.track_file(track['acquired_job'])
+        if not path.is_file():raise HTTPException(404,'Cette piste récupérée n’est plus disponible.')
+        return path
     if track.get('transcription_job'):
         from . import transcriptions
         path=transcriptions.track_file(track['transcription_job'])
@@ -107,6 +112,7 @@ def public(payload,revision):
             {'id':index,'language':track['language_declared'] or '', 'origin':track['origin'],'status':track['technical_status'],
              'warnings':track['warnings'],'errors':track['errors'][:10],'translation_notice':track.get('translation_notice',''),
              'transcription_notice':track.get('transcription_notice',''),
+             'acquisition_notice':track.get('acquisition_notice',''),'timing_adjustments':track.get('timing_adjustments',0),
              'source_language':track.get('source_language',''),'url':'/api/videos/track?id='+key+'&track='+str(index)}
             for index,track in enumerate(payload['tracks'])],
         'video_notice':NOTICE,'audio_verified':False,'human_review':'not_performed'}
@@ -197,6 +203,12 @@ def scan():
                             item['subtitle_status']='source_transcribed'
                             item['next_action']='Lire la transcription automatique et vérifier les mots et horodatages avec l’original.'
                     except Exception:report['errors'].append({'id':item['inventory_id'],'reason':'transcriptions_unavailable'})
+                    try:
+                        from . import caption_acquisition
+                        acquired=caption_acquisition.prepared_tracks(item);item['tracks'].extend(acquired)
+                        if acquired and any(track['language_declared'].lower().startswith('fr') for track in acquired):item['subtitle_status']='french_available'
+                        elif acquired and not item['subtitle_status'].startswith('french'):item['subtitle_status']='source_only'
+                    except Exception:report['errors'].append({'id':item['inventory_id'],'reason':'acquired_captions_unavailable'})
                     try:
                         from . import captions
                         prepared=captions.prepared_tracks(item);item['tracks'].extend(prepared)
