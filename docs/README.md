@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Commandes des traductions](essais/2026-11-16-commandes-traduction.md) — candidat 0.29.0, pause/arrêt/reprise et suppression du travail privé.
+
 - [Conversations en trois zones et modèles hors ligne](decisions/conversations-trois-zones.md) — direction validée par Louis ; détails à cadrer avant refonte générale.
 - [Bilan et recette du transfert](essais/2026-11-16-transfert-fiable.md) — résultats, échecs et validations Windows restantes.
 - [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.

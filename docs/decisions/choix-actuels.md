@@ -1,5 +1,9 @@
 # Choix et contraintes actuels
 
+Le candidat **0.29.0** ajoute [arrêt et suppression des travaux de traduction](../utilisation/documents-et-traduction.md#gérer-une-traduction--0290),
+avec reprise volontaire et conservation des originaux, conversations et guides
+déjà partagés. Les contrôles sont accessibles aussi pendant la lecture dédiée.
+
 La **0.28.0** améliore la [lecture pendant une traduction](../utilisation/documents-et-traduction.md#lire-pendant-que-le-document-se-traduit--0280) :
 progression par pages/passages, texte stable pendant les actualisations et groupe
 de lecture retrouvé après rechargement. La refonte globale des conversations

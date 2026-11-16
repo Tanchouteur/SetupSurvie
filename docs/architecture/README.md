@@ -869,3 +869,14 @@ sa génération précédente après navigation. Les lecteurs savent repartir apr
 port connu sont prises en charge localement ; les erreurs du composant actif
 ne sont pas filtrées globalement. Les recettes simulent ces états et conservent
 les essais natifs de rendu et les assertions d’erreur.
+
+## Contrôle des traductions — 0.29.0
+
+Les routes pause, stop, resume et DELETE d’un travail partagent `CONTROL_LOCK`.
+L’arrêt conserve `stopped`, repris seulement explicitement ; l’initialisation ne
+le réécrit pas comme une tâche à reprendre automatiquement. La suppression rejoint
+le worker avant de supprimer la ligne et ses enfants, et garde les publications
+indépendantes. Le verrou de publication est acquis pour éviter une écriture
+concurrente. La publication attend aussi son thread après annulation avant de
+relâcher ce verrou : une coroutine annulée n’est pas une preuve d’arrêt du thread.
+Les contrôles principaux se déplacent avec le lecteur ; leurs IDs restent uniques.

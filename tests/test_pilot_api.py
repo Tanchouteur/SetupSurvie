@@ -227,6 +227,22 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT count(*) FROM translation_parts').fetchone()[0],0)
             self.assertEqual(db.execute('SELECT count(*) FROM conversation_sources').fetchone()[0],0)
 
+    def test_translation_stop_resume_and_delete_are_owned_and_keep_original(self):
+        self.login();library.GUIDES.mkdir();source=library.GUIDES/'guide.en.txt';source.write_text('Useful water guide');library.index_guides()
+        headers={'Origin':'http://testserver'}
+        with patch.object(translations,'launch'):
+            item=self.client.post('/api/translations',json={'source_id':'guide:guide.en.txt'},headers=headers).json()
+        path='/api/translations/'+item['id'];foreign={'Cookie':profiles.COOKIE+'=bob','Origin':'http://testserver'}
+        self.assertEqual(self.client.post(path+'/stop',json={},headers=foreign).status_code,404)
+        self.assertEqual(self.client.delete(path,headers=foreign).status_code,404)
+        self.assertEqual(self.client.post(path+'/stop',json={},headers=headers).json()['status'],'stopped')
+        with patch.object(translations,'launch') as launch:
+            self.assertEqual(self.client.post(path+'/resume',json={},headers=headers).status_code,202);launch.assert_called_once()
+        response=self.client.delete(path,headers=headers)
+        self.assertEqual(response.status_code,200);self.assertTrue(response.json()['deleted'])
+        self.assertEqual(self.client.get(path).status_code,404);self.assertTrue(source.is_file())
+        self.assertEqual(self.client.get('/api/conversations/'+item['conversation_id']).status_code,200)
+
     def test_full_library_profile_reaches_controller_without_old_gateway_limit(self):
         self.login('admin')
         with patch.object(operations,'library_command',AsyncMock(return_value={'accepted':True})) as command:

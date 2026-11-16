@@ -10,6 +10,7 @@ import httpx
 from . import engine,library,operations,store,assistant_metrics,model_runtime,model_session
 
 ACTIVE={}
+CONTROL_LOCK=asyncio.Lock()
 SCHEMA={'type':'object','properties':{'status':{'type':'string','enum':['translated','refused']},
         'translation':{'type':'string'}},'required':['status','translation'],'additionalProperties':False}
 NOTICE='Traduction automatique non vérifiée. Consultez l’original, notamment pour les chiffres, tableaux et consignes de sécurité. Les illustrations ne sont pas traduites.'
@@ -202,6 +203,10 @@ def launch(identifier):
 
 
 async def pause(identifier,user_id):
+    async with CONTROL_LOCK:return await _pause(identifier,user_id)
+
+
+async def _pause(identifier,user_id):
     item=owned(identifier,user_id)
     if item['status'] in ('queued','running'):
         update(identifier,'paused','Traduction mise en pause. Les passages terminés sont conservés.')
@@ -211,17 +216,54 @@ async def pause(identifier,user_id):
 
 
 async def resume(identifier,user_id,mode=None):
+    async with CONTROL_LOCK:return await _resume(identifier,user_id,mode)
+
+
+async def _resume(identifier,user_id,mode=None):
     owned(identifier,user_id);await available()
     if mode is not None and mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         item=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()
         if not item:raise HTTPException(404,'Traduction introuvable.')
-        if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette traduction est déjà active ou terminée.')
+        if item['status'] not in ('paused','stopped','error'):raise HTTPException(409,'Cette traduction est déjà active ou terminée.')
         if db.execute("SELECT 1 FROM translations WHERE user_id=? AND status IN ('queued','running')",(user_id,)).fetchone():raise HTTPException(409,'Une autre traduction est en cours pour votre compte.')
         if db.execute("SELECT count(*) FROM translations WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'La file des traductions est pleine.')
         db.execute("UPDATE translations SET status='queued',mode=?,error=NULL,updated=? WHERE id=?",(mode or item['mode'],time.time(),identifier))
     launch(identifier);return status(identifier,user_id)
+
+
+async def stop(identifier,user_id):
+    async with CONTROL_LOCK:
+        item=owned(identifier,user_id)
+        if item['status']!='completed':
+            update(identifier,'stopped','Traduction arrêtée. Les passages terminés restent lisibles ; une reprise volontaire est possible.')
+        task=ACTIVE.get(identifier)
+        if task:
+            task.cancel();await asyncio.gather(task,return_exceptions=True)
+            if ACTIVE.get(identifier) is task:ACTIVE.pop(identifier,None)
+        return status(identifier,user_id)
+
+
+async def delete(identifier,user_id):
+    """Delete the private task, never the original or an independent publication."""
+    async with CONTROL_LOCK:
+        item=owned(identifier,user_id)
+        if item['status']!='completed':update(identifier,'stopped','Suppression demandée.')
+        task=ACTIVE.get(identifier)
+        if task:
+            task.cancel();await asyncio.gather(task,return_exceptions=True)
+            if ACTIVE.get(identifier) is task:ACTIVE.pop(identifier,None)
+        from . import publications
+        async with publications.LOCK:
+            publication=publication_state(identifier)
+            # Completed public files are independent and survive task deletion.
+            # Their provenance table is deliberately not a translation child.
+            with store.connect() as db:
+                db.execute('DELETE FROM settings WHERE key=?',('auto-translation:'+identifier,))
+                db.execute('DELETE FROM translations WHERE id=? AND user_id=?',(identifier,user_id))
+        return {'deleted':True,'id':identifier,'conversation_id':item['conversation_id'],'publication':publication,
+                'notice':'Travail privé supprimé. Le document original et toute version déjà partagée dans la bibliothèque sont conservés.'}
 
 
 def export(identifier,user_id):

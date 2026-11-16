@@ -572,3 +572,11 @@ en cours, disponibilité Ollama et marges mémoire), sans log libre ni conversat
 Le correctif de délai mémoire ne constitue pas une preuve de résolution de tous
 les démarrages Windows. Ni abaissement silencieux de réserve ni reprise forcée
 du mode jeu ne sont retenus pour faire passer les mesures.
+
+## 16 novembre — commandes des traductions, candidat 0.29.0
+
+Louis complète la demande de lecture par pause, arrêt, reprise et suppression.
+[Bilan et validations](2026-11-16-commandes-traduction.md) : conserver les passages
+après arrêt, ne pas reprendre au rechargement, supprimer le travail privé après
+confirmation en gardant l’original et les versions publiées indépendantes.
+La refonte générale des conversations et le catalogue de modèles restent distincts.

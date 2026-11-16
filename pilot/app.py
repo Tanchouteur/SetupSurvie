@@ -85,7 +85,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.28.0'
+VERSION='0.29.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -1068,6 +1068,16 @@ async def pause_translation(identifier:str,value=Depends(user)):
 @app.post('/api/translations/{identifier}/resume',status_code=202)
 async def resume_translation(identifier:str,body:TranslationResume,value=Depends(user)):
     return await translations.resume(identifier,value['id'],body.mode)
+
+
+@app.post('/api/translations/{identifier}/stop')
+async def stop_translation(identifier:str,value=Depends(user)):
+    return await translations.stop(identifier,value['id'])
+
+
+@app.delete('/api/translations/{identifier}')
+async def delete_translation(identifier:str,value=Depends(user)):
+    return await translations.delete(identifier,value['id'])
 
 
 @app.get('/api/translations/{identifier}/export')

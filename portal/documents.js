@@ -95,7 +95,8 @@
     if(!label){label=element('label','Traductions de cette conversation');label.id='translation-choice-label';const select=element('select');select.id='translation-choice';label.append(select);$('translation-publication').before(label);
       select.onchange=guard(async()=>{if(select.value){await loadTranslation(select.value);$('translation-panel').open=true;}else{clearTranslation();showAssociatedSource();$('translation-panel').open=true;}});}
     const select=$('translation-choice');select.replaceChildren();const fresh=element('option','Nouvelle traduction du document associé');fresh.value='';select.append(fresh);
-    for(const item of D.entries){const option=element('option',item.title+' · '+item.status+' · '+item.mode);option.value=item.id;select.append(option);}
+    const states={queued:'En attente',running:'En cours',paused:'En pause',stopped:'Arrêtée',completed:'Terminée',error:'À reprendre'};
+    for(const item of D.entries){const option=element('option',item.title+' · '+(states[item.status]||item.status)+' · '+item.mode);option.value=item.id;select.append(option);}
     select.value=S.translation||'';label.hidden=D.entries.length===0;
   }
   async function publicationStatus(event){
@@ -133,6 +134,7 @@
     document.addEventListener('survie:auth',()=>setTimeout(guard(intent),0));
     document.addEventListener('survie:conversation',guard(event=>{D.entries=event.detail.translation_items||[];D.conversation=S.conversation;translationChoices();}));
     document.addEventListener('survie:translation',guard(publicationStatus));
+    document.addEventListener('survie:translation-deleted',event=>{if(D.conversation===event.detail.conversation_id){D.entries=D.entries.filter(item=>item.id!==event.detail.id);translationChoices();}});
     document.addEventListener('survie:translation-clear',()=>{clearTimeout(D.timer);$('translation-publication')?.replaceChildren();if(!S.conversation||S.conversation!==D.conversation){D.entries=[];D.conversation=S.conversation;}translationChoices();});
     window.addEventListener('DOMContentLoaded',guard(intent));
     $('document-filters').hidden=false;

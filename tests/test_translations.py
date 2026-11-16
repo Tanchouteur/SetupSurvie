@@ -92,6 +92,55 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn(item['id'],tr.ACTIVE)
         store.init();self.assertEqual(tr.status(item['id'],'alice')['status'],'paused')
 
+    async def test_stop_preserves_done_parts_and_resumes_only_explicitly(self):
+        item=await self.create();started=asyncio.Event();calls=0
+        async def translate(text,mode):
+            nonlocal calls
+            calls+=1
+            if calls==1:return 'Eau propre.','fixture'
+            started.set();await asyncio.Event().wait()
+        with patch.object(tr,'translate',side_effect=translate):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            stopped=await tr.stop(item['id'],'alice')
+        self.assertEqual(stopped['status'],'stopped');self.assertEqual(stopped['done'],1)
+        self.assertNotIn(item['id'],tr.ACTIVE);store.init()
+        self.assertEqual(tr.status(item['id'],'alice')['status'],'stopped')
+        with patch.object(tr,'launch') as launch:
+            resumed=await tr.resume(item['id'],'alice')
+            self.assertEqual(resumed['status'],'queued');launch.assert_called_once_with(item['id'])
+        self.assertEqual(tr.status(item['id'],'alice')['parts'][0]['translated'],'Eau propre.')
+
+    async def test_delete_joins_worker_and_removes_only_owned_private_work(self):
+        item=await self.create();started=asyncio.Event();finished=asyncio.Event()
+        async def wait(text,mode):
+            started.set()
+            try:await asyncio.Event().wait()
+            finally:finished.set()
+        with patch.object(tr,'translate',side_effect=wait):
+            tr.launch(item['id']);await asyncio.wait_for(started.wait(),2)
+            with self.assertRaises(HTTPException):await tr.delete(item['id'],'bob')
+            result=await tr.delete(item['id'],'alice')
+        self.assertTrue(result['deleted']);self.assertTrue(finished.is_set());self.assertNotIn(item['id'],tr.ACTIVE)
+        self.assertTrue((library.GUIDES/'manual.en.txt').is_file())
+        with self.assertRaises(HTTPException):tr.status(item['id'],'alice')
+        with store.connect() as db:
+            for table in ('translations','translation_parts','translation_checks'):
+                column='id' if table=='translations' else 'translation_id'
+                self.assertEqual(db.execute('SELECT count(*) FROM '+table+' WHERE '+column+'=?',(item['id'],)).fetchone()[0],0)
+            self.assertFalse(db.execute('SELECT 1 FROM settings WHERE key=?',('auto-translation:'+item['id'],)).fetchone())
+            self.assertTrue(db.execute('SELECT 1 FROM conversations WHERE id=?',('c',)).fetchone())
+
+    async def test_delete_keeps_an_already_published_translation(self):
+        from pilot import publications
+        item=await self.create()
+        with patch.object(tr,'translate',AsyncMock(return_value=('Eau propre.','fixture'))):await tr.run(item['id'])
+        public=publications.state(item['id'])
+        self.assertTrue(public['source_id'])
+        path=library.GUIDES/public['source_id'][6:];before=path.read_bytes()
+        result=await tr.delete(item['id'],'alice')
+        self.assertEqual(result['publication']['source_id'],public['source_id']);self.assertEqual(path.read_bytes(),before)
+        self.assertTrue((await library.source(public['source_id']))['text'])
+
     async def test_restart_pauses_and_does_not_resume_inference_automatically(self):
         item=await self.create();store.init()
         state=tr.status(item['id'],'alice');self.assertEqual(state['status'],'paused')
@@ -170,3 +219,23 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
 
 if __name__=='__main__':unittest.main()
+
+
+class PublicationCancellationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cancelled_publication_joins_its_filesystem_thread(self):
+        import threading
+        from pilot import publications
+        entered=threading.Event();release=threading.Event();finished=threading.Event()
+        def writer(*args):
+            entered.set()
+            try:release.wait(3)
+            finally:finished.set()
+            return {'source_id':'guide:fixture'}
+        with patch.object(publications,'LOCK',asyncio.Lock()),patch.object(publications,'_publish',side_effect=writer):
+            task=asyncio.create_task(publications.publish('fixture','alice'))
+            self.assertTrue(await asyncio.to_thread(entered.wait,1));task.cancel()
+            await asyncio.sleep(.02)
+            self.assertFalse(task.done());self.assertTrue(publications.LOCK.locked())
+            release.set()
+            with self.assertRaises(asyncio.CancelledError):await task
+            self.assertTrue(finished.is_set());self.assertFalse(publications.LOCK.locked())

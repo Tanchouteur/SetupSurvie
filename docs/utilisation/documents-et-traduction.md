@@ -350,3 +350,24 @@ Lire ou recharger ne reprend pas une traduction en pause.
 Le brouillon en cours reste dans la conversation. Sa publication dans les
 traductions partagées attend la fin du traitement ; les avertissements de
 traduction automatique restent visibles dès les premiers passages.
+
+## Gérer une traduction — 0.29.0
+
+Les commandes se trouvent dans le panneau de traduction et dans **Lire le texte
+français** pendant la lecture :
+
+- **Mettre en pause** interrompt le passage en cours et conserve les précédents.
+- **Arrêter la traduction** conserve aussi le texte, avec l’état **Arrêtée**.
+  Elle ne repart pas en rechargeant la page ou en redémarrant le serveur.
+- **Reprendre avec le modèle choisi** poursuit seulement les passages restants,
+  après pause, arrêt ou erreur, lorsque le moteur est disponible.
+- **Supprimer la traduction** retire définitivement ce travail privé et ses
+  passages après confirmation. L’original, la conversation et toute traduction
+  déjà partagée dans la bibliothèque restent conservés. Le message de
+  confirmation rappelle cette différence. On peut ensuite lancer un nouveau
+  travail sur le même document.
+
+Arrêter ou supprimer annule et attend le traitement en cours. Aucune de ces
+commandes ne décharge un modèle utilisé ailleurs ni ne force le mode jeu. Les
+versions partagées sont des documents indépendants : leur retrait de la
+bibliothèque ne fait pas partie de la suppression du travail dans la conversation.

@@ -439,6 +439,9 @@ function renderTranslationParts(data){
   }
   for(const node of existing.values())node.remove();
 }
+const translationStop=button('Arrêter la traduction',()=>translationAction('stop'),'secondary');translationStop.id='translation-stop';translationStop.hidden=true;
+const translationDelete=button('Supprimer la traduction',()=>translationAction('delete'),'secondary');translationDelete.id='translation-delete';translationDelete.hidden=true;
+$('translation-pause').after(translationStop);$('translation-export').after(translationDelete);
 const translationReadingStatus=element('p',undefined,'small');translationReadingStatus.id='translation-reading-status';translationReadingStatus.setAttribute('role','status');
 $('translation-progress').after(translationReadingStatus);
 const translationReadingActions=element('div',undefined,'translation-actions');translationReadingActions.id='translation-reading-actions';translationReadingActions.hidden=true;
@@ -449,7 +452,7 @@ const translationReader=element('dialog',undefined,'translation-reading-dialog')
 translationReader.innerHTML='<header><h2 id="translation-reading-title">Lire le texte français</h2><button id="translation-reading-close" class="secondary">Fermer la lecture</button></header><p id="translation-reading-notice" class="small muted"></p><div id="translation-reading-content"></div>';
 document.body.append(translationReader);
 const translationReadOpen=button('Lire le texte français',()=>openTranslationReader(),'secondary');translationReadOpen.id='translation-reading-open';translationReadOpen.hidden=true;$('translation-summary').after(translationReadOpen);
-const readingNodes=[translationReadingStatus,translationReadingActions,$('translation-parts'),$('translation-previous').parentElement];
+const readingNodes=[$('translation-pause').parentElement,translationReadingStatus,translationReadingActions,$('translation-parts'),$('translation-previous').parentElement];
 const readingMarkers=readingNodes.map(node=>{const marker=document.createComment('translation-reading-home');node.before(marker);return marker;});
 function moveTranslationReader(open){
   if(open){for(const node of readingNodes)$('translation-reading-content').append(node);}
@@ -475,10 +478,10 @@ document.addEventListener('survie:translation',event=>{
   const key=S.user?.id+':'+data.id;
   if(key!==translationReaderRestoredFor){translationReaderRestoredFor=key;if(data.done&&S.view==='chat'&&!translationReader.open&&translationReadingState(data.id).open)openTranslationReader(true);}
   $('translation-reading-title').textContent=data.title;
-  $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:'Traitement terminé. '}[data.status]||'')+(data.notice||'');
+  $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',stopped:'Traduction arrêtée ; les passages terminés restent lisibles et une reprise volontaire est possible. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:'Traitement terminé. '}[data.status]||'')+(data.notice||'');
 });
 document.addEventListener('survie:view',()=>{if(S.view!=='chat'&&translationReader.open)translationReader.close();});
-document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;translationReadOpen.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
+document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;translationReadOpen.hidden=true;translationStop.hidden=true;translationDelete.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
 async function loadTranslation(id,offset){
   if(offset===undefined)offset=id===S.translation?S.translationOffset:translationReading(id);
   clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation,owner=S.user?.id;
@@ -487,11 +490,12 @@ async function loadTranslation(id,offset){
     if(offset>=data.total&&offset>0)return loadTranslation(id,Math.max(0,Math.floor((data.total-1)/10)*10));
     translationReading(id,offset);
     S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
-    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
+    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
     $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
     if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
     $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
+    translationStop.hidden=finished||data.status==='stopped';translationDelete.hidden=false;
     const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done;meter.setAttribute('aria-label','Passages réellement traduits');
     translationReadingStatus.textContent=(Number.isInteger(data.pages_done)?data.pages_done+' / '+data.pages+' pages ou sections entièrement traduites. ':'')+(data.pages_partial?data.pages_partial+' page(s) commencée(s). ':'')+(active&&data.current_page?'Page ou section en cours : '+data.current_page+'. ':'')+(data.done?'Vous pouvez déjà lire les passages traduits ci-dessous'+(active?', pendant que la suite avance. ':'. '):active?'Le premier passage n’est pas encore prêt. ':'Aucun passage français n’est enregistré. L’original reste consultable. ')+(data.parts.length?'Affichage des passages '+(offset+1)+' à '+(offset+data.parts.length)+'.':'');
     S.translationLastDone=data.last_done_position;translationReadingActions.hidden=!data.done;
@@ -505,8 +509,10 @@ async function loadTranslation(id,offset){
 }
 async function translationAction(action){
   if(translationBusy||S.sourceChanging||!needUser())return;
+  if(action==='delete'&&(!S.translation||!confirm('Supprimer ce travail de traduction, ses passages privés et son suivi ? Cette action est définitive. Le document original, la conversation et toute version déjà partagée dans la bibliothèque sont conservés.')))return;
   translationBusy=true;$('translation-start').disabled=true;$('translation-resume').disabled=true;$('translation-pause').disabled=true;
-  const conversation=S.conversation;const version=translationVersion;
+  translationStop.disabled=translationDelete.disabled=true;
+  const conversation=S.conversation,owner=S.user.id,identifier=S.translation;const version=translationVersion;
   try{let data;
     if(action==='start'){
       if(!S.source)return;
@@ -516,6 +522,11 @@ async function translationAction(action){
       data=await api('/translations',{source_id:S.source.id,conversation_id:S.conversation,mode:$('chat-mode').value,first_page:first,last_page:last});
       if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
       S.conversation=data.conversation_id;selectReading(S.conversation);$('chat-title').textContent='Traduction : '+data.title;S.source={id:data.source_id,title:data.title};S.sources=[S.source,...selectedSourceChoices().filter(source=>source.id!==S.source.id)];showAssociatedSource();await histories();
+    }else if(action==='delete'){
+      const result=await api('/translations/'+encodeURIComponent(identifier),undefined,{method:'DELETE'});
+      if(S.conversation!==conversation||S.user?.id!==owner||S.translation!==identifier)return;
+      try{const key='survie-translation-reading:'+owner,saved=JSON.parse(localStorage.getItem(key))||{};delete saved[identifier];localStorage.setItem(key,JSON.stringify(saved));}catch(_){}
+      clearTranslation();translationReader.dataset.translationId='';showAssociatedSource();$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-deleted',{detail:{id:identifier,conversation_id:conversation}}));toast(result.notice);return true;
     }else{
       if(!S.translation)return;
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
@@ -523,7 +534,7 @@ async function translationAction(action){
     }
     await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
-  finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;refreshSourceChoices();}
+  finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;translationStop.disabled=translationDelete.disabled=false;refreshSourceChoices();}
 }
 $('translation-start').onclick=()=>translationAction('start');$('translation-pause').onclick=()=>translationAction('pause');$('translation-resume').onclick=()=>translationAction('resume');
 $('translation-previous').onclick=()=>loadTranslation(S.translation,Math.max(0,S.translationOffset-10));$('translation-next').onclick=()=>loadTranslation(S.translation,S.translationOffset+10);
