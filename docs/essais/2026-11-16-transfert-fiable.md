@@ -154,3 +154,14 @@ un export de recette après rechargement ; le lien de téléchargement est déso
 attaché au dialogue actif, car le reste du document est inerte lorsqu’il est
 modal. Une assertion contrôle cette appartenance. Le rejeu complet reste requis,
 sans déclarer l’incident résolu sur ce seul changement.
+
+## Validation finale du candidat commun
+
+Le code `83ad57798496afbc88825986295d0d2c971176ef` réussit les **huit jobs CI** :
+[exécution 43867390409](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43867390409).
+La matrice navigateur complète passe, dont l’export après rechargement en WebKit
+et l’assertion du lien dans le dialogue actif. Cette validation confirme le rejeu
+sur la recette ; elle ne constitue pas une mesure de fréquence chez les clients.
+Les 39 contrôles locaux d’intégration transfert/calibration/portail réussissent,
+avec deux contrôles réservés à Windows ignorés sur le runner Linux.
+La 0.26.1 est intégrée à cette livraison sans diminution de version.

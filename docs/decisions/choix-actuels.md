@@ -1,7 +1,7 @@
 # Choix et contraintes actuels
 
 Le [transfert vers SSD](../exploitation/transfert-installation.md) rejoint la
-base vidéo 0.26.1 pour préparer la 0.27.0. Inventaire, reprise, adaptation et
+base vidéo 0.26.1 dans la 0.27.0. Inventaire, reprise, adaptation et
 bascule locale sont testés sur fixtures ; Windows réel, secours autonome sur PC
 vierge et conversion Windows/Linux restent à qualifier. La revue ajoute les
 contrôles de routage et le refus du retour pendant une maintenance.
