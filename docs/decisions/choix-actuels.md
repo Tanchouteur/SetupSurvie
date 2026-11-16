@@ -1,5 +1,7 @@
 # Choix et contraintes actuels
 
+Le 16 novembre 2026, le [transfert vers SSD](../exploitation/transfert-installation.md) est développé dans `codex/transfert-fiable`, isolé du chantier vidéo 0.26.0. Inventaire, reprise, adaptation et bascule locale sont testés sur fixtures ; Windows réel, secours autonome sur PC vierge et conversion Windows/Linux restent à qualifier. La version finale est réservée à l’intégration après synchronisation.
+
 Le **16 novembre 2026**, Louis ouvre une [configuration matérielle cible évolutive](../installation/configuration-materielle-cible.md) :
 NVIDIA **16 Go de VRAM**, probablement RTX **5060 Ti 16 Go** ; **32 Go de RAM
 au moins**, puis **64 Go selon les prix**, DDR4 ou DDR5 selon la plateforme ;

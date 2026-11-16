@@ -1,4 +1,7 @@
 # Documentation SetupSurvie
+- [Bilan et recette du transfert](essais/2026-11-16-transfert-fiable.md) — résultats, échecs et validations Windows restantes.
+- [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.
+- [Transférer une installation vers un SSD](exploitation/transfert-installation.md) — parcours local, reprise, bascule et retour à la source ; recette Windows réelle restante.
 
 - [Performances réelles de Marc en 0.24.0](essais/2026-11-16-rapport-performances-marc-0240.md) — 32k chargé, synthèses terminées, coût du chargement et des citations ; cache et couverture à distinguer.
 

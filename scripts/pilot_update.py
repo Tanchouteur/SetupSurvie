@@ -191,6 +191,8 @@ def recover_locked(app,journal,services):
 
 
 def apply(app,package,digest,services=None):
+    import transfer
+    transfer.guard(app.work)
     c=app.load();root=setup.safe_path(c.get('app_dir',setup.ROOT));data=setup.safe_path(c['data_dir'])
     if (root/'.git').exists() or root!=setup.ROOT.resolve():raise setup.SetupError('Utiliser le lanceur de l’application installée, jamais un dépôt de développement ou le kit.')
     if not c.get('app_dir'):raise setup.SetupError('Installation ancienne : migrer une fois le code hors du kit avant la mise à jour.')

@@ -155,6 +155,10 @@ Le débit séquentiel publicitaire et la mention PCIe 4.0 ne mesurent pas à eux
 la recherche dans nos archives. La copie de secours reste à prévoir sur un
 [autre disque physique](../exploitation/disque-de-secours-hors-ligne.md).
 
+## SSD commandé par Marc — déclaration du 16 novembre 2026
+
+Marc a commandé un **SSD NVMe PCIe 4.0 de 2 To**, selon Louis dans la demande de transfert. Cela ne prouve pas son installation ni ses performances. Le [parcours de transfert](../exploitation/transfert-installation.md) mesure la capacité réelle, préserve le HDD et distingue le stockage Docker. Les essais Windows et la comparaison avant/après restent à réaliser.
+
 ## Affiner la fiche au fil des observations
 
 1. Relever la référence exacte du CPU, les capacités RAM/VRAM, le modèle et le
