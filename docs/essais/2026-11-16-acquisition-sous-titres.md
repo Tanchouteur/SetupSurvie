@@ -83,3 +83,17 @@ rejoint aussi le drainage du canal sans conserver de texte supplémentaire, et
 protège cette fermeture contre une annulation. Les trois tests d’enfant réel
 exigent désormais un retour de processus et une fin de flux. Le passage local
 en avertissements de ressources stricts est conservé dans `/tmp/ss031-child-drain.log`.
+
+Contre-épreuve R7 de cette fermeture : Python **3.12.3**, même classe
+`FetchWorker` extraite du candidat, enfant synthétique produisant 25 Mo, aucune
+requête fournisseur ni inférence. Refus attendu `provider_response_too_large`,
+processus rejoint (retour −15), stdout à fin de flux, **76 ms**. Exécution avec
+avertissements de ressources stricts et collecte finale, sans avertissement de
+transport. Empreinte du module :
+`be909be631073c7a343a3c8a540333026511a70e488fa370d0fabfcd3944bbb4`.
+Rapport privé R7 : `audio-transcription/report-provider-drain-031.json`.
+
+Le job Linux du dernier code `b9ad6f78c14f0a169195ab76580ea3a1a69fd908`
+passe **896 tests en 73,526 s, 6 ignorés** avec libzim préparé dans le CI.
+Son journal ne contient plus les avertissements de transport ci-dessus.
+Les résultats du CI complet sont liés ci-dessous après sa fin.

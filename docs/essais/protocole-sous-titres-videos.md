@@ -1,5 +1,7 @@
 # Sous-titres français : validation de chaque vidéo
 
+**État de l’outillage — 0.31.0, 16 novembre 2026 :** le [guide actuel](../utilisation/videos-locales.md) couvre lecture/index, traduction des pistes (0.24.0), transcription audio locale (0.26.0) et récupération explicite YouTube (0.31.0). Les étapes historiques ci-dessous ne prouvent pas la qualification du fonds réel : la validation de chaque vidéo de Marc et l’inventaire des médias dans les ZIM restent ouverts.
+
 **Protocole cible retenu — 14 novembre 2026, outillage partiel en 0.24.0.** Louis demande
 explicitement que la récupération ou la création de sous-titres français soit
 validée pour chaque vidéo. Ce document complète le

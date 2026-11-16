@@ -60,3 +60,22 @@ en **1 386 ms**. Les mêmes 185 segments et 182 ajustements sont conservés, san
 traduction distante demandée. Rapport privé `report-provider-031.json`. Cette
 observation datée n’atteste ni disponibilité future du fournisseur, ni alignement
 avec un MP4 de Marc, ni fidélité ou droits de redistribution.
+
+## Prochaine étape : les médias dans les ZIM
+
+Une exploration locale du 16 novembre 2026 avec libzim **3.13.1** génère une ZIM
+de **36 622 octets**, sans corpus téléchargé. Son article HTML référence un WebM
+local de **1 135 octets**, une piste VTT anglaise de **57 octets** et une vidéo
+distante fictive. L’énumération `_get_entry_by_id` retrouve les trois types MIME,
+et `get_entry_by_path` restitue exactement les octets du média et de la piste.
+Aucun accès réseau ni modèle. Recette et rapport privés temporaires :
+`/tmp/ss031-zim-probe/`. Cela prouve la lecture de ces ressources synthétiques,
+pas l’inventaire produit ni l’examen du fonds de Marc.
+
+L’inventaire devra donc distinguer média interne présent et lien distant, joindre
+les `<track>` à la bonne vidéo, conserver les archives non examinées et vérifier
+l’édition. L’index documentaire actuel saute les archives ayant déjà un index natif
+et ne conserve que les articles textuels : il ne suffit pas pour certifier cette
+couverture vidéo. Prévoir une préparation reprenable qui examine aussi ces
+archives, puis servir les médias/pistes via les lecteurs existants, avec limites
+explicites. Cette étape reste prévue ; la 0.31.0 concerne `library/video/`.
