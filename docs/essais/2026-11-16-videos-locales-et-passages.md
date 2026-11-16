@@ -26,10 +26,11 @@ récupération en ligne et la transcription ne sont pas ajoutées par cette livr
 
 ## Vérifications
 
-Neuf tests API/index sur fichiers minuscules couvrent recherches françaises et
+Dix tests API/index sur fichiers minuscules couvrent recherches françaises et
 anglaises, langue/passage conservés, mélange document/vidéo, lecture par lot de
 l’assistant, modification/suppression de fichier, absence de piste, conversion
-SRT sûre, téléchargements incomplets/liens, arrêt/reprise, favoris, classement
+SRT sûre, téléchargements incomplets/liens, arrêt/reprise, lecture de l’ancien
+index pendant la transaction de remplacement, favoris, classement
 humain, autorisations et HTTP Range réel. Les vingt tests de l’inventaire partagé
 restent réussis. La suite complète locale comptait 786 tests (quatre ignorés
 réservés à Windows), avant les dernières précisions de suivi/limite d’aperçu.

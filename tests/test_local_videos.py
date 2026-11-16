@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import AsyncMock,patch
 
@@ -96,6 +97,23 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(videos.listing(query='générateur pédales')['total'],1)
         self.assertEqual(videos.listing(query='absent')['total'],0)
 
+    async def test_previous_index_remains_readable_during_replacement_transaction(self):
+        reached=threading.Event();release=threading.Event();original=videos.inventory.inspect_subtitle
+        def inspected(*args,**kwargs):
+            if kwargs.get('include_cues'):
+                reached.set()
+                if not release.wait(5):raise RuntimeError('Test release not received.')
+            return original(*args,**kwargs)
+        with patch.object(videos.inventory,'inspect_subtitle',side_effect=inspected):
+            await videos.start()
+            self.assertTrue(await asyncio.to_thread(reached.wait,3))
+            try:
+                source=await asyncio.wait_for(asyncio.to_thread(videos.source,self.id),2)
+                self.assertIn('17 mm',source['text'])
+            finally:
+                release.set();await videos.ACTIVE
+        self.assertEqual(videos.status()['phase'],'completed')
+
     async def test_favorites_and_human_classification_keep_the_video_identifier(self):
         await favorites.add('family',self.id)
         self.assertEqual(favorites.listing('family')[0]['kind'],'video')
@@ -122,4 +140,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
                 track=await client.get('/api/videos/track?id='+key+'&track=1');self.assertEqual(track.status_code,200)
                 self.assertIn('17 mm',track.text)
                 self.assertEqual((await client.get('/api/videos/media?id=../../outside')).status_code,422)
-                role['role']='admin';self.assertEqual((await client.get('/api/admin/videos/report')).json()['per_video'][0]['validation']['human_review'],'not_performed')
+                role['role']='admin';record=(await client.get('/api/admin/videos/report')).json()['per_video'][0]
+                self.assertEqual(record['validation']['human_review'],'not_performed')
+                self.assertEqual(record['media']['revision_stat']['size_bytes'],16)
+                self.assertEqual(record['source']['extractor'],'Youtube');self.assertEqual(record['path'],'cours.mp4')

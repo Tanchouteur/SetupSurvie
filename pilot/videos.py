@@ -186,7 +186,9 @@ def scan():
                         save();last_saved=time.monotonic()
                 if STOP.is_set():raise InterruptedError()
             report.update(phase='completed',skipped=found['skipped'],inventory_errors=found['errors'],unexamined=found['unexamined'],limitations=found['limitations'],
-                          per_video=[{'id':'video:'+item['inventory_id'],'title':item['title'],'subtitle_status':item['subtitle_status'],
+                          per_video=[{'id':'video:'+item['inventory_id'],'path':item['path'],'title':item['title'],'subtitle_status':item['subtitle_status'],
+                                      'media':item['media'],'source':{key:item['source'].get(key) for key in ('id','extractor','channel','upload_date_declared')},
+                                      'revision':stat_revision(item),'same_source_paths':item['same_source_paths'],
                                       'tracks':[{key:track[key] for key in ('language_declared','origin','technical_status','errors','warnings')} for track in item['tracks']],
                                       'validation':item['validation'],'next_action':item['next_action']} for item in found['videos']])
         except InterruptedError:report['phase']='paused'
