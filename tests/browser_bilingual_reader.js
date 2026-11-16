@@ -2,6 +2,7 @@
 async page=>{
   const base='http://10.0.3.2:8769',checks=[],calls=[],errors=[],headers={Origin:base};
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
+  async function fit(){try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});}catch(error){throw Error('Débordement '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&e.getBoundingClientRect().width>0).slice(-15).map(e=>({tag:e.tagName,id:e.id,cls:e.className,width:e.getBoundingClientRect().width,text:e.textContent.slice(0,150)}))}))));}}
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push({url:request.url(),method:request.method()}));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   await page.goto(base+'/#/bibliotheque');await page.waitForFunction(()=>S.authReady&&S.user);
@@ -21,7 +22,7 @@ async page=>{
   await french.click();await reader.locator('.french-reading-part').first().waitFor();await page.reload();
   await page.waitForFunction(()=>document.querySelector('#reader .french-reading-part')?.textContent.includes('Section 2'));
   check(await page.locator('#reader .reader-body').isHidden(),'Le choix français est retrouvé après rechargement');
-  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Lecture française sans débordement à '+width);}
+  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await fit();check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Lecture française sans débordement à '+width);}
   await page.setViewportSize({width:1366,height:900});
   await reader.locator('.french-reading-pages input').fill('4');await reader.locator('.french-reading-pages input').dispatchEvent('change');
   await reader.getByRole('button',{name:'Ouvrir la première page traduite'}).waitFor();
@@ -44,7 +45,7 @@ async page=>{
   await page.getByRole('button',{name:'Voir le PDF original'}).click();
   check(await page.locator('#pdf-container').isVisible()&&await page.locator('#pdf-page').inputValue()==='2','Retour au PDF illustré sur la bonne page');
   await page.locator('#pdf-french').click();await page.locator('.french-reading-part').first().waitFor();
-  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'PDF français sans débordement à '+width);}
+  for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await fit();check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'PDF français sans débordement à '+width);}
   const removed=await page.request.delete(base+'/api/conversations/'+item.conversation_id,{headers});check(removed.ok(),'Suppression de la conversation de traduction terminée : '+removed.status()+' '+await removed.text());
   const lookup=await page.request.get(base+'/api/library/french-reading?'+new URLSearchParams({original_id:'guide:shelter.en.pdf'}));check((await lookup.json()).translations.length>0,'Version française toujours lisible après suppression de conversation');
   check((await page.request.post(base+'/fixture/reader-article?enabled=true',{headers})).ok(),'Article fictif activé avec origine explicite');
