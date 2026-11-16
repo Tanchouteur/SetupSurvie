@@ -53,7 +53,7 @@
   async function download(id){
     try{
       const profile=S.user?.id,result=await api('/admin/video-captions/'+encodeURIComponent(id)+'/report');if(S.user?.id!==profile)return;
-      const url=URL.createObjectURL(new Blob([JSON.stringify(result,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-sous-titres-'+id+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      downloadReport(result,'sous-titres');
     }catch(error){$('next-caption-message').textContent=error.message;}
   }
   document.addEventListener('survie:video-cards',event=>{

@@ -32,7 +32,7 @@
     catch(error){$('next-index-settings-status').textContent=error.message;}
   };
   $('next-index-export').onclick=()=>{
-    if(!indexReport)return;const url=URL.createObjectURL(new Blob([JSON.stringify(indexReport,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='setupsurvie-indexation-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    if(!indexReport)return;downloadReport(indexReport,'indexation');
   };
   for(const [id,action] of [['prepare','prepare'],['start','start'],['pause','pause']])$('next-index-'+id).onclick=async()=>{
     try{await api('/admin/library/index/'+action,{});$('next-index-status').textContent='Commande transmise au PC serveur.';await refresh();}

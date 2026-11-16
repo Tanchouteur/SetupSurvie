@@ -1,10 +1,15 @@
 # Choix et contraintes actuels
 
 Le [transfert vers SSD](../exploitation/transfert-installation.md) rejoint la
-base vidéo 0.26.0 pour préparer la 0.27.0. Inventaire, reprise, adaptation et
+base vidéo 0.26.1 pour préparer la 0.27.0. Inventaire, reprise, adaptation et
 bascule locale sont testés sur fixtures ; Windows réel, secours autonome sur PC
 vierge et conversion Windows/Linux restent à qualifier. La revue ajoute les
 contrôles de routage et le refus du retour pendant une maintenance.
+
+La **0.26.1** corrige le délai de calibration mémoire et rend les noms de rapports
+versionnés et horodatés. Les [cinq rapports Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md)
+distinguent chargement lent, pression mémoire et recherche vidéo non préparée ;
+ils ne valident pas tous les démarrages du moteur. Le contexte reste inchangé.
 
 La [0.26.0 de transcription](../essais/2026-11-16-transcription-audio-videos.md)
 réutilise Whisper small préparé pour la dictée, sur CPU, puis la traduction

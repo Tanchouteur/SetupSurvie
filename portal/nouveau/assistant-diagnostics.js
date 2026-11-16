@@ -2,7 +2,6 @@
 (() => {
   const seconds=value=>Number.isFinite(value)?(value/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' s':'Non mesuré';
   const modeName=mode=>S.status?.modes?.find(item=>item.id===mode)?.name||mode;
-  function download(report,name){const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   function summaryList(target,rows){const list=element('dl',undefined,'assistant-measures');for(const [label,value] of rows)list.append(element('dt',label),element('dd',value));target.append(list);}
 
   let jobs=[],owner=null,selectedReport=null;
@@ -32,7 +31,7 @@
     }catch(error){body.replaceChildren(element('p',error.message,'error'));}
   }
   $('next-response-measure').onchange=loadMeasure;
-  $('next-response-measures-export').onclick=()=>{if(selectedReport)download(selectedReport,'setupsurvie-assistant-'+$('next-response-measure').value+'.json');};
+  $('next-response-measures-export').onclick=()=>{if(selectedReport)downloadReport(selectedReport,'assistant-'+selectedReport.mode);};
   document.addEventListener('survie:new-conversation',()=>{owner=S.conversation;jobs=[];open.hidden=true;});
   document.addEventListener('survie:conversation',event=>{owner=event.detail.id;jobs=event.detail.measurement_jobs||[];open.hidden=!jobs.length;});
   document.addEventListener('survie:job',event=>{
@@ -88,7 +87,7 @@
       renderCalibration(await api('/admin/assistant/calibration'));if(name==='apply'||name==='rollback')toast('Contexte enregistré pour les prochaines réponses.');
     }catch(error){$('next-calibration-status').textContent=error.message;}finally{busy=false;}
   };
-  $('next-calibration-export').onclick=()=>{if(calibrationReport)download(calibrationReport,'setupsurvie-memoire-'+calibrationReport.id+'.json');};
+  $('next-calibration-export').onclick=()=>{if(calibrationReport)downloadReport(calibrationReport,'memoire-'+calibrationReport.mode);};
   window.addEventListener('pagehide',()=>request?.abort());
   document.addEventListener('toggle',event=>{if(event.target===$('next-calibration-form').closest('details'))refresh();},true);
   setInterval(refresh,1500);new MutationObserver(refresh).observe($('view-settings'),{attributes:true,attributeFilter:['hidden']});document.addEventListener('survie:auth',()=>{request?.abort();refresh();});

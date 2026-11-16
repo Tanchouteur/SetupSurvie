@@ -5,6 +5,21 @@ const EMPTY=$('chat-messages').innerHTML;
 let contentTimer=null,contentState=null,contentInitialized=false,contentCommandBusy=false;
 const labels={home:'Votre espace',library:'Bibliothèque',chat:'Assistant',data:'Données locales',settings:'Paramètres',connect:'Connecter un appareil',monitor:'État de l’appareil',users:'Profils locaux'};
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;}
+function reportFilename(kind,report={}){
+  const safe=value=>String(value).replace(/[^a-zA-Z0-9._-]+/g,'-').slice(0,80);
+  const raw=report.created??report.started??report.updated;
+  let date=new Date(typeof raw==='number'?raw*1000:raw);
+  if(!Number.isFinite(date.getTime()))date=new Date();
+  const pad=value=>String(value).padStart(2,'0');
+  const stamp=date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'_'+pad(date.getHours())+'h'+pad(date.getMinutes())+'m'+pad(date.getSeconds())+'s';
+  return 'setupsurvie-'+safe(kind)+'-v'+safe(report.version||S.status?.version||'inconnue')+'-'+stamp+'.json';
+}
+function downloadReport(report,kind){
+  const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');
+  link.href=url;link.download=reportFilename(kind,report);link.hidden=true;document.body.append(link);link.click();
+  // Keep the attached link and Blob alive while Safari starts its download.
+  setTimeout(()=>{link.remove();URL.revokeObjectURL(url);},30000);
+}
 const mobileNav=matchMedia('(max-width:760px)');
 function fitChatViewport(){
   const height=window.visualViewport?.height||window.innerHeight;
