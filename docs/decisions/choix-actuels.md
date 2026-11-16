@@ -1,5 +1,47 @@
 # Choix et contraintes actuels
 
+## Deux prochains objectifs — décision de Louis du 16 novembre 2026
+
+**Statut : priorités à réaliser et à qualifier, sans validation annoncée par cette
+note.** Louis fixe les deux prochains objectifs du projet :
+
+1. **Améliorer réellement l’expérience utilisateur et simplifier l’ensemble du
+   site, sans perdre de fonctionnalités.** Repenser les parcours, la navigation,
+   les intitulés et la présentation des commandes, au-delà du seul aspect visuel.
+   Les fonctions existantes doivent rester accessibles ; les options avancées
+   peuvent être regroupées et dépliables. La [refonte de l’assistant en trois
+   zones](conversations-trois-zones.md) s’inscrit dans cet objectif global. Vérifier
+   les parcours sur ordinateur et téléphone, la conservation des données et
+   travaux, ainsi que l’accès aux sources et aux fonctions de secours.
+2. **Tester réellement la fiabilité de l’ensemble**, y compris la copie complète
+   de l’installation d’un disque physique à un autre et sa restauration autonome
+   hors ligne. Couvrir les fonctions, leur interaction, les erreurs, interruptions,
+   reprises, mises à jour et sauvegardes, ainsi que la fidélité des réponses,
+   traductions et synthèses sur des sources vérifiables. Appliquer le
+   [protocole de secours](../exploitation/disque-de-secours-hors-ligne.md#10-recette-dacceptation) :
+   vérifier le contenu copié puis restaurer sans Internet ni accès au disque
+   source, retrouver les ressources et données personnelles et contrôler le
+   fonctionnement après redémarrage et retrait du support de secours.
+
+### Conduite autonome de la campagne de fiabilité
+
+Louis prévoit de laisser GPT travailler de façon autonome pour préparer et
+exécuter tous les tests nécessaires, corriger les défauts rencontrés et rejouer
+les scénarios concernés. Cette note cadre la future campagne ; elle ne la lance
+pas. L’agent doit établir une matrice de couverture à partir des fonctions et
+procédures réellement présentes, puis consigner version, machine, supports,
+conditions réseau, résultats, preuves et limites de chaque essai.
+
+Les tests simulés préparent la campagne mais ne remplacent pas les essais réels.
+Une absence de matériel, de disque distinct ou d’accès à une cible doit rester
+signalée comme validation non exécutée. Les tests préservent les originaux et la
+dernière sauvegarde saine, utilisent des cibles jetables ou dédiées et respectent
+la pause d’inférence et les usages des PC. Les essais physiques et la recette
+humaine du manuel restent identifiés séparément lorsqu’ils exigent une
+intervention ; aucune réussite n’est déduite du seul déroulement automatique.
+
+## Livraisons disponibles
+
 La **0.31.0** ajoute la [récupération des sous-titres YouTube](../utilisation/videos-locales.md#récupérer-les-pistes-youtube--0310), à la demande avec Internet, puis lecture/recherche hors ligne et traduction locale optionnelle. La référence doit correspondre au média ; les ZIM et la qualification des vidéos de Marc restent ouverts.
 
 La **0.30.0** conserve les [refus de tests avant lancement](../essais/2026-11-16-diagnostic-refus-demarrage.md)
