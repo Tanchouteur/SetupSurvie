@@ -84,3 +84,13 @@ n’est ajouté. La lecture française intégrée dans les lecteurs, le glossair
 la déduplication de traductions et les sous-titres restent des travaux distincts.
 Le numéro **0.20.1** est une correction compatible du traitement existant ; aucune
 migration du schéma 1 ni modification d’image tierce ou des profils conseillés.
+
+
+## Reçu du paquet
+
+Paquet extrait et comparé au commit `2786b0699bb4909f3cb7fa284a3e7f54177fe083` :
+**809 fichiers**, 6880761 octets compressés, 15415878 octets
+décompressés. SHA-256 :
+`37c47ade1876d676201a9ea815a0da103afe2157e1dae2d3c66fbdeb6a3546ea`.
+Chaque fichier correspond aux octets du commit après filtres Git. Ce reçu est
+ajouté ensuite sans modifier le code validé ; aucun déploiement chez Marc.
