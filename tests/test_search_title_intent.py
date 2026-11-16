@@ -74,5 +74,48 @@ class TitleIntentTests(unittest.TestCase):
         self.assertEqual(task['match'],'title')
         self.assertEqual(task['classification'],{'method':'automatic','document_type':'unknown'})
 
+    def test_prices_and_cost_guides_do_not_precede_an_actual_task_title(self):
+        cases=[
+            ('réparer un vélo','Mécanique vélo/Réparer un pneu','Prix de réparation d’un vélo'),
+            ('réparer un vélo','Mécanique vélo/Réparer un pneu','Guide des prix de réparation de vélos'),
+            ('entretenir une vanne','Entretenir une vanne','Coût d’entretien d’une vanne'),
+            ('how to repair a bicycle','Repair a bicycle tyre','Bicycle repair costs'),
+            ('how to repair a bicycle','Repair a bicycle tyre','Guide to bicycle repair prices'),
+        ]
+        for query,task,prices in cases:
+            with self.subTest(query=query,prices=prices):
+                found=self.ordered(query,task,prices,'Extrait fictif de tarifs, aucun mode opératoire lu.')
+                self.assertEqual(found[0]['id'],'zim:fixture/task');self.assertEqual(len(found),2)
+
+    def test_explicit_price_questions_still_find_the_price_overview(self):
+        for query,task,prices in [
+            ('prix de réparation d’un vélo','Mécanique vélo/Réparer un pneu','Prix de réparation d’un vélo'),
+            ('bicycle repair costs','Repair a bicycle tyre','Bicycle repair costs'),
+        ]:
+            with self.subTest(query=query):
+                found=self.ordered(query,task,prices,'Extrait fictif de prix de réparation, sans étapes.')
+                self.assertEqual(found[0]['id'],'guide:background')
+
+    def test_explicit_instructions_can_discuss_cost_without_becoming_a_price_list(self):
+        for query,task,prices in [
+            ('réparer un vélo','Comment réparer un vélo à petit prix','Prix de réparation d’un vélo'),
+            ('how to repair a bicycle','How to repair a bicycle at low cost','Bicycle repair costs'),
+        ]:
+            with self.subTest(query=query):
+                self.assertEqual(self.ordered(query,task,prices,'Extrait fictif de prix.')[0]['id'],'zim:fixture/task')
+
+    def test_recognized_actions_work_without_a_how_or_comment_prefix(self):
+        cases=[
+            ('remplacer un roulement','Remplacer un roulement','Prix de remplacement d’un roulement'),
+            ('affûtage d’un couteau','Aiguiser un couteau','Tarifs d’affûtage d’un couteau'),
+            ('conserver des semences','Stockage des semences','Coût du stockage des semences'),
+            ('filtrer l’eau','Filtrer l’eau','Prix de filtration de l’eau'),
+            ('install a solar panel','Install a solar panel','Solar panel installation costs'),
+        ]
+        for query,task,prices in cases:
+            with self.subTest(query=query):
+                found=self.ordered(query,task,prices,'Extrait fictif de tarifs, sans instructions.')
+                self.assertEqual(found[0]['id'],'zim:fixture/task');self.assertEqual(len(found),2)
+
 
 if __name__=='__main__':unittest.main()

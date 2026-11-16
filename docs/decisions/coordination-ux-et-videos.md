@@ -12,6 +12,10 @@ fonctions conservées. Ne pas écraser les fichiers générés d’une autre liv
 
 ## Contrats à conserver pendant la refonte
 
+Le correctif moteur **0.33.1** complète ensuite le classement dans
+`pilot/retrieval.py`. Il ne change aucun écran, route ni identifiant ; les versions
+API/release/README sont les seuls autres points de code partagés à réconcilier.
+
 - Le moteur documentaire, les contrôleurs hôtes et les bases de données ne sont
   pas à réécrire pour changer leur présentation. Conserver conversations,
   dossiers, documents associés et préparations existantes.

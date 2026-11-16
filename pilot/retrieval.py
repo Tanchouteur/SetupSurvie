@@ -62,7 +62,7 @@ CONCEPTS={
  'generateur':{'terms':['generateur','generatrice','generator','alternateur'],'fr':['generateur'],'en':['generator']},
  'pedale':{'terms':['pedale','pedales','pedal','pedals','pedaling'],'fr':['pedales'],'en':['pedal']},
  'potable':{'terms':['potable','potabilisation','purification','drinking','purifying'],'fr':['potabilisation eau'],'en':['drinking water']},
- 'reparation':{'terms':['reparation','reparer','repair','repairing'],'fr':['reparation'],'en':['repair']},
+ 'reparation':{'terms':['reparation','reparer','repair','repairing','remplacer','remplacement','replace','replacement'],'fr':['reparation'],'en':['repair']},
  'conservation':{'terms':['conservation','conserver','preservation','preserving','storage'],'fr':['conservation'],'en':['preservation']},
  'batterie':{'terms':['batterie','batteries','battery'],'fr':['batterie'],'en':['battery']},
  'semences':{'terms':['semences','semence','graines','graine','seed','seeds'],'fr':['semences'],'en':['seeds']},
@@ -106,8 +106,9 @@ class Plan:
 
 def plan(query,words,synonyms,collection=''):
     raw=normal(query)
+    action=next((name for name,pattern in INTENTS.items() if re.search(pattern,raw)), '')
     detected=next((key for key,aliases in COLLECTIONS.items() if any(re.search(r'\b'+re.escape(normal(alias))+r'\b',raw) for alias in aliases)), '')
-    practical=bool(re.search(r'\b(comment|faire|allumer|allumage|fabriquer|fabrication|construire|construction|reparer|reparation|entretenir|entretien|realiser|installer|installation|recoudre|coudre|affuter|aiguiser|techniques|how|build|make|making|repair|tutorial)\b',raw)) and not re.search(r'\b(histoire|archeologie|history|origines)\b',raw)
+    practical=bool(action or re.search(r'\b(comment|faire|allumer|allumage|fabriquer|fabrication|construire|construction|reparer|reparation|entretenir|entretien|realiser|installer|installation|recoudre|coudre|affuter|aiguiser|techniques|how|build|make|making|repair|tutorial)\b',raw)) and not re.search(r'\b(histoire|archeologie|history|origines)\b',raw)
     if re.search(r'\b(pourquoi|why)\b',raw) and not re.search(r'\b(comment|how)\b',raw):practical=False
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
@@ -115,7 +116,6 @@ def plan(query,words,synonyms,collection=''):
     if meaningful:terms=meaningful
     if any(w in CONCEPTS['feu']['terms'] for w in terms):terms=[w for w in terms if w not in ('start','starting','make','making','produce')]
     if 'radio' in terms:terms=[w for w in terms if w!='poste']
-    action=next((name for name,pattern in INTENTS.items() if re.search(pattern,raw)), '')
     if practical and any(word in CONCEPTS['feu']['terms'] for word in terms) and not action:action='ignite'
     if action in ('repair','preserve'):
         terms=[w for w in terms if w not in CONCEPTS['reparation' if action=='repair' else 'conservation']['terms']] or terms
@@ -151,6 +151,11 @@ def rank(item,query,position=0,*,normalizer=None):
             # never evidence that the article contains a verified procedure.
             contextual=bool(re.search(r'\b(pourquoi|why|histoire|history|historical|origines?|origins?|risques?|dangers?|hazards?|safety|combien)\b|\b((should|do|can) (i|we|you)|does|how (many|much)|faut il|dois je|puis je)\b',title))
             instruction=bool(re.search(r'\b(comment|guide|tutorial|tutoriels?|manuels?|manuals?|instructions|etapes|steps|methode|method)\b|\bhow (to|(can|do|should) (i|we|you|one))\b',title))
+            # A price guide can mention the action without teaching it. Keep it
+            # searchable, while explicit how-to titles may still discuss costs.
+            prices=bool(re.search(r'\b(prix|tarifs?|couts?|prices?|pricing|costs?)\b',title))
+            steps=bool(re.search(r'\b(comment|tutorial|tutoriels?|instructions|etapes|steps|methode|method)\b|\bhow (to|(can|do|should) (i|we|you|one))\b',title))
+            if prices and not steps:contextual=True;instruction=False
             direct=query.practical and title_hits==1 and len(title_tokens)>1 and (not contextual or instruction)
             score+=55 if direct else 12 if query.practical and contextual and not instruction else 28
             if direct and (instruction or title.startswith('diy ')):score+=12 # A reading lead, never a verified procedure.
