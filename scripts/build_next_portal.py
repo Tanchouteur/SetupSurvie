@@ -23,7 +23,7 @@ def build():
     source=source.replace('</head>', '<script defer src="/nouveau/performance.js?v=0.23.0"></script><script defer src="/nouveau/translation-benchmark.js?v=0.25.0"></script></head>')
     source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.11.1"><script defer src="/nouveau/collections.js?v=0.11.1"></script><script defer src="/nouveau/catalogue.js?v=0.11.1"></script><script defer src="/nouveau/search-check.js?v=0.13.0"></script><script defer src="/nouveau/search-experiment.js?v=0.11.1"></script><script defer src="/nouveau/search-tools.js?v=0.11.1"></script><script defer src="/nouveau/assistant-diagnostics.js?v=0.26.0"></script><script defer src="/nouveau/practical.js?v=0.11.1"></script><script defer src="/nouveau/usage-recipe.js?v=0.11.1"></script><link rel="stylesheet" href="/nouveau/settings.css?v=0.25.0"><script defer src="/nouveau/settings-layout.js?v=0.25.0"></script><script defer src="/nouveau/navigation.js?v=0.25.0"></script></head>', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
-    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.25.0')
+    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.26.0')
     source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.23.0')
     return source
 

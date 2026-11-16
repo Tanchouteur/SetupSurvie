@@ -36,8 +36,14 @@ window.addEventListener('pagehide',rememberReading);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberReading();});
 function reloadProfile(){if(S.profileReloading)return;S.profileReloading=true;location.reload();}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
+const PAGE_REQUESTS=new Set();
+window.addEventListener('pagehide',()=>{for(const controller of PAGE_REQUESTS)controller.abort();});
 async function api(path,body,options={}){
-  const {onResult,...requestOptions}=options,config={credentials:'same-origin',...requestOptions};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
+  const {onResult,...requestOptions}=options,controller=new AbortController(),external=requestOptions.signal,relay=()=>controller.abort();
+  if(external?.aborted)relay();else external?.addEventListener('abort',relay,{once:true});
+  PAGE_REQUESTS.add(controller);
+  try{
+  const config={credentials:'same-origin',...requestOptions,signal:controller.signal};if(S.user)config.headers={...config.headers,'X-Survie-Profile':S.user.id};
   if(body!==undefined){config.method=options.method||'POST';config.body=body instanceof FormData?body:JSON.stringify(body);if(!(body instanceof FormData))config.headers={...config.headers,'Content-Type':'application/json'};}
   const r=await fetch('/api'+path,config);let data;
   if(r.ok&&onResult&&r.headers.get('Content-Type')?.includes('text/event-stream')){
@@ -56,6 +62,7 @@ async function api(path,body,options={}){
   try{data=await r.json();}catch(_){throw new Error('Le service ne répond pas. Réessayez dans quelques instants.');}
   if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){reloadProfile();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
   return data;
+  }finally{PAGE_REQUESTS.delete(controller);external?.removeEventListener('abort',relay);}
 }
 function button(text,action,cls='secondary'){const b=element('button',text,cls);b.type='button';b.addEventListener('click',action);return b;}
 function view(name){

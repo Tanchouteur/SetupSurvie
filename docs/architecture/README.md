@@ -1,6 +1,6 @@
 # Architecture du pilote
 
-## Transcription audio — candidat 0.26.0
+## Transcription audio — 0.26.0
 
 `transcriptions.py` garde les unités dans une base privée distincte et pilote un
 enfant CPU `speech_worker.py`, avec entrée locale, modèle préinstallé et réseau

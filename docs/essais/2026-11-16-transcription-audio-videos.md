@@ -1,9 +1,8 @@
 # Des MP4 seuls aux sous-titres recherchables
 
-**Bilan candidat 0.26.0 — 16 novembre 2026.** Nouvelle fonction compatible,
-avec état distinct des traductions : version mineure. La livraison et la CI ne
-sont pas encore acquises. Le [guide vidéo](../utilisation/videos-locales.md)
-décrit le parcours prévu par ce candidat.
+**Bilan de livraison 0.26.0 — 16 novembre 2026.** Nouvelle fonction compatible,
+avec état distinct des traductions : version mineure. Le [guide vidéo](../utilisation/videos-locales.md)
+décrit le parcours livré. Aucun déploiement chez Marc n’est effectué ici.
 
 ## Réalisation
 
@@ -117,7 +116,23 @@ Ce rejeu vérifie ces dépendances dans un environnement Linux séparé ; le con
 Windows installé reste à éprouver et CTranslate2 4.9.0 n'est pas identifié dans
 l'image épinglée par ce seul relevé du manifeste amont.
 
-## Travail restant
+## Vérification finale et travail restant
+
+Code fonctionnel `11fd1e5`, [huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43860168706) :
+829 tests Linux en 77,644 s, quatre réservés à Windows ignorés ; contrôles
+Windows, index isolés, Kiwix natif, routage synthétique et recettes Chromium/WebKit.
+Le contrôle audio compte quinze vérifications par navigateur, celui des requêtes
+six et celui de traduction longue vingt. Aucun modèle réel ne tourne en CI.
+
+Le deuxième CI avait échoué sur une requête vidéo encore en vol pendant une
+navigation WebKit, après la correction locale du seul suivi mémoire. Le client
+commun annule désormais les requêtes au départ de la page en conservant les
+signaux d’annulation fournis par ses appelants. Six contrôles sur requêtes retardées
+vérifient départ de page, annulation explicite, absence de réponse tardive et
+fonctionnement des demandes suivantes. Le contrôle d’erreur navigateur n’est
+pas retiré. Le rejeu local complet avait aussi été interrompu sur un résultat
+attendu absent dans une fixture déjà réutilisée ; la CI repart d’un serveur neuf.
+
 
 Le premier CI complet du code `e14b156` réussit. Un rejeu local Chromium/WebKit
 termine les quinze contrôles audio, puis relève une erreur de requête mémoire
@@ -126,7 +141,16 @@ limité à sa rubrique visible, sa requête est annulée au départ de la page e
 réponse ne peut pas remplir un autre profil. La recette conserve son contrôle
 d'erreurs et vérifie aussi l'absence de consultation d'un essai mémoire replié.
 
-Valider le parcours navigateur et le runtime emballé, terminer la CI et le paquet,
-puis qualifier les vrais MP4. Acquisition de sous-titres en ligne, inventaire et
+Les quinze contrôles audio et vingt contrôles de traduction longue passent
+dans Chromium et WebKit après la correction du suivi mémoire. Valider le runtime
+emballé et qualifier les vrais MP4 restent nécessaires après livraison. Acquisition de sous-titres en ligne, inventaire et
 préparation des vidéos/pistes des ZIM restent distincts et non achevés. Une bonne
 traduction de cet exemple n'est pas la validation de chaque vidéo de la bibliothèque.
+
+Paquet `setupsurvie-0260-validated.zip`, commit documentaire `ce8eb98` :
+**861 fichiers**, 7 068 572 octets compressés, 15 914 768 octets décompressés.
+Chaque fichier est suivi par Git et comparé octet par octet au commit filtré
+puis au manifeste. SHA-256 :
+`58cf787cd9f5ef4b8d548083bb3cefb200683046c359bd87ebf556255fa3fe3e`.
+Ce reçu est ajouté après construction. Aucun modèle, média de recette ou rapport
+privé n'est inclus. Aucun déploiement ni validation physique Windows ou iPhone.
