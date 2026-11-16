@@ -100,7 +100,7 @@
       }catch(error){message.textContent=error.message;}finally{save.disabled=false;select.disabled=false;}
     };
   });
-  const exportPanel=element('article',undefined,'panel');exportPanel.append(element('h2','Repères des dossiers pratiques'),element('p','Conservez les références examinées, leurs notes et les points encore à documenter. Les originaux restent dans la bibliothèque.','small muted'));
+  const exportPanel=element('article',undefined,'panel');exportPanel.id='practical-dossiers-export';exportPanel.append(element('h2','Repères des dossiers pratiques'),element('p','Conservez les références examinées, leurs notes et les points encore à documenter. Les originaux restent dans la bibliothèque.','small muted'));
   const exportStatus=element('p',undefined,'small');exportStatus.setAttribute('role','status');exportPanel.append(button('Exporter les dossiers',async()=>{
     try{const data=await request('/admin/library/dossiers-export'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=element('a');a.href=url;a.download='setupsurvie-dossiers.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){exportStatus.textContent=error.message;}
   },'secondary'),exportStatus);$('view-settings').append(exportPanel);

@@ -16,6 +16,7 @@
   const add=button('Créer un dossier',()=>edit('Créer un dossier','Nom du dossier','',value=>api('/conversation-folders',{name:value})));add.id='assistant-folder-create';
   const folderState=element('p','','small muted');folderState.setAttribute('role','status');
   const list=$('conversation-list');left.append(search,folders,add,folderState,list);
+  const previous=button('Conversations précédentes',()=>{offset=Math.max(0,offset-100);void histories();},'secondary');previous.hidden=true;left.append(previous);
   const more=button('Voir la suite',()=>{offset+=100;void histories();},'secondary');more.hidden=true;left.append(more);
   const banner=$('inference-banner');center.append(banner,$('chat-messages'),$('chat-form'));
   body.append(left,center,right);chat.append(body);
@@ -84,7 +85,7 @@
         row.append(open,m);list.append(row);
       }
       if(!data.conversations.length)list.append(element('p',search.value?'Aucune conversation ne correspond à ces mots.':'Aucune conversation ici.','small muted'));
-      more.hidden=!data.has_more;folderState.textContent=degraded?'Classement indisponible. Vos conversations restent accessibles.':offset?'Conversations '+(offset+1)+' à '+(offset+data.conversations.length):'';
+      previous.hidden=!offset;more.hidden=!data.has_more;folderState.textContent=degraded?'Classement indisponible. Vos conversations restent accessibles.':offset?'Conversations '+(offset+1)+' à '+(offset+data.conversations.length):'';
     }catch(e){if(own===generation)folderState.textContent=e.message+' Les conversations restent accessibles depuis leur adresse.';}
   };
   search.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>{offset=0;histories();},250);};

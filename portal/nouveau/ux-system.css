@@ -60,3 +60,8 @@
   .next-interface .reader-body { margin-inline:auto; }
   .next-interface .composer { max-width:var(--ux-reading-width); }
 }
+.ux-resume { display:flex;flex-wrap:wrap;gap:.75rem;margin:1rem 0; }
+.ux-personal-work { margin-top:1.5rem; }
+.ux-personal-work h2 { font-size:1.25rem; }
+.ux-work-row { padding:.75rem 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere; }
+.ux-work-row p { margin:.375rem 0; }

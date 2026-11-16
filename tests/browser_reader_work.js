@@ -12,7 +12,7 @@ async page=>{
  await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));
  check(await page.locator('#reader-work-choice').inputValue()===job,'Travail retrouvé par original sans reprise automatique');
  for(const width of [320,390,1024,1440]){await page.setViewportSize({width,height:900});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Lecteur sans débordement '+width);}
- const pdf=await page.context().newPage();pdf.on('pageerror',e=>errors.push(e.message));await pdf.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau');
+ const pdf=await page.context().newPage();pdf.on('pageerror',e=>errors.push(e.message));await pdf.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau',{waitUntil:'domcontentloaded'});
  await pdf.getByRole('button',{name:'Traduire ce PDF',exact:true}).click();await pdf.waitForSelector('#reader-work:visible');
  check(await pdf.locator('#pdf-translation-work').isVisible(),'Traduction accessible dans le lecteur PDF dédié');
  await pdf.getByRole('button',{name:'Revenir au PDF',exact:true}).click();check(await pdf.locator('#pdf-container').isVisible(),'Retour au PDF sans changer de page');await pdf.close();

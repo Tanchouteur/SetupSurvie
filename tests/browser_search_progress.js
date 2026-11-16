@@ -18,7 +18,7 @@ async page=>{
   check(await page.locator('#search-results .other-matches button').evaluate(node=>node===document.activeElement),'La navigation au clavier est conservée pendant les résultats progressifs');
   check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
   check((await page.locator('#search-message').textContent()).includes('2 document(s)'),'Dernière réponse complète les résultats');
-  const request=async query=>{await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
+  const request=async query=>{if(!await page.locator('#library-query').isVisible())await page.locator('#reader').getByRole('button',{name:'← Résultats',exact:true}).click();await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
   for(const suffix of ['complete','partial','stop','error']){
     const query='fixture-progress-empty-'+suffix;await gate(query,true);await request(query);
     await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours — aucun résultat pour le moment')&&document.querySelector('#search-stop'));

@@ -64,3 +64,9 @@ une cible principale, notamment pour l’espace IA à trois zones et la comparai
 Les tests automatiques ne prouvent pas une amélioration perçue par Marc ni Safari
 sur iPhone physique. L’intégration sur main et le déploiement ne sont pas réalisés
 par ce premier lot. Le moteur et les vidéos restent le chantier parallèle.
+
+## Suite du chantier
+
+Ce bilan conserve les résultats du premier candidat. La livraison finale est
+la **0.34.0**, après intégration vidéo 0.33.0 ; voir le
+[bilan final](2026-11-16-refonte-ux.md) pour les volets, lecteurs, recettes et limites actuels.

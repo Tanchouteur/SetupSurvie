@@ -18,3 +18,7 @@ class DocumentWorkspaceTests(unittest.TestCase):
             data=document_workspace.work('alice','guide:book.en.pdf#page=9')
             self.assertEqual({row['id'] for row in data['translations']},{'one','page'})
             self.assertNotIn('PRIVATE',str(data));self.assertNotIn('parts',str(data))
+
+            recent=document_workspace.recent('alice')
+            self.assertEqual({row['id'] for row in recent['translations']},{'one','page','other'})
+            self.assertNotIn('PRIVATE',str(recent));self.assertNotIn('parts',str(recent))

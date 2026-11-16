@@ -46,8 +46,8 @@ async page => {
   check(await page.locator('.other-matches').count()===1,'Autres pages regroupées sous le document');
   await page.locator('.other-matches summary').click();await page.locator('.other-matches button').click();
   await page.waitForSelector('#reader .reader-actions');check(page.url().includes(encodeURIComponent('#page=3')),'Bonne page après ouverture d’un passage regroupé');
-  await page.locator('#reader .reader-actions').getByRole('button',{name:'Traduire en français',exact:true}).click();
-  check(await page.locator('#translation-panel').evaluate(e=>e.open),'Traduction accessible depuis le haut du lecteur');
+  await page.locator('#reader [data-document-action="translate"]').click();
+  check(await page.locator('#reader-work').isVisible(),'Traduction accessible sur place depuis le haut du lecteur');
   check(!writes.includes('/api/translations'),'Ouvrir la traduction ne lance pas de calcul automatiquement');
   await page.route('**/api/source?id=*',r=>r.fulfill({json:{id:'guide:template.fr.md',title:'Modèle fictif',language:'fr',kind:'guide',url:'/guides/template.fr.md',text:'# Équipements\n\n| Objet | Notice |\n| --- | --- |\n| Exemple | À joindre |\n\n<script>window.unsafeFixture=true</script>'}}));
   await page.evaluate(()=>readSource('guide:template.fr.md'));await page.waitForSelector('#reader .reader-body table');

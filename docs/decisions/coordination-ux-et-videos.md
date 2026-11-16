@@ -37,3 +37,11 @@ future ne doit pas être annoncée comme disponible sur les PC avant leur mise �
 
 Voir la [direction à trois zones](conversations-trois-zones.md) et les
 [objectifs décidés par Louis](choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026).
+
+## Intégration UX 0.34.0
+
+La branche UX a intégré main 0.33.0 (`3dd2409`) avant sa propre livraison.
+Les événements, modules et recettes vidéo restent présents. Le retour recommandé
+est archivé sous `ux-reference-0.33.0` ; voir le
+[bilan UX](../essais/2026-11-16-refonte-ux.md). Cette intégration de code ne
+constitue pas une mise à jour des PC cibles.

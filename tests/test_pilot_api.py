@@ -32,6 +32,24 @@ class PilotAPITests(unittest.TestCase):
         response=self.client.post('/api/profiles/select',json={'id':who},headers={'Origin':'http://testserver'})
         self.assertEqual(response.status_code,200);return response
 
+    def test_conversation_organization_api_is_profile_owned_and_additive(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        with store.connect() as db:db.execute('INSERT INTO conversations VALUES(?,?,?,?)',('folder-chat','alice','Avant',1))
+        created=self.client.post('/api/conversation-folders',json={'name':'Jardin'},headers=headers)
+        self.assertEqual(created.status_code,201);folder=created.json()['id']
+        self.assertEqual(self.client.put('/api/conversations/folder-chat/folder',json={'folder_id':folder},headers=headers).status_code,200)
+        self.assertEqual(self.client.patch('/api/conversations/folder-chat/title',json={'title':'Semis'},headers=headers).status_code,200)
+        self.assertEqual(self.client.get('/api/conversations',params={'folder':folder,'q':'Semis'}).json()['conversations'][0]['id'],'folder-chat')
+        self.login('bob')
+        self.assertEqual(self.client.get('/api/conversation-folders').json()['folders'],[])
+        self.assertEqual(self.client.put('/api/conversations/folder-chat/folder',json={'folder_id':None},headers=headers).status_code,404)
+        self.assertEqual(self.client.delete('/api/conversation-folders/'+folder,headers=headers).status_code,404)
+        self.assertEqual(self.client.get('/api/document-work',params={'source_id':'guide:book.pdf'}).json()['translations'],[])
+        self.assertEqual(self.client.get('/api/my-work').json()['translations'],[])
+        self.login('alice')
+        self.assertEqual(self.client.delete('/api/conversation-folders/'+folder,headers=headers).status_code,200)
+        self.assertEqual(self.client.get('/api/conversations',params={'folder':'unfiled'}).json()['conversations'][0]['title'],'Semis')
+
     def test_translation_terms_belong_to_selected_profile_and_do_not_start_a_job(self):
         headers={'Origin':'http://testserver'};self.login('alice')
         with patch.object(translations,'launch') as launch:

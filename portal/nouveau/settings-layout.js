@@ -52,8 +52,8 @@
   if(get('next-translation-benchmark')){const translation=move('next-translation-benchmark-start','tests');advanced(translation,'settings-test-translation','Traduction : mesurer un document de 40 pages');}
   panes.entretien.prepend(link('tests','Tests et diagnostics','Retrouver les vérifications de recherche, de mémoire, de traduction et d’usage hors ligne.'));
   const exports=make('details','settings-advanced');exports.id='settings-exports';exports.append(make('summary','','Conserver les classements et les dossiers pratiques'));panes.entretien.append(exports);
-  for(const title of ['Classements et noms corrigés','Repères des dossiers pratiques']){
-    const panel=[...settings.querySelectorAll('article')].find(n=>n.querySelector('h2')?.textContent===title);if(panel)exports.append(panel);
+  for(const id of ['catalogue-metadata-export','practical-dossiers-export']){
+    const panel=get(id);if(panel)exports.append(panel);
   }
   advanced(move('next-clear-memory','entretien'),'settings-navigation-memory','Effacer les repères de ce navigateur');
   const feedback=move('refresh-feedback','entretien').querySelector('details');feedback.id='settings-old-feedback';feedback.querySelector('summary').textContent='Consulter les retours déjà enregistrés';

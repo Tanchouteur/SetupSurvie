@@ -12,7 +12,10 @@ préparation aux périodes de services dégradés.
 ## État du projet
 
 La [refonte UX](docs/decisions/refonte-ux-evolutive.md) organise les conversations,
-les documents et la traduction dans leurs parcours, sur PC et téléphone. Le
+les documents et la traduction dans leurs parcours, sur PC et téléphone.
+L’assistant propose des volets repliables pour conversations/dossiers et documents,
+la traduction reste dans les lecteurs, et les travaux personnels se retrouvent
+depuis leur original ou Mon appareil. Le
 [retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
 les données récentes et une référence de la version précédente.
 

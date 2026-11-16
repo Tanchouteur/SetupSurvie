@@ -717,6 +717,11 @@ async def media(id:str,source_id:str=Query(default='',max_length=2000),revision:
     return Response(data,media_type=kind,headers={'Content-Security-Policy':"sandbox; default-src 'none'"})
 
 
+@app.get('/api/my-work')
+async def my_work(value=Depends(user)):
+    with optional_feature('document_workspace') as module:return await asyncio.to_thread(module.recent,value['id'])
+
+
 @app.get('/api/document-work')
 async def document_work(source_id:str=Query(min_length=1,max_length=2000,pattern=r'^(guide|zim):.+$'),value=Depends(user)):
     with optional_feature('document_workspace') as module:return await asyncio.to_thread(module.work,value['id'],source_id)

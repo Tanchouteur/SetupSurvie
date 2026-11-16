@@ -20,6 +20,8 @@ l’onglet et par un contrôle toutes les dix secondes lorsque la page est visib
 ancien onglet est refusée si elle viserait le nouveau profil. Les traitements
 déjà lancés restent associés au profil qui les a demandés.
 
+Depuis 0.34.0, le nom du profil est dans la barre du haut sur ordinateur. Les
+dossiers de conversations et les listes de travaux restent propres au profil.
 Les profils servent à **ranger les conversations, traductions et favoris**.
 Toute personne pouvant accéder à l’appareil sur le réseau peut choisir un autre
 profil et en consulter les données. Ils ne protègent pas la confidentialité entre

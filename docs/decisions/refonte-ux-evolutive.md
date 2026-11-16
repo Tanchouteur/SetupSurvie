@@ -1,6 +1,6 @@
 # Refonte UX évolutive
 
-**Chantier en cours — 16 novembre 2026.** Louis autorise les changements de parcours,
+**Référence de conception — 0.34.0, 16 novembre 2026.** Louis autorise les changements de parcours,
 la conception visuelle et une livraison autonome. Il demande une attention égale
 au PC et au téléphone, des titres concrets, une aide courte et contextuelle,
 la traduction dans le lecteur et un retour à la version précédente. Une seule
@@ -29,12 +29,12 @@ et la restauration complète sur PC vierge restent des travaux distincts.
 
 | Lot | État et critères de sortie |
 | --- | --- |
-| Référence et retour | Tag `ux-reference-0.32.1` (`da125ca`), ZIP conservé ; commande `rollback` testée sur petites données, pas sur les PC physiques |
-| Fondations | Candidat : composants d’aide, variables CSS, titres concrets, lecture prioritaire, recettes PC/téléphone |
-| Lecteurs | À faire : traduction sur place, retrouver les travaux sans détour par la discussion, liens aux versions et pages |
-| Assistant | À faire : trois zones, dossiers personnels simples, recherche/renommage, tâches et modèles d’essai distincts |
-| Cohérence complète | À faire : accueil/reprise, vidéos, cartes et appareil avec les mêmes composants et états |
-| Livraison générale | À faire : inventaire exhaustif, recette avant/après, paquet final et intégration successive dans main |
+| Référence et retour | Référence finale 0.33.0 avec vidéos et référence initiale 0.32.1 archivées ; retour avec sauvegarde des données récentes testé sur fixtures et base SQLite réelle, pas sur les PC physiques |
+| Fondations | Implémentées : aides facultatives, variables CSS, titres concrets, lecture prioritaire, navigation au clavier |
+| Lecteurs | Implémentés : traduction dans le lecteur portail et PDF dédié, travaux retrouvés par original, comparaison, pages, commandes et exports préservés |
+| Assistant | Implémenté : trois zones repliables, dossiers personnels, déplacement, recherche et renommage ; tâches distinctes du temps de réponse |
+| Cohérence complète | Implémentée : reprise à l’accueil, travaux personnels, destinations et composants communs ; fonctions vidéo, cartes et paramètres conservées |
+| Livraison générale | Recette et inventaire dans le [bilan final](../essais/2026-11-16-refonte-ux.md) ; suivi de l’intégration et limites physiques explicites |
 
 Ces états ne certifient pas la simplicité réelle pour Marc. Une recette humaine
 reste préparée séparément, sans conditionner la livraison technique autonome.
@@ -59,13 +59,14 @@ Branche interface : `codex/refonte-ux`, worktree séparé. L’autre chantier po
 le moteur et les vidéos/sous-titres. Ne pas modifier son worktree.
 Les fichiers communs comprennent le générateur HTML, `pilot/app.py`, les lecteurs
 et les clés de cache. Réconcilier leurs modifications puis intégrer successivement
-sur main, avec tests après chaque intégration. La version candidate 0.33.0 doit
-être réévaluée si main reçoit une livraison avant l’intégration UX.
+sur main, avec tests après chaque intégration. Le lot vidéo 0.33.0 (`3dd2409`)
+a été intégré avant l’UX. La refonte porte donc la version **0.34.0** : une
+évolution fonctionnelle significative, avec API et données existantes compatibles.
+Aucune version ni empreinte d’image tierce n’a changé.
 
-Le paquet de retour 0.32.1 conserve l’état antérieur aux deux chantiers ; avant
-la livraison finale, retenir et archiver aussi la dernière base intégrée contenant
-les améliorations moteur/vidéo à conserver. Ne pas revenir à 0.32.1 en prétendant
-retrouver des capacités ajoutées après cette référence.
+Le paquet de retour recommandé est la **0.33.0**, qui conserve les ajouts vidéo.
+La 0.32.1 reste la référence historique précédant les deux chantiers. Consulter
+la [procédure de retour](../exploitation/retour-version-avant-refonte.md).
 
 ## Méthode et références
 

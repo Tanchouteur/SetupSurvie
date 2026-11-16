@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Refonte UX 0.34.0](2026-11-16-refonte-ux.md) — preuves de la livraison intégrée et limites.
+
 - [Fondations UX et retour volontaire](2026-11-16-fondations-ux.md) — candidat et preuves du premier lot.
 
 - [Transcription audio des vidéos](2026-11-16-transcription-audio-videos.md) — 0.26.0, essais et limites.

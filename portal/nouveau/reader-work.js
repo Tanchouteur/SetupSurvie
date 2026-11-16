@@ -55,8 +55,8 @@
     const previous=action('Passages précédents',()=>load(job,Math.max(0,offset-10)),'secondary'),next=action('Passages suivants',()=>load(job,offset+10),'secondary');
     navigation.append(previous,next);
     root.append(heading,select,config,notice,state,progress,controls,explanation,parts,navigation);host.querySelector('.reader-body').before(root);
-    const trigger=[...actions.querySelectorAll('button')].find(b=>b.textContent==='Traduire en français')||action('Traduire en français',()=>{},'secondary');
-    if(!trigger.isConnected)actions.append(trigger);
+    const trigger=actions.querySelector('[data-document-action=translate]')||action('Traduire en français',()=>{},'secondary');
+    trigger.dataset.documentAction='translate';if(!trigger.isConnected)actions.append(trigger);
     let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null;
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
     const resumePolling=()=>{if(!document.hidden&&valid()&&job)load(job,offset);};
@@ -126,7 +126,7 @@
         session.user=profile;session.status=status;
         const source=await request('/source?id='+encodeURIComponent(canonical(id)));
         await mount(source,dialog,nav);
-        const trigger=[...nav.querySelectorAll('button')].find(b=>b.textContent==='Traduire en français');
+        const trigger=nav.querySelector('[data-document-action=translate]');
         if(trigger){trigger.hidden=true;open.onclick=()=>{dialog.showModal();const panel=get('reader-work');if(panel.hidden)trigger.click();};}
       }).catch(()=>{open.disabled=true;open.textContent='Traduction indisponible';});
       window.addEventListener('focus',async()=>{try{const current=await request('/profiles/current');if(current.id!==session.user?.id){destroy?.();dialog.close();open.disabled=true;open.textContent='Profil modifié : rechargez le lecteur';}}catch(_){}});
