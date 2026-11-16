@@ -53,3 +53,12 @@ ligne, références/version des modèles et indication de compatibilité observ�
 Ne pas imposer un petit plafond documentaire au PC de Marc. Les choix exacts du
 catalogue restent à vérifier ; aucune liste de modèles ni téléchargement lourd
 n’est décidée dans ce document.
+
+## Contrat à préserver pour le chantier d’interface
+
+Les contrôles existants gardent leurs IDs et leurs gestionnaires. Déplacer les
+blocs plutôt que les cloner. En particulier, la 0.28.0 peut déplacer les passages
+`translation-parts` vers son lecteur dédié pendant sa lecture ; ils reviennent
+dans le panneau à la fermeture. Conserver ce confort ou le remplacer par un
+parcours offrant les mêmes capacités, sans reprendre l’inférence au rechargement.
+Voir la [référence d’architecture](../architecture/README.md#lecture-pendant-une-traduction--0280).

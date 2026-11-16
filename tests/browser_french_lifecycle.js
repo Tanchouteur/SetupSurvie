@@ -11,8 +11,9 @@ async page=>{
   await page.goto(base+'/#/bibliotheque/recherche');await page.waitForFunction(()=>S.user&&S.authReady);
   const pending=page.waitForRequest(request=>new URL(request.url()).pathname==='/api/library/french-reading');
   await page.evaluate(()=>readSource('guide:shelter.en.pdf#page=2'));await pending;
+  await page.evaluate(()=>window.dispatchEvent(new Event('beforeunload')));
+  check(await page.evaluate(()=>frenchRequests===1&&frenchAborts===1),'La navigation annule la requête française avant la désactivation du document');
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false})));
-  check(await page.evaluate(()=>frenchRequests===1&&frenchAborts===1),'Le départ annule la vraie requête de version française en attente');
   hold=false;release();
   check(await page.locator('#reader').isVisible(),'L’original ne dépend pas de cette option');
   await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));

@@ -4,6 +4,7 @@
   const node=(tag,text,cls)=>{const value=document.createElement(tag);if(text!==undefined)value.textContent=text;if(cls)value.className=cls;return value;};
   const button=(text,action)=>{const value=node('button',text);value.type='button';value.onclick=action;return value;};
   const requests=new Set();let departing=false;
+  window.addEventListener('beforeunload',()=>{for(const controller of requests)controller.abort();});
   window.addEventListener('pagehide',()=>{departing=true;for(const controller of requests)controller.abort();});
   window.addEventListener('pageshow',event=>{if(event.persisted)departing=false;});
   async function get(path){

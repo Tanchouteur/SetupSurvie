@@ -83,3 +83,12 @@ navigateur. Une seconde recette retient réellement une requête puis contrôle 
 annulation et sa reprise après `pageshow` ; l’original reste lisible.
 Les recettes normales des illustrations et du lecteur bilingue repassent sur
 Chromium et WebKit, sans filtrer les erreurs de page.
+
+L’arrêt d’un wrapper PDF.js seul ne suffisait pas : son port natif n’est conservé
+qu’après le signal de disponibilité. Le portail possède maintenant ce port dès
+la construction et le termine aussi pendant son démarrage. La recette retenant
+ce signal échoue avec l’ancien code et réussit avec le nouveau. Les requêtes sont
+aussi annulées dès `beforeunload`, avant la désactivation du document, sans
+confirmation ni attente de fin du modèle. **Cinq relectures natives successives
+sous WebKit**, avec les deux rechargements de la recette et sans filtre d’erreur,
+réussissent après cet ajustement. Le PDF reste rendu dans un vrai Worker.

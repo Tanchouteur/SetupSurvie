@@ -56,6 +56,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberRea
 function reloadProfile(){if(S.profileReloading)return;S.profileReloading=true;location.reload();}
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6500);}
 const PAGE_REQUESTS=new Set();
+window.addEventListener('beforeunload',()=>{for(const controller of PAGE_REQUESTS)controller.abort();});
 window.addEventListener('pagehide',()=>{for(const controller of PAGE_REQUESTS)controller.abort();});
 async function api(path,body,options={}){
   const {onResult,...requestOptions}=options,controller=new AbortController(),external=requestOptions.signal,relay=()=>controller.abort();

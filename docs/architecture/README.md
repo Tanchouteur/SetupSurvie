@@ -841,3 +841,31 @@ avant toute sortie, partagée entre tours d’outils ; elle ne rejoue jamais un 
 et vérifie l’état volontaire du moteur avant préparation/reprise. Les sorties
 partielles et erreurs restent distinctes d’une absence documentaire. Voir le
 [guide des mesures](../utilisation/mesurer-assistant-et-memoire.md).
+
+## Lecture pendant une traduction — 0.28.0
+
+`translations.status()` conserve l’accès par propriétaire et la pagination de dix
+passages ; ses compteurs ajoutent pages entièrement terminées, pages partielles,
+pages illisibles, page en attente et dernière position traduite. Un passage ou
+une page illisible ne compte pas comme traduit. Aucun texte ne passe au modèle
+pour produire ces compteurs.
+
+Le portail conserve les éléments DOM inchangés pendant le rafraîchissement. Le
+lecteur dédié déplace les mêmes éléments `translation-parts` et leurs commandes
+vers `translation-reading-content`, puis les remet à leur place à la fermeture ;
+il ne faut pas cloner leurs IDs lors d’une future refonte. Le repère local par
+profil/traduction contient seulement offset, ouverture et date, avec cent entrées
+au maximum. Une seule restauration d’ouverture par chargement évite une course
+avec la fermeture. Les travaux et textes restent côté serveur ; la mémoire du
+navigateur ne commande jamais une reprise d’inférence.
+
+Les requêtes de la page et du lecteur bilingue sont annulées dès `beforeunload`,
+puis à `pagehide`. L’aperçu PDF possède son port Worker dès sa création, attend
+le signal de disponibilité avant de le confier à PDF.js et peut donc le terminer
+même pendant son chargement. Le traitement reste dans un Worker natif ; ni
+PDF.js ni ses composants épinglés ne sont modifiés. La file d’aperçus abandonne
+sa génération précédente après navigation. Les lecteurs savent repartir après
+`pageshow` persistant quand le navigateur réutilise la page. Les annulations du
+port connu sont prises en charge localement ; les erreurs du composant actif
+ne sont pas filtrées globalement. Les recettes simulent ces états et conservent
+les essais natifs de rendu et les assertions d’erreur.
