@@ -110,3 +110,6 @@
  .next-interface .assistant-tools { flex-shrink:0; }
  .next-interface .assistant-tools>summary { min-width:5rem;white-space:nowrap; }
 }
+.next-interface .assistant-history>*,.next-interface .assistant-documents>* { flex-shrink:0; }
+.next-interface .assistant-documents .translation-content { max-height:none;overflow:visible; }
+.next-interface .assistant-documents .translation-panel[open] { flex-shrink:0;overflow:visible; }
