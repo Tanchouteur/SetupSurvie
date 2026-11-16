@@ -1,5 +1,15 @@
 # Architecture du pilote
 
+## Transcription audio — candidat 0.26.0
+
+`transcriptions.py` garde les unités dans une base privée distincte et pilote un
+enfant CPU `speech_worker.py`, avec entrée locale, modèle préinstallé et réseau
+de téléchargement désactivé. Une pause rejoint cet enfant ; le journal conserve
+les unités terminées et seule une piste complète est publiée. Le lecteur et
+l’index joignent ensuite source reconnue et traduction française par leurs
+révisions et empreintes. La consigne de traduction accepte les phrases coupées
+sans déplacer les fragments. Voir le [bilan et ses limites](../essais/2026-11-16-transcription-audio-videos.md).
+
 ## Essai de traduction longue — 0.25.0
 
 `translation_benchmark.py` génère un PDF fictif, partage `document_text.pdf_texts`,

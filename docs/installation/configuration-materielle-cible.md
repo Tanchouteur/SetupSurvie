@@ -37,6 +37,14 @@ Louis indique aussi un **HDD** et un processeur de la famille **Core Ultra 5**
 pour Marc ; le diagnostic ne les identifie pas lui-même et la référence exacte
 du CPU reste à relever.
 
+**Nouveau fait déclaré par Louis le 16 novembre 2026 :** Marc a commandé un
+SSD NVMe PCIe 4.0 de **2 To**, à ajouter le lendemain. Le modèle exact, la pose,
+le transfert et les performances après changement ne sont pas encore vérifiés.
+Le HDD doit rester conservé jusqu’à validation de la copie et du redémarrage.
+Un chantier de transfert automatique est confié à un autre agent ; le
+[protocole de secours](../exploitation/disque-de-secours-hors-ligne.md) reste
+la référence des exigences, sans déclaration de restauration déjà validée.
+
 Les constats et leurs limites sont conservés dans les
 [choix actuels](../decisions/choix-actuels.md), le
 [bilan Linux du 11 novembre](../essais/bilan-pilote-2026-11-11.md) et les

@@ -247,6 +247,11 @@ réel restent distinctes de l’essai synthétique ; rapport **R5**.
 
 ### L6 — Vidéos et sous-titres français hors ligne
 
+Le [candidat 0.26.0](../essais/2026-11-16-transcription-audio-videos.md) ajoute
+la reconnaissance locale et sa reprise ; un MP4 synthétique atteint le français
+et l’index sur le R7. Navigateurs, runtime emballé, CI et fonds réel restent à
+valider. Acquisition en ligne et vidéos/pistes des ZIM restent ouvertes.
+
 **Précision de Louis, 16 novembre 2026 :** les nouveaux fichiers dans
 `library/video/` seront des **MP4 YouTube seuls**, sans piste annexe présumée.
 La traduction de pistes présentes livrée en 0.24.0 est intermédiaire ; le besoin

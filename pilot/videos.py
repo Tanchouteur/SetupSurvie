@@ -64,10 +64,15 @@ def stat_revision(payload):
 
 
 def original_revision(payload):
-    return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job')]})
+    return stat_revision({**payload,'tracks':[track for track in payload['tracks'] if not track.get('prepared_job') and not track.get('transcription_job')]})
 
 
 def track_file(track):
+    if track.get('transcription_job'):
+        from . import transcriptions
+        path=transcriptions.track_file(track['transcription_job'])
+        if not path.is_file():raise HTTPException(404,'Cette transcription n’est plus disponible.')
+        return path
     if track.get('prepared_job'):
         from . import captions
         path=captions.track_file(track['prepared_job'])
@@ -101,6 +106,7 @@ def public(payload,revision):
         'url':'/api/videos/media?id='+key,'images':[],'tracks':[
             {'id':index,'language':track['language_declared'] or '', 'origin':track['origin'],'status':track['technical_status'],
              'warnings':track['warnings'],'errors':track['errors'][:10],'translation_notice':track.get('translation_notice',''),
+             'transcription_notice':track.get('transcription_notice',''),
              'source_language':track.get('source_language',''),'url':'/api/videos/track?id='+key+'&track='+str(index)}
             for index,track in enumerate(payload['tracks'])],
         'video_notice':NOTICE,'audio_verified':False,'human_review':'not_performed'}
@@ -184,6 +190,13 @@ def scan():
                 db.execute('DELETE FROM media');db.execute('DELETE FROM video_text')
                 for item in found['videos']:
                     if STOP.is_set():raise InterruptedError()
+                    try:
+                        from . import transcriptions
+                        recognized=transcriptions.prepared_tracks(item);item['tracks'].extend(recognized)
+                        if recognized:
+                            item['subtitle_status']='source_transcribed'
+                            item['next_action']='Lire la transcription automatique et vérifier les mots et horodatages avec l’original.'
+                    except Exception:report['errors'].append({'id':item['inventory_id'],'reason':'transcriptions_unavailable'})
                     try:
                         from . import captions
                         prepared=captions.prepared_tracks(item);item['tracks'].extend(prepared)

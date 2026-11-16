@@ -1,5 +1,11 @@
 # Choix et contraintes actuels
 
+Le [candidat 0.26.0 de transcription](../essais/2026-11-16-transcription-audio-videos.md)
+réutilise Whisper small préparé pour la dictée, sur CPU, puis la traduction
+locale existante. Les fichiers vidéo restent intacts et les étapes sont reprenables.
+L’acquisition en ligne, les vidéos des ZIM et leur qualification réelle restent
+à réaliser ; le candidat n’est pas encore livré.
+
 Le **16 novembre 2026**, Louis ouvre une [configuration matérielle cible évolutive](../installation/configuration-materielle-cible.md) :
 NVIDIA **16 Go de VRAM**, probablement RTX **5060 Ti 16 Go** ; **32 Go de RAM
 au moins**, puis **64 Go selon les prix**, DDR4 ou DDR5 selon la plateforme ;

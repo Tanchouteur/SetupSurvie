@@ -181,6 +181,7 @@ def container_specifications(c):
                    '-v', f'{MOUNT}/runtime/deploy/assistant-system.fr.txt:/srv/system.fr.txt:ro',
                    '-v', f'{MOUNT}/runtime/deploy/model-profiles.json:/srv/model-profiles.json:ro',
                    '-v', f'{MOUNT}/runtime/deploy/kiwix-themes.json:/srv/kiwix-themes.json:ro',
+                   '-v', f'{MOUNT}/runtime/deploy/versions.json:/srv/versions.json:ro',
                    '-v', f'{MOUNT}/data/state/pilot:/pilot-data',
                    '-v', f'{MOUNT}/data/state/openwebui:/webui-data:ro',
                    '-v', f'{MOUNT}/data/library/zim:/zim:ro',

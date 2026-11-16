@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos locales
 
-**Guide actuel — 0.24.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide du candidat 0.26.0 — 16 novembre 2026.** La version publiée 0.25.0 ne reconnaît pas encore les MP4 sans piste. Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
 à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -10,7 +10,7 @@ concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM re
 Après la mise à jour de maintenance, choisir **Famille → Bibliothèque → Collections →
 Vidéos locales → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
 les métadonnées `.info.json` et les pistes `.fr.srt`, `.en.vtt`, etc. à côté du
-média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé.
+média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé par cette actualisation.
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
 ou dans **Rechercher**. Relancer cette actualisation après un nouveau téléchargement
 ou une modification de sous-titre ; elle n’est pas automatique dans cette version.
@@ -50,7 +50,7 @@ Choisir **Famille → Bibliothèque → Collections → Vidéos locales**. Sur u
 ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
 les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres français**,
 sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
-piste exploitable reste à récupérer ou transcrire : ce bouton n’invente pas ses paroles.
+piste exploitable utilise le parcours audio ci-dessous ; ce bouton de traduction seul ne connaît pas ses paroles.
 
 Le suivi compte les segments terminés. **Mettre en pause** conserve ces segments ;
 **Reprendre** utilise le modèle choisi pour les segments restants. Un redémarrage,
@@ -78,6 +78,38 @@ préparée n’est pas une traduction relue, ni une preuve de bonne synchronisat
 Une modification du média ou de sa piste source empêche de reprendre l’ancien
 brouillon et retire l’association de l’ancienne traduction après actualisation.
 Les anciens fichiers et brouillons restent conservés pour comparaison.
+
+## Créer les sous-titres depuis un MP4 seul — candidat 0.26.0
+
+Dans **Famille → Bibliothèque → Collections → Vidéos locales**, actualiser les
+vidéos. Sur un média sans piste exploitable, ouvrir **Créer les sous-titres depuis
+l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
+sous-titres**. **Préparer aussi la version française** utilise ensuite le modèle
+choisi dans les préparations de pistes. Aucun traitement ne démarre à la lecture
+ou à l’ouverture de Collections.
+
+La reconnaissance réutilise le modèle local préparé pour la dictée. S’il manque,
+le message demande cette préparation par l’installateur, une fois avec Internet ;
+le bouton ne télécharge rien. Une fois préparée, elle fonctionne hors ligne,
+sur le processeur du serveur. La traduction française utilise aussi un modèle
+local installé et volontairement démarré. La pause IA est respectée.
+
+Le suivi est dans **Préparer les sous-titres français → Suivre la création des
+sous-titres depuis l’audio**. **Mettre en pause** garde les passages terminés ;
+**Reprendre** continue les autres. Fermer la page ne stoppe pas le serveur, mais
+un redémarrage attend une reprise explicite. Aucun sous-titre partiel n’est annoncé
+prêt. Une vidéo modifiée demande une nouvelle préparation après actualisation.
+
+La transcription source complète rejoint la recherche et le lecteur, puis sa
+version française lorsque celle-ci termine. Les deux pistes restent distinctes.
+**Télécharger le rapport audio** conserve les paroles, temps estimés, informations
+sur le moteur et anomalies : ce fichier contient le texte de la vidéo et reste privé.
+
+Comparez les passages utiles, en particulier nombres, noms techniques et négations,
+avec la vidéo. La reconnaissance peut se tromper, mal estimer les temps ou manquer
+une langue/un son ; elle ne décrit pas les gestes ni les images. Une vidéo sans
+audio ou sans parole reconnue ne reçoit pas de sous-titre vide présenté comme prêt.
+Les résultats réels limités du candidat sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
 
 ## Utilisation des paroles par l’assistant
 

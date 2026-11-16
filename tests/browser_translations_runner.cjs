@@ -63,6 +63,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const captionsContext=await browser.newContext(),captionsPage=await captionsContext.newPage();
       const captionsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_caption_preparation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,captionPreparation:await captionsRecipe(captionsPage)}));await captionsContext.close();
+      const audioContext=await browser.newContext(),audioPage=await audioContext.newPage();
+      const audioRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_audio_transcription.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,audioTranscription:await audioRecipe(audioPage)}));await audioContext.close();
       const benchmarkContext=await browser.newContext(),benchmarkPage=await benchmarkContext.newPage();
       const benchmarkRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_benchmark.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,translationBenchmark:await benchmarkRecipe(benchmarkPage)}));await benchmarkContext.close();

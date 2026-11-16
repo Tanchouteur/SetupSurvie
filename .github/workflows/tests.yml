@@ -88,6 +88,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_library_videos.py -v
       - run: python -m unittest discover -s tests -p test_local_videos.py -v
       - run: python -m unittest discover -s tests -p test_caption_preparation.py -v
+      - run: python -m unittest discover -s tests -p test_video_transcriptions.py -v
+      - run: python -m unittest discover -s tests -p test_speech_worker.py -v
       - run: python -m unittest discover -s tests -p test_translation_benchmark.py -v
       - run: python -m unittest discover -s tests -p test_performance.py -v
       - run: python -m unittest discover -s tests -p test_control.py -v
