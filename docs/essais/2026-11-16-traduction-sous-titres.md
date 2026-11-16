@@ -89,6 +89,13 @@ WebKit émulé ne valide pas Safari sur un iPhone physique. Captures du parcours
 ordinateur/téléphone relues ; aucune interface carte ou recherche documentaire
 n’est refondue. Aucun déploiement sur les PC clients.
 
+Paquet `setupsurvie-0240-validated.zip`, commit documentaire `e8527d9`, **843 fichiers**,
+6 998 688 octets compressés et 15 728 367 octets décompressés, comparés au commit
+avec les filtres Git de fins de ligne Windows et au manifeste :
+`098ea97b5bfbd42ae2a4af8e8f02027c8c57e52ea03227960f3189aabb77d3ea`.
+Le présent reçu est ajouté après construction. Aucun média, modèle ou rapport
+privé n’est ajouté au paquet ; la petite fixture vidéo synthétique reste un test.
+
 ## Encore à faire
 
 Acquisition des pistes distantes, transcription locale des manques, sous-titres
