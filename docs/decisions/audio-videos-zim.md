@@ -1,9 +1,9 @@
 # Reconnaissance audio des vidéos internes
 
-**Référence du candidat 0.34.0 — 16 novembre 2026.** La reconnaissance des médias
+**Référence du candidat 0.35.0 — 16 novembre 2026.** La reconnaissance des médias
 inclus est maintenant raccordée à la commande audio existante, avec suivi,
 pause/reprise, préparation française optionnelle et index. Le
-[guide actuel](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0340)
+[guide actuel](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0350)
 décrit les commandes ; le [bilan](../essais/2026-11-16-audio-videos-collections.md)
 sépare tests simulés, lecteur réel et modèles du R7. Aucun fonds de Marc ni
 ensemble de sous-titres ne devient automatiquement validé par ce raccordement.

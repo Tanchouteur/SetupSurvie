@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-Candidat 0.34.0 : [reconnaissance des vidéos incluses](2026-11-16-audio-videos-collections.md),
+Candidat 0.35.0 : [reconnaissance des vidéos incluses](2026-11-16-audio-videos-collections.md),
 source construite par le backend, lecture par portions/édition vérifiée,
 déplacement audio et bornes de fin, pause/reprise puis français et recherche.
 R7 réel et essais simulés/navigateurs séparés ; fonds de Marc toujours à qualifier.

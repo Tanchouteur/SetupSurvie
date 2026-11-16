@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.34.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.35.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -69,12 +69,12 @@ restent automatiques et demandent une comparaison à l’original.
 L’examen lit les références explicites des pages HTML ; il n’interprète pas tous
 les lecteurs JavaScript. Un lien distant ne prouve pas que le média est téléchargé.
 Les conteneurs vidéo peuvent aussi contenir des pistes non extraites : elles ne
-sont pas automatiquement prêtes. Depuis 0.34.0, la commande audio ci-dessous est
+sont pas automatiquement prêtes. Depuis 0.35.0, la commande audio ci-dessous est
 aussi disponible pour les médias inclus sans piste exploitable. Avant cette
 préparation, une vidéo se cherche par son titre, pas par des paroles inventées.
 Une archive remplacée nécessite un nouvel examen.
 
-## Créer les sous-titres d’une vidéo de collection — 0.34.0
+## Créer les sous-titres d’une vidéo de collection — 0.35.0
 
 Après l’examen des collections, ouvrir **Créer les sous-titres depuis l’audio**
 sur une vidéo sans piste exploitable. Choisir la langue parlée ou la détection
@@ -242,7 +242,7 @@ Une piste distante annoncée dans `.info.json` n’est pas disponible hors ligne
 Sans piste exploitable, le média reste lisible et cherchable par ses métadonnées,
 avec **Sous-titres à préparer**. Il ne disparaît pas du rapport. Récupération en
 ligne (0.31.0), transcription des MP4 locaux (0.26.0), examen ZIM (0.33.0) et audio
-interne (0.34.0) sont des parcours distincts. La validation réelle de chaque vidéo
+interne (0.35.0) sont des parcours distincts. La validation réelle de chaque vidéo
 reste à exécuter selon le
 [protocole R6](../essais/protocole-sous-titres-videos.md).
 

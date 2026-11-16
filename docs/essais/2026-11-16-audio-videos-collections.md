@@ -1,9 +1,15 @@
 # Audio des vidéos incluses : source, français et recherche
 
-**Bilan du candidat 0.34.0 — 16 novembre 2026.** Nouvelle capacité compatible,
+**Bilan du candidat 0.35.0 — 16 novembre 2026.** Nouvelle capacité compatible,
 sans migration destructive ni changement d’image ou de modèle épinglé. Le niveau
 mineur correspond au parcours audio désormais utilisable sur les médias ZIM.
 Les corrections moteur 0.33.1 restent conservées. Aucun déploiement client réalisé.
+
+La refonte UX est livrée d’abord en 0.34.0 sur `main` (`2782165`, PR nº 13).
+Le candidat audio initial portait aussi 0.34.0 ; il devient 0.35.0 après reprise
+normale de cette refonte. Les rapports privés R7 ci-dessous gardent leur version
+d’exécution initiale ; ils ne sont pas renumérotés rétroactivement. La CI de
+l’état réuni est relancée après cette réconciliation.
 
 ## Ce qui change
 
@@ -92,7 +98,7 @@ paroles restent privés sous `setupsurvie-test/audio-transcription/`.
 ## Livraison et limites
 
 CI du code final, intégration et reçu de paquet seront consignés après validation.
-Le [guide](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0340)
+Le [guide](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0350)
 porte les commandes courantes. Aucun média réel de Marc n’est examiné ici : mots,
 langue, codecs et alignement de chaque vidéo restent à qualifier. Les lecteurs
 uniquement générés par JavaScript et les médias seulement liés à Internet ne sont

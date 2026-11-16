@@ -91,7 +91,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.34.0'
+VERSION='0.35.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -717,8 +717,63 @@ async def media(id:str,source_id:str=Query(default='',max_length=2000),revision:
     return Response(data,media_type=kind,headers={'Content-Security-Policy':"sandbox; default-src 'none'"})
 
 
+@app.get('/api/my-work')
+async def my_work(value=Depends(user)):
+    with optional_feature('document_workspace') as module:return await asyncio.to_thread(module.recent,value['id'])
+
+
+@app.get('/api/document-work')
+async def document_work(source_id:str=Query(min_length=1,max_length=2000,pattern=r'^(guide|zim):.+$'),value=Depends(user)):
+    with optional_feature('document_workspace') as module:return await asyncio.to_thread(module.work,value['id'],source_id)
+
+
+class ConversationFolderName(BaseModel):
+    name:str=Field(min_length=1,max_length=80)
+
+
+class ConversationTitle(BaseModel):
+    title:str=Field(min_length=1,max_length=80)
+
+
+class ConversationFolderSelection(BaseModel):
+    folder_id:str|None=Field(default=None,max_length=100)
+
+
+@app.get('/api/conversation-folders')
+async def conversation_folders(value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.folders,value['id'])
+
+
+@app.post('/api/conversation-folders',status_code=201)
+async def create_conversation_folder(body:ConversationFolderName,value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.save_folder,value['id'],body.name)
+
+
+@app.patch('/api/conversation-folders/{identifier}')
+async def rename_conversation_folder(identifier:str,body:ConversationFolderName,value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.save_folder,value['id'],body.name,identifier)
+
+
+@app.delete('/api/conversation-folders/{identifier}')
+async def delete_conversation_folder(identifier:str,value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.delete_folder,value['id'],identifier)
+
+
+@app.patch('/api/conversations/{identifier}/title')
+async def rename_conversation(identifier:str,body:ConversationTitle,value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.rename,value['id'],identifier,body.title)
+
+
+@app.put('/api/conversations/{identifier}/folder')
+async def move_conversation(identifier:str,body:ConversationFolderSelection,value=Depends(user)):
+    with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.move,value['id'],identifier,body.folder_id)
+
+
 @app.get('/api/conversations')
-async def conversations(value=Depends(user)):
+async def conversations(q:str=Query(default='',max_length=160),folder:str|None=Query(default=None,max_length=100),offset:int=Query(default=0,ge=0,le=100000),value=Depends(user)):
+    # Legacy callers keep their original listing if the optional organizer fails.
+    if q or folder is not None or offset:
+        with optional_feature('conversation_organization') as module:return await asyncio.to_thread(module.listing,value['id'],q,folder,offset)
     with store.connect() as db:rows=db.execute('SELECT * FROM conversations WHERE user_id=? ORDER BY created DESC LIMIT 100',(value['id'],)).fetchall()
     return {'conversations':[dict(row) for row in rows]}
 
@@ -1037,7 +1092,7 @@ async def question(body:Question,value=Depends(user)):
         if not conversation_id:
             conversation_id=store.new_id();db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation_id,value['id'],body.message[:80],time.time()))
         if not db.execute('SELECT 1 FROM messages WHERE conversation_id=?',(conversation_id,)).fetchone():
-            db.execute('UPDATE conversations SET title=? WHERE id=?',(body.message[:80],conversation_id))
+            db.execute("UPDATE conversations SET title=? WHERE id=? AND NOT EXISTS(SELECT 1 FROM settings WHERE key='conversation-title:'||?)",(body.message[:80],conversation_id,conversation_id))
         try:store.set_conversation_source_choices(db,conversation_id,choices)
         except store.AssociationUnavailable as error:raise HTTPException(503,str(error)) from None
         db.execute('INSERT INTO messages(conversation_id,role,content,created) VALUES(?,?,?,?)',(conversation_id,'user',body.message,time.time()))

@@ -144,6 +144,13 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
       console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
+      for(const file of ['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js']){
+        const uxContext=await browser.newContext();
+        try{
+          const recipe=eval('('+fs.readFileSync(path.join(root,'tests',file),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+          console.log(JSON.stringify({engine:name,recipe:file,...await recipe(await uxContext.newPage())}));
+        }finally{await uxContext.close();}
+      }
       await context.close();await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

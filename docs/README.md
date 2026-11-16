@@ -1,7 +1,15 @@
 # Documentation SetupSurvie
 
+- [Refonte UX 0.34.0](essais/2026-11-16-refonte-ux.md) — assistant en trois zones, traduction dans les lecteurs et vérifications.
+- [Inventaire des parcours et composants](decisions/inventaire-parcours-ux.md) — capacités préservées, preuves et règles d’extension.
+
+- [Fondations UX et retour volontaire](essais/2026-11-16-fondations-ux.md) — premier lot candidat, tests et limites.
+
+- [Refonte UX évolutive](decisions/refonte-ux-evolutive.md) — chantier PC/téléphone, traduction dans le lecteur, composants et coordination.
+- [Retour à la version précédente](exploitation/retour-version-avant-refonte.md) — procédure conservant les données récentes.
+
 - [Demande pratique et prix](essais/2026-11-16-intention-pratique-et-prix.md) — 0.33.1, classement des actions courtes, tarifs toujours retrouvables et limites.
-- [Audio des vidéos ZIM](decisions/audio-videos-zim.md) — candidat 0.34.0, commandes existantes, portions et reprise ; [preuves et limites](essais/2026-11-16-audio-videos-collections.md).
+- [Audio des vidéos ZIM](decisions/audio-videos-zim.md) — candidat 0.35.0, commandes existantes, portions et reprise ; [preuves et limites](essais/2026-11-16-audio-videos-collections.md).
 
 - [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
 - [Validation des vidéos de collections](essais/2026-11-16-videos-collections.md) — 0.33.0, huit jobs CI et preuves natives/lecteur/navigateurs séparées du fonds réel.

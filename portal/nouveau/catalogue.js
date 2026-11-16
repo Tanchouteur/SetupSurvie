@@ -81,7 +81,7 @@
   document.addEventListener('survie:inventory',event=>{lastInventory=event.detail;decorateInventory(lastInventory);});
   document.addEventListener('survie:auth',()=>{if(lastInventory)decorateInventory(lastInventory);});
 
-  const settings=$('view-settings'),panel=element('article',undefined,'panel');panel.append(element('h2','Classements et noms corrigés'),element('p','Conservez les corrections apportées aux documents et collections. Cet export contient leurs références et classements, sans leur texte ni les conversations.','small muted'));
+  const settings=$('view-settings'),panel=element('article',undefined,'panel');panel.id='catalogue-metadata-export';panel.append(element('h2','Classements et noms corrigés'),element('p','Conservez les corrections apportées aux documents et collections. Cet export contient leurs références et classements, sans leur texte ni les conversations.','small muted'));
   const status=element('p',undefined,'small');status.setAttribute('role','status');
   panel.append(button('Exporter les métadonnées',async()=>{
     try{const report=await api('/admin/library/metadata-export'),url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');link.href=url;link.download='setupsurvie-classements.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='Métadonnées exportées.';}

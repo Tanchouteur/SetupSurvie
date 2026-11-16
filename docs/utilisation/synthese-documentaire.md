@@ -78,8 +78,8 @@ manuelle multiple est maintenant disponible. Voir le [programme retenu](../decis
 ## Lire un livre entier par étapes — 0.18.0
 
 Dans la Bibliothèque, choisissez vos documents pour l’assistant. Dans **Assistant**,
-écrivez ce que vous voulez en retenir, ouvrez **Lire les documents et préparer une
-synthèse**, puis cliquez sur **Préparer une synthèse longue**. Sans question saisie,
+écrivez ce que vous voulez en retenir, ouvrez le volet **Documents**, puis
+**Lire les documents et préparer une synthèse**, puis cliquez sur **Préparer une synthèse longue**. Sans question saisie,
 le logiciel prépare une synthèse des informations utiles. Le mode choisi dans
 le champ habituel détermine le modèle utilisé.
 

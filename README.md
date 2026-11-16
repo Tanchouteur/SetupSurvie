@@ -11,7 +11,15 @@ préparation aux périodes de services dégradés.
 
 ## État du projet
 
-Au **16 novembre 2026**, le pilote **0.34.0** propose une recherche locale avec
+La [refonte UX](docs/decisions/refonte-ux-evolutive.md) organise les conversations,
+les documents et la traduction dans leurs parcours, sur PC et téléphone.
+L’assistant propose des volets repliables pour conversations/dossiers et documents,
+la traduction reste dans les lecteurs, et les travaux personnels se retrouvent
+depuis leur original ou Mon appareil. Le
+[retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
+les données récentes et une référence de la version précédente.
+
+Au **16 novembre 2026**, le pilote **0.35.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils

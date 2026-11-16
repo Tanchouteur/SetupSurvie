@@ -18,7 +18,7 @@ Le correctif moteur **0.33.1** complète ensuite le classement dans
 `pilot/retrieval.py`. Il ne change aucun écran, route ni identifiant ; les versions
 API/release/README sont les seuls autres points de code partagés à réconcilier.
 
-La suite audio **0.34.0** est sur `codex/audio-videos-archives`. Elle raccorde
+La suite audio **0.35.0** est sur `codex/audio-videos-archives`. Elle raccorde
 `pilot/archive_videos.py`, `transcriptions.py` et `speech_worker.py`, avec le nouveau
 `archive_media.py`. Routes et identifiants sont conservés. Le champ vidéo public
 `audio_transcription_supported` permet aux contrôles existants de `transcriptions.js`
@@ -51,3 +51,18 @@ future ne doit pas être annoncée comme disponible sur les PC avant leur mise �
 
 Voir la [direction à trois zones](conversations-trois-zones.md) et les
 [objectifs décidés par Louis](choix-actuels.md#deux-prochains-objectifs--décision-de-louis-du-16-novembre-2026).
+
+## Intégration UX 0.34.0
+
+La branche UX a intégré main 0.33.0 (`3dd2409`) avant sa propre livraison.
+Les événements, modules et recettes vidéo restent présents. Le retour recommandé
+est archivé sous `ux-reference-0.33.1`, après reprise du correctif de recherche
+0.33.1 (`fafc21e`) ; voir le
+[bilan UX](../essais/2026-11-16-refonte-ux.md). Cette intégration de code ne
+constitue pas une mise à jour des PC cibles.
+
+La PR UX nº 13 est fusionnée sur `main` (`2782165`) avant le lot audio. Ce dernier
+reprend la refonte par fusion normale, conserve ses composants et choisit 0.35.0
+pour ne pas réutiliser 0.34.0. Les HTML sont régénérés avec les deux ensembles de
+scripts ; les tests de la branche audio doivent porter de nouveau sur cet état
+réuni. Les preuves R7 antérieures restent datées du candidat audio initial 0.34.0.
