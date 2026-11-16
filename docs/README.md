@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Audio des vidéos ZIM](decisions/audio-videos-zim.md) — prototype isolé de lecture par portions, non livré ; reconnaissance et interface à raccorder.
+
 - [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.
 - [Validation des vidéos de collections](essais/2026-11-16-videos-collections.md) — 0.33.0, huit jobs CI et preuves natives/lecteur/navigateurs séparées du fonds réel.
 - [Coordination UX et vidéos](decisions/coordination-ux-et-videos.md) — branches séparées, contrats et intégrations successives.
