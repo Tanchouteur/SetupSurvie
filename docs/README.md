@@ -1,5 +1,6 @@
 # Documentation SetupSurvie
 
+- [Demande pratique et prix](essais/2026-11-16-intention-pratique-et-prix.md) — 0.33.1, classement des actions courtes, tarifs toujours retrouvables et limites.
 - [Audio des vidéos ZIM](decisions/audio-videos-zim.md) — prototype isolé de lecture par portions, non livré ; reconnaissance et interface à raccorder.
 
 - [Vidéos dans les ZIM](decisions/inventaire-videos-zim.md) — inventaire volontaire, lecteur et pistes dans la recherche ; limites du parcours et essais.

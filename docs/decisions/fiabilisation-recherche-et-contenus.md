@@ -5,7 +5,7 @@ points du retour de Marc et de fiabiliser en priorité le cœur de recherche.
 Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais le programme L1–L9, décisions, critères de fin et pistes écartées. Les [recettes progressives](../essais/recettes-progressives-marc.md) précisent les rapports à demander et les blocages à annoncer. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
 observations ; ce suivi distingue réalisation et validations manquantes.
 
-## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.33.0
+## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.33.1
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -20,6 +20,12 @@ et les bilans liés sont les références de réalisation.
 | Traductions longues | 40 pages fictives terminées sur Marc ; vocabulaire personnel figé et repère borné 0.32.0 ; chapitre réel de notice, 9 passages et reprise/lecture testés sur R7 | Cohérence complète d’un livre réel de 500 pages et sémantique de chaque passage non certifiées ; poursuivre la relecture progressive, sans transformer les contrôles numériques en certificat |
 | Vidéos locales et collections | Index/lecteur, traduction et transcription audio hors ligne ; [récupération YouTube 0.31.0](../essais/2026-11-16-acquisition-sous-titres.md) réelle sur R7 puis pistes conservées ; [examen ZIM 0.33.0](../essais/2026-11-16-videos-collections.md), pistes internes dans la recherche/lecteur et préparation française | Audio des vidéos internes à raccorder ; contenu réel de Marc, codecs, mots et alignement de chaque vidéo encore à vérifier |
 | Mesures et conservation | Exports lisibles avec version/heure, ressources/contextes, [diagnostic de refus](../essais/2026-11-16-diagnostic-refus-demarrage.md), arrêt/reprise/suppression des traductions et paquet comparé à Git | Les observations après erreur restent distinctes de l’instant exact de la panne ; aucun test humain non exécuté n’est compté comme réussi |
+
+Le [correctif 0.33.1](../essais/2026-11-16-intention-pratique-et-prix.md) complète
+la recherche pratique : aperçu de prix séparé d’un titre d’instructions, demandes
+courtes reconnues sans « comment ». Le retour de Marc sur le prix de réparation
+du vélo est reproduit sur petits textes ; l’article exact et sa pertinence réelle
+restent à vérifier. Ce correctif ne clôt pas la validation du fonds complet.
 
 Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0330)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;

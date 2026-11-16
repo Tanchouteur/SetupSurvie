@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.25.0, 16 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.33.1, 16 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -36,6 +36,15 @@ orienter une demande pratique ; les questions sur un détail et les aperçus de
 risques restent accessibles. Un titre bien classé ne garantit pas des instructions
 complètes. Une demande générale identique à un titre conserve aussi ses mots de
 liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
+
+Depuis 0.33.1, une demande d’action telle que « réparer un vélo » privilégie les
+titres pratiques devant les aperçus de prix ou de tarifs. Les documents de prix
+restent recherchables ; « prix de réparation d’un vélo » peut donc les placer en
+premier. Une formulation expliquant « comment… » peut aussi parler de coût : elle
+ne devient pas automatiquement un simple tarif. Les actions courtes reconnues,
+comme « filtrer l’eau » ou « affûtage d’un couteau », gardent leur intention sans
+exiger « comment » au début. Cela reste un indice de classement ; ouvrir le texte
+pour vérifier qu’il contient bien les étapes cherchées.
 
 Depuis 0.15.1, une demande explicite comme « Fais une synthèse des documents sur
 comment faire du feu » garde le sujet recherché : elle n’exige plus qu’un article

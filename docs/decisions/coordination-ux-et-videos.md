@@ -12,6 +12,16 @@ fonctions conservées. Ne pas écraser les fichiers générés d’une autre liv
 
 ## Contrats à conserver pendant la refonte
 
+Le correctif moteur **0.33.1** complète ensuite le classement dans
+`pilot/retrieval.py`. Il ne change aucun écran, route ni identifiant ; les versions
+API/release/README sont les seuls autres points de code partagés à réconcilier.
+
+Une suite audio est isolée sur `codex/audio-videos-archives` : prototype de lecture
+HTTP par portions, non livré. Son raccordement visera les modules backend
+`pilot/archive_videos.py`, `transcriptions.py` et `speech_worker.py` en conservant
+les routes et identifiants existants. La lecture seule du site ne doit toujours
+pas démarrer une reconnaissance ou un modèle.
+
 - Le moteur documentaire, les contrôleurs hôtes et les bases de données ne sont
   pas à réécrire pour changer leur présentation. Conserver conversations,
   dossiers, documents associés et préparations existantes.
