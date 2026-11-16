@@ -15,6 +15,7 @@ en 0.35.0, sans modifier les moteurs ni les données.
 | Peu d’évolution hors de l’accueil et de l’assistant | Cartes, paramètres, état de l’appareil, recherche, collections et lecteurs repris avec les mêmes règles |
 | Cartes de paramètres de tailles et structures différentes | Modèle partagé titre/description/action, grilles égales et actions alignées ; formulaires longs non tronqués |
 | Cascade fragile | Thème complet de l’ancienne maquette retiré, anciennes règles de conversation supprimées, responsabilités CSS séparées |
+| Carte sans affichage graphique exposant une erreur technique | Explication française visible dans la zone de carte, commandes graphiques désactivées et retour vers la bibliothèque |
 | Scripts et générateur difficiles à suivre | Modules repris formatés, primitives UI sans API, liste ordonnée des ressources dans le générateur |
 
 La version mineure correspond à une évolution significative de l’interface et
@@ -32,10 +33,17 @@ inférence réelle, aucun modèle ni corpus lourd téléchargé.
 - Recettes existantes : les douze recettes du lanceur paramètres passent sous
   Chromium et WebKit, dont 182 contrôles paramètres, 51 recherche, 29 portail,
   16 volets et dossiers, 13 traduction dans les lecteurs et 41 fondations UX.
-- Nouvelle recette de finition : 91 contrôles par moteur réussis, avec cartes
+- Nouvelle recette de finition : 94 contrôles par moteur réussis, avec cartes
   de descriptions longues, état peuplé, cases, fermeture/réouverture, cinq
-  largeurs et vérification des zones cliquables. Un contrôle supplémentaire de
-  chevauchement des libellés de navigation est ensuite ajouté à la suite finale.
+  largeurs et vérification des zones cliquables. La recette vérifie aussi le
+  chevauchement des libellés de navigation et les volets pendant la saisie mobile.
+- Vérifications ciblées finales : Chromium, WebKit et Firefox passent chacun
+  les 94 contrôles de finition, 38 de confort de discussion, 9 du repli graphique
+  des cartes et le cycle association/pause/reprise/export/plage PDF.
+- Cartes : 15 tests unitaires adaptés réussis. Le repli graphique est testé avec
+  un pilote volontairement indisponible ; le Firefox Linux du conteneur confirme
+  aussi l’absence de contexte WebGL dans cet environnement, ce qui ne prouve pas
+  l’état graphique du PC Windows de Marc.
 - Syntaxe JavaScript, génération HTML et `git diff --check` vérifiés.
 - Captures Playwright MCP examinées sur PC et téléphone, avec réponses longues,
   tableaux, options ouvertes, dossiers, recherche et lecteur.

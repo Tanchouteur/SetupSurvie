@@ -48,6 +48,9 @@ est affiché par défaut lorsque des altitudes locales sont disponibles. On peut
 le masquer ou le réactiver dans Affichage. Une zone dépourvue d’altitudes garde
 son fond de carte ; aucune préparation ou connexion Internet n’est déclenchée.
 Le lien de retour mène à l’accueil, sans écran intermédiaire ni boucle vers la carte.
+Si le navigateur ne peut pas afficher la carte, une explication apparaît dans
+son espace de lecture avec un retour à la bibliothèque. Cela ne signifie pas
+que vos lieux ou trajets enregistrés sont perdus.
 
 **Mon appareil → Paramètres** propose quatre entrées : **Profils et connexion**,
 **Bibliothèque et préparations**, **Assistant**, **Entretien et diagnostics**.

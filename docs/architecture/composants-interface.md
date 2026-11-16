@@ -76,4 +76,8 @@ libellés, volets, commande unique, aides et débordements. Les recettes existan
 restent nécessaires pour la navigation, les profils, brouillons et travaux.
 Les captures doivent être regardées en plus des assertions : une absence de
 débordement ne prouve ni l’élégance ni la compréhension. Safari sur iPhone et
-la perception des utilisateurs restent des validations distinctes.
+la perception des utilisateurs restent des validations distinctes. Les captures
+utilisateur venant de Firefox sur PC, ses parcours principaux font aussi partie
+de la recette. Le repli des cartes en cas d’affichage graphique indisponible
+présente une explication française, avec sortie vers la bibliothèque, sans
+exposer le rapport interne du pilote graphique.
