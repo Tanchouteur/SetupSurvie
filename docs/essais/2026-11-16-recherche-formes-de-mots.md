@@ -50,7 +50,20 @@ auparavant ; un résultat par titre ne fait pas disparaître l’absence d’ind
   `/tmp/ss0351-kiwix-titles.log`. Le rejeu corrigé passe et écrit
   `/tmp/ss0351-kiwix-final.json`.
 - Une première suite recherche de 107 tests passe avant le complément de titres.
-  La suite complète finale, la CI et le paquet seront consignés après vérification.
+  La suite complète atteint ensuite **972 tests en 212,645 s, 6 ignorés**, sans
+  échec. Le diagnostic de performances conserve aussi les deux nouveaux compteurs
+  de tentatives par titre ; son contrôle ciblé est rejoué après cet ajout.
+  La CI finale et le paquet seront consignés après vérification.
+
+## Choix conservés et écartés
+
+Ajouter seulement « couteau » et « tuyau » au vocabulaire technique aurait corrigé
+ces exemples sans traiter les autres noms. Les formes de nombre sont donc
+regroupées par règles communes. La suppression aveugle d’un s/x et les préfixes
+arbitraires sont écartés : « Paris » ne devient pas « pari », « cours » ne devient
+pas « cour ». Les ambiguïtés dues aux accents restent protégées par les cas ciblés.
+Les tentatives de titres restent bornées ; aucun chargement IA ni hausse du budget
+global n’est ajouté pour ce problème de mots. Le temps réel sur HDD reste à mesurer.
 
 ## Portée et limites
 

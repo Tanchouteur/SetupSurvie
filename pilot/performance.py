@@ -159,7 +159,7 @@ async def classical(row,report):
         report['_selected']=list(dict.fromkeys(item['id'] for item in found if isinstance(item.get('id'),str)))[:3]
     row.update(results=len(found),first_result_ms=first,
                coverage={k:coverage[k] for k in ('status','searched','failed','not_searched','without_fulltext','deadline_exceeded','cache_hits','parallelism','processing',
-                   'primary_requests','request_limit','refinement_attempted','refinement_failed','refinement_not_searched','title_searched','title_failed','title_not_searched',
+                   'primary_requests','request_limit','refinement_attempted','refinement_failed','refinement_not_searched','title_searched','title_failed','title_not_searched','title_requests','title_refinement_requests',
                    'concurrency','local_query','cache_ttl_seconds','cache_disk_ttl_seconds','deadline_ms','error_counts') if k in coverage})
     # These components can make the whole search partial even when every native
     # archive succeeds. Never export their free-form errors, paths or titles.

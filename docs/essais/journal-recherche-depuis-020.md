@@ -1,5 +1,10 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+Candidat 0.35.1 : [formes de nombre et titres](2026-11-16-recherche-formes-de-mots.md),
+variantes courantes dans le plan partagé et la sélection de passages, mots
+techniques chiffrés conservés, repli par titres borné et compteurs dans les mesures.
+Les index existants restent utilisés ; aucune nouvelle préparation documentaire.
+
 Livraison 0.35.0 : [reconnaissance des vidéos incluses](2026-11-16-audio-videos-collections.md),
 source construite par le backend, lecture par portions/édition vérifiée,
 déplacement audio et bornes de fin, pause/reprise puis français et recherche.

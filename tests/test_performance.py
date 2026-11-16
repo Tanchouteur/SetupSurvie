@@ -75,6 +75,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
     async def test_partial_search_exports_component_states_without_paths_or_error_text(self):
         self.mock(Found,'coverage',{'status':'partial','searched':120,'failed':0,'metadata_status':'degraded',
             'coverage_scope':'searchable_text','collections_selected':135,'native_incompatible':0,
+            'title_requests':6,'title_refinement_requests':2,
             'videos':{'status':'not_indexed','results':0,'path':'PRIVATE-video','error':'PRIVATE-error'},
             'catalog':{'state':'stale','collections':135,'age_seconds':60,'error':'PRIVATE-catalog'},
             'local_index':{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4,'started':'PRIVATE-time','reader_probe':{'path':'PRIVATE-reader'}}})
@@ -84,6 +85,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(coverage['catalog'],{'state':'stale','collections':135,'age_seconds':60})
         self.assertEqual(coverage['local_index'],{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4})
         self.assertEqual(coverage['metadata_status'],'degraded');self.assertNotIn('PRIVATE',json.dumps(report))
+        self.assertEqual(coverage['title_requests'],6);self.assertEqual(coverage['title_refinement_requests'],2)
 
     async def test_complete_search_does_not_invent_missing_component_measurements(self):
         self.mock(Found,'coverage',{'status':'complete','searched':135,'failed':0,
