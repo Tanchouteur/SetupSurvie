@@ -95,3 +95,39 @@ contrôles de traduction** passent. Les tests simulés ne prouvent pas le sens d
 modèle réel ; les recettes R7 ci-dessus restent la preuve distincte.
 Les liens locaux des documents modifiés et `git diff --check` sont vérifiés ;
 aucun rapport utilisateur, modèle ou corpus volumineux n’est ajouté à Git.
+
+### Rejeu du dernier comportement
+
+Avec la consigne sur les inscriptions, les mêmes cinq pages terminent encore :
+**9/9 en 129 602 ms** (2 min 10 s), cinq contrôles sans anomalie repérée et
+quatre avertissements de trous de touches, aucun passage bloqué. Les passages
+conservés lors de la pause restent identiques après reprise ; les neuf parties
+correspondent au lecteur. Le quatrième passage garde désormais **CALL** dans la
+traduction. Rapport privé `report-translation-0320-v3.json` et empreintes du code
+et de la recette incluses. Cette vérification ciblée ne certifie pas toute la
+notice ou les autres ouvrages.
+
+Les six vérifications de qualité navigateur passent également dans Chromium et
+WebKit : nombres ajoutés refusés, proposition rejetée visible, comparaison source,
+avertissement conservé dans l’export et la publication, saisie accessible sur
+mobile et touches manquantes signalées avec le contrôle version 3. Elles utilisent
+un modèle simulé ; la génération réelle est celle des rapports R7 séparés.
+
+## Contrôle connexe du changement de modèle et des sources
+
+Sur le même code candidat, la recette `real_assistant_check.py` précharge le
+Llama 3.1 8B déjà installé, puis pose une seule demande naturelle à Gemma4 E4B
+avec cinq PDF fictifs explicitement sélectionnés. Les faits utiles sont en page
+6, pas dans les introductions. Le traitement lit les cinq sources sans omission,
+retrouve les cinq valeurs attendues (17, 23, 31, 43, 59) et les référence. La
+réponse précise que les données fictives ne suffisent pas à établir les principes
+techniques des capteurs ; elle n’invente pas ce contenu absent.
+
+La première demande termine en **14 461 ms**, première sortie à **5 723 ms**,
+préparation du modèle cible **4 105 ms**, un appel de rédaction et aucune reprise
+du modèle. Contexte demandé/observé 16k, 24 couches GPU et six threads dans la
+recette. Rapport privé `report-assistant-0320-switch.json`. Les deux modèles
+coexistent encore dans l’observation finale : ce résultat prouve une demande
+après changement de cible dans ces conditions, pas l’éviction sous saturation
+ni la disparition de tous les refus sur le Windows de Marc. Aucun autre modèle
+n’est déchargé pour l’essai ; expiration naturelle après quinze secondes.
