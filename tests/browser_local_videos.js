@@ -13,7 +13,9 @@ async page=>{
   check(!!hit,'Le moteur commun retrouve le passage horodaté des sous-titres');
   const before=calls.length;await page.evaluate(id=>readSource(id),hit.id);
   const player=page.locator('#reader video');await player.waitFor();
-  await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v&&v.readyState>=1&&v.currentTime>=7.9;});
+  await player.evaluate(v=>v.play());
+  await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v&&v.readyState>=2&&v.videoWidth===96&&v.currentTime>=7.9;});
+  await player.evaluate(v=>v.pause());
   check(Math.abs(await player.evaluate(v=>v.duration)-12)<.2,'Le vrai navigateur décode le petit fichier local de douze secondes');
   check(await player.evaluate(v=>v.currentTime>=7.9),'La vidéo s’ouvre sur le passage trouvé');
   check((await page.locator('#reader').textContent()).includes('non vérifiés'),'Limites de fidélité et de synchronisation conservées');
