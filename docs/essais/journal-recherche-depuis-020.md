@@ -572,3 +572,9 @@ en cours, disponibilité Ollama et marges mémoire), sans log libre ni conversat
 Le correctif de délai mémoire ne constitue pas une preuve de résolution de tous
 les démarrages Windows. Ni abaissement silencieux de réserve ni reprise forcée
 du mode jeu ne sont retenus pour faire passer les mesures.
+
+## 16 novembre — intégration cartes après lecture 0.28.0
+
+Branche d’un autre agent conservée par fusion normale : [bilan 0.28.1](2026-11-16-integration-routage-windows.md).
+Les trois routeurs Windows lisent les graphes sous leur UID/GID de préparation.
+Version compatible après 0.28.0 ; aucune nouvelle donnée cartographique ni image.

@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Correctif d’itinéraires Windows](essais/2026-11-16-integration-routage-windows.md) — 0.28.1, intégration de la branche fournie et limites de validation.
+
 - [Conversations en trois zones et modèles hors ligne](decisions/conversations-trois-zones.md) — direction validée par Louis ; détails à cadrer avant refonte générale.
 - [Bilan et recette du transfert](essais/2026-11-16-transfert-fiable.md) — résultats, échecs et validations Windows restantes.
 - [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.
