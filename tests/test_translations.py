@@ -112,6 +112,8 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_delete_joins_worker_and_removes_only_owned_private_work(self):
         item=await self.create();started=asyncio.Event();finished=asyncio.Event()
+        from pilot import publications
+        with store.connect() as db:publications.reserve(db,item['id'],'alice',{'id':self.source,'title':'Private draft metadata'},True)
         async def wait(text,mode):
             started.set()
             try:await asyncio.Event().wait()
@@ -128,6 +130,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
                 column='id' if table=='translations' else 'translation_id'
                 self.assertEqual(db.execute('SELECT count(*) FROM '+table+' WHERE '+column+'=?',(item['id'],)).fetchone()[0],0)
             self.assertFalse(db.execute('SELECT 1 FROM settings WHERE key=?',('auto-translation:'+item['id'],)).fetchone())
+            self.assertFalse(db.execute('SELECT 1 FROM translation_publications WHERE translation_id=?',(item['id'],)).fetchone())
             self.assertTrue(db.execute('SELECT 1 FROM conversations WHERE id=?',('c',)).fetchone())
 
     async def test_delete_keeps_an_already_published_translation(self):

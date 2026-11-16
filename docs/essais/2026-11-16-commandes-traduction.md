@@ -40,3 +40,19 @@ rechargement sans reprise, seconde reprise, annulation de confirmation, suppress
 unique, original/conversation conservés et sélecteur nettoyé. Premier Chromium :
 15 contrôles réussis. WebKit, suite complète et CI suivent ; aucune nouvelle
 inférence réelle ni commande sur le PC de Marc n’est annoncée.
+
+## Recette locale et intégration
+
+Les quatre recettes de lecture/commande/sélection passent sur Chromium et WebKit :
+**15 contrôles de commande**, **26 de lecture progressive** et **19 de choix des
+documents** par navigateur, plus la recette de traduction ordinaire. Le contrôle
+concurrent vérifie qu’une reprise attend la suppression puis reçoit Introuvable,
+sans recréer le travail. Les métadonnées d’une publication jamais écrite sont
+également retirées avec le brouillon ; la provenance d’un fichier publié demeure.
+
+Suite locale : **863 tests en 174,262 s**, **16 ignorés** pour lecteur optionnel
+absent et contrôles Windows. Le nouveau contrôle de concurrence est exécuté
+ensuite dans l’ensemble ciblé de **17 tests de traduction**, réussi. La correction
+des cartes Windows 0.28.1 est fusionnée dans le candidat sans perdre son numéro
+fonctionnel 0.29.0. Les contrôles d’intégration et la CI finale restent suivis.
+Le PC de Marc n’a subi ni mise à jour ni suppression par l’agent.

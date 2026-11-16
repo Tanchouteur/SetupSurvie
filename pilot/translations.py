@@ -262,6 +262,8 @@ async def delete(identifier,user_id):
             with store.connect() as db:
                 db.execute('DELETE FROM settings WHERE key=?',('auto-translation:'+identifier,))
                 db.execute('DELETE FROM translations WHERE id=? AND user_id=?',(identifier,user_id))
+                if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='translation_publications'").fetchone():
+                    db.execute('DELETE FROM translation_publications WHERE translation_id=? AND published_path IS NULL',(identifier,))
         return {'deleted':True,'id':identifier,'conversation_id':item['conversation_id'],'publication':publication,
                 'notice':'Travail privé supprimé. Le document original et toute version déjà partagée dans la bibliothèque sont conservés.'}
 
