@@ -51,3 +51,9 @@ nouvel export et vingt-huit des mesures/calibration existantes par navigateur.
 Le refus et l’état actuel sont bien deux objets distincts dans le fichier ;
 aucun POST n’est envoyé par le nouveau bouton. Le nom de rapport contient
 version/date/heure et l’interface reste contenue à 320, 390 et 1366 px.
+
+Le refus garde aussi une catégorie lorsqu’il correspond exactement à un message
+connu (pause, pression RAM/VRAM, activité concurrente, matériel ou moteur
+indisponible). Un message inconnu reste non catégorisé ; son texte libre n’est
+pas copié. Le test vérifie que ces catégories restent distinctes des états
+observés ensuite. Aucune interprétation d’un log n’est utilisée pour les deviner.

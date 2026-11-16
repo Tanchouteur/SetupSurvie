@@ -62,6 +62,14 @@ class StartupDiagnosticTests(unittest.IsolatedAsyncioTestCase):
                 async with diagnostic.observe('performance','rapide','fixture'):raise error
         self.assertIs(caught.exception,error)
 
+    async def test_known_refusal_reason_is_saved_without_free_text(self):
+        from pilot import calibration
+        for reason in ('paused','ram_pressure','hardware_unavailable','engine_unavailable'):
+            with self.assertRaises(HTTPException):
+                async with diagnostic.observe('calibration','rapide','fixture'):raise HTTPException(409,calibration.REASONS[reason])
+        self.assertEqual([r['refusal_reason'] for r in diagnostic.history()],['paused','ram_pressure','hardware_unavailable','engine_unavailable'])
+        self.assertEqual(diagnostic.refusal_reason('PRIVATE UNKNOWN DETAIL'),'not_categorized')
+
     async def test_unreachable_api_and_unknown_mode_are_explicit(self):
         def offline(request):raise httpx.ConnectError('PRIVATE HOST')
         # Restore constructor before installing the alternate mock.

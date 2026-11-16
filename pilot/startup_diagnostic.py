@@ -77,6 +77,15 @@ async def snapshot(model=None):
 def location():return store.ROOT/'startup-diagnostic.json'
 
 
+def refusal_reason(detail):
+    from . import calibration
+    for code,message in calibration.REASONS.items():
+        if detail==message:return code
+    if detail in ('Une réponse ou un essai est déjà en cours.','Une autre demande vient de démarrer.','Une autre demande vient de démarrer. Réessayez après sa fin.'):
+        return 'other_activity'
+    return 'not_categorized'
+
+
 def history():
     try:
         path=location()
@@ -95,7 +104,8 @@ async def observe(action,mode,version):
             try:
                 model=engine.MODES[mode]['model']
                 row={'created':time.time(),'version':version,'action':action,'mode':mode,'model':model,
-                     'context':engine.context_size(model),'http_status':error.status_code,'phase':'refused_before_start'}
+                     'context':engine.context_size(model),'http_status':error.status_code,'phase':'refused_before_start',
+                     'refusal_reason':refusal_reason(error.detail)}
                 row['observed']=await snapshot(model)
                 rows=[*history(),row][-20:]
                 durable.write_bytes(location(),json.dumps(rows,ensure_ascii=False).encode('utf-8'),private=True)
