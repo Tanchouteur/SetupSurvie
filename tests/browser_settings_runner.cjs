@@ -1,10 +1,10 @@
 // A tiny fixture API must already be running. No production service or model used.
 const fs=require('node:fs'),path=require('node:path');
-const {chromium,webkit}=require('playwright');
+const {chromium,webkit,firefox}=require('playwright');
 const base=process.env.UX_BASE||'http://127.0.0.1:8782',out=process.env.UX_ARTIFACTS||'/tmp/setupsurvie-settings-artifacts';
 (async()=>{
  fs.mkdirSync(out,{recursive:true});const results={};
- for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+ for(const [name,engine] of [['chromium',chromium],['webkit',webkit],...(process.env.UX_ENGINE==='firefox'?[['firefox',firefox]]:[])]){
   if(process.env.UX_ENGINE&&name!==process.env.UX_ENGINE)continue;
   const browser=await engine.launch({headless:true});
   try{
