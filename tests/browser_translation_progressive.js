@@ -37,6 +37,7 @@ async page=>{
   await page.route('**/api/translations/'+id+'/pause',route=>{paused=true;return route.fulfill({json:{id,status:'paused'}});});
   await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
   check(await page.evaluate(()=>S.translationOffset===10),'La mise en pause conserve la page de lecture');
+  check(await page.evaluate(id=>{const data=JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id));return data[id].offset===10&&Object.keys(data[id]).every(key=>['offset','updated'].includes(key));},id),'La mémoire de lecture garde seulement le groupe lu et sa date');
   const sent=commands.length;await page.reload();await page.waitForFunction(()=>S.translationOffset===10&&document.querySelector('#translation-parts article')?.dataset.position==='10');
   await page.locator('#translation-panel').evaluate(node=>node.open=true);
   check(commands.length===sent,'Recharger la lecture ne relance aucune traduction');
