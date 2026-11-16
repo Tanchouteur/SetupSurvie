@@ -59,6 +59,10 @@ async page=>{
   check(calls.includes('rollback'),'Retour au réglage précédent disponible');
   for(const width of [1366,390,320]){
     await page.setViewportSize({width,height:844});
+    // WebKit can retain the preceding document scroll width for one resize
+    // frame although no element overflows. Still fail a persistent overflow,
+    // with the diagnostic below, after letting the actual viewport settle.
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,null,{timeout:5000}).catch(()=>{});
     const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
       overflowing:[...document.querySelectorAll('body *')].filter(node=>{const r=node.getBoundingClientRect();return r.width&&r.right>innerWidth+.5;}).map(node=>({tag:node.tagName,id:node.id,
         class:typeof node.className==='string'?node.className:'',right:node.getBoundingClientRect().right,width:node.getBoundingClientRect().width,
