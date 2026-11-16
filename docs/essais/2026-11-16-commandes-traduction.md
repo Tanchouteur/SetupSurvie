@@ -56,3 +56,8 @@ ensuite dans l’ensemble ciblé de **17 tests de traduction**, réussi. La corr
 des cartes Windows 0.28.1 est fusionnée dans le candidat sans perdre son numéro
 fonctionnel 0.29.0. Les contrôles d’intégration et la CI finale restent suivis.
 Le PC de Marc n’a subi ni mise à jour ni suppression par l’agent.
+
+Le groupe de lecture local est aussi retiré après fermeture du lecteur lors de
+la suppression : la fermeture ne recrée plus le repère juste effacé. La recette
+de commande vérifie ce point, soit **16 contrôles par navigateur**. Les autres
+recettes et les données déjà partagées restent conservées.

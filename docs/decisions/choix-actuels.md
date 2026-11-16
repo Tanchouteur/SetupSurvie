@@ -6,8 +6,8 @@ déjà partagés. Les contrôles sont accessibles aussi pendant la lecture dédi
 
 La **0.28.0** améliore la [lecture pendant une traduction](../utilisation/documents-et-traduction.md#lire-pendant-que-le-document-se-traduit--0280) :
 progression par pages/passages, texte stable pendant les actualisations et groupe
-de lecture retrouvé après rechargement. La refonte globale des conversations
-attend l’explication de Louis. Le brouillon n’est pas publié avant la fin.
+de lecture retrouvé après rechargement. La direction de refonte en [trois zones](conversations-trois-zones.md) est validée ;
+ses détails de dossiers, profondeur et parcours attendent le cadrage de Louis. Le brouillon n’est pas publié avant la fin.
 
 Le [transfert vers SSD](../exploitation/transfert-installation.md) rejoint la
 base vidéo 0.26.1 dans la 0.27.0. Inventaire, reprise, adaptation et

@@ -39,6 +39,7 @@ async page=>{
  const saved=await(await page.request.get(base+'/api/conversations/'+conversation)).json();
  check(saved.translation_items.length===0,'La conversation subsiste sans référence au travail supprimé');
  check(!await page.locator('#translation-choice option[value="'+id+'"]').count(),'Le sélecteur ne garde pas une traduction supprimée');
+ check(await page.evaluate(id=>!JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id)||'{}')[id],id),'Le repère local de lecture du travail supprimé est aussi retiré');
  await page.locator('#translation-start').waitFor({state:'visible'});check(true,'Le document peut recevoir une nouvelle traduction');
  check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
  return {checks:checks.length,results:checks,real_inference:false};

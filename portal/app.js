@@ -525,8 +525,9 @@ async function translationAction(action){
     }else if(action==='delete'){
       const result=await api('/translations/'+encodeURIComponent(identifier),undefined,{method:'DELETE'});
       if(S.conversation!==conversation||S.user?.id!==owner||S.translation!==identifier)return;
+      clearTranslation();translationReader.dataset.translationId='';
       try{const key='survie-translation-reading:'+owner,saved=JSON.parse(localStorage.getItem(key))||{};delete saved[identifier];localStorage.setItem(key,JSON.stringify(saved));}catch(_){}
-      clearTranslation();translationReader.dataset.translationId='';showAssociatedSource();$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-deleted',{detail:{id:identifier,conversation_id:conversation}}));toast(result.notice);return true;
+      showAssociatedSource();$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-deleted',{detail:{id:identifier,conversation_id:conversation}}));toast(result.notice);return true;
     }else{
       if(!S.translation)return;
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
