@@ -1,6 +1,6 @@
 # Vidéos locales et passages de sous-titres — 16 novembre 2026
 
-**Bilan de développement 0.23.0.** Nouvelle fonction compatible, niveau mineur ;
+**Bilan de livraison 0.23.0.** Nouvelle fonction compatible, niveau mineur ;
 schéma principal 1, images tierces et profils conseillés conservés. Le
 [guide actuel](../utilisation/videos-locales.md) décrit les actions et les limites.
 Ni média ni piste de Marc n’ont été examinés, aucun déploiement client effectué.
@@ -34,7 +34,13 @@ index pendant la transaction de remplacement, favoris, classement
 humain, autorisations et HTTP Range réel. Les vingt tests de l’inventaire partagé
 restent réussis. La suite complète locale comptait 786 tests (quatre ignorés
 réservés à Windows), avant les dernières précisions de suivi/limite d’aperçu.
-CI finale et paquet restent à consigner.
+Le code final `1487476` passe les
+[huit jobs CI](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43824539062),
+avec **787 tests Python** (quatre réservés à Windows ignorés sous Linux),
+les dix tests vidéo sur Windows et 22 contrôles vidéo par navigateur dans la
+matrice complète. Le classement humain est vérifié en relisant la vraie API source,
+pas en annotant artificiellement la fixture après coup. Les liens locaux et
+`git diff --check` sont vérifiés. Aucun déploiement sur le PC de Marc.
 
 Une fixture créée pour ce dépôt, aplat vert VP8/WebM de douze secondes, 1 135 octets,
 est réellement décodée dans Chromium et WebKit. Vingt-deux contrôles par navigateur :

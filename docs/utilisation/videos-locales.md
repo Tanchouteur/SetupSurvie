@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos locales
 
-**Guide actuel du candidat 0.23.0 — 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.23.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux ; les vidéos à l’intérieur des archives ZIM restent
 à inventorier séparément. Aucun contenu de Marc n’a été examiné dans le runner.
