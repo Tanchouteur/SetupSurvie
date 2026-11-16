@@ -59,7 +59,7 @@
     trigger.dataset.documentAction='translate';if(!trigger.isConnected)actions.append(trigger);
     let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null;
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
-    const resumePolling=()=>{if(!document.hidden&&valid()&&job)load(job,offset);};
+    const resumePolling=()=>{if(!document.hidden&&!root.hidden&&valid()&&job)load(job,offset);};
     document.addEventListener('visibilitychange',resumePolling);
     destroy=()=>{disposed=true;version++;clearTimeout(timer);document.removeEventListener('visibilitychange',resumePolling);};
     const labels={queued:'En attente du moteur',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
@@ -68,7 +68,7 @@
     async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}}
     function newWork(){clearTimeout(timer);version++;job=null;offset=0;parts.replaceChildren();state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
     trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();root.hidden=!root.hidden;
-      if(!root.hidden){if(!job&&items.length){job=items[0].id;select.value=job;load(job);}root.scrollIntoView({block:'start'});}},true);
+      if(!root.hidden){if(!job&&items.length){job=items[0].id;select.value=job;}if(job)load(job,offset);root.scrollIntoView({block:'start'});}else{clearTimeout(timer);version++;}},true);
     select.onchange=()=>{if(select.value)load(select.value);else newWork();};
     function render(data){
       const keyed=new Map([...parts.children].map(n=>[n.dataset.position,n]));
@@ -96,7 +96,7 @@
         download.href='/api/translations/'+encodeURIComponent(id)+'/export';conversation.href=(portal?'':'/nouveau/')+'#/assistant?conversation='+encodeURIComponent(data.conversation_id);conversation.dataset.route='assistant?conversation='+encodeURIComponent(data.conversation_id);
         publish.hidden=data.status!=='completed'||!!data.publication?.source_id;
         previous.hidden=position===0;next.hidden=position+data.parts.length>=data.total;
-        render(data);if(active&&!document.hidden)timer=setTimeout(()=>load(id,position),2000);
+        render(data);if(active&&!document.hidden&&!root.hidden)timer=setTimeout(()=>load(id,position),2000);
       }catch(e){if(valid()&&own===version){state.textContent=e.message;if(e.status!==404)timer=setTimeout(()=>load(id,position),5000);}}
     }
     async function command(action){if(!valid()||busy)return;
@@ -136,5 +136,5 @@
   }
   document.addEventListener('survie:source',event=>{const host=get('reader');mount(event.detail,host,host.querySelector('.reader-actions'));});
   document.addEventListener('survie:auth',()=>destroy?.());
-  document.addEventListener('survie:route',event=>{if(event.detail.section!=='bibliotheque'||!event.detail.params.source)destroy?.();});
+  document.addEventListener('survie:route',event=>{if(event.detail.section!=='bibliotheque'||!event.detail.params.source){destroy?.();get('reader').hidden=true;}});
 })();

@@ -43,7 +43,7 @@ Le petit média synthétique et l’archive ZIM native de test restent des fixtu
 
 | Contrôle | Résultat enregistré |
 | --- | --- |
-| Suite intégrée avant derniers ajustements | 941 tests réussis, 6 ignorés, environ 203 s |
+| Suite finale `python -m unittest discover -s tests -v` | 942 tests, aucun échec, 6 ignorés, environ 204 s |
 | Dernier contrôle API | 32 tests réussis, dont propriétaires des dossiers et métadonnées personnelles |
 | Retour volontaire | 19 tests réussis : données récentes conservées, refus identique/plus récent et restauration de la version quittée si échec |
 | Compatibilité de stockage avec 0.33.0 | Base SQLite réelle ouverte par l’ancien puis le nouveau code : messages, titres, classement et traduction conservés |
