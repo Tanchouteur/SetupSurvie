@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -214,7 +215,17 @@ backup(app,config,sys.argv[3])
             with self.assertRaises(setup.SetupError):
                 with delivery_paths.locked(index_lock):pass
         crash_after_ready(code,[app.work,destination,self.ready],self.ready,index_excluded)
-        with delivery_paths.locked(index_lock):pass
+        # Windows can signal process termination before it finishes closing
+        # the handles for its file locks. Keep the lease and wait for that cleanup.
+        deadline=time.monotonic()+2
+        while True:
+            try:
+                with delivery_paths.locked(index_lock):pass
+                break
+            except setup.SetupError as exc:
+                if os.name!='nt' or not isinstance(exc.__cause__,PermissionError) or time.monotonic()>=deadline:
+                    raise
+                time.sleep(0.025)
         self.assertTrue(index_lock.with_name(index_lock.name+'.lease').exists())
         self.assertFalse((destination/'backup.json').exists())
         complete=self.root/'complete'
