@@ -42,6 +42,12 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.34.0** raccorde l’[audio des vidéos incluses](audio-videos-zim.md) au suivi
+existant : portions Kiwix, pause/reprise, piste source puis français optionnel et
+recherche. Un média absent, sans audio ou d’une autre édition reste explicite.
+Les [preuves](../essais/2026-11-16-audio-videos-collections.md) ne certifient pas
+les sous-titres de tout le fonds de Marc.
+
 La **0.33.1** corrige le [classement des actions et des prix](../essais/2026-11-16-intention-pratique-et-prix.md),
 avec demandes courtes et variantes de remplacement. Les titres restent des pistes
 à lire, jamais un certificat de procédure.

@@ -16,9 +16,8 @@ import time
 import uuid
 
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
-from pilot.archive_media import RangeReader
-
-OPTIONS={'format_whitelist':'mov,matroska,webm,avi,mpeg,mpegts,ogg,asf,flv','protocol_whitelist':''}
+from pilot.archive_media import DECODE_OPTIONS as OPTIONS,RangeReader
+from pilot import speech_worker
 
 
 def run(video):
@@ -61,6 +60,13 @@ def run(video):
         assert metrics['media_bytes']<len(data)//2,metrics
         assert metrics['largest_range_bytes']<=256*1024,metrics
         assert not secondary,secondary
+        import numpy as np
+        local_samples,local_decode=speech_worker.decode_window(str(video),58000,62000)
+        remote_samples,remote_decode=speech_worker.decode_window(source,58000,62000)
+        assert np.array_equal(local_samples,remote_samples),'Decoded PCM differs between local file and archive ranges.'
+        assert np.max(np.abs(remote_samples))>1e-6,'The chosen synthetic interval contains no useful audio.'
+        assert remote_decode['audio_frames']<200,remote_decode
+        probe=speech_worker.probe(source);assert probe['audio_present'] and probe['duration_ms']==observed['duration_ms'],probe
         current['data']=b'#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10,\nhttps://external.invalid/audio.ts\n#EXT-X-ENDLIST\n'
         rejected=False;source['size']=len(current['data'])
         with RangeReader(source) as reader:
@@ -71,6 +77,7 @@ def run(video):
         return {'passed':True,'av':av.__version__,'source_sha256':hashlib.sha256(original).hexdigest(),'original_bytes':len(original),'padded_bytes':len(data),
             'padding':'synthetic free MP4 atom, not actual high-bitrate footage','duration_ms':observed['duration_ms'],'audio_codec':observed['audio_codec'],
             'frames_after_seek':observed['frames'],'media_io':metrics,'elapsed_ms':round((time.monotonic()-began)*1000),'playlist_refused':rejected,
+            'decoded_window':remote_decode,'pcm_samples':len(remote_samples),'pcm_exactly_matches_local':True,'product_probe':probe,
             'secondary_requests':len(secondary),'real_asr':False,'real_corpus':False,'simulated_kiwix_http':True}
     finally:server.shutdown();server.server_close();thread.join(5)
 

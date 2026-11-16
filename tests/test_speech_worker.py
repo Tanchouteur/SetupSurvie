@@ -3,6 +3,7 @@ import io
 import json
 from pathlib import Path
 from types import SimpleNamespace
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -61,3 +62,22 @@ class SpeechWorkerTests(unittest.TestCase):
         rows=[json.loads(line) for line in output.getvalue().splitlines()]
         self.assertTrue(rows[0]['ok']);self.assertEqual(rows[1],{'ok':False,'reason':'audio_processing_failed'})
         self.assertNotIn('PRIVATE',output.getvalue())
+
+    def test_recognizer_words_after_actual_audio_end_do_not_become_subtitles(self):
+        with tempfile.TemporaryDirectory() as folder:
+            model=Path(folder)
+            for name in ('model.bin','config.json','tokenizer.json'):(model/name).touch()
+            result=[segment(0,2,[word(.2,.8,' In audio.'),word(1.2,1.6,' Outside audio.')])]
+            decoder={'decoded_samples':16000,'eof':True,'last_decoded_ms':1100,'timing_unknown':False}
+            recognizer=SimpleNamespace(transcribe=lambda *args,**kwargs:(result,SimpleNamespace(language='en',language_probability=.99)))
+            with patch.dict(sys.modules,{'faster_whisper':SimpleNamespace(WhisperModel=None)}),patch.object(speech,'MODEL',recognizer),\
+                 patch.object(speech,'MODEL_KEY',(str(model),2)),patch.object(speech,'decode_window',return_value=([],decoder)):
+                value=speech.transcribe({'path':'/fixture/media.mp4','model_path':str(model),'start_ms':0,'end_ms':60000,'threads':2,'language':'en'})
+            self.assertEqual(value['cues'],[{'start_ms':200,'end_ms':800,'text':'In audio.'}]);self.assertEqual(value['raw_segments'][0]['end_ms'],2000)
+
+    def test_archive_failures_keep_a_known_reason_without_exposing_the_descriptor(self):
+        from pilot.archive_media import ArchiveMediaError
+        output=io.StringIO()
+        with patch.object(speech,'dispatch',side_effect=ArchiveMediaError('archive_edition_unavailable')),\
+             patch('sys.stdin',io.StringIO('{"action":"probe"}\n')),patch('sys.stdout',output):speech.main()
+        self.assertEqual(json.loads(output.getvalue()),{'ok':False,'reason':'archive_edition_unavailable'})

@@ -1,6 +1,6 @@
-# Retrouver et lire les vidéos locales
+# Retrouver et lire les vidéos
 
-**Guide actuel — 0.33.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.34.0, 16 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -8,7 +8,7 @@ dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le run
 ## Préparer depuis le site
 
 Après la mise à jour de maintenance, choisir **Famille → Bibliothèque → Collections →
-Vidéos locales → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
+Vidéos de la bibliothèque → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
 les métadonnées `.info.json` et les pistes `.fr.srt`, `.en.vtt`, etc. à côté du
 média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé par cette actualisation.
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
@@ -69,9 +69,44 @@ restent automatiques et demandent une comparaison à l’original.
 L’examen lit les références explicites des pages HTML ; il n’interprète pas tous
 les lecteurs JavaScript. Un lien distant ne prouve pas que le média est téléchargé.
 Les conteneurs vidéo peuvent aussi contenir des pistes non extraites : elles ne
-sont pas automatiquement prêtes. La création audio des sous-titres des médias
-internes reste à raccorder ; une vidéo sans piste est cherchable par son titre,
-pas par des paroles inventées. Une archive remplacée nécessite un nouvel examen.
+sont pas automatiquement prêtes. Depuis 0.34.0, la commande audio ci-dessous est
+aussi disponible pour les médias inclus sans piste exploitable. Avant cette
+préparation, une vidéo se cherche par son titre, pas par des paroles inventées.
+Une archive remplacée nécessite un nouvel examen.
+
+## Créer les sous-titres d’une vidéo de collection — 0.34.0
+
+Après l’examen des collections, ouvrir **Créer les sous-titres depuis l’audio**
+sur une vidéo sans piste exploitable. Choisir la langue parlée ou la détection
+automatique, puis **Créer les sous-titres**. La case **Préparer aussi la version
+française** utilise ensuite le modèle choisi pour les préparations. Comme pour
+un MP4 local, la reconnaissance doit avoir été préparée une fois par l’installateur ;
+elle utilise ensuite ses fichiers locaux, sans Internet.
+
+Kiwix doit fonctionner sur cet appareil. La vidéo est lue par portions, sans
+extraire une copie entière avant de commencer. Le suivi compte la durée audio
+traitée et les segments conservés. **Mettre en pause** arrête notre outil audio ;
+**Reprendre** réutilise les unités terminées de la même édition. Fermer la page
+ne l’arrête pas. Après un redémarrage ou le mode jeu, la reprise reste volontaire.
+
+La piste source complète rejoint la recherche et le lecteur ; le français a son
+propre suivi de préparation. Les deux pistes restent sélectionnables. Un brouillon
+ne devient pas une piste prête. L’absence de piste audio ou un échec du lecteur
+est signalé, sans publier un faux succès. Une reconnaissance terminée peut encore
+se tromper dans les mots : l’écouter et la comparer à l’original reste nécessaire.
+Si Kiwix utilise une ancienne édition après le remplacement d’une collection,
+arrêter puis rouvrir SetupSurvie avec ses raccourcis, puis refaire l’examen. Un
+ancien travail dont la source a changé ne sera pas repris sur une autre édition.
+
+Le **rapport audio** conserve les passages, la reconnaissance, les contrôles et,
+pour les médias de collection, les requêtes/octets et le temps de lecture HTTP.
+Ces octets sont transférés, parfois relus ; ils ne mesurent pas les lectures du
+disque. Les temps de décodage, chargement et reconnaissance restent distincts.
+Le rapport contient les paroles : le conserver comme un document privé.
+
+Comparer le début, le milieu, la fin et les passages techniques avec l’audio.
+Les mots et leurs temps sont estimés ; les images ou gestes ne sont pas reconnus.
+Les lecteurs distants et listes de diffusion ne deviennent pas des fichiers locaux.
 
 Le décodage dépend du format et du navigateur. Un MKV/AVI peut demander un lecteur
 installé : le lien **Ouvrir la vidéo originale** reste disponible. Le logiciel ne
@@ -81,7 +116,7 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Choisir **Famille → Bibliothèque → Collections → Vidéos locales**. Sur une vidéo,
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une vidéo,
 ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
 les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres**,
 sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
@@ -116,7 +151,7 @@ Les anciens fichiers et brouillons restent conservés pour comparaison.
 
 ## Récupérer les pistes YouTube — 0.31.0
 
-Dans **Famille → Bibliothèque → Collections → Vidéos locales**, ouvrir
+Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, ouvrir
 **Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
 laisser le champ vide ; sinon, copier l’adresse exacte de la vidéo correspondante.
 Le logiciel ne cherche pas cette adresse depuis un titre approximatif.
@@ -152,7 +187,7 @@ transfert de l’installation ; aucun compte YouTube n’est nécessaire pour ce
 
 ## Créer les sous-titres depuis un MP4 seul — 0.26.0
 
-Dans **Famille → Bibliothèque → Collections → Vidéos locales**, actualiser les
+Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, actualiser les
 vidéos. Sur un média sans piste exploitable, ouvrir **Créer les sous-titres depuis
 l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
 sous-titres**. **Préparer aussi la version française** utilise ensuite le modèle
@@ -206,9 +241,9 @@ Une piste distante annoncée dans `.info.json` n’est pas disponible hors ligne
 
 Sans piste exploitable, le média reste lisible et cherchable par ses métadonnées,
 avec **Sous-titres à préparer**. Il ne disparaît pas du rapport. Récupération en
-ligne (0.31.0), transcription des MP4 locaux (0.26.0) et examen ZIM (0.33.0) sont
-des parcours distincts. La transcription des médias internes et la validation
-réelle de chaque vidéo restent à développer/exécuter selon le
+ligne (0.31.0), transcription des MP4 locaux (0.26.0), examen ZIM (0.33.0) et audio
+interne (0.34.0) sont des parcours distincts. La validation réelle de chaque vidéo
+reste à exécuter selon le
 [protocole R6](../essais/protocole-sous-titres-videos.md).
 
 ## Installation et conservation

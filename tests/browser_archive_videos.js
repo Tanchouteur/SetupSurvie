@@ -21,7 +21,7 @@ async page=>{
     await page.waitForFunction(()=>[...document.querySelectorAll('#next-videos-list .data-card')].some(card=>card.textContent.includes('Fictional video course')));
     const card=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});
     check(await card.getByRole('link',{name:'Ouvrir l’article d’origine'}).count()===1,'Origine documentaire conservée sur la vidéo');
-    check(await card.getByText('Créer les sous-titres depuis l’audio',{exact:true}).count()===0,'Aucune commande audio non raccordée aux archives');
+    check(await card.getByText('Créer les sous-titres depuis l’audio',{exact:true}).count()===0,'Une piste présente évite de proposer inutilement une reconnaissance audio');
     const found=await(await page.request.get(base+'/api/search?q=Fictional&domain=all')).json();const hit=found.results.find(row=>row.archive_video&&row.id.includes('#t=1000'));
     check(!!hit,'La recherche commune retrouve les paroles internes et leur horodatage');
     await page.evaluate(id=>readSource(id),hit.id);const player=page.locator('#reader video');await player.waitFor();await player.evaluate(v=>v.play());

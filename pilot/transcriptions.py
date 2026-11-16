@@ -92,7 +92,10 @@ def model_config():
 def current_source(item):
     _,payload,_=videos.row(item['video_id'])
     if videos.original_revision(payload)!=item['source_revision']:raise HTTPException(409,'Cette vidéo a changé. Actualisez les vidéos puis créez une nouvelle transcription ; les anciens passages restent conservés.')
-    return payload,videos.safe_file(payload['path'])
+    if payload.get('provider')=='zim':
+        from . import archive_videos
+        return payload,{'archive':archive_videos.audio_source(payload)}
+    return payload,{'path':str(videos.safe_file(payload['path']))}
 
 
 def track_file(identifier):
@@ -140,7 +143,15 @@ class Worker:
             if len(line)>900000:raise ValueError('Réponse de transcription trop longue ; le passage reste à reprendre.')
             try:value=json.loads(line)
             except ValueError:raise ValueError('L’outil audio s’est arrêté sans réponse exploitable. Les passages terminés restent conservés.') from None
-            if not value.get('ok'):raise ValueError('Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la dictée.')
+            if not value.get('ok'):
+                messages={
+                    'archive_reader_unavailable':'Le lecteur des collections ne répond pas. Les passages terminés sont conservés ; reprenez quand Kiwix fonctionne.',
+                    'archive_edition_unavailable':'Le lecteur n’utilise pas la même édition de la collection. Si elle vient de changer, arrêtez puis rouvrez SetupSurvie avant un nouvel examen.',
+                    'archive_media_range_unavailable':'Le lecteur ne permet pas de lire cette vidéo par portions. Aucune copie complète ou piste partielle n’a été publiée.',
+                    'archive_media_redirect_refused':'Cette référence renvoie vers un autre média ; la reconnaissance reste en attente d’une source locale vérifiée.',
+                    'archive_media_response_invalid':'Le média renvoyé ne correspond pas à l’inventaire. Vérifiez la collection avant de reprendre.',
+                    'archive_secondary_reference_refused':'Ce média demande d’ouvrir une autre ressource. La reconnaissance accepte ici les fichiers vidéo inclus, sans liste distante.'}
+                raise ValueError(messages.get(value.get('reason'),'Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la dictée.'))
             return value['result']
         finally:
             if not response.done():response.cancel();await asyncio.gather(response,return_exceptions=True)
@@ -149,10 +160,10 @@ class Worker:
 def checked_unit(value,start,end):
     if not isinstance(value,dict) or not isinstance(value.get('cues'),list) or type(value.get('eof')) is not bool:raise ValueError('Réponse de transcription non exploitable.')
     if type(value.get('last_decoded_ms')) is not int or value['last_decoded_ms']<0:raise ValueError('Chronologie audio non exploitable.')
-    previous=start
+    previous=start;boundary=min(end,value['last_decoded_ms']) if value['eof'] else end
     for cue in value['cues']:
         if not isinstance(cue,dict) or any(type(cue.get(k)) is not int for k in ('start_ms','end_ms')) or not isinstance(cue.get('text'),str):raise ValueError('Segment de transcription non exploitable.')
-        if not start<=cue['start_ms']<cue['end_ms']<=end or cue['start_ms']<previous or not cue['text'].strip() or len(cue['text'])>6000:raise ValueError('Les horodatages reconnus se chevauchent ou sortent du passage. Gardez le rapport pour vérification.')
+        if not start<=cue['start_ms']<cue['end_ms']<=boundary or cue['start_ms']<previous or not cue['text'].strip() or len(cue['text'])>6000:raise ValueError('Les horodatages reconnus se chevauchent ou sortent du passage. Gardez le rapport pour vérification.')
         previous=cue['end_ms']
     return value
 
@@ -167,6 +178,7 @@ def publish(identifier):
     path=track_file(identifier);durable.write_bytes(path,content.encode(),private=True)
     parsed=video_inventory.inspect_subtitle(path,None,include_cues=True)
     if parsed['technical_status']!='passed' or len(parsed['cues'])!=len(cues):raise ValueError('La transcription complète ne passe pas les contrôles de sous-titres. Elle reste privée et non publiée.')
+    current_source(item)
     with connect() as db:
         current=db.execute('SELECT status FROM jobs WHERE id=?',(identifier,)).fetchone()[0]
         if current!='running':return False
@@ -183,15 +195,16 @@ async def run(identifier):
             async with engine.LOCK:
                 await available();item=get(identifier)
                 if item['status'] not in ('queued','running'):return
-                _,path=await asyncio.to_thread(current_source,item)
+                _,source=await asyncio.to_thread(current_source,item)
                 update(identifier,'running')
                 if not item['probe'] or not json.loads(item['probe']).get('audio_present'):
-                    probe=await worker.call({'action':'probe','path':str(path)})
+                    probe=await worker.call({'action':'probe',**source})
+                    await asyncio.to_thread(current_source,item)
                     probe['recognizer']={key:config[key] for key in ('model','runtime','device','compute_type','threads')}
                     update(identifier,'running',probe=json.dumps(probe));item=get(identifier)
                     if not probe.get('audio_present'):raise ValueError('Cette vidéo ne contient pas de piste audio décodable. Aucune parole n’a été inventée.')
                 start=item['progress_ms'];end=start+UNIT_MS;began=time.monotonic()
-                value=await worker.call({'action':'transcribe','path':str(path),'model_path':config['model_path'],
+                value=await worker.call({'action':'transcribe',**source,'model_path':config['model_path'],
                     'threads':config['threads'],'language':item['detected_language'] or item['language'] or None,'start_ms':start,'end_ms':end})
                 try:checked_unit(value,start,end)
                 except ValueError as error:

@@ -1,9 +1,10 @@
 """Private child process for bounded audio decoding/transcription, CPU by default.
 
 JSON lines on stdin/stdout. The parent owns the process and can terminate it on
-pause. Only local files and a preinstalled model are accepted; no model download.
+pause. Local files or configured Kiwix portions, preinstalled model, no download.
 """
-from contextlib import redirect_stdout
+from contextlib import contextmanager,redirect_stdout
+from fractions import Fraction
 import json
 import math
 import os
@@ -22,12 +23,34 @@ def local(path):
     return path
 
 
-def probe(path):
+def command_source(command):
+    if 'archive' in command:
+        if 'path' in command or not isinstance(command['archive'],dict):raise ValueError('invalid_media_reference')
+        return command['archive']
+    return command['path']
+
+
+@contextmanager
+def opened_media(source):
     import av
-    path=local(path)
-    with av.open(str(path),mode='r') as container:
+    if not isinstance(source,dict):
+        with av.open(str(local(source)),mode='r') as container:yield container,{'source':'local_file','read_bytes_measured':False}
+        return
+    from .archive_media import ArchiveMediaError,DECODE_OPTIONS,RangeReader
+    with RangeReader(source) as reader:
+        def deny(url,flags,options):reader.fail('archive_secondary_reference_refused')
+        try:
+            # File-like input is supplied by our bounded reader. Refuse nested
+            # protocols and playlists rather than delegate their I/O to FFmpeg.
+            with av.open(reader,mode='r',options=dict(DECODE_OPTIONS),io_open=deny) as container:yield container,reader.metrics
+        finally:
+            if reader.failure:raise ArchiveMediaError(reader.failure)
+
+
+def probe(path):
+    with opened_media(path) as (container,media_io):
         streams=list(container.streams.audio)
-        if not streams:return {'audio_present':False,'duration_ms':round(container.duration/1000) if container.duration else None}
+        if not streams:return {'audio_present':False,'duration_ms':round(container.duration/1000) if container.duration else None,'media_io':dict(media_io)}
         stream=streams[0]
         duration=float(stream.duration*stream.time_base) if stream.duration is not None and stream.time_base else None
         offset=float(stream.start_time*stream.time_base) if stream.start_time is not None and stream.time_base else 0
@@ -35,7 +58,7 @@ def probe(path):
         if duration is not None:length=max(length or 0,duration+max(0,offset))
         return {'audio_present':True,'duration_ms':round(length*1000) if length and math.isfinite(length) and length>0 else None,
             'audio_codec':stream.codec_context.name,'audio_start_ms':round(offset*1000),'sample_rate':stream.codec_context.sample_rate,
-            'channels':stream.codec_context.channels}
+            'channels':stream.codec_context.channels,'media_io':dict(media_io)}
 
 
 def decode_window(path,start_ms,end_ms):
@@ -45,12 +68,14 @@ def decode_window(path,start_ms,end_ms):
     if not 0<=start_ms<end_ms or end_ms-start_ms>64000:raise ValueError('invalid_window')
     size=math.ceil((end_ms-start_ms)*RATE/1000);audio=np.zeros(size,dtype=np.float32)
     decoded=0;frames=0;last_end=0;eof=True;timing_unknown=False
-    with av.open(str(local(path)),mode='r') as container:
+    with opened_media(path) as (container,media_io):
         if not container.streams.audio:raise ValueError('no_audio_stream')
         stream=container.streams.audio[0]
-        # Global AV timestamps are microseconds. Decode from a preceding packet;
-        # crop resampled frames by their original time instead of moving speech.
-        if start_ms:container.seek(max(0,start_ms-1000)*1000,backward=True,any_frame=False)
+        # Seek in the audio stream: a sparse video keyframe can otherwise return
+        # us to the beginning of a long film for every successive audio unit.
+        if start_ms:
+            if stream.time_base:container.seek(int(Fraction(max(0,start_ms-1000),1000)/stream.time_base),stream=stream,backward=True,any_frame=False)
+            else:container.seek(max(0,start_ms-1000)*1000,backward=True,any_frame=False)
         resampler=av.AudioResampler(format='fltp',layout='mono',rate=RATE)
         for frame in container.decode(stream):
             frames+=1
@@ -73,7 +98,7 @@ def decode_window(path,start_ms,end_ms):
                 index=round(when*RATE-start_ms*RATE/1000);left=max(0,index);right=min(size,index+len(values))
                 if right>left:
                     audio[left:right]=values[left-index:right-index];decoded+=right-left;last_end=max(last_end,round((when+len(values)/RATE)*1000))
-    return audio,{'decoded_samples':decoded,'audio_frames':frames,'eof':eof,'last_decoded_ms':last_end,'timing_unknown':timing_unknown}
+    return audio,{'decoded_samples':decoded,'audio_frames':frames,'eof':eof,'last_decoded_ms':last_end,'timing_unknown':timing_unknown,'media_io':dict(media_io)}
 
 
 def aligned_cues(segments,window_start,start,end):
@@ -132,7 +157,7 @@ def transcribe(command):
     language=command.get('language') or None
     if language is not None and (not isinstance(language,str) or not language.isalpha() or not 2<=len(language)<=3):raise ValueError('invalid_language')
     window_start=max(0,start-2000);window_end=end+2000
-    began=time.monotonic();samples,decode=decode_window(command['path'],window_start,window_end)
+    began=time.monotonic();samples,decode=decode_window(command_source(command),window_start,window_end)
     decode_ms=round((time.monotonic()-began)*1000)
     if decode['timing_unknown']:raise ValueError('audio_timestamps_unavailable')
     if not decode['decoded_samples']:return {**decode,'cues':[],'language':language,'decode_ms':decode_ms,'model_loaded':False,'warnings':['no_audio_decoded_in_window']}
@@ -144,14 +169,15 @@ def transcribe(command):
     began=time.monotonic()
     segments,info=MODEL.transcribe(samples,language=language,task='transcribe',word_timestamps=True,vad_filter=True,
         condition_on_previous_text=False,beam_size=5,temperature=0)
-    cues,raw,warnings=aligned_cues(segments,window_start,start,end)
+    actual_end=min(end,decode['last_decoded_ms']) if decode['eof'] else end
+    cues,raw,warnings=aligned_cues(segments,window_start,start,actual_end)
     return {**decode,'cues':cues,'raw_segments':raw,'language':info.language,'language_probability':float(info.language_probability),
         'decode_ms':decode_ms,'load_ms':load_ms,'recognition_ms':round((time.monotonic()-began)*1000),'model_loaded':loaded,
         'device':'cpu','compute_type':'int8','threads':threads,'warnings':warnings,'alignment':'word_midpoints_with_2s_context'}
 
 
 def dispatch(command):
-    if command.get('action')=='probe':return probe(command['path'])
+    if command.get('action')=='probe':return probe(command_source(command))
     if command.get('action')=='transcribe':return transcribe(command)
     raise ValueError('unknown_action')
 
@@ -166,7 +192,8 @@ def main():
             with redirect_stdout(sys.stderr):result=dispatch(command)
             value={'ok':True,'result':result}
         except Exception as error:
-            reason=str(error) if isinstance(error,ValueError) and str(error) in ('local_file_required','no_audio_stream','audio_timestamps_unavailable','local_model_required','invalid_window') else 'audio_processing_failed'
+            reason=str(error) if isinstance(error,ValueError) and str(error) in ('local_file_required','no_audio_stream','audio_timestamps_unavailable','local_model_required','invalid_window',
+                'archive_reader_unavailable','archive_edition_unavailable','archive_media_range_unavailable','archive_media_redirect_refused','archive_media_response_invalid','archive_secondary_reference_refused') else 'audio_processing_failed'
             value={'ok':False,'reason':reason}
         sys.stdout.write(json.dumps(value,ensure_ascii=False,allow_nan=False)+'\n');sys.stdout.flush()
 

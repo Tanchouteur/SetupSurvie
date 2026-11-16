@@ -69,6 +69,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const archiveContext=await browser.newContext(),archivePage=await archiveContext.newPage();
       const archiveRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_archive_videos.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,archiveVideos:await archiveRecipe(archivePage)}));await archiveContext.close();
+      const archiveAudioContext=await browser.newContext(),archiveAudioPage=await archiveAudioContext.newPage();
+      const archiveAudioRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_archive_audio.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,archiveAudio:await archiveAudioRecipe(archiveAudioPage)}));await archiveAudioContext.close();
       const captionsContext=await browser.newContext(),captionsPage=await captionsContext.newPage();
       const captionsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_caption_preparation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       console.log(JSON.stringify({engine:name,captionPreparation:await captionsRecipe(captionsPage)}));await captionsContext.close();

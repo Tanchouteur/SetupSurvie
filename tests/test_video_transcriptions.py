@@ -131,6 +131,11 @@ class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
 
 
 class WorkerLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    def test_a_subtitle_after_the_decoded_audio_end_is_rejected(self):
+        value={'cues':[{'start_ms':800,'end_ms':1200,'text':'Outside audio.'}],'eof':True,'last_decoded_ms':1000}
+        with self.assertRaises(ValueError):speech.checked_unit(value,0,60000)
+        value['eof']=False;self.assertIs(speech.checked_unit(value,0,60000),value)
+
     async def test_pause_terminates_only_our_child_and_waits_for_exit(self):
         import sys
         child=await asyncio.create_subprocess_exec(sys.executable,'-c','import sys,time; sys.stdin.readline(); time.sleep(30)',

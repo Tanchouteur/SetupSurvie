@@ -116,6 +116,7 @@ def public(payload,revision):
     declared=source.get('upload_date_declared') or ''
     date=declared[:4]+'-'+declared[4:6]+'-'+declared[6:] if re.fullmatch(r'\d{8}',declared) else ''
     return {'id':'video:'+key,'kind':'video','title':payload['title'][:400],'collection':source.get('channel') or payload['collection'],
+        'audio_transcription_supported':True,
         'archive_video':payload.get('provider')=='zim','archive_name':payload.get('archive'),'archive_article':('zim:'+payload['book']+'/'+payload['articles'][0]) if payload.get('provider')=='zim' and payload.get('articles') else None,
         'language':media.get('language_declared') or '', 'duration_seconds':media.get('duration_seconds_declared'),
         'subtitle_status':payload['subtitle_status'],'video_revision':revision,'document_date':date,'edition':'',

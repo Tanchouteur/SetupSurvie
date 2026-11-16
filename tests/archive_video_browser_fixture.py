@@ -40,7 +40,7 @@ def install(app,root,base):
     operations.library_command=command
 
     @app.post('/fixture/archive-videos')
-    async def prepare(active:bool=True,wait:bool=True):
+    async def prepare(active:bool=True,wait:bool=True,without_tracks:bool=False):
         nonlocal enabled,hold,task,gate
         await archive_videos.stop_all();await captions.stop_all();await videos.stop()
         if task and not task.done():
@@ -50,7 +50,7 @@ def install(app,root,base):
         shutil.rmtree(archive_videos.directory(),ignore_errors=True);source.unlink(missing_ok=True)
         enabled=active;hold=wait
         if active:
-            create(source,media=(base/'tests/fixtures/video/solid-green.webm').read_bytes())
+            create(source,media=(base/'tests/fixtures/video/solid-green.webm').read_bytes(),with_tracks=not without_tracks)
             library.KIWIX='http://127.0.0.1:8769/fixture/archive-reader'
         else:library.KIWIX=original_reader
         videos.STOP.clear();await asyncio.to_thread(videos.scan)

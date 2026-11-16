@@ -14,6 +14,7 @@ import httpx
 
 BLOCK=256*1024
 MAX_CATALOGUE=64*1024
+DECODE_OPTIONS={'format_whitelist':'mov,matroska,webm,avi,mpeg,mpegts,ogg,asf,flv','protocol_whitelist':''}
 
 
 class ArchiveMediaError(ValueError):
@@ -80,7 +81,15 @@ class RangeReader(io.RawIOBase):
         data=self.request(self.catalogue,MAX_CATALOGUE);self.metrics['catalogue_bytes']+=len(data)
         try:
             if b'<!DOCTYPE' in data or b'<!ENTITY' in data:raise ValueError()
-            entry=ET.fromstring(data)
+            # Kiwix 3.8.1's isolated entry uses dc:issued without declaring dc.
+            # Bind only known catalogue namespaces; identity/link checks stay strict.
+            body=data.removeprefix(b'\xef\xbb\xbf').lstrip()
+            if body.startswith(b'<?xml'):
+                declaration,separator,body=body.partition(b'?>')
+                if not separator:raise ValueError()
+            wrapper=ET.fromstring(b'<kiwix-entry xmlns:dc="http://purl.org/dc/terms/" xmlns:atom="http://www.w3.org/2005/Atom">'+body+b'</kiwix-entry>')
+            if len(wrapper)!=1:raise ValueError()
+            entry=wrapper[0]
             if entry.tag.rsplit('}',1)[-1]!='entry':raise ValueError()
             identity=next(node.text for node in entry if node.tag.rsplit('}',1)[-1]=='id')
             link=next(node.attrib['href'] for node in entry if node.tag.rsplit('}',1)[-1]=='link' and node.get('type')=='text/html')

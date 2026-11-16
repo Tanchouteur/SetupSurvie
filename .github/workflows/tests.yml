@@ -53,6 +53,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_search_index_queue.py -v
       - run: python -m unittest discover -s tests -p test_zim_video_inventory.py -v
       - run: python -m unittest discover -s tests -p 'test_archive_video*.py' -v
+      - run: python -m unittest discover -s tests -p test_archive_media.py -v
       - run: python -m unittest discover -s tests -p test_zim_video_jobs.py -v
       - run: python -m unittest discover -s tests -p test_search_index_tools.py -v
       - run: python -m unittest discover -s tests -p test_index_reader_probe.py -v

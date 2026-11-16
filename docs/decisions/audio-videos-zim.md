@@ -1,8 +1,25 @@
 # Reconnaissance audio des vidéos internes
 
-**Chantier isolé — 16 novembre 2026, non livré.** Suite de la 0.33.0 sur
-`codex/audio-videos-archives`. Le lecteur et les pistes internes existent ; la
-création de sous-titres depuis leur audio n’est pas encore raccordée au site.
+**Référence du candidat 0.34.0 — 16 novembre 2026.** La reconnaissance des médias
+inclus est maintenant raccordée à la commande audio existante, avec suivi,
+pause/reprise, préparation française optionnelle et index. Le
+[guide actuel](../utilisation/videos-locales.md#créer-les-sous-titres-dune-vidéo-de-collection--0340)
+décrit les commandes ; le [bilan](../essais/2026-11-16-audio-videos-collections.md)
+sépare tests simulés, lecteur réel et modèles du R7. Aucun fonds de Marc ni
+ensemble de sous-titres ne devient automatiquement validé par ce raccordement.
+
+Le descripteur privé est construit depuis le service configuré et l’inventaire
+local ; l’archive ne choisit pas son hôte réseau. Chaque unité revalide sa source.
+Le lecteur vérifie l’édition servie, refuse les redirections/lectures secondaires
+et lit par portions bornées. Le worker utilise le flux audio pour se déplacer,
+garde les temps natifs et ne publie pas de segment au-delà de l’audio décodé.
+Un cache de lecture de 256 Kio n’est pas une limite de taille des vidéos ni du
+cache documentaire. Les métriques HTTP ne sont pas des mesures d’octets disque.
+
+Les paragraphes suivants conservent l’étape de conception et ses observations
+avant raccordement ; leur futur ne décrit pas l’état du candidat ci-dessus.
+
+## Historique : prototype isolé
 
 ## Lecture choisie
 

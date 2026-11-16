@@ -106,7 +106,8 @@ class AudioWorker:
         if audio_gate is not None and start>=2000:await audio_gate.wait()
         await asyncio.sleep(.2)
         return {'cues':[{'start_ms':start+100,'end_ms':start+800,'text':f'Fictional bearing {17+start//2000} mm.'}],
-            'language':'en','language_probability':.99,'eof':start>=2000,'last_decoded_ms':4000,'warnings':[],'raw_segments':[]}
+            'language':'en','language_probability':.99,'eof':start>=2000,'last_decoded_ms':4000,'warnings':[],'raw_segments':[],
+            'media_io':{'source':'kiwix_byte_ranges','media_bytes':1135,'http_requests':2} if 'archive' in command else {'source':'local_file','read_bytes_measured':False}}
     async def close(self):pass
 transcriptions.Worker=AudioWorker
 

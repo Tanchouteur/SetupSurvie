@@ -24,6 +24,8 @@ class ArchiveMediaTests(unittest.TestCase):
             identity='00000000-0000-0000-0000-000000000000' if self.mode=='old_edition' else self.identity
             book='another-book' if self.mode=='wrong_book' else 'cours%20fran%C3%A7ais'
             data=('<entry><id>urn:uuid:'+identity+'</id><link type="text/html" href="/content/'+book+'"/></entry>').encode()
+            if self.mode=='dc_missing_namespace':data=b'<?xml version="1.0" encoding="UTF-8"?>'+data.replace(b'</entry>',b'<dc:issued>2026-11-16</dc:issued></entry>')
+            if self.mode=='unknown_namespace':data=data.replace(b'</entry>',b'<unknown:issued>2026-11-16</unknown:issued></entry>')
             if self.mode=='redirect_catalogue':return response(302,headers={'Location':'https://external.invalid/'})
             if self.mode=='oversize_catalogue':data=b'x'*(archive_media.MAX_CATALOGUE+1)
             return response(200,content=data)
@@ -72,10 +74,14 @@ class ArchiveMediaTests(unittest.TestCase):
                 client.assert_not_called()
 
     def test_reader_edition_and_book_must_match_before_any_media_read(self):
-        for mode in ('old_edition','wrong_book','redirect_catalogue','oversize_catalogue'):
+        for mode in ('old_edition','wrong_book','redirect_catalogue','oversize_catalogue','unknown_namespace'):
             self.mode=mode;self.calls=[]
             with self.subTest(mode=mode),self.assertRaises(archive_media.ArchiveMediaError):self.reader()
             self.assertEqual(len(self.calls),1)
+
+    def test_standalone_kiwix_entry_with_undeclared_dc_metadata_keeps_strict_identity_validation(self):
+        self.mode='dc_missing_namespace'
+        with self.reader() as stream:self.assertEqual(stream.read(8),self.data[:8])
 
     def test_media_redirects_ignored_ranges_wrong_size_and_truncation_never_return_fake_audio(self):
         for mode in ('redirect_media','no_ranges','bad_total','bad_mime','short','long','offline'):

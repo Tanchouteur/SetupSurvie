@@ -1,6 +1,6 @@
 # Vidéos et sous-titres dans les archives ZIM
 
-**Référence du lot 0.33.0 — 16 novembre 2026.** Le parcours comprend maintenant
+**Référence du lot 0.33.0, complétée en 0.34.0 — 16 novembre 2026.** Le parcours comprend maintenant
 la commande volontaire dans Collections, son suivi/pause/reprise, l’index commun,
 la lecture via Kiwix et la préparation française depuis une piste interne.
 Il réutilise le lecteur libzim isolé, sans l’imposer au processus du portail.
@@ -15,10 +15,11 @@ distant. Une archive modifiée exige un nouvel examen. Les contenus sont ensuite
 cherchables avec langue et horodatage ; l’assistant lit les paroles, pas les gestes.
 
 Les pistes utilisables rejoignent le parcours français existant avec mêmes temps,
-pause/reprise et contrôles. Une piste absente reste absente : reconnaissance audio
-des médias internes, interprétation des lecteurs JavaScript et qualification des
-codecs/alignements de chaque vidéo réelle restent à poursuivre. Un simple lien
-YouTube/Vimeo n’est pas une vidéo présente sur cet appareil.
+pause/reprise et contrôles. Depuis 0.34.0, une piste absente peut aussi être
+[créée depuis l’audio inclus](audio-videos-zim.md), à la demande. L’interprétation
+des lecteurs JavaScript et la qualification des codecs/alignements de chaque
+vidéo réelle restent à poursuivre. Un simple lien YouTube/Vimeo n’est pas une
+vidéo présente sur cet appareil.
 
 L’état reconstruit est dans `state/pilot/zim-videos/` ; l’index partagé reste
 `state/pilot/videos.db`. Sauvegarde et transfert de tout l’état du pilote les

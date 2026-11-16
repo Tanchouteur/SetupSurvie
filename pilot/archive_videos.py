@@ -165,6 +165,18 @@ async def stop_all():
     if tasks:await asyncio.gather(*tasks,return_exceptions=True)
 
 
+def audio_source(payload):
+    """Build a private worker descriptor only from the configured local reader."""
+    from . import archive_media,library
+    if not original_revision(payload):raise HTTPException(409,'Cette archive a changé. Actualisez son inventaire vidéo avant la reconnaissance.')
+    try:
+        value={'endpoint':library.KIWIX,'book':payload['book'],'path':payload['path'],'size':payload['media']['size_bytes'],'uuid':payload['archive_revision']['uuid']}
+        archive_media.urls(value)
+        if len(json.dumps(value))>12000:raise ValueError()
+        return value
+    except (KeyError,ValueError):raise HTTPException(409,'La référence audio de cette vidéo doit être actualisée. Reprenez l’examen des collections.') from None
+
+
 async def media_response(payload,range_header=None):
     from . import library
     path=payload['path'];book=payload['book']

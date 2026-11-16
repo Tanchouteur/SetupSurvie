@@ -5,7 +5,7 @@ points du retour de Marc et de fiabiliser en priorité le cœur de recherche.
 Le [plan retenu et son suivi](plan-ameliorations-marc.md) porte désormais le programme L1–L9, décisions, critères de fin et pistes écartées. Les [recettes progressives](../essais/recettes-progressives-marc.md) précisent les rapports à demander et les blocages à annoncer. Le [compte rendu](../essais/2026-11-14-retour-experience-marc.md) conserve les
 observations ; ce suivi distingue réalisation et validations manquantes.
 
-## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.33.1
+## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.34.0
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -18,7 +18,7 @@ et les bilans liés sont les références de réalisation.
 | Recherche classique et index | R2 Marc 0.25.0 : 32 demandes, 31 avec résultats ; 120 index natifs compatibles et 15 compléments pour 135 archives. [Rapport et limites](../essais/2026-11-16-rapports-marc-0250.md) | Avis humains manquants, couverture encore partielle dans ce rapport, ouverture de résultats prioritaires et mesure après SSD à faire sur Marc |
 | Assistant documentaire | [Essai R7 0.32.0](../essais/2026-11-16-coherence-traduction.md#contrôle-connexe-du-changement-de-modèle-et-des-sources) : première demande après changement de cible, cinq PDF effectivement lus en page 6, cinq valeurs référencées, 14,461 s | Le changement avec coexistence de modèles ne prouve pas l’éviction sous saturation ni les refus de démarrage Windows ; exporter les traces d’un cas réel si nécessaire |
 | Traductions longues | 40 pages fictives terminées sur Marc ; vocabulaire personnel figé et repère borné 0.32.0 ; chapitre réel de notice, 9 passages et reprise/lecture testés sur R7 | Cohérence complète d’un livre réel de 500 pages et sémantique de chaque passage non certifiées ; poursuivre la relecture progressive, sans transformer les contrôles numériques en certificat |
-| Vidéos locales et collections | Index/lecteur, traduction et transcription audio hors ligne ; [récupération YouTube 0.31.0](../essais/2026-11-16-acquisition-sous-titres.md) réelle sur R7 puis pistes conservées ; [examen ZIM 0.33.0](../essais/2026-11-16-videos-collections.md), pistes internes dans la recherche/lecteur et préparation française | Audio des vidéos internes à raccorder ; contenu réel de Marc, codecs, mots et alignement de chaque vidéo encore à vérifier |
+| Vidéos locales et collections | Index/lecteur, traduction et transcription audio hors ligne ; [récupération YouTube 0.31.0](../essais/2026-11-16-acquisition-sous-titres.md) réelle sur R7 ; [examen ZIM 0.33.0](../essais/2026-11-16-videos-collections.md), puis [audio inclus 0.34.0](../essais/2026-11-16-audio-videos-collections.md) : reconnaissance, reprise et français retrouvés dans l’index sur R7 | Contenu réel de Marc, codecs, mots et alignement de chaque vidéo encore à vérifier ; lecteurs JavaScript et médias distants non couverts comme fichiers inclus |
 | Mesures et conservation | Exports lisibles avec version/heure, ressources/contextes, [diagnostic de refus](../essais/2026-11-16-diagnostic-refus-demarrage.md), arrêt/reprise/suppression des traductions et paquet comparé à Git | Les observations après erreur restent distinctes de l’instant exact de la panne ; aucun test humain non exécuté n’est compté comme réussi |
 
 Le [correctif 0.33.1](../essais/2026-11-16-intention-pratique-et-prix.md) complète

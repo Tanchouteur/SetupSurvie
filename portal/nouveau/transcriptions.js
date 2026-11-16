@@ -52,7 +52,7 @@
   document.addEventListener('survie:video-cards',event=>{
     area.hidden=S.user?.role!=='admin';if(area.hidden)return;
     for(const item of event.detail){
-      if(item.archive_video)continue;
+      if(item.archive_video&&!item.audio_transcription_supported)continue;
       if(item.available===false||item.tracks.some(track=>track.status==='passed'))continue;
       const card=[...$('next-videos-list').children].find(node=>node.dataset.videoId===item.id);if(!card)continue;
       const details=element('details');details.append(element('summary','Créer les sous-titres depuis l’audio'));
