@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Finition et reprise de la base UX](2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.
+
 - [Refonte UX 0.34.0](2026-11-16-refonte-ux.md) — preuves de la livraison intégrée et limites.
 
 - [Fondations UX et retour volontaire](2026-11-16-fondations-ux.md) — candidat et preuves du premier lot.

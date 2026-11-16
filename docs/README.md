@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.
+
+- [Base et composants de l’interface](architecture/composants-interface.md) — organisation CSS/JS, cartes cohérentes et corrections après les captures utilisateur.
+
 - [Refonte UX 0.34.0](essais/2026-11-16-refonte-ux.md) — assistant en trois zones, traduction dans les lecteurs et vérifications.
 - [Inventaire des parcours et composants](decisions/inventaire-parcours-ux.md) — capacités préservées, preuves et règles d’extension.
 

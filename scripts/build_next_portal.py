@@ -15,16 +15,46 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.34.0"></script><script defer src="/app.js', 1)
-    source=source.replace('</head>','<script defer src="/source-figures.js?v=0.28.0"></script></head>')
-    source=source.replace('</head>','<script defer src="/long-summaries.js?v=0.34.0"></script></head>')
-    source=source.replace('</head>','<link rel="stylesheet" href="/bilingual-reader.css?v=0.23.0"><script defer src="/bilingual-reader.js?v=0.28.0"></script></head>')
-    source=source.replace('</head>', '<script defer src="/nouveau/videos.js?v=0.33.0"></script><script defer src="/nouveau/captions.js?v=0.35.0"></script><script defer src="/nouveau/transcriptions.js?v=0.35.0"></script><script defer src="/nouveau/acquisitions.js?v=0.31.0"></script><script defer src="/nouveau/archive-videos.js?v=0.33.0"></script></head>')
-    source=source.replace('</head>', '<script defer src="/nouveau/performance.js?v=0.26.1"></script><script defer src="/nouveau/translation-benchmark.js?v=0.26.1"></script></head>')
-    source = source.replace('</head>', '<link rel="stylesheet" href="/nouveau/style.css?v=0.31.0"><script defer src="/nouveau/collections.js?v=0.11.1"></script><script defer src="/nouveau/catalogue.js?v=0.34.0"></script><script defer src="/nouveau/search-check.js?v=0.26.1"></script><script defer src="/nouveau/search-experiment.js?v=0.26.1"></script><script defer src="/nouveau/search-tools.js?v=0.26.1"></script><script defer src="/nouveau/assistant-diagnostics.js?v=0.30.0"></script><script defer src="/nouveau/practical.js?v=0.34.0"></script><script defer src="/nouveau/usage-recipe.js?v=0.26.1"></script><link rel="stylesheet" href="/nouveau/settings.css?v=0.25.0"><script defer src="/nouveau/settings-layout.js?v=0.34.0"></script><script defer src="/nouveau/navigation.js?v=0.34.0"></script></head>', 1)
-    source=source.replace('<script defer src="/nouveau/navigation.js', '<link rel="stylesheet" href="/nouveau/ux-system.css?v=0.34.0"><script defer src="/nouveau/ux-system.js?v=0.34.0"></script><script defer src="/nouveau/navigation.js')
-    source=source.replace('<script defer src="/nouveau/navigation.js', '<link rel="stylesheet" href="/nouveau/assistant-workspace.css?v=0.34.0"><script defer src="/nouveau/assistant-workspace.js?v=0.34.0"></script><script defer src="/nouveau/navigation.js')
-    source=source.replace('<script defer src="/nouveau/navigation.js', '<link rel="stylesheet" href="/nouveau/reader-work.css?v=0.34.0"><script defer src="/nouveau/reader-work.js?v=0.34.0"></script><script defer src="/nouveau/navigation.js')
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.36.0"></script><script defer src="/app.js', 1)
+    # One ordered asset list: shared primitives, feature modules, then navigation.
+    assets = [
+        ('css', '/nouveau/style.css', '0.36.0'),
+        ('css', '/nouveau/ux-system.css', '0.36.0'),
+        ('css', '/nouveau/settings.css', '0.36.0'),
+        ('css', '/nouveau/assistant-workspace.css', '0.36.0'),
+        ('css', '/nouveau/reader-work.css', '0.36.0'),
+        ('js', '/source-figures.js', '0.28.0'),
+        ('js', '/long-summaries.js', '0.34.0'),
+        ('css', '/bilingual-reader.css', '0.23.0'),
+        ('js', '/bilingual-reader.js', '0.28.0'),
+        ('js', '/nouveau/videos.js', '0.33.0'),
+        ('js', '/nouveau/captions.js', '0.35.0'),
+        ('js', '/nouveau/transcriptions.js', '0.35.0'),
+        ('js', '/nouveau/acquisitions.js', '0.31.0'),
+        ('js', '/nouveau/archive-videos.js', '0.33.0'),
+        ('js', '/nouveau/performance.js', '0.26.1'),
+        ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
+        ('js', '/nouveau/collections.js', '0.11.1'),
+        ('js', '/nouveau/catalogue.js', '0.34.0'),
+        ('js', '/nouveau/search-check.js', '0.26.1'),
+        ('js', '/nouveau/search-experiment.js', '0.26.1'),
+        ('js', '/nouveau/search-tools.js', '0.26.1'),
+        ('js', '/nouveau/assistant-diagnostics.js', '0.30.0'),
+        ('js', '/nouveau/practical.js', '0.34.0'),
+        ('js', '/nouveau/usage-recipe.js', '0.26.1'),
+        ('js', '/nouveau/settings-layout.js', '0.36.0'),
+        ('js', '/nouveau/ux-system.js', '0.36.0'),
+        ('js', '/nouveau/assistant-workspace.js', '0.36.0'),
+        ('js', '/nouveau/reader-work.js', '0.34.0'),
+        ('js', '/nouveau/navigation.js', '0.34.0'),
+    ]
+    tags = []
+    for kind, path, version in assets:
+        tags.append(f'<link rel="stylesheet" href="{path}?v={version}">' if kind == 'css'
+                    else f'<script defer src="{path}?v={version}"></script>')
+    source = source.replace('</head>', ''.join(tags) + '</head>', 1)
+    source = source.replace('<script defer src="/nouveau/layout.js',
+                            '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
     source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.34.0')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.29.0')

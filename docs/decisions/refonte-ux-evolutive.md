@@ -88,3 +88,14 @@ la [procédure de retour](../exploitation/retour-version-avant-refonte.md).
 Comparer les mêmes tâches et contenus avant/après. Séparer interaction, recherche
 et inférence. Aucun score de clics ou audit automatique ne certifie à lui seul la
 facilité d’usage. Les preuves datées indiquent version, environnement et limites.
+
+
+## Retours visuels et reprise de la base — 0.36.0
+
+Les captures de Louis après la 0.34.0 montrent des aides disproportionnées,
+une case mal alignée, une navigation des volets redondante et une finition
+insuffisante des autres pages. Le retour invalide l’idée que les tests techniques
+suffisaient à déclarer le résultat visuel terminé. La reprise nettoie la couche
+maquette, unifie les cartes et clarifie les responsabilités CSS/JS ; voir la
+[référence des composants](../architecture/composants-interface.md).
+La revue visuelle sur pages remplies fait désormais partie de la recette.

@@ -144,7 +144,7 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
       console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
-      for(const file of ['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js']){
+      for(const file of ['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js','browser_ui_finish.js']){
         const uxContext=await browser.newContext();
         try{
           const recipe=eval('('+fs.readFileSync(path.join(root,'tests',file),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');

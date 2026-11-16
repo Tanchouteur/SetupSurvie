@@ -21,7 +21,7 @@ async (page) => {
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[320,568]]){
     await page.setViewportSize({width,height});
-    if(width<=1000&&await page.locator('#assistant-workspace').count())await page.locator('[data-assistant-zone=discussion]').click();
+    if(width<=1000&&await page.locator('#assistant-workspace').count())await page.locator('[data-close-panel]:visible').click();
     await page.locator('#send-question').waitFor({state:'visible'});
     try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth&&document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);}
     catch(error){throw Error('Disposition incorrecte '+width+'x'+height+' '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,send:document.getElementById('send-question').getBoundingClientRect().toJSON(),chat:document.getElementById('view-chat').getBoundingClientRect().toJSON(),viewport:visualViewport?.height}))));}
@@ -32,7 +32,7 @@ async (page) => {
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);
   await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
-  if(await page.locator('#assistant-workspace').count()&&await page.locator('#chat-mode').isHidden())await page.locator('[data-assistant-zone=discussion]').click();
+  if(await page.locator('#assistant-workspace').count()&&await page.locator('#chat-mode').isHidden())await page.locator('[data-close-panel]:visible').click();
   await page.locator('#chat-mode').selectOption('moyenne');await documents();await page.locator('#translation-resume').click();
   await page.waitForFunction(done=>Number(document.querySelector('#translation-progress').value)>done,before.done);
   await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
