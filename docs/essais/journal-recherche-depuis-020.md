@@ -7,6 +7,10 @@ avant admission des passages, avec priorité conservée et omissions explicites.
 Le diagnostic exporte volume du dossier et marge de contexte estimée. Le rapport
 mesure environ 5 Gio de RAM libres après chargement ; comparer 16k/32k reste utile,
 sans attribuer une lenteur au seul manque de RAM ou de VRAM.
+Code `7801964`, huit jobs CI réussis, 789 tests Python dont quatre ignorés sous
+Linux ; recettes Windows, Chromium/WebKit et deux essais Gemma 16k/32k réussis.
+Ce dernier a traité environ 12k tokens d’entrée : le coût d’un contexte plein
+sur Windows reste à mesurer avec l’essai mémoire dédié.
 
 Complément 0.23.0 : [vidéos locales et passages](2026-11-16-videos-locales-et-passages.md).
 Les pistes présentes sont indexées et lues depuis le site avec horodatage ; les

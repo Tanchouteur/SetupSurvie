@@ -123,7 +123,12 @@ pas les performances de GPT‑OSS ou du PC de Marc. L’essai mémoire dédié g
 ce rôle. Aucun contexte client modifié, aucun déploiement client réalisé.
 
 Suite locale finale : **789 tests Python réussis, quatre réservés à Windows
-ignorés**, en 136,9 s. Le reçu CI/paquet est complété après exécution.
+ignorés**, en 136,9 s. Code fonctionnel `7801964`,
+[huit jobs CI réussis](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43829077963) :
+789 tests Python en 54,8 s sous Linux, contrôles Windows, index isolés, Kiwix natif,
+routage synthétique et recettes Chromium/WebKit. Aucun modèle réel ne tourne en CI.
+Le paquet est comparé au commit avec les filtres Git de fins de ligne Windows ;
+le reçu final ci-dessous identifie sa version documentaire exacte.
 Le rapport de Marc précède ce correctif : il ne le valide pas. La fidélité sur
 tout le fonds et le coût de 32k sous Windows restent à mesurer.
 
