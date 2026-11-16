@@ -45,8 +45,8 @@ def running():return any(not task.done() for task in ACTIVE.values())
 def competing_trial():
     # An optional module can be absent; if it is running, it is already loaded.
     import sys
-    module=sys.modules.get(__package__+'.search_experiment')
-    return module is not None and module.running()
+    return any(module is not None and module.running() for module in
+               (sys.modules.get(__package__+'.'+name) for name in ('search_experiment','performance')))
 
 
 def location():return store.ROOT/'calibration/latest.json'

@@ -54,6 +54,9 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const diagnosticPage=await context.newPage();
       const diagnosticRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_assistant_diagnostics.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const diagnosticResult=await diagnosticRecipe(diagnosticPage);await diagnosticPage.close();
+      const performanceContext=await browser.newContext(),performancePage=await performanceContext.newPage();
+      const performanceRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_performance.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
+      console.log(JSON.stringify({engine:name,performance:await performanceRecipe(performancePage)}));await performanceContext.close();
       const experimentPage=await context.newPage();
       const experimentRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_experiment.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
       const experimentResult=await experimentRecipe(experimentPage);await experimentPage.close();

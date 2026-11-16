@@ -283,13 +283,13 @@ async def run(report,cases):
 
 async def start(mode='rapide',suite='verification',latency_budget_ms=15000):
     if mode not in engine.MODES or suite not in ('verification','all') or not 1000<=latency_budget_ms<=60000:raise HTTPException(400,'Options du comparatif invalides.')
-    if running() or calibration.running() or engine.LOCK.locked():raise HTTPException(409,'Une réponse ou un essai est déjà en cours.')
+    if calibration.competing_trial() or running() or calibration.running() or engine.LOCK.locked():raise HTTPException(409,'Une réponse ou un essai est déjà en cours.')
     reserves={'reserve_ram_bytes':calibration.RAM_RESERVE,'reserve_video_bytes':calibration.VIDEO_RESERVE}
     try:await calibration.guard(reserves)
     except calibration.Abort as error:raise HTTPException(409,MESSAGES.get(str(error),'Essai indisponible.'))
     reference=json.loads(REFERENCE.read_text(encoding='utf-8'))
     cases=[c for c in reference['cases'] if suite=='all' or c['id'].startswith('verify-')]
-    if running() or calibration.running() or engine.LOCK.locked():raise HTTPException(409,'Une autre demande vient de démarrer.')
+    if calibration.competing_trial() or running() or calibration.running() or engine.LOCK.locked():raise HTTPException(409,'Une autre demande vient de démarrer.')
     report={'schema':1,'kind':'SetupSurvie paired search experiment','id':uuid.uuid4().hex,'created':time.time(),'status':'running',
             'mode':mode,'model':engine.MODES[mode]['model'],'suite':suite,'latency_budget_ms':latency_budget_ms,'reserves':reserves,
             'reference_version':reference['version'],'planned_cases':len(cases),'verification_count':sum(c['id'].startswith('verify-') for c in cases),

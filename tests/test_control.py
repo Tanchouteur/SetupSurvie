@@ -63,6 +63,19 @@ class ControlTests(unittest.TestCase):
         self.assertEqual(value['phase'],'idle')
         self.assertTrue(any(t['id']=='energie' for t in value['themes']))
 
+    def test_performance_counters_are_authenticated_and_never_start_engine(self):
+        import host_performance
+        data={'schema':1,'source':'host_controller','cpu':{'percent':25},'disks':[]}
+        with patch.object(host_performance,'snapshot',return_value=data),patch.object(control,'hardware',return_value={'memory':{'available':10},'gpus':[]}),patch.object(self.server,'change') as change:
+            request=urllib.request.Request(self.base+'/performance')
+            opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            with self.assertRaises(urllib.error.HTTPError) as caught:opener.open(request,timeout=3)
+            self.assertEqual(caught.exception.code,401)
+            request.add_header('Authorization','Bearer '+control.key(self.c))
+            with opener.open(request,timeout=3) as response:value=json.load(response)
+            self.assertEqual(value['cpu']['percent'],25);self.assertEqual(value['memory']['available'],10)
+            self.assertIn('memory_gpu_age_ms',value);change.assert_not_called()
+
     def test_paused_start_requires_explicit_force(self):
         setup.write_json(self.app.work/'inference-paused.json',{'reason':'user_gaming'})
         with self.assertRaises(urllib.error.HTTPError) as error:self.post('/start',control.key(self.c))

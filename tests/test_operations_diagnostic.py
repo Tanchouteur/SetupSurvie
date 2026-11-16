@@ -8,6 +8,17 @@ from pilot import operations
 
 
 class OperationsDiagnosticTests(unittest.IsolatedAsyncioTestCase):
+    async def test_performance_old_controller_and_unavailable_counters_are_explicit(self):
+        client=httpx.AsyncClient
+        for code,body,reason in [(404,{},'controller_update_required'),(503,{},'controller_unavailable'),(200,[],'controller_unavailable'),(200,{'schema':1,'cpu':{'percent':None}},None)]:
+            async def handler(request):
+                self.assertEqual(request.url.path,'/performance');self.assertEqual(request.headers['Authorization'],'Bearer PRIVATE')
+                return httpx.Response(code,json=body)
+            with patch.object(operations,'TOKEN','PRIVATE'),patch.object(httpx,'AsyncClient',side_effect=lambda **kw:client(transport=httpx.MockTransport(handler),**kw)):
+                data=await operations.performance()
+            self.assertEqual(data['available'],reason is None)
+            if reason:self.assertEqual(data['reason'],reason)
+            self.assertNotIn('PRIVATE',str(data))
     async def test_timeout_http_and_bad_json_are_distinct_and_raw_body_is_not_exposed(self):
         client=httpx.AsyncClient
         for kind in ('timeout','http_error','invalid_response'):

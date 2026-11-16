@@ -55,6 +55,9 @@ async def lifespan(app):
     except HTTPException:pass
     yield
     try:
+        with optional_feature('performance') as module:await module.cancel(reason='service_restarted')
+    except HTTPException:pass
+    try:
         with optional_feature('search_experiment') as module:await module.cancel(reason='service_restarted')
     except HTTPException:pass
     await calibration.cancel(reason='service_restarted')
@@ -1028,6 +1031,30 @@ class CalibrationChoice(BaseModel):
     reserve_video_mib:int=Field(default=512,ge=256,le=4096)
     max_first_text_seconds:int=Field(default=90,ge=10,le=600)
     trial_timeout_seconds:int=Field(default=600,ge=30,le=900)
+
+
+class PerformanceChoice(BaseModel):
+    mode:str=Field(default='rapide',max_length=100)
+
+
+@app.get('/api/admin/performance')
+async def get_performance(value=Depends(admin)):
+    with optional_feature('performance') as module:return module.status()
+
+
+@app.get('/api/admin/performance/report')
+async def get_performance_report(value=Depends(admin)):
+    with optional_feature('performance') as module:return module.status(full=True)
+
+
+@app.post('/api/admin/performance/start',status_code=202)
+async def start_performance(body:PerformanceChoice,value=Depends(admin)):
+    with optional_feature('performance') as module:return await module.start(body.mode,value['id'],VERSION)
+
+
+@app.post('/api/admin/performance/stop')
+async def stop_performance(value=Depends(admin)):
+    with optional_feature('performance') as module:return await module.cancel()
 
 
 class CalibrationApply(BaseModel):

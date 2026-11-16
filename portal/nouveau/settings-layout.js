@@ -42,6 +42,7 @@
   const policy=move('assistant-policy','assistant').querySelector('details');policy.id='settings-policy';policy.querySelector('summary').textContent='Instructions transmises aux modèles';
   panes.assistant.append(make('p','small muted','Le temps de réponse se choisit dans la conversation. Les essais avancés utilisent l’IA uniquement après votre commande.'));
   const check=move('next-search-check-open','entretien');
+  const performance=move('next-performance-start','entretien');panes.entretien.querySelector('.settings-heading').after(performance);
   // Keep each feature’s article ancestor: its controller may append controls to it.
   const offline=make('article','panel');offline.append(make('h2','','Vérifier l’usage hors ligne'),make('p','','Réunir les contrôles et vos observations dans un rapport, sans IA.'),get('next-usage-open'));check.after(offline);
   const exports=make('details','settings-advanced');exports.id='settings-exports';exports.append(make('summary','','Conserver les classements et les dossiers pratiques'));panes.entretien.append(exports);

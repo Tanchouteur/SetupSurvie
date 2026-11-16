@@ -63,6 +63,7 @@ class Server(ThreadingHTTPServer):
         self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
         self.activity_cache=None;self.activity_time=0
+        self.performance_lock=threading.Lock()
         super().__init__(address,Handler)
 
     def status(self):
@@ -90,6 +91,19 @@ class Server(ThreadingHTTPServer):
                 self.activity_cache=library_monitor.snapshot(self.config['data_dir'],self.app.work)
                 self.activity_time=time.monotonic()
             return self.activity_cache
+
+    def performance(self):
+        import host_performance
+        with self.performance_lock:
+            value=host_performance.snapshot(self.config['data_dir'])
+            with self.lock:
+                if time.monotonic()-self.cache_time>3:
+                    self.cache=hardware(self.config);self.cache_time=time.monotonic()
+                resources=dict(self.cache)
+                age=round((time.monotonic()-self.cache_time)*1000)
+            value.update(memory=resources.get('memory',{}),gpus=resources.get('gpus',[]),
+                         disk_capacity=resources.get('disk',{}),memory_gpu_age_ms=age)
+            return value
 
     def change(self,action,force=False):
         with self.lock:
@@ -145,6 +159,10 @@ class Handler(BaseHTTPRequestHandler):
         return True
     def do_GET(self):
         if not self.authorized():return
+        if self.path=='/performance':
+            try:self.respond(200,self.server.performance())
+            except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'Les mesures du PC ne sont pas disponibles.'})
+            return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
         if self.path=='/library':

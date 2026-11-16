@@ -88,3 +88,16 @@ async def activity():
     except (httpx.HTTPError,ValueError):
         return {'phase':'unknown','source':None,'stale':True,'active':[],'commands':False,
                 'control_available':False,'observed_at':time.time()}
+
+
+async def performance():
+    """Read host counters without starting any model or returning credentials."""
+    try:
+        if not TOKEN:return {'available':False,'reason':'not_configured'}
+        async with httpx.AsyncClient(trust_env=False,timeout=6) as client:
+            response=await client.get(URL+'/performance',headers={'Authorization':'Bearer '+TOKEN})
+            if response.status_code==404:return {'available':False,'reason':'controller_update_required'}
+            response.raise_for_status();value=response.json()
+            if not isinstance(value,dict) or value.get('schema')!=1:raise ValueError()
+            return {**value,'available':True}
+    except (httpx.HTTPError,ValueError):return {'available':False,'reason':'controller_unavailable'}
