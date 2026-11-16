@@ -50,6 +50,16 @@ La [coordination UX](../decisions/coordination-ux-et-videos.md) conserve son pé
 le code fonctionnel de ce lot change `pilot/retrieval.py` ; `pilot/app.py` ne change
 que la version. Aucun écran, contrôleur hôte, carte ou générateur HTML modifié.
 
+## Reçu du paquet logiciel
+
+Source : `0562bb1a56827500c16cfd444280087941367deb`, après validation du code
+ci-dessus. **925 fichiers**, **7 514 828 octets** compressés, **16 711 777 octets**
+décompressés. SHA-256
+`49f12934eaa0acfb1b1980910e8ea7456475b7e5da615118c7df2cacfad05b8b`.
+Chaque entrée a été comparée au même commit Git avec ses filtres puis aux
+tailles/empreintes du manifeste. Le reçu désigne le commit source, pas son propre
+ajout ; aucun contenu privé, modèle ou corpus n’est embarqué.
+
 ## Limites
 
 Un titre utile ne certifie ni une procédure complète ni la qualité du document.
