@@ -1,6 +1,6 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.25.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.30.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 

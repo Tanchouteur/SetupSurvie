@@ -45,3 +45,9 @@ Version **y**, fonctionnalité de diagnostic compatible et données séparées ;
 aucune migration, modification des modèles ou changement de marge de mémoire.
 Les réglages et le mode jeu restent respectés. Référence actuelle :
 [mesures et mémoire](../utilisation/mesurer-assistant-et-memoire.md).
+
+Les recettes ciblées passent sur **Chromium et WebKit** : neuf contrôles du
+nouvel export et vingt-huit des mesures/calibration existantes par navigateur.
+Le refus et l’état actuel sont bien deux objets distincts dans le fichier ;
+aucun POST n’est envoyé par le nouveau bouton. Le nom de rapport contient
+version/date/heure et l’interface reste contenue à 320, 390 et 1366 px.

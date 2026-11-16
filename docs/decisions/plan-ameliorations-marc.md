@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — candidat 0.28.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — candidat 0.30.0.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
@@ -8,7 +8,8 @@ La [recette Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md) distingu
 chargement, réserve mémoire et couverture partielle. La 0.26.1 corrige le délai
 d’essai mémoire ; la 0.27.0 ajoute le transfert contrôlé vers SSD. La
 [lecture progressive 0.28.0](../essais/2026-11-16-lecture-traduction-progressive.md)
-est en validation finale. Ces livraisons ne clôturent ni les essais humains
+est livrée, puis ses commandes pause/arrêt/reprise/suppression en 0.29.0.
+La 0.30.0 instrumente les refus de tests avant lancement. Ces livraisons ne clôturent ni les essais humains
 restants, ni la qualification de toutes les sources et vidéos.
 
 La 0.22.0 ajoute le [diagnostic des lenteurs en un clic](../exploitation/diagnostic-complet-performances.md).
@@ -83,7 +84,7 @@ conserve ses limites. Les lots ci-dessous complètent ce socle.
 | L3 | Espaces et collections | Classement corrigeable, titres explicites et ouverture directe préservée | L2, catalogue existant | Commandes et export 0.6.0 ; relecture R3 du fonds réel attendue |
 | L4 | Assistant, ressources et contexte | Mesures par phase et réglages adaptés au modèle et au PC | L2 ; indépendant des traductions | Dossier multi-source, passages pertinents et arrêt sans progrès en 0.16.0 ; essais R7 réels distincts des simulations. Sélection manuelle multiple persistante en 0.17.0 ; lecture longue avec notes et reprise en 0.18.0 ; illustrations originales en 0.19.0 ; notices/antennes et lecture HTML en 0.19.1 ; relances relues et conditions de départ en 0.20.0. Fidélité sur de vrais livres, vision et R4 Windows restent à qualifier |
 | L5 | Lecture française et livres longs | Traduction dans le lecteur, reprise et cohérence des passages | Moteur documentaire et traductions existants ; L4 pour le réglage | Cycle du modèle, contexte réglé, avertissement des trous d’extraction et 500 pages synthétiques en 0.20.1 ; lecture française intégrée portail/PDF en 0.21.0 ; glossaire et livre réel restent à faire |
-| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 ; acquisition, transcription, ZIM et recette du fonds à faire |
+| L6 | Vidéos et sous-titres | Pistes locales puis transcription/traduction synchronisées | L5 pour le traitement de traduction ; inventaire indépendant | Index/lecteur 0.23.0, traduction des pistes présentes 0.24.0 et transcription MP4 0.26.0 ; acquisition en branche de travail, ZIM et recette du fonds à faire |
 | L7 | Savoir-faire et apprentissage | Dossiers par objectif, sources qualifiées et lacunes visibles | L2 et L3 ; traduction facultative | Six dossiers et repères humains implémentés en 0.9.0 ; qualification réelle R3 attendue |
 | L8 | Complément IA de recherche | Comparaison reproductible et décision conserver/écarter | Référence L2 ; mesure matérielle L4 | Comparatif volontaire implémenté en 0.8.0 ; décision réelle R2/R4 attendue, aide désactivée |
 | L9 | Recette intégrée et livraison | Windows/Linux, navigation mobile, hors ligne, reprise et documentation cohérente | Tous les lots ; contrôles effectués aussi à chaque livraison | CI par lot, conservation des index 0.9.3, scénario/export R7 livré en 0.10.0 et paquet vérifié ; recette réelle intégrée encore à faire |
