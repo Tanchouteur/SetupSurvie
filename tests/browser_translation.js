@@ -21,10 +21,13 @@ async (page) => {
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[320,568]]){
     await page.setViewportSize({width,height});
+    if(width<=1000&&await page.locator('#assistant-workspace').count())await page.locator('[data-assistant-zone=discussion]').click();
+    await page.locator('#send-question').waitFor({state:'visible'});
     try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth&&document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);}
     catch(error){throw Error('Disposition incorrecte '+width+'x'+height+' '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,send:document.getElementById('send-question').getBoundingClientRect().toJSON(),chat:document.getElementById('view-chat').getBoundingClientRect().toJSON(),viewport:visualViewport?.height}))));}
     const valid=await page.evaluate(()=>({horizontal:document.documentElement.scrollWidth<=innerWidth,composer:document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight}));
     if(!valid.horizontal||!valid.composer)throw Error('Disposition incorrecte '+width+'x'+height);
+    await documents();await page.locator('#translation-resume').waitFor({state:'visible'});
     layouts.push({width,height,...valid});
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);

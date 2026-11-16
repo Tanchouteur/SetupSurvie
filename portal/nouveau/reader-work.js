@@ -89,7 +89,7 @@
       try{const data=await request('/translations/'+encodeURIComponent(id)+'?offset='+position);if(!valid()||own!==version)return;
         if(position>=data.total&&position)return load(id,Math.max(0,Math.floor((data.total-1)/10)*10));
         if(modeForJob!==id){modeForJob=id;if([...modes.options].some(o=>o.value===data.mode))modes.value=data.mode;}
-        select.value=id;const active=['queued','running'].includes(data.status);
+        select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)option.textContent=(labels[data.status]||data.status)+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR');const active=['queued','running'].includes(data.status);
         state.textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||'');
         progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.done;
         pause.hidden=!active;resume.hidden=active||data.status==='completed';stop.hidden=data.status==='completed'||data.status==='stopped';remove.hidden=false;download.hidden=false;conversation.hidden=false;
