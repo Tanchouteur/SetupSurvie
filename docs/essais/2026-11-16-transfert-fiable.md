@@ -165,3 +165,9 @@ sur la recette ; elle ne constitue pas une mesure de fréquence chez les clients
 Les 39 contrôles locaux d’intégration transfert/calibration/portail réussissent,
 avec deux contrôles réservés à Windows ignorés sur le runner Linux.
 La 0.26.1 est intégrée à cette livraison sans diminution de version.
+
+Paquet vérifié au commit `7a9e1538fc82a4906d8fde74c6758a5ed321b03f` : **875 fichiers**,
+**7118416 octets** compressés, **16046101 octets** décompressés.
+Tous les octets sont comparés aux fichiers Git filtrés et au manifeste.
+SHA-256 : `1e9ecce6b7e2b3d0ad7e388b49089dde4801c312fca41f1d8956614c7f1be476`.
+Aucun transfert sur le PC de Marc n’est lancé.
