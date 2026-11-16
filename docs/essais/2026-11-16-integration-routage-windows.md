@@ -31,3 +31,8 @@ réussissent : [exécution 43880285891](https://github.com/Tanchouteur/SetupSurv
 Les **43 tests locaux ciblés** réussissent en 7,442 s. Le routage Windows réel
 chez Marc et son redémarrage restent à vérifier ; aucune intervention sur son
 installation n’est exécutée ici.
+
+Paquet vérifié au commit `c665f7a1595a5e959f008c27cf6ec1c329698dfc` : **885 fichiers**,
+**7384141 octets** compressés, **16355718 octets** décompressés.
+Tous les octets sont comparés aux fichiers Git filtrés et au manifeste.
+SHA-256 : `5462e6693e7b1d855971b16af9942a46700edef1c146600a38176be5defb2b94`.
