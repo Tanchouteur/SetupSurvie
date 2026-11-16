@@ -5,7 +5,7 @@
 - [Coordination transfert et vidéos](decisions/integration-transfert-et-videos.md) — fichiers partagés et contrat des environnements hors ligne.
 - [Transférer une installation vers un SSD](exploitation/transfert-installation.md) — parcours local, reprise, bascule et retour à la source ; recette Windows réelle restante.
 
-- [Lecture progressive des traductions](essais/2026-11-16-lecture-traduction-progressive.md) — candidat 0.28.0, progression par page et lecture conservée pendant le travail.
+- [Lecture progressive des traductions](essais/2026-11-16-lecture-traduction-progressive.md) — 0.28.0, progression par page et lecture conservée pendant le travail.
 
 - [Rapports Windows de Marc en 0.25.0](essais/2026-11-16-rapports-marc-0250.md) — calibration, recherche, comparatif et 40 pages ; corrections 0.26.1 et limites.
 

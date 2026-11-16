@@ -62,3 +62,11 @@ blocs plutôt que les cloner. En particulier, la 0.28.0 peut déplacer les passa
 dans le panneau à la fermeture. Conserver ce confort ou le remplacer par un
 parcours offrant les mêmes capacités, sans reprendre l’inférence au rechargement.
 Voir la [référence d’architecture](../architecture/README.md#lecture-pendant-une-traduction--0280).
+
+État du code observé le 16 novembre : `deploy/model-profiles.json` contient dix
+profils pour sept références de modèles ; ce catalogue n’est pas une preuve de
+leur présence sur un PC. Le lanceur a déjà `scripts/setup.py pull-model --model`,
+qui appelle le moteur local et refuse les références cloud. Le contrôleur du site
+ne propose pas encore une file dédiée de téléchargement de modèles. Le futur
+menu doit donc réutiliser ces distinctions, ajouter suivi/reprise et vérification
+de présence, sans confondre changement de mode et acquisition d’un modèle.

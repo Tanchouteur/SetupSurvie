@@ -1,6 +1,6 @@
 # Lire pendant une traduction
 
-**Bilan du candidat 0.28.0 — 16 novembre 2026.** Demande de Louis après les
+**Bilan de livraison 0.28.0 — 16 novembre 2026.** Demande de Louis après les
 rapports Windows 0.25.0. La [direction générale des conversations](../decisions/conversations-trois-zones.md) est validée ; les détails attendent encore le cadrage de Louis.
 
 Le panneau ordinaire montrait déjà les dix premiers passages et son compteur.
@@ -120,3 +120,18 @@ terminé sans texte extractible : ce dernier ne promet pas une traduction future
 ne remplit pas la barre de passages traduits et garde son original consultable.
 La recette complète de lecture atteint **26 contrôles sur chacun des deux
 navigateurs**, avec historique, Échap et document illisible.
+
+## Livraison 0.28.0 vérifiée
+
+Les **huit jobs CI** de `7078874540ac002f81946e5ae1f28e4e4a0e0508`
+réussissent : [exécution 43877790629](https://github.com/Tanchouteur/SetupSurvie/actions/runs/43877790629).
+Le rendu normal et les cas de navigation sont inclus dans la matrice complète.
+Les contrôles Python Linux/Windows et l’indexation/routage passent également.
+La suite locale précédente comptait 833 tests (14 ignorés pour lecteur optionnel
+et Windows), puis les contrôles d’intégration ont été réexécutés après la fusion
+de la livraison de transfert 0.27.0. Aucun déploiement client effectué.
+
+Pause et reprise préexistent et restent disponibles. Louis demande ensuite
+Arrêter et Supprimer : ces commandes constituent le lot suivant ; la présente
+livraison ne les prétend pas déjà implémentées. Arrêter doit conserver les passages,
+Supprimer doit distinguer travail privé, version partagée et original intact.
