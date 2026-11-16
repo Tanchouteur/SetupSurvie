@@ -20,7 +20,7 @@ class WindowsUpdateLauncherTests(unittest.TestCase):
         self.application.mkdir(parents=True)
         self.source = self.root/'source/scripts'
         self.source.mkdir(parents=True)
-        for name in ('update-windows.ps1', 'windows-common.ps1'):
+        for name in ('update-windows.ps1', 'windows-common.ps1', 'transfer-windows.ps1'):
             (self.source/name).write_text('# fixture '+name)
         self.app = setup.Installation(self.root/'prive ailleurs')
         self.config = {'target': 'windows', 'app_dir': self.application.as_posix()}

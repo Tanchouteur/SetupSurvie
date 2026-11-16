@@ -16,7 +16,11 @@ function reportFilename(kind,report={}){
 }
 function downloadReport(report,kind){
   const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=element('a');
-  link.href=url;link.download=reportFilename(kind,report);link.hidden=true;document.body.append(link);link.click();
+  link.href=url;link.download=reportFilename(kind,report);link.hidden=true;
+  // Content outside showModal() is inert. Keep Safari's download action in
+  // the same active dialog as the export button, including after a reload.
+  const host=document.activeElement?.closest('dialog[open]')||[...document.querySelectorAll('dialog[open]')].at(-1)||document.body;
+  host.append(link);link.click();
   // Keep the attached link and Blob alive while Safari starts its download.
   setTimeout(()=>{link.remove();URL.revokeObjectURL(url);},30000);
 }

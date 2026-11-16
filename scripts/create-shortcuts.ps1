@@ -74,6 +74,8 @@ $startupFolder = if ($StartupDir) { (Resolve-Path -LiteralPath $StartupDir).Path
 Add-PilotShortcut $desktop 'Ouvrir SetupSurvie.lnk' $launcher $true 'Démarrer SetupSurvie et ouvrir la bibliothèque'
 Add-PilotShortcut $desktop 'Arrêter SetupSurvie.lnk' $stopper $false 'Arrêter les services SetupSurvie en conservant les données'
 Add-PilotShortcut $desktop 'Mettre à jour SetupSurvie.lnk' $updater $false 'Récupérer la dernière version avec Git, sauvegarder et mettre à jour'
+$transfer=Join-Path $PSScriptRoot 'transfer-windows.ps1'
+Add-PilotShortcut $desktop 'Transférer SetupSurvie.lnk' $transfer $false 'Copier vers un SSD, vérifier et revenir à la source'
 if (Test-Path -LiteralPath $monitor) { Add-PilotShortcut $desktop 'Suivi bibliothèque SetupSurvie.lnk' $monitor $false 'Voir les transferts sans les interrompre' }
 if ($Startup) { Add-PilotShortcut $startupFolder 'SetupSurvie.lnk' $startupLauncher $false "Démarrer SetupSurvie à l'ouverture de session" }
 if ($DisableStartup) {
