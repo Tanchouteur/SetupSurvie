@@ -396,20 +396,25 @@ function showAssociatedSource(){
 async function attachToConversation(source){
   if(await changeSourceChoices([...selectedSourceChoices().filter(item=>item.id!==source.id),source]))view('chat');
 }
-async function loadTranslation(id,offset=S.translationOffset){
-  clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation;
-  try{const data=await api('/translations/'+encodeURIComponent(id)+'?offset='+offset);
-    if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
-    S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
-    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
-    $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
-    $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
-    if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
-    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
-    const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done+data.unreadable;
-    const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
-    $('translation-parts').replaceChildren();
-    for(const part of data.parts){const article=element('article',undefined,'translation-part');article.append(element('h3','Page/section '+part.page+' · passage '+(part.position+1)));
+function translationReading(id,offset){
+  if(!S.user)return 0;
+  const key='survie-translation-reading:'+S.user.id;
+  try{
+    const saved=JSON.parse(localStorage.getItem(key))||{};
+    if(offset===undefined)return Number.isInteger(saved[id]?.offset)?Math.max(0,Math.min(100000,saved[id].offset)):0;
+    saved[id]={offset,updated:Date.now()};
+    const ids=Object.keys(saved).sort((a,b)=>(saved[b].updated||0)-(saved[a].updated||0));
+    for(const old of ids.slice(100))delete saved[old];localStorage.setItem(key,JSON.stringify(saved));
+  }catch(_){}return 0;
+}
+function renderTranslationParts(data){
+  const parent=$('translation-parts'),key=S.user.id+':'+data.id+':'+data.offset;
+  if(parent.dataset.reading!==key){parent.replaceChildren();parent.dataset.reading=key;}
+  const existing=new Map([...parent.children].map(node=>[Number(node.dataset.position),node]));
+  for(const part of data.parts){
+    const previous=existing.get(part.position),snapshot=JSON.stringify(part);
+    existing.delete(part.position);if(previous?._translationSnapshot===snapshot)continue;
+    const article=element('article',undefined,'translation-part');article.append(element('h3','Page/section '+part.page+' · passage '+(part.position+1)));
       if(part.model||part.quality?.model)article.append(element('p',part.model||part.quality.model,'small muted'));
       article.append(element('p',part.status==='done'?part.translated:part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
       if(part.quality){
@@ -419,12 +424,43 @@ async function loadTranslation(id,offset=S.translationOffset){
       }
       if(part.source_text){const details=element('details',undefined,'translation-comparison');details.append(element('summary','Comparer avec le texte original'),element('pre',part.source_text));article.append(details);}
       if(part.candidate){const details=element('details');details.append(element('summary','Voir la proposition refusée · ne pas utiliser'),element('p',part.candidate));article.append(details);}
-      const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));$('translation-parts').append(article);
-    }
+      const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));
+    article.dataset.position=part.position;article._translationSnapshot=snapshot;
+    if(previous){const opened=[...previous.querySelectorAll('details')].map(node=>node.open);article.querySelectorAll('details').forEach((node,i)=>node.open=!!opened[i]);previous.replaceWith(article);}
+    else parent.append(article);
+  }
+  for(const node of existing.values())node.remove();
+}
+const translationReadingStatus=element('p',undefined,'small');translationReadingStatus.id='translation-reading-status';translationReadingStatus.setAttribute('role','status');
+$('translation-progress').after(translationReadingStatus);
+const translationReadingActions=element('div',undefined,'translation-actions');translationReadingActions.id='translation-reading-actions';translationReadingActions.hidden=true;
+const translationBeginning=button('Lire depuis le début',()=>loadTranslation(S.translation,0),'secondary');translationBeginning.id='translation-reading-first';
+const translationLatest=button('Lire les derniers passages traduits',()=>loadTranslation(S.translation,Math.floor((S.translationLastDone||0)/10)*10),'secondary');translationLatest.id='translation-reading-latest';
+translationReadingActions.append(translationBeginning,translationLatest);translationReadingStatus.after(translationReadingActions);
+document.addEventListener('survie:translation-clear',()=>{translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
+async function loadTranslation(id,offset){
+  if(offset===undefined)offset=id===S.translation?S.translationOffset:translationReading(id);
+  clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation,owner=S.user?.id;
+  try{const data=await api('/translations/'+encodeURIComponent(id)+'?offset='+offset);
+    if(version!==translationVersion||conversation!==S.conversation||!S.user||S.user.id!==owner)return;
+    if(offset>=data.total&&offset>0)return loadTranslation(id,Math.max(0,Math.floor((data.total-1)/10)*10));
+    translationReading(id,offset);
+    S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
+    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
+    $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
+    $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
+    if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
+    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
+    const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done;meter.setAttribute('aria-label','Passages réellement traduits');
+    translationReadingStatus.textContent=(Number.isInteger(data.pages_done)?data.pages_done+' / '+data.pages+' pages ou sections entièrement traduites. ':'')+(data.pages_partial?data.pages_partial+' page(s) commencée(s). ':'')+(active&&data.current_page?'Page ou section en cours : '+data.current_page+'. ':'')+(data.done?'Vous pouvez déjà lire les passages traduits ci-dessous, pendant que la suite avance. ':'Le premier passage n’est pas encore prêt. ')+(data.parts.length?'Affichage des passages '+(offset+1)+' à '+(offset+data.parts.length)+'.':'');
+    S.translationLastDone=data.last_done_position;translationReadingActions.hidden=!data.done;
+    translationBeginning.disabled=offset===0;translationLatest.disabled=!Number.isInteger(data.last_done_position)||Math.floor(data.last_done_position/10)*10===offset;
+    const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
+    renderTranslationParts(data);
     $('translation-previous').hidden=offset===0;$('translation-next').hidden=offset+data.parts.length>=data.total;
     document.dispatchEvent(new CustomEvent('survie:translation',{detail:data}));
     if(active&&S.view==='chat')translationTimer=setTimeout(()=>loadTranslation(id,offset),2000);
-  }catch(e){if(version===translationVersion){$('translation-status').textContent=e.message;if(S.view==='chat'&&e.status!==401&&e.status!==404)translationTimer=setTimeout(()=>loadTranslation(id,offset),5000);}}
+  }catch(e){if(version===translationVersion&&S.user?.id===owner){$('translation-status').textContent=e.message;if(S.view==='chat'&&e.status!==401&&e.status!==404)translationTimer=setTimeout(()=>loadTranslation(id,offset),5000);}}
 }
 async function translationAction(action){
   if(translationBusy||S.sourceChanging||!needUser())return;
@@ -444,7 +480,7 @@ async function translationAction(action){
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
       if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
     }
-    await loadTranslation(data.id,0);$('translation-panel').open=true;return true;
+    await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
   finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;refreshSourceChoices();}
 }

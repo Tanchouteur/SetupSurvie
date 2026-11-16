@@ -93,7 +93,7 @@
   function translationChoices(){
     let label=$('translation-choice-label');
     if(!label){label=element('label','Traductions de cette conversation');label.id='translation-choice-label';const select=element('select');select.id='translation-choice';label.append(select);$('translation-publication').before(label);
-      select.onchange=guard(async()=>{if(select.value){await loadTranslation(select.value,0);$('translation-panel').open=true;}else{clearTranslation();showAssociatedSource();$('translation-panel').open=true;}});}
+      select.onchange=guard(async()=>{if(select.value){await loadTranslation(select.value);$('translation-panel').open=true;}else{clearTranslation();showAssociatedSource();$('translation-panel').open=true;}});}
     const select=$('translation-choice');select.replaceChildren();const fresh=element('option','Nouvelle traduction du document associé');fresh.value='';select.append(fresh);
     for(const item of D.entries){const option=element('option',item.title+' · '+item.status+' · '+item.mode);option.value=item.id;select.append(option);}
     select.value=S.translation||'';label.hidden=D.entries.length===0;

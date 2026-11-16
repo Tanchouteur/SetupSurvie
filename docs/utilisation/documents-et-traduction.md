@@ -321,3 +321,27 @@ commune. Il crée sa propre conversation ; la traduction reste une action distin
 Le [guide des illustrations](illustrations-et-references.md) décrit les visuels
 originaux proposés dans l’assistant depuis 0.19.0. Leur affichage conserve
 les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d’OCR.
+
+## Lire pendant que le document se traduit — 0.28.0
+
+Déplier le panneau de traduction dans la conversation. Dès qu’un passage est
+terminé, son texte français apparaît : vous pouvez commencer à lire pendant que
+les suivants sont préparés. Le suivi indique les pages/sections entièrement
+traduites, les pages commencées et celle en cours, en plus des passages. Une page
+illustrée sans texte exploitable reste signalée, sans être comptée comme traduite.
+
+Les actualisations ne referment plus une comparaison avec l’original et ne
+remplacent pas un passage déjà prêt. **Passages suivants/précédents** parcourent
+le texte par groupes de dix. **Lire les derniers passages traduits** rejoint
+volontairement la fin disponible ; **Lire depuis le début** revient au premier
+groupe. L’arrivée d’une nouvelle page ne vous déplace pas automatiquement.
+
+Le navigateur retrouve le groupe de passages lu après rechargement ou retour à
+la conversation, pour ce profil et cette traduction. Pause et reprise gardent
+cette position. Sur un autre appareil, le travail traduit est conservé côté
+serveur, mais cette position locale n’est pas transférée automatiquement.
+Lire ou recharger ne reprend pas une traduction en pause.
+
+Le brouillon en cours reste dans la conversation. Sa publication dans les
+traductions partagées attend la fin du traitement ; les avertissements de
+traduction automatique restent visibles dès les premiers passages.

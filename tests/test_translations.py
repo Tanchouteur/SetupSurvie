@@ -40,6 +40,20 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(''.join(parts),text)
         self.assertTrue(all(0<len(p)<=2200 for p in parts))
 
+    async def test_page_progress_keeps_partial_and_unreadable_pages_distinct(self):
+        item=await self.create()
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(item['id'],))
+            for position,page,status in [(0,1,'done'),(1,1,'pending'),(2,2,'done'),(3,3,'unreadable'),(4,4,'pending')]:
+                db.execute('INSERT INTO translation_parts(translation_id,position,page,source_text,translated,status) VALUES(?,?,?,?,?,?)',(item['id'],position,page,'Fictional source','Texte fictif' if status=='done' else '',status))
+        data=tr.status(item['id'],'alice')
+        self.assertEqual((data['pages'],data['pages_done'],data['pages_partial'],data['pages_unreadable']),(4,1,1,1))
+        self.assertEqual(data['current_page'],1);self.assertEqual(data['last_done_position'],2)
+        with store.connect() as db:db.execute("UPDATE translation_parts SET status='done',translated='Suite fictive' WHERE translation_id=? AND position=1",(item['id'],))
+        data=tr.status(item['id'],'alice')
+        self.assertEqual(data['pages_done'],2);self.assertEqual(data['pages_partial'],0);self.assertEqual(data['current_page'],4)
+        with self.assertRaises(HTTPException):tr.status(item['id'],'bob')
+
     async def test_completion_is_private_saved_and_exportable_after_restart(self):
         item=await self.create()
         self.assertEqual(store.conversation_source('c')['id'],self.source)

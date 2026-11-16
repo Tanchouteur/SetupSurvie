@@ -550,3 +550,9 @@ il est corrigé, sans modifier les réserves ni le contexte. Traduction fictive
 40/40 en 13 min 04 s ; génération et chargement distingués. Les exports portent
 un nom lisible avec type, version et heure précise. Les erreurs de démarrage
 avant essai restent à identifier et ne sont pas déclarées toutes résolues.
+
+## 16 novembre — lecture pendant la traduction, candidat 0.28.0
+
+Louis demande un suivi clair et la lecture au fur et à mesure. Le [bilan](2026-11-16-lecture-traduction-progressive.md)
+distingue l’ancien aperçu existant, les améliorations du confort et les essais.
+La refonte générale des conversations sera cadrée avec Louis après cette livraison.

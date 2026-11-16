@@ -1,5 +1,10 @@
 # Choix et contraintes actuels
 
+Le candidat **0.28.0** améliore la [lecture pendant une traduction](../utilisation/documents-et-traduction.md#lire-pendant-que-le-document-se-traduit--0280) :
+progression par pages/passages, texte stable pendant les actualisations et groupe
+de lecture retrouvé après rechargement. La refonte globale des conversations
+attend l’explication de Louis. Le brouillon n’est pas publié avant la fin.
+
 La **0.26.1** corrige le délai de calibration mémoire et rend les noms de rapports
 versionnés et horodatés. Les [cinq rapports Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md)
 distinguent chargement lent, pression mémoire et recherche vidéo non préparée ;

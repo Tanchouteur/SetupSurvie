@@ -50,11 +50,17 @@ def status(identifier,user_id,offset=0):
         counts={r['status']:r['n'] for r in db.execute('SELECT status,count(*) AS n FROM translation_parts WHERE translation_id=? GROUP BY status',(identifier,))}
         rows=db.execute('SELECT position,page,source_text,translated,status,model FROM translation_parts WHERE translation_id=? ORDER BY position LIMIT 10 OFFSET ?',(identifier,offset)).fetchall()
         checks={r['position']:dict(r) for r in db.execute('SELECT position,report,candidate FROM translation_checks WHERE translation_id=?',(identifier,))}
-        pages=db.execute('SELECT count(DISTINCT page) FROM translation_parts WHERE translation_id=?',(identifier,)).fetchone()[0]
+        page_rows=db.execute("SELECT page,count(*) AS total,sum(status='done') AS done,sum(status='unreadable') AS unreadable,min(CASE WHEN status='pending' THEN position END) AS pending,max(CASE WHEN status='done' THEN position END) AS last_done FROM translation_parts WHERE translation_id=? GROUP BY page ORDER BY page",(identifier,)).fetchall()
+        pages=len(page_rows)
     reports=[json.loads(r['report']) for r in checks.values()]
     parts=[{**dict(r),'quality':json.loads(checks[r['position']]['report']) if r['position'] in checks else {'status':'unchecked','issues':[]},'candidate':checks.get(r['position'],{}).get('candidate','')} for r in rows]
     return {**item,'total':sum(counts.values()),'done':counts.get('done',0),'unreadable':counts.get('unreadable',0),
-            'pages':pages,'parts':parts,'quality':{'checked':sum(r['status']=='checked' for r in reports),'warnings':sum(r['status']=='warning' for r in reports),'blocked':sum(r['status']=='blocked' for r in reports)},'offset':offset,'notice':NOTICE,'publication':publication_state(identifier)}
+            'pages':pages,'pages_done':sum(r['done']==r['total'] for r in page_rows),
+            'pages_partial':sum(0<r['done']<r['total'] for r in page_rows),
+            'pages_unreadable':sum(r['unreadable']>0 for r in page_rows),
+            'current_page':next((r['page'] for r in page_rows if r['pending'] is not None),None),
+            'last_done_position':max((r['last_done'] for r in page_rows if r['last_done'] is not None),default=None),
+            'parts':parts,'quality':{'checked':sum(r['status']=='checked' for r in reports),'warnings':sum(r['status']=='warning' for r in reports),'blocked':sum(r['status']=='blocked' for r in reports)},'offset':offset,'notice':NOTICE,'publication':publication_state(identifier)}
 
 
 def update(identifier,status,error=None):
