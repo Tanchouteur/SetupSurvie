@@ -57,3 +57,10 @@ connu (pause, pression RAM/VRAM, activité concurrente, matériel ou moteur
 indisponible). Un message inconnu reste non catégorisé ; son texte libre n’est
 pas copié. Le test vérifie que ces catégories restent distinctes des états
 observés ensuite. Aucune interprétation d’un log n’est utilisée pour les deviner.
+
+Le premier CI Windows révèle une hypothèse POSIX dans le nouveau test : comparer
+`stat().st_mode` à 0600 ne mesure pas les ACL de Windows. Le test vérifie désormais
+sur tous les systèmes l’écriture privée dans le dossier d’état, puis les bits
+0600 sur POSIX uniquement. Le contrôle d’accès Famille et le filtrage des champs
+restent vérifiés sous Windows aussi. Aucune validation d’ACL Windows n’est
+revendiquée, ni modification globale des permissions de l’installation.

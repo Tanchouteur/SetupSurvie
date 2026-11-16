@@ -1,5 +1,6 @@
 """Refusals and read-only probes on fake HTTP; never starts an engine/model."""
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -38,16 +39,21 @@ class StartupDiagnosticTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(report['current']['model_loaded_by_this_check']);operations.status.assert_awaited_once_with(fresh=True)
 
     async def test_refusal_is_preserved_bounded_and_never_changes_the_response(self):
-        for _ in range(22):
-            error=HTTPException(409,'Private refused detail')
-            with self.assertRaises(HTTPException) as caught:
-                async with diagnostic.observe('calibration','rapide','fixture'):raise error
-            self.assertIs(caught.exception,error)
+        with patch.object(diagnostic.durable,'write_bytes',wraps=diagnostic.durable.write_bytes) as write:
+            for _ in range(22):
+                error=HTTPException(409,'Private refused detail')
+                with self.assertRaises(HTTPException) as caught:
+                    async with diagnostic.observe('calibration','rapide','fixture'):raise error
+                self.assertIs(caught.exception,error)
+            self.assertEqual(write.call_count,22)
+            self.assertTrue(all(call.kwargs.get('private') is True and call.args[0].parent==store.ROOT for call in write.call_args_list))
         rows=diagnostic.history();self.assertEqual(len(rows),20)
         self.assertTrue(all(r['phase']=='refused_before_start' and r['http_status']==409 for r in rows))
         self.assertNotIn('Private refused',diagnostic.location().read_text())
         self.assertEqual(rows[-1]['observed']['controller']['last_engine_action']['stage'],'waiting_for_api')
-        self.assertEqual(diagnostic.location().stat().st_mode&0o777,0o600)
+        # Windows chmod does not implement POSIX owner/group mode bits; its
+        # inherited ACL is not represented by stat().st_mode.
+        if os.name=='posix':self.assertEqual(diagnostic.location().stat().st_mode&0o777,0o600)
 
     async def test_success_and_invalid_mode_never_collect_or_create_an_attempt(self):
         async with diagnostic.observe('calibration','rapide','fixture'):pass
