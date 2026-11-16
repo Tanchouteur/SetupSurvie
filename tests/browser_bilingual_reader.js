@@ -2,7 +2,7 @@
 async page=>{
   const base='http://10.0.3.2:8769',checks=[],calls=[],errors=[],headers={Origin:base};
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
-  async function fit(){try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});}catch(error){throw Error('Débordement '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&e.getBoundingClientRect().width>0).slice(-15).map(e=>({tag:e.tagName,id:e.id,cls:e.className,width:e.getBoundingClientRect().width,text:e.textContent.slice(0,150)}))}))));}}
+  async function fit(){try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth,{},{timeout:5000});}catch(error){throw Error('Débordement '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth,body:document.body.getBoundingClientRect().toJSON(),overflow:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth&&e.getBoundingClientRect().width>0).slice(-15).map(e=>({tag:e.tagName,id:e.id,cls:e.className,width:e.getBoundingClientRect().width,text:e.textContent.slice(0,150)}))}))));}}
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push({url:request.url(),method:request.method()}));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   await page.goto(base+'/#/bibliotheque');await page.waitForFunction(()=>S.authReady&&S.user);
