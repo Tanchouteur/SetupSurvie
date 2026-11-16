@@ -185,7 +185,9 @@ class Handler(BaseHTTPRequestHandler):
         raw=json.dumps(value,ensure_ascii=False).encode();self.send_response(code)
         self.send_header('Content-Type','application/json');self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
     def authorized(self):
-        if not hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+key(self.server.config)):
+        supplied = self.headers.get('Authorization', '').encode('latin-1')
+        expected = ('Bearer ' + key(self.server.config)).encode('ascii')
+        if not hmac.compare_digest(supplied, expected):
             if self.command == 'POST':
                 self.discard_rejected_body()
             self.respond(401,{'detail':'Accès non autorisé.'});return False
