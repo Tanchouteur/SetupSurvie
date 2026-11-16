@@ -69,6 +69,13 @@ contrôle est séparé de ce résultat réel. Aucun essai sur les vidéos de Mar
 
 ## Restant
 
+Paquet construit au complément documentaire `26fa67d435c5c04312097aa1d933d1d844cec688` :
+**835 fichiers**, décompressés avec le validateur de maintenance et tous comparés
+au contenu Git filtré de ce commit. 6 961 854 octets compressés, 15 628 479 octets
+décompressés ; SHA-256
+`3370dcf979e8bdcc824222f19158854a6e3e468e53181e799b85eb68ddc75930`.
+Le présent reçu est ajouté après construction ; aucun média client ni modèle inclus.
+
 Télécharger ou créer des pistes françaises, conserver leur préparation par
 segments, relecture humaine par vidéo, ZIM et pistes intégrées aux conteneurs,
 gros fonds, Windows de Marc et iPhone réel restent à qualifier/développer.
