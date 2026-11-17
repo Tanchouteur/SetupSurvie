@@ -144,6 +144,17 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.41.0** ajoute `scripts/youtube_videos.py` : une liste texte d’adresses
+YouTube (une par ligne, sections `[thème]` facultatives) est téléchargée en 480p
+avec `.info.json` et sous-titres fr/en, puis rangée dans
+`library/video/youtube/<thème ou chaîne>/`. Le téléchargement passe par un dossier
+de travail, sait reprendre et ignore les vidéos déjà présentes ; aucun
+contournement de blocage. Demande de Louis du 17 novembre 2026 ; choix par défaut
+de l’agent à confirmer (dossier `library/video/`, ligne de commande d’abord,
+vidéos hors de l’offre). Voir le [guide](../utilisation/telecharger-videos-youtube.md)
+et la [décision](telechargement-videos-youtube.md). Nouvelle fonctionnalité
+compatible (`y`) ; aucun téléchargement réel encore effectué.
+
 La **0.40.0** rend les vidéos trouvables. Demande de Louis du 17 novembre 2026,
 après un essai de sous-titrage chez Marc où ni la recherche ni l’assistant ne
 trouvaient de vidéo. Ajouts : filtre **Vidéos uniquement / Documents uniquement**
