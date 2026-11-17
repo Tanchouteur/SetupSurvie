@@ -1,6 +1,6 @@
 # Projets dépliables et largeur du volet — 17 novembre 2026
 
-Statut : bilan du candidat 0.38.0, intégration finale en cours.
+Statut : bilan de la livraison 0.38.0, intégrée dans `main` le 17 novembre 2026.
 
 ## Comportement
 
@@ -43,8 +43,13 @@ et de formules de 0.37.3 sont intégrées avant cette livraison.
   vérifie aussi les bornes envoyées, avant d’en examiner les passages. Le parcours
   PDF passe localement dans Chromium et WebKit après la navigation du portail.
 
-CI complète : résultat à consigner avant fusion de la
-[PR 18](https://github.com/Tanchouteur/SetupSurvie/pull/18).
+La [PR 18](https://github.com/Tanchouteur/SetupSurvie/pull/18) est fusionnée
+dans `main`, commit `8bd7dde4ffa8e94ce1b60bb424c31b7f9071dec2`, à la demande
+explicite de Louis pendant la fin de validation. La
+[CI complète du code livré](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44069108295)
+est encore en cours à la rédaction : six jobs réussis, Windows et navigation
+complète en cours. Ce statut ne constitue pas un succès annoncé des huit jobs.
+Le code applicatif fusionné a été comparé au candidat testé `2d7a8ff`.
 
 ## Limites
 
