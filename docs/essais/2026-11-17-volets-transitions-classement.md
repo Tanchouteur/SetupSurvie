@@ -66,3 +66,37 @@ séparées. Aucun PC cible n’est mis à jour par cette livraison.
 Louis retire ensuite la demande de préparation de retour aux anciennes versions.
 Les références créées avant ce retour restent historiques ; aucun travail
 supplémentaire de repli n’est poursuivi pour ce chantier.
+
+
+## Audit complémentaire de l’objectif — 17 novembre 2026
+
+La recette `browser_motion_resilience.js` ajoute **14 contrôles par moteur**,
+réussis localement sur Chromium, WebKit et Firefox, ainsi que depuis le MCP
+Playwright dans un contexte Chromium séparé. Aucun changement du code applicatif,
+de version ou de dépendance n’est nécessaire : ce complément porte sur les tests
+et la documentation de 0.37.0.
+
+| Critère de l’objectif | Preuve directement adaptée |
+| --- | --- |
+| Le clic produit son effet sans attendre l’animation | Nouvelle recette : rubrique et adresse changées immédiatement, animation de durée bornée |
+| Le mouvement indique le changement de contexte | Recette de navigation, état des volets et revue des captures PC/téléphone ; recettes des lecteurs et recherches dans la CI complète |
+| Clics rapides et clavier utilisables | `browser_motion_and_drag.js` : dernière route active et focus de réouverture ; audit : navigation au clavier, aide et Échap |
+| Réduction du mouvement, y compris en cours | Audit : animation réelle retenue en pause, annulée par le seul changement de préférence ; effets CSS coupés, réactivation sans rechargement |
+| Navigation robuste sans l’API d’animation | Audit : retrait temporaire de `Element.animate`, commandes de navigation toujours actives et API restaurée ensuite |
+| Précédent/Suivant sans perte ni étape parasite | Audit : brouillon conservé, rubrique retrouvée, taille d’historique stable et focus dans une zone visible |
+| Aucun traitement lancé par une transition | Audit : aucune commande serveur de modification pendant la consultation ; recettes de diagnostic, recherche et lecteurs sans lancement implicite |
+| Fonctions existantes et erreurs préservées | CI complète : profils, recherche, sources, traductions, lecteurs, vidéos/audio et classements ; dépôt refusé, extérieur ou annulé dans les 35 contrôles dédiés |
+| Tailles d’écran et confort de lecture | Finition (126) et confort (38), réponses longues/tableaux, largeurs PC et téléphone ; contrôles de débordement et commandes accessibles |
+
+L’animation retenue pour le contrôle de réduction du mouvement ne peut pas
+terminer naturellement avant le test : son annulation doit venir du réglage,
+sans nouvelle navigation qui pourrait masquer un défaut. WebKit propage le
+retour au réglage normal de manière asynchrone ; la recette attend le retour
+effectif d’une animation (borne de 3 s), sans délai fixe ni retrait d’assertion.
+Les aides et commandes de navigation de cet audit ne transmettent aucune commande
+serveur après la sélection initiale du profil de fixture.
+
+Ces contrôles sont ajoutés aux lanceurs de navigation Chromium/WebKit/Firefox.
+Le résultat de leur CI sera enregistré à la clôture. Ils complètent les preuves
+existantes ; ils ne constituent pas une promesse d’absence de tout bogue ni une
+recette physique sur iPhone ou sur les PC des utilisateurs.
