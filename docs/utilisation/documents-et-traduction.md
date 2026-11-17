@@ -440,3 +440,12 @@ Arrêter ou supprimer annule et attend le traitement en cours. Aucune de ces
 commandes ne décharge un modèle utilisé ailleurs ni ne force le mode jeu. Les
 versions partagées sont des documents indépendants : leur retrait de la
 bibliothèque ne fait pas partie de la suppression du travail dans la conversation.
+
+
+## Retour au lecteur PDF — correctif 0.37.2
+
+Revenir sur la fenêtre du PDF pendant son chargement ne doit pas être interprété
+comme un changement de profil. La vérification attend la fin de l’initialisation.
+Si vous choisissez réellement un autre profil dans un autre onglet, le lecteur
+ferme les commandes de traduction et vous demande de le recharger. Le document
+original reste accessible ; aucune traduction n’est relancée automatiquement.

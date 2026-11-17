@@ -86,6 +86,12 @@ Les blocs sont protégés pendant traduction, les extraits de recherche ne coupe
 pas une formule. Les anciens instantanés ne sont pas réécrits. Correction
 compatible : niveau `z`, mêmes données personnelles et composants tiers.
 
+La **0.37.2** corrige une aide mobile qui changeait de position pendant le
+mouvement d’une vue. Le fondu conserve les éléments fixes à leur place ;
+l’[audit de navigation](../essais/2026-11-17-volets-transitions-classement.md#audit-complémentaire-et-correctif-0372--17-novembre-2026)
+ajoute les tests d’interruption, de clavier, d’historique et de repli sans API
+d’animation. Le lecteur PDF distingue aussi le focus pendant son chargement
+d’un vrai changement de profil, qui reste bloquant pour les commandes périmées. Les limites des essais simulés restent explicites.
 
 La **0.37.1** corrige deux défauts reproduits sur Bazzite : les consignes de résumé
 devenant des mots de recherche, puis un refus contradictoire de traduction des

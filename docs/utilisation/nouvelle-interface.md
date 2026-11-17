@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.37.0, 17 novembre 2026.**
+**Guide actuel — 0.37.2, 17 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -103,7 +103,8 @@ est arrêté. Aucune durée restante ni mesure CPU n’est inventée.
 Le bouton **Documents** de réouverture reste à droite, près de son volet.
 Les volets se replient et s’ouvrent progressivement ; les changements de page,
 les résultats de recherche, les documents, les menus et les fenêtres ont des
-transitions courtes. Les commandes restent immédiates : une animation n’attend
+transitions courtes. Les aides ouvertes pendant un changement de page gardent
+leur position. Les commandes restent immédiates : une animation n’attend
 pas avant de lancer une action et ne remplace pas un message de réussite ou
 d’erreur. Le réglage système de réduction des animations est respecté, y compris
 dans les cartes et le lecteur PDF.
