@@ -101,5 +101,17 @@
     card.append(heading, copy, action);
     return card;
   }
-  window.SurvieUI = Object.freeze({ help, icon, cardLink });
+  function describeDisclosure(details, description) {
+    const summary = details.querySelector(":scope > summary");
+    if (!summary) return;
+    const heading = document.createElement("span");
+    heading.className = "settings-card-title";
+    heading.textContent = summary.textContent;
+    const copy = document.createElement("span");
+    copy.className = "settings-card-description";
+    copy.textContent = description;
+    summary.classList.add("settings-card-summary");
+    summary.replaceChildren(heading, copy);
+  }
+  window.SurvieUI = Object.freeze({ help, icon, cardLink, describeDisclosure });
 })();

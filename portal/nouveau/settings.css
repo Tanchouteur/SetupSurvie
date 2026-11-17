@@ -152,3 +152,47 @@
     min-height: 148px;
   }
 }
+/* One header for every collapsible settings card, including when closed. */
+.next-interface .settings-card-summary {
+  position: relative;
+  display: block;
+  list-style: none;
+  padding: 16px 24px 16px 0 !important;
+}
+.next-interface .settings-card-summary::-webkit-details-marker {
+  display: none;
+}
+.next-interface .settings-card-summary::after {
+  content: "⌄";
+  position: absolute;
+  right: 0;
+  top: 18px;
+  font-size: 18px;
+  font-weight: 400;
+}
+.next-interface details[open] > .settings-card-summary::after {
+  content: "⌃";
+}
+.next-interface .settings-card-title {
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+.next-interface .settings-card-description {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--muted);
+}
+.next-interface .settings-pane .panel:has(> .settings-card-summary),
+.next-interface .settings-pane .panel:has(> details > .settings-card-summary) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.next-interface #settings-engine-state {
+  margin-top: 12px;
+}

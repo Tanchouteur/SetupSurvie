@@ -65,6 +65,16 @@ async (page) => {
       check(Math.max(...cards.map(c=>c.height))-Math.min(...cards.map(c=>c.height))<2, 'Cartes de même hauteur '+route+' à '+width);
       check(new Set(cards.map(c=>c.radius)).size===1 && await fit(), 'Cartes cohérentes et sans débordement '+route+' à '+width);
     }
+    for (const route of ['bibliotheque','assistant','entretien','tests']) {
+      await page.goto(base + '/#/appareil/'+route);await page.locator('#settings-'+route).waitFor({state:'visible'});
+      const headers=await page.locator('#settings-'+route+' .settings-card-summary').evaluateAll(ns=>ns.filter(n=>n.getClientRects().length).map(n=>({
+        title:n.querySelector('.settings-card-title')?.textContent,
+        description:n.querySelector('.settings-card-description')?.textContent,
+        font:getComputedStyle(n.querySelector('.settings-card-title')).fontSize,
+      })));
+      check(headers.length>0 && headers.every(h=>h.title&&h.description)&&new Set(headers.map(h=>h.font)).size===1,'Titres et descriptions cohérents sur les cartes dépliables '+route+' à '+width);
+      check(await fit(),'Cartes dépliables sans débordement '+route+' à '+width);
+    }
     await page.goto(base + '/#/bibliotheque/recherche?q=Shelter'); await page.waitForSelector('#search-results .result');
     check(await fit(), 'Recherche et libellés masqués sans débordement à '+width);
     await page.goto(base + '/#/bibliotheque/collections'); await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady);

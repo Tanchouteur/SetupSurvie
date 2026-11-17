@@ -384,6 +384,39 @@
     ],
   ])
     get(target).append(make("p", "next-mobile-note", text));
+  const cardDescriptions = {
+    "settings-add-guide":
+      "Ajouter un fichier personnel à la bibliothèque locale.",
+    "settings-index":
+      "Rendre le texte des collections disponible dans la recherche.",
+    "settings-engine":
+      "Libérer la mémoire du PC ou rendre l’assistant disponible.",
+    "settings-context":
+      "Régler le contexte par modèle ; les essais se lancent séparément.",
+    "settings-policy":
+      "Consulter le contexte et les consignes utilisés pour les réponses.",
+    "settings-exports":
+      "Télécharger les noms corrigés et les repères documentaires examinés.",
+    "settings-navigation-memory":
+      "Effacer les repères locaux sans supprimer les données du serveur.",
+    "settings-old-feedback":
+      "Relire les observations déjà enregistrées sur cet appareil.",
+    "settings-test-memory":
+      "Comparer les contextes possibles avec les ressources de ce PC.",
+    "settings-test-search":
+      "Vérifier les résultats locaux avant d’évaluer une aide IA facultative.",
+    "settings-test-performance":
+      "Mesurer les délais et retrouver les étapes lentes d’une réponse.",
+    "settings-test-offline":
+      "Rassembler les contrôles et observations de lecture sans Internet.",
+    "settings-test-translation":
+      "Mesurer une traduction progressive avec pause, reprise et rapport.",
+  };
+  for (const [id, description] of Object.entries(cardDescriptions)) {
+    const card = get(id);
+    if (card) SurvieUI.describeDisclosure(card, description);
+  }
+  // The card header stays outside the generated fields and their event handlers.
   window.SettingsLayout = {
     show(tab, test) {
       for (const [key, pane] of Object.entries(panes)) {
