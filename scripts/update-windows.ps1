@@ -95,6 +95,9 @@ if ($MyInvocation.InvocationName -ne '.') {
         try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
         if (-not $acquired) { throw 'Une mise à jour est déjà lancée dans une autre fenêtre.' }
         $settings = Get-SurvieUpdateSettings
+        if (Test-Path -LiteralPath (Join-Path $settings.Work 'transfer-guard.json')) {
+            throw 'Transfert en cours : reprendre ou revenir a la source depuis Transferer SetupSurvie.'
+        }
         $maintenance = Join-Path $settings.Base 'maintenance'
         $logs = Join-Path $maintenance 'logs'
         $null = New-Item -ItemType Directory -Path $logs -Force

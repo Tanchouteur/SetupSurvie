@@ -8,13 +8,16 @@ import threading
 import unittest
 from unittest.mock import patch,AsyncMock
 import httpx
-from pilot import library,store,search_stream,search_cache,kiwix_queries
+from pilot import library,store,search_stream,search_cache,kiwix_queries,videos
 
 
 class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         folder=tempfile.TemporaryDirectory();self.addCleanup(folder.cleanup);self.root=Path(folder.name)
         p=patch.object(store,'ROOT',self.root/'state');p.start();self.addCleanup(p.stop);store.init()
+        # This fixture tests document streams, without a background video scan
+        # outliving its temporary state directory (notably locked on Windows).
+        p=patch.object(videos,'ensure_fresh',AsyncMock(return_value='fresh'));p.start();self.addCleanup(p.stop)
         self.addAsyncCleanup(kiwix_queries.close)
 
     async def test_guide_is_received_before_a_slow_native_catalogue_finishes(self):

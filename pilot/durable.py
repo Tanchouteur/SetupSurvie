@@ -30,6 +30,8 @@ def mkdir(path):
     missing = []
     parent = path
     while not parent.exists():
+        if parent == parent.parent:
+            raise FileNotFoundError(f'Support inaccessible : {parent}')
         missing.append(parent)
         parent = parent.parent
     if not parent.is_dir():raise NotADirectoryError(str(parent))
