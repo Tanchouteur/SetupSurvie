@@ -1,5 +1,9 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.38.2 : [recherche préalable des notices](2026-11-17-recherche-notices-commandes.md),
+commandes de notice reconnues avant rédaction, référence recherchée et question
+complète pour la lecture, relance limitée au dernier appareil fourni par l’utilisateur.
+
 0.38.1 : [aide générale sans source précise](2026-11-17-aide-generale-sans-source.md),
 consignes de réponse utiles et honnêtes, préparation vide annoncée comme telle,
 sources et gestes critiques toujours distingués. Essais simulés et réels séparés.

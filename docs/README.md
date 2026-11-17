@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Recherche préalable des notices — 0.38.2](essais/2026-11-17-recherche-notices-commandes.md) — référence explicite, lecture et relances.
+
 - [Aide générale sans source précise — 0.38.1](essais/2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
 - [Projets dépliables et volet redimensionnable — 0.38.0](essais/2026-11-17-projets-assistant.md) — comportement, essais et limites.
 

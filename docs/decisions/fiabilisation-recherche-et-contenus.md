@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.38.1
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.38.2
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -38,6 +38,12 @@ repli sans passage reçu : une organisation familiale peut recevoir une aide
 générale annoncée. Le modèle ne doit pas présenter cette aide comme un contenu
 lu dans une notice ni compléter une donnée critique absente. La validation
 sur une banque étendue reste celle de la campagne documentée, pas de ce seul lot.
+
+La [0.38.2](../essais/2026-11-17-recherche-notices-commandes.md) ajoute la
+recherche préalable des commandes de notice : une référence fournie est cherchée
+avant rédaction, puis le passage utile est lu. Les deux essais fictifs R7
+retrouvent la commande attendue ou constatent l’absence de notice après recherche.
+Le fonds réel, les éditions et la fidélité d’une procédure restent à vérifier.
 
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |

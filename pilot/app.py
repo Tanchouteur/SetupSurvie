@@ -91,7 +91,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.38.1'
+VERSION='0.38.2'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
