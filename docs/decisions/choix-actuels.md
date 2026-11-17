@@ -110,6 +110,14 @@ chantier d’interface. Ne plus consacrer de préparation supplémentaire à ce 
 Les références déjà créées restent historiques ; cette décision ne modifie pas
 les données ni les fonctions existantes de navigation.
 
+## Suivi CI et maîtrise du coût — décision de Louis du 17 novembre 2026
+
+Louis demande de confier le suivi de CI à un sous-agent **GPT Luna** lorsque
+possible, pour économiser les crédits IA. Le suivi de la PR 22 est délégué à
+ce modèle : observation du run existant, résultats et diagnostic ciblé d’échec.
+La décision ne change pas les critères de validation, n’autorise pas à ignorer
+un échec et ne transfère pas implicitement les autres chantiers à des agents.
+
 ## Livraisons disponibles
 
 La **0.38.3** complète la préservation des formules : réduction du contexte et
