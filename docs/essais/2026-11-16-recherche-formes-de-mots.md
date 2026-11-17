@@ -161,3 +161,11 @@ rapports et versions antérieurs gardent leurs noms réels. Le paquet final est
 comparé fichier par fichier avec Git ; son reçu est ajouté ensuite. Aucun
 déploiement ni résultat supplémentaire sur les PC de Louis ou Marc n’est déduit
 de cette intégration.
+
+Le paquet `/tmp/setupsurvie-0361-validated.zip` est construit au commit
+`3586c0f9eeada2dd738cde43f2e30aec5ae9b39c` : **960 fichiers**, **7 627 720 octets**
+compressés et **17 011 531 octets** décompressés. SHA-256 :
+`707d0fb458bf45e225d757e30932187bd31ae89a93b86ce06abc24e2d2495ef8`.
+Tous les contenus sont identiques à `git cat-file --filters` de ce commit et aux
+tailles/empreintes du manifeste. Le présent reçu est ajouté après ce contrôle ;
+le paquet ne prétend pas contenir le commit décrivant son propre reçu.
