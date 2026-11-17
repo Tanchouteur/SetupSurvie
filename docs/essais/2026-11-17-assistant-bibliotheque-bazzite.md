@@ -65,6 +65,15 @@ reprise, passages conservés, publication, lecteur identique aux passages et
 conservation du document publié après suppression du travail vérifiés.
 L’original reste inchangé. Cet essai ne certifie pas un livre de 500 pages.
 
+La relecture ciblée par l’agent des quatre passages constate un vocabulaire
+globalement suivi, mais « head to tail » devient « tête-bêche », expression
+ambiguë pour le montage décrit. Le texte anglais extrait comporte déjà des
+trous à la place d’équations ; le modèle ne les reconstitue pas dans la traduction.
+Le contrôle numérique sans anomalie n’est donc pas une preuve d’extraction
+complète ni de fidélité technique. La suite ciblée doit examiner les formules
+et leurs originaux illustrés, ainsi que la terminologie spatiale, sans inventer
+les éléments manquants. Ce constat reste distinct d’une relecture humaine.
+
 MP4 parlé synthétique de 132 s, 267 806 octets, déjà utilisé sur R7 : reconnaissance
 CPU depuis le cache Whisper existant, **3 unités, 7 segments, 8 248 ms**. Pause
 après une unité et reprise la conservent exactement ; original inchangé.
@@ -94,8 +103,17 @@ Avant le correctif des sous-titres : **975 tests, 6 ignorés, 201,964 s**.
 Sous-titres ciblés : **17 tests, 6,730 s**, dont véritable protocole HTTP simulé,
 clarification unique, refus explicite, deuxième échec et pause entre tentatives.
 Ce sont des modèles simulés ; les générations Bazzite sont distinctes.
-Suite finale : **979 tests, 6 ignorés, 216,124 s**, sans échec. Le CI et le reçu
-de publication sont consignés après exécution.
+Suite finale avant fusion : **979 tests, 6 ignorés, 216,124 s**, sans échec.
+Après fusion normale de la navigation 0.37.0, les **huit jobs CI** du code
+`bb082577893893082a9584dcb65ccd2bdc93cdf5` réussissent :
+[exécution 44039337612](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44039337612).
+Linux : **979 tests, 6 ignorés, 80,042 s**. Windows, lecteurs isolés Python
+3.11/3.13/3.14, Kiwix réel miniature, itinéraires hors ligne et campagne navigateur
+complète passent. Les deux tests du générateur HTML repassent aussi localement.
+Les exécutions précédentes et le doublon de PR sont annulés comme remplacés,
+sans être comptés comme huit validations terminées. Aucun fichier du portail ou
+de son générateur ne diffère de la base 0.37.0. La livraison est un correctif
+compatible, sans changement du schéma de données ni des composants tiers.
 Rapports avec textes privés, modèles, caches et corpus restent hors Git.
 Linux ne valide ni les démarrages Windows, ni un livre entier, ni chaque vidéo
 de Marc, ni Safari sur iPhone. Les limites du modèle restent explicites.
@@ -103,9 +121,12 @@ de Marc, ni Safari sur iPhone. Les limites du modèle restent explicites.
 ## Nettoyage et preuves privées
 
 Le code Python testé pour la traduction, la reconnaissance et la clarification
-correspond aux fichiers du candidat final : SHA-256 des modules `pilot/*.py`
+correspond aux fichiers du candidat 0.36.2 : SHA-256 des modules `pilot/*.py`
 concaténés dans l’ordre des noms,
 `c4d478ac42a8e74a62706a4bc10994af907dde5f55f764771926ad4b3db62400`.
+La seule différence de ces modules après fusion est la version de l’API portée
+à 0.37.1 ; leur empreinte réunie devient
+`6c0677c63a5b35f40d2f922b606a29edc64a5c7c5f460b740fcaafb6f1d3a62e`.
 Les réponses, sources extraites et recettes HTTP sont conservées uniquement
 dans une archive privée du runner : 114 089 octets,
 SHA-256 `b16f1e4fccdbd30324dc823fc3f7e728d4fc4057510d95f49f1967383ef89925`.

@@ -22,6 +22,10 @@ pause/arrêt/reprise et un MP4 parlé jusqu’au français indexé. Elle corrige
 consigne « documents expliquant… » et un statut de traduction contradictoire.
 Les limites de fidélité, le contexte trop petit et les échecs initiaux restent
 explicites ; cela ne qualifie pas tout le fonds Windows de Marc.
+La relecture ciblée relève aussi des équations déjà absentes du texte extrait
+et une traduction spatiale ambiguë : conserver les originaux illustrés et
+améliorer ce contrôle reste une suite précise du même objectif, sans déclarer
+une fidélité acquise d’après le seul statut terminé.
 
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |
