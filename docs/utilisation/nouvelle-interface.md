@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.34.0, 16 novembre 2026.**
+**Guide actuel — 0.36.0, 16 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -48,6 +48,9 @@ est affiché par défaut lorsque des altitudes locales sont disponibles. On peut
 le masquer ou le réactiver dans Affichage. Une zone dépourvue d’altitudes garde
 son fond de carte ; aucune préparation ou connexion Internet n’est déclenchée.
 Le lien de retour mène à l’accueil, sans écran intermédiaire ni boucle vers la carte.
+Si le navigateur ne peut pas afficher la carte, une explication apparaît dans
+son espace de lecture avec un retour à la bibliothèque. Cela ne signifie pas
+que vos lieux ou trajets enregistrés sont perdus.
 
 **Mon appareil → Paramètres** propose quatre entrées : **Profils et connexion**,
 **Bibliothèque et préparations**, **Assistant**, **Entretien et diagnostics**.
@@ -123,8 +126,10 @@ La barre de navigation principale est en haut. L’assistant utilise l’espace 
 - **Discussion** au centre : messages, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
 - **Documents** à droite : documents choisis pour travailler, traduction et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
 
-Les boutons **Conversations** et **Documents** replient les volets pour agrandir
-la discussion. **Discussion** referme les deux. Les choix documentaires ne sont
+Chaque volet porte une flèche de fermeture dans son en-tête. Son bouton
+**Conversations** ou **Documents** apparaît dans l’en-tête de la page quand il est
+fermé. Sur téléphone, fermer le volet ramène à la discussion. La commande
+**Nouvelle discussion** reste disponible et n’apparaît qu’une seule fois. Les choix documentaires ne sont
 pas une preuve de lecture par l’IA ; un ancien échange sans suivi ne reçoit pas
 une liste de lectures inventée. La commande **Traduire** ouvre la bibliothèque
 pour choisir un document, sans lancer le moteur.
@@ -154,7 +159,8 @@ et limites des contrôles automatiques.
 ## Téléphone
 
 La barre du bas donne accès aux cinq rubriques. Dans l’assistant, les boutons
-Conversations, Discussion et Documents montrent une seule zone à la fois. Recherche, documents, assistant,
+Conversations et Documents ouvrent le volet correspondant ; sa flèche de fermeture
+ramène à la discussion. Recherche, documents, assistant,
 cartes réelles et suivis restent accessibles. La sélection documentaire, les
 préparations de zones et les commandes complexes restent sur ordinateur, avec
 une indication dans la page. Les restrictions existantes des cartes pour la

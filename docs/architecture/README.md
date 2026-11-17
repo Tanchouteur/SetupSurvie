@@ -1,5 +1,7 @@
 # Architecture du pilote
 
+- [Composants et présentation du portail](composants-interface.md) — référence 0.36.0, responsabilités CSS/JS et recette de finition.
+
 ## Interface et organisation — 0.34.0
 
 Les trois zones de `assistant-workspace` déplacent les contrôles existants sans

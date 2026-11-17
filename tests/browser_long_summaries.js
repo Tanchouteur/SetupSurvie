@@ -12,7 +12,7 @@ async page=>{
   check(await page.locator('#summary-panel').isVisible(),'Synthèse longue proposée après le choix des documents');
   check(!await page.locator('#summary-panel').evaluate(n=>n.open),'Le suivi reste replié au départ');
   await page.locator('#summary-panel').evaluate(n=>n.open=true);
-  await page.locator('[data-assistant-zone=discussion]').click();
+  await page.locator('[data-close-panel=documents]').click();
   await page.locator('#chat-input').fill('Compare les informations fictives du PDF entier.');
   await page.waitForFunction(()=>!S.loadingConversation&&!S.sourceChanging&&!S.sending);
   await page.locator('[data-assistant-zone=documents]').click();

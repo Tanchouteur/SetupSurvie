@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.
+
+- [Base et composants de l’interface](architecture/composants-interface.md) — organisation CSS/JS, cartes cohérentes et corrections après les captures utilisateur.
+
 - [Offre de PC préinstallé](decisions/acces-simple-et-offre.md) — précision de Louis du 16 novembre 2026 : code propre non publié en open source, préparation avant livraison distincte de l'usage client ; offre encore à qualifier.
 
 - [Apports utiles de NOMAD](decisions/apports-nomad.md) — décision du 16 novembre 2026 : conserver SetupSurvie ; pistes de préparation guidée, contrôle des liens et essai Kolibri, sans nouvelle fonction livrée.

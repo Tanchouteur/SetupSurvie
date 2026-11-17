@@ -3,10 +3,19 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {createRequire}=require('node:module');
 const {spawn}=require('node:child_process');
-const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
+const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
 (async()=>{
   const root=path.resolve(__dirname,'..');
   const server=spawn('python',['tests/browser_translation_server.py'],{cwd:root,stdio:['ignore','ignore','inherit']});
+  async function checkUI(browser,name,files){
+    for(const file of files){
+      const context=await browser.newContext();
+      try{
+        const recipe=eval('('+fs.readFileSync(path.join(root,'tests',file),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/ui-finish-')+')');
+        console.log(JSON.stringify({engine:name,recipe:file,...await recipe(await context.newPage())}));
+      }finally{await context.close();}
+    }
+  }
   let browser;
   try{
     let ready=false;
@@ -144,14 +153,12 @@ const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
       console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
-      for(const file of ['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js']){
-        const uxContext=await browser.newContext();
-        try{
-          const recipe=eval('('+fs.readFileSync(path.join(root,'tests',file),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-          console.log(JSON.stringify({engine:name,recipe:file,...await recipe(await uxContext.newPage())}));
-        }finally{await uxContext.close();}
-      }
+      await checkUI(browser,name,['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js','browser_ui_finish.js','browser_map_fallback.js']);
       await context.close();await browser.close();browser=null;
     }
+    // The user's desktop screenshots are from Firefox; exercise its layout too.
+    browser=await firefox.launch({headless:true});
+    await checkUI(browser,'firefox',['browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
+    await browser.close();browser=null;
   }finally{if(browser)await browser.close();server.kill();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

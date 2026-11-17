@@ -48,8 +48,9 @@ suivi doit distinguer travail en cours, résultat provisoire, fin et erreur. Une
 nouvelle capacité ne justifie pas à elle seule un nouvel écran ou une nouvelle
 commande permanente ; partir de l’usage et des composants déjà présents.
 
-`portal/nouveau/ux-system.js` fournit les primitives communes et
-`ux-system.css` leurs règles. `SurvieUI.help(libellé, texte)` produit une aide
+`portal/nouveau/ui.js` fournit les primitives communes ;
+`ux-system.css` et les styles de composants portent leurs règles.
+`ux-system.js` gère les adaptations et repères personnels. `SurvieUI.help(libellé, texte)` produit une aide
 facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
 importantes d’une action restent écrites directement dans son parcours.
 Les composants n’appellent pas les moteurs et ne lancent aucune opération.
@@ -88,3 +89,14 @@ la [procédure de retour](../exploitation/retour-version-avant-refonte.md).
 Comparer les mêmes tâches et contenus avant/après. Séparer interaction, recherche
 et inférence. Aucun score de clics ou audit automatique ne certifie à lui seul la
 facilité d’usage. Les preuves datées indiquent version, environnement et limites.
+
+
+## Retours visuels et reprise de la base — 0.36.0
+
+Les captures de Louis après la 0.34.0 montrent des aides disproportionnées,
+une case mal alignée, une navigation des volets redondante et une finition
+insuffisante des autres pages. Le retour invalide l’idée que les tests techniques
+suffisaient à déclarer le résultat visuel terminé. La reprise nettoie la couche
+maquette, unifie les cartes et clarifie les responsabilités CSS/JS ; voir la
+[référence des composants](../architecture/composants-interface.md).
+La revue visuelle sur pages remplies fait désormais partie de la recette.

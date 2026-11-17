@@ -23,7 +23,7 @@ depuis leur original ou Mon appareil. Le
 [retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
 les données récentes et une référence de la version précédente.
 
-Au **16 novembre 2026**, le pilote **0.35.0** propose une recherche locale avec
+Au **16 novembre 2026**, le pilote **0.36.0** propose une recherche locale avec
 indexation automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils

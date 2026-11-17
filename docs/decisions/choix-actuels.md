@@ -60,6 +60,12 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La version **0.36.0** reprend la [base et la finition de l’interface](../essais/2026-11-16-finitions-interface.md)
+après les captures utilisateur : volets, cases et aides corrigés, cartes unifiées,
+styles de maquette retirés et composants communs explicites. Les fonctions audio
+0.35.0 et les données sont conservées ; les tests de fonctionnement précédents
+ne suffisaient pas à valider le rendu.
+
 La **0.35.0** raccorde l’[audio des vidéos incluses](audio-videos-zim.md) au suivi
 existant : portions Kiwix, pause/reprise, piste source puis français optionnel et
 recherche. Un média absent, sans audio ou d’une autre édition reste explicite.
