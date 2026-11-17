@@ -100,5 +100,6 @@ Chaque octet du paquet est comparé à Git avec ses filtres, ainsi qu’aux tail
 et empreintes du manifeste. Version API/manifeste 0.38.1 et schéma personnel 1.
 Ce reçu est postérieur au paquet, donc non prétendu inclus dans son contenu.
 Les **1 271 liens locaux et ancres Markdown** sont contrôlés sans cible manquante.
-Le paquet vérifié ne prouve pas un déploiement sur un PC client ; la CI réunie
-et la fin de la seconde suite locale restent attendues avant fusion.
+Le paquet vérifié ne prouve pas un déploiement sur un PC client.
+Après fusion de l’interface 0.38.0, la seconde suite locale termine : **1 005 tests,
+6 ignorés, 255,697 s**, aucun échec. La CI réunie reste attendue avant fusion.
