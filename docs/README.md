@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Volets, transitions et classement — 0.37.0](essais/2026-11-17-volets-transitions-classement.md)
+
 - [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.
 
 - [Base et composants de l’interface](architecture/composants-interface.md) — organisation CSS/JS, cartes cohérentes et corrections après les captures utilisateur.

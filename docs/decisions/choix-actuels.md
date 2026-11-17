@@ -72,6 +72,12 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.37.0** répond au retour de Louis du 17 novembre : réouverture des documents
+à droite, transitions courtes pour comprendre les clics et glisser-déposer des
+conversations vers les dossiers. Les menus de classement restent disponibles,
+les données ne changent pas de schéma et la réduction des animations est respectée.
+Voir le [bilan de navigation](../essais/2026-11-17-volets-transitions-classement.md).
+
 La version **0.36.0** reprend la [base et la finition de l’interface](../essais/2026-11-16-finitions-interface.md)
 après les captures utilisateur : volets, cases et aides corrigés, cartes unifiées,
 styles de maquette retirés et composants communs explicites. Les fonctions audio

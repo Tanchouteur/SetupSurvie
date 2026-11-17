@@ -153,12 +153,12 @@ const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.
       const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
       if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
       console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
-      await checkUI(browser,name,['browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js','browser_ui_finish.js','browser_map_fallback.js']);
+      await checkUI(browser,name,['browser_motion_and_drag.js','browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js','browser_ui_finish.js','browser_map_fallback.js']);
       await context.close();await browser.close();browser=null;
     }
     // The user's desktop screenshots are from Firefox; exercise its layout too.
     browser=await firefox.launch({headless:true});
-    await checkUI(browser,'firefox',['browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
+    await checkUI(browser,'firefox',['browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
     await browser.close();browser=null;
   }finally{if(browser)await browser.close();server.kill();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

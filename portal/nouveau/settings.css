@@ -171,7 +171,7 @@
   font-weight: 400;
 }
 .next-interface details[open] > .settings-card-summary::after {
-  content: "⌃";
+  transform: rotate(180deg);
 }
 .next-interface .settings-card-title {
   display: block;

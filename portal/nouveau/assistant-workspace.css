@@ -77,7 +77,7 @@
 .next-interface .assistant-workspace .next-chat-context .translation-panel {
   max-height: none;
   margin-bottom: 10px;
-} /*Conversation layout. Panels own their close controls; the header reopens them.*/
+} /*Conversation layout. Each opener stays beside its own panel.*/
 .next-interface #view-chat {
   width: 100%;
   max-width: none;
@@ -107,6 +107,14 @@
   display: flex;
   gap: 6px;
   flex: none;
+}
+.next-interface .assistant-document-opener {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+.next-interface .assistant-document-opener:has(> button[hidden]) {
+  display: none;
 }
 .next-interface .assistant-panel-openers:has(> button:not([hidden])) {
   margin-right: 4px;
@@ -148,11 +156,17 @@
 }
 .next-interface .assistant-workspace {
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr) 300px;
-  gap: 16px;
+  grid-template-columns: 268px minmax(0, 1fr) 316px;
+  gap: 0;
   flex: 1;
   min-height: 0;
   min-width: 0;
+}
+.next-interface .assistant-history { margin-right: 16px; }
+.next-interface .assistant-documents { margin-left: 16px; }
+.next-interface .assistant-history {
+  display: flex;
+  flex-direction: column;
 }
 .next-interface .assistant-discussion {
   display: flex;
@@ -192,6 +206,10 @@
   display: block;
   max-height: none;
   margin-top: 16px;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 .next-interface .assistant-history .conversation-row {
   display: flex;
@@ -222,10 +240,38 @@
   overflow-wrap: anywhere;
   text-align: left;
 }
+.next-interface .assistant-drag-handle {
+  display: flex;
+  width: 14px;
+  flex: none;
+  color: var(--muted);
+  opacity: .4;
+  cursor: grab;
+}
+.next-interface .assistant-drag-handle svg { width: 14px; height: 20px; }
+.next-interface .conversation-row:hover .assistant-drag-handle { opacity: 1; }
+.next-interface .conversation-row.is-dragging { opacity: .45; }
+.next-interface .assistant-dragging [data-folder-id] {
+  outline: 1px dashed var(--line);
+  outline-offset: -2px;
+}
+.next-interface .assistant-dragging [data-folder-id].is-drop-target {
+  outline: 2px solid var(--green);
+  background: var(--soft);
+  color: var(--green);
+}
+@media (hover: none) {
+  .next-interface .assistant-drag-handle { display: none; }
+}
 .next-interface .assistant-folders {
   display: grid;
   gap: 2px;
   margin: 4px 0;
+  max-height: min(30dvh, 260px);
+  min-height: 36px;
+  overflow: auto;
+  flex: 0 1 auto;
+  overscroll-behavior: contain;
 }
 .next-interface .assistant-folders button {
   width: 100%;
@@ -374,22 +420,23 @@
   width: 100%;
   font-size: 13px;
 }
-.next-interface .assistant-workspace[data-left="closed"] {
-  grid-template-columns: minmax(0, 1fr) 300px;
-}
-.next-interface .assistant-workspace[data-left="closed"] > .assistant-history {
-  display: none;
-}
-.next-interface .assistant-workspace[data-right="closed"] {
-  grid-template-columns: 252px minmax(0, 1fr);
-}
-.next-interface
-  .assistant-workspace[data-right="closed"]
-  > .assistant-documents {
-  display: none;
-}
-.next-interface .assistant-workspace[data-left="closed"][data-right="closed"] {
-  grid-template-columns: minmax(0, 1fr);
+@media (min-width: 1001px) {
+  .next-interface .assistant-workspace[data-left="closed"] {
+    grid-template-columns: 0px minmax(0, 1fr) 316px;
+  }
+  .next-interface .assistant-workspace[data-right="closed"] {
+    grid-template-columns: 268px minmax(0, 1fr) 0px;
+  }
+  .next-interface .assistant-workspace[data-left="closed"][data-right="closed"] {
+    grid-template-columns: 0px minmax(0, 1fr) 0px;
+  }
+  .next-interface .assistant-workspace[data-left="closed"] > .assistant-history,
+  .next-interface .assistant-workspace[data-right="closed"] > .assistant-documents {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    margin-inline: 0;
+  }
 }
 .next-interface .assistant-tasks {
   display: flex;
@@ -459,6 +506,8 @@
   }
 }
 @media (max-width: 1000px) {
+  .next-interface .assistant-history,
+  .next-interface .assistant-documents { margin: 0; }
   .next-interface .assistant-workspace,
   .next-interface .assistant-workspace[data-left="closed"],
   .next-interface .assistant-workspace[data-right="closed"] {
@@ -493,6 +542,7 @@
   }
   .next-interface .chat-top {
     justify-content: space-between;
+    gap: 6px;
   }
 }
 @media (max-width: 760px) {
