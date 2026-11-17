@@ -1,6 +1,6 @@
 # Recherche : retrouver les formes courantes des mots
 
-**Candidat 0.36.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
+**Bilan de livraison 0.36.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
 sans nouvel écran, modèle ou format de base. Le niveau correctif corrige des
 documents déjà indexés qui pouvaient être écartés à cause du nombre du mot.
 La refonte UX 0.34.0, l’audio des collections 0.35.0 et les finitions UX 0.36.0 sont conservés.
@@ -90,6 +90,9 @@ Après correction : **trois passages par navigateur**, Chromium et WebKit, avec
 Annulation en vol, absence de nouvel appel tardif, restauration et filtre via
 les flèches/rechargement sont vérifiés. La génération est aussi contrôlée par
 deux tests Python. Cela ne constitue pas un essai Safari sur iPhone physique.
+Ces trois passages, soit 78 contrôles par navigateur, sont rejoués avec succès
+après reprise de la présentation 0.36.0, sur le candidat 0.36.1. Les deux tests de
+génération passent aussi sur ce nouvel état.
 
 Un fichier core privé de WebKit apparaît pendant ces essais locaux ; seules
 ses métadonnées ELF sont examinées, sans contenu mémoire. Ce fichier de 6,12 Go
@@ -134,9 +137,27 @@ de ces résultats.
 
 Le premier CI `43957470597` est annulé comme remplacé lors de l’ajout des compteurs
 au diagnostic. Le second, `43958161595`, conserve son échec WebKit décrit plus
-haut. Ce dernier valide la correction et les nouvelles assertions avant la fusion UX ; les erreurs
+haut. Le passage `44025349791` valide la correction et les nouvelles assertions avant la fusion UX ; les erreurs
 JavaScript ne sont pas filtrées. À ce stade, les ajouts après le code validé sont uniquement
 documentaires, dont la reprise de la consigne de traçabilité de `main` (`1df999b`).
 L’UX et les orientations de PC préinstallé/NOMAD restent conservées ; aucun nouveau
 module de ces propositions n’est lancé par ce correctif. Le reçu du paquet est
 ajouté après sa comparaison à Git, sans annoncer un déploiement client.
+
+## Livraison après reprise de l’UX 0.36.0
+
+Les huit [jobs CI de l’état réuni](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44027721067)
+passent au code `974152d68700e27231092ab7796010d80c7f81b6` : Windows, Linux,
+lecteurs isolés, vrai Kiwix, routage et navigation complète Chromium/WebKit.
+La suite Linux compte **972 tests en 77,082 s, 6 ignorés**. Le contrôle du cycle
+conserve ses huit assertions par navigateur, en plus des recettes de la nouvelle
+présentation. Les changements suivants sont uniquement documentaires, dont les
+nouveaux accès Bazzite consignés sur `main` (`86fc060`). Ces accès ne constituent
+pas encore un essai produit sur ce PC ; l’IA peut y rester volontairement en pause.
+
+Le niveau **0.36.1** est un correctif compatible au-dessus de la livraison UX
+0.36.0, sans changement d’image tierce ni de schéma de données. Les paquets,
+rapports et versions antérieurs gardent leurs noms réels. Le paquet final est
+comparé fichier par fichier avec Git ; son reçu est ajouté ensuite. Aucun
+déploiement ni résultat supplémentaire sur les PC de Louis ou Marc n’est déduit
+de cette intégration.

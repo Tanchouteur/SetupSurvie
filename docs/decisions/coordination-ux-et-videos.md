@@ -61,6 +61,22 @@ est archivé sous `ux-reference-0.33.1`, après reprise du correctif de recherch
 [bilan UX](../essais/2026-11-16-refonte-ux.md). Cette intégration de code ne
 constitue pas une mise à jour des PC cibles.
 
+## Correctif recherche après les finitions 0.36.0
+
+Le candidat de `codex/recherche-formes`, initialement 0.35.1, reprend `main`
+0.36.0 (`1997efd`) et devient **0.36.1**. Son moteur rapproche des formes de
+nombre et conserve les compteurs de tentatives par titre. Un échec WebKit conduit
+aussi à protéger `api()` dans `portal/app.js` contre les appels tardifs après
+fermeture ; `pageshow` réautorise les requêtes. Aucun identifiant DOM, route,
+événement documentaire ou donnée utilisateur n’est remplacé.
+
+Le générateur garde la liste ordonnée des ressources de 0.36.0, dont `ui.js`,
+et renouvelle seulement la clé d’`app.js`. Les HTML sont régénérés. La recette
+de cycle garde l’assertion d’erreurs et ajoute l’absence de nouvelle requête
+après départ. Les essais et la CI de l’état réuni sont consignés dans le
+[bilan recherche](../essais/2026-11-16-recherche-formes-de-mots.md), séparément des
+validations antérieures et des essais physiques non exécutés.
+
 La PR UX nº 13 est fusionnée sur `main` (`2782165`) avant le lot audio. Ce dernier
 reprend la refonte par fusion normale, conserve ses composants et choisit 0.35.0
 pour ne pas réutiliser 0.34.0. Les HTML sont régénérés avec les deux ensembles de
