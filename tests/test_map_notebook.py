@@ -107,6 +107,16 @@ class RoutingTests(unittest.IsolatedAsyncioTestCase):
 
 
 class RoutingPreparationTests(unittest.TestCase):
+    def test_build_identity_respects_docker_user_namespace(self):
+        def runner(options):
+            return lambda *args,**kwargs: SimpleNamespace(stdout=json.dumps(options),returncode=0)
+        self.assertEqual(routing_prepare.build_user('compose',runner(['name=rootless'])),'0:0')
+        with patch.object(routing_prepare.os,'getuid',return_value=1234,create=True),patch.object(routing_prepare.os,'getgid',return_value=5678,create=True):
+            self.assertEqual(routing_prepare.build_user('compose',runner(['name=seccomp'])),'1234:5678')
+        self.assertEqual(routing_prepare.build_user('lab',None),'0:0')
+        with self.assertRaises(setup.SetupError):
+            routing_prepare.build_user('compose',lambda *a,**k:SimpleNamespace(stdout='invalid'))
+
     def test_bounded_local_preparation_atomic_switch_and_no_model(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);source=Path(__file__).resolve().parents[1]/'fixtures/maps/routing-small.osm';calls=[]
@@ -116,7 +126,7 @@ class RoutingPreparationTests(unittest.TestCase):
                     mount=args[args.index('-v')+1];path=Path(mount.rsplit(':/data',1)[0])
                     if 'osrm-customize' in args:
                         index=path/'network.osrm.properties';index.write_bytes(b'synthetic graph');index.chmod(0o600)
-                return SimpleNamespace(returncode=0)
+                return SimpleNamespace(returncode=0,stdout='[]')
             # Windows may return the same wall-clock tick for both tiny builds.
             first_time=datetime.datetime(2026,1,1,tzinfo=datetime.timezone.utc)
             second_time=first_time+datetime.timedelta(seconds=1)

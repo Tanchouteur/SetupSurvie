@@ -94,6 +94,14 @@ voir le [bilan](../essais/2026-11-17-installation-neuve-bazzite.md).
 - La fin de l’installation indique l’état du démarrage automatique et si le
   portail joint le contrôleur local.
 
+### Préparation initiale des guides longs (0.40.1)
+
+Sur un fonds important, l’extraction initiale des PDF peut dépasser les 30 secondes
+réservées au démarrage. Le portail conserve son dernier index et poursuit la
+préparation en arrière-plan ; son état redevient normal dès la réussite. Une
+erreur réelle reste signalée, sans afficher le contenu des documents. Les caches
+d’extraction sont conservés pour les démarrages suivants.
+
 Remplacer les chemins d’exemple par les destinations réelles. Les images et caches
 nécessaires doivent être préparés avant de couper Internet ; la présence d’un
 mode hors ligne ne prouve pas que tous les fichiers sont disponibles. Ne pas
@@ -120,11 +128,3 @@ ses propres contrôles de montage et de capacité, décrits dans les bilans Linu
 ## Disque de secours complet : protocole cible
 
 Le [protocole de disque de secours et restauration hors ligne](../exploitation/disque-de-secours-hors-ligne.md) formalise la reconstruction sur un autre PC Windows ou Linux avec le seul disque externe, sans Internet ni disque source. Il couvre aussi les prérequis système, les données ajoutées après le kit et la documentation humaine autonome. Les cibles compatibles et les parcours intersystèmes restent à développer et qualifier ; le kit actuel ne satisfait pas encore cette promesse. Pour s’orienter dans une panne avec les fonctions présentes, commencer par le [manuel de secours](../exploitation/manuel-de-secours.md).
-
-### Préparation initiale des guides longs (0.40.1)
-
-Sur un fonds important, l’extraction initiale des PDF peut dépasser les 30 secondes
-réservées au démarrage. Le portail conserve son dernier index et poursuit la
-préparation en arrière-plan ; son état redevient normal dès la réussite. Une
-erreur réelle reste signalée, sans afficher le contenu des documents. Les caches
-d’extraction sont conservés pour les démarrages suivants.
