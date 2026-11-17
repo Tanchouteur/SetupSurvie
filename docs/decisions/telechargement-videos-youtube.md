@@ -1,7 +1,19 @@
 # Télécharger une liste de vidéos YouTube dans la bibliothèque
 
-**Plan / proposition de l’agent — 17 novembre 2026. Rien n’est implémenté ni
-téléchargé.** Demande de Louis du même jour : un outil qui lit un fichier texte
+**Mise à jour du 17 novembre 2026 — étape 1 livrée en 0.41.0.** Louis a demandé
+de commencer l’outil le même jour, après confirmation que transcription,
+indexation et recherche des vidéos étaient en place. Faute de réponse explicite
+aux questions ci-dessous, l’agent a retenu les choix réversibles suivants, **à
+confirmer par Louis** : dossier `library/video/` inchangé (pas de migration),
+outil en ligne de commande d’abord, vidéos hors de l’offre commerciale. Mode
+d’emploi : [guide actuel](../utilisation/telecharger-videos-youtube.md). Écarts
+avec le plan ci-dessous : le dossier de travail est `state/video-downloads/` du
+dossier de données ; yt-dlp n’est pas figé dans `deploy/versions.json` mais mis
+à jour volontairement par `prepare`, avec sa version notée dans chaque rapport ;
+Deno est détecté parce que yt-dlp récent en a besoin pour YouTube. Aucun
+téléchargement réel n’a encore été fait.
+
+**Plan initial / proposition de l’agent — 17 novembre 2026, conservé ci-dessous.** Demande de Louis du même jour : un outil qui lit un fichier texte
 (une adresse YouTube par ligne), télécharge chaque vidéo, la renomme et la range
 seule dans un dossier connu de la bibliothèque. Ces vidéos sont des guides visuels
 choisis à la main, en complément des archives ZIM. Ce document trace l’outil
