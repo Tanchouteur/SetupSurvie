@@ -2,6 +2,8 @@
 
 - [Installation Linux neuve sur Bazzite](essais/2026-11-17-installation-neuve-bazzite.md) — recette réelle en cours, fonds réduit vérifié et limites.
 
+- [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
+- [Télécharger une liste de vidéos YouTube](decisions/telechargement-videos-youtube.md) — plan du 17 novembre 2026, non développé, à valider.
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.

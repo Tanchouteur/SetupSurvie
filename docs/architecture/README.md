@@ -132,6 +132,15 @@ WebVTT échappé. Le lecteur n’effectue ni inférence, ni accès Internet, ni 
 Les outils IA reçoivent des paroles avec horodatages et limites, sans pixels.
 Voir le [guide](../utilisation/videos-locales.md) pour les limites et procédures.
 
+
+Depuis 0.40.0, `videos.signature()` résume les noms, tailles et dates des fichiers
+finis (médias, pistes, `.info.json`) et l’état de l’examen des ZIM ; `ensure_fresh()`
+relance l’inventaire au démarrage et, au plus une fois par minute, avant une
+recherche vidéo si cette empreinte a changé. `library.search(kind=…)` sépare
+vidéos et documents ; en mode vidéos, une requête vide liste les titres et
+l’espace documentaire est ignoré. `pilot/video_requests.py` détecte les demandes
+de vidéo, nettoie la requête, compacte les résultats de l’outil `find_videos`
+avec leur `open_url` et ajoute les liens oubliés par le modèle.
 ## Diagnostic commun des performances — 0.22.0
 
 `pilot/performance.py` orchestre une campagne administrative explicite et bornée,

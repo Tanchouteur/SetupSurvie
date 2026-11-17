@@ -117,6 +117,27 @@
     scope.dataset.requested = scope.value;
   });
   get("search-language").after(scope);
+  // Videos are hard to find among thousands of articles: let people ask for
+  // them only. With « Vidéos uniquement », an empty search lists them all.
+  const kind = make("select", "");
+  kind.id = "search-kind";
+  kind.setAttribute("aria-label", "Type de résultat");
+  kind.append(
+    new Option("Documents et vidéos", "all"),
+    new Option("Vidéos uniquement", "videos"),
+    new Option("Documents uniquement", "documents"),
+  );
+  const query = get("library-query");
+  const fitKind = () => {
+    query.required = kind.value !== "videos";
+    query.placeholder =
+      kind.value === "videos"
+        ? "Sujet, ou vide pour toutes les vidéos"
+        : "Ex. : loi d’Ohm, compost, conserver des légumes…";
+  };
+  kind.addEventListener("change", fitKind);
+  kind.fitKind = fitKind;
+  scope.after(kind);
   const domain = make(
     "div",
     "next-domain",
