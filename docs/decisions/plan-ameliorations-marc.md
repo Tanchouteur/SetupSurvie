@@ -1,8 +1,15 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 17 novembre 2026 — 0.36.1.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 17 novembre 2026 — 0.37.1.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
+
+La [recette Bazzite 0.37.1](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+reproduit et corrige une demande naturelle de synthèse, conserve les limites du
+contexte et éprouve traduction et sous-titres sur les modèles existants.
+Louis demande de garder cet objectif prioritaire ; installation et transfert
+ne font pas partie de ces essais. Les validations Windows et par vidéo restent
+distinguées des preuves Linux.
 
 La [recette Windows 0.25.0](../essais/2026-11-16-rapports-marc-0250.md) distingue
 chargement, réserve mémoire et couverture partielle. La 0.26.1 corrige le délai

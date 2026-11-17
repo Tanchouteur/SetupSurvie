@@ -418,7 +418,7 @@ versions partagées sont des documents indépendants : leur retrait de la
 bibliothèque ne fait pas partie de la suppression du travail dans la conversation.
 
 
-## Retour au lecteur PDF — correctif 0.37.1
+## Retour au lecteur PDF — correctif 0.37.2
 
 Revenir sur la fenêtre du PDF pendant son chargement ne doit pas être interprété
 comme un changement de profil. La vérification attend la fin de l’initialisation.

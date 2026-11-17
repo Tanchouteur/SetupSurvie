@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.37.1, 17 novembre 2026.**
+**Guide actuel — 0.37.2, 17 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.

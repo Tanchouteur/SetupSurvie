@@ -6,6 +6,14 @@ charge le modèle déjà installé après une action explicite depuis Famille.
 
 ## Comprendre une réponse lente
 
+Depuis 0.37.1, si le contexte réglé ne suffit pas pour les consignes, les sources
+et la réponse réservée, le message indique ce réglage et **Mon appareil →
+Paramètres → Assistant**. Une courte question peut échouer avec un contexte trop
+petit ; ce refus ne prouve ni l’absence de documents ni un manque de VRAM.
+Augmenter le contexte demande de la mémoire et reste explicite. Les
+[essais Bazzite](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+distinguent refus à 8 192 tokens et essais à 16 384, sans prédire Windows.
+
 Après une réponse, ou pendant sa préparation, **Voir les durées** apparaît sous
 la zone de conversation lorsqu’un rapport est disponible. Choisir la demande à
 examiner puis **Télécharger le rapport** pour le transmettre à Louis ou à l’agent.

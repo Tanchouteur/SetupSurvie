@@ -68,7 +68,7 @@ Les références créées avant ce retour restent historiques ; aucun travail
 supplémentaire de repli n’est poursuivi pour ce chantier.
 
 
-## Audit complémentaire et correctif 0.37.1 — 17 novembre 2026
+## Audit complémentaire et correctif 0.37.2 — 17 novembre 2026
 
 La première recette complémentaire compte 14 contrôles, réussis sur Chromium,
 WebKit et Firefox et via le MCP Playwright. Un essai supplémentaire pendant
@@ -77,7 +77,7 @@ ouverte au clavier avait son bas vers 910 px, puis revenait à 754 px après le
 mouvement. Le déplacement de toute la vue changeait le repère de ses descendants
 fixes, avant de le rétablir à la fin.
 
-Le correctif **0.37.1** garde un fondu de la vue et retire sa transformation.
+Le correctif **0.37.2** garde un fondu de la vue et retire sa transformation.
 Les aides et autres éléments fixes conservent donc leurs coordonnées pendant
 l’effet. Les colonnes de l’assistant et les indicateurs de dépliement gardent
 leurs transitions propres. Il s’agit d’une correction compatible, d’où le niveau
@@ -131,6 +131,9 @@ les commandes conservent leur contrôle d’appartenance. Un vrai changement fer
 le travail et demande de recharger, sans reprendre une traduction ni modifier
 les données. La recette du lecteur passe de 13 à 15 contrôles.
 
-Ces corrections compatibles rejoignent 0.37.1. Aucun contrôle n’est supprimé et
+Ces corrections compatibles rejoignent 0.37.2. Aucun contrôle n’est supprimé et
 la CI complète est relancée après la correction, sans compter l’exécution échouée
 comme une validation réussie.
+
+La livraison moteur 0.37.1 est intégrée pendant cet audit. Le correctif d’interface
+est livré en 0.37.2, en conservant ses changements de recherche et de sous-titres.

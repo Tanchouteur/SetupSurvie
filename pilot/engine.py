@@ -99,8 +99,9 @@ def document_request(history):
     """
     questions=[m['content'] for m in history if m['role']=='user']
     if not questions:return None
-    question=questions[-1];plan=library.retrieval.plan(question,library.search_terms(question),library.SYNONYMS)
-    raw=library.retrieval.normal(question)
+    question=questions[-1];topic=research.primary_query(question)
+    plan=library.retrieval.plan(topic,library.search_terms(topic),library.SYNONYMS)
+    raw=library.retrieval.normal(topic)
     if re.search(r'\b(favoris|favorites)\b',raw):return None
     if plan.collection:
         if not plan.words:
@@ -110,7 +111,7 @@ def document_request(history):
         return question,plan.collection
     if not plan.words:return None
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
-    if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw):return None
+    if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
     if research.synthesis(question) or illustrations.requested(question) or re.search(r'\b(comment|how to)\b',raw):return question,''
     if re.search(r'\b(quell?e?s?)\b.*\b(dimensions?|longueurs?|tailles?)\b',raw):return question,''
     if plan.practical and plan.action:return question,''
@@ -357,7 +358,9 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     measured.value['budgets'].append({**allocation,'input_estimate':assistant_metrics.estimate_tokens(messages,tools),'fits':fitted})
                     if not fitted:
                         measured.value['failure']='context_budget'
-                        interrupted=True;answer='La question et les extraits dépassent la taille disponible. Les sources déjà consultées restent accessibles ; essayez une demande plus courte.';break
+                        interrupted=True;answer=('Le contexte de conversation réglé à '+str(context)+' tokens ne suffit pas pour la question, les consignes et les sources. '
+                            'Vous pouvez l’augmenter dans Mon appareil → Paramètres → Assistant, selon la mémoire disponible, ou réduire les documents joints. '
+                            'Les sources déjà consultées restent accessibles.');break
                     progress(identifier,'preparing')
                     measured.phase('model_preparation')
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}

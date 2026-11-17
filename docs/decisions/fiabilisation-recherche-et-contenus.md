@@ -7,13 +7,25 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.36.1
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.37.1
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
 un CI vert ne suffit pas à qualifier tout le fonds réel. Le tableau historique
 plus bas conserve le point de départ du 14 novembre ; le [plan L1–L9](plan-ameliorations-marc.md)
 et les bilans liés sont les références de réalisation.
+
+La [recette réelle Bazzite 0.37.1](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+ajoute 18 lectures de résultats, une synthèse de feu avec sept sources lues,
+un premier appel après changement de modèle, une traduction technique avec
+pause/arrêt/reprise et un MP4 parlé jusqu’au français indexé. Elle corrige la
+consigne « documents expliquant… » et un statut de traduction contradictoire.
+Les limites de fidélité, le contexte trop petit et les échecs initiaux restent
+explicites ; cela ne qualifie pas tout le fonds Windows de Marc.
+La relecture ciblée relève aussi des équations déjà absentes du texte extrait
+et une traduction spatiale ambiguë : conserver les originaux illustrés et
+améliorer ce contrôle reste une suite précise du même objectif, sans déclarer
+une fidélité acquise d’après le seul statut terminé.
 
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |
