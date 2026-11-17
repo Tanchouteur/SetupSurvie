@@ -3,6 +3,7 @@
   let destroy=null;
   const portal=typeof S!=='undefined',session=portal?S:{user:null,status:null};
   const get=id=>document.getElementById(id);
+  const setText=(n,text)=>{if(n.textContent!==text)n.textContent=text;};
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const action=(text,fn,cls='secondary')=>{const b=node('button',text,cls);b.type='button';b.addEventListener('click',fn);return b;};
   const request=portal?api:async(path,body,options={})=>{
@@ -55,27 +56,31 @@
     controls.append(start,pause,resume,stop,download,publish,remove,conversation);
     const navigation=node('div',undefined,'reader-work-actions');
     const previous=action('Passages précédents',()=>load(job,Math.max(0,offset-10)),'secondary'),next=action('Passages suivants',()=>load(job,offset+10),'secondary');
-    navigation.append(previous,next);
-    root.append(heading,select,config,notice,state,progress,controls,explanation,parts,navigation);host.querySelector('.reader-body').before(root);
+    const latest=action('Lire les derniers passages traduits',()=>{if(Number.isInteger(lastDone)){load(job,Math.floor(lastDone/10)*10);parts.scrollIntoView({block:'start'});}},'secondary');
+    const reading=node('p',undefined,'small muted');
+    navigation.append(previous,next,latest);
+    root.append(heading,select,config,notice,state,progress,controls,explanation,reading,parts,navigation);host.querySelector('.reader-body').before(root);
     const trigger=actions.querySelector('[data-document-action=translate]')||action('Traduire en français',()=>{},'secondary');
     trigger.dataset.documentAction='translate';trigger.disabled=true;if(!trigger.isConnected)actions.append(trigger);
-    let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null;
+    let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null,renderedJob=null,lastDone=null;
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
     const resumePolling=()=>{if(!document.hidden&&!root.hidden&&valid()&&job)load(job,offset);};
     document.addEventListener('visibilitychange',resumePolling);
     destroy=()=>{disposed=true;version++;clearTimeout(timer);document.removeEventListener('visibilitychange',resumePolling);};
     const labels={queued:'En attente du moteur',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
-    function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=true;previous.hidden=next.hidden=true;config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
+    function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=true;previous.hidden=next.hidden=latest.hidden=true;config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
     function choose(){select.replaceChildren(new Option('Nouvelle traduction',''));for(const item of items)select.append(new Option((labels[item.status]||item.status)+' · '+new Date(item.created*1000).toLocaleDateString('fr-FR'),item.id));select.value=job||'';}
     async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}finally{if(valid())trigger.disabled=false;}}
-    function newWork(){clearTimeout(timer);version++;job=null;offset=0;parts.replaceChildren();state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
+    function newWork(){clearTimeout(timer);version++;job=null;renderedJob=null;lastDone=null;offset=0;parts.replaceChildren();setText(reading,'');state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
     trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();root.hidden=!root.hidden;
       if(!root.hidden){if(!job&&items.length){job=items[0].id;select.value=job;}if(job)load(job,offset);root.scrollIntoView({block:'start'});}else{clearTimeout(timer);version++;}},true);
     select.onchange=()=>{if(select.value)load(select.value);else newWork();};
     function render(data){
       const keyed=new Map([...parts.children].map(n=>[n.dataset.position,n]));
       for(const part of data.parts){let row=keyed.get(String(part.position));const snapshot=JSON.stringify(part);if(row?.dataset.snapshot===snapshot){keyed.delete(String(part.position));continue;}
-        const n=node('article',undefined,'translation-part');n.dataset.position=part.position;n.dataset.snapshot=snapshot;n.append(node('h4','Page/section '+part.page+' · passage '+(part.position+1)),node('p',part.status==='done'?part.translated:part.status==='unreadable'?'Page sans texte extractible. Consultez les illustrations originales.':'Passage encore à traduire.'));
+        const n=node('article',undefined,'translation-part');n.dataset.position=part.position;n.dataset.snapshot=snapshot;n.append(node('h4','Page/section '+part.page+' · passage '+(part.position+1)));
+        if(part.status==='done'){const text=node('div',undefined,'translation-text');if(window.SurvieTranslationText)window.SurvieTranslationText.render(text,part.translated);else text.textContent=part.translated||'';n.append(text);}
+        else n.append(node('p',part.status==='unreadable'?'Page sans texte extractible. Consultez les illustrations originales.':'Passage encore à traduire.'));
         if(part.model)n.append(node('p',part.model,'small muted'));
         n.append(node('p',({checked:'Contrôles limités : le sens reste à vérifier.',warning:'À relire : anomalie possible.',unchecked:'Aucun contrôle enregistré.'}[part.quality?.status]||''),'small muted'));
         for(const issue of part.quality?.issues||[])n.append(node('p',issue.message,'reader-work-notice'));
@@ -87,12 +92,14 @@
       }
       for(const n of keyed.values())n.remove();
     }
-    async function load(id,position=0){clearTimeout(timer);job=id;offset=position;const own=++version;pending();
+    async function load(id,position=0){clearTimeout(timer);job=id;offset=position;const own=++version;if(renderedJob!==id)pending();
       try{const data=await request('/translations/'+encodeURIComponent(id)+'?offset='+position);if(!valid()||own!==version)return;
         if(position>=data.total&&position)return load(id,Math.max(0,Math.floor((data.total-1)/10)*10));
         if(modeForJob!==id){modeForJob=id;if([...modes.options].some(o=>o.value===data.mode))modes.value=data.mode;}
-        select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)option.textContent=(labels[data.status]||data.status)+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR');const active=['queued','running'].includes(data.status);
-        state.textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||'');
+        renderedJob=id;select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)setText(option,(labels[data.status]||data.status)+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR'));const active=['queued','running'].includes(data.status);
+        setText(state,(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||''));
+        const end=Math.min(position+data.parts.length,data.total);setText(reading,(Number.isInteger(data.current_page)?'Page/section en cours : '+data.current_page+'. ':'')+(data.total?'Passages affichés : '+(position+1)+' à '+end+' sur '+data.total+'.':'Aucun passage à afficher.'));
+        lastDone=data.last_done_position;latest.hidden=!Number.isInteger(lastDone)||Math.floor(lastDone/10)*10===position;
         progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.done;
         pause.hidden=!active;resume.hidden=active||data.status==='completed';stop.hidden=data.status==='completed'||data.status==='stopped';remove.hidden=false;download.hidden=false;conversation.hidden=false;
         download.href='/api/translations/'+encodeURIComponent(id)+'/export';conversation.href=(portal?'':'/nouveau/')+'#/assistant?conversation='+encodeURIComponent(data.conversation_id);conversation.dataset.route='assistant?conversation='+encodeURIComponent(data.conversation_id);

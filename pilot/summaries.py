@@ -172,7 +172,7 @@ async def infer(item,messages,*,schema=None,output=None):
     async with httpx.AsyncClient(trust_env=False) as client:
         session=model_session.Session(client,engine.OLLAMA,runtime,context,measurement,lambda stage:None,available)
         await session.prepare()
-        payload={'model':selected['model'],'messages':messages,'tools':[],'stream':True,'keep_alive':'5m',
+        payload={'model':selected['model'],'messages':messages,'tools':[],'stream':True,'keep_alive':model_session.KEEP_ALIVE,
             'think':('low' if selected['think'] in ('low','medium','high') else False) if schema else selected['think'],
             'options':{'num_ctx':context,'num_predict':output,'temperature':0 if schema else .2}}
         if schema:payload['format']=schema

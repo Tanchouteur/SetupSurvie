@@ -179,8 +179,8 @@
   panes.assistant.append(
     link(
       "ensemble",
-      "Voir l’état et la mémoire du PC",
-      "Consulter les mesures, sans démarrer l’assistant.",
+      "Voir la RAM, la VRAM et le modèle chargé",
+      "Voir les mesures actuelles du PC et de la carte graphique, sans démarrer l’assistant.",
     ),
   );
   advanced(
@@ -324,15 +324,16 @@
   engineShortcut.textContent = "Gérer l’assistant";
   get("view-monitor").querySelector(".page-heading h1").textContent =
     "État de l’appareil";
-  const metrics = make("details", "settings-advanced");
+  const metrics = make("section", "server-metrics");
   metrics.id = "settings-server-metrics";
+  metrics.setAttribute("aria-labelledby", "server-metrics-title");
+  const metricsTitle = make("h2", "", "Mémoire et modèle chargé");
+  metricsTitle.id = "server-metrics-title";
+  metrics.append(metricsTitle, make("p", "muted small", "Mesures du PC qui héberge SetupSurvie. Le stockage se consulte séparément dans les paramètres de la bibliothèque."));
+  get("view-monitor").querySelector(".page-heading").after(metrics);
   metrics.append(
-    make("summary", "", "Détails techniques : mémoire et modèle chargé"),
-  );
-  get("view-monitor").append(metrics);
-  metrics.append(
-    get("monitor-stats"),
     get("monitor-models").closest("article"),
+    get("monitor-stats"),
     get("monitor-updated"),
   );
   get("view-activity").append(

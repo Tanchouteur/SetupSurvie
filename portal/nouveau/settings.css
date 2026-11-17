@@ -196,3 +196,9 @@
 .next-interface #settings-engine-state {
   margin-top: 12px;
 }
+
+.server-metrics { margin: 1.5rem 0; min-width: 0; scroll-margin-top: 6rem; }
+.server-metrics > h2 { margin-bottom: .5rem; }
+.server-metrics #monitor-stats { margin: 1rem 0; }
+.server-metrics .model-monitor-row { display: grid; gap: .35rem; overflow-wrap: anywhere; }
+.server-metrics .model-monitor-row strong { font-size: 1.15rem; }
