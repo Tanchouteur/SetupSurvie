@@ -17,6 +17,7 @@ from . import durable,retrieval,store,video_inventory as inventory
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
 ACTIVE=None
 STOP=threading.Event()
+STOP_REASON='user'
 LOCK=threading.Lock()
 NOTICE='Sous-titres locaux : langue, sens et synchronisation non vérifiés. Le texte ne prouve pas que les gestes montrés ont été compris.'
 
@@ -115,7 +116,8 @@ def public(payload,revision):
     key=payload['inventory_id'];media=payload['media'];source=payload['source']
     declared=source.get('upload_date_declared') or ''
     date=declared[:4]+'-'+declared[4:6]+'-'+declared[6:] if re.fullmatch(r'\d{8}',declared) else ''
-    return {'id':'video:'+key,'kind':'video','title':payload['title'][:400],'collection':source.get('channel') or payload['collection'],
+    folder='' if payload['collection'] in ('.','') else payload['collection']
+    return {'id':'video:'+key,'kind':'video','title':payload['title'][:400],'collection':source.get('channel') or folder,
         'audio_transcription_supported':True,
         'archive_video':payload.get('provider')=='zim','archive_name':payload.get('archive'),'archive_article':('zim:'+payload['book']+'/'+payload['articles'][0]) if payload.get('provider')=='zim' and payload.get('articles') else None,
         'language':media.get('language_declared') or '', 'duration_seconds':media.get('duration_seconds_declared'),
@@ -153,17 +155,82 @@ def source(identifier):
     return result
 
 
+def signature():
+    """Cheap fingerprint of finished local files: names, sizes and dates only.
+
+    Nothing is opened or decoded; partial downloads are ignored so that a
+    download in progress does not trigger repeated inventories."""
+    if not ROOT.is_dir() or inventory.is_link(ROOT):return None
+    digest=hashlib.sha256();count=0
+    for directory,folders,files in os.walk(ROOT,followlinks=False):
+        folders.sort();base=Path(directory)
+        for name in sorted(files):
+            if inventory.INCOMPLETE.search(name):continue
+            suffix=Path(name).suffix.lower()
+            if suffix not in inventory.VIDEO_EXTENSIONS and suffix not in inventory.SUBTITLE_EXTENSIONS and not name.endswith('.info.json'):continue
+            try:info=(base/name).lstat()
+            except OSError:continue
+            digest.update(json.dumps([str((base/name).relative_to(ROOT)),info.st_size,info.st_mtime_ns],ensure_ascii=False).encode()+b'\n');count+=1
+    try:
+        from . import archive_videos
+        progress=archive_videos.progress()
+        if progress.get('phase') in ('completed','partial'):digest.update(json.dumps(['archives',progress.get('job_id'),progress.get('finished')]).encode())
+    except Exception:pass
+    return digest.hexdigest()+':'+str(count)
+
+
+CHECKED=0.0
+CHECK_INTERVAL=60
+
+
+def stale():
+    """True when the published index does not describe the current files."""
+    current=status()
+    if current['phase']=='running':return False
+    if current['phase'] in ('not_started','interrupted'):return True
+    if current['phase']=='paused' and current.get('stopped_by')!='user':return True
+    # A completed, failed or voluntarily stopped inventory is redone only
+    # when the files changed since it started.
+    return current.get('signature')!=signature()
+
+
+async def ensure_fresh(force=False):
+    """Start a read-only inventory when the video folder changed.
+
+    Called at startup and before video searches, at most once a minute. The
+    previous index stays searchable during the refresh."""
+    global CHECKED
+    if running() is not None:return 'refreshing'
+    if not force and time.monotonic()-CHECKED<CHECK_INTERVAL:return 'checked'
+    CHECKED=time.monotonic()
+    try:
+        if not await asyncio.to_thread(stale):return 'fresh'
+        await start();return 'refreshing'
+    except HTTPException:return 'refreshing'
+    except Exception:return 'unavailable'
+
+
+def indexed_count():
+    try:
+        with connect() as db:return db.execute('SELECT count(*) FROM media').fetchone()[0]
+    except sqlite3.Error:return 0
+
+
 def search(plan,language='',limit=40):
-    if not plan.words:return [],{'status':'not_run'}
     if not ROOT.is_dir() and not (store.ROOT/'videos.db').is_file():return [],{'status':'not_available'}
-    if status()['phase']=='not_started':return [],{'status':'not_indexed'}
+    phase=status()['phase']
+    if phase=='not_started' or (phase=='running' and not indexed_count()):return [],{'status':'not_indexed','indexed_videos':0}
     with connect() as db:
-        rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,snippet(video_text,6,'','', '…',45) AS excerpt,text AS _text FROM video_text WHERE video_text MATCH ? AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY bm25(video_text) LIMIT ?",
-                        (plan.fts(relaxed=True),language,language,language[:2],limit)).fetchall()
-        result=[];stale=0
+        if plan.words:
+            rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,snippet(video_text,6,'','', '…',45) AS excerpt,text AS _text FROM video_text WHERE video_text MATCH ? AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY bm25(video_text) LIMIT ?",
+                            (plan.fts(relaxed=True),language,language,language[:2],limit)).fetchall()
+        else:
+            rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,'' AS excerpt,text AS _text FROM video_text WHERE track='metadata' AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY title COLLATE NOCASE,id LIMIT ?",
+                            (language,language,language[:2],limit)).fetchall()
+        result=[];stale_rows=0
         for candidate in rows:
             try:stored,payload,_=row('video:'+candidate['id'])
-            except HTTPException:stale+=1;continue
+            except HTTPException:stale_rows+=1;continue
             data=public(payload,stored['revision']);start=int(candidate['start_ms'])
             data.update(id='video:'+candidate['id']+('#t='+str(start)+'&track='+candidate['track'] if candidate['track']!='metadata' else ''),
                         language=candidate['language'],excerpt=candidate['excerpt'],_text=candidate['_text'],
@@ -173,7 +240,9 @@ def search(plan,language='',limit=40):
             result.append(data)
     from . import archive_videos
     archives=archive_videos.coverage()
-    return result,{'status':'partial' if stale or archives['status'] in ('not_indexed','partial') else 'complete','stale_results':stale,'results':len(result),'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
+    total=indexed_count()
+    state='refreshing' if phase=='running' else 'partial' if stale_rows or phase!='completed' or archives['status'] in ('not_indexed','partial') else 'complete'
+    return result,{'status':state,'stale_results':stale_rows,'results':len(result),'indexed_videos':total,'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
 
 
 def status():
@@ -201,6 +270,8 @@ def listing(offset=0,limit=30,query=''):
 def scan():
     with LOCK:
         report={'schema':1,'phase':'running','started':time.time(),'videos':0,'tracks':0,'errors':[]}
+        try:report['signature']=signature()
+        except Exception:report['signature']=None
         last_saved=time.monotonic()
         def save():durable.write_bytes(store.ROOT/'videos-report.json',json.dumps(report,ensure_ascii=False).encode(),private=True)
         save()
@@ -267,7 +338,7 @@ def scan():
                                       'revision':stat_revision(item),'same_source_paths':item['same_source_paths'],
                                       'tracks':[{key:track[key] for key in ('language_declared','origin','technical_status','errors','warnings')} for track in item['tracks']],
                                       'validation':item['validation'],'next_action':item['next_action']} for item in found['videos']])
-        except InterruptedError:report['phase']='paused'
+        except InterruptedError:report.update(phase='paused',stopped_by=STOP_REASON)
         except Exception:report.update(phase='failed',error='L’inventaire n’a pas abouti ; l’ancien index reste conservé.')
         report['finished']=time.time();save()
         return report
@@ -275,7 +346,7 @@ def scan():
 
 async def start():
     global ACTIVE
-    if ACTIVE is not None and not ACTIVE.done():raise HTTPException(409,'Un inventaire vidéo est déjà en cours.')
+    if running() is not None:raise HTTPException(409,'Un inventaire vidéo est déjà en cours.')
     STOP.clear()
     # Publish running before handing work to a thread: a fast poll must not
     # mistake the preceding completed report for the newly requested inventory.
@@ -283,10 +354,26 @@ async def start():
     ACTIVE=asyncio.create_task(asyncio.to_thread(scan));return {'accepted':True}
 
 
-async def stop():
-    STOP.set()
-    if ACTIVE is not None:await asyncio.shield(ACTIVE)
+async def stop(reason='user'):
+    global STOP_REASON
+    STOP_REASON=reason;STOP.set()
+    task=running()
+    if task is not None:
+        # The scan thread checks STOP; a failure there is already reported
+        # in videos-report.json and must not block the service shutdown.
+        try:await asyncio.shield(task)
+        except asyncio.CancelledError:
+            if not task.cancelled():raise
+        except Exception:pass
     return status()
+
+
+def running():
+    """The inventory task of this event loop, if one is still running."""
+    if ACTIVE is None or ACTIVE.done():return None
+    try:same=ACTIVE.get_loop() is asyncio.get_running_loop()
+    except RuntimeError:same=False
+    return ACTIVE if same else None
 
 
 def webvtt(key,index):

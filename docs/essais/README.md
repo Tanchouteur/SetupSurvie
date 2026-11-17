@@ -1,5 +1,6 @@
 # Essais et résultats
 
+- [Trouver les vidéos — 0.40.0](2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens de l’assistant ; tests simulés.
 - [Mémoire visible et lecture de traduction — 0.39.0](2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.

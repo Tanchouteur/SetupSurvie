@@ -518,20 +518,38 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12):
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12,kind='all'):
+    if kind not in ('all','documents','videos'):raise ValueError('Invalid search kind')
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
     candidate_limit=min(80,max(20,limit*4))
     results=[];video_coverage={'status':'not_run'}
-    if not translations_only:
+    if kind != 'documents' and not translations_only:
         try:
             from . import videos
+            await videos.ensure_fresh()
             video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit)
             if favorite_user is not None:
                 with store.connect() as db:video_favorites={row['source_id'].split('#t=')[0] for row in db.execute('SELECT source_id FROM favorites WHERE user_id=?',(favorite_user,))}
                 video_rows=[item for item in video_rows if item['id'].split('#t=')[0] in video_favorites]
             results.extend(video_rows)
         except Exception:video_coverage={'status':'unavailable'}
+    if kind == 'videos':
+        if translations_only:video_coverage={'status':'not_available','reason':'translations_only'}
+        # Videos are few and rarely classified: the documentary space chosen
+        # for texts must not hide them when the user asks for videos only.
+        catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        if words:ordered=retrieval.ordered(results,query_plan,limit*2)
+        else:ordered=[{k:v for k,v in item.items() if not k.startswith('_')} for item in results[:limit*2]]
+        state=video_coverage['status']
+        coverage={'status':'complete' if state=='complete' else 'partial','coverage_scope':'indexed_videos','domain':'all','collection':query_plan.collection,'videos':video_coverage,'kind':'videos'}
+        warnings={'not_indexed':'Les vidéos n’ont pas encore été répertoriées. L’inventaire se lance automatiquement ; vous pouvez aussi le lancer dans Bibliothèque → Collections → Vidéos de la bibliothèque.',
+                  'refreshing':'Le répertoire des vidéos est en cours d’actualisation ; les nouvelles vidéos apparaîtront à la fin.',
+                  'not_available':'Le dossier des vidéos locales n’est pas disponible sur ce serveur.',
+                  'unavailable':'La recherche des vidéos n’a pas abouti ; réessayez dans un instant.',
+                  'partial':'Certaines vidéos ne sont pas encore répertoriées (dossier modifié ou collections non examinées) ; les résultats affichés restent utilisables.'}
+        if state in warnings:coverage['warning']=warnings[state]
+        return SearchResults(ordered,coverage)
     if words:
         expression=query_plan.fts()
         with store.connect() as db:

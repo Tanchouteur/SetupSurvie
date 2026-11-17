@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.35.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.40.0, 17 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -12,8 +12,17 @@ Vidéos de la bibliothèque → Actualiser les vidéos et leurs sous-titres**. C
 les métadonnées `.info.json` et les pistes `.fr.srt`, `.en.vtt`, etc. à côté du
 média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé par cette actualisation.
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
-ou dans **Rechercher**. Relancer cette actualisation après un nouveau téléchargement
-ou une modification de sous-titre ; elle n’est pas automatique dans cette version.
+ou dans **Rechercher**.
+
+Depuis 0.40.0, ce bouton n’est plus indispensable : le répertoire s’actualise tout
+seul au démarrage du service, puis au plus une fois par minute lors d’une
+recherche, si des vidéos, sous-titres ou `.info.json` ont été ajoutés, modifiés ou
+retirés. Le contrôle ne lit que les noms, tailles et dates des fichiers ; il ignore
+les téléchargements en cours (`.part`, `.ytdl`…). L’ancien répertoire reste
+consultable pendant l’actualisation. Un inventaire arrêté avec **Arrêter
+l’inventaire** n’est relancé automatiquement que si les fichiers changent ensuite ;
+un inventaire interrompu par un redémarrage reprend au démarrage suivant. Les
+vidéos des collections ZIM gardent leur examen volontaire, plus long (voir plus bas).
 
 Le travail continue si l’onglet est fermé. **Arrêter l’inventaire** conserve l’ancien
 index ; une nouvelle actualisation recommence son examen sans altérer les fichiers.
@@ -21,6 +30,22 @@ Les pistes mal formées, téléchargements en cours et liens symboliques détect
 ne deviennent pas des ressources prêtes. Un fichier remplacé après indexation
 est refusé jusqu’à l’actualisation. Les fichiers finaux sont présumés terminés
 par leur nom et l’absence de marqueur : aucun décodage intégral ne le certifie.
+
+## Chercher seulement les vidéos — 0.40.0
+
+Dans **Bibliothèque → Rechercher**, le menu **Documents et vidéos** propose
+**Vidéos uniquement** et **Documents uniquement**. Avec **Vidéos uniquement**, on
+peut laisser la recherche vide : toutes les vidéos répertoriées s’affichent, par
+ordre alphabétique de titre. Avec des mots, la recherche porte sur les titres,
+descriptions et sous-titres prêts. Ce mode ignore l’espace « Autonomie et
+résilience / Savoirs et culture » : les vidéos sont rarement classées et ne
+doivent pas disparaître d’une recherche dédiée. Le choix est conservé dans
+l’adresse de la page et revient avec le bouton Précédent.
+
+Si aucune vidéo n’apparaît, le message distingue : répertoire pas encore créé
+(il se lance tout seul), actualisation en cours, dossier `library/video/` absent,
+ou aucune vidéo correspondant aux mots. Une absence de résultat ne prouve pas
+que les collections ZIM non examinées sont sans vidéo.
 
 ## Chercher et lire
 
@@ -223,6 +248,27 @@ une langue/un son ; elle ne décrit pas les gestes ni les images. Une vidéo san
 audio ou sans parole reconnue ne reçoit pas de sous-titre vide présenté comme prêt.
 Les résultats réels limités de cette version sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
 
+## Demander une vidéo à l’assistant — 0.40.0
+
+Quand la question parle de vidéo (« trouve une vidéo pour faire du feu », « montre
+une vidéo de la bibliothèque »), l’assistant cherche d’abord dans les vidéos
+répertoriées, avec les mots utiles de la question, ou sans mot-clé pour une
+demande générale. Il reçoit pour chaque vidéo son titre, sa chaîne, sa durée, les
+langues de sous-titres prêtes et un lien qui ouvre le lecteur. Il peut aussi
+lancer lui-même cette recherche avec l’outil `find_videos`. Si rien ne correspond
+au sujet, il reçoit aussi quelques autres vidéos disponibles et le nombre de
+vidéos répertoriées, pour ne pas conclure que la bibliothèque n’en contient aucune.
+
+Si le modèle oublie de donner les liens, le logiciel ajoute à la fin de la réponse
+une liste **Vidéos trouvées dans la bibliothèque** avec ces liens. Ces liens
+proviennent uniquement des résultats réels. Un titre n’est pas une parole
+consultée : pour résumer une vidéo, l’assistant doit lire ses sous-titres comme
+un document. Une vidéo sans piste reste proposée par son titre seulement.
+
+Ces comportements sont vérifiés par des tests sur un moteur simulé. La qualité des
+réponses d’un vrai modèle (choix des mots, présentation des liens) reste à mesurer
+sur les PC cibles.
+
 ## Utilisation des paroles par l’assistant
 
 Une question ordinaire peut chercher et lire des sous-titres et des documents,
@@ -255,6 +301,9 @@ reste à exécuter selon le
 ## Installation et conservation
 
 Le pilote reçoit le montage **en lecture seule** de `library/video/` vers `/videos`.
+Le dossier s’appelle `video`, au singulier : un dossier `library/videos/` n’est pas lu.
+Le [plan de téléchargement d’une liste YouTube](../decisions/telechargement-videos-youtube.md)
+prévoit un rangement dans `library/video/youtube/` ; il n’est pas encore développé.
 Le lanceur crée le dossier s’il manque, sans copier de vidéo. Windows et Linux
 utilisent la même API ; le laboratoire reste protégé par ses contrôles de montage.
 Une mise à jour de code dans une installation active doit passer par la procédure
