@@ -29,7 +29,8 @@ async page=>{
  await separator.press('Home');check(Number(await separator.getAttribute('aria-valuenow'))===220,'Largeur minimale bornée');
  const project=page.locator('[data-folder-id="'+folder+'"][aria-expanded]');
  if(await project.getAttribute('aria-expanded')!=='true')await project.click();
- await page.locator('#project-'+folder).waitFor({state:'visible'});
+ // The project container can appear before its asynchronous rows arrive.
+ await page.locator('#project-'+folder+' [data-conversation-id="'+id+'"]').waitFor({state:'visible'});
  check(await page.locator('#project-'+folder+' [data-conversation-id="'+id+'"]').isVisible(),'Conversations imbriquées dans leur projet déplié');
  await project.click();check(await page.locator('#project-'+folder).isHidden(),'Projet repliable sans quitter la discussion');
  check(await page.locator('#assistant-history').evaluate(n=>getComputedStyle(n).overflowY==='auto'),'Défilement vertical du volet autorisé');

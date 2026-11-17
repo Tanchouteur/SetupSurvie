@@ -61,3 +61,25 @@ Cette recette ne décode pas le MP4 fictif, ne génère ni traduction ni transcr
 ne vérifie ni l’interface du navigateur ni le fonds Windows de Marc. Elle ne
 remplace pas la coupure physique d’Internet du serveur et des appareils clients,
 ni la relecture humaine des mots, chiffres, négations et synchronisation des vidéos.
+
+
+## Échecs CI et contrôle des attentes
+
+La [première CI de cette recette](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44082621017)
+termine avec six jobs réussis et deux échecs, conservés comme tels. Linux :
+1 013 tests en 72,281 s, 6 ignorés. Windows dépasse les cinq secondes du helper
+de transcription pendant une publication durable ; les logs montrent aussi
+une préparation de fixture de 17 secondes. Le navigateur Chromium échoue sur
+la présence d’une conversation dans son projet, après visibilité du conteneur.
+Aucun changement produit ne distingue ce commit de la 0.38.3 déjà validée.
+
+Les tests sont ajustés sans désactiver d’assertion : le workflow durable attend
+au maximum 30 secondes au lieu d’un objectif de performance de cinq secondes ;
+le test navigateur attend la conversation exacte, chargée de façon asynchrone,
+avant de vérifier son imbrication. Aucun délai du produit n’est augmenté.
+Avec une publication volontairement retardée de 5,2 s dans le processus de test,
+l’ancien helper échoue (6,553 s), le nouveau réussit (6,745 s). Les 13 tests de
+transcription passent en 11,612 s. Les 22 contrôles navigateur passent avec un
+retard réseau de 800 ms sur les requêtes de projet. Les tentatives de reproduction
+n’ont pas reproduit l’assertion Chromium initiale ; la course est identifiée
+par lecture du chargement asynchrone, pas revendiquée comme incident reproduit.
