@@ -1,6 +1,6 @@
 # Installer SetupSurvie
 
-Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
+Guide d’orientation mis à jour le 17 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
 
 ## Préparer le matériel
@@ -56,7 +56,7 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 ./scripts/install.sh --lan --data-dir /DISQUE/SetupSurvie/donnees
 ```
 
-### Linux : démarrage automatique et Docker rootless (0.40.0)
+### Linux : démarrage automatique et Docker rootless (0.41.0)
 
 Premier essai d’installation Linux de zéro sur Bazzite le 17 novembre 2026 ;
 voir le [bilan](../essais/2026-11-17-installation-neuve-bazzite.md).

@@ -37,7 +37,7 @@ retrouver les bilans. Légende : **Réel** = essayé sur un PC cible avec de vra
 | Cartes | PMTiles Sud, points, itinéraires OSRM hors ligne | Réel chez Marc (Windows) ; CI sur réseau synthétique |
 | Profils | Sans mot de passe, Famille, Open WebUI par en-têtes | Simulé ; pas de recette multi-utilisateurs simultanés |
 | Installation Windows | Lanceur unique, reprise, démarrage automatique, raccourcis, mise à jour Git | Diagnostic réel chez Marc ; **jamais d’installation sur Windows vierge** |
-| Installation Linux | `install.sh` (Docker + NVIDIA Container Toolkit) | **Jamais exécuté de zéro** ; le laboratoire Podman n’est pas ce parcours |
+| Installation Linux | `install.sh` sur Linux préparé (Docker + NVIDIA Container Toolkit) | Premier parcours réel Bazzite repris et terminé : [bilan](../essais/2026-11-17-installation-neuve-bazzite.md). Docker, Python et le pilote GPU étaient déjà présents ; OS vierge non qualifié. |
 | Mises à jour | `pilot_update.py`, sauvegarde, retour arrière | Réel chez Marc à plusieurs reprises (incidents corrigés) |
 | Transfert | `transfer.py` et assistant graphique : copie reprenable, préparation, activation, retour | Simulé (fixtures) ; **ni Windows réel, ni Linux réel** |
 | Secours | Protocole R01–R18, manuel de secours, `/secours.html` | **Plan** ; aucun scénario R01–R18 exécuté |
