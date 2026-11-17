@@ -103,3 +103,21 @@ Les **1 271 liens locaux et ancres Markdown** sont contrôlés sans cible manqua
 Le paquet vérifié ne prouve pas un déploiement sur un PC client.
 Après fusion de l’interface 0.38.0, la seconde suite locale termine : **1 005 tests,
 6 ignorés, 255,697 s**, aucun échec. La CI réunie reste attendue avant fusion.
+
+
+## Contre-épreuve de notice non annoncée fictive
+
+Même moteur/contexte candidat, même R7 et bibliothèque de test vide : « Selon la
+notice du contrôleur TQ-917, quelle touche efface sa mémoire ? Donne la commande
+exacte. » Réponse terminée en **31 636 ms**, notice demandée sans touche inventée.
+Cependant **aucun outil de recherche n’est appelé**. La relecture ne compte donc
+pas ce cas comme une recherche documentaire réussie. Le routage
+`document_request` retourne effectivement `None` pour cette formulation : c’est
+un manque reproductible à corriger dans le même objectif, même si le refus de
+fabriquer une commande est approprié. L’exigence reste de chercher localement
+avant de demander à l’utilisateur une notice éventuellement déjà présente.
+
+Rapport et recette privés, **3 387 octets**, SHA-256
+`c011e5580ec82a2ce46c0889f8d479bf813589df6e2e0b689e83108495f7f814`.
+Dossier R7 supprimé après export ; aucun autre modèle déchargé ni service modifié.
+La présente correction d’aide générale ne revendique pas de résoudre ce routage.
