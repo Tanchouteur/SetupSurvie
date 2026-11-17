@@ -1,6 +1,6 @@
 # Volets, transitions et classement des conversations
 
-**Candidat 0.37.0 — 17 novembre 2026.** Demandes directes de Louis après son
+**Bilan de livraison 0.37.0 — 17 novembre 2026.** Demandes directes de Louis après son
 essai de 0.36.0 : commande Documents près du volet droit, transitions pour rendre
 les clics compréhensibles et classement par glisser-déposer dans les dossiers.
 
@@ -42,9 +42,18 @@ La recette dédiée passe avec **35 contrôles sur chacun des moteurs Chromium,
 WebKit et Firefox**. Les six recettes ciblées passent sur les trois moteurs :
 finition (126), volets/dossiers (17), confort de discussion (38), traduction dans
 le lecteur (13), paramètres (182) et la recette dédiée. Les tests unitaires du
-classement (3) et du générateur HTML (2) passent. Après intégration de 0.36.1, la suite Python complète passe : **972 tests,
+classement (3) et du générateur HTML (2) passent. Après intégration de 0.36.1,
+la suite Python complète passe : **972 tests,
 aucun échec, 6 ignorés** (environ 215 s) ; les six recettes repassent sur les
-trois moteurs. Le résultat de la CI complète sera ajouté après exécution.
+trois moteurs.
+
+La [CI du code final `d36b0ca`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44033257585)
+termine avec **huit jobs réussis** : Linux, Windows, trois versions Python du
+lecteur isolé, Kiwix, itinéraires hors ligne et navigation des cartes/portail.
+Ce dernier job rejoue la régression complète Chromium/WebKit puis les parcours
+ciblés Firefox, dont les 35 nouveaux contrôles. Les commits suivants modifient
+uniquement la documentation. Livraison par la [PR nº 15](https://github.com/Tanchouteur/SetupSurvie/pull/15).
+
 Safari sur iPhone physique et usage sur les PC réels restent des validations
 séparées. Aucun PC cible n’est mis à jour par cette livraison.
 
