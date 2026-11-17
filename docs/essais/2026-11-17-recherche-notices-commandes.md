@@ -63,3 +63,14 @@ Rapport/recette privés hors Git ; dossier d’essai supprimé après export.
 Archive privée locale `setupsurvie-0382-notices-prive.tgz`, **4 797 octets**,
 SHA-256 `96f08d098e8730436d08c15a1185922bad2e5dd0a38fb5a3fa5e26b5b60bd217`.
 Derniers contrôles de filtres : **12 tests, 0,733 s**, sans échec.
+
+
+Suite complète locale : **1010 tests en 201.679 s, 6 ignorés**, aucun échec.
+
+Paquet candidat source `3e5543d417f1eaa6d10e20ad39b1590ef399c8d5` : **977 fichiers**, **17 268 205 octets**
+décompressés, ZIP **7 722 757 octets**, SHA-256
+`49cfd70329ff0244b205992c42f109cd64a4df8ef6bff6799574056ebeb1a3de`.
+Chaque fichier est comparé à Git avec ses filtres et aux tailles/empreintes du
+manifeste ; 1 277 liens locaux et ancres contrôlés, aucune cible manquante.
+Ce reçu est postérieur au paquet et n’est pas prétendu inclus dedans.
+La CI complète reste en cours ; aucun déploiement client n’est annoncé.
