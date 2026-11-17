@@ -11,6 +11,7 @@ import re
 import shutil
 import sqlite3
 import stat
+import subprocess
 import sys
 import time
 import uuid
@@ -635,6 +636,12 @@ def activate(dest):
             cache=dest/'data/tools/search-index-wheels'
             search_index_tools.validate_cache(cache)
             search_index_tools.prepare(app,config,offline=True,force=True)
+        # A copied Python environment may point to the source disk: rebuild it
+        # from the copied verified caches, without Internet. Optional tool.
+        try:
+            import youtube_tools
+            youtube_tools.prepare(config['data_dir'],offline=True,force=True)
+        except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):pass
         if host=='windows':
             import windows_autostart
             windows_autostart.prepare(app,config,preserve_preferences=True)

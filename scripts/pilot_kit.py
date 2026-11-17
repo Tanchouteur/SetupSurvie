@@ -115,6 +115,8 @@ def export_lab(destination,english=True):
     if index_wheels.is_dir():
         for path in sorted(index_wheels.iterdir()):
             if path.is_file() and not path.is_symlink() and path.suffix in ('.whl','.json'):copy(path,'app/vendor/search-index/'+path.name)
+    complete_youtube_caches(data)
+    for source,relative in youtube_vendor(data):copy(source,relative)
     setup.write_json(dest/'manifest.json',{'schema':1,'kind':'SetupSurvie public pilot kit','files':records,
         'models':sorted({p['model'] for p in profiles}),'english_wikipedia':english,
         'notice':'Aucun compte, secret, historique ni certificat privé du PC source. Python, Docker Desktop, Ollama et pilote NVIDIA requis sur Windows.'})
@@ -167,11 +169,43 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     try:
         if not search_index_tools.prepare(app,c,offline=True):print('Indexation complémentaire : outil absent du kit, préparation nécessaire dans les réglages.')
     except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):print('Outil d’indexation incompatible ou incomplet ; les autres documents restent disponibles. Réessayez dans les réglages.')
+    setup.prepare_youtube_tools(c,True)
     app.up(c);app.verify(c)
     app.install_windows_shortcuts(c,startup=startup)
     app.addresses(c)
     print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
     print('Application installée, indépendante du kit :',application)
+
+
+def complete_youtube_caches(data):
+    """Add the Windows and Linux files of yt-dlp/Deno/FFmpeg before export.
+
+    Uses Internet when a pinned file is missing; an outage only leaves the
+    tool to be prepared at first use on the target PC."""
+    import youtube_tools
+    try:
+        for system in ('windows','linux'):youtube_tools.cache_target(data,system,'3.13')
+    except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError) as error:
+        print('Outils YouTube incomplets dans le kit ('+str(error)[:200]+') ; ils seront préparés au premier téléchargement avec Internet.')
+
+
+def youtube_vendor(data):
+    """Verified yt-dlp/Deno wheels and FFmpeg archives of the data folder, for the kit.
+
+    Prepare them for every target first, e.g. on the lab:
+    python scripts/youtube_tools.py --data-dir DATA --cache-target windows:3.13"""
+    import youtube_tools
+    tools=data/'tools'
+    wheels=tools/'youtube-wheels'
+    if (wheels/'manifest.json').is_file():
+        youtube_tools.validate_wheels(wheels)
+        for path in sorted(wheels.iterdir()):
+            if path.is_file() and not path.is_symlink() and path.suffix in ('.whl','.json'):yield path,'app/vendor/youtube/wheels/'+path.name
+    ffmpeg=youtube_tools.manifest()['ffmpeg']
+    for system in ('windows','linux'):
+        archive=tools/'ffmpeg-archives'/ffmpeg[system]['file']
+        if archive.is_file() and archive.stat().st_size==ffmpeg[system]['bytes'] and youtube_tools.file_hash(archive)==ffmpeg[system]['sha256']:
+            yield archive,'app/vendor/youtube/ffmpeg/'+archive.name
 
 
 def refresh_app(root):
@@ -200,6 +234,13 @@ def refresh_app(root):
         for source in sorted(index_wheels.iterdir()):
             if not source.is_file() or source.is_symlink() or source.suffix not in ('.whl','.json'):continue
             relative='app/vendor/search-index/'+source.name;dest=root/relative;dest.parent.mkdir(parents=True,exist_ok=True)
+            if source.resolve()!=dest.resolve():shutil.copyfile(source,dest)
+            records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
+    youtube=Path(os.environ.get('SURVIE_YOUTUBE_TOOLS',setup.ROOT/'vendor/youtube'))
+    if not youtube.is_dir():youtube=root/'app/vendor/youtube'
+    if youtube.is_dir():
+        for source in sorted(p for p in youtube.rglob('*') if p.is_file() and not p.is_symlink()):
+            relative='app/vendor/youtube/'+source.relative_to(youtube).as_posix();dest=root/relative;dest.parent.mkdir(parents=True,exist_ok=True)
             if source.resolve()!=dest.resolve():shutil.copyfile(source,dest)
             records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
     manifest['files']=records;setup.write_json(root/'manifest.json',manifest)

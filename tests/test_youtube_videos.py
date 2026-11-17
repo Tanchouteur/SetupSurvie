@@ -143,22 +143,18 @@ class DownloadTests(unittest.TestCase):
         code=tool.run_list(tool.argparse.Namespace(action='check',list=str(listing)),log=self.output.append)
         self.assertEqual(code,2);self.assertIn('ligne 2 : '+A+' → [Eau]',self.output);self.assertFalse(self.calls.exists())
 
-    def test_prepare_installs_yt_dlp_in_its_own_environment(self):
-        commands=[]
-        def run(args,**options):
-            commands.append(args)
-            return subprocess.CompletedProcess(args,0,stdout='2099.01.01\n',stderr='')
-        def create(self,folder):
-            python=Path(folder)/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
-            python.parent.mkdir(parents=True);python.write_text('')
-        with patch.object(tool.venv.EnvBuilder,'create',create):
-            self.assertEqual(tool.prepare(self.data,run=run),'2099.01.01')
-        self.assertEqual(commands[0][1:],['-m','ensurepip','--upgrade'])
-        self.assertEqual(commands[1][1:],['-m','pip','install','--upgrade','--disable-pip-version-check','yt-dlp[default]'])
-        self.assertEqual(json.loads((self.data/'tools/youtube/ready.json').read_text())['yt_dlp'],'2099.01.01')
-        self.assertTrue(str(commands[1][0]).startswith(str(self.data/'tools/youtube/venv')))
-        with self.assertRaises(tool.setup.SetupError):tool.downloader(self.root/'other')
-        self.assertEqual(tool.downloader(self.data)[1:],['-m','yt_dlp'])
-
+    def test_download_prepares_the_tools_by_itself_or_explains_why_not(self):
+        with patch.object(tool.youtube_tools,'ensure',return_value=True) as ensure,patch.object(tool.youtube_tools,'installed_version',return_value='2026.10.26'):
+            command=tool.downloader(self.data,log=self.output.append)
+        ensure.assert_called_once();self.assertEqual(command[1:],['-m','yt_dlp'])
+        self.assertEqual(command[0],str(tool.youtube_tools.python(self.data)))
+        with patch.object(tool.youtube_tools,'ensure',return_value=False),patch.object(tool.youtube_tools,'installed_version',return_value=None):
+            with self.assertRaises(tool.setup.SetupError) as caught:tool.downloader(self.data)
+        self.assertIn('Internet',str(caught.exception))
+        ffmpeg=self.data/'tools'/'ffmpeg'/tool.youtube_tools.manifest()['ffmpeg']['version']/('ffmpeg.exe' if os.name=='nt' else 'ffmpeg')
+        ffmpeg.parent.mkdir(parents=True);ffmpeg.write_text('')
+        self.assertEqual(tool.find_ffmpeg(None,self.data),ffmpeg)
+        deno=tool.youtube_tools.paths(self.data)['venv']/('Scripts/deno.exe' if os.name=='nt' else 'bin/deno');deno.parent.mkdir(parents=True);deno.write_text('')
+        self.assertEqual(tool.find_js_runtime(self.data),'deno')
 
 if __name__=='__main__':unittest.main()

@@ -1,7 +1,8 @@
 # Télécharger une liste de vidéos YouTube
 
-**Guide actuel — 0.41.0, 17 novembre 2026.** Outil en ligne de commande, à lancer
-sur le PC qui héberge SetupSurvie, **avec Internet**. Il range les vidéos dans la
+**Guide actuel — 0.42.0, 17 novembre 2026.** Outil en ligne de commande, à lancer
+sur le PC qui héberge SetupSurvie, **avec Internet**. Depuis 0.42.0, yt-dlp, Deno
+et FFmpeg sont préparés automatiquement : rien à installer à la main. Il range les vidéos dans la
 bibliothèque ; le site les répertorie ensuite tout seul. Aucun essai réel sur
 YouTube n’a encore été fait : voir [Limites](#limites).
 
@@ -36,30 +37,49 @@ Pour relire la liste sans rien télécharger :
 python scripts/youtube_videos.py check videos.txt
 ```
 
-## 2. Préparer l’outil (une fois, puis de temps en temps)
+## 2. Outils nécessaires : rien à faire
 
-Depuis le dossier de SetupSurvie :
+Le téléchargement utilise trois outils, aux versions figées et vérifiées par
+empreinte (`deploy/youtube-tools.json`, `scripts/requirements-youtube.txt`) :
+
+- **yt-dlp** 2026.10.26, qui télécharge depuis YouTube ;
+- **Deno** 2.9.8, le moteur JavaScript que YouTube exige désormais ;
+- **FFmpeg** 8.1.3 (version LGPL), qui assemble image et son en 480p.
+
+Ils sont rangés dans `tools/` du dossier de données, à part du reste du système,
+et préparés sans intervention :
+
+| Moment | Ce qui se passe |
+| --- | --- |
+| Installation en ligne | Téléchargés, vérifiés et installés avec le reste. |
+| Installation depuis le kit hors ligne | Pris dans le kit, sans Internet. |
+| Copie vers un autre disque ou un autre PC | Leurs fichiers suivent le dossier de données ; l’environnement Python est recréé hors ligne à la réactivation. |
+| Premier téléchargement, si quelque chose manque | Réparé depuis les fichiers déjà présents, sinon téléchargé : Internet est de toute façon nécessaire pour YouTube. |
+
+Un échec de préparation ne bloque jamais l’installation : le reste de SetupSurvie
+fonctionne, et l’outil se termine au premier téléchargement avec Internet.
+
+Si YouTube change et que les téléchargements se mettent à échouer (refus,
+formats introuvables), passer à la toute dernière version de yt-dlp :
 
 ```text
-python scripts/youtube_videos.py prepare
+python scripts/youtube_videos.py prepare --latest
 ```
 
-Sous Windows, utiliser `py -3` à la place de `python` si besoin. La commande
-installe la dernière version de `yt-dlp` dans `tools/youtube/` du dossier de
-données, à part du reste du système. YouTube change souvent : si les
-téléchargements se mettent à échouer, relancer `prepare` met yt-dlp à jour.
-La version utilisée figure dans chaque rapport.
+La version utilisée, ainsi que la présence de Deno et FFmpeg, figurent dans chaque rapport.
 
-Deux outils facultatifs améliorent le résultat :
+### Kit hors ligne
 
-- **Deno**, que yt-dlp utilise pour lire les pages YouTube. Sans lui, YouTube
-  peut refuser des vidéos ou limiter les formats. Windows : `winget install
-  DenoLand.Deno`. Node.js ou Bun conviennent aussi s’ils sont déjà installés.
-- **FFmpeg**, pour assembler image et son en 480p. Sans lui, seuls les formats
-  déjà complets sont utilisés, souvent en 360p. Windows : `winget install
-  Gyan.FFmpeg`, ou indiquer son chemin avec `--ffmpeg`.
+L’export du kit depuis le laboratoire (`scripts/pilot_kit.py`) complète lui-même
+le cache avec les fichiers **Windows** (Python 3.13) et **Linux** de ces outils, puis
+les place sous `app/vendor/youtube/` avec leurs empreintes. L’installation depuis
+le kit les vérifie et les installe sans Internet. Si Internet manque pendant
+l’export, le kit le signale et l’outil se préparera au premier téléchargement.
+Pour compléter le cache à la main, par exemple pour une autre version de Python :
 
-L’outil signale en début de téléchargement s’ils sont absents.
+```text
+python scripts/youtube_tools.py --data-dir <données> --cache-target windows:3.12
+```
 
 ## 3. Télécharger
 
@@ -123,8 +143,13 @@ Voir la [décision et les questions ouvertes](../decisions/telechargement-videos
 
 ## Limites
 
-- Testé uniquement avec un yt-dlp simulé et une vérification des options par le
-  vrai yt-dlp 2026.10.26, sans téléchargement. Le premier essai réel doit se faire
+- Aucune vidéo réelle n’a encore été téléchargée : les téléchargements sont testés
+  avec un yt-dlp simulé. La préparation des outils a, elle, été faite réellement
+  dans le runner Linux (17 novembre 2026) : paquets et FFmpeg vérifiés, yt-dlp
+  détectant Deno 2.9.8 et FFmpeg 8.1.3, puis recréation hors ligne après copie
+  vers un autre dossier. L’archive FFmpeg Windows a été téléchargée, vérifiée et
+  extraite ; les paquets Windows existent pour Python 3.12 et 3.13. Aucune
+  installation Windows réelle n’a encore été faite. Le premier essai réel doit se faire
   sur le PC cible avec 3 à 5 vidéos courtes. Points à observer : 480p, sous-titres
   fr/en, vidéo sans sous-titres, adresse invalide, vidéo indisponible, puis
   lecture dans le site.
