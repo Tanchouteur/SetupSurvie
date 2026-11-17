@@ -221,3 +221,11 @@ Sur PC, faites glisser la séparation à droite du volet pour ajuster sa largeur
 Au clavier, sélectionnez la séparation et utilisez Gauche/Droite, Début ou Fin.
 Le volet défile verticalement quand les projets et conversations dépassent.
 Les projets ouverts restent mémorisés dans cet onglet, par profil.
+
+
+Les essais du volet 0.38.0 couvrent 22 contrôles de navigation, classement,
+renommage, imbrication, repli et redimensionnement au clavier sur Chromium,
+WebKit et Firefox. Le déplacement de la poignée à la souris a aussi été testé
+avec Playwright MCP : la largeur affichée suit la largeur demandée et la capture
+du pointeur est relâchée en fin de geste. Ce sont des essais sur fixtures,
+sans validation physique sur les PC des utilisateurs ou sur iPhone.
