@@ -56,7 +56,9 @@ class Client:
         url = self.base + path + ('?' + urllib.parse.urlencode(query) if query else '')
         data = None if payload is None else json.dumps(payload).encode()
         request = urllib.request.Request(url, data=data, method=method,
-                                         headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
+                                         headers={'Content-Type': 'application/json', 'Accept': 'application/json',
+                                                  # Same-origin protection of the portal, as a browser sends it.
+                                                  'Origin': self.base})
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 return json.load(response)
@@ -175,6 +177,7 @@ def run(args):
                                                                           encoding='utf-8')
     answers = out / 'answers.jsonl'
     done = {key(r) for r in read_jsonl(answers) if r.get('final')}
+    # Only the latest attempt counts in reports; earlier transport errors stay as evidence.
     total = len(chosen) * len(args.modes) * args.repetitions
     count = 0
     for repetition in range(1, args.repetitions + 1):
@@ -193,12 +196,20 @@ def run(args):
                 row = {'question_id': question['id'], 'mode': mode, 'repetition': repetition, 'version': health.get('version'),
                        'bank_version': bank['version'], 'conversation_id': conversation, 'exchanges': exchanges,
                        'status': last.get('status', 'error'), 'error': error or last.get('error'),
-                       'final': error is None or 'HTTP 429' not in error, 'recorded': time.time()}
+                       'final': error is None, 'recorded': time.time()}
                 row['checks'] = checks(question, row)
                 append_jsonl(answers, row)
                 if error and ('HTTP 503' in error):
                     raise CampaignError('Moteur devenu indisponible : arrêt pour reprise ultérieure. ' + error)
     print(f'Terminé : {answers}')
+
+
+def latest(rows):
+    """Last recorded attempt per question/mode/repetition."""
+    chosen = {}
+    for row in rows:
+        chosen[key(row)] = row
+    return list(chosen.values())
 
 
 def answer_text(row):
@@ -267,7 +278,7 @@ def search(args):
 def sheet(args):
     bank, _ = load_bank(args.bank)
     questions = {q['id']: q for q in bank['questions']}
-    rows = read_jsonl(Path(args.out) / 'answers.jsonl')
+    rows = latest(read_jsonl(Path(args.out) / 'answers.jsonl'))
     searches = {r['question_id']: r for r in read_jsonl(Path(args.out) / 'search.jsonl')}
     if args.ids:
         rows = [r for r in rows if r['question_id'] in args.ids]
@@ -330,7 +341,7 @@ def summarize(bank, rows, reviews):
 def report(args):
     bank, _ = load_bank(args.bank)
     out = Path(args.out)
-    rows = read_jsonl(out / 'answers.jsonl')
+    rows = latest(read_jsonl(out / 'answers.jsonl'))
     review_path = out / 'review.json'
     reviews = json.loads(review_path.read_text(encoding='utf-8')) if review_path.exists() else {}
     summary = summarize(bank, rows, reviews)

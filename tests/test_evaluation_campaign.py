@@ -51,10 +51,15 @@ class FakePortal(BaseHTTPRequestHandler):
         if self.path == '/api/profiles':
             profile = {'id': 'p1', 'name': body['name']}
             s.setdefault('profiles', []).append(profile)
-            return self.reply(profile, 201, 'survie_profile=p1')
+            return self.reply(profile, 201, 'survie_profile=p1; Path=/')
         if self.path == '/api/profiles/select':
-            return self.reply({'id': body['id']}, cookie='survie_profile=' + body['id'])
+            return self.reply({'id': body['id']}, cookie='survie_profile=' + body['id'] + '; Path=/')
         if self.path == '/api/questions':
+            if not self.headers.get('Origin'):
+                return self.reply({'detail': 'Origine requise'}, 403)
+            if s.get('fail_once'):
+                s['fail_once'] = False
+                return self.reply({'detail': 'occupé'}, 429)
             if 'survie_profile=p1' not in (self.headers.get('Cookie') or ''):
                 return self.reply({'detail': 'profil'}, 401)
             s.setdefault('asked', []).append(body)
@@ -109,6 +114,13 @@ class CampaignTest(unittest.TestCase):
         self.assertEqual(self.main('run', '--base-url', self.base), 0)
         self.assertEqual(len(FakePortal.state['asked']), 4)
         self.assertEqual(len(run_campaign.read_jsonl(self.out / 'answers.jsonl')), 3)
+
+    def test_transport_error_is_retried_on_resume(self):
+        FakePortal.state['fail_once'] = True
+        self.main('run', '--base-url', self.base, '--ids', 'A')
+        self.main('run', '--base-url', self.base, '--ids', 'A')
+        rows = run_campaign.read_jsonl(self.out / 'answers.jsonl')
+        self.assertEqual([r['final'] for r in rows], [False, True])
 
     def test_paused_engine_is_never_started(self):
         FakePortal.state['paused'] = True
