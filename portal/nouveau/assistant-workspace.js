@@ -265,7 +265,10 @@
   async function moveConversation(conversation, target) {
     const owner = S.user?.id;
     if (!owner || moving.has(conversation.id)) return;
-    if ((conversation.folder_id || "") === target) return;
+    if ((conversation.folder_id || "") === target) {
+      toast("Cette conversation est déjà dans ce dossier.");
+      return;
+    }
     moving.add(conversation.id);
     try {
       await api("/conversations/" + encodeURIComponent(conversation.id) + "/folder",

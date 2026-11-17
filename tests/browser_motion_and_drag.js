@@ -28,6 +28,9 @@ async page => {
   check(moves.length===1,'Un seul déplacement transmis pour un dépôt');
   check((await page.locator('.toast').textContent()).includes(name),'Confirmation nommant le dossier de destination');
   check(await page.evaluate(id=>S.conversation===id,id) && await page.locator('#chat-input').inputValue()==='Brouillon à conserver','Déplacer garde la discussion ouverte et le brouillon');
+  await row().dragTo(target);
+  await page.waitForFunction(()=>document.querySelector('.toast').textContent.includes('déjà dans ce dossier'));
+  check(moves.length===1,'Dépôt dans le dossier courant expliqué sans déplacement supplémentaire');
   await page.reload();await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady && S.user&&!S.loadingConversation);
   check((await (await page.request.get(base+'/api/conversations?folder='+folder,{maxRetries:1})).json()).conversations.some(c=>c.id===id),'Classement retrouvé après rechargement');
   await row().dragTo(page.locator('[data-folder-id=""]'));
