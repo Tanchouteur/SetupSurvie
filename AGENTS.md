@@ -151,6 +151,12 @@ leur revente. Documenter les lacunes et les droits restant à examiner.
   procédure, mettre à jour dans la même livraison le guide de référence concerné
   et ses renvois. Réviser aussi les choix actuels et l’architecture si nécessaire.
   Ne pas laisser une nouvelle procédure uniquement dans un bilan de livraison.
+- Consigner toute décision durable prise avec Louis dans le document de référence
+  concerné, même sans développement immédiat, avec sa date, son auteur, son contenu
+  et ses conséquences. Distinguer une décision confirmée d’une proposition de
+  l’agent. Si elle remplace une décision antérieure, conserver celle-ci et indiquer
+  ce qui la remplace. Mettre à jour les choix actuels et les renvois utiles, puis
+  commiter et pousser conformément aux règles Git ci-dessus.
 - Indiquer le statut des documents : guide actuel, plan/proposition, bilan daté
   ou archive. Distinguer prévu, implémenté, téléchargé, indexé et réellement testé.
   Préciser les validations non exécutées, les machines et les limites restantes.
