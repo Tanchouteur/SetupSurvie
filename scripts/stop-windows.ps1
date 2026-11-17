@@ -1,6 +1,9 @@
 [CmdletBinding()]
 param([Parameter(Mandatory=$true)][string]$WorkDir)
 $ErrorActionPreference='Stop'
+if (Test-Path -LiteralPath (Join-Path $WorkDir 'transfer-guard.json')) {
+    throw 'Transfert en cours : reprendre ou revenir a la source depuis Transferer SetupSurvie.'
+}
 $runtime=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'startup-settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $env:PATH=(@($runtime.paths)+@($env:PATH)) -join ';'
 $config=Get-Content -LiteralPath (Join-Path $WorkDir 'settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
