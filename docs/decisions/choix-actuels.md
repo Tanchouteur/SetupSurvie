@@ -110,7 +110,67 @@ chantier d’interface. Ne plus consacrer de préparation supplémentaire à ce 
 Les références déjà créées restent historiques ; cette décision ne modifie pas
 les données ni les fonctions existantes de navigation.
 
+## Suivi CI et maîtrise du coût — décision de Louis du 17 novembre 2026
+
+Louis demande de confier le suivi de CI à un sous-agent **GPT Luna** lorsque
+possible, pour économiser les crédits IA. Le suivi de la PR 22 est délégué à
+ce modèle : observation du run existant, résultats et diagnostic ciblé d’échec.
+Louis étend ensuite cette préférence aux tâches bien délimitées pour lesquelles
+un petit sous-agent peut réduire le coût total, sans multiplier les agents
+inutilement. L’agent principal vérifie les preuves et la qualité du travail,
+conserve la revue finale et reprend les tâches qui dépassent les capacités du
+sous-agent. La décision ne change pas les critères de validation et n’autorise
+pas à ignorer un échec.
+
+## Mesures visibles et conservation du modèle — décision de Louis du 17 novembre 2026
+
+Louis demande un indicateur compact dans la navbar PC pour le modèle réellement
+chargé, la RAM et la VRAM, et le maintien de la navigation principale dans les
+cartes. Les mesures détaillées doivent être accessibles directement ; un lien
+« mémoire » ne doit pas conduire seulement au stockage. Il demande aussi une
+lecture de traduction stable, plus large, structurée et dont la progression est
+claire depuis la Bibliothèque. Ces évolutions sont implémentées en **0.39.0**.
+
+Louis refuse le déchargement du modèle à l’expiration d’un délai d’inactivité.
+La conservation demandée devient sans expiration ; arrêt explicite, mode jeu,
+changement de modèle et essais froids volontairement lancés gardent leur rôle.
+Le [guide des mesures](../utilisation/mesurer-assistant-et-memoire.md) précise la
+portée, la prochaine demande et les événements qui peuvent perdre l’état du moteur.
+
+Louis signale enfin qu’une demande explicite de vidéo renvoie un article puis
+une absence non établie. Il demande un filtre vidéo dans la recherche et un
+parcours équivalent pour l’assistant : réservé par Louis à un autre agent après ce signalement,
+sans confondre vidéo absente, non examinée, non indexée et piste manquante.
+
 ## Livraisons disponibles
+
+La **0.39.0** apporte les mesures visibles, la lecture de traduction stable et
+la conservation du modèle sans expiration. Son bilan distingue les tests de
+développement d’un nouvel essai chez Marc.
+
+La **0.38.3** complète la préservation des formules : réduction du contexte et
+lecture explicite de la suite utilisent des limites de blocs entiers. Une
+formule trop longue est omise et signalée, sans augmenter les budgets. Les
+positions restent celles du texte source. Voir le
+[bilan ciblé](../essais/2026-11-17-formules-contexte-et-suite.md).
+Correction compatible (`z`), données et dépendances inchangées.
+
+
+La **0.38.2** corrige les demandes explicites de commandes dans une notice :
+recherche préalable sur la référence unique fournie, puis lecture avec la question
+complète. Les relances reprennent uniquement la dernière référence utilisateur,
+sans emprunter une supposition du modèle ou un ancien sujet. Voir le
+[bilan ciblé](../essais/2026-11-17-recherche-notices-commandes.md).
+Correction compatible (`z`), données et composants tiers inchangés.
+
+
+La **0.38.1** applique la règle validée par Louis : une question générale reste
+traitable sans source précise, avec connaissances générales annoncées et exemples
+adaptables. La préparation ne présente plus un lot vide comme des documents lus.
+Les commandes exactes et gestes critiques gardent leurs exigences de sources,
+paramètres et prudence ; aucun faux document n’est ajouté au suivi.
+Voir le [bilan ciblé](../essais/2026-11-17-aide-generale-sans-source.md).
+Correction compatible (`z`), schéma personnel et composants tiers inchangés.
 
 La **0.38.0** reprend le volet des conversations selon la demande de Louis du
 17 novembre : projets dépliables avec conversations imbriquées, défilement

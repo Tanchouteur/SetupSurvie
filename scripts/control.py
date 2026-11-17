@@ -91,11 +91,12 @@ class Server(ThreadingHTTPServer):
         if paused.exists():
             try:reason=json.loads(paused.read_text()).get('reason','user_pause')
             except ValueError:reason='user_pause'
-        online=False;models=[]
+        online=False;models=[];models_available=False
         try:
             version=self.app.request('http://127.0.0.1:11435/api/version',timeout=1)
             online=bool(version.get('version'))
             models=[{k:m.get(k) for k in ('name','size','size_vram','context_length')} for m in self.app.request('http://127.0.0.1:11435/api/ps',timeout=1).get('models',[])]
+            models_available=True
         except (OSError,ValueError):pass
         diagnostic={}
         try:
@@ -104,7 +105,7 @@ class Server(ThreadingHTTPServer):
                 saved=json.loads(path.read_text(encoding='utf-8'))
                 diagnostic=clean_engine_diagnostic(saved)
         except (OSError,ValueError,TypeError):pass
-        return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,
+        return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,'models_available':models_available,
                 'operation':operation,'error':error,'control_available':True,'last_engine_action':diagnostic}
 
     def activity(self):

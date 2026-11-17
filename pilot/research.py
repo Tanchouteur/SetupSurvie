@@ -18,6 +18,24 @@ def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
 def synthesis(query):return retrieval.search_subject(query)!=query
 
 
+def notice_request(query):
+    raw=retrieval.normal(query)
+    return bool(re.search(r'\b(notices?|manuels?|manuals?|instructions?|mode d emploi)\b',raw)
+                and re.search(r'\b(touches?|boutons?|commandes?|reglages?|appuy\w*|afficher|effac\w*|buttons?|keys?|settings|press|reset)\b',raw))
+
+
+def device_references(query):
+    # Only explicit mixed letter/digit identifiers, never a model-supplied name
+    # or a guessed title. Multiple references keep the complete comparison.
+    return list(dict.fromkeys(m[0] for m in re.finditer(
+        r'(?<![\w-])(?=[A-Za-z0-9-]*[A-Za-z])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?![\w-])',query)))
+
+
+def notice_search_query(query):
+    references=device_references(query)
+    return references[0] if notice_request(query) and len(references)==1 else query
+
+
 def primary_query(query):
     """Use the primary topic for the initial search, retaining the full user
     request in conversation for comparisons and any complementary tool calls.

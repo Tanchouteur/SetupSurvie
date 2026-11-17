@@ -1,8 +1,41 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.30.0, 16 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.39.0, 17 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
+
+## Voir le modèle chargé, la RAM et la VRAM
+
+Sur ordinateur, la barre de navigation affiche le **modèle réellement signalé
+par le moteur**, la RAM du PC et la VRAM. Cliquer sur cet indicateur ouvre
+**Mon appareil → Vue d’ensemble** : modèles, mémoire utilisée/disponible et
+activité de la carte sont visibles directement, avant le suivi documentaire.
+Les mêmes liens de navigation restent accessibles dans les cartes.
+Sur un écran étroit ou très court, l’indicateur est masqué pour laisser la place
+à la lecture ; les mesures restent disponibles dans Mon appareil.
+
+RAM et VRAM représentent tous les usages du PC serveur, y compris les autres
+logiciels. La mémoire vidéo allouée à chaque modèle est indiquée séparément.
+Le mode choisi pour la prochaine réponse n’est pas nécessairement le modèle
+actuellement chargé. Une mesure manquante reste **indisponible**, jamais zéro ;
+une panne d’actualisation indique que les dernières valeurs ne sont plus confirmées.
+Les sondes et caches peuvent décaler les observations de quelques secondes.
+
+## Garder le modèle chargé
+
+Louis demande le 17 novembre 2026 de supprimer le déchargement automatique après
+inactivité. Depuis 0.39.0, les requêtes du portail demandent une conservation sans
+expiration (`keep_alive: -1`), y compris traductions, synthèses et sous-titres.
+Elle s’applique à la prochaine demande ; elle ne réécrit pas le délai d’un appel
+antérieur déjà terminé. Le réglage par défaut du moteur préparé par les lanceurs
+Windows/Linux est aussi sans expiration.
+
+**Arrêter et libérer la mémoire**, le mode jeu et un changement de modèle gardent
+leur effet. Une calibration volontaire peut décharger un modèle pour mesurer un
+départ froid. Le moteur peut encore perdre son état lors d’un redémarrage ou
+d’une panne, ou évincer un modèle pour en charger un autre ; aucune promesse
+physique de conservation après ces événements n’est déduite du délai supprimé.
+Consulter la barre ou la Vue d’ensemble pour connaître l’état effectivement reçu.
 
 ## Comprendre une réponse lente
 

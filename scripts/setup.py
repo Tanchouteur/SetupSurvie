@@ -299,7 +299,7 @@ class Installation:
         env = os.environ.copy()
         env.update({"OLLAMA_HOST": "0.0.0.0:11435", "OLLAMA_MODELS": str(Path(c["data_dir"]) / "models"),
                     "OLLAMA_NO_CLOUD": "1", "OLLAMA_CONTEXT_LENGTH": "8192",
-                    "OLLAMA_NUM_PARALLEL": "1", "OLLAMA_MAX_LOADED_MODELS": "1"})
+                    "OLLAMA_NUM_PARALLEL": "1", "OLLAMA_MAX_LOADED_MODELS": "1", "OLLAMA_KEEP_ALIVE": "-1"})
         log_path = self.work / "ollama.log"
         with log_path.open("ab") as output:
             process = subprocess.Popen([binary, "serve"], env=env, stdin=subprocess.DEVNULL,

@@ -103,3 +103,8 @@
   min-width: 8rem;
   max-width: 100%;
 }
+.reader-work, .reader-work #reader-work-parts { min-width: 0; }
+.reader-work .translation-part { max-width: 80ch; margin: 1.5rem 0; }
+.reader-work .translation-part h4 { font-size: 0.9rem; color: #566a5d; }
+.reader-work .translation-part > .small { color: #566a5d; }
+.reader-work .translation-text pre { white-space: pre; overflow-wrap: normal; font: revert; }

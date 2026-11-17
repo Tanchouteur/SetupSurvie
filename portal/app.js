@@ -429,7 +429,11 @@ function renderTranslationParts(data){
     existing.delete(part.position);if(previous?._translationSnapshot===snapshot)continue;
     const article=element('article',undefined,'translation-part');article.append(element('h3','Page/section '+part.page+' · passage '+(part.position+1)));
       if(part.model||part.quality?.model)article.append(element('p',part.model||part.quality.model,'small muted'));
-      article.append(element('p',part.status==='done'?part.translated:part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
+      if(part.status==='done'){
+        const text=element('div',undefined,'translation-text');
+        if(window.SurvieTranslationText)window.SurvieTranslationText.render(text,part.translated);else text.textContent=part.translated;
+        article.append(text);
+      }else article.append(element('p',part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
       if(part.quality){
         const labels={checked:'Contrôles limités : aucune anomalie repérée. Le sens reste à vérifier.',warning:'À relire : anomalie possible.',blocked:'Passage refusé par les contrôles.',unchecked:'Pas de contrôle automatique enregistré pour ce passage.'};
         article.append(element('p',labels[part.quality.status]||'Contrôle indisponible.',part.quality.status==='checked'?'small muted':'translation-label small'));
@@ -585,7 +589,48 @@ function memoryBytes(value){return (value/1024**3).toLocaleString('fr-FR',{maxim
 function bytes(value){if(value===null||value===undefined)return 'Taille non renseignée';return value>=1e9?(value/1e9).toFixed(1)+' Go':value>=1e6?(value/1e6).toFixed(1)+' Mo':Math.round(value/1e3)+' Ko';}
 
 let inferenceTimer=null;
-async function refreshInference(){clearTimeout(inferenceTimer);try{const data=await api('/inference');S.inference=data;const banner=$('inference-banner');banner.hidden=!!data.online&&!data.operation;banner.replaceChildren(document.createTextNode(data.message+'. '),button('Voir l’état de l’appareil',()=>view('monitor'),'text-button'));$('engine-state').textContent=data.message;$('engine-detail').textContent=data.online?(data.models.length?'Le modèle reste chargé entre les questions pour répondre plus vite.':'Aucun modèle chargé. Le premier démarrera lorsque vous poserez une question.'):'La recherche et la lecture des documents fonctionnent toujours.';$('engine-dot').style.background=data.online?'#50855a':'#ad8241';$('engine-controls').hidden=S.user?.role!=='admin';$('engine-start').textContent=data.paused?'Forcer le démarrage de l’IA':'Démarrer l’assistant';$('engine-start').disabled=!!data.operation||data.online||!data.control_available;$('engine-stop').disabled=!!data.operation||!data.online||!data.control_available;$('engine-caution').textContent=data.paused?'Forcer la reprise réactive l’IA même en mode jeu et peut ralentir le jeu. Le modèle se chargera à la prochaine question.':'Arrêter le moteur interrompt les réponses en cours et libère sa mémoire.';$('engine-error').textContent=data.error||(!data.control_available?'Le service de commande ne répond pas. Utilisez le lanceur sur le PC serveur.':'');const grid=$('monitor-stats');grid.replaceChildren();function stat(title,value,detail,ratio){const card=element('article',undefined,'monitor-stat');card.append(element('span',title,'muted small'),element('strong',value),element('p',detail,'muted small'));if(Number.isFinite(ratio)){const meter=element('progress');meter.max=100;meter.value=Math.max(0,Math.min(100,ratio));meter.setAttribute('aria-label',title);card.append(meter);}grid.append(card);}for(const gpu of data.gpus){stat('Mémoire vidéo',memoryBytes(gpu.used)+' / '+memoryBytes(gpu.total),gpu.name,100*gpu.used/gpu.total);stat('Activité de la carte graphique',gpu.utilization+' %',gpu.temperature+' °C',gpu.utilization);}if(data.memory.total)stat('Mémoire du PC',memoryBytes(data.memory.used)+' / '+memoryBytes(data.memory.total),'RAM utilisée par tous les programmes',100*data.memory.used/data.memory.total);if(data.disk.total)stat('Espace libre du volume',bytes(data.disk.free),'Capacité du volume : '+bytes(data.disk.total),100*data.disk.used/data.disk.total);stat('Questions en cours',String(data.jobs.running||0),String(data.jobs.queued||0)+' en attente');const models=$('monitor-models');models.replaceChildren();for(const model of data.models){const row=element('div',undefined,'model-monitor-row');row.append(element('strong',model.name),element('span',bytes(model.size_vram)+' en mémoire vidéo · contexte '+model.context_length+' tokens','muted small'));models.append(row);}if(!data.models.length)models.append(element('p','Aucun modèle chargé.','muted'));$('monitor-updated').textContent='Dernière mesure : '+new Date().toLocaleTimeString('fr-FR');}catch(e){$('engine-state').textContent='Les mesures sont momentanément indisponibles.';}finally{inferenceTimer=setTimeout(refreshInference,S.view==='monitor'?3000:15000);}}
+async function refreshInference(){
+  clearTimeout(inferenceTimer);
+  try{
+    const data=await api('/inference');S.inference=data;document.dispatchEvent(new CustomEvent('survie:inference',{detail:data}));
+    const models=Array.isArray(data.models)?data.models:[],modelsKnown=data.models_available!==false&&data.control_available!==false;
+    const banner=$('inference-banner');banner.hidden=!!data.online&&!data.operation;
+    banner.replaceChildren(document.createTextNode(data.message+'. '),button('Voir l’état de l’appareil',()=>view('monitor'),'text-button'));
+    $('engine-state').textContent=data.message;
+    $('engine-detail').textContent=models.length?'Modèle'+(models.length>1?'s':'')+' chargé'+(models.length>1?'s':'')+' : '+models.map(model=>model.name).join(', ')+'.':
+      !modelsKnown?'Le modèle réellement chargé n’a pas pu être vérifié.':data.online?'Aucun modèle signalé par le moteur. Le prochain se chargera à votre demande.':'La recherche et la lecture des documents restent accessibles.';
+    $('engine-dot').style.background=data.online?'#50855a':'#ad8241';$('engine-controls').hidden=S.user?.role!=='admin';
+    $('engine-start').textContent=data.paused?'Forcer le démarrage de l’IA':'Démarrer l’assistant';
+    $('engine-start').disabled=!!data.operation||data.online||!data.control_available;
+    $('engine-stop').disabled=!!data.operation||!data.online||!data.control_available;
+    $('engine-caution').textContent=data.paused?'Forcer la reprise réactive l’IA même en mode jeu et peut ralentir le jeu. Le modèle se chargera à la prochaine question.':'Arrêter le moteur interrompt les réponses en cours et libère sa mémoire.';
+    $('engine-error').textContent=data.error||(!data.control_available?'Le service de commande ne répond pas. Les mesures du PC ne sont pas disponibles.':'');
+    const grid=$('monitor-stats');grid.replaceChildren();
+    function stat(title,value,detail,ratio){
+      const card=element('article',undefined,'monitor-stat');card.append(element('span',title,'muted small'),element('strong',value),element('p',detail,'muted small'));
+      if(Number.isFinite(ratio)){const meter=element('progress');meter.max=100;meter.value=Math.max(0,Math.min(100,ratio));meter.setAttribute('aria-label',title);card.append(meter);}grid.append(card);
+    }
+    const ram=data.memory||{};
+    if(ram.total)stat('RAM du PC',memoryBytes(ram.used)+' / '+memoryBytes(ram.total),memoryBytes(ram.available)+' disponibles · tous les programmes du PC',100*ram.used/ram.total);
+    else stat('RAM du PC','Mesure indisponible','La mémoire du serveur n’a pas pu être relevée.');
+    const gpus=Array.isArray(data.gpus)?data.gpus:[];
+    for(const gpu of gpus){
+      stat('VRAM de la carte graphique',memoryBytes(gpu.used)+' / '+memoryBytes(gpu.total),gpu.name+' · '+memoryBytes(Math.max(0,gpu.total-gpu.used))+' disponibles · tous les usages du PC',100*gpu.used/gpu.total);
+      stat('Activité de la carte graphique',Number.isFinite(gpu.utilization)?gpu.utilization+' %':'Mesure indisponible',gpu.name+(Number.isFinite(gpu.temperature)?' · '+gpu.temperature+' °C':''),gpu.utilization);
+    }
+    if(!gpus.length)stat('VRAM de la carte graphique','Mesure indisponible','Aucune mesure reçue ; cela ne signifie pas que la carte est absente ou inutilisée.');
+    stat('Questions en cours',String(data.jobs?.running||0),String(data.jobs?.queued||0)+' en attente');
+    const list=$('monitor-models');list.replaceChildren();
+    for(const model of models){
+      const row=element('div',undefined,'model-monitor-row');
+      const detail=[Number.isFinite(model.size_vram)?memoryBytes(model.size_vram)+' en VRAM':null,Number.isFinite(model.size)?memoryBytes(model.size)+' alloués au modèle (RAM et VRAM)':null,Number.isFinite(model.context_length)?'contexte '+model.context_length.toLocaleString('fr-FR')+' tokens':null].filter(Boolean).join(' · ');
+      row.append(element('strong',model.name),element('span',detail||'Détails mémoire non communiqués','muted small'));list.append(row);
+    }
+    if(!models.length)list.append(element('p',modelsKnown?'Aucun modèle signalé par le moteur.':'Impossible de vérifier le modèle chargé. Les mesures sont indisponibles.','muted'));
+    $('monitor-updated').textContent='Actualisé à '+new Date().toLocaleTimeString('fr-FR')+' · les mesures du contrôleur peuvent avoir quelques secondes de décalage.';
+  }catch(e){document.dispatchEvent(new CustomEvent('survie:inference',{detail:{observation_error:true}}));$('engine-state').textContent='Les mesures sont momentanément indisponibles.';$('monitor-updated').textContent='Actualisation impossible. Les dernières valeurs affichées ne sont plus confirmées.';}
+  finally{inferenceTimer=setTimeout(refreshInference,S.view==='monitor'?3000:15000);}
+}
 async function engineCommand(action){$('engine-start').disabled=true;$('engine-stop').disabled=true;try{await api('/admin/inference/'+action,action==='start'?{force:!!S.inference?.paused}:{});toast(action==='start'?'Démarrage demandé. Le chargement du modèle attendra votre prochaine question.':'Arrêt demandé.');}catch(e){toast(e.message);}await refreshInference();}
 
 async function loadNetwork(){try{const data=await api('/network');const warning=$('connect-warning');warning.hidden=!data.warning;warning.textContent=data.warning||'';if(!data.lan_enabled){warning.hidden=false;warning.textContent='L’accès depuis les autres appareils est désactivé. La personne qui prépare ce PC peut l’activer dans les réglages réseau.';}$('connect-qr').src='/api/network/qr.svg?kind=direct&v='+Date.now();$('connect-address').textContent=data.http_url;$('connect-address').href=data.http_url;$('connect-secure').textContent=data.https_url;$('connect-secure').href=data.https_url;}catch(e){$('connect-warning').hidden=false;$('connect-warning').textContent=e.message;}}

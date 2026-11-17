@@ -8,6 +8,22 @@ from pilot.archive_index import ArticleText
 
 
 class MathTextTests(unittest.TestCase):
+    def test_reading_windows_rewind_small_equations_and_report_oversized_omissions(self):
+        from pilot.math_text import marked,reading_window,BLOCKS
+        formula=marked(r'\frac{19}{7}');text='Avant. '+formula+' Après.'
+        inside=text.index('frac')
+        row=reading_window(text,inside,100)
+        self.assertEqual(row['offset'],text.index('```math'))
+        self.assertEqual(len(list(BLOCKS.finditer(row['text']))),1)
+        huge='Avant. '+marked('x'*4000)+' Après.'
+        row=reading_window(huge,huge.index('```math'),3500)
+        self.assertTrue(row['formula_omitted']);self.assertIn('Après.',row['text'])
+        self.assertLessEqual(len(row['text']),3500)
+        self.assertEqual(row['text'],huge[row['offset']:row['next_offset']])
+        incomplete='Avant. \n```math\n'+('x'*4000)
+        row=reading_window(incomplete,0,3500)
+        self.assertTrue(row['formula_omitted']);self.assertNotIn('```math',row['text'])
+
     def read(self,markup,reader=Text):
         p=reader();p.feed('<article>Avant '+markup+' après.</article>');p.close()
         return p.text()

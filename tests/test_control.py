@@ -16,6 +16,16 @@ import setup,control
 
 
 class ControlTests(unittest.TestCase):
+    def test_status_distinguishes_no_loaded_model_from_failed_model_observation(self):
+        for payload,available in [({'models':[]},True), (OSError('engine observation unavailable'),False)]:
+            self.server.cache_time=0
+            replies=[{'version':'fixture'},payload]
+            with patch.object(control,'hardware',return_value={'memory':{},'gpus':[]}),patch.object(self.app,'request',side_effect=replies):
+                state=self.server.status()
+            self.assertTrue(state['online'])
+            self.assertEqual(state['models'],[])
+            self.assertEqual(state['models_available'],available)
+
     def test_nonwindows_hardware_query_accepts_fractional_gpu_temperature(self):
         output = SimpleNamespace(returncode=0, stdout='NVIDIA GPU, 8192, 1024, 10, 46.73\n')
         with patch.object(control,'os',SimpleNamespace(name='posix')),patch.object(control.subprocess, 'run', return_value=output) as run:

@@ -66,6 +66,37 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(measured['failure'],'context_budget')
         self.assertEqual(measured['context'],8192);self.assertEqual(measured['model_calls'],[])
 
+    def test_empty_document_preparation_keeps_general_help_and_no_fictitious_sources(self):
+        question='Comment organiser l’apprentissage culturel des enfants ?'
+        with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
+        def reply(payload):
+            instructions='\n'.join(m['content'] for m in payload['messages'] if m['role']=='system')
+            self.assertIn('ne fournit aucun passage lisible',instructions)
+            self.assertNotIn('Des passages documentaires ont été préparés',instructions)
+            self.assertIn('connaissances générales',instructions)
+            self.assertIn('l’âge et le niveau des enfants',instructions)
+            self.assertIn('dosages, potabilité, électricité, structure',instructions)
+            packets=[json.loads(m['content']) for m in payload['messages'] if m.get('tool_name')=='read_sources']
+            self.assertEqual(packets[0]['results'],[])
+            return {'content':'À partir de connaissances générales, voici un exemple adaptable : alterner lecture et activité. Quels âges ont les enfants ?'}
+        _,answer=self.run_chat([reply],found=[])
+        self.assertEqual(answer['sources'],[])
+        self.assertIn('connaissances générales',answer['content'])
+        self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
+
+    def test_unreadable_search_hit_is_not_presented_as_documentary_evidence(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment utiliser la notice fictive ?' WHERE conversation_id='c' AND role='user'")
+        def reply(payload):
+            instructions='\n'.join(m['content'] for m in payload['messages'] if m['role']=='system')
+            self.assertIn('ne fournit aucun passage lisible',instructions)
+            self.assertIn('commande exacte d’appareil',instructions)
+            self.assertNotIn('Des passages documentaires ont été préparés',instructions)
+            return {'content':'Je ne peux pas vérifier les commandes de cette notice illisible. Donnez sa référence ; je peux expliquer les principes généraux séparément.'}
+        def failed(identifier):raise HTTPException(503,'Fixture unavailable')
+        _,answer=self.run_chat([reply],found=[self.a],read=failed)
+        self.assertEqual(answer['sources'],[])
+        self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
+
     def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self):
         proposal={'content':'{"name":"search_library","arguments":{"query":"notice"}}'}
         payloads,answer=self.run_chat([proposal,proposal],expected_status='incomplete')
@@ -377,6 +408,22 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
         self.assertIsNone(engine.document_request([{'role':'user','content':'Comment calculer 12 fois 8 ?'}]))
 
+    def test_notice_command_searches_device_but_reads_with_the_full_question(self):
+        question='Selon la notice du contrôleur TQ-917, quelle touche affiche son identifiant ? Donne la commande exacte.'
+        source={**self.a,'title':'Notice TQ-917','text':'Fixture fictive TQ-917. La touche REPERE affiche l’identifiant.'}
+        with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
+        def answer(payload):
+            self.assertTrue(any(m.get('content')==question for m in payload['messages']))
+            packet=json.loads(next(m['content'] for m in payload['messages'] if m.get('tool_name')=='read_sources'))
+            self.assertIn('REPERE',packet['results'][0]['passages'][0]['text'])
+            return {'content':'La notice fictive indique REPERE [1].'}
+        _,saved=self.run_chat([answer],found=[source],read=lambda _:source)
+        self.assertEqual(self.lookup_calls[0].args[0],'TQ-917')
+        self.assertEqual(len(saved['sources']),1)
+        trace=json.loads((Path(self.temp.name)/'traces/j.json').read_text())
+        read=next(row for row in trace['tools'] if row.get('tool')=='read_sources')
+        self.assertIn('affiche son identifiant',read['arguments']['query'])
+
     def test_wikipedia_followup_uses_previous_user_subject(self):
         history=[{'role':'user','content':'Comment faire du feu ?'}, {'role':'assistant','content':'Aucun document, affirmation non établie.'}, {'role':'user','content':'Et dans Wikipédia tu ne trouves rien ?'}]
         query,collection=engine.document_request(history)
@@ -400,6 +447,35 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(all(m['tool_call_id'] in calls for m in messages if m['role']=='tool'))
         self.assertTrue(all('thinking' not in m for m in messages))
         self.assertTrue(all(json.loads(m['content'])['partial_read'] for m in messages if m['role']=='tool'))
+
+    def test_context_compaction_never_keeps_half_a_formula_in_single_or_batch_reads(self):
+        from pilot.math_text import marked,BLOCKS
+        for batch in (False,True):
+            text=('x'*240)+'\n'+marked(r'\frac{'+('a'*600)+'}{19}')+('z'*2000)
+            value={'results':[{'passages':[{'offset':40,'text':text,'next_offset':40+len(text)}]}]} if batch else {'offset':40,'text':text,'next_offset':40+len(text)}
+            messages=[{'role':'system','content':'Policy'}, {'role':'user','content':'Question'},*engine.tool_messages('read_sources' if batch else 'read_source',{},value,'formula')]
+            self.assertTrue(engine.fit_context(messages,maximum=1500))
+            result=json.loads(messages[-1]['content']);part=result['results'][0]['passages'][0] if batch else result
+            self.assertEqual(part['text'],text[:len(part['text'])])
+            self.assertEqual(part['next_offset'],40+len(part['text']))
+            self.assertEqual(part['text'].count('```math'),len(list(BLOCKS.finditer(part['text']))))
+            self.assertNotIn(r'\frac',part['text'])
+
+    def test_explicit_read_continues_at_formula_boundary_with_original_offsets(self):
+        from pilot.math_text import marked,BLOCKS
+        text=('Avant. '*497)+'\n'+marked(r'\frac{19}{7}')+' Après.'*300
+        source={**self.a,'text':text}
+        def next_read(payload):
+            part=json.loads(payload['messages'][-1]['content'])
+            self.assertEqual(part['text'],text[part['offset']:part['next_offset']]);self.assertTrue(part['more'])
+            self.assertNotIn('```math',part['text'])
+            return self.call('read_source',{'id':'guide:a','offset':part['next_offset']})
+        def answer(payload):
+            part=json.loads(payload['messages'][-1]['content'])
+            self.assertEqual(part['text'],text[part['offset']:part['next_offset']])
+            self.assertIn(r'\frac{19}{7}',part['text']);self.assertEqual(len(list(BLOCKS.finditer(part['text']))),1)
+            return {'content':'Passage fictif lu [1].'}
+        self.run_chat([self.call('read_source',{'id':'guide:a','offset':0}),next_read,answer],read=lambda _:source)
 
     def test_long_archive_identifiers_fit_before_model_call_without_changing_context_or_question(self):
         question='Fais une synthèse des documents sur les techniques pour faire du feu.'

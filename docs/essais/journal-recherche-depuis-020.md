@@ -1,5 +1,19 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+- 17 novembre, candidat **0.39.0** : [mesures visibles et lecture stable](2026-11-17-memoire-et-lecture-traduction.md), conservation du modèle sans expiration ; demande vidéo spécifique tracée pour la suite.
+
+0.38.3 : [formules et limites de contexte](2026-11-17-formules-contexte-et-suite.md),
+protection des coupes de réduction et de lecture explicite, omissions signalées
+sans hausse de budget ni modification des états utilisateur.
+
+0.38.2 : [recherche préalable des notices](2026-11-17-recherche-notices-commandes.md),
+commandes de notice reconnues avant rédaction, référence recherchée et question
+complète pour la lecture, relance limitée au dernier appareil fourni par l’utilisateur.
+
+0.38.1 : [aide générale sans source précise](2026-11-17-aide-generale-sans-source.md),
+consignes de réponse utiles et honnêtes, préparation vide annoncée comme telle,
+sources et gestes critiques toujours distingués. Essais simulés et réels séparés.
+
 0.37.3 : [formules des sources et traductions](2026-11-17-formules-documentaires.md),
 lecteur HTML commun, extraits sans formule coupée, copie protégée pendant traduction
 et contrôle version 4. Anciennes extractions non réécrites ; sens technique à relire.

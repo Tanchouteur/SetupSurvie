@@ -9,7 +9,7 @@ import uuid
 
 import httpx
 from fastapi import HTTPException
-from . import assistant_metrics,calibration,durable,engine,library,model_runtime,store
+from . import model_session,assistant_metrics,calibration,durable,engine,library,model_runtime,store
 
 ACTIVE={}
 REFERENCE=Path(__file__).with_name('search-reference.json')
@@ -163,7 +163,7 @@ async def generate(report,instruction,data,schema,remaining):
         report['model_contacted']=True
         async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(None,connect=5)) as client:
             async with client.stream('POST',engine.OLLAMA+'/api/chat',json={'model':report['model'],'messages':messages,'format':schema,
-                'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':'5m',
+                'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':model_session.KEEP_ALIVE,
                 'options':{'num_ctx':report['context'],'num_predict':1024,'temperature':0,'seed':0}}) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():

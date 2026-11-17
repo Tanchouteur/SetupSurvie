@@ -1,0 +1,27 @@
+.translation-text {
+  max-width: 80ch;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+.translation-text p, .translation-text ul, .translation-text ol,
+.translation-text blockquote, .translation-text pre, .translation-text .translation-table {
+  margin: 0.75em 0;
+}
+.translation-text h1, .translation-text h2, .translation-text h3,
+.translation-text h4, .translation-text h5, .translation-text h6 { margin: 1em 0 0.4em; }
+.translation-text pre { white-space: pre; overflow-x: auto; }
+.translation-text code { white-space: pre-wrap; }
+.translation-text pre code { white-space: pre; }
+.translation-table { max-width: 100%; overflow-x: auto; }
+.translation-text table { border-collapse: collapse; }
+.translation-text th, .translation-text td { border: 1px solid #cad6cc; padding: 0.35em 0.5em; text-align: left; }
+.translation-text-fallback { white-space: pre-wrap; }
+
+/* Override the old translation-part and generic-dialog text rules. */
+.translation-part .translation-text p, dialog .translation-text p {
+  white-space: normal; color: inherit; font-size: 1rem;
+}
+.translation-text h1 { font-size: 1.7rem; letter-spacing: normal; }
+.translation-text h2 { font-size: 1.4rem; letter-spacing: normal; }
+.translation-text h3 { font-size: 1.2rem; }

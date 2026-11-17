@@ -36,7 +36,7 @@ async def status(fresh=False):
             if not isinstance(value,dict):raise ValueError()
     except (httpx.HTTPError,ValueError) as error:
         problem=problem or ('timeout' if isinstance(error,httpx.TimeoutException) else 'http_error' if isinstance(error,httpx.HTTPStatusError) else 'connection_error' if isinstance(error,httpx.HTTPError) else 'invalid_response')
-        value={'online':False,'paused':False,'models':[],'control_available':False,'gpus':[],'memory':{},'disk':{},
+        value={'online':False,'paused':False,'models':[],'models_available':False,'control_available':False,'gpus':[],'memory':{},'disk':{},
                'control_error':problem,'control_http_status':upstream,'control_elapsed_ms':round((time.monotonic()-started)*1000)}
         marker=network.CATALOG/'inference.json'
         if marker.is_file():

@@ -160,7 +160,7 @@ def container_specifications(c):
                     '-v', f'{MOUNT}/data/models:/root/.ollama/models', '--memory=22g', '--memory-swap=24g'],
                    {'OLLAMA_HOST': '0.0.0.0:11434', 'OLLAMA_NO_CLOUD': '1',
                     'OLLAMA_CONTEXT_LENGTH': '4096', 'OLLAMA_NUM_PARALLEL': '1',
-                    'OLLAMA_MAX_LOADED_MODELS': '1'}),
+                    'OLLAMA_MAX_LOADED_MODELS': '1', 'OLLAMA_KEEP_ALIVE': '-1'}),
         'open-webui': (['--network', 'setupsurvie-lab', '--network-alias', 'open-webui',
                         '-v', f'{MOUNT}/data/state/openwebui:/app/backend/data', '--memory=8g'], webui_env(c)),
         'portal': (['--network', 'setupsurvie-lab', '-p', f'{c["bind"]}:8080:8080', '-p', f'{c["bind"]}:3000:3000',

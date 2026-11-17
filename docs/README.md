@@ -1,5 +1,14 @@
 # Documentation SetupSurvie
 
+- [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
+
+- [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
+
+- [Formules, contexte et suite de lecture — 0.38.3](essais/2026-11-17-formules-contexte-et-suite.md) — blocs entiers et positions exactes.
+
+- [Recherche préalable des notices — 0.38.2](essais/2026-11-17-recherche-notices-commandes.md) — référence explicite, lecture et relances.
+
+- [Aide générale sans source précise — 0.38.1](essais/2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
 - [Projets dépliables et volet redimensionnable — 0.38.0](essais/2026-11-17-projets-assistant.md) — comportement, essais et limites.
 
 - [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.

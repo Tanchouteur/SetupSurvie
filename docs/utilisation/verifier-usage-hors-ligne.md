@@ -84,3 +84,20 @@ Les tests automatisés utilisent de petits documents et des états simulés :
 [bilan de livraison](../essais/2026-11-14-recette-usage-hors-ligne.md).
 La coupure réelle d’Internet, Windows chez Marc et Safari sur un iPhone physique
 restent des essais utilisateur, pas des résultats déduits de l’émulation.
+
+
+## Recette de développement avec réseau isolé
+
+`tests/real_offline_read_check.py --require-isolated` contrôle les lectures
+HTTP locales et la conservation après redémarrage sur de minuscules fichiers
+fictifs. Il refuse l’exécution si une interface autre que la boucle locale est
+présente. Lancer dans un conteneur Linux avec `--network none`, les dépendances
+Python du pilote déjà disponibles et le dépôt monté en lecture seule ; aucun
+modèle, document ou paquet n’est téléchargé. Le rapport JSON sort sur la sortie
+standard ; une erreur provoque un code de sortie non nul.
+
+Les documents et sous-titres de cette recette sont déjà préparés. Ce contrôle
+ne génère ni traduction ni transcription, et ne décode pas la vidéo fictive :
+il teste ses octets servis et la piste textuelle. Il complète les essais réels
+des moteurs, sans qualifier le fonds de Marc, le navigateur ou la coupure
+physique du réseau de ses appareils.

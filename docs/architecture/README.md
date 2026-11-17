@@ -19,6 +19,14 @@ Un repère modifié, perdu, ajouté ou réordonné bloque la proposition privée
 `translation_quality` version 4 compare ensuite les blocs et garde les contrôles
 numériques existants ; aucune validation générale du sens n’est revendiquée.
 
+Depuis 0.38.3, `engine.fit_context` utilise le préfixe protégé pour les résultats
+de lecture simples et par lots. Les `next_offset` restent les positions source
+exactes, même quand une formule est entièrement retirée de l’extrait compacté.
+`math_text.reading_window` borne aussi la lecture explicite `read_source` à
+3 500 caractères, revient au début d’une petite formule si nécessaire et omet
+un bloc trop long avec `formula_omitted`. Un résultat sans texte n’est pas compté
+comme nouvelle lecture. Aucun offset d’un état sauvegardé n’est réécrit.
+
 Le format de construction des compléments SQLite passe de 1 à 2. L’index déjà
 publié reste lisible pendant la reconstruction ; une interruption conserve
 l’ancienne publication. Le schéma des données personnelles reste à 1. Les index
@@ -1009,3 +1017,19 @@ sémantique. Les nombres/unités restent bloquants. Le contrôle version 3 inclu
 nombres joints à des lettres, pour ne pas rejeter l’espace rétabli dans `Chapter4`.
 Les rapports antérieurs et les publications existantes restent conservés. La file,
 la pause, l’arrêt et la publication complète gardent leurs contrats.
+
+## Ressources et lecture progressive — 0.39.0
+
+`resource-status.js` reprend l’événement `survie:inference` du portail ; dans les
+cartes, il effectue une observation GET périodique seulement sur ordinateur
+visible. Aucune commande de démarrage n’est associée à la navigation. Le
+contrôleur distingue une liste de modèles vide d’une observation impossible.
+`model_session.KEEP_ALIVE` centralise la conservation sans expiration après
+inactivité ; les arrêts explicites restent prioritaires.
+
+`translation-text.js` partage un rendu Markdown local assaini entre le lecteur
+Bibliothèque et la fenêtre de lecture. Les passages déjà affichés conservent
+leurs nœuds pendant les mises à jour ; le changement de groupe reste volontaire.
+Voir les guides [mémoire](../utilisation/mesurer-assistant-et-memoire.md) et
+[traduction](../utilisation/documents-et-traduction.md) pour les comportements et
+les limites, notamment l’absence de recomposition des illustrations du PDF.

@@ -12,6 +12,7 @@ import httpx
 
 from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session,research,citation_links,illustrations,conversation_context,tool_protocol,procedure_review
 from fastapi import HTTPException
+from .math_text import safe_prefix,reading_window
 
 OLLAMA=os.environ.get('OLLAMA_URL','http://ollama:11434').rstrip('/')
 POLICY=Path(os.environ.get('ASSISTANT_POLICY','/srv/system.fr.txt'))
@@ -48,7 +49,9 @@ DOCUMENTARY={}
 LOCK=asyncio.Semaphore(1)
 SYSTEM_APPENDIX='Les outils permettent de rechercher/lire les sources locales, calculer, convertir et interroger la géographie téléchargée. Pour les lieux, conserve les liens map_url et annonce les données absentes. Aucune position GPS en direct, aucun trafic ou état des lieux en direct. Ne déduis jamais la potabilité ou l’accès actuel des seuls repères cartographiques. Cite les sources sous la forme [1], [2], etc. en reprenant les numéros fournis. Ne cite aucune source non reçue. Utilise calculate pour les calculs, même simples.'
 SYSTEM_APPENDIX+=SYSTEM_SEARCH_NOTE
-SYSTEM_APPENDIX+=' Une référence avec consulted=false est un résultat de recherche, pas une source lue : appelle read_source avant de la citer. Pour chaque document cité, indique sa date document_date et son édition si disponibles ; sinon dis « date du document inconnue ». collected_at est la collecte locale et archive_date la date annoncée par le catalogue de l’archive : elles ne datent pas l’article ou le document. Signale les déductions comme telles. Si les sources consultées ne permettent pas de conclure, dis « Je ne sais pas d’après les documents disponibles » et précise ce qui manque.'
+GENERAL_KNOWLEDGE_NOTE=' Sans source précise, aide avec tes connaissances générales clairement signalées, sans fausse citation. Pour une commande exacte d’appareil ou un geste critique (dosages, potabilité, électricité, structure), explique les limites et demande les données décisives ; ne les invente pas.'
+SYSTEM_APPENDIX+=' Une référence avec consulted=false est un résultat de recherche, pas une source lue : appelle read_source avant de la citer. Pour chaque document cité, indique sa date document_date et son édition si disponibles ; sinon dis « date du document inconnue ». collected_at est la collecte locale et archive_date la date annoncée par le catalogue de l’archive : elles ne datent pas l’article ou le document. Signale les déductions comme telles. Si les sources consultées ne permettent pas de conclure sur un point précis, dis « Je ne sais pas d’après les documents disponibles » pour ce point et précise ce qui manque.'
+SYSTEM_APPENDIX+=GENERAL_KNOWLEDGE_NOTE
 
 
 def reference(references,item,consulted=False,*,visual=False):
@@ -103,6 +106,16 @@ def document_request(history):
     plan=library.retrieval.plan(topic,library.search_terms(topic),library.SYNONYMS)
     raw=library.retrieval.normal(topic)
     if re.search(r'\b(favoris|favorites)\b',raw):return None
+    # A short control follow-up can reuse an explicitly supplied device, but
+    # never an assistant's unsupported reference or a different user's topic.
+    if not research.device_references(topic) and re.search(r'\b(et pour|et quelle|et quel|and which|and to)\b',library.retrieval.normal(topic)) and re.search(r'\b(touches?|boutons?|commandes?|buttons?|keys?)\b',library.retrieval.normal(topic)):
+        for previous in reversed(questions[:-1]):
+            if research.notice_request(previous) and len(research.device_references(previous))==1:
+                reference=research.device_references(previous)[0]
+                collection=plan.collection or library.retrieval.plan(previous,library.search_terms(previous),library.SYNONYMS).collection
+                return 'Notice '+reference+' : '+question,collection
+            # Do not reach past an intervening user topic to borrow a device.
+            break
     if plan.collection:
         if not plan.words:
             for previous in reversed(questions[:-1]):
@@ -110,6 +123,7 @@ def document_request(history):
                 if subject.words:question=previous;break
         return question,plan.collection
     if not plan.words:return None
+    if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
     if research.synthesis(question) or illustrations.requested(question) or re.search(r'\b(comment|how to)\b',raw):return question,''
@@ -139,12 +153,12 @@ def fit_context(messages,maximum=24000):
             except (ValueError,TypeError):continue
             if isinstance(value,dict):
                 if isinstance(value.get('text'),str) and len(value['text'])>700:
-                    value['text']=value['text'][:700];value['more']=True;value['partial_read']=True;value['next_offset']=value.get('offset',0)+len(value['text'])
+                    value['text']=safe_prefix(value['text'],700);value['more']=True;value['partial_read']=True;value['next_offset']=value.get('offset',0)+len(value['text'])
                 if isinstance(value.get('results'),list):
                     if any('passages' in row for row in value['results']):
                         for row in value['results']:
                             for part in row.get('passages',[]):
-                                part['text']=part['text'][:300];part['next_offset']=part['offset']+len(part['text'])
+                                part['text']=safe_prefix(part['text'],300);part['next_offset']=part['offset']+len(part['text'])
                             row['partial_read']=True
                     else:value['results']=[{k:(v[:160] if k=='excerpt' and isinstance(v,str) else v) for k,v in row.items()} for row in value['results'][:3]]
                 message['content']=json.dumps(value,ensure_ascii=False,separators=(',',':'))
@@ -287,7 +301,10 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 prepared_key=search_key(query[:200],collection=collection,domain=domain)
                 try:
                     async def found_update(rows):progress(identifier,'searching',sources_found=len(rows))
-                    with measured.during('search'):found=await library.search(query[:200],limit=12,collection=collection,domain=domain,budget=60,on_update=found_update)
+                    lookup=research.notice_search_query(query)[:200]
+                    arguments['query']=lookup
+                    prepared_key=search_key(lookup,collection=collection,domain=domain)
+                    with measured.during('search'):found=await library.search(lookup,limit=12,collection=collection,domain=domain,budget=60,on_update=found_update)
                     measured.value['sources_found']=len(found)
                     search_cache[prepared_key]=found
                     progress(identifier,'reading',sources_found=len(found))
@@ -301,7 +318,10 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     value['omitted']+=max(0,len(found)-len(identifiers));value['selection_limited']|=bool(value['omitted'])
                     record_tool('read_sources',{'ids':identifiers,'query':query[:200]},value,True)
                     measured.value['prepared_sources']=len(value['results'])
-                    messages.append({'role':'system','content':'Les passages de plusieurs documents ont été préparés pour cette question. Rédige à partir des passages reçus, avec leurs numéros [n], et annonce les lectures partielles. Pour une synthèse, réunis les informations utiles et les désaccords ; complète seulement un manque précis avec les outils. Une couverture limitée ne prouve pas l’absence dans toute la bibliothèque.'})
+                    if value['results']:
+                        messages.append({'role':'system','content':'Des passages documentaires ont été préparés pour cette question. Rédige à partir des passages reçus, avec leurs numéros [n], et annonce les lectures partielles. Pour une synthèse, réunis les informations utiles et les désaccords ; complète seulement un manque précis avec les outils. Une couverture limitée ne prouve pas l’absence dans toute la bibliothèque.'})
+                    else:
+                        messages.append({'role':'system','content':'La préparation documentaire ne fournit aucun passage lisible pour cette demande. Aucun document n’est consulté par cette préparation ; ne cite pas un résultat non lu et ne prétends pas avoir reçu plusieurs documents.'+GENERAL_KNOWLEDGE_NOTE})
                 except Exception:
                     record_tool('search_library',arguments,{'results':[],'coverage':{'status':'unavailable','warning':'La recherche préparatoire n’a pas abouti. Ne pas conclure que le sujet est absent.'}},True)
                 update(identifier,sources=read_references(references))
@@ -318,7 +338,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 await session.prepare()
                 async def select_media(packet,schema):
                     progress(identifier,'illustrating')
-                    request={'model':selected['model'],'messages':packet,'tools':[],'stream':True,'keep_alive':'5m',
+                    request={'model':selected['model'],'messages':packet,'tools':[],'stream':True,'keep_alive':model_session.KEEP_ALIVE,
                         'think':'low' if selected['think'] in ('low','medium','high') else False,'format':schema,
                         'options':{'num_ctx':context,'num_predict':512,'temperature':0}}
                     result='';last={}
@@ -365,7 +385,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     measured.phase('model_preparation')
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}
                     payload={'model':selected['model'],'messages':messages,'tools':tools,'think':selected['think'],
-                             'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':output,**({'temperature':.2} if prepared or selected_ids or continued_ids else {})}}
+                             'stream':True,'keep_alive':model_session.KEEP_ALIVE,'options':{'num_ctx':context,'num_predict':output,**({'temperature':.2} if prepared or selected_ids or continued_ids else {})}}
                     await available()
                     async for event in session.chat(payload):
                         message=event.get('message',{})
@@ -470,12 +490,12 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                                     if source_identifier not in source_cache:
                                         with measured.during('reading'):source_cache[source_identifier]=await library.source(source_identifier)
                                     item=source_cache[source_identifier]
-                                    text=item['text'][offset:offset+3500]
+                                    window=reading_window(item['text'],offset,3500);text=window['text']
                                     if not text.strip():raise ValueError('No readable passage.')
                                     ref=reference(references,item,True,visual=wants_visual)
-                                    more=len(item['text'])>offset+3500
-                                    read_cache[key]={**{k:v for k,v in ref.items() if k!='figure_candidates'},'text':text,'offset':offset,'next_offset':offset+len(text),'more':more,
-                                           'partial_read':bool(offset or more or item.get('preview') or item.get('text_truncated')),
+                                    more=len(item['text'])>window['next_offset']
+                                    read_cache[key]={**{k:v for k,v in ref.items() if k!='figure_candidates'},**window,'more':more,
+                                           'partial_read':bool(window['offset'] or more or window['formula_omitted'] or item.get('preview') or item.get('text_truncated')),
                                            'text_limit_reached':bool(item.get('text_truncated'))}
                                 else:measured.value['cache_hits']['read']+=1
                                 value=read_cache[key];progress(identifier,'reading',sources_read=len(read_references(references)))
