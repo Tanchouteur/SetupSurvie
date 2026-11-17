@@ -30,8 +30,8 @@
   search.setAttribute("aria-label", "Rechercher une conversation");
   const folders = element("div", undefined, "assistant-folders");
   folders.setAttribute("aria-label", "Dossiers personnels");
-  const add = button("Créer un dossier", () =>
-    edit("Créer un dossier", "Nom du dossier", "", (value) =>
+  const add = button("Créer un projet", () =>
+    edit("Créer un projet", "Nom du dossier", "", (value) =>
       api("/conversation-folders", { name: value }),
     ),
   );
@@ -198,6 +198,33 @@
   }
   window.addEventListener("resize", refreshZones);
   refreshZones();
+  const resize = element('div',undefined,'assistant-resize');
+  resize.tabIndex=0;resize.setAttribute('role','separator');
+  resize.setAttribute('aria-label','Largeur du volet Conversations');
+  resize.setAttribute('aria-orientation','vertical');body.append(resize);
+  const limits=()=>({min:220,max:Math.max(220,Math.min(480,innerWidth-680))});
+  function setWidth(value) {
+    const {min,max}=limits();const width=Math.max(min,Math.min(max,value));
+    body.style.setProperty('--assistant-left-width',width+'px');
+    resize.setAttribute('aria-valuemin',min);resize.setAttribute('aria-valuemax',max);resize.setAttribute('aria-valuenow',width);
+  }
+  setWidth(252);
+  resize.addEventListener('pointerdown',event=>{
+    if(event.button!==0)return;event.preventDefault();resize.setPointerCapture(event.pointerId);
+    body.classList.add('assistant-resizing');
+  });
+  resize.addEventListener('pointermove',event=>{
+    if(resize.hasPointerCapture(event.pointerId))setWidth(event.clientX-left.getBoundingClientRect().left);
+  });
+  const stopResize=()=>body.classList.remove('assistant-resizing');
+  resize.addEventListener('lostpointercapture',stopResize);
+  resize.addEventListener('pointerup',event=>{if(resize.hasPointerCapture(event.pointerId))resize.releasePointerCapture(event.pointerId);});
+  resize.addEventListener('keydown',event=>{
+    const current=Number(resize.getAttribute('aria-valuenow'));
+    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    event.preventDefault();setWidth(event.key==='Home'?limits().min:event.key==='End'?limits().max:current+(event.key==='ArrowRight'?20:-20));
+  });
+  window.addEventListener('resize',()=>setWidth(Number(resize.getAttribute('aria-valuenow'))));
   const editor = element("dialog");
   editor.id = "assistant-editor";
   editor.setAttribute("aria-labelledby", "assistant-editor-title");
@@ -274,6 +301,7 @@
       await api("/conversations/" + encodeURIComponent(conversation.id) + "/folder",
         { folder_id: target || null }, { method: "PUT" });
       if (S.user?.id !== owner) return;
+      if(target) { expandedProjects.add(target);saveProjects(); }
       await histories();
       const destination = folderItems.find((item) => item.id === target)?.name || "Sans dossier";
       toast("Conversation déplacée dans « " + destination + " ».");
@@ -311,14 +339,14 @@
   document.addEventListener("survie:route", ({ detail }) => {
     if (detail.section !== "assistant") clearDrag();
   });
-  function folderButton(value, label) {
+  function folderButton(value, label, action) {
     const b = button(
       label,
-      () => {
+      action || (() => {
         folder = value;
         offset = 0;
         histories();
-      },
+      }),
       "secondary",
     );
     b.setAttribute("aria-pressed", String(folder === value));
@@ -347,100 +375,11 @@
     }
     return b;
   }
-  histories = async () => {
-    if (!S.user) return;
-    const own = ++generation,
-      owner = S.user.id;
-    try {
-      let data,
-        organization,
-        degraded = false;
-      try {
-        [data, organization] = await Promise.all([
-          api(
-            "/conversations?" +
-              new URLSearchParams({
-                folder,
-                q: search.value,
-                offset: String(offset),
-              }),
-          ),
-          api("/conversation-folders"),
-        ]);
-      } catch (e) {
-        if (
-          e.name === "AbortError" ||
-          own !== generation ||
-          S.user?.id !== owner
-        )
-          return;
-        data = await api("/conversations");
-        organization = { folders: [] };
-        degraded = true;
-        folder = "all";
-        offset = 0;
-      }
-      if (own !== generation || S.user?.id !== owner) return;
-      folderItems = organization.folders;
-      if (
-        folder !== "all" &&
-        folder !== "unfiled" &&
-        !folderItems.some((f) => f.id === folder)
-      ) {
-        folder = "all";
-        offset = 0;
-        return histories();
-      }
-      folders.replaceChildren(
-        folderButton("all", "Toutes les conversations"),
-        folderButton("unfiled", "Sans dossier"),
-      );
-      for (const f of folderItems) {
-        const row = element("div", undefined, "assistant-folder-row"),
-          m = menu("Actions du dossier " + f.name);
-        m.append(
-          button(
-            "Renommer",
-            () =>
-              edit("Renommer le dossier", "Nom du dossier", f.name, (value) =>
-                api(
-                  "/conversation-folders/" + encodeURIComponent(f.id),
-                  { name: value },
-                  { method: "PATCH" },
-                ),
-              ),
-            "text-button",
-          ),
-          button(
-            "Supprimer le dossier",
-            async () => {
-              if (
-                !confirm(
-                  "Supprimer le dossier « " +
-                    f.name +
-                    " » ? Ses conversations seront conservées dans Sans dossier.",
-                )
-              )
-                return;
-              try {
-                await api(
-                  "/conversation-folders/" + encodeURIComponent(f.id),
-                  undefined,
-                  { method: "DELETE" },
-                );
-                await histories();
-              } catch (e) {
-                toast(e.message);
-              }
-            },
-            "text-button",
-          ),
-        );
-        row.append(folderButton(f.id, f.name + " (" + f.count + ")"), m);
-        folders.append(row);
-      }
-      list.replaceChildren();
-      for (const c of data.conversations) {
+  const expandedProjects = new Set();
+  const projectKey=()=> 'survie-expanded-projects:'+S.user?.id;
+  function saveProjects(){try{sessionStorage.setItem(projectKey(),JSON.stringify([...expandedProjects]));}catch(_){}}
+
+  function conversationRow(c) {
         const row = element("div", undefined, "conversation-row"),
           open = button(
             c.title,
@@ -498,8 +437,133 @@
         );
         row.append(open, m);
         makeDraggable(row, c);
-        list.append(row);
+    return row;
+  }
+  async function loadProject(f, host, own, owner, offset = 0) {
+    try {
+      const data = await api('/conversations?' + new URLSearchParams({folder:f.id,q:search.value,offset:String(offset)}));
+      if (own !== generation || owner !== S.user?.id || !host.isConnected) return;
+      host.querySelector('.project-more')?.remove();
+      if (!offset) host.replaceChildren();
+      for (const c of data.conversations) host.append(conversationRow(c));
+      if (!data.conversations.length && !offset) host.append(element('p','Aucune conversation dans ce projet.','small muted'));
+      if (data.has_more) {
+        const more = button('Voir la suite', () => { more.disabled=true;void loadProject(f,host,own,owner,offset+100); }, 'project-more');
+        host.append(more);
       }
+    } catch (error) {
+      if (own !== generation || owner !== S.user?.id) return;
+      const retry = button('Réessayer', () => { retry.remove();void loadProject(f,host,own,owner,offset); });
+      host.append(element('p',error.message,'small muted'),retry);
+    }
+  }
+  histories = async () => {
+    if (!S.user) return;
+    const own = ++generation,
+      owner = S.user.id;
+    try {
+      let data,
+        organization,
+        degraded = false;
+      try {
+        [data, organization] = await Promise.all([
+          api(
+            "/conversations?" +
+              new URLSearchParams({
+                folder: folder === 'all' && !search.value ? 'unfiled' : folder,
+                q: search.value,
+                offset: String(offset),
+              }),
+          ),
+          api("/conversation-folders"),
+        ]);
+      } catch (e) {
+        if (
+          e.name === "AbortError" ||
+          own !== generation ||
+          S.user?.id !== owner
+        )
+          return;
+        data = await api("/conversations");
+        organization = { folders: [] };
+        degraded = true;
+        folder = "all";
+        offset = 0;
+      }
+      if (own !== generation || S.user?.id !== owner) return;
+      folderItems = organization.folders;
+      if (
+        folder !== "all" &&
+        folder !== "unfiled" &&
+        !folderItems.some((f) => f.id === folder)
+      ) {
+        folder = "all";
+        offset = 0;
+        return histories();
+      }
+      folders.replaceChildren(
+        folderButton("all", "Toutes les conversations"),
+        folderButton("unfiled", "Sans dossier"),
+      );
+      for (const f of folderItems) {
+        const row = element("div", undefined, "assistant-folder-row"),
+          m = menu("Actions du dossier " + f.name);
+        m.append(
+          button(
+            "Renommer",
+            () =>
+              edit("Renommer le projet", "Nom du dossier", f.name, (value) =>
+                api(
+                  "/conversation-folders/" + encodeURIComponent(f.id),
+                  { name: value },
+                  { method: "PATCH" },
+                ),
+              ),
+            "text-button",
+          ),
+          button(
+            "Supprimer le dossier",
+            async () => {
+              if (
+                !confirm(
+                  "Supprimer le dossier « " +
+                    f.name +
+                    " » ? Ses conversations seront conservées dans Sans dossier.",
+                )
+              )
+                return;
+              try {
+                await api(
+                  "/conversation-folders/" + encodeURIComponent(f.id),
+                  undefined,
+                  { method: "DELETE" },
+                );
+                await histories();
+              } catch (e) {
+                toast(e.message);
+              }
+            },
+            "text-button",
+          ),
+        );
+        const project = element('section',undefined,'assistant-project');
+        const contents = element('div',undefined,'assistant-project-conversations');
+        contents.id='project-'+f.id;
+        const toggle=folderButton(f.id,f.name+' ('+f.count+')',()=>{
+          const open=!expandedProjects.has(f.id);
+          if(open) expandedProjects.add(f.id);else expandedProjects.delete(f.id);
+          saveProjects();
+          contents.hidden=!open;toggle.setAttribute('aria-expanded',String(open));
+          if(open) void loadProject(f,contents,own,owner);
+        });
+        toggle.setAttribute('aria-controls',contents.id);
+        toggle.setAttribute('aria-expanded',String(expandedProjects.has(f.id)));
+        contents.hidden=!expandedProjects.has(f.id);
+        row.append(toggle,m);project.append(row,contents);folders.append(project);
+        if(!contents.hidden) void loadProject(f,contents,own,owner);
+      }
+      list.replaceChildren();
+      for (const c of data.conversations) list.append(conversationRow(c));
       if (!data.conversations.length)
         list.append(
           element(
@@ -566,7 +630,7 @@
   }
   document.addEventListener("survie:conversation", (event) => {
     $("chat-title").title = event.detail.title || "";
-    for (const node of list.querySelectorAll(".conversation-link"))
+    for (const node of left.querySelectorAll(".conversation-link"))
       node.setAttribute(
         "aria-current",
         String(node.dataset.conversationId === event.detail.id),
@@ -606,7 +670,7 @@
     drawEvidence();
     $("chat-title").textContent = "Nouvelle discussion";
     $("chat-title").removeAttribute("title");
-    for (const node of list.querySelectorAll(".conversation-link")) {
+    for (const node of left.querySelectorAll(".conversation-link")) {
       node.setAttribute("aria-current", "false");
     }
     body.dataset.zone = "discussion";
@@ -614,6 +678,8 @@
   });
   document.addEventListener("survie:auth", () => {
     generation++;
+    expandedProjects.clear();
+    try { const saved=JSON.parse(sessionStorage.getItem(projectKey())||'[]');if(Array.isArray(saved))for(const id of saved)if(typeof id==='string')expandedProjects.add(id); } catch(_) {}
     folder = "all";
     offset = 0;
     search.value = "";

@@ -207,3 +207,17 @@ Les vérifications de la refonte sont dans le [bilan 0.34.0](../essais/2026-11-1
 Le [bilan 0.12.0](../essais/2026-11-14-parametres-ux.md) conserve les résultats historiques des paramètres.
 Le [bilan 0.1.36](../essais/2026-11-14-moteur-recherche-utile.md) conserve les
 constats de la précédente évolution documentaire.
+
+
+## Projets dans le volet Conversations — 0.38.0
+
+Dépliez un projet pour afficher ses conversations juste dessous. Les anciens
+dossiers restent conservés. Le menu à côté du projet permet de le renommer ;
+celui de chaque conversation propose aussi **Renommer**. Le classement par
+glisser-déposer et par menu reste disponible. Les conversations sans projet
+restent dans la liste générale ; la recherche porte aussi sur les projets.
+
+Sur PC, faites glisser la séparation à droite du volet pour ajuster sa largeur.
+Au clavier, sélectionnez la séparation et utilisez Gauche/Droite, Début ou Fin.
+Le volet défile verticalement quand les projets et conversations dépassent.
+Les projets ouverts restent mémorisés dans cet onglet, par profil.
