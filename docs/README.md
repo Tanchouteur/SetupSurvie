@@ -1,7 +1,7 @@
 # Documentation SetupSurvie
 
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
-- [Télécharger une liste de vidéos YouTube — 0.41.0](utilisation/telecharger-videos-youtube.md) — guide de l’outil en ligne de commande ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
+- [Télécharger une liste de vidéos YouTube — 0.42.0](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.

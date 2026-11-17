@@ -7,7 +7,7 @@ suivent dans un sous-dossier. Chaque vidéo est téléchargée dans un dossier d
 travail, puis déplacée terminée dans library/video/youtube/<thème ou chaîne>/
 avec son .info.json et ses sous-titres français/anglais disponibles.
 
-  python scripts/youtube_videos.py prepare             # installe yt-dlp à part
+  python scripts/youtube_videos.py prepare             # facultatif : déjà fait par l’installation
   python scripts/youtube_videos.py check liste.txt     # relit la liste, sans réseau
   python scripts/youtube_videos.py download liste.txt  # télécharge et range
 
@@ -25,7 +25,6 @@ import shutil
 import subprocess
 import sys
 import time
-import venv
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'scripts'))
@@ -34,6 +33,7 @@ from delivery_paths import locked
 from pilot import durable
 from pilot.provider_subtitles import video_id
 from pilot.video_inventory import INCOMPLETE,SUBTITLE_EXTENSIONS,VIDEO_EXTENSIONS
+import youtube_tools
 
 SUBTITLE_LANGUAGES='fr,fr-FR,fr-CA,en,en-US,en-GB'
 RESERVED=re.compile(r'(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?')
@@ -131,36 +131,21 @@ def free_bytes(path):
     return shutil.disk_usage(path).free
 
 
-def tools_dir(data):return data/'tools'/'youtube'
-
-
-def tool_python(data):
-    folder=tools_dir(data)/'venv'
-    return folder/('Scripts/python.exe' if os.name=='nt' else 'bin/python')
-
-
-def prepare(data,*,run=subprocess.run):
-    """Install the newest yt-dlp in its own environment (Internet required).
-
-    YouTube changes often: a frozen old version stops working, so the version
-    is updated on purpose with each preparation and written in the reports.
-    """
-    folder=tools_dir(data);durable.mkdir(folder)
-    with locked(folder/'prepare.lock'):
-        hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
-        if not tool_python(data).is_file():
-            venv.EnvBuilder(with_pip=False).create(folder/'venv')
-            run([str(tool_python(data)),'-m','ensurepip','--upgrade'],check=True,timeout=300,**hidden)
-        run([str(tool_python(data)),'-m','pip','install','--upgrade','--disable-pip-version-check','yt-dlp[default]'],check=True,timeout=900,**hidden)
-        version=run([str(tool_python(data)),'-m','yt_dlp','--version'],check=True,timeout=60,capture_output=True,text=True,**hidden).stdout.strip()
-        setup.write_json(folder/'ready.json',{'yt_dlp':version,'prepared':datetime.now(timezone.utc).isoformat()})
-        return version
-
-
-def downloader(data,override=None):
+def downloader(data,override=None,*,log=print,run=subprocess.run):
+    """yt-dlp of the prepared environment, repaired or installed when needed."""
     if override:return [sys.executable,str(override)] if str(override).endswith('.py') else [str(override)]
-    if not tool_python(data).is_file():raise setup.SetupError('yt-dlp n’est pas préparé. Lancez d’abord : python scripts/youtube_videos.py prepare')
-    return [str(tool_python(data)),'-m','yt_dlp']
+    youtube_tools.ensure(data,log=log,run=run)
+    if not youtube_tools.installed_version(data,run=run):
+        raise setup.SetupError('yt-dlp n’a pas pu être préparé. Une connexion Internet est nécessaire la première fois ; relancez la même commande.')
+    return [str(youtube_tools.python(data)),'-m','yt_dlp']
+
+
+def upgrade(data,*,run=subprocess.run):
+    """Newest yt-dlp in the prepared environment, when YouTube broke the pinned one."""
+    youtube_tools.ensure(data,run=run)
+    hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+    run([str(youtube_tools.python(data)),'-m','pip','install','--upgrade','--disable-pip-version-check','yt-dlp[default]'],check=True,timeout=900,**hidden)
+    return youtube_tools.installed_version(data,run=run)
 
 
 def command(base,entry,staging,*,max_height,max_bytes,ffmpeg,js_runtime='deno'):
@@ -243,15 +228,18 @@ def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_ru
             'info_json':any(p.name.endswith('.info.json') for p in moved),'seconds':round(time.monotonic()-started),'warnings':warnings}
 
 
-def find_js_runtime():
+def find_js_runtime(data=None):
     """YouTube needs a JavaScript runtime in recent yt-dlp; Deno is its default."""
+    if data is not None and youtube_tools.deno(data):return 'deno'
     for name in ('deno','node','bun'):
         if shutil.which(name):return name
     return None
 
 
-def find_ffmpeg(value):
+def find_ffmpeg(value,data=None):
     if value:return Path(value)
+    prepared=youtube_tools.ffmpeg(data) if data is not None else None
+    if prepared:return prepared
     return True if shutil.which('ffmpeg') else None
 
 
@@ -283,16 +271,16 @@ def run_list(args,*,run=subprocess.run,log=print):
     if library.is_symlink():raise setup.SetupError('Le dossier library/video est un lien ; téléchargement refusé.')
     durable.mkdir(library)
     work=data/'state'/'video-downloads';durable.mkdir(work)
-    base=downloader(data,args.yt_dlp)
-    ffmpeg=find_ffmpeg(args.ffmpeg);js_runtime=find_js_runtime()
+    base=downloader(data,args.yt_dlp,log=log,run=run)
+    ffmpeg=find_ffmpeg(args.ffmpeg,data);js_runtime=find_js_runtime(data)
     max_bytes=int(args.max_size_gb*1_000_000_000);reserve=int(args.reserve_gb*1_000_000_000)
     version=''
     try:version=run([*base,'--version'],capture_output=True,text=True,timeout=60).stdout.strip()
     except (OSError,subprocess.SubprocessError):pass
     report={'schema':1,'started':datetime.now(timezone.utc).isoformat(),'list':Path(args.list).name,'yt_dlp':version,
             'ffmpeg':bool(ffmpeg),'js_runtime':js_runtime,'max_height':args.max_height,'max_bytes':max_bytes,'items':list(line_errors)}
-    if not js_runtime:log('Deno absent : YouTube peut refuser des vidéos ou limiter les formats. Installer Deno (Windows : winget install DenoLand.Deno).')
-    if not ffmpeg:log('FFmpeg absent : seuls les formats déjà complets sont utilisés, souvent en 360p.')
+    if not js_runtime:log('Deno absent : YouTube peut refuser des vidéos ou limiter les formats. Relancer avec Internet pour terminer la préparation.')
+    if not ffmpeg:log('FFmpeg absent : seuls les formats déjà complets sont utilisés, souvent en 360p. Relancer avec Internet pour terminer la préparation.')
     with locked(work/'download.lock'):
         present=existing_videos(library)
         for index,entry in enumerate(entries,1):
@@ -330,6 +318,7 @@ def main(argv=None):
     parser.add_argument('--max-size-gb',type=float,default=1.5,help='taille maximale par vidéo (1,5 Go par défaut)')
     parser.add_argument('--reserve-gb',type=float,default=10,help='espace libre à garder sur le disque (10 Go par défaut)')
     parser.add_argument('--ffmpeg',help='chemin de ffmpeg s’il n’est pas dans le PATH')
+    parser.add_argument('--latest',action='store_true',help='avec prepare : passer à la toute dernière version de yt-dlp si YouTube bloque')
     parser.add_argument('--yt-dlp',help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
     if args.action!='prepare' and not args.list:parser.error('Indiquez le fichier texte de la liste.')
@@ -337,7 +326,12 @@ def main(argv=None):
     if args.max_size_gb<=0 or args.reserve_gb<0:parser.error('Tailles positives attendues.')
     try:
         if args.action=='prepare':
-            print('yt-dlp prêt : version '+prepare(data_root(args)));return 0
+            data=data_root(args)
+            if args.latest:print('yt-dlp mis à jour : version '+str(upgrade(data)));return 0
+            ready=youtube_tools.prepare(data,force=True)
+            state=youtube_tools.status(data)
+            print(f"yt-dlp {state['yt_dlp']}, Deno {'prêt' if state['deno'] else 'absent'}, FFmpeg {'prêt' if state['ffmpeg'] else 'absent'}.")
+            return 0 if ready else 1
         return run_list(args)
     except (setup.SetupError,OSError,subprocess.CalledProcessError) as error:
         print('Erreur : '+str(error),file=sys.stderr);return 1

@@ -144,6 +144,18 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.42.0** inclut les outils du téléchargement YouTube dans l’installation, à
+la demande de Louis du 17 novembre 2026 (« on ne doit rien avoir à faire », y
+compris lors d’une copie de stockage à stockage). yt-dlp 2026.10.26, Deno 2.9.8 et
+FFmpeg 8.1.3 LGPL sont figés et vérifiés par empreinte. Ils sont préparés par
+l’installation en ligne et par le kit hors ligne (l’export y ajoute lui-même les
+fichiers Windows et Linux), recréés hors ligne après un transfert, et réparés au
+premier téléchargement si besoin. Un échec ne bloque jamais l’installation.
+Vérifié réellement dans le runner Linux : préparation, détection par yt-dlp et
+recréation hors ligne après copie ; archive FFmpeg Windows téléchargée et extraite.
+Pas encore essayé sur Windows. Voir le [guide](../utilisation/telecharger-videos-youtube.md).
+Nouvelle fonctionnalité compatible (`y`).
+
 La **0.41.0** ajoute `scripts/youtube_videos.py` : une liste texte d’adresses
 YouTube (une par ligne, sections `[thème]` facultatives) est téléchargée en 480p
 avec `.info.json` et sous-titres fr/en, puis rangée dans

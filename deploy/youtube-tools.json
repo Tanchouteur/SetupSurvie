@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "note": "Outils de téléchargement des vidéos YouTube, préparés par l’installateur, le kit et le transfert. Empreintes relues le 17 novembre 2026 : FFmpeg téléchargé et vérifié sous Linux (version, assemblage image/son) ; paquets Python vérifiés par pip download pour win_amd64 et manylinux.",
+  "yt_dlp": {
+    "version": "2026.10.26",
+    "requirements": "scripts/requirements-youtube.txt",
+    "licence": "Unlicense (yt-dlp), MIT (Deno), voir chaque paquet"
+  },
+  "ffmpeg": {
+    "version": "n8.1.3-27-g8dca1586f4",
+    "licence": "LGPL-2.1-or-later (build LGPL sans composant GPL)",
+    "source": "https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2026-10-31-12-59",
+    "windows": {
+      "file": "ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-8.1.zip",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-win64-lgpl-8.1.zip",
+      "sha256": "d4c2a42673917b4a97104a3e9f082729a9730796b98664e37c0b7eba6c6c613d",
+      "bytes": 167778744
+    },
+    "linux": {
+      "file": "ffmpeg-n8.1.3-27-g8dca1586f4-linux64-lgpl-8.1.tar.xz",
+      "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-10-31-12-59/ffmpeg-n8.1.3-27-g8dca1586f4-linux64-lgpl-8.1.tar.xz",
+      "sha256": "a64f3171e6ad1f7d358d28890a907ee478c331d1177ec696a93418f79ac3f1f3",
+      "bytes": 135188284
+    }
+  }
+}

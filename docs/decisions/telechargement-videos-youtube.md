@@ -1,5 +1,15 @@
 # Télécharger une liste de vidéos YouTube dans la bibliothèque
 
+**Décision de Louis du 17 novembre 2026 — outils inclus dans l’installation
+(0.42.0).** « On ne doit rien avoir à faire », y compris lors de la copie d’un
+stockage à l’autre. yt-dlp, Deno et FFmpeg sont donc figés avec leurs empreintes
+(`deploy/youtube-tools.json`, `scripts/requirements-youtube.txt`). Ils sont préparés
+par l’installation en ligne et par le kit hors ligne, recréés hors ligne à la
+réactivation après transfert, et réparés au premier usage si besoin. Les
+installations `winget` manuelles du guide 0.41.0 sont remplacées. FFmpeg est la
+version LGPL, compatible avec la revente du PC ; ses licences et celles de Deno et
+yt-dlp sont conservées avec les fichiers. Voir le [guide](../utilisation/telecharger-videos-youtube.md).
+
 **Mise à jour du 17 novembre 2026 — étape 1 livrée en 0.41.0.** Louis a demandé
 de commencer l’outil le même jour, après confirmation que transcription,
 indexation et recherche des vidéos étaient en place. Faute de réponse explicite

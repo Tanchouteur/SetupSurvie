@@ -88,6 +88,16 @@ def write_json(path, value, *, private=False):
     durable.write_bytes(path, body, private=private)
 
 
+def prepare_youtube_tools(config,offline):
+    """yt-dlp, Deno and FFmpeg for video lists; optional, never blocks setup."""
+    try:
+        import youtube_tools
+        if youtube_tools.prepare(config['data_dir'],offline=offline):print('Outils de téléchargement des vidéos YouTube prêts.')
+        else:print('Outils de téléchargement des vidéos YouTube : préparation terminée au premier téléchargement avec Internet.')
+    except (OSError,ValueError,SetupError,subprocess.SubprocessError):
+        print('Outils de téléchargement des vidéos YouTube non préparés ; ils le seront au premier téléchargement avec Internet. Les autres fonctions restent disponibles.')
+
+
 def safe_path(value):
     path = Path(value).expanduser().resolve()
     if any(c in str(path) for c in "\n\r\x00"):
@@ -652,6 +662,7 @@ def main(argv=None):
         try:
             if not search_index_tools.prepare(app,c,offline=args.offline):print('Indexation complémentaire à préparer depuis les réglages ; bibliothèque disponible.')
         except (OSError,ValueError,SetupError,subprocess.SubprocessError):print('Outil d’indexation non préparé ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
+        prepare_youtube_tools(c,args.offline)
         app.up(c)
         if not args.offline:
             existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])
