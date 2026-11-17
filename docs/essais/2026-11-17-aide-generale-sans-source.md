@@ -89,3 +89,16 @@ en 0.38.0 sur main. La livraison corrective devient **0.38.1** après fusion
 normale, sans modification des composants UX. Les essais réels conservent leurs
 empreintes initiales ; moteur et contexte restent identiques après cette fusion,
 la version API change. La CI doit valider l’état réuni avant livraison.
+
+
+## Paquet candidat vérifié
+
+Source `65c3758c980dddb0eec5dfaca3a53537961c8d6d` : **976 fichiers**, **17 252 598 octets**
+décompressés, ZIP **7 716 960 octets**, SHA-256
+`994e83f0630fbce5ee0c10f2e7015b98dc38d3a30e042ef18984dc4d772f0beb`.
+Chaque octet du paquet est comparé à Git avec ses filtres, ainsi qu’aux tailles
+et empreintes du manifeste. Version API/manifeste 0.38.1 et schéma personnel 1.
+Ce reçu est postérieur au paquet, donc non prétendu inclus dans son contenu.
+Les **1 271 liens locaux et ancres Markdown** sont contrôlés sans cible manquante.
+Le paquet vérifié ne prouve pas un déploiement sur un PC client ; la CI réunie
+et la fin de la seconde suite locale restent attendues avant fusion.
