@@ -7,8 +7,20 @@ import json
 import platform
 import sqlite3
 import struct
+import sys
 
-VERSION='3.13.1'
+# libzim 3.13.1 ships wheels up to CPython 3.14 only; 4.1.0 provides an abi3
+# wheel covering 3.11+. Existing installations keep their pinned reader.
+LEGACY='3.13.1'
+CURRENT='4.1.0'
+
+
+def expected_version(info=None):
+    info=sys.version_info if info is None else info
+    return LEGACY if tuple(info[:2])<(3,15) else CURRENT
+
+
+VERSION=expected_version()
 MESSAGES={
     'reader_missing':'Le lecteur d’archives manque dans l’outil isolé. Choisissez Vérifier / réparer l’outil.',
     'reader_import':'Le lecteur installé ne parvient pas à se charger sur ce PC. Vérifiez ou réparez l’outil, puis transmettez le rapport si l’échec persiste.',
@@ -27,7 +39,7 @@ def probe():
         from libzim.reader import Archive
     except (ModuleNotFoundError,importlib.metadata.PackageNotFoundError):return {**result,'error':'reader_missing'}
     except Exception:return {**result,'error':'reader_import'}
-    if not all(hasattr(Archive,name) for name in ('has_fulltext_index','_get_entry_by_id','get_metadata')):return {**result,'error':'reader_api'}
+    if not all(hasattr(Archive,name) for name in ('has_fulltext_index','get_metadata')) or not any(hasattr(Archive,name) for name in ('get_entry_by_id','_get_entry_by_id')):return {**result,'error':'reader_api'}
     try:
         with sqlite3.connect(':memory:') as db:
             db.execute("CREATE VIRTUAL TABLE check_fts USING fts5(text,tokenize='unicode61 remove_diacritics 2')")

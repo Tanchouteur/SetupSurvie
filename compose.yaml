@@ -4,7 +4,7 @@ services:
     image: ${WEBUI_IMAGE:?Run the installer first}
     restart: unless-stopped
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:${HOST_GATEWAY:-host-gateway}"
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       ENABLE_OPENAI_API: "false"
@@ -114,7 +114,7 @@ services:
       - ${DATA_DIR}/models:/models:ro
       - ${DATA_DIR}/catalog:/catalog:ro
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:${HOST_GATEWAY:-host-gateway}"
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
       interval: 15s

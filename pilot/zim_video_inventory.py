@@ -219,9 +219,10 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('source',json.dumps({'archive':source.name,'book':source.stem,'title':title,'revision':revision,'entries':archive.entry_count})))
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('cursor','0'));db.commit()
         cursor=int(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0])
+        entry_by_id=getattr(archive,'get_entry_by_id',None) or archive._get_entry_by_id  # libzim 4.x / 3.13.1
         for index in range(cursor,archive.entry_count):
             check()
-            entry=archive._get_entry_by_id(index)
+            entry=entry_by_id(index)
             try:
                 item=entry.get_item();mime=item.mimetype.lower().split(';')[0]
                 if entry.is_redirect:

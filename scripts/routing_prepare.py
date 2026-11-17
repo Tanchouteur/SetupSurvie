@@ -84,6 +84,17 @@ def recipe():
     return json.loads((setup.ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8'))
 
 
+def build_user(backend,runner):
+    if backend=='lab':return '0:0'
+    result=runner(backend,'info','--format','{{json .SecurityOptions}}')
+    try:options=json.loads(result.stdout)
+    except (ValueError,AttributeError,TypeError):
+        raise setup.SetupError('Mode Docker non vérifiable ; préparation du routage arrêtée.')
+    if not isinstance(options,list):raise setup.SetupError('Mode Docker non vérifiable ; préparation du routage arrêtée.')
+    if 'name=rootless' in options:return '0:0'
+    return str(getattr(os,'getuid',lambda:1000)())+':'+str(getattr(os,'getgid',lambda:1000)())
+
+
 def engine(backend,*args,check=True):
     if backend=='lab':
         import linux_lab as lab
@@ -144,6 +155,7 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
             if not allow_download:raise setup.SetupError('Image OSRM absente. Préparez son téléchargement sur le PC cible avec Internet.')
             progress('Téléchargement du moteur de calcul d’itinéraires (pas un modèle IA)…')
             runner(backend,'pull',config['image'])
+        user=build_user(backend,runner)
         files=[];profiles=setup.ROOT/'deploy/routing'
         for mode in config['profiles']:
             check();progress('Préparation du réseau : '+mode+'…')
@@ -165,10 +177,9 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
                             errors.append(exc);runner(backend,'kill',task,check=False);return
                 watcher=threading.Thread(target=watch,daemon=True);watcher.start()
                 try:
-                    # Rootless Podman maps container UID 0 to the PC user. An
+                    # Rootless Podman/Docker map container UID 0 to the PC user. An
                     # explicit host UID instead maps to a subordinate user that
                     # cannot write these bind mounts (or traverse the SSD root).
-                    user='0:0' if backend=='lab' else str(getattr(os,'getuid',lambda:1000)())+':'+str(getattr(os,'getgid',lambda:1000)())
                     runner(backend,'run','--rm','--pull=never','--name',task,'--network=none','--cpus=2','--memory=4g','--pids-limit=512',
                         '--cap-drop=ALL','--security-opt=no-new-privileges','--security-opt=label=disable',
                         '--user',user,

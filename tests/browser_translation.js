@@ -46,7 +46,9 @@ async (page) => {
   await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
   await page.getByRole('button',{name:'Poser une question sur ce document',exact:true}).click();
   await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
-  await page.locator('#translation-first').fill('3');await page.locator('#translation-last').fill('5');
+  await page.locator('#translation-first').fill('3');await page.locator('#translation-first').press('Tab');
+  await page.locator('#translation-last').fill('5');await page.locator('#translation-last').press('Tab');
+  if(await page.locator('#translation-first').inputValue()!=='3'||await page.locator('#translation-last').inputValue()!=='5')throw Error('Plage PDF modifiée avant envoi');
   const created=page.waitForResponse(response=>response.url()===base+'/api/translations'&&response.request().method()==='POST');
   await page.locator('#translation-start').click();
   const response=await created;if(!response.ok())throw Error('Création PDF refusée : '+response.status());

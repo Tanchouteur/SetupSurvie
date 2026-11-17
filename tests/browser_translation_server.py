@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+import zlib
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
@@ -142,8 +143,8 @@ with closing(sqlite3.connect(accounts.DB_PATH)) as db:
 (library.GUIDES/'quality-bad.en.txt').write_text('Use 10 mg. Do not exceed the limit.',encoding='utf-8')
 (library.GUIDES/'quality-short.en.txt').write_text('Quality short fixture. '+'Disconnect the power and inspect the wiring. '*12,encoding='utf-8')
 (library.GUIDES/'quality-gaps.en.txt').write_text('Press the         key to enter the menu.',encoding='utf-8')
-from pypdf import PdfWriter
-from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
+from pypdf import PdfReader,PdfWriter
+from pypdf.generic import DecodedStreamObject,DictionaryObject,EncodedStreamObject,NameObject,NumberObject
 writer=PdfWriter()
 for number in range(1,7):
     page=writer.add_blank_page(width=300,height=400)
@@ -152,6 +153,29 @@ for number in range(1,7):
     if number==6:text+=' Appendix rotor calibration.'
     stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET'+(' 20 40 80 30 re S 160 40 80 30 re S 100 55 m 160 55 l S' if number==6 else '')).encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
+# A small file with a genuinely large image, compressed without allocating its
+# complete RGB bitmap in the fixture server.
+writer=PdfWriter();page=writer.add_blank_page(width=500,height=720)
+compressor=zlib.compressobj();chunks=[];remaining=5000*7200
+while remaining:
+    pixels=min(remaining,300000)
+    chunks.append(compressor.compress(b'\x00\x00\xff'*pixels));remaining-=pixels
+chunks.append(compressor.flush())
+image=EncodedStreamObject();image._data=b''.join(chunks)
+image.update({NameObject('/Type'):NameObject('/XObject'),NameObject('/Subtype'):NameObject('/Image'),
+              NameObject('/Width'):NumberObject(5000),NameObject('/Height'):NumberObject(7200),
+              NameObject('/ColorSpace'):NameObject('/DeviceRGB'),NameObject('/BitsPerComponent'):NumberObject(8),
+              NameObject('/Filter'):NameObject('/FlateDecode')})
+page[NameObject('/Resources')]=DictionaryObject({NameObject('/XObject'):DictionaryObject({NameObject('/Im0'):writer._add_object(image)})})
+stream=DecodedStreamObject();stream.set_data(b'q 500 0 0 720 0 0 cm /Im0 Do Q');page[NameObject('/Contents')]=stream
+for number in (2,3):
+    page=writer.add_blank_page(width=500,height=720)
+    page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
+    stream=DecodedStreamObject();stream.set_data(f'BT /F1 12 Tf 20 680 Td (High resolution fixture page {number}.) Tj ET'.encode());page[NameObject('/Contents')]=stream
+high_resolution=library.GUIDES/'high-resolution.en.pdf';writer.write(high_resolution)
+assert high_resolution.stat().st_size<200000
+source_image=PdfReader(high_resolution).pages[0]['/Resources']['/XObject']['/Im0']
+assert (source_image['/Width'],source_image['/Height'])==(5000,7200)
 (library.GUIDES/'metadata.json').write_text(json.dumps([{'path':'shelter.en.txt','title':'Shelter fixture','language':'en',
     'document_date':'2010-05','edition':'Deuxième édition','collected_at':'2026-11-12','provenance':'Fixture synthétique'}]))
 

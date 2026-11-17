@@ -145,10 +145,10 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000):
         cursor=db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone();cursor=int(cursor[0]) if cursor else 0
         count=db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone();count=int(count[0]) if count else 0
         skipped=0
+        entry_by_id=getattr(archive,'get_entry_by_id',None) or archive._get_entry_by_id  # libzim 4.x / 3.13.1
         for index in range(cursor,archive.entry_count):
             check()
-            # libzim 3.13.1 exposes entry enumeration under this pinned name.
-            entry=archive._get_entry_by_id(index)
+            entry=entry_by_id(index)
             if not entry.is_redirect:
                 item=entry.get_item()
                 if item.mimetype in ('text/html','application/xhtml+xml','text/plain') and item.size<=2_000_000:

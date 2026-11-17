@@ -14,6 +14,10 @@ from content_mirrors import network_open
 from pilot import durable
 
 
+# The pinned archive is hash-checked first; this only bounds decompression.
+# go-pmtiles 1.31.2 for Linux x64 is 57.7 MB once extracted.
+TOOL_LIMIT=150_000_000
+
 def recipe():
     return json.loads((setup.ROOT/'deploy/map-catalog.json').read_text(encoding='utf-8'))
 
@@ -63,8 +67,8 @@ def tool(root, specification):
         with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as bundle:
             members=[m for m in bundle.getmembers() if m.isfile() and Path(m.name).name=='pmtiles']
             if len(members)!=1:raise setup.SetupError('Archive de l’outil cartographique ambiguë.')
-            with bundle.extractfile(members[0]) as stream:binary=stream.read(50_000_001)
-    if len(binary)>50_000_000:raise setup.SetupError('Outil cartographique trop volumineux.')
+            with bundle.extractfile(members[0]) as stream:binary=stream.read(TOOL_LIMIT+1)
+    if len(binary)>TOOL_LIMIT:raise setup.SetupError('Outil cartographique trop volumineux.')
     target=folder/('pmtiles.exe' if windows else 'pmtiles')
     if not target.exists() or target.read_bytes()!=binary:durable.write_bytes(target,binary)
     target.chmod(0o755)
