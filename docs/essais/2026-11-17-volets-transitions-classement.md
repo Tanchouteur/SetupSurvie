@@ -113,3 +113,24 @@ Ces contrôles sont ajoutés aux lanceurs de navigation Chromium/WebKit/Firefox.
 Le résultat de leur CI sera enregistré à la clôture. Ils complètent les preuves
 existantes ; ils ne constituent pas une promesse d’absence de tout bogue ni une
 recette physique sur iPhone ou sur les PC des utilisateurs.
+
+
+### Lecteur PDF : focus pendant l’initialisation
+
+La première CI de l’audit échoue sur Firefox en attendant « Traduire ce PDF ».
+Le défaut est reproduit séparément en retenant la réponse `/api/status` puis en
+redonnant le focus : le profil de référence encore absent est comparé au profil
+courant et la commande devient « Profil modifié » à tort. Le lecteur attend
+maintenant la fin de son initialisation avant cette comparaison.
+
+La recette renforcée vérifie aussi un vrai changement de profil après chargement.
+Elle révèle que la lecture de l’identité courante portait l’ancien en-tête de
+profil et recevait un refus 409, ignoré par le contrôle. La découverte d’identité
+lit désormais le profil du cookie sans cet en-tête ; les lectures de données et
+les commandes conservent leur contrôle d’appartenance. Un vrai changement ferme
+le travail et demande de recharger, sans reprendre une traduction ni modifier
+les données. La recette du lecteur passe de 13 à 15 contrôles.
+
+Ces corrections compatibles rejoignent 0.37.1. Aucun contrôle n’est supprimé et
+la CI complète est relancée après la correction, sans compter l’exécution échouée
+comme une validation réussie.

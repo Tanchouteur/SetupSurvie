@@ -83,7 +83,8 @@ La **0.37.1** corrige une aide mobile qui changeait de position pendant le
 mouvement d’une vue. Le fondu conserve les éléments fixes à leur place ;
 l’[audit de navigation](../essais/2026-11-17-volets-transitions-classement.md#audit-complémentaire-et-correctif-0371--17-novembre-2026)
 ajoute les tests d’interruption, de clavier, d’historique et de repli sans API
-d’animation. Les limites des essais simulés restent explicites.
+d’animation. Le lecteur PDF distingue aussi le focus pendant son chargement
+d’un vrai changement de profil, qui reste bloquant pour les commandes périmées. Les limites des essais simulés restent explicites.
 
 La **0.37.0** répond au retour de Louis du 17 novembre : réouverture des documents
 à droite, transitions courtes pour comprendre les clics et glisser-déposer des
