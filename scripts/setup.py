@@ -751,6 +751,9 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    # Helper modules ``import setup``: share this module so their SetupError
+    # is the one caught below, and errors stay short French messages.
+    sys.modules.setdefault("setup", sys.modules[__name__])
     try:
         raise SystemExit(main())
     except (SetupError, OSError, ValueError) as error:

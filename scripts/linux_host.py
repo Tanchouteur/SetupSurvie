@@ -111,7 +111,13 @@ def install_autostart(app,c):
     target=folder/unit_name(c)
     setup.durable.write_bytes(target,unit_text(app,c).encode('utf-8'))
     systemctl('daemon-reload');systemctl('enable',unit_name(c))
-    status=['Démarrage automatique Linux : service utilisateur '+unit_name(c)+' activé.']
+    # Hand the host processes over to the service so that they survive the
+    # end of this terminal or installer session.
+    import control
+    import discovery
+    control.stop(app);discovery.stop(app)
+    systemctl('restart',unit_name(c))
+    status=['Démarrage automatique Linux : service utilisateur '+unit_name(c)+' activé et démarré.']
     linger=linger_enabled()
     if linger is False:
         try:setup.run(['loginctl','enable-linger',getpass.getuser()],capture=True,timeout=60);linger=linger_enabled()
