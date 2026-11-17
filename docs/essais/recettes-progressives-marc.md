@@ -4,7 +4,33 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation ciblée — 0.35.0
+## Prochaine validation ciblée — 0.37.3
+
+Après mise à jour habituelle, privilégier ces trois contrôles utiles plutôt que
+relancer tous les essais de performances :
+
+1. Demander « Fais une synthèse des documents expliquant comment faire du feu.
+   Présente les différentes techniques et cite les sources locales consultées. »
+   Vérifier que des sources sont réellement lues dans le suivi, puis ouvrir une
+   référence pour comparer son contenu à l’explication. Si elle échoue, conserver
+   les durées, le modèle, le contexte, la version et l’adresse de la discussion.
+2. Choisir un autre mode puis envoyer une nouvelle question documentaire une
+   seule fois. Attendre la préparation ou utiliser Annuler ; conserver le diagnostic
+   si ce premier envoi échoue. Les essais Linux ne prouvent pas l’éviction sous
+   saturation mémoire sur le Windows de Marc.
+3. Sur une courte vidéo réelle, suivre la recette audio/français ci-dessous,
+   comparer mots/chiffres/négations au son et ouvrir un passage depuis la recherche.
+   Conserver le rapport vidéo pour repérer les médias encore sans piste : la
+   réussite d’un petit MP4 de test ne qualifie pas toutes les vidéos de Marc.
+
+Pour un article technique, ouvrir aussi l’original illustré et comparer les
+formules. Une ancienne traduction conserve son instantané ; pour tester le
+nouveau lecteur, créer un nouveau travail depuis l’article original. La reprise
+des compléments d’index est utile si l’on souhaite reconstruire leurs anciennes
+extractions ; elle ne répare pas les textes déjà enregistrés ni les traductions.
+Ce protocole décrit une validation à faire, pas un nouveau résultat chez Marc.
+
+## Validation ciblée précédente — 0.35.0
 
 Après mise à jour habituelle, choisir une courte vidéo incluse dans une collection
 déjà examinée, sans sous-titres. Inutile de relancer un examen terminé si la

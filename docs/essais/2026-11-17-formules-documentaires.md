@@ -82,7 +82,9 @@ WebKit : l’aide reçoit le focus avant le rappel `requestAnimationFrame` du
 routeur après Suivant. La recette attend désormais ce travail de restauration
 avant d’envoyer Entrée, sans délai fixe, retrait d’assertion ou changement du
 produit. Le rejeu ciblé Chromium/WebKit passe ses 16 contrôles par moteur ; la
-CI du code `3413f3d` est relancée. La vérification MCP Chromium confirme
+[CI du code `3413f3d`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44052550891)
+réussit ses huit jobs, y compris Windows et les parcours Chromium/WebKit/Firefox.
+Linux : **1 001 tests, 6 ignorés, 80,739 s**. La vérification MCP Chromium confirme
 également ouverture par Entrée puis fermeture par Échap avec focus conservé.
 L’essai Firefox local via l’adresse inter-conteneurs n’atteint pas le profil de
 fixture ; il n’est pas présenté comme réussi. Son contrôle CI reste distinct.
@@ -91,12 +93,17 @@ une formule traversant ce seuil est omise, et la lecture reste partielle. Une
 ancienne copie tronquée avec bloc non fermé n’alimente plus un extrait de calcul.
 Les tests ciblés couvrent l’API de lecture et les fenêtres : **18 contrôles de
 formules en 0,416 s**, **22 de recherche en 0,266 s**. La suite CI finale est
-relancée sur ce code ; son résultat et le paquet restent à vérifier.
+relancée sur ce code : **1 003 tests Linux, 6 ignorés, 80,102 s**, aucun échec.
+Les derniers contrôles Windows/navigateur et le reçu final du paquet restent à
+vérifier avant intégration.
 
 Les rapports complets, échecs initiaux, traces d’outils et recettes restent privés,
 hors Git. Archive locale `setupsurvie-formules-0372-preuves-privees.tgz`, **39 136
 octets**, SHA-256 `ddf4f1d46577a74a3ca3800024de8c8b21a109670c1bbadd2af5da427bd99e72`.
-Les empreintes des six modules observés correspondent aux fichiers de la branche.
+Les empreintes des six modules identifient le candidat effectivement observé.
+La garde ajoutée ensuite aux limites d’aperçu est contrôlée par les nouveaux tests
+synthétiques et la CI ; aucune nouvelle inférence Bazzite n’est revendiquée pour
+ce dernier ajout.
 Le chapitre réel n’est pas copié dans les fixtures ou le paquet logiciel.
 
 ## Nettoyage et limites
