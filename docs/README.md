@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Projets dépliables et volet redimensionnable — 0.38.0](essais/2026-11-17-projets-assistant.md) — comportement, essais et limites.
+
 - [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
 - [Feuille de route vers la V1](decisions/feuille-de-route-v1.md) — bilan général du 17 novembre 2026 : bloquants, améliorations, gros essais manquants et questions ; proposition à valider.
 - [Ingénierie de tests](essais/ingenierie-de-tests.md) — stratégie du 17 novembre 2026 pour pouvoir compter sur SetupSurvie en effondrement total : banque de 89 questions, notation, modes dégradés, scénarios ; non exécutée.
