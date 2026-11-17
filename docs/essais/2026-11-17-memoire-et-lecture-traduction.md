@@ -75,3 +75,8 @@ Paquet candidat source `b3e84d0b1eefbd15a341bf2d636806556fa7a5c3` : 988 fichiers
 `b26930208868c5a11b5b1570cca3fa5e2e76acbe662a7e85d5fbfc721b4b763b`.
 Comparé intégralement à Git et au manifeste ; ce premier paquet précède
 l’ajustement de la hauteur de carte et n’est pas le paquet final de livraison.
+
+Le contrôle de retour des cartes vers Bibliothèque a ensuite révélé qu’un nom de
+profil long pouvait agrandir le bouton sur téléphone et recouvrir la navigation.
+Son texte reste sur une ligne avec une largeur bornée. Le parcours teste un profil
+isolé au nom long ; les liens sont activés par un clic normal, sans forçage.
