@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.37.3
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.37.4
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -32,6 +32,12 @@ conserve les 23 formules du chapitre réel testé et les protège pendant traduc
 Le calcul moteur de 12 V / 1 Ω aboutit à 12 A avec lecture citée. La terminologie
 de montage, la fidélité de tout un livre et les vidéos réelles restent à vérifier ;
 ce contrôle de structure ne certifie pas le sens de tous les passages.
+
+La [0.37.4](../essais/2026-11-17-aide-generale-sans-source.md) corrige aussi le
+repli sans passage reçu : une organisation familiale peut recevoir une aide
+générale annoncée. Le modèle ne doit pas présenter cette aide comme un contenu
+lu dans une notice ni compléter une donnée critique absente. La validation
+sur une banque étendue reste celle de la campagne documentée, pas de ce seul lot.
 
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |

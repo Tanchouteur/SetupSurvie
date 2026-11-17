@@ -48,7 +48,9 @@ DOCUMENTARY={}
 LOCK=asyncio.Semaphore(1)
 SYSTEM_APPENDIX='Les outils permettent de rechercher/lire les sources locales, calculer, convertir et interroger la géographie téléchargée. Pour les lieux, conserve les liens map_url et annonce les données absentes. Aucune position GPS en direct, aucun trafic ou état des lieux en direct. Ne déduis jamais la potabilité ou l’accès actuel des seuls repères cartographiques. Cite les sources sous la forme [1], [2], etc. en reprenant les numéros fournis. Ne cite aucune source non reçue. Utilise calculate pour les calculs, même simples.'
 SYSTEM_APPENDIX+=SYSTEM_SEARCH_NOTE
-SYSTEM_APPENDIX+=' Une référence avec consulted=false est un résultat de recherche, pas une source lue : appelle read_source avant de la citer. Pour chaque document cité, indique sa date document_date et son édition si disponibles ; sinon dis « date du document inconnue ». collected_at est la collecte locale et archive_date la date annoncée par le catalogue de l’archive : elles ne datent pas l’article ou le document. Signale les déductions comme telles. Si les sources consultées ne permettent pas de conclure, dis « Je ne sais pas d’après les documents disponibles » et précise ce qui manque.'
+GENERAL_KNOWLEDGE_NOTE=' Sans source précise, aide avec tes connaissances générales clairement signalées, sans fausse citation. Pour une commande exacte d’appareil ou un geste critique (dosages, potabilité, électricité, structure), explique les limites et demande les données décisives ; ne les invente pas.'
+SYSTEM_APPENDIX+=' Une référence avec consulted=false est un résultat de recherche, pas une source lue : appelle read_source avant de la citer. Pour chaque document cité, indique sa date document_date et son édition si disponibles ; sinon dis « date du document inconnue ». collected_at est la collecte locale et archive_date la date annoncée par le catalogue de l’archive : elles ne datent pas l’article ou le document. Signale les déductions comme telles. Si les sources consultées ne permettent pas de conclure sur un point précis, dis « Je ne sais pas d’après les documents disponibles » pour ce point et précise ce qui manque.'
+SYSTEM_APPENDIX+=GENERAL_KNOWLEDGE_NOTE
 
 
 def reference(references,item,consulted=False,*,visual=False):
@@ -301,7 +303,10 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     value['omitted']+=max(0,len(found)-len(identifiers));value['selection_limited']|=bool(value['omitted'])
                     record_tool('read_sources',{'ids':identifiers,'query':query[:200]},value,True)
                     measured.value['prepared_sources']=len(value['results'])
-                    messages.append({'role':'system','content':'Les passages de plusieurs documents ont été préparés pour cette question. Rédige à partir des passages reçus, avec leurs numéros [n], et annonce les lectures partielles. Pour une synthèse, réunis les informations utiles et les désaccords ; complète seulement un manque précis avec les outils. Une couverture limitée ne prouve pas l’absence dans toute la bibliothèque.'})
+                    if value['results']:
+                        messages.append({'role':'system','content':'Des passages documentaires ont été préparés pour cette question. Rédige à partir des passages reçus, avec leurs numéros [n], et annonce les lectures partielles. Pour une synthèse, réunis les informations utiles et les désaccords ; complète seulement un manque précis avec les outils. Une couverture limitée ne prouve pas l’absence dans toute la bibliothèque.'})
+                    else:
+                        messages.append({'role':'system','content':'La préparation documentaire ne fournit aucun passage lisible pour cette demande. Aucun document n’est consulté par cette préparation ; ne cite pas un résultat non lu et ne prétends pas avoir reçu plusieurs documents.'+GENERAL_KNOWLEDGE_NOTE})
                 except Exception:
                     record_tool('search_library',arguments,{'results':[],'coverage':{'status':'unavailable','warning':'La recherche préparatoire n’a pas abouti. Ne pas conclure que le sujet est absent.'}},True)
                 update(identifier,sources=read_references(references))

@@ -1,5 +1,9 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.37.4 : [aide générale sans source précise](2026-11-17-aide-generale-sans-source.md),
+consignes de réponse utiles et honnêtes, préparation vide annoncée comme telle,
+sources et gestes critiques toujours distingués. Essais simulés et réels séparés.
+
 0.37.3 : [formules des sources et traductions](2026-11-17-formules-documentaires.md),
 lecteur HTML commun, extraits sans formule coupée, copie protégée pendant traduction
 et contrôle version 4. Anciennes extractions non réécrites ; sens technique à relire.

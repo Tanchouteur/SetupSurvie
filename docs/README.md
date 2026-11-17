@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Aide générale sans source précise — 0.37.4](essais/2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
+
 - [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
 - [Feuille de route vers la V1](decisions/feuille-de-route-v1.md) — bilan général du 17 novembre 2026 : bloquants, améliorations, gros essais manquants et questions ; proposition à valider.
 - [Ingénierie de tests](essais/ingenierie-de-tests.md) — stratégie du 17 novembre 2026 pour pouvoir compter sur SetupSurvie en effondrement total : banque de 89 questions, notation, modes dégradés, scénarios ; non exécutée.
