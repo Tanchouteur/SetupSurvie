@@ -70,6 +70,13 @@ la pause d’inférence et les usages des PC. Les essais physiques et la recette
 humaine du manuel restent identifiés séparément lorsqu’ils exigent une
 intervention ; aucune réussite n’est déduite du seul déroulement automatique.
 
+## Retour aux anciennes versions — décision de Louis du 17 novembre 2026
+
+Louis retire la demande de préparer un retour aux anciennes versions pour ce
+chantier d’interface. Ne plus consacrer de préparation supplémentaire à ce repli.
+Les références déjà créées restent historiques ; cette décision ne modifie pas
+les données ni les fonctions existantes de navigation.
+
 ## Livraisons disponibles
 
 La **0.37.0** répond au retour de Louis du 17 novembre : réouverture des documents

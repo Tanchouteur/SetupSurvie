@@ -42,7 +42,12 @@ La recette dédiée passe avec **35 contrôles sur chacun des moteurs Chromium,
 WebKit et Firefox**. Les six recettes ciblées passent sur les trois moteurs :
 finition (126), volets/dossiers (17), confort de discussion (38), traduction dans
 le lecteur (13), paramètres (182) et la recette dédiée. Les tests unitaires du
-classement (3) et du générateur HTML (2) passent. Le résultat de la CI complète
-sera ajouté après exécution.
+classement (3) et du générateur HTML (2) passent. Après intégration de 0.36.1, la suite Python complète passe : **972 tests,
+aucun échec, 6 ignorés** (environ 215 s) ; les six recettes repassent sur les
+trois moteurs. Le résultat de la CI complète sera ajouté après exécution.
 Safari sur iPhone physique et usage sur les PC réels restent des validations
 séparées. Aucun PC cible n’est mis à jour par cette livraison.
+
+Louis retire ensuite la demande de préparation de retour aux anciennes versions.
+Les références créées avant ce retour restent historiques ; aucun travail
+supplémentaire de repli n’est poursuivi pour ce chantier.
