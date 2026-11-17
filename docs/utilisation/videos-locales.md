@@ -5,6 +5,8 @@
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
 
+Pour plus tard, Louis propose d'étudier une [voix française générée à partir des sous-titres traduits](../decisions/boite-a-idees.md), notamment avec Qwen TTS. Cette piste n'est pas une fonction disponible.
+
 ## Préparer depuis le site
 
 Après la mise à jour de maintenance, choisir **Famille → Bibliothèque → Collections →
