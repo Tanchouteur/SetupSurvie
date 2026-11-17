@@ -129,7 +129,7 @@ chargé, la RAM et la VRAM, et le maintien de la navigation principale dans les
 cartes. Les mesures détaillées doivent être accessibles directement ; un lien
 « mémoire » ne doit pas conduire seulement au stockage. Il demande aussi une
 lecture de traduction stable, plus large, structurée et dont la progression est
-claire depuis la Bibliothèque. Ces évolutions sont préparées en **0.39.0**.
+claire depuis la Bibliothèque. Ces évolutions sont implémentées en **0.39.0**.
 
 Louis refuse le déchargement du modèle à l’expiration d’un délai d’inactivité.
 La conservation demandée devient sans expiration ; arrêt explicite, mode jeu,
@@ -144,7 +144,7 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
-La **0.39.0** prépare les mesures visibles, la lecture de traduction stable et
+La **0.39.0** apporte les mesures visibles, la lecture de traduction stable et
 la conservation du modèle sans expiration. Son bilan distingue les tests de
 développement d’un nouvel essai chez Marc.
 
