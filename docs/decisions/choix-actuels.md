@@ -115,8 +115,12 @@ les données ni les fonctions existantes de navigation.
 Louis demande de confier le suivi de CI à un sous-agent **GPT Luna** lorsque
 possible, pour économiser les crédits IA. Le suivi de la PR 22 est délégué à
 ce modèle : observation du run existant, résultats et diagnostic ciblé d’échec.
-La décision ne change pas les critères de validation, n’autorise pas à ignorer
-un échec et ne transfère pas implicitement les autres chantiers à des agents.
+Louis étend ensuite cette préférence aux tâches bien délimitées pour lesquelles
+un petit sous-agent peut réduire le coût total, sans multiplier les agents
+inutilement. L’agent principal vérifie les preuves et la qualité du travail,
+conserve la revue finale et reprend les tâches qui dépassent les capacités du
+sous-agent. La décision ne change pas les critères de validation et n’autorise
+pas à ignorer un échec.
 
 ## Livraisons disponibles
 
