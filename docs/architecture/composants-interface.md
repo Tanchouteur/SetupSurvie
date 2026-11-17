@@ -33,7 +33,7 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 | `portal/nouveau/settings.css` | Grilles de cartes, contenu des cartes, formulaires et restrictions mobiles des paramètres |
 | `portal/nouveau/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
 | `portal/nouveau/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |
-| `portal/nouveau/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation |
+| `portal/nouveau/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation et en-tête de carte dépliable |
 | `portal/nouveau/ux-system.js` | Reprise, travaux personnels et adaptations communes utilisant les contrôles du portail |
 | `portal/nouveau/layout.js` | Placement initial des contrôles, avant leur raccordement aux actions |
 | `portal/nouveau/assistant-workspace.js` | État et commandes des volets, dossiers, classement et sources consultées |
@@ -49,7 +49,8 @@ livré. Les variables de présentation ne doivent pas remplacer un état serveur
 Une carte de destination comprend toujours un titre, une courte description et
 la même action finale. Les cartes d’un groupe partagent largeur, hauteur, marges,
 rayon et hiérarchie de texte. La description occupe l’espace disponible et les
-actions s’alignent en bas. Une carte de formulaire conserve la hauteur nécessaire
+actions s’alignent en bas. Les cartes dépliables partagent aussi un titre et une description visibles dès
+leur état fermé via `SurvieUI.describeDisclosure`. Une carte de formulaire conserve la hauteur nécessaire
 à ses champs ; on ne coupe pas une commande pour égaliser des contenus différents.
 
 Les éléments interactifs restent explicites et accessibles. Une case et son

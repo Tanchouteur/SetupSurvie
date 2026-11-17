@@ -33,12 +33,13 @@ inférence réelle, aucun modèle ni corpus lourd téléchargé.
 - Recettes existantes : les douze recettes du lanceur paramètres passent sous
   Chromium et WebKit, dont 182 contrôles paramètres, 51 recherche, 29 portail,
   16 volets et dossiers, 13 traduction dans les lecteurs et 41 fondations UX.
-- Nouvelle recette de finition : 94 contrôles par moteur réussis, avec cartes
+- Nouvelle recette de finition : 126 contrôles par moteur, dont les cartes
+  dépliables et leurs descriptions, avec cartes
   de descriptions longues, état peuplé, cases, fermeture/réouverture, cinq
   largeurs et vérification des zones cliquables. La recette vérifie aussi le
   chevauchement des libellés de navigation et les volets pendant la saisie mobile.
 - Vérifications ciblées finales : Chromium, WebKit et Firefox passent chacun
-  les 94 contrôles de finition, 38 de confort de discussion, 9 du repli graphique
+  les contrôles de finition, 38 de confort de discussion, 9 du repli graphique
   des cartes et le cycle association/pause/reprise/export/plage PDF.
 - Cartes : 15 tests unitaires adaptés réussis. Le repli graphique est testé avec
   un pilote volontairement indisponible ; le Firefox Linux du conteneur confirme
@@ -47,6 +48,13 @@ inférence réelle, aucun modèle ni corpus lourd téléchargé.
 - Syntaxe JavaScript, génération HTML et `git diff --check` vérifiés.
 - Captures Playwright MCP examinées sur PC et téléphone, avec réponses longues,
   tableaux, options ouvertes, dossiers, recherche et lecteur.
+
+La vérification initiale des cartes de destination comptait 94 contrôles ; les
+32 vérifications supplémentaires portent sur les cartes dépliables dans quatre
+rubriques et à quatre largeurs. Le comparatif de recherche a aussi révélé une
+hypothèse fragile dans la recette WebKit : un panneau déjà mémorisé ouvert était
+refermé par un clic sans vérification. La recette respecte désormais cet état et
+attend ses champs visibles ; aucun contrôle fonctionnel n’a été retiré.
 
 La recette complète et la CI du dernier état sont suivies avant intégration.
 Le résultat final et le commit intégré seront ajoutés à la clôture.

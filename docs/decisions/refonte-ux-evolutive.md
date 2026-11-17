@@ -48,8 +48,9 @@ suivi doit distinguer travail en cours, résultat provisoire, fin et erreur. Une
 nouvelle capacité ne justifie pas à elle seule un nouvel écran ou une nouvelle
 commande permanente ; partir de l’usage et des composants déjà présents.
 
-`portal/nouveau/ux-system.js` fournit les primitives communes et
-`ux-system.css` leurs règles. `SurvieUI.help(libellé, texte)` produit une aide
+`portal/nouveau/ui.js` fournit les primitives communes ;
+`ux-system.css` et les styles de composants portent leurs règles.
+`ux-system.js` gère les adaptations et repères personnels. `SurvieUI.help(libellé, texte)` produit une aide
 facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
 importantes d’une action restent écrites directement dans son parcours.
 Les composants n’appellent pas les moteurs et ne lancent aucune opération.
