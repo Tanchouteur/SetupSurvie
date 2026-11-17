@@ -52,7 +52,13 @@ termine avec **huit jobs réussis** : Linux, Windows, trois versions Python du
 lecteur isolé, Kiwix, itinéraires hors ligne et navigation des cartes/portail.
 Ce dernier job rejoue la régression complète Chromium/WebKit puis les parcours
 ciblés Firefox, dont les 35 nouveaux contrôles. Les commits suivants modifient
-uniquement la documentation. Livraison par la [PR nº 15](https://github.com/Tanchouteur/SetupSurvie/pull/15).
+uniquement la documentation. La [PR nº 15](https://github.com/Tanchouteur/SetupSurvie/pull/15)
+est fusionnée sur `main` au commit `01edd4376e3614d57cb78b024587f5a883cf8683`.
+Le code applicatif est identique à `d36b0ca`. Après intégration, les deux tests
+du générateur HTML, les trois tests du classement et les 35 nouveaux contrôles
+sur chacun des trois navigateurs repassent. Le paquet logiciel 0.37.0 est construit
+et son manifeste, ses empreintes et son extraction sont vérifiés à part des
+installations réelles.
 
 Safari sur iPhone physique et usage sur les PC réels restent des validations
 séparées. Aucun PC cible n’est mis à jour par cette livraison.
