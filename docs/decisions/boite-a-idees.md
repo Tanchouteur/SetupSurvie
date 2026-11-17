@@ -19,6 +19,8 @@ pas des fonctionnalités livrées ni un engagement de calendrier.
 
 | IDEE-010 | Apports utiles de NOMAD en conservant SetupSurvie | Louis, 16 novembre 2026 | **Base conservée, pistes à qualifier** : l'[étude](apports-nomad.md) compare préparation guidée (liée à IDEE-009), contrôle périodique des liens, essai Kolibri et nouvelles éditions. Classement proposé, sans lancement de développement ou d'installation. |
 
+| IDEE-011 | Contexte personnel de chaque installation | Louis, 17 novembre 2026 | **Demandé pour le futur** : chaque foyer décrit son contexte avec une **trame simple** (inventaire du stock, adultes et enfants avec âges, compétences, matériel, etc.) que l’assistant utilise pour adapter ses réponses. Données privées : hors Git, incluses dans sauvegarde et transfert, distinctes des sources documentaires ; les profils actuels ne les protègent pas entre lecteurs du réseau. Tests prévus avec et sans contexte ([ingénierie de tests](../essais/ingenierie-de-tests.md#contexte-personnel-de-chaque-foyer-évolution-future)). Aucun développement lancé. |
+
 Les problèmes prioritaires de recherche, classement des collections, contenus
 pratiques, langues et délai de l’assistant sont suivis dans le
 [retour d’expérience de Marc](../essais/2026-11-14-retour-experience-marc.md).
