@@ -139,4 +139,14 @@ arrêtés comme au départ, le runtime historique reste en 0.1.34 et Docker gén
 reste inactif. Le volume laboratoire est démonté et ses périphériques temporaires
 détachés ; son image existante et ses données sont conservées. Le clone de
 développement reste propre après sa synchronisation à 0.36.1. Aucun déploiement
-client de 0.36.2, arrêt d’application utilisateur ou redémarrage du PC effectué.
+client de 0.37.1, arrêt d’application utilisateur ou redémarrage du PC effectué.
+
+## Paquet et publication
+
+Paquet construit depuis `a80670b8bd0bc837529020ac1e6857ee0cc4febe` : **965 fichiers**,
+**7 646 760 octets** compressés, **17 063 968 octets** décompressés.
+SHA-256 : `e41d7a36b254b2b6c4050d9b2a168e5c775e94c998d190ea9f405940a056c24e`.
+Chaque contenu est comparé à Git, à sa taille et à son empreinte dans le manifeste.
+Ce reçu suit la construction ; il ne prétend pas être inclus dans son propre paquet.
+La [PR nº 17](https://github.com/Tanchouteur/SetupSurvie/pull/17) porte l’intégration
+normale après la navigation 0.37.0, sans réécriture de l’historique.
