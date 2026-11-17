@@ -66,6 +66,37 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(measured['failure'],'context_budget')
         self.assertEqual(measured['context'],8192);self.assertEqual(measured['model_calls'],[])
 
+    def test_empty_document_preparation_keeps_general_help_and_no_fictitious_sources(self):
+        question='Comment organiser l’apprentissage culturel des enfants ?'
+        with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
+        def reply(payload):
+            instructions='\n'.join(m['content'] for m in payload['messages'] if m['role']=='system')
+            self.assertIn('ne fournit aucun passage lisible',instructions)
+            self.assertNotIn('Des passages documentaires ont été préparés',instructions)
+            self.assertIn('connaissances générales',instructions)
+            self.assertIn('l’âge et le niveau des enfants',instructions)
+            self.assertIn('dosages, potabilité, électricité, structure',instructions)
+            packets=[json.loads(m['content']) for m in payload['messages'] if m.get('tool_name')=='read_sources']
+            self.assertEqual(packets[0]['results'],[])
+            return {'content':'À partir de connaissances générales, voici un exemple adaptable : alterner lecture et activité. Quels âges ont les enfants ?'}
+        _,answer=self.run_chat([reply],found=[])
+        self.assertEqual(answer['sources'],[])
+        self.assertIn('connaissances générales',answer['content'])
+        self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
+
+    def test_unreadable_search_hit_is_not_presented_as_documentary_evidence(self):
+        with store.connect() as db:db.execute("UPDATE messages SET content='Comment utiliser la notice fictive ?' WHERE conversation_id='c' AND role='user'")
+        def reply(payload):
+            instructions='\n'.join(m['content'] for m in payload['messages'] if m['role']=='system')
+            self.assertIn('ne fournit aucun passage lisible',instructions)
+            self.assertIn('commande exacte d’appareil',instructions)
+            self.assertNotIn('Des passages documentaires ont été préparés',instructions)
+            return {'content':'Je ne peux pas vérifier les commandes de cette notice illisible. Donnez sa référence ; je peux expliquer les principes généraux séparément.'}
+        def failed(identifier):raise HTTPException(503,'Fixture unavailable')
+        _,answer=self.run_chat([reply],found=[self.a],read=failed)
+        self.assertEqual(answer['sources'],[])
+        self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
+
     def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self):
         proposal={'content':'{"name":"search_library","arguments":{"query":"notice"}}'}
         payloads,answer=self.run_chat([proposal,proposal],expected_status='incomplete')

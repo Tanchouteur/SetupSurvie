@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.37.3, 17 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.38.1, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -20,6 +20,26 @@ vérification du raisonnement. Une traduction techniquement ambiguë peut garder
 tous ses chiffres : comparer la source et son original illustré pour les gestes,
 branchements et usages importants. Un ancien fichier texte ayant déjà perdu
 ses formules ne peut pas les retrouver sans réextraction de son original.
+
+## Aide générale lorsque les sources ne suffisent pas — 0.38.1
+
+Pour une explication, une idée ou une organisation familiale, l’assistant peut
+répondre avec ses **connaissances générales**, en le signalant clairement.
+Une recherche sans passage utile ne doit pas provoquer un refus automatique.
+Il peut proposer un point de départ adaptable et demander l’âge ou le niveau
+des enfants ; les horaires et durées proposés sont des exemples, pas des normes.
+
+Les références numérotées restent réservées aux sources effectivement lues.
+Une réponse générale n’ajoute pas de document au suivi et ne prouve pas que le
+fonds entier a été interrogé. Si la question demande le contenu d’une notice,
+une commande exacte ou une preuve, le manque doit être annoncé pour ce point.
+Pour un dosage, une décision de potabilité, un branchement ou une structure,
+l’absence de données décisives ne permet pas d’inventer une procédure ou une
+garantie : l’assistant doit clarifier et donner les principes de prudence utiles.
+
+Cette règle guide le modèle ; elle ne certifie pas la justesse de chaque réponse.
+Les refus de moteur, la mémoire et les interruptions gardent leurs messages
+techniques : ils ne sont pas remplacés par une réponse générale inventée.
 
 ## Lire une réponse de l’assistant
 

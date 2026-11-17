@@ -1,5 +1,6 @@
 # Documentation SetupSurvie
 
+- [Aide générale sans source précise — 0.38.1](essais/2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
 - [Projets dépliables et volet redimensionnable — 0.38.0](essais/2026-11-17-projets-assistant.md) — comportement, essais et limites.
 
 - [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
