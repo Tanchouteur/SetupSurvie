@@ -1,6 +1,10 @@
 # Recherche, assistant et travaux sur Bazzite
 
-**Bilan du 17 novembre 2026 — correctif compatible 0.36.2.** Louis recadre les
+**Bilan du 17 novembre 2026 — livraison corrective compatible 0.37.1.**
+Les essais ont été préparés sous le numéro candidat 0.36.2 avant la fusion de
+la navigation 0.37.0. Ce candidat n’a pas été livré sur main. La 0.37.1 conserve
+la navigation et ses versions de ressources, puis ajoute seulement le correctif
+du moteur. Les rapports et empreintes ci-dessous gardent leurs numéros mesurés. Louis recadre les
 essais sur l’objectif actif : recherche et assistant utiles, puis traduction et
 sous-titres. Installation neuve et transfert restent distincts. La préparation
 initiale de cet autre scénario est arrêtée et supprimée sans remplacer son

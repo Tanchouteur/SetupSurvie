@@ -20,8 +20,8 @@ def build():
     assets = [
         ('css', '/nouveau/style.css', '0.36.0'),
         ('css', '/nouveau/ux-system.css', '0.36.0'),
-        ('css', '/nouveau/settings.css', '0.36.0'),
-        ('css', '/nouveau/assistant-workspace.css', '0.36.0'),
+        ('css', '/nouveau/settings.css', '0.37.0'),
+        ('css', '/nouveau/assistant-workspace.css', '0.37.0'),
         ('css', '/nouveau/reader-work.css', '0.36.0'),
         ('js', '/source-figures.js', '0.28.0'),
         ('js', '/long-summaries.js', '0.34.0'),
@@ -44,8 +44,10 @@ def build():
         ('js', '/nouveau/usage-recipe.js', '0.26.1'),
         ('js', '/nouveau/settings-layout.js', '0.36.0'),
         ('js', '/nouveau/ux-system.js', '0.36.0'),
-        ('js', '/nouveau/assistant-workspace.js', '0.36.0'),
+        ('js', '/nouveau/assistant-workspace.js', '0.37.0'),
         ('js', '/nouveau/reader-work.js', '0.34.0'),
+        ('css', '/nouveau/motion.css', '0.37.0'),
+        ('js', '/nouveau/motion.js', '0.37.0'),
         ('js', '/nouveau/navigation.js', '0.34.0'),
     ]
     tags = []

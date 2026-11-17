@@ -1,10 +1,10 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 17 novembre 2026 — 0.36.2.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 17 novembre 2026 — 0.37.1.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 
-La [recette Bazzite 0.36.2](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+La [recette Bazzite 0.37.1](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
 reproduit et corrige une demande naturelle de synthèse, conserve les limites du
 contexte et éprouve traduction et sous-titres sur les modèles existants.
 Louis demande de garder cet objectif prioritaire ; installation et transfert

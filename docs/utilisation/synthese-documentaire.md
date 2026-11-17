@@ -16,7 +16,7 @@ documentaire avant le premier appel du modèle. Avec une sélection, il commence
 par les passages des documents choisis et peut chercher un complément utile. La question complète reste transmise au modèle ; une
 consigne secondaire ne devient plus obligatoirement un mot à trouver dans le texte.
 
-Depuis 0.36.2, « Fais une synthèse des documents expliquant comment… » et
+Depuis 0.37.1, « Fais une synthèse des documents expliquant comment… » et
 « Résume les notices qui expliquent… » sont aussi reconnus. Une consigne de calcul
 placée après la question ne supprime pas la lecture préalable des documents.
 Les [essais sur la bibliothèque de Bazzite](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)

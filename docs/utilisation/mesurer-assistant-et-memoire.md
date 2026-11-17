@@ -6,7 +6,7 @@ charge le modèle déjà installé après une action explicite depuis Famille.
 
 ## Comprendre une réponse lente
 
-Depuis 0.36.2, si le contexte réglé ne suffit pas pour les consignes, les sources
+Depuis 0.37.1, si le contexte réglé ne suffit pas pour les consignes, les sources
 et la réponse réservée, le message indique ce réglage et **Mon appareil →
 Paramètres → Assistant**. Une courte question peut échouer avec un contexte trop
 petit ; ce refus ne prouve ni l’absence de documents ni un manque de VRAM.

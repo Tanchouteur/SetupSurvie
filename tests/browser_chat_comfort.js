@@ -40,6 +40,7 @@ async page => {
   const historyButton=page.locator('[data-assistant-zone="history"]');
   const visible=await page.locator('#assistant-history').isVisible();
   await page.locator('[data-close-panel=history]').click();
+  await page.locator('#assistant-history').waitFor({state:'hidden'});
   check(await page.locator('#assistant-history').isVisible()!==visible,'Volet des conversations repliable');
   await historyButton.click();
   check(await page.locator('#assistant-history').isVisible()===visible,'Volet retrouvé sans quitter la discussion');

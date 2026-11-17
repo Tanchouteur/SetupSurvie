@@ -1,0 +1,56 @@
+/* Short, shared feedback. Feature state and focus never wait for an animation. */
+:is(.next-interface, .ux-motion) {
+  --ux-motion-fast: 140ms;
+  --ux-motion-panel: 220ms;
+  --ux-motion-ease: cubic-bezier(.2, .7, .2, 1);
+}
+:is(.next-interface, .ux-motion) :is(button, a, summary, input, select, textarea) {
+  transition: background-color var(--ux-motion-fast) ease,
+    border-color var(--ux-motion-fast) ease,
+    color var(--ux-motion-fast) ease,
+    box-shadow var(--ux-motion-fast) ease,
+    opacity var(--ux-motion-fast) ease;
+}
+:is(.next-interface, .ux-motion) :is(button:not(:disabled), .settings-destination):active {
+  filter: brightness(.94);
+}
+:is(.next-interface, .ux-motion) .settings-card-summary::after {
+  transition: transform var(--ux-motion-fast) var(--ux-motion-ease);
+}
+:is(.next-interface, .ux-motion) dialog[open],
+:is(.next-interface, .ux-motion) .ux-help-content:not([hidden]),
+:is(.next-interface, .ux-motion) .reader-work:not([hidden]),
+:is(.next-interface, .ux-motion) .toast:not([hidden]) {
+  animation: ux-appear 160ms ease-out;
+}
+/* Standalone map and PDF readers share the same interaction feedback. */
+.ux-motion.map-panel-open #map-sidebar,
+.ux-motion #map-notice:not([hidden]) {
+  animation: ux-appear 160ms ease-out;
+}
+@keyframes ux-appear {
+  from { opacity: .4; }
+  to { opacity: 1; }
+}
+@media (min-width: 1001px) {
+  :is(.next-interface, .ux-motion) .assistant-workspace {
+    transition: grid-template-columns var(--ux-motion-panel) var(--ux-motion-ease);
+  }
+  :is(.next-interface, .ux-motion) .assistant-history,
+  :is(.next-interface, .ux-motion) .assistant-documents {
+    transition: opacity 160ms ease, margin var(--ux-motion-panel) var(--ux-motion-ease),
+      visibility 0s;
+  }
+  :is(.next-interface, .ux-motion) .assistant-workspace[data-left="closed"] > .assistant-history,
+  :is(.next-interface, .ux-motion) .assistant-workspace[data-right="closed"] > .assistant-documents {
+    transition: opacity 160ms ease, margin var(--ux-motion-panel) var(--ux-motion-ease),
+      visibility 0s var(--ux-motion-panel);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.next-interface, .ux-motion) *, :is(.next-interface, .ux-motion) *::before, :is(.next-interface, .ux-motion) *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

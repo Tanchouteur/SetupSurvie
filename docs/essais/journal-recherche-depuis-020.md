@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-0.36.2 : [tests ciblés Bazzite](2026-11-17-assistant-bibliotheque-bazzite.md),
+0.37.1 : [tests ciblés Bazzite](2026-11-17-assistant-bibliotheque-bazzite.md),
 demande de résumé décrivant ses sources séparée du sujet, consignes secondaires
 ne supprimant plus la lecture, contexte trop petit expliqué et clarification
 unique d’un refus contradictoire des sous-titres. Échecs initiaux conservés,

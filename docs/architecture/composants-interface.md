@@ -1,6 +1,6 @@
 # Composants et règles de présentation du portail
 
-**Référence de développement — 0.36.0, 16 novembre 2026.** Cette organisation
+**Référence de développement — 0.37.0, 17 novembre 2026.** Cette organisation
 remplace l’empilement de styles de la maquette utilisé en 0.34.0. Elle répond
 aux captures de Louis : aides trop grandes, case mal alignée, commandes de volets
 redondantes et cartes de paramètres incohérentes. Les tests de fonctionnement
@@ -33,6 +33,7 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 | `portal/nouveau/settings.css` | Grilles de cartes, contenu des cartes, formulaires et restrictions mobiles des paramètres |
 | `portal/nouveau/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
 | `portal/nouveau/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |
+| `portal/nouveau/motion.css` et `motion.js` | Transitions et retour visuel ; aucun appel API ni état métier, aucune attente ajoutée aux commandes ; partagés avec cartes/PDF |
 | `portal/nouveau/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation et en-tête de carte dépliable |
 | `portal/nouveau/ux-system.js` | Reprise, travaux personnels et adaptations communes utilisant les contrôles du portail |
 | `portal/nouveau/layout.js` | Placement initial des contrôles, avant leur raccordement aux actions |
@@ -59,7 +60,7 @@ L’aide est facultative, se ferme avec Échap et n’occupe pas la place d’un
 condition importante. La saisie de l’assistant ne contient plus de bouton « i ».
 
 Chaque volet de l’assistant porte son bouton de fermeture. Quand il est fermé,
-son bouton d’ouverture apparaît dans l’en-tête. Sur téléphone, fermer le volet
+son bouton d’ouverture apparaît dans l’en-tête, du côté du volet concerné. Sur téléphone, fermer le volet
 ramène à la conversation. Le bouton « Discussion » et la rangée de trois faux
 onglets sont supprimés. Un seul bouton Nouvelle discussion est déplacé selon
 la place disponible ; il n’existe pas de copie indépendante du contrôle.
@@ -82,3 +83,29 @@ utilisateur venant de Firefox sur PC, ses parcours principaux font aussi partie
 de la recette. Le repli des cartes en cas d’affichage graphique indisponible
 présente une explication française, avec sortie vers la bibliothèque, sans
 exposer le rapport interne du pilote graphique.
+
+## Mouvement et classement — demande de Louis du 17 novembre 2026
+
+Louis demande des transitions pour comprendre le résultat des clics et le
+classement des conversations par glisser-déposer. La 0.37.0 utilise des transitions
+CSS courtes pour les commandes et les colonnes du poste de discussion, et
+`Element.animate()` pour révéler les pages, résultats et contenus dépliés.
+Les ouvertures de documents et recherches conservent leurs messages d’attente
+existants. Une nouvelle navigation annule la précédente animation ; aucune
+animation n’est relancée par les mises à jour de texte d’une réponse.
+
+Les transitions durent 140–220 ms. Le focus et les attributs accessibles sont
+mis à jour immédiatement ; un volet qui se ferme devient immédiatement `inert`.
+Le réglage `prefers-reduced-motion: reduce` coupe les effets CSS et JavaScript,
+y compris s’il change pendant une animation. Aucun clone du DOM, état privé
+mémorisé ni service supplémentaire n’est nécessaire.
+
+Les dépôts acceptent seulement un glissement commencé dans la liste du profil
+courant. La cible est indiquée visuellement ; la commande utilise la même API
+que le sélecteur du menu. Le changement est confirmé après enregistrement.
+Un dépôt hors dossier, une navigation ou un changement de profil annule le
+contexte de glissement. Les erreurs conservent la conversation et le brouillon.
+Le menu reste la commande accessible au clavier et sur écran tactile.
+
+Références techniques : [Element.animate()](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate)
+et [réduction du mouvement](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
