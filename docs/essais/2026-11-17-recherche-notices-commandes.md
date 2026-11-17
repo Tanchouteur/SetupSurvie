@@ -1,6 +1,6 @@
 # Recherche préalable des commandes dans les notices
 
-**Bilan ciblé — 17 novembre 2026, candidat 0.38.2.** Suite du
+**Bilan ciblé — 17 novembre 2026, livraison 0.38.2.** Suite du
 [contre-exemple réel de la 0.38.1](2026-11-17-aide-generale-sans-source.md#contre-épreuve-de-notice-non-annoncée-fictive).
 
 ## Défaut et changement
@@ -34,7 +34,7 @@ et filtres conservés, question numérique nue sans recherche, plusieurs référ
 sans réduction, nouveau sujet sans ancien appareil. Aucune commande d’appareil
 réel n’est validée par ces fixtures.
 
-La suite complète et la CI restent à terminer. Après relecture des filtres,
+La suite complète est consignée plus bas ; la CI finale est consignée plus bas. Après relecture des filtres,
 le dernier test ajoute priorité à la collection de la relance et conservation
 du parcours spécifique aux favoris, sans élargissement implicite.
 
@@ -73,4 +73,8 @@ décompressés, ZIP **7 722 757 octets**, SHA-256
 Chaque fichier est comparé à Git avec ses filtres et aux tailles/empreintes du
 manifeste ; 1 277 liens locaux et ancres contrôlés, aucune cible manquante.
 Ce reçu est postérieur au paquet et n’est pas prétendu inclus dedans.
-La CI complète reste en cours ; aucun déploiement client n’est annoncé.
+La [CI du code `3e5543d`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44076479704)
+réussit ses **huit jobs** : Linux, Windows, trois lecteurs isolés Python,
+Kiwix, itinéraires et navigateurs. Linux : **1 010 tests, 6 ignorés, 68,818 s**.
+Les commits suivants modifient seulement ce bilan ; aucun composant produit
+n’est changé après cette validation. Aucun déploiement client n’est annoncé.
