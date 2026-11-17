@@ -53,7 +53,7 @@ repli par titres mesuré et correction des appels après fermeture d’une page.
 Les index existants sont conservés. Les preuves de développement ne remplacent
 toujours pas la pertinence et l’ouverture sur les véritables contenus de Marc.
 
-Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0350)
+Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0373)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
 un accès TeamViewer détenu par Louis ne devient pas un accès autonome de l’agent.
 Tant qu’un développement ou une vérification autonome utile reste possible, ces

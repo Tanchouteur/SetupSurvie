@@ -140,3 +140,19 @@ fonds entier de Marc, tous les schémas, la cohérence d’un livre réel de 500
 ou les sous-titres de chaque vidéo réelle. Les validations vidéo déjà acquises
 restent celles des bilans précédents ; aucune nouvelle campagne vidéo n’est
 revendiquée ici. L’objectif global reste ouvert sur ces vérifications ciblées.
+
+
+## Reçu de livraison
+
+Code validé : `ef3ad47c218f94eaf848f3d721a31f86307981ee`, huit jobs CI réussis.
+Linux : **1 003 tests, 6 ignorés, 81,904 s**. L’intégration des décisions et plans
+récents de main ne change ensuite que Markdown et la banque de questions préparée,
+sans exécuter la nouvelle campagne ni les essais d’installation/transfert.
+
+Paquet construit depuis `bb17fbbfadb1fbc44a30ab51173db466a46c94f9` :
+**974 fichiers**, **17 225 179 octets décompressés**, ZIP **7 706 506 octets**,
+SHA-256 `3a4f1714ae2dcf2a19d786b85489b929aeb619b4ebaf86e0dbcdc933389ae2a5`.
+Chaque fichier est comparé à Git avec ses filtres et au manifeste de taille/empreinte.
+Ce reçu est ajouté après le paquet et n’est pas prétendu inclus dans celui-ci.
+Le niveau patch corrige une perte de contenu compatible ; aucun composant tiers,
+original documentaire ou schéma personnel n’est migré.
