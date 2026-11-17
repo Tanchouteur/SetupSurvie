@@ -1,6 +1,9 @@
 # Documentation SetupSurvie
 
 - [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
+- [Feuille de route vers la V1](decisions/feuille-de-route-v1.md) — bilan général du 17 novembre 2026 : bloquants, améliorations, gros essais manquants et questions ; proposition à valider.
+- [Ingénierie de tests](essais/ingenierie-de-tests.md) — stratégie du 17 novembre 2026 pour pouvoir compter sur SetupSurvie en effondrement total : banque de 89 questions, notation, modes dégradés, scénarios ; non exécutée.
+- [Installation neuve et transfert entre SSD sur Bazzite](essais/plan-installation-neuve-et-transfert-bazzite.md) — protocole préparé, non exécuté : installation Linux de zéro ≤ 300 Go, transfert, nettoyage.
 
 - [Volets, transitions et classement — 0.37.0, audit 0.37.2](essais/2026-11-17-volets-transitions-classement.md)
 
