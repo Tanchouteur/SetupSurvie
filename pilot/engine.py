@@ -338,7 +338,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 await session.prepare()
                 async def select_media(packet,schema):
                     progress(identifier,'illustrating')
-                    request={'model':selected['model'],'messages':packet,'tools':[],'stream':True,'keep_alive':'5m',
+                    request={'model':selected['model'],'messages':packet,'tools':[],'stream':True,'keep_alive':model_session.KEEP_ALIVE,
                         'think':'low' if selected['think'] in ('low','medium','high') else False,'format':schema,
                         'options':{'num_ctx':context,'num_predict':512,'temperature':0}}
                     result='';last={}
@@ -385,7 +385,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     measured.phase('model_preparation')
                     content='';thinking='';calls=[];last_save=time.monotonic();done_reason=None;event={}
                     payload={'model':selected['model'],'messages':messages,'tools':tools,'think':selected['think'],
-                             'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':output,**({'temperature':.2} if prepared or selected_ids or continued_ids else {})}}
+                             'stream':True,'keep_alive':model_session.KEEP_ALIVE,'options':{'num_ctx':context,'num_predict':output,**({'temperature':.2} if prepared or selected_ids or continued_ids else {})}}
                     await available()
                     async for event in session.chat(payload):
                         message=event.get('message',{})

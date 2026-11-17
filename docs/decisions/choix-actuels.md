@@ -122,7 +122,31 @@ conserve la revue finale et reprend les tâches qui dépassent les capacités du
 sous-agent. La décision ne change pas les critères de validation et n’autorise
 pas à ignorer un échec.
 
+## Mesures visibles et conservation du modèle — décision de Louis du 17 novembre 2026
+
+Louis demande un indicateur compact dans la navbar PC pour le modèle réellement
+chargé, la RAM et la VRAM, et le maintien de la navigation principale dans les
+cartes. Les mesures détaillées doivent être accessibles directement ; un lien
+« mémoire » ne doit pas conduire seulement au stockage. Il demande aussi une
+lecture de traduction stable, plus large, structurée et dont la progression est
+claire depuis la Bibliothèque. Ces évolutions sont préparées en **0.39.0**.
+
+Louis refuse le déchargement du modèle à l’expiration d’un délai d’inactivité.
+La conservation demandée devient sans expiration ; arrêt explicite, mode jeu,
+changement de modèle et essais froids volontairement lancés gardent leur rôle.
+Le [guide des mesures](../utilisation/mesurer-assistant-et-memoire.md) précise la
+portée, la prochaine demande et les événements qui peuvent perdre l’état du moteur.
+
+Louis signale enfin qu’une demande explicite de vidéo renvoie un article puis
+une absence non établie. Il demande un filtre vidéo dans la recherche et un
+parcours équivalent pour l’assistant : à implémenter après le lot de lecture,
+sans confondre vidéo absente, non examinée, non indexée et piste manquante.
+
 ## Livraisons disponibles
+
+La **0.39.0** prépare les mesures visibles, la lecture de traduction stable et
+la conservation du modèle sans expiration. Son bilan distingue les tests de
+développement d’un nouvel essai chez Marc.
 
 La **0.38.3** complète la préservation des formules : réduction du contexte et
 lecture explicite de la suite utilisent des limites de blocs entiers. Une

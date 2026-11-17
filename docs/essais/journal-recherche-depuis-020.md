@@ -1,5 +1,7 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+- 17 novembre, candidat **0.39.0** : [mesures visibles et lecture stable](2026-11-17-memoire-et-lecture-traduction.md), conservation du modèle sans expiration ; demande vidéo spécifique tracée pour la suite.
+
 0.38.3 : [formules et limites de contexte](2026-11-17-formules-contexte-et-suite.md),
 protection des coupes de réduction et de lecture explicite, omissions signalées
 sans hausse de budget ni modification des états utilisateur.
