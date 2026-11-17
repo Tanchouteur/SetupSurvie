@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from collections import OrderedDict
 from functools import cached_property
+from itertools import islice,product
 import re
 import unicodedata
 from urllib.parse import unquote
@@ -84,6 +85,43 @@ CONCEPTS={
 }
 
 
+# Number variants, not arbitrary prefix matching or a translation dictionary.
+# Preserve ambiguous/invariant words and identifiers; explicit concepts above
+# retain their curated aliases. Unusual inflections still require the source form.
+INVARIABLE_WORDS={'corps','cours','discours','parcours','secours','poids','sens','temps','pays',
+                  'siemens','https','news','taux','faux','chaux','deux','mieux','vieux','epoux'}
+AL_WITH_S={'bal','carnaval','chacal','etal','festival','recital','regal','fatal','naval','banal'}
+# Do not join normalized "émail" with "email": accents are already folded here.
+AIL_WITH_AUX={'bail':'baux','corail':'coraux','soupirail':'soupiraux',
+              'travail':'travaux','vantail':'vantaux','vitrail':'vitraux'}
+AIL_SINGULAR={plural:single for single,plural in AIL_WITH_AUX.items()}
+OU_WITH_X={'bijou','caillou','chou','genou','hibou','joujou','pou'}
+
+
+def number_forms(word):
+    """Bounded aliases on whole tokens; never drop a separate query constraint."""
+    if not re.fullmatch(r'[a-z]{3,}',word) or word in INVARIABLE_WORDS:return [word]
+    if word in AIL_SINGULAR:forms=[word,AIL_SINGULAR[word],AIL_SINGULAR[word]+'s']
+    elif word in AIL_WITH_AUX:forms=[word,AIL_WITH_AUX[word],word+'s']
+    elif word.endswith('eaux'):forms=[word,word[:-1]]
+    elif word.endswith('aux'):
+        forms=[word,word[:-1]]
+        singular=word[:-3]+'al'
+        if singular not in AL_WITH_S:forms.append(singular)
+    elif word.endswith('eux'):forms=[word,word[:-1]]
+    elif word.endswith('oux'):
+        forms=[word]+([word[:-1]] if word[:-1] in OU_WITH_X else [])
+    elif word.endswith('s'):
+        if len(word)<4 or word.endswith(('is','us','os','ss','ais','ois')):return [word]
+        forms=[word,word[:-1]]
+    elif word.endswith(('x','z')):return [word]
+    elif word.endswith(('eau','au','eu')):forms=[word,word+'x',word+'s']
+    elif word in OU_WITH_X:forms=[word,word+'x']
+    elif len(word)>3 and word.endswith('al') and word not in AL_WITH_S:forms=[word,word[:-2]+'aux',word+'s']
+    else:forms=[word,word+'s']
+    return list(dict.fromkeys(forms))
+
+
 @dataclass
 class Plan:
     original:str
@@ -123,15 +161,34 @@ def plan(query,words,synonyms,collection=''):
     for word in terms:
         concept=next((value for value in CONCEPTS.values() if word in value['terms']),None)
         group=list(dict.fromkeys([word]+synonyms.get(word,[])+(concept['terms'] if concept else [])))
+        if not concept and word not in synonyms:group=number_forms(word)
         if any(set(group)&set(g) for g in groups):continue
         groups.append(group);dedup.append(word)
     title_fr=[];title_en=[]
     for word,group in zip(dedup,groups):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
         title_fr.append(concept['fr'][0] if concept else word)
-        title_en.append(concept['en'][0] if concept else (next((x for x in reversed(group) if x!=word),word)))
+        title_en.append(concept['en'][0] if concept else next((x for x in reversed(synonyms.get(word,[])) if x!=word),word))
     scope=('group:'+normal(collection[6:]).replace(' ','')) if collection.startswith('group:') else normal(collection).replace(' ','') or detected
     return Plan(query,dedup,groups,practical,scope,' '.join(title_fr),' '.join(title_en),action)
+
+
+def title_forms(query,english=False):
+    """Try the original first, then at most four whole-token singular variants."""
+    original=query.title_en if english else query.title_fr
+    if not original:return []
+    changes=[]
+    for word,group in zip(query.words,query.groups):
+        if not word.endswith(('s','x')) or group!=number_forms(word) or not re.search(r'\b'+re.escape(word)+r'\b',original):continue
+        alternatives=[form for form in group[1:] if not form.endswith(('s','x'))]
+        if alternatives:changes.append((word,alternatives))
+    values=[original]
+    if changes:
+        for combination in islice(product(*(forms for _,forms in changes)),4):
+            value=original
+            for (word,_),form in zip(changes,combination):value=re.sub(r'\b'+re.escape(word)+r'\b',form,value)
+            if value not in values:values.append(value)
+    return values
 
 
 def rank(item,query,position=0,*,normalizer=None):

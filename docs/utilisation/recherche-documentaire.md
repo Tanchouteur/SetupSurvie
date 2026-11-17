@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.33.1, 16 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.36.1, 17 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -36,6 +36,18 @@ orienter une demande pratique ; les questions sur un détail et les aperçus de
 risques restent accessibles. Un titre bien classé ne garantit pas des instructions
 complètes. Une demande générale identique à un titre conserve aussi ses mots de
 liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
+
+Depuis 0.36.1, des formes courantes de singulier/pluriel se retrouvent ensemble,
+par exemple « couteau/couteaux », « tuyau/tuyaux » ou « ruche/ruches ». La forme
+exacte garde sa priorité à pertinence comparable. Les autres mots du besoin
+restent présents : « tuyau en cuivre » conserve le cuivre dans sa recherche.
+Les guides, articles, paroles indexées et choix de passages pour l’assistant
+utilisent ces variantes. Aucun modèle ni nouvel examen de la bibliothèque n’est
+nécessaire. Si le premier essai par titres ne trouve pas de sujet pertinent,
+quelques variantes sont essayées dans le même budget de temps. Cela ne crée pas
+un index de texte manquant ; les limites de couverture restent indiquées.
+Les références contenant des chiffres restent exactes. Des formes rares ou
+ambiguës peuvent encore nécessiter les mots du document.
 
 Depuis 0.33.1, une demande d’action telle que « réparer un vélo » privilégie les
 titres pratiques devant les aperçus de prix ou de tarifs. Les documents de prix

@@ -10,6 +10,8 @@
 
 - [Apports utiles de NOMAD](decisions/apports-nomad.md) — décision du 16 novembre 2026 : conserver SetupSurvie ; pistes de préparation guidée, contrôle des liens et essai Kolibri, sans nouvelle fonction livrée.
 
+- [Recherche et formes de mots 0.36.1](essais/2026-11-16-recherche-formes-de-mots.md) — singulier/pluriel, repli par titres et limites.
+
 - [Refonte UX 0.34.0](essais/2026-11-16-refonte-ux.md) — assistant en trois zones, traduction dans les lecteurs et vérifications.
 - [Inventaire des parcours et composants](decisions/inventaire-parcours-ux.md) — capacités préservées, preuves et règles d’extension.
 

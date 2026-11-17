@@ -64,6 +64,9 @@ def create_archives(folder):
                 ('History_museum','Pedaling History Bicycle Museum','Fictional bicycle history example.'),
             ]:creator.add_item(Article(key,title,text))
             creator.add_item(Article('Bicycle_repair','Bicycle repair','Bicycle maintenance, fictional fixture without instructions.'))
+            creator.add_item(Article('Couteaux','Affûtage des couteaux','Texte fictif : affûtage des couteaux, sans conseil réel.'))
+            creator.add_item(Article('Tuyau_cuivre','Réparer un tuyau de cuivre','Extrait fictif : réparer un tuyau de cuivre, sans procédure réelle.'))
+            creator.add_item(Article('Tuyaux_plastique','Réparer des tuyaux de plastique','Extrait fictif : réparer des tuyaux de plastique, sans procédure réelle.'))
             creator.add_item(Article("Compost_et_l'urbanisme","Compost et l'urbanisme",'Compost jardin, chemin fictif de contrôle.'))
             creator.add_item(Article('Compost & jardin','Compost et jardin','Compost jardin, chemin fictif de contrôle.'))
             creator.add_item(Article('Compost_été','Compost été','Compost jardin, chemin fictif de contrôle.'))
@@ -136,6 +139,11 @@ def main():
                     check(any(r['id'].endswith('/'+expected) for r in found),query+' reaches an actual indexed technical article',{'ids':[r['id'] for r in found],'coverage':found.coverage})
                 scoped=await library.search('faire du feu dans Wikipédia')
                 check(bool(scoped) and all(r['id'].startswith('zim:wikipedia_fr/') for r in scoped),'Wikipedia is a real archive scope')
+                for query,target in [('affûter un couteau','Couteaux'),('réparer des tuyaux de cuivre','Tuyau_cuivre')]:
+                    found=await library.search(query,collection='wikipedia',limit=20);ids=[row['id'] for row in found]
+                    check(bool(ids) and ids[0]=='zim:wikipedia_fr/'+target,query+' crosses number variants in native fulltext',{'ids':ids})
+                    check('zim:wikipedia_fr/Tuyaux_plastique' not in ids,query+' retains its separate subject constraints')
+                    check('fictif' in (await library.source(found[0]['id']))['text'],query+' opens its actual synthetic source')
                 for query,expected in [('recoudre un vêtement','Mending_clothes'),('installer un panneau solaire','Solar_panel'),('faire des conserves de légumes','Vegetable_canning'),('aiguiser un outil','Tool_sharpening')]:
                     found=await library.search(query,limit=5,collection='manualen',domain='resilience')
                     check(bool(found) and found[0]['id']=='zim:manual_en/'+expected,query+' ranks its actual English source first',{'ids':[r['id'] for r in found],'coverage':found.coverage})
@@ -172,6 +180,9 @@ def main():
                 titles=await library.search('allumer un feu',collection='titleonlyfr')
                 check(any(r.get('match')=='title' for r in titles),'Title fallback works without fulltext index')
                 check(titles.coverage['status']=='partial','Missing fulltext coverage is explicit')
+                for query,target in [('couteau','Couteaux'),('couteaux','Couteaux'),('tuyau cuivre','Tuyau_cuivre'),('tuyaux cuivre','Tuyau_cuivre')]:
+                    found=await library.search(query,collection='titleonlyfr',limit=20)
+                    check(any(r['id']=='zim:title_only_fr/'+target for r in found),query+' crosses number variants in title-only fallback',{'ids':[r['id'] for r in found]})
                 for collection in ('wikipedia','titleonlyfr'):
                     found=await library.search('compost',limit=20,collection=collection)
                     check(len(found)==4 and len({row['id'] for row in found})==4,'Escaped paths and a literal entity have no phantom duplicate in '+collection,{'ids':[row['id'] for row in found]})

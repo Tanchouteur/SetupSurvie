@@ -78,6 +78,19 @@ conversations vers les dossiers. Les menus de classement restent disponibles,
 les données ne changent pas de schéma et la réduction des animations est respectée.
 Voir le [bilan de navigation](../essais/2026-11-17-volets-transitions-classement.md).
 
+**Consigne durable de Louis, confirmée le 16 novembre 2026 :** continuer à garder
+la rigueur des choix de design au fil des évolutions. La
+[règle d’extension](refonte-ux-evolutive.md#extension-des-fonctions) précise son
+application : destination cohérente, commandes compréhensibles, lecture confortable
+et suivi explicite. Les prochains ajouts utilisent les composants et parcours
+existants ; les propositions nouvelles restent distinguées des décisions validées.
+
+La **0.36.1** corrige les [formes courantes des mots](../essais/2026-11-16-recherche-formes-de-mots.md)
+dans la recherche et les passages lus, avec repli par titres borné. Les mesures
+comptent les tentatives supplémentaires. Les appels tardifs pendant la fermeture
+d’une page sont aussi annulés, avec reprise possible après retour navigateur.
+Les essais ciblés et la CI ne remplacent pas la qualification du fonds de Marc.
+
 La version **0.36.0** reprend la [base et la finition de l’interface](../essais/2026-11-16-finitions-interface.md)
 après les captures utilisateur : volets, cases et aides corrigés, cartes unifiées,
 styles de maquette retirés et composants communs explicites. Les fonctions audio

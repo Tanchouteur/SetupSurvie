@@ -20,7 +20,9 @@ les clics compréhensibles et classement par glisser-déposer dans les dossiers.
   et téléphone. Conversation ouverte, messages et brouillon restent conservés.
 
 La version mineure correspond au nouveau mode de classement par glisser-déposer.
-`data_schema: 1`, API et versions tierces restent identiques. La
+`data_schema: 1`, API et versions tierces restent identiques. Le correctif de
+recherche 0.36.1, livré pendant ce chantier, est intégré sans retirer ses
+améliorations de recherche ni l’annulation des appels tardifs. La
 [référence des composants](../architecture/composants-interface.md) fixe les
 responsabilités ; le [guide utilisateur](../utilisation/nouvelle-interface.md)
 donne les commandes.

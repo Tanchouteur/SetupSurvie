@@ -593,6 +593,16 @@ Les reformulations Kiwix utilisent des recherches littérales distinctes, après
 la première passe, et non une syntaxe OR supposée. Les métadonnées d’index
 ordonnent les sondages sans exclure les archives.
 
+**Complément 0.36.1, 17 novembre 2026 :** les mots hors du vocabulaire explicite
+reçoivent des variantes de nombre bornées sur des tokens entiers. Les identifiants
+alphanumériques et des formes ambiguës restent distincts ; aucun index n’est
+réécrit. Le même plan sert au filtrage et à la sélection des passages lus par
+l’assistant. En recherche de titres, la formulation initiale est essayée d’abord ;
+au plus quatre variantes sont tentées si aucun titre ne couvre le sujet. Quatre
+collections restent ciblées, avec le même budget global. `title_requests` et
+`title_refinement_requests` complètent la couverture et l’export de performances.
+Voir le [bilan et les limites](../essais/2026-11-16-recherche-formes-de-mots.md).
+
 `engine.document_request` prépare certaines demandes documentaires avant le
 premier appel au modèle, puis conserve les outils pour affiner. Les caches sont
 propres à une réponse et au périmètre, pas un index sémantique global. Le contexte
@@ -890,7 +900,11 @@ avec la fermeture. Les travaux et textes restent côté serveur ; la mémoire du
 navigateur ne commande jamais une reprise d’inférence.
 
 Les requêtes de la page et du lecteur bilingue sont annulées dès `beforeunload`,
-puis à `pagehide`. L’aperçu PDF possède son port Worker dès sa création, attend
+puis à `pagehide`. Depuis 0.36.1, `PAGE_CLOSING` empêche aussi un minuteur de
+relancer un appel `api()` pendant cette fermeture : il reçoit localement
+`AbortError`, sans nouvelle requête. `pageshow` réautorise les appels après
+restauration. L’annulation connue d’un contrôleur conserve ce type d’erreur ;
+une autre panne réseau reste propagée. L’aperçu PDF possède son port Worker dès sa création, attend
 le signal de disponibilité avant de le confier à PDF.js et peut donc le terminer
 même pendant son chargement. Le traitement reste dans un Worker natif ; ni
 PDF.js ni ses composants épinglés ne sont modifiés. La file d’aperçus abandonne

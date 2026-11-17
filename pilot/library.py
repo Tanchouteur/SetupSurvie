@@ -449,38 +449,43 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
                 await asyncio.gather(*(run([entry],False) for entry in batch))
             else:failed.update(entry[0] for entry in batch)
             await notify()
-    title_done=0;title_failed=0
+    title_done=0;title_failed=0;title_requests=0;title_refinement_requests=0
     async def title_lookup(book):
-        nonlocal title_done,title_failed,cache_hits
+        nonlocal title_done,title_failed,cache_hits,title_requests,title_refinement_requests
         if not query_plan:return
         lang='eng' if 'eng' in str(book.get('language','')) and 'fra' not in str(book.get('language','')) else ''
-        term=query_plan.title_en if lang=='eng' else query_plan.title_fr
-        if not term:return
+        forms=retrieval.title_forms(query_plan,lang=='eng')
+        if not forms:return
+        term=forms[0]
         started=time.monotonic()
         try:
-            async with title_semaphore:
-                (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}),'title',get,generation=generation,timeout=5 if budget>12 else 2);cache_hits+=cached
-                values=json.loads(raw)
-                if not isinstance(values,list):raise ValueError('Invalid suggestions')
+            for attempt,term in enumerate(forms):
+                started=time.monotonic();useful=False
+                async with title_semaphore:
+                    title_requests+=1;title_refinement_requests+=bool(attempt)
+                    (raw,_),cached=await kiwix_queries.request(store.ROOT,KIWIX,'/suggest?'+urlencode({'content':book['book'],'term':term,'count':12}),'title',get,generation=generation,timeout=5 if budget>12 else 2);cache_hits+=cached
+                    values=json.loads(raw)
+                    if not isinstance(values,list):raise ValueError('Invalid suggestions')
+                traced('title',[book],term,started,outcome='success',results=len(values),response_bytes=len(raw),cached=cached)
+                for position,value in enumerate(values[:12]):
+                    if not isinstance(value,dict) or value.get('kind')!='path' or not isinstance(value.get('path'),str):continue
+                    # Kiwix HTML-escapes suggestions; validate the decoded local
+                    # path before exposing any variant as a reading lead.
+                    raw_path=unescape(value['path'])
+                    if raw_path.startswith('//') or re.match(r'^[a-z][a-z0-9+.-]*://',raw_path,re.I):continue
+                    path=raw_path.lstrip('/')
+                    if not path or path.startswith('content/'):continue
+                    try:identifier=safe_zim_path('zim:'+book['book']+'/'+path)
+                    except HTTPException:continue
+                    title=Text();title.feed(str(value.get('value') or value.get('label') or path))
+                    record={'id':'zim:'+identifier,'_rank':position,'title':title.text(),'excerpt':'Correspondance dans le titre ; ouvrir la source pour en vérifier le contenu.',
+                            'kind':'article','language':book.get('language',''),'url':'/content/'+quote(identifier,safe='/'),
+                            'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
+                    records.setdefault(record['id'],record)
+                    useful=useful or retrieval.match_quality(record,query_plan)=='subject'
+                await notify()
+                if useful:break
             title_done+=1
-            traced('title',[book],term,started,outcome='success',results=len(values),response_bytes=len(raw),cached=cached)
-            for position,value in enumerate(values[:12]):
-                if not isinstance(value,dict) or value.get('kind')!='path' or not isinstance(value.get('path'),str):continue
-                # Kiwix 3.8.1 HTML-escapes paths inside its JSON suggestions.
-                # Decode that layer before URL validation, not after unquoting:
-                # a percent-encoded literal "&amp;" remains part of an entry name.
-                raw_path=unescape(value['path'])
-                if raw_path.startswith('//') or re.match(r'^[a-z][a-z0-9+.-]*://',raw_path,re.I):continue
-                path=raw_path.lstrip('/')
-                # Namespace colons (Wikijunior:...) are valid local entry paths.
-                if not path or path.startswith('content/'):continue
-                try:identifier=safe_zim_path('zim:'+book['book']+'/'+path)
-                except HTTPException:continue
-                title=Text();title.feed(str(value.get('value') or value.get('label') or path))
-                record={'id':'zim:'+identifier,'_rank':position,'title':title.text(),'excerpt':'Correspondance dans le titre ; ouvrir la source pour en vérifier le contenu.',
-                        'kind':'article','language':book.get('language',''),'url':'/content/'+quote(identifier,safe='/'),
-                        'collection':book.get('title',''),'book':book['book'],'match':'title',**source_metadata.metadata(book)}
-                records.setdefault(record['id'],record)
             await notify()
         except (TimeoutError,httpx.HTTPError,HTTPException,ValueError,TypeError) as error:
             title_failed+=1;status,reason=failure(error,'title',[book],started)
@@ -524,7 +529,8 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             await asyncio.gather(consume(),consume())
     except TimeoutError:deadline_exceeded=True
     report.update(refinement_attempted=refinement_attempted,refinement_failed=refinement_failed,refinement_not_searched=max(0,refinement_planned-refinement_finished))
-    report.update(title_searched=title_done,title_failed=title_failed,title_not_searched=len(title_books)-title_done-title_failed)
+    report.update(title_searched=title_done,title_failed=title_failed,title_not_searched=len(title_books)-title_done-title_failed,
+                  title_requests=title_requests,title_refinement_requests=title_refinement_requests)
     report.update(searched=len(done),failed=len(failed),not_searched=len(eligible)-len(done)-len(failed))
     report['collections_selected']=len(selected_books)
     report['native_incompatible']=len(incompatible)
