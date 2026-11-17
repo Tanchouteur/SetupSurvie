@@ -223,21 +223,5 @@ Le volet défile verticalement quand les projets et conversations dépassent.
 Les projets ouverts restent mémorisés dans cet onglet, par profil.
 
 
-Les essais du volet 0.38.0 couvrent 22 contrôles de navigation, classement,
-renommage, imbrication, repli et redimensionnement au clavier sur Chromium,
-WebKit et Firefox. Le déplacement de la poignée à la souris a aussi été testé
-avec Playwright MCP : la largeur affichée suit la largeur demandée et la capture
-du pointeur est relâchée en fin de geste. Ce sont des essais sur fixtures,
-sans validation physique sur les PC des utilisateurs ou sur iPhone.
-
-Une liste de plus de 25 projets a aussi été essayée sur fixtures : le défilement
-du volet atteint le bas du contenu, sans débordement horizontal à 390 pixels.
-Le premier passage CI a révélé une assertion WebKit exécutée avant la restauration
-du focus après Suivant ; la recette attend maintenant deux frames de rendu avant
-de donner le focus à l’aide. Les assertions d’ouverture et de fermeture restent
-présentes. Les validations finales CI sont suivies avant fusion.
-
-Le contrôle de largeur attend aussi la stabilisation du format PC après une
-réduction mobile et envoie la touche directement à la séparation. Ses 22
-assertions sont conservées et repassent sur les trois moteurs. La CI finale
-est suivie sur le code `dee61ce`, sans changement des données ni des API.
+Les vérifications et leurs limites figurent dans le
+[bilan du volet par projets](../essais/2026-11-17-projets-assistant.md).
