@@ -302,8 +302,9 @@ reste à exécuter selon le
 
 Le pilote reçoit le montage **en lecture seule** de `library/video/` vers `/videos`.
 Le dossier s’appelle `video`, au singulier : un dossier `library/videos/` n’est pas lu.
-Le [plan de téléchargement d’une liste YouTube](../decisions/telechargement-videos-youtube.md)
-prévoit un rangement dans `library/video/youtube/` ; il n’est pas encore développé.
+Depuis 0.41.0, l’outil [Télécharger une liste de vidéos YouTube](telecharger-videos-youtube.md)
+range les vidéos dans `library/video/youtube/`, avec `.info.json` et sous-titres ;
+le répertoire les reprend ensuite tout seul.
 Le lanceur crée le dossier s’il manque, sans copier de vidéo. Windows et Linux
 utilisent la même API ; le laboratoire reste protégé par ses contrôles de montage.
 Une mise à jour de code dans une installation active doit passer par la procédure

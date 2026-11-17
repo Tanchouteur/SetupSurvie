@@ -1,7 +1,7 @@
 # Documentation SetupSurvie
 
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
-- [Télécharger une liste de vidéos YouTube](decisions/telechargement-videos-youtube.md) — plan du 17 novembre 2026, non développé, à valider.
+- [Télécharger une liste de vidéos YouTube — 0.41.0](utilisation/telecharger-videos-youtube.md) — guide de l’outil en ligne de commande ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
@@ -83,6 +83,7 @@
 - [Rapport de performances de Marc et budget documentaire](essais/2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, défaut de contexte reproduit, mesures RAM/disque/IA et limites.
 
 - [Vidéos locales et sous-titres](utilisation/videos-locales.md) — 0.23.0, recherche des passages et lecteur local ; préparation des pistes manquantes encore distincte.
+- [Télécharger une liste de vidéos YouTube](utilisation/telecharger-videos-youtube.md) — 0.41.0, outil en ligne de commande avec Internet ; rangement dans library/video/youtube/.
 
 - [Lecture française intégrée](utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210) — 0.21.0, version publiée dans les lecteurs portail/PDF.
 
