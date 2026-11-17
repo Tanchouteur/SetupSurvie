@@ -153,3 +153,13 @@ chacun des trois moteurs. Les commits suivants ne changent que la documentation.
 La livraison passe par la [PR nº 16](https://github.com/Tanchouteur/SetupSurvie/pull/16).
 L’échec Firefox de la première CI est conservé comme preuve du défaut PDF ;
 il n’est pas compté comme une validation réussie.
+
+
+La PR nº 16 est intégrée au commit `f5959c1b9bfa0609e78126b16616995c4a9691ab`.
+La comparaison avec `cc97c47` ne montre aucun changement applicatif ni de test :
+seule la documentation diffère. Après intégration, les deux tests du générateur,
+les contrôles de syntaxe et les 16 contrôles d’audit sur chacun des trois moteurs
+repassent. Le paquet logiciel 0.37.2 est construit puis son manifeste, ses
+empreintes et son extraction sont vérifiés, avec les ressources animées et le
+lecteur PDF portant leur version de cache 0.37.2. Ce paquet n’est pas appliqué
+aux PC réels par cet audit.
