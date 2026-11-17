@@ -229,3 +229,10 @@ WebKit et Firefox. Le déplacement de la poignée à la souris a aussi été tes
 avec Playwright MCP : la largeur affichée suit la largeur demandée et la capture
 du pointeur est relâchée en fin de geste. Ce sont des essais sur fixtures,
 sans validation physique sur les PC des utilisateurs ou sur iPhone.
+
+Une liste de plus de 25 projets a aussi été essayée sur fixtures : le défilement
+du volet atteint le bas du contenu, sans débordement horizontal à 390 pixels.
+Le premier passage CI a révélé une assertion WebKit exécutée avant la restauration
+du focus après Suivant ; la recette attend maintenant deux frames de rendu avant
+de donner le focus à l’aide. Les assertions d’ouverture et de fermeture restent
+présentes. Les validations finales CI sont suivies avant fusion.
