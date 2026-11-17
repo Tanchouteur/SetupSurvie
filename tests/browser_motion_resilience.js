@@ -58,6 +58,18 @@ async page => {
     }finally{Element.prototype.animate=animate;}
   });
   check(fallback.view==='home'&&fallback.visible,'La navigation reste fonctionnelle sans l’API d’animation');
+  await page.setViewportSize({width:390,height:844});
+  const placement = await page.evaluate(async()=>{
+    document.querySelector('#navigation [data-route=assistant]').click();
+    document.querySelector('#navigation [data-route=bibliotheque]').click();
+    const help=document.querySelector('#next-collections .ux-help-trigger');help.focus();
+    const content=document.getElementById(help.getAttribute('aria-controls'));
+    const before=content.getBoundingClientRect().toJSON();
+    await Promise.allSettled(document.querySelector('.view:not([hidden])').getAnimations().map(a=>a.finished));
+    return {before,after:content.getBoundingClientRect().toJSON(),width:innerWidth,height:innerHeight,nav:document.getElementById('main-navigation').getBoundingClientRect().top};
+  });
+  check(placement.before.top>=0&&placement.before.bottom<=placement.nav&&placement.before.left>=0&&placement.before.right<=placement.width,'Une aide ouverte pendant la transition mobile reste entièrement visible au-dessus de la navigation');
+  check(Math.abs(placement.before.top-placement.after.top)<1&&Math.abs(placement.before.left-placement.after.left)<1,'La fin de la transition ne fait pas sauter l’aide mobile');
   await page.evaluate(()=>new Promise(requestAnimationFrame));
   check(!commands.length,'Les transitions et la consultation seules ne déclenchent aucune commande serveur');
   check(!errors.length,'Aucune erreur JavaScript : '+errors.join(','));

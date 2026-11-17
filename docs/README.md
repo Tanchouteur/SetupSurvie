@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Volets, transitions et classement — 0.37.0](essais/2026-11-17-volets-transitions-classement.md)
+- [Volets, transitions et classement — 0.37.0, audit 0.37.1](essais/2026-11-17-volets-transitions-classement.md)
 
 - [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.
 

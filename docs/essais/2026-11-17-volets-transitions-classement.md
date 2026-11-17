@@ -68,13 +68,25 @@ Les références créées avant ce retour restent historiques ; aucun travail
 supplémentaire de repli n’est poursuivi pour ce chantier.
 
 
-## Audit complémentaire de l’objectif — 17 novembre 2026
+## Audit complémentaire et correctif 0.37.1 — 17 novembre 2026
 
-La recette `browser_motion_resilience.js` ajoute **14 contrôles par moteur**,
-réussis localement sur Chromium, WebKit et Firefox, ainsi que depuis le MCP
-Playwright dans un contexte Chromium séparé. Aucun changement du code applicatif,
-de version ou de dépendance n’est nécessaire : ce complément porte sur les tests
-et la documentation de 0.37.0.
+La première recette complémentaire compte 14 contrôles, réussis sur Chromium,
+WebKit et Firefox et via le MCP Playwright. Un essai supplémentaire pendant
+l’animation a ensuite reproduit une régression mobile : à 390 × 844, l’aide
+ouverte au clavier avait son bas vers 910 px, puis revenait à 754 px après le
+mouvement. Le déplacement de toute la vue changeait le repère de ses descendants
+fixes, avant de le rétablir à la fin.
+
+Le correctif **0.37.1** garde un fondu de la vue et retire sa transformation.
+Les aides et autres éléments fixes conservent donc leurs coordonnées pendant
+l’effet. Les colonnes de l’assistant et les indicateurs de dépliement gardent
+leurs transitions propres. Il s’agit d’une correction compatible, d’où le niveau
+patch ; API, données et dépendances restent inchangées.
+
+La recette finale comprend **16 contrôles par moteur**, réussis localement sur
+les trois moteurs : elle ouvre aussi une aide pendant le changement de page et
+vérifie sa visibilité au-dessus de la navigation ainsi que sa position stable
+à la fin de l’effet.
 
 | Critère de l’objectif | Preuve directement adaptée |
 | --- | --- |
@@ -86,6 +98,7 @@ et la documentation de 0.37.0.
 | Précédent/Suivant sans perte ni étape parasite | Audit : brouillon conservé, rubrique retrouvée, taille d’historique stable et focus dans une zone visible |
 | Aucun traitement lancé par une transition | Audit : aucune commande serveur de modification pendant la consultation ; recettes de diagnostic, recherche et lecteurs sans lancement implicite |
 | Fonctions existantes et erreurs préservées | CI complète : profils, recherche, sources, traductions, lecteurs, vidéos/audio et classements ; dépôt refusé, extérieur ou annulé dans les 35 contrôles dédiés |
+| Éléments fixes stables pendant le mouvement | Audit : aide ouverte dès le changement de rubrique à 390 × 844, visible et sans saut à la fin du fondu |
 | Tailles d’écran et confort de lecture | Finition (126) et confort (38), réponses longues/tableaux, largeurs PC et téléphone ; contrôles de débordement et commandes accessibles |
 
 L’animation retenue pour le contrôle de réduction du mouvement ne peut pas
