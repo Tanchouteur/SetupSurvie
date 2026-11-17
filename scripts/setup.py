@@ -26,7 +26,7 @@ VERSIONS = json.loads((ROOT / "deploy/versions.json").read_text(encoding="utf-8"
 PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
-             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE'}
+             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE','HOST_GATEWAY'}
 DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
@@ -157,6 +157,8 @@ class Installation:
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],
                   "WEBUI_ADMIN_PASSWORD": c["admin_password"], "CHAT_MODEL": c["chat_model"]}
         values['PILOT_CONTROL_TOKEN']=control_key(c)
+        # Rootless Docker: host-gateway is the internal bridge, not the host.
+        values['HOST_GATEWAY']='10.0.2.2' if c.get('docker_rootless') else 'host-gateway'
         routing_recipe=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8')) if (ROOT/'deploy/routing-engine.json').exists() else None
         if routing_recipe:
             entry=c.get('routing_image')
@@ -239,6 +241,12 @@ class Installation:
         os_type = run(["docker", "info", "--format", "{{.OSType}}"], capture=True, timeout=30)
         if os_type != "linux":
             raise SetupError("Docker doit utiliser les conteneurs Linux.")
+        if c["target"] == "linux":
+            import linux_host
+            rootless=linux_host.docker_rootless()
+            if bool(c.get('docker_rootless'))!=rootless:
+                c['docker_rootless']=rootless;write_json(self.settings_path,c,private=True);self.render(c)
+            if rootless:print(linux_host.ensure_host_loopback())
         self.compose(c, "config", "--quiet")
         free = shutil.disk_usage(c["data_dir"]).free / 1024**3
         print(f"Docker et Compose disponibles. Espace libre : {free:.1f} Gio.")
@@ -605,7 +613,7 @@ def parser():
         if command == "install":
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
-            child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; --no-startup conserve seulement les raccourcis.')
+            child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; Linux : service utilisateur systemd au démarrage du PC. --no-startup ne l’active pas.')
     for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "prepare-maps", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account", "shortcuts"):
         child = subs.add_parser(command)
         if command == "shortcuts":
@@ -651,7 +659,8 @@ def main(argv=None):
         import search_index_tools
         try:
             if not search_index_tools.prepare(app,c,offline=args.offline):print('Indexation complémentaire à préparer depuis les réglages ; bibliothèque disponible.')
-        except (OSError,ValueError,SetupError,subprocess.SubprocessError):print('Outil d’indexation non préparé ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
+        except (OSError,ValueError,SetupError,subprocess.SubprocessError) as error:
+            print('Outil d’indexation non préparé ('+(str(error).strip()[:200] or type(error).__name__)+') ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
         app.up(c)
         if not args.offline:
             existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])
@@ -673,6 +682,13 @@ def main(argv=None):
                     'from pilot import library; library.index_guides()')
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)
+        if c['target']=='linux':
+            import linux_host
+            if args.startup:
+                for line in linux_host.install_autostart(app,c):print(line)
+            if not linux_host.controller_reachable(app,c):
+                print('Attention : le portail ne joint pas le contrôleur local ; démarrage/arrêt de l’IA et indexation automatique indisponibles depuis le site. Voir docs/installation/README.md.')
+            else:print('Contrôleur local joignable depuis le portail.')
         print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
     elif args.action == "prepare-maps":
         import map_install

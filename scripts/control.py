@@ -70,7 +70,10 @@ def hardware(c):
 
 class Server(ThreadingHTTPServer):
     daemon_threads=True
-    def __init__(self,app,c,backend,address=('0.0.0.0',11436)):
+    def __init__(self,app,c,backend,address=None):
+        # Rootless Docker reaches the host loopback through rootlesskit, so the
+        # token-protected controller need not listen on the local network.
+        address=address or ('127.0.0.1' if c.get('docker_rootless') else '0.0.0.0',11436)
         self.app,self.config,self.backend=app,c,backend
         self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
