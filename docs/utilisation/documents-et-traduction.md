@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.37.3, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.39.0, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -103,6 +103,21 @@ Si la version française ne s’ouvre pas, revenir à l’original ou réessayer
 panne de cette option ne bloque ni l’original, ni les PDF, ni la recherche. Les
 fichiers partagés restent également ouvrables depuis la Bibliothèque. Le modèle
 peut être arrêté pendant cette lecture.
+
+## Lire confortablement une traduction en cours — 0.39.0
+
+Depuis la Bibliothèque, le panneau conserve ses commandes et les passages déjà
+lus pendant les actualisations. L’état donne les passages et pages terminés,
+ainsi que la page en cours ; **Lire les derniers passages traduits** permet de
+rejoindre volontairement le dernier groupe prêt, sans déplacement automatique.
+Une actualisation ne remet pas le texte au début et ne referme pas les comparaisons.
+Dans l’assistant, **Lire le texte français** ouvre une fenêtre large sur ordinateur.
+
+Les titres, listes, tableaux et formules présents dans le texte sont rendus dans
+une présentation de lecture ; les simples retours de ligne de la prose peuvent
+se réunir. Ce rendu ne reconstitue pas la composition exacte d’un PDF, ses colonnes
+ou ses illustrations. Les pages originales et les comparaisons restent accessibles.
+Le rendu ne change ni le texte enregistré, ni les contrôles, ni les exports.
 
 ## Traduire en français
 

@@ -154,7 +154,7 @@ async def translate_batch(parts,mode,*,repair=None):
     measured=assistant_metrics.Measurement('subtitle-batch',selected['model'],mode,requested)
     measured.value.update(context=context,runtime=runtime,context_limited=context<requested)
     measured.value['budgets'].append({**allocation,'input_estimate':assistant_metrics.estimate_tokens(messages),'fits':True})
-    payload={'model':selected['model'],'messages':messages,'stream':True,'think':selected['think'],'format':SCHEMA,'keep_alive':'5m',
+    payload={'model':selected['model'],'messages':messages,'stream':True,'think':selected['think'],'format':SCHEMA,'keep_alive':model_session.KEEP_ALIVE,
         'options':{'num_ctx':context,'num_predict':output,'temperature':0}}
     answer='';last=None
     try:

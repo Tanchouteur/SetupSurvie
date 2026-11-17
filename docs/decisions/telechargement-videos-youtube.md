@@ -14,7 +14,7 @@ avant son développement. Il attend la validation de Louis.
   lecture seule dans le pilote (`compose.yaml` → `/videos`). Louis a écrit
   `library/videos/` dans sa demande : **à confirmer**. Le code ne lit pas un
   dossier `videos/` au pluriel.
-- Depuis la 0.39.0, le répertoire des vidéos se met à jour tout seul : au
+- Depuis la 0.40.0, le répertoire des vidéos se met à jour tout seul : au
   démarrage, puis lors d’une recherche si le dossier a changé. Une vidéo
   correctement rangée devient donc trouvable sans clic supplémentaire
   ([guide vidéo](../utilisation/videos-locales.md)).

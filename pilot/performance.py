@@ -202,7 +202,7 @@ async def generation(row,report):
             await session.prepare();measured.phase('model_preparation')
             last={};characters=0;thinking=0
             payload={'model':report['model'],'messages':[{'role':'user','content':'Essai de débit sans documents. Décris un village imaginaire en environ 150 mots, en français. Aucune instruction technique.'}],
-                     'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':'5m',
+                     'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':model_session.KEEP_ALIVE,
                      'options':{'num_ctx':context,'num_predict':512,'temperature':0,'seed':0}}
             async for event in session.chat(payload):
                 message=event.get('message',{});text=message.get('content','');characters+=len(text);thinking+=len(message.get('thinking',''))

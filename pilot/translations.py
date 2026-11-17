@@ -132,7 +132,7 @@ async def translate(text,mode,*,on_metrics=None,guidance=None):
     measured.value.update(context=context,runtime=runtime,context_limited=context<requested)
     measured.value['translation_guidance']={'version':guidance.get('version') if guidance else None,'terms':len(guidance.get('terms',[])) if guidance else 0,'previous_used':previous_used}
     measured.value['budgets'].append({**allocation,'input_estimate':assistant_metrics.estimate_tokens(messages),'fits':True})
-    payload={'model':selected['model'],'messages':messages,'stream':True,'think':selected['think'],'format':SCHEMA,'keep_alive':'5m',
+    payload={'model':selected['model'],'messages':messages,'stream':True,'think':selected['think'],'format':SCHEMA,'keep_alive':model_session.KEEP_ALIVE,
              'options':{'num_ctx':context,'num_predict':output,'temperature':0}}
     answer='';last=None
     try:

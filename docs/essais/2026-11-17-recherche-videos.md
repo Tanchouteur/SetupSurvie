@@ -1,4 +1,4 @@
-# Trouver les vidéos — 0.39.0
+# Trouver les vidéos — 0.40.0
 
 **Bilan daté du 17 novembre 2026.** Essais dans le runner de développement
 (CPU, sans modèle ni Internet), sur de petites vidéos fictives. Aucun essai sur

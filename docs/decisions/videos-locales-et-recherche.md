@@ -1,6 +1,6 @@
 # Vidéos locales dans la recherche commune
 
-**Complément 0.39.0, 17 novembre 2026 :** filtre « Vidéos uniquement », répertoire
+**Complément 0.40.0, 17 novembre 2026 :** filtre « Vidéos uniquement », répertoire
 actualisé automatiquement et outil `find_videos` de l’assistant ; voir le
 [guide actuel](../utilisation/videos-locales.md). Téléchargement d’une liste
 YouTube : [plan à valider](telechargement-videos-youtube.md).

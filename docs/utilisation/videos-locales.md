@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.39.0, 17 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.40.0, 17 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -14,7 +14,7 @@ média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lanc
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
 ou dans **Rechercher**.
 
-Depuis 0.39.0, ce bouton n’est plus indispensable : le répertoire s’actualise tout
+Depuis 0.40.0, ce bouton n’est plus indispensable : le répertoire s’actualise tout
 seul au démarrage du service, puis au plus une fois par minute lors d’une
 recherche, si des vidéos, sous-titres ou `.info.json` ont été ajoutés, modifiés ou
 retirés. Le contrôle ne lit que les noms, tailles et dates des fichiers ; il ignore
@@ -31,7 +31,7 @@ ne deviennent pas des ressources prêtes. Un fichier remplacé après indexation
 est refusé jusqu’à l’actualisation. Les fichiers finaux sont présumés terminés
 par leur nom et l’absence de marqueur : aucun décodage intégral ne le certifie.
 
-## Chercher seulement les vidéos — 0.39.0
+## Chercher seulement les vidéos — 0.40.0
 
 Dans **Bibliothèque → Rechercher**, le menu **Documents et vidéos** propose
 **Vidéos uniquement** et **Documents uniquement**. Avec **Vidéos uniquement**, on
@@ -248,7 +248,7 @@ une langue/un son ; elle ne décrit pas les gestes ni les images. Une vidéo san
 audio ou sans parole reconnue ne reçoit pas de sous-titre vide présenté comme prêt.
 Les résultats réels limités de cette version sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
 
-## Demander une vidéo à l’assistant — 0.39.0
+## Demander une vidéo à l’assistant — 0.40.0
 
 Quand la question parle de vidéo (« trouve une vidéo pour faire du feu », « montre
 une vidéo de la bibliothèque »), l’assistant cherche d’abord dans les vidéos

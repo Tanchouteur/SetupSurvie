@@ -1,0 +1,13 @@
+.resource-status { display: none; }
+@media screen and (min-width: 1001px) and (min-height: 501px) {
+  .next-interface #main-navigation.sidebar { height: 100px; padding-bottom: 32px; }
+  .next-interface .workspace { padding-top: 100px; }
+  .next-interface #main-navigation .resource-status, .map-site-nav .resource-status {
+    display: block; position: absolute; bottom: 3px; left: 20px; right: 20px;
+    height: 24px; line-height: 24px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; text-align: right; font-size: 12px; color: #566a5d; text-decoration: none;
+  }
+  .resource-status[data-stale=true] { font-style: italic; }
+  .resource-status:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+}
+@media print { .resource-status { display: none !important; } }

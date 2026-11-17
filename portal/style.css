@@ -125,7 +125,7 @@
 .source-figure-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.source-figure>a{display:block}
 
 /* Read a partial translation without the conversation composer covering it. */
-dialog.translation-reading-dialog{width:min(980px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;overflow:hidden}
+dialog.translation-reading-dialog{width:min(1120px,calc(100vw - 32px));max-width:min(1120px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;overflow:hidden}
 dialog.translation-reading-dialog[open]{display:flex;flex-direction:column}
 .translation-reading-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
 .translation-reading-dialog h2{font-size:20px;line-height:1.3;margin:0;overflow-wrap:anywhere}
