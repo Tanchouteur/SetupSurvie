@@ -50,6 +50,19 @@ async (page) => {
   }
   await pdf.locator('#pdf-query').fill('Shelter');await pdf.locator('#pdf-find').click();
   await pdf.waitForFunction(()=>document.querySelector('#pdf-status').textContent.includes('résultat'));
+  // The compressed source contains an actual 5000×7200 RGB image on its cover.
+  await pdf.setViewportSize({width:1366,height:900});
+  await pdf.goto(base+'/pdf.html?id='+encodeURIComponent('guide:high-resolution.en.pdf#page=3'));
+  await pdf.waitForFunction(()=>document.querySelector('#pdf-count').textContent.trim()==='/ 3'&&document.querySelector('#pdf-page').value==='3'&&document.querySelector('.page[data-page-number="3"] canvas')?.width>0);
+  await pdf.locator('#pdf-page').fill('1');await pdf.locator('#pdf-page').dispatchEvent('change');
+  await pdf.waitForFunction(()=>{
+    const canvas=document.querySelector('.page[data-page-number="1"] canvas');
+    if(document.querySelector('#pdf-page').value!=='1'||!canvas?.width||!canvas.height)return false;
+    const pixel=canvas.getContext('2d').getImageData(Math.floor(canvas.width/2),Math.floor(canvas.height/2),1,1).data;
+    return pixel[2]>200&&pixel[0]<50&&pixel[1]<50&&pixel[3]>200;
+  });
+  const cover=await pdf.locator('.page[data-page-number="1"] canvas').evaluate(canvas=>({width:canvas.width,height:canvas.height}));
+  if(cover.width*cover.height>4194304)throw Error('High-resolution cover exceeds canvas budget: '+JSON.stringify(cover));
   await pdf.route('**/api/**',route=>route.fulfill({status:503,contentType:'application/json',body:'{"detail":"fixture API unavailable"}'}));
   await pdf.reload();await pdf.waitForFunction(()=>document.querySelectorAll('canvas').length>0);
   await pdf.route('**/vendor/pdfjs/pdf.mjs',route=>route.fulfill({status:503,body:'fixture renderer unavailable'}));
@@ -67,5 +80,5 @@ async (page) => {
   await fallback.waitForFunction(()=>document.querySelectorAll('.result').length>0);
   if(!expected.some(e=>e.includes('fixture optional module failure'))||expected.some(e=>!e.includes('fixture optional module failure')))throw Error('Core failure after optional module crash: '+expected.join('\n'));
   await fallback.close();
-  return {favoritesPersisted:true,fullPageFavoriteSearch:true,publishedAndRetained:true,pdfRendered:true,worksWithoutPilot:true,originalFallback:true,optionalModuleIsolation:true,layouts};
+  return {favoritesPersisted:true,fullPageFavoriteSearch:true,publishedAndRetained:true,pdfRendered:true,highResolutionCover:cover,worksWithoutPilot:true,originalFallback:true,optionalModuleIsolation:true,layouts};
 }

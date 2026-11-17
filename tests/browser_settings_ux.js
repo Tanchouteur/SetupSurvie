@@ -65,8 +65,11 @@ async page => {
   for(const name of ['title','file','language','provenance','document_date','edition','licence'])check(await page.locator('#upload-form [name="'+name+'"]').count()===1,'Champ du guide conservé '+name);
   check(await page.locator('#next-context-form').evaluate(n=>!!n.closest('article')&&!!n.closest('#view-settings')),'Ancêtres nécessaires au contrôleur conservés');
   await page.setViewportSize({width:1440,height:950});await route('profils');
-  const profileName='Profil UX '+Date.now();await page.locator('#add-user-form [name="name"]').fill(profileName);await page.locator('#add-user-form button').click();
-  await page.waitForFunction(()=>document.querySelector('#user-status').textContent.includes('Profil créé'));
+  const profileName='Profil UX '+Date.now();await page.locator('#add-user-form [name="name"]').fill(profileName);
+  const profileCreated=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/admin/users'&&response.request().method()==='POST');
+  await page.locator('#add-user-form button').click();const profileResponse=await profileCreated;
+  check(profileResponse.ok(),'Création de profil HTTP '+profileResponse.status()+' : '+await profileResponse.text());
+  await page.waitForFunction(()=>document.querySelector('#user-status').textContent.includes('Profil créé')).catch(async error=>{throw Error('Statut de création de profil : '+await page.locator('#user-status').textContent()+' ; '+error.message);});
   check(true,'Création de profil branchée depuis les nouveaux paramètres');
   await page.locator('#navigation [data-route="assistant"]').click();await page.locator('#chat-input').fill('Brouillon Famille UX');
   await page.locator('#account-button').click();await page.locator('#profile-list').getByRole('button',{name:profileName,exact:true}).click();

@@ -8,7 +8,7 @@ from html import escape
 from unittest.mock import AsyncMock,patch
 from urllib.parse import urlsplit,parse_qs,quote
 from fastapi import HTTPException
-from pilot import library,store
+from pilot import library,store,videos
 
 
 class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
@@ -20,6 +20,9 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
                       {'book':'multi','language':'eng,fra','fulltext':True,'title':'Multilingue'},
                       {'book':'video','language':'fra','fulltext':False,'title':'Vidéos'}]
         self.addAsyncCleanup(library.kiwix_queries.close)
+        # A search may start the optional video scan; join its writer before
+        # restoring ROOT and deleting this test's directory (notably Windows).
+        self.addAsyncCleanup(videos.stop,reason='service_stopped')
 
     def xml(self,book,title='Feu de camp'):
         return f'<rss><channel><item><title>{title}</title><link>/content/{book}/Feu_de_camp</link><description>Extrait fictif sur le sujet demandé.</description></item></channel></rss>'.encode(), 'application/xml'

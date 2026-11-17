@@ -18,7 +18,7 @@ class Found(list):coverage={'status':'partial','searched':2,'failed':1,'processi
 class PerformanceTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
-        self.calls=[];self.pause=False;self.fail=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
+        self.calls=[];self.pause=False;self.memory_failure=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
         for module,key,value in [(store,'ROOT',Path(temp.name)),(perf,'ACTIVE',{}),(perf,'REPORTS',{}),(perf,'INTERVAL',.01),(perf,'BASELINE',.01),
                                  (engine,'LOCK',asyncio.Semaphore(1)),(engine,'ACTIVE',{}),(translations,'ACTIVE',{}),(engine,'MEASUREMENTS',{})]:
             self.mock(module,key,value)
@@ -46,7 +46,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(payload['options']['num_predict'],512)
             self.assertNotIn('tools',payload);self.assertNotEqual(payload.get('keep_alive'),0)
             if self.hang:self.started.set();await asyncio.Event().wait()
-            if self.fail:return httpx.Response(200,content=b'{"error":"out of memory"}\n')
+            if self.memory_failure:return httpx.Response(200,content=b'{"error":"out of memory"}\n')
             return httpx.Response(200,content=json.dumps({'done':True,'done_reason':'stop','message':{'content':'PRIVATE synthetic answer'},'load_duration':1000000,'eval_duration':2000000,'eval_count':3}).encode()+b'\n')
         self.mock(httpx,'AsyncClient',lambda **kw:original(transport=httpx.MockTransport(handler),**kw))
 
@@ -80,7 +80,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             'catalog':{'state':'stale','collections':135,'age_seconds':60,'error':'PRIVATE-catalog'},
             'local_index':{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4,'started':'PRIVATE-time','reader_probe':{'path':'PRIVATE-reader'}}})
         report=await self.finish();coverage=report['steps'][0]['coverage']
-        self.assertEqual(report['status'],'completed');self.assertEqual(report['reason'],'completed_with_gaps')
+        self.assertEqual(report['status'],'completed',report);self.assertEqual(report['reason'],'completed_with_gaps')
         self.assertEqual(coverage['videos'],{'status':'not_indexed','results':0})
         self.assertEqual(coverage['catalog'],{'state':'stale','collections':135,'age_seconds':60})
         self.assertEqual(coverage['local_index'],{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4})
@@ -122,8 +122,8 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(db.execute("SELECT id FROM conversations WHERE id='keep-user'").fetchone())
 
     async def test_model_memory_failure_kept_and_does_not_abort_classical_report(self):
-        self.fail=True;report=await self.finish()
-        self.assertEqual(report['status'],'completed')
+        self.memory_failure=True;report=await self.finish()
+        self.assertEqual(report['status'],'completed',report)
         self.assertEqual(report['reason'],'completed_with_gaps')
         self.assertEqual(report['steps'][6]['reason'],'memory_error')
         self.assertEqual(report['steps'][6]['status'],'failed')

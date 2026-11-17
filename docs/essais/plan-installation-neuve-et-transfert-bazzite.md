@@ -1,6 +1,8 @@
 # Installation neuve et transfert entre SSD sur Bazzite
 
-**Statut : protocole d’essai préparé le 17 novembre 2026, non exécuté.**
+**Statut : protocole préparé le 17 novembre 2026 ; installation neuve exécutée,
+finition et recette en cours.** Voir le [bilan réel](2026-11-17-installation-neuve-bazzite.md).
+Le transfert et la restauration entre SSD ne sont pas encore exécutés.
 Demande de Louis du même jour : installer SetupSurvie **de zéro** sur son PC
 Bazzite, avec téléchargement de la bibliothèque, des cartes et des modèles,
 noter et corriger chaque problème, puis transférer l’installation d’un SSD à

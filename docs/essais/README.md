@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Installation Linux neuve sur Bazzite](2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.
+
 - [Trouver les vidéos — 0.40.0](2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens de l’assistant ; tests simulés.
 - [Mémoire visible et lecture de traduction — 0.39.0](2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 

@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+## Installation Linux neuve — recette du 17 novembre 2026
+
+Le parcours Docker dédié sur Bazzite est en service. Louis confirme de terminer
+avec le fonds déjà présent : 110 ressources du catalogue hors Wikipédia anglais,
+toutes vérifiées par taille/SHA-256, compléments et partiels conservés. Les
+candidats internes 0.40.0–0.40.3, puis la livraison 0.41.0, corrigent démarrage autonome, réseau rootless, outil
+cartographique, lecteur Python 3.15 et suivi de l’index. Le [bilan réel](../essais/2026-11-17-installation-neuve-bazzite.md) distingue les preuves acquises et les limites restantes. Aucun transfert entre SSD ni redémarrage physique n’est annoncé.
+
 ## Feuille de route V1 et installation neuve sur Bazzite — 17 novembre 2026
 
 Louis demande un bilan général de ce qui doit ou peut être amélioré pour une V1,

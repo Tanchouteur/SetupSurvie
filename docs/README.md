@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Installation Linux neuve sur Bazzite](essais/2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.
+
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
 - [Télécharger une liste de vidéos YouTube — 0.42.0](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.

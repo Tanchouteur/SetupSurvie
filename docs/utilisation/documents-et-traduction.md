@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.39.0, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.41.0, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -9,6 +9,12 @@ zoom, recherche dans le texte et illustrations d’origine. Le lecteur PDF.js es
 fourni localement, sans service Internet ni IA. **Texte et assistant** conserve
 l’aperçu textuel pour poser des questions. Le bouton d’ouverture directe et le
 téléchargement restent disponibles si le lecteur rencontre un problème.
+
+Depuis 0.41.0, les grandes images sont redimensionnées pour l’affichage avec
+un budget de canvas explicite. Le PDF source, ses pages et ses illustrations
+restent intacts ; l’ouverture directe et le téléchargement donnent toujours
+l’original. Cela ne borne pas toute la mémoire nécessaire au décodage et ne
+garantit pas la lecture de tout PDF sur un téléphone.
 
 Avec le profil choisi, **Ajouter aux favoris** marque un document ou un article
 Kiwix. Les favoris sont propres au profil, enregistrés côté serveur et conservés entre
