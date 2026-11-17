@@ -1,6 +1,6 @@
 # Formules, réduction du contexte et suite de lecture
 
-**Bilan ciblé — 17 novembre 2026, candidat 0.38.3.** Complète la
+**Bilan ciblé — 17 novembre 2026, livraison 0.38.3.** Complète la
 [préservation des formules 0.37.3](2026-11-17-formules-documentaires.md), dans
 le même objectif de fidélité des sources reçues par l’assistant.
 
@@ -39,7 +39,10 @@ Les fixtures sont minuscules et fictives, sans modèle ni corpus téléchargé d
 le runner. Aucun nouvel essai de génération réelle n’est revendiqué pour ce lot.
 
 Suite complète locale : **1 013 tests en 202,916 s, 6 ignorés**, aucun échec.
-La CI reste en cours avant livraison.
+Les huit [jobs CI du code `338dae2`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44078935768)
+réussissent, dont Windows et les navigateurs. Linux : **1 013 tests en 81,544 s,
+6 ignorés**. Les commits suivants ne modifient que la documentation. Le suivi
+CI est confié à GPT Luna et ses résultats vérifiés par l’agent principal.
 
 
 Paquet candidat source `338dae2a7aa26a3c5bd78fc3f51286eb77bf4785` : **978 fichiers**, **17 278 278 octets**
