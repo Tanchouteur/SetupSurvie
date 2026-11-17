@@ -22,7 +22,9 @@ async page=>{
  for(const width of [1024,1366,1920,390,320]){await page.setViewportSize({width,height:844});if(width<=1000){if(await page.locator('#assistant-documents').isVisible())await page.locator('[data-close-panel=documents]').click();if(await page.locator('#assistant-history').isVisible())await page.locator('[data-close-panel=history]').click();check(await page.locator('#assistant-discussion').isVisible()&&!await page.locator('#assistant-history').isVisible(),'Une zone à la fois sur téléphone '+width);await page.locator('[data-assistant-zone="documents"]').click();check(await page.locator('#assistant-documents').isVisible(),'Volet documentaire mobile '+width);}check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement '+width);}
  await page.setViewportSize({width:1440,height:950});
  const separator=page.getByRole('separator',{name:'Largeur du volet Conversations'});
- await separator.focus();const oldWidth=Number(await separator.getAttribute('aria-valuenow'));await page.keyboard.press('ArrowRight');
+ await separator.waitFor({state:'visible'});
+ await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ const oldWidth=Number(await separator.getAttribute('aria-valuenow'));await separator.press('ArrowRight');
  check(Number(await separator.getAttribute('aria-valuenow'))>oldWidth,'Largeur du volet réglable au clavier');
  await separator.press('Home');check(Number(await separator.getAttribute('aria-valuenow'))===220,'Largeur minimale bornée');
  const project=page.locator('[data-folder-id="'+folder+'"][aria-expanded]');
