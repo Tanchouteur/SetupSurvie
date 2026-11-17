@@ -1,6 +1,6 @@
 # Aide générale sans source précise
 
-**Bilan ciblé — 17 novembre 2026, candidat 0.38.1.** Suite de l’objectif
+**Bilan ciblé — 17 novembre 2026, livraison 0.38.1.** Suite de l’objectif
 recherche et assistant. Applique la règle validée par Louis dans
 l’[ingénierie de tests](ingenierie-de-tests.md#2-cas-fondateur--la-capture-de-marc-du-17-novembre-2026).
 La campagne V1 complète, le fonds de Marc et les essais d’installation restent
@@ -79,7 +79,7 @@ supprimés après conservation privée du rapport et de la recette : archive loc
 `2be0b4e7ff9047c2b3f2826f504bfd074f9019c3f4ea07f1b37942bb52fdc0d8`.
 Les empreintes moteur/contexte observées correspondent aux fichiers candidats.
 Le modèle préexistant et les services restent intacts ; son maintien est 15 s.
-La CI complète reste en cours avant livraison.
+La validation réunie est consignée ci-dessous.
 
 
 ## Intégration avec les travaux parallèles
@@ -88,7 +88,7 @@ Candidat préparé en 0.37.4 ; la refonte du volet des projets est ensuite fusio
 en 0.38.0 sur main. La livraison corrective devient **0.38.1** après fusion
 normale, sans modification des composants UX. Les essais réels conservent leurs
 empreintes initiales ; moteur et contexte restent identiques après cette fusion,
-la version API change. La CI doit valider l’état réuni avant livraison.
+la version API change. La CI de l’état réuni est validée ci-dessous.
 
 
 ## Paquet candidat vérifié
@@ -102,7 +102,13 @@ Ce reçu est postérieur au paquet, donc non prétendu inclus dans son contenu.
 Les **1 271 liens locaux et ancres Markdown** sont contrôlés sans cible manquante.
 Le paquet vérifié ne prouve pas un déploiement sur un PC client.
 Après fusion de l’interface 0.38.0, la seconde suite locale termine : **1 005 tests,
-6 ignorés, 255,697 s**, aucun échec. La CI réunie reste attendue avant fusion.
+6 ignorés, 255,697 s**, aucun échec.
+La [CI du code réuni `65c3758`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44069842773)
+réussit ses **huit jobs** : Linux, Windows, trois lecteurs isolés Python,
+Kiwix, itinéraires et navigateurs. Linux : **1 005 tests, 6 ignorés, 81,275 s**.
+Les commits suivants ne changent que le bilan Markdown. Les empreintes du moteur
+et du contexte correspondent toujours aux essais réels R7. Aucun déploiement
+sur un PC client n’est effectué par cette intégration.
 
 
 ## Contre-épreuve de notice non annoncée fictive
