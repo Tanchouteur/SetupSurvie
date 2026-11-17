@@ -145,5 +145,11 @@ Après intégration du moteur 0.37.1, la suite locale complète compte **979 tes
 Python, aucun échec, 6 ignorés sur Linux**, en environ 213 s. Les sept recettes
 locales passent sur Chromium, WebKit et Firefox : audit (16), glisser-déposer (35),
 finition (126), volets/dossiers (17), confort (38), lecteur renforcé (15) et
-paramètres (182), soit **429 contrôles par moteur**. La CI finale est exécutée
-sur `cc97c47` ; ses résultats sont attendus avant la fusion.
+paramètres (182), soit **429 contrôles par moteur**. La [CI finale du code `cc97c47`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44042839118)
+termine avec **huit jobs réussis** : Linux, Windows, lecteurs isolés Python,
+Kiwix, itinéraires et navigation complète. Les journaux du job navigateur
+confirment les 16 contrôles d’audit, 35 de glisser-déposer et 15 du lecteur pour
+chacun des trois moteurs. Les commits suivants ne changent que la documentation.
+La livraison passe par la [PR nº 16](https://github.com/Tanchouteur/SetupSurvie/pull/16).
+L’échec Firefox de la première CI est conservé comme preuve du défaut PDF ;
+il n’est pas compté comme une validation réussie.
