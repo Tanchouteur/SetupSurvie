@@ -1,6 +1,6 @@
 # Retrouver un document utile
 
-**Guide actuel — portail 0.35.1, 17 novembre 2026.** Les essais de développement
+**Guide actuel — portail 0.36.1, 17 novembre 2026.** Les essais de développement
 utilisent des documents fictifs et un vrai Kiwix sur de petites archives générées.
 La pertinence et les délais sur le fonds de Marc restent à vérifier sur son PC.
 
@@ -37,7 +37,7 @@ risques restent accessibles. Un titre bien classé ne garantit pas des instructi
 complètes. Une demande générale identique à un titre conserve aussi ses mots de
 liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
 
-Depuis 0.35.1, des formes courantes de singulier/pluriel se retrouvent ensemble,
+Depuis 0.36.1, des formes courantes de singulier/pluriel se retrouvent ensemble,
 par exemple « couteau/couteaux », « tuyau/tuyaux » ou « ruche/ruches ». La forme
 exacte garde sa priorité à pertinence comparable. Les autres mots du besoin
 restent présents : « tuyau en cuivre » conserve le cuivre dans sa recherche.

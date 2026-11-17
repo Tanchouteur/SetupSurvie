@@ -1,5 +1,7 @@
 # Architecture du pilote
 
+- [Composants et présentation du portail](composants-interface.md) — référence 0.36.0, responsabilités CSS/JS et recette de finition.
+
 ## Interface et organisation — 0.34.0
 
 Les trois zones de `assistant-workspace` déplacent les contrôles existants sans
@@ -591,7 +593,7 @@ Les reformulations Kiwix utilisent des recherches littérales distinctes, après
 la première passe, et non une syntaxe OR supposée. Les métadonnées d’index
 ordonnent les sondages sans exclure les archives.
 
-**Complément 0.35.1, 17 novembre 2026 :** les mots hors du vocabulaire explicite
+**Complément 0.36.1, 17 novembre 2026 :** les mots hors du vocabulaire explicite
 reçoivent des variantes de nombre bornées sur des tokens entiers. Les identifiants
 alphanumériques et des formes ambiguës restent distincts ; aucun index n’est
 réécrit. Le même plan sert au filtrage et à la sélection des passages lus par
@@ -898,7 +900,7 @@ avec la fermeture. Les travaux et textes restent côté serveur ; la mémoire du
 navigateur ne commande jamais une reprise d’inférence.
 
 Les requêtes de la page et du lecteur bilingue sont annulées dès `beforeunload`,
-puis à `pagehide`. Depuis 0.35.1, `PAGE_CLOSING` empêche aussi un minuteur de
+puis à `pagehide`. Depuis 0.36.1, `PAGE_CLOSING` empêche aussi un minuteur de
 relancer un appel `api()` pendant cette fermeture : il reçoit localement
 `AbortError`, sans nouvelle requête. `pageshow` réautorise les appels après
 restauration. L’annulation connue d’un contrôleur conserve ce type d’erreur ;

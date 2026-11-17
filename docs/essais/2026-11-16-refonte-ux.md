@@ -7,6 +7,10 @@ Les preuves ci-dessous portent sur le code et des services de test ; elles ne
 constituent pas une mise à jour du PC de Marc ou de Louis ni une validation
 humaine de l’ergonomie.
 
+> Suite : les captures utilisateur ont révélé des défauts de finition après cette
+> livraison. Voir la [reprise de la base 0.36.0](../architecture/composants-interface.md).
+> Les résultats ci-dessous restent les preuves techniques datées de la 0.34.0.
+
 ## Résultat
 
 L’assistant dispose de trois zones sur PC : conversations/dossiers, discussion,

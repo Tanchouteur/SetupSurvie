@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-Livraison 0.35.1 : [formes de nombre et titres](2026-11-16-recherche-formes-de-mots.md),
+Candidat 0.36.1, préparé initialement en 0.35.1 : [formes de nombre et titres](2026-11-16-recherche-formes-de-mots.md),
 variantes courantes dans le plan partagé et la sélection de passages, mots
 techniques chiffrés conservés, repli par titres borné et compteurs dans les mesures.
 Les index existants restent utilisés ; aucune nouvelle préparation documentaire.

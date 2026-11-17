@@ -1,8 +1,12 @@
 # Paramètres et Mon appareil
 
-**Guide actuel — 0.34.0, 16 novembre 2026.** Les profils sont toujours sans mot
+**Guide actuel — 0.36.0, 16 novembre 2026.** Les profils sont toujours sans mot
 de passe. Choisir **Famille** pour modifier les réglages partagés ; ce profil est
 librement accessible et ne protège pas la confidentialité entre personnes du réseau.
+
+Les cartes d’une même rubrique ont la même présentation : titre, courte
+explication et lien **Ouvrir** aligné en bas. Les cartes de formulaires gardent
+la place nécessaire à leurs commandes ; les options avancées restent dépliables.
 
 ## Trouver la bonne rubrique
 

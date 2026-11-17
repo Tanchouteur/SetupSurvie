@@ -1,9 +1,16 @@
 # Recherche : retrouver les formes courantes des mots
 
-**Bilan de livraison 0.35.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
+**Candidat 0.36.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
 sans nouvel écran, modèle ou format de base. Le niveau correctif corrige des
 documents déjà indexés qui pouvaient être écartés à cause du nombre du mot.
-La refonte UX 0.34.0 et l’audio des collections 0.35.0 sont conservés.
+La refonte UX 0.34.0, l’audio des collections 0.35.0 et les finitions UX 0.36.0 sont conservés.
+
+Le candidat a d’abord porté **0.35.1** et passé les huit jobs CI. Au contrôle
+avant publication, `main` avait intégré les finitions UX **0.36.0** par la PR nº 14
+(`1997efd` avec son reçu). La publication de 0.35.1 est donc arrêtée avant tout
+paquet. Les deux travaux sont fusionnés normalement ; le correctif devient
+**0.36.1**, sans renuméroter les rapports déjà exécutés. La validation de cet
+état réuni est distincte des essais historiques ci-dessous.
 
 ## Défaut reproduit et changement
 
@@ -115,9 +122,9 @@ et du [Portail linguistique du Canada](https://nos-langues.canada.ca/fr/cles-de-
 Leur distinction des sens de « travail » ou d’« émail » rappelle les limites d’un
 rapprochement automatique ; le moteur ne prétend pas résoudre ces sens.
 
-## Livraison vérifiée
+## Validation du candidat initial 0.35.1
 
-Les huit [jobs CI du code final](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44025349791)
+Les huit [jobs CI du candidat avant reprise de l’UX 0.36.0](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44025349791)
 passent au commit `db206a9ff84db830e45e7c746bff38b18aa0bea2` : Linux,
 Windows, lecteurs isolés Python 3.11/3.13/3.14, vrai Kiwix, routage hors ligne
 et navigation complète Chromium/WebKit. La suite Linux compte **972 tests en
@@ -127,8 +134,8 @@ de ces résultats.
 
 Le premier CI `43957470597` est annulé comme remplacé lors de l’ajout des compteurs
 au diagnostic. Le second, `43958161595`, conserve son échec WebKit décrit plus
-haut. Le dernier valide la correction et les nouvelles assertions ; les erreurs
-JavaScript ne sont pas filtrées. Les ajouts après le code validé sont uniquement
+haut. Ce dernier valide la correction et les nouvelles assertions avant la fusion UX ; les erreurs
+JavaScript ne sont pas filtrées. À ce stade, les ajouts après le code validé sont uniquement
 documentaires, dont la reprise de la consigne de traçabilité de `main` (`1df999b`).
 L’UX et les orientations de PC préinstallé/NOMAD restent conservées ; aucun nouveau
 module de ces propositions n’est lancé par ce correctif. Le reçu du paquet est

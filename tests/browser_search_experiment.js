@@ -13,7 +13,7 @@ async page=>{
     const data=r.request().postDataJSON();calls.push(data);state.cases[0].judgments={...state.cases[0].judgments,...data.judgments};state.summary.splits.verification.reranked.fully_judged=1;return r.fulfill({json:state});
   });
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/appareil/tests?test=search');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
-  await page.locator('#next-search-experiment > summary').click();await page.waitForFunction(()=>document.getElementById('next-experiment-mode').options.length>0);
+  if(!await page.locator('#next-search-experiment').evaluate(n=>n.open))await page.locator('#next-search-experiment > summary').click();await page.locator('#next-experiment-suite').waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('next-experiment-mode').options.length>0);
   check(calls.length===0,'Ouvrir le comparatif ne lance pas de modèle');
   await page.locator('#next-experiment-suite').selectOption('all');await page.locator('#next-experiment-budget').selectOption('30');await page.locator('#next-experiment-form').evaluate(form=>form.requestSubmit());
   await page.waitForFunction(()=>document.getElementById('next-experiment-stop').hidden===false);

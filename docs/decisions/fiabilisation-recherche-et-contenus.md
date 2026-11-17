@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.35.1
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.36.1
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -29,7 +29,7 @@ courtes reconnues sans « comment ». Le retour de Marc sur le prix de réparati
 du vélo est reproduit sur petits textes ; l’article exact et sa pertinence réelle
 restent à vérifier. Ce correctif ne clôt pas la validation du fonds complet.
 
-La [0.35.1](../essais/2026-11-16-recherche-formes-de-mots.md) retrouve ensuite des
+La [0.36.1](../essais/2026-11-16-recherche-formes-de-mots.md) retrouve ensuite des
 formes courantes de nombre dans les index et les passages documentaires, avec
 repli par titres mesuré et correction des appels après fermeture d’une page.
 Les index existants sont conservés. Les preuves de développement ne remplacent

@@ -20,3 +20,10 @@
 #planning-panel:has(#route-access:not([hidden]))>p,#planning-panel:has(#route-access:not([hidden])) #planning-message{display:none}
 
 .map-print-image{display:none}@media print{.map-print-image{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:fill}#map{z-index:1}#map canvas{visibility:hidden}}
+
+/* An unavailable graphics engine must leave a readable explanation and exit. */
+.map-renderer-fallback{position:absolute;inset:24px;z-index:5;align-self:start;max-width:560px;max-height:calc(100% - 48px);overflow:auto;padding:24px;border:1px solid var(--line);border-radius:10px;background:var(--paper);box-shadow:var(--shadow)}
+.map-renderer-fallback h2{font-size:20px;line-height:1.4}
+.map-renderer-fallback p{font-size:14px;line-height:1.7}
+.map-renderer-fallback a{display:inline-flex;align-items:center;min-height:44px;font-weight:600}
+@media(max-width:600px){.map-renderer-fallback{inset:16px;max-height:calc(100% - 32px);padding:20px}}

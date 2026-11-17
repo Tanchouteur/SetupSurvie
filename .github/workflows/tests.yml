@@ -182,7 +182,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
-      - run: /tmp/setupsurvie-browser/node_modules/.bin/playwright install --with-deps chromium webkit
+      - run: /tmp/setupsurvie-browser/node_modules/.bin/playwright install --with-deps chromium webkit firefox
       - run: node tests/browser_maps_runner.cjs
       - run: python -m pip install -r tests/requirements-kiwix.txt
       - run: node tests/browser_translations_runner.cjs

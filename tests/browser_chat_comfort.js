@@ -5,7 +5,7 @@ async page => {
   page.on('pageerror',e=>errors.push(e.message));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.setViewportSize({width:1440,height:900});await page.goto(base+'/#/assistant');
-  await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
+  await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady&&S.user&&!S.loadingConversation);
   await page.locator('#chat-reset').click();
   await page.waitForFunction(()=>!S.conversation&&!S.source&&!S.translation);
   await page.evaluate(()=>{
@@ -39,7 +39,7 @@ async page => {
   await page.setViewportSize({width:1440,height:900});
   const historyButton=page.locator('[data-assistant-zone="history"]');
   const visible=await page.locator('#assistant-history').isVisible();
-  await historyButton.click();
+  await page.locator('[data-close-panel=history]').click();
   check(await page.locator('#assistant-history').isVisible()!==visible,'Volet des conversations repliable');
   await historyButton.click();
   check(await page.locator('#assistant-history').isVisible()===visible,'Volet retrouvé sans quitter la discussion');

@@ -70,4 +70,4 @@ vidéos internes aux ZIM reste un travail distinct après le parcours 0.33.0.
 
 **Suites datées :** l’[audio des vidéos incluses](2026-11-16-audio-videos-collections.md)
 est raccordé en 0.35.0 ; les [formes courantes de nombre](2026-11-16-recherche-formes-de-mots.md)
-sont ajoutées en 0.35.1, sans résoudre toute la morphologie ni qualifier le fonds réel.
+sont ajoutées en 0.36.1, sans résoudre toute la morphologie ni qualifier le fonds réel.
