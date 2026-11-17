@@ -31,6 +31,7 @@ async (page) => {
   await page.getByLabel('Afficher les modèles d’essai', {exact:true}).check();
   check(await page.getByLabel('Afficher les modèles d’essai', {exact:true}).isChecked(), 'Libellé de case utilisable à la souris');
   await page.locator('[data-close-panel=history]').click();
+  await page.locator('#assistant-history').waitFor({state:'hidden'});
   check(await page.locator('#assistant-history').isHidden(), 'Fermeture depuis le volet Conversations');
   check(await page.locator('#chat-reset').isVisible(), 'Nouvelle discussion disponible avec le volet fermé');
   await page.locator('[data-assistant-zone=history]').click();

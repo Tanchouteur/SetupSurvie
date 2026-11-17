@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.36.0, 16 novembre 2026.**
+**Guide actuel — 0.37.0, 17 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -98,6 +98,16 @@ de pause restent aussi accessibles sur téléphone.
 Un état trop ancien ou un service absent est signalé, sans conclure que le processus
 est arrêté. Aucune durée restante ni mesure CPU n’est inventée.
 
+## Retour visuel des commandes — 0.37.0
+
+Le bouton **Documents** de réouverture reste à droite, près de son volet.
+Les volets se replient et s’ouvrent progressivement ; les changements de page,
+les résultats de recherche, les documents, les menus et les fenêtres ont des
+transitions courtes. Les commandes restent immédiates : une animation n’attend
+pas avant de lancer une action et ne remplace pas un message de réussite ou
+d’erreur. Le réglage système de réduction des animations est respecté, y compris
+dans les cartes et le lecteur PDF.
+
 ## Navigation confortable
 
 Précédent/Suivant suivent les changements de rubrique, les recherches, les documents
@@ -122,7 +132,7 @@ mémoire. Les contrôles de changement de profil et d’onglets périmés resten
 
 La barre de navigation principale est en haut. L’assistant utilise l’espace disponible :
 
-- **Conversations** à gauche : nouvelle discussion, recherche dans les titres et messages, dossiers personnels et liste paginée. Le menu d’une conversation permet de la renommer, de la déplacer ou de la supprimer. Supprimer un dossier conserve ses conversations.
+- **Conversations** à gauche : nouvelle discussion, recherche dans les titres et messages, dossiers personnels et liste paginée. Sur ordinateur, glissez une conversation sur un dossier pour l’y ranger : la cible est mise en évidence et le déplacement est confirmé. Déposez-la sur **Sans dossier** pour retirer son classement. Le menu d’une conversation permet aussi de la renommer, de la déplacer ou de la supprimer, notamment au clavier et sur téléphone. Supprimer un dossier conserve ses conversations.
 - **Discussion** au centre : messages, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
 - **Documents** à droite : documents choisis pour travailler, traduction et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
 

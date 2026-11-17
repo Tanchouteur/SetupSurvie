@@ -38,8 +38,10 @@
   add.id = "assistant-folder-create";
   const folderState = element("p", "", "small muted");
   folderState.setAttribute("role", "status");
+  const dragStatus = element("p", "", "sr-only");
+  dragStatus.setAttribute("role", "status");
   const list = $("conversation-list");
-  left.append(search, folders, add, folderState, list);
+  left.append(search, folders, add, folderState, dragStatus, list);
   const previous = button(
     "Conversations précédentes",
     () => {
@@ -115,6 +117,7 @@
   library.dataset.route = "bibliotheque";
   context.prepend(library);
   const reopen = element("div", undefined, "assistant-panel-openers");
+  const reopenDocuments = element("div", undefined, "assistant-document-opener");
   const toggleButtons = new Map();
   for (const [zone, label, path] of [
     ["history", "Conversations", "M3 4h18v16H3z M9 4v16 M13 8h4 M13 12h4"],
@@ -127,7 +130,7 @@
       "aria-controls",
       zone === "history" ? "assistant-history" : "assistant-documents",
     );
-    reopen.append(open);
+    (zone === "documents" ? reopenDocuments : reopen).append(open);
     toggleButtons.set(zone, open);
     const panel = zone === "history" ? left : right,
       panelTitle = zone === "history" ? title : selectedTitle;
@@ -146,6 +149,7 @@
     head.append(panelTitle, close);
   }
   chat.querySelector(".chat-top").prepend(reopen);
+  chat.querySelector(".chat-top").append(reopenDocuments);
   $("next-history-open").hidden = true;
   let folder = "all",
     offset = 0,
@@ -160,6 +164,7 @@
     if (innerWidth <= 1000) body.dataset.zone = zone;
     else body.dataset[zone === "history" ? "left" : "right"] = "open";
     refreshZones();
+    if (innerWidth <= 1000) window.SurvieMotion?.reveal(zone === "history" ? left : right);
     requestAnimationFrame(() => {
       if (zone === "history") search.focus();
       else right.querySelector("button,a,summary")?.focus();
@@ -169,6 +174,7 @@
     if (innerWidth <= 1000) body.dataset.zone = "discussion";
     else body.dataset[zone === "history" ? "left" : "right"] = "closed";
     refreshZones();
+    if (innerWidth <= 1000) window.SurvieMotion?.reveal(center);
     toggleButtons.get(zone).focus();
   }
   function refreshZones() {
@@ -179,6 +185,9 @@
           : body.dataset[zone === "history" ? "left" : "right"] === "open";
       open.setAttribute("aria-expanded", String(expanded));
       open.hidden = innerWidth > 1000 && expanded;
+      const panel = zone === "history" ? left : right;
+      panel.inert = !expanded;
+      panel.setAttribute("aria-hidden", String(!expanded));
     }
     chat.dataset.history = body.dataset.left;
     if (innerWidth > 1000 && body.dataset.left === "open") {
@@ -242,6 +251,66 @@
     d.append(summary);
     return d;
   }
+  const dragType = "application/x-setupsurvie-conversation";
+  let dragging = null;
+  const moving = new Set();
+  function clearDrag() {
+    dragging = null;
+    left.classList.remove("assistant-dragging");
+    left.querySelectorAll(".is-dragging,.is-drop-target").forEach((node) =>
+      node.classList.remove("is-dragging", "is-drop-target"),
+    );
+    dragStatus.textContent = "";
+  }
+  async function moveConversation(conversation, target) {
+    const owner = S.user?.id;
+    if (!owner || moving.has(conversation.id)) return;
+    if ((conversation.folder_id || "") === target) {
+      toast("Cette conversation est déjà dans ce dossier.");
+      return;
+    }
+    moving.add(conversation.id);
+    try {
+      await api("/conversations/" + encodeURIComponent(conversation.id) + "/folder",
+        { folder_id: target || null }, { method: "PUT" });
+      if (S.user?.id !== owner) return;
+      await histories();
+      const destination = folderItems.find((item) => item.id === target)?.name || "Sans dossier";
+      toast("Conversation déplacée dans « " + destination + " ».");
+    } finally {
+      moving.delete(conversation.id);
+    }
+  }
+  function makeDraggable(row, conversation) {
+    row.draggable = true;
+    let canDrag = true;
+    row.addEventListener("pointerdown", (event) => {
+      canDrag = !event.target.closest("details");
+    });
+    const grip = element("span", undefined, "assistant-drag-handle");
+    grip.setAttribute("aria-hidden", "true");
+    grip.title = "Glisser vers un dossier";
+    grip.append(SurvieUI.icon("M8 6h.01 M16 6h.01 M8 12h.01 M16 12h.01 M8 18h.01 M16 18h.01"));
+    row.prepend(grip);
+    row.addEventListener("dragstart", (event) => {
+      if (!S.user || !canDrag || !event.dataTransfer || moving.has(conversation.id)) {
+        event.preventDefault();
+        return;
+      }
+      clearDrag();
+      dragging = { conversation, owner: S.user?.id };
+      event.dataTransfer.setData(dragType, conversation.id);
+      event.dataTransfer.effectAllowed = "move";
+      row.classList.add("is-dragging");
+      left.classList.add("assistant-dragging");
+      dragStatus.textContent = "Déposez la conversation sur un dossier pour l’y déplacer.";
+    });
+    row.addEventListener("dragend", clearDrag);
+  }
+  document.addEventListener("survie:auth", clearDrag);
+  document.addEventListener("survie:route", ({ detail }) => {
+    if (detail.section !== "assistant") clearDrag();
+  });
   function folderButton(value, label) {
     const b = button(
       label,
@@ -253,6 +322,29 @@
       "secondary",
     );
     b.setAttribute("aria-pressed", String(folder === value));
+    if (value !== "all") {
+      const target = value === "unfiled" ? "" : value;
+      b.dataset.folderId = target;
+      const validDrag = () => dragging && dragging.owner === S.user?.id;
+      b.addEventListener("dragover", (event) => {
+        if (!validDrag()) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        left.querySelectorAll(".is-drop-target").forEach((node) => node.classList.remove("is-drop-target"));
+        b.classList.add("is-drop-target");
+      });
+      b.addEventListener("dragleave", (event) => {
+        if (!b.contains(event.relatedTarget)) b.classList.remove("is-drop-target");
+      });
+      b.addEventListener("drop", async (event) => {
+        if (!validDrag() || event.dataTransfer?.getData(dragType) !== dragging.conversation.id) return;
+        event.preventDefault();
+        const conversation = dragging.conversation;
+        clearDrag();
+        try { await moveConversation(conversation, target); }
+        catch (error) { toast(error.message); }
+      });
+    }
     return b;
   }
   histories = async () => {
@@ -371,14 +463,11 @@
         move.onchange = async () => {
           move.disabled = true;
           try {
-            await api(
-              "/conversations/" + encodeURIComponent(c.id) + "/folder",
-              { folder_id: move.value || null },
-              { method: "PUT" },
-            );
-            await histories();
+            await moveConversation(c, move.value);
           } catch (e) {
             toast(e.message);
+            move.value = c.folder_id || "";
+          } finally {
             move.disabled = false;
           }
         };
@@ -408,6 +497,7 @@
           button("Supprimer", () => deleteConversation(c), "text-button"),
         );
         row.append(open, m);
+        makeDraggable(row, c);
         list.append(row);
       }
       if (!data.conversations.length)
