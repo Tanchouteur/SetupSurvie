@@ -1,6 +1,6 @@
 # Formules conservées dans les sources et traductions
 
-**Bilan daté — 17 novembre 2026. Livraison visée 0.37.3, correction compatible.**
+**Bilan daté — 17 novembre 2026. Livraison 0.37.3, correction compatible.**
 Suite ciblée de la [recette Bazzite précédente](2026-11-17-assistant-bibliotheque-bazzite.md).
 L’objectif reste recherche/assistant, puis traduction et sous-titres. Aucun nouvel
 essai d’installation ou de transfert n’est entrepris.
@@ -110,8 +110,13 @@ Firefox passent**, y compris avec une traduction préalable dans un autre profil
 le travail initial reste conservé et est mis en pause seulement pour nettoyer
 la fixture. Ces comptes et documents sont entièrement fictifs.
 
-La CI finale de `ef3ad47` est relancée. Son résultat et le reçu du paquet restent
-à vérifier avant intégration.
+La [CI finale du code `ef3ad47`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44056978014)
+réussit ses **huit jobs** : Linux, Windows, lecteurs isolés Python 3.11/3.13/3.14,
+Kiwix, itinéraires et parcours navigateur complets Chromium/WebKit puis ciblés
+Firefox. Les commits suivants ne changent que la documentation. Les versions
+API et manifeste restent 0.37.3, `data_schema: 1`, composants tiers inchangés.
+Le paquet est vérifié séparément ci-dessous ; aucun déploiement client n’est
+revendiqué par cette intégration.
 
 Les rapports complets, échecs initiaux, traces d’outils et recettes restent privés,
 hors Git. Archive locale `setupsurvie-formules-0372-preuves-privees.tgz`, **39 136
