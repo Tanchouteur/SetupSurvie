@@ -47,6 +47,12 @@
     "bytes": 4374,
     "sha256": "a4e64af683b9a5fc0ebcb849e7a2c1759e415f9791764d09b8a241b79fd90dfa",
     "source_sha256": "7713cfc8e3c36d5ec4aa3d6cffe7500a1b3310f8a86d914b8ea09c2a9dee7c2d",
-    "normalization": "Espaces en fin de ligne retir\u00e9s ; texte de licence inchang\u00e9."
+    "normalization": "Espaces en fin de ligne retirés ; texte de licence inchangé."
+  },
+  {
+    "path": "fonts/Noto Sans Regular/8192-8447.pbf",
+    "url": "https://protomaps.github.io/basemaps-assets/fonts/Noto%20Sans%20Regular/8192-8447.pbf",
+    "bytes": 64220,
+    "sha256": "8ea977a587352fe31b4159ffdbc9a40be79056f2472017c742ea1e4a931864b9"
   }
 ]
