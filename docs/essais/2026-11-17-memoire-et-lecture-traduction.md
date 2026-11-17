@@ -32,7 +32,7 @@ restent possibles. Aucune inférence réelle n’est lancée pour ces tests.
 Version mineure compatible : évolution visible des parcours et du comportement
 de conservation, sans migration des données ni mise à jour des composants tiers.
 
-## Vérifications en cours
+## Vérifications réalisées
 
 Contrôleur : 13 tests en 7,200 s. Sessions de modèle : 15 tests en 2,564 s,
 avec charge préparatoire et requête finale sans expiration. Chromium : nouveau
@@ -44,8 +44,7 @@ fenêtres d’au moins 1001×501. Les mesures détaillées restent accessibles p
 Les contrôles de contenu sont fictifs ; ils ne certifient pas une traduction réelle.
 Suite complète locale : **1 014 tests en 218,272 s, 6 ignorés**, aucun échec.
 Après les derniers réglages des lanceurs : 5 tests du laboratoire réussis,
-20 tests ciblés des lanceurs/installations réussis en 1,636 s. La CI reste à
-terminer avant intégration. La durée d’inactivité réelle sur Windows n’a pas été
+20 tests ciblés des lanceurs/installations réussis en 1,636 s. La CI finale est réussie (voir reçu ci-dessous). La durée d’inactivité réelle sur Windows n’a pas été
 rejouée : les essais vérifient les requêtes émises sans expiration. La
 [référence Ollama](https://docs.ollama.com/faq#how-do-i-keep-a-model-loaded-in-memory-or-make-it-unload-immediately)
 confirme le rôle de la valeur négative ; les demandes explicites de déchargement
@@ -80,3 +79,22 @@ Le contrôle de retour des cartes vers Bibliothèque a ensuite révélé qu’un
 profil long pouvait agrandir le bouton sur téléphone et recouvrir la navigation.
 Son texte reste sur une ligne avec une largeur bornée. Le parcours teste un profil
 isolé au nom long ; les liens sont activés par un clic normal, sans forçage.
+
+## Reçu de validation finale
+
+Les huit jobs de la [CI 44102135218](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44102135218)
+réussissent sur le code `b809cd6950e86b86231515ab16df920f1d9b986e`, dont
+Windows, Linux et les parcours navigateur. Après correction du bandeau, les cinq
+recettes cartographiques (présentation, défauts, carnet, accès et rendu) passent
+localement sur Chromium et WebKit. Le nouveau parcours mémoire/traduction passe
+ses 27 contrôles sur chacun des deux navigateurs. Aucun seuil de hauteur de carte
+ni assertion de clic n’est affaibli.
+
+Paquet final de ce code : 988 fichiers, 17 337 917 octets décompressés,
+7 751 363 octets ZIP ; SHA-256
+`124bfd8fc6ef25e279be39d390b8d06953ca8a551f6ed2e4affd012b32a46c48`.
+Chaque fichier est comparé au manifeste et à Git. Ce reçu documentaire est ajouté
+après construction ; il n’est pas prétendu inclus dans le paquet décrit.
+Aucun déploiement sur les PC de Louis ou Marc n’a été réalisé. Restent à observer
+sur leur matériel : mesures réelles, conservation après une longue inactivité et
+confort d’une traduction réelle. WebKit simulé ne valide pas un iPhone physique.
