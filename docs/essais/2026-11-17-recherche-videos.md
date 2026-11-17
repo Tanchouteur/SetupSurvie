@@ -49,8 +49,8 @@ dans cette livraison.
 
 | Vérification | Résultat |
 | --- | --- |
-| `tests/test_video_search.py` : 11 tests (filtre, liste sans mot-clé, actualisation automatique, fichiers `.part`, arrêt volontaire ou par redémarrage, recherche pendant l’actualisation, API HTTP, détection des demandes, liens ajoutés, quatre scénarios d’assistant avec moteur simulé, dont une liste de repli hors sujet qui n’est pas ajoutée comme résultat) | réussis |
-| Suite complète `python -m unittest discover -s tests` (runner, Python 3.13) | 1023 tests réussis, 6 ignorés ; tests moteur et vidéo relancés après la dernière correction |
+| `tests/test_video_search.py` : 12 tests (filtre, liste sans mot-clé, actualisation automatique, fichiers `.part`, arrêt volontaire ou par redémarrage, recherche pendant l’actualisation, API HTTP, détection des demandes, liens ajoutés, quatre scénarios d’assistant avec moteur simulé, dont une liste de repli hors sujet qui n’est pas ajoutée comme résultat ; arrêt du service avec un inventaire annulé ou d’une autre boucle) | réussis |
+| Suite complète `python -m unittest discover -s tests` (runner, Python 3.13) | 1026 tests réussis, 6 ignorés, après intégration de `main` (0.39.0) |
 | `tests/search_processing_smoke.py` | réussi |
 | `tests/profile_proxy_smoke.py` | non exécutable dans le runner (Docker Caddy absent, même échec sur `main`) ; laissé à la CI GitHub |
 | `tests/browser_video_search.py` : API et portail réels dans Chromium (image Playwright du runner), affichage ordinateur et téléphone (format iPhone 13 émulé) : 17 contrôles | réussis |
@@ -59,6 +59,11 @@ Contrôles du navigateur : répertoire créé sans clic au démarrage ; menu vis
 recherche vide en mode vidéos qui affiche les deux vidéos par titre ; choix
 conservé dans l’adresse ; mot-clé limité aux vidéos ; « Documents uniquement »
 sans vidéo ; lien de l’assistant qui ouvre le lecteur ; aucune erreur JavaScript.
+
+La première CI GitHub a révélé deux défauts, corrigés : le libellé « document(s) »
+attendu par un essai navigateur (désormais « résultat(s) » en mode mixte), et,
+sous Windows, un arrêt du service bloqué par l’annulation de l’inventaire
+automatique.
 
 Deux tests existants de budget de contexte ont révélé que chaque phrase ajoutée
 aux consignes permanentes réduit la place des passages lus. En conséquence, la
