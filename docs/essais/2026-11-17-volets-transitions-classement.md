@@ -137,3 +137,13 @@ comme une validation réussie.
 
 La livraison moteur 0.37.1 est intégrée pendant cet audit. Le correctif d’interface
 est livré en 0.37.2, en conservant ses changements de recherche et de sous-titres.
+
+
+### Vérification de la version réunie 0.37.2
+
+Après intégration du moteur 0.37.1, la suite locale complète compte **979 tests
+Python, aucun échec, 6 ignorés sur Linux**, en environ 213 s. Les sept recettes
+locales passent sur Chromium, WebKit et Firefox : audit (16), glisser-déposer (35),
+finition (126), volets/dossiers (17), confort (38), lecteur renforcé (15) et
+paramètres (182), soit **429 contrôles par moteur**. La CI finale est exécutée
+sur `cc97c47` ; ses résultats sont attendus avant la fusion.
