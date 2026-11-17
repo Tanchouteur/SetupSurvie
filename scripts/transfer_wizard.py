@@ -35,6 +35,11 @@ class Wizard:
             if (source/'settings.json').is_file():work=source
         self.work=tk.StringVar(value=str(work or (candidates[0] if len(candidates)==1 else '')))
         self.dest=tk.StringVar(value=str(base) if (base/'transfer.json').is_file() else '')
+        if self.work.get() and not self.dest.get():
+            try:
+                self.dest.set(transfer.read(Path(self.work.get())/'transfer-guard.json')['destination'])
+            except (OSError,ValueError,KeyError):
+                pass
         panel=ttk.Frame(self.root,padding=20);panel.pack(fill='both',expand=True)
         ttk.Label(panel,text='Transférer SetupSurvie',font=('',20)).pack(anchor='w')
         ttk.Label(panel,text='Copier vers un SSD ou un disque de secours. La source est conservée.',wraplength=700).pack(anchor='w',pady=8)
@@ -52,10 +57,44 @@ class Wizard:
         self.status=tk.StringVar(value='Commencez par Examiner. Une destination existante ne sera pas remplacée.')
         ttk.Label(panel,textvariable=self.status,wraplength=700).pack(anchor='w',pady=12)
         self.bar=ttk.Progressbar(panel,mode='determinate');self.bar.pack(fill='x')
+        self.copy_summary=tk.StringVar()
+        ttk.Label(panel,textvariable=self.copy_summary,wraplength=700).pack(anchor='w',pady=4)
         self.log=tk.Text(panel,wrap='word',height=12,state='disabled');self.log.pack(fill='both',expand=True,pady=10)
         ttk.Label(panel,text='Sans Internet : Python avec Tk et Docker doivent être disponibles.\nDocker Desktop : vérifier séparément Settings → Resources → Advanced → Disk image location.',wraplength=700).pack(anchor='w')
         self.root.report_callback_exception=lambda cls,exc,tb:messagebox.showerror('Vérifier les choix',str(exc))
         self.root.protocol('WM_DELETE_WINDOW',self.close);self.root.after(150,self.poll)
+        self.root.after(500,self.refresh_copy_status)
+
+    def refresh_copy_status(self):
+        path=self.current_dest if self.busy else self.dest.get()
+        state={}
+        if path.strip():
+            try:
+                state=transfer.copy_status(Path(path))
+            except (OSError,ValueError,KeyError):
+                self.copy_summary.set('Le suivi est temporairement indisponible. Vérifiez que le disque est accessible.')
+                self.root.after(2000,self.refresh_copy_status)
+                return
+        if state:
+            total=state['bytes_total']
+            verified=state['bytes_verified']
+            gib=1024**3
+            done=f"{verified/gib:.1f} / {total/gib:.1f} Gio vérifiés · {state['files_done']} / {state['files_total']} fichiers"
+            if state['state']=='interrupted':
+                label='Copie interrompue. '+state.get('reason','Choisissez Copier / reprendre.')
+            elif state['state']=='copied':
+                label='Copie vérifiée. Consultez le rapport avant de préparer la destination.'
+            else:
+                label=state['phase']
+                if state['file_total']>=gib/10:
+                    label+=f" · fichier en cours {state['file_bytes']/gib:.2f} / {state['file_total']/gib:.2f} Gio"
+            self.copy_summary.set(label+'\n'+done)
+            self.bar['value']=100*verified/max(total,1)
+        else:
+            unavailable=path.strip() and Path(path).anchor and not Path(Path(path).anchor).is_dir()
+            self.copy_summary.set('Disque de destination inaccessible.' if unavailable else '')
+            self.bar['value']=0
+        self.root.after(2000,self.refresh_copy_status)
 
     def close(self):
         if self.busy:
@@ -114,7 +153,7 @@ class Wizard:
     def copy(self):
         app=self.app();dest=self.destination()
         if not messagebox.askyesno('Copier et arrêter la source','Cette étape arrête seulement SetupSurvie et empêche son redémarrage automatique.\n\nLa source reste conservée jusqu’au retour explicite. Le disque Docker n’est pas déplacé. Continuer ?'):return
-        self.launch(lambda:transfer.transfer(app,dest,progress=lambda phase,n,total:self.events.put(('progress',(phase,n,total)))))
+        self.launch(lambda:transfer.transfer(app,dest))
 
     def activate(self):
         dest=self.destination()
@@ -132,20 +171,15 @@ class Wizard:
         self.append(json.dumps(transfer.read(path),ensure_ascii=False,indent=2))
 
     def poll(self):
-        # Coalesce progress: hashing/copying can enqueue many updates.
-        latest=None
         while True:
             try:kind,value=self.events.get_nowait()
             except queue.Empty:break
-            if kind=='progress':latest=value
-            elif kind=='text':self.append(value)
+            if kind=='text':self.append(value)
             else:
                 self.busy=False
                 for button in self.actions:button.configure(state='normal')
                 self.status.set(value);self.append(value)
                 if kind=='error':messagebox.showerror('Transfert interrompu',value)
-        if latest:
-            phase,n,total=latest;self.status.set(phase);self.bar['value']=100*n/max(total,1)
         self.root.after(150,self.poll)
 
 

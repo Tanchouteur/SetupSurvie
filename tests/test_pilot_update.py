@@ -86,6 +86,36 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'complete')
         self.assertFalse((self.work/'update.lock').exists())
 
+    def test_resume_startup_keeps_data_created_after_the_update(self):
+        self.run_update()
+        journal=self.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        state['phase']='switched'
+        setup.write_json(journal,state)
+        db=self.data/'state/pilot/pilot.db'
+        db.write_bytes(b'new conversations')
+        service=Services(self.app,self.c)
+        with patch.object(setup,'ROOT',self.root),patch.object(update,'Services',return_value=service):
+            update.resume_startup(self.app)
+        self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'],'complete')
+        self.assertEqual(db.read_bytes(),b'new conversations')
+        self.assertEqual((service.stops,service.starts),(0,0))
+
+    def test_resume_startup_restores_application_between_renames_without_touching_data(self):
+        operation,_=self.run_update()
+        journal=self.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        state['phase']='snapshot_ready'
+        setup.write_json(journal,state)
+        self.root.rename(operation/'new')
+        db=self.data/'state/pilot/pilot.db'
+        db.write_bytes(b'keep current data')
+        with patch.object(setup,'ROOT',operation/'previous'):
+            update.resume_startup(self.app)
+        self.assertEqual(update.release_at(self.root)['version'],'0.1.1')
+        self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'],'rolled_back')
+        self.assertEqual(db.read_bytes(),b'keep current data')
+
     def test_first_install_wrappers_do_not_break_legacy_update_allowlist(self):
         for name in ('Mettre-a-jour-SetupSurvie.cmd','Installer-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'):
             (self.source/name).write_text('first install fixture')
