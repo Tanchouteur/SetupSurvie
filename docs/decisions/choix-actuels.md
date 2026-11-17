@@ -701,3 +701,12 @@ avec les correctifs Windows et le suivi/pilotage local du transfert. La livraiso
 le [guide actuel](../exploitation/transfert-installation.md) et le
 [bilan d’intégration](../essais/2026-11-17-integration-transfert-ssd-windows.md).
 La copie en deux temps avec bascule courte reste une proposition non implémentée.
+
+## Redémarrage Bazzite confirmé — 17 novembre 2026
+
+Après le redémarrage physique effectué par Louis, les services Docker dédié et
+SetupSurvie repartent automatiquement (+19 s et +35 s au relevé), sans commande
+de démarrage de l’agent. Portail 0.41.0, recherche, lecture, secours et trois
+routeurs sont vérifiés ; voir le [bilan réel](../essais/2026-11-17-installation-neuve-bazzite.md#redémarrage-physique-confirmé--17-novembre-2026).
+Ce résultat complète la recette Linux ; téléphone réel, chargement de modèle,
+transfert entre SSD et coupure électrique brutale restent distincts.
