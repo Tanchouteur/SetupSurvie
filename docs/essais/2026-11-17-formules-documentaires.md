@@ -76,7 +76,22 @@ Première suite : **996 tests, 6 ignorés, 202,869 s**. Après protection des bl
 recherche. Derniers contrôles ciblés : **16 tests d’extraction/formules en 0,502 s**,
 **22 tests de lecture/recherche en 0,252 s**, **61 tests de traduction en 29,426 s**.
 Les fixtures sont synthétiques et minuscules ; aucun corpus ou modèle téléchargé
-dans le runner. La CI finale et le paquet restent à vérifier avant livraison.
+dans le runner. La première CI du code réuni `f7ca588` passe sept jobs, dont Windows et
+**1 001 tests Linux (6 ignorés, 74,301 s)**, puis échoue dans l’audit clavier
+WebKit : l’aide reçoit le focus avant le rappel `requestAnimationFrame` du
+routeur après Suivant. La recette attend désormais ce travail de restauration
+avant d’envoyer Entrée, sans délai fixe, retrait d’assertion ou changement du
+produit. Le rejeu ciblé Chromium/WebKit passe ses 16 contrôles par moteur ; la
+CI du code `3413f3d` est relancée. La vérification MCP Chromium confirme
+également ouverture par Entrée puis fermeture par Échap avec focus conservé.
+L’essai Firefox local via l’adresse inter-conteneurs n’atteint pas le profil de
+fixture ; il n’est pas présenté comme réussi. Son contrôle CI reste distinct.
+La relecture ajoute ensuite une garde au seuil d’aperçu de 100 000 caractères :
+une formule traversant ce seuil est omise, et la lecture reste partielle. Une
+ancienne copie tronquée avec bloc non fermé n’alimente plus un extrait de calcul.
+Les tests ciblés couvrent l’API de lecture et les fenêtres : **18 contrôles de
+formules en 0,416 s**, **22 de recherche en 0,266 s**. La suite CI finale est
+relancée sur ce code ; son résultat et le paquet restent à vérifier.
 
 Les rapports complets, échecs initiaux, traces d’outils et recettes restent privés,
 hors Git. Archive locale `setupsurvie-formules-0372-preuves-privees.tgz`, **39 136

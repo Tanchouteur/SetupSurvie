@@ -9,6 +9,19 @@ import hashlib
 UNREADABLE='[Formule non extractible : consultez l’original illustré.]'
 MAX_CHARS=16384
 BLOCKS=re.compile(r'(?m)^(?P<fence>`{3,})math[ \t]*\n(?P<value>[\s\S]*?)\n(?P=fence)[ \t]*(?=\n|$)')
+OPENINGS=re.compile(r'(?m)^`{3,}math[ \t]*(?:\n|$)')
+
+
+def safe_prefix(text,maximum):
+    """Never retain a formula cut by a preview limit, including old snapshots."""
+    end=min(len(text),maximum);complete={m.start():m.end() for m in BLOCKS.finditer(text)};covered=0
+    for opening in OPENINGS.finditer(text):
+        if opening.start()<covered:continue
+        if opening.start()>=end:break
+        if complete.get(opening.start(),len(text)+1)>end:
+            end=opening.start();break
+        covered=complete[opening.start()]
+    return text[:end]
 
 
 def marked(value):

@@ -4,6 +4,7 @@ import asyncio
 from fractions import Fraction
 from html import unescape
 from .html_text import Text
+from .math_text import safe_prefix
 import math
 import json
 import hashlib
@@ -704,7 +705,7 @@ async def source(identifier):
     p=Text();p.feed(raw.decode(errors='replace'))
     text=p.text()
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
-    result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
+    result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
             'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
     catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
 

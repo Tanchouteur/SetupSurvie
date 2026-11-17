@@ -1,6 +1,6 @@
 # Rendre les archives recherchables
 
-**Guide actuel — 0.11.1, 14 novembre 2026.** L’index complémentaire extrait le texte
+**Guide actuel — 0.37.3, 17 novembre 2026.** L’index complémentaire extrait le texte
 des archives ZIM sans index natif utilisable par Kiwix. Il ne modifie pas les originaux,
 ne charge aucun modèle IA et ne transcrit pas les vidéos.
 

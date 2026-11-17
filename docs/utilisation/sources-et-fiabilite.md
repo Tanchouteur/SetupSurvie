@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.20.0, 15 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.37.3, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -12,6 +12,7 @@ fournie par l’auteur, puis la structure mathématique ; il n’invente pas une
 formule à partir du nom d’une image. Une structure inconnue devient un
 avertissement explicite. Les extraits transmis à l’assistant omettent un bloc
 qui ne tient pas entier dans leur budget, plutôt que d’envoyer une demi-fraction.
+La limite d’aperçu d’un long article ne coupe pas non plus un bloc de formule.
 La lecture reste signalée comme partielle lorsqu’une partie du texte manque.
 
 Ces notations ne constituent ni une lecture visuelle des schémas ni une

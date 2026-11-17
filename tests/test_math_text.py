@@ -100,6 +100,15 @@ class MathTextTests(unittest.TestCase):
         oversized=marked('x'*2400)
         self.assertFalse(any('x'*20 in row['text'] for row in passages('Rotor. '+oversized+' Rotor.', 'rotor',500)))
 
+    def test_preview_limit_and_legacy_unclosed_block_never_supply_partial_equations(self):
+        from pilot.math_text import safe_prefix,marked
+        from pilot.research import passages
+        formula=marked(r'\frac{19}{7}=x^2');text='Rotor. '+formula+' End.'
+        self.assertEqual(safe_prefix(text,len(text)),text)
+        self.assertEqual(safe_prefix(text,20),'Rotor. \n')
+        self.assertEqual(safe_prefix(text[:20],20),'Rotor. \n')
+        self.assertEqual(passages(text[:20],'rotor',1000),[{'offset':0,'text':'Rotor. \n','next_offset':8}])
+
     def test_symbols_styles_and_invisible_multiplication_are_conserved(self):
         value=self.read('<math><mstyle mathvariant="bold"><mi>u</mi></mstyle><mo>\u2062</mo><mi>v</mi></math>')
         self.assertIn(r'\mathbf{u}',value);self.assertIn(r'\times',value)
@@ -114,6 +123,17 @@ class MathTextTests(unittest.TestCase):
 
 
 class FormulaPipelineTests(unittest.IsolatedAsyncioTestCase):
+    async def test_article_preview_stays_partial_without_a_cut_equation(self):
+        from pilot import library
+        raw=('<article>'+('a'*99980)+'<math><mfrac><mi>'+('x'*100)+'</mi><mn>7</mn></mfrac></math></article>').encode()
+        with patch.object(library,'books',AsyncMock(return_value=[{'book':'fixture','language':'en','title':'Fixture'}])),\
+             patch.object(library,'get',AsyncMock(return_value=(raw,'text/html'))):
+            source=await library.source('zim:fixture/rotor')
+        self.assertTrue(source['text_truncated'])
+        self.assertNotIn('```math',source['text']);self.assertNotIn(r'\frac',source['text'])
+        self.assertLess(len(source['text']),100000)
+        await library.kiwix_queries.close()
+
     async def test_article_reading_snapshot_and_passages_keep_the_same_equation(self):
         from pilot import library,store,document_text,research
         from pilot.math_text import BLOCKS

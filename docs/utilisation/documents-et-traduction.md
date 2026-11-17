@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.29.0, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.37.3, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 

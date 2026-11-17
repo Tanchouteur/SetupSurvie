@@ -9,7 +9,7 @@ import json
 import re
 
 from . import library,retrieval,illustrations
-from .math_text import BLOCKS
+from .math_text import BLOCKS,safe_prefix
 
 
 def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
@@ -48,6 +48,7 @@ def subject(query):
 
 
 def passages(text,query,maximum):
+    text=safe_prefix(text,len(text))
     if not text.strip() or maximum<80:return []
     if len(text.encode('utf-8'))<=maximum:return [{'offset':0,'text':text,'next_offset':len(text)}]
     plan=subject(query);groups=plan.token_groups
