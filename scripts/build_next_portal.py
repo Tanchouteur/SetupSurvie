@@ -45,9 +45,9 @@ def build():
         ('js', '/nouveau/settings-layout.js', '0.36.0'),
         ('js', '/nouveau/ux-system.js', '0.36.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.37.0'),
-        ('js', '/nouveau/reader-work.js', '0.34.0'),
+        ('js', '/nouveau/reader-work.js', '0.37.2'),
         ('css', '/nouveau/motion.css', '0.37.0'),
-        ('js', '/nouveau/motion.js', '0.37.0'),
+        ('js', '/nouveau/motion.js', '0.37.2'),
         ('js', '/nouveau/navigation.js', '0.34.0'),
     ]
     tags = []

@@ -6,13 +6,14 @@
     for (const animation of active.values()) animation.cancel();
     active.clear();
   }
-  function reveal(node, distance = 6) {
+  function reveal(node) {
     if (!node) return;
     active.get(node)?.cancel();
     if (reduced.matches || !node.animate || !node.getClientRects().length) return;
     const animation = node.animate(
-      [{ opacity: 0.55, transform: `translateY(${distance}px)` },
-       { opacity: 1, transform: "translateY(0)" }],
+      // A transformed container changes the containing block of fixed children.
+      // Fade only: help, navigation and reader controls keep viewport coordinates.
+      [{ opacity: 0.55 }, { opacity: 1 }],
       { duration: 180, easing: "cubic-bezier(.2,.7,.2,1)", id: "survie-reveal" },
     );
     active.set(node, animation);
@@ -36,7 +37,7 @@
   document.addEventListener("survie:results", () => reveal(document.getElementById("search-results")));
   document.addEventListener("toggle", ({ target }) => {
     if (target.tagName !== "DETAILS" || !target.open) return;
-    for (const child of target.children) if (child.tagName !== "SUMMARY") reveal(child, 0);
+    for (const child of target.children) if (child.tagName !== "SUMMARY") reveal(child);
   }, true);
   window.SurvieMotion = Object.freeze({ reveal });
 })();

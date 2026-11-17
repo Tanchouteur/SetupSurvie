@@ -6,7 +6,9 @@
   const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
   const action=(text,fn,cls='secondary')=>{const b=node('button',text,cls);b.type='button';b.addEventListener('click',fn);return b;};
   const request=portal?api:async(path,body,options={})=>{
-    const headers={'X-Survie-Profile':session.user?.id||''},config={credentials:'same-origin',...options,headers};
+    // Identity discovery must read the cookie's current profile, even when the
+    // reader belongs to an older one. Data and commands keep the ownership guard.
+    const headers=path==='/profiles/current'?{}:{'X-Survie-Profile':session.user?.id||''},config={credentials:'same-origin',...options,headers};
     if(body!==undefined){config.method=options.method||'POST';headers['Content-Type']='application/json';config.body=JSON.stringify(body);}
     const response=await fetch('/api'+path,config),data=await response.json();
     if(!response.ok){const error=Error(typeof data.detail==='string'?data.detail:'Le service est momentanément indisponible.');error.status=response.status;throw error;}return data;
@@ -122,7 +124,7 @@
       const dialog=node('dialog');dialog.id='pdf-translation-work';dialog.setAttribute('aria-label','Traduction du PDF');
       const close=action('Revenir au PDF',()=>dialog.close());const placeholder=node('div',undefined,'reader-body');dialog.append(close,placeholder);document.body.append(dialog);
       open.onclick=()=>dialog.showModal();
-      Promise.all([request('/profiles/current'),request('/status')]).then(async([profile,status])=>{
+      const ready=Promise.all([request('/profiles/current'),request('/status')]).then(async([profile,status])=>{
         session.user=profile;session.status=status;
         const source=await request('/source?id='+encodeURIComponent(canonical(id)));
         if(source.language==='fr'||source.is_ai_translation){open.hidden=true;return;}
@@ -130,7 +132,12 @@
         const trigger=nav.querySelector('[data-document-action=translate]');
         if(trigger){trigger.hidden=true;open.disabled=false;open.onclick=()=>{dialog.showModal();const panel=get('reader-work');if(panel.hidden)trigger.click();};}
       }).catch(()=>{open.disabled=true;open.textContent='Traduction indisponible';});
-      window.addEventListener('focus',async()=>{try{const current=await request('/profiles/current');if(current.id!==session.user?.id){destroy?.();dialog.close();open.disabled=true;open.textContent='Profil modifié : rechargez le lecteur';}}catch(_){}});
+      window.addEventListener('focus',async()=>{try{
+        // An initial focus is not a profile change. Compare only once the
+        // reference profile and controls are initialized, including slow loads.
+        await ready;if(!session.user)return;
+        const current=await request('/profiles/current');if(current.id!==session.user.id){destroy?.();dialog.close();open.disabled=true;open.textContent='Profil modifié : rechargez le lecteur';}
+      }catch(_){}});
     }
     return;
   }

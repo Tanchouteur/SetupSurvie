@@ -1,6 +1,6 @@
 # Composants et règles de présentation du portail
 
-**Référence de développement — 0.37.0, 17 novembre 2026.** Cette organisation
+**Référence de développement — 0.37.2, 17 novembre 2026.** Cette organisation
 remplace l’empilement de styles de la maquette utilisé en 0.34.0. Elle répond
 aux captures de Louis : aides trop grandes, case mal alignée, commandes de volets
 redondantes et cartes de paramètres incohérentes. Les tests de fonctionnement
@@ -109,3 +109,12 @@ Le menu reste la commande accessible au clavier et sur écran tactile.
 
 Références techniques : [Element.animate()](https://developer.mozilla.org/en-US/docs/Web/API/Element/animate)
 et [réduction du mouvement](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion).
+
+Depuis 0.37.2, les révélations génériques animent uniquement l’opacité. Ne pas
+transformer une vue contenant des aides ou contrôles fixes : une transformation
+change leur repère de positionnement, même pour un déplacement de quelques
+pixels. Le déplacement reste réservé aux éléments qui en ont besoin dans leur
+propre composant ; les colonnes de l’assistant continuent d’animer leur largeur.
+La recette `browser_motion_resilience.js` ouvre une aide pendant la transition
+mobile et contrôle son placement avant et après. Voir la
+[référence CSS sur le repère créé par transform](https://developer.mozilla.org/en-US/docs/Web/CSS/transform).
