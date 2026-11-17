@@ -94,3 +94,14 @@ de 4,2 s : échec avant (4,543 s), réussite après adaptation du seul délai de
 (4,690 s). Les 17 tests des sous-titres passent en 6,734 s ; attentes des événements
 de pause et assertions métier restent inchangées. Aucun correctif produit déduit
 de ces délais de fixture.
+
+
+La [troisième exécution](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44090179421)
+valide Windows, Linux et les cinq jobs techniques, mais échoue de nouveau sur
+l’assertion d’imbrication. Cette fois l’attente de la conversation réussit, puis
+la seconde requête `isVisible()` échoue : les deux observations séparées ne sont
+pas une assertion avec attente. Le test est remplacé par une seule observation
+attendue sur la conversation exacte dans son projet ; un délai dépassé reste un
+échec. Trois parcours Chromium avec réponses de projets retardées passent,
+22 contrôles chacun. Le code du portail reste inchangé. Aucun succès global
+n’est déduit des seuls sept jobs réussis.
