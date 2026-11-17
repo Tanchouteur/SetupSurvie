@@ -110,7 +110,27 @@ chantier d’interface. Ne plus consacrer de préparation supplémentaire à ce 
 Les références déjà créées restent historiques ; cette décision ne modifie pas
 les données ni les fonctions existantes de navigation.
 
+## Suivi CI et maîtrise du coût — décision de Louis du 17 novembre 2026
+
+Louis demande de confier le suivi de CI à un sous-agent **GPT Luna** lorsque
+possible, pour économiser les crédits IA. Le suivi de la PR 22 est délégué à
+ce modèle : observation du run existant, résultats et diagnostic ciblé d’échec.
+Louis étend ensuite cette préférence aux tâches bien délimitées pour lesquelles
+un petit sous-agent peut réduire le coût total, sans multiplier les agents
+inutilement. L’agent principal vérifie les preuves et la qualité du travail,
+conserve la revue finale et reprend les tâches qui dépassent les capacités du
+sous-agent. La décision ne change pas les critères de validation et n’autorise
+pas à ignorer un échec.
+
 ## Livraisons disponibles
+
+La **0.38.3** complète la préservation des formules : réduction du contexte et
+lecture explicite de la suite utilisent des limites de blocs entiers. Une
+formule trop longue est omise et signalée, sans augmenter les budgets. Les
+positions restent celles du texte source. Voir le
+[bilan ciblé](../essais/2026-11-17-formules-contexte-et-suite.md).
+Correction compatible (`z`), données et dépendances inchangées.
+
 
 La **0.38.2** corrige les demandes explicites de commandes dans une notice :
 recherche préalable sur la référence unique fournie, puis lecture avec la question

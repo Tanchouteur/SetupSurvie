@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.38.2
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.38.3
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -45,6 +45,11 @@ avant rédaction, puis le passage utile est lu. Les deux essais fictifs R7
 retrouvent la commande attendue ou constatent l’absence de notice après recherche.
 Le fonds réel, les éditions et la fidélité d’une procédure restent à vérifier.
 
+La [0.38.3](../essais/2026-11-17-formules-contexte-et-suite.md) complète cette
+protection lors de la réduction du contexte et de la lecture de la suite : les
+formules restent entières ou leur omission est signalée. Les tests contrôlent les
+positions dans la source ; aucun nouvel essai de génération réelle n’est revendiqué.
+
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |
 | Recherche classique et index | R2 Marc 0.25.0 : 32 demandes, 31 avec résultats ; 120 index natifs compatibles et 15 compléments pour 135 archives. [Rapport et limites](../essais/2026-11-16-rapports-marc-0250.md) | Avis humains manquants, couverture encore partielle dans ce rapport, ouverture de résultats prioritaires et mesure après SSD à faire sur Marc |
@@ -65,7 +70,7 @@ repli par titres mesuré et correction des appels après fermeture d’une page.
 Les index existants sont conservés. Les preuves de développement ne remplacent
 toujours pas la pertinence et l’ouverture sur les véritables contenus de Marc.
 
-Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0373)
+Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0383)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
 un accès TeamViewer détenu par Louis ne devient pas un accès autonome de l’agent.
 Tant qu’un développement ou une vérification autonome utile reste possible, ces

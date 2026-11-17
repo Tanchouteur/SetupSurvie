@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.38.2, 17 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.38.3, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -14,6 +14,16 @@ avertissement explicite. Les extraits transmis à l’assistant omettent un bloc
 qui ne tient pas entier dans leur budget, plutôt que d’envoyer une demi-fraction.
 La limite d’aperçu d’un long article ne coupe pas non plus un bloc de formule.
 La lecture reste signalée comme partielle lorsqu’une partie du texte manque.
+
+Depuis 0.38.3, cette protection couvre aussi la lecture explicite de la suite
+d’un article et la réduction des passages pour tenir dans le contexte. Une
+lecture peut s’arrêter avant une formule ; la suivante reprend à sa limite.
+Si une position demandée tombe au milieu d’une formule qui tient entière, le
+lecteur revient à son début. Une formule dépassant la fenêtre est omise avec
+un indicateur `formula_omitted` dans le résultat d’outil et une lecture partielle.
+Si aucun texte exploitable ne reste, la lecture échoue sans déclarer une nouvelle
+source consultée. Aucune hausse automatique du contexte ou interprétation de la
+formule n’est effectuée. Ouvrir l’original reste nécessaire pour les omissions.
 
 Ces notations ne constituent ni une lecture visuelle des schémas ni une
 vérification du raisonnement. Une traduction techniquement ambiguë peut garder

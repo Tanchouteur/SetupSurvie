@@ -448,6 +448,35 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(all('thinking' not in m for m in messages))
         self.assertTrue(all(json.loads(m['content'])['partial_read'] for m in messages if m['role']=='tool'))
 
+    def test_context_compaction_never_keeps_half_a_formula_in_single_or_batch_reads(self):
+        from pilot.math_text import marked,BLOCKS
+        for batch in (False,True):
+            text=('x'*240)+'\n'+marked(r'\frac{'+('a'*600)+'}{19}')+('z'*2000)
+            value={'results':[{'passages':[{'offset':40,'text':text,'next_offset':40+len(text)}]}]} if batch else {'offset':40,'text':text,'next_offset':40+len(text)}
+            messages=[{'role':'system','content':'Policy'}, {'role':'user','content':'Question'},*engine.tool_messages('read_sources' if batch else 'read_source',{},value,'formula')]
+            self.assertTrue(engine.fit_context(messages,maximum=1500))
+            result=json.loads(messages[-1]['content']);part=result['results'][0]['passages'][0] if batch else result
+            self.assertEqual(part['text'],text[:len(part['text'])])
+            self.assertEqual(part['next_offset'],40+len(part['text']))
+            self.assertEqual(part['text'].count('```math'),len(list(BLOCKS.finditer(part['text']))))
+            self.assertNotIn(r'\frac',part['text'])
+
+    def test_explicit_read_continues_at_formula_boundary_with_original_offsets(self):
+        from pilot.math_text import marked,BLOCKS
+        text=('Avant. '*497)+'\n'+marked(r'\frac{19}{7}')+' Après.'*300
+        source={**self.a,'text':text}
+        def next_read(payload):
+            part=json.loads(payload['messages'][-1]['content'])
+            self.assertEqual(part['text'],text[part['offset']:part['next_offset']]);self.assertTrue(part['more'])
+            self.assertNotIn('```math',part['text'])
+            return self.call('read_source',{'id':'guide:a','offset':part['next_offset']})
+        def answer(payload):
+            part=json.loads(payload['messages'][-1]['content'])
+            self.assertEqual(part['text'],text[part['offset']:part['next_offset']])
+            self.assertIn(r'\frac{19}{7}',part['text']);self.assertEqual(len(list(BLOCKS.finditer(part['text']))),1)
+            return {'content':'Passage fictif lu [1].'}
+        self.run_chat([self.call('read_source',{'id':'guide:a','offset':0}),next_read,answer],read=lambda _:source)
+
     def test_long_archive_identifiers_fit_before_model_call_without_changing_context_or_question(self):
         question='Fais une synthèse des documents sur les techniques pour faire du feu.'
         with store.connect() as db:db.execute('UPDATE messages SET content=? WHERE conversation_id=\'c\'',(question,))

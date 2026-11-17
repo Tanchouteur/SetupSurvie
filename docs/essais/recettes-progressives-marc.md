@@ -4,7 +4,9 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation ciblée — 0.37.3
+<a id="prochaine-validation-ciblée--0373"></a>
+
+## Prochaine validation ciblée — 0.38.3
 
 Après mise à jour habituelle, privilégier ces trois contrôles utiles plutôt que
 relancer tous les essais de performances :
@@ -24,8 +26,10 @@ relancer tous les essais de performances :
    réussite d’un petit MP4 de test ne qualifie pas toutes les vidéos de Marc.
 
 Pour un article technique, ouvrir aussi l’original illustré et comparer les
-formules. Une ancienne traduction conserve son instantané ; pour tester le
-nouveau lecteur, créer un nouveau travail depuis l’article original. La reprise
+formules, y compris après lecture de la suite. Pour une question sur une touche
+d’appareil, fournir sa référence et vérifier que la commande vient réellement
+de la notice consultée ; une notice manquante doit rester signalée. Une ancienne
+traduction conserve son instantané ; pour tester le nouveau lecteur, créer un nouveau travail depuis l’article original. La reprise
 des compléments d’index est utile si l’on souhaite reconstruire leurs anciennes
 extractions ; elle ne répare pas les textes déjà enregistrés ni les traductions.
 Ce protocole décrit une validation à faire, pas un nouveau résultat chez Marc.

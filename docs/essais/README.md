@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Formules, contexte et suite de lecture — 0.38.3](2026-11-17-formules-contexte-et-suite.md) — blocs entiers et positions exactes.
+
 - [Recherche préalable des notices — 0.38.2](2026-11-17-recherche-notices-commandes.md) — référence explicite, lecture et relances.
 
 - [Aide générale sans source précise — 0.38.1](2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.

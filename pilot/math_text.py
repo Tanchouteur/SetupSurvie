@@ -24,6 +24,34 @@ def safe_prefix(text,maximum):
     return text[:end]
 
 
+def reading_window(text,offset,maximum):
+    """Contiguous bounded source slice, never a partial protected equation.
+
+    Rewind a requested offset inside a small formula. Skip an oversized formula
+    rather than exceeding the budget; callers must announce that omission.
+    """
+    start=min(max(0,offset),len(text));skipped=False
+    spans=[m.span() for m in BLOCKS.finditer(text)]
+    for first,last in spans:
+        if first<start<last:
+            start=first if last-first<=maximum else last
+            skipped=last-first>maximum
+            break
+    for first,last in spans:
+        if last<=start:continue
+        end=min(len(text),start+maximum)
+        if first>=end:break
+        if first<=start and last>end:
+            start=last;skipped=True
+        elif first<end<last:break
+    end=min(len(text),start+maximum)
+    # safe_prefix has absolute source coordinates, including old unclosed blocks.
+    prefix=safe_prefix(text,end)
+    value=prefix[start:] if len(prefix)>=start else ''
+    return {'text':value,'offset':start,'next_offset':start+len(value),
+            'formula_omitted':skipped or len(prefix)<end}
+
+
 def marked(value):
     fence='`'*max(3,1+max((len(m[0]) for m in re.finditer(r'`+',value)),default=0))
     return '\n'+fence+'math\n'+value+'\n'+fence+'\n'
