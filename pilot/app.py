@@ -39,6 +39,23 @@ def optional_feature(name):
         raise HTTPException(503,'Cette fonction est momentanément indisponible. Les autres documents et conversations restent accessibles.')
 
 
+async def prepare_initial_index(app):
+    async def index():
+        try:
+            await asyncio.to_thread(library.index_guides)
+            DEGRADED.pop('index',None)
+        except Exception:
+            DEGRADED['index']=True
+            logging.getLogger(__name__).warning('Indexation des guides indisponible au démarrage.')
+
+    app.state.initial_index_task=asyncio.create_task(index())
+    try:await asyncio.wait_for(asyncio.shield(app.state.initial_index_task),STARTUP_FEATURE_TIMEOUT)
+    except asyncio.TimeoutError:
+        if not app.state.initial_index_task.done():
+            DEGRADED['index']=True
+            logging.getLogger(__name__).warning('La préparation de l’index continue en arrière-plan.')
+
+
 @asynccontextmanager
 async def lifespan(app):
     store.init()
@@ -46,10 +63,7 @@ async def lifespan(app):
     DEGRADED.clear()
     try:map_notebook.init()
     except Exception:DEGRADED['map_notebook']=True
-    try:await asyncio.wait_for(asyncio.to_thread(library.index_guides),STARTUP_FEATURE_TIMEOUT)
-    except Exception:
-        DEGRADED['index']=True
-        logging.getLogger(__name__).warning('Réindexation interrompue au démarrage ; dernier index conservé.')
+    await prepare_initial_index(app)
     try:
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
@@ -91,7 +105,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.40.0'
+VERSION='0.40.1'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
