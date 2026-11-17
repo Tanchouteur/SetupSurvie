@@ -1,4 +1,5 @@
 import os
+import shlex
 import sys
 import tempfile
 import unittest
@@ -64,12 +65,41 @@ class LinuxHostTest(unittest.TestCase):
         with mock.patch('shutil.which', return_value='/home/louis/bin/docker'):
             text = linux_host.unit_text(app, {'project': 'survie-abc'},
                                         {'PATH': '/home/louis/bin', 'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock'})
-        self.assertIn('Environment=DOCKER_HOST=unix:///run/user/1000/essai/docker.sock', text)
-        self.assertIn('Environment=PATH=/home/louis/bin:', text)
-        self.assertIn('--work-dir /srv/essai/prive up', text)
-        self.assertIn('--work-dir /srv/essai/prive down', text)
+        self.assertIn('Environment="DOCKER_HOST=unix:///run/user/1000/essai/docker.sock"', text)
+        self.assertIn('Environment="PATH=/home/louis/bin:', text)
+        self.assertIn('--work-dir "/srv/essai/prive" up', text)
+        self.assertIn('--work-dir "/srv/essai/prive" down', text)
         self.assertIn('RemainAfterExit=yes', text)
+        self.assertIn('Type=oneshot', text)
+        self.assertIn('Restart=on-failure', text)
+        self.assertIn('RestartSec=15', text)
+        self.assertIn('StartLimitIntervalSec=0', text)
         self.assertEqual(linux_host.unit_name({'project': 'survie-abc'}), 'setupsurvie-survie-abc.service')
+
+    def test_unit_quotes_special_characters_in_arguments_and_environment(self):
+        root = Path('/srv/dépôt "test" \\ % $HOME')
+        work = Path('/srv/travail "test" \\ % $HOME')
+        docker = '/home/bin "test" \\ % $HOME/docker'
+        host = 'unix:///run/socket "test" \\ % $HOME'
+        with mock.patch.object(setup, 'ROOT', root), mock.patch('shutil.which', return_value=docker):
+            text = linux_host.unit_text(mock.Mock(work=work), {}, {'PATH': '/ignored', 'DOCKER_HOST': host})
+        values = dict(line.split('=', 1) for line in text.splitlines() if '=' in line)
+        for directive, action in [('ExecStart', 'up'), ('ExecStop', 'down')]:
+            words = shlex.split(values[directive])
+            words = [word.replace('%%', '%').replace('$$', '$') for word in words]
+            self.assertEqual(words, [str(root / 'scripts/survie.sh'), '--work-dir', str(work), action])
+        environments = [shlex.split(line.split('=', 1)[1])[0].replace('%%', '%')
+                        for line in text.splitlines() if line.startswith('Environment=')]
+        self.assertEqual(environments, ['PATH=' + str(Path(docker).parent) + ':/usr/local/bin:/usr/bin:/bin',
+                                        'DOCKER_HOST=' + host])
+
+    def test_unit_rejects_control_characters(self):
+        with mock.patch('shutil.which', return_value='/usr/bin/docker'):
+            for value in ('/tmp/a\nb', '/tmp/a\rb', '/tmp/a\x00b'):
+                with self.subTest(value=value), self.assertRaises(setup.SetupError):
+                    linux_host.unit_text(mock.Mock(work=value), {}, {})
+                with self.subTest(host=value), self.assertRaises(setup.SetupError):
+                    linux_host.unit_text(mock.Mock(work='/tmp'), {}, {'DOCKER_HOST': value})
 
     def test_reader_version_follows_python(self):
         self.assertEqual(index_reader_probe.expected_version((3, 14, 2)), '3.13.1')

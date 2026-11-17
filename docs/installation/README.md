@@ -56,7 +56,7 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 ./scripts/install.sh --lan --data-dir /DISQUE/SetupSurvie/donnees
 ```
 
-### Linux : démarrage automatique et Docker rootless (0.39.0)
+### Linux : démarrage automatique et Docker rootless (0.40.0)
 
 Premier essai d’installation Linux de zéro sur Bazzite le 17 novembre 2026 ;
 voir le [bilan](../essais/2026-11-17-installation-neuve-bazzite.md).
@@ -65,7 +65,9 @@ voir le [bilan](../essais/2026-11-17-installation-neuve-bazzite.md).
   service utilisateur systemd `setupsurvie-<projet>.service`
   (`~/.config/systemd/user/`). Il lance `survie.sh up` au démarrage : services
   Web, contrôleur local, annonce `survie.local` et indexation automatique. Ces
-  processus ne dépendent plus du terminal de l’installation. Sans session
+  processus ne dépendent plus du terminal de l’installation. Le service réessaie
+  après 15 secondes si Docker n’est pas encore prêt. Les chemins comportant
+  des espaces sont conservés. Sans session
   ouverte, il faut le « linger » de l’utilisateur : l’installation l’active si
   le système le permet, sinon elle affiche `sudo loginctl enable-linger UTILISATEUR`.
   `--no-startup` n’installe pas ce service. Le retirer :

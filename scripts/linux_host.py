@@ -80,18 +80,29 @@ def ensure_host_loopback(proc=Path('/proc')):
 def unit_name(c):return 'setupsurvie-'+c['project']+'.service'
 
 
+def unit_quote(value,exec_argument=False):
+    """Quote one systemd word, preserving specifiers and optional exec variables."""
+    value=str(value)
+    if any(ch in value for ch in '\r\n\x00'):
+        raise setup.SetupError('Chemin invalide pour le service de démarrage.')
+    value=value.replace('\\','\\\\').replace('"','\\"').replace('%','%%')
+    if exec_argument:value=value.replace('$','$$')
+    return '"'+value+'"'
+
+
 def unit_text(app,c,environ=None):
     environ=os.environ if environ is None else environ
     docker=shutil.which('docker',path=environ.get('PATH')) or shutil.which('docker')
     if not docker:raise setup.SetupError('Programme docker introuvable pour le démarrage automatique.')
     paths=[str(Path(docker).parent),'/usr/local/bin','/usr/bin','/bin']
     lines=['[Unit]','Description=SetupSurvie (bibliothèque et assistant local)',
-           'After=network-online.target docker.service','Wants=network-online.target','',
-           '[Service]','Type=oneshot','RemainAfterExit=yes','TimeoutStartSec=900',
-           'Environment=PATH='+':'.join(dict.fromkeys(paths))]
-    if environ.get('DOCKER_HOST'):lines.append('Environment=DOCKER_HOST='+environ['DOCKER_HOST'])
+           'After=network-online.target docker.service','Wants=network-online.target','StartLimitIntervalSec=0','',
+           '[Service]','Type=oneshot','RemainAfterExit=yes','Restart=on-failure','RestartSec=15','TimeoutStartSec=900',
+           'Environment='+unit_quote('PATH='+':'.join(dict.fromkeys(paths)))]
+    if environ.get('DOCKER_HOST'):lines.append('Environment='+unit_quote('DOCKER_HOST='+environ['DOCKER_HOST']))
     survie=setup.ROOT/'scripts/survie.sh'
-    lines+=[f'ExecStart={survie} --work-dir {app.work} up',f'ExecStop={survie} --work-dir {app.work} down','',
+    command=unit_quote(survie,True)+' --work-dir '+unit_quote(app.work,True)
+    lines+=[f'ExecStart={command} up',f'ExecStop={command} down','',
             '[Install]','WantedBy=default.target','']
     for line in lines:
         if any(ch in line for ch in '\r\n\x00'):raise setup.SetupError('Chemin invalide pour le service de démarrage.')
