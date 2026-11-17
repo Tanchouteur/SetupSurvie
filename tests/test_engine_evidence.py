@@ -408,6 +408,22 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
         self.assertIsNone(engine.document_request([{'role':'user','content':'Comment calculer 12 fois 8 ?'}]))
 
+    def test_notice_command_searches_device_but_reads_with_the_full_question(self):
+        question='Selon la notice du contrôleur TQ-917, quelle touche affiche son identifiant ? Donne la commande exacte.'
+        source={**self.a,'title':'Notice TQ-917','text':'Fixture fictive TQ-917. La touche REPERE affiche l’identifiant.'}
+        with store.connect() as db:db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'",(question,))
+        def answer(payload):
+            self.assertTrue(any(m.get('content')==question for m in payload['messages']))
+            packet=json.loads(next(m['content'] for m in payload['messages'] if m.get('tool_name')=='read_sources'))
+            self.assertIn('REPERE',packet['results'][0]['passages'][0]['text'])
+            return {'content':'La notice fictive indique REPERE [1].'}
+        _,saved=self.run_chat([answer],found=[source],read=lambda _:source)
+        self.assertEqual(self.lookup_calls[0].args[0],'TQ-917')
+        self.assertEqual(len(saved['sources']),1)
+        trace=json.loads((Path(self.temp.name)/'traces/j.json').read_text())
+        read=next(row for row in trace['tools'] if row.get('tool')=='read_sources')
+        self.assertIn('affiche son identifiant',read['arguments']['query'])
+
     def test_wikipedia_followup_uses_previous_user_subject(self):
         history=[{'role':'user','content':'Comment faire du feu ?'}, {'role':'assistant','content':'Aucun document, affirmation non établie.'}, {'role':'user','content':'Et dans Wikipédia tu ne trouves rien ?'}]
         query,collection=engine.document_request(history)

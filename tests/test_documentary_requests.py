@@ -11,6 +11,39 @@ from pilot import store
 class DocumentaryRequestTests(unittest.TestCase):
     def plan(self,question):return retrieval.plan(question,library.search_terms(question),library.SYNONYMS)
 
+    def test_exact_notice_commands_prepare_a_search_before_requesting_the_manual(self):
+        cases=[
+            ('Selon la notice du contrôleur TQ-917, quelle touche efface sa mémoire ? Donne la commande exacte.','TQ-917'),
+            ('Quelle commande indique le manuel du poste RZ-614 pour afficher son identifiant ?','RZ-614'),
+            ('D’après la notice du contrôleur TQ-917, combien de secondes faut-il garder la touche appuyée ?','TQ-917'),
+            ('According to the UV-5R manual, which button opens the settings?','UV-5R'),
+        ]
+        for question,reference in cases:
+            with self.subTest(question=question):
+                self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
+                self.assertEqual(research.notice_search_query(research.primary_query(question)),reference)
+
+    def test_notice_reference_is_not_invented_or_reduced_to_one_of_several_devices(self):
+        for question in ('Quelle touche indique la notice de mon appareil ?',
+                         'Selon les notices TQ-917 et TQ-918, quelle commande diffère ?',
+                         'Quel bouton ouvre le programme de demain ?', 'Calcule 12 fois 4'):
+            with self.subTest(question=question):self.assertEqual(research.notice_search_query(question),question)
+
+    def test_notice_followup_keeps_the_users_reference_and_collection_not_the_models_claim(self):
+        history=[{'role':'user','content':'Selon la notice TQ-917 dans Wikipédia, quelle touche affiche son identifiant ?'},
+                 {'role':'assistant','content':'La référence serait TQ-918. Aucun manuel disponible.'},
+                 {'role':'user','content':'Et pour revenir à l’accueil, quelle touche ?'}]
+        query,collection=engine.document_request(history)
+        self.assertEqual(collection,'wikipedia');self.assertIn('TQ-917',query);self.assertNotIn('TQ-918',query)
+        self.assertIn('revenir à l’accueil',query);self.assertNotIn('identifiant',query)
+        self.assertEqual(research.notice_search_query(query),'TQ-917')
+        self.assertEqual(engine.document_request(history[:-1]+[{'role':'user','content':'Et pour revenir à l’accueil, quelle touche dans Appropedia ?'}])[1],'appropedia')
+        self.assertIsNone(engine.document_request(history[:-1]+[{'role':'user','content':'Et pour cette touche dans mes favoris ?'}]))
+        self.assertIsNone(engine.document_request(history[:-1]+[{'role':'user','content':'Combien font 12 fois 3 ?'}]))
+        changed=history[:-1]+[{'role':'user','content':'Comment planter des tomates ?'},history[-1]]
+        query=engine.document_request(changed)
+        self.assertTrue(query is None or 'TQ-917' not in query[0])
+
     def test_marcs_actual_summary_request_keeps_the_topic_instead_of_the_output_format(self):
         questions=['Fait un synthese sur les info des document sur comment faire du feux',
                    'Fais une synthèse des informations des documents sur comment faire du feu',
@@ -75,13 +108,21 @@ class DocumentarySearchTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);root=Path(temporary.name)
         guides=root/'guides';guides.mkdir()
-        documents=[('fire.fr.txt','Techniques de production de feu','Friction et percussion. Fire making avec du bois. Extrait fictif sans méthode réelle.'),
+        documents=[('notice.fr.txt','Notice TQ-917','Contrôleur fictif TQ-917. Pour afficher l’identifiant du test, appuyer sur REPERE. Cette notice est une fixture sans appareil réel.'),
+                   ('fire.fr.txt','Techniques de production de feu','Friction et percussion. Fire making avec du bois. Extrait fictif sans méthode réelle.'),
                    ('chemistry.fr.txt','Synthèse chimique de l’ammoniac','Synthèse chimique ammoniac. Données entièrement fictives.')]
         for name,title,text in documents:(guides/name).write_text(text,encoding='utf-8')
         (guides/'metadata.json').write_text(json.dumps([{'path':name,'title':title,'language':'fr'} for name,title,_ in documents]))
         for target,name,value in [(store,'ROOT',root/'state'),(library,'GUIDES',guides),(library,'books',AsyncMock(return_value=[]))]:
             changed=patch.object(target,name,value);changed.start();self.addCleanup(changed.stop)
         store.init();library.index_guides();self.addAsyncCleanup(library.kiwix_queries.close)
+
+    async def test_reference_finds_the_manual_without_requiring_conversational_framing_in_it(self):
+        question='Selon la notice du contrôleur TQ-917, quelle touche affiche son identifiant ? Donne la commande exacte.'
+        query,collection=engine.document_request([{'role':'user','content':question}])
+        found=await library.search(research.notice_search_query(research.primary_query(query)),collection=collection)
+        self.assertEqual(found[0]['id'],'guide:notice.fr.txt')
+        source=await library.source(found[0]['id']);self.assertIn('REPERE',source['text'])
 
     async def test_summary_instruction_finds_and_opens_the_same_source_as_its_topic(self):
         for question in ('comment faire du feu','Fait un synthese sur les info des document sur comment faire du feux',

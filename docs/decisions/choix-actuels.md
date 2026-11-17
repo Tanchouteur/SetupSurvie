@@ -112,6 +112,14 @@ les données ni les fonctions existantes de navigation.
 
 ## Livraisons disponibles
 
+La **0.38.2** corrige les demandes explicites de commandes dans une notice :
+recherche préalable sur la référence unique fournie, puis lecture avec la question
+complète. Les relances reprennent uniquement la dernière référence utilisateur,
+sans emprunter une supposition du modèle ou un ancien sujet. Voir le
+[bilan ciblé](../essais/2026-11-17-recherche-notices-commandes.md).
+Correction compatible (`z`), données et composants tiers inchangés.
+
+
 La **0.38.1** applique la règle validée par Louis : une question générale reste
 traitable sans source précise, avec connaissances générales annoncées et exemples
 adaptables. La préparation ne présente plus un lot vide comme des documents lus.

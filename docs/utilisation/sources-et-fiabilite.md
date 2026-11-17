@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.38.1, 17 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.38.2, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -40,6 +40,25 @@ garantie : l’assistant doit clarifier et donner les principes de prudence util
 Cette règle guide le modèle ; elle ne certifie pas la justesse de chaque réponse.
 Les refus de moteur, la mémoire et les interruptions gardent leurs messages
 techniques : ils ne sont pas remplacés par une réponse générale inventée.
+
+## Commandes tirées d’une notice — 0.38.2
+
+Une question portant explicitement sur une touche, un bouton ou un réglage
+présent dans une notice déclenche une recherche locale avant la rédaction.
+Lorsqu’une seule référence alphanumérique explicite est donnée (par exemple
+`UV-5R`), elle sert à retrouver la notice ; la question complète sert ensuite
+à sélectionner les passages. Une notice absente ou illisible reste un manque,
+pas une autorisation d’inventer la commande. Un document trouvé doit encore
+être lu et correspondre au modèle exact, à son édition et à ses conditions.
+
+Une relance courte comme « Et pour revenir à l’accueil, quelle touche ? » peut
+reprendre la référence et la collection de la question utilisateur précédente.
+Le logiciel ne prend pas une référence supposée par l’IA et ne remonte pas au-delà
+d’un nouveau sujet utilisateur. Plusieurs références ou une référence absente
+conservent la question complète au lieu de deviner un appareil unique.
+
+Ce routage améliore l’accès aux notices ; il ne garantit ni leur présence dans
+le fonds, ni la fidélité de chaque réponse ou la validité d’une commande réelle.
 
 ## Lire une réponse de l’assistant
 

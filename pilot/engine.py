@@ -105,6 +105,16 @@ def document_request(history):
     plan=library.retrieval.plan(topic,library.search_terms(topic),library.SYNONYMS)
     raw=library.retrieval.normal(topic)
     if re.search(r'\b(favoris|favorites)\b',raw):return None
+    # A short control follow-up can reuse an explicitly supplied device, but
+    # never an assistant's unsupported reference or a different user's topic.
+    if not research.device_references(topic) and re.search(r'\b(et pour|et quelle|et quel|and which|and to)\b',library.retrieval.normal(topic)) and re.search(r'\b(touches?|boutons?|commandes?|buttons?|keys?)\b',library.retrieval.normal(topic)):
+        for previous in reversed(questions[:-1]):
+            if research.notice_request(previous) and len(research.device_references(previous))==1:
+                reference=research.device_references(previous)[0]
+                collection=plan.collection or library.retrieval.plan(previous,library.search_terms(previous),library.SYNONYMS).collection
+                return 'Notice '+reference+' : '+question,collection
+            # Do not reach past an intervening user topic to borrow a device.
+            break
     if plan.collection:
         if not plan.words:
             for previous in reversed(questions[:-1]):
@@ -112,6 +122,7 @@ def document_request(history):
                 if subject.words:question=previous;break
         return question,plan.collection
     if not plan.words:return None
+    if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
     if research.synthesis(question) or illustrations.requested(question) or re.search(r'\b(comment|how to)\b',raw):return question,''
@@ -289,7 +300,10 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 prepared_key=search_key(query[:200],collection=collection,domain=domain)
                 try:
                     async def found_update(rows):progress(identifier,'searching',sources_found=len(rows))
-                    with measured.during('search'):found=await library.search(query[:200],limit=12,collection=collection,domain=domain,budget=60,on_update=found_update)
+                    lookup=research.notice_search_query(query)[:200]
+                    arguments['query']=lookup
+                    prepared_key=search_key(lookup,collection=collection,domain=domain)
+                    with measured.during('search'):found=await library.search(lookup,limit=12,collection=collection,domain=domain,budget=60,on_update=found_update)
                     measured.value['sources_found']=len(found)
                     search_cache[prepared_key]=found
                     progress(identifier,'reading',sources_found=len(found))
