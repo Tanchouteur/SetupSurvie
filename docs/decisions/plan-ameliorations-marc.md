@@ -1,6 +1,6 @@
 # Améliorations issues des retours de Marc
 
-**Plan retenu le 14 novembre, suivi actualisé le 16 novembre 2026 — 0.35.0.** Louis demande sa mise en
+**Plan retenu le 14 novembre, suivi actualisé le 17 novembre 2026 — 0.35.1.** Louis demande sa mise en
 œuvre et la conservation des idées explorées, retenues, reportées ou abandonnées.
 La 0.3.0 commence ce plan ; sa présence dans le code ne valide pas le fonds réel.
 

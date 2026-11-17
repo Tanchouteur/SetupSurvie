@@ -1,6 +1,6 @@
 # Recherche : retrouver les formes courantes des mots
 
-**Candidat 0.35.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
+**Bilan de livraison 0.35.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
 sans nouvel écran, modèle ou format de base. Le niveau correctif corrige des
 documents déjà indexés qui pouvaient être écartés à cause du nombre du mot.
 La refonte UX 0.34.0 et l’audio des collections 0.35.0 sont conservés.
@@ -31,6 +31,7 @@ essaie d’abord la formulation initiale, puis au plus quatre reformulations,
 uniquement si aucun titre reçu ne couvre le sujet. Le nombre de collections
 ciblées, le parallélisme et le budget global restent les mêmes. Les traces et
 `title_requests`/`title_refinement_requests` rendent ces tentatives observables.
+Ces compteurs sont logiques, cache compris ; ils ne mesurent pas les lectures disque.
 Les chemins locaux, titres et autres mots de la demande sont contrôlés comme
 auparavant ; un résultat par titre ne fait pas disparaître l’absence d’index.
 
@@ -53,10 +54,12 @@ auparavant ; un résultat par titre ne fait pas disparaître l’absence d’ind
   La suite complète atteint ensuite **972 tests en 212,645 s, 6 ignorés**, sans
   échec. Le diagnostic de performances conserve aussi les deux nouveaux compteurs
   de tentatives par titre ; son contrôle ciblé est rejoué après cet ajout.
-  La CI finale et le paquet seront consignés après vérification.
+  Les quatorze tests du diagnostic passent en **5,277 s** après l’ajout des compteurs.
 - Contrôle des liens des **185 fichiers Markdown suivis** : aucun fichier cible
   manquant ; un ancien renvoi d’audit utilisait l’ancre datée 0.32.0 du suivi.
   Il pointe désormais vers une ancre stable, sans modifier les résultats historiques.
+  Après reprise des nouvelles décisions du projet, les **186 fichiers Markdown**
+  sont vérifiés sans cible ni ancre locale manquante détectée.
 
 ## Fermeture et restauration de la page
 
@@ -111,3 +114,22 @@ primaires de l’[Académie française](https://www.academie-francaise.fr/mickae
 et du [Portail linguistique du Canada](https://nos-langues.canada.ca/fr/cles-de-la-redaction/noms-en-ail-pluriel).
 Leur distinction des sens de « travail » ou d’« émail » rappelle les limites d’un
 rapprochement automatique ; le moteur ne prétend pas résoudre ces sens.
+
+## Livraison vérifiée
+
+Les huit [jobs CI du code final](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44025349791)
+passent au commit `db206a9ff84db830e45e7c746bff38b18aa0bea2` : Linux,
+Windows, lecteurs isolés Python 3.11/3.13/3.14, vrai Kiwix, routage hors ligne
+et navigation complète Chromium/WebKit. La suite Linux compte **972 tests en
+62,484 s, 6 ignorés**. Le contrôle de cycle conserve ses huit assertions sur
+chacun des deux navigateurs. Aucun test humain ou Safari physique n’est déduit
+de ces résultats.
+
+Le premier CI `43957470597` est annulé comme remplacé lors de l’ajout des compteurs
+au diagnostic. Le second, `43958161595`, conserve son échec WebKit décrit plus
+haut. Le dernier valide la correction et les nouvelles assertions ; les erreurs
+JavaScript ne sont pas filtrées. Les ajouts après le code validé sont uniquement
+documentaires, dont la reprise de la consigne de traçabilité de `main` (`1df999b`).
+L’UX et les orientations de PC préinstallé/NOMAD restent conservées ; aucun nouveau
+module de ces propositions n’est lancé par ce correctif. Le reçu du paquet est
+ajouté après sa comparaison à Git, sans annoncer un déploiement client.

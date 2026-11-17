@@ -60,6 +60,19 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+**Consigne durable de Louis, confirmée le 16 novembre 2026 :** continuer à garder
+la rigueur des choix de design au fil des évolutions. La
+[règle d’extension](refonte-ux-evolutive.md#extension-des-fonctions) précise son
+application : destination cohérente, commandes compréhensibles, lecture confortable
+et suivi explicite. Les prochains ajouts utilisent les composants et parcours
+existants ; les propositions nouvelles restent distinguées des décisions validées.
+
+La **0.35.1** corrige les [formes courantes des mots](../essais/2026-11-16-recherche-formes-de-mots.md)
+dans la recherche et les passages lus, avec repli par titres borné. Les mesures
+comptent les tentatives supplémentaires. Les appels tardifs pendant la fermeture
+d’une page sont aussi annulés, avec reprise possible après retour navigateur.
+Les essais ciblés et la CI ne remplacent pas la qualification du fonds de Marc.
+
 La **0.35.0** raccorde l’[audio des vidéos incluses](audio-videos-zim.md) au suivi
 existant : portions Kiwix, pause/reprise, piste source puis français optionnel et
 recherche. Un média absent, sans audio ou d’une autre édition reste explicite.

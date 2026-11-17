@@ -898,7 +898,11 @@ avec la fermeture. Les travaux et textes restent côté serveur ; la mémoire du
 navigateur ne commande jamais une reprise d’inférence.
 
 Les requêtes de la page et du lecteur bilingue sont annulées dès `beforeunload`,
-puis à `pagehide`. L’aperçu PDF possède son port Worker dès sa création, attend
+puis à `pagehide`. Depuis 0.35.1, `PAGE_CLOSING` empêche aussi un minuteur de
+relancer un appel `api()` pendant cette fermeture : il reçoit localement
+`AbortError`, sans nouvelle requête. `pageshow` réautorise les appels après
+restauration. L’annulation connue d’un contrôleur conserve ce type d’erreur ;
+une autre panne réseau reste propagée. L’aperçu PDF possède son port Worker dès sa création, attend
 le signal de disponibilité avant de le confier à PDF.js et peut donc le terminer
 même pendant son chargement. Le traitement reste dans un Worker natif ; ni
 PDF.js ni ses composants épinglés ne sont modifiés. La file d’aperçus abandonne

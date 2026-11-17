@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 16 novembre 2026, 0.35.0
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.35.1
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -28,6 +28,12 @@ la recherche pratique : aperçu de prix séparé d’un titre d’instructions, 
 courtes reconnues sans « comment ». Le retour de Marc sur le prix de réparation
 du vélo est reproduit sur petits textes ; l’article exact et sa pertinence réelle
 restent à vérifier. Ce correctif ne clôt pas la validation du fonds complet.
+
+La [0.35.1](../essais/2026-11-16-recherche-formes-de-mots.md) retrouve ensuite des
+formes courantes de nombre dans les index et les passages documentaires, avec
+repli par titres mesuré et correction des appels après fermeture d’une page.
+Les index existants sont conservés. Les preuves de développement ne remplacent
+toujours pas la pertinence et l’ouverture sur les véritables contenus de Marc.
 
 Le [protocole ciblé courant](../essais/recettes-progressives-marc.md#prochaine-validation-ciblée--0350)
 évite de refaire toutes les préparations. Les essais chez Marc sont progressifs ;
