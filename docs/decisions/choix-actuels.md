@@ -112,6 +112,13 @@ les données ni les fonctions existantes de navigation.
 
 ## Livraisons disponibles
 
+La **0.37.3** conserve les formules extractibles dans les articles lus et leurs
+traductions. Le [bilan ciblé](../essais/2026-11-17-formules-documentaires.md)
+distingue extraction, contrôle de copie et sens technique restant à relire.
+Les blocs sont protégés pendant traduction, les extraits de recherche ne coupent
+pas une formule. Les anciens instantanés ne sont pas réécrits. Correction
+compatible : niveau `z`, mêmes données personnelles et composants tiers.
+
 La **0.37.2** corrige une aide mobile qui changeait de position pendant le
 mouvement d’une vue. Le fondu conserve les éléments fixes à leur place ;
 l’[audit de navigation](../essais/2026-11-17-volets-transitions-classement.md#audit-complémentaire-et-correctif-0372--17-novembre-2026)

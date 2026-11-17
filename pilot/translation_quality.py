@@ -6,8 +6,9 @@ from collections import Counter
 from decimal import Decimal, InvalidOperation
 import re
 import unicodedata
+from .math_text import BLOCKS,UNREADABLE
 
-VERSION=3
+VERSION=4
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
@@ -52,6 +53,11 @@ def assess(source,translated):
     # in "Press the         key". Numeric equality cannot validate that command.
     if re.search(r'\b(?:press|enter|push|appuyez|appuyer|saisissez|entrez)[^\n.!?]{0,60}[ \t]{4,}(?:keys?|buttons?|to|on|and|pour|sur|et)\b',source,re.I) or '\ufffd' in source:
         add('source_gaps','warning','Le texte original extrait contient des blancs ou caractères manquants, possiblement des touches dessinées. Comparez la page originale ; les commandes manquantes ne sont pas reconstituées.')
+    if UNREADABLE in source or re.search(r'\b(?:where|o[uù])[ \t]{4,}(?:is|est)\b',source,re.I):
+        add('source_math_gaps','warning','Une formule est illisible ou semble manquer dans le texte extrait. Comparez l’original illustré ; aucun calcul ou symbole manquant n’est reconstitué.')
+    def formulas(text):return Counter(re.sub(r'\s+',' ',m['value']).strip() for m in BLOCKS.finditer(text))
+    if formulas(source)!=formulas(translated):
+        add('formulas','error','Une formule extraite a disparu, été ajoutée ou modifiée. Elle doit être conservée avec ses groupes, indices et puissances ; comparez l’original avant reprise.')
     left=Counter(number(m.group()) for m in NUMBERS.finditer(source))
     right=Counter(number(m.group()) for m in NUMBERS.finditer(translated))
     if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')

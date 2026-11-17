@@ -2,6 +2,30 @@
 
 - [Composants et présentation du portail](composants-interface.md) — référence 0.36.0, responsabilités CSS/JS et recette de finition.
 
+## Extraction mathématique — 0.37.3
+
+`html_text.Text` est partagé par le lecteur, l’index complémentaire d’archives et
+la recette d’extraction documentaire du laboratoire. `math_text` est un lecteur
+borné de MathML de présentation : alternative auteur, annotation TeX ou notation
+structurée d’un sous-ensemble explicite. Fractions, racines, scripts et matrices
+simples sont conservés ; structures inconnues et dépassements sont signalés.
+Aucune résolution externe, OCR, évaluation mathématique ou nouveau composant.
+
+`document_text.chunks` conserve les blocs de formule entiers. `research.passages`
+réduit une fenêtre coupant une formule, sans augmenter son budget ni modifier
+les offsets de la source. `translations.translate` masque les blocs par des
+repères propres au passage et les réinsère sans retouche si leur suite est exacte.
+Un repère modifié, perdu, ajouté ou réordonné bloque la proposition privée.
+`translation_quality` version 4 compare ensuite les blocs et garde les contrôles
+numériques existants ; aucune validation générale du sens n’est revendiquée.
+
+Le format de construction des compléments SQLite passe de 1 à 2. L’index déjà
+publié reste lisible pendant la reconstruction ; une interruption conserve
+l’ancienne publication. Le schéma des données personnelles reste à 1. Les index
+natifs Kiwix, instantanés de travaux et anciens fichiers texte ne sont pas réécrits.
+Voir la [procédure d’indexation](../utilisation/indexation-archives.md) et le
+[bilan réel](../essais/2026-11-17-formules-documentaires.md).
+
 ## Interface et organisation — 0.34.0
 
 Les trois zones de `assistant-workspace` déplacent les contrôles existants sans

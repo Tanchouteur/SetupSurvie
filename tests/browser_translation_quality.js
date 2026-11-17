@@ -40,7 +40,7 @@ async page => {
   const publicFile=await page.request.get(base+'/guides/'+published.slice(6));
   if(!(await publicFile.text()).includes('À relire'))throw Error('Shared copy lost warning');
   const gaps=await begin('guide:quality-gaps.en.txt');
-  if(gaps.status!=='completed'||gaps.parts[0].quality.version!==3||!gaps.parts[0].quality.issues.some(row=>row.code==='source_gaps'))throw Error('Missing source keys were not identified');
+  if(gaps.status!=='completed'||gaps.parts[0].quality.version!==4||!gaps.parts[0].quality.issues.some(row=>row.code==='source_gaps'))throw Error('Missing source keys were not identified');
   await page.getByText('À relire : anomalie possible.',{exact:true}).waitFor();
   if(!(await page.locator('#translation-parts').textContent()).includes('touches dessinées'))throw Error('Source gaps warning not visible');
   return {badNumberBlocked:true,rejectedCandidateVisible:true,sourceComparison:true,warningInPrivateExportAndSharedDocument:true,mobileComposerAccessible:true,missingSourceKeysVisible:true};
