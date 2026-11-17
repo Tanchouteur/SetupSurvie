@@ -63,7 +63,14 @@ navigation des cartes/portail. Ce dernier job exécute la régression complète
 Chromium/WebKit (profils, recherche, documents, traductions, lecteurs, vidéos,
 audio et paramètres), puis les six recettes PC ciblées Firefox, dont les 126
 contrôles de finition. Les commits suivants ne changent que la documentation.
-La livraison passe par la [PR nº 14](https://github.com/Tanchouteur/SetupSurvie/pull/14).
+La [PR nº 14](https://github.com/Tanchouteur/SetupSurvie/pull/14) est fusionnée
+sur `main` au commit `3406e2da1d0ddfff4d62330647e651aa103889a9`.
+La comparaison avec `4d5dfc6` ne montre que des fichiers de consignes et de
+documentation modifiés. Après fusion, la suite Python complète repasse :
+**962 tests, aucun échec, 6 ignorés**. Les branches de travail sont ensuite retirées.
+Le paquet logiciel 0.36.0 est construit avec `scripts/pilot_update.py`, puis son
+manifeste, ses empreintes et son extraction sont vérifiés hors des installations
+réelles. Le code précédent reste sous `ux-reference-0.35.0`.
 
 La dernière exécution locale complète a reçu l’arrêt du serveur de fixtures
 après les parcours Chromium ; elle n’est pas comptée comme une réussite
