@@ -7,7 +7,7 @@ observations ; ce suivi distingue réalisation et validations manquantes.
 
 <a id="etat-objectif"></a>
 
-## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.37.1
+## État actuel pour la fin de l’objectif — 17 novembre 2026, 0.37.3
 
 L’objectif actif reste l’utilité réelle de l’assistant et une première version
 fiable de recherche, puis les traductions et sous-titres. Une fonction codée ou
@@ -26,6 +26,12 @@ La relecture ciblée relève aussi des équations déjà absentes du texte extra
 et une traduction spatiale ambiguë : conserver les originaux illustrés et
 améliorer ce contrôle reste une suite précise du même objectif, sans déclarer
 une fidélité acquise d’après le seul statut terminé.
+
+La [correction ciblée 0.37.3](../essais/2026-11-17-formules-documentaires.md)
+conserve les 23 formules du chapitre réel testé et les protège pendant traduction.
+Le calcul moteur de 12 V / 1 Ω aboutit à 12 A avec lecture citée. La terminologie
+de montage, la fidélité de tout un livre et les vidéos réelles restent à vérifier ;
+ce contrôle de structure ne certifie pas le sens de tous les passages.
 
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |

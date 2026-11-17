@@ -4,6 +4,22 @@
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
+## Formules dans les articles — 0.37.3
+
+Le lecteur extrait désormais les formules HTML prises en charge en conservant
+les groupes, fractions, indices et puissances. Il privilégie l’alternative
+fournie par l’auteur, puis la structure mathématique ; il n’invente pas une
+formule à partir du nom d’une image. Une structure inconnue devient un
+avertissement explicite. Les extraits transmis à l’assistant omettent un bloc
+qui ne tient pas entier dans leur budget, plutôt que d’envoyer une demi-fraction.
+La lecture reste signalée comme partielle lorsqu’une partie du texte manque.
+
+Ces notations ne constituent ni une lecture visuelle des schémas ni une
+vérification du raisonnement. Une traduction techniquement ambiguë peut garder
+tous ses chiffres : comparer la source et son original illustré pour les gestes,
+branchements et usages importants. Un ancien fichier texte ayant déjà perdu
+ses formules ne peut pas les retrouver sans réextraction de son original.
+
 ## Lire une réponse de l’assistant
 
 L’assistant doit distinguer ce qu’un document indique, ce qu’il en déduit et ce

@@ -1,5 +1,9 @@
 # Recherche, assistant et travaux sur Bazzite
 
+Suite ciblée : les équations manquantes identifiées ici sont examinées dans le
+[bilan 0.37.3](2026-11-17-formules-documentaires.md). Les résultats ci-dessous
+restent ceux du premier essai ; ils ne sont pas requalifiés rétroactivement.
+
 **Bilan du 17 novembre 2026 — livraison corrective compatible 0.37.1.**
 Les essais ont été préparés sous le numéro candidat 0.36.2 avant la fusion de
 la navigation 0.37.0. Ce candidat n’a pas été livré sur main. La 0.37.1 conserve

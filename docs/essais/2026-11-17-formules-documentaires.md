@@ -1,0 +1,99 @@
+# Formules conservées dans les sources et traductions
+
+**Bilan daté — 17 novembre 2026. Livraison visée 0.37.3, correction compatible.**
+Suite ciblée de la [recette Bazzite précédente](2026-11-17-assistant-bibliotheque-bazzite.md).
+L’objectif reste recherche/assistant, puis traduction et sous-titres. Aucun nouvel
+essai d’installation ou de transfert n’est entrepris.
+
+## Défaut et correction
+
+Le lecteur ignorait les balises MathML sans alternative texte. La recette de
+préparation de sources reproduisait ce défaut ; l’index complémentaire, lui,
+aplatissait les fractions. L’IA pouvait ainsi lire un texte sans ses équations.
+Le contrôle des nombres ne détectait pas une inversion de fraction conservant
+les mêmes valeurs.
+
+Un lecteur commun conserve l’alternative de l’auteur ou un sous-ensemble borné
+de MathML de présentation : fractions, groupes, indices, puissances, racines,
+scripts et matrices simples. Les formes inconnues deviennent un message explicite,
+sans calcul, OCR, requête externe ou équation inventée. Le comportement est fondé
+sur la [structure MathML de présentation du W3C](https://www.w3.org/TR/MathML3/chapter3.html),
+sans revendiquer la prise en charge intégrale de cette norme.
+
+Les blocs restent entiers dans les instantanés longs. Les extraits de recherche
+réduisent leur fenêtre si une formule serait coupée, en gardant leurs budgets
+et offsets exacts. Pour traduire, le logiciel remplace temporairement les blocs
+par des repères puis réinsère les originaux uniquement si la suite de repères
+revient intacte. La version 4 du contrôle compare aussi les blocs finaux ; les
+échecs restent privés, visibles et non publiés. Les contrôles numériques restent
+actifs. Le sens des phrases autour des formules n’est pas certifié.
+
+Les compléments d’index passent au format de construction 2 lors d’une reprise
+explicite ; leurs anciennes publications restent lisibles jusque-là et pendant
+la construction. Les index natifs Kiwix ne sont pas reconstruits. Aucun ancien
+instantané, texte utilisateur ou document publié n’est réécrit. Pour retrouver
+une équation déjà perdue, repartir de l’article original.
+
+## Essais réels Bazzite
+
+RTX 2060 6 Go, 32 Go RAM ; services existants et modèle Gemma4 E4B, contexte
+16 384. API et données d’essai isolées sur le SSD du laboratoire. Le candidat
+portait 0.37.2 avant l’arrivée sur main du correctif d’interface portant déjà ce
+numéro ; l’intégration finale prend 0.37.3 et préserve les deux travaux.
+
+Article réellement présent dans `wikibooks_en_all_maxi_2026-10` :
+`Amateur_Radio_Manual/Ohm%27s_Law_and_Resistors`. HTML original de **34 752 octets**,
+SHA-256 `8f145eb6691bee7e944f566bcc38983e869a8f5db61a388161d3519c367095b1`.
+Le nouveau lecteur extrait **8 698 caractères, 23 formules et zéro formule
+signalée illisible**. Les fichiers documentaires existants restent inchangés.
+
+Premier essai : demander au modèle de recopier lui-même les formules termine
+3 passages sur 5 puis bloque, car `×` devient `\times`. La proposition rejetée
+reste conservée. Le contrôle n’est pas assoupli : les formules sont ensuite
+protégées par le logiciel. Nouveau travail complet : **5/5 passages terminés en
+106 412 ms**, cinq rapports version 4 sans anomalie détectée. Les **23 blocs sont
+identiques octet pour octet** après traduction et présents dans le document
+français publié. L’original est inchangé. Il s’agit d’un chapitre, pas d’un livre
+complet ou d’une validation humaine de toute la terminologie.
+
+Deux demandes rejouées après la dernière correction des extraits :
+
+- Moteur de 1 Ω sous 12 V, fil prévu pour 10 A : **19 467 ms**, une source lue
+  et citée. La trace confirme l’outil `calculate`, expression `12 / 1`, résultat
+  exact 12. La réponse conclut 12 A et explique que le fil de l’exemple ne convient
+  pas. Cela ne dimensionne pas une installation réelle.
+- Résistances en série : **17 095 ms**, une source lue et citée, courants égaux
+  et tensions additionnées. La formule est effectivement reçue. « Head to tail »
+  reste rendu par « tête-bêche », expression ambiguë pour un montage : ce point
+  de vocabulaire technique reste ouvert. L’extrait anglais ajouté par la revue
+  des procédures conserve les notations, mais n’équivaut pas à une explication
+  entièrement française ni à une validation du câblage.
+
+## Tests automatisés et traçabilité
+
+Première suite : **996 tests, 6 ignorés, 202,869 s**. Après protection des blocs :
+**1 000 tests, 6 ignorés, 204,740 s**, avant le dernier scénario de fenêtre de
+recherche. Derniers contrôles ciblés : **16 tests d’extraction/formules en 0,502 s**,
+**22 tests de lecture/recherche en 0,252 s**, **61 tests de traduction en 29,426 s**.
+Les fixtures sont synthétiques et minuscules ; aucun corpus ou modèle téléchargé
+dans le runner. La CI finale et le paquet restent à vérifier avant livraison.
+
+Les rapports complets, échecs initiaux, traces d’outils et recettes restent privés,
+hors Git. Archive locale `setupsurvie-formules-0372-preuves-privees.tgz`, **39 136
+octets**, SHA-256 `ddf4f1d46577a74a3ca3800024de8c8b21a109670c1bbadd2af5da427bd99e72`.
+Les empreintes des six modules observés correspondent aux fichiers de la branche.
+Le chapitre réel n’est pas copié dans les fixtures ou le paquet logiciel.
+
+## Nettoyage et limites
+
+Conteneur d’API et dossier d’essai supprimés, huit conteneurs historiques arrêtés,
+Docker utilisateur toujours inactif, laboratoire démonté et boucle détachée.
+L’image de 590 milliards d’octets est conservée, le runtime historique reste
+0.1.34 et le clone de Louis reste propre. Aucune application utilisateur fermée,
+installation active remplacée, pause d’inférence levée ou donnée personnelle copiée.
+
+Ces essais Linux ne prouvent pas les refus de premier appel sous Windows, le
+fonds entier de Marc, tous les schémas, la cohérence d’un livre réel de 500 pages
+ou les sous-titres de chaque vidéo réelle. Les validations vidéo déjà acquises
+restent celles des bilans précédents ; aucune nouvelle campagne vidéo n’est
+revendiquée ici. L’objectif global reste ouvert sur ces vérifications ciblées.

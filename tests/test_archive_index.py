@@ -44,6 +44,17 @@ class ArchiveIndexTests(unittest.TestCase):
         body=self.query('crevaison');self.assertTrue(body);self.assertIn('/content/manual_fr/Reparer_velo',body[0]['url'])
         self.assertEqual(archive_index.build_archive(self.zim,self.index)['articles'],result['articles'])
 
+    def test_old_index_stays_readable_until_explicit_rebuild_with_new_parser(self):
+        with patch.object(archive_index,'FORMAT',1):archive_index.build_archive(self.zim,self.index)
+        path=next(self.index.glob('*.sqlite'))
+        with archive_index.connect(path,True) as db:
+            old=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
+        self.assertTrue(old['fingerprint'].startswith('1:'));self.assertTrue(self.query())
+        archive_index.build_archive(self.zim,self.index)
+        with archive_index.connect(path,True) as db:
+            new=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
+        self.assertTrue(new['fingerprint'].startswith('2:'));self.assertTrue(self.query())
+
     def test_interruption_resumes_from_committed_cursor_and_preserves_old_publication(self):
         archive_index.build_archive(self.zim,self.index);original=self.query()
         # Force replacement after the source changes, interrupt after the first batch.

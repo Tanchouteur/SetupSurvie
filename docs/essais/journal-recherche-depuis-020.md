@@ -1,5 +1,9 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.37.3 : [formules des sources et traductions](2026-11-17-formules-documentaires.md),
+lecteur HTML commun, extraits sans formule coupée, copie protégée pendant traduction
+et contrôle version 4. Anciennes extractions non réécrites ; sens technique à relire.
+
 0.37.1 : [tests ciblés Bazzite](2026-11-17-assistant-bibliotheque-bazzite.md),
 demande de résumé décrivant ses sources séparée du sujet, consignes secondaires
 ne supprimant plus la lecture, contexte trop petit expliqué et clarification

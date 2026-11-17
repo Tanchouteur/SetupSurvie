@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Extract attributed local articles for real-document retrieval evaluations."""
 import hashlib
-from html.parser import HTMLParser
 import json
 import re
 import time
@@ -11,6 +10,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import linux_lab as lab
+from pilot.html_text import Text
 
 SOURCES = (
     ('WIKI-FR-OHM', 'fra', 'wikipedia_fr_all_maxi_2026-05', "Loi_d'Ohm"),
@@ -19,33 +19,6 @@ SOURCES = (
     ('BOOK-EN-OHM', 'eng', 'wikibooks_en_all_maxi_2026-10', "Ohm's law"),
     ('BOOK-EN-BOIL', 'eng', 'wikibooks_en_all_maxi_2026-10', 'Cookbook Boiling'),
 )
-
-
-class Text(HTMLParser):
-    def __init__(self):
-        super().__init__(); self.parts = []; self.skip = 0; self.math_depth = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag in ('script', 'style'):
-            self.skip += 1
-        if tag == 'math':
-            self.math_depth += 1
-            if self.math_depth == 1:
-                self.parts.append(' ' + dict(attrs).get('alttext', '') + ' ')
-        if tag in ('p', 'h1', 'h2', 'h3', 'li', 'tr', 'br'):
-            self.parts.append('\n')
-
-    def handle_endtag(self, tag):
-        if tag in ('script', 'style'):
-            self.skip = max(0, self.skip - 1)
-        if tag == 'math':
-            self.math_depth = max(0, self.math_depth - 1)
-        if tag in ('p', 'li', 'h1', 'h2', 'h3', 'tr'):
-            self.parts.append('\n')
-
-    def handle_data(self, data):
-        if not self.skip and not self.math_depth:
-            self.parts.append(data)
 
 
 def read(url):
@@ -80,7 +53,7 @@ def main():
             url = urllib.parse.urljoin('http://127.0.0.1:8081/', selected.findtext('link'))
         html = read(url)
         parser = Text(); parser.feed(html)
-        text = '\n'.join(line.strip() for line in ''.join(parser.parts).splitlines() if line.strip())
+        text = parser.text()
         title = re.search(r'<title>(.*?)</title>', html, re.S)
         title = title.group(1) if title else identifier
         header = (f'Identifiant de source : {identifier}\nTitre : {title}\nLangue : {language}\n'

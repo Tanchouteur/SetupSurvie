@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Formules conservées dans les sources et traductions — 0.37.3](2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
+
 - [Recherche et assistant sur Bazzite — 0.37.1](2026-11-17-assistant-bibliotheque-bazzite.md) — corrections issues de demandes réelles, travaux et sous-titres.
 
 - [Volets, transitions et classement — 0.37.0](2026-11-17-volets-transitions-classement.md)

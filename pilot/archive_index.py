@@ -2,7 +2,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import hashlib
-from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -13,8 +12,9 @@ import time
 from urllib.parse import quote
 
 from . import durable,retrieval
+from .html_text import Text
 
-FORMAT=1
+FORMAT=2
 
 
 class Paused(Exception):pass
@@ -22,17 +22,8 @@ class StorageReserve(OSError):pass
 class ArchiveChanged(OSError):pass
 
 
-class ArticleText(HTMLParser):
-    def __init__(self):super().__init__();self.parts=[];self.skip=0;self.language=''
-    def handle_starttag(self,tag,attrs):
-        if tag in ('script','style','nav'):self.skip+=1
-        if tag=='html':self.language=dict(attrs).get('lang','').split('-')[0]
-        if tag in ('p','h1','h2','h3','li','br'):self.parts.append('\n')
-    def handle_endtag(self,tag):
-        if tag in ('script','style','nav'):self.skip=max(0,self.skip-1)
-    def handle_data(self,data):
-        if not self.skip:self.parts.append(data)
-    def text(self):return re.sub(r'[ \t]+',' ',' '.join(self.parts)).strip()
+class ArticleText(Text):
+    def __init__(self):super().__init__(prefer_main=False)
 
 
 @contextmanager

@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Formules conservées dans les sources et traductions — 0.37.3](essais/2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
+
 - [Volets, transitions et classement — 0.37.0](essais/2026-11-17-volets-transitions-classement.md)
 
 - [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.

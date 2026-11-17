@@ -9,6 +9,7 @@ import json
 import re
 
 from . import library,retrieval,illustrations
+from .math_text import BLOCKS
 
 
 def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
@@ -52,9 +53,20 @@ def passages(text,query,maximum):
     plan=subject(query);groups=plan.token_groups
     width=min(1800,max(80,maximum//2));stride=max(40,width//2)
     procedure=set('etape etapes materiel outils montage construction fabrication procedure instructions steps materials tools assembly construction building repairing'.split())
-    candidates=[]
+    candidates=[];formulas=[m.span() for m in BLOCKS.finditer(text)]
+    def intact(start,end):
+        # Shrink excerpts rather than exceed the byte budget or send a fraction
+        # with a missing numerator/denominator. Offsets remain source offsets.
+        for first,last in formulas:
+            if first>=end:break
+            if first<start<last:start=last
+            if first<end<last:end=first
+        return start,max(start,end)
     for start in range(0,len(text),stride):
-        value=text[start:start+width];normalized=retrieval.normal(value);words=set(normalized.split())
+        start,end=intact(start,min(len(text),start+width))
+        value=text[start:end]
+        if not value.strip():continue
+        normalized=retrieval.normal(value);words=set(normalized.split())
         matches=sum(any(group<=words for group in variants) for variants in groups)
         anchors=[]
         for variants in groups:
@@ -70,6 +82,7 @@ def passages(text,query,maximum):
         if selected and candidates[0][0]>=10 and score<10:break
         if any(start<part['next_offset'] and start+len(value)>part['offset'] for part in selected):continue
         value=clip(value,remaining)
+        start,end=intact(start,start+len(value));value=text[start:end]
         if not value.strip():continue
         selected.append({'offset':start,'text':value,'next_offset':start+len(value)})
         remaining-=len(value.encode('utf-8'))
