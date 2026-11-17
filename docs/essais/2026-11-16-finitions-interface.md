@@ -1,6 +1,6 @@
 # Reprise de la base et finition de l’interface
 
-**Bilan du candidat 0.36.0 — 16 novembre 2026.** Ce chantier répond aux captures
+**Bilan de livraison 0.36.0 — 17 novembre 2026.** Ce chantier répond aux captures
 utilisateur après 0.34.0. Il conserve le lot audio des collections intégré entre-temps
 en 0.35.0, sans modifier les moteurs ni les données.
 
@@ -56,8 +56,20 @@ hypothèse fragile dans la recette WebKit : un panneau déjà mémorisé ouvert 
 refermé par un clic sans vérification. La recette respecte désormais cet état et
 attend ses champs visibles ; aucun contrôle fonctionnel n’a été retiré.
 
-La recette complète et la CI du dernier état sont suivies avant intégration.
-Le résultat final et le commit intégré seront ajoutés à la clôture.
+La [CI complète du code final `4d5dfc6`](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44025173819)
+termine avec **huit jobs réussis** le 17 novembre : Linux, Windows, trois
+versions Python du lecteur isolé, recherche Kiwix, itinéraires hors ligne et
+navigation des cartes/portail. Ce dernier job exécute la régression complète
+Chromium/WebKit (profils, recherche, documents, traductions, lecteurs, vidéos,
+audio et paramètres), puis les six recettes PC ciblées Firefox, dont les 126
+contrôles de finition. Les commits suivants ne changent que la documentation.
+La livraison passe par la [PR nº 14](https://github.com/Tanchouteur/SetupSurvie/pull/14).
+
+La dernière exécution locale complète a reçu l’arrêt du serveur de fixtures
+après les parcours Chromium ; elle n’est pas comptée comme une réussite
+complète. Le résultat complet ci-dessus vient des services jetables distincts de
+la CI. Les contrôles ciblés locaux et la revue visuelle restent des preuves
+complémentaires.
 
 ## Portée de la preuve
 

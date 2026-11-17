@@ -60,7 +60,7 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
-Le candidat **0.36.0** reprend la [base et la finition de l’interface](../essais/2026-11-16-finitions-interface.md)
+La version **0.36.0** reprend la [base et la finition de l’interface](../essais/2026-11-16-finitions-interface.md)
 après les captures utilisateur : volets, cases et aides corrigés, cartes unifiées,
 styles de maquette retirés et composants communs explicites. Les fonctions audio
 0.35.0 et les données sont conservées ; les tests de fonctionnement précédents
