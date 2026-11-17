@@ -58,6 +58,14 @@ class EvidenceTests(unittest.TestCase):
     def call(name,arguments):
         return {'tool_calls':[{'function':{'name':name,'arguments':arguments}}]}
 
+    def test_small_context_explains_the_setting_without_exceeding_it(self):
+        payloads,saved=self.run_chat([],native_context=8192,expected_status='incomplete')
+        self.assertEqual(payloads,[])
+        self.assertIn('8192',saved['content']);self.assertIn('Paramètres → Assistant',saved['content'])
+        measured=assistant_metrics.read('j')
+        self.assertEqual(measured['failure'],'context_budget')
+        self.assertEqual(measured['context'],8192);self.assertEqual(measured['model_calls'],[])
+
     def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self):
         proposal={'content':'{"name":"search_library","arguments":{"query":"notice"}}'}
         payloads,answer=self.run_chat([proposal,proposal],expected_status='incomplete')

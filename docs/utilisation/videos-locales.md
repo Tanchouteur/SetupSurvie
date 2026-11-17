@@ -116,6 +116,12 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
+Depuis 0.37.1, si le moteur annonce un refus tout en renvoyant des traductions,
+le logiciel lui demande une seule fois de clarifier sa réponse. La proposition
+rejetée reste dans le rapport. Un refus clair ou un second échec arrête la
+préparation ; aucun segment ni horodatage n’est réinterprété pour forcer la
+publication. La pause reste prioritaire pendant cette vérification.
+
 Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une vidéo,
 ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
 les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres**,

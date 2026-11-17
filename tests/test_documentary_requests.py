@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 from unittest.mock import AsyncMock,patch
-from pilot import engine,library,retrieval
+from pilot import engine,library,retrieval,research
 from pilot import store
 
 
@@ -37,11 +37,38 @@ class DocumentaryRequestTests(unittest.TestCase):
         self.assertEqual(plan.collection,'wikipedia')
         self.assertEqual(retrieval.search_subject('Résume le document associé'),'Résume le document associé')
 
+    def test_documents_describing_a_subject_do_not_require_the_description_verb(self):
+        cases=[
+            ('Fais une synthèse des documents expliquant comment faire du feu. Présente les techniques et cite les sources.', ['feu']),
+            ('Résume les notices qui expliquent comment réparer un vélo', ['velo']),
+            ('Prépare un résumé des guides décrivant la corrosion sur acier dans Wikipédia', ['corrosion','acier']),
+            ('Give me a summary of the documents that explain how to start a fire', ['fire']),
+        ]
+        for question,words in cases:
+            with self.subTest(question=question):
+                plan=self.plan(research.primary_query(question))
+                self.assertEqual(plan.words,words)
+                self.assertEqual(plan.collection,'wikipedia' if 'Wikipédia' in question else '')
+        # A verb inside the actual subject remains part of the search.
+        question='Fais une synthèse des documents sur les modèles expliquant la corrosion sur acier'
+        self.assertEqual(retrieval.search_subject(question),'les modeles expliquant la corrosion sur acier')
+
     def test_friction_followup_prepares_reading_before_the_model_decides_what_to_do(self):
         question='Des méthodes d’allumage au frottement (comme le feu de bois) ?'
         prepared=engine.document_request([{'role':'user','content':question}]);self.assertIsNotNone(prepared)
         plan=self.plan(question);self.assertNotIn('comme',plan.words)
         group=next(group for group in plan.groups if 'frottement' in group);self.assertIn('friction',group)
+
+    def test_numeric_answer_instructions_do_not_cancel_document_reading(self):
+        for question in (
+            'À partir des documents locaux, quelle longueur théorique faut-il pour un brin quart d’onde à 145 MHz ? Distingue le calcul théorique d’une dimension de fabrication.',
+            'Comment dimensionner une pompe ? Donne le calcul et cite les sources.',
+            'Calcule avec les documents la longueur théorique d’un dipôle à 433 MHz',
+        ):
+            with self.subTest(question=question):
+                self.assertIsNotNone(engine.document_request([{'role':'user','content':question}]))
+        for question in ('Calcule 12 * 4', 'Combien font deux plus deux ?', 'Convertir 2 m en cm'):
+            self.assertIsNone(engine.document_request([{'role':'user','content':question}]))
 
 
 class DocumentarySearchTests(unittest.IsolatedAsyncioTestCase):
@@ -58,6 +85,7 @@ class DocumentarySearchTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_summary_instruction_finds_and_opens_the_same_source_as_its_topic(self):
         for question in ('comment faire du feu','Fait un synthese sur les info des document sur comment faire du feux',
+                         'Fais une synthèse des documents expliquant comment faire du feu',
                          'Des méthodes d’allumage au frottement (comme le feu de bois) ?'):
             with self.subTest(question=question):
                 found=await library.search(question,domain='resilience')
