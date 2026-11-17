@@ -28,7 +28,20 @@ suppression de leur dossier temporaire sous Windows.
   1 280 pixels : progression à 50 %, sept commandes visibles avec autorisation,
   fragment d’autorisation effacé, lecture seule sans autorisation, aucun
   débordement horizontal ni erreur JavaScript.
-- `git diff --check` réussi.
+- Suite complète locale après correction : **1 060 tests, 6 ignorés**, en
+  215,176 s. Suite Linux CI du même code : **1 060 tests, 6 ignorés**, en 83,181 s.
+- Transfert : 32 tests, dont 2 réservés à Windows et ignorés localement ;
+  mise à jour : 21 tests réussis.
+- Paquet logiciel : 1 008 fichiers comparés au dépôt et aux empreintes du
+  manifeste ; SHA-256 `ec122fc0adb324bc78ef0a9602820bf703964b0827c2ececfa67cded549697f0`.
+  Ce paquet correspond au code `fa67f5b` ; les compléments de bilan suivants
+  ne modifient que la documentation.
+- `git diff --check` et renvois locaux du bilan réussis.
+
+Les huit jobs de la [CI finale](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44168736221)
+réussissent sur `fa67f5b1d05be670351ae86788c7f9f3cbf20bee` : Linux, Windows,
+lecteurs isolés Python 3.11/3.13/3.14, Kiwix, routage hors ligne et navigateurs.
+Les changements postérieurs à ce code sont documentaires.
 
 ## Limites
 
