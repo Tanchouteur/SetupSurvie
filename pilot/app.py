@@ -62,6 +62,7 @@ async def lifespan(app):
     video_refresh=asyncio.create_task(refresh_videos())
     yield
     video_refresh.cancel()
+    await asyncio.gather(video_refresh,return_exceptions=True)
     try:
         with optional_feature('archive_videos') as module:await module.stop_all()
     except HTTPException:pass

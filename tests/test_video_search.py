@@ -86,6 +86,21 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(coverage['status'],'refreshing');self.assertEqual(len(found),1)
         self.assertEqual(coverage['indexed_videos'],2)
 
+    async def test_shutdown_ignores_inventory_of_another_or_cancelled_loop(self):
+        other=asyncio.new_event_loop();foreign=other.create_future()
+        try:
+            with patch.object(videos,'ACTIVE',foreign):
+                await videos.stop(reason='service_restarted')
+                videos.STOP.clear()
+                self.assertEqual(await videos.ensure_fresh(force=True),'refreshing');started=videos.ACTIVE
+            await started
+        finally:other.close()
+        cancelled=asyncio.get_running_loop().create_task(asyncio.sleep(10))
+        with patch.object(videos,'ACTIVE',cancelled):
+            cancelled.cancel();await asyncio.sleep(0)
+            await videos.stop(reason='service_restarted')
+        videos.STOP.clear()
+
     def test_http_search_accepts_empty_query_only_for_videos(self):
         videos.scan()
         with patch.object(videos,'ensure_fresh',AsyncMock(return_value='fresh')),patch.object(library,'books',AsyncMock(return_value=[])):

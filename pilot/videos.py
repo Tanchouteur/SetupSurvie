@@ -200,7 +200,7 @@ async def ensure_fresh(force=False):
     Called at startup and before video searches, at most once a minute. The
     previous index stays searchable during the refresh."""
     global CHECKED
-    if ACTIVE is not None and not ACTIVE.done():return 'refreshing'
+    if running() is not None:return 'refreshing'
     if not force and time.monotonic()-CHECKED<CHECK_INTERVAL:return 'checked'
     CHECKED=time.monotonic()
     try:
@@ -346,7 +346,7 @@ def scan():
 
 async def start():
     global ACTIVE
-    if ACTIVE is not None and not ACTIVE.done():raise HTTPException(409,'Un inventaire vidéo est déjà en cours.')
+    if running() is not None:raise HTTPException(409,'Un inventaire vidéo est déjà en cours.')
     STOP.clear()
     # Publish running before handing work to a thread: a fast poll must not
     # mistake the preceding completed report for the newly requested inventory.
@@ -357,8 +357,23 @@ async def start():
 async def stop(reason='user'):
     global STOP_REASON
     STOP_REASON=reason;STOP.set()
-    if ACTIVE is not None:await asyncio.shield(ACTIVE)
+    task=running()
+    if task is not None:
+        # The scan thread checks STOP; a failure there is already reported
+        # in videos-report.json and must not block the service shutdown.
+        try:await asyncio.shield(task)
+        except asyncio.CancelledError:
+            if not task.cancelled():raise
+        except Exception:pass
     return status()
+
+
+def running():
+    """The inventory task of this event loop, if one is still running."""
+    if ACTIVE is None or ACTIVE.done():return None
+    try:same=ACTIVE.get_loop() is asyncio.get_running_loop()
+    except RuntimeError:same=False
+    return ACTIVE if same else None
 
 
 def webvtt(key,index):
