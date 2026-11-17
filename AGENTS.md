@@ -58,6 +58,20 @@ Les API Ollama `11435` et de contrôle `11436` ne doivent pas être exposées au
 
 ## Matériel, stockage et données privées
 
+### Accès des agents Happier au PC de Louis — 17 novembre 2026
+
+Louis autorise les agents du runner Happier sur Coolify (`192.168.1.40`) à
+développer et tester sur son PC Bazzite (`192.168.1.171`) : `ssh bazzite` pour
+le compte louis, `ssh bazzite-root` pour l'administration complète. Ces alias
+sont installés dans le runner, pas implicitement dans chaque autre environnement.
+Les transferts et tunnels TCP/sockets Unix ont été testés ; consulter la
+[référence Nexus](https://github.com/Tanchouteur/Nexus/blob/main/infrastructure/runbooks/happier-bazzite.md)
+pour les commandes, la portée et la révocation. Le socket Podman général du PC
+n'est pas le laboratoire : conserver `scripts/lab.sh`, les contrôles de montage,
+les limites SSD et le respect du mode jeu. Préserver les travaux locaux et les
+applications ouvertes. Cet accès concerne les agents de développement ; il
+n'ajoute aucun outil ni privilège à l'assistant du portail.
+
 La [configuration matérielle cible](docs/installation/configuration-materielle-cible.md)
 rassemble les orientations de Louis du 16 novembre 2026 et les observations à
 compléter. La cible future reste distincte des machines observées ci-dessous ;

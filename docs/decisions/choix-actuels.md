@@ -1,5 +1,17 @@
 # Choix et contraintes actuels
 
+## Essais depuis Happier sur le PC Bazzite — 17 novembre 2026
+
+Louis autorise un accès complet par SSH depuis le runner Coolify sur le LAN,
+pour développer et tester sur son PC. Les alias `bazzite` (louis) et
+`bazzite-root` (root), transferts et tunnels TCP/sockets Unix ont été qualifiés.
+La [référence Nexus](https://github.com/Tanchouteur/Nexus/blob/main/infrastructure/runbooks/happier-bazzite.md)
+documente configuration, essais et révocation. Cela ne valide pas le produit :
+le laboratoire n'était pas monté et aucun LLM n'a été démarré. Les limites de
+stockage, la pause d'inférence et les contrôles du laboratoire restent obligatoires.
+Les assistants du produit ne reçoivent pas ces accès. Livraison de consignes et
+documentation uniquement, sans changement de version logicielle.
+
 ## Offre de PC préinstallé — 16 novembre 2026
 
 Louis précise que le code propre de SetupSurvie n'est pas publié en open source
