@@ -692,3 +692,13 @@ les dimensions, avec lecture effective des résultats et pages PDF groupées.
 Le [cas réel Baofeng](../essais/2026-11-15-notices-et-guidage-pratique.md) reste une
 recette parmi d’autres ; aucune commande d’appareil n’est codée dans le moteur.
 L’objectif de fidélité et les essais sur des besoins variés restent ouverts.
+
+
+## Redémarrage Bazzite confirmé — 17 novembre 2026
+
+Après le redémarrage physique effectué par Louis, les services Docker dédié et
+SetupSurvie repartent automatiquement (+19 s et +35 s au relevé), sans commande
+de démarrage de l’agent. Portail 0.41.0, recherche, lecture, secours et trois
+routeurs sont vérifiés ; voir le [bilan réel](../essais/2026-11-17-installation-neuve-bazzite.md#redémarrage-physique-confirmé--17-novembre-2026).
+Ce résultat complète la recette Linux ; téléphone réel, chargement de modèle,
+transfert entre SSD et coupure électrique brutale restent distincts.

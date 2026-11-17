@@ -146,3 +146,26 @@ Paquet réellement appliqué 0.41.0 : SHA-256
 `1e1f3358ec862e85cef310ce0c0602af8049bf82715bce4c2fe91188c8065bf2`.
 Les ajouts documentaires et corrections de tests postérieurs ne sont pas annoncés
 comme inclus dans ce paquet. Les gros contenus et rapports privés restent hors Git.
+
+## Redémarrage physique confirmé — 17 novembre 2026
+
+Louis redémarre le PC puis demande une vérification, sans démarrage manuel des
+services par l’agent. Le PC annonce un boot à **21:26:56 CET** (20:26:56 UTC).
+Docker dédié devient actif à **21:27:15 CET** (+19 s) et le service SetupSurvie
+à **21:27:31 CET** (+35 s), tous deux activés et sans erreur ; linger actif.
+Ce constat remplace la réserve de non-exécution du redémarrage dans le reçu
+initial ci-dessus. Il ne constitue pas une coupure électrique brutale.
+
+Contrôles après ce boot : portail **0.41.0**, `ok=true`, aucune fonction
+dégradée, moteur en ligne sans pause et contrôleur joignable. Les cinq services
+principaux sont sains et les trois routeurs actifs. Accès LAN HTTP par IP réussi
+depuis le runner ; recherche « loi d’Ohm » : 16 résultats ; original PDF servi
+par plages (HTTP 206, signature `%PDF-`), page de secours, Open WebUI et Kiwix
+accessibles. Les cartes Sud/Solliès et le manifeste de routage sont présents.
+Trois demandes réelles aux routeurs depuis le pilote donnent `Ok` : 2 287,1 m
+à pied, 5 020,1 m à moto et en voiture.
+
+Aucune génération IA, modification de service ou redémarrage supplémentaire
+n’a été demandé par cette vérification. Le chargement effectif d’un modèle,
+la dictée et le nom `survie.local` sur un téléphone ne sont pas validés ici.
+La branche de transfert Windows reste à l’autre agent.
