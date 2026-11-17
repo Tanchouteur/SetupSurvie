@@ -1,5 +1,9 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.38.3 : [formules et limites de contexte](2026-11-17-formules-contexte-et-suite.md),
+protection des coupes de réduction et de lecture explicite, omissions signalées
+sans hausse de budget ni modification des états utilisateur.
+
 0.38.2 : [recherche préalable des notices](2026-11-17-recherche-notices-commandes.md),
 commandes de notice reconnues avant rédaction, référence recherchée et question
 complète pour la lecture, relance limitée au dernier appareil fourni par l’utilisateur.

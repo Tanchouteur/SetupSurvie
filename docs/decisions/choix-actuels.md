@@ -112,6 +112,14 @@ les données ni les fonctions existantes de navigation.
 
 ## Livraisons disponibles
 
+La **0.38.3** complète la préservation des formules : réduction du contexte et
+lecture explicite de la suite utilisent des limites de blocs entiers. Une
+formule trop longue est omise et signalée, sans augmenter les budgets. Les
+positions restent celles du texte source. Voir le
+[bilan ciblé](../essais/2026-11-17-formules-contexte-et-suite.md).
+Correction compatible (`z`), données et dépendances inchangées.
+
+
 La **0.38.2** corrige les demandes explicites de commandes dans une notice :
 recherche préalable sur la référence unique fournie, puis lecture avec la question
 complète. Les relances reprennent uniquement la dernière référence utilisateur,

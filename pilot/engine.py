@@ -12,6 +12,7 @@ import httpx
 
 from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session,research,citation_links,illustrations,conversation_context,tool_protocol,procedure_review
 from fastapi import HTTPException
+from .math_text import safe_prefix,reading_window
 
 OLLAMA=os.environ.get('OLLAMA_URL','http://ollama:11434').rstrip('/')
 POLICY=Path(os.environ.get('ASSISTANT_POLICY','/srv/system.fr.txt'))
@@ -152,12 +153,12 @@ def fit_context(messages,maximum=24000):
             except (ValueError,TypeError):continue
             if isinstance(value,dict):
                 if isinstance(value.get('text'),str) and len(value['text'])>700:
-                    value['text']=value['text'][:700];value['more']=True;value['partial_read']=True;value['next_offset']=value.get('offset',0)+len(value['text'])
+                    value['text']=safe_prefix(value['text'],700);value['more']=True;value['partial_read']=True;value['next_offset']=value.get('offset',0)+len(value['text'])
                 if isinstance(value.get('results'),list):
                     if any('passages' in row for row in value['results']):
                         for row in value['results']:
                             for part in row.get('passages',[]):
-                                part['text']=part['text'][:300];part['next_offset']=part['offset']+len(part['text'])
+                                part['text']=safe_prefix(part['text'],300);part['next_offset']=part['offset']+len(part['text'])
                             row['partial_read']=True
                     else:value['results']=[{k:(v[:160] if k=='excerpt' and isinstance(v,str) else v) for k,v in row.items()} for row in value['results'][:3]]
                 message['content']=json.dumps(value,ensure_ascii=False,separators=(',',':'))
@@ -489,12 +490,12 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                                     if source_identifier not in source_cache:
                                         with measured.during('reading'):source_cache[source_identifier]=await library.source(source_identifier)
                                     item=source_cache[source_identifier]
-                                    text=item['text'][offset:offset+3500]
+                                    window=reading_window(item['text'],offset,3500);text=window['text']
                                     if not text.strip():raise ValueError('No readable passage.')
                                     ref=reference(references,item,True,visual=wants_visual)
-                                    more=len(item['text'])>offset+3500
-                                    read_cache[key]={**{k:v for k,v in ref.items() if k!='figure_candidates'},'text':text,'offset':offset,'next_offset':offset+len(text),'more':more,
-                                           'partial_read':bool(offset or more or item.get('preview') or item.get('text_truncated')),
+                                    more=len(item['text'])>window['next_offset']
+                                    read_cache[key]={**{k:v for k,v in ref.items() if k!='figure_candidates'},**window,'more':more,
+                                           'partial_read':bool(window['offset'] or more or window['formula_omitted'] or item.get('preview') or item.get('text_truncated')),
                                            'text_limit_reached':bool(item.get('text_truncated'))}
                                 else:measured.value['cache_hits']['read']+=1
                                 value=read_cache[key];progress(identifier,'reading',sources_read=len(read_references(references)))

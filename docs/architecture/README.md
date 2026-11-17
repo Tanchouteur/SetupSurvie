@@ -19,6 +19,14 @@ Un repère modifié, perdu, ajouté ou réordonné bloque la proposition privée
 `translation_quality` version 4 compare ensuite les blocs et garde les contrôles
 numériques existants ; aucune validation générale du sens n’est revendiquée.
 
+Depuis 0.38.3, `engine.fit_context` utilise le préfixe protégé pour les résultats
+de lecture simples et par lots. Les `next_offset` restent les positions source
+exactes, même quand une formule est entièrement retirée de l’extrait compacté.
+`math_text.reading_window` borne aussi la lecture explicite `read_source` à
+3 500 caractères, revient au début d’une petite formule si nécessaire et omet
+un bloc trop long avec `formula_omitted`. Un résultat sans texte n’est pas compté
+comme nouvelle lecture. Aucun offset d’un état sauvegardé n’est réécrit.
+
 Le format de construction des compléments SQLite passe de 1 à 2. L’index déjà
 publié reste lisible pendant la reconstruction ; une interruption conserve
 l’ancienne publication. Le schéma des données personnelles reste à 1. Les index
