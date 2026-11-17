@@ -1,6 +1,6 @@
 # Recherche : retrouver les formes courantes des mots
 
-**Candidat 0.35.1 — 16 novembre 2026.** Correctif compatible de la recherche,
+**Candidat 0.35.1 — 17 novembre 2026, premiers essais le 16.** Correctif compatible de la recherche,
 sans nouvel écran, modèle ou format de base. Le niveau correctif corrige des
 documents déjà indexés qui pouvaient être écartés à cause du nombre du mot.
 La refonte UX 0.34.0 et l’audio des collections 0.35.0 sont conservés.
@@ -54,6 +54,38 @@ auparavant ; un résultat par titre ne fait pas disparaître l’absence d’ind
   échec. Le diagnostic de performances conserve aussi les deux nouveaux compteurs
   de tentatives par titre ; son contrôle ciblé est rejoué après cet ajout.
   La CI finale et le paquet seront consignés après vérification.
+- Contrôle des liens des **185 fichiers Markdown suivis** : aucun fichier cible
+  manquant ; un ancien renvoi d’audit utilisait l’ancre datée 0.32.0 du suivi.
+  Il pointe désormais vers une ancre stable, sans modifier les résultats historiques.
+
+## Fermeture et restauration de la page
+
+Le CI `43958161595` passe sept jobs puis échoue en navigation WebKit : une
+requête `/api/videos` du filtre de collection rencontre un refus « access control »
+pendant le cycle de rechargement. Cet échec est conservé, sans filtrage des erreurs
+de la recette. Le contrôle de cycle est renforcé : un minuteur tente un nouvel
+appel après le départ de la page. Avant correction, cet appel repart réellement,
+bien que les anciennes requêtes aient été annulées.
+
+L’API du navigateur marque maintenant la page en fermeture dès `beforeunload` ou
+`pagehide`, annule les requêtes actives et refuse localement les appels suivants
+avec `AbortError`. `pageshow` réautorise les appels quand la page est restaurée.
+Une annulation connue conserve ce type d’erreur, même si WebKit présente une
+erreur réseau différente ; les autres erreurs restent propagées. Aucun filtre
+global d’erreurs ni changement de présentation. Le générateur renouvelle seulement
+le cache d’`app.js` et régénère les deux entrées HTML.
+
+Après correction : **trois passages par navigateur**, Chromium et WebKit, avec
+**8 contrôles de cycle + 18 de filtre par passage**, soit **78 par navigateur**.
+Annulation en vol, absence de nouvel appel tardif, restauration et filtre via
+les flèches/rechargement sont vérifiés. La génération est aussi contrôlée par
+deux tests Python. Cela ne constitue pas un essai Safari sur iPhone physique.
+
+Un fichier core privé de WebKit apparaît pendant ces essais locaux ; seules
+ses métadonnées ELF sont examinées, sans contenu mémoire. Ce fichier de 6,12 Go
+logiques/160,8 Mo alloués est supprimé de notre worktree et n’est pas versionné.
+Les dumps sont désactivés seulement dans le conteneur de test de cette tâche,
+sans modification de la sécurité globale du runner ni des navigateurs clients.
 
 ## Choix conservés et écartés
 
