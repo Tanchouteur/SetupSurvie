@@ -100,7 +100,8 @@ class TransferProtocolTests(unittest.TestCase):
         key = r'Software\Classes\setupsurvie-transfert'
         with tempfile.TemporaryDirectory(prefix='survie protocole ') as folder, \
              patch.dict(sys.modules, {'winreg': registry}), \
-             patch.object(windows_update.os, 'name', 'nt'), \
+             patch.object(windows_update, 'os', types.SimpleNamespace(
+                 name='nt', path=windows_update.os.path, environ=windows_update.os.environ)), \
              patch.dict(windows_update.os.environ, {'SystemRoot': r'C:\Windows'}):
             base = Path(folder)
             (base/'maintenance').mkdir()

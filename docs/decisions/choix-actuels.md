@@ -692,3 +692,12 @@ les dimensions, avec lecture effective des résultats et pages PDF groupées.
 Le [cas réel Baofeng](../essais/2026-11-15-notices-et-guidage-pratique.md) reste une
 recette parmi d’autres ; aucune commande d’appareil n’est codée dans le moteur.
 L’objectif de fidélité et les essais sur des besoins variés restent ouverts.
+
+## Intégration du transfert SSD Windows — 17 novembre 2026
+
+À la demande de Louis, la branche `codex/transfert-ssd-windows` est intégrée
+avec les correctifs Windows et le suivi/pilotage local du transfert. La livraison
+0.42.0 conserve la source et ne déplace pas le disque Docker en service. Voir
+le [guide actuel](../exploitation/transfert-installation.md) et le
+[bilan d’intégration](../essais/2026-11-17-integration-transfert-ssd-windows.md).
+La copie en deux temps avec bascule courte reste une proposition non implémentée.
