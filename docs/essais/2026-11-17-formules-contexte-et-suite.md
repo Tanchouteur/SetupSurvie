@@ -38,4 +38,14 @@ milieu du bloc, bloc trop grand, préfixe incomplet et conservation des bornes.
 Les fixtures sont minuscules et fictives, sans modèle ni corpus téléchargé dans
 le runner. Aucun nouvel essai de génération réelle n’est revendiqué pour ce lot.
 
-La suite complète et la CI restent en cours avant livraison.
+Suite complète locale : **1 013 tests en 202,916 s, 6 ignorés**, aucun échec.
+La CI reste en cours avant livraison.
+
+
+Paquet candidat source `338dae2a7aa26a3c5bd78fc3f51286eb77bf4785` : **978 fichiers**, **17 278 278 octets**
+décompressés, ZIP **7 726 665 octets**, SHA-256
+`158c1844d9245c8798df447c0310b40f864748d48d714396c5ca1faeb315fe49`.
+Chaque fichier est comparé à Git avec ses filtres et aux tailles/empreintes du
+manifeste ; 1 282 liens locaux et ancres sont contrôlés sans cible manquante.
+Ce reçu est ajouté après le paquet, donc non prétendu inclus dans celui-ci.
+Aucun déploiement sur les PC clients n’est effectué pour ces contrôles.
