@@ -79,6 +79,11 @@ les données ni les fonctions existantes de navigation.
 
 ## Livraisons disponibles
 
+La **0.38.0** reprend le volet des conversations selon la demande de Louis du
+17 novembre : projets dépliables avec conversations imbriquées, défilement
+vertical et séparation redimensionnable sur PC. Les menus permettent de renommer
+projets et conversations ; les anciens dossiers et messages restent conservés.
+
 La **0.37.2** corrige une aide mobile qui changeait de position pendant le
 mouvement d’une vue. Le fondu conserve les éléments fixes à leur place ;
 l’[audit de navigation](../essais/2026-11-17-volets-transitions-classement.md#audit-complémentaire-et-correctif-0372--17-novembre-2026)
