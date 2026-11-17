@@ -94,8 +94,24 @@ ancienne copie tronquée avec bloc non fermé n’alimente plus un extrait de ca
 Les tests ciblés couvrent l’API de lecture et les fenêtres : **18 contrôles de
 formules en 0,416 s**, **22 de recherche en 0,266 s**. La suite CI finale est
 relancée sur ce code : **1 003 tests Linux, 6 ignorés, 80,102 s**, aucun échec.
-Les derniers contrôles Windows/navigateur et le reçu final du paquet restent à
-vérifier avant intégration.
+Windows termine sans échec. Le job navigateur passe Chromium, WebKit et l’audit
+clavier Firefox, puis dépasse son délai au lancement d’une traduction dans le
+lecteur Firefox. Le rapport initial ne conserve pas le message du panneau : la
+cause exacte de ce passage CI ne peut pas être certifiée rétroactivement.
+
+Le diagnostic local rejoue les six recettes Firefox précédentes et le lecteur :
+15 contrôles du lecteur passent. Une collision est ensuite provoquée volontairement
+avec une traduction déjà active sur le même profil : l’API la refuse correctement,
+le panneau dit « Une traduction est déjà en cours pour votre compte », et l’ancienne
+recette attend à tort un nouveau travail pendant 30 s. La recette crée désormais
+son propre profil et garde un diagnostic borné du panneau en cas d’échec, sans
+retirer la protection du produit ni arrêter un travail hérité. **16 contrôles
+Firefox passent**, y compris avec une traduction préalable dans un autre profil ;
+le travail initial reste conservé et est mis en pause seulement pour nettoyer
+la fixture. Ces comptes et documents sont entièrement fictifs.
+
+La CI finale de `ef3ad47` est relancée. Son résultat et le reçu du paquet restent
+à vérifier avant intégration.
 
 Les rapports complets, échecs initiaux, traces d’outils et recettes restent privés,
 hors Git. Archive locale `setupsurvie-formules-0372-preuves-privees.tgz`, **39 136
