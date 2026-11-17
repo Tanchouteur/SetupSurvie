@@ -72,6 +72,14 @@ intervention ; aucune réussite n’est déduite du seul déroulement automatiqu
 
 ## Livraisons disponibles
 
+La **0.36.2** corrige deux défauts reproduits sur Bazzite : les consignes de résumé
+devenant des mots de recherche, puis un refus contradictoire de traduction des
+sous-titres. Les [essais réels](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+séparent lectures, bascule de modèle, traduction, reconnaissance et limites de
+fidélité. **Recadrage explicite de Louis, 17 novembre :** terminer cet objectif
+avant installation neuve, transfert de disque ou autre chantier. Les préparatifs
+de ce scénario distinct sont supprimés ; aucune installation utilisateur remplacée.
+
 **Consigne durable de Louis, confirmée le 16 novembre 2026 :** continuer à garder
 la rigueur des choix de design au fil des évolutions. La
 [règle d’extension](refonte-ux-evolutive.md#extension-des-fonctions) précise son

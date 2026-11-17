@@ -22,8 +22,15 @@ def search_subject(query):
     if not request:return query
     tail=raw[request.end():].strip();changed=False
     framing=set('le la les un une de du des d et and ces mes nos vos informations information info infos documents document sources source articles article videos video transcriptions transcripts captions bibliotheque library the my our these local locaux locale locales disponibles disponible trouves trouvees found available'.split())
+    framing.update('notice notices guide guides manuel manuels ouvrage ouvrages livre livres texte textes page pages manual manuals book books'.split())
+    # Only after an explicit summary request and document framing. These verbs
+    # describe the requested sources, not vocabulary that every source must use.
+    boundary_pattern=(r'\b(?:au sujet de|a propos de|sur|concernant|about|of|on|de|des|du|'
+                      r'(?:(?:qui )?(?:expliquent|explique|decrivent|decrit|presentent|presente|detaillent|detaille)|'
+                      r'expliquant|decrivant|presentant|detaillant)|'
+                      r'(?:(?:that |which )?(?:explain|explains|describe|describes)|explaining|describing))\b')
     for _ in range(8):
-        boundary=next((m for m in re.finditer(r'\b(?:au sujet de|a propos de|sur|concernant|about|of|on|de|des|du)\b',tail) if set(tail[:m.start()].split())<=framing),None)
+        boundary=next((m for m in re.finditer(boundary_pattern,tail) if set(tail[:m.start()].split())<=framing),None)
         if boundary is None or not tail[boundary.end():].strip():break
         tail=tail[boundary.end():].strip();changed=True
     return tail if changed else query

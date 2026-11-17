@@ -127,6 +127,35 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
         self.assertIn('900',result['rejected_proposals'][0]['candidate'])
 
+    async def test_contradictory_refusal_gets_one_clarification_and_keeps_rejected_candidate(self):
+        candidate='{"status":"refused","cues":[{"id":0,"text":"Proposition refusée"}]}'
+        async def response(parts,mode,**kwargs):
+            if not kwargs:raise captions.CandidateError('Inconsistent status',candidate,repairable=True,metrics={'total_ms':123})
+            self.assertEqual(kwargs,{'repair':candidate})
+            return await self.translated(parts,mode)
+        self.mock_translate.side_effect=response
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(result['status'],'completed');self.assertEqual(self.mock_translate.await_count,2)
+        self.assertEqual(result['rejected_proposals'][0]['candidate'],candidate)
+        metrics=json.loads(result['parts'][0]['metrics'])
+        self.assertEqual(metrics['format_repair_count'],1);self.assertEqual(metrics['format_repair_attempt']['total_ms'],123)
+
+    async def test_second_contradiction_stops_without_an_unbounded_retry(self):
+        self.mock_translate.side_effect=captions.CandidateError('Still inconsistent','refused data',repairable=True)
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
+        self.assertEqual(self.mock_translate.await_count,2);self.assertEqual(len(result['rejected_proposals']),2)
+        self.assertFalse(captions.track_file(result['id']).exists())
+
+    async def test_game_pause_after_contradiction_prevents_the_clarification(self):
+        async def response(parts,mode):
+            self.state['paused']=True
+            raise captions.CandidateError('Inconsistent','refused data',repairable=True)
+        self.mock_translate.side_effect=response
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(result['status'],'paused');self.assertEqual(self.mock_translate.await_count,1)
+        self.assertEqual(len(result['rejected_proposals']),1);self.assertFalse(captions.track_file(result['id']).exists())
+
     async def test_job_path_rejects_traversal_and_symlink(self):
         with self.assertRaises(HTTPException):captions.track_file('../../not-ours')
         key=store.new_id();folder=store.ROOT/'video-captions';folder.mkdir()
@@ -164,6 +193,29 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result[0]['id'],0);self.assertEqual(metrics['status'],'done');self.assertIn('writing',metrics['phases_ms'])
         self.assertIn('runtime_after',metrics);self.assertIsNotNone(metrics['first_text_ms'])
         self.assertEqual(len(payloads),2);self.assertNotIn('start_ms',payloads[0]['messages'][1]['content'])
+
+    async def test_real_protocol_clarifies_status_but_never_accepts_an_explicit_refusal(self):
+        original=httpx.AsyncClient;payloads=[];refused=False
+        def handler(request):
+            payload=json.loads(request.content);payloads.append(payload)
+            parts=json.loads(payload['messages'][1]['content'])
+            rows=[{'id':p['id'],'text':f'Le rotor fictif mesure {p["id"]+17} mm. Ne pas dépasser cette cote.'} for p in parts]
+            value={'status':'refused' if refused or len(payloads)==1 else 'translated','cues':[] if refused else rows}
+            return httpx.Response(200,content=json.dumps({'message':{'content':json.dumps(value)},'done':True,'done_reason':'stop'}).encode()+b'\n')
+        with patch.object(captions,'translate_batch',self.real_translate),\
+             patch.object(captions.model_runtime,'describe',AsyncMock(return_value={'available':True,'installed':True,'native_context':16384,'running':None,'other_models':0})),\
+             patch.object(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs)):
+            first=await self.finish(await captions.create(self.video,0,'rapide'))
+            self.assertEqual(first['status'],'completed');self.assertEqual(len(payloads),2)
+            self.assertTrue(any('incohérence' in m.get('content','') for m in payloads[1]['messages']))
+            self.assertEqual(len(first['rejected_proposals']),1)
+            self.assertIn('refused',first['rejected_proposals'][0]['candidate'])
+            # A different source revision makes a separate job; an unambiguous
+            # empty refusal is not retried and never receives a French track.
+            self.write_cues(3);videos.scan();refused=True;payloads.clear()
+            second=await self.finish(await captions.create(self.video,0,'rapide'))
+            self.assertEqual(second['status'],'error');self.assertEqual(second['done'],0)
+            self.assertEqual(len(payloads),1);self.assertFalse(captions.track_file(second['id']).exists())
 
     async def test_api_requires_family_and_report_does_not_start_inference(self):
         from pilot import app as gateway

@@ -1,5 +1,12 @@
 # Journal de fiabilisation depuis la 0.2.0
 
+0.36.2 : [tests ciblés Bazzite](2026-11-17-assistant-bibliotheque-bazzite.md),
+demande de résumé décrivant ses sources séparée du sujet, consignes secondaires
+ne supprimant plus la lecture, contexte trop petit expliqué et clarification
+unique d’un refus contradictoire des sous-titres. Échecs initiaux conservés,
+sept sources réelles pour la synthèse du feu, travaux et originaux préservés.
+Recadrage de Louis : cet objectif avant les essais distincts d’installation/transfert.
+
 Livraison 0.36.1, préparée initialement en 0.35.1 : [formes de nombre et titres](2026-11-16-recherche-formes-de-mots.md),
 variantes courantes dans le plan partagé et la sélection de passages, mots
 techniques chiffrés conservés, repli par titres borné et compteurs dans les mesures.

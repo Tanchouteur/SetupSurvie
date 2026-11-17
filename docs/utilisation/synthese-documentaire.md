@@ -16,6 +16,12 @@ documentaire avant le premier appel du modèle. Avec une sélection, il commence
 par les passages des documents choisis et peut chercher un complément utile. La question complète reste transmise au modèle ; une
 consigne secondaire ne devient plus obligatoirement un mot à trouver dans le texte.
 
+Depuis 0.36.2, « Fais une synthèse des documents expliquant comment… » et
+« Résume les notices qui expliquent… » sont aussi reconnus. Une consigne de calcul
+placée après la question ne supprime pas la lecture préalable des documents.
+Les [essais sur la bibliothèque de Bazzite](../essais/2026-11-17-assistant-bibliotheque-bazzite.md)
+conservent l’échec précédent et la comparaison avec sources réellement lues.
+
 La préparation peut examiner jusqu’à douze résultats. Elle privilégie des documents
 distincts et plusieurs collections, puis sélectionne des passages liés au sujet,
 y compris loin du début. Un livre et plusieurs de ses pages ne sont pas présentés
