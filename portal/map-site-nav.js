@@ -10,5 +10,8 @@
     if (route === 'cartes') { link.href = '/cartes.html?interface=nouveau'; link.setAttribute('aria-current','page'); }
     nav.append(link);
   }
-  header.append(brand, nav); document.body.prepend(header); document.body.classList.add('has-map-site-nav');
+  header.append(brand, nav);
+  const controls=document.querySelector('.map-header');
+  if(controls)header.append(controls);
+  document.body.prepend(header); document.body.classList.add('has-map-site-nav');
 })();

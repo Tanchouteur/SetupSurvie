@@ -139,7 +139,7 @@ portée, la prochaine demande et les événements qui peuvent perdre l’état d
 
 Louis signale enfin qu’une demande explicite de vidéo renvoie un article puis
 une absence non établie. Il demande un filtre vidéo dans la recherche et un
-parcours équivalent pour l’assistant : à implémenter après le lot de lecture,
+parcours équivalent pour l’assistant : réservé par Louis à un autre agent après ce signalement,
 sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles

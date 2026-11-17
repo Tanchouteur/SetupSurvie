@@ -60,3 +60,18 @@ ses résultats aux documents ; l’outil IA ne porte pas encore de filtre de typ
 et réduit les détails de couverture. Ce lot est tracé, pas déclaré corrigé par
 la présente livraison : filtre, découverte sans piste et absence/non-indexation
 à distinguer, puis test de la demande réelle et de sa relance.
+
+
+La première CI relève une carte trop petite : la navbar nouvellement ajoutée
+s’empilait avec l’ancien en-tête. Ils sont réunis en un seul bandeau, en gardant
+les boutons de profil et d’impression. Le seuil de hauteur de carte n’est pas
+abaissé pour accepter cette régression.
+Louis réserve ensuite toute la recherche vidéo à un autre agent ; aucune
+modification de ce moteur vidéo n’est incluse dans ce lot. Le travail préparatoire
+API reste isolé, non intégré et non publié, dans son worktree dédié.
+
+Paquet candidat source `b3e84d0b1eefbd15a341bf2d636806556fa7a5c3` : 988 fichiers,
+17 334 674 octets décompressés, ZIP 7 750 184 octets, SHA-256
+`b26930208868c5a11b5b1570cca3fa5e2e76acbe662a7e85d5fbfc721b4b763b`.
+Comparé intégralement à Git et au manifeste ; ce premier paquet précède
+l’ajustement de la hauteur de carte et n’est pas le paquet final de livraison.
