@@ -19,3 +19,9 @@ section p:last-child { margin-bottom: 0; }
 progress { accent-color: #2e6848; height: 1.25rem; width: 100%; }
 #volume { font-weight: 650; }
 .quiet { color: #4b6050; font-size: .9rem; }
+#commands { margin-bottom: 1rem; }
+#path { box-sizing: border-box; display: block; font: inherit; margin: .4rem 0 1rem; padding: .5rem; width: 100%; }
+.actions { display: flex; flex-wrap: wrap; gap: .45rem; }
+.actions button { cursor: pointer; font: inherit; padding: .3rem .6rem; }
+.actions button:disabled { cursor: default; }
+#message { white-space: pre-line; overflow-wrap: anywhere; }

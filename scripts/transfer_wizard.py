@@ -31,6 +31,9 @@ class Wizard:
     def __init__(self, base, work=None):
         self.root=tk.Tk();self.root.title('Transférer SetupSurvie');self.root.geometry('760x660')
         self.base=base;self.events=queue.Queue();self.busy=False;self.monitor=None
+        self.web_events=queue.Queue(maxsize=1)
+        self.web_result=''
+        self.web_requested=False
         candidates=discover(base)
         if not work and (base/'transfer.json').is_file():
             source=Path(transfer.read(base/'transfer.json')['source']['private'])
@@ -110,16 +113,17 @@ class Wizard:
         if self.monitor:
             self.monitor.move(dest)
         else:
-            self.monitor=transfer_web.Monitor(dest)
+            self.monitor=transfer_web.Monitor(dest,commands=self.web_events)
 
     def open_monitor(self):
-        dest=setup.safe_path(self.current_dest) if self.busy else self.destination()
+        selected=self.current_dest if self.busy else self.dest.get()
+        dest=setup.safe_path(selected) if selected.strip() else None
         try:
             self.start_monitor(dest)
         except OSError:
             messagebox.showinfo('Suivi dans le navigateur','Le port du suivi est déjà utilisé. Le suivi reste disponible dans cet assistant.')
             return
-        webbrowser.open(transfer_web.URL)
+        webbrowser.open(self.monitor.browser_url())
 
     def choose_source(self):
         path=filedialog.askdirectory(title='Dossier privé contenant settings.json')
@@ -143,6 +147,8 @@ class Wizard:
     def launch(self, action):
         if self.busy:return
         self.busy=True
+        self.active_from_web=self.web_requested
+        self.web_result=''
         self.status.set('Opération en cours ; vérification des fichiers. Sur un gros disque, cela peut durer longtemps.')
         for button in self.actions:button.configure(state='disabled')
         # Read Tk variables only in the UI thread. Worker actions use frozen values.
@@ -170,23 +176,23 @@ class Wizard:
             self.events.put(('text',f"Données et logiciel : {report['bytes']/gib:.2f} Gio. Libre : {report['free_bytes']/gib:.2f} Gio. Ajouter les images Docker et 256 Mio de marge.\nLe besoin exact est contrôlé avant l’arrêt. La copie peut prendre plusieurs heures.\nMême PC : conserver Docker et Python. Autre Windows : prérequis système à fournir séparément. Linux : conversion non qualifiée.\nLes téléchargements incomplets sont conservés, pas déclarés disponibles.\nVérifiez le disque physique et le format NTFS (Windows) : aucun formatage automatique."))
         self.launch(action)
 
-    def copy(self):
+    def copy(self, confirmed=False):
         app=self.app();dest=self.destination()
-        if not messagebox.askyesno('Copier et arrêter la source','Cette étape arrête seulement SetupSurvie et empêche son redémarrage automatique.\n\nLa source reste conservée jusqu’au retour explicite. Le disque Docker n’est pas déplacé. Continuer ?'):return
+        if not confirmed and not messagebox.askyesno('Copier et arrêter la source','Cette étape arrête seulement SetupSurvie et empêche son redémarrage automatique.\n\nLa source reste conservée jusqu’au retour explicite. Le disque Docker n’est pas déplacé. Continuer ?'):return
         try:
             self.start_monitor(dest)
         except OSError:
             self.append('Suivi navigateur indisponible. Vous pouvez suivre la copie dans cette fenêtre.')
         self.launch(lambda:transfer.transfer(app,dest))
 
-    def activate(self):
+    def activate(self, confirmed=False):
         dest=self.destination()
-        if not messagebox.askyesno('Activer la destination','Démarrer les services depuis la destination et recréer les raccourcis ?\n\nLa source restera bloquée. Aucun essai IA ne sera lancé. Sur un autre PC, les prérequis doivent déjà être installés.'):return
+        if not confirmed and not messagebox.askyesno('Activer la destination','Démarrer les services depuis la destination et recréer les raccourcis ?\n\nLa source restera bloquée. Aucun essai IA ne sera lancé. Sur un autre PC, les prérequis doivent déjà être installés.'):return
         self.launch(lambda:transfer.activate(dest))
 
-    def rollback(self):
+    def rollback(self, confirmed=False):
         dest=self.destination()
-        if not messagebox.askyesno('Retour à la source','Arrêter la destination et débloquer la source ?\n\nLes données nouvelles sur le SSD restent sur le SSD et ne sont pas fusionnées. Utilisez ensuite le raccourci de la source.'):return
+        if not confirmed and not messagebox.askyesno('Retour à la source','Arrêter la destination et débloquer la source ?\n\nLes données nouvelles sur le SSD restent sur le SSD et ne sont pas fusionnées. Utilisez ensuite le raccourci de la source.'):return
         self.launch(lambda:transfer.rollback(dest))
 
     def report(self):
@@ -194,22 +200,71 @@ class Wizard:
         if not path.is_file():messagebox.showinfo('Rapport','Le rapport sera créé pendant la copie.');return
         self.append(json.dumps(transfer.read(path),ensure_ascii=False,indent=2))
 
+    def web_command(self, action, selected):
+        if self.busy:
+            return
+        self.web_requested=True
+        try:
+            if action=='choose':
+                self.choose_dest()
+                self.web_result='Destination sélectionnée dans l’assistant.'
+                return
+            if not selected.strip() or not Path(selected).is_absolute():
+                raise setup.SetupError('Choisissez un dossier de destination ou saisissez son chemin complet.')
+            self.dest.set(str(setup.safe_path(selected)))
+            if action=='examine':
+                self.examine()
+            elif action=='copy':
+                self.copy(confirmed=True)
+            elif action=='prepare':
+                self.destination_action(transfer.prepare)
+            elif action=='verify':
+                self.destination_action(transfer.verify_copy)
+            elif action=='activate':
+                self.activate(confirmed=True)
+            elif action=='rollback':
+                self.rollback(confirmed=True)
+        except (OSError, ValueError, setup.SetupError) as exc:
+            self.web_result=str(exc)
+        finally:
+            self.web_requested=False
+
     def poll(self):
+        try:
+            command=self.web_events.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            self.web_command(*command)
         while True:
             try:kind,value=self.events.get_nowait()
             except queue.Empty:break
-            if kind=='text':self.append(value)
+            if kind=='text':
+                self.append(value)
+                self.web_result=value
             else:
                 self.busy=False
                 for button in self.actions:button.configure(state='normal')
                 self.status.set(value);self.append(value)
-                if kind=='error':messagebox.showerror('Transfert interrompu',value)
+                if not self.web_result or kind=='error':
+                    self.web_result=value
+                if kind=='error' and not self.active_from_web:
+                    messagebox.showerror('Transfert interrompu',value)
+        if self.monitor:
+            selected=self.current_dest if self.busy else self.dest.get()
+            self.monitor.move(Path(selected) if selected.strip() else None)
+            self.monitor.activity(self.busy,self.web_result or self.status.get())
         self.root.after(150,self.poll)
 
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--base',default=str(setup.ROOT.parent));parser.add_argument('--work-dir')
-    args=parser.parse_args();Wizard(setup.safe_path(args.base),args.work_dir).root.mainloop()
+    parser.add_argument('--browser',action='store_true')
+    args=parser.parse_args()
+    wizard=Wizard(setup.safe_path(args.base),args.work_dir)
+    if args.browser:
+        wizard.root.after_idle(wizard.open_monitor)
+    wizard.root.mainloop()
 
 
 if __name__=='__main__':main()

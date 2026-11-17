@@ -2,15 +2,60 @@
   if (location.hostname !== '127.0.0.1' || location.port !== '18780') return;
   const element = id => document.getElementById(id);
   const go = number => new Intl.NumberFormat('fr-FR', {maximumFractionDigits: 1}).format(number / 1e9);
+  const received = new URLSearchParams(location.hash.slice(1)).get('autorisation');
+  if (received) {
+    sessionStorage.setItem('autorisation-transfert', received);
+    history.replaceState(null, '', location.pathname);
+  }
+  const token = sessionStorage.getItem('autorisation-transfert');
+  const headers = token ? {'X-SetupSurvie-Transfer': token} : {};
+  const confirmations = {
+    copy: 'SetupSurvie sera arrêté pendant la copie. Continuer ?',
+    activate: 'Démarrer SetupSurvie depuis le disque de destination ?',
+    rollback: 'Arrêter la destination et rendre la source disponible ? Les nouvelles données du SSD resteront sur le SSD.',
+  };
+  let lastDestination = '';
+  let sending = false;
+  const path = element('path');
+  const buttons = [...element('commands').querySelectorAll('button')];
+  for (const button of buttons) {
+    button.addEventListener('click', async () => {
+      const action = button.dataset.action;
+      if (sending || (confirmations[action] && !confirm(confirmations[action]))) return;
+      sending = true;
+      buttons.forEach(control => { control.disabled = true; });
+      try {
+        const response = await fetch('/api/suivi-copie/action', {
+          method: 'POST', headers: {...headers, 'Content-Type': 'application/json'},
+          body: JSON.stringify({action, destination: path.value, confirmed: true}),
+        });
+        if (!response.ok) throw new Error();
+        element('message').textContent = 'Commande transmise à l’assistant.';
+      } catch {
+        element('message').textContent = 'Commande indisponible. Vérifiez l’assistant sur le PC serveur.';
+      } finally {
+        sending = false;
+      }
+    });
+  }
   element('guide').hidden = true;
   element('live').hidden = false;
   document.querySelector('.back').href = 'http://127.0.0.1:8080/#appareil/stockage';
 
   async function refresh() {
     try {
-      const response = await fetch('/api/suivi-copie', {cache: 'no-store'});
+      const response = await fetch('/api/suivi-copie', {cache: 'no-store', headers});
       if (!response.ok) throw new Error();
       const data = await response.json();
+      element('commands').hidden = !data.commands;
+      if (data.commands) {
+        if (document.activeElement !== path && (path.value === lastDestination || !path.value)) {
+          path.value = data.destination;
+        }
+        lastDestination = data.destination;
+        element('message').textContent = data.message;
+        buttons.forEach(button => { button.disabled = Boolean(data.busy || sending); });
+      }
       element('destination').textContent = data.destination;
       element('phase').textContent = data.state === 'interrupted' ? 'Copie interrompue' : data.phase;
       element('progress').hidden = !data.bytes_total;

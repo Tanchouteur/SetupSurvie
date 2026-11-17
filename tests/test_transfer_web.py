@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from queue import Queue
 import sys
 import tempfile
 import unittest
@@ -44,3 +45,30 @@ class TransferWebTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as missing:
             self.open(self.url + '/transfer.json', timeout=3)
         self.assertEqual(missing.exception.code, 404)
+
+    def test_command_requires_local_origin_session_token_and_confirmation(self):
+        queue = Queue(maxsize=1)
+        monitor = transfer_web.Monitor(self.dest, port=0, commands=queue)
+        self.addCleanup(monitor.close)
+        origin = f'http://127.0.0.1:{monitor.server.server_port}'
+        url = origin + '/api/suivi-copie/action'
+        def send(token, confirmed, request_origin=origin):
+            body = json.dumps({'action': 'copy', 'destination': str(self.dest),
+                               'confirmed': confirmed}).encode()
+            request = Request(url, data=body, headers={
+                'Origin': request_origin, 'X-SetupSurvie-Transfer': token,
+                'Content-Type': 'application/json',
+            })
+            return self.open(request, timeout=3)
+        with self.assertRaises(HTTPError) as denied:
+            send('wrong', True)
+        self.assertEqual(denied.exception.code, 403)
+        with self.assertRaises(HTTPError) as denied:
+            send(monitor.server.token, True, 'http://foreign.test')
+        self.assertEqual(denied.exception.code, 403)
+        with self.assertRaises(HTTPError) as missing:
+            send(monitor.server.token, False)
+        self.assertEqual(missing.exception.code, 400)
+        with send(monitor.server.token, True) as response:
+            self.assertEqual(response.status, 202)
+        self.assertEqual(queue.get_nowait(), ('copy', str(self.dest)))

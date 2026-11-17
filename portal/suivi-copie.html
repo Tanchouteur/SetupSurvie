@@ -14,7 +14,22 @@
     <section id="guide">
       <p>Sur le PC qui héberge SetupSurvie, ouvrez <strong>Transférer SetupSurvie</strong> sur le Bureau. Choisissez le dossier de destination, cliquez sur <strong>Examiner</strong>, puis sur <strong>Copier / reprendre</strong>.</p>
       <p>Le portail est arrêté pendant la copie pour conserver des données cohérentes. Le suivi reste accessible sur le PC serveur.</p>
-      <a class="button" href="http://127.0.0.1:18780/suivi-copie.html">Ouvrir le suivi sur le PC serveur</a>
+      <a class="button" href="setupsurvie-transfert:ouvrir">Ouvrir l’assistant depuis Windows</a>
+      <p><a href="http://127.0.0.1:18780/suivi-copie.html">Consulter un suivi déjà ouvert</a></p>
+    </section>
+    <section id="commands" aria-label="Commandes du transfert" hidden>
+      <label for="path">Dossier de destination</label>
+      <input id="path" placeholder="E:\SetupSurvie-SSD" autocomplete="off">
+      <div class="actions">
+        <button type="button" data-action="choose">Parcourir…</button>
+        <button type="button" data-action="examine">Examiner</button>
+        <button type="button" data-action="copy">Copier / reprendre</button>
+        <button type="button" data-action="prepare">Préparer</button>
+        <button type="button" data-action="verify">Vérifier</button>
+        <button type="button" data-action="activate">Activer</button>
+        <button type="button" data-action="rollback">Retour à la source</button>
+      </div>
+      <p id="message" role="status"></p>
     </section>
     <section id="live" aria-labelledby="phase" hidden>
       <p class="destination">Dossier de destination <strong id="destination"></strong></p>
