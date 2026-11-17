@@ -50,6 +50,11 @@ protection lors de la réduction du contexte et de la lecture de la suite : les
 formules restent entières ou leur omission est signalée. Les tests contrôlent les
 positions dans la source ; aucun nouvel essai de génération réelle n’est revendiqué.
 
+La [recette réseau isolé](../essais/2026-11-17-lecture-reseau-isole.md) complète
+les preuves hors ligne : 13 contrôles HTTP réels, sans interface externe, sur
+guides et sous-titres fictifs déjà préparés. Elle conserve favoris et documents
+associés après redémarrage ; elle ne remplace pas la recette des appareils de Marc.
+
 | Partie | Preuve actuelle | Ce qui reste concret |
 | --- | --- | --- |
 | Recherche classique et index | R2 Marc 0.25.0 : 32 demandes, 31 avec résultats ; 120 index natifs compatibles et 15 compléments pour 135 archives. [Rapport et limites](../essais/2026-11-16-rapports-marc-0250.md) | Avis humains manquants, couverture encore partielle dans ce rapport, ouverture de résultats prioritaires et mesure après SSD à faire sur Marc |
