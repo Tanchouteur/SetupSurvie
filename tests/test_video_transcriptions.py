@@ -10,6 +10,9 @@ from pilot import captions,engine,operations,store,transcriptions as speech,vide
 
 
 class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
+    # These are durable workflow checks, not five-second performance targets.
+    # Windows CI can spend several seconds in SQLite/fsync even on tiny fixtures.
+    FINISH_TIMEOUT=30
     async def asyncSetUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);self.root=Path(temporary.name)
         self.calls=[];self.closed=0;self.gate=None;self.entered=asyncio.Event();self.audio=True;self.empty=False
@@ -46,8 +49,8 @@ class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
 
     async def finish(self,job):
         task=speech.ACTIVE.get(job['id'])
-        if task:await asyncio.wait_for(task,5)
-        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,5)
+        if task:await asyncio.wait_for(task,self.FINISH_TIMEOUT)
+        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,self.FINISH_TIMEOUT)
         return speech.status(job['id'],True)
 
     async def test_audio_source_and_french_track_reach_common_index_without_writing_mp4(self):
@@ -56,8 +59,8 @@ class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['status'],'completed',result);self.assertEqual(result['units_done'],2)
         self.assertEqual(result['progress_ms'],61000);self.assertEqual(result['cues'],2);self.assertTrue(result['translation_job'])
         task=captions.ACTIVE.get(result['translation_job'])
-        if task:await asyncio.wait_for(task,5)
-        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,5)
+        if task:await asyncio.wait_for(task,self.FINISH_TIMEOUT)
+        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,self.FINISH_TIMEOUT)
         source=videos.source(self.video)
         self.assertEqual({t['origin'] for t in source['tracks']},{'local_transcription','local_translation'})
         self.assertIn('Ne pas ouvrir',source['text']);self.assertEqual(source['language'],'fr')
@@ -118,8 +121,8 @@ class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
         _,payload,_=videos.row(self.video);source_index=next(i for i,t in enumerate(payload['tracks']) if t.get('transcription_job'))
         translated=await captions.create(self.video,source_index,'rapide')
         task=captions.ACTIVE.get(translated['id'])
-        if task:await asyncio.wait_for(task,5)
-        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,5)
+        if task:await asyncio.wait_for(task,self.FINISH_TIMEOUT)
+        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,self.FINISH_TIMEOUT)
         self.assertEqual(videos.source(self.video)['language'],'fr')
         speech.track_file(job['id']).write_text('WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nChanged speech.\n')
         videos.scan();self.assertEqual(videos.source(self.video)['tracks'],[])

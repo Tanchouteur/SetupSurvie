@@ -13,6 +13,8 @@ from pilot import captions,engine,library,operations,store,videos
 
 
 class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
+    # Durable publication is checked for correctness, not a four-second SLA.
+    FINISH_TIMEOUT=30
     async def asyncSetUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);self.root=Path(temporary.name)
         for module,key,value in [(store,'ROOT',self.root/'state'),(videos,'ROOT',self.root/'video'),(videos,'ACTIVE',None),
@@ -38,8 +40,8 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
 
     async def finish(self,job):
         task=captions.ACTIVE.get(job['id'])
-        if task:await asyncio.wait_for(task,4)
-        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,4)
+        if task:await asyncio.wait_for(task,self.FINISH_TIMEOUT)
+        if videos.ACTIVE:await asyncio.wait_for(videos.ACTIVE,self.FINISH_TIMEOUT)
         return captions.status(job['id'],full=True)
 
     async def test_complete_french_track_keeps_original_times_is_indexed_and_never_writes_originals(self):

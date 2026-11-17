@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
+
 - [Formules, contexte et suite de lecture — 0.38.3](essais/2026-11-17-formules-contexte-et-suite.md) — blocs entiers et positions exactes.
 
 - [Recherche préalable des notices — 0.38.2](essais/2026-11-17-recherche-notices-commandes.md) — référence explicite, lecture et relances.
