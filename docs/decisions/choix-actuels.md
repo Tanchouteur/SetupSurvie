@@ -24,6 +24,15 @@ doit pouvoir s’appuyer dessus.** Louis demande de commencer par une
 sans rien lancer encore. Un refus inutile y compte comme un échec ; une erreur
 dangereuse sur un sujet critique bloque la campagne.
 
+Compléments de Louis le même jour : règle validée — sans source précise,
+l’assistant répond avec ses connaissances générales en le signalant, avec
+prudence et clarification sur les gestes critiques ; **au moins 95 % des
+réponses sans refus injustifié ni erreur grave**, « car ça peut sauver la vie » ;
+coupure brutale autorisée sur le PC Bazzite ; essais chez Marc lancés par Louis
+via TeamViewer avec mise à jour manuelle. Évolution future demandée : contexte
+personnel de chaque foyer avec une trame (stock, adultes/enfants, compétences),
+inscrite en IDEE-011. Toujours aucune exécution avant feu vert.
+
 ## Essais depuis Happier sur le PC Bazzite — 17 novembre 2026
 
 Louis autorise un accès complet par SSH depuis le runner Coolify sur le LAN,

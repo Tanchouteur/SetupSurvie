@@ -124,7 +124,7 @@ erreur (V1-D06).
 
 ## 4. Peut attendre après la V1
 
-Les idées de la [boîte à idées](boite-a-idees.md) restent hors V1 sauf décision :
+Les idées de la [boîte à idées](boite-a-idees.md) restent hors V1 sauf décision, dont le contexte personnel de chaque foyer (IDEE-011, demandé « dans le futur ») :
 Maison de Solliès-Ville (IDEE-001), compréhension des liens (IDEE-005), choix des
 modèles à stocker (IDEE-009), apports NOMAD dont Kolibri (IDEE-010). Également :
 recherche par image (IMG-04), Wi-Fi dédié (EVO-01), batterie (EVO-02),
@@ -153,7 +153,10 @@ réseau, preuves, limites ; « préparé », « vérifié » et « réussi » re
 
 ## 6. Critères proposés pour annoncer 1.0.0
 
-Proposition à valider par Louis : tous les points V1-D01 à V1-D11 ont une preuve
+Seuil de l’assistant décidé par Louis le 17 novembre 2026 : au moins **95 %**
+des réponses de la banque sans refus injustifié ni erreur grave, car une réponse
+peut sauver une vie ; voir l’[ingénierie de tests](../essais/ingenierie-de-tests.md#seuils-pour-la-v1).
+Proposition à valider par Louis pour le reste : tous les points V1-D01 à V1-D11 ont une preuve
 réelle datée, aucun défaut connu ne fait perdre de données ni ne bloque la
 bibliothèque, et une personne non accompagnée réussit les tâches principales.
 Tant que ces critères ne sont pas remplis, rester en `0.y.z`.

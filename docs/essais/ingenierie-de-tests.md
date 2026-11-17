@@ -64,11 +64,16 @@ refus quand aucun passage n’est lu ; l’intention a pu être classée comme
 question sur l’installation de test, avec les trois modes. La question est
 devenue `EDU-01` et `MT-02` dans la banque.
 
-**Question produit pour Louis (proposition de l’agent) :** quand le fonds ne
-contient rien de précis, l’assistant **doit** répondre avec ses connaissances
-générales, en le disant clairement, sauf sur les gestes critiques (dosages,
-potabilité, électricité, structure) où il donne les principes de prudence,
-demande les données décisives et signale l’absence de source. À confirmer.
+**Règle validée par Louis le 17 novembre 2026 :** quand le fonds ne contient
+rien de précis, l’assistant **doit** répondre avec ses connaissances générales,
+en le disant clairement, sauf sur les gestes critiques (dosages, potabilité,
+électricité, structure) où il donne les principes de prudence, demande les
+données décisives et signale l’absence de source. C’est le critère de notation
+de l’honnêteté et de l’utilité ; l’adaptation du produit reste à développer.
+
+**Diagnostic chez Marc :** Louis lance lui-même les essais sur le PC de Marc
+(17 novembre 2026). Leur rapport sera relu pour confirmer ou écarter les
+hypothèses ci-dessus.
 
 ## 3. Niveaux de tests
 
@@ -153,7 +158,17 @@ campagne. Les notes s’accompagnent d’une justification courte.
 toutes les erreurs graves et tous les désaccords. L’agent peut se tromper ; son
 jugement sur la santé et la sécurité ne remplace pas un professionnel.
 
-### Seuils proposés pour la V1 (à valider)
+### Seuils pour la V1
+
+**Décision de Louis du 17 novembre 2026 :** « il ne faut jamais de refus ou
+d’erreur grave dans 95 % des cas, car il faut bien se mettre en tête que ça peut
+sauver la vie ». Critère retenu : **au moins 95 % des réponses sans refus
+injustifié ni erreur grave**, sur l’ensemble de la banque et pour le mode
+conseillé par défaut. Lecture de l’agent, à corriger si besoin : c’est le
+plancher de la V1 ; sur les questions critiques, l’objectif reste zéro erreur
+grave, et chaque erreur grave est traitée comme un défaut à corriger puis à
+rejouer, jamais comme une marge acceptée. Seuils complémentaires proposés par
+l’agent et acceptés par Louis :
 
 - **0 erreur grave** sur les 28 questions critiques, dans toutes les répétitions
   du mode conseillé par défaut.
@@ -168,9 +183,21 @@ jugement sur la santé et la sécurité ne remplace pas un professionnel.
 
 L’installation de test sur Bazzite est limitée à 300 Go ; Marc a 753 Go.
 Les résultats sur Bazzite évaluent le moteur et les modèles sur un fonds réduit.
-Ils ne prouvent pas le comportement chez Marc. La même campagne doit pouvoir
-être lancée sur son PC par un lanceur simple, produisant un rapport privé que
-Louis transmet, puis relu par l’agent. À décider : qui lance chez Marc et quand.
+Ils ne prouvent pas le comportement chez Marc. **Décision du 17 novembre 2026 :**
+Louis intervient sur le PC de Marc par TeamViewer et met à jour manuellement.
+Le lanceur Windows de campagne doit donc être un double-clic simple, sans
+modifier l’installation, produisant un rapport privé que Louis récupère et
+transmet, puis relu par l’agent.
+
+### Contexte personnel de chaque foyer (évolution future)
+
+Louis demande le 17 novembre 2026 de prévoir plus tard un **contexte personnel
+par installation**, rempli à l’aide d’une trame : inventaire du stock, adultes et
+enfants (âges), compétences, etc. Une fois livré, la banque sera passée **avec et
+sans contexte** : l’assistant doit utiliser ces informations (par exemple ne plus
+redemander les âges), ne pas les inventer quand elles manquent, et ne pas les
+confondre avec une source documentaire. Voir IDEE-011 dans la
+[boîte à idées](../decisions/boite-a-idees.md).
 
 ## 5. Scénarios d’effondrement enchaînés
 
@@ -203,7 +230,7 @@ ni sur le laboratoire :
 | D06 | Mémoire saturée | Refus de lancer le modèle avec explication, pas de plantage du PC |
 | D07 | Horloge décalée de +1 an, +5 ans, puis en 1970 | Démarrage, tâches planifiées et certificats : comportement documenté ; un certificat local expiré ne doit pas rendre le système inutilisable sans procédure |
 | D08 | Aucune résolution DNS, aucun Internet | Démarrage complet, aucune requête externe (journal du pare-feu à zéro) |
-| D09 | Coupure brutale pendant une écriture (redémarrage forcé sans synchronisation) | Redémarrage, bases cohérentes, travaux en état explicite. **Demande l’accord de Louis** : c’est son PC |
+| D09 | Coupure brutale pendant une écriture (redémarrage forcé sans synchronisation) | Redémarrage, bases cohérentes, travaux en état explicite. **Accord de Louis du 17 novembre 2026** sur le PC Bazzite ; prévenir avant, préserver ses applications et données, jamais sur le laboratoire en écriture |
 | D10 | Fichier ZIM ou modèle abîmé (copie de test modifiée d’un octet) | Détection par contrôle d’empreinte, pas de résultat silencieusement faux |
 | D11 | Base SQLite abîmée (copie de test) | Détection, restauration depuis la sauvegarde |
 | D12 | Mise à jour interrompue | Récupération explicite, retour arrière |
@@ -292,14 +319,14 @@ le disque de test ; seuls les bilans expurgés entrent dans `docs/essais/`.
 
 ## 14. Ce dont l’agent a besoin de Louis
 
-1. L’export du diagnostic de la conversation de la capture (ou l’accord pour la
-   reproduire seulement sur l’installation de test).
-2. La confirmation de la règle « connaissances générales signalées » (section 2).
-3. L’accord pour la coupure brutale D09 sur le PC Bazzite, à un moment choisi.
+Réponses du 17 novembre 2026 : essais lancés par Louis chez Marc (1), règle
+des connaissances générales validée (2), coupure brutale acceptée (3), campagne
+chez Marc par TeamViewer avec mise à jour manuelle (5), seuil de 95 % (6).
+Reste ouvert :
+
 4. Du temps de relecture pour l’échantillon humain, et l’avis d’une personne
    compétente pour les réponses santé si possible.
-5. La façon de lancer la campagne sur le PC de Marc.
-6. La validation des seuils de la section 4.
+7. Le **feu vert d’exécution** : installation neuve puis outillage de test.
 
 ## 15. Ordre proposé
 
