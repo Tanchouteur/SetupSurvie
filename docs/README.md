@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Feuille de route vers la V1](decisions/feuille-de-route-v1.md) — bilan général du 17 novembre 2026 : bloquants, améliorations, gros essais manquants et questions ; proposition à valider.
+- [Installation neuve et transfert entre SSD sur Bazzite](essais/plan-installation-neuve-et-transfert-bazzite.md) — protocole préparé, non exécuté : installation Linux de zéro ≤ 300 Go, transfert, nettoyage.
+
 - [Volets, transitions et classement — 0.37.0, audit 0.37.2](essais/2026-11-17-volets-transitions-classement.md)
 
 - [Finition et reprise de la base UX](essais/2026-11-16-finitions-interface.md) — défauts des captures, nettoyage CSS/JS et preuves du candidat 0.36.0.

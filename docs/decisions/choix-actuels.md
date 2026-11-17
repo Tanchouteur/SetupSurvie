@@ -1,5 +1,20 @@
 # Choix et contraintes actuels
 
+## Feuille de route V1 et installation neuve sur Bazzite — 17 novembre 2026
+
+Louis demande un bilan général de ce qui doit ou peut être amélioré pour une V1,
+des gros essais manquants, puis une installation Linux complète de zéro sur son
+PC Bazzite (RTX 2060, deux SSD), un transfert d’un SSD à l’autre limité à
+**300 Go** et un nettoyage ; pas de modification du code à ce stade. Il précise
+que le bilan porte sur le projet en général, d’autres agents travaillant en
+parallèle. La [feuille de route V1](feuille-de-route-v1.md) est une proposition
+de l’agent à valider ; le [protocole Bazzite](../essais/plan-installation-neuve-et-transfert-bazzite.md)
+liste les décisions préalables (dépassement temporaire du plafond de 600 Go
+sur le SSD 4 To, sens du transfert, Docker dédié, créneaux IA). Cette demande
+ouvre le chantier d’installation neuve et de transfert mis de côté plus tôt le
+même jour ; aucun résultat n’est annoncé. Documentation seule, sans changement
+de version logicielle.
+
 ## Essais depuis Happier sur le PC Bazzite — 17 novembre 2026
 
 Louis autorise un accès complet par SSH depuis le runner Coolify sur le LAN,
