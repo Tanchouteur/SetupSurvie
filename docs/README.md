@@ -1,5 +1,8 @@
 # Documentation SetupSurvie
 
+- [Trouver les vidéos — 0.39.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
+- [Télécharger une liste de vidéos YouTube](decisions/telechargement-videos-youtube.md) — plan du 17 novembre 2026, non développé, à valider.
+
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
 
 - [Formules, contexte et suite de lecture — 0.38.3](essais/2026-11-17-formules-contexte-et-suite.md) — blocs entiers et positions exactes.

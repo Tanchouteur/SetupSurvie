@@ -53,7 +53,15 @@ async def lifespan(app):
     try:
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
     except HTTPException:pass
+    # Keep the video directory searchable without a manual inventory. The
+    # check only lists names, sizes and dates; it never blocks startup.
+    async def refresh_videos():
+        try:
+            with optional_feature('videos') as module:await module.ensure_fresh(force=True)
+        except Exception:pass
+    video_refresh=asyncio.create_task(refresh_videos())
     yield
+    video_refresh.cancel()
     try:
         with optional_feature('archive_videos') as module:await module.stop_all()
     except HTTPException:pass
@@ -70,7 +78,7 @@ async def lifespan(app):
         with optional_feature('captions') as module:await module.stop_all()
     except HTTPException:pass
     try:
-        with optional_feature('videos') as module:await module.stop()
+        with optional_feature('videos') as module:await module.stop(reason='service_restarted')
     except HTTPException:pass
     try:
         with optional_feature('performance') as module:await module.cancel(reason='service_restarted')
@@ -91,7 +99,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.38.3'
+VERSION='0.39.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -517,16 +525,16 @@ async def search_diagnostic():
 
 
 @app.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all',diagnostic:bool=False,stream:bool=False):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all',diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
     owner=(await user(request))['id'] if favorites_only else None
     if stream:
-        return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
+        return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic,kind=kind),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
     details={'diagnostic':True,'budget':search_stream.BUDGET} if diagnostic else {}
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
-            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,**details) if q.strip() else []
+            found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,kind=kind,**details) if q.strip() or kind=='videos' else []
     else:
-        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,**details) if q.strip() else []
+        found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,kind=kind,**details) if q.strip() or kind=='videos' else []
     return {'results':found,**({'coverage':found.coverage} if isinstance(found,library.SearchResults) else {})}
 
 

@@ -124,6 +124,21 @@ pas à ignorer un échec.
 
 ## Livraisons disponibles
 
+La **0.39.0** rend les vidéos trouvables. Demande de Louis du 17 novembre 2026,
+après un essai de sous-titrage chez Marc où ni la recherche ni l’assistant ne
+trouvaient de vidéo. Ajouts : filtre **Vidéos uniquement / Documents uniquement**
+dans Rechercher, avec liste complète si la recherche est vide ; actualisation
+automatique du répertoire des vidéos locales au démarrage et quand le dossier
+change ; outil `find_videos` de l’assistant, recherche préparée quand la question
+parle de vidéo, et liens vers le lecteur ajoutés si le modèle les oublie. Voir le
+[guide vidéo](../utilisation/videos-locales.md) et le
+[bilan](../essais/2026-11-17-recherche-videos.md). Nouvelle fonctionnalité
+compatible (`y`) : API `/api/search` étendue par `kind`, données et composants
+tiers inchangés. Le même jour, Louis demande un outil qui télécharge une liste
+d’adresses YouTube dans la bibliothèque. Seul son
+[plan](telechargement-videos-youtube.md) est livré, à valider ; il pose la
+question du dossier (`library/video/` actuel ou `library/videos/`) et des droits.
+
 La **0.38.3** complète la préservation des formules : réduction du contexte et
 lecture explicite de la suite utilisent des limites de blocs entiers. Une
 formule trop longue est omise et signalée, sans augmenter les budgets. Les

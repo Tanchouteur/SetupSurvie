@@ -1,5 +1,10 @@
 # Vidéos locales dans la recherche commune
 
+**Complément 0.39.0, 17 novembre 2026 :** filtre « Vidéos uniquement », répertoire
+actualisé automatiquement et outil `find_videos` de l’assistant ; voir le
+[guide actuel](../utilisation/videos-locales.md). Téléchargement d’une liste
+YouTube : [plan à valider](telechargement-videos-youtube.md).
+
 **État actuel — 0.31.0, 16 novembre 2026 :** le [guide vidéo](../utilisation/videos-locales.md) couvre index/lecture, traduction locale 0.24.0, transcription audio 0.26.0 et récupération YouTube 0.31.0. L’inventaire dans les ZIM et la qualification du fonds réel de Marc restent ouverts. Les compléments datés ci-dessous conservent leurs étapes historiques.
 
 **Complément 0.24.0, 16 novembre 2026 :** traduction française synchronisée des

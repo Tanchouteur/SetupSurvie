@@ -15,7 +15,7 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.36.0"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
         ('css', '/nouveau/style.css', '0.36.0'),
@@ -48,7 +48,7 @@ def build():
         ('js', '/nouveau/reader-work.js', '0.37.2'),
         ('css', '/nouveau/motion.css', '0.37.0'),
         ('js', '/nouveau/motion.js', '0.37.2'),
-        ('js', '/nouveau/navigation.js', '0.34.0'),
+        ('js', '/nouveau/navigation.js', '0.39.0'),
     ]
     tags = []
     for kind, path, version in assets:
@@ -58,7 +58,7 @@ def build():
     source = source.replace('<script defer src="/nouveau/layout.js',
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
-    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.36.1')
+    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.39.0')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.29.0')
     source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.28.0')
     return source
