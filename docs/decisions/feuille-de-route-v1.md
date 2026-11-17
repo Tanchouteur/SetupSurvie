@@ -59,6 +59,13 @@ retrouver les bilans. Légende : **Réel** = essayé sur un PC cible avec de vra
 | V1-D10 | **Mise à jour d’une V1 vers une version suivante** sans perte | Nécessaire pour un produit vendu ; aujourd’hui éprouvée seulement entre versions pilotes | Mise à jour + retour arrière sur une copie de l’installation vendue |
 | V1-D11 | **Manuel humain autonome** testé par une personne | Exigence du protocole de secours ; le manuel actuel est un premier guide | Recette humaine R16–R17 |
 
+Complément du 17 novembre 2026 : la stratégie d’évaluation et des modes dégradés
+est dans l’[ingénierie de tests](../essais/ingenierie-de-tests.md), avec une
+banque de 89 questions. Cas réel ajouté : sur le PC de Marc (fonds de 753 Go),
+une question sur l’organisation scolaire des enfants est refusée sans aucune
+source consultée. Le **sur-refus** compte comme un défaut au même titre qu’une
+erreur (V1-D06).
+
 ## 3. Devrait être amélioré pour la V1
 
 ### Interface et simplicité

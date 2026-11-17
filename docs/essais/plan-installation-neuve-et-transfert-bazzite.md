@@ -48,6 +48,15 @@ Un problème contourné à la main sans correction du produit reste **ouvert**.
 
 ## 3. Décisions à obtenir avant de commencer
 
+**Réponses de Louis du 17 novembre 2026 :** Q1 accepté — plafond SetupSurvie du
+SSD 4 To porté à **900 Go** pendant l’essai ; Q2 sens validé (SSD système → SSD
+4 To) ; Q3 Docker rootless dédié validé ; Q4 Louis ne prévoit pas de jouer dans
+les jours à venir (le marqueur de pause reste à vérifier avant chaque essai IA) ;
+Q5 fonds réduit validé. Q6 à Q8 restent des propositions. Louis demande de
+**ne rien lancer** et de commencer par préparer l’[ingénierie de tests](ingenierie-de-tests.md),
+qui utilisera cette installation comme banc d’essai.
+
+
 | N° | Question | Proposition de l’agent |
 | --- | --- | --- |
 | Q1 | **Plafond du SSD 4 To** : le laboratoire occupe déjà 590 Go sur 600 Go. Une installation ou une copie de 300 Go sur ce disque dépasse la règle | Autoriser un dépassement **temporaire** jusqu’à 900 Go pendant l’essai, dans un dossier séparé, supprimé au nettoyage. Sinon, impossible de transférer vers ce disque |

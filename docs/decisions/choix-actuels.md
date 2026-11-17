@@ -15,6 +15,15 @@ ouvre le chantier d’installation neuve et de transfert mis de côté plus tôt
 même jour ; aucun résultat n’est annoncé. Documentation seule, sans changement
 de version logicielle.
 
+Réponses de Louis le même jour : plafond du SSD 4 To porté à **900 Go** pendant
+l’essai, installation sur le SSD système puis transfert vers le 4 To, Docker
+dédié, fonds réduit ; pas de jeu prévu dans les jours à venir. **Principe
+confirmé : SetupSurvie doit être très utile en cas d’effondrement total et l’on
+doit pouvoir s’appuyer dessus.** Louis demande de commencer par une
+[ingénierie de tests](../essais/ingenierie-de-tests.md) conduite par l’agent,
+sans rien lancer encore. Un refus inutile y compte comme un échec ; une erreur
+dangereuse sur un sujet critique bloque la campagne.
+
 ## Essais depuis Happier sur le PC Bazzite — 17 novembre 2026
 
 Louis autorise un accès complet par SSH depuis le runner Coolify sur le LAN,
