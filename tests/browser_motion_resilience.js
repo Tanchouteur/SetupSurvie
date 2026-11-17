@@ -42,6 +42,10 @@ async page => {
   await page.goBack();await page.locator('#chat-input').waitFor({state:'visible'});
   check(await page.locator('#chat-input').inputValue()==='Brouillon conservé pendant l’audit des transitions','Précédent retrouve le brouillon après une navigation au clavier');
   await page.goForward();await page.locator('#next-collections').waitFor({state:'visible'});
+  // The router restores history focus in requestAnimationFrame. The visible
+  // view can precede that callback in WebKit: wait for this actual UI work
+  // before moving focus to the help button, otherwise restoration steals Enter.
+  await page.evaluate(()=>new Promise(requestAnimationFrame));
   check(await page.evaluate(length=>S.view==='library'&&history.length===length,length),'Suivant retrouve la rubrique sans étape d’historique créée par les animations');
   check(await page.evaluate(()=>{const n=document.activeElement;return !!n&&n.getClientRects().length>0&&!n.closest('[hidden],[inert]');}),'Le focus restauré reste dans une zone visible et utilisable');
   const help=page.getByRole('button',{name:'Comprendre le filtre des collections',exact:true});
