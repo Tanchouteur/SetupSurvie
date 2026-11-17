@@ -186,9 +186,63 @@ def recover(app,journal,services):
         return recover_locked(app,journal,services)
 
 
+def resume_startup(app, *, restart=False):
+    """Resolve an interrupted update from its durable journal and application directories."""
+    import transfer
+    with locked(app.work/'update.lock'):
+        transfer.guard(app.work)
+        journal=app.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        if state['phase'] in ('complete','rolled_back'):
+            return
+        config=app.load()
+        root=setup.safe_path(config['app_dir'])
+        previous=Path(state['previous'])
+        snapshot=Path(state['snapshot'])
+        if (state['phase'] not in ('prepared','snapshot_ready','switched')
+            or root!=setup.safe_path(state['application'])
+            or setup.ROOT.resolve() not in (root,previous.resolve())
+            or not previous.resolve().is_relative_to(root.parent/'updates')
+            or previous.name!='previous' or snapshot!=previous.parent/'snapshot'):
+            raise setup.SetupError('Mise à jour incomplète : ouvrez la récupération de mise à jour.')
+        installed=release_at(root)['version'] if root.is_dir() else None
+        if state['phase'] in ('prepared','snapshot_ready'):
+            # Before publication service state has never been handed to the new code.
+            if state['phase']=='snapshot_ready' and installed is None and previous.is_dir():
+                if release_at(previous)['version']!=state['old_version'] or not (snapshot/'backup.json').is_file():
+                    raise setup.SetupError('Ancienne installation incomplète ; récupération manuelle nécessaire.')
+                durable.publish(previous,root)
+                installed=state['old_version']
+            if installed==state['old_version'] and not previous.exists():
+                state['phase']='rolled_back'
+                setup.write_json(journal,state,private=True)
+                return
+        if (state['phase']=='prepared' or installed!=state['new_version'] or not previous.is_dir()
+            or release_at(previous)['version']!=state['old_version'] or not (snapshot/'backup.json').is_file()):
+            raise setup.SetupError('Version installée ou sauvegarde incohérente ; récupération manuelle nécessaire.')
+        services=Services(app,config)
+        if restart:
+            try:
+                health=app.request('http://127.0.0.1:8080/api/health',timeout=3)
+                running=health.get('ok') and health.get('version')==state['new_version']
+            except (OSError,ValueError,setup.SetupError):
+                running=False
+            if running:
+                import control
+                control.start(app,config)
+            else:
+                services.start()
+        services.check(state['new_version'])
+        state['phase']='complete'
+        setup.write_json(journal,state,private=True)
+
+
 def recover_locked(app,journal,services):
     j=json.loads(journal.read_text(encoding='utf-8'));root=Path(j['application']);previous=Path(j['previous']);snapshot=Path(j['snapshot'])
     if j['phase'] in ('complete','rolled_back'):raise setup.SetupError('Cette opération est terminée ; aucun état utilisateur ne sera écrasé.')
+    if j['phase']!='rolling_back':
+        j['phase']='rolling_back'
+        setup.write_json(journal,j,private=True)
     services.stop()
     if previous.exists():
         if root.exists():durable.publish(root,root.with_name(root.name+'.failed-'+uuid.uuid4().hex[:8]))
@@ -257,10 +311,13 @@ def main():
     for action in ('apply','rollback'):
         a=sub.add_parser(action);a.add_argument('package');a.add_argument('--sha256',required=True);a.add_argument('--work-dir',required=True)
     r=sub.add_parser('recover');r.add_argument('--work-dir',required=True)
+    f=sub.add_parser('resume-startup',aliases=['finish-switched']);f.add_argument('--work-dir',required=True)
     args=p.parse_args()
     if args.action=='build':build(args.output);return
     app=setup.Installation(args.work_dir)
     if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
+    elif args.action in ('resume-startup','finish-switched'):
+        resume_startup(app,restart=True)
     else:
         # Recovery and application share the same OS lease, including after a crash.
         with locked(app.work/'update.lock'):

@@ -32,4 +32,20 @@ if ($TaskName) {
     $task=Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     $startup=$task -and $task.State -ne 'Disabled' -and $task.Description -eq 'SetupSurvie managed document services startup without AI'
 }
-@{source=(Disk-Info $Source);destination=(Disk-Info $Destination);docker=$docker;startup_enabled=[bool]$startup} | ConvertTo-Json -Depth 5 -Compress
+$dockerDisks=@()
+$distributions=Get-ChildItem -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss' -ErrorAction SilentlyContinue
+foreach ($distribution in $distributions) {
+    $wsl=Get-ItemProperty -LiteralPath $distribution.PSPath
+    if ($wsl.DistributionName -notin @('docker-desktop','docker-desktop-data') -or -not $wsl.BasePath) { continue }
+    $base=$wsl.BasePath -replace '^\\\\\?\\',''
+    $vhd=$wsl.VhdFileName
+    if (-not $vhd) { $vhd='ext4.vhdx' }
+    if ([IO.Path]::GetFileName($vhd) -ne $vhd) { continue }
+    $dockerDisks+=Join-Path $base $vhd
+    if ($wsl.DistributionName -eq 'docker-desktop' -and (Split-Path $base -Leaf) -eq 'main') {
+        $parent=Split-Path $base
+        $dockerDisks+=Join-Path $parent 'disk\docker_data.vhdx'
+        $dockerDisks+=Join-Path $parent 'wsl-swap.vhdx'
+    }
+}
+@{source=(Disk-Info $Source);destination=(Disk-Info $Destination);docker=$docker;docker_disks=$dockerDisks;startup_enabled=[bool]$startup} | ConvertTo-Json -Depth 5 -Compress

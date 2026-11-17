@@ -14,6 +14,7 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 import transfer
+from delivery_paths import locked
 
 
 @contextmanager
@@ -96,6 +97,68 @@ transfer.transfer(setup.Installation(sys.argv[2]),Path(sys.argv[3]),stop_context
         self.assertEqual(transfer.read(self.dest/'transfer.json')['phase'],'copying')
         with self.assertRaises(setup.SetupError):transfer.verify_copy(self.dest)
         self.copy();transfer.verify_copy(self.dest)
+
+    def test_windows_can_resume_a_journal_that_inventory_included_a_data_lease(self):
+        lease=self.data/'catalog/content.lock.lease'
+        with locked(lease.with_name('content.lock')):
+            with patch.object(transfer,'data_lease',return_value=False), \
+                    self.assertRaises(PermissionError if os.name=='nt' else RuntimeError):
+                if os.name=='nt':
+                    self.copy()
+                else:
+                    original=transfer.database_check
+                    def unavailable(path):
+                        if path==lease:raise RuntimeError('fixture locked')
+                        return original(path)
+                    with patch.object(transfer,'database_check',side_effect=unavailable):
+                        self.copy()
+            journal=self.copy()
+        self.assertIn('data/catalog/content.lock.lease',journal['inventory']['excluded'])
+        self.assertFalse((self.dest/'data/catalog/content.lock.lease').exists())
+        transfer.verify_copy(self.dest)
+
+    def test_docker_disks_are_excluded_but_the_recovery_archive_and_template_are_copied(self):
+        active=self.data/'docker/main/ext4.vhdx'
+        history=self.data/'diagnostics/docker-recovery-2026-11-14/main/ext4.vhdx'
+        template=self.data/'tools/DockerDesktop/resources/wsl/ext4.vhdx'
+        for path in (active,history,template):
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(b'fixture disk')
+        items=transfer.inventory({'data':self.data},[active])
+        self.assertIn('data/docker/main/ext4.vhdx',items['excluded'])
+        self.assertIn('data/'+history.relative_to(self.data).as_posix(),[r['path'] for r in items['files']])
+        self.assertIn('data/'+template.relative_to(self.data).as_posix(),[r['path'] for r in items['files']])
+        with self.assertRaisesRegex(setup.SetupError,'non identifié'):
+            transfer.inventory({'data':self.data})
+
+    def test_retries_return_after_source_is_unlocked_before_final_journal_write(self):
+        self.copy()
+        real_save=transfer.save
+        def crash(dest,journal):
+            if journal['phase']=='returned_to_source':raise OSError('fixture outage')
+            real_save(dest,journal)
+        with patch.object(transfer,'save',side_effect=crash),self.assertRaises(OSError):
+            transfer.rollback(self.dest)
+        self.assertFalse((self.work/'transfer-guard.json').exists())
+        self.assertEqual(transfer.read(self.dest/'transfer.json')['phase'],'returning_to_source')
+        transfer.rollback(self.dest)
+        self.assertEqual(transfer.read(self.dest/'transfer.json')['phase'],'returned_to_source')
+
+    def test_interrupted_image_export_keeps_attempt_and_reuses_only_verified_archive(self):
+        self.dest.mkdir(parents=True)
+        def export(_config,path):
+            path.write_bytes(b'fixture Docker image')
+            if exporter.call_count==1:
+                raise OSError('fixture outage')
+            setup.write_json(path.with_name(path.name+'.json'),{'sha256':setup.file_hash(path)})
+        with patch.object(self.app,'export_images',side_effect=export) as exporter:
+            with self.assertRaises(OSError):
+                transfer.copy_images(self.app,self.config,self.dest,lambda *args,**kwargs:None)
+            self.assertFalse((self.dest/'images.tar').exists())
+            result=transfer.copy_images(self.app,self.config,self.dest,lambda *args,**kwargs:None)
+            self.assertEqual(transfer.copy_images(self.app,self.config,self.dest,lambda *args,**kwargs:None),result)
+        self.assertEqual(exporter.call_count,2)
+        self.assertEqual(len(list(self.dest.glob('images-export-*.tar.pending'))),1)
 
     def test_partial_prefix_and_corruption(self):
         source=self.data/'large';source.write_bytes(b'0123456789'*100)

@@ -2,10 +2,12 @@
 """Offline relocation of an installed portable SetupSurvie. Standard library only."""
 from contextlib import ExitStack, contextmanager
 import argparse
+import errno
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sqlite3
 import stat
@@ -23,6 +25,10 @@ BLOCK = 16 * 1024 * 1024
 # Runtime identities are never portable. Leases remain untouched on the source.
 RUNTIME = {'control-process.json', 'native-ollama.json', 'discovery-process.json',
            'control.stop', 'docker-start-attempt.json', 'transfer-guard.json', 'compose.env'}
+
+
+def data_lease(relative):
+    return relative.startswith('data/') and relative.endswith('.lock.lease')
 
 
 def read(path):
@@ -50,14 +56,17 @@ def roots(app, config):
     return result
 
 
-def inventory(source):
+def inventory(source, docker_disks=()):
     """Every regular file, with explicit exclusions; no hidden traversal of links."""
     files, excluded, empty = [], [], []
+    docker_disks = {Path(path) for path in docker_disks}
+    def unreadable(error):
+        raise error
     for role, root in source.items():
         if not root.is_dir():raise setup.SetupError('Dossier source absent : '+role)
         nested = {p for p in source.values() if p != root and p.is_relative_to(root)}
         seen = set()
-        for folder, dirs, names in os.walk(root, followlinks=False):
+        for folder, dirs, names in os.walk(root, followlinks=False, onerror=unreadable):
             parent = Path(folder)
             kept = []
             for name in dirs:
@@ -79,9 +88,16 @@ def inventory(source):
                 path = parent/name
                 relative = path.relative_to(root).as_posix()
                 destination(root,relative)
-                if role == 'private' and (name in RUNTIME or name.endswith('.lease')) or name.endswith(('.pyc','-shm')):
+                if (role == 'private' and (name in RUNTIME or name.endswith('.lease'))
+                    or data_lease(role+'/'+relative) or name.endswith(('.pyc','-shm'))):
                     excluded.append(role+'/'+relative);continue
-                if name.lower().endswith(('.vhd','.vhdx')):raise setup.SetupError('Disque virtuel détecté : déplacez Docker depuis ses réglages, sans copier son disque en service.')
+                if name.lower().endswith(('.vhd','.vhdx')):
+                    if role=='data' and path in docker_disks and stat.S_ISREG(path.lstat().st_mode):
+                        excluded.append(role+'/'+relative);continue
+                    history=re.fullmatch(r'diagnostics/docker-recovery-\d{4}-\d{2}-\d{2}/(?:main/ext4|disk/docker_data)\.vhdx',relative)
+                    template=relative=='tools/DockerDesktop/resources/wsl/ext4.vhdx'
+                    if role!='data' or not (history or template):
+                        raise setup.SetupError('Disque virtuel non identifié détecté ; copie refusée.')
                 if name.endswith('.transfer-part'):raise setup.SetupError('Nom réservé au transfert déjà présent dans la source.')
                 info = path.lstat()
                 if not stat.S_ISREG(info.st_mode):raise setup.SetupError('Fichier spécial refusé : '+role+'/'+relative)
@@ -146,7 +162,7 @@ def plan(app, dest):
         path=source['data']/name
         if not path.is_file() or not path.stat().st_size:
             raise setup.SetupError('Une base attendue de l’installation est absente ou vide. Conservez la source pour diagnostic ; aucun transfert déclaré complet.')
-    items=inventory(source)
+    items=inventory(source,host.get('docker_disks',[]))
     if any(record['path'].endswith('/pyvenv.cfg') for record in items['files']):
         raise setup.SetupError('Un environnement Python supplémentaire doit disposer d’un adaptateur hors ligne avant transfert. Aucun arrêt effectué.')
     total=sum(r['bytes'] for r in items['files'])
@@ -190,6 +206,9 @@ def copy_file(source, target, record, progress):
                         raise setup.SetupError('Partiel différent de la source ; conservé pour diagnostic. Choisissez une nouvelle destination.')
                     digest.update(chunk);offset+=len(chunk)
                     progress('Vérification de la reprise',offset,record['bytes'])
+            if os.name=='nt' and not partial.stat().st_mode & stat.S_IWRITE:
+                # A previous run may have stopped after copying read-only attributes.
+                partial.chmod(stat.S_IWRITE)
         with partial.open('ab') as out:
             while chunk:=src.read(BLOCK):
                 out.write(chunk);out.flush();os.fsync(out.fileno())
@@ -198,18 +217,25 @@ def copy_file(source, target, record, progress):
     unchanged()
     if offset!=record['bytes'] or hash_progress(partial,progress)!=digest.hexdigest():
         raise setup.SetupError('Copie incomplète ou corrompue ; destination non démarrable.')
-    shutil.copystat(source,partial)
-    durable.sync_file(partial);durable.publish(partial,target)
+    # On Windows a read-only source may make the published copy read-only.
+    # Flush using the still-writable handle before publishing those attributes.
+    if os.name=='nt':
+        with partial.open('rb+') as output:
+            shutil.copystat(source,partial);os.fsync(output.fileno())
+    else:
+        shutil.copystat(source,partial);durable.sync_file(partial)
+    durable.publish(partial,target)
     return digest.hexdigest()
 
 
 @contextmanager
 def stopped(app, config):
-    import library_tasks, discovery
+    import control, library_tasks, discovery
     from pilot_backup import maintenance
     data=Path(config['data_dir'])
     # Marker is written BEFORE stopping, and survives our process dying.
     library_tasks.shutdown(app,config)
+    control.stop(app)
     discovery.stop(app)
     with ExitStack() as stack:
         stack.enter_context(locked(data/'catalog/content-supervisor.lock'))
@@ -228,6 +254,56 @@ def save(dest, journal):
     setup.write_json(dest/'transfer.json',journal,private=True)
 
 
+def copy_status(dest):
+    path=dest/'Suivi-transfert.json'
+    if not path.is_file():
+        return {}
+    status=read(path)
+    if status['state']=='running':
+        import discovery
+        if not status['identity'] or discovery.identity(status['pid'])!=status['identity']:
+            status['state']='interrupted'
+    return status
+
+
+@contextmanager
+def track_copy(dest, journal, callback):
+    import discovery
+    status={'state':'running','phase':'Arrêt de SetupSurvie et inventaire',
+            'pid':os.getpid(),'identity':discovery.identity(os.getpid()),
+            'bytes_total':journal['bytes'],'bytes_verified':0,'files_done':0,
+            'files_total':len(journal['inventory']['files'])}
+    last_write=0
+    def update(phase, n=0, total=0, *, force=False, **values):
+        nonlocal last_write
+        changed=phase!=status['phase']
+        status.update(phase=phase, file_bytes=n, file_total=total, **values)
+        if force or time.monotonic()-last_write>=2:
+            status['updated_at']=time.time()
+            setup.write_json(dest/'Suivi-transfert.json',status)
+            last_write=time.monotonic()
+        if force or changed and n==0:
+            callback(phase,n,total)
+    update(status['phase'],force=True)
+    try:
+        yield update
+    except (Exception, KeyboardInterrupt) as exc:
+        reason='Reprise nécessaire.'
+        if isinstance(exc,OSError) and (exc.errno==errno.ENOSPC or getattr(exc,'winerror',None)==112):
+            reason='Espace insuffisant sur le disque de destination.'
+        elif isinstance(exc,OSError):
+            reason='Erreur de lecture ou d’écriture. Vérifiez les deux disques et le diagnostic privé.'
+        elif isinstance(exc,setup.SetupError):
+            reason='Un contrôle a échoué. Consultez le diagnostic privé avant de reprendre.'
+        try:
+            update(status['phase'],force=True,state='interrupted',reason=reason)
+        except OSError:
+            pass
+        raise
+    else:
+        update('Copie vérifiée',force=True,state='copied')
+
+
 def export_report(dest, journal):
     # No paths, filenames, users, settings values, DB contents or raw tool logs.
     report={k:journal.get(k) for k in ('schema','kind','id','phase','created','bytes','prerequisites','release','target')}
@@ -239,7 +315,7 @@ def export_report(dest, journal):
     host=journal.get('host',{})
     report['storage']={'destination_filesystem':host.get('destination',{}).get('filesystem'),
                        'different_physical_disk':host.get('source',{}).get('disk')!=host.get('destination',{}).get('disk') if host.get('source',{}).get('known') and host.get('destination',{}).get('known') else None,
-                       'docker_location_recorded':bool(host.get('docker')), 'docker_moved':False}
+                       'docker_location_recorded':bool(host.get('docker') or host.get('docker_disks')), 'docker_moved':False}
     report['incomplete_files_preserved']=sum(r['path'].endswith(('.part','.pending','.tmp')) for r in journal.get('inventory',{}).get('files',[]))
     report['pending']=['Essai Windows réel chez Marc', 'Recherche et ouverture par un utilisateur',
                        'IA : essai explicite après levée de pause', 'Redémarrage et réseau externe débranché',
@@ -265,6 +341,36 @@ def bundle_launcher(base):
     durable.write_bytes(base/'transferer-setupsurvie.sh',
         b'#!/bin/sh\nexec python3 "$(dirname "$0")/application/scripts/transfer_wizard.py" --base "$(dirname "$0")"\n')
     (base/'transferer-setupsurvie.sh').chmod(0o700)
+
+
+def copy_images(app, config, dest, progress):
+    archive=dest/'images.tar'
+    manifest=dest/'images.tar.json'
+    if archive.is_file() and manifest.is_file():
+        try:
+            expected=read(manifest)['sha256']
+        except (ValueError,KeyError):
+            expected=None
+        if expected and hash_progress(archive,progress,'Contrôle des images Docker')==expected:
+            return expected,setup.file_hash(manifest)
+    # A surviving docker save child can only write to its own temporary path.
+    # Keep untrusted attempts for diagnosis and rebuild from the installed images.
+    token=uuid.uuid4().hex
+    if archive.exists():
+        durable.publish(archive,dest/f'images-interrupted-{token}.tar')
+    if manifest.exists():
+        durable.publish(manifest,dest/f'images-interrupted-{token}.tar.json')
+    staging=dest/f'images-export-{token}.tar.pending'
+    sidecar=staging.with_name(staging.name+'.json')
+    progress('Exportation des images Docker',force=True)
+    app.export_images(config,staging)
+    durable.sync_file(staging)
+    expected=read(sidecar)['sha256']
+    if hash_progress(staging,progress,'Contrôle des images Docker')!=expected:
+        raise setup.SetupError('Archive Docker corrompue.')
+    durable.publish(staging,archive)
+    durable.publish(sidecar,manifest)
+    return expected,setup.file_hash(manifest)
 
 
 def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, export_images=True):
@@ -304,49 +410,62 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                     image_bytes+=int(json.loads(setup.run(['docker','image','inspect',ref],capture=True))[0]['Size'])
             if journal['free_bytes'] < journal['bytes']+image_bytes+256*1024**2:
                 raise setup.SetupError('Place insuffisante : données, images Docker et marge de 256 Mio nécessaires. Source inchangée.')
-            durable.mkdir(dest);dest.chmod(0o700);save(dest,journal)
+            durable.mkdir(dest.parent);dest.mkdir();dest.chmod(0o700)
+            durable.sync_directory(dest.parent);save(dest,journal)
         existing=app.work/'transfer-guard.json'
         if existing.exists() and read(existing).get('id')!=journal['id']:
             raise setup.SetupError('Un autre transfert protège cette source. Reprenez-le ou revenez à la source.')
         setup.write_json(existing,{'id':journal['id'],'destination':str(dest)},private=True)
         journal['phase']='copying';save(dest,journal);export_report(dest,journal)
-        with stop_context(app,config):
+        with track_copy(dest,journal,progress) as report, stop_context(app,config):
             # Reinventory ONLY on first stop. Never silently merge changed source states.
-            current=inventory(roots(app,config))
+            docker_disks=journal.get('host',{}).get('docker_disks',[])
+            current=inventory(roots(app,config),docker_disks)
             if not journal.get('frozen'):
                 journal['inventory']=current;journal['bytes']=sum(r['bytes'] for r in current['files']);journal['frozen']=True;save(dest,journal)
-            elif current['files']!=journal['inventory']['files']:
-                raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
+            else:
+                previous=journal['inventory']['files']
+                retained=[record for record in previous if not data_lease(record['path'])]
+                if current['files']!=retained:
+                    raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
+                if retained!=previous:
+                    journal['inventory']=current
+                    journal['bytes']=sum(record['bytes'] for record in retained)
+                    journal['verified']={path:digest for path,digest in journal.get('verified',{}).items() if not data_lease(path)}
+                    save(dest,journal)
             for folder in journal['inventory']['directories']:durable.mkdir(destination(dest,folder))
             verified=journal.setdefault('verified',{})
             databases=journal.setdefault('databases',[])
+            confirmed=0
+            last_save=time.monotonic()
+            report('Copie et vérification des fichiers',force=True,bytes_total=journal['bytes'],
+                   files_total=len(journal['inventory']['files']))
             for number,record in enumerate(journal['inventory']['files'],1):
                 relative=record['path'];role,tail=relative.split('/',1)
                 origin=destination(Path(journal['source'][role]),tail)
                 target=destination(dest,relative)
-                progress('Fichier '+str(number)+' / '+str(len(journal['inventory']['files'])),0,record['bytes'])
-                # Source databases are checked BEFORE their bytes are accepted.
-                is_db=database_check(origin)
-                verified[relative]=copy_file(origin,target,record,progress)
+                report('Vérification avant copie',0,record['bytes'],files_done=number-1,bytes_verified=confirmed)
+                try:
+                    # Source databases are checked before their bytes are accepted.
+                    is_db=database_check(origin)
+                    verified[relative]=copy_file(origin,target,record,report)
+                except (OSError,setup.SetupError) as exc:
+                    exc.add_note('Fichier concerné : '+relative)
+                    raise
                 if is_db and relative not in databases:databases.append(relative)
-                save(dest,journal)
+                confirmed+=record['bytes']
+                if time.monotonic()-last_save>=5:
+                    save(dest,journal);last_save=time.monotonic()
+            save(dest,journal)
+            report('Contrôle des bases de données',force=True,files_done=len(verified),bytes_verified=confirmed)
             for relative in databases:database_check(destination(dest,relative))
             if export_images:
-                archive=dest/'images.tar'
-                if not archive.exists() or not (dest/'images.tar.json').exists():
-                    # An interrupted docker save is untrusted, keep it for diagnosis.
-                    if archive.exists():durable.publish(archive,dest/('images-interrupted-'+uuid.uuid4().hex+'.tar'))
-                    app.export_images(config,archive)
-                image_info=read(dest/'images.tar.json')
-                if setup.file_hash(archive)!=image_info['sha256']:raise setup.SetupError('Archive Docker corrompue.')
-                journal['images_sha256']=image_info['sha256']
-                journal['images_manifest_sha256']=setup.file_hash(dest/'images.tar.json')
-            if inventory(roots(app,config))['files']!=journal['inventory']['files']:
+                journal['images_sha256'],journal['images_manifest_sha256']=copy_images(app,config,dest,report)
+            if inventory(roots(app,config),docker_disks)['files']!=journal['inventory']['files']:
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
-            journal['phase']='copied';save(dest,journal)
-        bundle_launcher(dest)
-        journal['checks']['source_stopped']=True
-        save(dest,journal);export_report(dest,journal)
+            bundle_launcher(dest)
+            journal['checks']['source_stopped']=True
+            journal['phase']='copied';save(dest,journal);export_report(dest,journal)
         return journal
 
 
@@ -606,9 +725,14 @@ def rollback_locked(dest):
         command=local_runtime(dest)+['stop-destination',str(dest)]
         setup.run(command)
     marker=source_work/'transfer-guard.json'
-    if not marker.is_file() or read(marker).get('id')!=journal['id']:
+    if journal['phase']=='returned_to_source':
+        return
+    owned=marker.is_file() and read(marker).get('id')==journal['id']
+    already_unlocked=journal['phase']=='returning_to_source' and not marker.exists()
+    if not (owned or already_unlocked):
         raise setup.SetupError('Protection source absente ou différente ; aucun démarrage automatique.')
-    marker.unlink();durable.sync_directory(source_work)
+    journal['phase']='returning_to_source';save(dest,journal)
+    marker.unlink(missing_ok=True);durable.sync_directory(source_work)
     journal['phase']='returned_to_source';save(dest,journal);export_report(dest,journal)
     # Use original code and settings. User chooses Ouvrir; never force IA on rollback.
     print('Destination arrêtée. Source disponible : utilisez son raccourci Ouvrir SetupSurvie. Les nouveaux changements sur le SSD ne sont pas fusionnés.')
@@ -624,12 +748,16 @@ def stop_destination(dest):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=['copy','prepare','verify','activate','rollback','stop-destination'])
+    parser.add_argument('action',choices=['copy','status','prepare','verify','activate','rollback','stop-destination'])
     parser.add_argument('destination');parser.add_argument('--work-dir')
     args=parser.parse_args();dest=setup.safe_path(args.destination)
     if args.action=='copy':
         if not args.work_dir:parser.error('--work-dir requis')
-        transfer(setup.Installation(args.work_dir),dest,progress=lambda phase,n,total:print(phase,n,'/',total,flush=True))
+        transfer(setup.Installation(args.work_dir),dest)
+    elif args.action=='status':
+        status=copy_status(dest)
+        if not status:raise setup.SetupError('Aucun suivi disponible pour cette destination.')
+        print(json.dumps({key:value for key,value in status.items() if key not in ('pid','identity')},ensure_ascii=False,indent=2))
     elif args.action=='prepare':prepare(dest)
     elif args.action=='verify':verify_copy(dest);print('Empreintes et bases contrôlées ; fonctionnement réel à essayer séparément.')
     elif args.action=='activate':activate(dest)

@@ -132,6 +132,10 @@ pas à ignorer un échec.
 
 ## Mesures visibles et conservation du modèle — décision de Louis du 17 novembre 2026
 
+Louis demande aussi de reprendre la qualité visuelle générale, la cohérence de la
+navigation des cartes et l'intégration des indicateurs de ressources. Ce
+[chantier visuel](refonte-ux-evolutive.md#cohérence-et-qualité-visuelle-à-reprendre--demande-de-louis-du-17-novembre-2026) reste à concevoir et à réaliser.
+
 Louis demande un indicateur compact dans la navbar PC pour le modèle réellement
 chargé, la RAM et la VRAM, et le maintien de la navigation principale dans les
 cartes. Les mesures détaillées doivent être accessibles directement ; un lien
@@ -704,3 +708,21 @@ les dimensions, avec lecture effective des résultats et pages PDF groupées.
 Le [cas réel Baofeng](../essais/2026-11-15-notices-et-guidage-pratique.md) reste une
 recette parmi d’autres ; aucune commande d’appareil n’est codée dans le moteur.
 L’objectif de fidélité et les essais sur des besoins variés restent ouverts.
+
+## Intégration du transfert SSD Windows — 17 novembre 2026
+
+À la demande de Louis, la branche `codex/transfert-ssd-windows` est intégrée
+avec les correctifs Windows et le suivi/pilotage local du transfert. La livraison
+0.42.0 conserve la source et ne déplace pas le disque Docker en service. Voir
+le [guide actuel](../exploitation/transfert-installation.md) et le
+[bilan d’intégration](../essais/2026-11-17-integration-transfert-ssd-windows.md).
+La copie en deux temps avec bascule courte reste une proposition non implémentée.
+
+## Redémarrage Bazzite confirmé — 17 novembre 2026
+
+Après le redémarrage physique effectué par Louis, les services Docker dédié et
+SetupSurvie repartent automatiquement (+19 s et +35 s au relevé), sans commande
+de démarrage de l’agent. Portail 0.41.0, recherche, lecture, secours et trois
+routeurs sont vérifiés ; voir le [bilan réel](../essais/2026-11-17-installation-neuve-bazzite.md#redémarrage-physique-confirmé--17-novembre-2026).
+Ce résultat complète la recette Linux ; téléphone réel, chargement de modèle,
+transfert entre SSD et coupure électrique brutale restent distincts.

@@ -1,10 +1,58 @@
 """Install a stable Windows updater outside the replaceable application directory."""
 import argparse
+import os
 from pathlib import Path
 import shutil
 
 import setup
 from delivery_paths import destination
+
+
+def install_transfer_protocol(base):
+    """Register a fixed, argument-free PowerShell launch for this user only."""
+    if os.name != 'nt':
+        return
+    import winreg
+    key_path = r'Software\Classes\setupsurvie-transfert'
+    owner = 'SetupSurvie managed transfer protocol v1'
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+            try:
+                existing, _ = winreg.QueryValueEx(key, 'SetupSurvieOwner')
+            except FileNotFoundError:
+                return  # An unowned protocol must never be replaced.
+            if existing != owner:
+                return
+    except FileNotFoundError:
+        # A per-user registration would otherwise shadow a machine-wide handler.
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path):
+                return
+        except FileNotFoundError:
+            pass
+
+    # Windows may append the clicked URL to the command. WScript receives it,
+    # but this fixed script never reads its arguments or forwards them to PS.
+    script = destination(base, 'maintenance/transfer-browser.vbs')
+    marker = "' SetupSurvie managed transfer protocol v1"
+    if script.exists():
+        try:
+            if not script.read_text(encoding='utf-16').startswith(marker):
+                return
+        except (OSError, UnicodeError):
+            return
+    ps_script = destination(base, 'maintenance/transfer-windows.ps1')
+    command = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "' + str(ps_script) + '" -Browser'
+    body = marker + '\r\nCreateObject("WScript.Shell").Run "' + command.replace('"', '""') + '", 1, False\r\n'
+    from pilot import durable
+    durable.write_bytes(script, body.encode('utf-16'))
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+        winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'URL:SetupSurvie transfer')
+        winreg.SetValueEx(key, 'URL Protocol', 0, winreg.REG_SZ, '')
+        winreg.SetValueEx(key, 'SetupSurvieOwner', 0, winreg.REG_SZ, owner)
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path + r'\shell\open\command') as key:
+        winreg.SetValueEx(key, '', 0, winreg.REG_SZ,
+                          f'"{os.path.join(os.environ["SystemRoot"], "System32", "wscript.exe")}" //B //Nologo "{script}"')
 
 
 def install_launcher(app, config):
@@ -44,6 +92,7 @@ def install_launcher(app, config):
     from pilot import durable
     durable.write_bytes(destination(base, 'Transferer-SetupSurvie.cmd'),
         b'@echo off\r\nrem SetupSurvie managed transfer\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0maintenance\\transfer-windows.ps1" %*\r\nif errorlevel 1 pause\r\n')
+    install_transfer_protocol(base)
     import windows_autostart
     windows_autostart.refresh(app, config)
 

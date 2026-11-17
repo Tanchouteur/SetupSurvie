@@ -27,11 +27,12 @@ def run(work_dir, *, open_browser=False):
     if not open_browser:
         if (work/'startup-paused.json').exists():return 0
         journal=work/'update.json'
-        if journal.exists() and json.loads(journal.read_text(encoding='utf-8-sig')).get('phase') not in ('complete','rolled_back'):
+        phase=json.loads(journal.read_text(encoding='utf-8-sig')).get('phase') if journal.exists() else None
+        if phase not in (None,'complete','rolled_back','prepared','snapshot_ready','switched'):
             return 1
         # A routine health tick needs no shell, Python CLI or Docker command.
         # Download recovery has its own independent scheduled task.
-        if healthy(config):return 0
+        if phase in (None,'complete','rolled_back') and healthy(config):return 0
     log=Path(config['data_dir'])/'diagnostics/startup-background.log'
     log.parent.mkdir(parents=True,exist_ok=True)
     shell=Path(os.environ['SystemRoot'])/'System32/WindowsPowerShell/v1.0/powershell.exe'

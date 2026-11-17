@@ -1,5 +1,9 @@
 # Documentation SetupSurvie
 
+- [Qualité visuelle à reprendre](decisions/refonte-ux-evolutive.md#cohérence-et-qualité-visuelle-à-reprendre--demande-de-louis-du-17-novembre-2026) — demande de Louis : navigation des cartes, indicateurs RAM/GPU et cohérence de tout le site ; chantier futur.
+
+- [Intégration du transfert SSD Windows — 0.42.0](essais/2026-11-17-integration-transfert-ssd-windows.md) — reprise de copie, suivi navigateur, tests et limites.
+
 - [Installation Linux neuve sur Bazzite](essais/2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.
 
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
