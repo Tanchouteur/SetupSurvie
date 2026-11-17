@@ -175,7 +175,7 @@
   );
   const engineState = make("p", "small");
   engineState.id = "settings-engine-state";
-  engine.prepend(engineState);
+  engine.querySelector("details > summary").after(engineState);
   panes.assistant.append(
     link(
       "ensemble",
