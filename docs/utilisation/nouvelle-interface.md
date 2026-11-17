@@ -236,3 +236,8 @@ Le premier passage CI a révélé une assertion WebKit exécutée avant la resta
 du focus après Suivant ; la recette attend maintenant deux frames de rendu avant
 de donner le focus à l’aide. Les assertions d’ouverture et de fermeture restent
 présentes. Les validations finales CI sont suivies avant fusion.
+
+Le contrôle de largeur attend aussi la stabilisation du format PC après une
+réduction mobile et envoie la touche directement à la séparation. Ses 22
+assertions sont conservées et repassent sur les trois moteurs. La CI finale
+est suivie sur le code `dee61ce`, sans changement des données ni des API.
