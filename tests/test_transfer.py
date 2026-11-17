@@ -221,6 +221,14 @@ transfer.transfer(setup.Installation(sys.argv[2]),Path(sys.argv[3]),stop_context
         self.assertEqual(value['source'],(self.dest/'data/library/guides/été.pdf').as_posix())
         self.assertEqual(value['text'],'souvenir '+str(self.data))
 
+    def test_frozen_inventory_accepts_only_new_empty_wal_for_existing_base(self):
+        base = {'path': 'data/state/pilot.db', 'bytes': 4096}
+        wal = {'path': 'data/state/pilot.db-wal', 'bytes': 0}
+        self.assertTrue(transfer.matches_frozen_inventory([base, wal], [base]))
+        self.assertFalse(transfer.matches_frozen_inventory([base, {**wal, 'bytes': 32}], [base]))
+        self.assertFalse(transfer.matches_frozen_inventory([base], [base, wal]))
+        self.assertFalse(transfer.matches_frozen_inventory([base, {**wal, 'path': 'orphan-wal'}], [base]))
+
     def test_sqlite_wal_is_included(self):
         database=self.data/'state/pilot/wal.db'
         db=sqlite3.connect(database)

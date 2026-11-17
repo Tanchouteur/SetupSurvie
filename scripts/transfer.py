@@ -107,6 +107,18 @@ def inventory(source, docker_disks=()):
     return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded}
 
 
+def matches_frozen_inventory(current, frozen):
+    frozen_paths = {record['path'] for record in frozen}
+    # Read-only SQLite checks can create empty WAL sidecars for existing bases.
+    # A pre-existing WAL or a new WAL with content must still match the inventory.
+    return [record for record in current if not (
+        record['path'].endswith('-wal')
+        and record['bytes'] == 0
+        and record['path'] not in frozen_paths
+        and record['path'][:-4] in frozen_paths
+    )] == frozen
+
+
 def database_check(path):
     with path.open('rb') as stream:
         header=stream.read(16)
@@ -425,10 +437,10 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             else:
                 previous=journal['inventory']['files']
                 retained=[record for record in previous if not data_lease(record['path'])]
-                if current['files']!=retained:
+                if not matches_frozen_inventory(current['files'],retained):
                     raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
                 if retained!=previous:
-                    journal['inventory']=current
+                    journal['inventory']={**current,'files':retained}
                     journal['bytes']=sum(record['bytes'] for record in retained)
                     journal['verified']={path:digest for path,digest in journal.get('verified',{}).items() if not data_lease(path)}
                     save(dest,journal)
@@ -460,7 +472,9 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             for relative in databases:database_check(destination(dest,relative))
             if export_images:
                 journal['images_sha256'],journal['images_manifest_sha256']=copy_images(app,config,dest,report)
-            if inventory(roots(app,config),docker_disks)['files']!=journal['inventory']['files']:
+            if not matches_frozen_inventory(
+                inventory(roots(app,config),docker_disks)['files'],journal['inventory']['files']
+            ):
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)
             journal['checks']['source_stopped']=True
