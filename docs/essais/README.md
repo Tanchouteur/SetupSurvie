@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Installation Linux neuve sur Bazzite](2026-11-17-installation-neuve-bazzite.md) — recette réelle en cours, fonds réduit vérifié et limites.
+
 - [Mémoire visible et lecture de traduction — 0.39.0](2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
