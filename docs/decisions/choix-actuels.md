@@ -132,6 +132,10 @@ pas à ignorer un échec.
 
 ## Mesures visibles et conservation du modèle — décision de Louis du 17 novembre 2026
 
+Louis demande aussi de reprendre la qualité visuelle générale, la cohérence de la
+navigation des cartes et l'intégration des indicateurs de ressources. Ce
+[chantier visuel](refonte-ux-evolutive.md#cohérence-et-qualité-visuelle-à-reprendre--demande-de-louis-du-17-novembre-2026) reste à concevoir et à réaliser.
+
 Louis demande un indicateur compact dans la navbar PC pour le modèle réellement
 chargé, la RAM et la VRAM, et le maintien de la navigation principale dans les
 cartes. Les mesures détaillées doivent être accessibles directement ; un lien
