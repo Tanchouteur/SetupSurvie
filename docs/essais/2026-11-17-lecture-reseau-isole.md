@@ -83,3 +83,14 @@ transcription passent en 11,612 s. Les 22 contrôles navigateur passent avec un
 retard réseau de 800 ms sur les requêtes de projet. Les tentatives de reproduction
 n’ont pas reproduit l’assertion Chromium initiale ; la course est identifiée
 par lecture du chargement asynchrone, pas revendiquée comme incident reproduit.
+
+
+La [CI suivante](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44088373199)
+valide sept jobs, dont la campagne navigateur complète et Linux (1 013 tests,
+81,401 s, 6 ignorés). Windows s’arrête avant la transcription sur le helper
+analogue des sous-titres : publication durable annulée après quatre secondes.
+Il n’est pas compté comme réussi. Même contrôle ciblé avec publication retardée
+de 4,2 s : échec avant (4,543 s), réussite après adaptation du seul délai de fin
+(4,690 s). Les 17 tests des sous-titres passent en 6,734 s ; attentes des événements
+de pause et assertions métier restent inchangées. Aucun correctif produit déduit
+de ces délais de fixture.
