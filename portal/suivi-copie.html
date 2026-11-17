@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copier SetupSurvie</title>
+  <link rel="stylesheet" href="/suivi-copie.css">
+  <script defer src="/suivi-copie.js"></script>
+</head>
+<body>
+  <main>
+    <a class="back" href="/#appareil/stockage">Mon appareil · Stockage</a>
+    <h1>Copier SetupSurvie</h1>
+    <section id="guide">
+      <p>Sur le PC qui héberge SetupSurvie, ouvrez <strong>Transférer SetupSurvie</strong> sur le Bureau. Choisissez le dossier de destination, cliquez sur <strong>Examiner</strong>, puis sur <strong>Copier / reprendre</strong>.</p>
+      <p>Le portail est arrêté pendant la copie pour conserver des données cohérentes. Le suivi reste accessible sur le PC serveur.</p>
+      <a class="button" href="http://127.0.0.1:18780/suivi-copie.html">Ouvrir le suivi sur le PC serveur</a>
+    </section>
+    <section id="live" aria-labelledby="phase" hidden>
+      <p class="destination">Dossier de destination <strong id="destination"></strong></p>
+      <h2 id="phase" role="status">Lecture du suivi…</h2>
+      <progress id="progress" max="100" aria-label="Volume vérifié" hidden></progress>
+      <p id="volume"></p>
+      <p id="file"></p>
+      <p id="updated" class="quiet"></p>
+    </section>
+  </main>
+</body>
+</html>

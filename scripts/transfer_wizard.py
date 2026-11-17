@@ -10,9 +10,11 @@ import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
+import webbrowser
 
 import setup
 import transfer
+import transfer_web
 
 
 def discover(base):
@@ -28,7 +30,7 @@ def discover(base):
 class Wizard:
     def __init__(self, base, work=None):
         self.root=tk.Tk();self.root.title('Transférer SetupSurvie');self.root.geometry('760x660')
-        self.base=base;self.events=queue.Queue();self.busy=False
+        self.base=base;self.events=queue.Queue();self.busy=False;self.monitor=None
         candidates=discover(base)
         if not work and (base/'transfer.json').is_file():
             source=Path(transfer.read(base/'transfer.json')['source']['private'])
@@ -54,6 +56,7 @@ class Wizard:
         row=ttk.Frame(panel);row.pack(fill='x')
         for label,callback in [('Vérifier la copie',lambda:self.destination_action(transfer.verify_copy)),('Retour à la source',self.rollback),('Ouvrir le rapport',self.report)]:
             button=ttk.Button(row,text=label,command=callback);button.pack(side='left',padx=2);self.actions.append(button)
+        ttk.Button(row,text='Suivi dans le navigateur',command=self.open_monitor).pack(side='left',padx=2)
         self.status=tk.StringVar(value='Commencez par Examiner. Une destination existante ne sera pas remplacée.')
         ttk.Label(panel,textvariable=self.status,wraplength=700).pack(anchor='w',pady=12)
         self.bar=ttk.Progressbar(panel,mode='determinate');self.bar.pack(fill='x')
@@ -99,7 +102,24 @@ class Wizard:
     def close(self):
         if self.busy:
             messagebox.showinfo('Opération en cours','Laissez cette fenêtre ouverte. En cas d’arrêt du PC, relancez le même transfert pour reprendre.');return
+        if self.monitor:
+            self.monitor.close()
         self.root.destroy()
+
+    def start_monitor(self, dest):
+        if self.monitor:
+            self.monitor.move(dest)
+        else:
+            self.monitor=transfer_web.Monitor(dest)
+
+    def open_monitor(self):
+        dest=setup.safe_path(self.current_dest) if self.busy else self.destination()
+        try:
+            self.start_monitor(dest)
+        except OSError:
+            messagebox.showinfo('Suivi dans le navigateur','Le port du suivi est déjà utilisé. Le suivi reste disponible dans cet assistant.')
+            return
+        webbrowser.open(transfer_web.URL)
 
     def choose_source(self):
         path=filedialog.askdirectory(title='Dossier privé contenant settings.json')
@@ -153,6 +173,10 @@ class Wizard:
     def copy(self):
         app=self.app();dest=self.destination()
         if not messagebox.askyesno('Copier et arrêter la source','Cette étape arrête seulement SetupSurvie et empêche son redémarrage automatique.\n\nLa source reste conservée jusqu’au retour explicite. Le disque Docker n’est pas déplacé. Continuer ?'):return
+        try:
+            self.start_monitor(dest)
+        except OSError:
+            self.append('Suivi navigateur indisponible. Vous pouvez suivre la copie dans cette fenêtre.')
         self.launch(lambda:transfer.transfer(app,dest))
 
     def activate(self):

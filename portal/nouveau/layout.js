@@ -225,12 +225,21 @@
   const storage = make("section", "view");
   storage.id = "view-storage";
   storage.hidden = true;
+  const copy = make("article", "panel");
+  const copyLink = make("a", "secondary-link", "Copier l’installation");
+  copyLink.href = "/suivi-copie.html";
+  copy.append(
+    make("h2", "", "Copier SetupSurvie vers un autre disque"),
+    make("p", "", "Choisissez le dossier de destination sur le PC serveur et suivez la copie depuis le navigateur."),
+    copyLink,
+  );
   storage.append(
     header(
       "L’espace de votre bibliothèque.",
       "Les fichiers sur disque sont distincts des modèles chargés en mémoire.",
     ),
     get("data-summary"),
+    copy,
     make("h2", "", "Modèles enregistrés sur le disque"),
     get("data-models"),
     get("data-preparation"),
