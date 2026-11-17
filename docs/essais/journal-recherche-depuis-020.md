@@ -1,6 +1,6 @@
 # Journal de fiabilisation depuis la 0.2.0
 
-0.37.4 : [aide générale sans source précise](2026-11-17-aide-generale-sans-source.md),
+0.38.1 : [aide générale sans source précise](2026-11-17-aide-generale-sans-source.md),
 consignes de réponse utiles et honnêtes, préparation vide annoncée comme telle,
 sources et gestes critiques toujours distingués. Essais simulés et réels séparés.
 

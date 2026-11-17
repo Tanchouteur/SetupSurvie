@@ -118,3 +118,13 @@ propre composant ; les colonnes de l’assistant continuent d’animer leur larg
 La recette `browser_motion_resilience.js` ouvre une aide pendant la transition
 mobile et contrôle son placement avant et après. Voir la
 [référence CSS sur le repère créé par transform](https://developer.mozilla.org/en-US/docs/Web/CSS/transform).
+
+
+## Volet par projets — 0.38.0
+
+Les dossiers existants sont présentés comme projets dépliables. Chaque projet
+charge ses conversations et sa pagination à l’ouverture, avec garde de profil
+et de génération. Une seule surface verticale défile dans le volet. Les menus
+de renommage et le classement restent sur leurs API existantes. La séparation
+PC utilise la capture du pointeur et un rôle separator accessible au clavier ;
+sa largeur est bornée par l’espace disponible. Aucun changement de schéma.

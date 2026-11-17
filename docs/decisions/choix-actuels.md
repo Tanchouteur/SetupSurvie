@@ -112,7 +112,7 @@ les données ni les fonctions existantes de navigation.
 
 ## Livraisons disponibles
 
-La **0.37.4** applique la règle validée par Louis : une question générale reste
+La **0.38.1** applique la règle validée par Louis : une question générale reste
 traitable sans source précise, avec connaissances générales annoncées et exemples
 adaptables. La préparation ne présente plus un lot vide comme des documents lus.
 Les commandes exactes et gestes critiques gardent leurs exigences de sources,
@@ -120,6 +120,10 @@ paramètres et prudence ; aucun faux document n’est ajouté au suivi.
 Voir le [bilan ciblé](../essais/2026-11-17-aide-generale-sans-source.md).
 Correction compatible (`z`), schéma personnel et composants tiers inchangés.
 
+La **0.38.0** reprend le volet des conversations selon la demande de Louis du
+17 novembre : projets dépliables avec conversations imbriquées, défilement
+vertical et séparation redimensionnable sur PC. Les menus permettent de renommer
+projets et conversations ; les anciens dossiers et messages restent conservés.
 
 La **0.37.3** conserve les formules extractibles dans les articles lus et leurs
 traductions. Le [bilan ciblé](../essais/2026-11-17-formules-documentaires.md)

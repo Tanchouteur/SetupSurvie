@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.37.4, 17 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.38.1, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -21,7 +21,7 @@ tous ses chiffres : comparer la source et son original illustré pour les gestes
 branchements et usages importants. Un ancien fichier texte ayant déjà perdu
 ses formules ne peut pas les retrouver sans réextraction de son original.
 
-## Aide générale lorsque les sources ne suffisent pas — 0.37.4
+## Aide générale lorsque les sources ne suffisent pas — 0.38.1
 
 Pour une explication, une idée ou une organisation familiale, l’assistant peut
 répondre avec ses **connaissances générales**, en le signalant clairement.

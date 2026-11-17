@@ -1,6 +1,6 @@
 # Aide générale sans source précise
 
-**Bilan ciblé — 17 novembre 2026, candidat 0.37.4.** Suite de l’objectif
+**Bilan ciblé — 17 novembre 2026, candidat 0.38.1.** Suite de l’objectif
 recherche et assistant. Applique la règle validée par Louis dans
 l’[ingénierie de tests](ingenierie-de-tests.md#2-cas-fondateur--la-capture-de-marc-du-17-novembre-2026).
 La campagne V1 complète, le fonds de Marc et les essais d’installation restent
@@ -80,3 +80,12 @@ supprimés après conservation privée du rapport et de la recette : archive loc
 Les empreintes moteur/contexte observées correspondent aux fichiers candidats.
 Le modèle préexistant et les services restent intacts ; son maintien est 15 s.
 La CI complète reste en cours avant livraison.
+
+
+## Intégration avec les travaux parallèles
+
+Candidat préparé en 0.37.4 ; la refonte du volet des projets est ensuite fusionnée
+en 0.38.0 sur main. La livraison corrective devient **0.38.1** après fusion
+normale, sans modification des composants UX. Les essais réels conservent leurs
+empreintes initiales ; moteur et contexte restent identiques après cette fusion,
+la version API change. La CI doit valider l’état réuni avant livraison.

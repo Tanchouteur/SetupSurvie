@@ -1,6 +1,7 @@
 # Essais et résultats
 
-- [Aide générale sans source précise — 0.37.4](2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
+- [Aide générale sans source précise — 0.38.1](2026-11-17-aide-generale-sans-source.md) — consignes cohérentes, recherche vide et limites documentaires.
+- [Projets dépliables et volet redimensionnable — 0.38.0](2026-11-17-projets-assistant.md) — comportement, essais et limites.
 
 - [Formules conservées dans les sources et traductions — 0.37.3](2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
 - [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de questions et modes dégradés, 17 novembre 2026, non exécutée.
