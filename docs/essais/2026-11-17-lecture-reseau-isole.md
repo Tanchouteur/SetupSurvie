@@ -105,3 +105,14 @@ attendue sur la conversation exacte dans son projet ; un délai dépassé reste 
 échec. Trois parcours Chromium avec réponses de projets retardées passent,
 22 contrôles chacun. Le code du portail reste inchangé. Aucun succès global
 n’est déduit des seuls sept jobs réussis.
+
+
+## Intégration vérifiée
+
+Les huit [jobs CI finaux](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44092051034)
+réussissent sur `316607f6bb18a477e107f1fe90d42c6b82588d16`, dont Windows et la
+campagne Chromium/WebKit/Firefox. Les échecs précédents restent documentés
+ci-dessus ; ils ne sont pas remplacés rétroactivement par ce résultat. La
+[PR nº 23](https://github.com/Tanchouteur/SetupSurvie/pull/23) contient seulement
+tests et documentation : moteur, interface, schéma personnel, versions tierces
+et version logicielle 0.38.3 inchangés. Aucun déploiement client.
