@@ -1,5 +1,35 @@
 # Connexion simple et direction du produit
 
+## Offre de PC préinstallé — précision de Louis du 16 novembre 2026
+
+**Direction commerciale confirmée, offre encore à qualifier.** Le code propre de
+SetupSurvie n'est pas publié en open source. Les clients visés achètent un **PC
+avec SetupSurvie déjà installé**. Le produit à éprouver est donc la machine
+préparée et son usage familial ; son utilisateur n'a pas à installer et assembler
+les services. Les composants et contenus tiers conservent leurs propres licences.
+Cette précision ne vaut ni lancement commercial vérifié, ni prix, ni engagement
+de garantie, d'abonnement ou d'assistance défini.
+
+Deux parcours guident les choix :
+
+- **Avant livraison :** préparer une configuration connue, acquérir les contenus
+  et modèles choisis, vérifier leurs éditions et états, tester la machine et
+  conserver une référence de ce qui a réellement été livré. Les outils de
+  téléchargement et de préparation servent d'abord à ce travail ; leur présence
+  ne doit pas en faire une étape obligatoire chez le client.
+- **Chez le client :** brancher, accéder depuis un appareil du réseau et utiliser
+  les fonctions préparées, avec des explications simples sur ce qui reste à
+  configurer. Réseau, certificats, reprise après coupure, mises à jour, sauvegarde
+  et restauration doivent être qualifiés sur la configuration vendue. Ne pas
+  annoncer un démarrage sans aucune configuration avant recette réelle.
+
+La priorité recommandée est la cohérence de la machine livrée, sa simplicité,
+la fiabilité et le secours. Dans l'[étude NOMAD](apports-nomad.md), la préparation
+guidée et le contrôle des liens relèvent surtout de l'atelier et de l'entretien ;
+Kolibri pourrait enrichir l'usage familial. Ce classement ne lance aucun lot et
+ne remplace pas les deux objectifs actuels de simplification et de fiabilité.
+Les modalités de suivi et d'assistance restent à définir avec Louis et Marc.
+
 **Actualisation 0.1.29, 13 novembre 2026 :** Louis retient les profils locaux sans
 mot de passe ni code de secours. Le [guide actuel](../utilisation/profils-locaux.md)
 prévaut sur les propositions ou descriptions de connexion conservées ci-dessous.
@@ -36,7 +66,7 @@ Cette architecture reste une piste à prototyper, avec son coût, sa consommatio
 - Présenter d’abord les usages concrets : comprendre une réparation, consulter un manuel, apprendre, préparer une réserve et vérifier un calcul. La préparation aux coupures constitue un bénéfice supplémentaire mesurable.
 - Montrer ce qui est livré : collections exactes et datées, langues, modèle utilisé, temps d’attente, capacité de fonctionnement hors ligne et procédure de récupération.
 - Soigner les premières minutes : QR code visible, peu de choix, aide courte, source ouvrable et état explicite lorsque l’IA est arrêtée. Les noms techniques restent à côté des choix pour permettre les essais.
-- Vendre éventuellement la préparation, l’installation, le matériel et les mises à jour documentaires ; préserver l’usage du contenu déjà livré sans abonnement obligatoire. Ce sont des hypothèses d’offre, aucun tarif ni niveau de demande n’est encore validé.
+- Le modèle de vente du PC préinstallé est confirmé par Louis le 16 novembre 2026. Les prix, les prestations complémentaires et leur financement restent à définir et à tester ; le souhait historique de préserver l'usage du contenu livré sans abonnement obligatoire reste une hypothèse d'offre, sans formule commerciale validée.
 - Prévoir des mises à jour par support local et une sauvegarde récupérable. Documenter les licences de chaque contenu avant une distribution commerciale.
 
 Recette avec Marc et quelques personnes novices : noter le temps pour connecter un téléphone, trouver une information, comprendre une réponse et rouvrir sa source. Observer où ils hésitent avant de demander leur avis. Leur faire comparer quelques modèles sur leurs propres questions, sans leur annoncer lequel serait « le meilleur ».

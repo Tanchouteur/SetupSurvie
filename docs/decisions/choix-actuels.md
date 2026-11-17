@@ -1,5 +1,23 @@
 # Choix et contraintes actuels
 
+## Offre de PC préinstallé — 16 novembre 2026
+
+Louis précise que le code propre de SetupSurvie n'est pas publié en open source
+et que l'offre visée est la **vente du PC avec SetupSurvie installé**. Le
+[cadrage de référence](acces-simple-et-offre.md) distingue préparation avant
+livraison et usage client. Les apports de NOMAD sont à apprécier selon leur gain
+pour la machine livrée, sa fiabilité et son entretien. Les tarifs et modalités
+d'assistance ne sont pas définis par cette décision ; le pilote reste à qualifier.
+
+## Base conservée et apports de NOMAD — 16 novembre 2026
+
+Louis retient **SetupSurvie comme base** et demande d'identifier les apports utiles
+de NOMAD. L'[étude actuelle](apports-nomad.md) recommande de simplifier la
+préparation existante, d'étudier un contrôle régulier des liens du catalogue et
+de qualifier Kolibri pour les cours/exercices. Ce classement est une proposition
+technique ; il ne lance ni développement ni installation et ne remplace pas les
+deux objectifs ci-dessous. La comparaison d'octobre reste historique.
+
 ## Deux prochains objectifs — décision de Louis du 16 novembre 2026
 
 **Statut : priorités à réaliser et à qualifier, sans validation annoncée par cette
@@ -253,8 +271,9 @@ sur les précisions ci-dessous.
 
 Les guides de l’[installation](../installation/README.md), de
 l’[exploitation](../exploitation/README.md) et l’[architecture](../architecture/README.md)
-décrivent l’application de ces choix. Les pistes d’offre et de routeur dédié
-restent des hypothèses dans [Connexion simple et direction du produit](acces-simple-et-offre.md).
+décrivent l’application de ces choix. Le modèle de vente du PC préinstallé est
+confirmé dans [Connexion simple et direction du produit](acces-simple-et-offre.md) ;
+les modalités commerciales et la piste du routeur dédié restent à qualifier.
 
 Les [contrôles Windows datés](../essais/2026-11-12-installateur-windows-simple.md) sont acquis dans leur périmètre.
 Restent à évaluer : installation complète sur Windows vierge, fonctionnement hors ligne après

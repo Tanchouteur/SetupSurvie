@@ -10,7 +10,13 @@ approvisionnement, Internet, accès aux professionnels), mais aussi au quotidien
 
 La première étape est un pilote accompagné chez Marc pour recueillir des retours.
 La vente est un objectif ; ne pas présenter le pilote comme un produit commercial
-validé. Les utilisateurs peuvent ne rien connaître à l'informatique ni à l'IA :
+validé. Louis précise le 16 novembre 2026 que le code propre de SetupSurvie n'est
+pas publié en open source et que l'offre visée est la vente d'un PC avec
+SetupSurvie préinstallé. Distinguer la préparation avant livraison du parcours
+client ; ne pas supposer que celui-ci installe et assemble les services. Lire
+`docs/decisions/acces-simple-et-offre.md` ; les composants tiers gardent leurs
+licences et aucun tarif ou service après-vente n'est déduit de cette orientation.
+Les utilisateurs peuvent ne rien connaître à l'informatique ni à l'IA :
 privilégier un français simple, une navigation évidente, des erreurs compréhensibles
 et une utilisation confortable sur ordinateur et téléphone, notamment Safari iOS.
 

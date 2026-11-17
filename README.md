@@ -9,6 +9,10 @@ et un assistant IA local, accessibles depuis les appareils du réseau domestique
 même sans Internet. Il sert au quotidien, à l’éducation familiale et à la
 préparation aux périodes de services dégradés.
 
+L'offre visée est un **PC vendu avec SetupSurvie préinstallé**, dont le code
+propre n'est pas publié en open source. Le [cadrage de l'offre](docs/decisions/acces-simple-et-offre.md)
+distingue préparation avant livraison, usage client et validations restantes.
+
 ## État du projet
 
 La [refonte UX](docs/decisions/refonte-ux-evolutive.md) organise les conversations,
