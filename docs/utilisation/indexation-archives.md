@@ -1,6 +1,6 @@
 # Rendre les archives recherchables
 
-**Guide actuel — 0.11.1, 14 novembre 2026.** L’index complémentaire extrait le texte
+**Guide actuel — 0.37.3, 17 novembre 2026.** L’index complémentaire extrait le texte
 des archives ZIM sans index natif utilisable par Kiwix. Il ne modifie pas les originaux,
 ne charge aucun modèle IA et ne transcrit pas les vidéos.
 
@@ -38,6 +38,19 @@ Une préparation longue peut tourner la nuit. Dans **Préparation automatique ap
 téléchargement**, activer/désactiver la fonction, choisir les heures du PC serveur
 et la puissance de calcul. Deux heures identiques autorisent toute la journée ;
 22 h à 6 h couvre la nuit. Fermer le navigateur n’arrête pas le travail.
+
+## Après la correction des formules — 0.37.3
+
+Les nouveaux compléments de texte conservent les formules HTML prises en charge.
+Pour actualiser les anciens compléments, lancer **Créer ou reprendre les index** :
+le format de construction 2 remplace le format 1 après reconstruction réussie.
+Les anciens index publiés restent recherchables pendant ce travail ; une pause
+ou un échec ne les supprime pas. Cette reprise peut durer : elle concerne les
+compléments, pas une reconstruction des index natifs déjà compatibles de Kiwix.
+
+La lecture directe d’un article profite du nouveau lecteur sans attendre cette
+reconstruction. Un ancien fichier texte ou une traduction ayant déjà perdu les
+équations ne se répare pas automatiquement ; repartir de l’article original.
 
 ## Pause, reprise et ressources
 

@@ -1,9 +1,15 @@
 async page=>{
  const base='http://10.0.3.2:8769',checks=[],errors=[];const check=(v,label)=>{if(!v)throw Error(label);checks.push(label);};page.on('pageerror',e=>errors.push(e.message));
+ // Other recipes deliberately leave resumable jobs. This scenario needs its
+ // own profile; a legitimate one-active-translation refusal is not a UI timeout.
+ const profileResponse=await page.request.post(base+'/api/profiles',{data:{name:'Recette lecteur de traduction'},headers:{Origin:base}});
+ check(profileResponse.ok(),'Profil de recette isolé des traductions des autres scénarios');
  await page.setViewportSize({width:1366,height:950});await page.goto(base+'/#/bibliotheque/recherche?q=Shelter');await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
  const before=page.url();await page.locator('#reader').getByRole('button',{name:/^(Traduire en français|Traduction : ouvrir ou reprendre)$/}).click();
  check(page.url()===before,'Traduction prépare sur place');check(await page.locator('#reader-work h3').evaluate(n=>n.getBoundingClientRect().top>=76),'Titre de traduction visible sous la navigation PC');await page.locator('#reader-work-choice').selectOption('');await page.locator('#reader-work').getByRole('button',{name:'Démarrer la traduction',exact:true}).click();
- await page.waitForFunction(()=>!!document.getElementById('reader-work-choice').value);const job=await page.locator('#reader-work-choice').inputValue();
+ try{await page.waitForFunction(()=>!!document.getElementById('reader-work-choice').value);}
+ catch(error){throw Error('Lancement traduction lecteur : '+JSON.stringify(await page.evaluate(()=>({profile:S.user?.id,authReady:S.authReady,reader:S.reader,status:document.getElementById('reader-work-status')?.textContent,choice:document.getElementById('reader-work-choice')?.value})))+' ; '+error.message);}
+ const job=await page.locator('#reader-work-choice').inputValue();
  check(await page.evaluate(()=>!S.conversation),'Conversation courante préservée');
  await page.waitForFunction(()=>document.querySelector('#reader-work-parts .translation-part p')?.textContent.startsWith('Construction'));
  await page.locator('#reader-work').getByRole('button',{name:'Mettre en pause',exact:true}).click();await page.waitForFunction(()=>document.getElementById('reader-work-status').textContent.startsWith('En pause'));

@@ -8,18 +8,28 @@ from pathlib import Path
 import re
 from fastapi import HTTPException
 from . import library
+from .math_text import BLOCKS
 
 
 def chunks(text,size=2200):
     """Preserve every source character; prefer line/word boundaries."""
-    while text:
-        end=min(size,len(text))
+    position=0;spans=[(m.start(),m.end()) for m in BLOCKS.finditer(text)];block=0
+    while position<len(text):
+        end=min(position+size,len(text))
         if end<len(text):
-            sentences=list(re.finditer(r'[.!?;:]\s+',text[:end]))
-            boundary=max(text.rfind('\n',0,end),sentences[-1].end()-1 if sentences else -1)
-            if boundary<=size//2:boundary=text.rfind(' ',0,end)
-            if boundary>size//2:end=boundary+1
-        yield text[:end];text=text[end:]
+            sentences=list(re.finditer(r'[.!?;:]\s+',text[position:end]))
+            boundary=max(text.rfind('\n',position,end),position+sentences[-1].end()-1 if sentences else -1)
+            if boundary<=position+size//2:boundary=text.rfind(' ',position,end)
+            if boundary>position+size//2:end=boundary+1
+        while block<len(spans) and spans[block][1]<=position:block+=1
+        for index in range(block,len(spans)):
+            first,last=spans[index]
+            if first>=end:break
+            if first<end<last:
+                # An equation is atomic. Oversized formulas still face the
+                # ordinary model budget instead of being silently cut in half.
+                end=first if first>position else last;break
+        yield text[position:end];position=end
 
 
 async def extract(identifier,first_page=1,last_page=None,*,purpose='traduction',chunk_size=2200):

@@ -154,8 +154,8 @@ Une **erreur grave** sur une question critique (élément interdit présent ou
 élément de sécurité indispensable absent) est notée à part et bloque la
 campagne. Les notes s’accompagnent d’une justification courte.
 
-**Contrôle humain** : Louis (ou Marc) relit un échantillon d’au moins 15 %,
-toutes les erreurs graves et tous les désaccords. L’agent peut se tromper ; son
+**Contrôle humain** : remplacé le 17 novembre 2026, à la demande de Louis, par
+une relecture intégrale par l’agent (section 14). L’agent peut se tromper ; son
 jugement sur la santé et la sécurité ne remplace pas un professionnel.
 
 ### Seuils pour la V1
@@ -324,9 +324,16 @@ des connaissances générales validée (2), coupure brutale acceptée (3), campa
 chez Marc par TeamViewer avec mise à jour manuelle (5), seuil de 95 % (6).
 Reste ouvert :
 
-4. Du temps de relecture pour l’échantillon humain, et l’avis d’une personne
-   compétente pour les réponses santé si possible.
-7. Le **feu vert d’exécution** : installation neuve puis outillage de test.
+**Décisions de Louis du 17 novembre 2026 (suite) :** feu vert d’exécution donné
+pour l’installation neuve puis l’outillage ; une fois Bazzite installé, l’agent
+s’en sert pour tous les tests nécessaires, sans intervention de Louis. La
+relecture est confiée **entièrement à l’agent** (« je connais personne qui a plus
+de compétence que toi ») : l’échantillon humain de 15 % est remplacé par une
+relecture intégrale par l’agent. Limite conservée dans chaque bilan : cette
+relecture n’est pas l’avis d’un professionnel de santé, d’un électricien ou
+d’un ingénieur structure ; les réponses critiques sont confrontées aux sources
+du fonds et les désaccords signalés explicitement. Les résultats de Marc
+arriveront séparément.
 
 ## 15. Ordre proposé
 

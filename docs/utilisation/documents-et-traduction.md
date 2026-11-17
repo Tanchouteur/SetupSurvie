@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.29.0, 16 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.37.3, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -226,7 +226,9 @@ comme traduit. Ils ne demandent ni Internet ni seconde inférence.
 | Ancien passage déjà traduit | **Pas de contrôle enregistré**. Il n’est pas présenté comme validé rétroactivement ; les anciennes publications restent inchangées |
 
 Dans chaque passage, **Comparer avec le texte original** affiche l’instantané
-exact fourni au modèle, sous la traduction. Le bouton **Consulter l’original**
+source conservé pour le travail, sous la traduction. Les formules protégées sont
+transmises au modèle sous forme de repères, puis réinsérées à l’identique par
+le logiciel ; leur contenu n’a pas besoin d’être retapé par le modèle. Le bouton **Consulter l’original**
 ouvre le document pour contrôler aussi la mise en page et les tableaux. Le texte
 source et une proposition refusée restent privés ; le partage n’ajoute que les
 avertissements aux traductions acceptées. Les avertissements ne sont pas un
@@ -256,9 +258,31 @@ comme `CALL` est remplacée par `APPEL`, un avertissement demande de comparer
 l’original et l’appareil ; toutes les inscriptions et interfaces ne sont pas
 reconnues automatiquement.
 
+La version **4** des contrôles (0.37.3) protège aussi les formules extractibles
+présentes dans les articles HTML. Le lecteur conserve leurs fractions, indices,
+puissances et groupes sous forme de blocs de notation, sans recalculer ni
+compléter la source. Une structure non prise en charge affiche **Formule non
+extractible : consultez l’original illustré**. Une formule représentée uniquement
+par une image sans alternative reste à lire dans l’original ; il n’y a pas d’OCR.
+
+Pendant la traduction, le logiciel conserve les blocs originaux et demande au
+modèle de traduire le texte autour de repères. Chaque repère doit revenir une
+seule fois, dans le même ordre ; sinon le passage et sa proposition restent
+refusés. Après réinsertion, les blocs doivent conserver les mêmes formules.
+Les passages ne coupent pas ces blocs en deux ; une formule exceptionnellement
+longue peut dépasser le contexte disponible et bloquer proprement la traduction.
+Cela ne valide ni le raisonnement autour d’une formule ni sa correspondance
+avec une illustration. Les anciens rapports gardent leur version.
+
+Les textes déjà extraits avec des équations manquantes ne sont pas réparés
+par la mise à jour. Utiliser l’article original pour un nouveau travail ; une
+traduction en reprise conserve son ancien instantané. Les originaux, anciennes
+traductions et publications ne sont pas remplacés automatiquement. Voir les
+[preuves et limites](../essais/2026-11-17-formules-documentaires.md).
+
 Les unités reconnues forment une liste limitée (masses, volumes, longueurs,
-durées, températures, quelques unités électriques et pressions). Les tableaux,
-formules, unités rares, négations complexes et changements de sens ne sont pas
+durées, températures, quelques unités électriques et pressions). Les tableaux, le sens des
+formules, les unités rares, négations complexes et changements de sens ne sont pas
 validés. Une phrase peut conserver les mêmes nombres tout en disant l’inverse.
 Les seuils de longueur et la recherche de négations sont des indices, avec des
 faux positifs et des erreurs possibles non détectées. Les passages privilégient

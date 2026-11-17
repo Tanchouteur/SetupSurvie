@@ -8,6 +8,24 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_formulas_keep_grouping_even_when_all_numbers_still_match(self):
+        from pilot.math_text import marked
+        source='Formula follows. '+marked(r'\frac{12}{4}=3')
+        for formula in (r'\frac{4}{12}=3',r'12+4=3',r'\frac{12}{4}=3^{2}'):
+            with self.subTest(formula=formula):
+                report=quality.assess(source,'La formule suit. '+marked(formula))
+                self.assertEqual(report['status'],'blocked')
+                self.assertIn('formulas',{row['code'] for row in report['issues']})
+        self.assertEqual(quality.assess(source,'La formule suit. '+marked(r'\frac{12}{4}=3'))['status'],'checked')
+        self.assertEqual(quality.assess(source,'La formule a disparu.')['status'],'blocked')
+
+    def test_missing_formula_warns_without_fabricating_a_replacement(self):
+        from pilot.math_text import UNREADABLE
+        for source in ('The current is '+UNREADABLE,'where    is the total current'):
+            report=quality.assess(source,'La formule est à consulter dans l’original.')
+            self.assertEqual(report['status'],'warning')
+            self.assertIn('source_math_gaps',{row['code'] for row in report['issues']})
+
     def test_device_button_labels_are_kept_or_flagged_without_certifying_other_words(self):
         source='Press the CALL button. Press the EXIT key to cancel.'
         self.assertEqual(quality.assess(source,'Appuyez sur le bouton CALL. Appuyez sur EXIT pour annuler.')['status'],'checked')
@@ -58,15 +76,39 @@ class TokenChecksTests(unittest.TestCase):
     def test_missing_pdf_key_glyphs_warn_even_with_all_numbers_preserved(self):
         for text in ['Press the         key to enter the menu.', 'Enter                 on the numerical keypad.', 'Appuyez sur la touche         pour confirmer.', 'An unknown glyph: \ufffd.']:
             report=quality.assess(text,'Traduction fictive sans restitution des touches.')
-            self.assertEqual(report['version'],3)
+            self.assertEqual(report['version'],4)
             self.assertIn('source_gaps',{row['code'] for row in report['issues']})
         self.assertNotIn('source_gaps',{row['code'] for row in quality.assess('Press the MENU key.','Appuyez sur MENU.')['issues']})
 
 
 class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_invalid_formula_anchors_keep_rejected_proposal_and_never_publish(self):
+        from pilot.math_text import marked,TranslationMismatch
+        source='Fictional equation. '+marked('19/7')
+        with patch.object(translations,'extract',AsyncMock(return_value=({'id':'guide:test','title':'Fixture'},[(1,source,'pending')]))):
+            item=await translations.create('alice','guide:test',None,'rapide')
+        candidate='Repère supprimé.'
+        with patch.object(translations,'translate',AsyncMock(side_effect=TranslationMismatch(candidate,'fixture'))):await translations.run(item['id'])
+        result=translations.status(item['id'],'alice')
+        self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
+        self.assertEqual(result['parts'][0]['candidate'],candidate)
+        self.assertIn('formula_anchors',{i['code'] for i in result['parts'][0]['quality']['issues']})
     asyncSetUp=fixtures.TranslationTests.asyncSetUp
     asyncTearDown=fixtures.TranslationTests.asyncTearDown
     create=fixtures.TranslationTests.create
+    async def test_formula_change_with_same_numbers_is_not_published(self):
+        from pilot import library
+        from pilot.math_text import marked
+        source='Original fictional formula. '+marked(r'\frac{19}{7}')
+        (library.GUIDES/'manual.en.txt').write_text(source);library.index_guides()
+        item=await self.create()
+        candidate='Formule fictive traduite. '+marked(r'\frac{7}{19}')
+        with patch.object(translations,'translate',AsyncMock(return_value=(candidate,'fixture'))):await translations.run(item['id'])
+        result=translations.status(item['id'],'alice')
+        self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
+        self.assertIn('formulas',{i['code'] for i in result['parts'][0]['quality']['issues']})
+        self.assertEqual(result['parts'][0]['candidate'],candidate)
+        self.assertIsNone(result['publication']['source_id'])
     async def test_source_gaps_warning_survives_publication_and_export(self):
         from pilot import library
         (library.GUIDES/'manual.en.txt').write_text('Press the         key to enter the menu.',encoding='utf-8');library.index_guides()

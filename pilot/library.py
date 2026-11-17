@@ -3,7 +3,8 @@ import ast
 import asyncio
 from fractions import Fraction
 from html import unescape
-from html.parser import HTMLParser
+from .html_text import Text
+from .math_text import safe_prefix
 import math
 import json
 import hashlib
@@ -25,49 +26,6 @@ from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalo
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
-
-
-class Text(HTMLParser):
-    VOID={'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
-    def __init__(self,*,prefer_main=True):
-        super().__init__();self.parts=[];self.skip=0;self.math=0;self.images=[];self.title=[];self.in_title=False;self.language=''
-        self.prefer_main=prefer_main;self.tags=[];self.sections=[];self.active=[]
-    def append(self,text):
-        self.parts.append(text)
-        for section in self.active:section['parts'].append(text)
-    def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs)
-        if tag not in self.VOID:self.tags.append(tag)
-        if self.prefer_main and not self.skip and len(self.sections)<32 and (tag in ('article','main') or attrs.get('role')=='main'):
-            section={'kind':'article' if tag=='article' else 'main','depth':len(self.tags),'parts':[]};self.sections.append(section);self.active.append(section)
-        if tag=='html':self.language=attrs.get('lang','').split('-')[0]
-        if tag in ('script','style','nav'):self.skip+=1
-        if tag=='title':self.in_title=True
-        if tag=='math':
-            self.math+=1
-            if self.math==1:self.append(' '+attrs.get('alttext','')+' ')
-        if tag in ('p','br','h1','h2','h3','li','tr'):self.append('\n')
-        if tag=='img' and attrs.get('src'):self.images.append({'src':attrs['src'],'alt':attrs.get('alt','')})
-    def handle_endtag(self,tag):
-        if tag in ('script','style','nav'):self.skip=max(0,self.skip-1)
-        if tag=='math':self.math=max(0,self.math-1)
-        if tag=='title':self.in_title=False
-        if tag in ('p','h1','h2','h3','li','tr'):self.append('\n')
-        if tag not in self.VOID:
-            try:index=len(self.tags)-1-self.tags[::-1].index(tag)
-            except ValueError:return
-            self.active=[section for section in self.active if section['depth']<=index]
-            del self.tags[index:]
-    def handle_data(self,text):
-        if self.in_title:self.title.append(text)
-        if not self.skip and not self.math:self.append(text)
-    def text(self):
-        clean=lambda parts:'\n'.join(x.strip() for x in ''.join(parts).splitlines() if x.strip())
-        if self.prefer_main:
-            for kind in ('article','main'):
-                choices=[clean(section['parts']) for section in self.sections if section['kind']==kind]
-                if any(choices):return max(choices,key=len)
-        return clean(self.parts)
 
 
 class Fetched(tuple):
@@ -747,7 +705,7 @@ async def source(identifier):
     p=Text();p.feed(raw.decode(errors='replace'))
     text=p.text()
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
-    result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':text[:100000],'text_truncated':len(text)>100000,
+    result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
             'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
     catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
 

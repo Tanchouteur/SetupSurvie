@@ -1,5 +1,6 @@
 # Essais et résultats
 
+- [Formules conservées dans les sources et traductions — 0.37.3](2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
 - [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de questions et modes dégradés, 17 novembre 2026, non exécutée.
 - [Installation neuve et transfert entre SSD sur Bazzite](plan-installation-neuve-et-transfert-bazzite.md) — protocole du 17 novembre 2026, non exécuté.
 

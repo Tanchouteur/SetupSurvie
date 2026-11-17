@@ -88,6 +88,21 @@ class TranslationTermsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data['fin_du_passage_precedent'],guidance['previous']);self.assertTrue(measurements[0]['translation_guidance']['previous_used'])
         self.assertIn('ne la recopie pas',seen[0]['messages'][0]['content']);self.assertEqual(seen[0]['format'],translations.SCHEMA)
 
+    async def test_model_translates_prose_while_software_preserves_formula_bytes(self):
+        from pilot.math_text import marked,BLOCKS
+        source='Equation below. '+marked(r'\frac{19}{7}=x^{2}')+' End.'
+        native=httpx.AsyncClient;seen=[]
+        def handler(request):
+            payload=json.loads(request.content);text=payload['messages'][1]['content'];seen.append(text)
+            self.assertNotIn(r'\frac',text);self.assertIn('[SS_FORMULE_',text)
+            text=text.replace('Equation below.','Équation ci-dessous.').replace(' End.',' Fin.')
+            event={'message':{'content':json.dumps({'status':'translated','translation':text})},'done':True,'done_reason':'stop'}
+            return httpx.Response(200,content=(json.dumps(event)+'\n').encode())
+        with patch.object(translations.model_runtime,'describe',AsyncMock(return_value={'available':False,'native_context':None})),patch.object(translations.httpx,'AsyncClient',side_effect=lambda **kw:native(transport=httpx.MockTransport(handler),**kw)):
+            result,model=await translations.translate(source,'rapide')
+        self.assertEqual([m[0] for m in BLOCKS.finditer(source)],[m[0] for m in BLOCKS.finditer(result)])
+        self.assertNotIn('[SS_FORMULE_',result);self.assertEqual(len(seen),1)
+
     async def test_previous_context_yields_to_the_actual_passage_when_budget_is_small(self):
         seen=[];measures=[];native=httpx.AsyncClient
         def handler(request):
