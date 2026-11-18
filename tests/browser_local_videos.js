@@ -33,7 +33,13 @@ async page=>{
   await subtitles.selectOption('0');
   await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v.textTracks[0].cues?.length>0;});
   check(await player.evaluate(v=>v.textTracks[0].mode==='showing'),'Piste anglaise sélectionnable sans traduction');
-  await player.evaluate(v=>{v.currentTime=9;v.dispatchEvent(new Event('pause'));});
+  await page.waitForFunction(()=>document.querySelector('#reader video')?.readyState>=1);
+  await player.evaluate(v=>{v.currentTime=9;});
+  await page.waitForFunction(()=>{
+    const video=document.querySelector('#reader video');
+    return video.currentTime>=8.9&&!video.seeking;
+  });
+  await player.evaluate(v=>v.dispatchEvent(new Event('pause')));
   await page.evaluate(id=>readSource(id.split('#t=')[0]),hit.id);
   await page.waitForFunction(()=>document.querySelector('#reader video')?.currentTime>=8.9);
   check(true,'Position retrouvée pour la même vidéo et la même révision');
