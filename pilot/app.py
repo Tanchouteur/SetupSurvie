@@ -114,7 +114,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.43.1'
+VERSION='0.43.2'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -544,7 +544,7 @@ async def search(request:Request,q:str=Query(default='',max_length=200),language
     owner=(await user(request))['id'] if favorites_only else None
     if stream:
         return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic,kind=kind),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
-    details={'diagnostic':True,'budget':search_stream.BUDGET} if diagnostic else {}
+    details={'diagnostic':diagnostic,'budget':search_stream.BUDGET}
     if favorites_only or translations_only:
         with optional_feature('favorites' if favorites_only else 'publications'):
             found=await library.search(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,kind=kind,**details) if q.strip() or kind=='videos' else []

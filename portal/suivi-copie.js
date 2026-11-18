@@ -10,8 +10,8 @@
   const token = sessionStorage.getItem('autorisation-transfert');
   const headers = token ? {'X-SetupSurvie-Transfer': token} : {};
   const confirmations = {
-    copy: 'SetupSurvie sera arrêté pendant la copie. Continuer ?',
-    activate: 'Démarrer SetupSurvie depuis le disque de destination ?',
+    copy: 'SetupSurvie sera arrêté pendant la copie. Docker Desktop conserve son emplacement. Continuer ?',
+    activate: 'Démarrer les services SetupSurvie avec les données de destination et le moteur Docker déjà installé ?',
     rollback: 'Arrêter la destination et rendre la source disponible ? Les nouvelles données du SSD resteront sur le SSD.',
   };
   let lastDestination = '';

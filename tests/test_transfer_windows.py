@@ -33,3 +33,19 @@ foreach ($name in @('transfer-host-check.ps1','transfer-windows.ps1','create-sho
         self.assertEqual(state['source']['disk'],state['destination']['disk'])
         self.assertFalse(state['startup_enabled'])
         self.assertNotIn('secret',result.stdout.lower())
+
+    def test_custom_wsl_disk_from_docker_settings_is_identified_without_reading_it(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name)/'SSD é'
+            image=root/'DockerDesktopWSL/disk/docker_data.vhdx'
+            image.parent.mkdir(parents=True)
+            image.write_bytes(b'disposable disk fixture')
+            settings=Path(name)/'Docker/settings-store.json'
+            settings.parent.mkdir()
+            settings.write_text(json.dumps({'CustomWslDistroDir':str(root)}),encoding='utf-8')
+            result=subprocess.run([*POWERSHELL,str(ROOT/'scripts/transfer-host-check.ps1'),'-Destination',name],
+                                  env={**os.environ,'APPDATA':name},check=True,capture_output=True,text=True,encoding='utf-8')
+        state=json.loads(result.stdout)
+        self.assertFalse(state['source']['known'])
+        self.assertIn(str(image),state['docker_disks'])
+        self.assertIn({'path':str(image),'physical_disk':state['destination']},state['docker_evidence']['data_images'])

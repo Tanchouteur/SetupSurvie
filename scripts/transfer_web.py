@@ -28,11 +28,11 @@ STAGES = {
     'adapting': 'Préparation en cours',
     'prepared': 'Disque prêt à être activé',
     'activating': 'Activation et contrôle des services',
-    'active': 'SetupSurvie fonctionne depuis le nouveau disque',
+    'active': 'Services SetupSurvie actifs sur la destination',
     'returning_to_source': 'Retour à la source en cours',
     'returned_to_source': 'Retour à la source terminé',
 }
-COMMANDS = {'choose', 'examine', 'copy', 'prepare', 'verify', 'activate', 'rollback'}
+COMMANDS = {'choose', 'examine', 'copy', 'prepare', 'verify', 'activate', 'docker-status', 'rollback'}
 CONFIRM = {'copy', 'activate', 'rollback'}
 
 

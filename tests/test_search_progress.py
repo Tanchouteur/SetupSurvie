@@ -57,12 +57,13 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             frames=[frame async for frame in search_stream.packets('fixture')]
         self.assertIn('"state":"error"',frames[-1]);self.assertNotIn('PRIVATE',str(frames))
 
-    async def test_http_stream_is_opt_in_and_uses_a_longer_bounded_budget(self):
+    async def test_http_stream_is_opt_in_and_both_formats_use_the_portal_budget(self):
         from pilot.app import app
         found=library.SearchResults([{'id':'guide:fixture'}],{'status':'complete'})
         with patch.object(library,'search',AsyncMock(return_value=found)) as search:
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://fixture') as client:
                 plain=await client.get('/api/search?q=fixture');self.assertIn('application/json',plain.headers['content-type'])
+                self.assertEqual(search.await_args.kwargs['budget'],search_stream.BUDGET)
                 streamed=await client.get('/api/search?q=fixture&stream=true')
                 self.assertIn('text/event-stream',streamed.headers['content-type']);self.assertIn('"state":"done"',streamed.text)
                 self.assertEqual(search.await_args.kwargs['budget'],60);self.assertIsNotNone(search.await_args.kwargs['on_update'])
