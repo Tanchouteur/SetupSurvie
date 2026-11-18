@@ -90,7 +90,7 @@ def manifest_links(dest, inventory, *, publish=False):
 def inventory(source, docker_disks=()):
     """Every regular file, with explicit exclusions; no hidden traversal of links."""
     files, excluded, empty = [], [], []
-    ollama_links = {}
+    ollama_links, directory_modes = {}, {}
     docker_disks = {Path(path) for path in docker_disks}
     def unreadable(error):
         raise error
@@ -118,7 +118,10 @@ def inventory(source, docker_disks=()):
                 destination(Path('/validation'),relative_dir)
                 key=relative_dir.casefold()
                 if key in seen:raise setup.SetupError('Noms ambigus entre Windows et Linux.')
-                seen.add(key);empty.append(role+'/'+relative_dir)
+                seen.add(key)
+                relative_path=role+'/'+relative_dir
+                empty.append(relative_path)
+                if os.name!='nt':directory_modes[relative_path]=stat.S_IMODE(parent.stat().st_mode)&0o777
             for name in sorted(names):
                 path = parent/name
                 relative = path.relative_to(root).as_posix()
@@ -143,7 +146,7 @@ def inventory(source, docker_disks=()):
                 if not stat.S_ISREG(info.st_mode):raise setup.SetupError('Fichier spécial refusé : '+role+'/'+relative)
                 files.append({'path':role+'/'+relative, 'bytes':info.st_size,
                               'mtime_ns':info.st_mtime_ns, 'mode':stat.S_IMODE(info.st_mode)})
-    return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded, 'ollama_links':ollama_links}
+    return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded, 'ollama_links':ollama_links, 'directory_modes':directory_modes}
 
 
 def matches_frozen_inventory(current, frozen):
@@ -156,6 +159,15 @@ def matches_frozen_inventory(current, frozen):
         and record['path'] not in frozen_paths
         and record['path'][:-4] in frozen_paths
     )]==frozen
+
+
+def restore_directory_modes(dest, inventory):
+    if os.name=='nt':return
+    # Parent directories must remain writable while files and links are published.
+    for relative, mode in reversed(tuple(inventory.get('directory_modes',{}).items())):
+        path=destination(dest,relative)
+        path.chmod(mode & 0o777)
+        durable.sync_directory(path)
 
 
 def database_check(path):
@@ -582,6 +594,11 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 if (current.get('ollama_links',{})!=journal['inventory'].get('ollama_links',{})
                     or not matches_frozen_inventory(current['files'],retained)):
                     raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
+                frozen_modes=journal['inventory'].get('directory_modes')
+                if frozen_modes is not None and current['directory_modes']!=frozen_modes:
+                    raise setup.SetupError('Permissions source modifiées depuis l’arrêt ; reprise refusée.')
+                if frozen_modes is None:
+                    journal['inventory']['directory_modes']=current['directory_modes']
                 if retained!=previous:
                     journal['inventory']={**current,'files':retained}
                     journal['bytes']=sum(record['bytes'] for record in retained)
@@ -611,6 +628,7 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 if time.monotonic()-last_save>=5:
                     save(dest,journal);last_save=time.monotonic()
             manifest_links(dest,journal['inventory'],publish=True)
+            restore_directory_modes(dest,journal['inventory'])
             save(dest,journal)
             report('Contrôle des bases de données',force=True,files_done=len(verified),bytes_verified=confirmed)
             for relative in databases:database_check(destination(dest,relative))
@@ -618,6 +636,7 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 journal['images_sha256'],journal['images_manifest_sha256']=copy_images(app,config,dest,report)
             current=inventory(roots(app,config),docker_disks)
             if (current.get('ollama_links',{})!=journal['inventory'].get('ollama_links',{})
+                or current['directory_modes']!=journal['inventory'].get('directory_modes',{})
                 or not matches_frozen_inventory(current['files'],journal['inventory']['files'])):
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)

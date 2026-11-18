@@ -36,6 +36,7 @@ def connect():
         title TEXT NOT NULL,language TEXT NOT NULL,detected_language TEXT,mode TEXT NOT NULL,translate_french INTEGER NOT NULL,
         status TEXT NOT NULL,error TEXT,created REAL NOT NULL,updated REAL NOT NULL,probe TEXT,progress_ms INTEGER NOT NULL DEFAULT 0,
         published_hash TEXT,index_status TEXT,translation_job TEXT);
+        CREATE INDEX IF NOT EXISTS jobs_by_video ON jobs(video_id, created DESC);
         CREATE TABLE IF NOT EXISTS units(job_id TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,result TEXT NOT NULL,
         PRIMARY KEY(job_id,start_ms));
         CREATE TABLE IF NOT EXISTS rejections(job_id TEXT NOT NULL,start_ms INTEGER NOT NULL,created REAL NOT NULL,reason TEXT NOT NULL,result TEXT NOT NULL);''')
@@ -71,9 +72,19 @@ def status(identifier,full=False):
     return result
 
 
-def listing(limit=100):
-    with connect() as db:ids=[r[0] for r in db.execute('SELECT id FROM jobs ORDER BY created DESC'+(' LIMIT ?' if limit is not None else ''),(limit,) if limit is not None else ())]
-    return [status(identifier) for identifier in ids]
+def listing(limit=100, *, video_id=None):
+    query='SELECT id FROM jobs'
+    parameters=[]
+    if video_id is not None:
+        query+=' WHERE video_id=?'
+        parameters.append(video_id)
+    query+=' ORDER BY created DESC'
+    if limit is not None:
+        query+=' LIMIT ?'
+        parameters.append(limit)
+    with connect() as db:
+        identifiers=[row[0] for row in db.execute(query,parameters)]
+    return [status(identifier) for identifier in identifiers]
 
 
 def model_config():

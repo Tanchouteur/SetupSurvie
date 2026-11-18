@@ -81,6 +81,17 @@ class TransferTests(unittest.TestCase):
         with self.assertRaisesRegex(setup.SetupError,'externe'):
             transfer.inventory({'data':self.data})
 
+    @unittest.skipIf(os.name=='nt','Permissions Unix')
+    def test_copy_preserves_directory_permissions_under_private_destination(self):
+        zim=self.data/'library/zim'
+        zim.mkdir();zim.chmod(0o755)
+        (zim/'test.zim').write_bytes(b'fixture')
+        old=os.umask(0o077)
+        try:self.copy()
+        finally:os.umask(old)
+        self.assertEqual((self.dest/'data/library/zim').stat().st_mode & 0o777,0o755)
+        self.assertEqual(self.dest.stat().st_mode & 0o777,0o700)
+
     def test_youtube_venv_is_excluded_and_its_cache_required(self):
         venv=self.data/'tools/youtube/venv'
         venv.mkdir(parents=True);(venv/'pyvenv.cfg').write_text('fixture')

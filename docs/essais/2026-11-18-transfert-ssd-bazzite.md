@@ -16,8 +16,9 @@ sur le SSD système.
 
 La mise à jour 0.43.2 → 0.43.3 a terminé avec sa sauvegarde et son journal. La
 seconde mise à jour a installé la 0.44.0 de `main` avec le correctif testé. La
-livraison du correctif est numérotée 0.44.1, une correction compatible sans
-migration du schéma ni modification des versions tierces.
+livraison du correctif part de la 0.45.0 de `main` et porte la version 0.45.1,
+une correction compatible sans migration du schéma ni modification des versions
+tierces.
 
 ## Journal des problèmes
 
@@ -27,6 +28,7 @@ migration du schéma ni modification des versions tierces.
 | Le PC quitte le LAN au moment du premier lancement de la copie. | Le journal système confirme une veille demandée par PowerDevil à 12 h 27, suivie d’une reprise à 15 h 03, en heure locale. Aucun dossier de copie ni garde source à la reprise. Un inhibiteur temporaire `sleep:idle` est vérifié avant le nouvel essai. |
 | Le transfert refuse un lien de manifeste Ollama v2. | Le transfert conserve les liens relatifs vers des blocs réguliers du même magasin Ollama et les vérifie après copie. Un lien vers un bloc externe, même lisible, est refusé. |
 | L’installation Linux possède un environnement Python YouTube avec des chemins liés à la source. | Le dossier Python généré est exclu, le cache de roues est vérifié, et l’activation tente la reconstruction hors ligne. Le rapport indique si les outils sont prêts. |
+| Kiwix est sain selon Docker mais son catalogue est vide et ses 58 ZIM sont présents. | Le masque de création à 077 a rendu les répertoires illisibles pour le compte Kiwix. Permissions d’origine rétablies sur 621 répertoires de la copie et Kiwix relancé. Le transfert conserve désormais ces permissions et vérifie qu’une entrée est visible lorsque des ZIM sont présents. |
 | Le texte de secours renvoie au lanceur Windows sur une copie Linux. | Le texte renvoie à `transferer-setupsurvie.sh` pour une copie Linux. |
 
 ## Interruption et reprise
@@ -34,3 +36,27 @@ migration du schéma ni modification des versions tierces.
 Le seul processus de copie a été interrompu par SIGKILL au milieu d’un gros
 fichier. Le préfixe observé avant l’arrêt faisait **452 984 832 octets**. La
 reprise avec les mêmes dossiers a repris la copie et le contrôle des empreintes.
+
+Le journal de copie est passé à `copied` environ 7 min 44 s après le premier
+lancement. Il compte **10 383 fichiers vérifiés**, **65 bases SQLite
+contrôlées**, **deux liens de manifeste** et une archive des images Docker de
+**5 117 729 792 octets**. Le contrôle de préparation et la validation de
+l’activation sont des étapes distinctes.
+
+La suite de développement a exécuté **1 096 tests**, avec **33 ignorés** et
+aucun échec. La suite ciblée après la dernière révision du transfert a exécuté
+**38 tests**, avec **3 ignorés** réservés à Windows. Elle inclut le contrôle
+d’un lien Ollama copié, le refus d’une cible externe et l’exclusion contrôlée
+de l’environnement Python YouTube.
+
+## Activation et fonctionnement
+
+L’activation a confirmé les montages de la destination, les services, les trois
+routeurs, la recherche, l’ouverture d’un guide et les outils YouTube reconstruits
+hors ligne. La recette après correction de Kiwix a bloqué Internet dans les sept
+conteneurs de la copie, avec une connexion témoin réussie avant le blocage et
+refusée pendant. Le portail et sa page de secours, Open WebUI, le catalogue
+Kiwix, les profils, la recherche et le PDF de la loi d’Ohm, la lecture PMTiles,
+les listes de traductions et de vidéos, yt-dlp, Deno et FFmpeg ont répondu. Les
+comptages des tables contrôlées des deux bases source et destination concordent.
+Les règles temporaires ont été retirées après la recette.
