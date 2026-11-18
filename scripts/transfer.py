@@ -56,9 +56,41 @@ def roots(app, config):
     return result
 
 
+def ollama_manifest_target(root, relative, path, target):
+    """Allow only Ollama v2 metadata links to regular blobs in the same model store."""
+    parts=relative.split('/')
+    if os.name=='nt' or len(parts)<5 or parts[:2]!=['models','manifests-v2']:
+        raise setup.SetupError('Lien symbolique refusé hors des manifestes Ollama Linux.')
+    name=Path(target).name
+    if not re.fullmatch(r'sha256-[a-f0-9]{64}',name):
+        raise setup.SetupError('Lien de manifeste Ollama vers un bloc non reconnu.')
+    blob=destination(root,'models/blobs/'+name)
+    if target!=os.path.relpath(blob,path.parent) or not blob.is_file():
+        raise setup.SetupError('Lien de manifeste Ollama externe ou bloc absent.')
+    return target
+
+
+def ollama_manifest_link(root, relative):
+    path=destination(root,relative,allow_leaf_symlink=True)
+    return ollama_manifest_target(root,relative,path,os.readlink(path))
+
+
+def manifest_links(dest, inventory, *, publish=False):
+    root=destination(dest,'data')
+    for relative, target in inventory.get('ollama_links',{}).items():
+        path=destination(root,relative,allow_leaf_symlink=True)
+        if publish and not path.is_symlink():
+            ollama_manifest_target(root,relative,path,target)
+            path.symlink_to(target)
+            durable.sync_directory(path.parent)
+        if ollama_manifest_link(root,relative)!=target:
+            raise setup.SetupError('Lien de manifeste Ollama modifié ; bascule refusée.')
+
+
 def inventory(source, docker_disks=()):
     """Every regular file, with explicit exclusions; no hidden traversal of links."""
     files, excluded, empty = [], [], []
+    ollama_links = {}
     docker_disks = {Path(path) for path in docker_disks}
     def unreadable(error):
         raise error
@@ -72,10 +104,13 @@ def inventory(source, docker_disks=()):
             for name in dirs:
                 path = parent/name
                 if path in nested:continue
+                relative=path.relative_to(root).as_posix()
                 if name in ('.git', '__pycache__') or role=='private' and name=='search-tools':
-                    excluded.append(role+'/'+path.relative_to(root).as_posix());continue
+                    excluded.append(role+'/'+relative);continue
                 if path.is_symlink() or (hasattr(path, 'is_junction') and path.is_junction()):
                     raise setup.SetupError('Lien ou jonction refusé dans '+role)
+                if role=='data' and relative=='tools/youtube/venv':
+                    excluded.append(role+'/'+relative);continue
                 kept.append(name)
             dirs[:] = kept
             relative_dir = parent.relative_to(root).as_posix()
@@ -87,6 +122,11 @@ def inventory(source, docker_disks=()):
             for name in sorted(names):
                 path = parent/name
                 relative = path.relative_to(root).as_posix()
+                if relative.casefold() in seen:raise setup.SetupError('Noms ambigus entre Windows et Linux.')
+                seen.add(relative.casefold())
+                if role=='data' and path.is_symlink():
+                    ollama_links[relative]=ollama_manifest_link(root,relative)
+                    continue
                 destination(root,relative)
                 if (role == 'private' and (name in RUNTIME or name.endswith('.lease'))
                     or data_lease(role+'/'+relative) or name.endswith(('.pyc','-shm'))):
@@ -101,11 +141,9 @@ def inventory(source, docker_disks=()):
                 if name.endswith('.transfer-part'):raise setup.SetupError('Nom réservé au transfert déjà présent dans la source.')
                 info = path.lstat()
                 if not stat.S_ISREG(info.st_mode):raise setup.SetupError('Fichier spécial refusé : '+role+'/'+relative)
-                if relative.casefold() in seen:raise setup.SetupError('Noms ambigus entre Windows et Linux.')
-                seen.add(relative.casefold())
                 files.append({'path':role+'/'+relative, 'bytes':info.st_size,
                               'mtime_ns':info.st_mtime_ns, 'mode':stat.S_IMODE(info.st_mode)})
-    return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded}
+    return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded, 'ollama_links':ollama_links}
 
 
 def matches_frozen_inventory(current, frozen):
@@ -268,6 +306,9 @@ def plan(app, dest):
     items=inventory(source,host.get('docker_disks',[]))
     if any(record['path'].endswith('/pyvenv.cfg') for record in items['files']):
         raise setup.SetupError('Un environnement Python supplémentaire doit disposer d’un adaptateur hors ligne avant transfert. Aucun arrêt effectué.')
+    if 'data/tools/youtube/venv' in items['excluded']:
+        import youtube_tools
+        youtube_tools.validate_wheels(source['data']/'tools/youtube-wheels')
     total=sum(r['bytes'] for r in items['files'])
     parent=dest
     while not parent.exists():parent=parent.parent
@@ -344,6 +385,7 @@ def stopped(app, config):
         stack.enter_context(locked(data/'catalog/content-supervisor.lock'))
         stack.enter_context(maintenance(app,config))
         stack.enter_context(locked(app.work/'search-tools-prepare.lock'))
+        stack.enter_context(locked(data/'tools/youtube-prepare.lock'))
         # Remove only this project's containers: Docker cannot auto-restart an old
         # bind mount after reboot. No daemon shutdown or foreign container action.
         app.render(config);app.compose(config,'down','--timeout','60')
@@ -411,6 +453,7 @@ def export_report(dest, journal):
     # No paths, filenames, users, settings values, DB contents or raw tool logs.
     report={k:journal.get(k) for k in ('schema','kind','id','phase','created','bytes','prerequisites','release','target')}
     report['files']=len(journal.get('inventory',{}).get('files',[]))
+    report['ollama_manifest_links']=len(journal.get('inventory',{}).get('ollama_links',{}))
     report['verified_files']=len(journal.get('verified',{}))
     report['databases_checked']=len(journal.get('databases',[]))
     report['adapted_files']=len(journal.get('adapted',[]))
@@ -423,18 +466,21 @@ def export_report(dest, journal):
     if journal.get('target')=='windows':
         report['storage']['docker_placement']=docker_placement(latest)
     report['incomplete_files_preserved']=sum(r['path'].endswith(('.part','.pending','.tmp')) for r in journal.get('inventory',{}).get('files',[]))
-    report['pending']=['Essai Windows réel chez Marc', 'Recherche et ouverture par un utilisateur',
+    report['pending']=['Recherche et ouverture par un utilisateur',
                        'IA : essai explicite après levée de pause', 'Redémarrage et réseau externe débranché',
-                       'Autre PC Windows et Linux : recettes distinctes non réalisées']
+                       'Activation sur un autre PC : recette séparée']
     setup.write_json(dest/'Rapport-transfert.json',report)
+    launcher='transferer-setupsurvie.sh' if journal.get('target')=='linux' else 'Transferer-SetupSurvie.cmd'
+    docker_help=('Sous Windows, utilisez Vérifier Docker pour repérer le moteur et son stockage.\n'
+                 if journal.get('target')=='windows' else
+                 'Sous Linux, ouvrez le lanceur dans votre session avec accès au moteur Docker.\n')
     durable.write_bytes(dest/'LIRE-MOI-SECOURS.txt',
-        ('SetupSurvie — copie privée du foyer\nÉtat : '+journal['phase']+'\n'
-         'Ouvrez Transferer-SetupSurvie.cmd pour vérifier, activer ou revenir à la source.\n'
+        (f"SetupSurvie — copie privée du foyer\nÉtat : {journal['phase']}\n"
+         f'Ouvrez {launcher} pour vérifier, activer ou revenir à la source.\n'
          'Les données sont dans data ; les guides PDF dans data/library/guides.\n'
          'Documentation complète : application/docs ; guide court : LISEZ-MOI.html.\n'
          'Ne supprimez pas la source. Ne démarrez pas deux installations.\n'
-         'Sous Windows, utilisez Vérifier Docker pour repérer le moteur et son stockage.\n'
-         'Suivez le guide de transfert pour déplacer Docker ou préparer un autre PC.\n').encode('utf-8'))
+         f'{docker_help}Suivez le guide de transfert pour déplacer Docker ou préparer un autre PC.\n').encode('utf-8'))
     import html
     guide=setup.ROOT/'docs/exploitation/transfert-installation.md'
     body=guide.read_text(encoding='utf-8') if guide.exists() else 'Consultez application/docs/exploitation/manuel-de-secours.md'
@@ -533,7 +579,8 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             else:
                 previous=journal['inventory']['files']
                 retained=[record for record in previous if not data_lease(record['path'])]
-                if not matches_frozen_inventory(current['files'],retained):
+                if (current.get('ollama_links',{})!=journal['inventory'].get('ollama_links',{})
+                    or not matches_frozen_inventory(current['files'],retained)):
                     raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
                 if retained!=previous:
                     journal['inventory']={**current,'files':retained}
@@ -563,12 +610,15 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 confirmed+=record['bytes']
                 if time.monotonic()-last_save>=5:
                     save(dest,journal);last_save=time.monotonic()
+            manifest_links(dest,journal['inventory'],publish=True)
             save(dest,journal)
             report('Contrôle des bases de données',force=True,files_done=len(verified),bytes_verified=confirmed)
             for relative in databases:database_check(destination(dest,relative))
             if export_images:
                 journal['images_sha256'],journal['images_manifest_sha256']=copy_images(app,config,dest,report)
-            if not matches_frozen_inventory(inventory(roots(app,config),docker_disks)['files'],journal['inventory']['files']):
+            current=inventory(roots(app,config),docker_disks)
+            if (current.get('ollama_links',{})!=journal['inventory'].get('ollama_links',{})
+                or not matches_frozen_inventory(current['files'],journal['inventory']['files'])):
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)
             journal['checks']['source_stopped']=True
@@ -580,6 +630,7 @@ def verify_copy(dest):
     dest=setup.safe_path(dest);journal=read(dest/'transfer.json')
     if journal.get('kind')!=KIND or journal.get('schema')!=1 or journal['phase'] not in ('copied','adapting','prepared'):
         raise setup.SetupError('Copie inachevée : reprenez le transfert, aucun démarrage possible.')
+    manifest_links(dest,journal['inventory'])
     for record in journal['inventory']['files']:
         relative=record['path'];path=destination(dest,relative)
         # Adaptation is separately hashed. Original records remain an audit trail.
@@ -699,6 +750,7 @@ def activate(dest):
         recovering=journal['phase']=='activating'
         if recovering:
             stop_destination(dest)
+            manifest_links(dest,journal['inventory'])
             for record in journal['inventory']['files']:
                 relative=record['path']
                 if relative.startswith(('application/','data/library/','data/models/')):
@@ -747,8 +799,11 @@ def activate(dest):
         # from the copied verified caches, without Internet. Optional tool.
         try:
             import youtube_tools
-            youtube_tools.prepare(config['data_dir'],offline=True,force=True)
-        except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):pass
+            youtube_ready=youtube_tools.prepare(config['data_dir'],offline=True,force=True)
+        except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):
+            youtube_ready=False
+        if 'data/tools/youtube/venv' in journal['inventory']['excluded']:
+            journal['checks']['youtube_tools']='passed' if youtube_ready else 'unavailable'
         if host=='windows':
             import windows_autostart
             windows_autostart.prepare(app,config,preserve_preferences=True)

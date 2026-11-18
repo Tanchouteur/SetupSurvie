@@ -63,6 +63,33 @@ class TransferTests(unittest.TestCase):
         self.assertNotIn('secret-fixture-only',public);self.assertNotIn('marc-fixed-id',public)
         with self.assertRaises(setup.SetupError):transfer.guard(self.work)
 
+    @unittest.skipIf(os.name=='nt','Manifestes Ollama dans le conteneur Linux')
+    def test_ollama_v2_link_keeps_its_relative_blob_and_is_verified(self):
+        blob=self.data/'models/blobs'/('sha256-'+'a'*64)
+        link=self.data/'models/manifests-v2/ollama.com/library/model/tag'
+        blob.parent.mkdir(parents=True);blob.write_bytes(b'manifest fixture')
+        link.parent.mkdir(parents=True);link.symlink_to(os.path.relpath(blob,link.parent))
+        self.copy()
+        copied=self.dest/'data'/link.relative_to(self.data)
+        self.assertEqual(os.readlink(copied),os.readlink(link))
+        self.assertEqual(copied.read_bytes(),blob.read_bytes())
+        transfer.verify_copy(self.dest)
+        copied.unlink();copied.symlink_to(blob)
+        with self.assertRaisesRegex(setup.SetupError,'externe'):
+            transfer.verify_copy(self.dest)
+        link.unlink();link.symlink_to(blob)
+        with self.assertRaisesRegex(setup.SetupError,'externe'):
+            transfer.inventory({'data':self.data})
+
+    def test_youtube_venv_is_excluded_and_its_cache_required(self):
+        venv=self.data/'tools/youtube/venv'
+        venv.mkdir(parents=True);(venv/'pyvenv.cfg').write_text('fixture')
+        with patch('youtube_tools.validate_wheels') as check:
+            journal=self.copy()
+        check.assert_called_once_with(self.data/'tools/youtube-wheels')
+        self.assertIn('data/tools/youtube/venv',journal['inventory']['excluded'])
+        self.assertFalse((self.dest/'data/tools/youtube/venv').exists())
+
     def test_process_death_resumes_published_files_without_recopy(self):
         # Kill only our disposable fixture process after a durable publication.
         script="""import sys,os
