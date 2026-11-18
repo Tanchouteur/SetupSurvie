@@ -30,8 +30,8 @@
     if(scrollFrame!==undefined)return;
     scrollFrame=requestAnimationFrame(()=>{scrollFrame=undefined;positionTitles();});
   }
-  const navSize=new ResizeObserver(scheduleTitles);
-  navSize.observe(topbar);navSize.observe(desktopNav);
+  const layoutSize=new ResizeObserver(scheduleTitles);
+  for(const node of [topbar,desktopNav,...sections])layoutSize.observe(node);
   window.addEventListener('scroll',scheduleTitles,{passive:true});
   window.addEventListener('resize',scheduleTitles);
   collections.addEventListener('toggle',scheduleTitles,true);

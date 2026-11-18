@@ -102,11 +102,14 @@ async page => {
   for(const width of [1440,320]){
     await page.setViewportSize({width,height:700});
     for(const id of ['livres','guides','videos']){
+      await page.evaluate(id=>{
+        const section=document.getElementById('collection-section-'+id);
+        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
+      },id);
       const stuck=await page.waitForFunction(({id,width})=>{
         const section=document.getElementById('collection-section-'+id);
         const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
         const summary=section.querySelector('summary');
-        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
         const gap=summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom;
         const heading=summary.querySelector('h2').getBoundingClientRect();
         const mask=getComputedStyle(summary,'::before');
