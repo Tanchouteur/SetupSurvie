@@ -4,7 +4,11 @@
   const normal=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr').replace(/[’'_-]/g,' ').replace(/\s+/g,' ').trim();
   const groups=[['livres','data-books'],['guides','data-guides']];
   const categoryLinks=[...document.querySelectorAll('[data-collection-type]')];
-  let category='';
+  const collections=document.getElementById('next-collections');
+  const topbar=document.querySelector('.topbar');
+  new ResizeObserver(()=>collections.style.setProperty('--collection-mobile-top',topbar.offsetHeight+'px')).observe(topbar);
+  let category='',readOpen=(_,fallback)=>fallback;
+  const disclosureSelector='.next-collection-section, .next-collection-group';
   const groupId=value=>{let hash=2166136261;for(const char of value)hash=Math.imul(hash^char.charCodeAt(0),16777619);return 'collection-group-'+(hash>>>0).toString(16);};
   function arrangeCollections(){
     for(const [type,id] of groups)groupCards(document.getElementById(id),type);
@@ -22,6 +26,7 @@
     for(const [family,cards] of families){
       if(cards.length<2)continue;
       const group=document.createElement('details');group.className='next-collection-group';group.id=groupId(guides?'guide:'+family:family);
+      group.open=readOpen(group.id,false);
       const summary=document.createElement('summary');summary.textContent=family+' · '+cards.length+(guides?' documents':' collections');group.append(summary);
       const children=document.createElement('div');children.className='data-grid';group.append(children);cards[0].card.before(group);
       for(const {card,heading,variant} of cards){
@@ -62,24 +67,26 @@
     let total=0,matching=0,ready=0,loaded=true;
     for(const [type,id] of groups){
       const grid=document.getElementById(id),section=grid.parentElement;
-      if(category&&category!==type){section.hidden=true;continue;}
+      const selected=!category||category===type;
       let visible=0;loaded=loaded&&grid.children.length>0;
       for(const card of grid.querySelectorAll('.data-card')){
         const text=normal(card.dataset.catalogSearch||card.textContent);
         const match=words.every(word=>text.includes(word));
-        card.hidden=!match;total++;if(match){visible++;matching++;if(card.dataset.inventoryReady==='true')ready++;}
+        card.hidden=!match;
+        if(match)visible++;
+        if(selected){total++;if(match){matching++;if(card.dataset.inventoryReady==='true')ready++;}}
       }
       for(const group of grid.querySelectorAll('.next-collection-group')){
         const visible=[...group.querySelectorAll('.data-card')].some(card=>!card.hidden);group.hidden=!visible;
         revealMatches(group,!!words.length,visible);
       }
       for(const placeholder of grid.querySelectorAll('.empty-panel'))placeholder.hidden=!!words.length;
-      section.hidden=!!words.length&&!visible;
+      section.hidden=!selected||!!words.length&&!visible;
       revealMatches(section,!!words.length,!!visible);
     }
     const videosOnly=category==='videos',videoSection=document.querySelector('[data-collection-section="videos"]');
     videoSection.hidden=!!category&&!videosOnly;
-    if(!videoSection.hidden)revealMatches(videoSection,!!words.length,true);
+    revealMatches(videoSection,!!words.length,true);
     document.getElementById('collection-filter-count').textContent=videosOnly?'':total?`${matching} / ${total} ressource(s) affichée(s) · ${ready} disponible(s) à la lecture.`:loaded?'Aucune ressource recensée dans cet inventaire.':'';
     document.getElementById('collection-filter-empty').hidden=videosOnly||!words.length||matching>0||!loaded;
     const link=document.getElementById('collection-search-inside');
@@ -97,15 +104,17 @@
   document.getElementById('collection-filter-clear').onclick=()=>{input.value='';changed();input.focus();};
   const observer=new MutationObserver(apply);
   for(const [,id] of groups)observer.observe(document.getElementById(id),{childList:true});
-  window.CollectionsFilter={setView(value,type){
+  window.CollectionsFilter={setView(value,type,read){
+    readOpen=read;
     category=categoryLinks.some(link=>link.dataset.collectionType===type)?type:'';
     const previous=input.value;
     input.value=String(value||'').slice(0,160);
-    apply();
-    if(category){
-      const section=document.querySelector(`[data-collection-section="${category}"]`);
-      section.open=true;
+    for(const detail of document.querySelectorAll(disclosureSelector)){
+      const open=readOpen(detail.id,detail.matches('.next-collection-section'));
+      if(detail.dataset.filtering)detail.dataset.previousOpen=String(open);
+      else detail.open=open;
     }
+    apply();
     if(previous!==input.value)document.dispatchEvent(new Event('survie:collection-query-restored'));
   }};
   apply();

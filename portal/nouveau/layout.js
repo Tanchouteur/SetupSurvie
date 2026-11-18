@@ -229,6 +229,7 @@
     ["videos", "Vidéos de la bibliothèque", null],
   ]) {
     const section = make("details", "next-collection-section");
+    section.id = "collection-section-" + key;
     section.dataset.collectionSection = key;
     section.open = true;
     const summary = make("summary", "");
