@@ -1009,6 +1009,13 @@ body.next-interface {
     gap: 2px;
   }
   .next-interface .sidebar #navigation .nav-item {
+    padding-inline: 4px;
+  }
+  .next-interface .sidebar #navigation .nav-item > span:last-child {
+    font-size: 13px;
+  }
+  .next-interface .assistant-tools > summary {
+    min-width: 0;
     padding-inline: 6px;
   }
   .next-interface .sidebar #account-button {
