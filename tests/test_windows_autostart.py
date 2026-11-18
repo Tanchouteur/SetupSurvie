@@ -22,7 +22,7 @@ class AutoStartTests(unittest.TestCase):
         runtime=json.loads((launcher.parent/'startup-settings.json').read_text())
         self.assertEqual(runtime['desktop'],str(desktop));self.assertIn(str(ollama.parent),runtime['paths'])
         self.assertEqual(runtime['python'],str(Path(sys.executable).resolve()))
-        after=self.app.load();self.assertFalse(after.pop('inference_autostart'));self.assertEqual(after,json.loads(original))
+        after=self.app.load();self.assertEqual(after,json.loads(original))
         self.assertFalse((self.app.work/'inference-paused.json').exists())
         self.assertTrue((launcher.parent/'register-startup-windows.ps1').is_file())
     def test_repeated_prepare_is_stable_and_unknown_owner_refused(self):
@@ -69,6 +69,31 @@ class AutoStartTests(unittest.TestCase):
         self.assertEqual(self.app.settings_path.read_bytes(),before)
         self.assertIn('-RefreshOnly',run.call_args.args[0])
         self.assertTrue((self.root/'maintenance/windows_background.py').exists())
+
+    def test_update_migrates_legacy_default_but_preserves_user_pause(self):
+        windows_autostart.prepare(self.app,self.c)
+        record=self.root/'maintenance/startup-settings.json'
+        legacy=json.loads(record.read_text());legacy.pop('inference_default_migrated')
+        setup.write_json(record,legacy)
+        config={**self.app.load(),'inference_autostart':False}
+        setup.write_json(self.app.settings_path,config)
+        marker=self.app.work/'inference-paused.json'
+        setup.write_json(marker,{'reason':'user_gaming'})
+        windows_autostart.refresh(self.app,config)
+        self.assertTrue(self.app.load()['inference_autostart'])
+        self.assertEqual(json.loads(marker.read_text())['reason'],'user_gaming')
+        legacy=json.loads(record.read_text());legacy.pop('inference_default_migrated')
+        setup.write_json(record,legacy)
+        config={**self.app.load(),'inference_autostart':False}
+        setup.write_json(self.app.settings_path,config)
+        setup.write_json(marker,{'reason':'windows_no_inference_autostart'})
+        windows_autostart.refresh(self.app,config)
+        self.assertFalse(marker.exists())
+        # A later explicit preference must not be migrated repeatedly.
+        config={**self.app.load(),'inference_autostart':False}
+        setup.write_json(self.app.settings_path,config)
+        windows_autostart.refresh(self.app,config)
+        self.assertFalse(self.app.load()['inference_autostart'])
 
     def test_unconfigured_update_does_not_enable_startup(self):
         with patch.object(setup,'run') as run:windows_autostart.refresh(self.app,self.c)
