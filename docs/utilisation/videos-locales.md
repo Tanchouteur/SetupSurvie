@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.45.0, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.47.0, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -59,8 +59,17 @@ Les différents passages d’un média sont regroupés sous un résultat « Vid�
 Un passage trouvé ouvre le lecteur à son horodatage et garde la langue de sa piste
 dans le texte envoyé à l’assistant.
 
-Le lecteur propose la piste française locale quand elle existe, la langue source
-et **Sans sous-titres**. Les SRT sont servis en WebVTT sans changer l’original.
+Dans **Sous-titres**, le réglage **Automatique** choisit le français si une
+piste existe pour une vidéo anglaise, puis l’anglais. Une vidéo française s’ouvre
+sans sous-titres. Si la langue parlée est inconnue, le lecteur privilégie
+le français, puis l’anglais. Pour les autres langues, il affiche une piste
+française si elle est disponible.
+
+Choisissez une piste ou **Sans sous-titres** dans le menu du lecteur pour
+mémoriser ce choix pour cette vidéo, avec votre profil et dans ce navigateur.
+Sélectionnez **Automatique** pour revenir au réglage par défaut. Si la piste
+mémorisée devient indisponible, le lecteur utilise le réglage automatique.
+Les SRT sont servis en WebVTT sans changer l’original.
 La lecture, le changement de piste et les déplacements dans le média fonctionnent
 sans Internet ni IA. La position est mémorisée par profil et navigateur pour la
 même révision ; un passage explicitement trouvé prend priorité sur cette position.

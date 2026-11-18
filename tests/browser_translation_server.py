@@ -58,13 +58,22 @@ async def fixture_acquisitions_release():
     acquisition_gate=None;return {'released':True}
 
 @gateway.app.post('/fixture/videos')
-def fixture_videos():
+def fixture_videos(extra_track:bool=False):
     videos.ROOT.mkdir(exist_ok=True)
     shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'cours.webm')
     shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'sans-piste.webm')
     (videos.ROOT/'cours.info.json').write_text(json.dumps({'title':'Fabrication du rotor fictif','language':'en','duration':12,'channel':'Chaîne de test','description':'Vidéo synthétique, aucun guide pratique.'}))
     (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:03,000\nIntroduction fictive.\n\n2\n00:00:08,000 --> 00:00:10,000\nMontage du rotor fictif, cote inventée 17 mm.\n')
     (videos.ROOT/'cours.en.vtt').write_text('WEBVTT\n\n00:08.000 --> 00:10.000\nImaginary rotor assembly, fictional 17 mm.\n')
+    for name,title,audio,subtitle in (
+        ('english','Vidéo de test en anglais','eng','en-GB'),
+        ('french','Vidéo de test en français','fr-FR','fr'),
+    ):
+        shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/(name+'.webm'))
+        (videos.ROOT/(name+'.info.json')).write_text(json.dumps({'title':title,'language':audio,'duration':12}))
+        (videos.ROOT/(name+'.'+subtitle+'.vtt')).write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nFixture.\n')
+    if extra_track:
+        (videos.ROOT/'cours.de.vtt').write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nTest.\n')
     return {'ready':True}
 
 caption_gate=None

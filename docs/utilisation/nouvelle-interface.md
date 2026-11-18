@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.46.1, 18 novembre 2026.**
+**Guide actuel — 0.47.1, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -29,7 +29,7 @@ sous un titre dépliable, par exemple *Where There Is No Dentist*. Le filtre
 ouvre les groupes correspondant à ses mots et chaque chapitre reste ouvrable.
 Vous pouvez aussi déplier ou replier chaque grande rubrique par son titre.
 **Effacer le filtre** efface les mots saisis dans la rubrique courante.
-Depuis 0.46.1, le navigateur retrouve vos rubriques et groupes ouverts ou repliés
+Depuis 0.47.1, le navigateur retrouve vos rubriques et groupes ouverts ou repliés
 pour le profil sélectionné. Un filtre peut ouvrir provisoirement les groupes
 correspondants. Le titre de la rubrique en cours reste sous la navigation pendant
 le défilement et permet toujours de la replier.
