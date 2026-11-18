@@ -92,6 +92,7 @@ CONCEPTS={
  'vetement':{'terms':['vetement','vetements','garment','garments','clothes','clothing'],'fr':['vetement'],'en':['clothes']},
  'panneau':{'terms':['panneau','panneaux','panel','panels'],'fr':['panneau'],'en':['panel']},
  'solaire':{'terms':['solaire','solaires','solar','photovoltaic','photovoltaique'],'fr':['solaire'],'en':['solar']},
+ 'aliment':{'terms':['aliment','aliments','alimentaire','alimentaires','nourriture','food','foods'],'fr':['aliments'],'en':['food']},
  'conserves':{'terms':['conserve','conserves','canning'],'fr':['conserves'],'en':['canning']},
  'legume':{'terms':['legume','legumes','vegetable','vegetables'],'fr':['legumes'],'en':['vegetables']},
  'affutage':{'terms':['affutage','affuter','aiguiser','sharpening','sharpen'],'fr':['affutage'],'en':['sharpening']},
@@ -184,6 +185,8 @@ def plan(query,words,synonyms,collection=''):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
         title_fr.append(concept['fr'][0] if concept else word)
         title_en.append(concept['en'][0] if concept else next((x for x in reversed(synonyms.get(word,[])) if x!=word),word))
+    if action=='preserve' and len(dedup)==1 and dedup[0] in CONCEPTS['aliment']['terms']:
+        title_fr=['conservation des aliments'];title_en=['food preservation']
     scope=('group:'+normal(collection[6:]).replace(' ','')) if collection.startswith('group:') else normal(collection).replace(' ','') or detected
     return Plan(query,dedup,groups,practical,scope,' '.join(title_fr),' '.join(title_en),action)
 
@@ -239,6 +242,13 @@ def rank(item,query,position=0,*,normalizer=None):
     if item.get('language') in ('fr','fra'):score+=2
     canonical=' '.join(query.words)
     if canonical and (canonical==title or normalize(query.original)==title):score+=5 if query.practical else 30
+    if query.practical and query.action=='preserve' and not query.collection:
+        # A practical preservation query first needs documents on the subject.
+        # A targeted dictionary or Wikisource search retains its normal ranking.
+        book=item.get('book') or str(item.get('id','')).split('/',1)[0].removeprefix('zim:')
+        reference=book.startswith('wiktionary_') or (book.startswith('wikisource_') and re.search(r'(?:^|/)Page:',path,re.I))
+        if reference and not re.search(r'\b(definition|dictionnaire|thesaurus|wiktionnaire|wiktionary|wikisource)\b',normalize(query.original)):
+            score-=60
     if query.practical:
         classification=item.get('classification',{})
         if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
@@ -334,6 +344,6 @@ def article_language(item):
 def domains(item):
     # Conservative automatic indication; never certifies a procedure.
     text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
-    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|food preservation|conserves|canning|solaire|solar|photovoltaic|photovoltaique|radio|radios|antenne|antennes|communications|telecommunications|affutage|sharpening)\b',text))
+    resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|(?:(?:conservation|stockage) de(?:s| la) |(?:conserver|stocker) (?:les? |des? |la )?)(?:aliments?|nourriture)|food (?:preservation|storage)|conserves|canning|solaire|solar|photovoltaic|photovoltaique|radio|radios|antenne|antennes|communications|telecommunications|affutage|sharpening)\b',text))
     cultural=bool(re.search(r'\b(histoire|history|science|sciences|physique|physics|biologie|biology|mathematiques|mathematics|enseignement|education|geographie|geography|litterature|literature|philosophie|philosophy)\b',text))
     return (['resilience'] if resilience else [])+(['culture'] if cultural or not resilience else [])

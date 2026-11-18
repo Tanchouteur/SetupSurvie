@@ -52,6 +52,16 @@ risques restent accessibles. Un titre bien classé ne garantit pas des instructi
 complètes. Une demande générale identique à un titre conserve aussi ses mots de
 liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
 
+Depuis 0.49.2, « conservation des aliments » garde le sujet complet dans les
+recherches par titre. Les documents sur la conservation alimentaire peuvent
+apparaître dans **Autonomie et résilience**. Pour une recherche pratique de
+conservation, les entrées du Wiktionnaire et les pages de transcription de
+Wikisource passent plus bas. La recherche ciblée sur ces collections reste
+possible. Sur les archives présentes sur Bazzite, la requête française avec
+**Autonomie et résilience** a placé l’article « Conservation des aliments » de
+Wikipédia en tête. Cet essai portait sur les archives natives, avec une
+couverture partielle. L’ordre dépend du fonds de chaque installation.
+
 Depuis 0.36.1, des formes courantes de singulier/pluriel se retrouvent ensemble,
 par exemple « couteau/couteaux », « tuyau/tuyaux » ou « ruche/ruches ». La forme
 exacte garde sa priorité à pertinence comparable. Les autres mots du besoin

@@ -43,6 +43,31 @@ class TitleScopeTests(unittest.TestCase):
         self.assertEqual(rows[0]['title'],'Histoire du vélo');self.assertEqual(len(rows),3)
         self.assertEqual(self.ordered('les fractions',['Some fractions','Les fractions'],'Fictional fractions text.')[0]['title'],'Les fractions')
 
+    def test_food_preservation_queries_keep_the_subject_in_both_languages(self):
+        for query in ('conservation des aliments','conservation alimentaire','comment conserver la nourriture','food preservation'):
+            with self.subTest(query=query):
+                plan=retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
+                self.assertEqual(retrieval.title_forms(plan),['conservation des aliments'])
+                self.assertEqual(retrieval.title_forms(plan,english=True),['food preservation'])
+        for title in ('Conservation des aliments','Conserver les aliments','Stockage de la nourriture','Food storage'):
+            with self.subTest(title=title):
+                self.assertIn('resilience',retrieval.domains({'title':title}))
+
+    def test_practical_search_ranks_topic_resources_ahead_of_reference_entries(self):
+        query='conservation des aliments'
+        plan=retrieval.plan(query,library.search_terms(query),library.SYNONYMS)
+        candidates=[
+            {'id':'zim:wiktionary_fr/Thésaurus:conservation_des_aliments','title':'Thésaurus:conservation des aliments','excerpt':'Vocabulaire de la conservation des aliments.'},
+            {'id':'zim:wikisource_fr/Page:Traité_des_alimens/10','title':'Page:Traité des alimens/10','excerpt':'Mention de la conservation des aliments.'},
+            {'id':'zim:wikipedia_fr/Conservation_des_aliments','title':'Conservation des aliments','excerpt':''},
+            {'id':'zim:wikibooks_fr/Guide','title':'Conservation alimentaire','excerpt':'Présentation fictive de la conservation des aliments.'},
+        ]
+        ordered=retrieval.ordered(candidates,plan,10)
+        self.assertEqual({row['id'] for row in ordered[:2]},{candidates[2]['id'],candidates[3]['id']})
+        self.assertEqual(len(ordered),len(candidates))
+        explicit=retrieval.plan(query,library.search_terms(query),library.SYNONYMS,collection='wiktionary')
+        self.assertGreater(retrieval.rank(candidates[0],explicit),retrieval.rank(candidates[0],plan))
+
     def test_contextual_subjects_are_still_found_when_explicitly_requested(self):
         for query,title in [
             ('occupational hazards of solar panel installation','Occupational hazards of solar panel installation'),
