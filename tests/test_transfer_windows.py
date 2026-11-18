@@ -45,7 +45,8 @@ foreach ($name in @('transfer-host-check.ps1','transfer-windows.ps1','create-sho
             settings.write_text(json.dumps({'CustomWslDistroDir':str(root)}),encoding='utf-8')
             result=subprocess.run([*POWERSHELL,str(ROOT/'scripts/transfer-host-check.ps1'),'-Destination',name],
                                   env={**os.environ,'APPDATA':name},check=True,capture_output=True,text=True,encoding='utf-8')
-        state=json.loads(result.stdout)
-        self.assertFalse(state['source']['known'])
-        self.assertIn(str(image),state['docker_disks'])
-        self.assertIn({'path':str(image),'physical_disk':state['destination']},state['docker_evidence']['data_images'])
+            state=json.loads(result.stdout)
+            self.assertFalse(state['source']['known'])
+            detected_path = next((path for path in state['docker_disks'] if Path(path).samefile(image)), None)
+            self.assertIsNotNone(detected_path)
+            self.assertIn({'path':detected_path,'physical_disk':state['destination']},state['docker_evidence']['data_images'])

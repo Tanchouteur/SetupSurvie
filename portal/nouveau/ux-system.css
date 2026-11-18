@@ -375,10 +375,8 @@
 }
 .next-interface .search-line {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(145px, 190px) minmax(
-      145px,
-      230px
-    ) auto;
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 220px)
+    minmax(140px, 175px) minmax(135px, 165px) auto;
   align-items: center;
   gap: 10px;
 }
@@ -389,8 +387,9 @@
 }
 .next-interface .search-line input,
 .next-interface .search-line select {
+  min-height: 44px;
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 .next-interface #search-collection {
   width: 100%;
@@ -475,6 +474,20 @@
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 12px;
+}
+.next-interface .result > :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 2px 6px 2px 0;
+  vertical-align: middle;
+}
+.next-interface .result > button.secondary {
+  padding-inline: 12px;
+}
+.next-interface .result > button[aria-pressed="true"] {
+  background: var(--soft);
+  border-color: #b2c7b5;
 }
 .next-interface .result-meta {
   font-size: 12px;
@@ -565,11 +578,11 @@
     letter-spacing: -0.7px;
   }
 }
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .next-interface .search-line {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-  .next-interface #library-query {
+  .next-interface :is(#library-query, #search-collection) {
     grid-column: 1/-1;
   }
   .next-interface .search-line > button {
@@ -595,9 +608,12 @@
   .next-interface .search-line {
     gap: 8px;
   }
-  .next-interface .search-line input,
+  .next-interface .search-line input {
+    font-size: 16px;
+  }
   .next-interface .search-line select {
-    font-size: 14px;
+    font-size: 13px;
+    padding-inline: 6px;
   }
   .next-interface #search-collection {
     flex-basis: auto;
@@ -676,7 +692,7 @@
   gap: 8px;
   font: inherit;
   font-size: 14px;
-  font-weight: 550;
+  font-weight: 600;
   border-radius: 8px;
   min-height: 40px;
 }
@@ -701,6 +717,33 @@
 .next-interface button.secondary:hover {
   background: var(--soft);
 }
+.next-interface :is(#home-search, #library-search) > button[type="submit"] {
+  min-height: 44px;
+  padding-inline: 16px;
+  font-size: 14px;
+  font-weight: 650;
+  background: #245240;
+  border: 1px solid #1d4435;
+  box-shadow: 0 1px 2px #203e3420;
+}
+.next-interface :is(#home-search, #library-search) > button[type="submit"]:hover:not(:disabled) {
+  background: #1a4535;
+}
+.next-interface .hero-search #home-query {
+  padding-inline: 10px;
+}
+.next-interface .feature-card .text-button {
+  align-self: flex-start;
+  justify-content: flex-start;
+  padding: 8px 0;
+  min-height: 44px;
+  font-size: 14px;
+  color: #245240;
+}
+.next-interface .feature-card .text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
 .next-interface .sidebar .nav-item {
   border: 0;
   border-radius: 9px;
@@ -708,6 +751,10 @@
   background: transparent;
   color: var(--muted);
   font-weight: 500;
+}
+.next-interface .sidebar .nav-item:hover {
+  background: #f0f3ec;
+  color: var(--green);
 }
 .next-interface .sidebar .nav-item.active {
   background: var(--soft);

@@ -30,6 +30,7 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 | `portal/style.css` | Contrôles historiques partagés avec le portail classique, états métier et lecteurs communs ; conservés pour compatibilité |
 | `portal/nouveau/style.css` | Structure du portail et navigation, règles propres aux outils ; ancien thème complet de la maquette retiré |
 | `portal/nouveau/ux-system.css` | Variables, typographie, formulaires, aides, surfaces, bibliothèque et lecteurs : règles communes de présentation |
+| `portal/resource-status.css` et `resource-status.js` | Bloc modèle et jauges mémoire dans la navigation PC du portail et des Cartes. Le portail réutilise son actualisation, les Cartes lisent les mesures tant que la barre est visible. |
 | `portal/nouveau/settings.css` | Grilles de cartes, contenu des cartes, formulaires et restrictions mobiles des paramètres |
 | `portal/nouveau/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
 | `portal/nouveau/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |

@@ -1,18 +1,20 @@
 # Comprendre les délais et mesurer la mémoire de l’assistant
 
-**Guide actuel — 0.39.0, 17 novembre 2026.** Les mesures des réponses n’ajoutent
+**Guide actuel — 0.43.2, 18 novembre 2026.** Les mesures des réponses n’ajoutent
 aucun modèle et ne changent pas le contexte. L’essai mémoire est distinct : il
 charge le modèle déjà installé après une action explicite depuis Famille.
 
 ## Voir le modèle chargé, la RAM et la VRAM
 
-Sur ordinateur, la barre de navigation affiche le **modèle réellement signalé
-par le moteur**, la RAM du PC et la VRAM. Cliquer sur cet indicateur ouvre
-**Mon appareil → Vue d’ensemble** : modèles, mémoire utilisée/disponible et
-activité de la carte sont visibles directement, avant le suivi documentaire.
-Les mêmes liens de navigation restent accessibles dans les cartes.
-Sur un écran étroit ou très court, l’indicateur est masqué pour laisser la place
-à la lecture ; les mesures restent disponibles dans Mon appareil.
+Sur ordinateur, un bloc dans la ligne de navigation affiche le **modèle
+réellement signalé par le moteur** et deux jauges, **RAM** et **VRAM**. Le
+pourcentage indique la part utilisée. À partir de 90 %, la jauge passe à
+l’orange ; un tiret et une piste hachurée signalent une mesure indisponible.
+Survoler le bloc donne les volumes exacts et les noms complets des modèles.
+Cliquer dessus ouvre **Mon appareil → Vue d’ensemble**, avec le détail des
+modèles, des mémoires et de l’activité GPU. Le bloc est aussi présent dans les
+Cartes. Sur écran étroit ou très court, ouvrir directement **Mon appareil**
+pour accéder aux mesures.
 
 RAM et VRAM représentent tous les usages du PC serveur, y compris les autres
 logiciels. La mémoire vidéo allouée à chaque modèle est indiquée séparément.
