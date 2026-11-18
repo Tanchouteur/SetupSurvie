@@ -15,11 +15,11 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.45.2"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.46.1"></script><script defer src="/app.js', 1)
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/nouveau/style.css', '0.45.2'),
+        ('css', '/nouveau/style.css', '0.46.1'),
         ('css', '/nouveau/ux-system.css', '0.43.2'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
@@ -36,7 +36,7 @@ def build():
         ('js', '/nouveau/youtube-downloads.js', '0.43.6'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
-        ('js', '/nouveau/collections.js', '0.45.2'),
+        ('js', '/nouveau/collections.js', '0.46.1'),
         ('js', '/nouveau/catalogue.js', '0.34.0'),
         ('js', '/nouveau/search-check.js', '0.26.1'),
         ('js', '/nouveau/search-experiment.js', '0.26.1'),
@@ -55,7 +55,7 @@ def build():
         ('css', '/design/tokens.css', '0.44.0'),
         ('css', '/design/system.css', '0.44.0'),
         ('js', '/design/experience.js', '0.44.0'),
-        ('js', '/nouveau/navigation.js', '0.45.2'),
+        ('js', '/nouveau/navigation.js', '0.46.1'),
     ]
     tags = []
     for kind, path, version in assets:
