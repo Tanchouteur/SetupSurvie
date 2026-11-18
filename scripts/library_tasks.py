@@ -300,8 +300,8 @@ class Manager:
         try:return json.loads((self.paths(job)/'progress.json').read_text(encoding='utf-8'))
         except (OSError,ValueError):return {}
 
-    def pause(self,automatic=False):
-        state = self.current()
+    def pause(self,automatic=False,*,state=None):
+        if state is None:state = self.current()
         if state['phase'] not in ('starting', 'planning', 'downloading'):
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
         if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')

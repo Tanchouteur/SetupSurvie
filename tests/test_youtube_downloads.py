@@ -61,7 +61,7 @@ class SiteTests(unittest.TestCase):
                                    'youtube':{'videos':2,'done':1,'current':{'index':2},'counts':{'downloaded':1},'items':[{'line':2,'status':'downloaded'}],'secret':'x'}}
         value=asyncio.run(site.status())
         self.assertEqual(value['progress']['current'],{'index':2});self.assertNotIn('secret',value['progress']);self.assertFalse(value['resumable'])
-        asyncio.run(site.pause());self.assertEqual(self.command.await_args.args[0],'pause')
+        asyncio.run(site.pause());self.assertEqual(self.command.await_args.args[0],'youtube-download-pause')
         self.command.side_effect=HTTPException(503,'Le service de téléchargement ne répond pas.')
         self.assertEqual(asyncio.run(site.status())['available'],False)
 

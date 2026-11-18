@@ -106,18 +106,21 @@ class Queue:
             db.execute('DELETE FROM work_history WHERE id IN (SELECT id FROM work_history ORDER BY updated DESC,rowid DESC LIMIT -1 OFFSET 300)')
 
     def snapshot(self, profile):
+        from . import youtube_pipeline
+
         keys = [item[0] for item in self.waiters]
         active = self.active[0] if self.active else None
         records = self.records.copy()
         running = self.active is not None
         with store.connect() as db:
             history = [json.loads(row[0]) for row in db.execute('SELECT data FROM work_history ORDER BY updated DESC,rowid DESC LIMIT 300')]
+        video_jobs = {row['id']: row for row in youtube_pipeline.listing()}
         jobs = []
-        for key in dict.fromkeys([active, *keys, *records, *(row['id'] for row in history)]):
+        for key in dict.fromkeys([active, *keys, *records]):
             row = records.get(key)
             if row is None:
                 continue
-            details = describe(row['kind'], key)
+            details = youtube_pipeline.public(video_jobs[key]) if key in video_jobs else describe(row['kind'], key)
             public = {**row, **details}
             if key == active:
                 public['status'] = 'running'
@@ -127,9 +130,8 @@ class Queue:
                 public['status'] = 'preparing'
             if allowed(public, profile):
                 jobs.append(public)
-        from . import youtube_pipeline
         jobs.extend({'id': row['id'], 'kind': row['kind'], 'type': row['type'], **youtube_pipeline.public(row)}
-                    for row in youtube_pipeline.listing() if row['id'] not in records)
+                    for row in video_jobs.values() if row['id'] not in records)
         jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
         for job in jobs:
             job['movable'] = job['id'] in keys and can_move(job, profile)
@@ -164,8 +166,10 @@ def tracked(kind):
                 initial.update({key: job[key] for key in ('model', 'mode') if key in job})
             record = {'id': identifier, 'kind': kind, 'type': KINDS[kind], **initial}
             QUEUE.records[identifier] = record
+            persisted_elsewhere = kind in ('youtube', 'youtube-track')
             try:
-                QUEUE.save({**record, 'status': 'interrupted'})
+                if not persisted_elsewhere:
+                    QUEUE.save({**record, 'status': 'interrupted'})
             except (OSError, sqlite3.Error):
                 logging.getLogger(__name__).warning('Historique de la file indisponible')
             token = CURRENT.set(identifier)
@@ -174,10 +178,11 @@ def tracked(kind):
             finally:
                 CURRENT.reset(token)
                 try:
-                    final = describe(kind, identifier)
-                    if final['status'] in ('queued', 'running', 'preparing'):
-                        final['status'] = 'interrupted'
-                    QUEUE.save({**record, **final})
+                    if not persisted_elsewhere:
+                        final = describe(kind, identifier)
+                        if final['status'] in ('queued', 'running', 'preparing'):
+                            final['status'] = 'interrupted'
+                        QUEUE.save({**record, **final})
                 except Exception:
                     logging.getLogger(__name__).exception('Historique de la file indisponible')
                 finally:
@@ -209,6 +214,13 @@ def describe(kind, identifier):
                     result.update(done=progress[0] or 0, total=progress[1])
                 if row:
                     result.update(status=row['status'], mode=row['mode'], error=row['error'], owner=row['user_id'])
+                    if kind == 'chat':
+                        stage = engine.PROGRESS.get(identifier, {}).get('stage')
+                        phase = {'preparing':'Préparation de la demande','searching':'Recherche dans la bibliothèque',
+                                 'reading':'Lecture des documents','writing':'Rédaction de la réponse',
+                                 'illustrating':'Recherche d’illustrations','referencing':'Vérification des références'}.get(stage)
+                        if phase:
+                            result['stage'] = phase
                     result.setdefault('href', '#/assistant?conversation=' + row['conversation_id'])
                     if kind != 'chat':
                         result['title'] = row['title'][:180]

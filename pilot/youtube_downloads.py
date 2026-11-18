@@ -56,7 +56,7 @@ async def resume():
 async def pause():
     state=await operations.library_command()
     if state.get('action')!='youtube-download' or state.get('phase') not in ACTIVE:raise HTTPException(409,'Aucun téléchargement YouTube en cours.')
-    await operations.library_command('pause',{})
+    await operations.library_command('youtube-download-pause',{'list':state.get('youtube_list')})
     return {'accepted':True}
 
 

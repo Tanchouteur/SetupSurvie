@@ -44,7 +44,7 @@ class Host:
             self.polls=0
             self.state={'phase':'downloading','action':'youtube-download','youtube_list':body.get('list'),'message':'Téléchargement des vidéos YouTube et de leurs sous-titres…','options':{'max_height':body.get('max_height',480),'videos':2},
                         'youtube':{'videos':2,'done':0,'current':{'index':1,'line':2},'counts':{'downloaded':0},'items':[]}}
-        if action=='pause':self.state.update(phase='paused',message='Téléchargement YouTube en pause. « Reprendre » continue la liste.')
+        if action=='youtube-download-pause':self.state.update(phase='paused',message='Téléchargement YouTube en pause. « Reprendre » continue la liste.')
         return {'accepted':True}
 
 
@@ -78,7 +78,7 @@ def exercise(page,name,base,host):
     page.wait_for_function("()=>!document.getElementById('next-youtube-pause').hidden")
     page.click('#next-youtube-pause')
     page.wait_for_function("()=>!document.getElementById('next-youtube-resume').hidden")
-    check(host.commands[-1][0]=='pause' and 'en pause' in page.locator('#next-youtube-status').inner_text(),name+' : pause puis « Reprendre » proposé')
+    check(host.commands[-1][0]=='youtube-download-pause' and 'en pause' in page.locator('#next-youtube-status').inner_text(),name+' : pause puis « Reprendre » proposé')
     page.click('#next-youtube-resume');page.wait_for_function("()=>document.getElementById('next-youtube-resume').hidden")
     check(host.commands[-1]==('youtube-download',{'resume':True}),name+' : reprise demandée au PC serveur')
 

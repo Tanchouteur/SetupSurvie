@@ -323,7 +323,7 @@ async def pause_active_download():
         state = await operations.library_command()
         if state.get('youtube_list') == identifier and state.get('phase') in youtube_downloads.ACTIVE:
             update(identifier, hold=True)
-            await operations.library_command('pause')
+            await operations.library_command('youtube-download-pause',{'list':identifier})
     except HTTPException:
         # The controller may already have finished. The next ticket stays paused.
         return
