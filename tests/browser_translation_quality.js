@@ -41,7 +41,7 @@ async page => {
   if(!(await publicFile.text()).includes('À relire'))throw Error('Shared copy lost warning');
   const gaps=await begin('guide:quality-gaps.en.txt');
   if(gaps.status!=='completed'||!gaps.parts[0].quality.issues.some(row=>row.code==='source_gaps'))throw Error('Missing source keys were not identified');
-  if(gaps.parts[0].quality.version!==5)throw Error('The translation quality report has an unexpected version');
+  if(gaps.parts[0].quality.version!==6)throw Error('The translation quality report has an unexpected version');
   await page.getByText('À relire : anomalie possible.',{exact:true}).waitFor();
   if(!(await page.locator('#translation-parts').textContent()).includes('touches dessinées'))throw Error('Source gaps warning not visible');
   return {badNumberBlocked:true,rejectedCandidateVisible:true,sourceComparison:true,warningInPrivateExportAndSharedDocument:true,mobileComposerAccessible:true,missingSourceKeysVisible:true};

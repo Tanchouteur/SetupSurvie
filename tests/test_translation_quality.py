@@ -58,6 +58,14 @@ class TokenChecksTests(unittest.TestCase):
             ('Pressure 1.00 bar.','Pression 1 bar.')]:
             with self.subTest(source=source):self.assertEqual(quality.assess(source,target)['status'],'checked')
 
+    def test_unit_check_ignores_prose_after_a_reference_but_still_checks_amperes(self):
+        self.assertEqual(quality.assess('Figure 4 shows the tray.',
+            'La figure 4 a pour objet le plateau.')['status'],'checked')
+        self.assertEqual(quality.assess('Observe panel 4 if it moves.',
+            'Observez le panneau 4 s’il bouge.')['status'],'checked')
+        self.assertEqual(quality.assess('The current is 4 A.',
+            'Le courant est de 4 mA.')['status'],'blocked')
+
     def test_critical_numeric_errors_are_blocked(self):
         for source,target in [
             ('Use 10 mg.','Utilisez 100 mg.'),

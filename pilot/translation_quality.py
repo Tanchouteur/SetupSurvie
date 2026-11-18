@@ -8,7 +8,7 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=5
+VERSION=6
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
@@ -29,6 +29,14 @@ UNIT_ALIASES={
     'psi':'psi','rpm':'rpm','mm²':'mm²','cm²':'cm²','m²':'m²','cm³':'cm³','m³':'m³',
     'mg/kg':'mg/kg','g/l':'g/l','mg/l':'mg/l','ml/min':'ml/min','km/h':'km/h','m/s':'m/s'}
 UNIT=re.compile('('+NUMBER+r')\s*('+ '|'.join(re.escape(k).replace('/',r'\s*/\s*').replace('°','°'+r'\s*') for k in sorted(UNIT_ALIASES,key=len,reverse=True))+r')(?![a-zà-ÿ\d²³])',re.I)
+
+
+REFUSAL = re.compile(
+    r"^(?:(?:(?:je suis )?d[ée]sol[ée],? (?:mais )?)?"
+    r"je ne peux pas (?:traduire|vous aider|t[’']aider|r[ée]pondre)"
+    r"|(?:i[’']?m sorry,? (?:but )?)?i (?:cannot|can[’']t) (?:help|translate|assist|provide))",
+    re.I,
+)
 
 
 def normalized(text):
@@ -69,7 +77,15 @@ def assess(source,translated,*,source_language=None):
     right=numbers(translated)
     if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
-        return Counter((number(m.group(1)),UNIT_ALIASES[re.sub(r'\s','',m.group(2)).lower()]) for m in UNIT.finditer(text))
+        pairs=Counter()
+        for match in UNIT.finditer(text):
+            unit=re.sub(r'\s','',match.group(2))
+            # Lowercase a is usually an article or a verb after a reference.
+            # Single-letter elisions such as l’ or s’il are also prose.
+            if unit=='a' or (len(unit)==1 and text[match.end():match.end()+1] in ("'",'’')):
+                continue
+            pairs[number(match.group(1)),UNIT_ALIASES[unit.lower()]]+=1
+        return pairs
     if measures(source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
     if len(source.strip())>=160 and len(translated.strip())<len(source.strip())*.4:
         add('short','warning','Traduction beaucoup plus courte : résumé ou passages omis possibles.')
