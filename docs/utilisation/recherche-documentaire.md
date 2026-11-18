@@ -19,6 +19,13 @@ Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/
 Le rechargement relance une seule fois la recherche mémorisée avec ses filtres.
 Une formule comme « faire du feu dans Wikipédia » peut également cibler cette source.
 
+Depuis 0.43.5, la recherche se concentre sur l’œuvre nommée dans « Qui a écrit
+Les Misérables et ça raconte quoi ? ». Elle peut aussi retrouver un guide
+intitulé « Répartir les tâches » pour une demande sur la « répartition des
+tâches » et chercher le sujet principal d’une question qui se poursuit par un
+exemple. Les résultats restent accessibles sans IA. Voir le
+[bilan de fiabilité documentaire](../essais/2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435).
+
 Dans un même onglet, revenir d'un document ou utiliser Précédent et Suivant
 retrouve les résultats déjà reçus sans relancer la même recherche. Ils restent en
 mémoire temporaire, séparés par profil et par filtres ; changer de profil les

@@ -130,7 +130,9 @@ def document_request(history):
     if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
-    if research.synthesis(question) or illustrations.requested(question) or re.search(r'\b(comment|how to)\b',raw):return question,''
+    if (research.synthesis(question) or illustrations.requested(question) or
+        research.planning_request(raw) or library.retrieval.author_subject(topic) or
+        re.search(r'\b(comment|how to)\b',raw)):return question,''
     if re.search(r'\b(quell?e?s?)\b.*\b(dimensions?|longueurs?|tailles?)\b',raw):return question,''
     if plan.practical and plan.action:return question,''
     if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
@@ -333,7 +335,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                     if value['results']:
                         messages.append({'role':'system','content':'Des passages documentaires ont été préparés pour cette question. Rédige à partir des passages reçus, avec leurs numéros [n], et annonce les lectures partielles. Pour une synthèse, réunis les informations utiles et les désaccords ; complète seulement un manque précis avec les outils. Une couverture limitée ne prouve pas l’absence dans toute la bibliothèque.'})
                     else:
-                        messages.append({'role':'system','content':'La préparation documentaire ne fournit aucun passage lisible pour cette demande. Aucun document n’est consulté par cette préparation ; ne cite pas un résultat non lu et ne prétends pas avoir reçu plusieurs documents.'+GENERAL_KNOWLEDGE_NOTE})
+                        messages.append({'role':'system','content':'La préparation documentaire ne fournit aucun passage lisible pour cette demande. Aucun document n’est consulté par cette préparation ; ne cite pas un résultat non lu. Si tu mentionnes la recherche, dis qu’elle n’a pas fourni de passage pertinent, sans affirmer que la bibliothèque ne contient aucun document sur le sujet.'+GENERAL_KNOWLEDGE_NOTE})
                 except Exception:
                     record_tool('search_library',arguments,{'results':[],'coverage':{'status':'unavailable','warning':'La recherche préparatoire n’a pas abouti. Ne pas conclure que le sujet est absent.'}},True)
                 update(identifier,sources=read_references(references))

@@ -88,3 +88,27 @@ Ce petit essai permet d’attribuer des défauts précis de recherche et de
 consultation des sources. La campagne des 89 questions sur le fonds réel de
 Marc, les archives Kiwix, les questions critiques, les autres modèles et le
 seuil V1 restent à mesurer.
+
+## Contre-épreuve en 0.43.5
+
+Bilan du 18 novembre 2026, commit applicatif `12d7aca`. Même R7, même
+Gemma 4 E4B, même mode et mêmes guides fictifs. Le lanceur a rejoué 18
+demandes par l’API, dont les huit cas avec leur fiche, les huit cas sans
+elle et les deux contrôles. Aucune fiche n’a été sélectionnée manuellement.
+
+| Avec les fiches présentes | 0.43.4 | 0.43.5 |
+| --- | ---: | ---: |
+| Fiche au premier rang avec la question complète | 5/8 | 8/8 |
+| Fiche automatiquement lue et citée par l’assistant | 5/8 | 8/8 |
+
+Le hameau retrouve la fiche avec la question complète. Pour l’école à la
+maison, le pilote prépare le passage avant le premier appel au modèle, qui
+propose un planning fondé sur la fiche. L’apprentissage culturel et la
+question sur *Les Misérables* retrouvent aussi leur fiche dans la recherche
+seule. Sur les huit essais sans fiche, Gemma propose une aide générale sans
+référence numérotée. Les contrôles proposent une leçon de fractions et
+rappellent la limite sur la météo en temps réel.
+
+Le correctif ne nécessite pas de reconstruire l’index. Ces mesures portent
+sur les guides du corpus de test. Le fonds réel de Marc, Kiwix à grande
+échelle et GPT-OSS restent à vérifier.

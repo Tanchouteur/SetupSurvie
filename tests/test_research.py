@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import AsyncMock,patch
 
 from pilot import engine,research,library,store
+from real_document_coverage_check import write_guides
 
 
 class PassageTests(unittest.TestCase):
@@ -110,6 +111,26 @@ class PassageTests(unittest.TestCase):
 
 
 class ReadingTests(unittest.IsolatedAsyncioTestCase):
+    async def test_full_questions_from_r7_find_the_expected_guides(self):
+        cases = {
+            'edu-01': "comment oragniserais tu l'apprentissage culturel des enfant ? genre combient de temp ? a quel heure etc ? je veux tout savoir",
+            'org-02': 'comment organiser la répartition des taches dans un hameau de 50 personnes ?',
+            'cul-02': 'qui a écrit les misérables et ça raconte quoi ?',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            guides = root / 'guides'
+            write_guides(guides, present=True)
+            with (patch.object(store, 'ROOT', root / 'state'), patch.object(library, 'GUIDES', guides),
+                  patch.object(library, 'books', AsyncMock(return_value=[]))):
+                store.init()
+                library.index_guides()
+                self.addAsyncCleanup(library.kiwix_queries.close)
+                for key, question in cases.items():
+                    with self.subTest(key=key):
+                        results = await library.search(question, limit=5, kind='documents')
+                        self.assertEqual([row['id'] for row in results][:1], [f'guide:{key}.fr.txt'])
+
     async def test_selected_pdf_reaches_an_indexed_late_page_and_retains_its_page_identity(self):
         with tempfile.TemporaryDirectory() as directory,patch.object(store,'ROOT',Path(directory)):
             store.init()

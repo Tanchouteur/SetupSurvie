@@ -18,6 +18,15 @@ def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
 def synthesis(query):return retrieval.search_subject(query)!=query
 
 
+def planning_request(raw):
+    """Detect a request for a plan with a topic that local guides can inform."""
+    return bool(re.match(
+        r'^(?:(?:peux tu|pourrais tu|pouvez vous|could you|can you) )?(?:me )?'
+        r'(?:prepare[r]?|planifie[r]?|propose[r]?|fais|faire|elabore[r]?|plan|make|suggest)'
+        r'(?: moi)? (?:un|une|le|la|a|the) '
+        r'(?:semaine|programme|planning|emploi du temps|plan|week|schedule)\b',raw))
+
+
 def notice_request(query):
     raw=retrieval.normal(query)
     return bool(re.search(r'\b(notices?|manuels?|manuals?|instructions?|mode d emploi)\b',raw)

@@ -1,6 +1,6 @@
 # Essais et résultats
 
-- [Fiabilité documentaire sur le R7](2026-11-18-fiabilite-documentaire-r7.md) — comparaison avec et sans fiche, recherche seule et lecture par Gemma 4 E4B.
+- [Fiabilité documentaire sur le R7](2026-11-18-fiabilite-documentaire-r7.md) — comparaison avec et sans fiche et [contre-épreuve 0.43.5](2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435).
 - [Téléchargement YouTube réel — 0.43.4](2026-11-18-youtube-reel-bazzite-windows.md) — Bazzite, pause et reprise, contrôle Windows.
 - [Demandes de vidéos avec de vrais modèles — 0.43.4](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
 
