@@ -5,12 +5,16 @@ const {createRequire}=require('node:module');
 const {spawn}=require('node:child_process');
 const {chromium,webkit}=createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
 (async()=>{
+  const targetEngine=process.env.BROWSER_ENGINE;
+  if(targetEngine&&!['chromium','webkit','firefox'].includes(targetEngine)){console.error(`Invalid BROWSER_ENGINE: ${targetEngine}`);process.exit(1);}
+  if(targetEngine==='firefox')return;
   const root=path.resolve(__dirname,'..');
   const server=spawn('python',['-m','http.server','8766','--bind','127.0.0.1','--directory',path.join(root,'portal')],{stdio:'ignore'});
   let browser;
   try{
     for(let attempt=0;attempt<50;attempt++){try{if((await fetch('http://127.0.0.1:8766/cartes.html')).ok)break;}catch(_){}await new Promise(r=>setTimeout(r,100));}
     for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+      if(targetEngine&&name!==targetEngine)continue;
       browser=await engine.launch({headless:true});
       for(const file of ['browser_map_redesign.js','browser_map_notebook.js','browser_ux_preview.js','browser_map_defaults.js','browser_map_accesses.js','browser_map_rendering.js']){
         const context=await browser.newContext();const page=await context.newPage();
