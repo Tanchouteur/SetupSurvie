@@ -276,7 +276,11 @@ function renderLibraryResults(results){
   for(const result of results){const node=element('article',undefined,'result');node.dataset.source=result.id;node.append(element('div',`${result.kind==='guide'?'Guide':result.kind==='video'?'Vidéo':'Article'} · ${{fra:'Français',fr:'Français',eng:'Anglais',en:'Anglais'}[result.language]||'Autre langue'}${result.collection?' · '+result.collection:''}`,'result-meta'),element('h3',result.title),element('p',sourceDates(result),'muted small'),element('p',result.excerpt),button(result.kind==='video'?'Voir la vidéo →':'Lire le document →',()=>readSource(result.id)),sourceChoiceButton(result));
     if(result.kind==='video')node.append(element('p',result.match==='subtitle'?'Passage à '+videoTimestamp(result.position_ms)+' · sous-titres '+(result.language||'de langue inconnue'):'Titre et description seulement ; paroles non recherchées dans ce résultat.','small muted'));
     if(result.match_quality&&result.match_quality!=='subject')node.append(element('p',result.match_quality==='mention'?'Mention du sujet dans le texte ; vérifiez que ce passage répond au besoin.':'Correspondance à vérifier en ouvrant le document.','small muted'));
-    if(result.other_matches?.length){const details=element('details',undefined,'other-matches');details.append(element('summary',result.other_matches.length+' autre(s) passage(s) dans ce document'));for(const match of result.other_matches)details.append(button(match.kind==='video'?'À '+videoTimestamp(match.position_ms)+' · '+(match.language||'langue inconnue')+' · '+match.title:match.title,()=>readSource(match.id),'text-button'));node.append(details);}
+    if(result.other_matches?.length){const details=element('details',undefined,'other-matches');details.append(element('summary',result.other_matches.length+' autre(s) passage(s) dans ce document'));for(const match of result.other_matches){
+      const passage=button(match.kind==='video'?'À '+videoTimestamp(match.position_ms)+' · '+(match.language||'langue inconnue')+' · '+match.title:match.title,()=>readSource(match.id),'text-button');
+      passage.dataset.resultPassage=match.id;
+      details.append(passage);
+    }node.append(details);}
     $('search-results').append(node);
   }
   refreshSourceChoices();document.dispatchEvent(new CustomEvent('survie:results',{detail:results}));

@@ -48,14 +48,6 @@ h1 { font-family: var(--ds-font-display); font-weight: 500; letter-spacing: -.01
   .map-site-nav nav a { min-height: 38px; padding: 0 14px; border-radius: var(--ds-r-full); color: var(--ds-ink-2); font-weight: 500; transition: background-color var(--ds-fast) ease, color var(--ds-fast) ease; }
   .map-site-nav nav a:hover { background: #ffffff80; color: var(--ds-ink); }
   .map-site-nav nav a[aria-current="page"] { background: var(--ds-surface); color: var(--ds-ink); font-weight: 600; box-shadow: var(--ds-shadow-2); }
-  .map-site-nav .resource-status { width: 232px; flex: 0 0 auto; height: 42px; background: transparent; border-color: var(--ds-line); border-radius: var(--ds-r); color: var(--ds-ink); }
-  .map-site-nav .resource-status:hover { background: var(--ds-surface); border-color: var(--ds-line-strong); color: var(--ds-ink); }
-  .map-site-nav .resource-status-meters { grid-template-columns: repeat(2, 42px); gap: 7px; border-color: var(--ds-line); }
-  .map-site-nav .resource-status-caption, .map-site-nav .resource-status-meter-label { color: var(--ds-ink-3); }
-  .map-site-nav .resource-status-value { color: var(--ds-ink); }
-  .map-site-nav .resource-status-track { background: var(--ds-surface-3); }
-  .map-site-nav .resource-status-fill { background: var(--ds-ok); }
-  .map-site-nav .resource-status-meter[data-level="high"] .resource-status-fill { background: var(--ds-ember); }
 }
 @media screen and (max-width: 1280px) and (min-width: 761px) {
   .map-site-nav .resource-status { display: none; }

@@ -55,7 +55,8 @@ livré. Les variables de présentation ne doivent pas remplacer un état serveur
 **Décision du 18 novembre 2026.** Louis demande une refonte du design, sans
 changement de fonctions, et laisse le champ libre sur l’expérience à condition de
 ne pas dégrader l’existant. L’agent a retenu l’univers du logo : le feu, le livre
-et le papier. Pour un nouveau composant, partir de ces règles :
+et le papier. Le [guide de design Veillée](guide-design.md) est la référence des
+prochaines interventions. Cette section conserve les choix du premier lot.
 
 - **Couleurs.** Papier chaud pour les fonds, encre brune pour le texte. Le rouge
   braise est réservé à l’action principale d’un écran et aux repères de position.
@@ -72,8 +73,8 @@ et le papier. Pour un nouveau composant, partir de ces règles :
   chercher, préparer une question ou aller à une page. Une question préparée n’est
   jamais envoyée sans l’action de l’utilisateur.
 
-Le bandeau sous la navigation est retiré sur PC : la version et l’état de la
-bibliothèque passent en pied de page. Les anciennes feuilles conservent des règles
+Le bandeau sous la navigation est retiré sur PC. Depuis 0.48.1, le numéro de
+version est aussi visible dans la barre supérieure. Les anciennes feuilles conservent des règles
 désormais recouvertes ; leur nettoyage reste à faire, par petites étapes.
 Sur mobile, les liens de navigation des Cartes ont une hauteur tactile minimale
 de 44 px, avec un bandeau de hauteur inchangée pour conserver la place de la carte.

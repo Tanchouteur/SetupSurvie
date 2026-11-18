@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.48.1, 18 novembre 2026.**
+**Guide actuel — 0.49.0, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -10,6 +10,12 @@ La maquette fictive reste séparée sous `/maquette/`.
 ## Se repérer
 
 Le numéro de la version installée apparaît dans la barre supérieure.
+Sur ordinateur, la jauge **RAM / VRAM** ouvre l’état de l’appareil. Elle se
+compacte sur un écran plus étroit.
+
+Quand vous ouvrez un document depuis une recherche sur ordinateur, le volet
+des résultats défile à côté du lecteur et indique le résultat ouvert. Sur
+téléphone, utilisez **Résultats** pour retrouver la liste.
 
 | Rubrique | Usage |
 | --- | --- |
