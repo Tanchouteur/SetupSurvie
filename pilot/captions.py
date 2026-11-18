@@ -38,6 +38,7 @@ def connect():
     db.executescript('''CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,video_id TEXT NOT NULL,source_revision TEXT NOT NULL,
         source_track TEXT NOT NULL,source_language TEXT NOT NULL,source_hash TEXT NOT NULL,title TEXT NOT NULL,mode TEXT NOT NULL,
         status TEXT NOT NULL,error TEXT,created REAL NOT NULL,updated REAL NOT NULL,published_hash TEXT,index_status TEXT);
+        CREATE INDEX IF NOT EXISTS jobs_by_video ON jobs(video_id, created DESC);
         CREATE TABLE IF NOT EXISTS parts(job_id TEXT NOT NULL,position INTEGER NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,
         source_text TEXT NOT NULL,translated TEXT,status TEXT NOT NULL,model TEXT,quality TEXT,candidate TEXT,metrics TEXT,
         PRIMARY KEY(job_id,position));
@@ -82,8 +83,18 @@ def status(identifier,*,full=False):
     return result
 
 
-def listing(limit=100):
-    with connect() as db:identifiers=[r[0] for r in db.execute('SELECT id FROM jobs ORDER BY created DESC'+(' LIMIT ?' if limit is not None else ''),(limit,) if limit is not None else ())]
+def listing(limit=100, *, video_id=None):
+    query='SELECT id FROM jobs'
+    parameters=[]
+    if video_id is not None:
+        query+=' WHERE video_id=?'
+        parameters.append(video_id)
+    query+=' ORDER BY created DESC'
+    if limit is not None:
+        query+=' LIMIT ?'
+        parameters.append(limit)
+    with connect() as db:
+        identifiers=[row[0] for row in db.execute(query,parameters)]
     return [status(identifier) for identifier in identifiers]
 
 

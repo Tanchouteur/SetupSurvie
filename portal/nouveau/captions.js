@@ -3,6 +3,8 @@
   const area=element('details');area.id='next-caption-preparation';area.innerHTML='<summary>Préparer les sous-titres</summary><p class="small">Traduisez une piste source depuis sa vidéo. Les temps restent ceux de l’original. Les pistes terminées deviennent utilisables sans IA ; la relecture du sens reste à faire.</p><label>Modèle pour la préparation<select id="next-caption-mode"></select></label><p id="next-caption-message" class="small" role="status"></p><div id="next-caption-jobs"></div>';
   $('next-videos').append(area);
   area.hidden=true;
+  let reader=null;
+  const readerVisible=()=>reader?.host.isConnected&&!$('reader').hidden&&!$('view-library').hidden;
   let jobs=[],owner=null,loading=false,busy=false,version=0;
   const states={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'À reprendre après vérification',completed:'Piste française préparée · relecture à faire'};
   function modes(){
@@ -12,9 +14,13 @@
       if(available.some(mode=>mode.id===previous))select.value=previous;
     }
   }
-  function render(){
-    const target=$('next-caption-jobs');target.replaceChildren();
-    for(const job of jobs){
+  function message(text,videoId=reader?.id){
+    $('next-caption-message').textContent=text;
+    if(reader?.host.isConnected&&reader.id===videoId)reader.message.textContent=text;
+  }
+  function renderJobs(target,visibleJobs){
+    target.replaceChildren();
+    for(const job of visibleJobs){
       const article=element('article',undefined,'data-card');article.dataset.captionJob=job.id;
       article.append(element('h3',job.title),element('p',(states[job.status]||job.status)+' · '+job.done+' / '+job.total+' segments','small'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
@@ -26,50 +32,94 @@
       if(['paused','error'].includes(job.status))actions.append(button('Reprendre',()=>command(job.id,'resume'),'secondary'));
       actions.append(button('Télécharger le rapport',()=>download(job.id),'secondary'));article.append(actions);target.append(article);
     }
-    if(!jobs.length)target.append(element('p','Aucune préparation lancée. Choisissez une piste à traduire sur une vidéo.','small muted'));
+    if(target===$('next-caption-jobs')&&!visibleJobs.length)target.append(element('p','Aucune préparation lancée. Choisissez une piste à traduire sur une vidéo.','small muted'));
+  }
+  function render(){
+    renderJobs($('next-caption-jobs'),jobs);
   }
   async function refresh(){
     modes();area.hidden=S.user?.role!=='admin';if(area.hidden||loading||busy||document.hidden)return;
     if(owner!==S.user.id){owner=S.user.id;jobs=[];render();}
-    loading=true;const current=++version,id=S.user.id;
+    const reading=readerVisible()?reader:null;
+    const query=reading?'?video_id='+encodeURIComponent(reading.id):'';
+    loading=true;
+    const current=++version,id=S.user.id;
     try{
-      const result=await api('/admin/video-captions');if(current!==version||S.user?.id!==id)return;
-      const completed=result.jobs.some(job=>job.status==='completed'&&jobs.some(old=>old.id===job.id&&old.status!=='completed'));
-      jobs=result.jobs;render();if(completed)document.dispatchEvent(new Event('survie:videos-changed'));
-    }catch(error){if(current===version)$('next-caption-message').textContent=error.message;}
+      const result=await api('/admin/video-captions'+query);
+      if(current!==version||S.user?.id!==id||(reading&&reading!==reader))return;
+      const previous=reading?reading.entries:jobs;
+      const completed=result.jobs.some(job=>job.status==='completed'&&!previous.some(old=>old.id===job.id&&old.status==='completed'));
+      if(JSON.stringify(previous)!==JSON.stringify(result.jobs)){
+        if(reading){
+          reading.entries=result.jobs;
+          renderJobs(reading.jobs,reading.entries);
+        }else{
+          jobs=result.jobs;
+          render();
+        }
+      }
+      if(completed)document.dispatchEvent(new Event('survie:videos-changed'));
+    }catch(error){if(current===version)message(error.message);}
     finally{loading=false;}
   }
   async function command(id,action,track){
     if(busy)return;busy=true;const profile=S.user?.id;
-    $('next-caption-message').textContent=action==='create'?'Lancement de la préparation…':'Commande en cours…';
+    const videoId=action==='create'?id:([...jobs,...(reader?.entries||[])].find(job=>job.id===id)?.video_id??null);
+    message(action==='create'?'Lancement de la préparation…':'Commande en cours…',videoId);
     let failure='';
     try{
       await api('/admin/video-captions'+(action==='create'?'':'/'+encodeURIComponent(id)+'/'+action),action==='create'?{id,track,mode:$('next-caption-mode').value||'rapide'}:action==='resume'?{mode:$('next-caption-mode').value||'rapide'}:{});
     }catch(error){failure=error.message;}
     finally{busy=false;}
     if(S.user?.id!==profile)return;
-    $('next-caption-message').textContent=failure||'Commande reçue. Les segments terminés sont conservés.';area.open=true;await refresh();
+    message(failure||'Commande reçue. Les segments terminés sont conservés.',videoId);area.open=true;await refresh();
   }
   async function download(id){
     try{
       const profile=S.user?.id,result=await api('/admin/video-captions/'+encodeURIComponent(id)+'/report');if(S.user?.id!==profile)return;
       downloadReport(result,'sous-titres');
-    }catch(error){$('next-caption-message').textContent=error.message;}
+    }catch(error){message(error.message);}
+  }
+  function preparation(item){
+    const tracks=item.tracks.filter(track=>track.status==='passed'&&track.language&&!track.language.startsWith('fr')&&track.origin!=='local_translation');
+    if(!tracks.length)return;
+    const details=element('details');details.append(element('summary','Préparer une piste française'));
+    const label=element('label','Piste source'),select=element('select');select.setAttribute('aria-label','Piste source à traduire');
+    tracks.forEach(track=>select.append(new Option(track.language+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue'}[track.origin]||track.origin),String(track.id))));label.append(select);
+    details.append(label,button('Traduire les sous-titres',()=>command(item.id,'create',Number(select.value)),'secondary'));
+    return details;
   }
   document.addEventListener('survie:video-cards',event=>{
-    modes();area.hidden=S.user?.role!=='admin';if(area.hidden)return;
+    area.hidden=S.user?.role!=='admin';if(area.hidden)return;
     for(const item of event.detail){
-      const card=[...$('next-videos-list').children].find(card=>card.dataset.videoId===item.id);if(!card||item.available===false)continue;
-      const tracks=item.tracks.filter(track=>track.status==='passed'&&track.language&&!track.language.startsWith('fr')&&track.origin!=='local_translation');
-      if(!tracks.length){if(item.subtitle_status==='missing')card.append(element('p',item.archive_video&&!item.audio_transcription_supported?'Sous-titres indisponibles pour cette vidéo de collection.':'La vidéo n’a pas encore de piste source. Utilisez « Créer les sous-titres depuis l’audio ».','small muted'));continue;}
-      const details=element('details');details.append(element('summary','Préparer une piste française'));
-      const label=element('label','Piste source'),select=element('select');select.setAttribute('aria-label','Piste source à traduire');
-      tracks.forEach(track=>select.append(new Option(track.language+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue'}[track.origin]||track.origin),String(track.id))));label.append(select);
-      details.append(label,button('Traduire les sous-titres',()=>command(item.id,'create',Number(select.value)),'secondary'));card.append(details);
+      const card=[...$('next-videos-list').children].find(card=>card.dataset.videoId===item.id);
+      if(!card||item.available===false)continue;
+      const form=preparation(item);
+      if(form)card.append(form);
+      else if(item.subtitle_status==='missing')card.append(element('p',item.archive_video&&!item.audio_transcription_supported?'Sous-titres indisponibles pour cette vidéo de collection.':'La vidéo n’a pas encore de piste source. Utilisez « Créer les sous-titres depuis l’audio ».','small muted'));
     }
     refresh();
   });
-  document.addEventListener('survie:auth',()=>{version++;owner=null;jobs=[];area.hidden=S.user?.role!=='admin';render();refresh();});
-  setInterval(()=>{if(!$('next-collections').hidden&&(area.open||jobs.some(job=>['queued','running'].includes(job.status))))refresh();},2000);
+  document.addEventListener('survie:video-reader',event=>{
+    const {item,host}=event.detail;
+    if(S.user?.role!=='admin')return;
+    const id=item.id.split('#')[0];
+    const form=preparation({...item,id});
+    if(reader?.host===host){
+      const previous=reader.form.firstElementChild;
+      if(form&&previous)form.open=previous.open;
+      reader.form.replaceChildren(...(form?[form]:[]));
+      return;
+    }
+    const panel=element('div'),formHost=element('div'),status=element('p',undefined,'small'),target=element('div');
+    status.setAttribute('role','status');
+    if(form)formHost.append(form);
+    panel.append(formHost,status,target);host.append(panel);
+    reader={host,id,form:formHost,message:status,jobs:target,entries:jobs.filter(job=>job.video_id===id)};
+    renderJobs(target,reader.entries);
+    refresh();
+  });
+  document.addEventListener('survie:auth',()=>{version++;reader=null;owner=null;jobs=[];message('');area.hidden=S.user?.role!=='admin';render();refresh();});
+  setInterval(()=>{if(readerVisible()||(!$('next-collections').hidden&&(area.open||jobs.some(job=>['queued','running'].includes(job.status)))))refresh();},2000);
   area.addEventListener('toggle',()=>{if(area.open)refresh();});
 })();

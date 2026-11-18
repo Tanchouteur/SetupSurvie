@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.44.1, 18 novembre 2026.**
+**Guide actuel — 0.45.1, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -21,7 +21,7 @@ Dans Bibliothèque → Collections, **Ouvrir cette collection** ouvre directemen
 son lecteur Kiwix local, sans question ni recherche préalable. Les guides gardent
 leur lecture, leur PDF, leurs favoris et la possibilité de poser une question.
 
-Depuis 0.44.1, **Tout**, **Vidéos**, **Guides** et **Livres et encyclopédies**
+Depuis 0.45.1, **Tout**, **Vidéos**, **Guides** et **Livres et encyclopédies**
 sont accessibles en haut de Collections. Choisissez **Vidéos** pour afficher
 directement les vidéos locales et celles des archives. Les guides dont les
 titres commencent par le même nom de série suivi d’un tiret long sont regroupés

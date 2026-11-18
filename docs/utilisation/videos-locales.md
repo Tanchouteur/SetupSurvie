@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.40.0, 17 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.45.0, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -65,6 +65,21 @@ La lecture, le changement de piste et les déplacements dans le média fonctionn
 sans Internet ni IA. La position est mémorisée par profil et navigateur pour la
 même révision ; un passage explicitement trouvé prend priorité sur cette position.
 Quitter le lecteur met la vidéo en pause.
+
+## Créer, traduire et suivre les sous-titres dans le lecteur — 0.45.0
+
+Avec le profil **Famille**, ouvrez une vidéo depuis une recherche, un lien de
+l’assistant ou les Collections. Sous le lecteur, choisissez **Créer les
+sous-titres depuis l’audio** si aucune piste n’est lisible. Vous pouvez demander
+la version française en même temps. Si une piste source est déjà disponible,
+ouvrez **Préparer une piste française**, choisissez la piste et lancez la
+traduction.
+
+Le lecteur affiche l’attente, l’avancement, les erreurs et les résultats de
+cette vidéo, avec les commandes **Mettre en pause** et **Reprendre**. Vous
+retrouvez le suivi en rouvrant la vidéo. Dès que l’inventaire a pris en compte
+la nouvelle piste, elle rejoint le menu **Sous-titres** sans fermer le lecteur.
+Le suivi global reste accessible dans les Collections.
 
 ## Vidéos dans les collections ZIM — 0.33.0
 
