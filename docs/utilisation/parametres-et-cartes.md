@@ -135,10 +135,38 @@ est signalée, pas remplacée par une altitude supposée.
 
 Un lieu cartographié n’est pas une confirmation d’ouverture, d’accès ou de potabilité.
 Une recherche vide ou une couverture partielle ne prouve pas l’absence d’un lieu.
-La carte fonctionne sans Internet tant que le téléphone est relié au serveur
-SetupSurvie. Ouvrir la carte ne télécharge pas les données sur le téléphone pour
-une réouverture loin du serveur. Voir le [guide des repères et des trajets](points-et-itineraires.md#consulter-sur-téléphone)
-pour enregistrer un repère ou préparer un export avant de partir.
+La carte du serveur fonctionne sans Internet sur le réseau de la maison.
+La consultation du fond de carte loin de la maison se prépare dans le navigateur
+du téléphone.
+
+## Télécharger une zone sur le téléphone
+
+1. Depuis le réseau de la maison, ouvrir le portail en **HTTPS** dans le navigateur
+   qui servira dehors. Le téléphone doit faire confiance au certificat local.
+   Voir les [étapes de configuration](../installation/pilote-marc.md#accès-depuis-tout-le-réseau-local).
+2. Ouvrir **Cartes → Hors ligne**. Choisir une zone préparée sur le serveur. Sa
+   taille est indiquée avant de lancer **Télécharger cette zone**. Garder l’onglet
+   ouvert jusqu’au message **Carte prête**.
+3. Ouvrir **Mes cartes téléchargées** et ajouter cette page aux favoris du même
+   navigateur. Pour vérifier avant de partir, fermer l’onglet, couper le Wi-Fi et
+   les données mobiles, puis rouvrir le favori. Le fond téléchargé se déplace et
+   se zoome dans les limites de la zone.
+4. Pour libérer de la place, sélectionner la zone dans **Mes cartes téléchargées**
+   et choisir **Supprimer**. Une zone mise à jour sur le serveur peut être
+   téléchargée à nouveau depuis **Hors ligne**. Un transfert interrompu conserve
+   la copie précédemment terminée.
+
+Le fond téléchargé inclut les routes, bâtiments et noms de lieux présents dans
+les données. La recherche d’adresses, le relief, les repères personnels et le
+calcul d’itinéraires utilisent le serveur. Pour emporter des trajets ou des
+points, utiliser les [exports GPX](points-et-itineraires.md#consulter-sur-téléphone).
+
+Les fichiers du navigateur sont propres à l’adresse HTTPS et au navigateur
+utilisés. Conserver le favori de cette adresse et utiliser la navigation
+normale. Selon le navigateur, un manque d’espace ou l’effacement des données
+du site peut supprimer les cartes téléchargées. Sources sur le stockage
+[WebKit](https://webkit.org/blog/14403/updates-to-storage-policy/) et sur le
+[contexte HTTPS du lecteur](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers).
 
 ## Outils de l’assistant
 

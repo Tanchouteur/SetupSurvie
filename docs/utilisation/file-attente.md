@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.50.0.**
+**Guide actuel — 0.51.0.**
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône

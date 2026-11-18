@@ -9,6 +9,7 @@
     const response = await fetch('/api/maps');
     if (!response.ok) throw new Error('Le service des cartes ne répond pas.');
     const {maps} = await response.json();
+    window.MapDownloads?.setAreas(maps);
     const hasBasemap=maps.length>0;
     if(!hasBasemap)maps.push({id:'empty',title:'Aucun fond de carte préparé',center:[2.3,46.5],bbox:[-180,-80,180,80],maxzoom:0});
     document.getElementById('no-basemap').hidden=hasBasemap;
@@ -25,26 +26,7 @@
     select.replaceChildren(...maps.map(item => new Option(item.title, item.id)));
     let current = maps.find(m => m.id === 'sollies') || maps[0];
     select.value = current.id;
-    const baseStyle = item => ({
-      version: 8,
-      glyphs: location.origin + '/vendor/maps/fonts/{fontstack}/{range}.pbf',
-      sources: {local: {type: 'vector', url: 'pmtiles://' + location.origin + item.url, attribution: item.attribution}},
-      layers: [
-        {id: 'background', type: 'background', paint: {'background-color': '#f1efdf'}},
-        {id: 'earth', type: 'fill', source: 'local', 'source-layer': 'earth', paint: {'fill-color': '#f1efdf'}},
-        {id: 'landcover', type: 'fill', source: 'local', 'source-layer': 'landcover', paint: {'fill-color': '#d2dfbd', 'fill-opacity': 0.6}},
-        {id: 'landuse', type: 'fill', source: 'local', 'source-layer': 'landuse', paint: {'fill-color': '#c4d5b0', 'fill-opacity': 0.55}},
-        {id: 'water', type: 'fill', source: 'local', 'source-layer': 'water', filter: ['==', ['geometry-type'], 'Polygon'], paint: {'fill-color': '#a6cdda'}},
-        {id: 'rivers', type: 'line', source: 'local', 'source-layer': 'water', filter: ['==', ['geometry-type'], 'LineString'], paint: {'line-color': '#76afc6', 'line-width': 1}},
-        {id: 'boundaries', type: 'line', source: 'local', 'source-layer': 'boundaries', paint: {'line-color': '#9c9690', 'line-width': 1, 'line-dasharray': [3, 3]}},
-        {id: 'buildings', type: 'fill', source: 'local', 'source-layer': 'buildings', minzoom: 12, paint: {'fill-color': '#c8b9a9'}},
-        {id: 'roads-outline', type: 'line', source: 'local', 'source-layer': 'roads', paint: {'line-color': '#c2b7a1', 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.8, 15, 5]}},
-        {id: 'roads', type: 'line', source: 'local', 'source-layer': 'roads', paint: {'line-color': ['match', ['get', 'kind'], 'highway', '#edc578', 'major_road', '#f2db9c', 'path', '#b7a27b', '#ffffff'], 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.4, 15, 3]}},
-        {id: 'road-names', type: 'symbol', source: 'local', 'source-layer': 'roads', minzoom: 12, layout: {'symbol-placement': 'line', 'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name'], ''], 'text-font': ['Noto Sans Regular'], 'text-size': 11}, paint: {'text-color': '#64574b', 'text-halo-color': '#fff', 'text-halo-width': 1}},
-        {id: 'places', type: 'symbol', source: 'local', 'source-layer': 'places', layout: {'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name'], ''], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 11, 13, 15]}, paint: {'text-color': '#29463e', 'text-halo-color': '#fff', 'text-halo-width': 1.5}}
-      ]
-    });
-    const style=item=>{const s=baseStyle(item);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/shade/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
+    const style=item=>{const s=window.survieMapStyle(item,location.origin+item.url);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/shade/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
     let map;
     try {
       map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, maxTileCacheSize: 96, trackResize: false});

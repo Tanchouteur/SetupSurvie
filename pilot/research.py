@@ -265,9 +265,17 @@ def normalize_citations(answer,references):
     return answer
 
 
-def unsupported_citations(answer,references):
+def unsupported_citation_spans(answer,references):
     read={item['number'] for item in references.values() if item.get('consulted')}
-    return bool(citation_numbers(answer)-read) or any(not (citation_source(match[1],references) or {}).get('consulted') for match in source_id_citations(answer))
+    ids=[match.span() for match in source_id_citations(answer)
+         if not (citation_source(match[1],references) or {}).get('consulted')]
+    numbers=[(part['start'],part['end']) for part in citation_spans(answer)
+             if part['numbers']-read and not any(start<=part['start']<end for start,end in ids)]
+    return ids+numbers
+
+
+def unsupported_citations(answer,references):
+    return bool(unsupported_citation_spans(answer,references))
 
 
 def citations_valid(answer,references):

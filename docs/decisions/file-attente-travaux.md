@@ -22,7 +22,7 @@ communiqué ensuite indique six téléchargements sans sous-titres et un échec
 yt-dlp à la ligne 2. Le détail du refus yt-dlp de cette ligne reste inconnu.
 
 
-La version **0.50.0** ajoute une fonctionnalité compatible au portail. Le
+La version **0.51.0** ajoute une fonctionnalité compatible au portail. Le
 planificateur reprend les points d’acquisition du moteur existants et fait
 passer les étapes de la chaîne vidéo par les mêmes travailleurs que les
 actions manuelles. Les essais automatisés peuvent vérifier ces enchaînements

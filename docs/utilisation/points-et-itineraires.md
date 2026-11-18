@@ -1,6 +1,6 @@
 # Points et itinéraires hors ligne
 
-Guide actuel **0.49.3**. La carte sert à préparer et consulter des déplacements,
+Guide actuel **0.50.0**. La carte sert à préparer et consulter des déplacements,
 sans suivi GPS et sans service de routage Internet.
 
 ## Consulter sur téléphone
@@ -8,12 +8,11 @@ sans suivi GPS et sans service de routage Internet.
 Ouvrir Cartes puis utiliser **Choisir un profil**, en haut de la carte. Les profils sont libres et sans mot de passe, comme dans le portail. Ouvrir **Rechercher · Mes repères**, puis l’onglet **Mes repères**.
 Choisir une liste, toucher un point ou ouvrir un trajet. La fiche indique les
 kilomètres par les voies, le mode et la durée estimée. Les notes et le tracé restent
-accessibles même si le moteur de calcul est arrêté. Le téléphone consulte les
-contenus du serveur sur le réseau local, même si Internet est coupé. L’ouverture
-ne télécharge ni le fond de carte ni les listes sur le téléphone. Une fois le
-serveur inaccessible, il est impossible de rouvrir la carte et les repères sur
-le téléphone. Avant de partir, exporter le GPX pour une application compatible
-ou imprimer la carte et la fiche depuis un ordinateur.
+accessibles sur le réseau de la maison même si le moteur de calcul est arrêté.
+La [carte téléchargée sur le téléphone](parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone)
+contient le fond de carte. Avant de partir avec des repères ou un trajet, exporter
+le GPX pour une application compatible ou imprimer la carte et la fiche depuis
+un ordinateur.
 
 Avec le profil **Famille** ou un profil donnant accès aux réglages, toucher
 l’emplacement voulu sur la carte, puis **Ajouter à une liste**. Donner un nom
