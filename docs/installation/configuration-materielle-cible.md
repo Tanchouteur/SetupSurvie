@@ -165,7 +165,31 @@ la recherche dans nos archives. La copie de secours reste à prévoir sur un
 
 ## SSD commandé par Marc — déclaration du 16 novembre 2026
 
-Marc a commandé un **SSD NVMe PCIe 4.0 de 2 To**, selon Louis dans la demande de transfert. Cela ne prouve pas son installation ni ses performances. Le [parcours de transfert](../exploitation/transfert-installation.md) mesure la capacité réelle, préserve le HDD et distingue le stockage Docker. Les essais Windows et la comparaison avant/après restent à réaliser.
+Marc a commandé un **SSD NVMe PCIe 4.0 de 2 To**, selon Louis dans la demande de transfert. Le [parcours de transfert](../exploitation/transfert-installation.md) mesure la capacité réelle, préserve le HDD et distingue le stockage Docker.
+
+### 18 novembre 2026 : transfert déclaré réussi et rapports 0.43.0
+
+Louis confirme le transfert HDD → SSD. Le diagnostic Windows désigne désormais
+`E:` (environ 2 To) comme volume de données. Le test rapide a commencé avec
+GPT-OSS 20B déjà chargé (contexte de 32 768 tokens) et les caches conservés.
+Sur les 71 relevés du test rapide, l'activité du volume de données atteint
+**1,64 % en médiane et 15,6 % au maximum**. Les relevés espacés d'environ trois
+secondes permettent d'écarter une saturation soutenue sur cet essai.
+
+| Phase mesurée | Résultat sur le SSD |
+| --- | --- |
+| Recherche sans IA, rapport étendu | Premier résultat en **0,39 s** en médiane sur 31 requêtes avec résultats. Fin en **1,95 s** en médiane sur 32 requêtes, dont un cas à **8,31 s** avec plusieurs appels Kiwix non cachés au-delà de 3 s. Le fil de classement cumule **1,24 s de CPU** en médiane. |
+| Génération seule, premier passage puis répétition | **16,24 s puis 9,63 s**. L'évaluation de l'entrée passe de **6,46 s à 0,14 s** et la génération reste autour de **9 à 10 s**. |
+| Synthèse documentaire, premier passage puis répétition | **60,69 s puis 34,65 s**, dont **36,19 s puis 29,73 s** de rédaction selon les phases du portail. Avec les documents déjà sélectionnés, **55,26 s**, dont **46,17 s** de rédaction. |
+
+La rédaction tourne entre **22 et 26 tokens/s**. Le CPU total est autour de
+**55 à 56 %** en médiane pendant les synthèses, avec un processeur logique
+jusqu'à **96 %**. Ollama annonce environ **5,4 Go en VRAM pour une allocation
+totale de 14,1 Go** : le placement est partagé entre le GPU et la mémoire
+système. La part exacte du CPU, du sous-système mémoire et du GPU dans le
+débit reste à isoler. Les rapports 0.43.0 et les campagnes précédentes diffèrent
+par le logiciel et l'état des caches. Le gain propre du SSD au premier accès
+et au chargement initial du modèle reste à mesurer à conditions égales.
 
 ## Affiner la fiche au fil des observations
 
