@@ -85,7 +85,7 @@
   .resource-status-chevron { display: none; }
 }
 
-@media screen and (min-width: 1001px) and (max-width: 1560px) and (min-height: 501px) {
+@media screen and (min-width: 1001px) and (max-width: 1680px) and (min-height: 501px) {
   .next-interface #main-navigation .resource-status,
   .map-site-nav .resource-status { --monitor-model: 104px; --monitor-meter: 56px; gap: 8px; padding-right: 12px; }
   .resource-status-model { padding-inline: 12px; }

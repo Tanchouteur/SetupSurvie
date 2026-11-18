@@ -513,11 +513,11 @@ body.next-interface {
   .next-interface .sidebar-tool strong { display: block; font-size: .875rem; font-weight: 600; }
   .next-interface .sidebar-tool small { color: var(--ds-ink-3); font-size: .8125rem; }
 }
-@media (min-width: 761px) and (max-width: 1560px) {
+@media (min-width: 761px) and (max-width: 1680px) {
   .ds-search-trigger .ds-label, .ds-search-trigger kbd { display: none; }
   .next-interface button.ds-search-trigger { width: 40px; padding: 0; }
 }
-@media (min-width: 761px) and (max-width: 1560px) {
+@media (min-width: 761px) and (max-width: 1680px) {
   body.next-interface .sidebar { gap: 8px; padding-inline: 14px; }
   body.next-interface .sidebar #navigation .nav-item { padding-inline: 11px; }
   body.next-interface .sidebar #account-button { padding-right: 8px; }

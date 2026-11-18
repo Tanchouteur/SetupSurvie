@@ -18,7 +18,7 @@ async page=>{
  const values=status.locator('.resource-status-value');
  check((await status.getAttribute('aria-label')).includes('RAM 18/32 Go · VRAM 5/8 Go')&&(await values.allTextContents()).join(',')==='56%,63%','Les jauges reprennent les mesures réelles avec les volumes accessibles');
  await page.evaluate(()=>{document.querySelector('#account-label').textContent='Profil familial avec un nom volontairement très long';});
- for(const width of [1001,1024,1181,1281,1400,1401,1440,1561,1920]){
+ for(const width of [1001,1024,1181,1281,1400,1401,1440,1561,1680,1681,1920]){
    await page.setViewportSize({width,height:900});
    const metrics=()=> {
      const link=document.querySelector('.resource-status');
@@ -29,7 +29,7 @@ async page=>{
    const {bar,badge,account,navigation,width:viewport}=await page.evaluate(metrics);
    const fits=Math.abs(bar.height-68)<0.5&&badge.height>0&&badge.right<=viewport&&badge.top>=bar.top&&badge.bottom<=bar.bottom&&
      navigation.right<=account.left&&account.right<=badge.left;
-   check(fits,'Bloc mémoire sur la ligne de navigation à '+width+(fits?'':' '+JSON.stringify({bar,badge,account,viewport})));
+   check(fits,'Bloc mémoire sur la ligne de navigation à '+width+(fits?'':' '+JSON.stringify({bar,badge,account,navigation,viewport})));
  }
  check(await page.locator('#monitor-models').isVisible()&&await page.locator('#monitor-stats').isVisible(),'Modèle et mesures visibles sans déplier des détails');
  check(await page.locator('#settings-server-metrics').evaluate(n=>n.tagName==='SECTION'&&n.getBoundingClientRect().top<500),'Les mesures arrivent avant les cartes de suivi du stockage');
