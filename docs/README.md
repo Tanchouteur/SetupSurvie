@@ -1,6 +1,7 @@
 # Documentation SetupSurvie
 
 - [Guide de design Veillée](architecture/guide-design.md) — navigation, lecture, vidéo et recette visuelle.
+- [File d’attente](utilisation/file-attente.md) — voir, réordonner, mettre en pause et reprendre les travaux du portail. [Décision et suivi](decisions/file-attente-travaux.md).
 
 - [Premier transfert réel entre SSD sur Bazzite](essais/2026-11-18-transfert-ssd-bazzite.md) — mise à jour, interruption et reprise sur deux SSD physiques.
 - [Refonte du design « Veillée » — 0.44.0](essais/2026-11-18-refonte-design-veillee.md) — nouvelle identité du portail, accès rapide, vérifications et limites
@@ -16,7 +17,7 @@
 - [Installation Linux neuve sur Bazzite](essais/2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.
 
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
-- [Télécharger une liste de vidéos YouTube — 0.43.0](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
+- [Télécharger une liste de vidéos YouTube](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.

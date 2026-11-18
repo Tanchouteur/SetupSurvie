@@ -6,6 +6,7 @@ import time
 import uuid
 import httpx
 from fastapi import HTTPException
+from . import work_queue
 from . import model_session,assistant_metrics,durable,engine,model_runtime,operations,store,translations
 
 ACTIVE={}
@@ -188,6 +189,7 @@ async def release_model(report):
     except Exception:report['model_released']=False
 
 
+@work_queue.tracked('calibration')
 async def run(report,options):
     try:
         async with engine.LOCK,asyncio.timeout(3600):

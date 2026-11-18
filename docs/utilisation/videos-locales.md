@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.50.2, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.51.1, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
@@ -183,8 +183,8 @@ est réessayé seul. Un échec persistant laisse la piste en brouillon et le rap
 indique le problème. Les propositions rejetées restent dans le rapport.
 Un refus explicite arrête le travail et la pause reste prioritaire.
 
-Une coupure de connexion à Ollama en cours de réponse entraîne également un
-nouvel essai par lots plus petits. Si un segment traduit seul est interrompu,
+Depuis **0.51.1**, une coupure de connexion à Ollama en cours de réponse
+entraîne également un nouvel essai par lots plus petits. Si un segment traduit seul est interrompu,
 il est retenté une fois. Les segments déjà terminés sont conservés dans les
 deux cas.
 

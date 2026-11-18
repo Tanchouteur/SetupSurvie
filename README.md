@@ -27,7 +27,7 @@ Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le naviga
 du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
 [guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
 
-Au **18 novembre 2026**, le pilote **0.50.2** propose une recherche locale avec indexation
+Au **18 novembre 2026**, le pilote **0.51.1** propose une recherche locale avec indexation
 automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
@@ -62,7 +62,7 @@ L’outil d’indexation vérifie ses prérequis isolés avant le parcours des a
 Les données existantes restent compatibles et conservées. La qualité sur le fonds
 réel, l’installation complète sur PC vierge, Safari réel et la recette complète
 hors ligne restent à qualifier ; consulter les [bilans datés](docs/essais/README.md).
-Le pilote n’est pas une offre commerciale validée.
+Le pilote n’est pas une offre commerciale validée. La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre et de régler l’ordre des traitements du portail.
 
 La bibliothèque reste accessible quand le moteur IA est arrêté. Le portail et
 Open WebUI partagent les comptes, avec des historiques de conversations distincts.

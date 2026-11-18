@@ -156,8 +156,8 @@ et conserve les termes préférés. Les passages terminés et leur numérotation
 sont conservés, y compris quand on reprend un travail créé avant la mise à jour.
 Un refus explicite ou un échec persistant laisse le passage en attente de reprise.
 
-Si la connexion à Ollama se coupe après le début d’une réponse, le même
-passage est réessayé à partir de son texte source. La réponse partielle est
+Depuis **0.51.1**, si la connexion à Ollama se coupe après le début d’une
+réponse, le même passage est réessayé à partir de son texte source. La réponse partielle est
 écartée. Si la connexion se coupe à nouveau, le travail attend une reprise.
 
 Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
