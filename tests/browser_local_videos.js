@@ -60,8 +60,13 @@ async page=>{
   await page.waitForFunction(()=>document.getElementById('next-videos-status').textContent.includes('Inventaire terminé'));
   await page.evaluate(id=>readSource(id),hit.id);
   await subtitles.locator('option').filter({hasText:'de ·'}).waitFor({state:'attached'});
-  check(await player.evaluate(v=>[...v.textTracks].some(t=>t.language==='en'&&t.mode==='showing')),
-    'La piste mémorisée survit au changement de rang après un inventaire');
+  check((await subtitles.locator('option:checked').textContent()).startsWith('en ·'),
+    'La piste mémorisée reste sélectionnée quand son rang change après un inventaire');
+  await player.evaluate(v=>v.play());
+  await page.waitForFunction(()=>[...document.querySelector('#reader video').textTracks]
+    .some(track=>track.language==='en'&&track.mode==='showing'&&track.cues?.length===1));
+  await player.evaluate(v=>v.pause());
+  check(true,'Le lecteur affiche la piste mémorisée après son chargement');
   check(calls.slice(before).every(row=>!row.url.includes('/api/chat')&&!row.url.includes('/api/translations')&&!row.url.includes('/api/admin/inference')),'Lire une vidéo ou une piste ne lance ni modèle ni traduction');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);check(await player.evaluate(v=>v.getBoundingClientRect().width<=innerWidth),'Lecteur vidéo adapté à '+width);}
   await page.locator('#navigation [data-route="assistant"]').click();check(await player.evaluate(v=>v.paused),'Quitter le lecteur met le média en pause');
