@@ -85,7 +85,7 @@
     new ResizeObserver(resizeMap).observe(document.getElementById('map'));
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.ScaleControl({unit: 'metric'}));
-    const showStatus = () => { status.textContent = current.id==='empty'?'Aucun fond de carte téléchargé. Préparez une carte pour voir les routes et bâtiments.':current.title + ' · données du ' + current.edition + ' · détail jusqu’au zoom ' + current.maxzoom + '. Fonctionne sans Internet.'; };
+    const showStatus = () => { status.textContent = current.id==='empty'?'Aucun fond de carte téléchargé. Préparez une carte pour voir les routes et bâtiments.':current.title + ' · données du ' + current.edition + ' · détail jusqu’au zoom ' + current.maxzoom + '. Fonctionne sans Internet sur le réseau de la maison.'; };
     map.on('load', showStatus);
     map.on('error', event => {status.textContent = 'Certaines données ne sont pas téléchargées dans cette zone. Les outils restent disponibles pour les données présentes.'; console.warn(event.error);});
     select.addEventListener('change', () => {
@@ -193,7 +193,7 @@
     map.on('click','notebook-points',event=>{const feature=event.features[0],p=notebookPoints.find(p=>p.id===feature.properties.id);if(p){selectPoint(p.lat,p.lon);new maplibregl.Popup().setLngLat([p.lon,p.lat]).setText(p.title).addTo(map);window.dispatchEvent(new CustomEvent('survie-saved-point',{detail:p}));}});
     window.SurvieMap={
       point:()=>point,
-      pickPoint:()=>{window.MapUI.notify('Cliquez sur la carte à l’endroit à enregistrer.');map.getCanvas().style.cursor='crosshair';},
+      pickPoint:()=>{window.MapUI.notify('Touchez ou cliquez sur la carte à l’endroit à enregistrer.');map.getCanvas().style.cursor='crosshair';},
       finishPick:()=>{map.getCanvas().style.cursor='';},
       selectPoint:(p)=>{selectPoint(p.lat,p.lon);map.flyTo({center:[p.lon,p.lat],zoom:14});},
       points:items=>{notebookPoints=items;restorePlanningLayers();},

@@ -61,6 +61,23 @@ async (page) => {
   if(await page.locator('#map-results button').count())throw new Error('Résultats périmés après une erreur.');
   if(await page.locator('#map-nearby button').isDisabled())throw new Error('Le bouton reste bloqué après erreur.');
   await page.locator('[data-panel=map-notebook]').click();await page.screenshot({path:'/artifacts/map-redesign-admin-desktop.png',fullPage:true});
+  await page.setViewportSize({width:320,height:568});
+  await page.reload();
+  await page.waitForFunction(()=>window.SurvieMap&&document.querySelector('#map').dataset.ready==='true');
+  const canvas = page.locator('#map canvas');
+  await canvas.click({position:{x:100,y:160}});
+  await page.locator('#save-selected-point').click();
+  const chosen=await page.evaluate(()=>SurvieMap.point());
+  if(Number(await page.locator('#point-lat').inputValue())!==chosen.lat ||
+     Number(await page.locator('#point-lon').inputValue())!==chosen.lon)throw new Error('Coordonnées du point touché perdues.');
+  await page.locator('#point-title').fill('Repère mobile');
+  await page.locator('#map-point-form button[type=submit]').click();
+  await page.getByRole('button',{name:'Repère mobile',exact:true}).waitFor();
+  await page.locator('#new-map-point').click();
+  await page.locator('#close-map-panel').waitFor({state:'hidden'});
+  await canvas.click({position:{x:120,y:180}});
+  await page.locator('#map-point-dialog').waitFor({state:'visible'});
+  await page.locator('#cancel-point').click();
   const layouts=[];role='user';calls.length=0;
   for(const [width,height] of [[1440,900],[1024,768],[768,900],[390,844],[375,667],[320,568],[844,390]]){
     await page.setViewportSize({width,height});await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap&&document.body.dataset.mapRole==='user');
@@ -69,7 +86,8 @@ async (page) => {
     await page.getByRole('button',{name:'Réserve familiale',exact:true}).click();
     if(width<=760)await page.locator('#close-map-panel').click();
     if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Débordement '+width);
-    const mapBox=await page.locator('#map').boundingBox();if(mapBox.height<height-115)throw new Error('Carte trop petite '+width);
+    if(await page.locator('#save-selected-point').isVisible())throw new Error('Un lecteur peut voir la commande d’ajout.');
+    const mapBox=await page.locator('#map').boundingBox();if(mapBox.height<height-(width<=760?164:115))throw new Error('Carte trop petite '+width);
     if(await page.locator('#planning-panel').isVisible())throw new Error('Édition chez lecteur.');
     layouts.push({width,height,mapHeight:mapBox.height});
     if(width===390)await page.screenshot({path:'/artifacts/map-redesign-reader-mobile.png',fullPage:true});
@@ -79,5 +97,5 @@ async (page) => {
   await page.screenshot({path:'/artifacts/map-redesign-guest-mobile.png',fullPage:true});
   await page.locator('#map-nearby button').click();await page.locator('#map-login-dialog').waitFor({state:'visible'});
   if(errors.length||external.length)throw new Error(JSON.stringify({errors,external}));
-  return {passed:true,layouts,first_point_creates_list:true,profile_selection:true,empty_data_explained:true,search_loading_and_error:true,physical_phone:false};
+  return {passed:true,layouts,first_point_creates_list:true,mobile_point_saved:true,profile_selection:true,empty_data_explained:true,search_loading_and_error:true,physical_phone:false};
 }

@@ -135,8 +135,10 @@ est signalée, pas remplacée par une altitude supposée.
 
 Un lieu cartographié n’est pas une confirmation d’ouverture, d’accès ou de potabilité.
 Une recherche vide ou une couverture partielle ne prouve pas l’absence d’un lieu.
-La carte fonctionne sans Internet à proximité du serveur accessible sur le LAN ;
-elle n’est pas une application autonome téléchargée sur le téléphone.
+La carte fonctionne sans Internet tant que le téléphone est relié au serveur
+SetupSurvie. Ouvrir la carte ne télécharge pas les données sur le téléphone pour
+une réouverture loin du serveur. Voir le [guide des repères et des trajets](points-et-itineraires.md#consulter-sur-téléphone)
+pour enregistrer un repère ou préparer un export avant de partir.
 
 ## Outils de l’assistant
 

@@ -13,7 +13,12 @@
   function selectedPoints(){return book.points.filter(p=>p.list_id===listId);}
   function clearRoute(){cancelAccess();accessChoices.clear();accessQueries.clear();$('map-route-chip').hidden=true;request++;draft=null;activeRoute=null;$('route-save-form').hidden=true;$('selected-route').hidden=true;map?.route(null);}
   function listOptions(select,value){select.replaceChildren();for(const list of book.lists){const option=node('option',list.title);option.value=list.id;select.append(option);}if(book.lists.some(l=>l.id===value))select.value=value;}
-  function updateMap(){map?.points(selectedPoints());}
+  function updateMap(){
+    map?.points(selectedPoints());
+    for(const id of ['new-map-point','begin-map-point','save-selected-point']){
+      $(id).disabled=!map||user?.role!=='admin';
+    }
+  }
   function displayRoute(route){if(mobile.matches)document.body.classList.remove('map-panel-open');activeRoute=route;$('selected-point-card').hidden=true;$('map-route-chip').hidden=false;$('map-route-chip').textContent=km(route.distance_m)+' · '+duration(route.duration_s)+' · Voir le trajet';$('selected-route').hidden=false;$('selected-route-title').textContent=route.title||'Trajet calculé';$('selected-route-distance').textContent=km(route.distance_m)+' par les voies';$('selected-route-duration').textContent=duration(route.duration_s)+' estimées · '+route.speed_kmh+' km/h · '+({foot:'à pied',motorcycle:'moto',car:'petite voiture'}[route.mode]);$('selected-route-note').textContent=route.note;$('selected-route-stops').replaceChildren();for(const point of route.points||[]){$('selected-route-stops').append(node('li',point.title+(point.offset_m>5?' · liaison à vérifier : '+Math.round(point.offset_m)+' m à vol d’oiseau':'')));}const segments=$('selected-route-segments');segments.replaceChildren();for(const step of (route.segments||[]).slice(0,50)){segments.append(node('p',step.name+' · '+km(step.distance_m)));}if((route.segments||[]).length>50)segments.append(node('p','Les 50 premiers segments sont affichés. Le fichier GPX conserve le tracé complet.'));$('selected-route-export').hidden=!route.id;if(route.id)$('selected-route-export').href='/api/map-notebook/routes/'+route.id+'/gpx';map?.route(route.geometry,route.connectors||[]);}
   async function openRoute(id){clearRoute();const ticket=request;try{const route=await api('/map-notebook/routes/'+id);if(ticket!==request)return;displayRoute(route);$('planning-message').textContent='';}catch(e){$('notebook-message').textContent=e.message;}}
   function render(){
@@ -29,11 +34,10 @@
       const row=node('article');row.className='notebook-card';row.append(button(route.title,()=>openRoute(route.id),'route-open'),node('small',km(route.distance_m)+' · '+duration(route.duration_s)+' · '+({foot:'à pied',motorcycle:'moto',car:'petite voiture'}[route.mode])));
       if(user?.role==='admin'){const remove=button('Supprimer',()=>removeRoute(route));remove.className='editor-only';row.append(remove);}routes.append(row);
     }
-    if(!points.children.length)points.append(node('p',user?.role==='admin'?'Votre liste est vide. Cliquez sur « Ajouter un point », puis choisissez son emplacement sur la carte.':'Aucun point enregistré dans cette liste.'));
+    if(!points.children.length)points.append(node('p',user?.role==='admin'?'Votre liste est vide. Choisissez « Ajouter un point », puis choisissez son emplacement sur la carte.':'Aucun point enregistré dans cette liste.'));
     if(!routes.children.length)routes.append(node('p','Aucun trajet enregistré dans cette liste.'));
-    $('notebook-message').textContent=book.lists.length?'Choisissez un point ou un trajet pour l’afficher. Consultation sans GPS.':user?.role==='admin'?'Commencez par « Ajouter un point ». Vous pourrez créer sa liste dans le même formulaire.':'Aucune liste préparée. Un administrateur peut préparer les repères sur ordinateur.';
+    $('notebook-message').textContent=book.lists.length?'Choisissez un point ou un trajet pour l’afficher. Consultation sans GPS.':user?.role==='admin'?'Commencez par « Ajouter un point ». Vous pourrez créer sa liste dans le même formulaire.':'Aucune liste préparée. Le profil Famille peut ajouter des repères.';
     for(const id of ['rename-map-list','delete-map-list'])$(id).disabled=!listId;
-    $('new-map-point').disabled=false;
     $('route-calculate').disabled=book.points.length<2;
     renderStops();updateMap();
   }
@@ -50,7 +54,7 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&pickingPoint){pickingPoint=false;map?.finishPick();window.MapUI.notify('Ajout du point annulé.');}});
   $('new-map-point').onclick=beginPoint;
   $('begin-map-point').onclick=beginPoint;
-  $('save-selected-point').onclick=()=>{if(window.MapUI.requireUser())editPoint();};
+  $('save-selected-point').onclick=()=>editPoint();
   $('point-list').onchange=()=>{const create=$('point-list').value==='__new__';$('point-new-list-field').hidden=!create;$('point-new-list-title').required=create;};
   window.addEventListener('survie-map-picked',()=>{if(pickingPoint){pickingPoint=false;map?.finishPick();window.MapUI.notify('');editPoint();}});$('cancel-point').onclick=()=>{pickingPoint=false;map?.finishPick();$('map-point-dialog').close();};
   $('map-point-form').onsubmit=async event=>{event.preventDefault();const submit=event.submitter;submit.disabled=true;try{if($('point-list').value==='__new__'){const created=await api('/admin/map-notebook/lists',{title:$('point-new-list-title').value.trim()});book.lists.push(created);listId=created.id;listOptions($('point-list'),created.id);$('point-new-list-field').hidden=true;$('point-new-list-title').required=false;}await api('/admin/map-notebook/points'+(editingPoint?'/'+editingPoint:''),{list_id:$('point-list').value,title:$('point-title').value.trim(),lat:Number($('point-lat').value),lon:Number($('point-lon').value),kind:$('point-kind').value,notes:$('point-notes').value});listId=$('point-list').value;$('map-point-dialog').close();window.MapUI.showPanel('map-notebook');window.MapUI.notify('Point enregistré dans votre liste.');clearRoute();await load();}catch(e){$('point-form-message').textContent=e.message;}finally{submit.disabled=false;}};
