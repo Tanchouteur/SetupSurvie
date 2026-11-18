@@ -539,8 +539,13 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         # Videos are few and rarely classified: the documentary space chosen
         # for texts must not hide them when the user asks for videos only.
         catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
-        if words:ordered=retrieval.ordered(results,query_plan,limit*2)
-        else:ordered=[{k:v for k,v in item.items() if not k.startswith('_')} for item in results[:limit*2]]
+        ordered=retrieval.ordered(results,query_plan,limit*2) if words else []
+        if not ordered:
+            # A long question matches only some words: in this small dedicated
+            # list, keep those videos rather than announce that none exists.
+            unique={}
+            for item in sorted(results,key=lambda row:row.get('match')!='subtitle'):unique.setdefault(item['id'].split('#t=')[0],item)
+            ordered=[{k:v for k,v in item.items() if not k.startswith('_')} for item in list(unique.values())[:limit*2]]
         state=video_coverage['status']
         coverage={'status':'complete' if state=='complete' else 'partial','coverage_scope':'indexed_videos','domain':'all','collection':query_plan.collection,'videos':video_coverage,'kind':'videos'}
         warnings={'not_indexed':'Les vidéos n’ont pas encore été répertoriées. L’inventaire se lance automatiquement ; vous pouvez aussi le lancer dans Bibliothèque → Collections → Vidéos de la bibliothèque.',

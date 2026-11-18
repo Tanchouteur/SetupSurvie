@@ -13,13 +13,19 @@ INTENT=re.compile(r'\b(videos?|youtube)\b')
 NOISE=set('''video videos tuto tutos tutoriel tutoriels youtube film films regarder voir montrer montre montrez trouve trouves trouver
 cherche chercher recherche donne donner propose proposer affiche afficher liste lister mets mettre ouvre ouvrir lien liens
 n importe nimporte quoi quelconque n'importe quelque chose bibliotheque biblioteque ok bah ben bon alors stp svp merci dispo disponible disponibles
-il y en as avez ai existe une un des les la le de du sur pour qui me moi nous'''.split())
+il y en as avez ai existe une un des les la le de du sur pour qui me moi nous
+parle parlent parler apres aussi indique indiquee ou dit disent'''.split())
 GUIDANCE=('Résultat find_videos : vidéos de la bibliothèque locale. Pour proposer une vidéo, écris son titre comme lien Markdown '
           'avec son open_url exact, par exemple [Titre](open_url). Ne fabrique aucun lien. Un titre ou une description ne sont pas '
-          'des paroles consultées ; pour en résumer le contenu, lis ses sous-titres avec read_source quand has_subtitles=true. '
+          'des paroles consultées. Si read_sources contient ses sous-titres, réponds directement à partir d’eux, sans demander de confirmation ; '
+          'sinon lis-les avec read_source quand has_subtitles=true. N’écris [n] que pour un passage reçu dans read_sources. '
           'Si results est vide, lis coverage : un index absent ou en cours n’est pas une absence de vidéo. Si indexed_videos est '
           'supérieur à zéro, d’autres vidéos existent : propose une recherche plus large ou la liste sans mot-clé.')
 LIMIT=8
+PATH=r'/nouveau/#/bibliotheque/recherche\?'
+LINKED=re.compile(r'\]\('+PATH+r'[^)\s]*source=video:([a-f0-9]{64})')
+BRACKETED=re.compile(r'\[(?:https?:/)?('+PATH+r'[^\]\s]+)\](?!\()')
+ABSOLUTE=re.compile(r'\]\(https?:/('+PATH+r')')
 
 
 def requested(question):
@@ -54,10 +60,20 @@ def compact(found):
             'index_status':videos.get('status','unavailable'),'indexed_videos':videos.get('indexed_videos'),'more_results':max(0,len(found)-len(rows))}}
 
 
+def repair(answer):
+    """Make clickable the player addresses that small models misformat."""
+    return BRACKETED.sub(lambda match:'[Ouvrir la vidéo]('+match[1]+')',ABSOLUTE.sub(r'](\1',answer))
+
+
+def key(identifier):return identifier.split(':',1)[-1].split('#',1)[0]
+
+
 def appendix(answer,suggestions):
     """Deterministic links the model forgot; never removes its own text."""
-    missing=[row for row in suggestions if row['open_url'] not in answer and row['id'] not in answer][:5]
-    if not missing or any(row['open_url'] in answer for row in suggestions):return answer
+    linked=set(LINKED.findall(answer))
+    if linked&{key(row['id']) for row in suggestions}:return answer
+    missing=suggestions[:5]
+    if not missing:return answer
     lines=['','','**Vidéos trouvées dans la bibliothèque :**']
     for row in missing:
         title=re.sub(r'[\[\]\n]',' ',row['title']).strip() or 'Vidéo sans titre'

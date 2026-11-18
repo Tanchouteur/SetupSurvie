@@ -21,7 +21,7 @@ REASONS={
     'members_only':'vidéo réservée aux abonnés payants',
     'live':'diffusion en direct non terminée',
     'too_large':'fichier plus gros que la limite choisie',
-    'no_format':'aucun format compatible ; installer FFmpeg peut aider',
+    'no_format':'aucun format compatible avec la qualité choisie',
     'rate_limited':'YouTube limite les téléchargements ; réessayer plus tard',
     'bot_check':'YouTube demande une vérification anti-robot ; réessayer plus tard, sans contournement',
     'network':'connexion Internet interrompue ; relancer la liste pour reprendre',

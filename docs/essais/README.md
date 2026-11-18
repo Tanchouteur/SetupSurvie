@@ -1,5 +1,8 @@
 # Essais et résultats
 
+- [Téléchargement YouTube réel — 0.43.4](2026-11-18-youtube-reel-bazzite-windows.md) — Bazzite, pause et reprise, contrôle Windows.
+- [Demandes de vidéos avec de vrais modèles — 0.43.4](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
+
 - [Bouton de liste YouTube — 0.43.0](2026-11-18-bouton-liste-youtube.md) — parcours du site, contrôleur simulé, sans vidéo réelle.
 
 - [Intégration du transfert SSD Windows — 0.42.0](2026-11-17-integration-transfert-ssd-windows.md) — reprise de copie, suivi navigateur, tests et limites.

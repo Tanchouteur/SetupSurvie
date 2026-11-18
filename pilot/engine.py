@@ -352,6 +352,15 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                         value['other_videos']=listing['results'];value['coverage']['indexed_videos']=listing['coverage'].get('indexed_videos')
                     except Exception:pass
                 record_tool('find_videos',arguments,value,True)
+                # A subject request deserves the spoken content, not only titles:
+                # small models otherwise ask permission or cite an unread result.
+                readable=[row['id'] for row in value['results'] if row.get('has_subtitles')][:3] if arguments['query'] else []
+                if readable:
+                    try:
+                        packet=await read_batch(readable,current_question,initial_tools)
+                        record_tool('read_sources',{'ids':readable,'query':current_question[:200]},packet,True)
+                        update(identifier,sources=read_references(references))
+                    except Exception:logging.getLogger(__name__).warning('Sous-titres vidéo non lus pour cette demande.')
                 messages.append({'role':'system','content':video_requests.GUIDANCE})
             selected=MODES[mode]
             async with httpx.AsyncClient(trust_env=False,timeout=httpx.Timeout(180,connect=15)) as client:
@@ -594,7 +603,9 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 measured.value['failure']='tool_protocol' if measured.value.get('tool_protocol_retries') else 'no_final_text'
                 interrupted=True
                 answer=research.fallback(references) if read_references(references) else ('Le modèle n’a pas réussi à appeler l’outil ni à terminer la réponse. Aucun résultat de cette action n’est vérifié. Essayez un autre mode.' if measured.value.get('tool_protocol_retries') else 'Le modèle n’a pas produit de réponse finale dans le budget prévu. Les recherches déjà effectuées ne prouvent pas une absence dans la bibliothèque.')
-            if video_suggestions and not interrupted:answer=video_requests.appendix(answer,list(video_suggestions.values()))
+            # Real links stay useful even when a citation check rejected the prose.
+            answer=video_requests.repair(answer)
+            if video_suggestions:answer=video_requests.appendix(answer,list(video_suggestions.values()))
             with measured.during('metadata'):measured.value['runtime_after']=await model_runtime.describe(OLLAMA,selected['model'],fresh=True)
             final_sources=cited_sources(answer,references)
             with store.connect() as db:
