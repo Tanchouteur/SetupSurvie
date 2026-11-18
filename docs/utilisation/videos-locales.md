@@ -183,6 +183,11 @@ est réessayé seul. Un échec persistant laisse la piste en brouillon et le rap
 indique le problème. Les propositions rejetées restent dans le rapport.
 Un refus explicite arrête le travail et la pause reste prioritaire.
 
+Une coupure de connexion à Ollama en cours de réponse entraîne également un
+nouvel essai par lots plus petits. Si un segment traduit seul est interrompu,
+il est retenté une fois. Les segments déjà terminés sont conservés dans les
+deux cas.
+
 Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
 ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire
 les sous-titres**. Le modèle se choisit dans **Suivi des sous-titres → Modèle de traduction**. Il doit être installé et démarré volontairement. Une vidéo sans

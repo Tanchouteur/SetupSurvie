@@ -34,6 +34,10 @@ class IncompleteBatch(CandidateError):
     """A malformed batch that can be retried in smaller groups."""
 
 
+class InterruptedBatch(IncompleteBatch):
+    """A reply interrupted after generation started, even for one cue."""
+
+
 def running():return any(not task.done() for task in ACTIVE.values())
 
 
@@ -186,7 +190,10 @@ async def translate_batch(parts,mode,*,repair=None):
                 answer+=text
                 if len(answer)>40000:raise IncompleteBatch('Réponse trop longue : les segments restent à préparer.',answer)
             measured.model_call(last or {})
-    except model_session.Failure:raise ValueError('Le moteur a interrompu la traduction ; les segments terminés restent conservés.') from None
+    except (model_session.Failure,httpx.HTTPError,json.JSONDecodeError) as error:
+        if last is not None and model_session.interrupted_reply(error):
+            raise InterruptedBatch('La connexion a interrompu les sous-titres en cours de traduction.',answer) from None
+        raise ValueError('Le moteur a interrompu la traduction ; les segments terminés restent conservés.') from None
     if not last or not last.get('done') or last.get('done_reason')!='stop':
         raise IncompleteBatch('La traduction des segments n’a pas terminé.',answer)
     if translation_quality.REFUSAL.match(answer.strip()):
@@ -251,6 +258,7 @@ def record_rejection(identifier,position,error):
 async def run(identifier):
     batch_limit=BATCH_SIZE
     recovery_end=None
+    retried_single=None
     try:
         while True:
             # Same lock as questions and documentary translations, released
@@ -282,10 +290,14 @@ async def run(identifier):
                 async with asyncio.timeout(900):
                     try:rows,model,metrics=await translate_batch(parts,item['mode'])
                     except IncompleteBatch as error:
-                        if len(parts)==1:raise
-                        record_rejection(identifier,parts[0]['position'],error)
-                        batch_limit=len(parts)//2
-                        if recovery_end is None:recovery_end=parts[-1]['position']
+                        position=parts[0]['position']
+                        if len(parts)==1:
+                            if not isinstance(error,InterruptedBatch) or retried_single==position:raise
+                            retried_single=position
+                        else:
+                            batch_limit=len(parts)//2
+                            if recovery_end is None:recovery_end=parts[-1]['position']
+                        record_rejection(identifier,position,error)
                         continue
                     except CandidateError as error:
                         if not error.repairable:raise

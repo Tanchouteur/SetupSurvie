@@ -267,6 +267,36 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((result['status'],result['done']),('completed',6))
         self.assertEqual(len(result['rejected_proposals']),1)
 
+    async def test_single_cue_retries_an_interrupted_reply_before_publishing(self):
+        self.write_cues(1);videos.scan()
+        original=httpx.AsyncClient
+        calls=[]
+        def handler(request):
+            calls.append(json.loads(request.content))
+            if len(calls)==1:
+                interrupted={'message':{'content':'{"cues":[{"id":0,"text":"999'},'done':False}
+                return httpx.Response(200,content=(json.dumps(interrupted)+'\n').encode())
+            value={'cues':[{'id':0,'text':'Le rotor fictif mesure 17 mm. Ne dépassez pas cette valeur.'}]}
+            return httpx.Response(200,json={'message':{'content':json.dumps(value)},'done':True,'done_reason':'stop'})
+        runtime={'available':False,'native_context':None}
+        with patch.object(captions,'translate_batch',self.real_translate),patch.object(
+             captions.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
+             httpx,'AsyncClient',side_effect=lambda **kw:original(transport=httpx.MockTransport(handler),**kw)
+        ):
+            result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(len(calls),2)
+        self.assertEqual((result['status'],result['done']),('completed',1))
+        self.assertIn('999',result['rejected_proposals'][0]['candidate'])
+        self.assertNotIn('999',captions.track_file(result['id']).read_text())
+
+    async def test_permanent_single_cue_interruption_stops_after_one_retry(self):
+        self.write_cues(1);videos.scan()
+        self.mock_translate.side_effect=captions.InterruptedBatch('Flux interrompu','Proposition partielle')
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(self.mock_translate.await_count,2)
+        self.assertEqual((result['status'],result['done']),('error',0))
+        self.assertFalse(captions.track_file(result['id']).exists())
+
     async def test_incomplete_single_cue_stops_without_publishing(self):
         self.mock_translate.side_effect=captions.IncompleteBatch('Segment omis','{"cues":[]}')
         result=await self.finish(await captions.create(self.video,0,'rapide'))
