@@ -31,35 +31,12 @@ sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'scripts'))
 import setup
 from delivery_paths import locked
 from pilot import durable
-from pilot.provider_subtitles import video_id
+from pilot.youtube_list import REASONS,folder_name,parse_list
 from pilot.video_inventory import INCOMPLETE,SUBTITLE_EXTENSIONS,VIDEO_EXTENSIONS
 import youtube_tools
 
 SUBTITLE_LANGUAGES='fr,fr-FR,fr-CA,en,en-US,en-GB'
-RESERVED=re.compile(r'(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?')
-FORBIDDEN=re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 VIDEO_TIMEOUT=4*3600
-REASONS={
-    'invalid_url':'adresse non reconnue comme une vidéo YouTube',
-    'playlist_refused':'liste de lecture refusée : donner l’adresse de chaque vidéo',
-    'duplicate_in_list':'déjà présente plus haut dans la liste',
-    'already_present':'déjà dans la bibliothèque',
-    'private':'vidéo privée',
-    'unavailable':'vidéo supprimée ou indisponible',
-    'age_restricted':'vidéo réservée aux comptes connectés (limite d’âge) ; aucun compte n’est utilisé',
-    'region_blocked':'vidéo bloquée dans ce pays',
-    'members_only':'vidéo réservée aux abonnés payants',
-    'live':'diffusion en direct non terminée',
-    'too_large':'fichier plus gros que la limite choisie',
-    'no_format':'aucun format compatible ; installer FFmpeg peut aider',
-    'rate_limited':'YouTube limite les téléchargements ; réessayer plus tard',
-    'bot_check':'YouTube demande une vérification anti-robot ; réessayer plus tard, sans contournement',
-    'network':'connexion Internet interrompue ; relancer la liste pour reprendre',
-    'disk_space':'espace disque insuffisant',
-    'timeout':'téléchargement trop long, arrêté ; relancer la liste pour reprendre',
-    'tool_failed':'échec de yt-dlp ; voir le détail dans le rapport',
-    'output_missing':'yt-dlp n’a produit aucun fichier vidéo terminé',
-}
 PATTERNS=[
     ('private',r'private video'),('members_only',r'members[- ]only|join this channel'),
     ('age_restricted',r'sign in to confirm your age|age[- ]restricted|inappropriate for some users'),
@@ -73,37 +50,6 @@ PATTERNS=[
     ('disk_space',r'no space left on device|not enough space'),
     ('network',r'unable to download webpage|connection (?:reset|refused|aborted)|timed? ?out|temporary failure in name resolution|getaddrinfo failed|network is unreachable'),
 ]
-
-
-class ListError(ValueError):pass
-
-
-def parse_list(text):
-    """Entries and line errors of a list file; never touches the network."""
-    entries=[];errors=[];seen={};theme=''
-    for number,raw in enumerate(text.lstrip('﻿').splitlines(),1):
-        line=raw.strip()
-        if not line or line.startswith('#'):continue
-        heading=re.fullmatch(r'\[(.*)\]',line)
-        if heading:theme=folder_name(heading[1]) if heading[1].strip() else '';continue
-        address=line.split()[0]
-        try:identifier=video_id(address)
-        except ValueError:
-            reason='playlist_refused' if re.search(r'[?&]list=|/playlist\b|/@|/channel/|/c/|/user/',address) else 'invalid_url'
-            errors.append({'line':number,'text':address[:300],'status':'refused','reason':reason});continue
-        if identifier in seen:
-            errors.append({'line':number,'text':address[:300],'status':'skipped','reason':'duplicate_in_list','first_line':seen[identifier]});continue
-        seen[identifier]=number
-        entries.append({'line':number,'id':identifier,'url':'https://www.youtube.com/watch?v='+identifier,'theme':theme})
-    return entries,errors
-
-
-def folder_name(value,fallback=''):
-    """A short folder name valid on Windows and Linux."""
-    text=FORBIDDEN.sub(' ',str(value or ''))
-    text=re.sub(r'\s+',' ',text).strip().rstrip('. ')[:80].rstrip('. ')
-    if RESERVED.fullmatch(text):text='_'+text
-    return text or fallback
 
 
 def existing_videos(library):
@@ -202,23 +148,46 @@ def publish(media,sidecars,library,entry):
     return target,moved,info
 
 
-def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_runtime='deno',run=subprocess.run):
+def execute(args,*,cancel=None,run=subprocess.run,popen=subprocess.Popen):
+    """Run yt-dlp; with a cancel file, stop it cooperatively (partial files kept).
+
+    Returns (returncode, output, paused)."""
+    hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+    options=dict(stdin=subprocess.DEVNULL,env={**os.environ,'PYTHONIOENCODING':'utf-8','PYTHONUTF8':'1'},**hidden)
+    if cancel is None:
+        result=run(args,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=VIDEO_TIMEOUT,**options)
+        return result.returncode,(result.stdout or '')+'\n'+(result.stderr or ''),False
+    import tempfile
+    with tempfile.TemporaryFile() as output:
+        process=popen(args,stdout=output,stderr=subprocess.STDOUT,**options)
+        deadline=time.monotonic()+VIDEO_TIMEOUT;paused=False
+        while process.poll() is None:
+            if Path(cancel).exists() or time.monotonic()>deadline:
+                paused=Path(cancel).exists();process.terminate()
+                try:process.wait(timeout=15)
+                except subprocess.TimeoutExpired:process.kill();process.wait()
+                break
+            time.sleep(.5)
+        output.seek(0);text=output.read().decode('utf-8','replace')
+    if not paused and process.returncode and time.monotonic()>deadline:raise subprocess.TimeoutExpired(args,VIDEO_TIMEOUT)
+    return process.returncode,text,paused
+
+
+def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_runtime='deno',run=subprocess.run,cancel=None,popen=subprocess.Popen):
     staging=data/'state'/'video-downloads'/'en-cours'/entry['id']
     durable.mkdir(staging)
     if free_bytes(staging)<max_bytes+reserve:return {'status':'error','reason':'disk_space'}
-    hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
     started=time.monotonic()
     try:
-        result=run(command(base,entry,staging,max_height=max_height,max_bytes=max_bytes,ffmpeg=ffmpeg,js_runtime=js_runtime),
-                   capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=VIDEO_TIMEOUT,stdin=subprocess.DEVNULL,
-                   env={**os.environ,'PYTHONIOENCODING':'utf-8','PYTHONUTF8':'1'},**hidden)
+        returncode,output,paused=execute(command(base,entry,staging,max_height=max_height,max_bytes=max_bytes,ffmpeg=ffmpeg,js_runtime=js_runtime),
+                                         cancel=cancel,run=run,popen=popen)
     except subprocess.TimeoutExpired:return {'status':'error','reason':'timeout'}
-    output=(result.stdout or '')+'\n'+(result.stderr or '')
+    if paused:return {'status':'paused','reason':'paused'}
     warnings=[line.strip()[:300] for line in output.splitlines() if line.startswith('WARNING')][:10]
     media,sidecars=finished_files(staging,entry['id'])
-    if result.returncode or media is None:
+    if returncode or media is None:
         detail=[line.strip()[:300] for line in output.splitlines() if line.startswith('ERROR')][-3:]
-        return {'status':'error','reason':classify(output,result.returncode),'detail':detail,'warnings':warnings}
+        return {'status':'error','reason':classify(output,returncode),'detail':detail,'warnings':warnings}
     target,moved,info=publish(media,sidecars,library,entry)
     shutil.rmtree(staging,ignore_errors=True)
     subtitles=sorted(p.name for p in moved if p.suffix.lower() in SUBTITLE_EXTENSIONS)
@@ -279,28 +248,46 @@ def run_list(args,*,run=subprocess.run,log=print):
     except (OSError,subprocess.SubprocessError):pass
     report={'schema':1,'started':datetime.now(timezone.utc).isoformat(),'list':Path(args.list).name,'yt_dlp':version,
             'ffmpeg':bool(ffmpeg),'js_runtime':js_runtime,'max_height':args.max_height,'max_bytes':max_bytes,'items':list(line_errors)}
+    cancel=Path(args.cancel) if getattr(args,'cancel',None) else None
+    progress_path=Path(args.progress) if getattr(args,'progress',None) else None
+    def progress(phase,current=None):
+        if progress_path is None:return
+        done=[item for item in report['items'] if item['status'] not in ('paused',)]
+        value={'schema':1,'phase':phase,'total':len(entries)+len(line_errors),'videos':len(entries),'done':len(done),'current':current,
+               'counts':{key:sum(1 for item in report['items'] if item['status']==key) for key in ('downloaded','skipped','refused','error')},
+               'tools':{'yt_dlp':version,'ffmpeg':bool(ffmpeg),'js_runtime':js_runtime},
+               'items':[{key:item[key] for key in ('line','id','status','reason','title','path','theme') if key in item}|({'message':REASONS[item['reason']]} if item.get('reason') in REASONS else {}) for item in report['items'][-300:]]}
+        if report.get('path'):value['report']=report['path']
+        setup.write_json(progress_path,value,private=True)
     if not js_runtime:log('Deno absent : YouTube peut refuser des vidéos ou limiter les formats. Relancer avec Internet pour terminer la préparation.')
     if not ffmpeg:log('FFmpeg absent : seuls les formats déjà complets sont utilisés, souvent en 360p. Relancer avec Internet pour terminer la préparation.')
     with locked(work/'download.lock'):
-        present=existing_videos(library)
+        present=existing_videos(library);progress('running')
         for index,entry in enumerate(entries,1):
+            if cancel is not None and cancel.exists():report['paused']=True;break
             item={'line':entry['line'],'id':entry['id'],'url':entry['url'],'theme':entry['theme']}
+            progress('running',{'index':index,'line':entry['line'],'url':entry['url']})
             if entry['id'] in present:
                 item.update(status='skipped',reason='already_present',path=present[entry['id']].relative_to(library).as_posix())
             else:
                 log(f'[{index}/{len(entries)}] {entry["url"]} …')
-                item.update(download(entry,data,library,base,max_height=args.max_height,max_bytes=max_bytes,reserve=reserve,ffmpeg=ffmpeg,js_runtime=js_runtime,run=run))
+                item.update(download(entry,data,library,base,max_height=args.max_height,max_bytes=max_bytes,reserve=reserve,ffmpeg=ffmpeg,js_runtime=js_runtime,run=run,cancel=cancel))
                 if item['status']=='downloaded':present[entry['id']]=library/item['path']
+                if item['status']=='paused':
+                    report['paused']=True;log('Pause demandée : la vidéo en cours reprendra au même endroit.');break
             log(f'[{index}/{len(entries)}] '+(f'téléchargée : {item["path"]}' if item['status']=='downloaded' else f'{REASONS[item["reason"]]} — {entry["url"]}'))
             report['items'].append(item)
             if item.get('reason')=='disk_space':
                 log('Arrêt : espace disque insuffisant. Les vidéos déjà rangées sont conservées.');break
-    report['items'].sort(key=lambda value:value['line'])
+    report['items']=sorted((item for item in report['items'] if item['status']!='paused'),key=lambda value:value['line'])
     report['finished']=datetime.now(timezone.utc).isoformat()
     counts={key:sum(1 for item in report['items'] if item['status']==key) for key in ('downloaded','skipped','refused','error')}
     report['counts']=counts
     path=work/'rapports'/('rapport-'+datetime.now().strftime('%Y%m%d-%H%M%S')+'.json')
     setup.write_json(path,report,private=True)
+    report['path']=str(path);progress('paused' if report.get('paused') else 'completed')
+    if report.get('paused'):
+        log(f'En pause : {counts["downloaded"]} téléchargée(s) jusqu’ici. Relancez la même liste pour reprendre. Rapport : {path}');return 3
     log(f'Terminé : {counts["downloaded"]} téléchargée(s), {counts["skipped"]} déjà présente(s) ou en double, '
         f'{counts["refused"]} ligne(s) refusée(s), {counts["error"]} erreur(s). Rapport : {path}')
     if counts['downloaded']:log('Le site répertorie les nouvelles vidéos tout seul (au démarrage ou à la prochaine recherche).')
@@ -319,6 +306,8 @@ def main(argv=None):
     parser.add_argument('--reserve-gb',type=float,default=10,help='espace libre à garder sur le disque (10 Go par défaut)')
     parser.add_argument('--ffmpeg',help='chemin de ffmpeg s’il n’est pas dans le PATH')
     parser.add_argument('--latest',action='store_true',help='avec prepare : passer à la toute dernière version de yt-dlp si YouTube bloque')
+    parser.add_argument('--progress',help=argparse.SUPPRESS)
+    parser.add_argument('--cancel',help=argparse.SUPPRESS)
     parser.add_argument('--yt-dlp',help=argparse.SUPPRESS)
     args=parser.parse_args(argv)
     if args.action!='prepare' and not args.list:parser.error('Indiquez le fichier texte de la liste.')

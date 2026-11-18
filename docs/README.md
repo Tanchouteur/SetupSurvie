@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Bouton de liste YouTube — 0.43.0](essais/2026-11-18-bouton-liste-youtube.md) — dépôt depuis le site, suivi, pause, reprise ; contrôleur simulé.
+
 - [Qualité visuelle à reprendre](decisions/refonte-ux-evolutive.md#cohérence-et-qualité-visuelle-à-reprendre--demande-de-louis-du-17-novembre-2026) — demande de Louis : navigation des cartes, indicateurs RAM/GPU et cohérence de tout le site ; chantier futur.
 
 - [Intégration du transfert SSD Windows — 0.42.0](essais/2026-11-17-integration-transfert-ssd-windows.md) — reprise de copie, suivi navigateur, tests et limites.
@@ -7,7 +9,7 @@
 - [Installation Linux neuve sur Bazzite](essais/2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.
 
 - [Trouver les vidéos — 0.40.0](essais/2026-11-17-recherche-videos.md) — filtre Vidéos uniquement, répertoire automatique, liens donnés par l’assistant.
-- [Télécharger une liste de vidéos YouTube — 0.42.0](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
+- [Télécharger une liste de vidéos YouTube — 0.43.0](utilisation/telecharger-videos-youtube.md) — outils yt-dlp, Deno et FFmpeg inclus dans l’installation, le kit et le transfert ; [décision et questions ouvertes](decisions/telechargement-videos-youtube.md).
 - [Mémoire visible et lecture de traduction — 0.39.0](essais/2026-11-17-memoire-et-lecture-traduction.md) — état réel, navigation et actualisation stable.
 
 - [Lecture et recherche avec réseau isolé — 0.38.3](essais/2026-11-17-lecture-reseau-isole.md) — API HTTP réelle, aucun réseau externe, données fictives.
@@ -89,7 +91,7 @@
 - [Rapport de performances de Marc et budget documentaire](essais/2026-11-16-rapport-performances-marc-0220.md) — 0.23.1, défaut de contexte reproduit, mesures RAM/disque/IA et limites.
 
 - [Vidéos locales et sous-titres](utilisation/videos-locales.md) — 0.23.0, recherche des passages et lecteur local ; préparation des pistes manquantes encore distincte.
-- [Télécharger une liste de vidéos YouTube](utilisation/telecharger-videos-youtube.md) — 0.41.0, outil en ligne de commande avec Internet ; rangement dans library/video/youtube/.
+- [Télécharger une liste de vidéos YouTube](utilisation/telecharger-videos-youtube.md) — 0.43.0, bouton du site ou ligne de commande, avec Internet ; rangement dans library/video/youtube/.
 
 - [Lecture française intégrée](utilisation/documents-et-traduction.md#lire-une-version-française-déjà-terminée--0210) — 0.21.0, version publiée dans les lecteurs portail/PDF.
 

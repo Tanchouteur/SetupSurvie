@@ -1,5 +1,7 @@
 # Essais et résultats
 
+- [Bouton de liste YouTube — 0.43.0](2026-11-18-bouton-liste-youtube.md) — parcours du site, contrôleur simulé, sans vidéo réelle.
+
 - [Intégration du transfert SSD Windows — 0.42.0](2026-11-17-integration-transfert-ssd-windows.md) — reprise de copie, suivi navigateur, tests et limites.
 
 - [Installation Linux neuve sur Bazzite](2026-11-17-installation-neuve-bazzite.md) — recette réelle 0.41.0, fonds réduit vérifié, CI réussie et limites.

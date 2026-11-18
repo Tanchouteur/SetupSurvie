@@ -1,5 +1,11 @@
 # Télécharger une liste de vidéos YouTube dans la bibliothèque
 
+**Étape 2 livrée en 0.43.0 — 18 novembre 2026, à la demande de Louis :** bouton dans
+Collections. Le montage `library/video` reste en lecture seule pour le pilote : le
+contrôleur de l’hôte exécute le téléchargement, ce qui tranche la question
+d’architecture de l’étape 2 ci-dessous. Voir le
+[bilan](../essais/2026-11-18-bouton-liste-youtube.md).
+
 **Décision de Louis du 17 novembre 2026 — outils inclus dans l’installation
 (0.42.0).** « On ne doit rien avoir à faire », y compris lors de la copie d’un
 stockage à l’autre. yt-dlp, Deno et FFmpeg sont donc figés avec leurs empreintes

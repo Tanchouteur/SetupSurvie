@@ -156,6 +156,14 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.43.0** ajoute dans Collections, pour le profil Famille, le bouton demandé par
+Louis le 17 novembre 2026 : liste YouTube collée ou déposée, vérification, suivi,
+pause et reprise. Le contrôleur de l’hôte télécharge ; le service du site garde
+`library/video` en lecture seule. Testé avec un contrôleur simulé, sans vidéo réelle
+ni essai Windows. Voir le [guide](../utilisation/telecharger-videos-youtube.md) et le
+[bilan](../essais/2026-11-18-bouton-liste-youtube.md). Nouvelle fonctionnalité
+compatible (`y`), données et composants tiers inchangés.
+
 La **0.42.0** inclut les outils du téléchargement YouTube dans l’installation, à
 la demande de Louis du 17 novembre 2026 (« on ne doit rien avoir à faire », y
 compris lors d’une copie de stockage à stockage). yt-dlp 2026.10.26, Deno 2.9.8 et

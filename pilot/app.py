@@ -114,7 +114,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.42.0'
+VERSION='0.43.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -838,7 +838,9 @@ SourceIdentifier=Annotated[str,Field(min_length=1,max_length=2000,pattern=r'^(gu
 
 @app.get('/api/videos')
 async def get_videos(offset:int=Query(default=0,ge=0,le=1000000),limit:int=Query(default=30,ge=1,le=100),q:str=Query(default='',max_length=160),value=Depends(user)):
-    with optional_feature('videos') as module:return await asyncio.to_thread(module.listing,offset,limit,q)
+    with optional_feature('videos') as module:
+        await module.ensure_fresh()
+        return await asyncio.to_thread(module.listing,offset,limit,q)
 
 
 @app.get('/api/zim-videos')
@@ -859,6 +861,36 @@ async def pause_zim_videos(value=Depends(admin)):
 @app.get('/api/admin/zim-videos/report')
 async def report_zim_videos(value=Depends(admin)):
     with optional_feature('archive_videos') as module:return {'version':VERSION,**await module.status()}
+
+
+class YoutubeList(BaseModel):
+    text:str=Field(min_length=1,max_length=300_000)
+    max_height:int=480
+
+
+@app.post('/api/admin/youtube-downloads/check')
+async def check_youtube_list(body:YoutubeList,value=Depends(admin)):
+    with optional_feature('youtube_downloads') as module:return module.check(body.text)
+
+
+@app.post('/api/admin/youtube-downloads',status_code=202)
+async def start_youtube_downloads(body:YoutubeList,value=Depends(admin)):
+    with optional_feature('youtube_downloads') as module:return await module.start(body.text,body.max_height)
+
+
+@app.post('/api/admin/youtube-downloads/resume',status_code=202)
+async def resume_youtube_downloads(value=Depends(admin)):
+    with optional_feature('youtube_downloads') as module:return await module.resume()
+
+
+@app.post('/api/admin/youtube-downloads/pause',status_code=202)
+async def pause_youtube_downloads(value=Depends(admin)):
+    with optional_feature('youtube_downloads') as module:return await module.pause()
+
+
+@app.get('/api/admin/youtube-downloads')
+async def youtube_downloads(value=Depends(admin)):
+    with optional_feature('youtube_downloads') as module:return JSONResponse(await module.status(),headers={'Cache-Control':'no-store'})
 
 
 @app.post('/api/admin/videos/index',status_code=202)

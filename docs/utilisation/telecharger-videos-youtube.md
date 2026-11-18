@@ -1,10 +1,25 @@
 # Télécharger une liste de vidéos YouTube
 
-**Guide actuel — 0.42.0, 17 novembre 2026.** Outil en ligne de commande, à lancer
-sur le PC qui héberge SetupSurvie, **avec Internet**. Depuis 0.42.0, yt-dlp, Deno
+**Guide actuel — 0.43.0, 18 novembre 2026.** Depuis le site ou en ligne de commande
+sur le PC qui héberge SetupSurvie ; ce PC doit avoir **Internet**. Depuis 0.42.0, yt-dlp, Deno
 et FFmpeg sont préparés automatiquement : rien à installer à la main. Il range les vidéos dans la
 bibliothèque ; le site les répertorie ensuite tout seul. Aucun essai réel sur
 YouTube n’a encore été fait : voir [Limites](#limites).
+
+## Depuis le site — 0.43.0
+
+Avec le profil **Famille**, ouvrir **Bibliothèque → Collections → Vidéos de la
+bibliothèque → Ajouter des vidéos depuis YouTube**.
+
+1. Coller les adresses, ou choisir un fichier texte (format ci-dessous).
+2. **Vérifier la liste** indique le nombre de vidéos et explique les lignes écartées.
+3. Choisir la qualité, puis **Télécharger les vidéos**.
+
+Le PC serveur fait le travail : la page peut être fermée. Le suivi donne la vidéo
+en cours et le résultat de chaque ligne. **Mettre en pause** arrête la vidéo en
+cours en gardant ses fichiers partiels ; **Reprendre** continue la liste et passe
+les vidéos déjà rangées. Une seule préparation de bibliothèque tourne à la fois.
+À la fin, le répertoire des vidéos s’actualise tout seul.
 
 ## 1. Préparer la liste
 
@@ -155,4 +170,5 @@ Voir la [décision et les questions ouvertes](../decisions/telechargement-videos
   lecture dans le site.
 - Le comportement de YouTube évolue : un refus anti-robot ou une limite de débit
   est signalé, sans garantie de réussite.
-- Pas encore de bouton dans le site : ce sera l’étape 2 si elle est validée.
+- Le bouton du site est testé avec un contrôleur simulé : son premier usage réel
+  reste à faire sur le PC cible ([bilan](../essais/2026-11-18-bouton-liste-youtube.md)).

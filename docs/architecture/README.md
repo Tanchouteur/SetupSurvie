@@ -141,6 +141,12 @@ vidéos et documents ; en mode vidéos, une requête vide liste les titres et
 l’espace documentaire est ignoré. `pilot/video_requests.py` détecte les demandes
 de vidéo, nettoie la requête, compacte les résultats de l’outil `find_videos`
 avec leur `open_url` et ajoute les liens oubliés par le modèle.
+
+Depuis 0.43.0, `pilot/youtube_downloads.py` dépose la liste dans
+`state/pilot/youtube-lists/` (lisible par l’hôte) et envoie son identifiant au
+contrôleur. L’action `youtube-download` de `scripts/library_tasks.py` lance
+`scripts/youtube_videos.py` avec fichiers de progression et d’annulation ;
+`pilot/youtube_list.py` partage l’analyse de la liste entre site et hôte.
 ## Diagnostic commun des performances — 0.22.0
 
 `pilot/performance.py` orchestre une campagne administrative explicite et bornée,
