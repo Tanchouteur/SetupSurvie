@@ -510,37 +510,6 @@ body.next-interface {
   body.next-interface .sidebar #navigation .nav-item { padding-inline: 8px; font-size: .8125rem; }
 }
 
-/* Device gauge in the navigation: smaller, calmer, still one click from the details. */
-@media screen and (min-width: 1001px) and (min-height: 501px) {
-  .next-interface #main-navigation .resource-status {
-    flex: 0 0 auto;
-    width: 232px;
-    height: 42px;
-    padding: 4px 6px 4px 12px;
-    background: transparent;
-    border: 1px solid var(--ds-line);
-    border-radius: var(--ds-r);
-    color: var(--ds-ink);
-    transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease;
-  }
-  .next-interface #main-navigation .resource-status:hover { background: var(--ds-surface); border-color: var(--ds-line-strong); color: var(--ds-ink); }
-  .next-interface .resource-status-caption,
-  .next-interface .resource-status-meter-label { color: var(--ds-ink-3); font-size: .6875rem; }
-  .next-interface .resource-status-name { font-size: .75rem; }
-  .next-interface .resource-status-meters { grid-template-columns: repeat(2, 42px); gap: 7px; padding-left: 8px; border-color: var(--ds-line); }
-  .next-interface .resource-status-value { color: var(--ds-ink); }
-  .next-interface .resource-status-track { background: var(--ds-surface-3); }
-  .next-interface .resource-status-fill { background: var(--ds-ok); }
-  .next-interface .resource-status-meter[data-level="high"] .resource-status-fill { background: var(--ds-ember); }
-}
-@media screen and (min-width: 1001px) and (max-width: 1280px) {
-  .next-interface #main-navigation .resource-status { width: 58px; min-width: 0; padding-inline: 6px; justify-content: center; }
-  .next-interface #main-navigation .resource-status-model { display: none; }
-  .next-interface .resource-status-meters { grid-template-columns: 34px; gap: 2px; padding-left: 0; border-left: 0; }
-  .next-interface .resource-status-meter-label .resource-status-value { display: none; }
-  .next-interface .resource-status-chevron { display: none; }
-}
-
 /* ---------- Page rhythm and entrances ---------- */
 /* Fixed help bubbles must keep the viewport as reference: blocks holding one only fade. */
 .next-interface .view:not(.chat-view):not([hidden]) > * { animation: ds-fade var(--ds-slow) ease backwards; }
