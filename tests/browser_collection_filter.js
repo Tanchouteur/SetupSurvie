@@ -46,8 +46,12 @@ async page => {
   check(await series.getByRole('heading',{name:'Chapitre 01'}).isVisible(),'Le groupe ouvre les chapitres');
   check(await series.getByText('Lire le guide',{exact:false}).count()===2,'Chaque chapitre garde sa commande de lecture');
   await series.locator('summary').click();
+  await page.waitForFunction(id=>localStorage.getItem('survie-next-v1:'+S.user.id+':detail:'+id)?.includes('"value":false'),await series.getAttribute('id'));
   await field.fill('dentist 02');
   check(await series.getByRole('heading',{name:'Chapitre 02'}).isVisible()&&await visible()===1,'Le filtre ouvre la série et isole son chapitre');
+  await page.getByRole('link',{name:'Guides',exact:true}).click();
+  check(await series.getByRole('heading',{name:'Chapitre 02'}).isVisible(),'La rubrique garde le chapitre filtré même si le groupe était replié');
+  await page.getByRole('link',{name:'Tout',exact:true}).click();
   await page.locator('#collection-filter-clear').click();
   for(const [category,content] of [['livres','#data-books'],['guides','#data-guides'],['videos','#next-videos']]){
     const summary=page.locator(`[data-collection-section="${category}"] > summary`);

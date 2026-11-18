@@ -129,7 +129,7 @@
       const id=route.params.get('conversation');
       if(S.user&&id&&S.conversation!==id&&!S.loadingConversation)openConversation(id);
     }
-    for(const detail of document.querySelectorAll('#view-'+route.name+' details[id]')){const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}
+    for(const detail of document.querySelectorAll('#view-'+route.name+' details[id]')){if(detail.dataset.filtering)continue;const open=get('detail:'+detail.id,null);if(typeof open==='boolean')detail.open=open;}
     if(route.section==='appareil'&&route.tab==='tests'&&['performance','search','memory','translation','offline'].includes(route.params.get('test')))document.getElementById('settings-test-'+route.params.get('test')).open=true;
     if(restoring)restorePosition(saved);
     else if(route.name!=='chat'){$('main').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}
