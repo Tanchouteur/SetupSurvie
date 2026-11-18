@@ -105,7 +105,7 @@
     if(route.name==='library'){
       put('library-tab',route.tab);$('next-domain-controls').hidden=route.tab!=='recherche';$('next-domain-help').hidden=route.tab!=='recherche';
       $('next-collections').hidden=route.tab!=='collections';$('next-learning').hidden=route.tab!=='parcours';$('next-search').hidden=['collections','parcours'].includes(route.tab);
-      if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setQuery(query);if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
+      if(route.tab==='collections'){const query=route.params.get('resource')??get('collection-query','');window.CollectionsFilter?.setView(query,route.params.get('rubrique'));if(query)route.params.set('resource',query);history.replaceState(saved,'',urlFor(route.section,route.tab,route.params));if(Date.now()-inventoryAt>60000)loadData();}
       if(!['collections','parcours'].includes(route.tab)){
         if($('search-collection')?.options.length===1)loadData();
         if($('search-domain'))$('search-domain').value=route.params.get('domain')||get('domain','resilience');$('library-query').value=route.params.get('q')||'';$('search-language').value=route.params.get('lang')||'';if($('search-kind')){$('search-kind').value=['videos','documents'].includes(route.params.get('kind'))?route.params.get('kind'):'all';$('search-kind').fitKind?.();}if($('search-collection')){$('search-collection').dataset.requested=route.params.get('collection')||'';$('search-collection').value=route.params.get('collection')||'';}

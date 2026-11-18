@@ -51,7 +51,8 @@ que les collections ZIM non examinées sont sans vidéo.
 
 ## Chercher et lire
 
-Les titres/descriptions participent au filtre de Collections. **Rechercher** réunit
+Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
+Les titres et descriptions participent au filtre de Collections. **Rechercher** réunit
 documents et vidéos ; les paroles ne sont cherchées que dans les pistes locales
 qui passent les contrôles techniques. Un titre seul ne décrit pas toute la vidéo.
 Les différents passages d’un média sont regroupés sous un résultat « Vidéo ».

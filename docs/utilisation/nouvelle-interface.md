@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.37.2, 17 novembre 2026.**
+**Guide actuel — 0.44.1, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -20,6 +20,16 @@ La maquette fictive reste séparée sous `/maquette/`.
 Dans Bibliothèque → Collections, **Ouvrir cette collection** ouvre directement
 son lecteur Kiwix local, sans question ni recherche préalable. Les guides gardent
 leur lecture, leur PDF, leurs favoris et la possibilité de poser une question.
+
+Depuis 0.44.1, **Tout**, **Vidéos**, **Guides** et **Livres et encyclopédies**
+sont accessibles en haut de Collections. Choisissez **Vidéos** pour afficher
+directement les vidéos locales et celles des archives. Les guides dont les
+titres commencent par le même nom de série suivi d’un tiret long sont regroupés
+sous un titre dépliable, par exemple *Where There Is No Dentist*. Le filtre
+ouvre les groupes correspondant à ses mots et chaque chapitre reste ouvrable.
+Vous pouvez aussi déplier ou replier chaque grande rubrique par son titre.
+**Effacer le filtre** efface les mots saisis dans la rubrique courante.
+
 Sur PC, **Outils** donne accès à **Open WebUI**, aux fonctions avancées et au
 secours documentaire. Sur téléphone, les liens restent dans la navigation.
 Open WebUI conserve son historique distinct. Les sources originales et l’accès de secours restent disponibles.
@@ -34,7 +44,7 @@ Depuis 0.1.34, le champ **Chercher une ressource installée** filtre les
 encyclopédies, livres et guides de Collections par nom, nom de fichier,
 description et langue, sans tenir compte des accents ou majuscules. Plusieurs
 mots peuvent être saisis dans un ordre différent. Les boutons d’ouverture restent
-ceux des cartes habituelles ; **Tout afficher** retire le filtre. Le compteur
+ceux des cartes habituelles. Le compteur
 distingue les correspondances de celles réellement disponibles à la lecture.
 
 Ce filtre n’ouvre pas le contenu des archives et ne lance ni IA ni téléchargement.
