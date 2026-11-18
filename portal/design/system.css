@@ -308,7 +308,15 @@ body.next-interface {
 .next-interface .sidebar { background: #fbf7effa; border-color: transparent; }
 .next-interface .brand { color: var(--ds-ink); text-decoration: none; }
 .next-interface .brand:hover { color: var(--ds-ink); }
-.next-interface .brand > span:last-child { font-family: var(--ds-font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: -.01em; }
+.next-interface .brand > .ds-brand-name { font-family: var(--ds-font-display); font-size: 1.25rem; font-weight: 600; letter-spacing: -.01em; }
+.next-interface .ds-nav-version {
+  flex: none;
+  color: var(--ds-ink-3);
+  font: 400 .6875rem/1.2 var(--ds-font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.next-interface .ds-nav-version:empty { display: none; }
 .next-interface .brand-mark img { transition: transform var(--ds-slow) var(--ds-spring); }
 .next-interface .brand:hover .brand-mark img { transform: scale(1.08) rotate(-3deg); }
 .next-interface .avatar {
@@ -494,7 +502,7 @@ body.next-interface {
   body.next-interface .sidebar #account-button { padding-right: 8px; }
 }
 @media (min-width: 761px) and (max-width: 1180px) {
-  body.next-interface .brand > span:last-child { display: none; }
+  body.next-interface .brand > .ds-brand-name { display: none; }
   body.next-interface .sidebar #account-button #account-label { display: none; }
   body.next-interface .sidebar #account-button { padding: 3px; }
 }

@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.47.1, 18 novembre 2026.**
+**Guide actuel — 0.48.1, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -8,6 +8,8 @@ Les données de production ne sont pas remplacées par les exemples de la maquet
 La maquette fictive reste séparée sous `/maquette/`.
 
 ## Se repérer
+
+Le numéro de la version installée apparaît dans la barre supérieure.
 
 | Rubrique | Usage |
 | --- | --- |
@@ -25,7 +27,10 @@ Depuis 0.45.1, **Tout**, **Vidéos**, **Guides** et **Livres et encyclopédies**
 sont accessibles en haut de Collections. Choisissez **Vidéos** pour afficher
 directement les vidéos locales et celles des archives. Les guides dont les
 titres commencent par le même nom de série suivi d’un tiret long sont regroupés
-sous un titre dépliable, par exemple *Where There Is No Dentist*. Le filtre
+en séries, par exemple *Where There Is No Dentist*. Depuis 0.48.1, les séries
+de guides et les groupes de collections apparaissent en tête de leur rubrique
+sous forme de cartes. Une carte indique le nombre de ressources et s’ouvre sur
+toute la largeur pour les afficher. Le filtre
 ouvre les groupes correspondant à ses mots et chaque chapitre reste ouvrable.
 Vous pouvez aussi déplier ou replier chaque grande rubrique par son titre.
 **Effacer le filtre** efface les mots saisis dans la rubrique courante.

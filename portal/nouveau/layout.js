@@ -79,8 +79,16 @@
   admin.dataset.view = "settings";
   admin.hidden = true;
   document.querySelector(".sidebar-bottom").prepend(admin);
-  document.querySelector(".brand").href = "#/accueil";
-  document.querySelector(".brand").dataset.route = "accueil";
+  const brand = document.querySelector(".brand");
+  brand.href = "#/accueil";
+  brand.dataset.route = "accueil";
+  brand.setAttribute("aria-label", "SetupSurvie");
+  brand.lastElementChild.classList.add("ds-brand-name");
+  for (const host of [brand, get("breadcrumb").parentElement]) {
+    const version = make("span", "ds-nav-version");
+    if (host === brand) version.setAttribute("aria-hidden", "true");
+    host.append(version);
+  }
   document
     .querySelectorAll(
       'a[href="/maquette/"],a[href="/nouveau/"],a[href^="/classique/"]',

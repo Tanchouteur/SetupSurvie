@@ -10,12 +10,15 @@ async page => {
   assert(!await page.locator('#feedback-button').isVisible(),'Bouton de retour retiré');
   assert(await page.locator('a[href^="/classique/"]').count()===0,'Liens classiques retirés des menus');
   await page.locator('#navigation [data-route="bibliotheque"]').click();
-  await page.locator('[data-route="bibliotheque/collections"]').click();
+  await page.locator('.next-tabs [data-route="bibliotheque/collections"]').click();
   await page.locator('#collection-filter').fill('');
-  await page.waitForSelector('#data-guides button');
+  const guides=page.locator('#collection-section-guides');
+  if(!await guides.evaluate(section=>section.open))await guides.locator(':scope > summary').click();
+  const directGuide=guides.locator('#data-guides > .data-card button').first();
+  await directGuide.waitFor();
   assert(await page.locator('#next-collections').isVisible(),'Bibliothèque réelle et guides');
   // Existing reader and enriched PDF/favorite functions retain the same controls.
-  await page.locator('#data-guides button').first().click();await page.waitForSelector('#reader .reader-actions');
+  await directGuide.click();await page.waitForSelector('#reader .reader-actions');
   assert(page.url().includes('source='),'Document adressable');
   assert(await page.locator('#reader').isVisible(),'Lecture du vrai document fixture');
   await page.goBack();await page.waitForFunction(()=>document.querySelector('#next-collections').hidden===false);

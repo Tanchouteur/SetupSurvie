@@ -10,6 +10,15 @@ async page => {
   check(await page.evaluate(()=>document.fonts.check('16px "Atkinson Next"')&&document.fonts.check('32px Fraunces')),'Polices locales chargées');
   check(await page.locator('footer #software-version').isVisible(),'Version visible en pied de page');
   check(!await page.locator('.topbar').isVisible(),'Bandeau retiré sur PC');
+  const version=(await (await page.request.get(base+'/api/status')).json()).version;
+  const desktopVersion=page.locator('.brand .ds-nav-version');
+  await page.waitForFunction(value=>document.querySelector('.brand .ds-nav-version')?.textContent===value,version);
+  check(await desktopVersion.isVisible()&&await desktopVersion.textContent()===version,'La barre PC affiche le numéro fourni par le service');
+  check(await desktopVersion.evaluate(node=>getComputedStyle(node).fontWeight==='400'&&
+    getComputedStyle(node).color!==getComputedStyle(node.closest('.brand')).color),'Numéro en graisse normale et en couleur atténuée');
+  await page.setViewportSize({width:800,height:900});
+  check(await desktopVersion.isVisible(),'Numéro visible dans la barre PC compacte');
+  await page.setViewportSize({width:1440,height:900});
   const aligned=()=>page.evaluate(()=>{const m=document.querySelector('.ds-nav-indicator').getBoundingClientRect(),a=document.querySelector('#navigation .nav-item.active').getBoundingClientRect();return Math.abs(m.left-a.left)<2&&Math.abs(m.width-a.width)<2;});
   await page.locator('#navigation [data-route="bibliotheque"]').click();
   await page.waitForFunction(()=>{const m=document.querySelector('.ds-nav-indicator').getBoundingClientRect(),a=document.querySelector('#navigation .nav-item.active').getBoundingClientRect();return Math.abs(m.left-a.left)<2;});
@@ -31,6 +40,8 @@ async page => {
   // Phone: same quick access, no sideways scrolling.
   await page.setViewportSize({width:320,height:640});await page.goto(base+'/#/accueil');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady);
   check(await page.locator('.top-actions .ds-search-trigger').isVisible(),'Accès rapide sur téléphone');
+  const mobileVersion=page.locator('.topbar .ds-nav-version');
+  check(await mobileVersion.isVisible()&&await mobileVersion.textContent()===version,'La barre mobile affiche le même numéro');
   check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Pas de défilement horizontal à 320 px');
   check(!external.length,'Aucune ressource distante : '+external[0]);check(!errors.length,'Aucune erreur JavaScript : '+errors[0]);
 }

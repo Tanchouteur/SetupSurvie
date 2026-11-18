@@ -456,26 +456,6 @@ body.next-interface {
     font-size: 13px;
   }
 }
-.next-interface .next-collection-group {
-  grid-column: 1/-1;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--paper);
-  padding: 16px;
-}
-.next-interface .next-collection-group > summary {
-  cursor: pointer;
-  font-weight: 650;
-  font-size: 18px;
-  min-height: 32px;
-}
-.next-interface .next-collection-group > .data-grid {
-  margin-top: 16px;
-}
-.next-interface .next-collection-group .data-card details {
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
 .next-interface .other-matches {
   margin-top: 12px;
 }
@@ -497,9 +477,6 @@ body.next-interface {
     max-width: 100%;
     width: 100%;
     flex-basis: 100%;
-  }
-  .next-interface .next-collection-group {
-    padding: 12px;
   }
 }
 .next-search-check-dialog {
