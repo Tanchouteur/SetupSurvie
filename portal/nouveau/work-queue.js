@@ -127,7 +127,7 @@
     const summary = $('work-queue-state');
     summary.tabIndex = -1;
     summary.textContent = state.paused ? (state.running ? 'File en pause. Le traitement en cours termine son étape.' : 'File en pause.')
-      : state.running && !active.length ? 'Un autre travail utilise l’appareil.' : next.length ? next.length + ' travail(aux) en attente.' : 'Aucun travail en attente.';
+      : state.running && !active.length ? 'Un autre travail utilise l’appareil.' : next.length ? next.length + (next.length === 1 ? ' tâche en attente.' : ' tâches en attente.') : 'Aucun travail en attente.';
     const toggle = $('work-queue-pause');
     toggle.hidden = S.user?.role !== 'admin';
     toggle.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';

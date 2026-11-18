@@ -8,12 +8,27 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=5
+VERSION=6
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!\d|[.,]\d)')
+EN_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:st|nd|rd|th)(?!\w)',re.I)
+FR_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:er|re|ère|e|ème|eme|ᵉ|ᵉʳ|ʳᵉ)s?(?!\w)',re.I)
+ORDINAL_WORDS={
+    '1':(r'first(?:ly)?',r"premi(?:er|ère)s?|d[’']abord"),
+    '2':(r'second(?:ly)?',r'second(?:e)?s?|deuxièmes?'),
+    '3':(r'third(?:ly)?',r'troisièmes?'),
+    '4':(r'fourth(?:ly)?',r'quatrièmes?'),
+    '5':(r'fifth(?:ly)?',r'cinquièmes?'),
+    '6':(r'sixth(?:ly)?',r'sixièmes?'),
+    '7':(r'seventh(?:ly)?',r'septièmes?'),
+    '8':(r'eighth(?:ly)?',r'huitièmes?'),
+    '9':(r'ninth(?:ly)?',r'neuvièmes?'),
+    '10':(r'tenth(?:ly)?',r'dixièmes?'),
+}
+
 UNIT_ALIASES={
     'mètres':'m','mètre':'m','centimeters':'cm','centimetres':'cm','centimètres':'cm','centimeter':'cm','centimetre':'cm','centimètre':'cm',
     'millimeters':'mm','millimetres':'mm','millimètres':'mm','millimeter':'mm','millimetre':'mm','millimètre':'mm',
@@ -31,6 +46,14 @@ UNIT_ALIASES={
 UNIT=re.compile('('+NUMBER+r')\s*('+ '|'.join(re.escape(k).replace('/',r'\s*/\s*').replace('°','°'+r'\s*') for k in sorted(UNIT_ALIASES,key=len,reverse=True))+r')(?![a-zà-ÿ\d²³])',re.I)
 
 
+REFUSAL = re.compile(
+    r"^(?:(?:(?:je suis )?d[ée]sol[ée],? (?:mais )?)?"
+    r"je ne peux pas (?:traduire|vous aider|t[’']aider|r[ée]pondre)"
+    r"|(?:i[’']?m sorry,? (?:but )?)?i (?:cannot|can[’']t) (?:help|translate|assist|provide))",
+    re.I,
+)
+
+
 def normalized(text):
     # Preserve superscripts in units; NFKC would silently change m² into m2.
     return unicodedata.normalize('NFC',text).replace('−','-').replace('–','-').replace('—','-')
@@ -44,6 +67,22 @@ def number(token):
         fixed=format(value,'f')
         return fixed.rstrip('0').rstrip('.') if '.' in fixed else fixed
     except InvalidOperation:return token
+
+
+def separate_ordinals(source,translated):
+    """Compare written ordinals separately so they cannot replace a cardinal."""
+    expected=Counter(number(match[1]) for match in EN_ORDINAL.finditer(source))
+    if not expected:return source,translated,True
+    received=Counter(number(match[1]) for match in FR_ORDINAL.finditer(translated))
+    # Count only additional French words. Ordinary written-out ordinals from
+    # the source must not also satisfy a missing numbered ordinal.
+    for value,missing in (expected-received).items():
+        if value not in ORDINAL_WORDS:continue
+        english,french=ORDINAL_WORDS[value]
+        old=len(re.findall(r'\b(?:'+english+r')\b',source,re.I))
+        new=len(re.findall(r'\b(?:'+french+r')\b',translated,re.I))
+        received[value]+=min(missing,max(0,new-old))
+    return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',translated),expected==received
 
 
 def assess(source,translated,*,source_language=None):
@@ -65,11 +104,26 @@ def assess(source,translated,*,source_language=None):
             # dollar amount of 70000. Other comma decimals keep their meaning.
             text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
         return Counter(number(m.group()) for m in NUMBERS.finditer(text))
-    left=numbers(source)
-    right=numbers(translated)
-    if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
+    source_numbers,translated_numbers,ordinals_match=separate_ordinals(source,translated)
+    if not ordinals_match or numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
-        return Counter((number(m.group(1)),UNIT_ALIASES[re.sub(r'\s','',m.group(2)).lower()]) for m in UNIT.finditer(text))
+        pairs=Counter()
+        for match in UNIT.finditer(text):
+            unit=re.sub(r'\s','',match.group(2))
+            # Lowercase a is usually an article or a verb after a reference.
+            # Single-letter elisions such as l’ or s’il are also prose.
+            if unit=='a' or (len(unit)==1 and text[match.end():match.end()+1] in ("'",'’')):
+                continue
+            if unit=='A':
+                # An extracted page number can be followed by a new English
+                # sentence starting with the article "A".
+                line_start=text.rfind('\n',0,match.start(1))+1
+                gap=text[match.end(1):match.start(2)]
+                rest=text[match.end(2):]
+                if '\n' in gap and not text[line_start:match.start(1)].strip() and re.match(r'[ 	]+[^\W\d_]',rest):
+                    continue
+            pairs[number(match.group(1)),UNIT_ALIASES[unit.lower()]]+=1
+        return pairs
     if measures(source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
     if len(source.strip())>=160 and len(translated.strip())<len(source.strip())*.4:
         add('short','warning','Traduction beaucoup plus courte : résumé ou passages omis possibles.')

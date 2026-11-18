@@ -71,12 +71,26 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         async def bad(parts,mode):return [{'id':row['position'],'text':'Le rotor mesure 999 cm.'} for row in parts],'bad-model',{}
         self.mock_translate.side_effect=bad
         job=await captions.create(self.video,0,'rapide');failed=await self.finish(job)
-        self.assertEqual(failed['status'],'error');self.assertEqual(failed['blocked'],2)
+        self.assertEqual(failed['status'],'error');self.assertEqual(failed['blocked'],1)
         self.assertFalse(captions.track_file(job['id']).exists());self.assertEqual(videos.source(self.video)['language'],'en')
         self.assertTrue(failed['rejected_proposals']);self.assertIn('999',failed['parts'][0]['candidate'])
         self.mock_translate.side_effect=self.translated
         result=await self.finish(await captions.resume(job['id'],'rapide'))
-        self.assertEqual(result['status'],'completed');self.assertEqual(len(result['rejected_proposals']),2)
+        self.assertEqual(result['status'],'completed');self.assertEqual(len(result['rejected_proposals']),3)
+
+    async def test_only_the_bad_cue_is_retried_then_batching_and_original_times_are_kept(self):
+        self.write_cues(18);videos.scan()
+        async def translate(parts,mode):
+            rows,model,metrics=await self.translated(parts,mode)
+            if len(parts)>1 and parts[0]['position']==0:rows[1]['text']='Le rotor fictif mesure 999 cm.'
+            return rows,model,metrics
+        self.mock_translate.side_effect=translate
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(self.calls,[list(range(16)),[1],[16,17]])
+        self.assertEqual((result['status'],result['done']),('completed',18))
+        self.assertEqual(len(result['rejected_proposals']),1)
+        self.assertEqual([(part['start_ms'],part['end_ms']) for part in result['parts']],
+            [(1000*i,1000*i+800) for i in range(18)])
 
     async def test_pause_and_resume_reuses_only_completed_cues(self):
         self.write_cues(40);videos.scan();entered=asyncio.Event()
@@ -233,7 +247,7 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result['status'],'completed')
         self.assertNotIn('status',payloads[0]['format']['properties']);self.assertNotIn('refused',payloads[0]['messages'][0]['content'])
 
-    async def test_incomplete_batch_retries_in_smaller_groups_then_publishes(self):
+    async def test_missing_and_reordered_cues_retry_in_smaller_groups_then_publish(self):
         self.write_cues(6);videos.scan()
         original=httpx.AsyncClient;attempts=[]
         def handler(request):
@@ -243,7 +257,7 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
             schema=payload['format']['properties']['cues']
             self.assertEqual((schema['minItems'],schema['maxItems']),(len(parts),len(parts)))
             rows=[{'id':p['id'],'text':f'Le rotor fictif mesure {p["id"]+17} mm. Ne pas dépasser cette cote.'} for p in parts]
-            value={'cues':rows[:-1] if len(attempts)==1 else rows}
+            value={'cues':rows[-2::-1] if len(attempts)==1 else rows}
             return httpx.Response(200,json={'message':{'content':json.dumps(value)},'done':True,'done_reason':'stop'})
         with patch.object(captions,'translate_batch',self.real_translate),\
              patch.object(captions.model_runtime,'describe',AsyncMock(return_value={'available':True,'installed':True,'native_context':16384,'running':None,'other_models':0})),\

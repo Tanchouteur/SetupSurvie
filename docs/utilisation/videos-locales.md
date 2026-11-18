@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.49.1, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.50.2, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
@@ -175,12 +175,13 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Depuis 0.49.1, le modèle reçoit le nombre exact de segments à traduire. S’il rend
-un lot incomplet, SetupSurvie rejette la proposition et réduit la taille des
-lots. Si un segment envoyé seul manque encore, le travail attend une reprise.
-Un refus explicite arrête le travail. Si le moteur annonce un refus tout en
-renvoyant des traductions, il peut clarifier sa réponse une seule fois.
-Les propositions rejetées restent dans le rapport. La pause reste prioritaire.
+Le modèle reçoit le nombre exact de segments à traduire. Depuis **0.50.2**,
+SetupSurvie réduit aussi les lots quand une réponse est tronquée ou illisible,
+ou que les identifiants sont modifiés ou réordonnés. Quand un contrôle échoue
+pour un segment, les segments valides sont enregistrés et celui qui a échoué
+est réessayé seul. Un échec persistant laisse la piste en brouillon et le rapport
+indique le problème. Les propositions rejetées restent dans le rapport.
+Un refus explicite arrête le travail et la pause reste prioritaire.
 
 Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
 ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire

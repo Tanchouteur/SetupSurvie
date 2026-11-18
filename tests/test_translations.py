@@ -82,6 +82,36 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['parts'][0]['model'],'model-one')
         self.assertEqual(state['parts'][1]['model'],'model-two')
 
+    async def test_resume_retries_only_failed_passage_without_renumbering_or_publishing_partial_text(self):
+        item=await self.create()
+        key=item['id']
+        first='The dial has 7 marks. The tray holds 4 liters.'
+        second='The cover has 2 clips. The cable measures 10 meters.'
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(key,))
+            db.executemany('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',
+                [(key,0,1,first,'pending'),(key,1,2,second,'pending')])
+        calls=[]
+        async def respond(source,mode,**options):
+            calls.append(source)
+            if source==first:return 'Le cadran a 7 repères. Le bac contient 4 litres.','fixture'
+            if source==second:
+                if len(calls)==2:raise ValueError('Interruption du moteur simulée.')
+                raise tr.UnusableResponse('Réponse tronquée.')
+            if source.startswith('The cover'):return 'Le couvercle a 2 attaches.','fixture'
+            self.assertEqual(source,'The cable measures 10 meters.')
+            return 'Le câble mesure 10 mètres.','fixture'
+        with patch.object(tr,'translate',side_effect=respond):
+            await tr.run(key)
+            self.assertEqual(tr.status(key,'alice')['done'],1)
+            with patch.object(tr,'launch'):await tr.resume(key,'alice')
+            await tr.run(key)
+        state=tr.status(key,'alice')
+        self.assertEqual((state['status'],state['done'],state['pages_done']),('completed',2,2))
+        self.assertEqual(calls,[first,second,second,'The cover has 2 clips. ','The cable measures 10 meters.'])
+        self.assertEqual(state['parts'][1]['translated'],'Le couvercle a 2 attaches. Le câble mesure 10 mètres.')
+        self.assertEqual(state['parts'][1]['source_text'],second)
+
     async def test_pause_cancels_inflight_fragment_and_preserves_previous_translation(self):
         item=await self.create();started=asyncio.Event()
         async def wait(text,mode,**kwargs):started.set();await asyncio.Event().wait()

@@ -74,7 +74,7 @@
         return row;
       });
       if (!entries.length) entries.push(make('li', 'Aucun travail en attente.'));
-      if (errors) entries.push(make('li', errors + ' travail(aux) à vérifier.', 'work-queue-error-text'));
+      if (errors) entries.push(make('li', errors + (errors === 1 ? ' tâche à vérifier.' : ' tâches à vérifier.'), 'work-queue-error-text'));
       list.append(...entries);
       action.hidden = !admin || !toggle;
       action.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';

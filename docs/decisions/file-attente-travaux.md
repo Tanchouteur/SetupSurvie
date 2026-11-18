@@ -14,7 +14,7 @@ doit rester visible tout en libérant la place pour la suite.
 - [x] Afficher la file dans la navigation, avec un aperçu au survol et au clavier,
   une page accessible au toucher et des erreurs visibles séparément.
 - [x] Raccorder les reprises et contrôles du chantier de fiabilité des traductions.
-- [ ] Vérifier priorités, erreurs, reprise, recherche par titre et par sous-titres
+- [x] Vérifier priorités, erreurs, reprise, recherche par titre et par sous-titres
   ainsi que les parcours de navigation sur ordinateur et téléphone.
 
 La capture de Marc montre le départ d’une liste de sept vidéos. Le compte rendu
@@ -23,7 +23,8 @@ yt-dlp à la ligne 2. Le détail du refus yt-dlp de cette ligne reste inconnu.
 
 
 La version **0.51.0** ajoute une fonctionnalité compatible au portail. Le
-planificateur reprend les points d’acquisition du moteur existants et fait
+planificateur reprend les points d’acquisition du moteur conservés par le
+[correctif de traduction 0.50.2](https://github.com/Tanchouteur/SetupSurvie/pull/51) et fait
 passer les étapes de la chaîne vidéo par les mêmes travailleurs que les
 actions manuelles. Les essais automatisés peuvent vérifier ces enchaînements
 avec un contrôleur et des modèles simulés. La recette sur le PC Windows de
