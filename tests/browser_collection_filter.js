@@ -98,19 +98,29 @@ async page => {
   check(await series.getByRole('heading',{name:'Chapitre 02'}).isVisible(),'La série ouverte est mémorisée même quand sa rubrique était repliée');
   await page.locator('#collection-section-livres > summary').click();
   await page.addStyleTag({content:'.next-collection-section[open] > :not(summary) { min-height: calc(100vh + 300px); }'});
+  await page.evaluate(()=>document.fonts.ready);
   for(const width of [1440,320]){
     await page.setViewportSize({width,height:700});
     for(const id of ['livres','guides','videos']){
-      await page.evaluate(id=>{
-        const section=document.getElementById('collection-section-'+id);
-        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
-      },id);
       const stuck=await page.waitForFunction(({id,width})=>{
-        const summary=document.querySelector('#collection-section-'+id+' > summary');
+        const section=document.getElementById('collection-section-'+id);
         const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
+        const summary=section.querySelector('summary');
+        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
         return Math.abs(summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom)<2;
       },{id,width},{timeout:5000}).then(()=>true,()=>false);
-      check(stuck,'Titre '+id+' accroché sous la navigation à '+width+' px');
+      const label='Titre '+id+' accroché sous la navigation à '+width+' px';
+      if(!stuck){
+        const layout=await page.evaluate(({id,width})=>{
+          const section=document.getElementById('collection-section-'+id);
+          const summary=section.querySelector('summary');
+          const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
+          return {open:section.open,hidden:section.hidden,scrollY,position:getComputedStyle(summary).position,
+            section:section.getBoundingClientRect().toJSON(),summary:summary.getBoundingClientRect().top,nav:nav.getBoundingClientRect().bottom};
+        },{id,width});
+        throw Error(label+' : '+JSON.stringify(layout));
+      }
+      check(true,label);
     }
   }
   await page.locator('#collection-section-videos > summary').click();
