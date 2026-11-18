@@ -72,6 +72,7 @@ class EvidenceTests(unittest.TestCase):
         def reply(payload):
             instructions='\n'.join(m['content'] for m in payload['messages'] if m['role']=='system')
             self.assertIn('ne fournit aucun passage lisible',instructions)
+            self.assertIn('sans affirmer que la bibliothèque ne contient aucun document',instructions)
             self.assertNotIn('Des passages documentaires ont été préparés',instructions)
             self.assertIn('connaissances générales',instructions)
             self.assertIn('l’âge et le niveau des enfants',instructions)
@@ -83,6 +84,22 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(answer['sources'],[])
         self.assertIn('connaissances générales',answer['content'])
         self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
+
+    def test_home_school_plan_reads_a_guide_before_the_first_model_reply(self):
+        question = "Prépare une semaine d'école à la maison pour deux enfants de 7 et 11 ans, avec le matériel qu'on a à la maison."
+        with store.connect() as db:
+            db.execute("UPDATE messages SET content=? WHERE conversation_id='c' AND role='user'", (question,))
+        guide = {**self.a, 'title': 'École à la maison', 'text': 'Le carnet bleu contient une activité de lecture lundi.'}
+
+        def reply(payload):
+            packet = next(json.loads(row['content']) for row in payload['messages']
+                          if row.get('tool_name') == 'read_sources')
+            self.assertIn('carnet bleu', packet['results'][0]['passages'][0]['text'])
+            return {'content': 'Le carnet bleu propose une lecture lundi [1].'}
+
+        _, saved = self.run_chat([reply], found=[guide], read=lambda _: guide)
+        self.assertEqual(len(self.lookup_calls), 1)
+        self.assertEqual([row['id'] for row in saved['sources']], [guide['id']])
 
     def test_unreadable_search_hit_is_not_presented_as_documentary_evidence(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Comment utiliser la notice fictive ?' WHERE conversation_id='c' AND role='user'")

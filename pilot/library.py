@@ -222,7 +222,9 @@ SYNONYMS.update({
 })
 SYNONYMS.update({'examiner':['examiner','examine','examining','examination'],
                  'malade':['malade','malades','sick','patient'],
-                 'personne':['personne','person','people']})
+                 'personne':['personne','personnes','person','people'],
+                 'repartition':['repartition','repartitions','repartir'],
+                 'repartir':['repartir','repartition','repartitions']})
 SYNONYMS.update({'feu':['feu','feux','fire','campfire'],'allumer':['allumer','allumage','lighting','ignite'],'camp':['camp','camping','campfire']})
 TERM_ALIASES={'feux':'feu','stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
               'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
@@ -262,6 +264,11 @@ def index_report():
 
 def search_terms(query,maximum=10):
     query=retrieval.search_subject(query)
+    author=retrieval.author_subject(query)
+    # A spoken elaboration after the first question is not required vocabulary
+    # for finding the topic. Keep it in the request so the answer can address it.
+    if author:query=author
+    else:query=re.split(r'[?!]\s+(?=(?:genre|par exemple|for example|like)[\s,:])',query,maxsplit=1,flags=re.I)[0]
     words=[unicodedata.normalize('NFKD',w).encode('ascii','ignore').decode().lower() for w in re.findall(r'\w+',query,flags=re.UNICODE)]
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:maximum]
 
