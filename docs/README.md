@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Guide de design Veillée](architecture/guide-design.md) — navigation, lecture, vidéo et recette visuelle.
+
 - [Premier transfert réel entre SSD sur Bazzite](essais/2026-11-18-transfert-ssd-bazzite.md) — mise à jour, interruption et reprise sur deux SSD physiques.
 - [Refonte du design « Veillée » — 0.44.0](essais/2026-11-18-refonte-design-veillee.md) — nouvelle identité du portail, accès rapide, vérifications et limites
 - [Téléchargement YouTube réel — 0.43.4](essais/2026-11-18-youtube-reel-bazzite-windows.md) — trois vidéos sur Bazzite, contrôle Windows sans YouTube.

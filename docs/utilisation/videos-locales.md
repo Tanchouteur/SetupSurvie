@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.48.0, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.49.0, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -88,7 +88,9 @@ Le lecteur affiche l’attente, l’avancement, les erreurs et les résultats de
 cette vidéo, avec les commandes **Mettre en pause** et **Reprendre**. Vous
 retrouvez le suivi en rouvrant la vidéo. Dès que l’inventaire a pris en compte
 la nouvelle piste, elle rejoint le menu **Sous-titres** sans fermer le lecteur.
-Sous le lecteur, **Lire la transcription** déroule les paroles disponibles.
+**Lire la transcription** déroule les paroles disponibles. Sur un grand écran,
+les sous-titres et les options se placent à côté de la vidéo lorsqu’elle est
+ouverte directement, sans liste de résultats.
 **Qualité des sous-titres** affiche les informations de provenance et les limites
 des pistes. Dans **Collections → Vidéos**, les cartes affichent d’abord le titre,
 l’état des sous-titres et **Voir la vidéo**. **Options de sous-titrage** regroupe

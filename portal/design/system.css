@@ -304,6 +304,27 @@ body.next-interface {
   color: var(--ds-ink-3);
 }
 
+/* Reuse the portal's secondary controls for standalone catalogue actions. */
+.next-interface :is(#data-books, #data-guides) .data-card > a:not(.button, .secondary-link),
+.next-interface :is(#data-books, #data-guides) .data-card > button.text-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  max-width: 100%;
+  margin-block-start: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-surface);
+  color: var(--ds-ink-2);
+  line-height: 1.25;
+  text-decoration: none;
+}
+.next-interface :is(#data-books, #data-guides) .data-card > :is(a, button.text-button):hover {
+  border-color: var(--ds-line-strong);
+  background: var(--ds-surface-2);
+}
+
 /* ---------- Top navigation ---------- */
 .next-interface .sidebar { background: #fbf7effa; border-color: transparent; }
 .next-interface .brand { color: var(--ds-ink); text-decoration: none; }
@@ -496,7 +517,7 @@ body.next-interface {
   .ds-search-trigger .ds-label, .ds-search-trigger kbd { display: none; }
   .next-interface button.ds-search-trigger { width: 40px; padding: 0; }
 }
-@media (min-width: 761px) and (max-width: 1400px) {
+@media (min-width: 761px) and (max-width: 1560px) {
   body.next-interface .sidebar { gap: 8px; padding-inline: 14px; }
   body.next-interface .sidebar #navigation .nav-item { padding-inline: 11px; }
   body.next-interface .sidebar #account-button { padding-right: 8px; }

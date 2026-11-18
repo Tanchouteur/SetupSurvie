@@ -21,7 +21,17 @@ async page=>{
   check((await page.locator('#search-message').textContent()).includes('2 résultat(s)'),'Dernière réponse complète les résultats');
   const initialSearches=searches;
   await page.locator('#search-results .result button').first().click();
-  await page.waitForFunction(()=>!document.getElementById('reader').hidden);
+  await page.locator('#reader h2').waitFor();
+  const rail=page.locator('#search-results');
+  await rail.locator('.result[aria-current="true"]').waitFor();
+  await page.addStyleTag({content:'.reading .search-results > .result { min-height: 520px; flex-shrink: 0; }'});
+  await page.evaluate(()=>window.scrollBy(0,380));
+  check(await rail.evaluate(node=>{
+    const box=node.getBoundingClientRect(),nav=document.querySelector('#main-navigation').getBoundingClientRect();
+    if(box.top<nav.bottom||box.bottom>innerHeight||node.scrollHeight<=node.clientHeight)return false;
+    node.scrollTop=node.scrollHeight;
+    return node.scrollTop>0&&node.lastElementChild.getBoundingClientRect().bottom<=box.bottom;
+  }),'Le volet tient sous la navigation et défile jusqu’au dernier résultat');
   await page.locator('#reader').getByRole('button',{name:'← Résultats',exact:true}).click();
   check(searches===initialSearches&&await page.locator('#search-results .result').count()===2,'Retour au lecteur conserve les résultats sans nouvelle recherche');
   check(await page.locator('#search-results .other-matches').evaluate(node=>node.open),'Passages dépliés conservés au retour');
