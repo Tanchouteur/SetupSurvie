@@ -107,12 +107,13 @@ python scripts/youtube_videos.py download videos.txt
   Sinon, ajouter `--work-dir DOSSIER_PRIVÉ` ou `--data-dir DOSSIER_DONNÉES`.
   Dans le laboratoire Linux de Louis, ajouter `--lab`, qui contrôle le volume
   dédié.
-- Qualité **480p maximum** par défaut, conteneur MP4 si possible. `--max-height 720`
+- Qualité **480p maximum** par défaut, H.264 et MP4 en priorité pour la compatibilité
+  avec les téléphones et anciens PC. `--max-height 720`
   aide pour les vidéos où les gestes doivent être bien visibles.
 - Limite de **1,5 Go par vidéo** (`--max-size-gb`), et **10 Go** gardés libres sur
   le disque (`--reserve-gb`). L’outil s’arrête proprement si l’espace manque.
 - Les sous-titres français et anglais sont demandés : ceux de l’auteur et les
-  automatiques. Leur absence n’empêche pas le téléchargement. Le site peut
+  automatiques. Leur absence, ou un refus de YouTube, n’empêche pas le téléchargement. Le site peut
   ensuite récupérer, créer depuis l’audio ou traduire les pistes manquantes
   ([guide vidéo](videos-locales.md)).
 
@@ -158,17 +159,9 @@ Voir la [décision et les questions ouvertes](../decisions/telechargement-videos
 
 ## Limites
 
-- Aucune vidéo réelle n’a encore été téléchargée : les téléchargements sont testés
-  avec un yt-dlp simulé. La préparation des outils a, elle, été faite réellement
-  dans le runner Linux (17 novembre 2026) : paquets et FFmpeg vérifiés, yt-dlp
-  détectant Deno 2.9.8 et FFmpeg 8.1.3, puis recréation hors ligne après copie
-  vers un autre dossier. L’archive FFmpeg Windows a été téléchargée, vérifiée et
-  extraite ; les paquets Windows existent pour Python 3.12 et 3.13. Aucune
-  installation Windows réelle n’a encore été faite. Le premier essai réel doit se faire
-  sur le PC cible avec 3 à 5 vidéos courtes. Points à observer : 480p, sous-titres
-  fr/en, vidéo sans sous-titres, adresse invalide, vidéo indisponible, puis
-  lecture dans le site.
+- Trois vraies vidéos ont été téléchargées sur Bazzite en 0.43.2, avec pause, reprise,
+  répertoire et recherche ([bilan](../essais/2026-11-18-youtube-reel-bazzite-windows.md)).
+  Sous Windows, les vrais outils sont contrôlés en CI, sans accès à YouTube : le premier
+  téléchargement réel reste à faire sur le PC cible.
 - Le comportement de YouTube évolue : un refus anti-robot ou une limite de débit
   est signalé, sans garantie de réussite.
-- Le bouton du site est testé avec un contrôleur simulé : son premier usage réel
-  reste à faire sur le PC cible ([bilan](../essais/2026-11-18-bouton-liste-youtube.md)).
