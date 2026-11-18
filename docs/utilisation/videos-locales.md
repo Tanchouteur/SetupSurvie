@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.46.0, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.47.0, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.

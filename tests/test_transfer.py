@@ -63,6 +63,44 @@ class TransferTests(unittest.TestCase):
         self.assertNotIn('secret-fixture-only',public);self.assertNotIn('marc-fixed-id',public)
         with self.assertRaises(setup.SetupError):transfer.guard(self.work)
 
+    @unittest.skipIf(os.name=='nt','Manifestes Ollama dans le conteneur Linux')
+    def test_ollama_v2_link_keeps_its_relative_blob_and_is_verified(self):
+        blob=self.data/'models/blobs'/('sha256-'+'a'*64)
+        link=self.data/'models/manifests-v2/ollama.com/library/model/tag'
+        blob.parent.mkdir(parents=True);blob.write_bytes(b'manifest fixture')
+        link.parent.mkdir(parents=True);link.symlink_to(os.path.relpath(blob,link.parent))
+        self.copy()
+        copied=self.dest/'data'/link.relative_to(self.data)
+        self.assertEqual(os.readlink(copied),os.readlink(link))
+        self.assertEqual(copied.read_bytes(),blob.read_bytes())
+        transfer.verify_copy(self.dest)
+        copied.unlink();copied.symlink_to(blob)
+        with self.assertRaisesRegex(setup.SetupError,'externe'):
+            transfer.verify_copy(self.dest)
+        link.unlink();link.symlink_to(blob)
+        with self.assertRaisesRegex(setup.SetupError,'externe'):
+            transfer.inventory({'data':self.data})
+
+    @unittest.skipIf(os.name=='nt','Permissions Unix')
+    def test_copy_preserves_directory_permissions_under_private_destination(self):
+        zim=self.data/'library/zim'
+        zim.mkdir();zim.chmod(0o755)
+        (zim/'test.zim').write_bytes(b'fixture')
+        old=os.umask(0o077)
+        try:self.copy()
+        finally:os.umask(old)
+        self.assertEqual((self.dest/'data/library/zim').stat().st_mode & 0o777,0o755)
+        self.assertEqual(self.dest.stat().st_mode & 0o777,0o700)
+
+    def test_youtube_venv_is_excluded_and_its_cache_required(self):
+        venv=self.data/'tools/youtube/venv'
+        venv.mkdir(parents=True);(venv/'pyvenv.cfg').write_text('fixture')
+        with patch('youtube_tools.validate_wheels') as check:
+            journal=self.copy()
+        check.assert_called_once_with(self.data/'tools/youtube-wheels')
+        self.assertIn('data/tools/youtube/venv',journal['inventory']['excluded'])
+        self.assertFalse((self.dest/'data/tools/youtube/venv').exists())
+
     def test_process_death_resumes_published_files_without_recopy(self):
         # Kill only our disposable fixture process after a durable publication.
         script="""import sys,os
@@ -292,6 +330,40 @@ class ActivationTests(unittest.TestCase):
         journal['images_sha256']=setup.file_hash(self.dest/'images.tar')
         journal['images_manifest_sha256']=setup.file_hash(self.dest/'images.tar.json')
         transfer.save(self.dest,journal);transfer.prepare(self.dest)
+
+    @unittest.skipUnless(sys.platform=='linux','Retrait sur Linux')
+    def test_retirement_is_explicit_resumable_and_preserves_docker_and_private_state(self):
+        import transfer_retire
+        self.prepared()
+        journal=transfer.read(self.dest/'transfer.json')
+        journal['phase']='active';journal['checks']['mounts']=True
+        transfer.save(self.dest,journal)
+        docker=self.appdir.parent/'docker';docker.mkdir()
+        (docker/'state').write_text('conserver')
+        checks=(
+            patch.object(transfer_retire,'docker_paths',return_value=[docker]),
+            patch.object(transfer_retire,'mounted_paths',return_value=[]),
+            patch.object(transfer_retire,'check_destination'),
+            patch.object(transfer_retire,'different_filesystem',return_value=True),
+        )
+        from contextlib import ExitStack
+        with ExitStack() as stack:
+            for check in checks:stack.enter_context(check)
+            transfer_retire.retire(self.dest)
+            self.assertTrue(self.appdir.is_dir())
+            self.assertNotIn('source_retirement', transfer.read(self.dest/'transfer.json'))
+            with self.assertRaises(setup.SetupError):transfer_retire.retire(self.dest,'wrong')
+            with patch.object(transfer_retire.shutil,'rmtree',side_effect=OSError('interrupted')):
+                with self.assertRaises(OSError):transfer_retire.retire(self.dest,journal['id'])
+            self.assertFalse(self.appdir.exists())
+            with self.assertRaisesRegex(setup.SetupError,'retrait'):transfer.rollback(self.dest)
+            transfer_retire.retire(self.dest,journal['id'])
+        self.assertFalse(self.data.exists())
+        self.assertTrue((self.work/'transfer-guard.json').is_file())
+        self.assertTrue((docker/'state').is_file())
+        self.assertTrue((self.dest/'data/state/pilot/pilot.db').is_file())
+        report=transfer.read(self.dest/'Rapport-transfert.json')
+        self.assertEqual(report['source_retirement'],{'application':'removed','data':'removed'})
 
     def test_activation_fences_source_and_checks_mounts_documents(self):
         if os.name=='nt':self.skipTest('Linux runtime fixture')

@@ -3,7 +3,7 @@
 ## Préférences de sous-titres vidéo — 18 novembre 2026
 
 Louis demande de mémoriser la piste choisie et d’ajuster le réglage par défaut
-à la langue parlée. Depuis la 0.46.0, les vidéos anglaises privilégient la piste
+à la langue parlée. Depuis la 0.47.0, les vidéos anglaises privilégient la piste
 française puis anglaise. Les vidéos françaises s’ouvrent sans sous-titres.
 Le choix manuel est mémorisé par vidéo, profil et navigateur. Voir le
 [guide vidéo](../utilisation/videos-locales.md#chercher-et-lire).
