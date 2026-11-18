@@ -97,7 +97,7 @@ async page => {
   await page.locator('#collection-section-guides > summary').click();
   check(await series.getByRole('heading',{name:'Chapitre 02'}).isVisible(),'La série ouverte est mémorisée même quand sa rubrique était repliée');
   await page.locator('#collection-section-livres > summary').click();
-  await page.addStyleTag({content:'.next-collection-section[open] > :not(summary) { min-height: 100vh; }'});
+  await page.addStyleTag({content:'.next-collection-section[open] > :not(summary) { min-height: calc(100vh + 300px); }'});
   for(const width of [1440,320]){
     await page.setViewportSize({width,height:700});
     for(const id of ['livres','guides','videos']){
@@ -105,12 +105,12 @@ async page => {
         const section=document.getElementById('collection-section-'+id);
         window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
       },id);
-      await page.waitForFunction(({id,width})=>{
+      const stuck=await page.waitForFunction(({id,width})=>{
         const summary=document.querySelector('#collection-section-'+id+' > summary');
         const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
         return Math.abs(summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom)<2;
-      },{id,width});
-      checks.push('Titre '+id+' accroché sous la navigation à '+width+' px');
+      },{id,width},{timeout:5000}).then(()=>true,()=>false);
+      check(stuck,'Titre '+id+' accroché sous la navigation à '+width+' px');
     }
   }
   await page.locator('#collection-section-videos > summary').click();
