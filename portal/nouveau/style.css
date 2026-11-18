@@ -1000,6 +1000,22 @@ body.next-interface {
   }
 }
 
+@media (min-width: 1001px) and (max-width: 1080px) {
+  .next-interface .sidebar {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .next-interface .sidebar #navigation {
+    gap: 2px;
+  }
+  .next-interface .sidebar #navigation .nav-item {
+    padding-inline: 6px;
+  }
+  .next-interface .sidebar #account-button {
+    max-width: 106px;
+  }
+}
+
 @media (max-width: 760px) {
   .next-interface .sidebar #navigation .nav-item {
     line-height: 1.15;

@@ -20,11 +20,14 @@ async page=>{
  await page.evaluate(()=>{document.querySelector('#account-label').textContent='Profil familial avec un nom volontairement très long';});
  for(const width of [1001,1024,1181,1280,1281,1440]){
    await page.setViewportSize({width,height:900});
-   check(await status.evaluate(link=>{
-     const bar=link.parentElement.getBoundingClientRect(), badge=link.getBoundingClientRect();
-     const account=document.querySelector('#account-button').getBoundingClientRect();
-     return bar.height===68&&badge.right<=innerWidth&&badge.top>=bar.top&&badge.bottom<=bar.bottom&&account.right<=badge.left;
-   }),'Bloc mémoire sur la ligne de navigation à '+width);
+   const metrics=()=> {
+     const link=document.querySelector('.resource-status');
+     const box=node=>{const {left,right,top,bottom,height}=node.getBoundingClientRect();return {left,right,top,bottom,height};};
+     return {bar:box(link.parentElement),badge:box(link),account:box(document.querySelector('#account-button')),width:innerWidth};
+   };
+   const {bar,badge,account,width:viewport}=await page.evaluate(metrics);
+   const fits=Math.abs(bar.height-68)<0.5&&badge.height>0&&badge.right<=viewport&&badge.top>=bar.top&&badge.bottom<=bar.bottom&&account.right<=badge.left;
+   check(fits,'Bloc mémoire sur la ligne de navigation à '+width+(fits?'':' '+JSON.stringify({bar,badge,account,viewport})));
  }
  check(await page.locator('#monitor-models').isVisible()&&await page.locator('#monitor-stats').isVisible(),'Modèle et mesures visibles sans déplier des détails');
  check(await page.locator('#settings-server-metrics').evaluate(n=>n.tagName==='SECTION'&&n.getBoundingClientRect().top<500),'Les mesures arrivent avant les cartes de suivi du stockage');
