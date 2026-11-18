@@ -475,6 +475,20 @@
   line-height: 1.6;
   margin-bottom: 12px;
 }
+.next-interface .result > :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 2px 6px 2px 0;
+  vertical-align: middle;
+}
+.next-interface .result > button.secondary {
+  padding-inline: 12px;
+}
+.next-interface .result > button[aria-pressed="true"] {
+  background: var(--soft);
+  border-color: #b2c7b5;
+}
 .next-interface .result-meta {
   font-size: 12px;
   letter-spacing: 0;
