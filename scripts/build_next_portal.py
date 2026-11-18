@@ -15,7 +15,7 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.48.0"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.48.1"></script><script defer src="/app.js', 1)
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
@@ -53,7 +53,7 @@ def build():
         ('css', '/resource-status.css', '0.43.2'),
         ('js', '/resource-status.js', '0.43.2'),
         ('css', '/design/tokens.css', '0.44.0'),
-        ('css', '/design/system.css', '0.44.0'),
+        ('css', '/design/system.css', '0.48.1'),
         ('css', '/nouveau/library-video.css', '0.48.0'),
         ('js', '/design/experience.js', '0.44.0'),
         ('js', '/nouveau/navigation.js', '0.47.1'),
@@ -69,7 +69,7 @@ def build():
                       for name in ('atkinson-next-latin-wght', 'fraunces-latin-wght'))
     source = source.replace('<link rel="stylesheet"', preload + '<link rel="stylesheet"', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
-    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.40.0')
+    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.48.1')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.43.3')
     source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.39.0')
     return source

@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.47.1, 18 novembre 2026.**
+**Guide actuel — 0.48.1, 18 novembre 2026.**
 
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
@@ -8,6 +8,8 @@ Les données de production ne sont pas remplacées par les exemples de la maquet
 La maquette fictive reste séparée sous `/maquette/`.
 
 ## Se repérer
+
+Le numéro de la version installée apparaît dans la barre supérieure.
 
 | Rubrique | Usage |
 | --- | --- |
