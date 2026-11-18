@@ -10,7 +10,9 @@
     +'<p id="next-youtube-message" class="small" role="status"></p><ul id="next-youtube-refused" class="small" hidden></ul>'
     +'<div id="next-youtube-progress" hidden><progress id="next-youtube-bar" max="1" value="0" style="width:100%" aria-label="Avancement du téléchargement"></progress><p id="next-youtube-status" class="small" role="status"></p><ul id="next-youtube-items" class="small"></ul></div>'
     +'<p class="small muted">Les vidéos restent la propriété de leurs auteurs : usage privé, sans redistribution. Aucun compte YouTube n’est utilisé et aucun blocage n’est contourné.</p>';
-  $('next-videos').append(area);
+  // Moved into Mon appareil → Bibliothèque et préparations by settings-layout.js.
+  area.className='settings-advanced';$('next-videos').append(area);
+  const shortcut=element('p',undefined,'small');shortcut.id='next-youtube-shortcut';const go=element('a','Ajouter des vidéos depuis une liste YouTube →');go.href='#/appareil/bibliotheque';shortcut.append(go);$('next-videos').querySelector('#next-videos-admin').after(shortcut);
   let latest=null,busy=false,loading=false,generation=0,finished=false;
   const running=phase=>['starting','planning','downloading','refreshing'].includes(phase);
   const icons={downloaded:'✓',skipped:'•',refused:'✗',error:'✗'};
@@ -74,8 +76,8 @@
   });
   $('next-youtube-pause').onclick=()=>command(async()=>{await api('/admin/youtube-downloads/pause',{});$('next-youtube-message').textContent='Pause demandée : la vidéo en cours reprendra au même endroit.';});
   $('next-youtube-resume').onclick=()=>command(async()=>{await api('/admin/youtube-downloads/resume',{});$('next-youtube-message').textContent='Reprise demandée.';finished=false;});
-  document.addEventListener('survie:auth',()=>{generation++;latest=null;area.hidden=S.user?.role!=='admin';if(area.open)refresh();});
+  document.addEventListener('survie:auth',()=>{generation++;latest=null;area.hidden=S.user?.role!=='admin';shortcut.hidden=area.hidden;if(area.open)refresh();});
   area.addEventListener('toggle',()=>{if(area.open)refresh();});
-  setInterval(()=>{if(!$('next-collections').hidden&&(area.open||running(latest?.phase)))refresh();},2000);
-  area.hidden=true;
+  setInterval(()=>{if(area.offsetParent&&(area.open||running(latest?.phase)))refresh();},2000);
+  area.hidden=true;shortcut.hidden=true;
 })();

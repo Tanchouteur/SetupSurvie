@@ -161,6 +161,8 @@
       "Pour préparer les index ou modifier leur programmation, utilisez un ordinateur. La pause et le rapport restent accessibles ici.",
     ),
   );
+  const youtube = get("next-youtube");
+  index.closest("details").after(youtube);
   const engine = move("engine-controls", "assistant");
   engine.querySelector("details").open = true;
   engine.querySelector("summary").textContent =
@@ -388,6 +390,8 @@
   const cardDescriptions = {
     "settings-add-guide":
       "Ajouter un fichier personnel à la bibliothèque locale.",
+    "next-youtube":
+      "Déposer une liste d’adresses ; le PC serveur télécharge et range les vidéos.",
     "settings-index":
       "Rendre le texte des collections disponible dans la recherche.",
     "settings-engine":
