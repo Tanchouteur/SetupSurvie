@@ -52,8 +52,8 @@ class TransferWebTests(unittest.TestCase):
         self.addCleanup(monitor.close)
         origin = f'http://127.0.0.1:{monitor.server.server_port}'
         url = origin + '/api/suivi-copie/action'
-        def send(token, confirmed, request_origin=origin):
-            body = json.dumps({'action': 'copy', 'destination': str(self.dest),
+        def send(token, confirmed, request_origin=origin, action='copy'):
+            body = json.dumps({'action': action, 'destination': str(self.dest),
                                'confirmed': confirmed}).encode()
             request = Request(url, data=body, headers={
                 'Origin': request_origin, 'X-SetupSurvie-Transfer': token,
@@ -72,3 +72,6 @@ class TransferWebTests(unittest.TestCase):
         with send(monitor.server.token, True) as response:
             self.assertEqual(response.status, 202)
         self.assertEqual(queue.get_nowait(), ('copy', str(self.dest)))
+        with send(monitor.server.token, False, action='docker-status') as response:
+            self.assertEqual(response.status, 202)
+        self.assertEqual(queue.get_nowait(), ('docker-status', str(self.dest)))
