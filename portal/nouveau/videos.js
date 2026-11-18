@@ -1,15 +1,21 @@
-/* Existing local captions only. Playback never starts inference or a download. */
+/* Playback and opening the reader never start subtitle preparation. */
 (() => {
   const panel=element('section');panel.id='next-videos';panel.innerHTML='<h2>Vidéos de la bibliothèque</h2><p class="small muted">Les titres et descriptions se cherchent avec le filtre ci-dessus. La recherche dans les documents retrouve aussi les paroles dont les sous-titres sont indexés.</p><div id="next-videos-admin" class="actions"><button id="next-videos-index" class="secondary">Actualiser les vidéos et leurs sous-titres</button><button id="next-videos-stop" class="secondary" hidden>Arrêter l’inventaire</button><button id="next-videos-report" class="secondary">Télécharger le rapport vidéo</button></div><p id="next-videos-status" class="small" role="status"></p><div id="next-videos-list" class="collections"></div><button id="next-videos-more" class="secondary" hidden>Voir les vidéos suivantes</button>';
   $('next-collections').append(panel);
   const states={french_available:'Sous-titres français présents · à vérifier',french_prepared:'Français préparé localement · relecture à faire',source_transcribed:'Paroles transcrites localement · relecture à faire',source_only:'Sous-titres dans la langue source',missing:'Sous-titres à préparer',invalid:'Sous-titres présents mais illisibles',unknown:'Langue des sous-titres à identifier'};
   let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
+  let updateReaderTracks=null;
   async function refresh(append=false){
     if(!S.authReady||!S.user)return;
     const current=++version,q=$('collection-filter').value;
     try{
       const data=await api('/videos?offset='+(append?offset:0)+'&q='+encodeURIComponent(q));if(current!==version)return;
-      latest=data;$('next-videos-admin').hidden=S.user.role!=='admin';
+      const inventoryFinished=data.status.phase==='completed'&&(
+        latest?.status.phase!=='completed'||latest.status.finished!==data.status.finished
+      );
+      latest=data;
+      if(inventoryFinished)updateReaderTracks?.();
+      $('next-videos-admin').hidden=S.user.role!=='admin';
       $('next-videos-list').hidden=false;
       const running=data.status.phase==='running';$('next-videos-index').disabled=running||busy;$('next-videos-stop').hidden=!running;
       const phase={not_started:'Actualisez les vidéos pour préparer leur recherche.',running:'Inventaire en cours ; les anciens résultats restent utilisables.',paused:'Inventaire arrêté ; ancien index conservé.',interrupted:'Inventaire interrompu ; relancez-le explicitement.',failed:data.status.error||'Inventaire indisponible.',completed:'Inventaire terminé.'}[data.status.phase]||'';
@@ -40,10 +46,11 @@
   };
   document.addEventListener('survie:collection-filter',()=>{version++;$('next-videos-list').hidden=true;clearTimeout(timer);timer=setTimeout(()=>refresh(),250);});
   new MutationObserver(()=>{if(!$('next-collections').hidden)refresh();}).observe($('next-collections'),{attributes:true,attributeFilter:['hidden']});
-  document.addEventListener('survie:auth',()=>{version++;refresh();});
-  document.addEventListener('survie:videos-changed',()=>refresh());
-  setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&!$('next-collections').hidden)refresh();},1500);
+  document.addEventListener('survie:auth',()=>{version++;$('video-reader-preparation')?.remove();refresh();});
+  document.addEventListener('survie:videos-changed',async()=>{await refresh();updateReaderTracks?.();});
+  setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&(!$('next-collections').hidden||activeMedia?.isConnected&&!$('reader').hidden&&!$('view-library').hidden))refresh();},1500);
   document.addEventListener('survie:source',event=>{
+    updateReaderTracks=null;
     if(activeMedia){activeMedia.pause();activeMedia=null;}
     const source=event.detail;if(source.kind!=='video')return;
     const reader=$('reader'),body=reader.querySelector('.reader-body'),player=element('video');activeMedia=player;
@@ -52,19 +59,62 @@
     try{saved=JSON.parse(localStorage.getItem(positionKey)||'null');}catch(_){}
     function remember(){const now=performance.now();if(now-lastPositionSave<2000&&!player.paused)return;lastPositionSave=now;try{localStorage.setItem(positionKey,JSON.stringify({revision:source.video_revision,seconds:player.currentTime}));}catch(_){}}
     player.addEventListener('timeupdate',remember);player.addEventListener('pause',remember);
-    const notice=element('p',[source.video_notice,...new Set((source.tracks||[]).flatMap(track=>[track.transcription_notice,track.acquisition_notice]).filter(Boolean))].join(' '),'small catalogue-warning');
-    const usable=(source.tracks||[]).filter(t=>t.status==='passed');let defaultChosen=false;
-    for(const track of usable){const node=element('track');node.kind='subtitles';node.src=track.url;node.srclang=track.language||'und';node.label=(track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale',local_transcription:'transcription locale'}[track.origin]||track.origin);node.default=!defaultChosen&&track.language.startsWith('fr');defaultChosen||=node.default;player.append(node);}
-    const select=element('select');select.setAttribute('aria-label','Sous-titres de la vidéo');select.append(new Option('Sans sous-titres','off'));
-    usable.forEach((track,index)=>select.append(new Option((track.language||'Langue inconnue')+' · '+({automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale',local_transcription:'transcription locale'}[track.origin]||track.origin),String(index))));
-    const french=usable.findIndex(track=>track.language.startsWith('fr'));select.value=french>=0?String(french):'off';
-    function apply(){for(let i=0;i<player.textTracks.length;i++)player.textTracks[i].mode=select.value===String(i)?'showing':'disabled';}
-    select.onchange=apply;player.addEventListener('loadedmetadata',()=>{const duration=player.duration,wanted=source.position_ms?source.position_ms/1000:saved?.revision===source.video_revision&&Number.isFinite(saved.seconds)?saved.seconds:0;if(wanted>0&&Number.isFinite(duration))player.currentTime=Math.min(wanted,Math.max(0,duration-.1));apply();});
+    const notice=element('p',undefined,'small catalogue-warning');
+    const select=element('select');select.setAttribute('aria-label','Sous-titres de la vidéo');
     const label=element('label','Sous-titres');label.append(select);
+    const preparation=element('section');preparation.id='video-reader-preparation';
+    preparation.setAttribute('aria-label','Préparation des sous-titres');
+    const invalid=element('p','Certaines pistes échouent aux contrôles techniques ; elles ne sont pas proposées en lecture. Consultez le rapport vidéo.','small');
     const problem=element('p',undefined,'small');problem.hidden=true;player.addEventListener('error',()=>{problem.hidden=false;problem.textContent='Ce navigateur ne peut pas lire ce format ou le fichier ne répond pas. Ouvrez le média original avec un lecteur installé. Les sous-titres restent consultables ci-dessous.';});
-    reader.insertBefore(player,body);reader.insertBefore(label,body);reader.insertBefore(notice,body);reader.insertBefore(problem,body);
-    if(!source.transcription_available)body.replaceChildren(element('p','Aucun sous-titre exploitable pour cet aperçu. Le titre seul ne permet pas à l’assistant de connaître les paroles.'));
-    if((source.tracks||[]).some(t=>t.status!=='passed'))reader.insertBefore(element('p','Certaines pistes échouent aux contrôles techniques ; elles ne sont pas proposées en lecture. Consultez le rapport vidéo.','small'),body);
+    for(const node of [player,label,preparation,notice,problem,invalid])reader.insertBefore(node,body);
+    const origins={automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale',local_transcription:'transcription locale'};
+    function apply(){
+      player.querySelectorAll('track').forEach((track,index)=>{
+        track.track.mode=select.value===String(index)?'showing':'disabled';
+      });
+    }
+    let selectedManually=false,usable=[];
+    function renderTracks(){
+      const chosen=usable[Number.parseInt(select.value,10)];
+      usable=(source.tracks||[]).filter(track=>track.status==='passed');
+      const french=usable.findIndex(track=>track.language?.startsWith('fr'));
+      const previous=chosen?usable.findIndex(track=>track.id===chosen.id&&track.language===chosen.language&&track.origin===chosen.origin):-1;
+      player.querySelectorAll('track').forEach(track=>track.remove());
+      select.replaceChildren(new Option('Sans sous-titres','off'));
+      for(const [index,track] of usable.entries()){
+        const node=element('track');node.kind='subtitles';node.src=track.url;node.srclang=track.language||'und';
+        node.label=(track.language||'Langue inconnue')+' · '+(origins[track.origin]||track.origin);
+        node.default=(!selectedManually&&index===french)||(selectedManually&&index===previous);
+        node.addEventListener('load',apply,{once:true});
+        player.append(node);select.append(new Option(node.label,String(index)));
+      }
+      const selected=selectedManually?previous:french;
+      select.value=selected>=0?String(selected):'off';apply();
+      notice.textContent=[source.video_notice,...new Set((source.tracks||[]).flatMap(track=>[track.transcription_notice,track.acquisition_notice]).filter(Boolean))].join(' ');
+      invalid.hidden=!(source.tracks||[]).some(track=>track.status!=='passed');
+      body.replaceChildren();
+      if(source.transcription_available)renderDocument(body,source);
+      else body.append(element('p','Aucun sous-titre exploitable pour cet aperçu. Le titre seul ne permet pas à l’assistant de connaître les paroles.'));
+      if(preparation.isConnected&&S.user?.role==='admin')document.dispatchEvent(new CustomEvent('survie:video-reader',{detail:{item:source,host:preparation}}));
+    }
+    select.onchange=()=>{selectedManually=true;apply();};
+    player.addEventListener('loadedmetadata',()=>{const duration=player.duration,wanted=source.position_ms?source.position_ms/1000:saved?.revision===source.video_revision&&Number.isFinite(saved.seconds)?saved.seconds:0;if(wanted>0&&Number.isFinite(duration))player.currentTime=Math.min(wanted,Math.max(0,duration-.1));apply();});
+    if(S.user?.role!=='admin')preparation.remove();
+    renderTracks();
+    let loadingTracks=false;
+    const profile=S.user?.id;
+    updateReaderTracks=async()=>{
+      if(loadingTracks||!player.isConnected||reader.hidden||$('view-library').hidden||S.user?.id!==profile)return;
+      loadingTracks=true;
+      try{
+        const updated=await api('/source?id='+encodeURIComponent(source.id));
+        if(!player.isConnected||S.user?.id!==profile||updated.video_revision===source.video_revision)return;
+        Object.assign(source,updated);
+        renderTracks();
+      }catch(_){
+        // Keep the current player usable during an inventory or a network error.
+      }finally{loadingTracks=false;}
+    };
     const original=reader.querySelector('.reader-actions a');if(original){original.textContent='Ouvrir la vidéo originale →';original.href=source.url;}
   });
   new MutationObserver(()=>{if(activeMedia&&($('reader').hidden||$('view-library').hidden)){activeMedia.pause();}}).observe($('view-library'),{subtree:true,attributes:true,attributeFilter:['hidden']});

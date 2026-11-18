@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+## Sous-titres depuis le lecteur vidéo — 18 novembre 2026
+
+Louis demande de lancer et suivre les sous-titres directement dans la vidéo.
+La 0.45.0 ajoute au lecteur la transcription audio, la traduction française
+et les commandes de suivi pour la vidéo ouverte. Les pistes terminées
+rejoignent le menu du lecteur après leur indexation. Voir le
+[guide vidéo](../utilisation/videos-locales.md#créer-traduire-et-suivre-les-sous-titres-dans-le-lecteur--0450).
+
 ## Refonte du design « Veillée » — 18 novembre 2026
 
 Louis demande une refonte du design sans changement de fonctions, avec le champ

@@ -5,9 +5,11 @@ async page=>{
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push(request.url()));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   const fixture=await(await page.request.post(base+'/fixture/captions',{headers})).json();
-  await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
-  const card=page.locator('#next-videos-list article').filter({has:page.getByRole('heading',{name:'Préparation française fictive'})});await card.waitFor();
+  await page.goto(base+'/#/bibliotheque/recherche?kind=videos&source='+encodeURIComponent(fixture.video+'#t=2000'));
+  const card=page.locator('#video-reader-preparation');await card.waitFor();
   check(!calls.some(url=>url.includes('/api/chat')),'Ouvrir les vidéos ne lance aucune inférence');
+  const player=page.locator('#reader video');
+  await player.evaluate(video=>{video.dataset.preparationFixture='open';});
   const preparation=card.locator('details').filter({hasText:'Préparer une piste française'});
   if(!await preparation.evaluate(details=>details.open))await preparation.locator('summary').click();
   check(await card.locator('select[aria-label="Piste source à traduire"]').inputValue()==='0','La piste source anglaise est choisie explicitement');
@@ -20,16 +22,18 @@ async page=>{
     if(!current)await page.waitForTimeout(100);
   }
   check(!!current,'La préparation courante atteint seize segments conservés');
-  await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('16 / 40'),current.id);
-  check(await page.locator('#next-caption-preparation').getAttribute('open')!==null,'Le suivi s’ouvre après le lancement');
-  let job=page.locator('[data-caption-job="'+current.id+'"]');
+  let job=card.locator('[data-caption-job="'+current.id+'"]');
+  await job.filter({hasText:'16 / 40'}).waitFor();
+  check(await job.isVisible(),'Le suivi s’affiche sous le lecteur après le lancement');
+  check(calls.some(url=>url.includes('/api/admin/video-captions?video_id='+encodeURIComponent(fixture.video))),
+    'Le suivi interroge les traductions de la vidéo ouverte');
   await job.getByRole('button',{name:'Mettre en pause',exact:true}).click();
-  await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('En pause'),current.id);
+  await job.filter({hasText:'En pause'}).waitFor();
   check((await job.textContent()).includes('16 / 40'),'La pause garde les seize segments déjà traduits');
   const stillEnglish=await(await page.request.get(base+'/api/source?id='+encodeURIComponent(fixture.video))).json();
   check(stillEnglish.language==='en'&&!stillEnglish.tracks.some(track=>track.language==='fr'),'Un brouillon partiel ne devient pas une piste française');
   await page.request.post(base+'/fixture/captions-release',{headers});await job.getByRole('button',{name:'Reprendre',exact:true}).click();
-  await page.waitForFunction(id=>{const text=document.querySelector('[data-caption-job="'+id+'"]')?.textContent||'';return text.includes('40 / 40')&&text.includes('Piste française préparée');},current.id);
+  await job.filter({hasText:'40 / 40'}).filter({hasText:'Piste française préparée'}).waitFor();
   let indexed=false;
   for(let i=0;i<100&&!indexed;i++){
     const response=await page.request.get(base+'/api/source?id='+encodeURIComponent(fixture.video));
@@ -39,7 +43,8 @@ async page=>{
   check((await job.textContent()).includes('relecture à faire'),'La piste terminée garde sa limite de validation humaine');
   const found=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();
   check(found.results.some(row=>row.id.startsWith(fixture.video)),'Les paroles françaises préparées rejoignent la recherche commune');
-  await page.evaluate(id=>readSource(id+'#t=2000'),fixture.video);const player=page.locator('#reader video');await player.waitFor();await player.evaluate(video=>video.play());
+  check(await player.getAttribute('data-preparation-fixture')==='open','La préparation conserve le lecteur déjà ouvert');
+  await player.evaluate(video=>video.play());
   await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v?.videoWidth===96&&[...v.textTracks].some(track=>track.language==='fr'&&track.cues?.length===40);});
   await player.evaluate(video=>video.pause());
   check(await player.evaluate(video=>[...video.textTracks].some(track=>track.language==='fr'&&track.mode==='showing')),'Le lecteur décode le média et affiche la nouvelle piste française');
@@ -49,7 +54,7 @@ async page=>{
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Aucun débordement à '+width);}
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
   if(!await page.locator('#next-caption-preparation').evaluate(details=>details.open))await page.locator('#next-caption-preparation > summary').click();
-  job=page.locator('[data-caption-job="'+current.id+'"]');
+  job=page.locator('#next-caption-jobs [data-caption-job="'+current.id+'"]');
   const downloading=page.waitForEvent('download');await job.getByRole('button',{name:'Télécharger le rapport',exact:true}).click();
   const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.total===40&&report.parts.length===40&&report.human_review==='not_performed','Le rapport garde tous les segments et distingue la relecture humaine');
