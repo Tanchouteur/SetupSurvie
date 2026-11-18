@@ -1,9 +1,13 @@
 // Actual private queue/index/HTTP; recognizer and translator are simulated.
 async page=>{
-  const base='http://10.0.3.2:8769',checks=[],writes=[],errors=[];
+  const base='http://10.0.3.2:8769',checks=[],writes=[],reads=[],errors=[];
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   page.on('pageerror',error=>errors.push(error.message));
-  page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/api/admin/video-transcriptions'))writes.push(request.url());});
+  page.on('request',request=>{
+    if(!request.url().includes('/api/admin/video-transcriptions'))return;
+    if(request.method()==='POST')writes.push(request.url());
+    else reads.push(request.url());
+  });
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.request.post(base+'/fixture/transcriptions?hold=true',{headers:{Origin:base}});
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/bibliotheque/collections');
@@ -23,7 +27,10 @@ async page=>{
   await job.filter({hasText:'En pause'}).waitFor();
   let result=await(await page.request.get(base+'/api/admin/video-transcriptions/'+id+'/report')).json();
   check(result.status==='paused'&&result.units_done===1,'Pause conserve le premier passage audio');
-  const video=result.video_id;let source=await(await page.request.get(base+'/api/source?id='+encodeURIComponent(video))).json();
+  const video=result.video_id;
+  check(reads.some(url=>url.includes('/api/admin/video-transcriptions?video_id='+encodeURIComponent(video))),
+    'Le suivi interroge les transcriptions de la vidéo ouverte');
+  let source=await(await page.request.get(base+'/api/source?id='+encodeURIComponent(video))).json();
   check(source.tracks.length===0,'Une transcription partielle ne devient pas une piste disponible');
   await page.reload();
   await job.filter({hasText:'En pause'}).waitFor();
@@ -41,7 +48,8 @@ async page=>{
   check(result.status==='completed'&&!!result.translation_job,'Le suivi relie la traduction au travail audio courant');
   await reader.locator('[data-caption-job="'+result.translation_job+'"]').filter({hasText:'Piste française préparée'}).waitFor();
   await page.locator('#reader [aria-label="Sous-titres de la vidéo"] option').filter({hasText:'fr · traduction locale'}).waitFor({state:'attached'});
-  check(await reader.locator('[data-audio-job]').count()===1&&await reader.locator('[data-caption-job]').count()===1,'Le lecteur affiche les tâches de la vidéo ouverte et sa nouvelle piste');
+  check(await job.isVisible()&&await reader.getByRole('heading',{name:'Préparation française fictive'}).count()===0,
+    'Le lecteur affiche la nouvelle piste et le suivi de la vidéo ouverte');
   check(result.units_done===2&&result.cues===2&&!!result.translation_job,'La suite traduit les deux passages conservés');
   source=await(await page.request.get(base+'/api/source?id='+encodeURIComponent(video))).json();
   check(source.language==='fr'&&source.tracks.some(track=>track.origin==='local_transcription')&&source.tracks.some(track=>track.origin==='local_translation'),'Pistes source reconnue et française présentes ensemble');

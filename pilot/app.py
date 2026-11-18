@@ -972,10 +972,10 @@ async def resume_video_acquisition(identifier:str,value=Depends(admin)):
 
 
 @app.get('/api/admin/video-transcriptions')
-async def list_video_transcriptions(value=Depends(admin)):
+async def list_video_transcriptions(video_id:str|None=Query(default=None,pattern=r'^video:[a-f0-9]{64}$'),value=Depends(admin)):
     with optional_feature('transcriptions') as module:
         runtime=await asyncio.to_thread(module.model_config)
-        return {'jobs':await asyncio.to_thread(module.listing),'available':runtime['available'],'message':runtime.get('message','')}
+        return {'jobs':await asyncio.to_thread(module.listing,video_id=video_id),'available':runtime['available'],'message':runtime.get('message','')}
 
 
 @app.post('/api/admin/video-transcriptions',status_code=202)
@@ -1029,8 +1029,8 @@ async def resume_translation_benchmark(body:CaptionResume,value=Depends(admin)):
 
 
 @app.get('/api/admin/video-captions')
-async def list_video_captions(value=Depends(admin)):
-    with optional_feature('captions') as module:return {'jobs':await asyncio.to_thread(module.listing)}
+async def list_video_captions(video_id:str|None=Query(default=None,pattern=r'^video:[a-f0-9]{64}$'),value=Depends(admin)):
+    with optional_feature('captions') as module:return {'jobs':await asyncio.to_thread(module.listing,video_id=video_id)}
 
 
 @app.post('/api/admin/video-captions',status_code=202)

@@ -25,6 +25,8 @@ async page=>{
   let job=card.locator('[data-caption-job="'+current.id+'"]');
   await job.filter({hasText:'16 / 40'}).waitFor();
   check(await job.isVisible(),'Le suivi s’affiche sous le lecteur après le lancement');
+  check(calls.some(url=>url.includes('/api/admin/video-captions?video_id='+encodeURIComponent(fixture.video))),
+    'Le suivi interroge les traductions de la vidéo ouverte');
   await job.getByRole('button',{name:'Mettre en pause',exact:true}).click();
   await job.filter({hasText:'En pause'}).waitFor();
   check((await job.textContent()).includes('16 / 40'),'La pause garde les seize segments déjà traduits');

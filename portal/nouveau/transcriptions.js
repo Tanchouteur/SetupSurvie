@@ -30,16 +30,28 @@
   }
   function render(){
     renderJobs($('next-audio-jobs'),jobs);
-    if(reader?.host.isConnected)renderJobs(reader.jobs,jobs.filter(job=>job.video_id===reader.id));
   }
   async function refresh(){
     area.hidden=S.user?.role!=='admin';if(area.hidden||loading||busy||document.hidden)return;
     if(owner!==S.user.id){owner=S.user.id;jobs=[];render();}
-    loading=true;const current=++generation,id=S.user.id;
+    const reading=readerVisible()?reader:null;
+    const query=reading?'?video_id='+encodeURIComponent(reading.id):'';
+    loading=true;
+    const current=++generation,id=S.user.id;
     try{
-      const result=await api('/admin/video-transcriptions');if(current!==generation||S.user?.id!==id)return;
-      const completed=result.jobs.some(job=>job.status==='completed'&&!jobs.some(old=>old.id===job.id&&old.status==='completed'));
-      if(JSON.stringify(jobs)!==JSON.stringify(result.jobs)){jobs=result.jobs;render();}
+      const result=await api('/admin/video-transcriptions'+query);
+      if(current!==generation||S.user?.id!==id||(reading&&reading!==reader))return;
+      const previous=reading?reading.entries:jobs;
+      const completed=result.jobs.some(job=>job.status==='completed'&&!previous.some(old=>old.id===job.id&&old.status==='completed'));
+      if(JSON.stringify(previous)!==JSON.stringify(result.jobs)){
+        if(reading){
+          reading.entries=result.jobs;
+          renderJobs(reading.jobs,reading.entries);
+        }else{
+          jobs=result.jobs;
+          render();
+        }
+      }
       if(!result.available)message(result.message,reader?.form.firstElementChild?reader.id:null);
       if(completed)document.dispatchEvent(new Event('survie:videos-changed'));
     }catch(error){if(current===generation)message(error.message);}
@@ -47,7 +59,7 @@
   }
   async function command(id,action,options={}){
     if(busy)return;busy=true;const profile=S.user?.id;
-    const videoId=action==='create'?id:jobs.find(job=>job.id===id)?.video_id;
+    const videoId=action==='create'?id:([...jobs,...(reader?.entries||[])].find(job=>job.id===id)?.video_id??null);
     message(action==='create'?'Lancement de la reconnaissance des paroles…':'Commande en cours…',videoId);let failure='';
     try{await api('/admin/video-transcriptions'+(action==='create'?'':'/'+encodeURIComponent(id)+'/'+action),action==='create'?{id,mode:$('next-caption-mode').value||'rapide',...options}:{});}
     catch(error){failure=error.message;}finally{busy=false;}
@@ -95,8 +107,8 @@
     status.setAttribute('role','status');
     if(form)formHost.append(form);
     panel.append(formHost,status,target);host.append(panel);
-    reader={host,id,form:formHost,message:status,jobs:target};
-    renderJobs(target,jobs.filter(job=>job.video_id===id));
+    reader={host,id,form:formHost,message:status,jobs:target,entries:jobs.filter(job=>job.video_id===id)};
+    renderJobs(target,reader.entries);
     refresh();
   });
   document.addEventListener('survie:auth',()=>{generation++;reader=null;owner=null;jobs=[];message('');area.hidden=S.user?.role!=='admin';render();refresh();});
