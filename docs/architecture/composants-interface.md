@@ -35,6 +35,10 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 | `portal/nouveau/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
 | `portal/nouveau/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |
 | `portal/nouveau/motion.css` et `motion.js` | Transitions et retour visuel ; aucun appel API ni état métier, aucune attente ajoutée aux commandes ; partagés avec cartes/PDF |
+| `portal/design/tokens.css` | Depuis 0.44.0 : polices locales, couleurs, rayons, ombres, durées et icônes, partagés par toutes les pages |
+| `portal/design/system.css` | Depuis 0.44.0 : apparence du portail, chargée après les feuilles des fonctions, qui gardent leur disposition |
+| `portal/design/pages.css` | Depuis 0.44.0 : même identité pour Cartes, PDF, secours et suivi de copie ; ces pages restent utilisables sans elle |
+| `portal/design/experience.js` | Depuis 0.44.0 : repères de navigation, progression de lecture et accès rapide, sans API ni état enregistré |
 | `portal/nouveau/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation et en-tête de carte dépliable |
 | `portal/nouveau/ux-system.js` | Reprise, travaux personnels et adaptations communes utilisant les contrôles du portail |
 | `portal/nouveau/layout.js` | Placement initial des contrôles, avant leur raccordement aux actions |
@@ -45,6 +49,32 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 Les scripts repris sont formatés pour la lecture. Les outils de formatage et
 l’analyseur CSS utilisés dans le runner ne sont pas des dépendances du logiciel
 livré. Les variables de présentation ne doivent pas remplacer un état serveur.
+
+## Direction visuelle « Veillée » — 0.44.0
+
+**Décision du 18 novembre 2026.** Louis demande une refonte du design, sans
+changement de fonctions, et laisse le champ libre sur l’expérience à condition de
+ne pas dégrader l’existant. L’agent a retenu l’univers du logo : le feu, le livre
+et le papier. Pour un nouveau composant, partir de ces règles :
+
+- **Couleurs.** Papier chaud pour les fonds, encre brune pour le texte. Le rouge
+  braise est réservé à l’action principale d’un écran et aux repères de position.
+  Les boutons ordinaires sont encre, les boutons secondaires papier. Le vert ne
+  sert plus qu’aux états « prêt » et « disponible ».
+- **Typographie.** Fraunces pour les titres, Atkinson Hyperlegible Next pour le
+  texte, choisie pour sa lisibilité. Les deux sont sous licence SIL OFL 1.1,
+  embarquées dans `portal/design/fonts/` avec leur licence et sans accès réseau.
+- **Mouvement.** Il indique une position ou une conséquence : pastille et
+  soulignement qui glissent, cartes qui se soulèvent, entrées courtes. Un bloc
+  contenant une aide fixe s’anime en opacité seulement. La réduction du mouvement
+  coupe tout, y compris les braises de l’accueil.
+- **Accès rapide.** `Ctrl K`, `⌘ K`, `/` ou la loupe ouvrent une fenêtre pour
+  chercher, préparer une question ou aller à une page. Une question préparée n’est
+  jamais envoyée sans l’action de l’utilisateur.
+
+Le bandeau sous la navigation est retiré sur PC : la version et l’état de la
+bibliothèque passent en pied de page. Les anciennes feuilles conservent des règles
+désormais recouvertes ; leur nettoyage reste à faire, par petites étapes.
 
 ## Cartes et commandes
 

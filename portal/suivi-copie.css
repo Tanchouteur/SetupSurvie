@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
-  background: #f3f5ef;
-  color: #202d23;
+  background: #f6f3ee;
+  color: #2b2622;
   font: 16px/1.55 system-ui, sans-serif;
 }
 
 body { margin: 0; }
 main { margin: clamp(2rem, 8vh, 5rem) auto; max-width: 38rem; padding: 0 1.25rem; }
-.back { color: #355642; }
+.back { color: #524539; }
 h1 { font-size: clamp(2rem, 6vw, 3rem); letter-spacing: -.035em; line-height: 1.12; }
 h2 { font-size: 1.35rem; margin: 1.25rem 0 .75rem; }
-section { background: #fff; border: 1px solid #d5ded4; border-radius: .8rem; padding: 1.25rem; }
+section { background: #fff; border: 1px solid #e0dbd2; border-radius: .8rem; padding: 1.25rem; }
 section p:first-child { margin-top: 0; }
 section p:last-child { margin-bottom: 0; }
 .button { background: #2b6144; border-radius: .35rem; color: #fff; display: inline-block; padding: .6rem 1rem; }
@@ -18,7 +18,7 @@ section p:last-child { margin-bottom: 0; }
 .destination strong { display: block; }
 progress { accent-color: #2e6848; height: 1.25rem; width: 100%; }
 #volume { font-weight: 650; }
-.quiet { color: #4b6050; font-size: .9rem; }
+.quiet { color: #5d554e; font-size: .9rem; }
 #commands { margin-bottom: 1rem; }
 #path { box-sizing: border-box; display: block; font: inherit; margin: .4rem 0 1rem; padding: .5rem; width: 100%; }
 .actions { display: flex; flex-wrap: wrap; gap: .45rem; }

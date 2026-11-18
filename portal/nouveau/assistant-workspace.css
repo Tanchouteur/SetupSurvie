@@ -456,7 +456,7 @@
   width: 100%;
   max-width: 850px;
   margin-inline: auto;
-  box-shadow: 0 3px 12px #203e3405;
+  box-shadow: 0 3px 12px #3a2e2405;
 }
 .next-interface .assistant-discussion .composer-controls {
   display: flex;

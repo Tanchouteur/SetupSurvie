@@ -52,6 +52,9 @@ def build():
         ('js', '/nouveau/motion.js', '0.37.2'),
         ('css', '/resource-status.css', '0.43.2'),
         ('js', '/resource-status.js', '0.43.2'),
+        ('css', '/design/tokens.css', '0.44.0'),
+        ('css', '/design/system.css', '0.44.0'),
+        ('js', '/design/experience.js', '0.44.0'),
         ('js', '/nouveau/navigation.js', '0.43.3'),
     ]
     tags = []
@@ -61,6 +64,9 @@ def build():
     source = source.replace('</head>', ''.join(tags) + '</head>', 1)
     source = source.replace('<script defer src="/nouveau/layout.js',
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)
+    preload = ''.join(f'<link rel="preload" href="/design/fonts/{name}.woff2" as="font" type="font/woff2" crossorigin>'
+                      for name in ('atkinson-next-latin-wght', 'fraunces-latin-wght'))
+    source = source.replace('<link rel="stylesheet"', preload + '<link rel="stylesheet"', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
     source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.40.0')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.43.3')

@@ -1,5 +1,6 @@
 # Essais et résultats
 
+- [Refonte du design « Veillée » — 0.44.0](2026-11-18-refonte-design-veillee.md) — captures, tailles d’écran, accès rapide, limites.
 - [Téléchargement YouTube réel — 0.43.4](2026-11-18-youtube-reel-bazzite-windows.md) — Bazzite, pause et reprise, contrôle Windows.
 - [Demandes de vidéos avec de vrais modèles — 0.43.4](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
 

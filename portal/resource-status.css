@@ -10,25 +10,25 @@
     min-width: 0;
     height: 46px;
     padding: 5px 8px 5px 10px;
-    border: 1px solid #d0ddd1;
+    border: 1px solid #dfd9ce;
     border-radius: 10px;
-    background: #f2f6ef;
-    color: #234637;
+    background: #f7f4ee;
+    color: #423427;
     text-decoration: none;
     line-height: 1.15;
   }
 
   .next-interface #main-navigation .resource-status:hover,
   .map-site-nav .resource-status:hover {
-    border-color: #a5baa9;
-    background: #eaf1e7;
+    border-color: #b9b0a6;
+    background: #f2eee6;
   }
 
   .resource-status:focus-visible { outline: 2px solid #875016; outline-offset: 2px; }
   .resource-status-model { display: grid; gap: 3px; flex: 1; min-width: 0; }
   .resource-status-caption { white-space: nowrap; }
   .resource-status-caption,
-  .resource-status-meter-label { font-size: 10px; color: #4b6356; }
+  .resource-status-meter-label { font-size: 10px; color: #60564e; }
   .resource-status-name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -42,17 +42,17 @@
     grid-template-columns: repeat(2, 55px);
     gap: 9px;
     padding-left: 8px;
-    border-left: 1px solid #d0ddd1;
+    border-left: 1px solid #dfd9ce;
   }
   .resource-status-meter { display: grid; gap: 4px; }
   .resource-status-meter-label { display: flex; align-items: center; justify-content: space-between; gap: 2px; }
-  .resource-status-value { color: #234637; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .resource-status-value { color: #423427; font-weight: 650; font-variant-numeric: tabular-nums; }
   .resource-status-track {
     display: block;
     overflow: hidden;
     height: 4px;
     border-radius: 4px;
-    background: #d4e0d5;
+    background: #e2ddd2;
   }
   .resource-status-fill {
     display: block;
@@ -66,7 +66,7 @@
   }
   .resource-status-meter[data-level="high"] .resource-status-fill { background: #a86418; }
   .resource-status-meter[data-level="unavailable"] .resource-status-track {
-    background: repeating-linear-gradient(135deg, #d0dace 0 2px, transparent 2px 4px);
+    background: repeating-linear-gradient(135deg, #dcd7cc 0 2px, transparent 2px 4px);
   }
   .resource-status-chevron { font-size: 16px; }
 }

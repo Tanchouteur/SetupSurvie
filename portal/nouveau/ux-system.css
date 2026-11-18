@@ -5,7 +5,7 @@
   --ux-space-3: 1.25rem;
   --ux-space-4: 2rem;
   --ux-reading-width: 76ch;
-  --ux-help-background: #173f32;
+  --ux-help-background: #382a1e;
   --ux-help-text: #fff;
   --ux-focus: #875016;
 }
@@ -251,8 +251,8 @@
   --ux-card-gap: 16px;
   --ux-radius: 10px;
   --paper: #fffefa;
-  --line: #d9e1d9;
-  --muted: #52665a;
+  --line: #e3dfd7;
+  --muted: #645c55;
 }
 .next-interface .panel,
 .next-interface .data-card,
@@ -340,7 +340,7 @@
   background: var(--soft);
   color: var(--green);
   font-weight: 650;
-  box-shadow: inset 0 0 0 1px #cbd7cb;
+  box-shadow: inset 0 0 0 1px #d9d4c9;
 }
 .next-interface .next-tabs a:hover {
   background: var(--soft);
@@ -487,7 +487,7 @@
 }
 .next-interface .result > button[aria-pressed="true"] {
   background: var(--soft);
-  border-color: #b2c7b5;
+  border-color: #cac1af;
 }
 .next-interface .result-meta {
   font-size: 12px;
@@ -657,9 +657,9 @@
   vertical-align: middle;
 }
 .next-interface {
-  --ink: #203e34;
-  --green: #285a43;
-  --soft: #edf2e8;
+  --ink: #3a2e24;
+  --green: #54402e;
+  --soft: #f3efe7;
   font:
     16px/1.6 system-ui,
     -apple-system,
@@ -705,7 +705,7 @@
 }
 .next-interface input:not([type="checkbox"]):not([type="radio"]),
 .next-interface select {
-  border: 1px solid #bdcdbf;
+  border: 1px solid #d0c9ba;
   background: #fff;
   border-radius: 8px;
 }
@@ -722,12 +722,12 @@
   padding-inline: 16px;
   font-size: 14px;
   font-weight: 650;
-  background: #245240;
-  border: 1px solid #1d4435;
-  box-shadow: 0 1px 2px #203e3420;
+  background: #4c3a2a;
+  border: 1px solid #3f3022;
+  box-shadow: 0 1px 2px #3a2e2420;
 }
 .next-interface :is(#home-search, #library-search) > button[type="submit"]:hover:not(:disabled) {
-  background: #1a4535;
+  background: #3e2f21;
 }
 .next-interface .hero-search #home-query {
   padding-inline: 10px;
@@ -738,7 +738,7 @@
   padding: 8px 0;
   min-height: 44px;
   font-size: 14px;
-  color: #245240;
+  color: #4c3a2a;
 }
 .next-interface .feature-card .text-button:hover {
   text-decoration: underline;
@@ -753,7 +753,7 @@
   font-weight: 500;
 }
 .next-interface .sidebar .nav-item:hover {
-  background: #f0f3ec;
+  background: #f4f1eb;
   color: var(--green);
 }
 .next-interface .sidebar .nav-item.active {

@@ -15,7 +15,7 @@
 .translation-text pre code { white-space: pre; }
 .translation-table { max-width: 100%; overflow-x: auto; }
 .translation-text table { border-collapse: collapse; }
-.translation-text th, .translation-text td { border: 1px solid #cad6cc; padding: 0.35em 0.5em; text-align: left; }
+.translation-text th, .translation-text td { border: 1px solid #d8d3c8; padding: 0.35em 0.5em; text-align: left; }
 .translation-text-fallback { white-space: pre-wrap; }
 
 /* Override the old translation-part and generic-dialog text rules. */
