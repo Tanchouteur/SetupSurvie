@@ -102,12 +102,13 @@ async page => {
   for(const width of [1440,320]){
     await page.setViewportSize({width,height:700});
     for(const id of ['livres','guides','videos']){
-      await page.evaluate(id=>{
-        const section=document.getElementById('collection-section-'+id);
-        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
-      },id);
       const stuck=await page.waitForFunction(({id,width})=>{
         const section=document.getElementById('collection-section-'+id);
+        const sectionTop=section.getBoundingClientRect().top;
+        if(Math.abs(sectionTop+150)>2){
+          window.scrollTo({top:scrollY+sectionTop+150,behavior:'instant'});
+          return false;
+        }
         const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
         const summary=section.querySelector('summary');
         const gap=summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom;
