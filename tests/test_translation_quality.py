@@ -58,6 +58,29 @@ class TokenChecksTests(unittest.TestCase):
             ('Pressure 1.00 bar.','Pression 1 bar.')]:
             with self.subTest(source=source):self.assertEqual(quality.assess(source,target)['status'],'checked')
 
+    def test_unit_check_ignores_prose_after_a_reference_but_still_checks_amperes(self):
+        self.assertEqual(quality.assess('Figure 4 shows the tray.',
+            'La figure 4 a pour objet le plateau.')['status'],'checked')
+        self.assertEqual(quality.assess('Observe panel 4 if it moves.',
+            'Observez le panneau 4 s’il bouge.')['status'],'checked')
+        self.assertEqual(quality.assess('The current is 4 A.',
+            'Le courant est de 4 mA.')['status'],'blocked')
+        self.assertEqual(quality.assess('47\nA fictional example begins here.',
+            '47\nUn exemple fictif commence ici.')['status'],'checked')
+        self.assertEqual(quality.assess('The current is 4\nA in the circuit.',
+            'Le courant dans le circuit est de 4 mA.')['status'],'blocked')
+
+    def test_numbered_ordinals_can_be_written_in_french_without_masking_a_missing_value(self):
+        source='The students first note the 1st and 3rd marks. Wait 1 min.'
+        for target in ('Les élèves notent d’abord les première et troisième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les 1re et 3e marques. Attendez 1 min.'):
+            self.assertEqual(quality.assess(source,target)['status'],'checked')
+        for target in ('Les élèves notent les première et troisième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les première et quatrième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les première et troisième marques. Attendez une minute.',
+                       'Les élèves notent d’abord les marques 1 et 3. Attendez 1 min.'):
+            self.assertEqual(quality.assess(source,target)['status'],'blocked')
+
     def test_critical_numeric_errors_are_blocked(self):
         for source,target in [
             ('Use 10 mg.','Utilisez 100 mg.'),

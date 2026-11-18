@@ -147,6 +147,22 @@ refus reste à reprendre. Les contrôles de traduction sont appliqués avant de
 compter un passage terminé. Pour une traduction interrompue, utilisez
 **Reprendre avec le modèle choisi** dans le travail existant.
 
+Depuis **0.50.2**, si la réponse est vide, tronquée ou mal formée, ou si
+le contrôle rejette le texte proposé, SetupSurvie retente le passage avec le
+même modèle. Il le découpe en deux si une fin de phrase ou de ligne adaptée
+est disponible. Chaque morceau est vérifié, puis le passage complet est vérifié
+avant son enregistrement. Le nouvel essai écarte l’extrait du passage précédent
+et conserve les termes préférés. Les passages terminés et leur numérotation
+sont conservés, y compris quand on reprend un travail créé avant la mise à jour.
+Un refus explicite ou un échec persistant laisse le passage en attente de reprise.
+
+Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
+d’une unité de mesure, ainsi qu’un article « A » après un numéro de page isolé.
+Une modification de la valeur ou d’une unité explicite
+comme « A » (ampères) continue de bloquer la publication. Un ordinal anglais
+comme « 1st » peut être rendu par « 1re » ou « première ». Une mesure
+manquante reste bloquante même si le même chiffre figure dans un ordinal.
+
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 
 Depuis 0.1.18, le panneau de traduction peut se réduire et défiler sur les écrans
