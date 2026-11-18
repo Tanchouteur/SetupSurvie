@@ -117,14 +117,18 @@ def public(payload,revision):
     declared=source.get('upload_date_declared') or ''
     date=declared[:4]+'-'+declared[4:6]+'-'+declared[6:] if re.fullmatch(r'\d{8}',declared) else ''
     folder='' if payload['collection'] in ('.','') else payload['collection']
+    audio_language=media.get('language_declared') or next(
+        (track['language_declared'] for track in payload['tracks']
+         if track.get('origin')=='local_transcription' and track.get('language_declared')), '')
     return {'id':'video:'+key,'kind':'video','title':payload['title'][:400],'collection':source.get('channel') or folder,
         'audio_transcription_supported':True,
         'archive_video':payload.get('provider')=='zim','archive_name':payload.get('archive'),'archive_article':('zim:'+payload['book']+'/'+payload['articles'][0]) if payload.get('provider')=='zim' and payload.get('articles') else None,
-        'language':media.get('language_declared') or '', 'duration_seconds':media.get('duration_seconds_declared'),
+        'language':media.get('language_declared') or '', 'audio_language':audio_language, 'duration_seconds':media.get('duration_seconds_declared'),
         'subtitle_status':payload['subtitle_status'],'video_revision':revision,'document_date':date,'edition':'',
         'collected_at':'','archive_date':'','provenance':source.get('channel') or 'Fichier vidéo local','licence':'Droits d’usage à vérifier.',
         'url':'/api/videos/media?id='+key,'images':[],'tracks':[
-            {'id':index,'language':track['language_declared'] or '', 'origin':track['origin'],'status':track['technical_status'],
+            {'id':index,'preference_key':hashlib.sha256(track['path'].encode()).hexdigest(),
+             'language':track['language_declared'] or '', 'origin':track['origin'],'status':track['technical_status'],
              'warnings':track['warnings'],'errors':track['errors'][:10],'translation_notice':track.get('translation_notice',''),
              'transcription_notice':track.get('transcription_notice',''),
              'acquisition_notice':track.get('acquisition_notice',''),'timing_adjustments':track.get('timing_adjustments',0),
