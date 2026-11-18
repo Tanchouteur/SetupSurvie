@@ -209,7 +209,7 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
              patch.object(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs)):
             first=await self.finish(await captions.create(self.video,0,'rapide'))
             self.assertEqual(first['status'],'completed');self.assertEqual(len(payloads),2)
-            self.assertTrue(any('incohérence' in m.get('content','') for m in payloads[1]['messages']))
+            self.assertTrue(any('annonce un refus' in m.get('content','') for m in payloads[1]['messages']))
             self.assertEqual(len(first['rejected_proposals']),1)
             self.assertIn('refused',first['rejected_proposals'][0]['candidate'])
             # A different source revision makes a separate job; an unambiguous
@@ -218,6 +218,48 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
             second=await self.finish(await captions.create(self.video,0,'rapide'))
             self.assertEqual(second['status'],'error');self.assertEqual(second['done'],0)
             self.assertEqual(len(payloads),1);self.assertFalse(captions.track_file(second['id']).exists())
+
+    async def test_output_format_offers_no_refusal_and_keeps_spoken_apologies(self):
+        original=httpx.AsyncClient;payloads=[]
+        def handler(request):
+            payload=json.loads(request.content);payloads.append(payload)
+            parts=json.loads(payload['messages'][1]['content'])
+            value={'cues':[{'id':p['id'],'text':f'Désolé, le rotor fictif mesure {p["id"]+17} mm. Ne pas dépasser cette cote.'} for p in parts]}
+            return httpx.Response(200,content=json.dumps({'message':{'content':json.dumps(value)},'done':True,'done_reason':'stop'}).encode()+b'\n')
+        with patch.object(captions,'translate_batch',self.real_translate),\
+             patch.object(captions.model_runtime,'describe',AsyncMock(return_value={'available':True,'installed':True,'native_context':16384,'running':None,'other_models':0})),\
+             patch.object(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs)):
+            result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(result['status'],'completed')
+        self.assertNotIn('status',payloads[0]['format']['properties']);self.assertNotIn('refused',payloads[0]['messages'][0]['content'])
+
+    async def test_incomplete_batch_retries_in_smaller_groups_then_publishes(self):
+        self.write_cues(6);videos.scan()
+        original=httpx.AsyncClient;attempts=[]
+        def handler(request):
+            payload=json.loads(request.content)
+            parts=json.loads(payload['messages'][1]['content'])
+            attempts.append([p['id'] for p in parts])
+            schema=payload['format']['properties']['cues']
+            self.assertEqual((schema['minItems'],schema['maxItems']),(len(parts),len(parts)))
+            rows=[{'id':p['id'],'text':f'Le rotor fictif mesure {p["id"]+17} mm. Ne pas dépasser cette cote.'} for p in parts]
+            value={'cues':rows[:-1] if len(attempts)==1 else rows}
+            return httpx.Response(200,json={'message':{'content':json.dumps(value)},'done':True,'done_reason':'stop'})
+        with patch.object(captions,'translate_batch',self.real_translate),\
+             patch.object(captions.model_runtime,'describe',AsyncMock(return_value={'available':True,'installed':True,'native_context':16384,'running':None,'other_models':0})),\
+             patch.object(httpx,'AsyncClient',lambda **kwargs:original(transport=httpx.MockTransport(handler),**kwargs)):
+            result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(attempts,[list(range(6)),[0,1,2],[3,4,5]])
+        self.assertEqual((result['status'],result['done']),('completed',6))
+        self.assertEqual(len(result['rejected_proposals']),1)
+
+    async def test_incomplete_single_cue_stops_without_publishing(self):
+        self.mock_translate.side_effect=captions.IncompleteBatch('Segment omis','{"cues":[]}')
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual((result['status'],result['done']),('error',0))
+        self.assertEqual([len(call.args[0]) for call in self.mock_translate.await_args_list],[2,1])
+        self.assertEqual(len(result['rejected_proposals']),2)
+        self.assertFalse(captions.track_file(result['id']).exists())
 
     async def test_api_requires_family_and_report_does_not_start_inference(self):
         from pilot import app as gateway

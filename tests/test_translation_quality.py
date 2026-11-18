@@ -8,6 +8,16 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_english_dollar_grouping_keeps_the_amount_and_other_decimal_checks(self):
+        source='The budget is $70,000. Measure 70,000 ml.'
+        for budget in ('70 000 dollars','$70,000'):
+            result=quality.assess(source,f'Le budget est de {budget}. Mesurez 70 ml.',source_language='en-US')
+            self.assertEqual(result['status'],'checked')
+        for budget,measure in (('70 dollars','70 ml'),('70 000 dollars','70 000 ml')):
+            result=quality.assess(source,f'Le budget est de {budget}. Mesurez {measure}.',source_language='en')
+            self.assertEqual(result['status'],'blocked')
+        self.assertEqual(quality.assess('Budget de 70,000 $.','Budget de 70 000 dollars.')['status'],'blocked')
+
     def test_formulas_keep_grouping_even_when_all_numbers_still_match(self):
         from pilot.math_text import marked
         source='Formula follows. '+marked(r'\frac{12}{4}=3')
@@ -76,7 +86,7 @@ class TokenChecksTests(unittest.TestCase):
     def test_missing_pdf_key_glyphs_warn_even_with_all_numbers_preserved(self):
         for text in ['Press the         key to enter the menu.', 'Enter                 on the numerical keypad.', 'Appuyez sur la touche         pour confirmer.', 'An unknown glyph: \ufffd.']:
             report=quality.assess(text,'Traduction fictive sans restitution des touches.')
-            self.assertEqual(report['version'],4)
+            self.assertEqual(report['version'],quality.VERSION)
             self.assertIn('source_gaps',{row['code'] for row in report['issues']})
         self.assertNotIn('source_gaps',{row['code'] for row in quality.assess('Press the MENU key.','Appuyez sur MENU.')['issues']})
 

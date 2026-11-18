@@ -226,7 +226,10 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_ollama_schema_and_refusal_or_truncation_are_not_accepted(self):
         real_client=httpx.AsyncClient
-        cases=[({'status':'translated','translation':'Texte français.'},'stop',True),
+        self.assertEqual(tr.SCHEMA['required'],['translation']);self.assertNotIn('status',tr.SCHEMA['properties'])
+        cases=[({'translation':'Texte français.'},'stop',True),
+               ({'status':'translated','translation':'Texte français.'},'stop',True),
+               ({'translation':''},'stop',False),
                ({'status':'refused','translation':''},'stop',False),
                ({'status':'translated','translation':'Partial'},'length',False),
                ({'status':'translated','translation':"I’m sorry, but I cannot help."},'stop',False)]
