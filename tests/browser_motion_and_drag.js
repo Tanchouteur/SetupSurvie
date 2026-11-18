@@ -11,7 +11,7 @@ async page => {
   await page.locator('#chat-reset').click();
   await page.locator('#chat-input').fill('Conversation fictive pour le glisser-déposer '+Date.now());
   await page.locator('#chat-form').evaluate(n=>n.requestSubmit());
-  await page.waitForFunction(()=>!!S.conversation&&!S.job);
+  await page.waitForFunction(()=>!!S.conversation&&!S.sending&&!S.job&&new URLSearchParams(location.hash.split('?')[1]).get('conversation')===S.conversation);
   const id = await page.evaluate(()=>S.conversation), name = 'Dossier de recette '+Date.now();
   await page.locator('#assistant-folder-create').click();
   await page.locator('#assistant-editor input').fill(name);
