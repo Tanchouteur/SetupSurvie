@@ -5,6 +5,10 @@
   const states={french_available:'Sous-titres français présents · à vérifier',french_prepared:'Français préparé localement · relecture à faire',source_transcribed:'Paroles transcrites localement · relecture à faire',source_only:'Sous-titres dans la langue source',missing:'Sous-titres à préparer',invalid:'Sous-titres présents mais illisibles',unknown:'Langue des sous-titres à identifier'};
   let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
   let updateReaderTracks=null;
+  function languageCode(value){
+    const code=(value||'').toLowerCase().split(/[-_]/)[0];
+    return ({eng:'en',fra:'fr',fre:'fr',und:''})[code]??code;
+  }
   async function refresh(append=false){
     if(!S.authReady||!S.user)return;
     const current=++version,q=$('collection-filter').value;
@@ -57,7 +61,11 @@
     const source=event.detail;if(source.kind!=='video')return;
     const reader=$('reader'),body=reader.querySelector('.reader-body'),player=element('video');activeMedia=player;
     player.controls=true;player.preload='metadata';player.playsInline=true;player.style.width='100%';player.style.maxHeight='60vh';player.src=source.url;
-    const positionKey='survie:video:'+S.user?.id+':'+source.id.split('#t=')[0];let saved=null,lastPositionSave=0;
+    const videoKey=S.user?.id+':'+source.id.split('#t=')[0];
+    const positionKey='survie:video:'+videoKey;
+    const subtitleKey='survie:video-subtitles:'+videoKey;
+    let saved=null,lastPositionSave=0,preference='auto';
+    try{preference=localStorage.getItem(subtitleKey)||'auto';}catch(_){}
     try{saved=JSON.parse(localStorage.getItem(positionKey)||'null');}catch(_){}
     function remember(){const now=performance.now();if(now-lastPositionSave<2000&&!player.paused)return;lastPositionSave=now;try{localStorage.setItem(positionKey,JSON.stringify({revision:source.video_revision,seconds:player.currentTime}));}catch(_){}}
     player.addEventListener('timeupdate',remember);player.addEventListener('pause',remember);
@@ -70,28 +78,38 @@
     const problem=element('p',undefined,'small');problem.hidden=true;player.addEventListener('error',()=>{problem.hidden=false;problem.textContent='Ce navigateur ne peut pas lire ce format ou le fichier ne répond pas. Ouvrez le média original avec un lecteur installé. Les sous-titres restent consultables ci-dessous.';});
     for(const node of [player,label,preparation,notice,problem,invalid])reader.insertBefore(node,body);
     const origins={automatic:'automatique',provided:'fournie',unknown:'origine inconnue',local_translation:'traduction locale',local_transcription:'transcription locale'};
+    let usable=[],automatic=-1;
+    const trackKey=track=>track.preference_key||JSON.stringify([track.language,track.origin,track.id]);
+    const selectedIndex=()=>select.value==='auto'?automatic:Number.parseInt(select.value,10);
     function apply(){
+      const selected=selectedIndex();
       player.querySelectorAll('track').forEach((track,index)=>{
-        track.track.mode=select.value===String(index)?'showing':'disabled';
+        track.track.mode=selected===index?'showing':'disabled';
       });
     }
-    let selectedManually=false,usable=[];
     function renderTracks(){
-      const chosen=usable[Number.parseInt(select.value,10)];
       usable=(source.tracks||[]).filter(track=>track.status==='passed');
-      const french=usable.findIndex(track=>track.language?.startsWith('fr'));
-      const previous=chosen?usable.findIndex(track=>track.id===chosen.id&&track.language===chosen.language&&track.origin===chosen.origin):-1;
+      const audioLanguage=languageCode(source.audio_language);
+      automatic=audioLanguage==='fr'?-1:usable.findIndex(track=>languageCode(track.language)==='fr');
+      if(automatic<0&&(!audioLanguage||audioLanguage==='en')){
+        automatic=usable.findIndex(track=>languageCode(track.language)==='en');
+      }
+      const remembered=usable.findIndex(track=>trackKey(track)===preference);
+      const selected=preference==='off'?-1:remembered>=0?remembered:automatic;
       player.querySelectorAll('track').forEach(track=>track.remove());
-      select.replaceChildren(new Option('Sans sous-titres','off'));
+      select.replaceChildren(
+        new Option('Automatique · '+({fr:'français',en:'anglais'}[languageCode(usable[automatic]?.language)]||'sans sous-titres'),'auto'),
+        new Option('Sans sous-titres','off'),
+      );
       for(const [index,track] of usable.entries()){
         const node=element('track');node.kind='subtitles';node.src=track.url;node.srclang=track.language||'und';
         node.label=(track.language||'Langue inconnue')+' · '+(origins[track.origin]||track.origin);
-        node.default=(!selectedManually&&index===french)||(selectedManually&&index===previous);
+        node.default=index===selected;
         node.addEventListener('load',apply,{once:true});
         player.append(node);select.append(new Option(node.label,String(index)));
       }
-      const selected=selectedManually?previous:french;
-      select.value=selected>=0?String(selected):'off';apply();
+      select.value=preference==='off'?'off':remembered>=0?String(remembered):'auto';
+      apply();
       notice.textContent=[source.video_notice,...new Set((source.tracks||[]).flatMap(track=>[track.transcription_notice,track.acquisition_notice]).filter(Boolean))].join(' ');
       invalid.hidden=!(source.tracks||[]).some(track=>track.status!=='passed');
       body.replaceChildren();
@@ -99,7 +117,15 @@
       else body.append(element('p','Aucun sous-titre exploitable pour cet aperçu. Le titre seul ne permet pas à l’assistant de connaître les paroles.'));
       if(preparation.isConnected&&S.user?.role==='admin')document.dispatchEvent(new CustomEvent('survie:video-reader',{detail:{item:source,host:preparation}}));
     }
-    select.onchange=()=>{selectedManually=true;apply();};
+    select.onchange=()=>{
+      const track=usable[Number.parseInt(select.value,10)];
+      preference=track?trackKey(track):select.value;
+      try{
+        if(preference==='auto')localStorage.removeItem(subtitleKey);
+        else localStorage.setItem(subtitleKey,preference);
+      }catch(_){}
+      apply();
+    };
     player.addEventListener('loadedmetadata',()=>{const duration=player.duration,wanted=source.position_ms?source.position_ms/1000:saved?.revision===source.video_revision&&Number.isFinite(saved.seconds)?saved.seconds:0;if(wanted>0&&Number.isFinite(duration))player.currentTime=Math.min(wanted,Math.max(0,duration-.1));apply();});
     if(S.user?.role!=='admin')preparation.remove();
     renderTracks();

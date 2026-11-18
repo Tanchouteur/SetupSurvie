@@ -25,7 +25,6 @@ async page=>{
     const found=await(await page.request.get(base+'/api/search?q=Fictional&domain=all')).json();const hit=found.results.find(row=>row.archive_video&&row.id.includes('#t=1000'));
     check(!!hit,'La recherche commune retrouve les paroles internes et leur horodatage');
     await page.evaluate(id=>readSource(id),hit.id);const player=page.locator('#reader video');await player.waitFor();await player.evaluate(v=>v.play());
-    await page.locator('#reader select[aria-label="Sous-titres de la vidéo"]').selectOption('0');
     await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return v?.videoWidth===96&&v.currentTime>=1&&[...v.textTracks].some(t=>t.language==='en'&&t.cues?.length===1);});
     await player.evaluate(v=>v.pause());check(Math.abs(await player.evaluate(v=>v.duration)-12)<.2,'Le navigateur lit le WebM servi depuis l’archive');
     check(await player.evaluate(v=>[...v.textTracks].some(t=>t.cues?.[0]?.startTime===1)),'La piste interne garde son temps original');
