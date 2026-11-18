@@ -75,6 +75,8 @@ et le papier. Pour un nouveau composant, partir de ces règles :
 Le bandeau sous la navigation est retiré sur PC : la version et l’état de la
 bibliothèque passent en pied de page. Les anciennes feuilles conservent des règles
 désormais recouvertes ; leur nettoyage reste à faire, par petites étapes.
+Sur mobile, les liens de navigation des Cartes ont une hauteur tactile minimale
+de 44 px, avec un bandeau de hauteur inchangée pour conserver la place de la carte.
 
 ## Cartes et commandes
 
