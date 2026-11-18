@@ -158,7 +158,9 @@ Un refus explicite ou un échec persistant laisse le passage en attente de repri
 
 Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
 d’une unité de mesure. Une modification de la valeur ou d’une unité explicite
-comme « A » (ampères) continue de bloquer la publication.
+comme « A » (ampères) continue de bloquer la publication. Un ordinal anglais
+comme « 1st » peut être rendu par « 1re » ou « première ». Une mesure
+manquante reste bloquante même si le même chiffre figure dans un ordinal.
 
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 

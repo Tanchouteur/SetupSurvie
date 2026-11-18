@@ -66,6 +66,17 @@ class TokenChecksTests(unittest.TestCase):
         self.assertEqual(quality.assess('The current is 4 A.',
             'Le courant est de 4 mA.')['status'],'blocked')
 
+    def test_numbered_ordinals_can_be_written_in_french_without_masking_a_missing_value(self):
+        source='The students first note the 1st and 3rd marks. Wait 1 min.'
+        for target in ('Les élèves notent d’abord les première et troisième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les 1re et 3e marques. Attendez 1 min.'):
+            self.assertEqual(quality.assess(source,target)['status'],'checked')
+        for target in ('Les élèves notent les première et troisième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les première et quatrième marques. Attendez 1 min.',
+                       'Les élèves notent d’abord les première et troisième marques. Attendez une minute.',
+                       'Les élèves notent d’abord les marques 1 et 3. Attendez 1 min.'):
+            self.assertEqual(quality.assess(source,target)['status'],'blocked')
+
     def test_critical_numeric_errors_are_blocked(self):
         for source,target in [
             ('Use 10 mg.','Utilisez 100 mg.'),

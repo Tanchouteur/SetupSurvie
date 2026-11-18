@@ -14,6 +14,21 @@ VERSION=6
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!\d|[.,]\d)')
+EN_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:st|nd|rd|th)(?!\w)',re.I)
+FR_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:er|re|ère|e|ème|eme|ᵉ|ᵉʳ|ʳᵉ)s?(?!\w)',re.I)
+ORDINAL_WORDS={
+    '1':(r'first(?:ly)?',r"premi(?:er|ère)s?|d[’']abord"),
+    '2':(r'second(?:ly)?',r'second(?:e)?s?|deuxièmes?'),
+    '3':(r'third(?:ly)?',r'troisièmes?'),
+    '4':(r'fourth(?:ly)?',r'quatrièmes?'),
+    '5':(r'fifth(?:ly)?',r'cinquièmes?'),
+    '6':(r'sixth(?:ly)?',r'sixièmes?'),
+    '7':(r'seventh(?:ly)?',r'septièmes?'),
+    '8':(r'eighth(?:ly)?',r'huitièmes?'),
+    '9':(r'ninth(?:ly)?',r'neuvièmes?'),
+    '10':(r'tenth(?:ly)?',r'dixièmes?'),
+}
+
 UNIT_ALIASES={
     'mètres':'m','mètre':'m','centimeters':'cm','centimetres':'cm','centimètres':'cm','centimeter':'cm','centimetre':'cm','centimètre':'cm',
     'millimeters':'mm','millimetres':'mm','millimètres':'mm','millimeter':'mm','millimetre':'mm','millimètre':'mm',
@@ -54,6 +69,22 @@ def number(token):
     except InvalidOperation:return token
 
 
+def separate_ordinals(source,translated):
+    """Compare written ordinals separately so they cannot replace a cardinal."""
+    expected=Counter(number(match[1]) for match in EN_ORDINAL.finditer(source))
+    if not expected:return source,translated,True
+    received=Counter(number(match[1]) for match in FR_ORDINAL.finditer(translated))
+    # Count only additional French words. Ordinary written-out ordinals from
+    # the source must not also satisfy a missing numbered ordinal.
+    for value,missing in (expected-received).items():
+        if value not in ORDINAL_WORDS:continue
+        english,french=ORDINAL_WORDS[value]
+        old=len(re.findall(r'\b(?:'+english+r')\b',source,re.I))
+        new=len(re.findall(r'\b(?:'+french+r')\b',translated,re.I))
+        received[value]+=min(missing,max(0,new-old))
+    return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',translated),expected==received
+
+
 def assess(source,translated,*,source_language=None):
     source=normalized(source);translated=normalized(translated)
     issues=[]
@@ -73,9 +104,8 @@ def assess(source,translated,*,source_language=None):
             # dollar amount of 70000. Other comma decimals keep their meaning.
             text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
         return Counter(number(m.group()) for m in NUMBERS.finditer(text))
-    left=numbers(source)
-    right=numbers(translated)
-    if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
+    source_numbers,translated_numbers,ordinals_match=separate_ordinals(source,translated)
+    if not ordinals_match or numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
         pairs=Counter()
         for match in UNIT.finditer(text):
