@@ -1,6 +1,7 @@
-# Demandes de vidéos avec de vrais modèles — 0.43.2
+# Demandes de vidéos avec de vrais modèles — 0.43.4
 
-**Bilan daté du 18 novembre 2026.** Essai sur le R7 (RTX 4080, Ollama local), avec
+**Bilan daté du 18 novembre 2026.** Candidat alors numéroté 0.43.1, livré en 0.43.4.
+Essai sur le R7 (RTX 4080, Ollama local), avec
 le vrai assistant et trois vidéos fictives. Recette :
 `tests/real_video_request_check.py`. Aucun téléchargement, aucune vidéo réelle.
 GPT-OSS 20B, le modèle vu dans les captures de Marc, n’est pas installé sur le R7 et

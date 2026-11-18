@@ -1,26 +1,53 @@
 ﻿[CmdletBinding()]
-param([Parameter(Mandatory=$true)][string]$Source,[Parameter(Mandatory=$true)][string]$Destination,[string]$TaskName)
+param([string]$Source,[Parameter(Mandatory=$true)][string]$Destination,[string]$TaskName)
 $ErrorActionPreference='Stop'
 [Console]::OutputEncoding=New-Object System.Text.UTF8Encoding($false)
-function Disk-Info([string]$Path) {
-    $root=[IO.Path]::GetPathRoot([IO.Path]::GetFullPath($Path))
-    if ($root -notmatch '^([A-Za-z]):\\$') { return @{known=$false} }
-    $letter=$Matches[1]
-    $volume=Get-Volume -DriveLetter $letter -ErrorAction SilentlyContinue
-    $partition=Get-Partition -DriveLetter $letter -ErrorAction SilentlyContinue
-    if (-not $volume -or -not $partition) { return @{known=$false} }
-    return @{known=([bool]$volume -and [bool]$partition);disk=$partition.DiskNumber;filesystem=$volume.FileSystemType.ToString()}
+. (Join-Path $PSScriptRoot 'windows-common.ps1')
+
+function Local-Path([string]$Path) {
+    $Path=$Path -replace '^\\\\\?\\',''
+    if ($Path -notmatch '^[A-Za-z]:[\\/]') { return }
+    try { [IO.Path]::GetFullPath($Path) } catch { }
 }
+
+$diskCache=@{}
+function Disk-Info([string]$Path) {
+    $local=Local-Path $Path
+    if (-not $local) { return @{known=$false} }
+    $letter=$local.Substring(0,1)
+    if (-not $diskCache.ContainsKey($letter)) {
+        $volume=Get-Volume -DriveLetter $letter -ErrorAction SilentlyContinue
+        $partition=Get-Partition -DriveLetter $letter -ErrorAction SilentlyContinue
+        $diskCache[$letter]=if ($volume -and $partition) {
+            @{known=$true;disk=$partition.DiskNumber;filesystem=[string]$volume.FileSystemType}
+        } else { @{known=$false} }
+    }
+    return $diskCache[$letter]
+}
+
+function Located-Path([string]$Path) {
+    return @{path=$Path;physical_disk=(Disk-Info $Path)}
+}
+
+function Existing-Vhds([string]$Root) {
+    foreach ($relative in @('docker_data.vhdx','disk\docker_data.vhdx','data\docker_data.vhdx','DockerDesktopWSL\disk\docker_data.vhdx')) {
+        $path=Join-Path $Root $relative
+        if (Test-Path -LiteralPath $path -PathType Leaf) { $path }
+    }
+}
+
 $docker=$null
 foreach ($name in @('settings-store.json','settings.json')) {
     $path=Join-Path $env:APPDATA ('Docker\'+$name)
     if (-not (Test-Path -LiteralPath $path)) { continue }
     try {
         $settings=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
-        foreach ($key in @('diskImageLocation','dataFolder','wslDataRoot')) {
+        foreach ($key in @('customWslDistroDir','diskImageLocation','dataFolder','wslDataRoot')) {
             $property=$settings.PSObject.Properties[$key]
-            if ($property -and $property.Value -is [string] -and $property.Value) {
-                $docker=@{recorded_path=$property.Value;exists=(Test-Path -LiteralPath $property.Value);active_location_verified=$false}
+            if ($property -and $property.Value -is [string]) {
+                $location=Local-Path $property.Value
+                if (-not $location) { continue }
+                $docker=@{recorded_path=$location;physical_disk=(Disk-Info $location);exists=(Test-Path -LiteralPath $location);active_location_verified=$false}
                 break
             }
         }
@@ -32,20 +59,58 @@ if ($TaskName) {
     $task=Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     $startup=$task -and $task.State -ne 'Disabled' -and $task.Description -eq 'SetupSurvie managed document services startup without AI'
 }
-$dockerDisks=@()
+$backend=@(Get-Process -Name 'com.docker.backend' -ErrorAction SilentlyContinue | ForEach-Object {
+    try { Local-Path $_.Path } catch { }
+} | Select-Object -Unique)
+$registered=@(Get-SurvieDockerInstallLocations | ForEach-Object { Local-Path $_ } | Select-Object -Unique)
+$dataDisks=@()
+$managedRoots=@()
+$systemDisks=@()
+$swapDisks=@()
 $distributions=Get-ChildItem -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss' -ErrorAction SilentlyContinue
 foreach ($distribution in $distributions) {
-    $wsl=Get-ItemProperty -LiteralPath $distribution.PSPath
-    if ($wsl.DistributionName -notin @('docker-desktop','docker-desktop-data') -or -not $wsl.BasePath) { continue }
-    $base=$wsl.BasePath -replace '^\\\\\?\\',''
-    $vhd=$wsl.VhdFileName
-    if (-not $vhd) { $vhd='ext4.vhdx' }
+    $wsl=Get-ItemProperty -LiteralPath $distribution.PSPath -ErrorAction SilentlyContinue
+    if (-not $wsl) { continue }
+    $name=$wsl.PSObject.Properties['DistributionName']
+    $root=$wsl.PSObject.Properties['BasePath']
+    if (-not $name -or -not $root -or $name.Value -notin @('docker-desktop','docker-desktop-data')) { continue }
+    $base=Local-Path $root.Value
+    if (-not $base) { continue }
+    $property=$wsl.PSObject.Properties['VhdFileName']
+    $vhd=if ($property -and $property.Value) { $property.Value } else { 'ext4.vhdx' }
     if ([IO.Path]::GetFileName($vhd) -ne $vhd) { continue }
-    $dockerDisks+=Join-Path $base $vhd
-    if ($wsl.DistributionName -eq 'docker-desktop' -and (Split-Path $base -Leaf) -eq 'main') {
-        $parent=Split-Path $base
-        $dockerDisks+=Join-Path $parent 'disk\docker_data.vhdx'
-        $dockerDisks+=Join-Path $parent 'wsl-swap.vhdx'
+    $path=Join-Path $base $vhd
+    if ($name.Value -eq 'docker-desktop-data') {
+        if (Test-Path -LiteralPath $path -PathType Leaf) { $dataDisks+=$path }
+    } else {
+        if (Test-Path -LiteralPath $path -PathType Leaf) { $systemDisks+=$path }
+        if ((Split-Path $base -Leaf) -eq 'main') {
+            $parent=Split-Path $base
+            $managedRoots+=$parent
+            $swapDisks+=Join-Path $parent 'wsl-swap.vhdx'
+        }
     }
 }
-@{source=(Disk-Info $Source);destination=(Disk-Info $Destination);docker=$docker;docker_disks=$dockerDisks;startup_enabled=[bool]$startup} | ConvertTo-Json -Depth 5 -Compress
+if ($docker) {
+    if ($docker.recorded_path -match '\.vhdx$' -and (Test-Path -LiteralPath $docker.recorded_path -PathType Leaf)) {
+        $dataDisks+=$docker.recorded_path
+    } else {
+        $managedRoots+=$docker.recorded_path
+    }
+}
+if (-not $managedRoots.Count -and -not $dataDisks.Count) {
+    $managedRoots+=Join-Path $env:LOCALAPPDATA 'Docker\wsl'
+}
+$dataDisks+=@($managedRoots | Select-Object -Unique | ForEach-Object { Existing-Vhds $_ })
+$dataDisks=@($dataDisks | Select-Object -Unique)
+$dockerDisks=@(($dataDisks+$systemDisks+$swapDisks) | Select-Object -Unique)
+@{
+    source=(Disk-Info $Source);destination=(Disk-Info $Destination);docker=$docker
+    docker_evidence=@{
+        backend=@($backend | ForEach-Object { Located-Path $_ })
+        registration=@($registered | ForEach-Object { Located-Path $_ })
+        data_images=@($dataDisks | ForEach-Object { Located-Path $_ })
+        wsl_system=@($systemDisks | ForEach-Object { Located-Path $_ })
+    }
+    docker_disks=$dockerDisks;startup_enabled=[bool]$startup
+} | ConvertTo-Json -Depth 6 -Compress

@@ -168,7 +168,7 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
-La **0.43.2** corrige les demandes de vidéos après un essai réel sur le R7 : lecture
+La **0.43.4** corrige les demandes de vidéos après un essai réel sur le R7 : lecture
 préalable des sous-titres, questions longues, liens mal formés ou perdus. Gemma et
 Llama réussissent la recette sur vidéos fictives ; GPT-OSS et le PC de Marc restent à
 essayer. Voir le [bilan](../essais/2026-11-18-demandes-videos-modele-reel.md). Elle fiabilise

@@ -116,16 +116,20 @@
   scope.addEventListener("change", () => {
     scope.dataset.requested = scope.value;
   });
-  get("search-language").after(scope);
+  const language = get("search-language");
+  language.before(scope);
+  language.options[0].textContent = "Français + anglais";
+  language.options[1].textContent = "Français";
+  language.options[2].textContent = "Anglais";
   // Videos are hard to find among thousands of articles: let people ask for
   // them only. With « Vidéos uniquement », an empty search lists them all.
   const kind = make("select", "");
   kind.id = "search-kind";
   kind.setAttribute("aria-label", "Type de résultat");
   kind.append(
-    new Option("Documents et vidéos", "all"),
-    new Option("Vidéos uniquement", "videos"),
-    new Option("Documents uniquement", "documents"),
+    new Option("Tous les types", "all"),
+    new Option("Vidéos", "videos"),
+    new Option("Documents", "documents"),
   );
   const query = get("library-query");
   const fitKind = () => {
@@ -137,7 +141,7 @@
   };
   kind.addEventListener("change", fitKind);
   kind.fitKind = fitKind;
-  scope.after(kind);
+  language.after(kind);
   const domain = make(
     "div",
     "next-domain",

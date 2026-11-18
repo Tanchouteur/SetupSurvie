@@ -1,9 +1,14 @@
 name: Tests du pilote
 on:
+  # Branches are tested through their pull request: one run per change.
   push:
+    branches: [main]
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   linux:
     runs-on: ubuntu-latest
@@ -172,19 +177,47 @@ jobs:
       - run: python -m pip install -r tests/requirements.txt
       # Pinned OSRM image + tiny synthetic road graph; no corpus or LLM.
       - run: python tests/routing_smoke.py
+  browser-scope:
+    runs-on: ubuntu-latest
+    outputs:
+      needed: ${{ steps.scope.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          # Unknown differences stay on the safe side: run the browser tests.
+          needed=true
+          if [ "$EVENT" = pull_request ] && changed=$(git diff --name-only HEAD^1 HEAD); then
+            if ! printf '%s\n' "$changed" | grep -Eq '^(\.github/workflows/tests\.yml|portal/|pilot/|deploy/|fixtures/|assets/|compose|tests/(.*browser|fixtures/|zim_video_fixture|requirements))'; then needed=false; fi
+          fi
+          echo "needed=$needed" >> "$GITHUB_OUTPUT"
   maps-interface:
+    needs: browser-scope
+    if: needs.browser-scope.outputs.needed == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 15
+    # Browsers and their system libraries are already in this pinned image.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit, firefox]
+    env:
+      BROWSER_ENGINE: ${{ matrix.engine }}
+      # Firefox refuses a home folder owned by another user in job containers.
+      HOME: /root
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
-      - run: /tmp/setupsurvie-browser/node_modules/.bin/playwright install --with-deps chromium webkit firefox
       - run: node tests/browser_maps_runner.cjs
       - run: python -m pip install -r tests/requirements-kiwix.txt
       - run: node tests/browser_translations_runner.cjs

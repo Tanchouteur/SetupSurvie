@@ -267,7 +267,7 @@ proviennent uniquement des résultats réels. Un titre n’est pas une parole
 consultée : pour résumer une vidéo, l’assistant doit lire ses sous-titres comme
 un document. Une vidéo sans piste reste proposée par son titre seulement.
 
-Depuis 0.43.2, si la demande porte sur un sujet, l’assistant lit d’abord les
+Depuis 0.43.4, si la demande porte sur un sujet, l’assistant lit d’abord les
 sous-titres exploitables des vidéos trouvées : il peut répondre sur leur contenu,
 sans demander de confirmation. Les liens mal écrits par le modèle sont réparés, et
 les liens réels restent affichés si sa réponse est rejetée. Ce parcours a été essayé

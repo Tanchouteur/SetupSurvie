@@ -92,7 +92,7 @@ def inventory(source, docker_disks=()):
                     or data_lease(role+'/'+relative) or name.endswith(('.pyc','-shm'))):
                     excluded.append(role+'/'+relative);continue
                 if name.lower().endswith(('.vhd','.vhdx')):
-                    if role=='data' and path in docker_disks and stat.S_ISREG(path.lstat().st_mode):
+                    if path in docker_disks and stat.S_ISREG(path.lstat().st_mode):
                         excluded.append(role+'/'+relative);continue
                     history=re.fullmatch(r'diagnostics/docker-recovery-\d{4}-\d{2}-\d{2}/(?:main/ext4|disk/docker_data)\.vhdx',relative)
                     template=relative=='tools/DockerDesktop/resources/wsl/ext4.vhdx'
@@ -106,6 +106,18 @@ def inventory(source, docker_disks=()):
                 files.append({'path':role+'/'+relative, 'bytes':info.st_size,
                               'mtime_ns':info.st_mtime_ns, 'mode':stat.S_IMODE(info.st_mode)})
     return {'files':sorted(files,key=lambda r:r['path']), 'directories':empty, 'excluded':excluded}
+
+
+def matches_frozen_inventory(current, frozen):
+    frozen_paths={record['path'] for record in frozen}
+    # Read-only SQLite checks can create empty sidecars for existing databases.
+    # Previously inventoried WALs and new WALs with content still matter.
+    return [record for record in current if not (
+        record['path'].endswith('-wal')
+        and record['bytes']==0
+        and record['path'] not in frozen_paths
+        and record['path'][:-4] in frozen_paths
+    )]==frozen
 
 
 def database_check(path):
@@ -135,7 +147,98 @@ def prerequisites(config):
                              'Docker Desktop/WSL2 opérationnel', 'Ollama natif si IA souhaitée',
                              'pilote adapté au GPU'],
             'linux':'Conversion depuis Windows non qualifiée ; image Ollama Linux et prérequis spécifiques nécessaires.',
-            'docker_storage':'Le disque virtuel Docker reste séparé. Aucun VHDX ni volume étranger copié. Vérifier Disk image location dans Docker Desktop.'}
+            'docker_storage':'Le transfert reconstitue SetupSurvie à partir de ses données et de ses images exportées. Le stockage actif et l’installation système de Docker Desktop se gèrent séparément.'}
+
+
+def windows_host(source, dest, task_name=''):
+    command=['powershell.exe','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',
+             str(setup.ROOT/'scripts/transfer-host-check.ps1'),'-Destination',str(dest)]
+    if source is not None:
+        command+=['-Source',str(source)]
+    if task_name:
+        command+=['-TaskName',task_name]
+    host=json.loads(setup.run(command,capture=True,timeout=30))
+    host['observed_at']=time.time()
+    return host
+
+
+DOCKER_COMPONENTS = {
+    'backend': 'Moteur Docker en cours d’exécution',
+    'registration': 'Programme Docker enregistré dans Windows',
+    'data_images': 'Image(s) disque des données Docker repérée(s)',
+    'wsl_system': 'Disque système Docker sous WSL repéré',
+}
+DOCKER_PLACEMENTS = {
+    'source': 'sur le disque source',
+    'destination': 'sur le disque de destination',
+    'same_disk': 'sur le disque commun à la source et à la destination',
+    'other': 'sur un autre disque physique',
+    'multiple': 'sur plusieurs disques physiques',
+    'unknown': 'emplacement indéterminé',
+}
+
+
+def docker_placement(host):
+    """Summarize physical disk observations without exporting paths or disk numbers."""
+    def number(info):
+        return info.get('disk') if info.get('known') else None
+
+    source=number(host.get('source',{}))
+    dest=number(host.get('destination',{}))
+    evidence=host.get('docker_evidence',{})
+    statuses={}
+    for component in DOCKER_COMPONENTS:
+        disks={number(record['physical_disk']) for record in evidence.get(component,[])}
+        if len(disks-{None})>1:
+            status='multiple'
+        elif not disks or None in disks:
+            status='unknown'
+        elif source is not None and source==dest and disks=={source}:
+            status='same_disk'
+        elif disks=={source}:
+            status='source'
+        elif disks=={dest}:
+            status='destination'
+        else:
+            status='other' if dest is not None or source is not None else 'unknown'
+        statuses[component]=status
+    return {'observed_at':host.get('observed_at'),'components':statuses}
+
+
+def describe_docker(host):
+    statuses=docker_placement(host)['components']
+    return '\n'.join(f'{label} · {DOCKER_PLACEMENTS[statuses[component]]}'
+                    for component,label in DOCKER_COMPONENTS.items())+(
+        '\nPour déplacer ou restaurer Docker, suivez la rubrique Docker Desktop du guide de transfert. '
+        'Vérifiez ensuite Docker et SetupSurvie après redémarrage.')
+
+
+def installed_docker_status(dest, journal):
+    source_work=Path(journal['source']['private'])
+    try:
+        source_guard=read(source_work/'transfer-guard.json')
+    except (OSError, ValueError):
+        source_guard={}
+    source=journal['source']['data'] if isinstance(source_guard,dict) and source_guard.get('id')==journal['id'] else None
+    return windows_host(source,dest)
+
+
+def refresh_docker_status(dest):
+    if os.name!='nt':
+        raise setup.SetupError('Le contrôle du placement de Docker Desktop est disponible sous Windows.')
+    dest=setup.safe_path(dest)
+    if not (dest/'transfer.json').is_file():
+        raise setup.SetupError('Choisissez la destination existante du transfert ou utilisez Examiner pour une nouvelle copie.')
+    with locked(dest/'operation.lock'):
+        journal=read(dest/'transfer.json')
+        if journal.get('kind')!=KIND or journal.get('schema')!=1:
+            raise setup.SetupError('Transfert non reconnu.')
+        if journal['phase'] in ('planned','copying'):
+            raise setup.SetupError('Reprenez la copie avant d’actualiser le placement de Docker Desktop.')
+        host=installed_docker_status(dest,journal)
+        journal['docker_last_check']=host
+        save(dest,journal);export_report(dest,journal)
+        return host
 
 
 def plan(app, dest):
@@ -154,7 +257,7 @@ def plan(app, dest):
     if os.name=='nt':
         startup_file=source['application'].parent/'maintenance/startup-settings.json'
         task_name=read(startup_file).get('task_name','') if startup_file.is_file() else ''
-        host=json.loads(setup.run(['powershell.exe','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',str(setup.ROOT/'scripts/transfer-host-check.ps1'),'-Source',str(source['data']),'-Destination',str(dest),'-TaskName',task_name],capture=True))
+        host=windows_host(source['data'],dest,task_name)
         disk=host.get('destination',{})
         if not disk.get('known') or disk.get('filesystem') not in ('NTFS','ReFS'):
             raise setup.SetupError('Destination Windows : volume NTFS ou ReFS identifiable nécessaire pour les gros fichiers et leurs dates. Aucun formatage effectué.')
@@ -313,9 +416,12 @@ def export_report(dest, journal):
     report['adapted_files']=len(journal.get('adapted',[]))
     report['checks']=journal.get('checks',{})
     host=journal.get('host',{})
+    latest=journal.get('docker_last_check',host)
     report['storage']={'destination_filesystem':host.get('destination',{}).get('filesystem'),
                        'different_physical_disk':host.get('source',{}).get('disk')!=host.get('destination',{}).get('disk') if host.get('source',{}).get('known') and host.get('destination',{}).get('known') else None,
-                       'docker_location_recorded':bool(host.get('docker') or host.get('docker_disks')), 'docker_moved':False}
+                       'docker_location_recorded':bool(latest.get('docker') or latest.get('docker_disks')), 'docker_moved':False}
+    if journal.get('target')=='windows':
+        report['storage']['docker_placement']=docker_placement(latest)
     report['incomplete_files_preserved']=sum(r['path'].endswith(('.part','.pending','.tmp')) for r in journal.get('inventory',{}).get('files',[]))
     report['pending']=['Essai Windows réel chez Marc', 'Recherche et ouverture par un utilisateur',
                        'IA : essai explicite après levée de pause', 'Redémarrage et réseau externe débranché',
@@ -327,7 +433,8 @@ def export_report(dest, journal):
          'Les données sont dans data ; les guides PDF dans data/library/guides.\n'
          'Documentation complète : application/docs ; guide court : LISEZ-MOI.html.\n'
          'Ne supprimez pas la source. Ne démarrez pas deux installations.\n'
-         'Docker et les prérequis du PC ne sont pas déplacés automatiquement.\n').encode('utf-8'))
+         'Sous Windows, utilisez Vérifier Docker pour repérer le moteur et son stockage.\n'
+         'Suivez le guide de transfert pour déplacer Docker ou préparer un autre PC.\n').encode('utf-8'))
     import html
     guide=setup.ROOT/'docs/exploitation/transfert-installation.md'
     body=guide.read_text(encoding='utf-8') if guide.exists() else 'Consultez application/docs/exploitation/manuel-de-secours.md'
@@ -426,10 +533,10 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             else:
                 previous=journal['inventory']['files']
                 retained=[record for record in previous if not data_lease(record['path'])]
-                if current['files']!=retained:
+                if not matches_frozen_inventory(current['files'],retained):
                     raise setup.SetupError('La source a changé depuis l’arrêt. Reprise refusée ; aucun mélange de deux états.')
                 if retained!=previous:
-                    journal['inventory']=current
+                    journal['inventory']={**current,'files':retained}
                     journal['bytes']=sum(record['bytes'] for record in retained)
                     journal['verified']={path:digest for path,digest in journal.get('verified',{}).items() if not data_lease(path)}
                     save(dest,journal)
@@ -461,7 +568,7 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             for relative in databases:database_check(destination(dest,relative))
             if export_images:
                 journal['images_sha256'],journal['images_manifest_sha256']=copy_images(app,config,dest,report)
-            if inventory(roots(app,config),docker_disks)['files']!=journal['inventory']['files']:
+            if not matches_frozen_inventory(inventory(roots(app,config),docker_disks)['files'],journal['inventory']['files']):
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)
             journal['checks']['source_stopped']=True
@@ -669,6 +776,13 @@ def activate(dest):
             raise
         journal['phase']='active';journal['checks']['mounts']=True
         journal['checks']['services_health']=True
+        if host=='windows':
+            try:
+                journal['docker_last_check']=installed_docker_status(dest,journal)
+            except (OSError,ValueError,setup.SetupError):
+                # The placement probe is advisory. Container and document checks already passed.
+                journal['docker_last_check']={}
+            print(describe_docker(journal['docker_last_check']))
         save(dest,journal);export_report(dest,journal)
 
 
@@ -748,7 +862,7 @@ def stop_destination(dest):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=['copy','status','prepare','verify','activate','rollback','stop-destination'])
+    parser.add_argument('action',choices=['copy','status','prepare','verify','activate','docker-status','rollback','stop-destination'])
     parser.add_argument('destination');parser.add_argument('--work-dir')
     args=parser.parse_args();dest=setup.safe_path(args.destination)
     if args.action=='copy':
@@ -761,6 +875,7 @@ def main():
     elif args.action=='prepare':prepare(dest)
     elif args.action=='verify':verify_copy(dest);print('Empreintes et bases contrôlées ; fonctionnement réel à essayer séparément.')
     elif args.action=='activate':activate(dest)
+    elif args.action=='docker-status':print(describe_docker(refresh_docker_status(dest)))
     elif args.action=='rollback':rollback(dest)
     else:stop_destination(dest)
 

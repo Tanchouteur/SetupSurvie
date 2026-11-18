@@ -1,10 +1,13 @@
 @media screen {
   body.has-map-site-nav { grid-template-rows: 68px minmax(0, 1fr) 30px; }
-  .map-site-nav { position: relative; display: flex; align-items: center; gap: 16px; min-width: 0; padding: 8px 20px; background: #fff; border-bottom: 1px solid var(--line); }
+  .map-site-nav { position: relative; display: flex; align-items: center; gap: 16px; min-width: 0; padding: 8px 20px; background: #fcfbf7; border-bottom: 1px solid var(--line); }
   .map-site-nav a { color: var(--ink); text-decoration: none; }
-  .map-site-brand { font-weight: 700; white-space: nowrap; }
+  .map-site-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .map-site-brand img { object-fit: contain; }
   .map-site-nav nav { display: flex; justify-content: center; flex: 1; gap: 4px; min-width: 0; }
-  .map-site-nav nav a { padding: 8px 10px; white-space: nowrap; border-radius: 8px; font-size: 14px; }
+  .map-site-nav nav a { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 6px 10px; white-space: nowrap; border-radius: 8px; font-size: 14px; }
+  .map-site-nav nav a:hover { background: #f0f3ec; }
+  .map-site-nav nav a:focus-visible { outline: 2px solid #875016; outline-offset: 2px; }
   .map-site-nav nav a[aria-current=page] { background: #e8f0e8; font-weight: 650; }
   .map-site-nav .map-header { border: 0; padding: 0; gap: 8px; min-width: 0; background: none; }
   .map-site-nav #map-account { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
@@ -15,17 +18,18 @@
   body.has-map-site-nav { grid-template-rows: 84px minmax(0, 1fr) 24px; }
   .map-site-nav { padding: 0 8px 38px; align-items: center; gap: 0; }
   .map-site-brand { display: none; }
-  .map-site-nav nav { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
-  .map-site-nav nav a { padding: 8px 10px; }
+  .map-site-nav nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .map-site-nav nav a { min-height: 44px; padding: 3px 1px; white-space: normal; text-align: center; line-height: 1.15; font-size: 11px; }
   .map-site-nav .map-header { position: absolute; bottom: 3px; right: 12px; left: 12px; }
   .map-site-nav .map-header .map-brand { position: static; width: auto; height: auto; clip-path: none; }
   .map-site-nav #map-account { max-width: 120px; }
   .map-site-nav .map-header .map-brand h1 { font-size: 14px; }
   .map-site-nav .map-header .map-brand > span { display: none; }
 }
-@media screen and (min-width: 1001px) and (min-height: 501px) {
-  body.has-map-site-nav { grid-template-rows: 84px minmax(0, 1fr) 30px; }
-  .map-site-nav { padding: 4px 20px 28px; }
+@media screen and (min-width: 761px) and (max-width: 1280px) {
+  .map-site-nav { gap: 8px; padding-inline: 12px; }
+  .map-site-nav nav a { padding-inline: 6px; }
+  .map-site-nav #map-account { max-width: 104px; }
 }
 @media print {
   .map-site-nav { display: block; padding: 0; }

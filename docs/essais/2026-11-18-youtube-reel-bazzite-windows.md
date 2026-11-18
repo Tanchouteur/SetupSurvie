@@ -1,6 +1,7 @@
-# Téléchargement YouTube réel sur Bazzite et contrôle Windows — 0.43.2
+# Téléchargement YouTube réel sur Bazzite et contrôle Windows — 0.43.4
 
-**Bilan daté du 18 novembre 2026.** Le parcours a été exécuté sur l’installation
+**Bilan daté du 18 novembre 2026.** Essai exécuté sur le candidat alors numéroté 0.43.2,
+livré en 0.43.4 après intégration des autres versions de `main`. Le parcours a été exécuté sur l’installation
 Linux d’essai de Louis, sous Python 3.15, après mise à jour officielle avec
 sauvegarde. Il a utilisé l’API du bouton, le vrai contrôleur de l’hôte, YouTube,
 yt-dlp 2026.10.26, Deno 2.9.8 et FFmpeg 8.1.3. Le navigateur n’a pas été utilisé ici.

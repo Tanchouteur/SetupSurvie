@@ -3,7 +3,13 @@
   const header = document.createElement('header');
   header.className = 'map-site-nav';
   const brand = document.createElement('a');
-  brand.className = 'map-site-brand'; brand.href = '/nouveau/#/accueil'; brand.textContent = 'SetupSurvie';
+  brand.className = 'map-site-brand'; brand.href = '/nouveau/#/accueil';
+  const logo = document.createElement('img');
+  logo.src = '/branding/logo.png';
+  logo.alt = '';
+  logo.width = 36;
+  logo.height = 40;
+  brand.append(logo, 'SetupSurvie');
   const nav = document.createElement('nav'); nav.setAttribute('aria-label', 'Navigation principale');
   for (const [label, route] of [['Accueil','accueil'],['Bibliothèque','bibliotheque'],['Assistant','assistant'],['Cartes','cartes'],['Mon appareil','appareil/ensemble']]) {
     const link = document.createElement('a'); link.href = '/nouveau/#/' + route; link.textContent = label;

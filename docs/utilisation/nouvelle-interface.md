@@ -61,6 +61,12 @@ chacun peut le sélectionner sans mot de passe.
 
 ## Suivre le serveur et les téléchargements
 
+Depuis la 0.43.2, le bloc **Modèle chargé** et les jauges **RAM** et **VRAM**
+tiennent dans la ligne de navigation sur ordinateur, y compris dans les Cartes.
+Sur écran étroit, ouvrir **Mon appareil → Vue d’ensemble**. La barre supérieure
+des Cartes conserve les cinq destinations visibles sur téléphone. Voir les
+[mesures de l’assistant](mesurer-assistant-et-memoire.md#voir-le-modèle-chargé-la-ram-et-la-vram).
+
 Les mesures décrivent le PC serveur, pas le téléphone qui consulte la page.
 Mémoire, GPU, modèles chargés, espace libre et questions utilisent les mesures
 existantes du contrôleur, sans démarrer de modèle. Une mesure absente reste

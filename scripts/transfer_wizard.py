@@ -60,13 +60,15 @@ class Wizard:
         for label,callback in [('Vérifier la copie',lambda:self.destination_action(transfer.verify_copy)),('Retour à la source',self.rollback),('Ouvrir le rapport',self.report)]:
             button=ttk.Button(row,text=label,command=callback);button.pack(side='left',padx=2);self.actions.append(button)
         ttk.Button(row,text='Suivi dans le navigateur',command=self.open_monitor).pack(side='left',padx=2)
+        if os.name=='nt':
+            button=ttk.Button(row,text='Vérifier Docker',command=self.docker_status);button.pack(side='left',padx=2);self.actions.append(button)
         self.status=tk.StringVar(value='Commencez par Examiner. Une destination existante ne sera pas remplacée.')
         ttk.Label(panel,textvariable=self.status,wraplength=700).pack(anchor='w',pady=12)
         self.bar=ttk.Progressbar(panel,mode='determinate');self.bar.pack(fill='x')
         self.copy_summary=tk.StringVar()
         ttk.Label(panel,textvariable=self.copy_summary,wraplength=700).pack(anchor='w',pady=4)
         self.log=tk.Text(panel,wrap='word',height=12,state='disabled');self.log.pack(fill='both',expand=True,pady=10)
-        ttk.Label(panel,text='Sans Internet : Python avec Tk et Docker doivent être disponibles.\nDocker Desktop : vérifier séparément Settings → Resources → Advanced → Disk image location.',wraplength=700).pack(anchor='w')
+        ttk.Label(panel,text='Python avec Tk et Docker doivent être disponibles pour une restauration hors ligne. Sous Windows, « Vérifier Docker » actualise son emplacement après la copie.',wraplength=700).pack(anchor='w')
         self.root.report_callback_exception=lambda cls,exc,tb:messagebox.showerror('Vérifier les choix',str(exc))
         self.root.protocol('WM_DELETE_WINDOW',self.close);self.root.after(150,self.poll)
         self.root.after(500,self.refresh_copy_status)
@@ -173,7 +175,17 @@ class Wizard:
         def action():
             report=transfer.plan(app,dest)
             gib=1024**3
-            self.events.put(('text',f"Données et logiciel : {report['bytes']/gib:.2f} Gio. Libre : {report['free_bytes']/gib:.2f} Gio. Ajouter les images Docker et 256 Mio de marge.\nLe besoin exact est contrôlé avant l’arrêt. La copie peut prendre plusieurs heures.\nMême PC : conserver Docker et Python. Autre Windows : prérequis système à fournir séparément. Linux : conversion non qualifiée.\nLes téléchargements incomplets sont conservés, pas déclarés disponibles.\nVérifiez le disque physique et le format NTFS (Windows) : aucun formatage automatique."))
+            message=f"Données et logiciel : {report['bytes']/gib:.2f} Gio. Libre : {report['free_bytes']/gib:.2f} Gio. Ajouter les images Docker et 256 Mio de marge.\nLe besoin exact est contrôlé avant l’arrêt. La copie peut prendre plusieurs heures.\nMême PC : conserver Docker et Python. Autre Windows : prérequis système à fournir séparément. Linux : conversion non qualifiée.\nLes téléchargements incomplets sont conservés, pas déclarés disponibles."
+            if os.name=='nt':
+                message+='\n\n'+transfer.describe_docker(report['host'])
+            self.events.put(('text',message))
+        self.launch(action)
+
+    def docker_status(self):
+        dest=self.destination()
+        def action():
+            host=transfer.refresh_docker_status(dest)
+            self.events.put(('text',transfer.describe_docker(host)))
         self.launch(action)
 
     def copy(self, confirmed=False):
@@ -188,7 +200,12 @@ class Wizard:
     def activate(self, confirmed=False):
         dest=self.destination()
         if not confirmed and not messagebox.askyesno('Activer la destination','Démarrer les services depuis la destination et recréer les raccourcis ?\n\nLa source restera bloquée. Aucun essai IA ne sera lancé. Sur un autre PC, les prérequis doivent déjà être installés.'):return
-        self.launch(lambda:transfer.activate(dest))
+        def action():
+            transfer.activate(dest)
+            if os.name=='nt':
+                latest=transfer.read(dest/'transfer.json').get('docker_last_check',{})
+                self.events.put(('text',transfer.describe_docker(latest)))
+        self.launch(action)
 
     def rollback(self, confirmed=False):
         dest=self.destination()
@@ -220,6 +237,8 @@ class Wizard:
                 self.destination_action(transfer.prepare)
             elif action=='verify':
                 self.destination_action(transfer.verify_copy)
+            elif action=='docker-status':
+                self.docker_status()
             elif action=='activate':
                 self.activate(confirmed=True)
             elif action=='rollback':
