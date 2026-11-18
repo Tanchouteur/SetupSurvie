@@ -41,8 +41,15 @@ async page => {
   check(await page.locator('#data-books a').getAttribute('href')===opening,'Ouverture inchangée après filtrage');
   const series=page.locator('#data-guides details.next-collection-group').filter({hasText:'Where There Is No Dentist'});
   check(await page.locator('#data-guides details.next-collection-group').filter({hasText:'Atelier pratique'}).count()===1,'Une autre série reçoit le même regroupement');
-  check((await series.locator('summary').innerText()).includes('Where There Is No Dentist · 2 documents'),'Un seul groupe pour deux chapitres');
-  await series.locator('summary').click();
+  const row=page.locator('#data-guides');
+  const seriesSummary=series.locator(':scope > summary');
+  check(await seriesSummary.locator('.next-collection-group-name').textContent()==='Where There Is No Dentist'&&
+    await seriesSummary.locator('.next-collection-group-count').textContent()==='2 documents','Carte de série avec nom et nombre de chapitres');
+  check(await row.evaluate(grid=>[...grid.children].slice(0,2).every(node=>node.matches('.next-collection-group'))),
+    'Les regroupements précèdent les documents individuels');
+  check((await series.boundingBox()).width<(await row.boundingBox()).width*.75,'Le groupe replié occupe une carte');
+  await seriesSummary.click();
+  check(Math.abs((await series.boundingBox()).width-(await row.boundingBox()).width)<2,'La carte ouverte utilise toute la grille');
   check(await series.getByRole('heading',{name:'Chapitre 01'}).isVisible(),'Le groupe ouvre les chapitres');
   check(await series.getByText('Lire le guide',{exact:false}).count()===2,'Chaque chapitre garde sa commande de lecture');
   await series.locator('summary').click();

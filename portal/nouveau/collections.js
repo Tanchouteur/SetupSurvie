@@ -51,18 +51,27 @@
       if(!families.has(family))families.set(family,[]);
       families.get(family).push({card,heading,variant:guides?parts[2]:card.dataset.variant});
     }
+    const grouped=document.createDocumentFragment();
     for(const [family,cards] of families){
       if(cards.length<2)continue;
       const group=document.createElement('details');group.className='next-collection-group';group.id=groupId(guides?'guide:'+family:family);
       group.open=readOpen(group.id,false);
-      const summary=document.createElement('summary');summary.textContent=family+' · '+cards.length+(guides?' documents':' collections');group.append(summary);
-      const children=document.createElement('div');children.className='data-grid';group.append(children);cards[0].card.before(group);
+      const summary=element('summary');
+      const icon=element('span',undefined,'next-collection-group-icon');
+      icon.setAttribute('aria-hidden','true');
+      const label=element('span',undefined,'next-collection-group-label');
+      label.append(element('span',family,'next-collection-group-name'),
+        element('span',cards.length+(guides?' documents':' collections'),'next-collection-group-count'));
+      summary.append(icon,label);
+      const children=element('div',undefined,'data-grid');
+      group.append(summary,children);grouped.append(group);
       for(const {card,heading,variant} of cards){
         if(variant)heading.textContent=variant;
         if(!guides&&card.dataset.archiveName){const info=document.createElement('details'),label=document.createElement('summary'),name=document.createElement('p');label.textContent='Référence de cette collection';name.textContent=card.dataset.archiveName;info.append(label,name);card.append(info);}
         children.append(card);
       }
     }
+    grid.prepend(grouped);
   }
   function collectionOptions(data){
     const select=document.getElementById('search-collection');if(!select)return;
