@@ -966,7 +966,7 @@ body.next-interface {
   }
 }
 
-@media (min-width: 761px) and (max-width: 1400px) {
+@media (min-width: 761px) and (max-width: 1460px) {
   .next-interface .sidebar {
     gap: 10px;
     padding-inline: 14px;
