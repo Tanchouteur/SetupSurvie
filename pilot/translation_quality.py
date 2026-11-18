@@ -8,11 +8,12 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=4
+VERSION=5
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
+ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!\d|[.,]\d)')
 UNIT_ALIASES={
     'mètres':'m','mètre':'m','centimeters':'cm','centimetres':'cm','centimètres':'cm','centimeter':'cm','centimetre':'cm','centimètre':'cm',
     'millimeters':'mm','millimetres':'mm','millimètres':'mm','millimeter':'mm','millimetre':'mm','millimètre':'mm',
@@ -45,7 +46,7 @@ def number(token):
     except InvalidOperation:return token
 
 
-def assess(source,translated):
+def assess(source,translated,*,source_language=None):
     source=normalized(source);translated=normalized(translated)
     issues=[]
     def add(code,severity,message):issues.append({'code':code,'severity':severity,'message':message})
@@ -58,8 +59,14 @@ def assess(source,translated):
     def formulas(text):return Counter(re.sub(r'\s+',' ',m['value']).strip() for m in BLOCKS.finditer(text))
     if formulas(source)!=formulas(translated):
         add('formulas','error','Une formule extraite a disparu, été ajoutée ou modifiée. Elle doit être conservée avec ses groupes, indices et puissances ; comparez l’original avant reprise.')
-    left=Counter(number(m.group()) for m in NUMBERS.finditer(source))
-    right=Counter(number(m.group()) for m in NUMBERS.finditer(translated))
+    def numbers(text):
+        if source_language and source_language.lower().split('-')[0]=='en':
+            # A leading dollar sign and English grouping make $70,000 a
+            # dollar amount of 70000. Other comma decimals keep their meaning.
+            text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
+        return Counter(number(m.group()) for m in NUMBERS.finditer(text))
+    left=numbers(source)
+    right=numbers(translated)
     if left!=right:add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
         return Counter((number(m.group(1)),UNIT_ALIASES[re.sub(r'\s','',m.group(2)).lower()]) for m in UNIT.finditer(text))

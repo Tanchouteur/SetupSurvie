@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.48.0, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.48.2, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -173,11 +173,12 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Depuis 0.37.1, si le moteur annonce un refus tout en renvoyant des traductions,
-le logiciel lui demande une seule fois de clarifier sa réponse. La proposition
-rejetée reste dans le rapport. Un refus clair ou un second échec arrête la
-préparation ; aucun segment ni horodatage n’est réinterprété pour forcer la
-publication. La pause reste prioritaire pendant cette vérification.
+Depuis 0.48.2, le modèle reçoit le nombre exact de segments à traduire. S’il rend
+un lot incomplet, SetupSurvie rejette la proposition et réduit la taille des
+lots. Si un segment envoyé seul manque encore, le travail attend une reprise.
+Un refus explicite arrête le travail. Si le moteur annonce un refus tout en
+renvoyant des traductions, il peut clarifier sa réponse une seule fois.
+Les propositions rejetées restent dans le rapport. La pause reste prioritaire.
 
 Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
 ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire
@@ -193,7 +194,9 @@ Les essais de performance/calibration refusent une préparation concurrente.
 
 Les horodatages sont copiés de la source, jamais inventés par le modèle. Un lot
 perdant un segment ou modifiant son ordre est refusé. Les changements détectés de
-nombres/unités bloquent la publication ; négations et longueurs suspectes peuvent
+nombres/unités bloquent la publication. Pour une piste déclarée en anglais,
+un montant comme « $70,000 » garde la même valeur s’il est écrit
+« 70 000 dollars » en français. Les négations et longueurs suspectes peuvent
 produire des avertissements. **Télécharger le rapport** conserve segments source,
 traduction, propositions refusées, modèle et contrôles. Ce rapport contient du
 texte de la vidéo et doit rester privé. Le rapport vidéo général inclut aussi
@@ -210,6 +213,13 @@ préparée n’est pas une traduction relue, ni une preuve de bonne synchronisat
 Une modification du média ou de sa piste source empêche de reprendre l’ancien
 brouillon et retire l’association de l’ancienne traduction après actualisation.
 Les anciens fichiers et brouillons restent conservés pour comparaison.
+
+Essai du 18 novembre 2026 sur Bazzite avec GPT-OSS 20B et un contexte de
+8 192 jetons. À partir des 93 segments du rapport Windows, une préparation
+isolée a produit une piste française complète avec les 93 horodatages d’origine.
+Trois avertissements ont été conservés. Le test a utilisé les sous-titres du
+rapport et un média factice. La fidélité à l’audio et la reprise sur
+l’installation Windows de Marc restent à vérifier.
 
 ## Récupérer les pistes YouTube — 0.31.0
 
