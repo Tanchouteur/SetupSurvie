@@ -3,7 +3,7 @@
 - [Faire une synthèse des documents](synthese-documentaire.md) — dossier multi-source, lectures par passages et limites des références, 0.16.0.
 
 - [Inventorier les vidéos et sous-titres locaux](inventaire-videos.md) — outil volontaire en lecture seule, 0.14.0.
-- [Télécharger une liste de vidéos YouTube](telecharger-videos-youtube.md) — 0.41.0, liste texte d’adresses, rangement automatique et reprise.
+- [Télécharger une liste de vidéos YouTube](telecharger-videos-youtube.md) — 0.43.0, depuis le site ou en ligne de commande, rangement automatique, pause et reprise.
 
 - [Rechercher un document](recherche-documentaire.md) — premiers résultats, filtres et contrôle exportable.
 
