@@ -10,7 +10,7 @@ async page => {
   assert(!await page.locator('#feedback-button').isVisible(),'Bouton de retour retiré');
   assert(await page.locator('a[href^="/classique/"]').count()===0,'Liens classiques retirés des menus');
   await page.locator('#navigation [data-route="bibliotheque"]').click();
-  await page.locator('[data-route="bibliotheque/collections"]').click();
+  await page.locator('.next-tabs [data-route="bibliotheque/collections"]').click();
   await page.locator('#collection-filter').fill('');
   const guides=page.locator('#collection-section-guides');
   if(!await guides.evaluate(section=>section.open))await guides.locator(':scope > summary').click();
