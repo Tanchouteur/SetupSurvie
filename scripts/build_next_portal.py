@@ -33,6 +33,7 @@ def build():
         ('js', '/nouveau/transcriptions.js', '0.35.0'),
         ('js', '/nouveau/acquisitions.js', '0.31.0'),
         ('js', '/nouveau/archive-videos.js', '0.33.0'),
+        ('js', '/nouveau/youtube-downloads.js', '0.43.0'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.11.1'),

@@ -2,7 +2,8 @@
 """Simulated yt-dlp for tests: no network. Behaviour per video id in FAKE_YTDLP.
 
 Scenarios: ok (media, info.json, fr/en subtitles), nosubs, private, partial
-(leaves a .part file and fails, then succeeds on the next call), empty.
+(leaves a .part file and fails, then succeeds on the next call), empty,
+slow (writes a .part file and waits, to test a cooperative pause).
 Every call is appended to FAKE_YTDLP_CALLS for inspection.
 """
 import json
@@ -27,6 +28,10 @@ if scenario['kind']=='partial':
         print('ERROR: unable to download video data: <urlopen error [Errno 104] Connection reset by peer>',file=sys.stderr);raise SystemExit(1)
     marker.unlink()
 if scenario['kind']=='empty':raise SystemExit(0)
+if scenario['kind']=='slow':
+    import time
+    (folder/(stem+'.mp4.part')).write_bytes(b'begun')
+    time.sleep(30);raise SystemExit(1)
 (folder/(stem+'.info.json')).write_text(json.dumps({'id':identifier,'title':title,'channel':channel,'extractor':'youtube','language':'fr','duration':12,'height':360,
     'description':'Description fictive.','webpage_url':url}),encoding='utf-8')
 if scenario['kind']!='nosubs':

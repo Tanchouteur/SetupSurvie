@@ -80,6 +80,9 @@ class Manager:
                 # The worker can finish between the first read and the PID check.
                 state = self.read()
                 if state['phase'] not in ACTIVE:return state
+                if state.get('action')=='youtube-download':
+                    child=state.get('index_pid');identity=state.get('index_identity')
+                    if child and identity and discovery.identity(child)==identity:return state
                 if state.get('action')=='video-inventory':
                     child=state.get('index_pid');identity=state.get('index_identity')
                     if child and identity and discovery.identity(child)==identity:return state
@@ -124,6 +127,8 @@ class Manager:
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
+        result['action']=state.get('action')
+        if state.get('action')=='youtube-download' and state.get('id'):result['youtube']=self.youtube_progress(state['id'])
         if state.get('id'):
             if state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
                 result.update(pause_requested=True, message='Pause demandée. Attente de la fin de l’échange en cours ; les fichiers partiels seront conservés.')
@@ -200,6 +205,8 @@ class Manager:
             if action=='index' and not automatic:index_queue.hold(root,'')
             state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':automatic,'selection':selection}}
             self.paths(state['id']).mkdir(parents=True)
+        elif action=='youtube-download':
+            state=self.youtube_job(state,body)
         elif action in ('geography','routing'):
             options = geography_data.validate(body)
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
@@ -247,6 +254,32 @@ class Manager:
             state.update(phase='error', message='Le transfert n’a pas pu démarrer. Réessayez depuis le PC serveur.')
             self.write(state); raise
 
+    def youtube_job(self,previous,body):
+        """A list saved by the site in state/pilot/youtube-lists, or the paused one."""
+        if body.get('resume') is True:
+            if previous.get('action')!='youtube-download' or previous['phase'] not in ('paused','interrupted','error'):
+                raise setup.SetupError('Aucun téléchargement YouTube à reprendre.')
+            text=(self.paths(previous['id'])/'liste.txt').read_text(encoding='utf-8');height=previous['options']['max_height']
+        else:
+            identifier=body.get('list');height=body.get('max_height',480)
+            if not isinstance(identifier,str) or not re.fullmatch('[a-f0-9]{32}',identifier):raise setup.SetupError('Liste de vidéos non valide.')
+            if height not in (360,480,720):raise setup.SetupError('Qualité non valide : 360, 480 ou 720.')
+            source=Path(self.config['data_dir'])/'state/pilot/youtube-lists'/(identifier+'.txt')
+            if source.is_symlink() or not source.is_file() or source.stat().st_size>300_000:raise setup.SetupError('Liste de vidéos introuvable ; déposez-la de nouveau.')
+            text=source.read_text(encoding='utf-8')
+        from pilot.youtube_list import parse_list
+        entries,_=parse_list(text)
+        if not entries:raise setup.SetupError('La liste ne contient aucune adresse de vidéo YouTube valide.')
+        state={'id':uuid.uuid4().hex,'phase':'starting','options':{'max_height':height,'videos':len(entries)}}
+        folder=self.paths(state['id']);folder.mkdir(parents=True)
+        setup.write_json(folder/'liste.json',{'count':len(entries)},private=True)
+        (folder/'liste.txt').write_text(text,encoding='utf-8')
+        return state
+
+    def youtube_progress(self,job):
+        try:return json.loads((self.paths(job)/'progress.json').read_text(encoding='utf-8'))
+        except (OSError,ValueError):return {}
+
     def pause(self,automatic=False):
         state = self.current()
         if state['phase'] not in ('starting', 'planning', 'downloading'):
@@ -269,7 +302,23 @@ class Manager:
         try:
             root, scope = self.check_storage()
             check()
-            if state['action']=='index-prepare':
+            if state['action']=='youtube-download':
+                update('downloading','Téléchargement des vidéos YouTube et de leurs sous-titres…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                command=[sys.executable,'-X','utf8',str(setup.ROOT/'scripts/youtube_videos.py'),'download',str(folder/'liste.txt'),
+                    '--data-dir',str(root),'--max-height',str(state['options']['max_height']),'--progress',str(folder/'progress.json'),'--cancel',str(folder/'cancel')]
+                with (folder/'youtube.log').open('ab') as log:
+                    process=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=log,stderr=log,**hidden)
+                    state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
+                    code=process.wait()
+                report=self.youtube_progress(job)
+                if report.get('phase')=='paused' or (folder/'cancel').exists():raise Paused()
+                if code not in (0,2) or report.get('phase')!='completed':
+                    raise setup.SetupError('Le téléchargement des vidéos n’a pas pu se terminer. Vérifiez Internet et l’espace libre, puis reprenez : les vidéos déjà rangées sont conservées.')
+                counts=report.get('counts',{})
+                update('completed',f"Téléchargement terminé : {counts.get('downloaded',0)} vidéo(s) ajoutée(s), {counts.get('skipped',0)} déjà présente(s), "
+                       f"{counts.get('error',0)+counts.get('refused',0)} non téléchargée(s). Le site les répertorie tout seul.")
+            elif state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools
                 search_index_tools.prepare(self.app,self.config,check=check,force=True)
@@ -355,7 +404,7 @@ class Manager:
                     self.app.compose(self.config, 'restart', 'kiwix', *(['pilot'] if any(i['path'].startswith('library/guides/') for i in items) else []))
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
-            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
+            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Téléchargement YouTube en pause. Les vidéos rangées et la vidéo en cours sont conservées ; « Reprendre » continue la liste.' if state.get('action')=='youtube-download' else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')
             if state.get('action') in ('index','index-prepare') and getattr(exc,'report',None):state['reader_probe']=exc.report

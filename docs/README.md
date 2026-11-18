@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Bouton de liste YouTube — 0.43.0](essais/2026-11-18-bouton-liste-youtube.md) — dépôt depuis le site, suivi, pause, reprise ; contrôleur simulé.
+
 - [Qualité visuelle à reprendre](decisions/refonte-ux-evolutive.md#cohérence-et-qualité-visuelle-à-reprendre--demande-de-louis-du-17-novembre-2026) — demande de Louis : navigation des cartes, indicateurs RAM/GPU et cohérence de tout le site ; chantier futur.
 
 - [Intégration du transfert SSD Windows — 0.42.0](essais/2026-11-17-integration-transfert-ssd-windows.md) — reprise de copie, suivi navigateur, tests et limites.
