@@ -147,7 +147,7 @@ refus reste à reprendre. Les contrôles de traduction sont appliqués avant de
 compter un passage terminé. Pour une traduction interrompue, utilisez
 **Reprendre avec le modèle choisi** dans le travail existant.
 
-Depuis **0.49.5**, si la réponse est vide, tronquée ou mal formée, ou si
+Depuis **0.50.2**, si la réponse est vide, tronquée ou mal formée, ou si
 le contrôle rejette le texte proposé, SetupSurvie retente le passage avec le
 même modèle. Il le découpe en deux si une fin de phrase ou de ligne adaptée
 est disponible. Chaque morceau est vérifié, puis le passage complet est vérifié

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Mes cartes téléchargées — SetupSurvie</title>
+  <link rel="stylesheet" href="/vendor/maps/maplibre-gl.css">
+  <link rel="stylesheet" href="/cartes-hors-ligne/viewer.css">
+  <script defer src="/vendor/maps/maplibre-gl.js"></script>
+  <script defer src="/vendor/maps/pmtiles.js"></script>
+  <script defer src="/cartes-style.js?v=0.50.0"></script>
+  <script defer src="/cartes-hors-ligne/storage.js"></script>
+  <script defer src="/cartes-hors-ligne/viewer.js"></script>
+</head>
+<body>
+  <header>
+    <a href="/cartes.html">← Carte du serveur</a>
+    <h1>Mes cartes téléchargées</h1>
+    <div id="controls" hidden>
+      <label for="saved-area">Zone téléchargée</label>
+      <div class="actions">
+        <select id="saved-area"></select>
+        <button type="button" id="remove-area">Supprimer…</button>
+      </div>
+    </div>
+    <p id="status" role="status">Lecture du stockage du navigateur…</p>
+  </header>
+  <main id="map" aria-label="Carte téléchargée" hidden></main>
+</body>
+</html>

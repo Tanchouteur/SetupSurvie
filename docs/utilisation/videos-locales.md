@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.49.5, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.50.2, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
@@ -175,7 +175,7 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Le modèle reçoit le nombre exact de segments à traduire. Depuis **0.49.5**,
+Le modèle reçoit le nombre exact de segments à traduire. Depuis **0.50.2**,
 SetupSurvie réduit aussi les lots quand une réponse est tronquée ou illisible,
 ou que les identifiants sont modifiés ou réordonnés. Quand un contrôle échoue
 pour un segment, les segments valides sont enregistrés et celui qui a échoué

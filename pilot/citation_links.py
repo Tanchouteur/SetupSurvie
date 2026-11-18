@@ -64,7 +64,9 @@ def apply(answer,value,references):
 
 
 def unverified(answer,references):
-    allowed={item['number'] for item in references.values() if item.get('consulted')}
-    for part in reversed(research.citation_spans(answer)):
-        if not part['numbers']<=allowed:answer=answer[:part['start']]+'[référence non vérifiée]'+answer[part['end']:]
-    return answer+'\n\n**Références à vérifier :** le modèle n’a pas relié suffisamment sa synthèse aux passages lus. Les documents consultés restent accessibles dans le suivi documentaire. Ce texte n’est pas une synthèse vérifiée.'
+    for start,end in sorted(research.unsupported_citation_spans(answer,references),reverse=True):
+        answer=answer[:start]+'[référence non vérifiée]'+answer[end:]
+    note='**Références à vérifier.** Certains passages de cette réponse peuvent être sans appui documentaire.'
+    if any(item.get('consulted') for item in references.values()):
+        note+=' Vous pouvez consulter les documents lus dans le suivi documentaire.'
+    return note+'\n\n'+answer
