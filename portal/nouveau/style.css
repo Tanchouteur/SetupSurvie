@@ -418,9 +418,18 @@ body.next-interface {
   border-top: 1px solid var(--ds-line);
 }
 .next-interface .next-collection-section > summary {
+  position: sticky;
+  top: var(--ds-nav-h);
+  z-index: 2;
   min-height: 44px;
   padding-block: 10px;
+  background: var(--ds-surface);
   cursor: pointer;
+}
+@media (max-width: 760px) {
+  .next-interface .next-collection-section > summary {
+    top: var(--collection-mobile-top, 57px);
+  }
 }
 .next-interface .next-collection-section:not([open]) > :not(summary) {
   display: none;
