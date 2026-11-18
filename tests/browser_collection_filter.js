@@ -109,7 +109,9 @@ async page => {
         window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
         const gap=summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom;
         const heading=summary.querySelector('h2').getBoundingClientRect();
-        return gap>=6&&gap<=12&&section.classList.contains('is-pinned')&&heading.left-summary.getBoundingClientRect().left>=14;
+        const mask=getComputedStyle(summary,'::before');
+        return gap>=6&&gap<=12&&section.classList.contains('is-pinned')&&
+          heading.left-summary.getBoundingClientRect().left>=14&&Math.abs(parseFloat(mask.height)-gap)<2;
       },{id,width},{timeout:5000}).then(()=>true,()=>false);
       const label='Titre '+id+' accroché sous la navigation à '+width+' px';
       if(!stuck){

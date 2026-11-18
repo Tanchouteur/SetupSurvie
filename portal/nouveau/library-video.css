@@ -32,6 +32,16 @@
 .next-interface .next-collection-section.is-pinned > .collection-section-title {
   box-shadow: var(--ds-shadow-3);
 }
+/* Keep the navigation gap clear of content scrolling behind the title. */
+.next-interface .next-collection-section.is-pinned > .collection-section-title::before {
+  content: "";
+  position: absolute;
+  inset-inline: -1px;
+  bottom: calc(100% + 1px);
+  height: var(--collection-title-gap);
+  background: var(--ds-bg);
+  pointer-events: none;
+}
 .next-interface :is(.collection-section-title, .video-disclosure > summary, .video-card-tools details > summary, #video-reader-preparation summary)::-webkit-details-marker {
   display: none;
 }
