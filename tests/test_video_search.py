@@ -52,6 +52,12 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([item['title'] for item in found],['Allumer un feu sans allumettes','Bouillir de l’eau'])
         self.assertTrue(all(item['kind']=='video' for item in found));self.assertEqual(found.coverage['domain'],'all')
 
+    async def test_long_video_question_keeps_partial_matches(self):
+        videos.scan()
+        found=await self.search('longueur inconnue du bâton fictif pour le feu demandé ici',kind='videos')
+        self.assertEqual(found[0]['title'],'Allumer un feu sans allumettes');self.assertEqual(found[0]['kind'],'video')
+        self.assertFalse([key for key in found[0] if key.startswith('_')])
+
     async def test_kind_separates_videos_and_documents(self):
         videos.scan()
         only=await self.search('allumer feu',kind='videos',domain='all')
@@ -130,6 +136,16 @@ class VideoRequestTests(unittest.TestCase):
         self.assertEqual(video_requests.appendix(linked,[row]),linked)
 
 
+    def test_misformatted_player_addresses_become_real_links(self):
+        url=video_requests.open_url('video:'+'a'*64+'#t=2000&track=0')
+        for text in ('Voir [https:/'+url+'].','Voir ['+url+'].'):
+            self.assertIn('[Ouvrir la vidéo]('+url+')',video_requests.repair(text))
+        self.assertEqual(video_requests.repair('[Titre](https:/'+url+')'),'[Titre]('+url+')')
+        row={'id':'video:'+'a'*64,'title':'Feu','open_url':video_requests.open_url('video:'+'a'*64),'has_subtitles':True,'subtitle_languages':['fr']}
+        self.assertNotIn('Vidéos trouvées',video_requests.appendix(video_requests.repair('Voir ['+url+']'),[row]))
+        self.assertIn('Vidéos trouvées',video_requests.appendix('Voir https:/'+url,[row]))
+
+
 class VideoAssistantTests(unittest.TestCase):
     setUp=harness.EvidenceTests.setUp
     run_chat=harness.EvidenceTests.run_chat
@@ -177,6 +193,28 @@ class VideoAssistantTests(unittest.TestCase):
             return {'content':'Aucune vidéo sur la soudure ; une autre vidéo existe : [Allumer un feu sans allumettes]('+video_requests.open_url(video['id'])+').'}
         _,saved=self.run_chat([reply],search=search)
         self.assertEqual(saved['content'].count('/bibliotheque/recherche'),1)
+
+    def test_subject_request_reads_available_subtitles_before_the_model(self):
+        self.question('D’après la vidéo sur le feu, quelle longueur d’archet est indiquée ?')
+        video=self.video();passage={**self.a,'id':video['id'],'title':video['title'],'text':'Archet fictif de 60 cm.'}
+        async def search(query,language='',**options):
+            if options.get('kind')=='videos':return library.SearchResults([video],{'status':'complete','videos':{'status':'complete','indexed_videos':1}})
+            return library.SearchResults([],{'status':'complete'})
+        def reply(payload):
+            packets=[json.loads(m['content']) for m in payload['messages'] if m.get('tool_name')=='read_sources']
+            self.assertEqual(packets[-1]['results'][0]['id'],video['id'])
+            return {'content':'L’archet mesure 60 cm [1]. [Voir la vidéo]('+video_requests.open_url(video['id'])+')'}
+        _,saved=self.run_chat([reply],search=search,read=lambda identifier:passage)
+        self.assertIn('60 cm',saved['content']);self.assertEqual(saved['sources'][0]['id'],video['id'])
+
+    def test_rejected_citation_keeps_the_real_video_links(self):
+        self.question('Trouve une vidéo sans piste sur un archet')
+        video={**self.video(),'tracks':[]}
+        async def search(query,language='',**options):
+            if options.get('kind')=='videos':return library.SearchResults([video],{'status':'complete','videos':{'status':'complete','indexed_videos':1}})
+            return library.SearchResults([],{'status':'complete'})
+        _,saved=self.run_chat([{'content':'Voici la vidéo [1].'}],search=search,expected_status='incomplete')
+        self.assertIn(video_requests.open_url(video['id']),saved['content'])
 
     def test_off_topic_fallback_is_not_appended_as_found(self):
         self.question('Cherche une vidéo sur la soudure à l’arc')

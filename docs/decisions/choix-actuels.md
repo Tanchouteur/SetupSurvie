@@ -156,6 +156,12 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.43.1** corrige les demandes de vidéos après un essai réel sur le R7 : lecture
+préalable des sous-titres, questions longues, liens mal formés ou perdus. Gemma et
+Llama réussissent la recette sur vidéos fictives ; GPT-OSS et le PC de Marc restent à
+essayer. Voir le [bilan](../essais/2026-11-18-demandes-videos-modele-reel.md).
+Correction compatible (`z`), données et composants tiers inchangés.
+
 La **0.43.0** ajoute dans Collections, pour le profil Famille, le bouton demandé par
 Louis le 17 novembre 2026 : liste YouTube collée ou déposée, vérification, suivi,
 pause et reprise. Le contrôleur de l’hôte télécharge ; le service du site garde

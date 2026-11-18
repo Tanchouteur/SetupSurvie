@@ -267,9 +267,12 @@ proviennent uniquement des résultats réels. Un titre n’est pas une parole
 consultée : pour résumer une vidéo, l’assistant doit lire ses sous-titres comme
 un document. Une vidéo sans piste reste proposée par son titre seulement.
 
-Ces comportements sont vérifiés par des tests sur un moteur simulé. La qualité des
-réponses d’un vrai modèle (choix des mots, présentation des liens) reste à mesurer
-sur les PC cibles.
+Depuis 0.43.1, si la demande porte sur un sujet, l’assistant lit d’abord les
+sous-titres exploitables des vidéos trouvées : il peut répondre sur leur contenu,
+sans demander de confirmation. Les liens mal écrits par le modèle sont réparés, et
+les liens réels restent affichés si sa réponse est rejetée. Ce parcours a été essayé
+avec de vrais modèles sur des vidéos fictives ([bilan](../essais/2026-11-18-demandes-videos-modele-reel.md)) ;
+il reste à essayer avec le modèle et le fonds de Marc.
 
 ## Utilisation des paroles par l’assistant
 
