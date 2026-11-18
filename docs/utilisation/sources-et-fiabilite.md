@@ -104,7 +104,7 @@ La [référence de recherche](recherche-documentaire.md) décrit le classement
 commun et la préparation des demandes documentaires depuis 0.1.36. Un classement
 élevé ne transforme pas un article général en procédure validée.
 
-Depuis 0.49.4, si le contrôle des références ne peut pas relier la réponse
+Depuis 0.50.1, si le contrôle des références ne peut pas relier la réponse
 aux passages lus, l’assistant conserve son texte et affiche **Références à
 vérifier** au début. Les citations inconnues ou renvoyant à des résultats
 non lus sont signalées. Les documents effectivement lus restent accessibles
