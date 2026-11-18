@@ -383,12 +383,30 @@ class EvidenceTests(unittest.TestCase):
         self.assertIs(payloads[0]['think'],True);self.assertIs(payloads[1]['think'],False)
         self.assertEqual(payloads[0]['model'],payloads[1]['model'])
 
-    def test_failed_reference_revision_returns_actual_excerpts_without_certifying_summary(self):
-        with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
-        _,answer=self.run_chat([{'content':'Source inventée [99].'},{'content':'Encore inventée [99].'}],[self.a],expected_status='incomplete')
-        self.assertIn('ne constituent pas une synthèse validée',answer['content'])
-        self.assertIn(self.a['text'],answer['content']);self.assertNotIn('[99]',answer['content'])
-        self.assertEqual(assistant_metrics.read('j')['failure'],'citation_check')
+    def test_failed_reference_revision_preserves_answer_with_only_one_source_read(self):
+        question = 'faire secher ses fruits pour les conserver'
+        with store.connect() as db:
+            db.execute("UPDATE messages SET content=? WHERE role='user'", (question,))
+        passage = {**self.a, 'title': 'Guide fictif sur le séchage', 'text': 'Passage fictif sur les fruits séchés.'}
+
+        _, answer = self.run_chat([
+            {'content':'Le document décrit le séchage [1]. Autre détail [99]. Autre source [guide:inconnue.pdf].'},
+            {'content':'{"citations":[{"fragment_id":"f1","source_number":99}]}'},
+        ], found=[passage], read=lambda _: passage, expected_status='incomplete')
+
+        self.assertTrue(answer['content'].startswith('**Références à vérifier.**'))
+        self.assertIn('Le document décrit le séchage [1]. Autre détail [référence non vérifiée].', answer['content'])
+        self.assertIn('Autre source [référence non vérifiée].', answer['content'])
+        self.assertNotIn('[99]', answer['content'])
+        self.assertNotIn('guide:inconnue.pdf', answer['content'])
+        self.assertEqual([source['id'] for source in answer['sources']], [passage['id']])
+        self.assertEqual(answer['documentary']['results'], 1)
+        self.assertEqual(answer['documentary']['sources_read'], 1)
+        with store.connect() as db:
+            job = db.execute("SELECT answer,error FROM jobs WHERE id='j'").fetchone()
+        self.assertEqual(job['answer'], answer['content'])
+        self.assertIn('Réponse conservée', job['error'])
+        self.assertEqual(assistant_metrics.read('j')['failure'], 'citation_check')
 
     def test_missing_link_format_keeps_useful_original_prose_with_a_clear_limit(self):
         with store.connect() as db:db.execute("UPDATE messages SET content='Fais une synthèse des documents sur le compost' WHERE role='user'")
