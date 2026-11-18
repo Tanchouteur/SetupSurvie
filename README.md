@@ -23,8 +23,12 @@ depuis leur original ou Mon appareil. Le
 [retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
 les données récentes et une référence de la version précédente.
 
-Au **18 novembre 2026**, le pilote **0.49.3** propose une recherche locale avec
-indexation automatique, deux espaces documentaires et diagnostic exportable.
+Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le navigateur
+du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
+[guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
+
+Au **18 novembre 2026**, le pilote propose une recherche locale avec indexation
+automatique, deux espaces documentaires et diagnostic exportable.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
 valides pour le même état du fonds, avec budget disque ajustable. Des outils
 volontaires permettent aussi d’inventorier les vidéos/sous-titres locaux ou inclus dans les collections ZIM et de

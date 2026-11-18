@@ -1,5 +1,12 @@
 # Choix et contraintes actuels
 
+## Carte sur téléphone hors du réseau de la maison — 18 novembre 2026
+
+Louis demande de pouvoir rouvrir la carte sur son téléphone après fermeture du
+navigateur et départ de la maison. La 0.50.0 ajoute le téléchargement explicite
+d’un fond par zone depuis le serveur en HTTPS. Le [guide des cartes](../utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone)
+décrit l’ouverture par favori et les données qui restent sur le serveur.
+
 ## Finition Veillée — 18 novembre 2026
 
 Louis demande une jauge intégrée à la navigation, des actions lisibles, un
