@@ -71,7 +71,7 @@
   .resource-status-chevron { font-size: 16px; }
 }
 
-@media screen and (min-width: 1001px) and (max-width: 1280px) and (min-height: 501px) {
+@media screen and (min-width: 1001px) and (max-width: 1400px) and (min-height: 501px) {
   .next-interface #main-navigation .resource-status,
   .map-site-nav .resource-status { flex: 0 1 220px; min-width: 198px; gap: 5px; padding-inline: 7px; }
   .resource-status-meters { padding-left: 5px; gap: 5px; }
