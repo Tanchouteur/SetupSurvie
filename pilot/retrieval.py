@@ -36,6 +36,14 @@ def search_subject(query):
     return tail if changed else query
 
 
+def author_subject(query):
+    """Retrieve the named work before answering who wrote it or what it is about."""
+    match=re.fullmatch(r'(?:qui a ecrit|who wrote) (.+?)'
+                       r'(?: et (?:ca raconte quoi|de quoi (?:ca|il|elle) parle|quel est (?:le sujet|le resume))'
+                       r'| and what is (?:it|the book) about)?',normal(query))
+    return match[1] if match else ''
+
+
 class NormalCache:
     """Per-search normalization, discarded after completion; no stale global text."""
     MAX_BYTES=32_000_000

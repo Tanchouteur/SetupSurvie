@@ -181,6 +181,11 @@ l’agent et acceptés par Louis :
 
 ### Fonds réduit et fonds de Marc
 
+Le [premier essai différentiel sur le R7](2026-11-18-fiabilite-documentaire-r7.md)
+compare des fiches présentes, absentes ou jointes dans un fonds de test.
+Il isole des défauts de recherche et de consultation sur quelques cas de la
+banque. La campagne complète sur le fonds réel reste à exécuter.
+
 L’installation de test sur Bazzite est limitée à 300 Go ; Marc a 753 Go.
 Les résultats sur Bazzite évaluent le moteur et les modèles sur un fonds réduit.
 Ils ne prouvent pas le comportement chez Marc. **Décision du 17 novembre 2026 :**
@@ -298,7 +303,8 @@ fonds réduit, et dans le fonds de Marc ? Les trous trouvés par l’évaluation
 
 ## 13. Outillage à construire (après feu vert, code)
 
-Rien n’est écrit pour l’instant ; liste de ce dont l’agent aura besoin :
+Le premier script comparatif est documenté dans le bilan R7. Voici l’outillage
+prévu pour la campagne complète :
 
 1. **Lanceur de campagne IA** (`tests/evaluation/run_campaign.py`) : lit la banque,
    pilote l’API d’une installation de test par tunnel SSH, reprend après coupure,

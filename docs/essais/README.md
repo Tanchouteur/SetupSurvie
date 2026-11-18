@@ -1,6 +1,7 @@
 # Essais et résultats
 
 - [Refonte du design « Veillée » — 0.44.0](2026-11-18-refonte-design-veillee.md) — captures, tailles d’écran, accès rapide, limites.
+- [Fiabilité documentaire sur le R7](2026-11-18-fiabilite-documentaire-r7.md) — comparaison avec et sans fiche et [contre-épreuve 0.43.5](2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435).
 - [Téléchargement YouTube réel — 0.43.4](2026-11-18-youtube-reel-bazzite-windows.md) — Bazzite, pause et reprise, contrôle Windows.
 - [Demandes de vidéos avec de vrais modèles — 0.43.4](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
 
@@ -23,7 +24,7 @@
 - [Projets dépliables et volet redimensionnable — 0.38.0](2026-11-17-projets-assistant.md) — comportement, essais et limites.
 
 - [Formules conservées dans les sources et traductions — 0.37.3](2026-11-17-formules-documentaires.md) — équations extraites, calcul réel et contrôles de fidélité limités.
-- [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de questions et modes dégradés, 17 novembre 2026, non exécutée.
+- [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de 89 questions, modes dégradés et premier essai ciblé.
 - [Installation neuve et transfert entre SSD sur Bazzite](plan-installation-neuve-et-transfert-bazzite.md) — protocole du 17 novembre 2026, non exécuté.
 
 - [Recherche et assistant sur Bazzite — 0.37.1](2026-11-17-assistant-bibliotheque-bazzite.md) — corrections issues de demandes réelles, travaux et sous-titres.

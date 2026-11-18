@@ -9,6 +9,15 @@ une identité tirée du logo à tout le portail. Les règles sont dans
 Les choix de palette, de polices et l’accès rapide sont des propositions de l’agent,
 à confirmer par Louis et par les retours de Marc.
 
+## Fiabilité documentaire — 18 novembre 2026
+
+À la suite de la première vague sur le R7, Louis demande de corriger les
+problèmes reproduits. La 0.43.5 améliore la recherche sur les demandes
+formulées en phrases et prépare des passages pour certaines demandes de
+planning ou d’identification d’une œuvre. Le
+[bilan du R7](../essais/2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435)
+conserve les résultats avant et après.
+
 ## Démarrage du moteur avec SetupSurvie — 18 novembre 2026
 
 Louis demande que l’assistant soit prêt lorsque SetupSurvie démarre avec le PC.

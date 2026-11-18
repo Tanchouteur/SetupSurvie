@@ -33,6 +33,12 @@ ses formules ne peut pas les retrouver sans réextraction de son original.
 
 ## Aide générale lorsque les sources ne suffisent pas — 0.38.1
 
+Depuis 0.43.5, l’assistant cherche et lit des passages dès la préparation de
+certaines demandes de planning et d’identification d’une œuvre. Si la
+recherche ne fournit aucun passage utile, ses consignes lui demandent
+d’indiquer cette limite et lui permettent de proposer une aide générale.
+[Bilan de l’essai sur le R7](../essais/2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435)
+
 Pour une explication, une idée ou une organisation familiale, l’assistant peut
 répondre avec ses **connaissances générales**, en le signalant clairement.
 Une recherche sans passage utile ne doit pas provoquer un refus automatique.
