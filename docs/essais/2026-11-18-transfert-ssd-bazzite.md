@@ -43,9 +43,9 @@ contrôlées**, **deux liens de manifeste** et une archive des images Docker de
 **5 117 729 792 octets**. Le contrôle de préparation et la validation de
 l’activation sont des étapes distinctes.
 
-La suite de développement a exécuté **1 096 tests**, avec **33 ignorés** et
-aucun échec. La suite ciblée après la dernière révision du transfert a exécuté
-**38 tests**, avec **3 ignorés** réservés à Windows. Elle inclut le contrôle
+La suite avant la correction des permissions a compté **1 096 tests**,
+dont **33 ignorés**, sans échec. La suite ciblée après la dernière révision du transfert a exécuté
+**38 tests**, dont **3 ignorés** réservés à Windows, sans échec. Elle inclut le contrôle
 d’un lien Ollama copié, le refus d’une cible externe et l’exclusion contrôlée
 de l’environnement Python YouTube.
 
@@ -60,3 +60,21 @@ Kiwix, les profils, la recherche et le PDF de la loi d’Ohm, la lecture PMTiles
 les listes de traductions et de vidéos, yt-dlp, Deno et FFmpeg ont répondu. Les
 comptages des tables contrôlées des deux bases source et destination concordent.
 Les règles temporaires ont été retirées après la recette.
+
+La version **0.45.1** a ensuite été installée sur le Crucial par le parcours
+de mise à jour et relancée via une unité systemd utilisateur dédiée, activée
+au démarrage. L’ancien démarrage automatique a été désactivé. Une seconde
+recette a combiné le blocage d’Internet dans les sept conteneurs et le
+renommage temporaire du dossier de données source. Tous les contrôles
+documentaires ci-dessus ont répondu, dont le nouveau contrôle Kiwix. Le
+catalogue complet annonce **58 archives**. Un navigateur Chromium a ouvert
+le portail par l’adresse IPv4 du LAN. Le dossier source et les règles réseau
+ont été remis en place, et l’inhibiteur temporaire de veille a été retiré.
+
+La copie reste en service sur le Crucial avec l’assistant arrêté et le
+contrôleur joignable. L’archive des images et la source sont conservées.
+Le démon Docker rootless et son espace de stockage restent sur le SSD
+système. Le scénario couvre la relance du service et l’absence du dossier
+de données source. Le redémarrage physique du PC, le retrait du SSD système,
+le retour applicatif à la source sur cette installation, l’iPhone et
+l’inférence réelle restent à vérifier dans des recettes dédiées.
