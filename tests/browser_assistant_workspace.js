@@ -7,7 +7,14 @@ async page=>{
  await page.locator('#assistant-folder-create').click();await page.locator('#assistant-editor input').fill('Potager '+Date.now());await page.locator('#assistant-editor button[type=submit]').click();
  await page.locator('#assistant-editor').waitFor({state:'hidden'});await page.waitForFunction(()=>!history.state?.dialog);
  check(true,'Dossier personnel créé depuis le volet');
- await page.locator('#chat-input').fill('Question fictive de classement');await page.locator('#chat-form').evaluate(n=>n.requestSubmit());await page.waitForFunction(()=>!!S.conversation&&!S.job);
+ await page.locator('#chat-reset').click();
+ await page.locator('#chat-input').fill('Question fictive de classement');
+ const sent=page.waitForResponse(response=>response.url().endsWith('/api/questions')&&response.request().method()==='POST');
+ await page.locator('#send-question').click();
+ const response=await sent;
+ check(response.ok(),'La question fictive est acceptée : HTTP '+response.status());
+ const question=await response.json();
+ await page.waitForFunction(id=>S.conversation===id&&!S.sending&&!S.job,question.conversation_id);
  const id=await page.evaluate(()=>S.conversation),title='Mes semis '+Date.now();
  const row=page.locator('#conversation-list .conversation-row').filter({has:page.getByRole('button',{name:'Question fictive de classement',exact:true})});
  await row.locator('summary').click();await row.getByRole('button',{name:'Renommer',exact:true}).click();await page.locator('#assistant-editor input').fill(title);await page.locator('#assistant-editor button[type=submit]').click();

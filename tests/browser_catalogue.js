@@ -49,7 +49,8 @@ async page => {
     await dialog.getByRole('button',{name:'Enregistrer les noms',exact:true}).click();await dialog.waitFor({state:'hidden'});
     await page.waitForFunction(id=>[...document.querySelectorAll('#data-books .data-card')].find(n=>n.dataset.collectionId===id)?.dataset.family==='Groupe de recette',id);
   }
-  const group=page.locator('.next-collection-group').filter({hasText:'Groupe de recette'});await group.evaluate(e=>e.open=true);await page.waitForTimeout(80);
+  const group=page.locator('.next-collection-group').filter({hasText:'Groupe de recette'});
+  if(!await group.evaluate(e=>e.open))await group.locator('summary').first().click();
   check(await group.count()===1&&await group.locator('.data-card').count()===2,'Collections renommées réunies sous le même groupe');
   check(await page.locator('[data-collection-id="'+books[0]+'"]').getByRole('link',{name:'Ouvrir cette collection →',exact:true}).getAttribute('href')===original,'Lien d’ouverture inchangé après renommage');
   await page.reload();await group.waitFor();await page.waitForFunction(()=>[...document.querySelectorAll('.next-collection-group')].find(e=>e.textContent.includes('Groupe de recette'))?.open);
