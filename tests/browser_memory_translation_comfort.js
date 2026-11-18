@@ -87,12 +87,16 @@ async page=>{
  check(await page.locator('#map-sidebar').isVisible(),'Les outils cartographiques sont conservés');
  for(const width of [1440,1024,390,320]){
    await page.setViewportSize({width,height:900});
-   check(await page.locator('.map-site-nav').evaluate(header=>{
-     const nav=header.querySelector('nav');
-     return document.documentElement.scrollWidth<=innerWidth&&nav.scrollWidth<=nav.clientWidth&&
-       [...nav.children].every(link=>link.getBoundingClientRect().right<=innerWidth)&&
-       (innerWidth>760||[...nav.children].every(link=>link.getBoundingClientRect().height>=44));
-   }),'Navigation des cartes entièrement visible à '+width);
+   const layout=await page.locator('.map-site-nav nav').evaluate(nav=>{
+     const links=[...nav.children].map(link=>link.getBoundingClientRect());
+     return {
+       fits:document.documentElement.scrollWidth<=innerWidth&&nav.scrollWidth<=nav.clientWidth&&
+         links.every(link=>link.right<=innerWidth),
+       minHeight:Math.min(...links.map(link=>link.height)),
+     };
+   });
+   check(layout.fits,'Navigation des cartes entièrement visible à '+width);
+   if(width<=760)check(layout.minHeight>=44,`Cibles tactiles des cartes à ${width} px : ${layout.minHeight} px, minimum 44 px`);
  }
  await page.locator('.map-site-nav').getByRole('link',{name:'Bibliothèque',exact:true}).click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.view==='library');
  check(true,'Retour direct des cartes vers la bibliothèque');

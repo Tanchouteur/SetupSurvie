@@ -27,6 +27,20 @@ class NextPortalTests(unittest.TestCase):
         self.assertLess(next(i for i,s in enumerate(new.scripts) if s.startswith('/nouveau/layout.js')), next(i for i,s in enumerate(new.scripts) if s.startswith('/app.js')))
         self.assertTrue(new.scripts[-1].startswith('/nouveau/navigation.js'))
 
+    def test_design_assets_are_local_licensed_and_loaded_last(self):
+        design=ROOT/'portal/design'
+        for name in ('tokens.css','system.css','pages.css'):
+            without_svg=(design/name).read_text().replace('http://www.w3.org/2000/svg','')
+            self.assertNotIn('http://',without_svg,name);self.assertNotIn('https://',without_svg,name)
+        for font in ('fraunces-latin-wght','atkinson-next-latin-wght','atkinson-next-latin-wght-italic'):
+            self.assertEqual((design/'fonts'/(font+'.woff2')).read_bytes()[:4],b'wOF2')
+        for licence in ('LICENSE-Fraunces.txt','LICENSE-Atkinson-Hyperlegible-Next.txt'):
+            self.assertIn('SIL Open Font License',(design/'fonts'/licence).read_text())
+        html=(ROOT/'portal/index.html').read_text()
+        self.assertGreater(html.index('/design/system.css'),html.index('/nouveau/motion.css'))
+        for page in ('cartes.html','pdf.html','secours.html','suivi-copie.html'):
+            self.assertIn('/design/pages.css',(ROOT/'portal'/page).read_text(),page)
+
     def test_classic_has_its_own_scripts_and_styles_and_shared_reader_assets(self):
         text=(ROOT/'portal/classique/index.html').read_text()
         for name in ('app.js','documents.js','settings.js','style.css'):

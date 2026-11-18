@@ -6,9 +6,9 @@
   .map-site-brand img { object-fit: contain; }
   .map-site-nav nav { display: flex; justify-content: center; flex: 1; gap: 4px; min-width: 0; }
   .map-site-nav nav a { display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 6px 10px; white-space: nowrap; border-radius: 8px; font-size: 14px; }
-  .map-site-nav nav a:hover { background: #f0f3ec; }
+  .map-site-nav nav a:hover { background: #f4f1eb; }
   .map-site-nav nav a:focus-visible { outline: 2px solid #875016; outline-offset: 2px; }
-  .map-site-nav nav a[aria-current=page] { background: #e8f0e8; font-weight: 650; }
+  .map-site-nav nav a[aria-current=page] { background: #f1eee7; font-weight: 650; }
   .map-site-nav .map-header { border: 0; padding: 0; gap: 8px; min-width: 0; background: none; }
   .map-site-nav #map-account { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
   .map-site-nav .map-header .back-link, .map-site-nav .map-header .offline-badge { display: none; }

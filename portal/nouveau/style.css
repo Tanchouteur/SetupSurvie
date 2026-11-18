@@ -15,8 +15,8 @@ body.next-interface {
   gap: 14px;
   min-height: 52px;
   padding: 10px 24px;
-  background: #e8edde;
-  color: #35513a;
+  background: #eee8dd;
+  color: #4e4239;
   font-size: 12px;
 }
 .next-banner span {
@@ -334,7 +334,7 @@ body.next-interface {
   .next-interface .next-mobile-note {
     display: block;
     padding: 12px;
-    border-left: 3px solid #aac19e;
+    border-left: 3px solid #bfb1a0;
     background: var(--soft);
     font-size: 13px;
   }
@@ -536,7 +536,7 @@ body.next-interface {
 }
 .catalogue-editor {
   margin-top: 1.5rem;
-  border-top: 1px solid var(--line, #dce3d7);
+  border-top: 1px solid var(--line, #e5e0d5);
   padding-top: 1rem;
 }
 .catalogue-editor form,
@@ -587,10 +587,10 @@ body.next-interface {
   min-height: 0;
   margin: 0.2rem 0 0;
   padding: 0;
-  accent-color: #285b45;
+  accent-color: #55402e;
 }
 .catalogue-editor fieldset {
-  border: 1px solid var(--line, #dce3d7);
+  border: 1px solid var(--line, #e5e0d5);
   border-radius: 0.6rem;
   padding: 0.8rem;
 }
@@ -839,7 +839,7 @@ body.next-interface {
   border: 1px solid var(--line);
   border-radius: 10px;
   z-index: 90;
-  box-shadow: 0 8px 24px #203e3415;
+  box-shadow: 0 8px 24px #3a2e2415;
 }
 @media (min-width: 761px) {
   .next-interface .sidebar {

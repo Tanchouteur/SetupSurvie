@@ -31,7 +31,13 @@ async page=>{
     for(let n=0;n<100;n++){result=await(await page.request.get(base+'/api/admin/video-transcriptions/'+job.id+'/report')).json();if(result.translation_job)break;await new Promise(r=>setTimeout(r,100));}
     check(result.units_done===2&&!!result.translation_job,'La reprise termine l’audio et lance la préparation française choisie');
     await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('Piste française préparée'),result.translation_job);
-    const found=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();const hit=found.results.find(row=>row.id.startsWith(job.video_id));
+    // Publication and search indexing finish independently.
+    let hit;
+    for(let n=0;n<100&&!hit;n++){
+      const found=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();
+      hit=found.results.find(row=>row.id.startsWith(job.video_id+'#t='));
+      if(!hit)await new Promise(resolve=>setTimeout(resolve,100));
+    }
     check(!!hit,'Les nouvelles paroles françaises sont retrouvées dans le moteur commun');
     await page.evaluate(id=>readSource(id),hit.id);const player=page.locator('#reader video');await player.waitFor();await player.evaluate(v=>v.play());
     await page.waitForFunction(()=>{const video=document.querySelector('#reader video');return video?.videoWidth===96&&[...video.textTracks].some(track=>track.language==='fr'&&track.mode==='showing'&&track.cues?.length===2);});await player.evaluate(v=>v.pause());

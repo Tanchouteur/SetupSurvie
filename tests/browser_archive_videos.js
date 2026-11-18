@@ -35,7 +35,13 @@ async page=>{
     const preparing=page.waitForResponse(response=>response.url().endsWith('/api/admin/video-captions')&&response.request().method()==='POST');
     await refreshed.getByRole('button',{name:'Traduire les sous-titres'}).click();const job=await(await preparing).json();
     await page.waitForFunction(id=>document.querySelector('[data-caption-job="'+id+'"]')?.textContent.includes('Piste française préparée'),job.id);
-    const french=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();const translated=french.results.find(row=>row.archive_video);
+    // Publication and search indexing finish independently.
+    let translated;
+    for(let n=0;n<100&&!translated;n++){
+      const french=await(await page.request.get(base+'/api/search?q=roulement&language=fr&domain=all')).json();
+      translated=french.results.find(row=>row.archive_video&&row.id.split('&track=')[0]===hit.id.split('&track=')[0]);
+      if(!translated)await new Promise(resolve=>setTimeout(resolve,100));
+    }
     check(!!translated,'La piste française préparée rejoint le même moteur de recherche');
     await page.evaluate(id=>readSource(id),translated.id);await player.waitFor();await player.evaluate(v=>v.play());
     await page.waitForFunction(()=>{const v=document.querySelector('#reader video');return [...v.textTracks].some(t=>t.language==='fr'&&t.mode==='showing'&&t.cues?.length===1);});await player.evaluate(v=>v.pause());

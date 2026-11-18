@@ -1,5 +1,14 @@
 # Choix et contraintes actuels
 
+## Refonte du design « Veillée » — 18 novembre 2026
+
+Louis demande une refonte du design sans changement de fonctions, avec le champ
+libre sur l’expérience tant que l’existant n’est pas dégradé. La 0.44.0 applique
+une identité tirée du logo à tout le portail. Les règles sont dans
+[composants et présentation](../architecture/composants-interface.md#direction-visuelle--veillée--0440).
+Les choix de palette, de polices et l’accès rapide sont des propositions de l’agent,
+à confirmer par Louis et par les retours de Marc.
+
 ## Fiabilité documentaire — 18 novembre 2026
 
 À la suite de la première vague sur le R7, Louis demande de corriger les

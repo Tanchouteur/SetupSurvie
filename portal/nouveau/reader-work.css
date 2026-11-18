@@ -64,19 +64,19 @@
 }
 .reader-work {
   --ux-radius: 0.625rem;
-  --line: #cad6cc;
+  --line: #d8d3c8;
 }
 #pdf-translation-work {
   width: min(64rem, calc(100vw - 2rem));
   max-height: 90dvh;
   overflow: auto;
-  border: 1px solid #829487;
+  border: 1px solid #938c83;
   border-radius: 0.625rem;
   background: #faf9f3;
-  color: #20362b;
+  color: #332a23;
 }
 #pdf-translation-work::backdrop {
-  background: #12291e88;
+  background: #261d1588;
 }
 #pdf-translation-work button,
 #pdf-translation-work select,
@@ -105,6 +105,6 @@
 }
 .reader-work, .reader-work #reader-work-parts { min-width: 0; }
 .reader-work .translation-part { max-width: 80ch; margin: 1.5rem 0; }
-.reader-work .translation-part h4 { font-size: 0.9rem; color: #566a5d; }
-.reader-work .translation-part > .small { color: #566a5d; }
+.reader-work .translation-part h4 { font-size: 0.9rem; color: #686058; }
+.reader-work .translation-part > .small { color: #686058; }
 .reader-work .translation-text pre { white-space: pre; overflow-wrap: normal; font: revert; }
