@@ -22,7 +22,7 @@ class WindowsRecoveryTests(unittest.TestCase):
         state=json.loads((self.app.work/'content-resume.json').read_text())
         self.assertEqual(state['sha256'],setup.file_hash(self.plan));self.assertEqual(state['jobs'],2)
         self.assertFalse((self.app.work/'inference-paused.json').exists())
-        self.assertFalse(self.app.load()['inference_autostart'])
+        self.assertNotIn('inference_autostart',self.app.load())
         self.assertTrue((self.root/'maintenance/windows_resume.py').is_file())
     def test_existing_supervisor_is_not_disturbed_or_metadata_replaced(self):
         marker=self.data/'diagnostics/bibliotheque-transfer.json'
@@ -61,6 +61,8 @@ class WindowsRecoveryTests(unittest.TestCase):
             self.assertEqual(windows_resume.run(self.app.work),'complete')
         download.assert_not_called()
     def test_login_sets_pause_but_keeps_existing_gaming_reason(self):
+        config=self.app.load();config['inference_autostart']=False
+        setup.write_json(self.app.settings_path,config)
         windows_resume.prepare_login(self.app.work)
         marker=self.app.work/'inference-paused.json';self.assertTrue(marker.exists())
         setup.write_json(marker,{'reason':'gaming'})
@@ -68,7 +70,7 @@ class WindowsRecoveryTests(unittest.TestCase):
         self.assertEqual(json.loads(marker.read_text()),{'reason':'gaming'})
     def test_persistent_no_autostart_policy_keeps_services_without_native_ai(self):
         import control,discovery
-        config=self.app.load()
+        config={**self.app.load(),'inference_autostart':False}
         with patch.object(self.app,'catalog'),patch.object(control,'start'),patch.object(discovery,'start'),patch.object(self.app,'start_native') as native,patch.object(self.app,'compose') as compose:
             self.app.up(config)
         native.assert_not_called()

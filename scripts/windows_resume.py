@@ -43,12 +43,8 @@ def configure(work_dir, selection, jobs=2):
         raise ValueError('Plan figé Kiwix non reconnu.')
     if not content.catalog(plan):raise ValueError('Sélection vide.')
     state={'schema':1,'enabled':True,'selection':str(plan),'sha256':setup.file_hash(plan),
-           'data_dir':str(root),'jobs':jobs,'inference_autostart':False}
+           'data_dir':str(root),'jobs':jobs}
     setup.write_json(app.work/'content-resume.json',state,private=True)
-    # This durable preference is used by setup.up from 0.1.27. The login
-    # wrapper also supports older installed launchers with the pause marker.
-    config['inference_autostart']=False
-    setup.write_json(app.settings_path,config,private=True)
     stable=Path(config['app_dir']).parent/'maintenance/windows_resume.py'
     stable.parent.mkdir(parents=True,exist_ok=True)
     source=Path(__file__).resolve()

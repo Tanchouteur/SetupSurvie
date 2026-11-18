@@ -1,5 +1,17 @@
 # Choix et contraintes actuels
 
+## Démarrage du moteur avec SetupSurvie — 18 novembre 2026
+
+Louis demande que l’assistant soit prêt lorsque SetupSurvie démarre avec le PC.
+Depuis 0.43.1, les nouvelles installations Windows ne désactivent plus le moteur
+et la mise à jour d’un démarrage Windows géré corrige l’ancien réglage automatique.
+Sous Linux, le service automatique démarre aussi le moteur : un redémarrage réel
+sur Bazzite l’a montré en ligne le 17 novembre 2026, sans génération de test.
+Les pauses explicites, notamment le mode jeu, restent actives. Windows démarre à
+l’ouverture de session si le démarrage automatique est activé ; la disponibilité
+de l’IA dépend du démarrage réussi du moteur et de ses modèles. Essai Windows à
+froid non réalisé.
+
 ## Installation Linux neuve — recette du 17 novembre 2026
 
 Le parcours Docker dédié sur Bazzite est en service. Louis confirme de terminer
@@ -540,7 +552,9 @@ Le 13 novembre 2026, Marc autorise la reprise Windows de son plan documentaire
 sans démarrage IA et sans interrompre le transfert actif. La 0.1.27 prépare une
 tâche limitée, vérifiée par un test HTTPS sous le compte cible, et conserve une
 pause volontaire. Le mode `inference_autostart: false` laisse le moteur sur
-commande explicite. Les modifications de pare-feu et le créneau Windows Update
+commande explicite. Cette ancienne valeur automatique est migrée en 0.43.1 selon
+la demande de Louis du 18 novembre ; les pauses explicites restent conservées.
+Les modifications de pare-feu et le créneau Windows Update
 18 h–midi sont propres à cette activation autorisée. Voir le
 [guide de reprise Windows](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127).
 

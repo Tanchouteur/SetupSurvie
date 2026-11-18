@@ -38,11 +38,9 @@ def prepare(app,config,*,python=None,find=shutil.which,preserve_preferences=Fals
         if candidate.is_file():desktop=str(candidate)
     state={'schema':1,'kind':'SetupSurvie managed Windows startup','work_dir':str(app.work.resolve()),
            'python':str(executable),'ollama':find('ollama') or (str(data/'tools/Ollama/ollama.exe') if (data/'tools/Ollama/ollama.exe').is_file() else None),'paths':list(dict.fromkeys(paths)),'desktop':desktop,
-           'task_name':'SetupSurvie-Demarrage-'+hashlib.sha256(str(app.work.resolve()).casefold().encode()).hexdigest()[:8]}
+           'task_name':'SetupSurvie-Demarrage-'+hashlib.sha256(str(app.work.resolve()).casefold().encode()).hexdigest()[:8],
+           'inference_default_migrated':True}
     setup.write_json(previous,state,private=True)
-    if not preserve_preferences:
-        config={**config,'inference_autostart':False}
-        setup.write_json(app.settings_path,config,private=True)
     for name in ('windows_background.py','startup-windows.ps1','stop-windows.ps1','windows-common.ps1','register-startup-windows.ps1','content-monitor.ps1','windows_resume.py','register-windows-resume.ps1','start-without-inference.ps1'):
         origin=setup.ROOT/'scripts'/name;target=destination(stable,name)
         if origin.resolve()==target.resolve():continue
@@ -56,6 +54,20 @@ def refresh(app,config):
     if config.get('target')!='windows' or not config.get('app_dir'):return
     stable=setup.safe_path(config['app_dir']).parent/'maintenance'
     if not (stable/'startup-settings.json').is_file():return
+    # Older managed launchers set this preference automatically. Migrate it
+    # once; explicit pause markers (including gaming and failed starts) remain.
+    saved=json.loads((stable/'startup-settings.json').read_text(encoding='utf-8'))
+    if saved.get('schema')!=1 or saved.get('kind')!='SetupSurvie managed Windows startup' or setup.safe_path(saved['work_dir'])!=app.work.resolve():
+        raise setup.SetupError('Un autre démarrage utilise déjà ce dossier de maintenance.')
+    if (app.work/'transfer-guard.json').exists():return
+    if not saved.get('inference_default_migrated') and config.get('inference_autostart') is False:
+        marker=app.work/'inference-paused.json'
+        if marker.is_file():
+            try: reason=json.loads(marker.read_text(encoding='utf-8')).get('reason')
+            except (OSError,ValueError,AttributeError): reason=None
+            if reason=='windows_no_inference_autostart':marker.unlink()
+        config={**config,'inference_autostart':True}
+        setup.write_json(app.settings_path,config,private=True)
     launcher=prepare(app,config,preserve_preferences=True)
     if os.name=='nt':
         shell=shutil.which('powershell.exe')

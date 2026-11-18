@@ -200,9 +200,10 @@ a échoué ; un site déjà sain à la version installée n’est pas redémarr�
 ne dépend pas de `Docker/install-settings.json`, fichier qui peut disparaître.
 Les outils portables sur le disque de données restent trouvables après redémarrage.
 
-La préférence `inference_autostart: false` est enregistrée : les services
-s’ouvrent sans lancer le moteur IA. L’utilisateur peut démarrer l’IA depuis le
-portail. La pause du mode jeu est conservée. Seul le raccourci de démarrage
+Depuis 0.43.1, le moteur IA démarre avec les services. La mise à jour d’un
+démarrage géré remplace l’ancien réglage automatique `inference_autostart: false`
+par le démarrage actif ; une pause explicite, notamment le mode jeu, reste respectée.
+Le site peut être accessible avant que le moteur soit prêt. Seul le raccourci de démarrage
 Ollama correspondant exactement à l’exécutable utilisé est déplacé hors du
 dossier Startup, avec conservation d’une copie ; les autres installations sont
 laissées en place. Les modèles nécessaires à l’installation peuvent toujours
