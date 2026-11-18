@@ -131,6 +131,38 @@ transfer.transfer(setup.Installation(sys.argv[2]),Path(sys.argv[3]),stop_context
         with self.assertRaisesRegex(setup.SetupError,'non identifié'):
             transfer.inventory({'data':self.data})
 
+    def test_report_distinguishes_moved_docker_data_from_backend_on_source(self):
+        def disk(number):
+            return {'known':True,'disk':number,'filesystem':'NTFS'}
+
+        evidence={key:[{'path':f'private-{key}-path','physical_disk':disk(number)}]
+                  for key,number in {'backend':1,'registration':1,'data_images':2,'wsl_system':2}.items()}
+        host={'source':disk(1),'destination':disk(2),'docker_evidence':evidence,'observed_at':123}
+        inventory={'files':[]}
+        self.dest.mkdir(parents=True)
+        transfer.export_report(self.dest,{'target':'windows','phase':'active','inventory':inventory,
+                                         'host':{},'docker_last_check':host})
+        report=transfer.read(self.dest/'Rapport-transfert.json')
+        placement=report['storage']['docker_placement']
+        self.assertEqual(placement,{'observed_at':123,'components':{
+            'backend':'source','registration':'source','data_images':'destination','wsl_system':'destination',
+        }})
+        self.assertNotIn('private-backend-path',json.dumps(report))
+        self.assertFalse(report['storage']['docker_moved'])
+        host['destination']=disk(1)
+        self.assertEqual(transfer.docker_placement(host)['components']['backend'],'same_disk')
+        evidence['data_images']+=evidence['backend']
+        self.assertEqual(transfer.docker_placement(host)['components']['data_images'],'multiple')
+        self.assertEqual(transfer.docker_placement({})['components']['backend'],'unknown')
+
+    def test_frozen_inventory_accepts_only_new_empty_wal_for_existing_base(self):
+        base={'path':'data/state/pilot.db','bytes':4096}
+        wal={'path':'data/state/pilot.db-wal','bytes':0}
+        self.assertTrue(transfer.matches_frozen_inventory([base,wal],[base]))
+        self.assertFalse(transfer.matches_frozen_inventory([base,{**wal,'bytes':32}],[base]))
+        self.assertFalse(transfer.matches_frozen_inventory([base],[base,wal]))
+        self.assertFalse(transfer.matches_frozen_inventory([base,{**wal,'path':'orphan-wal'}],[base]))
+
     def test_retries_return_after_source_is_unlocked_before_final_journal_write(self):
         self.copy()
         real_save=transfer.save

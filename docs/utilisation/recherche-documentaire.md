@@ -19,6 +19,14 @@ Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/
 Le rechargement relance une seule fois la recherche mémorisée avec ses filtres.
 Une formule comme « faire du feu dans Wikipédia » peut également cibler cette source.
 
+Dans un même onglet, revenir d'un document ou utiliser Précédent et Suivant
+retrouve les résultats déjà reçus sans relancer la même recherche. Ils restent en
+mémoire temporaire, séparés par profil et par filtres ; changer de profil les
+efface. Une nouvelle recherche interrompt une recherche encore en cours et en
+conserve les résultats partiels avec un avertissement. Le bouton de recherche
+permet de relancer explicitement pour actualiser les résultats ; recharger ou
+fermer l'onglet efface cette mémoire temporaire.
+
 **« Recherche en cours — aucun résultat pour le moment »** signifie que les
 collections sont encore interrogées. Ce n'est pas une conclusion d'absence de
 document. Les résultats arrivent progressivement ; on peut déjà les lire.

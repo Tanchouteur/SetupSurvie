@@ -52,7 +52,7 @@ def build():
         ('js', '/nouveau/motion.js', '0.37.2'),
         ('css', '/resource-status.css', '0.43.2'),
         ('js', '/resource-status.js', '0.43.2'),
-        ('js', '/nouveau/navigation.js', '0.40.0'),
+        ('js', '/nouveau/navigation.js', '0.43.3'),
     ]
     tags = []
     for kind, path, version in assets:
@@ -63,7 +63,7 @@ def build():
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
     source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.40.0')
-    source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.29.0')
+    source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.43.3')
     source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.39.0')
     return source
 

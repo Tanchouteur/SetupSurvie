@@ -34,7 +34,7 @@
         const id=base(source.id),active=D.favorites.has(id),user=S.user.id;
         if(active){await request('/favorites?source_id='+encodeURIComponent(id),undefined,{method:'DELETE'});if(S.user?.id!==user)return;D.favorites.delete(id);}
         else{await request('/favorites',{source_id:id},{method:'PUT'});if(S.user?.id!==user)return;D.favorites.add(id);}
-        updateStars();if(D.scope==='favorites')await scopedSearch();
+        updateStars();document.dispatchEvent(new CustomEvent('survie:favorites-changed'));if(D.scope==='favorites')await scopedSearch();
       }finally{star.disabled=false;}
     }),'favorite-toggle secondary');
     star.dataset.favoriteId=base(source.id);return star;
@@ -78,6 +78,8 @@
     if(D.scope==='favorites'&&!needUser())return;
     const q=$('library-query').value.trim(),language=$('search-language').value;
     S.searchAbort?.abort();const controller=new AbortController();S.searchAbort=controller;
+    $('search-results').setAttribute('aria-busy','true');
+    $('search-results').replaceChildren();$('search-results').dataset.signature='';
     $('reader').hidden=true;document.querySelector('.reading-layout').classList.remove('reading');
     $('search-message').textContent='Recherche dans '+(D.scope==='favorites'?'vos favoris…':'les traductions partagées…');
     const path=q?'/search?q='+encodeURIComponent(q)+'&language='+encodeURIComponent(language)+(D.scope==='favorites'?'&favorites_only=true':'&translations_only=true'):
@@ -87,8 +89,9 @@
       const results=data.results.filter(r=>!language||r.language===language||r.language===({fr:'fra',en:'eng'}[language]));
       $('search-results').replaceChildren();renderLibraryResults(results);
       $('search-message').textContent=results.length+' résultat(s)'+(q?' pour « '+q+' »':'')+(D.scope==='translations'&&!q?' · traductions récentes ; recherchez un mot pour trouver les autres.':'.');
+      $('search-results').setAttribute('aria-busy','false');
       if(!results.length)$('search-results').append(element('p',D.scope==='favorites'?'Aucun favori trouvé. Ajoutez une étoile à un document, ou essayez un autre mot.':'Aucune traduction partagée trouvée. Les nouvelles traductions terminées apparaîtront ici.','empty-panel'));
-    }catch(error){if(error.name!=='AbortError'){$('search-message').textContent=error.message;throw error;}}
+    }catch(error){if(error.name!=='AbortError'){$('search-results').setAttribute('aria-busy','false');$('search-message').textContent=error.message;throw error;}}
   }
   function translationChoices(){
     let label=$('translation-choice-label');
@@ -128,6 +131,8 @@
     for(const node of document.querySelectorAll('[data-library-scope]'))node.onclick=guard(async()=>{if(node.dataset.libraryScope==='favorites'&&!needUser())return;setScope(node.dataset.libraryScope);await scopedSearch();});
     $('library-search').onsubmit=guard(scopedSearch);
     document.addEventListener('survie:scope-reset',()=>setScope('all'));
+    document.addEventListener('survie:scope-set',event=>setScope(event.detail));
+    document.addEventListener('survie:favorites-refresh',updateStars);
     document.addEventListener('survie:results',guard(decorateResults));
     document.addEventListener('survie:source',guard(decorateSource));
     document.addEventListener('survie:auth',guard(refreshFavorites));
