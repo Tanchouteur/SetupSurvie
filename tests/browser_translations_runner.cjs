@@ -5,6 +5,8 @@ const {createRequire}=require('node:module');
 const {spawn}=require('node:child_process');
 const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
 (async()=>{
+  const targetEngine=process.env.BROWSER_ENGINE;
+  if(targetEngine&&!['chromium','webkit','firefox'].includes(targetEngine)){console.error(`Invalid BROWSER_ENGINE: ${targetEngine}`);process.exit(1);}
   const root=path.resolve(__dirname,'..');
   const server=spawn('python',['tests/browser_translation_server.py'],{cwd:root,stdio:['ignore','ignore','inherit']});
   async function checkUI(browser,name,files){
@@ -28,6 +30,7 @@ const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.
     const source=fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'");
     const recipe=eval('('+source+')');
     for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+      if(targetEngine&&name!==targetEngine)continue;
       browser=await engine.launch({headless:true});
       const context=await browser.newContext();const page=await context.newPage();
       const errors=[];page.on('pageerror',error=>errors.push(String(error)));
@@ -157,8 +160,10 @@ const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.
       await context.close();await browser.close();browser=null;
     }
     // The user's desktop screenshots are from Firefox; exercise its layout too.
-    browser=await firefox.launch({headless:true});
-    await checkUI(browser,'firefox',['browser_motion_resilience.js','browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
-    await browser.close();browser=null;
+    if(!targetEngine||targetEngine==='firefox'){
+      browser=await firefox.launch({headless:true});
+      await checkUI(browser,'firefox',['browser_motion_resilience.js','browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
+      await browser.close();browser=null;
+    }
   }finally{if(browser)await browser.close();server.kill();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
