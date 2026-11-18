@@ -470,6 +470,8 @@ def export_report(dest, journal):
     report['databases_checked']=len(journal.get('databases',[]))
     report['adapted_files']=len(journal.get('adapted',[]))
     report['checks']=journal.get('checks',{})
+    if journal.get('source_retirement'):
+        report['source_retirement']={role: entry['stage'] for role,entry in journal['source_retirement'].items()}
     host=journal.get('host',{})
     latest=journal.get('docker_last_check',host)
     report['storage']={'destination_filesystem':host.get('destination',{}).get('filesystem'),
@@ -860,7 +862,7 @@ def activate(dest):
         save(dest,journal);export_report(dest,journal)
 
 
-def validate_mounts(app, config):
+def validate_mounts(app, config, *, allow_ollama=False, app_root=None):
     ids=app.compose(config,'ps','--quiet',capture=True).split()
     if not ids:raise setup.SetupError('Aucun service destination démarré.')
     info=json.loads(setup.run(['docker','inspect',*ids],capture=True))
@@ -868,10 +870,11 @@ def validate_mounts(app, config):
     routers={'router-foot','router-motorcycle','router-car'} if (Path(config['data_dir'])/'library/maps/routing/current/manifest.json').is_file() else set()
     required_services=core|routers
     found=set()
-    source_roots=[setup.safe_path(config['data_dir']),setup.ROOT.resolve()]
+    allowed_services=required_services|{'ollama'} if allow_ollama else required_services
+    source_roots=[setup.safe_path(config['data_dir']),app_root or setup.ROOT.resolve()]
     for container in info:
         service=container.get('Config',{}).get('Labels',{}).get('com.docker.compose.service')
-        if service not in required_services or service in found:raise setup.SetupError('Service absent, inattendu ou en double après transfert.')
+        if service not in allowed_services or service in found:raise setup.SetupError('Service absent, inattendu ou en double après transfert.')
         found.add(service)
         for mount in container.get('Mounts',[]):
             if mount.get('Type')!='bind':raise setup.SetupError('Volume non inventorié ; validation refusée.')
@@ -890,7 +893,7 @@ def validate_mounts(app, config):
         # readiness is checked by transfer_document_probe, from the pilot network.
         if service in core and state.get('Health',{}).get('Status')!='healthy':
             raise setup.SetupError('Service non sain après transfert.')
-    if found!=required_services:raise setup.SetupError('Certains services requis manquent après transfert.')
+    if not required_services.issubset(found):raise setup.SetupError('Certains services requis manquent après transfert.')
 
 
 def rollback(dest):
@@ -906,6 +909,7 @@ def rollback(dest):
 def rollback_locked(dest):
     dest=setup.safe_path(dest);journal=read(dest/'transfer.json')
     if journal.get('kind')!=KIND:raise setup.SetupError('Transfert non reconnu.')
+    if journal.get('source_retirement'):raise setup.SetupError('Le retrait de la source a commencé. Le retour vers cette installation est indisponible.')
     source_work=Path(journal['source']['private'])
     source=setup.Installation(source_work);config=source.load()
     # Always stop destination first, even after an interrupted activation.
@@ -936,8 +940,8 @@ def stop_destination(dest):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action',choices=['copy','status','prepare','verify','activate','docker-status','rollback','stop-destination'])
-    parser.add_argument('destination');parser.add_argument('--work-dir')
+    parser.add_argument('action',choices=['copy','status','prepare','verify','activate','docker-status','rollback','stop-destination','retire-source'])
+    parser.add_argument('destination');parser.add_argument('--work-dir');parser.add_argument('--confirm-id')
     args=parser.parse_args();dest=setup.safe_path(args.destination)
     if args.action=='copy':
         if not args.work_dir:parser.error('--work-dir requis')
@@ -951,6 +955,9 @@ def main():
     elif args.action=='activate':activate(dest)
     elif args.action=='docker-status':print(describe_docker(refresh_docker_status(dest)))
     elif args.action=='rollback':rollback(dest)
+    elif args.action=='retire-source':
+        from transfer_retire import retire
+        retire(dest,args.confirm_id)
     else:stop_destination(dest)
 
 

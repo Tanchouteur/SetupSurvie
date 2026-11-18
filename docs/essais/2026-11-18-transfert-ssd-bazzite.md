@@ -78,3 +78,12 @@ système. Le scénario couvre la relance du service et l’absence du dossier
 de données source. Le redémarrage physique du PC, le retrait du SSD système,
 le retour applicatif à la source sur cette installation, l’iPhone et
 l’inférence réelle restent à vérifier dans des recettes dédiées.
+
+## Retrait de la source sur Linux
+
+La version 0.46.0 ajoute la commande `retire-source`. L’examen réel a retenu
+uniquement les anciens dossiers `application` et `donnees` sur le Samsung.
+Le moteur Docker et ses fichiers sont dans un dossier voisin. La suppression,
+la reprise après interruption, le refus du retour vers une source en cours de
+retrait et la conservation du stockage Docker ont été testés sur des dossiers
+jetables. La copie source réelle est conservée à l’issue de cet examen.

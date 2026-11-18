@@ -331,6 +331,40 @@ class ActivationTests(unittest.TestCase):
         journal['images_manifest_sha256']=setup.file_hash(self.dest/'images.tar.json')
         transfer.save(self.dest,journal);transfer.prepare(self.dest)
 
+    @unittest.skipUnless(sys.platform=='linux','Retrait sur Linux')
+    def test_retirement_is_explicit_resumable_and_preserves_docker_and_private_state(self):
+        import transfer_retire
+        self.prepared()
+        journal=transfer.read(self.dest/'transfer.json')
+        journal['phase']='active';journal['checks']['mounts']=True
+        transfer.save(self.dest,journal)
+        docker=self.appdir.parent/'docker';docker.mkdir()
+        (docker/'state').write_text('conserver')
+        checks=(
+            patch.object(transfer_retire,'docker_paths',return_value=[docker]),
+            patch.object(transfer_retire,'mounted_paths',return_value=[]),
+            patch.object(transfer_retire,'check_destination'),
+            patch.object(transfer_retire,'different_filesystem',return_value=True),
+        )
+        from contextlib import ExitStack
+        with ExitStack() as stack:
+            for check in checks:stack.enter_context(check)
+            transfer_retire.retire(self.dest)
+            self.assertTrue(self.appdir.is_dir())
+            self.assertNotIn('source_retirement', transfer.read(self.dest/'transfer.json'))
+            with self.assertRaises(setup.SetupError):transfer_retire.retire(self.dest,'wrong')
+            with patch.object(transfer_retire.shutil,'rmtree',side_effect=OSError('interrupted')):
+                with self.assertRaises(OSError):transfer_retire.retire(self.dest,journal['id'])
+            self.assertFalse(self.appdir.exists())
+            with self.assertRaisesRegex(setup.SetupError,'retrait'):transfer.rollback(self.dest)
+            transfer_retire.retire(self.dest,journal['id'])
+        self.assertFalse(self.data.exists())
+        self.assertTrue((self.work/'transfer-guard.json').is_file())
+        self.assertTrue((docker/'state').is_file())
+        self.assertTrue((self.dest/'data/state/pilot/pilot.db').is_file())
+        report=transfer.read(self.dest/'Rapport-transfert.json')
+        self.assertEqual(report['source_retirement'],{'application':'removed','data':'removed'})
+
     def test_activation_fences_source_and_checks_mounts_documents(self):
         if os.name=='nt':self.skipTest('Linux runtime fixture')
         self.prepared()
