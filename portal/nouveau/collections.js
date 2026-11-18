@@ -6,7 +6,35 @@
   const categoryLinks=[...document.querySelectorAll('[data-collection-type]')];
   const collections=document.getElementById('next-collections');
   const topbar=document.querySelector('.topbar');
-  new ResizeObserver(()=>collections.style.setProperty('--collection-mobile-top',topbar.offsetHeight+'px')).observe(topbar);
+  const desktopNav=document.getElementById('main-navigation');
+  const mobile=matchMedia('(max-width: 760px)');
+  const sections=[...collections.querySelectorAll('.next-collection-section')];
+  let scrollFrame,navEdge;
+  function positionTitles(){
+    const nav=mobile.matches?topbar:desktopNav;
+    const top=Math.max(0,nav.getBoundingClientRect().bottom);
+    if(top!==navEdge){
+      navEdge=top;
+      collections.style.setProperty('--collection-nav-edge',top+'px');
+    }
+    const pinned=sections.map(section=>{
+      if(collections.hidden||section.hidden||!section.open)return false;
+      const gap=Number.parseFloat(getComputedStyle(section).getPropertyValue('--collection-title-gap'));
+      const stickyTop=top+gap;
+      return Math.abs(section.firstElementChild.getBoundingClientRect().top-stickyTop)<1 &&
+        section.getBoundingClientRect().top<stickyTop-1;
+    });
+    sections.forEach((section,index)=>section.classList.toggle('is-pinned',pinned[index]));
+  }
+  function scheduleTitles(){
+    if(scrollFrame!==undefined)return;
+    scrollFrame=requestAnimationFrame(()=>{scrollFrame=undefined;positionTitles();});
+  }
+  const navSize=new ResizeObserver(scheduleTitles);
+  navSize.observe(topbar);navSize.observe(desktopNav);
+  window.addEventListener('scroll',scheduleTitles,{passive:true});
+  window.addEventListener('resize',scheduleTitles);
+  collections.addEventListener('toggle',scheduleTitles,true);
   let category='',readOpen=(_,fallback)=>fallback;
   const disclosureSelector='.next-collection-section, .next-collection-group';
   const groupId=value=>{let hash=2166136261;for(const char of value)hash=Math.imul(hash^char.charCodeAt(0),16777619);return 'collection-group-'+(hash>>>0).toString(16);};
@@ -97,6 +125,7 @@
     link.href='#/'+link.dataset.route;
     link.textContent=videosOnly?'Rechercher aussi dans les sous-titres →':'Chercher aussi à l’intérieur des documents →';
     document.getElementById('collection-filter-clear').disabled=!input.value;
+    scheduleTitles();
   }
   const changed=()=>{apply();document.dispatchEvent(new CustomEvent('survie:collection-filter',{detail:input.value.slice(0,160)}));};
   input.addEventListener('input',changed);

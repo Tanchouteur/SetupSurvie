@@ -15,11 +15,11 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.47.1"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.48.0"></script><script defer src="/app.js', 1)
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/nouveau/style.css', '0.47.1'),
+        ('css', '/nouveau/style.css', '0.48.0'),
         ('css', '/nouveau/ux-system.css', '0.43.2'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
@@ -28,16 +28,16 @@ def build():
         ('js', '/long-summaries.js', '0.34.0'),
         ('css', '/bilingual-reader.css', '0.23.0'),
         ('js', '/bilingual-reader.js', '0.28.0'),
-        ('js', '/nouveau/videos.js', '0.47.0'),
-        ('js', '/nouveau/captions.js', '0.45.0'),
-        ('js', '/nouveau/transcriptions.js', '0.45.0'),
-        ('js', '/nouveau/acquisitions.js', '0.31.0'),
-        ('js', '/nouveau/archive-videos.js', '0.33.0'),
+        ('js', '/nouveau/videos.js', '0.48.0'),
+        ('js', '/nouveau/captions.js', '0.48.0'),
+        ('js', '/nouveau/transcriptions.js', '0.48.0'),
+        ('js', '/nouveau/acquisitions.js', '0.48.0'),
+        ('js', '/nouveau/archive-videos.js', '0.48.0'),
         ('js', '/nouveau/youtube-downloads.js', '0.43.6'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
-        ('js', '/nouveau/collections.js', '0.47.1'),
-        ('js', '/nouveau/catalogue.js', '0.34.0'),
+        ('js', '/nouveau/collections.js', '0.48.0'),
+        ('js', '/nouveau/catalogue.js', '0.48.0'),
         ('js', '/nouveau/search-check.js', '0.26.1'),
         ('js', '/nouveau/search-experiment.js', '0.26.1'),
         ('js', '/nouveau/search-tools.js', '0.26.1'),
@@ -54,6 +54,7 @@ def build():
         ('js', '/resource-status.js', '0.43.2'),
         ('css', '/design/tokens.css', '0.44.0'),
         ('css', '/design/system.css', '0.44.0'),
+        ('css', '/nouveau/library-video.css', '0.48.0'),
         ('js', '/design/experience.js', '0.44.0'),
         ('js', '/nouveau/navigation.js', '0.47.1'),
     ]

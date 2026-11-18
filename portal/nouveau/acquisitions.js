@@ -1,13 +1,13 @@
 /* Only an explicit command contacts YouTube; retained tracks work offline. */
 (() => {
-  const area=element('details');area.id='next-acquisition-preparation';area.innerHTML='<summary>Suivre la récupération des sous-titres YouTube</summary><p class="small">Avec Internet, récupérez les pistes proposées pour vos vidéos locales. Elles resteront disponibles hors ligne. Si YouTube refuse ou ne propose aucune piste, utilisez la création depuis l’audio.</p><p id="next-acquisition-message" class="small" role="status"></p><div id="next-acquisition-jobs"></div>';
+  const area=element('details');area.id='next-acquisition-preparation';area.className='video-disclosure';area.innerHTML='<summary>Récupérations YouTube</summary><p id="next-acquisition-message" class="small" role="status"></p><div id="next-acquisition-jobs"></div>';
   $('next-caption-preparation').append(area);area.hidden=true;
   let jobs=[],owner=null,loading=false,busy=false,generation=0;
   const states={queued:'En attente',running:'Récupération sur YouTube en cours',paused:'En pause',error:'Récupération non aboutie',completed:'Sous-titres récupérés · relecture à faire'};
   function render(){
     const target=$('next-acquisition-jobs');target.replaceChildren();
     for(const job of jobs){
-      const article=element('article',undefined,'data-card');article.dataset.acquisitionJob=job.id;
+      const article=element('article',undefined,'data-card video-job');article.dataset.acquisitionJob=job.id;
       article.append(element('h3',job.title),element('p',states[job.status]||job.status,'small'));
       if(job.language)article.append(element('p',job.language+' · '+(job.origin==='automatic'?'piste déclarée automatique':'piste déclarée fournie')+' · '+job.cues+' segments','small'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
@@ -17,7 +17,7 @@
       const actions=element('div',undefined,'actions');
       if(['queued','running'].includes(job.status))actions.append(button('Mettre en pause',()=>command(job.id,'pause'),'secondary'));
       if(['paused','error'].includes(job.status))actions.append(button('Reprendre avec Internet',()=>command(job.id,'resume'),'secondary'));
-      actions.append(button('Télécharger le rapport de récupération',()=>download(job.id),'secondary'));article.append(actions);target.append(article);
+      actions.append(button('Télécharger le rapport de récupération',()=>download(job.id),'text-button'));article.append(actions);target.append(article);
     }
     if(!jobs.length)target.append(element('p','Aucune récupération lancée. Choisissez « Récupérer sur YouTube » sur une vidéo.','small muted'));
   }

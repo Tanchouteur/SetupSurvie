@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.47.0, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.48.0, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
@@ -10,7 +10,7 @@ Pour plus tard, Louis propose d'étudier une [voix française générée à part
 ## Préparer depuis le site
 
 Après la mise à jour de maintenance, choisir **Famille → Bibliothèque → Collections →
-Vidéos de la bibliothèque → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
+Vidéos de la bibliothèque → Gestion de la vidéothèque → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
 les métadonnées `.info.json` et les pistes `.fr.srt`, `.en.vtt`, etc. à côté du
 média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé par cette actualisation.
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
@@ -88,11 +88,16 @@ Le lecteur affiche l’attente, l’avancement, les erreurs et les résultats de
 cette vidéo, avec les commandes **Mettre en pause** et **Reprendre**. Vous
 retrouvez le suivi en rouvrant la vidéo. Dès que l’inventaire a pris en compte
 la nouvelle piste, elle rejoint le menu **Sous-titres** sans fermer le lecteur.
-Le suivi global reste accessible dans les Collections.
+Sous le lecteur, **Lire la transcription** déroule les paroles disponibles.
+**Qualité des sous-titres** affiche les informations de provenance et les limites
+des pistes. Dans **Collections → Vidéos**, les cartes affichent d’abord le titre,
+l’état des sous-titres et **Voir la vidéo**. **Options de sous-titrage** regroupe
+les commandes de la carte. **Suivi des sous-titres** rassemble les travaux et
+leurs rapports, et **Gestion de la vidéothèque** contient les commandes d’inventaire.
 
 ## Vidéos dans les collections ZIM — 0.33.0
 
-Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque →
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque → Gestion de la vidéothèque →
 Vidéos dans les collections → Examiner ou reprendre les collections**. L’outil
 d’archives doit avoir été préparé dans **Paramètres → Bibliothèque**. Cet examen
 ne télécharge rien et ne lance pas l’IA. Il peut durer longtemps au premier
@@ -174,10 +179,9 @@ rejetée reste dans le rapport. Un refus clair ou un second échec arrête la
 préparation ; aucun segment ni horodatage n’est réinterprété pour forcer la
 publication. La pause reste prioritaire pendant cette vérification.
 
-Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une vidéo,
-ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
-les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres**,
-sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
+ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire
+les sous-titres**. Le modèle se choisit dans **Suivi des sous-titres → Modèle de traduction**. Il doit être installé et démarré volontairement. Une vidéo sans
 piste exploitable utilise le parcours audio ci-dessous ; ce bouton de traduction seul ne connaît pas ses paroles.
 
 Le suivi compte les segments terminés. **Mettre en pause** conserve ces segments ;
@@ -210,7 +214,7 @@ Les anciens fichiers et brouillons restent conservés pour comparaison.
 ## Récupérer les pistes YouTube — 0.31.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, ouvrir
-**Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
+**Options de sous-titrage → Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
 laisser le champ vide ; sinon, copier l’adresse exacte de la vidéo correspondante.
 Le logiciel ne cherche pas cette adresse depuis un titre approximatif.
 Choisir la piste automatique, française ou anglaise, puis **Récupérer les sous-titres**.
@@ -221,8 +225,7 @@ puis l’anglais. Dans une même langue, une piste déclarée fournie est priori
 sur une piste automatique. « Français » accepte aussi une variante comme `fr-FR`.
 Une langue annoncée par YouTube ne prouve pas que la piste a été relue.
 
-Le suivi est sous **Préparer les sous-titres → Suivre la récupération des sous-titres
-YouTube**. **Mettre en pause** arrête la requête ; **Reprendre avec Internet** la
+Le suivi est sous **Suivi des sous-titres → Récupérations YouTube**. **Mettre en pause** arrête la requête ; **Reprendre avec Internet** la
 relance à votre demande. Fermer la page ne l’arrête pas ; après un redémarrage,
 la reprise reste explicite. Un refus du fournisseur ou une piste absente reste
 une erreur expliquée, avec la création locale depuis l’audio comme autre possibilité.
@@ -246,8 +249,8 @@ transfert de l’installation ; aucun compte YouTube n’est nécessaire pour ce
 ## Créer les sous-titres depuis un MP4 seul — 0.26.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, actualiser les
-vidéos. Sur un média sans piste exploitable, ouvrir **Créer les sous-titres depuis
-l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
+vidéos dans **Gestion de la vidéothèque**. Sur une carte sans piste exploitable,
+ouvrir **Options de sous-titrage → Créer les sous-titres depuis l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
 sous-titres**. **Préparer aussi la version française** utilise ensuite le modèle
 choisi dans les préparations de pistes. Aucun traitement ne démarre à la lecture
 ou à l’ouverture de Collections.
@@ -258,8 +261,7 @@ le bouton ne télécharge rien. Une fois préparée, elle fonctionne hors ligne,
 sur le processeur du serveur. La traduction française utilise aussi un modèle
 local installé et volontairement démarré. La pause IA est respectée.
 
-Le suivi est dans **Préparer les sous-titres → Suivre la création des
-sous-titres depuis l’audio**. **Mettre en pause** garde les passages terminés ;
+Le suivi est dans **Suivi des sous-titres → Transcriptions audio**. **Mettre en pause** garde les passages terminés ;
 **Reprendre** continue les autres. Fermer la page ne stoppe pas le serveur, mais
 un redémarrage attend une reprise explicite. Aucun sous-titre partiel n’est annoncé
 prêt. Une vidéo modifiée demande une nouvelle préparation après actualisation.
@@ -315,7 +317,7 @@ la même référence vidéo ; un classement humain ne certifie pas la procédure
 
 ## Rapport et sous-titres manquants
 
-**Télécharger le rapport vidéo** fournit l’état de chaque vidéo : pistes trouvées,
+Dans **Gestion de la vidéothèque**, **Télécharger le rapport vidéo** fournit l’état de chaque vidéo : pistes trouvées,
 langues déclarées, origine fournie/automatique/inconnue, erreurs, contrôles et
 prochaine action. Une piste nommée « fr » n’est pas une preuve de langue française,
 de traduction fidèle ou de synchronisation ; la relecture humaine reste à faire.

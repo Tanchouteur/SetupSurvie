@@ -413,33 +413,6 @@ body.next-interface {
   border-color: var(--ds-line-strong);
   font-weight: 700;
 }
-.next-interface .next-collection-section {
-  margin-block: 20px;
-  border-top: 1px solid var(--ds-line);
-}
-.next-interface .next-collection-section > summary {
-  position: sticky;
-  top: var(--ds-nav-h);
-  z-index: 2;
-  min-height: 44px;
-  padding-block: 10px;
-  background: var(--ds-surface);
-  cursor: pointer;
-}
-@media (max-width: 760px) {
-  .next-interface .next-collection-section > summary {
-    top: var(--collection-mobile-top, 57px);
-  }
-}
-.next-interface .next-collection-section:not([open]) > :not(summary) {
-  display: none;
-}
-.next-interface .next-collection-section > summary h2 {
-  display: inline;
-  font-family: var(--ds-font-display);
-  font-size: 1.5rem;
-  margin: 0;
-}
 .next-collection-filter {
   margin: 18px 0 26px;
   padding: 20px;
@@ -842,23 +815,7 @@ body.next-interface {
     white-space: normal;
   }
 }
-.next-interface #next-videos label.video-caption-check {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  margin: 0.6rem 0;
-}
-.next-interface #next-videos .video-caption-check input[type="checkbox"] {
-  flex: none;
-  width: 1.15rem;
-  height: 1.15rem;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  accent-color: var(--green);
-} /* Main navigation and shell; feature panels do not redefine them. */
+/* Main navigation and shell; feature panels do not redefine them. */
 .next-interface .assistant-tools {
   position: relative;
   flex-shrink: 0;

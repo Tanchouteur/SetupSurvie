@@ -13,6 +13,7 @@ async page=>{
     await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
     const card=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});await card.waitFor();
     check((await card.textContent()).includes('Sous-titres à préparer'),'L’absence de piste reste explicite');
+    await card.getByText('Options de sous-titrage',{exact:true}).click();
     await card.getByText('Créer les sous-titres depuis l’audio',{exact:true}).click();
     await card.getByLabel('Langue parlée dans la vidéo').selectOption('en');
     const request=page.waitForResponse(response=>response.url().endsWith('/api/admin/video-transcriptions')&&response.request().method()==='POST');
