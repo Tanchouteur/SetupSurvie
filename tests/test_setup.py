@@ -42,6 +42,21 @@ class InstallationTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_linux_start_includes_engine_and_respects_gaming_pause(self):
+        import control,discovery
+        with patch.object(self.app,'catalog'),patch.object(control,'start'),patch.object(discovery,'start'),patch.object(self.app,'start_native'),patch.object(self.app,'compose') as compose:
+            self.app.up(self.config)
+            start=next(call for call in compose.call_args_list if call.args[1:3]==('up','-d'))
+            self.assertNotIn('pilot',start.args)  # no explicit subset: Compose starts Ollama too
+            self.assertTrue(any(call.args[1:3]==('exec','-T') for call in compose.call_args_list))
+            compose.reset_mock()
+            marker=self.app.work/'inference-paused.json';marker.write_text('{"reason":"user_gaming"}')
+            self.app.up(self.config)
+            self.assertTrue(any(call.args[1:]==('stop','ollama') for call in compose.call_args_list))
+            start=next(call for call in compose.call_args_list if call.args[1:3]==('up','-d'))
+            self.assertIn('pilot',start.args);self.assertNotIn('ollama',start.args)
+            self.assertTrue(marker.exists())
+
     def test_new_installation_uses_requested_default_login_without_resetting_existing_account(self):
         self.assertEqual(self.config['admin_email'],'admin@survie.local')
         config={**self.config,'admin_password':'changed-by-owner'}
