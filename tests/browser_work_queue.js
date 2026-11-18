@@ -60,6 +60,24 @@ async page => {
   await view.getByRole('heading', {name: 'File d’attente', exact: true}).waitFor();
   await view.getByText('Manuel en anglais').waitFor();
   verify(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'La file déborde sur téléphone.');
+  // Exercise the actual file input and list-validation API, without pasting.
+  await page.goto(base + '/nouveau/#/appareil/bibliotheque');
+  const youtube = page.locator('#next-youtube');
+  const input = youtube.locator('input[type=file]');
+  if (!await input.isVisible()) await youtube.locator('summary').click();
+  const list = '[Énergie]\r\nhttps://youtu.be/aaaaaaaaaaa\r\nhttps://youtu.be/bbbbbbbbbbb\r\nhttps://youtu.be/ccccccccccc';
+  await input.setInputFiles({name: 'liste.txt', mimeType: 'text/plain', buffer: Buffer.from('\uFEFF' + list, 'utf16le')});
+  await youtube.getByText('3 vidéo(s) prête(s) à télécharger.', {exact: true}).waitFor();
+  let submitted;
+  await page.route('**/api/admin/youtube-downloads', async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    submitted = route.request().postDataJSON();
+    await route.fulfill({json: {accepted: true}});
+  });
+  await youtube.getByRole('button', {name: 'Télécharger les vidéos'}).click();
+  await youtube.getByText('Liste ajoutée à la file.', {exact: false}).waitFor();
+  verify(submitted.text.split(/\r?\n/).length === 4 && submitted.text.includes('ccccccccccc'),
+    'Le formulaire doit envoyer les trois adresses, dans leur ordre.');
   verify(!errors.length, errors.join('\n'));
-  return {passed: ['aperçu survol et clavier', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur et relance', 'navigation tactile']};
+  return {passed: ['aperçu survol et clavier', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur et relance', 'navigation tactile', 'import et envoi du TXT Windows entier']};
 }

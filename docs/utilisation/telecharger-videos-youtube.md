@@ -11,7 +11,9 @@ Avec le profil **Famille**, ouvrir **Mon appareil → Paramètres → Bibliothè
 préparations → Ajouter des vidéos depuis YouTube**. Un raccourci se trouve aussi dans
 **Bibliothèque → Collections → Vidéos de la bibliothèque**.
 
-1. Coller les adresses, ou choisir un fichier texte (format ci-dessous).
+1. Coller les adresses ou choisir le fichier `.txt`. Les adresses du fichier
+   remplissent le formulaire et sont vérifiées automatiquement. Le formulaire
+   accepte les fichiers UTF-8, UTF-16 et Windows-1252.
 2. **Vérifier la liste** indique le nombre de vidéos et explique les lignes écartées.
 3. Choisir la qualité, puis **Télécharger les vidéos**.
 
