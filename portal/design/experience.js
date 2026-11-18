@@ -208,6 +208,28 @@
     }
   });
 
+  function markCurrentResult(reveal) {
+    const rail = $("search-results");
+    if (!rail) return;
+    const current = rail.parentElement.classList.contains("reading") && !$("reader").hidden ? S.reader : null;
+    const rows = [...rail.querySelectorAll(":scope > .result")];
+    const active = rows.find((row) => row.dataset.source === current) ||
+      rows.find((row) => [...row.querySelectorAll("[data-result-passage]")].some((link) => link.dataset.resultPassage === current));
+    for (const row of rows) {
+      row.classList.toggle("selected", row === active);
+      if (row === active) row.setAttribute("aria-current", "true");
+      else row.removeAttribute("aria-current");
+    }
+    if (reveal && active && rail.clientHeight && rail.scrollHeight > rail.clientHeight) {
+      const frame = rail.getBoundingClientRect();
+      const row = active.getBoundingClientRect();
+      if (row.top < frame.top + 8 || row.bottom > frame.bottom - 8) {
+        const target = rail.scrollTop + row.top - frame.top - 8;
+        rail.scrollTo({ top: target, behavior: reduced.matches ? "instant" : "smooth" });
+      }
+    }
+  }
+
   function start() {
     /* The status strip disappears: its two facts move to the footer. */
     const footer = document.querySelector("body > .workspace footer, footer");
@@ -238,6 +260,9 @@
     for (const name of ["survie:route", "survie:source", "survie:results"]) {
       document.addEventListener(name, () => requestAnimationFrame(() => { placeIndicators(); schedule(); }));
     }
+    document.addEventListener("survie:source", () => requestAnimationFrame(() => markCurrentResult(true)));
+    document.addEventListener("survie:route", () => requestAnimationFrame(() => markCurrentResult(false)));
+    document.addEventListener("survie:results", () => requestAnimationFrame(() => markCurrentResult(false)));
     document.fonts?.ready.then(placeIndicators);
     placeIndicators();
     schedule();

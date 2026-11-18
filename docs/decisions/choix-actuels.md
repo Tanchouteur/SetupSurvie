@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+## Finition Veillée — 18 novembre 2026
+
+Louis demande une jauge intégrée à la navigation, des actions lisibles, un
+volet de recherche mieux cadré, des transitions et un guide pour les travaux
+suivants. La 0.49.0 reprend ces points et place les options vidéo à côté
+du lecteur sur grand écran lorsqu’il est ouvert directement. Voir le
+[guide de design](../architecture/guide-design.md).
+
 ## Collections et lecteur vidéo — 18 novembre 2026
 
 Louis demande de reprendre les titres de rubrique au défilement et de clarifier

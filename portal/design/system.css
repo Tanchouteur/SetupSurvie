@@ -304,6 +304,27 @@ body.next-interface {
   color: var(--ds-ink-3);
 }
 
+/* Reuse the portal's secondary controls for standalone catalogue actions. */
+.next-interface :is(#data-books, #data-guides) .data-card > a:not(.button, .secondary-link),
+.next-interface :is(#data-books, #data-guides) .data-card > button.text-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  max-width: 100%;
+  margin-block-start: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-surface);
+  color: var(--ds-ink-2);
+  line-height: 1.25;
+  text-decoration: none;
+}
+.next-interface :is(#data-books, #data-guides) .data-card > :is(a, button.text-button):hover {
+  border-color: var(--ds-line-strong);
+  background: var(--ds-surface-2);
+}
+
 /* ---------- Top navigation ---------- */
 .next-interface .sidebar { background: #fbf7effa; border-color: transparent; }
 .next-interface .brand { color: var(--ds-ink); text-decoration: none; }
@@ -492,11 +513,11 @@ body.next-interface {
   .next-interface .sidebar-tool strong { display: block; font-size: .875rem; font-weight: 600; }
   .next-interface .sidebar-tool small { color: var(--ds-ink-3); font-size: .8125rem; }
 }
-@media (min-width: 761px) and (max-width: 1560px) {
+@media (min-width: 761px) and (max-width: 1680px) {
   .ds-search-trigger .ds-label, .ds-search-trigger kbd { display: none; }
   .next-interface button.ds-search-trigger { width: 40px; padding: 0; }
 }
-@media (min-width: 761px) and (max-width: 1400px) {
+@media (min-width: 761px) and (max-width: 1680px) {
   body.next-interface .sidebar { gap: 8px; padding-inline: 14px; }
   body.next-interface .sidebar #navigation .nav-item { padding-inline: 11px; }
   body.next-interface .sidebar #account-button { padding-right: 8px; }
@@ -508,37 +529,6 @@ body.next-interface {
 }
 @media (min-width: 761px) and (max-width: 860px) {
   body.next-interface .sidebar #navigation .nav-item { padding-inline: 8px; font-size: .8125rem; }
-}
-
-/* Device gauge in the navigation: smaller, calmer, still one click from the details. */
-@media screen and (min-width: 1001px) and (min-height: 501px) {
-  .next-interface #main-navigation .resource-status {
-    flex: 0 0 auto;
-    width: 232px;
-    height: 42px;
-    padding: 4px 6px 4px 12px;
-    background: transparent;
-    border: 1px solid var(--ds-line);
-    border-radius: var(--ds-r);
-    color: var(--ds-ink);
-    transition: background-color var(--ds-fast) ease, border-color var(--ds-fast) ease;
-  }
-  .next-interface #main-navigation .resource-status:hover { background: var(--ds-surface); border-color: var(--ds-line-strong); color: var(--ds-ink); }
-  .next-interface .resource-status-caption,
-  .next-interface .resource-status-meter-label { color: var(--ds-ink-3); font-size: .6875rem; }
-  .next-interface .resource-status-name { font-size: .75rem; }
-  .next-interface .resource-status-meters { grid-template-columns: repeat(2, 42px); gap: 7px; padding-left: 8px; border-color: var(--ds-line); }
-  .next-interface .resource-status-value { color: var(--ds-ink); }
-  .next-interface .resource-status-track { background: var(--ds-surface-3); }
-  .next-interface .resource-status-fill { background: var(--ds-ok); }
-  .next-interface .resource-status-meter[data-level="high"] .resource-status-fill { background: var(--ds-ember); }
-}
-@media screen and (min-width: 1001px) and (max-width: 1280px) {
-  .next-interface #main-navigation .resource-status { width: 58px; min-width: 0; padding-inline: 6px; justify-content: center; }
-  .next-interface #main-navigation .resource-status-model { display: none; }
-  .next-interface .resource-status-meters { grid-template-columns: 34px; gap: 2px; padding-left: 0; border-left: 0; }
-  .next-interface .resource-status-meter-label .resource-status-value { display: none; }
-  .next-interface .resource-status-chevron { display: none; }
 }
 
 /* ---------- Page rhythm and entrances ---------- */

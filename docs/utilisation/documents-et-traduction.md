@@ -140,7 +140,7 @@ de chaque page Kiwix ni une traduction de vidéo.
 6. Une nouvelle traduction terminée est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de retenter un ajout échoué. Les anciennes traductions privées restent privées jusqu’à publication explicite.
 7. Télécharger le texte français permet aussi de conserver une traduction partielle ; les passages manquants y sont indiqués. Retrouver les travaux récents dans **Mon appareil → Travaux en cours → Mes traductions et synthèses**, ou depuis leur original.
 
-Depuis **0.48.2**, le modèle reçoit un format de réponse centré sur le texte
+Depuis **0.49.1**, le modèle reçoit un format de réponse centré sur le texte
 traduit. GPT-OSS pouvait choisir le statut de refus proposé par l’ancien format
 pour un passage ordinaire. Une réponse vide, interrompue ou signalée comme un
 refus reste à reprendre. Les contrôles de traduction sont appliqués avant de

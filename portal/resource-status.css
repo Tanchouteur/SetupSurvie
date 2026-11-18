@@ -1,80 +1,102 @@
 .resource-status { display: none; }
 
+/* Device monitor: same recessed track and raised pill as the main navigation.
+   Fixed columns keep the bar still when values change and prevent any overlap. */
 @media screen and (min-width: 1001px) and (min-height: 501px) {
   .next-interface #main-navigation .resource-status,
   .map-site-nav .resource-status {
+    --monitor-model: 118px;
+    --monitor-meter: 62px;
     display: flex;
+    flex: none;
     align-items: center;
-    flex: 0 0 234px;
-    gap: 8px;
-    min-width: 0;
+    gap: 10px;
     height: 46px;
-    padding: 5px 8px 5px 10px;
-    border: 1px solid #dfd9ce;
-    border-radius: 10px;
-    background: #f7f4ee;
-    color: #423427;
+    padding: 4px 14px 4px 4px;
+    border-radius: var(--ds-r-full, 999px);
+    background: var(--ds-surface-2, #f2ebde);
+    box-shadow: inset 0 1px 2px #3a260f12;
+    color: var(--ds-ink, #241c14);
     text-decoration: none;
     line-height: 1.15;
   }
-
   .next-interface #main-navigation .resource-status:hover,
-  .map-site-nav .resource-status:hover {
-    border-color: #b9b0a6;
-    background: #f2eee6;
+  .map-site-nav .resource-status:hover { color: var(--ds-ink, #241c14); }
+  .resource-status:focus-visible { outline: 2px solid var(--ds-ember, #b5400e); outline-offset: 2px; border-radius: var(--ds-r-full, 999px); }
+  .resource-status-model {
+    display: grid;
+    flex: none;
+    align-content: center;
+    gap: 1px;
+    box-sizing: border-box;
+    width: var(--monitor-model);
+    height: 38px;
+    padding: 0 14px;
+    border-radius: var(--ds-r-full, 999px);
+    background: var(--ds-surface, #fffdf8);
+    box-shadow: var(--ds-shadow-2, 0 1px 3px #3a260f26);
+    transition: box-shadow var(--ds-base, 210ms) var(--ds-ease, ease);
   }
-
-  .resource-status:focus-visible { outline: 2px solid #875016; outline-offset: 2px; }
-  .resource-status-model { display: grid; gap: 3px; flex: 1; min-width: 0; }
-  .resource-status-caption { white-space: nowrap; }
+  .resource-status:hover .resource-status-model { box-shadow: var(--ds-shadow-3, 0 4px 12px #3a260f33); }
   .resource-status-caption,
-  .resource-status-meter-label { font-size: 10px; color: #60564e; }
-  .resource-status-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-    font-weight: 650;
-  }
+  .resource-status-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .resource-status-caption { color: var(--ds-ink-3, #6f6252); font-size: .625rem; }
+  .resource-status-name { font-size: .75rem; font-weight: 700; }
   .resource-status-meters {
     display: grid;
     flex: none;
-    grid-template-columns: repeat(2, 55px);
-    gap: 9px;
-    padding-left: 8px;
-    border-left: 1px solid #dfd9ce;
+    grid-template-columns: repeat(2, var(--monitor-meter));
+    gap: 12px;
   }
-  .resource-status-meter { display: grid; gap: 4px; }
-  .resource-status-meter-label { display: flex; align-items: center; justify-content: space-between; gap: 2px; }
-  .resource-status-value { color: #423427; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .resource-status-meter { display: grid; gap: 4px; min-width: 0; }
+  .resource-status-meter-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px;
+    color: var(--ds-ink-3, #6f6252);
+    font-size: .625rem;
+    white-space: nowrap;
+  }
+  .resource-status-value { color: var(--ds-ink, #241c14); font-size: .6875rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .resource-status-track {
     display: block;
     overflow: hidden;
-    height: 4px;
-    border-radius: 4px;
-    background: #e2ddd2;
+    height: 5px;
+    border-radius: var(--ds-r-full, 999px);
+    background: var(--ds-surface-3, #e9e0cf);
+    box-shadow: inset 0 1px 1px #3a260f1f;
   }
   .resource-status-fill {
     display: block;
     width: 100%;
     height: 100%;
     border-radius: inherit;
-    background: #357652;
+    background: var(--ds-ok, #2a6248);
     transform: scaleX(var(--resource-usage, 0));
     transform-origin: left;
     transition: transform var(--ux-motion-panel, 220ms) var(--ux-motion-ease, ease-out);
   }
-  .resource-status-meter[data-level="high"] .resource-status-fill { background: #a86418; }
+  .resource-status-meter[data-level="high"] .resource-status-fill { background: var(--ds-ember, #b5400e); }
   .resource-status-meter[data-level="unavailable"] .resource-status-track {
-    background: repeating-linear-gradient(135deg, #dcd7cc 0 2px, transparent 2px 4px);
+    background: repeating-linear-gradient(135deg, var(--ds-line-strong, #cbbda4) 0 2px, transparent 2px 4px);
+    box-shadow: none;
   }
-  .resource-status-chevron { font-size: 16px; }
+  .resource-status-chevron { display: none; }
 }
 
-@media screen and (min-width: 1001px) and (max-width: 1400px) and (min-height: 501px) {
+@media screen and (min-width: 1001px) and (max-width: 1680px) and (min-height: 501px) {
   .next-interface #main-navigation .resource-status,
-  .map-site-nav .resource-status { flex: 0 1 220px; min-width: 198px; gap: 5px; padding-inline: 7px; }
-  .resource-status-meters { padding-left: 5px; gap: 5px; }
+  .map-site-nav .resource-status { --monitor-model: 104px; --monitor-meter: 56px; gap: 8px; padding-right: 12px; }
+  .resource-status-model { padding-inline: 12px; }
+  .resource-status-meters { gap: 8px; }
+}
+
+/* Narrow desktop: the two gauges only; exact values stay in the tooltip and the page. */
+@media screen and (min-width: 1001px) and (max-width: 1280px) and (min-height: 501px) {
+  .next-interface #main-navigation .resource-status { --monitor-meter: 34px; padding-inline: 14px; }
+  .next-interface #main-navigation .resource-status-model,
+  .next-interface #main-navigation .resource-status-value { display: none; }
 }
 
 @media print { .resource-status { display: none !important; } }

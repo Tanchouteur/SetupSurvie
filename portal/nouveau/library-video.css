@@ -252,3 +252,100 @@
   .next-interface .video-card-play { grid-column: 2; justify-self: start; }
   .next-interface .video-player-captions > label { grid-template-columns: minmax(0, 1fr); gap: 5px; }
 }
+
+/* On desktop, results and the document have their own reading widths. */
+@media (min-width: 761px) {
+  .next-interface .reading-layout.reading > .reader {
+    flex: 1;
+    min-width: 0;
+  }
+  .next-interface .reading-layout.reading > .search-results:empty { display: none; }
+  .next-interface .reading-layout.reading > .search-results:not(:empty) {
+    position: sticky;
+    top: calc(var(--ds-nav-h) + 12px);
+    flex: 0 0 clamp(215px, 25%, 300px);
+    width: auto;
+    max-height: calc(100dvh - var(--ds-nav-h) - 24px);
+    padding: 8px;
+    gap: 6px;
+    overflow: auto;
+    scroll-padding-block: 8px;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    border: 1px solid var(--ds-line);
+    border-radius: var(--ds-r-lg);
+    background: var(--ds-surface-2);
+  }
+  .next-interface .reading .search-results > .result {
+    padding: 12px;
+    border-radius: var(--ds-r);
+  }
+  .next-interface .reading .search-results > .result.selected {
+    border-color: var(--ds-ember);
+    background: var(--ds-ember-soft);
+    box-shadow: inset 3px 0 var(--ds-ember);
+  }
+  .next-interface .reading .search-results .result :is(h3, .result-meta, button, summary) {
+    overflow-wrap: anywhere;
+  }
+  .next-interface .reading .search-results .result button {
+    min-height: 36px;
+    margin-block-start: 6px;
+    max-width: 100%;
+  }
+  .next-interface #reader .reader-actions {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+}
+
+.next-interface .video-card-play:not(:disabled) {
+  border-color: transparent;
+  background: var(--ds-ember-soft);
+  color: var(--ds-ember-strong);
+}
+.next-interface .video-card-play:hover:not(:disabled) {
+  border-color: var(--ds-ember);
+  background: var(--ds-ember-soft);
+  color: var(--ds-ember-strong);
+}
+.next-interface .video-card-mark {
+  background: linear-gradient(145deg, var(--ds-night-2), var(--ds-night));
+  color: var(--ds-cream);
+  box-shadow: inset 0 1px 1px #fbf1df29;
+}
+.next-interface .video-player-stage { box-shadow: var(--ds-shadow-2); }
+
+/* A wide reader without a results column has room for a companion panel. */
+@media (min-width: 1280px) {
+  .next-interface .reading-layout:has(> .search-results:empty) > #reader:not([hidden]):has(> .video-player-stage) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 30%);
+    column-gap: 22px;
+    align-items: start;
+  }
+  .next-interface .reading-layout:has(> .search-results:empty) > #reader:has(> .video-player-stage) > :is(.reader-actions, .eyebrow, h2, .source-dates) {
+    grid-column: 1 / -1;
+  }
+  .next-interface .reading-layout:has(> .search-results:empty) > #reader:has(> .video-player-stage) > .video-player-stage {
+    grid-column: 1;
+    grid-row: span 8;
+    margin-block-start: 0;
+  }
+  .next-interface .reading-layout:has(> .search-results:empty) > #reader:has(> .video-player-stage) > :not(.reader-actions, .eyebrow, h2, .source-dates, .video-player-stage) {
+    grid-column: 2;
+  }
+  .next-interface .reading-layout:has(> .search-results:empty) .video-player-captions > label {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .next-interface :is(.collection-section-title, .next-collection-group > summary, .video-disclosure > summary)::after {
+    transition: transform var(--ds-base) var(--ds-ease);
+  }
+  .next-interface :is(.next-collection-group, .video-disclosure)[open] > :not(summary) {
+    animation: ds-fade var(--ds-base) var(--ds-ease) both;
+  }
+}

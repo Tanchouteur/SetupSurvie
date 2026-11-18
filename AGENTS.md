@@ -27,7 +27,8 @@ de branding ne constituent pas une décision de renommage du produit.
 
 ## Architecture et points d'entrée
 
-- `portal/` : interface HTML, CSS et JavaScript, servie par Caddy.
+- `portal/` : interface HTML, CSS et JavaScript, servie par Caddy. Lire le
+  [guide de design Veillée](docs/architecture/guide-design.md) avant une modification visuelle.
 - `pilot/` : passerelle FastAPI, comptes, conversations, outils documentaires,
   recherche, inventaire local et monitoring.
 - `deploy/assistant-system.fr.txt` : contexte produit transmis à l'assistant.

@@ -1,9 +1,9 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.48.2, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.49.1, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
-dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
+dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
 
 Pour plus tard, Louis propose d'étudier une [voix française générée à partir des sous-titres traduits](../decisions/boite-a-idees.md), notamment avec Qwen TTS. Cette piste n'est pas une fonction disponible.
 
@@ -88,7 +88,9 @@ Le lecteur affiche l’attente, l’avancement, les erreurs et les résultats de
 cette vidéo, avec les commandes **Mettre en pause** et **Reprendre**. Vous
 retrouvez le suivi en rouvrant la vidéo. Dès que l’inventaire a pris en compte
 la nouvelle piste, elle rejoint le menu **Sous-titres** sans fermer le lecteur.
-Sous le lecteur, **Lire la transcription** déroule les paroles disponibles.
+**Lire la transcription** déroule les paroles disponibles. Sur un grand écran,
+les sous-titres et les options se placent à côté de la vidéo lorsqu’elle est
+ouverte directement, sans liste de résultats.
 **Qualité des sous-titres** affiche les informations de provenance et les limites
 des pistes. Dans **Collections → Vidéos**, les cartes affichent d’abord le titre,
 l’état des sous-titres et **Voir la vidéo**. **Options de sous-titrage** regroupe
@@ -173,7 +175,7 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Depuis 0.48.2, le modèle reçoit le nombre exact de segments à traduire. S’il rend
+Depuis 0.49.1, le modèle reçoit le nombre exact de segments à traduire. S’il rend
 un lot incomplet, SetupSurvie rejette la proposition et réduit la taille des
 lots. Si un segment envoyé seul manque encore, le travail attend une reprise.
 Un refus explicite arrête le travail. Si le moteur annonce un refus tout en
