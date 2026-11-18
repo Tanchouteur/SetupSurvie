@@ -33,7 +33,7 @@ def build():
         ('js', '/nouveau/transcriptions.js', '0.35.0'),
         ('js', '/nouveau/acquisitions.js', '0.31.0'),
         ('js', '/nouveau/archive-videos.js', '0.33.0'),
-        ('js', '/nouveau/youtube-downloads.js', '0.43.0'),
+        ('js', '/nouveau/youtube-downloads.js', '0.43.5'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.11.1'),
@@ -44,7 +44,7 @@ def build():
         ('js', '/nouveau/assistant-diagnostics.js', '0.30.0'),
         ('js', '/nouveau/practical.js', '0.34.0'),
         ('js', '/nouveau/usage-recipe.js', '0.26.1'),
-        ('js', '/nouveau/settings-layout.js', '0.39.0'),
+        ('js', '/nouveau/settings-layout.js', '0.43.5'),
         ('js', '/nouveau/ux-system.js', '0.36.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.38.0'),
         ('js', '/nouveau/reader-work.js', '0.39.0'),
@@ -52,7 +52,7 @@ def build():
         ('js', '/nouveau/motion.js', '0.37.2'),
         ('css', '/resource-status.css', '0.43.2'),
         ('js', '/resource-status.js', '0.43.2'),
-        ('js', '/nouveau/navigation.js', '0.43.3'),
+        ('js', '/nouveau/navigation.js', '0.43.5'),
     ]
     tags = []
     for kind, path, version in assets:

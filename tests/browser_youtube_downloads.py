@@ -52,6 +52,9 @@ def exercise(page,name,base,host):
     page.request.post(base+'/api/profiles/select',data={'id':'famille'},headers={'Origin':base})
     page.goto(base+'/nouveau/#/bibliotheque/collections')
     page.wait_for_function("()=>typeof S!=='undefined'&&S.authReady")
+    page.wait_for_function("()=>!document.getElementById('next-youtube-shortcut').hidden")
+    page.locator('#next-youtube-shortcut a').click();page.wait_for_function("()=>location.hash.startsWith('#/appareil/bibliotheque')")
+    check(page.locator('#settings-bibliotheque #next-youtube').count()==1,name+' : liste YouTube rangée dans les réglages de la bibliothèque')
     area=page.locator('#next-youtube');area.wait_for(state='attached')
     page.wait_for_function("()=>!document.getElementById('next-youtube').hidden")
     area.locator('summary').click()
@@ -111,7 +114,7 @@ def main():
             page=browser.new_page();page.request.post(base+'/api/profiles/select',data={'id':child['id']},headers={'Origin':base})
             page.goto(base+'/nouveau/#/bibliotheque/collections');page.wait_for_function("()=>typeof S!=='undefined'&&S.authReady&&S.user")
             time.sleep(1)
-            check(page.locator('#next-youtube').is_hidden(),'Profil Enfant : la zone YouTube n’est pas proposée')
+            check(page.locator('#next-youtube').is_hidden() and page.locator('#next-youtube-shortcut').is_hidden(),'Profil Enfant : la zone YouTube n’est pas proposée')
             check(page.request.get(base+'/api/admin/youtube-downloads').status==403,'Profil Enfant : l’API refuse le téléchargement')
             page.close();browser.close()
     finally:
