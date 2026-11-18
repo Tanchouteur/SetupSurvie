@@ -14,7 +14,21 @@ async page=>{
  await page.locator('#settings-assistant').getByRole('link',{name:/Voir la RAM/}).click();
  await page.waitForFunction(()=>location.hash==='#/appareil/ensemble');await page.waitForFunction(()=>document.getElementById('monitor-models').textContent.includes('modele-charge-fixture'));
  await page.locator('.resource-status').filter({hasText:'modele-charge-fixture'}).waitFor();
- check((await page.locator('.resource-status').innerText()).includes('RAM 18/32 Go')&&(await page.locator('.resource-status').innerText()).includes('VRAM 5/8 Go'),'La navbar reprend le modèle réellement observé et les deux mémoires');
+ const status=page.locator('.resource-status');
+ const values=status.locator('.resource-status-value');
+ check((await status.getAttribute('aria-label')).includes('RAM 18/32 Go · VRAM 5/8 Go')&&(await values.allTextContents()).join(',')==='56%,63%','Les jauges reprennent les mesures réelles avec les volumes accessibles');
+ await page.evaluate(()=>{document.querySelector('#account-label').textContent='Profil familial avec un nom volontairement très long';});
+ for(const width of [1001,1024,1181,1281,1400,1401,1440]){
+   await page.setViewportSize({width,height:900});
+   const metrics=()=> {
+     const link=document.querySelector('.resource-status');
+     const box=node=>{const {left,right,top,bottom,height}=node.getBoundingClientRect();return {left,right,top,bottom,height};};
+     return {bar:box(link.parentElement),badge:box(link),account:box(document.querySelector('#account-button')),width:innerWidth};
+   };
+   const {bar,badge,account,width:viewport}=await page.evaluate(metrics);
+   const fits=Math.abs(bar.height-68)<0.5&&badge.height>0&&badge.right<=viewport&&badge.top>=bar.top&&badge.bottom<=bar.bottom&&account.right<=badge.left;
+   check(fits,'Bloc mémoire sur la ligne de navigation à '+width+(fits?'':' '+JSON.stringify({bar,badge,account,viewport})));
+ }
  check(await page.locator('#monitor-models').isVisible()&&await page.locator('#monitor-stats').isVisible(),'Modèle et mesures visibles sans déplier des détails');
  check(await page.locator('#settings-server-metrics').evaluate(n=>n.tagName==='SECTION'&&n.getBoundingClientRect().top<500),'Les mesures arrivent avant les cartes de suivi du stockage');
  check((await page.locator('#monitor-stats').innerText()).includes('RAM du PC')&&(await page.locator('#monitor-stats').innerText()).includes('VRAM de la carte graphique'),'RAM et VRAM distinguées du disque');
@@ -23,13 +37,26 @@ async page=>{
  inference={...inference,models:[],models_available:false,control_available:false,memory:{},gpus:[]};await page.evaluate(()=>refreshInference());
  check((await page.locator('#monitor-models').innerText()).includes('Impossible de vérifier'),'Une observation indisponible ne devient pas aucun modèle chargé');
  check((await page.locator('#monitor-stats').innerText()).includes('Mesure indisponible'),'RAM ou VRAM absentes restent explicitement indisponibles');
+ check((await values.allTextContents()).join(',')==='—,—','Une jauge indisponible affiche un tiret');
+ inference={...inference,models_available:true,control_available:true,models:[],paused:true,memory:{used:0,total:1}};
+ await page.evaluate(()=>refreshInference());
+ check((await values.allTextContents()).join(',')==='0%,—'&&(await status.innerText()).includes('Moteur en pause'),'La mesure de zéro reste distincte de l’absence de mesure');
  stage='mise en forme';
  const formatting=await page.evaluate(()=>{const target=document.createElement('div');document.body.append(target);window.SurvieTranslationText.render(target,'## Titre du passage\n\nUne phrase\ncoupée par le PDF.\n\n- Premier élément\n- Deuxième élément\n\n| Nom | Valeur |\n| --- | --- |\n| Essai | 17 mm |\n\n```math\n\\frac{19}{7}\n```\n\n<img src="/interdit" onerror="window.translationInjected=true">\n\n[lien](javascript:alert(1))');target.classList.add('translation-text');const out={head:!!target.querySelector('h2'),list:target.querySelectorAll('li').length,table:!!target.querySelector('table'),formula:target.querySelector('pre code')?.textContent.includes('\\frac{19}{7}'),whiteSpace:getComputedStyle(target.querySelector('p')).whiteSpace,unsafe:!!target.querySelector('img,script,[onerror],a[href^="javascript:"]')};target.remove();return out;});
  check(formatting.head&&formatting.list===2&&formatting.table&&formatting.formula,'Titres, listes, tableaux et formules conservent leur structure');
  check(formatting.whiteSpace==='normal'&&!formatting.unsafe,'Retours PDF réunis dans la prose et contenu actif écarté');
+ stage='lien vers les mesures';
+ await page.goto(base+'/#/accueil');
+ await status.click();
+ await page.waitForURL('**/#/appareil/ensemble');
+ await page.locator('#view-monitor').waitFor();
+ check(true,'Le bloc entier ouvre les mesures depuis une autre rubrique');
  stage='profil traduction';
  const profile=await page.request.post(base+'/api/profiles',{data:{name:'Recette confort traduction '+Date.now()},headers:{Origin:base}});check(profile.ok(),'Profil de traduction isolé');
- await page.goto(base+'/#/bibliotheque/recherche?q=Shelter');await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.txt'));
+ const profileId=(await profile.json()).id;
+ await page.goto(base+'/nouveau/#/bibliotheque/recherche?q=Shelter');
+ await page.waitForFunction(id=>typeof S!=='undefined'&&S.authReady&&S.user?.id===id,profileId);
+ await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.txt'));
  stage='création traduction';
  const job=await page.evaluate(async()=>{const item=await api('/translations',{source_id:'guide:shelter.en.txt',mode:'rapide'});await api('/translations/'+item.id+'/pause',{});return item;});
  let done=3,reads=0;
@@ -58,7 +85,15 @@ async page=>{
  await page.locator('.map-site-nav [aria-current=page]').waitFor();await page.locator('.map-site-nav .resource-status').filter({hasText:'modele-charge-fixture'}).waitFor();
  check(await page.locator('.map-site-nav nav a').count()===5,'La navigation principale reste dans les cartes');
  check(await page.locator('#map-sidebar').isVisible(),'Les outils cartographiques sont conservés');
- for(const width of [1440,1024,390,320]){await page.setViewportSize({width,height:900});check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Navigation des cartes sans débordement '+width);}
+ for(const width of [1440,1024,390,320]){
+   await page.setViewportSize({width,height:900});
+   check(await page.locator('.map-site-nav').evaluate(header=>{
+     const nav=header.querySelector('nav');
+     return document.documentElement.scrollWidth<=innerWidth&&nav.scrollWidth<=nav.clientWidth&&
+       [...nav.children].every(link=>link.getBoundingClientRect().right<=innerWidth)&&
+       (innerWidth>760||[...nav.children].every(link=>link.getBoundingClientRect().height>=44));
+   }),'Navigation des cartes entièrement visible à '+width);
+ }
  await page.locator('.map-site-nav').getByRole('link',{name:'Bibliothèque',exact:true}).click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.view==='library');
  check(true,'Retour direct des cartes vers la bibliothèque');
  check(!errors.length,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
