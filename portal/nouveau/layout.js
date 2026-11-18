@@ -191,6 +191,19 @@
   learning.append(learningBrowser);
   const collections = make("div", "next-library-pane");
   collections.id = "next-collections";
+  const categories = make("nav", "next-collection-types");
+  categories.setAttribute("aria-label", "Types de ressources");
+  for (const [key, label] of [
+    ["", "Tout"],
+    ["videos", "Vidéos"],
+    ["guides", "Guides"],
+    ["livres", "Livres et encyclopédies"],
+  ]) {
+    const link = make("a", "secondary", label);
+    link.dataset.collectionType = key;
+    categories.append(link);
+  }
+  collections.append(categories);
   collections.append(
     make(
       "p",
@@ -201,26 +214,29 @@
   const filter = make("form", "next-collection-filter");
   filter.id = "collection-filter-form";
   filter.innerHTML =
-    '<label for="collection-filter">Chercher une ressource installée</label><div class="next-collection-search"><input id="collection-filter" type="search" maxlength="160" autocomplete="off" placeholder="Ex. : Wikipédia, jardin, Anses…" aria-describedby="collection-filter-help"><button id="collection-filter-clear" class="secondary" type="button">Tout afficher</button></div><p id="collection-filter-help" class="small muted">Recherche dans les noms et les descriptions des collections et guides, sans ouvrir leur contenu.</p><p id="collection-filter-count" class="small" role="status" aria-live="polite"></p><a id="collection-search-inside" href="#/bibliotheque/recherche">Chercher aussi à l’intérieur des documents →</a>';
+    '<label for="collection-filter">Chercher une ressource installée</label><div class="next-collection-search"><input id="collection-filter" type="search" maxlength="160" autocomplete="off" placeholder="Ex. : Wikipédia, jardin, Anses…" aria-describedby="collection-filter-help"><button id="collection-filter-clear" class="secondary" type="button">Effacer le filtre</button></div><p id="collection-filter-help" class="small muted">Filtre les noms et les descriptions des ressources affichées.</p><p id="collection-filter-count" class="small" role="status" aria-live="polite"></p><a id="collection-search-inside" href="#/bibliotheque/recherche">Chercher aussi à l’intérieur des documents →</a>';
   const empty = make(
     "p",
     "empty-panel",
-    "Aucune ressource de l’inventaire ne correspond à ces mots. Un article ou un chapitre peut toutefois traiter ce sujet : essayez la recherche dans les documents.",
+    "Aucun livre ni guide ne correspond à ces mots. Un article ou un chapitre peut toutefois traiter ce sujet : essayez la recherche dans les documents.",
   );
   empty.id = "collection-filter-empty";
   empty.hidden = true;
-  const booksTitle = make("h2", "", "Encyclopédies et livres");
-  booksTitle.id = "collection-books-title";
-  const guidesTitle = make("h2", "", "Guides et fiches pratiques");
-  guidesTitle.id = "collection-guides-title";
-  collections.append(
-    filter,
-    empty,
-    booksTitle,
-    get("data-books"),
-    guidesTitle,
-    get("data-guides"),
-  );
+  collections.append(filter, empty);
+  for (const [key, label, content] of [
+    ["livres", "Livres et encyclopédies", get("data-books")],
+    ["guides", "Guides et fiches pratiques", get("data-guides")],
+    ["videos", "Vidéos de la bibliothèque", null],
+  ]) {
+    const section = make("details", "next-collection-section");
+    section.dataset.collectionSection = key;
+    section.open = true;
+    const summary = make("summary", "");
+    summary.append(make("h2", "", label));
+    section.append(summary);
+    if (content) section.append(content);
+    collections.append(section);
+  }
   const invNotice = make("p", "small muted");
   invNotice.id = "next-inventory-notice";
   invNotice.setAttribute("role", "status");
