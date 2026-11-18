@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import re
 import signal
 import subprocess
 import sys
@@ -229,6 +230,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
+        match=re.fullmatch(r'/library/youtube/([a-f0-9]{32})',self.path)
+        if match:
+            try:
+                result=self.server.library.youtube_result(match[1])
+                self.respond(200 if result is not None else 404,result or {'detail':'Rapport indisponible.'})
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'Rapport indisponible.'})
+            return
         if self.path=='/library':
             try:self.respond(200,self.server.library.status())
             except (OSError,ValueError,RuntimeError,setup.SetupError):self.respond(503,{'detail':'Le suivi documentaire est indisponible sur le PC serveur.'})

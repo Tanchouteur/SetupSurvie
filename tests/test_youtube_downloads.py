@@ -21,7 +21,7 @@ import setup  # noqa: E402
 import test_library_tasks as fixtures  # noqa: E402
 import test_youtube_videos as downloads  # noqa: E402
 import youtube_videos as tool  # noqa: E402
-from pilot import app as gateway,store,youtube_downloads as site  # noqa: E402
+from pilot import app as gateway,store,youtube_pipeline,youtube_downloads as site  # noqa: E402
 
 A,B='aaaaaaaaaaa','bbbbbbbbbbb'
 LIST='[Eau]\nhttps://youtu.be/'+A+'\nhttps://www.youtube.com/playlist?list=PL1\nhttps://youtu.be/'+B+'\n'
@@ -80,8 +80,12 @@ class SiteTests(unittest.TestCase):
         self.assertEqual(client.get('/api/admin/youtube-downloads').status_code,403)
         gateway.app.dependency_overrides[gateway.user]=lambda:{'id':'famille','role':'admin'}
         self.assertEqual(len(client.post('/api/admin/youtube-downloads/check',json={'text':LIST}).json()['videos']),2)
-        self.assertEqual(client.post('/api/admin/youtube-downloads',json={'text':LIST,'max_height':720}).status_code,202)
-        self.assertEqual(self.command.await_args.args[1]['max_height'],720)
+        with patch.object(youtube_pipeline,'launch') as launch:
+            response=client.post('/api/admin/youtube-downloads',json={'text':LIST,'max_height':720})
+        self.assertEqual(response.status_code,202)
+        queued=youtube_pipeline.read(response.json()['job'])
+        self.assertEqual((queued['height'],queued['status']), (720,'queued'))
+        launch.assert_called_once()
         self.assertEqual(client.post('/api/admin/youtube-downloads/resume').status_code,202)
         self.assertEqual(self.command.await_args.args,('youtube-download',{'resume':True}))
 

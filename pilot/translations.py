@@ -7,6 +7,7 @@ import time
 from fastapi import HTTPException
 import httpx
 
+from . import work_queue
 from . import engine,library,operations,store,assistant_metrics,model_runtime,model_session,translation_terms,math_text
 
 ACTIVE={}
@@ -168,6 +169,7 @@ async def translate(text,mode,*,on_metrics=None,guidance=None):
     return protected.restore(result,selected['model']),selected['model']
 
 
+@work_queue.tracked('translation')
 async def run(identifier):
     try:
         while True:
@@ -290,6 +292,7 @@ async def delete(identifier,user_id):
             with store.connect() as db:
                 db.execute('DELETE FROM settings WHERE key=?',('auto-translation:'+identifier,))
                 db.execute('DELETE FROM translations WHERE id=? AND user_id=?',(identifier,user_id))
+                db.execute('DELETE FROM work_history WHERE id=?',(identifier,))
                 if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='translation_publications'").fetchone():
                     db.execute('DELETE FROM translation_publications WHERE translation_id=? AND published_path IS NULL',(identifier,))
         return {'deleted':True,'id':identifier,'conversation_id':item['conversation_id'],'publication':publication,

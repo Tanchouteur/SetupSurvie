@@ -13,6 +13,7 @@ import time
 
 import httpx
 from fastapi import HTTPException
+from . import work_queue
 from . import assistant_metrics,durable,engine,model_runtime,model_session,store,translation_quality,translations,video_inventory,videos
 
 ACTIVE={}
@@ -242,6 +243,7 @@ def record_rejection(identifier,position,error):
     with connect() as db:db.execute('INSERT INTO rejections VALUES(?,?,?,?,?)',(identifier,time.time(),position,str(error),error.candidate))
 
 
+@work_queue.tracked('captions')
 async def run(identifier):
     batch_limit=BATCH_SIZE
     try:
@@ -299,7 +301,7 @@ async def run(identifier):
         # Publication never depends on a successful refresh; a manual inventory
         # can finish indexing this completed track after any interruption.
         try:
-            await videos.start()
+            await videos.refresh_after(time.time())
             update(identifier,'completed',index_status='requested')
         except HTTPException:update(identifier,'completed',index_status='pending')
     except asyncio.CancelledError:
