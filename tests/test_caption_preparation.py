@@ -156,6 +156,21 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         metrics=json.loads(result['parts'][0]['metrics'])
         self.assertEqual(metrics['format_repair_count'],1);self.assertEqual(metrics['format_repair_attempt']['total_ms'],123)
 
+    async def test_interrupted_format_clarification_keeps_both_rejections_and_retries(self):
+        attempts=[]
+        async def response(parts,mode,**options):
+            attempts.append([part['position'] for part in parts])
+            if len(attempts)==1:
+                raise captions.CandidateError('Statut contradictoire','première réponse',repairable=True)
+            if options.get('repair'):
+                raise captions.InterruptedBatch('Flux interrompu','réponse partielle')
+            return await self.translated(parts,mode)
+        self.mock_translate.side_effect=response
+        result=await self.finish(await captions.create(self.video,0,'rapide'))
+        self.assertEqual(attempts,[[0,1],[0,1],[0],[1]])
+        self.assertEqual((result['status'],result['done']),('completed',2))
+        self.assertEqual([entry['candidate'] for entry in result['rejected_proposals']],['première réponse','réponse partielle'])
+
     async def test_second_contradiction_stops_without_an_unbounded_retry(self):
         self.mock_translate.side_effect=captions.CandidateError('Still inconsistent','refused data',repairable=True)
         result=await self.finish(await captions.create(self.video,0,'rapide'))

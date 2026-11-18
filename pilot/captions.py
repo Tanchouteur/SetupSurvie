@@ -290,7 +290,17 @@ async def run(identifier):
                     break
                 update(identifier,'running')
                 async with asyncio.timeout(900):
-                    try:rows,model,metrics=await translate_batch(parts,item['mode'])
+                    try:
+                        try:rows,model,metrics=await translate_batch(parts,item['mode'])
+                        except CandidateError as error:
+                            if not error.repairable:raise
+                            # One format clarification, never acceptance of a refusal.
+                            # Keep the first rejected candidate even if pause/retry fails.
+                            record_rejection(identifier,parts[0]['position'],error)
+                            await translations.available()
+                            if get(identifier)['status']!='running':return
+                            rows,model,metrics=await translate_batch(parts,item['mode'],repair=error.candidate)
+                            metrics.update(format_repair_count=1,format_repair_attempt=error.metrics or {})
                     except IncompleteBatch as error:
                         position=parts[0]['position']
                         if len(parts)==1:
@@ -301,15 +311,6 @@ async def run(identifier):
                             if recovery_end is None:recovery_end=parts[-1]['position']
                         record_rejection(identifier,position,error)
                         continue
-                    except CandidateError as error:
-                        if not error.repairable:raise
-                        # One format clarification, never acceptance of a refusal.
-                        # Keep the first rejected candidate even if pause/retry fails.
-                        record_rejection(identifier,parts[0]['position'],error)
-                        await translations.available()
-                        if get(identifier)['status']!='running':return
-                        rows,model,metrics=await translate_batch(parts,item['mode'],repair=error.candidate)
-                        metrics.update(format_repair_count=1,format_repair_attempt=error.metrics or {})
                 await asyncio.to_thread(current_source,item)
                 checks=[translation_quality.assess(source['source_text'],row['text'],source_language=item['source_language'])
                     for source,row in zip(parts,rows)]
