@@ -1,14 +1,15 @@
 # Télécharger une liste de vidéos YouTube
 
-**Guide actuel — 0.43.4, 18 novembre 2026.** Depuis le site ou en ligne de commande
+**Guide actuel — 0.43.6, 18 novembre 2026.** Depuis le site ou en ligne de commande
 sur le PC qui héberge SetupSurvie ; ce PC doit avoir **Internet**. Depuis 0.42.0, yt-dlp, Deno
 et FFmpeg sont préparés automatiquement : rien à installer à la main. Il range les vidéos dans la
 bibliothèque ; le site les répertorie ensuite tout seul. Essai réel sur Bazzite ; sous Windows, voir les [limites](#limites).
 
-## Depuis le site — 0.43.0
+## Depuis le site — 0.43.6
 
-Avec le profil **Famille**, ouvrir **Bibliothèque → Collections → Vidéos de la
-bibliothèque → Ajouter des vidéos depuis YouTube**.
+Avec le profil **Famille**, ouvrir **Mon appareil → Paramètres → Bibliothèque et
+préparations → Ajouter des vidéos depuis YouTube**. Un raccourci se trouve aussi dans
+**Bibliothèque → Collections → Vidéos de la bibliothèque**.
 
 1. Coller les adresses, ou choisir un fichier texte (format ci-dessous).
 2. **Vérifier la liste** indique le nombre de vidéos et explique les lignes écartées.

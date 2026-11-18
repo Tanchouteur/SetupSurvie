@@ -177,6 +177,13 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.43.6** corrige le faux message « Suivi momentanément indisponible » : un ancien
+transfert terminé qui désigne un disque précédent n’est plus pris pour une activité
+inconnue. Le suivi affiche aussi les téléchargements YouTube, et leur liste rejoint
+**Paramètres → Bibliothèque et préparations**, à la demande de Louis du 18 novembre 2026.
+Testé par fixtures et navigateur ; cause non confirmée directement sur le PC de Marc.
+Correction compatible (`z`).
+
 La **0.43.4** corrige les demandes de vidéos après un essai réel sur le R7 : lecture
 préalable des sous-titres, questions longues, liens mal formés ou perdus. Gemma et
 Llama réussissent la recette sur vidéos fictives ; GPT-OSS et le PC de Marc restent à

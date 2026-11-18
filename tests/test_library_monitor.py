@@ -29,6 +29,22 @@ class LibraryMonitorTests(unittest.TestCase):
 
     def result(self):return monitor.snapshot(self.root,self.work)
 
+    def test_finished_transfer_from_an_old_disk_is_not_an_unknown_activity(self):
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json',{'pid':999999,'identity':{'path':'old'},'plan':str(self.root.parent/'ancien-disque/catalog/plan.json'),'started':1})
+        with patch.object(monitor.discovery,'identity',return_value={'path':'other'}):value=self.result()
+        self.assertEqual((value['phase'],value['stale']),('idle',False))
+
+    def test_live_transfer_with_invalid_plan_stays_unknown(self):
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json',{'pid':123,'identity':self.identity,'plan':str(self.root.parent/'ancien-disque/catalog/plan.json'),'started':1})
+        self.assertEqual(self.result()['phase'],'unknown')
+
+    def test_youtube_job_reports_its_own_progress(self):
+        job='a'*32;self.write(self.work/'library-web/state.json',{'id':job,'action':'youtube-download','phase':'downloading','pid':123,'identity':self.identity})
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web'/job/'progress.json',{'videos':3,'counts':{'downloaded':1,'skipped':1,'error':0}})
+        value=self.result();self.assertEqual((value['phase'],value['kind']),('downloading','youtube-download'))
+        self.assertEqual(value['index_progress'],{'videos':3,'downloaded':1,'skipped':1,'errors':0})
+
     def test_index_activity_tracks_live_child_and_does_not_report_it_as_download(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'index','phase':'downloading','pid':101,'identity':{'path':'old','created':'0'},'index_pid':202,'index_identity':self.identity})
