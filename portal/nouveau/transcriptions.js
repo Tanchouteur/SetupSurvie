@@ -1,6 +1,6 @@
 /* Audio preparation is explicit; playback and opening Collections never start it. */
 (() => {
-  const area=element('details');area.id='next-audio-preparation';area.innerHTML='<summary>Suivre la création des sous-titres depuis l’audio</summary><p class="small">Sur une vidéo sans sous-titres, choisissez « Créer les sous-titres depuis l’audio ». Le logiciel reconnaît les paroles, puis peut les traduire en français. La vidéo d’origine reste conservée. Vérifiez les mots, nombres et passages techniques.</p><p id="next-audio-message" class="small" role="status"></p><div id="next-audio-jobs"></div>';
+  const area=element('details');area.id='next-audio-preparation';area.className='video-disclosure';area.innerHTML='<summary>Transcriptions audio</summary><p id="next-audio-message" class="small" role="status"></p><div id="next-audio-jobs"></div>';
   $('next-caption-preparation').append(area);area.hidden=true;
   let reader=null;
   const readerVisible=()=>reader?.host.isConnected&&!$('reader').hidden&&!$('view-library').hidden;
@@ -14,17 +14,16 @@
   function renderJobs(target,visibleJobs){
     target.replaceChildren();
     for(const job of visibleJobs){
-      const article=element('article',undefined,'data-card');article.dataset.audioJob=job.id;
-      article.append(element('h3',job.title),element('p',(states[job.status]||job.status)+' · '+duration(job.progress_ms||0)+(job.duration_ms?' / environ '+duration(job.duration_ms):''),'small'));
+      const article=element('article',undefined,'data-card video-job');article.dataset.audioJob=job.id;
+      article.append(element('h3',target===$('next-audio-jobs')?job.title:'Transcription audio'),element('p',(states[job.status]||job.status)+' · '+duration(job.progress_ms||0)+(job.duration_ms?' / environ '+duration(job.duration_ms):''),'small'));
       if(job.detected_language)article.append(element('p','Langue reconnue : '+job.detected_language+' · '+job.cues+' segments conservés','small muted'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
       if(job.translation_job)article.append(element('p','Traduction française envoyée dans la file d’attente.','small'));
       if(job.status==='completed'&&job.index_status==='pending')article.append(element('p','Piste conservée ; actualisez les vidéos pour terminer sa mise en recherche.','small'));
-      if(job.status==='completed')article.append(element('p','Les horodatages sont estimés. Comparez les passages utiles avec l’original ; la transcription ne décrit pas les gestes de la vidéo.','small'));
       const actions=element('div',undefined,'actions');
       if(['queued','running'].includes(job.status))actions.append(button('Mettre en pause',()=>command(job.id,'pause'),'secondary'));
       if(['paused','error'].includes(job.status))actions.append(button('Reprendre',()=>command(job.id,'resume'),'secondary'));
-      actions.append(button('Télécharger le rapport audio',()=>download(job.id),'secondary'));article.append(actions);target.append(article);
+      actions.append(button('Télécharger le rapport audio',()=>download(job.id),'text-button'));article.append(actions);target.append(article);
     }
     if(target===$('next-audio-jobs')&&!visibleJobs.length)target.append(element('p','Aucune transcription lancée. Choisissez une vidéo sans sous-titres.','small muted'));
   }
@@ -64,7 +63,7 @@
     try{await api('/admin/video-transcriptions'+(action==='create'?'':'/'+encodeURIComponent(id)+'/'+action),action==='create'?{id,mode:$('next-caption-mode').value||'rapide',...options}:{});}
     catch(error){failure=error.message;}finally{busy=false;}
     if(S.user?.id!==profile)return;
-    message(failure||'Commande reçue. Les passages terminés sont conservés.',videoId);
+    message(failure,videoId);
     $('next-caption-preparation').open=true;area.open=true;await refresh();
   }
   async function download(id){
@@ -79,7 +78,7 @@
     const label=element('label','Langue parlée'),language=element('select');language.setAttribute('aria-label','Langue parlée dans la vidéo');
     for(const [value,text] of [['','Détection automatique'],['en','Anglais'],['fr','Français']])language.append(new Option(text,value));label.append(language);
     const translation=element('label',undefined,'video-caption-check'),checkbox=element('input');checkbox.type='checkbox';checkbox.checked=true;translation.append(checkbox,document.createTextNode('Préparer aussi la version française'));
-    details.append(label,translation,element('p','La préparation peut durer longtemps. Elle garde les passages terminés et reprend à votre demande après une pause.','small'),button('Créer les sous-titres',()=>command(item.id,'create',{language:language.value,translate_french:checkbox.checked}),'secondary'));
+    details.append(label,translation,button('Créer les sous-titres',()=>command(item.id,'create',{language:language.value,translate_french:checkbox.checked}),'secondary'));
     return details;
   }
   document.addEventListener('survie:video-cards',event=>{

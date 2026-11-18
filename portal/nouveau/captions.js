@@ -1,7 +1,7 @@
 /* Explicit preparation, independent of reading a video. No automatic inference. */
 (() => {
-  const area=element('details');area.id='next-caption-preparation';area.innerHTML='<summary>Préparer les sous-titres</summary><p class="small">Traduisez une piste source depuis sa vidéo. Les temps restent ceux de l’original. Les pistes terminées deviennent utilisables sans IA ; la relecture du sens reste à faire.</p><label>Modèle pour la préparation<select id="next-caption-mode"></select></label><p id="next-caption-message" class="small" role="status"></p><div id="next-caption-jobs"></div>';
-  $('next-videos').append(area);
+  const area=element('details');area.id='next-caption-preparation';area.className='video-disclosure';area.innerHTML='<summary>Suivi des sous-titres</summary><details class="video-disclosure"><summary>Modèle de traduction</summary><label>Modèle pour la préparation<select id="next-caption-mode"></select></label></details><p id="next-caption-message" class="small" role="status"></p><div id="next-caption-jobs"></div>';
+  $('video-library-tools').prepend(area);
   area.hidden=true;
   let reader=null;
   const readerVisible=()=>reader?.host.isConnected&&!$('reader').hidden&&!$('view-library').hidden;
@@ -21,16 +21,15 @@
   function renderJobs(target,visibleJobs){
     target.replaceChildren();
     for(const job of visibleJobs){
-      const article=element('article',undefined,'data-card');article.dataset.captionJob=job.id;
-      article.append(element('h3',job.title),element('p',(states[job.status]||job.status)+' · '+job.done+' / '+job.total+' segments','small'));
+      const article=element('article',undefined,'data-card video-job');article.dataset.captionJob=job.id;
+      article.append(element('h3',target===$('next-caption-jobs')?job.title:'Traduction française'),element('p',(states[job.status]||job.status)+' · '+job.done+' / '+job.total+' segments','small'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
       if(job.warnings)article.append(element('p',job.warnings+' segment(s) à vérifier dans le rapport.','small catalogue-warning'));
-      if(job.status==='completed')article.append(element('p','Lisez le début, le milieu, la fin et les passages techniques en comparant à l’original. Les contrôles automatiques ne certifient pas la traduction.','small'));
       if(job.status==='completed'&&job.index_status==='pending')article.append(element('p','Piste conservée ; actualisez les vidéos pour terminer sa mise en recherche.','small'));
       const actions=element('div',undefined,'actions');
       if(['queued','running'].includes(job.status))actions.append(button('Mettre en pause',()=>command(job.id,'pause'),'secondary'));
       if(['paused','error'].includes(job.status))actions.append(button('Reprendre',()=>command(job.id,'resume'),'secondary'));
-      actions.append(button('Télécharger le rapport',()=>download(job.id),'secondary'));article.append(actions);target.append(article);
+      actions.append(button('Télécharger le rapport',()=>download(job.id),'text-button'));article.append(actions);target.append(article);
     }
     if(target===$('next-caption-jobs')&&!visibleJobs.length)target.append(element('p','Aucune préparation lancée. Choisissez une piste à traduire sur une vidéo.','small muted'));
   }
@@ -72,7 +71,7 @@
     }catch(error){failure=error.message;}
     finally{busy=false;}
     if(S.user?.id!==profile)return;
-    message(failure||'Commande reçue. Les segments terminés sont conservés.',videoId);area.open=true;await refresh();
+    message(failure,videoId);area.open=true;await refresh();
   }
   async function download(id){
     try{
@@ -96,7 +95,6 @@
       if(!card||item.available===false)continue;
       const form=preparation(item);
       if(form)card.append(form);
-      else if(item.subtitle_status==='missing')card.append(element('p',item.archive_video&&!item.audio_transcription_supported?'Sous-titres indisponibles pour cette vidéo de collection.':'La vidéo n’a pas encore de piste source. Utilisez « Créer les sous-titres depuis l’audio ».','small muted'));
     }
     refresh();
   });

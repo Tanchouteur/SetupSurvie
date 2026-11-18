@@ -32,7 +32,10 @@ Vous pouvez aussi déplier ou replier chaque grande rubrique par son titre.
 Depuis 0.47.1, le navigateur retrouve vos rubriques et groupes ouverts ou repliés
 pour le profil sélectionné. Un filtre peut ouvrir provisoirement les groupes
 correspondants. Le titre de la rubrique en cours reste sous la navigation pendant
-le défilement et permet toujours de la replier.
+le défilement et permet toujours de la replier. Depuis 0.48.0, les titres
+détachés de la navigation restent dans leur rubrique et se distinguent des
+cartes par un fond et une ombre. Les vidéos séparent la lecture, les commandes
+de sous-titrage et l’entretien de la vidéothèque.
 
 Sur PC, **Outils** donne accès à **Open WebUI**, aux fonctions avancées et au
 secours documentaire. Sur téléphone, les liens restent dans la navigation.

@@ -17,10 +17,11 @@
   document.addEventListener('survie:source',event=>{
     const source=event.detail,info=source.classification;if(!info)return;
     const reader=$('reader'),summary=element('p',description(info),'small muted');
-    reader.querySelector('h2').after(summary);
+    if(source.kind!=='video')reader.querySelector('h2').after(summary);
     if(info.status==='source_changed')reader.append(element('p','La source a changé depuis sa correction. Le classement automatique est utilisé jusqu’à une nouvelle vérification.','catalogue-warning small'));
     if(S.user?.role!=='admin')return;
     const details=element('details',undefined,'catalogue-editor'),heading=element('summary','Corriger le classement');details.append(heading);
+    if(source.kind==='video')details.append(summary);
     details.append(element('p','Ce classement aide à retrouver le document. Il ne certifie ni son exactitude ni la sécurité d’une procédure.','small muted'));
     const form=element('form'),field=element('fieldset'),legend=element('legend','Où retrouver ce document ?');field.append(legend);
     for(const [key,label] of Object.entries(domains)){const row=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='domain';input.value=key;input.checked=info.domains.includes(key);row.append(input,document.createTextNode(label));field.append(row);}

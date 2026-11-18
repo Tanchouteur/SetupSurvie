@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+## Collections et lecteur vidéo — 18 novembre 2026
+
+Louis demande de reprendre les titres de rubrique au défilement et de clarifier
+la présentation des vidéos. La 0.48.0 intègre les titres à la mise en page
+Veillée, pose la lecture au premier plan et rassemble le sous-titrage, son suivi
+et la gestion de la vidéothèque dans leurs panneaux. Voir le
+[guide vidéo](../utilisation/videos-locales.md#chercher-et-lire).
+
 ## Préférences de sous-titres vidéo — 18 novembre 2026
 
 Louis demande de mémoriser la piste choisie et d’ajuster le réglage par défaut

@@ -9,7 +9,9 @@ async page=>{
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/bibliotheque/collections');
   const card=page.locator('#next-videos-list .data-card').filter({hasText:'Récupération source fictive'});await card.waitFor();
   check(writes.length===0,'Ouvrir Collections ne contacte pas le fournisseur');
-  const form=card.locator('details').filter({hasText:'Récupérer sur YouTube'});await form.locator('summary').click();
+  await card.getByText('Options de sous-titrage',{exact:true}).click();
+  const form=card.locator('.video-card-tools > details').filter({hasText:'Récupérer sur YouTube'});
+  await form.locator('summary').click();
   await form.getByLabel('Adresse YouTube').fill('https://example.org/not-youtube');
   await form.getByRole('button',{name:'Récupérer les sous-titres',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#next-acquisition-message')?.textContent.includes('HTTPS YouTube'));

@@ -6,6 +6,12 @@ async page=>{
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   check((await page.request.post(base+'/fixture/videos',{headers})).ok(),'Petits médias synthétiques préparés sans téléchargement');
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+  const management=page.locator('#next-video-management');
+  async function openManagement(){
+    if(!await management.evaluate(details=>details.open))await management.locator(':scope > summary').click();
+  }
+  check(!await page.locator('#next-videos-index').isVisible(),'Les commandes de gestion sont repliées à l’arrivée');
+  await openManagement();
   await page.locator('#next-videos-index').click();await page.waitForFunction(()=>document.getElementById('next-videos-status').textContent.includes('Inventaire terminé'));
   check(await page.locator('#next-videos-list .data-card').count()===4,'Vidéos locales inventoriées depuis Collections');
   check((await page.locator('#next-videos-list').textContent()).includes('Sous-titres à préparer'),'Vidéo sans piste signalée séparément');
@@ -22,7 +28,16 @@ async page=>{
   await player.evaluate(v=>v.pause());
   check(Math.abs(await player.evaluate(v=>v.duration)-12)<.2,'Le vrai navigateur décode le petit fichier local de douze secondes');
   check(await player.evaluate(v=>v.currentTime>=7.9),'La vidéo s’ouvre sur le passage trouvé');
-  check((await page.locator('#reader').textContent()).includes('non vérifiés'),'Limites de fidélité et de synchronisation conservées');
+  const quality=page.locator('.video-player-limits');
+  const transcript=page.locator('.video-player-transcript');
+  check(await quality.locator('summary').isVisible()&&!(await quality.evaluate(d=>d.open)),
+    'Les détails de qualité sont accessibles sous le lecteur');
+  check(await transcript.locator('summary').isVisible()&&!(await transcript.evaluate(d=>d.open)),
+    'La transcription reste repliée pour dégager le lecteur');
+  await quality.locator('summary').click();
+  check(await quality.getByText(/non vérifiés/).isVisible(),'Limites de fidélité et de synchronisation conservées');
+  await transcript.locator('summary').click();
+  check(await transcript.locator('.reader-body').isVisible(),'La transcription se déplie dans le lecteur');
   await page.waitForFunction(()=>[...document.querySelector('#reader video').textTracks].some(t=>t.language==='fr'&&t.cues?.length===2));
   check(await player.evaluate(v=>[...v.textTracks].find(t=>t.language==='fr').mode==='showing'),'Piste française locale proposée par défaut');
   const subtitles=page.getByLabel('Sous-titres de la vidéo');
@@ -62,6 +77,7 @@ async page=>{
 
   await page.request.post(base+'/fixture/videos?extra_track=true',{headers});
   await page.goto(base+'/#/bibliotheque/collections');
+  await openManagement();
   await page.locator('#next-videos-index').click();
   await page.waitForFunction(()=>document.getElementById('next-videos-status').textContent.includes('Inventaire terminé'));
   await page.evaluate(id=>readSource(id),hit.id);
@@ -77,6 +93,7 @@ async page=>{
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);check(await player.evaluate(v=>v.getBoundingClientRect().width<=innerWidth),'Lecteur vidéo adapté à '+width);}
   await page.locator('#navigation [data-route="assistant"]').click();check(await player.evaluate(v=>v.paused),'Quitter le lecteur met le média en pause');
   await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+  await openManagement();
   const downloading=page.waitForEvent('download');await page.locator('#next-videos-report').click();const download=await downloading,chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());
   check(report.per_video.length===4&&report.per_video.every(v=>v.validation.human_review==='not_performed'),'Rapport par vidéo, sans inventer une validation humaine');
   check(report.per_video.some(v=>v.subtitle_status==='missing'),'Les pistes manquantes restent dans le rapport exporté');

@@ -104,10 +104,18 @@ async page => {
     for(const id of ['livres','guides','videos']){
       const stuck=await page.waitForFunction(({id,width})=>{
         const section=document.getElementById('collection-section-'+id);
+        const sectionTop=section.getBoundingClientRect().top;
+        if(Math.abs(sectionTop+150)>2){
+          window.scrollTo({top:scrollY+sectionTop+150,behavior:'instant'});
+          return false;
+        }
         const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
         const summary=section.querySelector('summary');
-        window.scrollTo({top:scrollY+section.getBoundingClientRect().top+150,behavior:'instant'});
-        return Math.abs(summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom)<2;
+        const gap=summary.getBoundingClientRect().top-nav.getBoundingClientRect().bottom;
+        const heading=summary.querySelector('h2').getBoundingClientRect();
+        const mask=getComputedStyle(summary,'::before');
+        return gap>=6&&gap<=12&&section.classList.contains('is-pinned')&&
+          heading.left-summary.getBoundingClientRect().left>=14&&Math.abs(parseFloat(mask.height)-gap)<2;
       },{id,width},{timeout:5000}).then(()=>true,()=>false);
       const label='Titre '+id+' accroché sous la navigation à '+width+' px';
       if(!stuck){
@@ -116,14 +124,17 @@ async page => {
           const summary=section.querySelector('summary');
           const nav=document.querySelector(width>760?'#main-navigation':'.topbar');
           return {open:section.open,hidden:section.hidden,scrollY,position:getComputedStyle(summary).position,
-            section:section.getBoundingClientRect().toJSON(),summary:summary.getBoundingClientRect().top,nav:nav.getBoundingClientRect().bottom};
+            section:section.getBoundingClientRect().toJSON(),pinned:section.classList.contains('is-pinned'),
+            titleInset:summary.querySelector('h2').getBoundingClientRect().left-summary.getBoundingClientRect().left,
+            summary:summary.getBoundingClientRect().top,nav:nav.getBoundingClientRect().bottom};
         },{id,width});
         throw Error(label+' : '+JSON.stringify(layout));
       }
-      check(true,label);
+      check(true,label+' avec marge intérieure et espace sous la navigation');
     }
   }
   await page.locator('#collection-section-videos > summary').click();
+  await page.waitForFunction(()=>!document.querySelector('#collection-section-videos').classList.contains('is-pinned'));
   check(!await page.locator('#next-videos').isVisible(),'Un titre accroché permet toujours de replier la rubrique');
   await page.setViewportSize({width:1440,height:950});
   await field.fill('electricite');

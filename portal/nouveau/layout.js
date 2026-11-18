@@ -232,7 +232,7 @@
     section.id = "collection-section-" + key;
     section.dataset.collectionSection = key;
     section.open = true;
-    const summary = make("summary", "");
+    const summary = make("summary", "collection-section-title");
     summary.append(make("h2", "", label));
     section.append(summary);
     if (content) section.append(content);

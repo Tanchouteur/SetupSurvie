@@ -7,6 +7,7 @@ async page=>{
   check((await page.request.post(base+'/fixture/archive-videos',{headers})).ok(),'Petite archive native et média synthétique préparés');
   try{
     await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+    await page.getByText('Gestion de la vidéothèque',{exact:true}).click();
     const section=page.locator('#next-archive-videos');if(!await section.evaluate(d=>d.open))await section.locator('summary').click();
     await page.locator('#next-archive-videos-start').click();await page.waitForFunction(()=>document.querySelector('#next-archive-videos-status').textContent.includes('Examen en cours'));
     check(await page.locator('#next-archive-videos-start').isDisabled(),'Un second examen ne démarre pas en parallèle');
@@ -30,6 +31,7 @@ async page=>{
     check(await player.evaluate(v=>[...v.textTracks].some(t=>t.cues?.[0]?.startTime===1)),'La piste interne garde son temps original');
     await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
     const refreshed=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});await refreshed.waitFor();
+    await refreshed.getByText('Options de sous-titrage',{exact:true}).click();
     await refreshed.getByText('Préparer une piste française',{exact:true}).click();
     const preparing=page.waitForResponse(response=>response.url().endsWith('/api/admin/video-captions')&&response.request().method()==='POST');
     await refreshed.getByRole('button',{name:'Traduire les sous-titres'}).click();const job=await(await preparing).json();
