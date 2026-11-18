@@ -27,6 +27,8 @@ if scenario['kind']=='partial':
         marker.write_text('1');(folder/(stem+'.mp4.part')).write_bytes(b'half')
         print('ERROR: unable to download video data: <urlopen error [Errno 104] Connection reset by peer>',file=sys.stderr);raise SystemExit(1)
     marker.unlink()
+if scenario['kind']=='subs429' and '--write-subs' in args:
+    print('ERROR: Unable to download video subtitles for \'fr\': HTTP Error 429: Too Many Requests',file=sys.stderr);raise SystemExit(1)
 if scenario['kind']=='empty':raise SystemExit(0)
 if scenario['kind']=='slow':
     import time

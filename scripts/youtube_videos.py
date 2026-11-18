@@ -46,10 +46,13 @@ PATTERNS=[
     ('too_large',r'larger than max-filesize|file is larger than'),
     ('no_format',r'requested format is not available|no video formats found'),
     ('rate_limited',r'http error 429|too many requests'),
-    ('unavailable',r'video unavailable|has been removed|account associated with this video has been terminated|this video does not exist'),
+    ('unavailable',r'video unavailable|video is unavailable|video is not available|has been removed|account associated with this video has been terminated|this video does not exist'),
     ('disk_space',r'no space left on device|not enough space'),
     ('network',r'unable to download webpage|connection (?:reset|refused|aborted)|timed? ?out|temporary failure in name resolution|getaddrinfo failed|network is unreachable'),
 ]
+
+
+SUBTITLE_FAILURE=re.compile(r'unable to download video subtitles',re.I)
 
 
 def existing_videos(library):
@@ -94,12 +97,14 @@ def upgrade(data,*,run=subprocess.run):
     return youtube_tools.installed_version(data,run=run)
 
 
-def command(base,entry,staging,*,max_height,max_bytes,ffmpeg,js_runtime='deno'):
-    if ffmpeg:fmt=f'bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/bv*[height<={max_height}]+ba/b[height<={max_height}]'
+def command(base,entry,staging,*,max_height,max_bytes,ffmpeg,js_runtime='deno',subtitles=True):
+    # H.264 first: AV1 or VP9 may not play on older phones and computers.
+    if ffmpeg:fmt=f'bv*[height<={max_height}][vcodec^=avc1]+ba[ext=m4a]/bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/bv*[height<={max_height}]+ba/b[height<={max_height}]'
     else:fmt=f'b[height<={max_height}][ext=mp4]/b[height<={max_height}]'
     args=[*base,'--ignore-config','--no-playlist','--newline','--no-colors','--no-mtime',
-          '-f',fmt,'--max-filesize',str(max_bytes),'--write-info-json','--write-subs','--write-auto-subs',
-          '--sub-langs',SUBTITLE_LANGUAGES,'--sub-format','vtt/srt/best','--windows-filenames','--trim-filenames','160',
+          '-f',fmt,'--max-filesize',str(max_bytes),'--write-info-json',
+          *(['--write-subs','--write-auto-subs','--sub-langs',SUBTITLE_LANGUAGES,'--sub-format','vtt/srt/best','--sleep-subtitles','3'] if subtitles else []),
+          '--windows-filenames','--trim-filenames','160',
           '--continue','--no-overwrites','--retries','5','--fragment-retries','5','--socket-timeout','30',
           '-P',str(staging),'-o','%(title).120B [%(id)s].%(ext)s']
     if js_runtime in ('node','bun'):args+=['--js-runtimes',js_runtime]
@@ -179,8 +184,13 @@ def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_ru
     if free_bytes(staging)<max_bytes+reserve:return {'status':'error','reason':'disk_space'}
     started=time.monotonic()
     try:
-        returncode,output,paused=execute(command(base,entry,staging,max_height=max_height,max_bytes=max_bytes,ffmpeg=ffmpeg,js_runtime=js_runtime),
-                                         cancel=cancel,run=run,popen=popen)
+        def attempt(subtitles=True):
+            return execute(command(base,entry,staging,max_height=max_height,max_bytes=max_bytes,ffmpeg=ffmpeg,js_runtime=js_runtime,subtitles=subtitles),
+                           cancel=cancel,run=run,popen=popen)
+        returncode,output,paused=attempt();subtitles_skipped=False
+        if returncode and not paused and SUBTITLE_FAILURE.search(output):
+            # Subtitles can be fetched or created later: keep the video.
+            returncode,output,paused=attempt(False);subtitles_skipped=True
     except subprocess.TimeoutExpired:return {'status':'error','reason':'timeout'}
     if paused:return {'status':'paused','reason':'paused'}
     warnings=[line.strip()[:300] for line in output.splitlines() if line.startswith('WARNING')][:10]
@@ -191,7 +201,7 @@ def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_ru
     target,moved,info=publish(media,sidecars,library,entry)
     shutil.rmtree(staging,ignore_errors=True)
     subtitles=sorted(p.name for p in moved if p.suffix.lower() in SUBTITLE_EXTENSIONS)
-    return {'status':'downloaded','path':target.relative_to(library).as_posix(),'title':str(info.get('title') or '')[:300],
+    return {'status':'downloaded','subtitles_skipped':subtitles_skipped,'path':target.relative_to(library).as_posix(),'title':str(info.get('title') or '')[:300],
             'channel':str(info.get('channel') or info.get('uploader') or '')[:200],'duration_seconds':info.get('duration'),
             'height':info.get('height'),'bytes':target.stat().st_size,'subtitles':subtitles,
             'info_json':any(p.name.endswith('.info.json') for p in moved),'seconds':round(time.monotonic()-started),'warnings':warnings}
@@ -256,7 +266,7 @@ def run_list(args,*,run=subprocess.run,log=print):
         value={'schema':1,'phase':phase,'total':len(entries)+len(line_errors),'videos':len(entries),'done':len(done),'current':current,
                'counts':{key:sum(1 for item in report['items'] if item['status']==key) for key in ('downloaded','skipped','refused','error')},
                'tools':{'yt_dlp':version,'ffmpeg':bool(ffmpeg),'js_runtime':js_runtime},
-               'items':[{key:item[key] for key in ('line','id','status','reason','title','path','theme') if key in item}|({'message':REASONS[item['reason']]} if item.get('reason') in REASONS else {}) for item in report['items'][-300:]]}
+               'items':[{key:item[key] for key in ('line','id','status','reason','title','path','theme','subtitles_skipped') if key in item}|({'message':REASONS[item['reason']]} if item.get('reason') in REASONS else {}) for item in report['items'][-300:]]}
         if report.get('path'):value['report']=report['path']
         setup.write_json(progress_path,value,private=True)
     if not js_runtime:log('Deno absent : YouTube peut refuser des vidéos ou limiter les formats. Relancer avec Internet pour terminer la préparation.')

@@ -34,7 +34,7 @@
     $('next-youtube-status').textContent=(value.message||'')+current+tally;
     const items=$('next-youtube-items');items.replaceChildren();
     for(const item of (progress.items||[]).slice(-12).reverse()){
-      const text=(icons[item.status]||'')+' Ligne '+item.line+' : '+(item.status==='downloaded'?(item.title||item.path||'vidéo')+' — ajoutée':item.message||item.status);
+      const text=(icons[item.status]||'')+' Ligne '+item.line+' : '+(item.status==='downloaded'?(item.title||item.path||'vidéo')+' — ajoutée'+(item.subtitles_skipped?' sans sous-titres (YouTube les a refusés ; à récupérer plus tard)':''):item.message||item.status);
       items.append(element('li',text));
     }
     if(phase==='completed'&&!finished){finished=true;document.dispatchEvent(new Event('survie:videos-changed'));}

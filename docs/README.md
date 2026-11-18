@@ -1,6 +1,6 @@
 # Documentation SetupSurvie
 
-- [Demandes de vidéos avec de vrais modèles — 0.43.1](essais/2026-11-18-demandes-videos-modele-reel.md) — essai R7, liens et sous-titres, vidéos fictives.
+- [Demandes de vidéos avec de vrais modèles — 0.43.2](essais/2026-11-18-demandes-videos-modele-reel.md) — essai R7, liens et sous-titres, vidéos fictives.
 
 - [Bouton de liste YouTube — 0.43.0](essais/2026-11-18-bouton-liste-youtube.md) — dépôt depuis le site, suivi, pause, reprise ; contrôleur simulé.
 

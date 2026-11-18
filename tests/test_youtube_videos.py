@@ -36,7 +36,7 @@ class ListTests(unittest.TestCase):
     def test_error_messages_are_classified_without_guessing(self):
         cases={'ERROR: Private video':'private','ERROR: Sign in to confirm your age':'age_restricted','ERROR: Sign in to confirm you’re not a bot':'bot_check',
                'ERROR: The uploader has not made this video available in your country':'region_blocked','ERROR: HTTP Error 429: Too Many Requests':'rate_limited',
-               'ERROR: Video unavailable':'unavailable','ERROR: Requested format is not available':'no_format','ERROR: [Errno 28] No space left on device':'disk_space',
+               'ERROR: Video unavailable':'unavailable','ERROR: [youtube] x: This video is unavailable':'unavailable','ERROR: Requested format is not available':'no_format','ERROR: [Errno 28] No space left on device':'disk_space',
                'ERROR: Unable to download webpage: timed out':'network','ERROR: something new':'tool_failed'}
         for text,reason in cases.items():self.assertEqual(tool.classify(text,1),reason,text)
         self.assertEqual(tool.classify('',0),'output_missing')
@@ -49,7 +49,7 @@ class ListTests(unittest.TestCase):
         self.assertEqual(plain[plain.index('-f')+1],'b[height<=480][ext=mp4]/b[height<=480]');self.assertNotIn('--merge-output-format',plain)
         self.assertEqual(plain[-2:],['--',entry['url']])
         merged=tool.command(['yt-dlp'],entry,Path('/tmp/x'),max_height=720,max_bytes=10,ffmpeg=Path('/opt/ffmpeg'))
-        self.assertIn('bv*[height<=720]',merged[merged.index('-f')+1]);self.assertEqual(merged[merged.index('--ffmpeg-location')+1],'/opt/ffmpeg')
+        self.assertTrue(merged[merged.index('-f')+1].startswith('bv*[height<=720][vcodec^=avc1]+ba[ext=m4a]/'));self.assertEqual(merged[merged.index('--ffmpeg-location')+1],str(Path('/opt/ffmpeg')))
         self.assertNotIn('--js-runtimes',merged)
         node=tool.command(['yt-dlp'],entry,Path('/tmp/x'),max_height=480,max_bytes=10,ffmpeg=None,js_runtime='node')
         self.assertEqual(node[node.index('--js-runtimes')+1],'node')
@@ -97,6 +97,12 @@ class DownloadTests(unittest.TestCase):
         found=next(item for item in listed if item['title']=='Allumer un feu')
         self.assertEqual(found['collection'],'Chaîne: Survie')
         self.assertIn('fr',[track['language'] for track in found['tracks'] if track['status']=='passed'])
+
+    def test_refused_subtitles_do_not_lose_the_video(self):
+        self.scenario(**{A:{'kind':'subs429','title':'Vidéo sans piste'}})
+        code,report=self.run_list('https://youtu.be/'+A+'\n')
+        item=report['items'][0];self.assertEqual(code,0);self.assertEqual(item['status'],'downloaded');self.assertTrue(item['subtitles_skipped'])
+        calls=self.calls_made();self.assertEqual(len(calls),2);self.assertIn('--write-subs',calls[0]);self.assertNotIn('--write-subs',calls[1])
 
     def test_rerun_resumes_partial_download_and_skips_present_videos(self):
         self.scenario(**{A:{'kind':'partial'}})

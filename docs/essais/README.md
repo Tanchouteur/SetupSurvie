@@ -1,6 +1,6 @@
 # Essais et résultats
 
-- [Demandes de vidéos avec de vrais modèles — 0.43.1](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
+- [Demandes de vidéos avec de vrais modèles — 0.43.2](2026-11-18-demandes-videos-modele-reel.md) — essai R7, vidéos fictives, défauts corrigés.
 
 - [Bouton de liste YouTube — 0.43.0](2026-11-18-bouton-liste-youtube.md) — parcours du site, contrôleur simulé, sans vidéo réelle.
 

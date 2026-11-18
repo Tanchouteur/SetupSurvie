@@ -1,4 +1,4 @@
-# Demandes de vidéos avec de vrais modèles — 0.43.1
+# Demandes de vidéos avec de vrais modèles — 0.43.2
 
 **Bilan daté du 18 novembre 2026.** Essai sur le R7 (RTX 4080, Ollama local), avec
 le vrai assistant et trois vidéos fictives. Recette :
