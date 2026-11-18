@@ -15,12 +15,12 @@ def build():
         source=source.replace('/classique/'+name,'/'+name)
     source=source.replace('<script defer src="/classique/context.js?v=0.1.32"></script>','')
     source = source.replace('SetupSurvie — Des connaissances à portée de main', 'SetupSurvie — Nouvelle interface')
-    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.42.0"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/nouveau/layout.js?v=0.43.2"></script><script defer src="/app.js', 1)
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/nouveau/style.css', '0.36.0'),
-        ('css', '/nouveau/ux-system.css', '0.36.0'),
+        ('css', '/nouveau/style.css', '0.43.2'),
+        ('css', '/nouveau/ux-system.css', '0.43.2'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
         ('css', '/nouveau/reader-work.css', '0.39.0'),
@@ -50,8 +50,8 @@ def build():
         ('js', '/nouveau/reader-work.js', '0.39.0'),
         ('css', '/nouveau/motion.css', '0.37.0'),
         ('js', '/nouveau/motion.js', '0.37.2'),
-        ('css', '/resource-status.css', '0.39.0'),
-        ('js', '/resource-status.js', '0.39.0'),
+        ('css', '/resource-status.css', '0.43.2'),
+        ('js', '/resource-status.js', '0.43.2'),
         ('js', '/nouveau/navigation.js', '0.40.0'),
     ]
     tags = []

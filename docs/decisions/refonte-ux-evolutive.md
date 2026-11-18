@@ -133,3 +133,14 @@ Prévoir une revue visuelle et des essais de navigation après correction, ainsi
 qu'un essai sur iPhone réel distinct de l'émulation. Ce retour complète la demande
 antérieure d'indicateurs compacts et de navigation dans les cartes : leur présence
 est conservée, leur intégration visuelle reste à revoir.
+
+## Finition de la navigation et des commandes — 18 novembre 2026
+
+Louis demande de soigner les commandes une à une, leur alignement, leur version
+mobile et leurs transitions en partant de l'interface existante. Il donne la
+priorité à la barre PC et cite des jauges pour intégrer proprement le modèle,
+la RAM et la VRAM. La 0.43.2 commence par cette barre, la navigation des Cartes
+sur téléphone et les boutons de recherche. Les mesures partagent un composant
+entre le portail et les Cartes. La [Vue d’ensemble de l’appareil](../utilisation/mesurer-assistant-et-memoire.md#voir-le-modèle-chargé-la-ram-et-la-vram)
+garde les valeurs détaillées. La revue des autres familles de composants
+et l'essai sur iPhone physique restent à faire.
