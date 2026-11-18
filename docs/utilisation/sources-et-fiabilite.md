@@ -104,6 +104,15 @@ La [référence de recherche](recherche-documentaire.md) décrit le classement
 commun et la préparation des demandes documentaires depuis 0.1.36. Un classement
 élevé ne transforme pas un article général en procédure validée.
 
+Depuis 0.50.1, si le contrôle des références ne peut pas relier la réponse
+aux passages lus, l’assistant conserve son texte et affiche **Références à
+vérifier** au début. Les citations inconnues ou renvoyant à des résultats
+non lus sont signalées. Les documents effectivement lus restent accessibles
+dans le suivi documentaire, même lorsque la réponse ne contient aucun lien
+vérifiable. Le texte et l’avertissement restent visibles à la réouverture de
+la conversation. Si le moteur ne produit aucun texte de réponse, l’assistant
+peut afficher les extraits consultés.
+
 ## Suivi des recherches et lectures dans l’assistant
 
 Depuis 0.15.0, les nouvelles réponses disposant d’observations documentaires

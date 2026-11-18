@@ -480,8 +480,8 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                             measured.value['citation_linking']=link_report
                             if link_report['applied'] and not link_report['rejected'] and research.citations_valid(linked,references):answer=linked;break
                             measured.value['failure']='citation_check';interrupted=True
-                            fabricated=research.unsupported_citations(content,references)
-                            answer=research.fallback(references) if fabricated or not linked.strip() else citation_links.unverified(linked,references);break
+                            answer=citation_links.unverified(content,references)
+                            break
                         answer=content;break
                     if not tools:
                         interrupted=True;answer=content or 'Le budget de recherche est atteint. Les sources consultées restent accessibles ; aucun autre outil n’a été lancé.';break
@@ -613,8 +613,9 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
             with store.connect() as db:
                 inserted=db.execute('INSERT INTO messages(conversation_id,role,content,sources,created,model,mode) VALUES(?,?,?,?,?,?,?)',
                     (conversation_id,'assistant',answer,json.dumps(final_sources,ensure_ascii=False),time.time(),selected['model'],mode))
-                db.execute('UPDATE jobs SET status=?,answer=?,sources=?,updated=? WHERE id=?',
-                    ('incomplete' if interrupted else 'done',answer,json.dumps(final_sources,ensure_ascii=False),time.time(),identifier))
+                error='Réponse conservée. Certaines références restent à vérifier.' if measured.value.get('failure')=='citation_check' else None
+                db.execute('UPDATE jobs SET status=?,answer=?,sources=?,error=?,updated=? WHERE id=?',
+                    ('incomplete' if interrupted else 'done',answer,json.dumps(final_sources,ensure_ascii=False),error,time.time(),identifier))
                 if evidence.searches or evidence.reads or evidence.failed:
                     documentary.save(identifier,evidence.summary(),sources=list(evidence.consulted.values()),message_id=inserted.lastrowid,db=db);evidence_recorded=True
             outcome='incomplete' if interrupted else 'done'
