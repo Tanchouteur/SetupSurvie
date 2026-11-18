@@ -65,6 +65,10 @@ class TokenChecksTests(unittest.TestCase):
             'Observez le panneau 4 s’il bouge.')['status'],'checked')
         self.assertEqual(quality.assess('The current is 4 A.',
             'Le courant est de 4 mA.')['status'],'blocked')
+        self.assertEqual(quality.assess('47\nA fictional example begins here.',
+            '47\nUn exemple fictif commence ici.')['status'],'checked')
+        self.assertEqual(quality.assess('The current is 4\nA in the circuit.',
+            'Le courant dans le circuit est de 4 mA.')['status'],'blocked')
 
     def test_numbered_ordinals_can_be_written_in_french_without_masking_a_missing_value(self):
         source='The students first note the 1st and 3rd marks. Wait 1 min.'

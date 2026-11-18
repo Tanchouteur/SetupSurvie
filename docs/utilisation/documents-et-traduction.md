@@ -157,7 +157,8 @@ sont conservés, y compris quand on reprend un travail créé avant la mise à j
 Un refus explicite ou un échec persistant laisse le passage en attente de reprise.
 
 Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
-d’une unité de mesure. Une modification de la valeur ou d’une unité explicite
+d’une unité de mesure, ainsi qu’un article « A » après un numéro de page isolé.
+Une modification de la valeur ou d’une unité explicite
 comme « A » (ampères) continue de bloquer la publication. Un ordinal anglais
 comme « 1st » peut être rendu par « 1re » ou « première ». Une mesure
 manquante reste bloquante même si le même chiffre figure dans un ordinal.

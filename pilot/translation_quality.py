@@ -114,6 +114,14 @@ def assess(source,translated,*,source_language=None):
             # Single-letter elisions such as l’ or s’il are also prose.
             if unit=='a' or (len(unit)==1 and text[match.end():match.end()+1] in ("'",'’')):
                 continue
+            if unit=='A':
+                # An extracted page number can be followed by a new English
+                # sentence starting with the article "A".
+                line_start=text.rfind('\n',0,match.start(1))+1
+                gap=text[match.end(1):match.start(2)]
+                rest=text[match.end(2):]
+                if '\n' in gap and not text[line_start:match.start(1)].strip() and re.match(r'[ 	]+[^\W\d_]',rest):
+                    continue
             pairs[number(match.group(1)),UNIT_ALIASES[unit.lower()]]+=1
         return pairs
     if measures(source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
