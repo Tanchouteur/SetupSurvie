@@ -3,11 +3,14 @@
 ## Modèles et saisie de l’assistant — décision de Louis du 19 novembre 2026
 
 Louis demande de retirer la dictée de la discussion, qu’il n’utilise pas, et
-de pouvoir télécharger les modèles depuis l’interface. La 0.61.0 applique
+de pouvoir télécharger les modèles depuis l’interface. La 0.62.0 applique
 ce choix au portail. Le profil Famille installe les modèles du catalogue des
 modes de réponse depuis **Mon appareil → Paramètres → Assistant**. Le serveur utilise son
 stockage Ollama existant. La reconnaissance vocale reste utilisée pour les
-sous-titres des vidéos. Voir le [guide d’utilisation](../utilisation/nouvelle-interface.md#télécharger-un-modèle-pour-lassistant).
+sous-titres des vidéos. Le lot avait d’abord été numéroté 0.61.0 dans la
+PR 66. Le numéro 0.61.0 était déjà utilisé par le chantier « interface unique ».
+La version 0.62.0 identifie la livraison des modèles et permet de l’installer
+depuis une installation marquée 0.61.0. Voir le [guide d’utilisation](../utilisation/nouvelle-interface.md#télécharger-un-modèle-pour-lassistant).
 
 
 ## Traductions partielles publiées automatiquement — 3 décembre 2026

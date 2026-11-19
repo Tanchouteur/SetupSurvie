@@ -201,7 +201,7 @@ dans la discussion. La taille annoncée avant téléchargement est une estimatio
 du modèle complet. Les couches déjà présentes peuvent réduire le transfert.
 
 Le catalogue du portail reprend les modèles des modes de réponse. La dictée
-de la discussion a été retirée en version 0.61.0. La [transcription des vidéos
+de la discussion a été retirée en version 0.62.0. La [transcription des vidéos
 locales](videos-locales.md) utilise toujours son propre modèle Whisper.
 
 ## Lire et traduire sur place
