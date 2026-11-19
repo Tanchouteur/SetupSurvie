@@ -19,7 +19,7 @@ def build():
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/nouveau/style.css', '0.48.1'),
+        ('css', '/nouveau/style.css', '0.51.0'),
         ('css', '/nouveau/ux-system.css', '0.43.2'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
