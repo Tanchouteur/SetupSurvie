@@ -85,6 +85,7 @@ class TokenChecksTests(unittest.TestCase):
         source='Note the 1st shelf and the 3rd tray. It contains 7 pieces.'
         self.assertEqual(quality.spell_numbered_ordinals(source),
             'Note the first shelf and the third tray. It contains 7 pieces.')
+        self.assertEqual(quality.spell_numbered_ordinals('See the 11th tray.'),'See the 11th tray.')
         report=quality.assess(source,'Notez l’étagère et le troisième bac. Il contient 7 pièces.')
         self.assertEqual([i['code'] for i in report['issues']],['ordinals'])
         self.assertEqual(report['status'],'blocked')

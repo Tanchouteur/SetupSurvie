@@ -210,11 +210,12 @@ async def check_full_passage(source,mode,guidance,observations):
         # Discard the partial stream and replay the original request unchanged.
         await available()
         attempt=await check_passage(source,mode,guidance,observations)
-    if any(issue['code']=='ordinals' for issue in attempt[2]['issues']):
+    if (any(issue['code']=='ordinals' for issue in attempt[2]['issues'])
+            and translation_quality.spell_numbered_ordinals(source)!=source):
         await available()
         try:
             return await check_passage(source,mode,guidance,observations,spell_ordinals=True,
-                correction='Les rangs chiffrés ont été écrits en toutes lettres dans le texte fourni. Traduis chaque rang à son emplacement en français, sans omettre ni ajouter de rang.')
+                correction='Les rangs anglais courants sont écrits en toutes lettres dans le texte fourni. Traduis chaque rang à son emplacement en français, sans omettre ni ajouter de rang.')
         except UnusableResponse:
             return attempt
     return attempt
