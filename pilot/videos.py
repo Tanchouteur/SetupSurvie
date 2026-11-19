@@ -346,7 +346,8 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
 
 def scan():
     with LOCK:
-        report={'schema':1,'phase':'running','started':time.time(),'videos':0,'tracks':0,'errors':[]}
+        report={'schema':1,'phase':'running','started':time.time(),'videos':0,'tracks':0,'errors':[],
+                'stage':'Lecture des vidéos et des pistes'}
         try:report['signature']=signature()
         except Exception:report['signature']=None
         last_saved=time.monotonic()
@@ -361,6 +362,7 @@ def scan():
                 found={'videos':[],'skipped':[],'errors':[],'unexamined':[],'limitations':[]}
             else:found=inventory.inventory(ROOT,cancelled=STOP.is_set)
             found['videos'].extend(archived)
+            report.pop('stage')
             report['archive_inventory_job']=archive_report.get('job_id') if archive_report['phase'] in ('completed','partial') else None
             report['archive_inventory_finished']=archive_report.get('finished')
             report['archive_inventory_phase']=archive_report['phase']
@@ -408,6 +410,8 @@ def scan():
                 if STOP.is_set():raise InterruptedError()
                 fresh=archive_videos.progress()
                 if fresh.get('job_id')!=archive_report.get('job_id') or fresh.get('finished')!=archive_report.get('finished'):report['archive_inventory_job']=None
+                report['stage']='Publication de l’index des vidéos';save()
+            report.pop('stage')
             report.update(phase='completed',skipped=found['skipped'],inventory_errors=found['errors'],unexamined=found['unexamined'],limitations=found['limitations'],
                           per_video=[{'id':'video:'+item['inventory_id'],'path':item['path'],'title':item['title'],'subtitle_status':item['subtitle_status'],
                                       'archive':item.get('archive'),'provider':item.get('provider','local'),
@@ -417,6 +421,7 @@ def scan():
                                       'validation':item['validation'],'next_action':item['next_action']} for item in found['videos']])
         except InterruptedError:report.update(phase='paused',stopped_by=STOP_REASON)
         except Exception:report.update(phase='failed',error='L’inventaire n’a pas abouti ; l’ancien index reste conservé.')
+        report.pop('stage',None)
         report['finished']=time.time();save()
         return report
 
