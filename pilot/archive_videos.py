@@ -50,9 +50,14 @@ def items(errors=None):
         if not re.fullmatch('[a-f0-9]{24}\\.sqlite',path.name) or video_inventory.is_link(path):continue
         try:
             with zim_video_inventory.connect(path,True) as db:
+                titles=db.execute('SELECT value FROM metadata WHERE key=?',(zim_video_inventory.YOUTUBE_TITLES,)).fetchone()
+                titles=json.loads(titles[0]) if titles else {}
                 for row in db.execute('SELECT payload FROM video_items ORDER BY id'):
                     value=json.loads(row[0])
+                    if not zim_video_inventory.standalone_media(value['path'],value['media']['mimetype']):
+                        continue
                     if original_revision(value):
+                        value['title']=zim_video_inventory.display_title(value,titles)
                         for track in value['tracks']:
                             if track.get('archive_cache') and track['technical_status']=='passed':
                                 try:

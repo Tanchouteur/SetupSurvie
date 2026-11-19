@@ -14,6 +14,18 @@ except ImportError:HAS_ZIM=False
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_display_title_hides_technical_names_and_preserves_question_marks(self):
+        payload={'path':'opaque/videoplayback?id=123','title':'videoplayback?id=123',
+                 'collection':'Cours','inventory_id':'deadbeef001'}
+        self.assertEqual(inventory.display_title(payload,{}),'Cours — Vidéo sans titre (deadbeef)')
+        payload.update(title='Comment reconnaître une étoile ?')
+        self.assertEqual(inventory.display_title(payload,{}),payload['title'])
+        payload.update(title='Carte_du_ciel.mp4',path='media/Carte_du_ciel.mp4')
+        self.assertEqual(inventory.display_title(payload,{}),'Carte du ciel')
+        self.assertFalse(inventory.standalone_media('some/segment.m4s?part=1','video/mp4'))
+        self.assertFalse(inventory.standalone_media('library/index.d.ts','video/mp2t'))
+        self.assertTrue(inventory.standalone_media('media/concert.ts','video/mp2t'))
+
     def test_relative_archive_paths_and_remote_urls_remain_distinct(self):
         self.assertEqual(inventory.resolve('A/course.html','../media/clip%20one.webm#t=2')['path'],'media/clip one.webm')
         self.assertEqual(inventory.resolve('A/course.html','/tracks/en.vtt')['path'],'tracks/en.vtt')
@@ -42,6 +54,25 @@ class ArchiveVideoTests(unittest.TestCase):
     def create(self,extra=False):
         from zim_video_fixture import create
         create(self.zim,extra=extra)
+
+    def test_youtube_titles_enrich_existing_inventory_without_changing_video_identity(self):
+        from zim_video_fixture import create
+        create(self.zim,youtube=True)
+        with patch.object(inventory,'save_youtube_titles',lambda *args:None):
+            original=inventory.build(self.zim,self.state)
+        path=self.state/original['file']
+        with inventory.connect(path,True) as db:
+            old_rows=db.execute('SELECT payload FROM video_items ORDER BY id').fetchall()
+        updated=inventory.build(self.zim,self.state)
+        self.assertEqual(updated['status'],'reused')
+        self.assertEqual(updated['revision'],original['revision'])
+        with inventory.connect(path,True) as db:
+            rows=db.execute('SELECT payload FROM video_items ORDER BY id').fetchall()
+            titles=json.loads(db.execute('SELECT value FROM metadata WHERE key=?',(inventory.YOUTUBE_TITLES,)).fetchone()[0])
+        self.assertEqual(rows,old_rows)
+        self.assertEqual(titles,{'videos/aaaaaaaaaaa/video.webm':'How do we measure a shadow?',
+                                 'videos/bbbbbbbbbbb/video.webm':'A different lesson'})
+        self.assertEqual(inventory.build(self.zim,self.state)['status'],'reused')
 
     def test_native_text_index_does_not_skip_media_and_local_presence_is_not_decoding(self):
         result=inventory.build(self.zim,self.state);self.assertEqual(result['status'],'completed');self.assertEqual(result['video_resources'],2)

@@ -1,5 +1,5 @@
 """Generate a tiny fictional archive; libzim remains optional outside this helper."""
-def create(path,*,media=None,extra=False,with_tracks=True,extension='webm'):
+def create(path,*,media=None,extra=False,with_tracks=True,extension='webm',youtube=False):
     if extension not in ('webm','mp4'):raise ValueError('Synthetic fixture format required')
     from libzim.writer import Creator,Item,StringProvider,Hint
     class Resource(Item):
@@ -20,3 +20,15 @@ def create(path,*,media=None,extra=False,with_tracks=True,extension='webm'):
             creator.add_redirection('tracks/alias.vtt','Track alias','tracks/en.vtt',{})
         if media is None:creator.add_item(Resource('media/unlinked.mp4','video/mp4',b'orphan fixture'))
         if extra:creator.add_item(Resource('media/new.mp4','video/mp4',b'new fixture'))
+        if youtube:
+            import json
+            for name in ('channel.json','home_playlists.json'):
+                creator.add_item(Resource(name,'application/json','{}'))
+            for id_,slug,title in [('aaaaaaaaaaa','opaque-slug','How do we measure a shadow?'),
+                                   ('bbbbbbbbbbb','other-slug','A different lesson')]:
+                video=f'videos/{id_}/video.webm'
+                creator.add_item(Resource(video,'video/webm',b'fictional media'))
+                creator.add_item(Resource(f'videos/{slug}.json','application/json',
+                    json.dumps({'id':id_,'title':title,'videoPath':video})))
+            creator.add_item(Resource('videos/mismatched.json','application/json',
+                json.dumps({'id':'bbbbbbbbbbb','title':'Wrong lesson','videoPath':'videos/aaaaaaaaaaa/video.webm'})))

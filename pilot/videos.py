@@ -165,7 +165,7 @@ def signature():
     Nothing is opened or decoded; partial downloads are ignored so that a
     download in progress does not trigger repeated inventories."""
     if not ROOT.is_dir() or inventory.is_link(ROOT):return None
-    digest=hashlib.sha256();count=0
+    digest=hashlib.sha256(b'archive-display-titles-v1');count=0
     for directory,folders,files in os.walk(ROOT,followlinks=False):
         folders.sort();base=Path(directory)
         for name in sorted(files):

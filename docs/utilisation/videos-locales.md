@@ -113,6 +113,17 @@ recherche prend les pistes en compte. Si le service a redémarré entre-temps,
 **Actualiser le lecteur vidéo** permet de terminer cette étape. Le rapport des
 collections conserve l’examen, les erreurs et les archives non examinées.
 
+Depuis la version 0.50.3, les collections YouTube de Kiwix donnent leurs titres
+à la vidéothèque et à la recherche hors ligne. Après la mise à jour, relancer
+**Examiner ou reprendre les collections** pour récupérer les titres des archives
+déjà examinées à partir de leur catalogue embarqué. Les liens vidéo et les
+pistes déjà préparées gardent leurs références.
+
+Les autres collections utilisent le titre de la page qui contient la vidéo ou
+un nom de fichier lisible. Quand le titre manque, **Vidéo sans titre** indique
+la collection et une référence courte. Les fragments de streaming et les
+fichiers techniques reconnus sont écartés de la vidéothèque.
+
 Les vidéos effectivement incluses apparaissent avec les fichiers locaux. **Ouvrir
 l’article d’origine** conserve l’accès au document qui les héberge. Le lecteur
 passe par Kiwix sur votre appareil ; un Internet coupé n’empêche pas cette lecture.
