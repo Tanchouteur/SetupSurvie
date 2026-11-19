@@ -1,0 +1,384 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "wiki-01",
+      "split": "tune",
+      "query": "Eau",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Eau",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Article général sur la molécule et ses propriétés."
+    },
+    {
+      "id": "wiki-02",
+      "split": "tune",
+      "query": "Radio",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radio",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Homonymie entre plusieurs sens."
+    },
+    {
+      "id": "wiki-03",
+      "split": "tune",
+      "query": "Radio Disney",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radio_Disney",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Histoire et programmes du réseau musical."
+    },
+    {
+      "id": "wiki-04",
+      "split": "tune",
+      "query": "Feu",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Feu",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Phénomène et usages humains avec production du feu."
+    },
+    {
+      "id": "wiki-05",
+      "split": "tune",
+      "query": "Eau potable",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Eau_potable",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Sujet centré sur les critères et moyens de production d’eau potable."
+    },
+    {
+      "id": "wiki-06",
+      "split": "tune",
+      "query": "Compost",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Compostage_(biologie)",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Processus biologique et techniques de compostage."
+    },
+    {
+      "id": "wiki-07",
+      "split": "tune",
+      "query": "Conservation des aliments",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Conservation_des_aliments",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Historique et techniques de conservation."
+    },
+    {
+      "id": "wiki-08",
+      "split": "tune",
+      "query": "Filtration de eau",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Filtration",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Méthodes de filtration et matériel industriel."
+    },
+    {
+      "id": "wiki-09",
+      "split": "tune",
+      "query": "Batterie instrument",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Batterie_(instrument)",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Instrument de musique."
+    },
+    {
+      "id": "wiki-10",
+      "split": "tune",
+      "query": "La forme de l’eau",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "La_Forme_de_l'eau",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Film de fiction."
+    },
+    {
+      "id": "wiki-11",
+      "split": "tune",
+      "query": "Bicyclette",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Bicyclette",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Histoire et fonctionnement, avec une section consacrée à l’entretien."
+    },
+    {
+      "id": "wiki-12",
+      "split": "tune",
+      "query": "Premiers secours médecine",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Premiers_secours_(médecine)",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Notions pratiques concernant les secours."
+    },
+    {
+      "id": "wiki-13",
+      "split": "verify",
+      "query": "Rayonnement solaire",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Rayonnement_solaire",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Rayonnement en tant que phénomène physique."
+    },
+    {
+      "id": "wiki-14",
+      "split": "verify",
+      "query": "Panneau solaire photovoltaïque",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Panneau_solaire_photovoltaïque",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Équipement de production et utilisations."
+    },
+    {
+      "id": "wiki-15",
+      "split": "verify",
+      "query": "Potabilisation",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Potabilisation",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Techniques de production d’eau potable."
+    },
+    {
+      "id": "wiki-16",
+      "split": "verify",
+      "query": "Radioactivité",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radioactivité",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène physique."
+    },
+    {
+      "id": "wiki-17",
+      "split": "verify",
+      "query": "Radio Londres",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radio_Londres",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Histoire des émissions pendant la guerre."
+    },
+    {
+      "id": "wiki-18",
+      "split": "verify",
+      "query": "Radioamateur",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radioamateur",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Pratique radio, moyens, modes de communication et histoire."
+    },
+    {
+      "id": "wiki-19",
+      "split": "verify",
+      "query": "Plomberie",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Plomberie",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Installations et techniques de plomberie."
+    },
+    {
+      "id": "wiki-20",
+      "split": "verify",
+      "query": "Couture",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Couture",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Activité, techniques et rôle historique de la couture."
+    },
+    {
+      "id": "wiki-21",
+      "split": "verify",
+      "query": "Château d’eau",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Château_d'eau",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Infrastructure, fonctionnement et usages de stockage."
+    },
+    {
+      "id": "wiki-22",
+      "split": "verify",
+      "query": "Abribus",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Abribus",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Mobilier urbain et histoire."
+    },
+    {
+      "id": "wiki-23",
+      "split": "verify",
+      "query": "Le Feu Barbusse",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Le_Feu_(Barbusse)",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Roman de Barbusse."
+    },
+    {
+      "id": "wiki-24",
+      "split": "verify",
+      "query": "Système solaire",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Système_solaire",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Astronomie et description du système."
+    },
+    {
+      "id": "video-01",
+      "split": "verify",
+      "query": "Big Buck Bunny",
+      "kind": "videos",
+      "title_prefix": "Big Buck Bunny",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Vidéo d’animation ou séquence de découverte.",
+      "dedicated": true
+    },
+    {
+      "id": "video-02",
+      "split": "verify",
+      "query": "Me at the zoo",
+      "kind": "videos",
+      "title_prefix": "Me at the zoo",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Vidéo d’animation ou séquence de découverte.",
+      "dedicated": true
+    },
+    {
+      "id": "video-03",
+      "split": "verify",
+      "query": "Caminandes",
+      "kind": "videos",
+      "title_prefix": "\"Caminandes 2",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Vidéo d’animation ou séquence de découverte.",
+      "dedicated": true
+    },
+    {
+      "id": "wiki-25",
+      "split": "verify",
+      "query": "Solar system",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Solar_System",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Astronomie."
+    },
+    {
+      "id": "wiki-26",
+      "split": "verify",
+      "query": "First aid",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "First_aid",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Actions de secours."
+    },
+    {
+      "id": "wiki-27",
+      "split": "verify",
+      "query": "Water",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Water",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Propriétés et présence de l’eau."
+    },
+    {
+      "id": "wiki-28",
+      "split": "verify",
+      "query": "Compost",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Compost",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Préparation et utilisation des matières compostées."
+    }
+  ]
+}

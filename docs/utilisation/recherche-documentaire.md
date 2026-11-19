@@ -229,7 +229,7 @@ n’est configuré ou testé par cette livraison.
 
 ## Indexation et espaces depuis 0.3.0
 
-Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. Le classement utilise le texte disponible ; élargir au fonds complet permet de retrouver les documents non classés. La sélection et les filtres figurent dans l’adresse et sont restaurés au retour. Les favoris et traductions gardent leurs sélections personnelles.
+Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. Le classement utilise le texte disponible et, quand elle est accessible, la structure des articles de Wikipédia. Élargir au fonds complet permet de retrouver les documents écartés par l’espace. Voir le [guide des classements](classement-et-collections.md). La sélection et les filtres figurent dans l’adresse et sont restaurés au retour. Les favoris et traductions gardent leurs sélections personnelles.
 
 Depuis 0.6.0, le profil Famille peut [corriger ces espaces et le type du document](classement-et-collections.md),
 ainsi que les noms des collections. Une correction humaine conservée prime sur

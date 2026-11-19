@@ -940,7 +940,7 @@ pour produire ces compteurs.
 Le portail conserve les éléments DOM inchangés pendant le rafraîchissement. Le
 lecteur dédié déplace les mêmes éléments `translation-parts` et leurs commandes
 vers `translation-reading-content`, puis les remet à leur place à la fermeture ;
-il ne faut pas cloner leurs IDs lors d’une future refonte. Depuis 0.57.0,
+il ne faut pas cloner leurs IDs lors d’une future refonte. Depuis 0.58.0,
 le bandeau de l’Assistant héberge les commandes et les passages reviennent
 dans le fil après fermeture de la fenêtre. Le repère local par
 profil/traduction contient seulement offset, ouverture et date, avec cent entrées

@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Mesurer le classement des espaces](essais/mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
+
 - [Guide de design Veillée](architecture/guide-design.md) — navigation, lecture, vidéo et recette visuelle.
 - [File d’attente](utilisation/file-attente.md) — voir, réordonner, mettre en pause et reprendre les travaux du portail. [Décision et suivi](decisions/file-attente-travaux.md).
 

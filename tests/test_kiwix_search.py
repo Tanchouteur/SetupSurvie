@@ -127,7 +127,8 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
                     return ('<rss><channel><item><title>Bicycle maintenance</title><link>/content/wikipedia_fr/Repair</link>'+description+'</item></channel></rss>').encode(),'application/xml'
                 book=dict(self.catalog[0],book='wikipedia_fr_'+str(edition))
                 # Unique collection identity also keeps the real response cache isolated.
-                async def scoped(path):
+                async def scoped(path,*args):
+                    if path.startswith('/content/'):raise HTTPException(404)
                     raw,content=await reader(path);return raw.replace(b'wikipedia_fr/',book['book'].encode()+b'/'),content
                 with patch.object(library,'books',AsyncMock(return_value=[book])),patch.object(library,'get',scoped):
                     found=await library.search('bicycle puncture repair')
@@ -140,8 +141,12 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
         catalog=[dict(self.catalog[0],book='wikipedia_fr_'+str(i)) for i in range(45)]
         async def fetch(path,*args):
             if path.startswith('/suggest?'):return b'[]','application/json'
+            if path.startswith('/content/'):raise HTTPException(404)
             return self.xml(parse_qs(urlsplit(path).query)['books.name'][0])
         with patch.object(library,'books',AsyncMock(return_value=catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)) as get:
             found=await library.search('feu')
-        self.assertLessEqual(get.await_count,36);self.assertGreater(found.coverage['not_searched'],0)
+        calls = [call.args[0] for call in get.await_args_list]
+        self.assertLessEqual(sum(path.startswith(('/search?', '/suggest?')) for path in calls), 36)
+        self.assertLessEqual(sum(path.startswith('/content/') for path in calls), 12)
+        self.assertGreater(found.coverage['not_searched'], 0)
         self.assertEqual(found.coverage['status'],'partial')

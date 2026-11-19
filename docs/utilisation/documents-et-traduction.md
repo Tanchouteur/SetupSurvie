@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.57.0, 19 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.58.0, 19 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -456,7 +456,7 @@ les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d�
 
 ## Lire pendant que le document se traduit — 0.28.0
 
-Depuis **0.57.0**, dans l’Assistant, le bandeau **Traduction** au-dessus de la
+Depuis **0.58.0**, dans l’Assistant, le bandeau **Traduction** au-dessus de la
 discussion affiche l’état, le nombre de passages traduits et les commandes.
 Les passages terminés apparaissent dans le fil au fur et à mesure, même avec
 le bandeau replié. Les passages refusés par les contrôles et ceux dont le texte

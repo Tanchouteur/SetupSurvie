@@ -28,7 +28,7 @@ Sur téléphone, une seule zone à la fois, avec les boutons explicites
 ## Traduction dans le fil — décision du 19 novembre 2026
 
 Louis demande de lire la traduction au fur et à mesure dans la discussion
-et propose de regrouper les boutons en haut. SetupSurvie 0.57.0 retient un
+et propose de regrouper les boutons en haut. SetupSurvie 0.58.0 retient un
 bandeau repliable pour les commandes et la progression. Les passages traduits
 et les blocages se lisent dans le fil. Cette disposition remplace le suivi
 des traductions dans le volet droit décrit ci-dessus. La [lecture plein
@@ -69,7 +69,7 @@ n’est décidée dans ce document.
 
 Les contrôles existants gardent leurs IDs et leurs gestionnaires. Déplacer les
 blocs plutôt que les cloner. En particulier, la 0.28.0 peut déplacer les passages
-`translation-parts` vers son lecteur dédié pendant sa lecture. Depuis 0.57.0, ils reviennent dans le fil à la fermeture. Conserver ce confort ou le remplacer par un
+`translation-parts` vers son lecteur dédié pendant sa lecture. Depuis 0.58.0, ils reviennent dans le fil à la fermeture. Conserver ce confort ou le remplacer par un
 parcours offrant les mêmes capacités, sans reprendre l’inférence au rechargement.
 Voir la [référence d’architecture](../architecture/README.md#lecture-pendant-une-traduction--0280).
 
