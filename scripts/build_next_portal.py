@@ -28,7 +28,7 @@ def build():
         ('js', '/long-summaries.js', '0.34.0'),
         ('css', '/bilingual-reader.css', '0.23.0'),
         ('js', '/bilingual-reader.js', '0.28.0'),
-        ('js', '/nouveau/videos.js', '0.52.0'),
+        ('js', '/nouveau/videos.js', '0.53.0'),
         ('js', '/nouveau/captions.js', '0.52.0'),
         ('js', '/nouveau/transcriptions.js', '0.52.0'),
         ('js', '/nouveau/acquisitions.js', '0.52.0'),
@@ -57,7 +57,7 @@ def build():
         ('js', '/resource-status.js', '0.43.2'),
         ('css', '/design/tokens.css', '0.44.0'),
         ('css', '/design/system.css', '0.49.0'),
-        ('css', '/nouveau/library-video.css', '0.52.0'),
+        ('css', '/nouveau/library-video.css', '0.53.0'),
         ('js', '/design/experience.js', '0.49.0'),
         ('js', '/nouveau/navigation.js', '0.51.0'),
     ]

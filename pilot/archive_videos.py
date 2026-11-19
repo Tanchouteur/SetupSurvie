@@ -51,6 +51,7 @@ def items(errors=None):
         try:
             with zim_video_inventory.connect(path,True) as db:
                 titles=db.execute('SELECT value FROM metadata WHERE key=?',(zim_video_inventory.YOUTUBE_TITLES,)).fetchone()
+                has_youtube_catalogue=titles is not None
                 titles=json.loads(titles[0]) if titles else {}
                 for row in db.execute('SELECT payload FROM video_items ORDER BY id'):
                     value=json.loads(row[0])
@@ -58,6 +59,7 @@ def items(errors=None):
                         continue
                     if original_revision(value):
                         value['title']=zim_video_inventory.display_title(value,titles)
+                        value['youtube_archive']=has_youtube_catalogue
                         for track in value['tracks']:
                             if track.get('archive_cache') and track['technical_status']=='passed':
                                 try:

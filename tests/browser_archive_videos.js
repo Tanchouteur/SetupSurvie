@@ -5,6 +5,7 @@ async page=>{
   page.on('pageerror',error=>errors.push(error.message));page.on('request',request=>calls.push(request.url()));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers});
   check((await page.request.post(base+'/fixture/archive-videos',{headers})).ok(),'Petite archive native et média synthétique préparés');
+  await page.request.post(base+'/fixture/acquisitions',{headers});
   try{
     await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
     await page.getByText('Gestion de la vidéothèque',{exact:true}).click();
@@ -24,10 +25,27 @@ async page=>{
     await collectionHeader.waitFor();
     check((await collectionHeader.textContent()).includes('2 vidéos')&&!await collection.evaluate(d=>d.open),
       'Les vidéos de la même collection sont comptées sur une carte repliée');
+    const origin=page.getByRole('combobox',{name:'Origine des vidéos'});
+    await origin.selectOption('youtube');
+    const youtubeVideo=page.locator('#next-videos-list .data-card').filter({hasText:'Récupération source fictive'});
+    await youtubeVideo.waitFor();
+    check(await collection.count()===0,'YouTube retire la collection encyclopédique');
+    await origin.selectOption('encyclopedia');
+    await collectionHeader.waitFor();
+    check((await page.locator('#next-videos-count').textContent())==='2 vidéos',
+      'Encyclopédie ne compte que les vidéos de l’archive');
+    await page.locator('#collection-filter').fill('terme-sans-résultat');
+    await page.getByText('Aucune vidéo ne correspond à ces filtres.').waitFor();
+    check(await collection.count()===0,'Le filtre par mots se combine avec l’origine');
+    await page.locator('#collection-filter').fill('');
+    await collectionHeader.waitFor();
     await collectionHeader.click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#next-videos-list .data-card')].some(card=>card.textContent.includes('Fictional video course')));
     const card=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});
     check(await card.getByRole('link',{name:'Ouvrir l’article d’origine'}).count()===1,'Origine documentaire conservée sur la vidéo');
+    await origin.selectOption('all');
+    await youtubeVideo.waitFor();
+    check(await collectionHeader.isVisible(),'Toutes les vidéos réunit les deux origines');
     check(await card.getByText('Créer les sous-titres depuis l’audio',{exact:true}).count()===0,'Une piste présente évite de proposer inutilement une reconnaissance audio');
     const found=await(await page.request.get(base+'/api/search?q=Fictional&domain=all')).json();const hit=found.results.find(row=>row.archive_video&&row.id.includes('#t=1000'));
     check(!!hit,'La recherche commune retrouve les paroles internes et leur horodatage');
@@ -57,5 +75,8 @@ async page=>{
     check(!calls.some(url=>url.includes('/api/chat')||url.includes('/api/admin/inference')),'Lecture et examen ne commandent aucun démarrage moteur');
     check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
     return {checks:checks.length,results:checks,real_corpus:false,real_model:false,simulated_reader_http:true};
-  }finally{await page.request.post(base+'/fixture/archive-videos?active=false',{headers});}
+  }finally{
+    await page.request.post(base+'/fixture/acquisitions?enabled=false',{headers});
+    await page.request.post(base+'/fixture/archive-videos?active=false',{headers});
+  }
 }

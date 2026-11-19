@@ -116,6 +116,10 @@
   font-size: .8125rem;
   overflow-wrap: anywhere;
 }
+.next-interface .video-origin-filter {
+  width: min(100%, 240px);
+  margin: 4px 0 12px;
+}
 .next-interface .video-library-status {
   display: flex;
   flex-wrap: wrap;

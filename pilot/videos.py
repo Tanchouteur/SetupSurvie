@@ -12,7 +12,7 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import durable,retrieval,store,video_inventory as inventory
+from . import durable,provider_subtitles,retrieval,store,video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
 ACTIVE=None
@@ -165,7 +165,7 @@ def signature():
     Nothing is opened or decoded; partial downloads are ignored so that a
     download in progress does not trigger repeated inventories."""
     if not ROOT.is_dir() or inventory.is_link(ROOT):return None
-    digest=hashlib.sha256(b'archive-display-titles-v1');count=0
+    digest=hashlib.sha256(b'archive-display-titles-and-origin-v1');count=0
     for directory,folders,files in os.walk(ROOT,followlinks=False):
         folders.sort();base=Path(directory)
         for name in sorted(files):
@@ -280,7 +280,22 @@ def listing_card(record):
     return item
 
 
-def listing(offset=0,limit=30,query='',grouped=False,group=''):
+def video_origin(provider,youtube_archive,path,extractor,url):
+    if provider=='zim':
+        return 'youtube' if youtube_archive else 'encyclopedia'
+    if (extractor or '').lower() in ('youtube','youtube:video') or path.lower().startswith('youtube/'):
+        return 'youtube'
+    if url and '://' in url:
+        try:
+            provider_subtitles.video_id(url)
+        except ValueError:
+            pass
+        else:
+            return 'youtube'
+    return 'local'
+
+
+def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
     words=retrieval.normal(query).split()[:10]
     filters=[]
     parameters=[]
@@ -291,6 +306,11 @@ def listing(offset=0,limit=30,query='',grouped=False,group=''):
     if group:
         filters.append('group_key=?')
         parameters.append(group)
+    if origin!='all':
+        filters.append("""video_origin(json_extract(payload,'$.provider'),
+            json_extract(payload,'$.youtube_archive'),json_extract(payload,'$.path'),
+            json_extract(payload,'$.source.extractor'),json_extract(payload,'$.source.url'))=?""")
+        parameters.append(origin)
     restriction=' WHERE '+' AND '.join(filters) if filters else ''
     prefix=VIDEO_COLLECTIONS if grouped or group else ''
     table='grouped_videos' if prefix else 'media'
@@ -299,6 +319,8 @@ def listing(offset=0,limit=30,query='',grouped=False,group=''):
         report={key:report[key] for key in ('phase','finished','videos','error') if key in report}
     with connect() as db:
         db.execute('BEGIN')
+        if origin!='all':
+            db.create_function('video_origin',5,video_origin,deterministic=True)
         if prefix and words:
             def collection_matches(label):
                 text=retrieval.normal(label or '')

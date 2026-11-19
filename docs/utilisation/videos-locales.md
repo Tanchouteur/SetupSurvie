@@ -6,7 +6,7 @@ la carte pour voir les titres et les commandes de lecture. Les vidéos sans
 groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
 les noms des collections.
 
-**Guide actuel — 0.50.2, 18 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.53.0, 19 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
@@ -58,6 +58,14 @@ que les collections ZIM non examinées sont sans vidéo.
 ## Chercher et lire
 
 Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
+Le menu **Origine des vidéos** permet d’afficher **YouTube** ou **Encyclopédie**.
+**YouTube** inclut les vidéos importées et les chaînes YouTube archivées dans
+Kiwix. **Encyclopédie** affiche les vidéos des autres collections Kiwix.
+**Toutes les vidéos** inclut aussi les fichiers ajoutés sans origine identifiée.
+Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
+dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
+nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).
+
 Les titres et descriptions participent au filtre de Collections. **Rechercher** réunit
 documents et vidéos ; les paroles ne sont cherchées que dans les pistes locales
 qui passent les contrôles techniques. Un titre seul ne décrit pas toute la vidéo.
