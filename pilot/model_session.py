@@ -20,6 +20,14 @@ class Failure(RuntimeError):
         super().__init__(kind)
 
 
+def interrupted_reply(error):
+    """Identify a broken reply after a caller has received generated output."""
+    return (
+        isinstance(error, (httpx.TransportError, json.JSONDecodeError))
+        or isinstance(error, Failure) and error.kind == 'stream_interrupted'
+    )
+
+
 def failure_kind(value):
     return 'memory_error' if re.search(r'out of memory|insufficient memory|failed to allocate',str(value),re.I) else 'model_error'
 
