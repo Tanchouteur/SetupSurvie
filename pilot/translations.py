@@ -194,7 +194,7 @@ async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None,sp
     return protected.restore(result,selected['model']),selected['model']
 
 
-async def check_passage(source,mode,guidance,observations,*,correction=None,spell_ordinals=False):
+async def check_passage(source,mode,guidance,observations,*,correction=None,spell_ordinals=False,source_language=None):
     formula_error=None
     try:
         options={'correction':correction} if correction else {}
@@ -202,32 +202,32 @@ async def check_passage(source,mode,guidance,observations,*,correction=None,spel
         result,model=await translate(source,mode,guidance=guidance,on_metrics=observations.append,**options)
     except math_text.TranslationMismatch as error:
         result,model,formula_error=error.candidate,error.model,str(error)
-    report=translation_quality.assess(source,result)
+    report=translation_quality.assess(source,result,source_language=source_language,english_grouping=True)
     if formula_error:
         report['status']='blocked'
         report['issues'].append({'code':'formula_anchors','severity':'error','message':formula_error})
     return result,model,report
 
 
-async def check_full_passage(source,mode,guidance,observations):
+async def check_full_passage(source,mode,guidance,observations,*,source_language=None):
     try:
-        attempt=await check_passage(source,mode,guidance,observations)
+        attempt=await check_passage(source,mode,guidance,observations,source_language=source_language)
     except InterruptedResponse:
         # Discard the partial stream and replay the original request unchanged.
         await available()
-        attempt=await check_passage(source,mode,guidance,observations)
+        attempt=await check_passage(source,mode,guidance,observations,source_language=source_language)
     if (any(issue['code']=='ordinals' for issue in attempt[2]['issues'])
             and translation_quality.spell_numbered_ordinals(source)!=source):
         await available()
         try:
-            return await check_passage(source,mode,guidance,observations,spell_ordinals=True,
+            return await check_passage(source,mode,guidance,observations,spell_ordinals=True,source_language=source_language,
                 correction='Les rangs anglais courants sont écrits en toutes lettres dans le texte fourni. Traduis chaque rang à son emplacement en français, sans omettre ni ajouter de rang.')
         except UnusableResponse:
             return attempt
     return attempt
 
 
-async def recover_passage(source,mode,guidance,observations):
+async def recover_passage(source,mode,guidance,observations,*,source_language=None):
     # Keep the persisted passage and its position. Split only at a sentence or
     # line boundary outside protected formulas, and check each half separately.
     formulas=list(math_text.BLOCKS.finditer(source))
@@ -242,7 +242,7 @@ async def recover_passage(source,mode,guidance,observations):
     checked=[];warnings=[]
     for piece in pieces:
         await available()
-        result,model,report=await check_passage(piece,mode,retry_guidance,observations,correction=options)
+        result,model,report=await check_passage(piece,mode,retry_guidance,observations,correction=options,source_language=source_language)
         if report['status']=='blocked':
             # Keep the original refusal candidate when only a half failed.
             if len(pieces)>1:return None
@@ -250,16 +250,30 @@ async def recover_passage(source,mode,guidance,observations):
         checked.append(result)
         warnings.extend(report['issues'])
     result='\n'.join(checked) if cut is not None and source[:cut].endswith('\n') else ' '.join(checked)
-    report=translation_quality.assess(source,result)
+    report=translation_quality.assess(source,result,source_language=source_language,english_grouping=True)
     for issue in warnings:
         if issue not in report['issues']:report['issues'].append(issue)
     if report['status']=='checked' and report['issues']:report['status']='warning'
     return result,model,report
 
 
+async def document_language(identifier):
+    with store.connect() as db:
+        row=db.execute('''SELECT t.source_id,p.source_meta FROM translations t
+            LEFT JOIN translation_publications p ON p.translation_id=t.id WHERE t.id=?''',(identifier,)).fetchone()
+    if not row:return ''
+    metadata=json.loads(row['source_meta']) if row['source_meta'] else {}
+    if 'language' in metadata:return metadata['language']
+    # Legacy jobs have the saved passage but no saved language. The live
+    # document supplies metadata only, and may since have been removed.
+    try:return (await library.source(row['source_id'])).get('language','')
+    except HTTPException:return ''
+
+
 @work_queue.tracked('translation')
 async def run(identifier):
     try:
+        source_language=await document_language(identifier)
         while True:
             # Share the same inference queue as chat, yielding between fragments.
             async with engine.LOCK:
@@ -278,12 +292,12 @@ async def run(identifier):
                     try:
                         async with asyncio.timeout(900):
                             try:
-                                attempt=await check_full_passage(part['source_text'],item['mode'],guidance,observations)
+                                attempt=await check_full_passage(part['source_text'],item['mode'],guidance,observations,source_language=source_language)
                             except UnusableResponse:
                                 attempt=None
                             if attempt is None or attempt[2]['status']=='blocked':
                                 try:
-                                    recovered=await recover_passage(part['source_text'],item['mode'],guidance,observations)
+                                    recovered=await recover_passage(part['source_text'],item['mode'],guidance,observations,source_language=source_language)
                                 except ValueError:
                                     if attempt is None:raise
                                 else:

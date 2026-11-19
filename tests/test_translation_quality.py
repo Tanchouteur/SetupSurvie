@@ -8,6 +8,19 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_english_document_grouping_keeps_values_and_units(self):
+        original='About 400,000 years ago. That is 1,500.25 meters.'
+        correct='Il y a environ 400\u202f000 ans. Cela fait 1 500,25 mètres.'
+        def assess(candidate):
+            return quality.assess(original,candidate,source_language='eng',english_grouping=True)
+        self.assertEqual(assess(correct)['status'],'checked')
+        for candidate in (correct.replace('400\u202f000','400'),correct.replace('mètres','millimètres'),
+                          correct.replace('1 500,25','1,50025')):
+            self.assertEqual(assess(candidate)['status'],'blocked')
+        french=quality.assess('La distance est de 400,000 mètres.','La distance est de 400 000 mètres.',
+                             source_language='fr',english_grouping=True)
+        self.assertEqual(french['status'],'blocked')
+
     def test_english_dollar_grouping_keeps_the_amount_and_other_decimal_checks(self):
         source='The budget is $70,000. Measure 70,000 ml.'
         for budget in ('70 000 dollars','$70,000'):
@@ -124,6 +137,21 @@ class TokenChecksTests(unittest.TestCase):
 
 
 class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_english_grouping_works_for_new_and_legacy_translation_jobs(self):
+        from pilot import library
+        (library.GUIDES/'manual.en.txt').write_text('About 400,000 years ago.',encoding='utf-8')
+        library.index_guides()
+        for legacy in (False,True):
+            with self.subTest(legacy=legacy):
+                item=await self.create()
+                if legacy:
+                    with store.connect() as db:
+                        db.execute("UPDATE translation_publications SET source_meta='{}' WHERE translation_id=?",(item['id'],))
+                with patch.object(translations,'publish_automatic',AsyncMock()),patch.object(translations,'translate',AsyncMock(return_value=('Il y a environ 400\u202f000 ans.','fixture'))):
+                    await translations.run(item['id'])
+                state=translations.status(item['id'],'alice')
+                self.assertEqual((state['status'],state['done']),('completed',1))
+
     async def test_invalid_formula_anchors_keep_rejected_proposal_and_never_publish(self):
         from pilot.math_text import marked,TranslationMismatch
         source='Fictional equation. '+marked('19/7')

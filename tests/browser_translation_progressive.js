@@ -61,12 +61,20 @@ async page=>{
   check(await page.evaluate(()=>S.translationOffset===10),'La mise en pause conserve la page de lecture');
   check(await page.evaluate(id=>{const data=JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user.id));return data[id].offset===10&&Object.keys(data[id]).every(key=>['offset','open','updated'].includes(key));},id),'La mémoire de lecture garde seulement le groupe lu et sa date');
   stage='ouvrir la lecture';await page.locator('#translation-reading-open').click();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
-  const historyLength=await page.evaluate(()=>history.length);
+  await page.waitForFunction(()=>history.state?.dialog==='translation-reading-dialog');
+  await page.addInitScript(()=>{
+    const push=history.pushState.bind(history);
+    window.translationDialogPushes=0;
+    history.pushState=(state,...args)=>{
+      if(state?.dialog==='translation-reading-dialog')window.translationDialogPushes++;
+      return push(state,...args);
+    };
+  });
   stage='retrouver la lecture après rechargement';const sent=commands.length;await page.reload();await page.waitForFunction(()=>S.translationOffset===10&&document.querySelector('#translation-parts article')?.dataset.position==='10');
   await page.locator('#translation-panel').evaluate(node=>node.open=true);
   await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
   check(true,'La fenêtre de lecture est retrouvée après rechargement');
-  check(await page.evaluate(()=>history.length)===historyLength,'Restaurer la lecture ne rajoute pas une étape à l’historique');
+  check(await page.evaluate(()=>window.translationDialogPushes===0),'Restaurer la lecture ne rajoute pas une étape à l’historique');
   check(commands.length===sent,'Recharger la lecture ne relance aucune traduction');
   check(await page.evaluate(()=>S.translationOffset===10),'Le groupe de passages lu est retrouvé après rechargement');
   stage='revenir au début';await page.locator('#translation-reading-first').click();await page.waitForFunction(()=>document.querySelector('#translation-parts article')?.dataset.position==='0');

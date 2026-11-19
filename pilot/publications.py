@@ -20,7 +20,7 @@ NOTICE='Traduction IA non vérifiée. Comparez les nombres, unités, tableaux et
 
 
 def reserve(db, identifier, user_id, source, auto_publish=False):
-    metadata={key:source.get(key,'') for key in ('document_date','edition','provenance','licence','collected_at','archive_date','source_revision')}
+    metadata={key:source.get(key,'') for key in ('document_date','edition','provenance','licence','collected_at','archive_date','source_revision','language')}
     db.execute('INSERT OR IGNORE INTO translation_publications(translation_id,user_id,source_id,title,source_meta,auto_publish) VALUES(?,?,?,?,?,?)',
                (identifier,user_id,source['id'],source['title'],json.dumps(metadata,ensure_ascii=False),int(auto_publish)))
 
