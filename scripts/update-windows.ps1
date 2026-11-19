@@ -1,7 +1,180 @@
 ﻿[CmdletBinding()]
-param([string]$WorkDir, [switch]$Check, [switch]$Recover)
+param([string]$WorkDir, [switch]$Check, [switch]$Recover, [switch]$ConsoleOnly,
+    [Parameter(DontShow)] [string]$ProgressLog)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
+
+$script:updateVersion = $null
+$script:updateLog = $null
+$script:updateStages = @{
+    setup = 'Vérification de l''installation'
+    git = 'Récupération de la version disponible'
+    build = 'Préparation du paquet'
+    package = 'Vérification du paquet et de l''espace disque'
+    apply = 'Sauvegarde et installation'
+    maintenance = 'Attente de la fin des travaux en cours'
+    stop = 'Arrêt des services'
+    backup = 'Sauvegarde des données'
+    switch = 'Installation de la nouvelle version'
+    start = 'Redémarrage des services'
+    check = 'Vérification du fonctionnement'
+    rollback = 'Restauration de la version précédente'
+    prune = 'Nettoyage des anciennes copies de mise à jour'
+    launcher = 'Actualisation des raccourcis et du lanceur'
+    done = 'Mise à jour terminée'
+    current = 'SetupSurvie est déjà à jour'
+    error = 'Mise à jour arrêtée'
+}
+
+function Write-SurvieUpdateProgress([string]$Phase, [string]$Detail, [int]$Current, [int]$Total) {
+    $title = $script:updateStages[$Phase]
+    if (-not $title) { return }
+    if ($Total -gt 0) { $Detail = '{0:N0} fichiers sur {1:N0} sauvegardés' -f $Current, $Total }
+    $line = $title
+    if ($Detail) { $line += ' — ' + $Detail }
+    Write-Host ('[{0:HH:mm:ss}] {1}' -f (Get-Date), $line)
+    if ($ProgressLog) {
+        $entry = @{ Phase = $Phase; Title = $title; Detail = $Detail; Current = $Current; Total = $Total
+            Version = $script:updateVersion; Log = $script:updateLog }
+        try {
+            $json = $entry | ConvertTo-Json -Compress
+            [IO.File]::AppendAllText($ProgressLog, $json + [Environment]::NewLine)
+        } catch [IO.IOException] {
+            # The progress display is best effort. The transcript remains authoritative.
+        } catch [UnauthorizedAccessException] {}
+    }
+}
+
+function Show-SurvieUpdateWindow {
+    Add-Type -AssemblyName System.Windows.Forms
+    [Windows.Forms.Application]::EnableVisualStyles()
+    $form = New-Object Windows.Forms.Form -Property @{
+        Text = 'Mise à jour de SetupSurvie'
+        StartPosition = 'CenterScreen'
+        ClientSize = [Drawing.Size]::new(540, 240)
+        FormBorderStyle = 'FixedDialog'
+        AutoScaleMode = 'Dpi'
+        MaximizeBox = $false
+        Font = [Drawing.Font]::new('Segoe UI', 10)
+    }
+    $title = New-Object Windows.Forms.Label -Property @{
+        Text = $script:updateStages.setup
+        Font = [Drawing.Font]::new('Segoe UI Semibold', 15)
+        Location = [Drawing.Point]::new(24, 22)
+        Size = [Drawing.Size]::new(492, 35)
+    }
+    $version = New-Object Windows.Forms.Label -Property @{
+        Location = [Drawing.Point]::new(24, 61)
+        Size = [Drawing.Size]::new(492, 23)
+    }
+    $bar = New-Object Windows.Forms.ProgressBar -Property @{
+        Location = [Drawing.Point]::new(24, 92)
+        Size = [Drawing.Size]::new(492, 14)
+        Style = 'Marquee'
+        MarqueeAnimationSpeed = 30
+        AccessibleName = 'Progression de l''étape'
+    }
+    $detail = New-Object Windows.Forms.Label -Property @{
+        Location = [Drawing.Point]::new(24, 116)
+        Size = [Drawing.Size]::new(492, 60)
+        AutoEllipsis = $true
+    }
+    $elapsed = New-Object Windows.Forms.Label -Property @{
+        Location = [Drawing.Point]::new(24, 197)
+        Size = [Drawing.Size]::new(220, 24)
+    }
+    $journal = New-Object Windows.Forms.Button -Property @{
+        Text = 'Ouvrir le journal'
+        Location = [Drawing.Point]::new(275, 190)
+        Size = [Drawing.Size]::new(140, 32)
+        Enabled = $false
+    }
+    $close = New-Object Windows.Forms.Button -Property @{
+        Text = 'Fermer'
+        Location = [Drawing.Point]::new(426, 190)
+        Size = [Drawing.Size]::new(90, 32)
+        Enabled = $false
+    }
+    $form.Controls.AddRange(@($title, $version, $bar, $detail, $elapsed, $journal, $close))
+    $statusPath = [IO.Path]::GetTempFileName()
+    $timer = New-Object Windows.Forms.Timer -Property @{ Interval = 300 }
+    $view = @{ ExitCode = $null; Log = $null; Phase = $null }
+    $process = $null
+    try {
+        $worker = New-Object Diagnostics.ProcessStartInfo -Property @{
+            FileName = (Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe')
+            Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -ConsoleOnly -ProgressLog `"$statusPath`""
+            UseShellExecute = $false
+            CreateNoWindow = $true
+        }
+        if ($WorkDir) {
+            $workPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($WorkDir)
+            if ($workPath.EndsWith([char]92)) { $workPath += [char]92 }
+            $worker.Arguments += ' -WorkDir "' + $workPath + '"'
+        }
+        $process = [Diagnostics.Process]::Start($worker)
+        $watch = [Diagnostics.Stopwatch]::StartNew()
+        $journal.Add_Click({ Start-Process -FilePath $view.Log })
+        $close.Add_Click({ $form.Close() })
+        $form.Add_FormClosing({ param($sender, $eventArgs) $eventArgs.Cancel = $null -eq $view.ExitCode })
+        $timer.Add_Tick({
+            $elapsed.Text = 'Temps écoulé  ' + $watch.Elapsed.ToString('hh\:mm\:ss')
+            try {
+                $stream = [IO.File]::Open($statusPath, 'Open', 'Read', 'ReadWrite')
+                try {
+                    $reader = [IO.StreamReader]::new($stream)
+                    try { $lines = $reader.ReadToEnd().Trim().Split("`n") }
+                    finally { $reader.Dispose() }
+                } finally { $stream.Dispose() }
+                if ($lines[-1]) {
+                    $status = $lines[-1] | ConvertFrom-Json -ErrorAction Stop
+                    $view.Phase = $status.Phase
+                    $title.Text = $status.Title
+                    $version.Text = $status.Version
+                    $detail.Text = $status.Detail
+                    if ($status.Log) {
+                        $view.Log = $status.Log
+                        $journal.Enabled = $true
+                    }
+                    if ($status.Total -gt 0) {
+                        $bar.Style = 'Continuous'
+                        $bar.Value = [int][Math]::Floor(100 * $status.Current / $status.Total)
+                    } else { $bar.Style = 'Marquee' }
+                }
+            } catch {
+                # A partially written line is read again on the next timer tick.
+            }
+            if ($process.HasExited) {
+                $view.ExitCode = $process.ExitCode
+                $timer.Stop()
+                $close.Enabled = $true
+                $form.AcceptButton = $close
+                $close.Focus() | Out-Null
+                $bar.Style = 'Continuous'
+                if ($view.ExitCode -eq 0) {
+                    $bar.Value = 100
+                    if ($view.Phase -notin @('done', 'current')) {
+                        $title.Text = $script:updateStages.done
+                        $detail.Text = ''
+                    }
+                }
+                else {
+                    $bar.Value = 0
+                    $title.Text = $script:updateStages.error
+                    if ($view.Phase -ne 'error') { $detail.Text = 'Le programme s''est arrêté. Consultez le journal de mise à jour.' }
+                }
+            }
+        })
+        $timer.Start()
+        $null = $form.ShowDialog()
+        return $view.ExitCode
+    } finally {
+        $timer.Dispose()
+        $form.Dispose()
+        if ($process) { $process.Dispose() }
+        [IO.File]::Delete($statusPath)
+    }
+}
 
 function Get-SurvieUpdateSettings {
     $work = $WorkDir
@@ -38,7 +211,10 @@ function Invoke-SurvieUpdateCommand([string]$File, [array]$Arguments) {
         if ($_ -is [Management.Automation.ErrorRecord] -and $line.Trim()) {
             $stderr = @($stderr | Select-Object -Last 2) + $line
         }
-        Write-Host $line
+        if ($line.StartsWith('SURVIE_UPDATE_PROGRESS ')) {
+            $status = $line.Substring('SURVIE_UPDATE_PROGRESS '.Length) | ConvertFrom-Json
+            Write-SurvieUpdateProgress $status.phase $status.detail $status.current $status.total
+        } else { Write-Host $line }
     }
     $code = $LASTEXITCODE
     if ($code -ne 0) {
@@ -74,7 +250,8 @@ function Invoke-SurvieGitUpdate($Settings) {
     $git = Find-SurvieGit
     if (-not $git) { throw "Git manque. Relancez Installer-SetupSurvie.cmd -Check puis la préparation du PC pour l'installer." }
     $source = Join-Path $maintenance 'source'
-    Write-Host 'Récupération des changements depuis GitHub...'
+    $script:updateVersion = 'Version installée  ' + $installed.version
+    Write-SurvieUpdateProgress 'git' 'Synchronisation avec GitHub…'
     if (-not (Test-Path -LiteralPath (Join-Path $source '.git'))) {
         Invoke-SurvieUpdateCommand $git @('clone', '--branch', 'main', '--single-branch', 'https://github.com/Tanchouteur/SetupSurvie.git', $source)
     }
@@ -87,22 +264,36 @@ function Invoke-SurvieGitUpdate($Settings) {
     Invoke-SurvieUpdateCommand $git @('-C', $source, 'merge', '--ff-only', 'origin/main')
     $available = Get-Content -LiteralPath (Join-Path $source 'deploy\release.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     Write-Host ('Version installée : ' + $installed.version + ' ; disponible : ' + $available.version)
-    if ([version]$available.version -le [version]$installed.version) { Write-Host 'SetupSurvie est déjà à jour. Aucun service redémarré.'; return }
+    if ([version]$available.version -le [version]$installed.version) {
+        Write-SurvieUpdateProgress 'current' 'Aucun service redémarré.'
+        return
+    }
+    $script:updateVersion = $installed.version + ' → ' + $available.version
     if ($Check) { Write-Host 'Nouvelle version disponible. Relancez sans -Check pour appliquer la mise à jour.'; return }
+    Write-SurvieUpdateProgress 'build'
     $packages = Join-Path $maintenance 'paquets'
     $null = New-Item -ItemType Directory -Path $packages -Force
     $package = Join-Path $packages ('SetupSurvie-' + $available.version + '-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.zip')
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $source 'scripts\pilot_update.py'), 'build', $package))
     $digest = ((Get-Content -LiteralPath ($package + '.sha256') -Raw).Trim() -split '\s+')[0]
     if ($digest -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $digest) { throw 'Empreinte incorrecte : application conservée.' }
-    Write-Host 'Sauvegarde puis mise à jour. Le site sera brièvement indisponible après les vérifications.'
-    Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
+    Write-SurvieUpdateProgress 'apply' 'Le site sera indisponible pendant la sauvegarde et le redémarrage.'
+    $previousProgress = $env:SURVIE_UPDATE_PROGRESS
+    try {
+        $env:SURVIE_UPDATE_PROGRESS = '1'
+        Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
+    } finally { $env:SURVIE_UPDATE_PROGRESS = $previousProgress }
+    Write-SurvieUpdateProgress 'launcher'
     $refresh = Join-Path $Settings.Application 'scripts\windows_update.py'
     if (Test-Path -LiteralPath $refresh) { Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', $refresh, '--work-dir', $Settings.Work)) }
-    Write-Host 'Mise à jour terminée. Actualisez http://localhost:8080.'
+    Write-SurvieUpdateProgress 'done' 'Vous pouvez actualiser SetupSurvie dans votre navigateur.'
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
+    if (-not $ConsoleOnly -and -not $Check -and -not $Recover -and
+        $env:SURVIE_NO_PAUSE -ne '1' -and [Environment]::UserInteractive) {
+        exit (Show-SurvieUpdateWindow)
+    }
     $mutex = New-Object Threading.Mutex($false, 'Local\SetupSurvie-MiseAJour')
     $acquired = $false; $transcript = $false
     $previousEncoding = [Console]::OutputEncoding
@@ -110,6 +301,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
         try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
         if (-not $acquired) { throw 'Une mise à jour est déjà lancée dans une autre fenêtre.' }
+        Write-SurvieUpdateProgress 'setup'
         $settings = Get-SurvieUpdateSettings
         if (Test-Path -LiteralPath (Join-Path $settings.Work 'transfer-guard.json')) {
             throw 'Transfert en cours : reprendre ou revenir a la source depuis Transferer SetupSurvie.'
@@ -117,11 +309,12 @@ if ($MyInvocation.InvocationName -ne '.') {
         $maintenance = Join-Path $settings.Base 'maintenance'
         $logs = Join-Path $maintenance 'logs'
         $null = New-Item -ItemType Directory -Path $logs -Force
-        Start-Transcript -Path (Join-Path $logs ('maj-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.log')) | Out-Null
+        $script:updateLog = Join-Path $logs ('maj-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.log')
+        Start-Transcript -Path $script:updateLog | Out-Null
         $transcript = $true
         Set-Location -LiteralPath $maintenance
         Invoke-SurvieGitUpdate $settings
         exit 0
-    } catch { Write-Host ('Mise à jour arrêtée : ' + $_.Exception.Message) -ForegroundColor Red; exit 1 }
+    } catch { Write-SurvieUpdateProgress 'error' $_.Exception.Message; exit 1 }
     finally { [Console]::OutputEncoding = $previousEncoding; if ($transcript) { Stop-Transcript | Out-Null }; if ($acquired) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
 }

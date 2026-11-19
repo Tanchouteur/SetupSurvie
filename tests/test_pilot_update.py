@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -59,6 +60,37 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'state/openwebui/cache/file').read_bytes(),b'cache-sentinel')
         self.assertEqual((self.data/'state/pilot/archive-index/text.sqlite').read_bytes(),b'index-sentinel')
         self.assertTrue((self.work/'inference-paused.json').exists())
+
+    def test_snapshot_manifest_is_published_only_after_all_copies_are_synced(self):
+        from pilot_backup import stopped_backup
+        target = self.base/'partial-snapshot'
+        with patch.object(update.durable, 'sync_file', side_effect=OSError('simulated write failure')):
+            with self.assertRaisesRegex(OSError, 'simulated write failure'):
+                stopped_backup(self.app, self.c, target, resume=False, services_stopped=True)
+        self.assertFalse((target/'backup.json').exists())
+
+    def test_pruning_keeps_two_complete_copies_and_preserves_unrecognized_folders(self):
+        history = self.base/'updates'
+        current, older, obsolete, unfinished = (history/(str(i)*32) for i in range(1, 5))
+        for index, operation in enumerate((obsolete, older, current), 1):
+            release = operation/'previous/deploy/release.json'
+            release.parent.mkdir(parents=True)
+            release.write_text('{}')
+            manifest = operation/'snapshot/backup.json'
+            manifest.parent.mkdir()
+            manifest.write_text('{}')
+            os.utime(manifest, (index, index))
+        (unfinished/'new').mkdir(parents=True)
+        manual = history/'manual-copy'
+        manual.mkdir()
+        discarded = history/('discarded-'+'5'*32)
+        discarded.mkdir()
+
+        update.prune_update_history(history, history/('9'*32))
+        self.assertTrue(obsolete.is_dir())
+        self.assertTrue(discarded.is_dir())
+        update.prune_update_history(history, current)
+        self.assertEqual(set(history.iterdir()), {current, older, unfinished, manual})
 
     def test_windows_update_reconciles_only_prepared_routers(self):
         graph=self.data/'library/maps/routing/current/manifest.json'

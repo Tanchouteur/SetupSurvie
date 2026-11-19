@@ -83,7 +83,7 @@ def install_launcher(app, config):
     body = '@echo off\r\nrem SetupSurvie managed updater\r\n' \
            'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0maintenance\\update-windows.ps1" %*\r\n' \
            'set "SURVIE_EXIT=%ERRORLEVEL%"\r\n' \
-           'if not "%SURVIE_NO_PAUSE%"=="1" pause\r\nexit /b %SURVIE_EXIT%\r\n'
+           'if not "%SURVIE_NO_PAUSE%"=="1" if not "%~1"=="" pause\r\nexit /b %SURVIE_EXIT%\r\n'
     payload = body.encode('utf-8')
     if not launcher.is_file() or launcher.read_bytes() != payload:
         temporary = destination(base, 'Mettre-a-jour-SetupSurvie.cmd.tmp')

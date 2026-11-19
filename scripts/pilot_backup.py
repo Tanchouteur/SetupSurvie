@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Stopped-service user snapshot, complementary to the immutable public pilot kit."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import json
+import os
 from pathlib import Path
 import shutil
 import secrets
@@ -54,14 +56,22 @@ def maintenance(app,c,*,pause_video_inventory=False):
             yield
 
 
-def stopped_backup(app,c,destination,*,resume=True):
+def copy_snapshot_file(source, target, relative):
+    shutil.copyfile(source, target)
+    target.chmod(0o600)
+    digest = setup.file_hash(target)
+    durable.sync_file(target)
+    return {'path': relative, 'bytes': target.stat().st_size, 'sha256': digest}
+
+
+def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progress=None):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
     durable.mkdir(dest);dest.chmod(0o700)
-    files=[]
     try:
-        app.compose(c,'stop','portal','pilot','open-webui')
+        if not services_stopped:
+            app.compose(c,'stop','portal','pilot','open-webui')
         sources=[(checked_destination(app.work,name),'private/'+name) for name in PRIVATE_FILES]
         receipt=checked_destination(data,'catalog/downloaded-content.json')
         sources.append((receipt,'data/catalog/downloaded-content.json'))
@@ -71,17 +81,49 @@ def stopped_backup(app,c,destination,*,resume=True):
                 if 'cache' in relative.parts or path.name.endswith('-shm') or relative.parts[0]=='state' and path.name.endswith('.lease'):continue
                 if path.is_symlink():raise setup.SetupError('Lien refusé dans la sauvegarde : '+relative.as_posix())
                 if path.is_file():sources.append((path,'data/'+relative.as_posix()))
-        seen=set()
-        for source,relative in sources:
-            if not source.exists():continue
-            if source.is_symlink() or not source.resolve().is_relative_to(data.resolve()) and source not in [app.work/name for name in PRIVATE_FILES]:
+        sources = [(source, relative) for source, relative in sources if source.exists()]
+        data_root = data.resolve()
+        private_sources = {app.work/name for name in PRIVATE_FILES}
+
+        def copy_entry(entry):
+            source, relative = entry
+            if source.is_symlink() or (source not in private_sources and not source.resolve().is_relative_to(data_root)):
                 raise setup.SetupError('Lien ou chemin externe refusé dans la sauvegarde.')
-            if relative.casefold() in seen:raise setup.SetupError('Chemin dupliqué ou ambigu dans la sauvegarde : '+relative)
+            return copy_snapshot_file(source, checked_destination(dest, relative), relative)
+
+        seen = set()
+        prepared = set()
+        for _, relative in sources:
+            if relative.casefold() in seen:
+                raise setup.SetupError('Chemin dupliqué ou ambigu dans la sauvegarde : '+relative)
             seen.add(relative.casefold())
-            target=checked_destination(dest,relative);target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
-            target.chmod(0o600)
-            files.append({'path':relative,'bytes':target.stat().st_size,'sha256':setup.file_hash(target)})
-        durable.sync_tree(dest)
+            parent = relative.rsplit('/', 1)[0]
+            if parent not in prepared:
+                checked_destination(dest, parent).mkdir(parents=True, exist_ok=True)
+                prepared.add(parent)
+        total = len(sources)
+        last_report = time.monotonic()
+        if progress:
+            progress(0, total)
+        files = []
+
+        def collect(records):
+            nonlocal last_report
+            for record in records:
+                files.append(record)
+                now = time.monotonic()
+                if progress and (now-last_report >= 2 or len(files) == total):
+                    progress(len(files), total)
+                    last_report = now
+
+        if os.name == 'nt':
+            # Bound queued copies and wait for in-flight writes before returning on error.
+            with ThreadPoolExecutor(max_workers=4) as workers:
+                for index in range(0, total, 128):
+                    collect(workers.map(copy_entry, sources[index:index+128]))
+        else:
+            collect(map(copy_entry, sources))
+            durable.sync_tree(dest, sync_files=False)
         setup.write_json(dest/'backup.json',{'schema':1,'files':files,'requires':'Le kit public correspondant fournit modèles, archives ZIM et caches ; cette sauvegarde contient comptes, conversations, guides et certificats privés.'},private=True)
     finally:
         if resume:app.compose(c,'start','open-webui','pilot','portal')

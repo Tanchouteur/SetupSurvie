@@ -4,9 +4,11 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 import shutil
+import stat
 import sys
 import time
 import uuid
@@ -23,6 +25,14 @@ FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
 # First-install wrappers belong to source/kit deliveries, not software updates.
 FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
 SERVICES=('open-webui','kiwix','pilot','portal')
+
+
+def report_progress(phase, detail='', current=None, total=None):
+    if os.environ.get('SURVIE_UPDATE_PROGRESS') != '1':
+        return
+    print('SURVIE_UPDATE_PROGRESS '+json.dumps({
+        'phase': phase, 'detail': detail, 'current': current, 'total': total,
+    }), flush=True)
 
 
 def release_at(root):
@@ -253,6 +263,63 @@ def recover_locked(app,journal,services):
     j['phase']='rolled_back';setup.write_json(journal,j,private=True)
 
 
+def plain_directory(path):
+    info = path.lstat()
+    return stat.S_ISDIR(info.st_mode) and not (
+        getattr(info, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
+
+
+def prune_update_history(updates, current):
+    """Rotate only the in-place update history after a successful service check."""
+    candidates = []
+    pending = []
+    resolved_updates = updates.resolve()
+    for entry in updates.iterdir():
+        if not re.fullmatch(r'(?:discarded-)?[0-9a-f]{32}', entry.name):
+            continue
+        if not plain_directory(entry) or entry.resolve().parent != resolved_updates:
+            continue
+        if entry.name.startswith('discarded-'):
+            pending.append(entry)
+            continue
+        if {child.name for child in entry.iterdir()} != {'previous', 'snapshot'}:
+            continue
+        previous = entry/'previous'
+        snapshot = entry/'snapshot'
+        if not plain_directory(previous) or not plain_directory(snapshot):
+            continue
+        manifest = snapshot/'backup.json'
+        if not manifest.is_file() or manifest.is_symlink() or not (previous/'deploy/release.json').is_file():
+            continue
+        candidates.append((manifest.stat().st_mtime_ns, entry))
+
+    # Keep the current validated backup plus the most recent preceding copy.
+    if not any(entry == current for _, entry in candidates):
+        return
+    older = sorted(((date, entry) for date, entry in candidates if entry != current), reverse=True)
+    expired = [entry for _, entry in older[1:]]
+    if not expired and not pending:
+        return
+    report_progress("prune")
+    removed = 0
+    for entry in expired + pending:
+        try:
+            if not plain_directory(entry) or entry.resolve().parent != resolved_updates:
+                continue
+            if entry in expired:
+                discarded = updates/('discarded-'+entry.name)
+                if discarded.exists() or discarded.is_symlink():
+                    raise setup.SetupError('Un nettoyage portant le même identifiant existe déjà.')
+                durable.publish(entry, discarded)
+                entry = discarded
+            shutil.rmtree(entry)
+            removed += 1
+        except (OSError, setup.SetupError) as exc:
+            print(f'Nettoyage différé pour {entry.name} : {exc}', flush=True)
+    print(f'Anciennes copies de mise à jour supprimées : {removed}.', flush=True)
+
+
 def apply(app,package,digest,services=None,*,rollback=False):
     import transfer
     transfer.guard(app.work)
@@ -270,6 +337,7 @@ def apply(app,package,digest,services=None,*,rollback=False):
         operation=destination(root.parent,'updates/'+uuid.uuid4().hex)
         durable.mkdir(operation);operation.chmod(0o700)
         staged=operation/'new';previous=operation/'previous';snapshot=operation/'snapshot'
+        report_progress("package")
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)
         available=version_tuple(manifest['release']['version']);installed=version_tuple(old_release['version'])
@@ -287,20 +355,34 @@ def apply(app,package,digest,services=None,*,rollback=False):
         durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),
            'old_version':old_release['version'],'new_version':manifest['release']['version']}
+        report_progress("maintenance")
         with maintenance(app,c,pause_video_inventory=c['target']=='windows' and not rollback):
             setup.write_json(journal,j,private=True)
             try:
+                report_progress("stop")
                 services.stop()
-                stopped_backup(app,c,snapshot,resume=False)
+                report_progress("backup", "Préparation de la liste des fichiers…")
+                stopped_backup(app,c,snapshot,resume=False,services_stopped=True,
+                               progress=lambda done, total: report_progress("backup", current=done, total=total))
+                report_progress("switch")
                 j['phase']='snapshot_ready';setup.write_json(journal,j,private=True)
                 durable.publish(root,previous);durable.publish(staged,root)
                 j['phase']='switched';setup.write_json(journal,j,private=True)
-                services.start();services.check(j['new_version'])
+                report_progress("start")
+                services.start()
+                report_progress("check")
+                services.check(j['new_version'])
                 j['phase']='complete';setup.write_json(journal,j,private=True)
             except BaseException:
+                report_progress("rollback")
                 try:recover_locked(app,journal,services)
                 except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
                 raise
+        if c['target']=='windows' and not rollback:
+            try:
+                prune_update_history(operation.parent, operation)
+            except (OSError, setup.SetupError) as exc:
+                print('Nettoyage des anciennes mises à jour différé :', exc, flush=True)
         print('Retour terminé :' if rollback else 'Mise à jour terminée :',j['new_version'],'; données conservées. Sauvegarde privée :',operation)
         return operation
 
