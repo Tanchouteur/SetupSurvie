@@ -86,6 +86,13 @@ async def available():
         raise HTTPException(503,state['message']+'. La traduction reste conservée ; aucune reprise forcée de l’IA.')
 
 
+def check_conversation_queue(db, conversation_id):
+    if db.execute("SELECT 1 FROM translations WHERE conversation_id=? AND status IN ('queued','running')", (conversation_id,)).fetchone():
+        raise HTTPException(409, 'Une traduction est déjà dans la file pour cette conversation.')
+    if store.summary_active(db, conversation_id):
+        raise HTTPException(409, 'Mettez la synthèse longue en pause avant de traduire dans cette conversation.')
+
+
 async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=None):
     if mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
     if conversation_id and not store.owned_conversation(conversation_id,user_id):raise HTTPException(404,'Conversation introuvable.')
@@ -94,14 +101,13 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         if conversation_id and not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(conversation_id,user_id)).fetchone():raise HTTPException(404,'Conversation introuvable.')
-        if db.execute("SELECT count(*) FROM translations WHERE user_id=? AND status IN ('queued','running')",(user_id,)).fetchone()[0]:raise HTTPException(409,'Une traduction est déjà en cours pour votre compte.')
         if db.execute("SELECT count(*) FROM translations WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'Plusieurs traductions attendent. Réessayez plus tard.')
         if not conversation_id:
             conversation_id=store.new_id()
             db.execute('INSERT INTO conversations VALUES(?,?,?,?)',(conversation_id,user_id,('Traduction : '+source['title'])[:80],time.time()))
         try:store.add_conversation_source(db,conversation_id,source)
         except ValueError as error:raise HTTPException(409,str(error)) from None
-        if conversation_id and store.summary_active(db,conversation_id):raise HTTPException(409,'Mettez la synthèse longue en pause avant de traduire dans cette conversation.')
+        check_conversation_queue(db,conversation_id)
         key=store.new_id();now=time.time()
         db.execute('INSERT INTO translations VALUES(?,?,?,?,?,?,?,?,?,?)',(key,user_id,conversation_id,source['id'],source['title'],mode,'queued',None,now,now))
         snapshot={k:source.get(k,'') for k in ('id','title','document_date','edition','provenance','licence','collected_at','archive_date','source_revision')}
@@ -351,7 +357,7 @@ async def _resume(identifier,user_id,mode=None):
         item=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()
         if not item:raise HTTPException(404,'Traduction introuvable.')
         if item['status'] not in ('paused','stopped','error'):raise HTTPException(409,'Cette traduction est déjà active ou terminée.')
-        if db.execute("SELECT 1 FROM translations WHERE user_id=? AND status IN ('queued','running')",(user_id,)).fetchone():raise HTTPException(409,'Une autre traduction est en cours pour votre compte.')
+        check_conversation_queue(db,item['conversation_id'])
         if db.execute("SELECT count(*) FROM translations WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'La file des traductions est pleine.')
         db.execute("UPDATE translations SET status='queued',mode=?,error=NULL,updated=? WHERE id=?",(mode or item['mode'],time.time(),identifier))
     launch(identifier);return status(identifier,user_id)

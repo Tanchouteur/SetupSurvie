@@ -500,6 +500,11 @@ document.addEventListener('survie:translation',event=>{
 });
 document.addEventListener('survie:view',()=>{if(S.view!=='chat'&&translationReader.open)translationReader.close();});
 document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;translationReadOpen.hidden=true;translationStop.hidden=true;translationDelete.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
+document.addEventListener('survie:work-queue', ({detail}) => {
+  const queue = window.WorkQueuePreview;
+  queue.translationLabels(queue.aiBusy(detail), $('translation-start'), $('translation-resume'),
+    'Traduire en français', 'Reprendre avec le modèle choisi');
+});
 async function loadTranslation(id,offset){
   if(offset===undefined)offset=id===S.translation?S.translationOffset:translationReading(id);
   clearTimeout(translationTimer);S.translation=id;S.translationOffset=offset;const version=++translationVersion,conversation=S.conversation,owner=S.user?.id;
@@ -551,6 +556,7 @@ async function translationAction(action){
       data=await api('/translations/'+encodeURIComponent(S.translation)+'/'+action,action==='resume'?{mode:$('chat-mode').value}:{});
       if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
     }
+    if(['start','resume'].includes(action)&&window.WorkQueuePreview?.aiBusy(window.WorkQueuePreview.current?.()))toast('Traduction ajoutée à la file d’attente.');
     await loadTranslation(data.id,action==='start'?0:undefined);$('translation-panel').open=true;document.dispatchEvent(new CustomEvent('survie:translation-command',{detail:{action,id:data.id}}));return true;
   }catch(e){toast(e.message);$('translation-status').textContent=e.message;}
   finally{translationBusy=false;$('translation-start').disabled=!S.source;$('translation-resume').disabled=false;$('translation-pause').disabled=false;translationStop.disabled=translationDelete.disabled=false;refreshSourceChoices();}

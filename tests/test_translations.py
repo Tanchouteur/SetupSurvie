@@ -9,7 +9,7 @@ import httpx
 from fastapi import HTTPException
 from pypdf import PdfWriter
 from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
-from pilot import engine,library,operations,store,translations as tr
+from pilot import engine,library,operations,store,work_queue,translations as tr
 
 
 class TranslationTests(unittest.IsolatedAsyncioTestCase):
@@ -33,6 +33,24 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
     async def create(self):
         with patch.object(tr,'launch'):
             return await tr.create('alice',self.source,'c','rapide')
+
+    async def test_same_profile_can_start_and_resume_in_other_conversations(self):
+        first = await self.create()
+        queue = work_queue.Queue()
+        queue.paused = True
+        with patch.object(engine, 'LOCK', queue), patch.object(work_queue, 'QUEUE', queue):
+            second = await tr.create('alice', self.source, None, 'rapide')
+            self.assertEqual(second['status'], 'queued')
+            with self.assertRaises(HTTPException) as conflict:
+                await tr.create('alice', self.source, first['conversation_id'], 'rapide')
+            self.assertEqual(conflict.exception.status_code, 409)
+            await tr.stop(second['id'], 'alice')
+            resumed = await tr.resume(second['id'], 'alice', 'moyenne')
+            self.assertEqual((resumed['status'], resumed['mode']), ('queued', 'moyenne'))
+            await asyncio.sleep(0)
+            self.assertIn(second['id'], queue.order())
+            self.assertEqual(tr.status(first['id'], 'alice')['status'], 'queued')
+            await tr.stop(second['id'], 'alice')
 
     async def test_chunks_preserve_all_characters_and_bound_requests(self):
         text=('abc\ndef ghi '*500)+'last'

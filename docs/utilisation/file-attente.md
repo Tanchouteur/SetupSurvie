@@ -1,16 +1,19 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.52.1.**
+**Guide actuel — 0.55.0.**
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône
-ou atteignez-la avec la touche Tab pour voir les prochaines tâches. Ouvrez
+ou atteignez-la avec la touche Tab pour voir les tâches en cours et en attente, dans leurs cartes. Ouvrez
 la page de la file en cliquant dessus ou en appuyant sur Entrée. Sur
 téléphone, l’icône ouvre directement la page.
 
 La page indique le contenu, l’étape, le modèle sélectionné et l’avancement
-quand le traitement sait le mesurer. Les flèches changent l’ordre des travaux
-qui attendent un créneau. Les réponses et les traductions de documents
+quand le traitement sait le mesurer. Dans l’aperçu du portail et sur la page,
+maintenez la poignée à trois barres à droite d’une tâche en attente pour la
+glisser avant ou après une autre. Au clavier, sélectionnez la poignée puis
+utilisez les flèches haut et bas. Sur téléphone, faites glisser la poignée
+avec le doigt sur la page dédiée. Les réponses et les traductions de documents
 s’affichent dans leur propre profil. Les travaux de la bibliothèque sont
 communs et le profil **Famille** peut modifier leur ordre.
 
@@ -23,12 +26,14 @@ L’aperçu et la page montrent trois créneaux indépendants.
 - **Téléchargements** suit les lots YouTube et la récupération des sous-titres.
   Ils peuvent avancer pendant une réponse.
 - **Préparation locale** suit la transcription audio sur le processeur et
-  l’indexation des vidéos. Whisper utilise jusqu’à quatre fils de calcul pour
+  l’inventaire des vidéos et sous-titres ainsi que l’examen des vidéos dans
+  les collections. Les deux inventaires restent visibles pendant un autre
+  traitement local. Whisper utilise jusqu’à quatre fils de calcul pour
   laisser de la capacité au reste du portail. Une traduction des sous-titres rejoint le créneau IA
   lorsque la piste source est disponible.
 
 **Ensuite** désigne le prochain travail prévu dans chaque créneau. Une nouvelle
-question peut changer ce choix pour l’IA. Les flèches règlent l’ordre au sein
+question peut changer ce choix pour l’IA. Les poignées règlent l’ordre au sein
 d’un même créneau et d’un même niveau de priorité.
 
 Avec **Famille**, **Mettre en pause** empêche le démarrage des étapes suivantes de la file. L’indexation des fichiers déjà publiés peut se terminer en arrière-plan.
@@ -51,6 +56,11 @@ actualisation. L’assistant continue à suivre la réponse en cours dès que la
 connexion revient. Un envoi qui reste sans confirmation conserve le texte
 dans la zone de saisie. Les lecteurs de documents, les synthèses et les préparations
 de pistes indiquent aussi si un travail attend son tour ou la reprise de la file.
+
+Quand le créneau IA est occupé, **Ajouter à la file d’attente** lance ou remet
+dans la file une traduction depuis son document ou sa conversation. La reprise
+conserve les passages terminés et utilise le modèle choisi pour la suite.
+Un profil peut suivre plusieurs traductions dans des conversations distinctes.
 
 Une reprise vidéo conserve les fichiers et
 pistes déjà publiés. La pause globale et les étapes de la chaîne YouTube

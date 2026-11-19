@@ -27,7 +27,7 @@ Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le naviga
 du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
 [guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
 
-Au **19 novembre 2026**, le pilote **0.54.0** propose une recherche locale avec indexation
+Au **19 novembre 2026**, le pilote **0.55.0** propose une recherche locale avec indexation
 automatique, deux espaces documentaires et diagnostic exportable.
 La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre
 et de régler l’ordre des traitements du portail.

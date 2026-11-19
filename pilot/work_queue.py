@@ -28,7 +28,7 @@ KINDS = {
 }
 
 
-BACKGROUND_LANE = {'youtube': 'network', 'acquisition': 'network', 'speech': 'local', 'youtube-track': 'local', 'video-index': 'local'}
+BACKGROUND_LANE = {'youtube': 'network', 'acquisition': 'network', 'speech': 'local', 'youtube-track': 'local', 'video-index': 'local', 'archive-video-index': 'local'}
 CHAT_BURST = 3
 
 
@@ -145,7 +145,7 @@ class Queue(Slot):
             return 'next'
         return 'waiting'
 
-    def move(self, identifier, direction, profile):
+    def move(self, identifier, direction, profile, *, target=None, after=False):
         kind = self.records.get(identifier, {}).get('kind')
         slot = self.slots[BACKGROUND_LANE.get(kind, 'ai')]
         priority = slot.priority(identifier)
@@ -153,10 +153,23 @@ class Queue(Slot):
                    if not future.cancelled() and key in self.records
                    and slot.priority(key) == priority and can_move(self.records[key], profile)]
         position = next((i for i, (_, key) in enumerate(visible) if key == identifier), None)
-        if position is None or not 0 <= position + direction < len(visible):
-            raise HTTPException(409, 'La position a changé. Consultez de nouveau la file.')
-        first, second = visible[position][0], visible[position + direction][0]
-        slot.waiters[first], slot.waiters[second] = slot.waiters[second], slot.waiters[first]
+        error = HTTPException(409, 'La position a changé. Consultez de nouveau la file.')
+        if position is None:
+            raise error
+        if target is None:
+            destination = position + direction
+            if not 0 <= destination < len(visible):
+                raise error
+        else:
+            anchor = next((i for i, (_, key) in enumerate(visible) if key == target), None)
+            if anchor is None or anchor == position:
+                raise error
+            destination = anchor + int(after) - int(position < anchor)
+        indexes = [index for index, _ in visible]
+        tickets = [slot.waiters[index] for index in indexes]
+        tickets.insert(destination, tickets.pop(position))
+        for index, ticket in zip(indexes, tickets):
+            slot.waiters[index] = ticket
 
     def save(self, record):
         if self.root is None or self.root != store.ROOT:
@@ -179,14 +192,14 @@ class Queue(Slot):
         return self.video_report[1]
 
     def snapshot(self, profile):
-        from . import youtube_pipeline
+        from . import archive_videos, videos, youtube_pipeline
 
         active = {slot.active[0] for slot in self.slots.values() if slot.active and slot.active[0] is not None}
         orders = {name: slot.order() for name, slot in self.slots.items()}
         ordered = [key for order in orders.values() for key in order]
         keys = set(ordered)
         records = self.records.copy()
-        lanes = {name: {'running': slot.locked()} for name, slot in self.slots.items()}
+        lanes = {name: {'running': slot.locked(), 'waiting': bool(orders[name])} for name, slot in self.slots.items()}
         with store.connect() as db:
             history = [json.loads(row[0]) for row in db.execute('SELECT data FROM work_history ORDER BY updated DESC,rowid DESC LIMIT 300')]
         video_jobs = {row['id']: row for row in youtube_pipeline.listing()}
@@ -208,19 +221,26 @@ class Queue(Slot):
         jobs.extend({'id': row['id'], 'kind': row['kind'], 'type': row['type'], **youtube_pipeline.public(row)}
                     for row in video_jobs.values() if row['id'] not in records)
         jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
-        from . import videos
         indexing = videos.running() is not None
         report = self.video_status(videos, indexing)
         phase = report.get('phase')
         if indexing:
             lanes['local']['running'] = True
         show_index = indexing or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
-        if show_index and not (indexing and any(job['kind'] == 'youtube-track' and job['status'] == 'running' for job in jobs)):
+        if show_index:
             jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
-                         'title': 'Titres et sous-titres', 'status': 'running' if indexing else phase,
+                         'title': 'Inventaire des vidéos et sous-titres', 'status': 'running' if indexing else phase,
                          'stage': f"{report.get('videos', 0)} vidéo(s) traitée(s)",
                          'error': report.get('error'),
                          'href': '#/bibliotheque/collections'})
+        archive = archive_videos.progress()
+        phase = archive.get('phase')
+        if phase in ('running', 'paused', 'interrupted', 'error', 'failed'):
+            lanes['local']['running'] |= phase == 'running'
+            jobs.append({'id': 'archive-video-index', 'kind': 'archive-video-index', 'type': 'Examen des collections',
+                         'title': 'Inventaire des vidéos dans les collections', 'status': phase,
+                         'done': archive.get('completed', 0), 'total': archive.get('archives', 0),
+                         'error': archive.get('error'), 'href': '#/bibliotheque/collections'})
         for job in jobs:
             job['lane'] = BACKGROUND_LANE.get(job['kind'], 'ai')
             job.setdefault('priority', job['kind'] == 'chat')

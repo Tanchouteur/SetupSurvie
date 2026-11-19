@@ -35,7 +35,91 @@
       });
   }
 
-  function mount(container, {href, mobile = false, refresh, toggle}) {
+  function aiBusy(state) {
+    const lane = state?.lanes?.ai;
+    return !!state && (state.paused || lane?.running || lane?.waiting ||
+      state.jobs.some(job => (job.lane || 'ai') === 'ai' && (waiting(job) || job.status === 'running')));
+  }
+
+  function translationLabels(busy, start, resume, startLabel, resumeLabel) {
+    const label = 'Ajouter à la file d’attente';
+    start.textContent = busy ? label : startLabel;
+    resume.textContent = busy ? label : resumeLabel;
+  }
+
+  function dragHandle(job, jobs, move, disabled, redraw) {
+    const control = make('button', '', 'work-queue-handle');
+    control.type = 'button';
+    control.disabled = disabled;
+    control.dataset.workControl = job.id + ':move';
+    control.setAttribute('aria-label', 'Déplacer ' + job.title);
+    control.setAttribute('aria-description', 'Glissez la poignée ou utilisez les flèches haut et bas du clavier.');
+    control.title = 'Glisser pour déplacer · flèches haut et bas au clavier';
+    control.addEventListener('keydown', event => {
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      const after = event.key === 'ArrowDown';
+      const target = jobs[jobs.indexOf(job) + (after ? 1 : -1)];
+      if (target) move(job.id, target.id, after);
+    });
+    let id, source, target, after, startY, moved, frame, point;
+    const locate = () => {
+      target?.classList.remove('work-queue-drop-before', 'work-queue-drop-after');
+      const card = document.elementFromPoint(point.x, point.y)?.closest('[data-work-id]');
+      target = card !== source && card?.parentElement === source.parentElement &&
+        jobs.some(item => item.id === card.dataset.workId) ? card : null;
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        after = point.y >= rect.top + rect.height / 2;
+        target.classList.add(after ? 'work-queue-drop-after' : 'work-queue-drop-before');
+      }
+    };
+    const scroll = () => {
+      const panel = source.closest('.work-queue-preview-sections');
+      const bounds = panel?.getBoundingClientRect() || {top: 0, bottom: window.innerHeight};
+      if (point.x >= (bounds.left ?? 0) && point.x <= (bounds.right ?? window.innerWidth) &&
+          point.y >= bounds.top && point.y <= bounds.bottom) {
+        const step = point.y < bounds.top + 42 ? -12 : point.y > bounds.bottom - 42 ? 12 : 0;
+        if (step) {
+          (panel || window).scrollBy(0, step);
+          locate();
+        }
+      }
+      frame = requestAnimationFrame(scroll);
+    };
+    control.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0 || id !== undefined) return;
+      source = control.closest('[data-work-id]');
+      id = event.pointerId;
+      startY = event.clientY;
+      moved = false;
+      source.classList.add('work-queue-dragging');
+      control.setPointerCapture(id);
+    });
+    control.addEventListener('pointermove', event => {
+      if (event.pointerId !== id || (!moved && Math.abs(event.clientY - startY) < 5)) return;
+      moved = true;
+      point = {x: event.clientX, y: event.clientY};
+      locate();
+      if (!frame) frame = requestAnimationFrame(scroll);
+    });
+    const finish = event => {
+      if (event.pointerId !== id) return;
+      const destination = event.type === 'pointerup' && target?.dataset.workId;
+      cancelAnimationFrame(frame);
+      frame = undefined;
+      id = undefined;
+      source.classList.remove('work-queue-dragging');
+      target?.classList.remove('work-queue-drop-before', 'work-queue-drop-after');
+      target = null;
+      if (destination) move(job.id, destination, after);
+      redraw();
+    };
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) control.addEventListener(name, finish);
+    return control;
+  }
+
+  function mount(container, {href, mobile = false, refresh, toggle, move}) {
     const host = make('div', '', 'work-queue-nav' + (mobile ? ' work-queue-mobile' : ''));
     const link = make('a', '', 'work-queue-link');
     link.href = href;
@@ -52,11 +136,17 @@
     host.append(link);
 
     const preview = make('div', '', 'work-queue-preview');
-    const list = make('ul');
+    const heading = make('div', '', 'work-queue-preview-heading');
+    const open = make('a', 'Ouvrir la file');
+    open.href = href;
+    if (href.startsWith('#')) open.dataset.route = 'file';
+    heading.append(make('strong', 'File d’attente'), open);
+    const list = make('div', '', 'work-queue-preview-sections');
+    let signature, lastDraw;
     const action = make('button', 'Mettre en pause', 'secondary');
     action.type = 'button';
     action.hidden = true;
-    preview.append(make('strong', 'File d’attente'), list, action);
+    preview.append(heading, list, action);
     if (!mobile) {
       host.append(preview);
       host.addEventListener('pointerenter', () => {
@@ -106,53 +196,68 @@
       action.disabled = connection !== 'ready' || pending;
       if (state) action.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';
       if (mobile) return;
+      lastDraw = () => draw(state, {admin, current, connection, pending});
+      if (preview.querySelector('.work-queue-dragging')) return;
+      const renderKey = JSON.stringify([state, connection, pending]);
+      if (renderKey === signature) return;
+      signature = renderKey;
+      const focused = document.activeElement?.dataset.workControl;
       const entries = [];
-      if (freshness[connection]) entries.push(make('li', freshness[connection], 'work-queue-preview-notice'));
-      if (state?.paused) entries.push(make('li', 'File en pause', 'work-queue-preview-notice'));
-      if (state) {
-        const problems = [...state.jobs.filter(failed), ...state.jobs.filter(job => !failed(job) && job.failure_count > 0)];
-        const pausedJobs = state.jobs.filter(held);
-        for (const [items, title, style] of [
-          [problems, errors ? plural(errors, 'erreur', 'erreurs') : 'Lignes à vérifier', errors ? 'work-queue-error-text' : 'work-queue-preview-notice'],
-          [pausedJobs, plural(suspended, 'tâche à reprendre', 'tâches à reprendre'), 'work-queue-preview-notice']
-        ]) {
-          if (!items.length) continue;
-          const row = make('li', '', style);
-          row.append(make('strong', title));
-          for (const job of items.slice(0, 2)) {
-            const detail = failed(job) || held(job) ? statusLabel(job) : 'Lignes à vérifier';
-            row.append(make('span', detail + ' · ' + job.title, 'work-queue-preview-task'));
-            const reason = job.error || job.failures?.[0]?.message;
-            if (reason) {
-              const note = make('span', reason, 'work-queue-preview-task');
-              note.title = reason;
-              row.append(note);
-            }
+      if (freshness[connection]) entries.push(make('p', freshness[connection], 'work-queue-preview-notice'));
+      if (state?.paused) entries.push(make('p', 'File en pause', 'work-queue-preview-notice'));
+      function section(title, jobs, movable = [], empty = '') {
+        const group = make('section', '', 'work-queue-preview-lane');
+        group.append(make('h2', title));
+        const cards = make('ul');
+        for (const job of jobs) {
+          const row = make('li', '', 'work-queue-preview-card');
+          row.dataset.workId = job.id;
+          row.dataset.status = job.status;
+          const content = make('div', '', 'work-queue-preview-content');
+          const label = job.next ? (state.paused ? 'À la reprise' : 'Ensuite') : statusLabel(job);
+          const title = make(job.href ? 'a' : 'strong', job.title, 'work-queue-preview-task');
+          if (job.href) title.href = job.href.startsWith('#') ? href.split('#')[0] + job.href : job.href;
+          content.append(make('span', label + (job.type ? ' · ' + job.type : ''), 'work-queue-meta'), title);
+          if (job.stage) content.append(make('span', job.stage, 'work-queue-meta'));
+          if (job.total > 0 && Number.isFinite(job.done)) {
+            const meter = make('progress');
+            meter.max = job.total;
+            meter.value = job.done;
+            meter.setAttribute('aria-label', 'Avancement de ' + job.title);
+            content.append(meter);
           }
-          if (items.length > 2) row.append(make('span', plural(items.length - 2, 'autre tâche dans la file', 'autres tâches dans la file'), 'work-queue-meta'));
-          entries.push(row);
+          const reason = job.error || job.failures?.[0]?.message;
+          if (reason) content.append(make('span', reason, 'work-queue-meta'));
+          row.append(content);
+          const peers = movable.filter(peer => !!peer.priority === !!job.priority);
+          if (move && peers.length > 1 && peers.includes(job)) {
+            row.append(dragHandle(job, peers, move, connection !== 'ready' || pending, () => lastDraw()));
+          }
+          cards.append(row);
         }
-        for (const lane of lanes(state).filter(lane => lane.id === 'ai' || lane.running || lane.waiting.length)) {
-          const row = make('li', '', 'work-queue-preview-lane');
-          row.append(make('strong', lane.title));
-          for (const job of lane.active) row.append(make('span', 'En cours · ' + job.title, 'work-queue-preview-task'));
-          if (!lane.active.length && lane.running) row.append(make('span', 'En cours sur l’appareil', 'work-queue-meta'));
-          const next = lane.waiting.find(job => job.next);
-          if (next) row.append(make('span', (state.paused ? 'À la reprise · ' : 'Ensuite · ') + next.title, 'work-queue-preview-task'));
-          if (lane.waiting.length > (next ? 1 : 0)) {
-            row.append(make('span', plural(lane.waiting.length, 'tâche en attente', 'tâches en attente'), 'work-queue-meta'));
-          } else if (!lane.running && !lane.waiting.length && !state.paused) {
-            row.append(make('span', 'Aucune tâche en attente', 'work-queue-meta'));
-          }
-          entries.push(row);
+        if (jobs.length) group.append(cards);
+        else group.append(make('p', empty, 'work-queue-meta'));
+        entries.push(group);
+      }
+      if (state) {
+        const problems = state.jobs.filter(job => failed(job) ||
+          (job.failure_count > 0 && !held(job) && !waiting(job) && job.status !== 'running'));
+        if (problems.length) section('À vérifier', problems);
+        const pausedJobs = state.jobs.filter(held);
+        if (pausedJobs.length) section('À reprendre', pausedJobs);
+        const activeLanes = lanes(state).filter(lane => lane.running || lane.waiting.length);
+        for (const lane of activeLanes.length ? activeLanes : lanes(state).slice(0, 1)) {
+          section(lane.title, [...lane.active, ...lane.waiting], lane.waiting.filter(job => job.movable),
+            lane.running ? 'En cours sur l’appareil' : 'Aucune tâche en attente');
         }
       }
       list.replaceChildren(...entries);
+      if (focused) [...list.querySelectorAll('[data-work-control]')].find(node => node.dataset.workControl === focused)?.focus({preventScroll: true});
     }
     return {draw};
   }
 
-  window.WorkQueuePreview = {mount, isSnapshot, waiting, failed, held, statusLabel, workLabel, plural, freshness, lanes};
+  window.WorkQueuePreview = {mount, isSnapshot, waiting, failed, held, statusLabel, workLabel, plural, freshness, lanes, aiBusy, translationLabels, dragHandle};
   const map = document.querySelector('.map-site-nav');
   if (!map) return;
   let snapshot = null, fetching = false, generation = 0;
