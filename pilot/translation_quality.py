@@ -8,7 +8,7 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=8
+VERSION=9
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
@@ -17,6 +17,7 @@ ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!
 ENGLISH_GROUPED_NUMBER=re.compile(r'(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?!\d|[.,]\d)')
 EN_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:st|nd|rd|th)(?!\w)',re.I)
 FR_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:er|re|ère|e|ème|eme|ᵉ|ᵉʳ|ʳᵉ)s?(?!\w)',re.I)
+FR_ROMAN_CENTURY=re.compile(r'(?<!\w)((?=[IVX])X{0,3}(?:IX|IV|V?I{1,3}|V)?)(?:e|ème|eme|ᵉ)\s+siècle\b',re.I)
 ORDINAL_WORDS={
     '1':('first',r"premi(?:er|ère)s?|d[’']abord"),
     '2':('second',r'second(?:e)?s?|deuxièmes?'),
@@ -83,6 +84,11 @@ def separate_ordinals(source,translated):
     expected=Counter(number(match[1]) for match in EN_ORDINAL.finditer(source))
     if not expected:return source,translated,True
     received=Counter(number(match[1]) for match in FR_ORDINAL.finditer(translated))
+    def roman_value(match):
+        digits={'I':1,'V':5,'X':10}
+        value=match[1].upper()
+        return str(sum(-digits[c] if i+1<len(value) and digits[c]<digits[value[i+1]] else digits[c] for i,c in enumerate(value)))
+    received.update(roman_value(match) for match in FR_ROMAN_CENTURY.finditer(translated))
     # Count only additional French words. Ordinary written-out ordinals from
     # the source must not also satisfy a missing numbered ordinal.
     for value,missing in (expected-received).items():
@@ -91,7 +97,7 @@ def separate_ordinals(source,translated):
         old=len(re.findall(r'\b'+english+r'(?:ly)?\b',source,re.I))
         new=len(re.findall(r'\b(?:'+french+r')\b',translated,re.I))
         received[value]+=min(missing,max(0,new-old))
-    return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',translated),expected==received
+    return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',FR_ROMAN_CENTURY.sub(' siècle',translated)),expected==received
 
 
 def normalize_english_grouping(text):
@@ -126,6 +132,13 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
             text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
         return Counter(number(m.group()) for m in NUMBERS.finditer(text))
     measure_source=normalize_english_grouping(source) if english and english_grouping else source
+    if english:
+        # Established historical names may translate their numeral as an ordinal word.
+        historical=((r'\bWorld War (?:II|2)\b',r'\b(?:Seconde|Deuxième) Guerre mondiale\b'),
+                    (r'\bWorld War (?:I|1)\b',r'\bPremière Guerre mondiale\b'))
+        for original,french in historical:
+            if len(re.findall(original,measure_source,re.I))==len(re.findall(french,translated,re.I)):
+                measure_source=re.sub(original,'événement historique',measure_source,flags=re.I)
     source_numbers,translated_numbers,ordinals_match=separate_ordinals(measure_source,translated)
     if not ordinals_match:add('ordinals','error','Un rang indiqué par un nombre dans l’original a disparu, été ajouté ou changé.')
     if numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
