@@ -168,8 +168,8 @@ mémoire. Les contrôles de changement de profil et d’onglets périmés resten
 La barre de navigation principale est en haut. L’assistant utilise l’espace disponible :
 
 - **Conversations** à gauche : nouvelle discussion, recherche dans les titres et messages, dossiers personnels et liste paginée. Sur ordinateur, glissez une conversation sur un dossier pour l’y ranger : la cible est mise en évidence et le déplacement est confirmé. Déposez-la sur **Sans dossier** pour retirer son classement. Le menu d’une conversation permet aussi de la renommer, de la déplacer ou de la supprimer, notamment au clavier et sur téléphone. Supprimer un dossier conserve ses conversations.
-- **Discussion** au centre : messages, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
-- **Documents** à droite : documents choisis pour travailler, traduction et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
+- **Discussion** au centre : messages, texte traduit au fur et à mesure, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
+- **Documents** à droite : documents choisis pour travailler et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
 
 Chaque volet porte une flèche de fermeture dans son en-tête. Son bouton
 **Conversations** ou **Documents** apparaît dans l’en-tête de la page quand il est
@@ -177,7 +177,9 @@ fermé. Sur téléphone, fermer le volet ramène à la discussion. La commande
 **Nouvelle discussion** reste disponible et n’apparaît qu’une seule fois. Les choix documentaires ne sont
 pas une preuve de lecture par l’IA ; un ancien échange sans suivi ne reçoit pas
 une liste de lectures inventée. La commande **Traduire** ouvre la bibliothèque
-pour choisir un document, sans lancer le moteur.
+pour choisir un document, sans lancer le moteur. Dans la conversation d’une
+traduction, les commandes et la progression sont dans le bandeau **Traduction**
+au-dessus du fil. On peut le replier et continuer à lire les passages traduits.
 
 À l’accueil, **Reprendre** donne accès au dernier document ouvert dans ce
 navigateur et à la discussion mémorisée, pour le profil courant. Dans **Mon

@@ -74,10 +74,7 @@
 .next-interface .chat-empty {
   max-width: 100%;
 }
-.next-interface .assistant-workspace .next-chat-context .translation-panel {
-  max-height: none;
-  margin-bottom: 10px;
-} /*Conversation layout. Each opener stays beside its own panel.*/
+/* Conversation layout. Each opener stays beside its own panel. */
 .next-interface #view-chat {
   width: 100%;
   max-width: none;
@@ -381,15 +378,16 @@
 .next-interface .assistant-documents details > summary {
   cursor: pointer;
 }
-.next-interface .assistant-documents .translation-panel {
+.next-interface .assistant-documents #summary-panel {
   padding: 8px;
+  margin-bottom: 10px;
 }
-.next-interface .assistant-documents .translation-content {
+.next-interface .assistant-documents #summary-panel .translation-content {
   max-height: none;
   overflow: visible;
   padding: 0 4px 8px;
 }
-.next-interface .assistant-documents .translation-panel[open] {
+.next-interface .assistant-documents #summary-panel[open] {
   flex-shrink: 0;
   overflow: visible;
 }
@@ -451,6 +449,83 @@
 }
 .next-interface .assistant-discussion .chat-messages {
   padding: 16px 20px 24px;
+}
+.next-interface .assistant-discussion .translation-panel {
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto 4px;
+  background: var(--paper);
+  border-color: var(--line);
+  overflow: hidden;
+}
+.next-interface .assistant-discussion .translation-content {
+  max-height: min(17rem, 28dvh);
+  overscroll-behavior: contain;
+}
+.next-interface .translation-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.next-interface .translation-toolbar #translation-reading-open {
+  margin: 0;
+  min-height: 42px;
+  padding-inline: 12px;
+  font-size: 13px;
+}
+.next-interface .translation-toolbar .translation-actions:empty {
+  display: none;
+}
+.next-interface .translation-content label {
+  min-width: 0;
+  max-width: 100%;
+}
+.next-interface .translation-content select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.next-interface .translation-content .translation-range {
+  margin-block: 10px;
+}
+.next-interface .translation-content :is(#translation-status, #translation-publication) {
+  margin-block: 8px;
+}
+.next-interface .translation-content :is(#translation-status, #translation-publication):empty {
+  display: none;
+}
+.next-interface .translation-content :is(.translation-help, .translation-more) > summary {
+  padding: 4px 0;
+  cursor: pointer;
+}
+.next-interface .translation-more .translation-actions,
+.next-interface #translation-reading-content > .translation-actions + .translation-actions {
+  margin-top: 8px;
+}
+.next-interface .translation-content #translation-progress {
+  display: block;
+  height: 8px;
+  margin: 8px 0 2px;
+}
+.next-interface .translation-thread {
+  max-width: 78ch;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+.next-interface .translation-thread .translation-part {
+  padding-block: 18px;
+}
+.next-interface .translation-thread #translation-reading-status {
+  margin-top: 0;
+  color: var(--muted);
+}
+.next-interface :is(.translation-thread, #translation-reading-content) #translation-reading-actions {
+  margin-bottom: 12px;
+}
+.next-interface .chat-messages:has(.translation-thread:not([hidden])) > .chat-empty {
+  display: none;
 }
 .next-interface .assistant-discussion .composer {
   width: 100%;
@@ -552,6 +627,9 @@
   }
   .next-interface .assistant-discussion .chat-messages {
     padding: 8px 0 16px;
+  }
+  .next-interface .assistant-discussion .translation-content {
+    max-height: min(10rem, 26dvh);
   }
   .next-interface
     .assistant-discussion

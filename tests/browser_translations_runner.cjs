@@ -163,7 +163,7 @@ const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.
     // The user's desktop screenshots are from Firefox; exercise its layout too.
     if(!targetEngine||targetEngine==='firefox'){
       browser=await firefox.launch({headless:true});
-      await checkUI(browser,'firefox',['browser_motion_resilience.js','browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
+      await checkUI(browser,'firefox',['browser_translation_progressive.js','browser_motion_resilience.js','browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
       await browser.close();browser=null;
     }
   }finally{if(browser)await browser.close();server.kill();}

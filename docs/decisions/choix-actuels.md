@@ -233,6 +233,11 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+La **0.58.0** met les commandes et la progression de traduction au-dessus
+du fil, et affiche les passages traduits dans la discussion dès qu’ils sont
+disponibles. Évolution fonctionnelle compatible (`y`).
+[Décision de Louis du 19 novembre](conversations-trois-zones.md#traduction-dans-le-fil--décision-du-19-novembre-2026).
+
 Le **19 novembre 2026**, Louis demande que la première installation traite la
 sélection YouTube maintenue dans le dépôt et indexe les vidéos des encyclopédies.
 La **0.54.0** soumet la liste YouTube en ligne au traitement existant, y compris
