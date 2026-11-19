@@ -323,6 +323,30 @@ def prune_update_history(updates, current):
     print(f'Anciennes copies de mise à jour supprimées : {removed}.', flush=True)
 
 
+def prune_completed_update(app):
+    """Allow the operator to resume or run history rotation between updates."""
+    import transfer
+    with locked(app.work/'update.lock'):
+        transfer.guard(app.work)
+        config = app.load()
+        root = setup.safe_path(config['app_dir'])
+        updates = destination(root.parent, 'updates')
+        journal = app.work/'update.json'
+        if not journal.is_file():
+            raise setup.SetupError('Aucune mise à jour terminée à partir de laquelle nettoyer les anciennes copies.')
+        state = json.loads(journal.read_text(encoding='utf-8'))
+        previous = Path(state['previous'])
+        current = previous.parent
+        if (state['phase'] != 'complete' or root != setup.ROOT.resolve() or (root/'.git').exists()
+            or root != setup.safe_path(state['application']) or previous.name != 'previous'
+            or current.parent != updates or not re.fullmatch(r'[0-9a-f]{32}', current.name)
+            or release_at(root)['version'] != state['new_version']):
+            raise setup.SetupError('Le nettoyage exige une mise à jour terminée et une version installée cohérente.')
+        report_progress("check")
+        Services(app, config).check(state['new_version'])
+        prune_update_history(updates, current)
+
+
 def apply(app,package,digest,services=None,*,rollback=False):
     import transfer
     transfer.guard(app.work)
@@ -395,12 +419,16 @@ def main():
     b=sub.add_parser('build');b.add_argument('output')
     for action in ('apply','rollback'):
         a=sub.add_parser(action);a.add_argument('package');a.add_argument('--sha256',required=True);a.add_argument('--work-dir',required=True)
-    r=sub.add_parser('recover');r.add_argument('--work-dir',required=True)
+    for action in ('recover', 'prune'):
+        command = sub.add_parser(action)
+        command.add_argument('--work-dir', required=True)
     f=sub.add_parser('resume-startup',aliases=['finish-switched']);f.add_argument('--work-dir',required=True)
     args=p.parse_args()
     if args.action=='build':build(args.output);return
     app=setup.Installation(args.work_dir)
     if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
+    elif args.action == 'prune':
+        prune_completed_update(app)
     elif args.action in ('resume-startup','finish-switched'):
         resume_startup(app,restart=True)
     else:

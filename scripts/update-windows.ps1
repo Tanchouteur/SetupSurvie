@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([string]$WorkDir, [switch]$Check, [switch]$Recover, [switch]$ConsoleOnly,
+param([string]$WorkDir, [switch]$Check, [switch]$Recover, [switch]$Cleanup, [switch]$ConsoleOnly,
     [Parameter(DontShow)] [string]$ProgressLog)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
@@ -22,6 +22,7 @@ $script:updateStages = @{
     prune = 'Nettoyage des anciennes copies de mise à jour'
     launcher = 'Actualisation des raccourcis et du lanceur'
     done = 'Mise à jour terminée'
+    clean = 'Nettoyage terminé'
     current = 'SetupSurvie est déjà à jour'
     error = 'Mise à jour arrêtée'
 }
@@ -111,6 +112,7 @@ function Show-SurvieUpdateWindow {
             UseShellExecute = $false
             CreateNoWindow = $true
         }
+        if ($Cleanup) { $worker.Arguments += ' -Cleanup' }
         if ($WorkDir) {
             $workPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($WorkDir)
             if ($workPath.EndsWith([char]92)) { $workPath += [char]92 }
@@ -157,7 +159,7 @@ function Show-SurvieUpdateWindow {
                 $bar.Style = 'Continuous'
                 if ($view.ExitCode -eq 0) {
                     $bar.Value = 100
-                    if ($view.Phase -notin @('done', 'current')) {
+                    if ($view.Phase -notin @('done', 'current', 'clean')) {
                         $title.Text = $script:updateStages.done
                         $detail.Text = ''
                     }
@@ -242,6 +244,13 @@ function Invoke-SurvieGitUpdate($Settings) {
     $maintenance = Join-Path $Settings.Base 'maintenance'
     $journalPath = Join-Path $Settings.Work 'update.json'
     $journal = if (Test-Path -LiteralPath $journalPath) { Get-Content -LiteralPath $journalPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+    if ($Cleanup) {
+        if ($Check -or $Recover) { throw 'Choisir le nettoyage seul avec -Cleanup.' }
+        $launcher = Join-Path $Settings.Application 'scripts\pilot_update.py'
+        Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', $launcher, 'prune', '--work-dir', $Settings.Work))
+        Write-SurvieUpdateProgress 'clean' 'Consultez le journal pour le détail des anciennes copies.'
+        return
+    }
     if ($Recover) {
         if (-not $journal) { throw 'Aucune mise à jour à récupérer.' }
         $launcher = Join-Path $Settings.Application 'scripts\pilot_update.py'
@@ -282,11 +291,7 @@ function Invoke-SurvieGitUpdate($Settings) {
     $digest = ((Get-Content -LiteralPath ($package + '.sha256') -Raw).Trim() -split '\s+')[0]
     if ($digest -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $digest) { throw 'Empreinte incorrecte : application conservée.' }
     Write-SurvieUpdateProgress 'apply' 'Le site sera indisponible pendant la sauvegarde et le redémarrage.'
-    $previousProgress = $env:SURVIE_UPDATE_PROGRESS
-    try {
-        $env:SURVIE_UPDATE_PROGRESS = '1'
-        Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
-    } finally { $env:SURVIE_UPDATE_PROGRESS = $previousProgress }
+    Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
     Write-SurvieUpdateProgress 'launcher'
     $refresh = Join-Path $Settings.Application 'scripts\windows_update.py'
     if (Test-Path -LiteralPath $refresh) { Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', $refresh, '--work-dir', $Settings.Work)) }
@@ -301,6 +306,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     $mutex = New-Object Threading.Mutex($false, 'Local\SetupSurvie-MiseAJour')
     $acquired = $false; $transcript = $false
     $previousEncoding = [Console]::OutputEncoding
+    $previousProgress = $env:SURVIE_UPDATE_PROGRESS
     try {
         [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
         try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
@@ -317,8 +323,9 @@ if ($MyInvocation.InvocationName -ne '.') {
         Start-Transcript -Path $script:updateLog | Out-Null
         $transcript = $true
         Set-Location -LiteralPath $maintenance
+        $env:SURVIE_UPDATE_PROGRESS = '1'
         Invoke-SurvieGitUpdate $settings
         exit 0
     } catch { Write-SurvieUpdateProgress 'error' $_.Exception.Message; exit 1 }
-    finally { [Console]::OutputEncoding = $previousEncoding; if ($transcript) { Stop-Transcript | Out-Null }; if ($acquired) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
+    finally { $env:SURVIE_UPDATE_PROGRESS = $previousProgress; [Console]::OutputEncoding = $previousEncoding; if ($transcript) { Stop-Transcript | Out-Null }; if ($acquired) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
 }

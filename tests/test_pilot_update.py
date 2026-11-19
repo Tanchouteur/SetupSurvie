@@ -92,6 +92,25 @@ class UpdateTests(unittest.TestCase):
         update.prune_update_history(history, current)
         self.assertEqual(set(history.iterdir()), {current, older, unfinished, manual})
 
+    def test_cleanup_between_updates_requires_a_complete_journal_and_healthy_installation(self):
+        operation, _ = self.run_update()
+        journal = self.work/'update.json'
+        saved = json.loads(journal.read_text(encoding='utf-8'))
+        with patch.object(setup, 'ROOT', self.root), patch.object(update, 'Services') as services, \
+                patch.object(update, 'prune_update_history') as prune:
+            setup.write_json(journal, {**saved, 'phase': 'switched'})
+            with self.assertRaises(setup.SetupError):
+                update.prune_completed_update(self.app)
+            services.assert_not_called()
+            setup.write_json(journal, saved)
+            services.return_value.check.side_effect = setup.SetupError('unhealthy')
+            with self.assertRaisesRegex(setup.SetupError, 'unhealthy'):
+                update.prune_completed_update(self.app)
+            prune.assert_not_called()
+            services.return_value.check.side_effect = None
+            update.prune_completed_update(self.app)
+            prune.assert_called_once_with(operation.parent, operation)
+
     def test_windows_update_reconciles_only_prepared_routers(self):
         graph=self.data/'library/maps/routing/current/manifest.json'
         graph.parent.mkdir(parents=True)

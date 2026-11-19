@@ -1,4 +1,4 @@
-﻿# All Git mutations, downloads and service actions are mocked; fixtures only.
+# All Git mutations, downloads and service actions are mocked; fixtures only.
 $ErrorActionPreference = 'Stop'
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
 $root = Split-Path $PSScriptRoot
@@ -81,6 +81,10 @@ try {
     Assert ($script:calls.Count -eq 1) 'Recovery must not fetch, build or update Git'
     Assert ($script:calls[0].Arguments -contains 'recover') 'Recovery must use the installed recovery mechanism'
     Assert ($script:calls[0].Arguments -contains 'C:\fixture-previous\scripts\pilot_update.py') 'Recovery must remain possible with a missing application script'
+    $Recover = $false; $Cleanup = $true; $script:calls = @()
+    Invoke-SurvieGitUpdate $settings
+    Assert ($script:calls.Count -eq 1) 'Standalone cleanup must not use Git'
+    Assert ($script:calls[0].Arguments -contains 'prune') 'Cleanup must delegate to the guarded update engine'
     Write-Host 'Windows Git updater checks passed; no real Git fetch, installation or service action.'
 } finally {
     $absolute = [IO.Path]::GetFullPath($fixture)
