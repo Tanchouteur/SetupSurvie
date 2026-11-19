@@ -1,6 +1,12 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.51.1, 18 novembre 2026.** Les fichiers restent dans
+Depuis la version 0.52.0, **Bibliothèque → Collections → Vidéos de la
+bibliothèque** regroupe les vidéos d’une même collection sur une carte. Ouvrez
+la carte pour voir les titres et les commandes de lecture. Les vidéos sans
+groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
+les noms des collections.
+
+**Guide actuel — 0.53.0, 19 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents
 dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
@@ -52,6 +58,15 @@ que les collections ZIM non examinées sont sans vidéo.
 ## Chercher et lire
 
 Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
+Dans le volet vidéo déplié, le menu **Origine des vidéos** propose
+**Toutes les vidéos**, **YouTube** et **Hors YouTube**.
+**YouTube** inclut les vidéos importées et les chaînes YouTube archivées dans
+Kiwix. **Hors YouTube** affiche les vidéos des autres collections Kiwix et
+les fichiers locaux sans origine YouTube identifiée.
+Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
+dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
+nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).
+
 Les titres et descriptions participent au filtre de Collections. **Rechercher** réunit
 documents et vidéos ; les paroles ne sont cherchées que dans les pistes locales
 qui passent les contrôles techniques. Un titre seul ne décrit pas toute la vidéo.
@@ -112,6 +127,19 @@ disponibles pendant le suivant. Ensuite, une mise à jour du lecteur et de la
 recherche prend les pistes en compte. Si le service a redémarré entre-temps,
 **Actualiser le lecteur vidéo** permet de terminer cette étape. Le rapport des
 collections conserve l’examen, les erreurs et les archives non examinées.
+
+Depuis la version 0.51.1, les collections YouTube de Kiwix donnent leurs titres
+à la vidéothèque et à la recherche hors ligne. Après la mise à jour, relancer
+**Examiner ou reprendre les collections** pour récupérer les titres des archives
+déjà examinées à partir de leur catalogue embarqué. Les liens vidéo et les
+pistes déjà préparées gardent leurs références.
+
+Les autres collections utilisent le titre de la page qui contient la vidéo ou
+un nom de fichier lisible. Quand le titre manque, **Vidéo sans titre** indique
+la collection et une référence courte. Les fragments de streaming et les
+fichiers techniques reconnus sont écartés de la vidéothèque.
+Les lignes vides supplémentaires entre deux sous-titres WebVTT sont ignorées
+pendant l’examen, y compris dans les collections.
 
 Les vidéos effectivement incluses apparaissent avec les fichiers locaux. **Ouvrir
 l’article d’origine** conserve l’accès au document qui les héberge. Le lecteur
@@ -182,11 +210,6 @@ pour un segment, les segments valides sont enregistrés et celui qui a échoué
 est réessayé seul. Un échec persistant laisse la piste en brouillon et le rapport
 indique le problème. Les propositions rejetées restent dans le rapport.
 Un refus explicite arrête le travail et la pause reste prioritaire.
-
-Depuis **0.51.1**, une coupure de connexion à Ollama en cours de réponse
-entraîne également un nouvel essai par lots plus petits. Si un segment traduit seul est interrompu,
-il est retenté une fois. Les segments déjà terminés sont conservés dans les
-deux cas.
 
 Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
 ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire

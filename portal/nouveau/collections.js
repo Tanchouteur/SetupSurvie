@@ -38,6 +38,17 @@
   let category='',readOpen=(_,fallback)=>fallback;
   const disclosureSelector='.next-collection-section, .next-collection-group';
   const groupId=value=>{let hash=2166136261;for(const char of value)hash=Math.imul(hash^char.charCodeAt(0),16777619);return 'collection-group-'+(hash>>>0).toString(16);};
+  function createGroup(key,name,count){
+    const group=element('details',undefined,'next-collection-group');group.id=groupId(key);
+    group.open=readOpen(group.id,false);
+    const summary=element('summary'),icon=element('span',undefined,'next-collection-group-icon');
+    icon.setAttribute('aria-hidden','true');
+    const label=element('span',undefined,'next-collection-group-label');
+    label.append(element('span',name,'next-collection-group-name'),
+      element('span',count,'next-collection-group-count'));
+    summary.append(icon,label);group.append(summary);
+    return group;
+  }
   function arrangeCollections(){
     for(const [type,id] of groups)groupCards(document.getElementById(id),type);
   }
@@ -54,17 +65,9 @@
     const grouped=document.createDocumentFragment();
     for(const [family,cards] of families){
       if(cards.length<2)continue;
-      const group=document.createElement('details');group.className='next-collection-group';group.id=groupId(guides?'guide:'+family:family);
-      group.open=readOpen(group.id,false);
-      const summary=element('summary');
-      const icon=element('span',undefined,'next-collection-group-icon');
-      icon.setAttribute('aria-hidden','true');
-      const label=element('span',undefined,'next-collection-group-label');
-      label.append(element('span',family,'next-collection-group-name'),
-        element('span',cards.length+(guides?' documents':' collections'),'next-collection-group-count'));
-      summary.append(icon,label);
+      const group=createGroup(guides?'guide:'+family:family,family,cards.length+(guides?' documents':' collections'));
       const children=element('div',undefined,'data-grid');
-      group.append(summary,children);grouped.append(group);
+      group.append(children);grouped.append(group);
       for(const {card,heading,variant} of cards){
         if(variant)heading.textContent=variant;
         if(!guides&&card.dataset.archiveName){const info=document.createElement('details'),label=document.createElement('summary'),name=document.createElement('p');label.textContent='Référence de cette collection';name.textContent=card.dataset.archiveName;info.append(label,name);card.append(info);}
@@ -142,7 +145,7 @@
   document.getElementById('collection-filter-clear').onclick=()=>{input.value='';changed();input.focus();};
   const observer=new MutationObserver(apply);
   for(const [,id] of groups)observer.observe(document.getElementById(id),{childList:true});
-  window.CollectionsFilter={setView(value,type,read){
+  window.CollectionsFilter={createGroup,setView(value,type,read){
     readOpen=read;
     category=categoryLinks.some(link=>link.dataset.collectionType===type)?type:'';
     const previous=input.value;

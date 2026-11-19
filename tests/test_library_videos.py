@@ -64,6 +64,14 @@ class VideoInventoryTests(unittest.TestCase):
         self.assertEqual(report['tracks'][0]['origin'], 'automatic')
         self.assertEqual(report['tracks'][0]['cue_count'], 1)
 
+    def test_extra_blank_lines_between_webvtt_cues_are_ignored(self):
+        report = videos.inspect_subtitle_text(
+            VTT + '\n\n\n00:01.000 --> 00:02.000\nSecond cue\n', 'vtt',
+            include_cues=True,
+        )
+        self.assertEqual(report['technical_status'], 'passed')
+        self.assertEqual([cue['text'] for cue in report['cues']], ['Hello', 'Second cue'])
+
     def test_remote_french_is_not_a_local_track(self):
         self.write('cours.mp4')
         self.info(subtitles={'fr': [{'url': 'fictif:remote'}]})

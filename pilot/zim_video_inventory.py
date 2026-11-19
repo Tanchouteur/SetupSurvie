@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import posixpath
+import re
 import shutil
 import sqlite3
 import time
@@ -21,6 +22,81 @@ FORMAT=3
 MAX_HTML=2_000_000
 MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
+YOUTUBE_TITLES='youtube_video_titles_v1'
+YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
+GENERIC_TITLE=re.compile(r'(?:vid[eé]o|videoplayback|clip|media|index|[0-9]+|[0-9a-f]{16,}|[A-Za-z0-9_-]{24,})',re.I)
+TECHNICAL_TITLE=re.compile(r'://|\?[\w-]+=|\.(?:m4s|webm|mp4|ts)$',re.I)
+
+
+def readable_title(title):
+    title=' '.join(title.split())
+    if title and not TECHNICAL_TITLE.search(title) and not GENERIC_TITLE.fullmatch(title):
+        return title[:400]
+    return ''
+
+
+def display_title(payload, titles):
+    path=payload['path']
+    if title:=titles.get(path):
+        return title
+    filename=path.rsplit('/',1)[-1]
+    title=payload['title']
+    if title not in (path,filename) and (cleaned:=readable_title(title)):
+        return cleaned
+    stem=posixpath.splitext(filename.split('?',1)[0])[0]
+    if re.fullmatch(r'[\w. -]+',stem) and not GENERIC_TITLE.fullmatch(stem):
+        cleaned=' '.join(re.sub(r'[_-]+',' ',stem).split())
+        if cleaned and not GENERIC_TITLE.fullmatch(cleaned):
+            return cleaned[:400]
+    collection=' '.join(payload['collection'].split())[:350]
+    return f'{collection} — Vidéo sans titre ({payload["inventory_id"][:8]})'
+
+
+def standalone_media(path, mimetype):
+    filename=path.rsplit('/',1)[-1].split('?',1)[0].lower()
+    return not (filename.endswith(('.m4s','.d.ts')) or mimetype=='video/mp2t' and path=='index.ts')
+
+
+def youtube_collection(archive):
+    return archive.has_entry_by_path('channel.json') and archive.has_entry_by_path('home_playlists.json')
+
+
+def save_youtube_titles(db, archive, check):
+    """Match the offline YouTube catalogue to the exact internal video path."""
+    if not youtube_collection(archive):
+        return
+    if db.execute('SELECT 1 FROM metadata WHERE key=?',(YOUTUBE_TITLES,)).fetchone():
+        return
+    candidates={row[0] for row in db.execute("SELECT path FROM resources WHERE category='video'") if YOUTUBE_MEDIA.fullmatch(row[0])}
+    titles={}
+    conflicts=set()
+    if candidates:
+        for index in range(archive.entry_count):
+            if index%128==0:
+                check()
+            entry=archive._get_entry_by_id(index)
+            if entry.is_redirect or not re.fullmatch(r'videos/[^/]+\.json',entry.path):
+                continue
+            try:
+                item=entry.get_item()
+                if item.mimetype!='application/json' or item.size>MAX_HTML:
+                    continue
+                data=json.loads(bytes(item.content))
+                if not isinstance(data,dict):
+                    continue
+                path=video_inventory.text_field(data,'videoPath')
+                if path not in candidates or YOUTUBE_MEDIA.fullmatch(path)[1]!=data.get('id'):
+                    continue
+                title=readable_title(video_inventory.text_field(data,'title') or '')
+                title.encode('utf-8')
+                if not title:
+                    continue
+                if titles.setdefault(path,title)!=title:
+                    conflicts.add(path)
+            except (RuntimeError,KeyError,ValueError,RecursionError):
+                continue
+    db.execute('INSERT INTO metadata VALUES(?,?)',(YOUTUBE_TITLES,json.dumps(
+        {path:title for path,title in titles.items() if path not in conflicts},ensure_ascii=False)))
 
 
 def resolve(article,reference,base=''):
@@ -198,7 +274,15 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
             if prior['revision']==revision:
                 for row in db.execute('SELECT path,webvtt FROM subtitles WHERE usable=1'):
                     check();cache_track(root,prior,row['path'],row['webvtt'])
-                return {**summary(db),'status':'reused','file':published.name}
+                reused={**summary(db),'status':'reused','file':published.name}
+                needs_titles=(youtube_collection(archive)
+                              and not db.execute('SELECT 1 FROM metadata WHERE key=?',(YOUTUBE_TITLES,)).fetchone())
+        if prior['revision']==revision:
+            if needs_titles:
+                with connect(published) as db:
+                    save_youtube_titles(db,archive,check)
+                    if fingerprint(source,archive)!=revision:raise ArchiveChanged()
+            return reused
     if building.exists():
         with connect(building,True) as db:prior=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
         if prior['revision']!=revision:
@@ -260,7 +344,9 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(archive.entry_count),));db.commit()
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
-        video_items(db,root,json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0]),check);db.commit()
+        video_items(db,root,json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0]),check)
+        save_youtube_titles(db,archive,check)
+        db.commit()
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
         value=summary(db)

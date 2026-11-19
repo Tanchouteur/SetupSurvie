@@ -94,6 +94,8 @@ def inspect_subtitle_text(content, format, duration=None, *, include_cues=False,
         ends, previous_start, previous_end, gaps = [], None, None, []
         for number, block in enumerate(blocks, 1):
             lines = block.splitlines()
+            if not lines:
+                continue
             if vtt and (re.match(r'^NOTE(?:[ \t]|$)', lines[0]) or lines[0] in {'STYLE', 'REGION'}):
                 continue
             try:

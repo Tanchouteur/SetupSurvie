@@ -49,7 +49,7 @@
     area.hidden=S.user?.role!=='admin';if(area.hidden)return;
     for(const item of event.detail){
       if(item.available===false)continue;
-      const card=[...$('next-videos-list').children].find(node=>node.dataset.videoId===item.id);if(!card)continue;
+      const card=$('next-videos-list').querySelector('[data-video-id="'+CSS.escape(item.id)+'"]');if(!card)continue;
       const details=element('details');details.append(element('summary','Récupérer sur YouTube'));
       const referenceLabel=element('label','Adresse YouTube (si elle n’est pas déjà associée)'),reference=element('input');reference.type='text';reference.maxLength=2000;reference.placeholder='https://www.youtube.com/watch?v=…';referenceLabel.append(reference);
       const languageLabel=element('label','Piste à récupérer'),language=element('select');
