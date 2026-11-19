@@ -15,7 +15,7 @@ async page => {
     {id:'video-index', lane:'local', kind:'video-index', type:'Indexation vidéo', title:'Inventaire des vidéos et sous-titres', status:'running', stage:'19 vidéos traitées'},
     {id:'archive-video-index', lane:'local', kind:'archive-video-index', type:'Examen des collections', title:'Inventaire des vidéos dans les collections', status:'running', done:2, total:5}
   );
-  let paused = false, unavailable = false;
+  let paused = false, unavailable = false, moveRequests = 0;
   await page.route('**/api/work-queue**', async route => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -23,6 +23,7 @@ async page => {
       return unavailable === 'invalid' ? route.fulfill({json: {ok: true}})
         : route.fulfill({status: 503, json: {detail: 'Indisponible'}});
     }
+    if (path.endsWith('/move')) moveRequests++;
     if (path.endsWith('/pause')) paused = request.postDataJSON().paused;
     if (path.endsWith('/second/move') && request.postDataJSON().target === 'document' && !request.postDataJSON().after ||
         path.endsWith('/document/move') && request.postDataJSON().target === 'second') {
@@ -55,18 +56,50 @@ async page => {
   await shortcut.locator('.work-queue-signal[data-level=error]').waitFor();
   await preview.getByText('Vidéos du jardin', {exact:true}).waitFor();
   await preview.getByText('Ensuite · Question à l’assistant', {exact:true}).waitFor();
+  verify((await preview.boundingBox()).height > 620, 'L’aperçu doit montrer davantage de cartes sur un écran haut.');
+  await shortcut.focus();
+  await page.setViewportSize({width: 900, height: 480});
+  await preview.waitFor();
+  const compact = await preview.boundingBox();
+  verify(compact.x >= 0 && compact.y + compact.height <= 480, 'L’aperçu doit tenir dans un écran court.');
+  await page.setViewportSize({width: 1440, height: 900});
+  await shortcut.hover();
   const previewHandle = preview.getByRole('button', {name: 'Déplacer Notice de montage'});
   await previewHandle.scrollIntoViewIfNeeded();
   const from = await previewHandle.boundingBox();
+  const sourceCard = await preview.locator('[data-work-id=second]').boundingBox();
   const to = await preview.getByText('Manuel en anglais', {exact:true}).locator('..').boundingBox();
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
   await page.mouse.down();
   await page.mouse.move(to.x + to.width / 2, to.y + 2, {steps: 8});
   await preview.locator('[data-work-id=document].work-queue-drop-before').waitFor();
+  const ghost = page.locator('.work-queue-drag-ghost');
+  const ghostBox = await ghost.boundingBox();
+  const pointerOffset = from.y + from.height / 2 - sourceCard.y;
+  verify(Math.abs(ghostBox.y - (to.y + 2 - pointerOffset)) < 2,
+    'La carte soulevée doit suivre le pointeur.');
+  const highlighted = preview.locator('.work-queue-drag-lane');
+  verify(await highlighted.locator('h2').textContent() === 'Assistant et traductions', 'Seule la section autorisée doit ressortir.');
+  verify(await preview.locator('[data-work-id=document]').evaluate(node => parseFloat(node.style.getPropertyValue('--work-queue-shift'))) > 0,
+    'La carte voisine doit laisser la place au dépôt.');
+  const otherLane = await preview.getByText('Téléchargements', {exact: true}).boundingBox();
+  await page.mouse.move(otherLane.x + 16, otherLane.y + otherLane.height / 2);
+  await page.mouse.up();
+  await ghost.waitFor({state: 'detached'});
+  verify(moveRequests === 0 && await highlighted.count() === 0, 'Un dépôt dans une autre section doit être annulé.');
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + 2, {steps: 8});
   await page.mouse.up();
   await page.waitForFunction(() => document.querySelectorAll('#main-navigation .work-queue-preview [data-work-id="second"]')[0]?.nextElementSibling?.dataset.workId === 'document');
-  await preview.getByRole('button', {name: 'Mettre en pause'}).click();
-  await preview.getByRole('button', {name: 'Reprendre la file'}).waitFor();
+  const pause = preview.locator('.work-queue-preview-heading').getByRole('button', {name: 'Mettre en pause'});
+  verify(await pause.getAttribute('data-paused') === 'false' && await pause.textContent() === '', 'L’en-tête doit afficher le pictogramme pause.');
+  await pause.press('Enter');
+  const play = preview.locator('.work-queue-preview-heading').getByRole('button', {name: 'Reprendre la file'});
+  await play.waitFor();
+  verify(await play.getAttribute('data-paused') === 'true', 'L’icône doit passer à la lecture.');
+  verify(await play.evaluate(node => node === document.activeElement), 'Le bouton pause/reprise doit garder le focus.');
+
   await preview.getByText('File en pause', {exact:true}).waitFor();
   await preview.getByText('À la reprise · Question à l’assistant', {exact:true}).waitFor();
   verify((await shortcut.getAttribute('aria-label')).includes('1 erreur'), 'La pause doit laisser l’erreur visible.');

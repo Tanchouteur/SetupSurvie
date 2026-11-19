@@ -62,17 +62,37 @@
       const target = jobs[jobs.indexOf(job) + (after ? 1 : -1)];
       if (target) move(job.id, target.id, after);
     });
-    let id, source, target, after, startY, moved, frame, point;
+    let id, source, target, after, start, frame, point, lane, ghost, lifted, peers;
     const locate = () => {
       target?.classList.remove('work-queue-drop-before', 'work-queue-drop-after');
-      const card = document.elementFromPoint(point.x, point.y)?.closest('[data-work-id]');
-      target = card !== source && card?.parentElement === source.parentElement &&
-        jobs.some(item => item.id === card.dataset.workId) ? card : null;
-      if (target) {
-        const rect = target.getBoundingClientRect();
-        after = point.y >= rect.top + rect.height / 2;
-        target.classList.add(after ? 'work-queue-drop-after' : 'work-queue-drop-before');
+      if (lane) {
+        const list = source.parentElement;
+        const top = list.getBoundingClientRect().top;
+        // Read layout positions so the sliding cards do not change the drop target.
+        target = document.elementFromPoint(point.x, point.y)?.closest('.work-queue-preview-lane') === lane
+          ? peers.find(card => card !== source && point.y >= top + card.offsetTop &&
+            point.y < top + card.offsetTop + card.offsetHeight)
+          : null;
+        if (target) after = point.y >= top + target.offsetTop + target.offsetHeight / 2;
+        const from = peers.indexOf(source);
+        const to = target ? peers.indexOf(target) + Number(after) : from;
+        const displacement = source.offsetHeight + parseFloat(getComputedStyle(list).rowGap);
+        peers.forEach((card, index) => {
+          if (card === source) return;
+          const offset = index >= to && index < from ? displacement
+            : index > from && index < to ? -displacement : 0;
+          card.style.setProperty('--work-queue-shift', offset + 'px');
+        });
+      } else {
+        const card = document.elementFromPoint(point.x, point.y)?.closest('[data-work-id]');
+        target = card !== source && card?.parentElement === source.parentElement &&
+          jobs.some(item => item.id === card.dataset.workId) ? card : null;
+        if (target) {
+          const rect = target.getBoundingClientRect();
+          after = point.y >= rect.top + rect.height / 2;
+        }
       }
+      target?.classList.add(after ? 'work-queue-drop-after' : 'work-queue-drop-before');
     };
     const scroll = () => {
       const panel = source.closest('.work-queue-preview-sections');
@@ -91,30 +111,65 @@
       if (!event.isPrimary || event.button !== 0 || id !== undefined) return;
       source = control.closest('[data-work-id]');
       id = event.pointerId;
-      startY = event.clientY;
-      moved = false;
+      start = {x: event.clientX, y: event.clientY};
       source.classList.add('work-queue-dragging');
       control.setPointerCapture(id);
     });
     control.addEventListener('pointermove', event => {
-      if (event.pointerId !== id || (!moved && Math.abs(event.clientY - startY) < 5)) return;
-      moved = true;
+      if (event.pointerId !== id) return;
+      const x = event.clientX - start.x;
+      const y = event.clientY - start.y;
+      if (!frame && Math.hypot(x, y) < 5) return;
       point = {x: event.clientX, y: event.clientY};
+      if (!frame) {
+        lane = source.closest('.work-queue-preview-lane');
+        if (lane) {
+          peers = [...source.parentElement.children].filter(card => jobs.some(item => item.id === card.dataset.workId));
+          lifted = source.getBoundingClientRect();
+          ghost = source.cloneNode(true);
+          ghost.classList.remove('work-queue-dragging');
+          ghost.classList.add('work-queue-drag-ghost');
+          ghost.removeAttribute('data-work-id');
+          ghost.inert = true;
+          ghost.style.width = lifted.width + 'px';
+          document.body.append(ghost);
+          lane.classList.add('work-queue-drag-lane');
+        }
+        frame = requestAnimationFrame(scroll);
+      }
+      if (ghost) {
+        ghost.style.transform = `translate3d(${lifted.left + x}px, ${lifted.top + y}px, 0)`;
+      }
       locate();
-      if (!frame) frame = requestAnimationFrame(scroll);
     });
     const finish = event => {
       if (event.pointerId !== id) return;
+      if (frame && event.type === 'pointerup') {
+        point = {x: event.clientX, y: event.clientY};
+        locate();
+      }
       const destination = event.type === 'pointerup' && target?.dataset.workId;
       cancelAnimationFrame(frame);
       frame = undefined;
       id = undefined;
+      ghost?.remove();
+      ghost = null;
       source.classList.remove('work-queue-dragging');
+      lane?.classList.remove('work-queue-drag-lane');
+      peers?.forEach(card => card.style.removeProperty('--work-queue-shift'));
+      lane = null;
+      peers = null;
       target?.classList.remove('work-queue-drop-before', 'work-queue-drop-after');
       target = null;
       if (destination) move(job.id, destination, after);
       redraw();
     };
+    control.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || id === undefined) return;
+      const pointerId = id;
+      finish({pointerId});
+      if (control.hasPointerCapture(pointerId)) control.releasePointerCapture(pointerId);
+    });
     for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) control.addEventListener(name, finish);
     return control;
   }
@@ -140,13 +195,15 @@
     const open = make('a', 'Ouvrir la file');
     open.href = href;
     if (href.startsWith('#')) open.dataset.route = 'file';
-    heading.append(make('strong', 'File d’attente'), open);
-    const list = make('div', '', 'work-queue-preview-sections');
-    let signature, lastDraw;
-    const action = make('button', 'Mettre en pause', 'secondary');
+    const controls = make('div', '', 'work-queue-preview-controls');
+    const action = make('button', '', 'secondary work-queue-preview-toggle');
     action.type = 'button';
     action.hidden = true;
-    preview.append(heading, list, action);
+    controls.append(action, open);
+    heading.append(make('strong', 'File d’attente'), controls);
+    const list = make('div', '', 'work-queue-preview-sections');
+    let signature, lastDraw;
+    preview.append(heading, list);
     if (!mobile) {
       host.append(preview);
       host.addEventListener('pointerenter', () => {
@@ -165,7 +222,9 @@
           host.classList.add('work-queue-dismissed');
         }
       });
-      if (toggle) action.onclick = toggle;
+      if (toggle) action.onclick = () => {
+        if (action.getAttribute('aria-disabled') !== 'true') toggle();
+      };
     }
     container.append(host);
 
@@ -193,8 +252,13 @@
       if (current) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
       action.hidden = !state || !admin || !toggle;
-      action.disabled = connection !== 'ready' || pending;
-      if (state) action.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';
+      action.setAttribute('aria-disabled', String(connection !== 'ready' || pending));
+      if (state) {
+        const label = state.paused ? 'Reprendre la file' : 'Mettre en pause';
+        action.dataset.paused = String(state.paused);
+        action.setAttribute('aria-label', label);
+        action.title = label;
+      }
       if (mobile) return;
       lastDraw = () => draw(state, {admin, current, connection, pending});
       if (preview.querySelector('.work-queue-dragging')) return;
