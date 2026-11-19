@@ -123,6 +123,8 @@ Les autres collections utilisent le titre de la page qui contient la vidéo ou
 un nom de fichier lisible. Quand le titre manque, **Vidéo sans titre** indique
 la collection et une référence courte. Les fragments de streaming et les
 fichiers techniques reconnus sont écartés de la vidéothèque.
+Les lignes vides supplémentaires entre deux sous-titres WebVTT sont ignorées
+pendant l’examen, y compris dans les collections.
 
 Les vidéos effectivement incluses apparaissent avec les fichiers locaux. **Ouvrir
 l’article d’origine** conserve l’accès au document qui les héberge. Le lecteur
