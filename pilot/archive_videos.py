@@ -100,6 +100,11 @@ async def status():
     value=await asyncio.to_thread(state)
     try:host=await operations.library_command()
     except HTTPException:return {**value,'control_notice':'Le suivi du PC serveur ne répond pas. Les inventaires déjà terminés restent disponibles.'}
+    if host.get('initial_video_inventory_pending'):
+        message = ('L’examen demandé à l’installation attend que le PC serveur soit disponible.'
+                   if host.get('index_reader_ready') else
+                   'L’examen demandé à l’installation attend la préparation de l’outil d’indexation.')
+        value['control_notice'] = message
     if host.get('action')!='video-inventory':return value
     value['host_job']={key:host[key] for key in ('id','phase') if key in host}
     same=host.get('id')==value.get('job_id')

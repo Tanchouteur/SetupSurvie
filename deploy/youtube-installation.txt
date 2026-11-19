@@ -1,0 +1,3 @@
+# Sélection YouTube de la première installation en ligne.
+# Une adresse de vidéo par ligne, avec des rubriques [Thème] facultatives.
+# Ajouter ici les vidéos retenues pour la bibliothèque.

@@ -225,6 +225,15 @@ sans confondre vidéo absente, non examinée, non indexée et piste manquante.
 
 ## Livraisons disponibles
 
+Le **19 novembre 2026**, Louis demande que la première installation traite la
+sélection YouTube maintenue dans le dépôt et indexe les vidéos des encyclopédies.
+La **0.54.0** soumet la liste YouTube en ligne au traitement existant, y compris
+la transcription et la traduction lorsque nécessaires, et programme l’inventaire
+des vidéos ZIM aussi depuis un kit hors ligne. La sélection initiale reste à
+renseigner. Nouvelle fonctionnalité compatible (`y`).
+[Guide d’installation](../installation/README.md#préparer-les-vidéos-à-la-première-installation).
+
+
 La **0.43.6** corrige le faux message « Suivi momentanément indisponible » : un ancien
 transfert terminé qui désigne un disque précédent n’est plus pris pour une activité
 inconnue. Le suivi affiche aussi les téléchargements YouTube, et leur liste rejoint

@@ -8,6 +8,7 @@ import time
 from fastapi import HTTPException
 
 from . import engine, operations, store, work_queue, youtube_downloads
+from .youtube_list import INSTALLATION_LIST
 
 TASKS = {}
 TERMINAL_HOST = ('completed', 'error', 'interrupted', 'paused')
@@ -54,19 +55,42 @@ def insert(identifier, kind, **data):
                    (identifier, kind, json.dumps({'kind': kind, **data}, ensure_ascii=False), time.time()))
 
 
-async def submit(text, height):
+def enqueue(text, height, *, identifier=None):
     if len(text.encode('utf-8')) > youtube_downloads.MAX_TEXT:
         raise HTTPException(413, 'Liste trop longue : divisez-la en plusieurs fichiers.')
     summary = youtube_downloads.check(text)
     if not summary['videos'] or height not in (360, 480, 720):
         raise HTTPException(400, 'Vérifiez les adresses YouTube et la qualité choisie.')
-    identifier = youtube_downloads.save(text, prune=False)
+    identifier = youtube_downloads.save(text, prune=False, identifier=identifier)
     count = len(summary['videos'])
     insert(identifier, 'youtube', title=f'{count} vidéo(s) · {height}p', status='queued',
            model='yt-dlp · Deno · FFmpeg', total=count, done=0, height=height,
            href='#/appareil/bibliotheque', items=[])
-    launch(identifier, download)
     return {'accepted': True, 'job': identifier, **summary}
+
+
+async def submit(text, height):
+    result = enqueue(text, height)
+    launch(result['job'], download)
+    return result
+
+
+def enqueue_installation_list():
+    path = store.ROOT / INSTALLATION_LIST
+    if path.is_symlink():
+        return True
+    try:
+        try:
+            with path.open('rb') as source:
+                raw = source.read(youtube_downloads.MAX_TEXT + 1)
+        except FileNotFoundError:
+            return False
+        # The same list must retain its queue state after startup or install recovery.
+        identifier = hashlib.sha256(b'SetupSurvie YouTube installation\0' + raw).hexdigest()[:32]
+        enqueue(raw.decode('utf-8'), 480, identifier=identifier)
+    except (HTTPException, OSError, UnicodeError):
+        logging.getLogger(__name__).warning('La liste YouTube de l’installation n’a pas pu être ajoutée.')
+    return True
 
 
 def launch(identifier, worker):
@@ -283,8 +307,11 @@ async def watch():
     from . import videos
 
     observed_index = None
+    installation_list_seen = False
     while True:
         try:
+            if not installation_list_seen:
+                installation_list_seen = await asyncio.to_thread(enqueue_installation_list)
             for item in pending():
                 launch(item['id'], download if item['kind']=='youtube' else prepare)
             if operations.TOKEN:
