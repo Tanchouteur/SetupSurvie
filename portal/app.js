@@ -847,10 +847,17 @@ $('conversation-picker').onchange=e=>{if(e.target.value)openConversation(e.targe
 $('chat-form').onsubmit=send;$('cancel-job').onclick=async()=>{if(S.job)try{await api('/jobs/'+encodeURIComponent(S.job)+'/cancel',{});}catch(e){toast(e.message);}};
 window.addEventListener('storage',event=>{if(event.key==='survie.profile.changed')reloadProfile();});
 async function refreshProfileOnReturn(){
-  if(!S.user||document.hidden||S.profileChecking||S.profileReloading)return;
+  if(PAGE_CLOSING||!S.user||document.hidden||S.profileChecking||S.profileReloading)return;
   S.profileChecking=true;const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),4000);
-  try{const response=await fetch('/api/profiles/current',{credentials:'same-origin',signal:controller.signal});if(response.ok&&(await response.json()).id!==S.user?.id)reloadProfile();}catch(_){/* Offline reading remains available. */}
-  finally{clearTimeout(timeout);S.profileChecking=false;}
+  PAGE_REQUESTS.add(controller);
+  try{
+    const response=await fetch('/api/profiles/current',{credentials:'same-origin',signal:controller.signal});
+    if(response.ok){
+      const profile=await response.json();
+      if(!PAGE_CLOSING&&!controller.signal.aborted&&profile.id!==S.user?.id)reloadProfile();
+    }
+  }catch(_){/* Offline reading remains available. */}
+  finally{clearTimeout(timeout);PAGE_REQUESTS.delete(controller);S.profileChecking=false;}
 }
 window.addEventListener('focus',refreshProfileOnReturn);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfileOnReturn();});

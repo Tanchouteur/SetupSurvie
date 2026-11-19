@@ -65,6 +65,7 @@ def build():
     for kind, path, version in assets:
         tags.append(f'<link rel="stylesheet" href="{path}?v={version}">' if kind == 'css'
                     else f'<script defer src="{path}?v={version}"></script>')
+    source = source.replace('/app.js?v=0.60.0', '/app.js?v=0.60.2')
     source = source.replace('</head>', ''.join(tags) + '</head>', 1)
     source = source.replace('<script defer src="/nouveau/layout.js',
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)
