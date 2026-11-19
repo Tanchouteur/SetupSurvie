@@ -123,6 +123,11 @@ passage ; le nombre de collections terminées et les pistes lisibles sont affich
 **Mettre l’examen en pause** conserve les points de reprise. Reprendre reste
 volontaire après un redémarrage ou une pause.
 
+Depuis la version 0.60.2, les grosses archives sont réparties entre plusieurs
+processus. Le suivi affiche les entrées examinées à l’intérieur de l’archive en
+cours. Après la mise à jour, **Examiner ou reprendre les collections** reprend
+l’examen déjà commencé si l’archive est toujours la même.
+
 L’examen continue si la page est fermée. Les anciennes données terminées restent
 disponibles pendant le suivant. Ensuite, une mise à jour du lecteur et de la
 recherche prend les pistes en compte. Si le service a redémarré entre-temps,

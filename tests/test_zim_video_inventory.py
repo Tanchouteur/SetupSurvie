@@ -99,6 +99,65 @@ class ArchiveVideoTests(unittest.TestCase):
         with inventory.connect(building,True) as db:self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0],'2')
         result=inventory.build(self.zim,self.state,checkpoint=1);self.assertEqual(result['status'],'completed');self.assertFalse(list(self.state.glob('*.building')))
 
+    def test_parallel_scan_resumes_legacy_and_out_of_order_checkpoints(self):
+        scripts=Path(__file__).resolve().parents[1]/'scripts'
+        with patch.object(sys,'path',[str(scripts),*sys.path]):
+            import inventory_zim_videos as cli
+
+        expected_dir=self.root/'expected'
+        expected=inventory.build(self.zim,expected_dir)
+        state_dir=self.root/'parallel'
+        staging=state_dir/'zim-videos'
+        native=inventory.shutil.disk_usage
+        calls=0
+
+        def pause_legacy_scan(path):
+            nonlocal calls
+            calls+=1
+            if calls==4:
+                raise inventory.Paused()
+            return native(path)
+
+        with patch.object(inventory.shutil,'disk_usage',side_effect=pause_legacy_scan),self.assertRaises(inventory.Paused):
+            inventory.build(self.zim,staging,checkpoint=1)
+
+        def pause_with_later_range_saved(db,building,revision,cursor,total):
+            self.assertEqual(cursor,2)
+            split=cursor+2
+            db.execute('CREATE TABLE scan_ranges(start INTEGER PRIMARY KEY,stop INTEGER NOT NULL,cursor INTEGER NOT NULL)')
+            db.executemany('INSERT INTO scan_ranges VALUES(?,?,?)',[(cursor,split,cursor),(split,total,split)])
+            db.commit()
+            cli.scan_range(self.zim,building,revision,split,total,split,None,1_000_000)
+            raise inventory.Paused()
+
+        with self.assertRaises(inventory.Paused):
+            inventory.build(self.zim,staging,scan=pause_with_later_range_saved)
+        self.assertFalse(list(staging.glob('*.sqlite')))
+        building=next(staging.glob('*.building'))
+        with inventory.connect(building,True) as db:
+            self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0],'2')
+            self.assertEqual(db.execute('SELECT sum(stop-cursor) FROM scan_ranges').fetchone()[0],2)
+
+        with patch.object(sys,'path',[str(scripts),*sys.path]),patch.object(cli,'LARGE_ARCHIVE',0):
+            report=cli.run(self.root,state_dir,workers=2,reserve=1_000_000)
+        self.assertEqual(report['phase'],'completed')
+        self.assertEqual(report['results'][0],expected)
+        self.assertNotIn('active_archive',report)
+        with inventory.connect(expected_dir/expected['file'],True) as baseline,inventory.connect(staging/expected['file'],True) as parallel:
+            for table in ('resources','aliases','subtitles','subtitle_cues','video_refs','issues'):
+                with self.subTest(table=table):
+                    query=f'SELECT * FROM {table} ORDER BY 1,2'
+                    self.assertEqual([tuple(row) for row in baseline.execute(query)],
+                                     [tuple(row) for row in parallel.execute(query)])
+            def videos(db):
+                items=[json.loads(row[0]) for row in db.execute('SELECT payload FROM video_items ORDER BY id')]
+                for item in items:
+                    for track in item['tracks']:
+                        track.get('revision',{}).pop('mtime_ns',None)
+                return items
+
+            self.assertEqual(videos(baseline),videos(parallel))
+
     def test_replaced_archive_keeps_last_completed_inventory_and_rescans_new_edition(self):
         original=inventory.build(self.zim,self.state);before=(self.state/original['file']).read_bytes();self.create(extra=True)
         cancel=self.root/'cancel';cancel.touch()

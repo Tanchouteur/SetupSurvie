@@ -87,6 +87,11 @@ def progress():
         if isinstance(value.get('results'),list):
             value['completed']=sum(row.get('status') in zim_video_inventory.EXAMINED_STATUSES
                                    for row in value['results'] if isinstance(row,dict))
+        active=value.get('active_archive')
+        if active is not None and not (isinstance(active,dict) and isinstance(active.get('archive'),str)
+                and type(active.get('entries_examined')) is int and type(active.get('entries')) is int
+                and 0<=active['entries_examined']<=active['entries']):
+            value.pop('active_archive')
         return value
     except (OSError,ValueError):return {'schema':1,'phase':'not_started','archives':0,'completed':0,'results':[],'unexamined':[]}
 

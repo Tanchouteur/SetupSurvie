@@ -328,10 +328,15 @@ class Queue(Slot):
         phase = archive.get('phase')
         if phase in ('running', 'paused', 'interrupted', 'error', 'failed'):
             lanes['local']['running'] |= phase == 'running'
+            active = archive.get('active_archive') if phase == 'running' else None
+            stage = None
+            if isinstance(active, dict) and active.get('entries'):
+                counts = f"{active['entries_examined']:,} / {active['entries']:,}".replace(',', '\u202f')
+                stage = f"{active['archive']} · {counts} entrées examinées"
             jobs.append({'id': 'archive-video-index', 'kind': 'archive-video-index', 'type': 'Examen des collections',
                          'title': 'Inventaire des vidéos dans les collections', 'status': phase,
                          'done': archive.get('completed', 0), 'total': archive.get('archives', 0),
-                         'error': archive.get('error'), 'href': '#/bibliotheque/collections'})
+                         'error': archive.get('error'), 'href': '#/bibliotheque/collections', **({'stage': stage} if stage else {})})
         add_host_work(jobs, activity or {})
         for job in jobs:
             job.setdefault('lane', BACKGROUND_LANE.get(job['kind'], 'ai'))

@@ -32,7 +32,7 @@ def build():
         ('js', '/nouveau/captions.js', '0.54.0'),
         ('js', '/nouveau/transcriptions.js', '0.54.0'),
         ('js', '/nouveau/acquisitions.js', '0.54.0'),
-        ('js', '/nouveau/archive-videos.js', '0.48.0'),
+        ('js', '/nouveau/archive-videos.js', '0.60.2'),
         ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
         ('css', '/nouveau/work-queue.css', '0.56.0-2'),
         ('js', '/work-queue-preview.js', '0.56.0'),

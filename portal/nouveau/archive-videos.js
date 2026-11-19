@@ -10,7 +10,9 @@
       const value=await api('/zim-videos');if(current!==generation||profile!==S.user?.id)return;
       const becameReady=value.reader_ready&&!latest?.reader_ready;latest=value;
       const results=value.results||[],media=results.reduce((sum,row)=>sum+(row.video_resources||0),0),tracks=results.reduce((sum,row)=>sum+(row.usable_tracks||0),0);
-      $('next-archive-videos-status').textContent=(states[value.phase]||'État de l’examen à vérifier.')+(!['not_started','preparing'].includes(value.phase)?' '+value.completed+' / '+value.archives+' collection(s) examinée(s) · '+media+' fichier(s) vidéo · '+tracks+' piste(s) lisible(s).':'')+(value.reader_updating?' Mise à jour du lecteur et de la recherche…':'')+(value.control_notice?' '+value.control_notice:'');
+      const active=value.phase==='running'&&value.active_archive;
+      const entries=active?.entries?` ${active.archive} · ${active.entries_examined.toLocaleString('fr-FR')} / ${active.entries.toLocaleString('fr-FR')} entrées examinées.`:'';
+      $('next-archive-videos-status').textContent=(states[value.phase]||'État de l’examen à vérifier.')+(!['not_started','preparing'].includes(value.phase)?' '+value.completed+' / '+value.archives+' collection(s) examinée(s) · '+media+' fichier(s) vidéo · '+tracks+' piste(s) lisible(s).':'')+entries+(value.reader_updating?' Mise à jour du lecteur et de la recherche…':'')+(value.control_notice?' '+value.control_notice:'');
       $('next-archive-videos-actions').hidden=S.user.role!=='admin';$('next-archive-videos-start').disabled=['preparing','running'].includes(value.phase)||value.reader_updating;
       $('next-archive-videos-pause').hidden=!['preparing','running'].includes(value.phase);$('next-archive-videos-refresh').hidden=!['completed','partial'].includes(value.phase)||value.reader_ready||value.reader_updating;
       if(becameReady)document.dispatchEvent(new Event('survie:videos-changed'));

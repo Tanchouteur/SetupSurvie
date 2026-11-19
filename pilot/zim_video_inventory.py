@@ -22,6 +22,7 @@ FORMAT=3
 MAX_HTML=2_000_000
 MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
+HTML_VIDEO_HINT=re.compile(rb'<(?:video|iframe)',re.IGNORECASE)
 YOUTUBE_TITLES='youtube_video_titles_v1'
 EXAMINED_STATUSES={'completed','reused','partial'}
 YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
@@ -257,7 +258,54 @@ def summary(db):
     return value
 
 
-def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
+def entry_reader(archive):
+    return getattr(archive,'get_entry_by_id',None) or archive._get_entry_by_id  # libzim 4.x / 3.13.1
+
+
+def save_cursor(db,cursor):
+    db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(cursor),))
+    db.commit()
+
+
+def scan_entry(entry,write,write_many):
+    try:
+        item=entry.get_item();mime=item.mimetype.lower().split(';')[0]
+        if entry.is_redirect:
+            write('INSERT OR REPLACE INTO aliases VALUES(?,?)',(entry.path,item.path))
+        elif mime.startswith('video/') or mime in ('text/vtt','application/x-subrip') or entry.path.lower().endswith(('.vtt','.srt')):
+            write('INSERT OR REPLACE INTO resources VALUES(?,?,?,?)',(entry.path,'video' if mime.startswith('video/') else 'subtitle',mime,item.size))
+            if not mime.startswith('video/'):
+                if item.size>video_inventory.MAX_SIDECAR_BYTES:
+                    report={'technical_status':'invalid','errors':['fichier_annexe_trop_gros'],'cue_count':0};cues=[]
+                else:
+                    try:
+                        content=bytes(item.content).decode('utf-8-sig')
+                        report=video_inventory.inspect_subtitle_text(content,'vtt' if mime=='text/vtt' or entry.path.lower().endswith('.vtt') else 'srt',include_cues=True)
+                        cues=report.pop('cues')
+                    except UnicodeError:report={'technical_status':'invalid','errors':['encodage_non_utf8'],'cue_count':0};cues=[]
+                usable=report['technical_status']=='passed'
+                def stamp(ms):return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d}.{ms%1000:03d}'
+                webvtt='WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in cues)+'\n' if usable else ''
+                write('INSERT OR REPLACE INTO subtitles VALUES(?,?,?,?)',(entry.path,int(usable),json.dumps(report,ensure_ascii=False),webvtt))
+                write('DELETE FROM subtitle_cues WHERE path=?',(entry.path,))
+                write_many('INSERT INTO subtitle_cues VALUES(?,?,?,?,?)',[(entry.path,n,c['start_ms'],c['end_ms'],c['text']) for n,c in enumerate(cues)])
+        elif mime in ('text/html','application/xhtml+xml'):
+            if item.size>MAX_HTML:write('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'html_too_large'));return
+            content=bytes(item.content)
+            if not HTML_VIDEO_HINT.search(content):
+                return
+            parser=Videos();parser.feed(content.decode('utf-8',errors='replace'));parser.close()
+            for position,value in enumerate(parser.items):
+                for group in ('sources','tracks'):
+                    for ref in value[group]:
+                        ref.update(resolved=resolve(entry.path,ref['src'],parser.base))
+                        if len(ref['src'])>4000:ref['src']='';parser.errors.append('reference_too_long')
+                write('INSERT OR REPLACE INTO video_refs VALUES(?,?,?,?)',(entry.path,position,(value['title'] or entry.title)[:400],json.dumps(value,ensure_ascii=False)))
+            if parser.errors:write('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,','.join(sorted(set(parser.errors)))))
+    except (RuntimeError,KeyError,ValueError):write('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'entry_unreadable'))
+
+
+def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000,scan=None):
     """Caller holds an OS lease. Commit cursors and keep last complete inventory."""
     from libzim.reader import Archive
     source=Path(source);root=Path(root)
@@ -304,45 +352,16 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('source',json.dumps({'archive':source.name,'book':source.stem,'title':title,'revision':revision,'entries':archive.entry_count})))
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('cursor','0'));db.commit()
         cursor=int(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0])
-        entry_by_id=getattr(archive,'get_entry_by_id',None) or archive._get_entry_by_id  # libzim 4.x / 3.13.1
-        for index in range(cursor,archive.entry_count):
-            check()
-            entry=entry_by_id(index)
-            try:
-                item=entry.get_item();mime=item.mimetype.lower().split(';')[0]
-                if entry.is_redirect:
-                    db.execute('INSERT OR REPLACE INTO aliases VALUES(?,?)',(entry.path,item.path))
-                elif mime.startswith('video/') or mime in ('text/vtt','application/x-subrip') or entry.path.lower().endswith(('.vtt','.srt')):
-                    db.execute('INSERT OR REPLACE INTO resources VALUES(?,?,?,?)',(entry.path,'video' if mime.startswith('video/') else 'subtitle',mime,item.size))
-                    if not mime.startswith('video/'):
-                        if item.size>video_inventory.MAX_SIDECAR_BYTES:
-                            report={'technical_status':'invalid','errors':['fichier_annexe_trop_gros'],'cue_count':0};cues=[]
-                        else:
-                            try:
-                                content=bytes(item.content).decode('utf-8-sig')
-                                report=video_inventory.inspect_subtitle_text(content,'vtt' if mime=='text/vtt' or entry.path.lower().endswith('.vtt') else 'srt',include_cues=True)
-                                cues=report.pop('cues')
-                            except UnicodeError:report={'technical_status':'invalid','errors':['encodage_non_utf8'],'cue_count':0};cues=[]
-                        usable=report['technical_status']=='passed'
-                        def stamp(ms):return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d}.{ms%1000:03d}'
-                        webvtt='WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in cues)+'\n' if usable else ''
-                        db.execute('INSERT OR REPLACE INTO subtitles VALUES(?,?,?,?)',(entry.path,int(usable),json.dumps(report,ensure_ascii=False),webvtt))
-                        db.execute('DELETE FROM subtitle_cues WHERE path=?',(entry.path,))
-                        db.executemany('INSERT INTO subtitle_cues VALUES(?,?,?,?,?)',[(entry.path,n,c['start_ms'],c['end_ms'],c['text']) for n,c in enumerate(cues)])
-                elif mime in ('text/html','application/xhtml+xml'):
-                    if item.size>MAX_HTML:db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'html_too_large'));continue
-                    parser=Videos();parser.feed(bytes(item.content).decode('utf-8',errors='replace'));parser.close()
-                    for position,value in enumerate(parser.items):
-                        for group in ('sources','tracks'):
-                            for ref in value[group]:
-                                ref.update(resolved=resolve(entry.path,ref['src'],parser.base))
-                                if len(ref['src'])>4000:ref['src']='';parser.errors.append('reference_too_long')
-                        db.execute('INSERT OR REPLACE INTO video_refs VALUES(?,?,?,?)',(entry.path,position,(value['title'] or entry.title)[:400],json.dumps(value,ensure_ascii=False)))
-                    if parser.errors:db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,','.join(sorted(set(parser.errors)))))
-            except (RuntimeError,KeyError,ValueError):db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'entry_unreadable'))
-            if (index+1)%checkpoint==0:
-                db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(index+1),));db.commit()
-        db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(archive.entry_count),));db.commit()
+        if scan is None:
+            entry_by_id=entry_reader(archive)
+            for index in range(cursor,archive.entry_count):
+                check()
+                scan_entry(entry_by_id(index),db.execute,db.executemany)
+                if (index+1)%checkpoint==0:
+                    save_cursor(db,index+1)
+        else:
+            scan(db,building,revision,cursor,archive.entry_count)
+        save_cursor(db,archive.entry_count)
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
         video_items(db,root,json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0]),check)
