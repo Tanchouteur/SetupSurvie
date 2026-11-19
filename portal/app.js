@@ -85,6 +85,9 @@ async function api(path,body,options={}){
   }
   try{data=await r.json();}catch(_){throw new Error('Le service ne répond pas. Réessayez dans quelques instants.');}
   if(!r.ok){if(r.headers.get('X-Survie-Profile-Changed')){reloadProfile();throw Error('Le profil a changé dans un autre onglet. Actualisation…');}if(r.status===401){S.user=null;accountUI();}const error=new Error(typeof data.detail==='string'?data.detail:'Vérifiez les informations saisies.');error.status=r.status;throw error;}
+  if(r.status===202 || config.method==='POST' && path.startsWith('/admin/library/index/')) {
+    document.dispatchEvent(new Event('survie:work-accepted'));
+  }
   return data;
   }catch(error){if(controller.signal.aborted)throw new DOMException('La requête a été annulée.','AbortError');throw error;}
   finally{PAGE_REQUESTS.delete(controller);external?.removeEventListener('abort',relay);}

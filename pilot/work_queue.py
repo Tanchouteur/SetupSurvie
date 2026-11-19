@@ -25,11 +25,79 @@ KINDS = {
     'search-test': 'Essai de recherche avec IA',
     'performance': 'Essai de performances',
     'translation-test': 'Essai de traduction',
+    'video-index': 'Indexation vidéo',
+    'archive-video-index': 'Examen des collections',
 }
 
 
 BACKGROUND_LANE = {'youtube': 'network', 'acquisition': 'network', 'speech': 'local', 'youtube-track': 'local', 'video-index': 'local', 'archive-video-index': 'local'}
 CHAT_BURST = 3
+
+
+HOST_WORK = {
+    'download': ('network', 'Téléchargement de la bibliothèque'),
+    'geography': ('network', 'Préparation des adresses, lieux et relief'),
+    'routing': ('network', 'Préparation des itinéraires'),
+    'plan': ('local', 'Sélection des collections'),
+    'index': ('local', 'Indexation des documents'),
+    'index-prepare': ('local', 'Préparation de la recherche'),
+    'video-inventory': ('local', 'Inventaire des vidéos dans les collections'),
+    'youtube-download': ('network', 'Téléchargement YouTube'),
+}
+HOST_PHASES = {
+    'starting': ('running', 'Démarrage'),
+    'planning': ('running', 'Recherche des collections'),
+    'downloading': ('running', 'Téléchargement'),
+    'verifying': ('running', 'Vérification'),
+    'checking': ('running', 'Vérification ou passage au fichier suivant'),
+    'indexing': ('running', 'Indexation'),
+    'index_preparation': ('running', 'Préparation de l’outil de recherche'),
+    'refreshing': ('running', 'Mise à disposition des contenus'),
+    'waiting_retry': ('running', 'En attente d’une nouvelle tentative'),
+    'pausing': ('running', 'Pause demandée'),
+    'paused': ('paused', 'Préparation en pause'),
+    'interrupted': ('interrupted', 'Préparation interrompue'),
+    'error': ('error', 'Préparation à vérifier'),
+    'verified': ('completed', 'Fichiers vérifiés'),
+    'planned': ('completed', 'Sélection prête'),
+    'completed': ('completed', 'Préparation terminée'),
+    'unknown': ('unknown', 'État non confirmé'),
+}
+
+
+def work_item(kind, identifier, **fields):
+    return {'id': identifier, 'kind': kind, 'type': KINDS.get(kind), **fields}
+
+
+def add_host_work(jobs, report):
+    kind = report.get('kind')
+    phase = report.get('phase')
+    if kind not in HOST_WORK or phase not in HOST_PHASES:
+        return
+    # These operations already have a card from their own worker.
+    if kind == 'youtube-download' and any(job['kind'] == 'youtube' for job in jobs):
+        return
+    status, stage = HOST_PHASES[phase]
+    lane, title = HOST_WORK[kind]
+    details = {key: report[key] for key in (
+        'source', 'stale', 'observed_at', 'progress_at', 'active', 'total_bytes',
+        'verified_bytes', 'verified_count', 'total_count', 'pending_errors', 'index_progress'
+    ) if key in report}
+    existing = next((job for job in jobs if job['kind'] == 'archive-video-index'), None)
+    if kind == 'video-inventory' and existing:
+        existing['preparation'] = details
+        return
+    if kind == 'video-inventory':
+        stage = 'Examen des collections, sans IA' if status == 'running' else stage
+    counts = report.get('index_progress') or {}
+    progress = {'done': counts.get('completed', 0), 'total': counts['archives']} if counts.get('archives') else {}
+    href = {
+        'index': '#/appareil/bibliotheque', 'index-prepare': '#/appareil/bibliotheque',
+        'video-inventory': '#/appareil/entretien', 'youtube-download': '#/appareil/bibliotheque',
+    }.get(kind, '#/appareil/telechargements')
+    jobs.append(work_item('host-' + kind, 'host:' + kind, type='Préparation de l’appareil',
+                          title=title, lane=lane, status=status, stage=stage, href=href,
+                          preparation=details, **progress))
 
 
 class Slot:
@@ -191,7 +259,7 @@ class Queue(Slot):
             self.video_report = revision, {key: report.get(key) for key in ('phase', 'videos', 'error')}
         return self.video_report[1]
 
-    def snapshot(self, profile):
+    def snapshot(self, profile, activity=None):
         from . import archive_videos, videos, youtube_pipeline
 
         active = {slot.active[0] for slot in self.slots.values() if slot.active and slot.active[0] is not None}
@@ -201,7 +269,10 @@ class Queue(Slot):
         records = self.records.copy()
         lanes = {name: {'running': slot.locked(), 'waiting': bool(orders[name])} for name, slot in self.slots.items()}
         with store.connect() as db:
-            history = [json.loads(row[0]) for row in db.execute('SELECT data FROM work_history ORDER BY updated DESC,rowid DESC LIMIT 300')]
+            history = [
+                {**json.loads(row['data']), 'updated': row['updated']}
+                for row in db.execute('SELECT data,updated FROM work_history ORDER BY updated DESC,rowid DESC LIMIT 300')
+            ]
         video_jobs = {row['id']: row for row in youtube_pipeline.listing()}
         jobs = []
         for key in dict.fromkeys([*(key for key in records if key in active), *ordered, *records]):
@@ -220,7 +291,19 @@ class Queue(Slot):
                 jobs.append(public)
         jobs.extend({'id': row['id'], 'kind': row['kind'], 'type': row['type'], **youtube_pipeline.public(row)}
                     for row in video_jobs.values() if row['id'] not in records)
-        jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
+        # Older document work predates the queue history. Use the live rows
+        # for these items, including when a retry changed their status.
+        from . import document_workspace
+        recent = document_workspace.recent(profile['id'])
+        known = set(records)
+        for kind, items in (('translation', recent['translations']), ('summary', recent['summaries'])):
+            for item in items:
+                if item['id'] not in known:
+                    public = describe(kind, item['id'])
+                    if public.get('owner') == profile['id']:
+                        jobs.append(work_item(kind, item['id'], updated=item['updated'], **public))
+                    known.add(item['id'])
+        jobs.extend(row for row in history if row['id'] not in known and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
         indexing = videos.running() is not None
         report = self.video_status(videos, indexing)
         phase = report.get('phase')
@@ -241,8 +324,9 @@ class Queue(Slot):
                          'title': 'Inventaire des vidéos dans les collections', 'status': phase,
                          'done': archive.get('completed', 0), 'total': archive.get('archives', 0),
                          'error': archive.get('error'), 'href': '#/bibliotheque/collections'})
+        add_host_work(jobs, activity or {})
         for job in jobs:
-            job['lane'] = BACKGROUND_LANE.get(job['kind'], 'ai')
+            job.setdefault('lane', BACKGROUND_LANE.get(job['kind'], 'ai'))
             job.setdefault('priority', job['kind'] == 'chat')
             lane_order = orders[job['lane']]
             job['next'] = job['status'] == 'queued' and bool(lane_order and lane_order[0] == job['id'])
@@ -281,7 +365,7 @@ def tracked(kind):
             initial = describe(kind, identifier)
             if isinstance(job, dict):
                 initial.update({key: job[key] for key in ('model', 'mode') if key in job})
-            record = {'id': identifier, 'kind': kind, 'type': KINDS[kind], **initial}
+            record = work_item(kind, identifier, **initial)
             if kind == 'chat':
                 # Performance trials delegate to the response engine too.
                 record['priority'] = CURRENT.get() not in QUEUE.records

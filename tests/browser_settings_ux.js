@@ -3,7 +3,7 @@ async page => {
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   const ready=()=>page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   const reload=async()=>{await page.waitForLoadState('networkidle');await page.reload({waitUntil:'domcontentloaded'});await ready();};
-  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash==='#/appareil/'+tab,tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','tests','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
+  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash===(tab==='activite'?'#/file':'#/appareil/'+tab),tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','tests','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(['POST','PUT','DELETE','PATCH'].includes(r.method()))commands.push(new URL(r.url()).pathname);});
   let state={online:false,paused:true,message:'Mode jeu · assistant en pause',models:[],gpus:[],memory:{},disk:{},jobs:{},control_available:true};
@@ -15,7 +15,7 @@ async page => {
   const commandStart=commands.length;
   for(const tab of ['acces','profils','connexion','reglages','bibliotheque','telechargements','stockage','assistant','tests','entretien','lieux','ensemble','activite']){
     await route(tab);
-    check(await page.locator('#view-'+({profils:'users',connexion:'connect',telechargements:'data',stockage:'storage',ensemble:'monitor',activite:'activity'}[tab]||'settings')).isVisible(),'Lien direct '+tab);
+    check(await page.locator('#view-'+({profils:'users',connexion:'connect',telechargements:'data',stockage:'storage',ensemble:'monitor',activite:'work-queue'}[tab]||'settings')).isVisible(),'Lien direct '+tab);
     check(await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return new Set(ids).size===ids.length;}),'IDs uniques dans '+tab);
   }
   check(commands.length===commandStart,'La navigation ne lance aucune commande');
@@ -51,8 +51,14 @@ async page => {
       check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Sans débordement '+width+' / '+tab);
     }
   }
-  await page.setViewportSize({width:320,height:740});await route('activite');await page.waitForFunction(()=>document.querySelector('#view-activity .next-transfer-title').textContent==='Téléchargement en cours');
-  check(await page.locator('#view-activity .next-transfer-message').isVisible(),'Suivi du travail indépendant accessible à 320 px');
+  await page.route('**/api/work-queue',r=>r.fulfill({json:{paused:false,running:true,jobs:[{
+    id:'host:download',kind:'host-download',type:'Préparation de l’appareil',title:'Téléchargement de la bibliothèque',
+    lane:'network',status:'running',stage:'Téléchargement',preparation:{source:'windows',total_bytes:10000,verified_bytes:3000,
+      total_count:4,verified_count:1,active:[{title:'Collection simulée en cours',bytes:3000,total:10000}]}
+  }]}}));
+  await page.setViewportSize({width:320,height:740});await route('activite');
+  await page.getByText('Détails de la préparation', {exact:true}).click();
+  check(await page.getByText('Transfert Windows indépendant · suivi en lecture seule.', {exact:true}).isVisible(),'Suivi du travail indépendant accessible à 320 px');
   await route('bibliotheque');await page.locator('#settings-index > summary').click(); // Collapse if previously remembered open; inspect visibility via DOM below.
   check(!await page.locator('#next-index-start').isVisible(),'Préparation complexe réservée au PC');
   check(await page.locator('.next-mobile-tools a[href="/secours.html"]').isVisible(),'Secours accessible sur téléphone');

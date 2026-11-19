@@ -3,16 +3,27 @@
   page.id = 'view-work-queue';
   page.hidden = true;
   page.innerHTML = `
-    <div class="page-heading"><h1>File d’attente</h1></div>
+    <div class="page-heading work-queue-heading">
+      <h1>File d’attente</h1>
+      <details class="queue-help">
+        <summary aria-label="Comment fonctionne la file d’attente ?">?</summary>
+        <p>Chaque carte indique où en est un travail. Ouvrez son titre pour retrouver le document ou les commandes. Les groupes peuvent avancer en parallèle.</p>
+      </details>
+    </div>
     <div class="work-queue-toolbar">
-      <p id="work-queue-state" role="status">Chargement de la file…</p>
+      <div><strong id="work-queue-overview">Suivi des tâches</strong>
+      <p id="work-queue-state" role="status">Chargement de la file…</p></div>
       <button id="work-queue-pause" type="button" class="secondary" hidden>Mettre en pause</button>
     </div>
     <p id="work-queue-error" role="alert" hidden></p>
     <p id="work-queue-freshness" role="status" hidden></p>
     <p id="work-queue-help" class="work-queue-meta" hidden>Glissez la poignée d’une tâche en attente pour la déplacer dans son groupe. Au clavier, utilisez les flèches haut et bas sur la poignée.</p>
-    <div id="work-queue-groups"></div>
-    <p><a href="#/appareil/activite" data-route="appareil/activite">Voir le suivi détaillé des préparations</a></p>`;
+    <p id="work-queue-host-notice" class="work-queue-meta" hidden>Le suivi des préparations de l’appareil est indisponible. Les autres tâches restent visibles.</p>
+    <div class="work-queue-filters" role="group" aria-label="Travaux affichés" hidden>
+      <button type="button" data-queue-filter="current" aria-pressed="true">À suivre</button>
+      <button type="button" data-queue-filter="history" aria-pressed="false">Historique récent</button>
+    </div>
+    <div id="work-queue-groups"></div>`;
   $('main').append(page);
 
   const previews = [
@@ -28,6 +39,57 @@
   let pending = false;
   let fetching = null;
   let generation = 0;
+  let filter = 'current';
+  const filters = page.querySelector('.work-queue-filters');
+  const laneHelp = {
+    ai: 'Les questions passent en priorité. Si un travail de fond attend toujours après trois questions prioritaires, il avance à son tour.',
+    network: 'Ces tâches récupèrent des fichiers ou des pistes. Elles peuvent avancer pendant une réponse de l’assistant.',
+    local: 'L’appareil examine ou transforme des fichiers déjà présents, par exemple pour les retrouver dans la recherche ou transcrire une vidéo.'
+  };
+  function help(label, explanation) {
+    const details = element('details', undefined, 'queue-help');
+    const summary = element('summary', '?');
+    summary.setAttribute('aria-label', label);
+    details.append(summary, element('p', explanation));
+    return details;
+  }
+  filters.addEventListener('click', event => {
+    const control = event.target.closest('[data-queue-filter]');
+    if (!control) return;
+    filter = control.dataset.queueFilter;
+    draw();
+  });
+
+  function preparationDetails(job) {
+    const data = job.preparation;
+    const details = element('details', undefined, 'work-queue-failures');
+    details.append(element('summary', 'Détails de la préparation'));
+    const stamp = data.observed_at && new Date(data.observed_at * 1000).toLocaleTimeString('fr-FR');
+    if (stamp) details.append(element('p', 'Dernière observation à ' + stamp + '.'));
+    if (data.stale) details.append(element('p', 'Progression ancienne ou non confirmée.'));
+    if (data.source === 'windows') details.append(element('p', 'Transfert Windows indépendant · suivi en lecture seule.'));
+    if (data.total_bytes > 0) {
+      details.append(element('p', bytes(data.verified_bytes) + ' / ' + bytes(data.total_bytes) +
+        ' vérifiés · ' + data.verified_count + ' / ' + data.total_count + ' éléments.'));
+      details.append(element('p', 'Les fichiers partiels sont vérifiés après réception. Un fichier vérifié peut encore attendre sa mise à disposition.'));
+    }
+    if (data.active?.length) {
+      const list = element('ul');
+      for (const file of data.active) {
+        const phase = file.phase === 'verifying' ? 'Vérification' : 'Transfert';
+        list.append(element('li', file.title + ' · ' + bytes(file.bytes) + ' / ' + bytes(file.total) + ' · ' + phase));
+      }
+      details.append(list);
+    }
+    if (data.pending_errors) details.append(element('p', data.pending_errors + ' contenu(s) à vérifier.'));
+    const progress = data.index_progress;
+    if (progress?.archives > 0) details.append(element('p', progress.completed + ' / ' + progress.archives +
+      ' archives examinées · ' + progress.articles + ' articles indexés.'));
+    if (progress?.videos > 0) details.append(element('p', progress.downloaded + ' / ' + progress.videos +
+      ' vidéos ajoutées · ' + progress.skipped + ' déjà présentes · ' + progress.errors + ' en erreur.'));
+    return details;
+  }
+
 
   function message(text) {
     $('work-queue-error').hidden = !text;
@@ -75,17 +137,24 @@
     const title = element(job.href ? 'a' : 'strong', job.title);
     if (job.href) title.href = job.href;
     const label = element('span', job.next ? (state.paused ? 'À la reprise' : 'Ensuite') : statusLabel(job), 'work-queue-status');
-    main.append(element('p', [job.type, job.model].filter(Boolean).join(' · '), 'work-queue-meta'), title);
+    main.append(title, element('p', [job.type, job.model].filter(Boolean).join(' · '), 'work-queue-meta'));
     if (job.priority) main.append(element('span', 'Question prioritaire', 'work-queue-priority'));
+    if (job.preparation && job.kind.startsWith('host-')) {
+      main.append(element('p', 'Commandes sur la page d’origine', 'work-queue-meta'));
+    }
     if (job.stage) main.append(element('p', job.stage, 'work-queue-meta'));
-    if (job.total > 0 && Number.isFinite(job.done)) {
-      const percent = Math.round(100 * Math.min(job.total, job.done) / job.total);
+    const hostBytes = job.preparation?.total_bytes > 0;
+    const total = hostBytes ? job.preparation.total_bytes : job.total;
+    const done = hostBytes ? job.preparation.verified_bytes : job.done;
+    if (total > 0 && Number.isFinite(done)) {
+      const percent = Math.round(100 * Math.min(total, done) / total);
       const progress = element('progress');
-      progress.max = job.total;
-      progress.value = job.done;
+      progress.max = total;
+      progress.value = done;
       progress.setAttribute('aria-label', 'Avancement de ' + job.title);
       const row = element('div', undefined, 'work-queue-progress');
-      const amount = job.kind === 'speech' ? percent + ' %' : job.done + ' / ' + job.total;
+      const amount = hostBytes ? percent + ' % vérifiés'
+        : job.kind === 'speech' ? percent + ' %' : done + ' / ' + total;
       row.append(progress, element('span', amount));
       main.append(row);
     }
@@ -93,6 +162,7 @@
     if (failed(job) && !job.error && !job.stage && !job.failure_count) {
       main.append(element('p', 'Le détail de cette erreur est indisponible.', 'work-queue-meta'));
     }
+    if (job.preparation) main.append(preparationDetails(job));
     if (job.failure_count) {
       const details = element('details', undefined, 'work-queue-failures');
       const list = element('ul');
@@ -130,6 +200,8 @@
     status.hidden = !state || !freshness[connection];
     status.textContent = status.hidden ? '' : freshness[connection] +
       (observedAt ? ' Dernière actualisation à ' + observedAt.toLocaleTimeString('fr-FR') + '.' : '');
+    $('work-queue-host-notice').hidden = state?.preparations_available !== false;
+    filters.hidden = !state;
     const toggle = $('work-queue-pause');
     toggle.hidden = !state || !admin;
     toggle.disabled = connection !== 'ready' || pending;
@@ -138,12 +210,13 @@
       summary.textContent = freshness[connection] || 'Chargement du suivi…';
       return;
     }
-    const signature = JSON.stringify([state, admin, connection, pending]);
+    const signature = JSON.stringify([state, admin, connection, pending, filter]);
     if (signature === lastPage) return;
     lastPage = signature;
     const next = state.jobs.filter(waiting);
     const active = state.jobs.filter(job => job.status === 'running');
     const failures = state.jobs.filter(failed);
+    const unknown = state.jobs.filter(job => job.status === 'unknown');
     const pausedJobs = state.jobs.filter(held);
     const partial = state.jobs.filter(job => !failed(job) && job.failure_count > 0);
     const counts = [
@@ -151,6 +224,7 @@
       next.length && plural(next.length, 'tâche en attente', 'tâches en attente'),
       failures.length && plural(failures.length, 'erreur', 'erreurs'),
       partial.length && plural(partial.length, 'lot avec des lignes à vérifier', 'lots avec des lignes à vérifier'),
+      unknown.length && plural(unknown.length, 'état à vérifier', 'états à vérifier'),
       pausedJobs.length && plural(pausedJobs.length, 'tâche à reprendre', 'tâches à reprendre')
     ].filter(Boolean);
     const activity = counts.join(' · ') || (state.running ? 'Un travail est en cours sur l’appareil.' : 'Aucune tâche active.');
@@ -158,7 +232,17 @@
     toggle.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';
     const host = $('work-queue-groups');
     const previous = document.activeElement?.dataset.workControl;
+    const focusedDetails = document.activeElement?.matches('li[data-work-id] details > summary')
+      ? document.activeElement.closest('li').dataset.workId : null;
     const expanded = new Set(Array.from(host.querySelectorAll('li[data-work-id] > div > details[open]'), item => item.closest('li').dataset.workId));
+    const openHelp = new Set(Array.from(host.querySelectorAll('[data-lane] .queue-help[open]'), item => item.closest('[data-lane]').dataset.lane));
+    const focusedLane = document.activeElement?.closest('.queue-help')?.closest('[data-lane]')?.dataset.lane;
+    const history = state.jobs.filter(job => !waiting(job) && !['running', 'unknown'].includes(job.status) &&
+      !failed(job) && !held(job) && !job.failure_count)
+      .sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 30);
+    for (const control of filters.querySelectorAll('button')) {
+      control.setAttribute('aria-pressed', String(control.dataset.queueFilter === filter));
+    }
     host.replaceChildren();
     let reorderable = false;
     function group(heading, jobs, container, className = 'work-queue-group') {
@@ -183,7 +267,14 @@
       container.append(section);
     }
 
+    if (filter === 'history') {
+      group('Historique récent', history, host);
+      if (!history.length) host.append(element('p', 'Aucun travail récent dans l’historique.', 'work-queue-empty'));
+      $('work-queue-help').hidden = true;
+      return;
+    }
     group('En erreur', failures, host);
+    group('À vérifier', unknown, host);
     group('À reprendre', pausedJobs, host);
     const completedWithIssues = partial.filter(job => !waiting(job) && job.status !== 'running' && !held(job));
     group('Lots avec des lignes à vérifier', completedWithIssues, host);
@@ -191,21 +282,24 @@
       const section = element('section', undefined, 'work-queue-lane');
       section.dataset.lane = lane.id;
       const header = element('div', undefined, 'work-queue-lane-heading');
-      const label = lane.running ? 'En cours' : state.paused ? 'En pause'
-        : lane.waiting.length ? 'En attente' : 'Disponible';
-      header.append(element('h2', lane.title), element('span', label, 'work-queue-meta'));
+      const heading = element('div', undefined, 'work-queue-lane-title');
+      const hint = help('Que signifie « ' + lane.title + ' » ?', laneHelp[lane.id]);
+      hint.open = openHelp.has(lane.id);
+      heading.append(element('h2', lane.title), hint);
+      header.append(heading);
       section.append(header);
-      if (lane.id === 'ai') {
-        section.append(element('p', 'Les questions passent en priorité. Une tâche de fond avance après trois questions prioritaires si elle attend toujours.', 'work-queue-lane-rule'));
-      }
       if (lane.running && !lane.active.length) section.append(element('p', 'Un travail utilise ce créneau.', 'work-queue-lane-rule'));
-      if (!lane.running && !lane.waiting.length) section.append(element('p', 'Aucune tâche en attente.', 'work-queue-lane-rule'));
+      if (!lane.running && !lane.active.length && !lane.waiting.length) section.append(element('p', 'Aucun travail en cours ou en attente.', 'work-queue-lane-rule'));
       group(null, [...lane.active, ...lane.waiting], section, 'work-queue-lane-jobs');
       host.append(section);
     }
 
-    group('Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job) && !held(job) && !(job.failure_count > 0)).slice(0, 30), host);
     $('work-queue-help').hidden = !reorderable;
+    if (focusedDetails) {
+      [...host.querySelectorAll('li[data-work-id]')].find(item => item.dataset.workId === focusedDetails)
+        ?.querySelector('details > summary')?.focus({preventScroll: true});
+    }
+    if (focusedLane) host.querySelector('[data-lane="' + focusedLane + '"] .queue-help summary')?.focus({preventScroll: true});
     if (previous) Array.from(host.querySelectorAll('[data-work-control]')).find(control => control.dataset.workControl === previous)?.focus({preventScroll: true});
   }
 
@@ -241,6 +335,7 @@
     document.dispatchEvent(new CustomEvent('survie:work-queue', {detail: null}));
     message('');
     lastPage = '';
+    filter = 'current';
     generation++;
     $('work-queue-groups').replaceChildren();
     draw();
@@ -249,6 +344,10 @@
   });
   document.addEventListener('survie:route', () => { draw(); refresh(); });
   document.addEventListener('survie:translation-command', refresh);
+  document.addEventListener('survie:work-accepted', async () => {
+    if (fetching) await fetching;
+    refresh();
+  });
   document.addEventListener('visibilitychange', refresh);
   window.addEventListener('online', refresh);
   window.addEventListener('offline', () => {

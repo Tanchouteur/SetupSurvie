@@ -99,84 +99,8 @@
   });
   document.addEventListener("survie:conversation", drawResume);
   document.addEventListener("survie:auth", drawResume);
-  const work = element("section", undefined, "ux-personal-work");
-  work.setAttribute("aria-label", "Vos travaux de lecture");
-  const workTitle = element("h2", "Vos traductions et synthèses"),
-    workList = element("div"),
-    workRefresh = button("Actualiser vos travaux", refreshWork, "secondary");
-  const observed = element("p", "", "small muted");
-  work.append(workTitle, workRefresh, observed, workList);
-  document.getElementById("view-activity").append(work);
-  let workVersion = 0;
-  async function refreshWork() {
-    const owner = S.user?.id,
-      own = ++workVersion;
-    if (!owner) return;
-    try {
-      const data = await api("/my-work");
-      if (owner !== S.user?.id || own !== workVersion) return;
-      workList.replaceChildren();
-      observed.textContent =
-        "Actualisé à " +
-        new Intl.DateTimeFormat("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(new Date());
-      for (const [kind, items] of [
-        ["translation", data.translations],
-        ["summary", data.summaries],
-      ])
-        for (const item of items) {
-          const row = element("article", undefined, "ux-work-row"),
-            states = {
-              running: "En cours",
-              queued: "En attente",
-              preparing: "Préparation",
-              paused: "En pause",
-              error: "À reprendre",
-              stopped: "Arrêté",
-              completed: "Terminé",
-              incomplete: "Incomplet",
-            };
-          const link = element("a", item.title);
-          link.href =
-            "#/assistant?conversation=" +
-            encodeURIComponent(item.conversation_id);
-          link.dataset.route =
-            "assistant?conversation=" +
-            encodeURIComponent(item.conversation_id);
-          row.append(
-            link,
-            element(
-              "p",
-              (kind === "translation" ? "Traduction" : "Synthèse") +
-                " · " +
-                (states[item.status] || item.status),
-              "small muted",
-            ),
-          );
-          workList.append(row);
-        }
-      if (!workList.children.length)
-        workList.append(
-          element(
-            "p",
-            "Aucun travail de lecture enregistré pour ce profil.",
-            "small muted",
-          ),
-        );
-    } catch (e) {
-      if (own === workVersion) workList.textContent = e.message;
-    }
-  }
   document.addEventListener("survie:route", (event) => {
-    if (event.detail.section === "appareil" && event.detail.tab === "activite")
-      refreshWork();
     if (event.detail.section === "accueil") drawResume();
-  });
-  document.addEventListener("survie:auth", () => {
-    workVersion++;
-    workList.replaceChildren();
   });
   // Opened content takes priority over the search form, especially on phones.
   document.addEventListener("survie:source", () => {

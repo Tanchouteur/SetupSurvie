@@ -1,8 +1,8 @@
 /* Functional UX adapter. Existing shared controls keep their API and data contracts. */
 (() => {
-  const sections={'work-queue':'file',home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',activity:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
+  const sections={'work-queue':'file',home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
   const routes={file:['work-queue',''],accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
-  const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings'};
+  const machine={ensemble:'monitor',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings'};
   const libraryTabs=['collections','recherche','parcours','favoris','traductions'];
   const namespace='survie-next-v1:',ttl=7*86400000;
   let current=null,applying=false,popping=false,scopeCommand=false,activityTimer=null,inventoryAt=0,historyReady=false,openingSource=false,skipSearch=false,lastActivity=null,activityRequest=null,pendingRestore=null;
@@ -40,6 +40,9 @@
   function parse(hash){
     const [path,query='']=hash.replace(/^#\/?/,'').split('?'),[section,requested]=path.split('/');
     if(!Object.hasOwn(routes,section))return null;
+    if (section === 'appareil' && requested === 'activite') {
+      return {section:'file', name:'work-queue', tab:'', params:new URLSearchParams(query)};
+    }
     let [name,tab]=routes[section];
     if(section==='appareil'){tab=requested||get('machine-tab','ensemble');if(!Object.hasOwn(machine,tab))tab='ensemble';name=machine[tab];}
     if(section==='bibliotheque'){tab=requested||get('library-tab','collections');if(!libraryTabs.includes(tab))tab='collections';}
@@ -71,7 +74,7 @@
   }
   function restorePosition(state){requestAnimationFrame(()=>{const target=state?.focus&&document.getElementById(state.focus);(target||$('main')).focus({preventScroll:true});window.scrollTo({top:state?.scroll||0,behavior:'instant'});});}
   const baseView=view,baseRead=readSource,baseOpen=openConversation,baseStatus=status,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
-  labels['work-queue']='File d’attente';labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
+  labels['work-queue']='File d’attente';labels.maps='Cartes';labels.storage='Stockage';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function fitNextChat(){if(current?.name!=='chat')return;const viewport=window.visualViewport;const height=viewport?.height||innerHeight;const top=$('view-chat').getBoundingClientRect().top-(viewport?.offsetTop||0);const nav=mobileNav.matches?$('main-navigation').getBoundingClientRect().height:0;document.documentElement.style.setProperty('--next-chat-height',Math.max(160,height-top-nav)+'px');}
   window.addEventListener('resize',fitNextChat,{passive:true});window.visualViewport?.addEventListener('resize',fitNextChat,{passive:true});
@@ -95,7 +98,7 @@
     $('breadcrumb').textContent=route.section==='appareil'?'Mon appareil':labels[route.name];
     document.querySelectorAll('#navigation [data-route]').forEach(a=>{const active=a.dataset.route===route.section;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     for(const a of document.querySelectorAll('.next-tabs [data-route]')){
-      const active=a.dataset.route===route.section+'/'+route.tab||a.dataset.route==='file'&&(route.name==='work-queue'||route.name==='activity')||route.section==='appareil'&&!['ensemble','activite'].includes(route.tab)&&a.dataset.route==='appareil/reglages';
+      const active=a.dataset.route===route.section+'/'+route.tab||a.dataset.route==='file'&&route.name==='work-queue'||route.section==='appareil'&&route.tab!=='ensemble'&&a.dataset.route==='appareil/reglages';
       if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     }
     if(route.name==='work-queue') document.querySelector('#view-work-queue .page-heading').after($('next-machine-tabs'));

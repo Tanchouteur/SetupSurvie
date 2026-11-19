@@ -291,16 +291,6 @@
     ),
   );
   get("main").append(maps);
-  const activity = make("section", "view");
-  activity.id = "view-activity";
-  activity.hidden = true;
-  activity.append(
-    header(
-      "Travaux en cours",
-      "Le suivi des préparations est indépendant de l’assistant et du navigateur.",
-    ),
-  );
-  get("main").append(activity);
   get("view-monitor")
     .querySelector(".page-heading")
     .replaceWith(
@@ -328,7 +318,6 @@
   machineTabs.setAttribute("aria-label", "Rubriques de l’appareil");
   machineTabs.innerHTML = [
     ["ensemble", "Vue d’ensemble"],
-    ["activite", "Activité"],
     ["telechargements", "Téléchargements"],
     ["stockage", "Stockage"],
     ["reglages", "Réglages"],
@@ -336,7 +325,7 @@
     .map(([p, l]) => route("appareil/" + p, l))
     .join("");
   get("view-monitor").querySelector(".page-heading").after(machineTabs);
-  for (const target of ["view-monitor", "view-data", "view-activity"]) {
+  for (const target of ["view-monitor", "view-data"]) {
     const block = make("article", "panel next-activity");
     block.innerHTML =
       '<h2 class="next-transfer-title">Lecture de l’activité…</h2><p class="next-transfer-message" role="status"></p><progress class="next-transfer-progress" max="1" aria-label="Volume du plan déjà vérifié" hidden></progress><div class="next-transfer-files"></div><p class="next-transfer-time small muted"></p><p class="small muted">Les fichiers partiels ne sont pas encore vérifiés. Un reçu de vérification ne prouve pas la disponibilité dans le lecteur ou la recherche.</p>';
