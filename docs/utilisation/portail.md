@@ -254,6 +254,20 @@ attente, ambre en pause, rouge en erreur. La poignée à six points déplace une
 tâche en attente dans son groupe, à la souris ou avec les flèches du clavier.
 Les fonctions, priorités et commandes sont inchangées.
 
+**Quand une tâche est en erreur (0.63.5, 19 novembre 2026).** Sur retour de
+Louis, la carte affiche le message réel du PC serveur en rouge, puis un encadré
+**Que faire ?** en français simple : bouton à utiliser, ou page à ouvrir, et
+quand demander de l’aide. Les libellés techniques (« Préparation à vérifier »,
+« Commandes sur la page d’origine ») sont retirés ; les informations brutes
+restent dans **Détails techniques**. Un titre qui ouvre une page est souligné
+avec une flèche. L’examen des vidéos des collections se relance directement par
+**Relancer l’examen** (profil Famille) ; son titre ouvre **Bibliothèque →
+Collections → Vidéos** et déplie le panneau d’examen, au lieu de la page
+Entretien. Si le PC serveur n’a pas donné de cause, la carte le dit.
+
+L’aperçu au survol de l’icône reste ouvert quand la souris descend de l’icône
+vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
+
 ## Installer et mettre à jour
 
 Les pages font partie du logiciel portable : aucune dépendance Windows, aucun

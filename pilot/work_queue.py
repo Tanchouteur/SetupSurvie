@@ -58,12 +58,23 @@ HOST_PHASES = {
     'pausing': ('running', 'Pause demandée'),
     'paused': ('paused', 'Préparation en pause'),
     'interrupted': ('interrupted', 'Préparation interrompue'),
-    'error': ('error', 'Préparation à vérifier'),
+    'error': ('error', 'Arrêtée sur une erreur'),
     'verified': ('completed', 'Fichiers vérifiés'),
     'planned': ('completed', 'Sélection prête'),
     'completed': ('completed', 'Préparation terminée'),
     'unknown': ('unknown', 'État non confirmé'),
 }
+
+
+# Plain-language next step for a stopped host preparation; the card shows it under « Que faire ? ».
+HOST_HELP = {
+    'video-inventory': ('L’examen des vidéos s’est arrêté. Les vidéos déjà trouvées restent disponibles. '
+                        'Cliquez sur « Relancer l’examen ». Si l’arrêt se reproduit, vérifiez qu’il reste de la place '
+                        'sur le disque du PC serveur, puis réessayez plus tard.'),
+}
+HOST_HELP_DEFAULT = ('Cette préparation s’est arrêtée. Cliquez sur son titre pour ouvrir la page où la relancer. '
+                     'Si l’arrêt se reproduit, notez le message et demandez de l’aide à la personne qui s’occupe de l’appareil.')
+HOST_RETRY = {'video-inventory': 'Relancer l’examen'}
 
 
 def work_item(kind, identifier, **fields):
@@ -94,11 +105,20 @@ def add_host_work(jobs, report):
     progress = {'done': counts.get('completed', 0), 'total': counts['archives']} if counts.get('archives') else {}
     href = {
         'index': '#/appareil/bibliotheque', 'index-prepare': '#/appareil/bibliotheque',
-        'video-inventory': '#/appareil/entretien', 'youtube-download': '#/appareil/bibliotheque',
+        'video-inventory': '#/bibliotheque/collections?rubrique=videos', 'youtube-download': '#/appareil/bibliotheque',
     }.get(kind, '#/appareil/telechargements')
-    jobs.append(work_item('host-' + kind, 'host:' + kind, type='Préparation de l’appareil',
+    message = report.get('message') if isinstance(report.get('message'), str) else ''
+    extra = {}
+    if kind == 'video-inventory':
+        extra['focus'] = 'next-archive-videos'
+    if status in ('error', 'interrupted'):
+        extra |= {'error': message or 'Le PC serveur n’a pas précisé la cause de l’arrêt.',
+                 'help': HOST_HELP.get(kind, HOST_HELP_DEFAULT)}
+        if kind in HOST_RETRY:
+            extra['retry_label'] = HOST_RETRY[kind]
+    jobs.append(work_item('host-' + kind, 'host:' + kind, type='Préparation sur le PC serveur',
                           title=title, lane=lane, status=status, stage=stage, href=href,
-                          preparation=details, **progress))
+                          preparation=details, **progress, **extra))
 
 
 class Slot:
@@ -331,7 +351,9 @@ class Queue(Slot):
             jobs.append({'id': 'archive-video-index', 'kind': 'archive-video-index', 'type': 'Examen des collections',
                          'title': 'Inventaire des vidéos dans les collections', 'status': phase,
                          'done': archive.get('completed', 0), 'total': archive.get('archives', 0),
-                         'error': archive.get('error'), 'href': '#/bibliotheque/collections'})
+                         'error': archive.get('error'), 'href': '#/bibliotheque/collections?rubrique=videos', 'focus': 'next-archive-videos',
+                         **({'help': HOST_HELP['video-inventory'], 'retry_label': HOST_RETRY['video-inventory']}
+                            if phase in ('error', 'failed', 'interrupted') else {})})
         add_host_work(jobs, activity or {})
         for job in jobs:
             job.setdefault('lane', BACKGROUND_LANE.get(job['kind'], 'ai'))
@@ -341,7 +363,7 @@ class Queue(Slot):
             job['movable'] = job['status'] == 'queued' and job['id'] in keys and can_move(job, profile)
             job['retry'] = job['status'] in ('paused', 'error', 'failed', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or profile['role'] == 'admin' and
-                job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test',*VIDEO_INVENTORIES))
+                job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test',*VIDEO_INVENTORIES,'host-video-inventory'))
         return {'paused': self.paused, 'running': any(lane['running'] for lane in lanes.values()), 'lanes': lanes, 'jobs': [
             {key: value for key, value in job.items() if key != 'owner'} for job in jobs
         ]}
@@ -475,6 +497,9 @@ def describe(kind, identifier):
 async def retry(identifier, profile):
     from . import archive_videos, caption_acquisition, captions, summaries, transcriptions, translation_benchmark, translations, videos, youtube_pipeline
 
+    if identifier == 'host:video-inventory':
+        # The host examination of collections is the same work as the archive inventory.
+        identifier = 'archive-video-index'
     if identifier in VIDEO_INVENTORIES:
         if profile['role'] != 'admin':raise HTTPException(403,'Accès réservé à l’administrateur.')
         phase = ((await archive_videos.status())['phase'] if identifier == 'archive-video-index'

@@ -42,6 +42,33 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(inventory), 1)
         self.assertEqual(inventory[0]['preparation']['observed_at'], 123)
 
+    async def test_stopped_host_preparation_explains_what_to_do(self):
+        report = {'kind': 'video-inventory', 'phase': 'error',
+                  'message': 'Certaines collections n’ont pas pu être examinées.'}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            jobs = self.queue.snapshot(ADMIN, report)['jobs']
+        job = next(job for job in jobs if job['id'] == 'host:video-inventory')
+        self.assertEqual(job['error'], report['message'])
+        self.assertIn('Relancer l’examen', job['help'])
+        self.assertEqual(job['retry_label'], 'Relancer l’examen')
+        self.assertTrue(job['retry'])
+        self.assertTrue(job['href'].startswith('#/bibliotheque/collections'))
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            child = next(job for job in self.queue.snapshot(CHILD, report)['jobs'] if job['id'] == 'host:video-inventory')
+        self.assertFalse(child['retry'])
+        silent = {'kind': 'index', 'phase': 'error'}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            index = next(job for job in self.queue.snapshot(ADMIN, silent)['jobs'] if job['id'] == 'host:index')
+        self.assertIn('pas précisé', index['error'])
+        self.assertIn('Cliquez sur son titre', index['help'])
+        self.assertFalse(index['retry'])
+
+    async def test_host_video_inventory_retry_restarts_the_collection_examination(self):
+        with patch.object(archive_videos, 'status', AsyncMock(return_value={'phase': 'error'})), \
+                patch.object(archive_videos, 'start', AsyncMock()) as start:
+            await work_queue.retry('host:video-inventory', ADMIN)
+        start.assert_awaited_once()
+
     async def test_priority_pause_running_slot_and_error_isolation(self):
         queue = self.queue
         observed = []

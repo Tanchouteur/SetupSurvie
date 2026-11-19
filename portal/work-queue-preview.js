@@ -292,7 +292,8 @@
             content.append(meter);
           }
           const reason = job.error || job.failures?.[0]?.message;
-          if (reason) content.append(make('span', reason, 'work-queue-meta'));
+          if (reason) content.append(make('span', reason, failed(job) ? 'work-queue-meta work-queue-preview-reason' : 'work-queue-meta'));
+          if (failed(job)) content.append(make('span', 'Ouvrez la file d’attente pour savoir quoi faire.', 'work-queue-preview-hint'));
           row.append(content);
           const peers = movable.filter(peer => !!peer.priority === !!job.priority);
           if (move && peers.length > 1 && peers.includes(job)) {

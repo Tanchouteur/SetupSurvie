@@ -57,7 +57,7 @@ async page => {
       total_count:4,verified_count:1,active:[{title:'Collection simulée en cours',bytes:3000,total:10000}]}
   }]}}));
   await page.setViewportSize({width:320,height:740});await route('activite');
-  await page.getByText('Détails de la préparation', {exact:true}).click();
+  await page.getByText('Détails techniques', {exact:true}).click();
   check(await page.getByText('Transfert Windows indépendant · suivi en lecture seule.', {exact:true}).isVisible(),'Suivi du travail indépendant accessible à 320 px');
   await route('bibliotheque');await page.locator('#settings-index > summary').click(); // Collapse if previously remembered open; inspect visibility via DOM below.
   check(!await page.locator('#next-index-start').isVisible(),'Préparation complexe réservée au PC');

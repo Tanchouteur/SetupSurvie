@@ -62,6 +62,11 @@ async page => {
   const preview = page.locator('#main-navigation .work-queue-preview');
   await shortcut.hover();
   await preview.getByText('Audio en cours').waitFor();
+  // The pointer must reach the preview without crossing an empty gap that closes it.
+  const icon = await shortcut.boundingBox(), panel = await preview.boundingBox();
+  await page.mouse.move(icon.x + icon.width / 2, icon.y + icon.height / 2);
+  await page.mouse.move(icon.x + icon.width / 2, panel.y + 40, {steps: 12});
+  verify(await preview.isVisible(), 'L’aperçu doit rester ouvert quand la souris descend de l’icône vers lui.');
   await preview.getByText('Inventaire des vidéos et sous-titres', {exact:true}).waitFor();
   await preview.getByText('Inventaire des vidéos dans les collections', {exact:true}).waitFor();
   await preview.getByText('Liste de vidéos', {exact:true}).waitFor();
@@ -126,6 +131,10 @@ async page => {
   await view.getByText('50 %').waitFor();
   await view.locator('[data-work-id=archive-video-index]').getByText('2 / 5', {exact:true}).waitFor();
   await view.getByText('Une vidéo est privée.').waitFor();
+  const failedCard = view.locator('[data-work-id=video]');
+  await failedCard.getByText('Que faire ?', {exact: true}).waitFor();
+  verify((await failedCard.locator('.work-queue-next-step').textContent()).includes('Réessayer'),
+    'Une erreur doit dire simplement quoi faire.');
   verify(await view.locator('#work-queue-groups > section').first().locator('h2').textContent() === 'En erreur',
     'Les erreurs doivent être visibles avant les créneaux.');
   await view.getByRole('heading', {name:'À reprendre', exact:true}).waitFor();

@@ -45,6 +45,13 @@ class LibraryMonitorTests(unittest.TestCase):
         value=self.result();self.assertEqual((value['phase'],value['kind']),('downloading','youtube-download'))
         self.assertEqual(value['index_progress'],{'videos':3,'downloaded':1,'skipped':1,'errors':0})
 
+    def test_stopped_web_job_keeps_its_plain_message_for_the_queue(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':'c'*32,'action':'video-inventory','phase':'error','pid':303,'identity':self.identity,
+            'message':'Certaines collections n’ont pas pu être examinées.'})
+        value=self.result();self.assertEqual((value['kind'],value['phase']),('video-inventory','error'))
+        self.assertEqual(value['message'],'Certaines collections n’ont pas pu être examinées.')
+
     def test_index_activity_tracks_live_child_and_does_not_report_it_as_download(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'index','phase':'downloading','pid':101,'identity':{'path':'old','created':'0'},'index_pid':202,'index_identity':self.identity})

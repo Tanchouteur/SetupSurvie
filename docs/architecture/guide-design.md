@@ -53,6 +53,12 @@ imbriquées, bordures partout, grosses poignées encadrées.
   supplémentaire. Le libellé d’état reste une pastille de texte à droite.
 - La poignée de déplacement est un motif de six points, sans cadre, avec une
   cible de 44 px ; elle prend la braise au survol et au focus.
+- Une tâche en erreur montre toujours, dans cet ordre : le message réel, un
+  encadré **Que faire ?** rédigé pour une personne qui ne connaît pas
+  l’informatique, la commande de relance, puis des **Détails techniques**
+  repliés. Le serveur fournit `help` et `retry_label` quand il connaît la
+  démarche ; sinon l’interface donne une consigne générique. Un titre-lien est
+  souligné, en braise, suivi d’une flèche.
 - Les barres de progression sont fines (6 px), vertes pour une tâche en cours,
   braise sinon. La pulsation et l’inclinaison de la carte déplacée s’arrêtent
   avec `prefers-reduced-motion`.

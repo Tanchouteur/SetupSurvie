@@ -63,7 +63,7 @@
   function preparationDetails(job) {
     const data = job.preparation;
     const details = element('details', undefined, 'work-queue-failures');
-    details.append(element('summary', 'Détails de la préparation'));
+    details.append(element('summary', 'Détails techniques'));
     const stamp = data.observed_at && new Date(data.observed_at * 1000).toLocaleTimeString('fr-FR');
     if (stamp) details.append(element('p', 'Dernière observation à ' + stamp + '.'));
     if (data.stale) details.append(element('p', 'Progression ancienne ou non confirmée.'));
@@ -128,6 +128,26 @@
     return command('/' + encodeURIComponent(id) + '/move', {target, after}, id + ':move');
   }
 
+  function reveal(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    for (let node = target; node; node = node.parentElement?.closest('details')) if (node.tagName === 'DETAILS') node.open = true;
+    target.scrollIntoView({block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  }
+
+  // People using the portal may know nothing about computers: say plainly what to do next.
+  function nextStep(job) {
+    const box = element('div', undefined, 'work-queue-next-step');
+    box.append(element('strong', 'Que faire ?'));
+    const fallback = job.retry
+      ? 'Cliquez sur « ' + (job.retry_label || 'Réessayer') + ' ». Si l’erreur revient, notez le message en rouge et demandez de l’aide à la personne qui s’occupe de l’appareil.'
+      : job.href
+        ? 'Cliquez sur le titre de la tâche pour ouvrir sa page et la relancer. Si l’erreur revient, notez le message en rouge et demandez de l’aide à la personne qui s’occupe de l’appareil.'
+        : 'Notez le message en rouge et demandez de l’aide à la personne qui s’occupe de l’appareil.';
+    box.append(element('p', job.help || fallback));
+    return box;
+  }
+
   function taskCard(job, movable) {
     const node = element('li', undefined, 'work-queue-card');
     node.dataset.status = job.status;
@@ -136,14 +156,18 @@
     node.classList.toggle('work-queue-held', held(job));
     const main = element('div', undefined, 'work-queue-content');
     const title = element(job.href ? 'a' : 'strong', job.title);
-    if (job.href) title.href = job.href;
+    if (job.href) {
+      title.href = job.href;
+      title.className = 'work-queue-open';
+      title.title = 'Ouvrir la page de cette tâche';
+      // Commands often sit in a folded panel: unfold it and bring it into view.
+      if (job.focus) title.addEventListener('click', () => setTimeout(() => reveal(job.focus), 250));
+    }
     const label = element('span', job.next ? (state.paused ? 'À la reprise' : 'Ensuite') : statusLabel(job), 'work-queue-status');
     main.append(title, element('p', [job.type, job.model].filter(Boolean).join(' · '), 'work-queue-meta'));
     if (job.priority) main.append(element('span', 'Question prioritaire', 'work-queue-priority'));
-    if (job.preparation && job.kind.startsWith('host-')) {
-      main.append(element('p', 'Commandes sur la page d’origine', 'work-queue-meta'));
-    }
-    if (job.stage) main.append(element('p', job.stage, 'work-queue-meta'));
+    // A failed card already shows « En erreur » and the real message: skip the generic stage.
+    if (job.stage && !(failed(job) && job.error)) main.append(element('p', job.stage, 'work-queue-meta'));
     const hostBytes = job.preparation?.total_bytes > 0;
     const total = hostBytes ? job.preparation.total_bytes : job.total;
     const done = hostBytes ? job.preparation.verified_bytes : job.done;
@@ -163,6 +187,7 @@
     if (failed(job) && !job.error && !job.stage && !job.failure_count) {
       main.append(element('p', 'Le détail de cette erreur est indisponible.', 'work-queue-meta'));
     }
+    if (failed(job) || job.status === 'interrupted') main.append(nextStep(job));
     if (job.preparation) main.append(preparationDetails(job));
     if (job.failure_count) {
       const details = element('details', undefined, 'work-queue-failures');
@@ -181,7 +206,7 @@
     }
     if (job.retry) {
       const id = job.id + ':retry';
-      const control = button(held(job) ? 'Reprendre' : 'Réessayer', () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
+      const control = button(job.retry_label || (held(job) ? 'Reprendre' : 'Réessayer'), () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
       control.dataset.workControl = id;
       control.disabled = connection !== 'ready' || pending;
       tools.append(control);

@@ -134,8 +134,10 @@ def snapshot(root, work, *, now=None):
                     progress=read_json(destination(work,'library-web/'+web['id']+'/progress.json'),{})
                     counts=progress.get('counts') if isinstance(progress,dict) else None
                     if isinstance(counts,dict):extra={'videos':progress.get('videos',0),'downloaded':counts.get('downloaded',0),'skipped':counts.get('skipped',0),'errors':counts.get('error',0)}
+                # The supervisor's own sentence explains a stop to non-specialists.
+                message=web.get('message') if isinstance(web.get('message'),str) else ''
                 return {**base, 'source': source, 'phase': phase,
-                        'kind': web['action'], 'worker_alive': alive,'index_progress':extra}
+                        'kind': web['action'], 'worker_alive': alive,'index_progress':extra,'message':message[:400]}
             plan_path = allowed_plan(work / 'library-web' / web['id'] / 'plan.json', root, work)
         else:
             return base
