@@ -12,7 +12,8 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import durable,provider_subtitles,retrieval,store,video_inventory as inventory
+from . import durable,provider_subtitles,retrieval,store,zim_video_inventory
+from . import video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
 ACTIVE=None
@@ -282,7 +283,8 @@ def listing_card(record):
 
 def is_youtube_video(provider,youtube_archive,path,extractor,url):
     if provider=='zim':
-        return bool(youtube_archive)
+        # The catalogue identifies the archive format. The path identifies the video.
+        return bool(youtube_archive and zim_video_inventory.YOUTUBE_MEDIA.fullmatch(path or ''))
     if (extractor or '').lower() in ('youtube','youtube:video') or path.lower().startswith('youtube/'):
         return True
     if url and '://' in url:

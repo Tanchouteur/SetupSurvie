@@ -1,6 +1,6 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.54.0, 19 novembre 2026.** **Bibliothèque → Collections → Vidéos de la
+**Guide actuel — 0.63.3, 19 novembre 2026.** **Bibliothèque → Collections → Vidéos de la
 bibliothèque** regroupe les vidéos d’une même collection sur une carte. Ouvrez
 la carte pour voir les titres et les commandes de lecture. Les vidéos sans
 groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
@@ -59,9 +59,10 @@ que les collections ZIM non examinées sont sans vidéo.
 Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
 Dans le volet vidéo déplié, le menu **Origine des vidéos** propose
 **Toutes les vidéos**, **YouTube** et **Hors YouTube**.
-**YouTube** inclut les vidéos importées et les chaînes YouTube archivées dans
-Kiwix. **Hors YouTube** affiche les vidéos des autres collections Kiwix et
-les fichiers locaux sans origine YouTube identifiée.
+**YouTube** inclut les vidéos importées et les vidéos reconnues dans les
+catalogues YouTube archivés par Kiwix. **Hors YouTube** affiche les autres
+vidéos Kiwix, y compris les clips d’une archive mixte, ainsi que les fichiers
+locaux sans origine YouTube identifiée.
 Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
 dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
 nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).
