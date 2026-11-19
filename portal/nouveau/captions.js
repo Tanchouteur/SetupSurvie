@@ -91,7 +91,7 @@
   document.addEventListener('survie:video-cards',event=>{
     area.hidden=S.user?.role!=='admin';if(area.hidden)return;
     for(const item of event.detail){
-      const card=[...$('next-videos-list').children].find(card=>card.dataset.videoId===item.id);
+      const card=$('next-videos-list').querySelector('[data-video-id="'+CSS.escape(item.id)+'"]');
       if(!card||item.available===false)continue;
       const form=preparation(item);
       if(form)card.append(form);

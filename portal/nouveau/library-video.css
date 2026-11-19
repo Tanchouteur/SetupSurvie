@@ -133,6 +133,13 @@
   gap: 14px;
 }
 .next-interface .video-library-list[hidden] { display: none; }
+.next-interface .video-collection-group .next-collection-group-icon::before {
+  -webkit-mask: none;
+  mask: none;
+  clip-path: polygon(27% 12%, 85% 50%, 27% 88%);
+}
+.next-interface :is(.video-collection-more, .video-collection-notice) { margin: 0 14px 14px; }
+.next-interface .video-collection-notice:empty { display: none; }
 .next-interface .video-library-card { padding: 16px; }
 .next-interface .video-card-heading {
   display: grid;

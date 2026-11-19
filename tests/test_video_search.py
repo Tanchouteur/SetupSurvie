@@ -58,6 +58,25 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(found[0]['title'],'Allumer un feu sans allumettes');self.assertEqual(found[0]['kind'],'video')
         self.assertFalse([key for key in found[0] if key.startswith('_')])
 
+    async def test_collection_group_counts_include_all_pages_and_can_be_filtered(self):
+        for name, title, channel in [('feu','Première vidéo','Série de tests'),('eau','Deuxième vidéo','Série de tests'),
+                                     ('extra','Vidéo isolée','')]:
+            add_video(videos.ROOT,name,title)
+            sidecar=videos.ROOT/(name+'.info.json')
+            sidecar.write_text(json.dumps({**json.loads(sidecar.read_text()),'channel':channel}))
+        videos.scan()
+        listing=videos.listing(limit=1,grouped=True)
+        self.assertEqual((listing['total'],listing['group_total']),(3,2))
+        group=listing['groups'][0]
+        self.assertEqual((group['name'],group['count']),('Série de tests',2))
+        self.assertEqual(videos.listing(offset=1,limit=1,grouped=True)['groups'][0]['video']['title'],'Vidéo isolée')
+        self.assertEqual(videos.listing(query='serie',grouped=True)['groups'][0]['count'],2)
+        first=videos.listing(limit=1,group=group['id'])
+        second=videos.listing(offset=1,limit=1,group=group['id'])
+        self.assertEqual(first['total'],2)
+        self.assertEqual([item['title'] for item in first['videos']+second['videos']],['Deuxième vidéo','Première vidéo'])
+        self.assertEqual(videos.listing(query='premiere',grouped=True)['groups'][0]['video']['title'],'Première vidéo')
+
     async def test_kind_separates_videos_and_documents(self):
         videos.scan()
         only=await self.search('allumer feu',kind='videos',domain='all')

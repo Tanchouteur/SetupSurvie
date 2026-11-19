@@ -19,6 +19,12 @@ async page=>{
     let ready=false;
     for(let n=0;n<200;n++){if((await(await page.request.get(base+'/api/zim-videos')).json()).reader_ready){ready=true;break;}await new Promise(resolve=>setTimeout(resolve,100));}
     check(ready,'Le nouvel inventaire est réellement repris dans le lecteur');
+    const collection=page.locator('#next-videos-list .video-collection-group').filter({hasText:'Fictional video inventory'});
+    const collectionHeader=collection.locator(':scope > summary');
+    await collectionHeader.waitFor();
+    check((await collectionHeader.textContent()).includes('2 vidéos')&&!await collection.evaluate(d=>d.open),
+      'Les vidéos de la même collection sont comptées sur une carte repliée');
+    await collectionHeader.click();
     await page.waitForFunction(()=>[...document.querySelectorAll('#next-videos-list .data-card')].some(card=>card.textContent.includes('Fictional video course')));
     const card=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});
     check(await card.getByRole('link',{name:'Ouvrir l’article d’origine'}).count()===1,'Origine documentaire conservée sur la vidéo');

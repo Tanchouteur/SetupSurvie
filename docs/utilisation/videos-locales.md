@@ -1,5 +1,11 @@
 # Retrouver et lire les vidéos
 
+Depuis la version 0.52.0, **Bibliothèque → Collections → Vidéos de la
+bibliothèque** regroupe les vidéos d’une même collection sur une carte. Ouvrez
+la carte pour voir les titres et les commandes de lecture. Les vidéos sans
+groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
+les noms des collections.
+
 **Guide actuel — 0.50.2, 18 novembre 2026.** Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
 concerne les fichiers locaux et, après examen volontaire, les médias présents

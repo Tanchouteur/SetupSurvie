@@ -3,7 +3,7 @@
   const panel=element('div');panel.id='next-videos';
   panel.innerHTML=`<div class="video-library-status"><p id="next-videos-count" role="status"></p><p id="next-videos-feedback" class="small" role="status"></p></div>
     <div id="next-videos-list" class="video-library-list"></div>
-    <button id="next-videos-more" class="secondary" hidden>Voir les vidéos suivantes</button>
+    <button id="next-videos-more" class="secondary" hidden>Voir la suite</button>
     <div id="video-library-tools">
       <details id="next-video-management" class="video-disclosure">
         <summary>Gestion de la vidéothèque</summary>
@@ -18,6 +18,7 @@
   document.querySelector('[data-collection-section="videos"]').append(panel);
   const states={french_available:'Sous-titres français',french_prepared:'Sous-titres français · à relire',source_transcribed:'Paroles transcrites · à relire',source_only:'Sous-titres en langue d’origine',missing:'Sous-titres à préparer',invalid:'Pistes illisibles',unknown:'Langue des pistes inconnue'};
   let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
+  let renderedQuery=null;
   let updateReaderTracks=null;
   function languageCode(value){
     const code=(value||'').toLowerCase().split(/[-_]/)[0];
@@ -27,7 +28,9 @@
     if(!S.authReady||!S.user)return;
     const current=++version,q=$('collection-filter').value;
     try{
-      const data=await api('/videos?offset='+(append?offset:0)+'&q='+encodeURIComponent(q));if(current!==version)return;
+      const data=await api('/videos?'+new URLSearchParams({grouped:'true',offset:append?offset:0,q}));
+      if(current!==version)return;
+      const same=!append&&renderedQuery===q&&offset>0&&latest?.status.finished===data.status.finished&&latest.total===data.total;
       const inventoryFinished=data.status.phase==='completed'&&(
         latest?.status.phase!=='completed'||latest.status.finished!==data.status.finished
       );
@@ -40,8 +43,39 @@
       $('next-videos-count').textContent=data.total?data.total+(data.total===1?' vidéo':' vidéos'):(q?'Aucune vidéo ne correspond à ce filtre.':'Aucune vidéo répertoriée.');
       $('next-videos-feedback').textContent=running?'Inventaire en cours…':data.status.phase==='failed'?'Inventaire indisponible.':'';
       $('next-videos-status').textContent=phase+(running?' Vidéos examinées : '+(data.status.videos||0)+'.':'');
-      const target=$('next-videos-list');if(!append){target.replaceChildren();offset=0;}
-      for(const item of data.videos){
+      if(same)return;
+      const target=$('next-videos-list');
+      if(!append){target.replaceChildren();offset=0;renderedQuery=q;}
+      for(const group of data.groups.filter(group=>!group.video))target.append(collectionCard(group,q,data.group_total===1));
+      renderCards(target,data.groups.filter(group=>group.video).map(group=>group.video));
+      offset+=data.groups.length;$('next-videos-more').hidden=offset>=data.group_total;
+    }catch(error){if(current===version)$('next-videos-feedback').textContent=error.message;}
+  }
+  function collectionCard(group,q,onlyGroup){
+    const details=window.CollectionsFilter.createGroup('video:'+group.id,group.name,group.count+' vidéos');
+    details.classList.add('video-collection-group');
+    const children=element('div',undefined,'data-grid video-library-list');
+    const notice=element('p',undefined,'small video-collection-notice');notice.setAttribute('role','status');
+    let loaded=0,loading=false;
+    const more=button('Voir les vidéos suivantes',load,'secondary video-collection-more');more.hidden=true;
+    details.append(children,notice,more);
+    async function load(){
+      if(loading)return;
+      loading=true;more.disabled=true;notice.textContent='Chargement des vidéos…';
+      try{
+        const data=await api('/videos?'+new URLSearchParams({group:group.id,q,offset:loaded}));
+        if(!details.isConnected||q!==$('collection-filter').value)return;
+        renderCards(children,data.videos);
+        loaded+=data.videos.length;more.hidden=loaded>=data.total;more.textContent='Voir les vidéos suivantes';notice.textContent='';
+      }catch(error){notice.textContent=error.message;more.hidden=false;more.textContent='Réessayer';}
+      finally{loading=false;more.disabled=false;}
+    }
+    details.addEventListener('toggle',()=>{if(details.open&&!loaded)load();});
+    if(q.trim()&&onlyGroup)details.open=true;
+    return details;
+  }
+  function renderCards(target,items){
+      for(const item of items){
         const card=element('article',undefined,'data-card video-library-card');
         const head=element('div',undefined,'video-card-heading');
         const info=element('div',undefined,'video-card-info');
@@ -64,8 +98,7 @@
         }
         target.append(card);
       }
-      offset+=data.videos.length;$('next-videos-more').hidden=offset>=data.total;
-      document.dispatchEvent(new CustomEvent('survie:video-cards',{detail:data.videos}));
+      document.dispatchEvent(new CustomEvent('survie:video-cards',{detail:items}));
       for(const card of target.querySelectorAll('.video-library-card:not(:has(.video-card-tools))')){
         const controls=card.querySelectorAll(':scope > details:not(.video-card-tools)');
         if(!controls.length)continue;
@@ -73,7 +106,6 @@
         options.append(element('summary','Options de sous-titrage'),...controls);
         card.append(options);
       }
-    }catch(error){if(current===version)$('next-videos-feedback').textContent=error.message;}
   }
   async function command(action){
     if(busy)return;busy=true;$('next-videos-index').disabled=true;
@@ -91,8 +123,8 @@
   document.addEventListener('survie:collection-filter',refreshFilter);
   document.addEventListener('survie:collection-query-restored',refreshFilter);
   new MutationObserver(()=>{if(!$('next-collections').hidden)refresh();}).observe($('next-collections'),{attributes:true,attributeFilter:['hidden']});
-  document.addEventListener('survie:auth',()=>{version++;$('video-reader-preparation')?.remove();refresh();});
-  document.addEventListener('survie:videos-changed',async()=>{await refresh();updateReaderTracks?.();});
+  document.addEventListener('survie:auth',()=>{version++;renderedQuery=null;$('video-reader-preparation')?.remove();refresh();});
+  document.addEventListener('survie:videos-changed',async()=>{renderedQuery=null;await refresh();updateReaderTracks?.();});
   setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&(!$('next-collections').hidden||activeMedia?.isConnected&&!$('reader').hidden&&!$('view-library').hidden))refresh();},1500);
   document.addEventListener('survie:source',event=>{
     updateReaderTracks=null;

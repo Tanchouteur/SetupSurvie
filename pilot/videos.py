@@ -257,18 +257,70 @@ def status():
     except (OSError,ValueError):return {'schema':1,'phase':'not_started','videos':0,'tracks':0,'errors':[]}
 
 
-def listing(offset=0,limit=30,query=''):
+VIDEO_COLLECTIONS = """
+WITH named_videos AS (
+    SELECT id,revision,payload,
+        substr(COALESCE(NULLIF(trim(json_extract(payload,'$.source.channel')),''),
+                        NULLIF(NULLIF(json_extract(payload,'$.collection'),'.'),'')),1,400) AS label,
+        json_extract(payload,'$.provider') AS provider
+    FROM media
+), grouped_videos AS (
+    SELECT *, CASE WHEN label IS NULL THEN 'video:'||id
+        WHEN provider='zim' THEN 'zim:'||lower(label)
+        ELSE 'local:'||lower(label) END AS group_key
+    FROM named_videos
+)
+"""
+
+
+def listing_card(record):
+    payload=json.loads(record['payload'])
+    item=public(payload,record['revision'])
+    item['available']=stat_revision(payload)==record['revision']
+    return item
+
+
+def listing(offset=0,limit=30,query='',grouped=False,group=''):
     words=retrieval.normal(query).split()[:10]
-    restriction=' WHERE id IN (SELECT id FROM video_text WHERE video_text MATCH ? AND track=\'metadata\')' if words else ''
-    parameters=[' AND '.join('"'+word+'"' for word in words)] if words else []
+    filters=[]
+    parameters=[]
+    if words:
+        title_match="id IN (SELECT id FROM video_text WHERE video_text MATCH ? AND track='metadata')"
+        filters.append(f'({title_match} OR collection_matches(label))' if grouped or group else title_match)
+        parameters.append(' AND '.join('"'+word+'"' for word in words))
+    if group:
+        filters.append('group_key=?')
+        parameters.append(group)
+    restriction=' WHERE '+' AND '.join(filters) if filters else ''
+    prefix=VIDEO_COLLECTIONS if grouped or group else ''
+    table='grouped_videos' if prefix else 'media'
+    report=status()
+    if prefix:
+        report={key:report[key] for key in ('phase','finished','videos','error') if key in report}
     with connect() as db:
-        total=db.execute('SELECT count(*) FROM media'+restriction,parameters).fetchone()[0]
-        records=db.execute('SELECT * FROM media'+restriction+' ORDER BY id LIMIT ? OFFSET ?',(*parameters,limit,offset)).fetchall()
-    items=[]
-    for record in records:
-        payload=json.loads(record['payload']);item=public(payload,record['revision'])
-        item['available']=stat_revision(payload)==record['revision'];items.append(item)
-    return {'status':status(),'total':total,'offset':offset,'videos':items}
+        db.execute('BEGIN')
+        if prefix and words:
+            def collection_matches(label):
+                text=retrieval.normal(label or '')
+                return all(word in text for word in words)
+            db.create_function('collection_matches',1,collection_matches,deterministic=True)
+        if grouped:
+            groups=db.execute(prefix+f"""
+                SELECT group_key,MIN(label) AS label,count(*) AS count,MIN(id) AS first_id
+                FROM {table}{restriction} GROUP BY group_key
+                ORDER BY label IS NULL,label COLLATE NOCASE,group_key
+            """,parameters).fetchall()
+            page=[]
+            for row in groups[offset:offset+limit]:
+                value={'id':row['group_key'],'name':row['label'],'count':row['count']}
+                if row['count']==1:
+                    value['video']=listing_card(db.execute('SELECT * FROM media WHERE id=?',(row['first_id'],)).fetchone())
+                page.append(value)
+            return {'status':report,'total':sum(row['count'] for row in groups),'group_total':len(groups),'groups':page}
+        total=db.execute(prefix+'SELECT count(*) FROM '+table+restriction,parameters).fetchone()[0]
+        order="json_extract(payload,'$.title') COLLATE NOCASE,id" if group else 'id'
+        records=db.execute(prefix+'SELECT * FROM '+table+restriction+' ORDER BY '+order+' LIMIT ? OFFSET ?',(*parameters,limit,offset)).fetchall()
+    return {'status':report,'total':total,'offset':offset,'videos':[listing_card(record) for record in records]}
 
 
 def scan():
