@@ -7,7 +7,7 @@
       <h1>File d’attente</h1>
       <details class="queue-help">
         <summary aria-label="Comment fonctionne la file d’attente ?">?</summary>
-        <p>Chaque carte indique où en est un travail. Ouvrez son titre pour retrouver le document ou les commandes d’origine. Les tâches de groupes différents peuvent avancer en parallèle. Les préparations lancées en dehors de la file restent pilotées depuis leur page d’origine.</p>
+        <p>Chaque carte indique où en est un travail. Ouvrez son titre pour retrouver le document ou les commandes. Les groupes peuvent avancer en parallèle.</p>
       </details>
     </div>
     <div class="work-queue-toolbar">
