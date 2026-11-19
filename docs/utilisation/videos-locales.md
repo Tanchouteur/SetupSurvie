@@ -1,15 +1,14 @@
 # Retrouver et lire les vidéos
 
-Depuis la version 0.52.0, **Bibliothèque → Collections → Vidéos de la
+**Guide actuel — 0.54.0, 19 novembre 2026.** **Bibliothèque → Collections → Vidéos de la
 bibliothèque** regroupe les vidéos d’une même collection sur une carte. Ouvrez
 la carte pour voir les titres et les commandes de lecture. Les vidéos sans
 groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
 les noms des collections.
 
-**Guide actuel — 0.53.0, 19 novembre 2026.** Les fichiers restent dans
+Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
-concerne les fichiers locaux et, après examen volontaire, les médias présents
-dans les collections ZIM. Le fonds complet de Marc reste à vérifier.
+concerne les fichiers locaux et les médias des collections ZIM déjà examinées. Le fonds complet de Marc reste à vérifier.
 
 Pour plus tard, Louis propose d'étudier une [voix française générée à partir des sous-titres traduits](../decisions/boite-a-idees.md), notamment avec Qwen TTS. Cette piste n'est pas une fonction disponible.
 
@@ -30,7 +29,7 @@ les téléchargements en cours (`.part`, `.ytdl`…). L’ancien répertoire res
 consultable pendant l’actualisation. Un inventaire arrêté avec **Arrêter
 l’inventaire** n’est relancé automatiquement que si les fichiers changent ensuite ;
 un inventaire interrompu par un redémarrage reprend au démarrage suivant. Les
-vidéos des collections ZIM gardent leur examen volontaire, plus long (voir plus bas).
+vidéos des collections ZIM demandent un examen distinct. La [première installation](../installation/README.md) le programme pour les archives présentes. Vous pouvez aussi le lancer depuis le portail.
 
 Le travail continue si l’onglet est fermé. **Arrêter l’inventaire** conserve l’ancien
 index ; une nouvelle actualisation recommence son examen sans altérer les fichiers.
