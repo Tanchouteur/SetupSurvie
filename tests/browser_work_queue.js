@@ -2,19 +2,21 @@ async page => {
   const base = 'http://127.0.0.1:8769';
   const verify = (value, message) => { if (!value) throw Error(message); };
   const tasks = [
-    {id: 'active', kind: 'speech', type: 'Transcription audio', title: 'Audio en cours', model: 'Whisper small · CPU', status: 'running', done: 60000, total: 120000},
-    {id: 'document', kind: 'translation', type: 'Traduction de document', title: 'Manuel en anglais', model: 'gemma', status: 'queued', done: 3, total: 8, movable: true},
-    {id: 'question', kind: 'chat', type: 'Question à l’assistant', title: 'Comment réparer ce mécanisme ?', model: 'gemma', status: 'queued', movable: true},
-    {id: 'video', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Liste de vidéos', model: 'yt-dlp', status: 'error',
-      error: 'Une vidéo est privée.', retry: true, failure_count: 1, failures: [{line: 2, message: 'vidéo privée'}]}
+    {id: 'active', lane: 'local', kind: 'speech', type: 'Transcription audio', title: 'Audio en cours', model: 'Whisper small · CPU', status: 'running', done: 60000, total: 120000},
+    {id: 'question', lane: 'ai', kind: 'chat', type: 'Question à l’assistant', title: 'Comment réparer ce mécanisme ?', model: 'gemma', status: 'queued', priority: true, next: true, movable: true},
+    {id: 'document', lane: 'ai', kind: 'translation', type: 'Traduction de document', title: 'Manuel en anglais', model: 'gemma', status: 'queued', done: 3, total: 8, movable: true},
+    {id: 'video', lane: 'network', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Liste de vidéos', model: 'yt-dlp', status: 'error',
+      error: 'Une vidéo est privée.', retry: true, failure_count: 1, failures: [{line: 2, message: 'vidéo privée'}]},
+    {id: 'second', lane: 'ai', kind: 'translation', type: 'Traduction de document', title: 'Notice de montage', model: 'gemma', status: 'queued', movable: true},
+    {id: 'download', lane: 'network', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Vidéos du jardin', status: 'running'}
   ];
   let paused = false;
   await page.route('**/api/work-queue**', async route => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (path.endsWith('/pause')) paused = request.postDataJSON().paused;
-    if (path.endsWith('/question/move') && request.postDataJSON().direction === -1) {
-      [tasks[1], tasks[2]] = [tasks[2], tasks[1]];
+    if (path.endsWith('/second/move') && request.postDataJSON().direction === -1) {
+      [tasks[2], tasks[4]] = [tasks[4], tasks[2]];
     }
     if (path.endsWith('/video/retry')) {
       tasks[3].status = 'queued';
@@ -30,10 +32,12 @@ async page => {
   await page.setViewportSize({width: 1440, height: 900});
   await page.goto(base + '/nouveau/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
-  await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '3');
+  await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '5');
   const preview = page.locator('#main-navigation .work-queue-preview');
   await shortcut.hover();
   await preview.getByText('Audio en cours').waitFor();
+  await preview.getByText('En cours · Vidéos du jardin').waitFor();
+  await preview.getByText('Ensuite · Comment réparer ce mécanisme ?').waitFor();
   await preview.getByRole('button', {name: 'Mettre en pause'}).click();
   await preview.getByRole('button', {name: 'Reprendre la file'}).waitFor();
   await shortcut.focus();
@@ -44,8 +48,12 @@ async page => {
   const view = page.locator('#view-work-queue');
   await view.getByText('50 %').waitFor();
   await view.getByText('Une vidéo est privée.').waitFor();
-  await view.getByRole('button', {name: 'Avancer Comment réparer ce mécanisme ?'}).click();
-  await page.waitForFunction(() => document.querySelector('.work-queue-group:nth-child(2) .work-queue-card').dataset.workId === 'question');
+  const ai = view.locator('[data-lane=ai]');
+  await ai.getByText('Question prioritaire').waitFor();
+  verify(await ai.getByRole('button', {name: 'Reculer Comment réparer ce mécanisme ?'}).isDisabled(),
+    'Une question prioritaire ne peut pas être déplacée dans les tâches de fond.');
+  await ai.getByRole('button', {name: 'Avancer Notice de montage'}).click();
+  await page.waitForFunction(() => document.querySelectorAll('[data-lane=ai] .work-queue-card')[1]?.dataset.workId === 'second');
   await view.getByRole('button', {name: 'Reprendre la file'}).click();
   await view.getByRole('button', {name: 'Mettre en pause'}).waitFor();
   await view.getByRole('button', {name: 'Réessayer'}).click();
@@ -79,5 +87,5 @@ async page => {
   verify(submitted.text.split(/\r?\n/).length === 4 && submitted.text.includes('ccccccccccc'),
     'Le formulaire doit envoyer les trois adresses, dans leur ordre.');
   verify(!errors.length, errors.join('\n'));
-  return {passed: ['aperçu survol et clavier', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur et relance', 'navigation tactile', 'import et envoi du TXT Windows entier']};
+  return {passed: ['aperçu des créneaux parallèles au survol et au clavier', 'question prioritaire', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur et relance', 'navigation tactile', 'import et envoi du TXT Windows entier']};
 }

@@ -63,3 +63,12 @@
   .work-queue-card { flex-direction: column; gap: 8px; }
   .work-queue-controls { flex-direction: row; align-items: center; justify-content: space-between; }
 }
+
+.work-queue-preview-task { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .875rem; }
+.work-queue-lane { margin-block: 18px; padding: 16px; border: 1px solid var(--ds-line); border-radius: var(--ds-r); }
+.work-queue-lane-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.work-queue-lane-heading h2 { margin: 0; font-size: 1.25rem; }
+.work-queue-lane-heading > span { white-space: nowrap; }
+.work-queue-lane-rule { margin: 8px 0 0; color: var(--ds-ink-2); font-size: .875rem; }
+.work-queue-lane-jobs > ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 9px; }
+.work-queue-priority { display: inline-block; margin-inline-start: 8px; color: var(--ds-ember-strong); font-size: .8rem; }

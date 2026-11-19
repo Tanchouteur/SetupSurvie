@@ -43,7 +43,7 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
                 work_queue.CURRENT.reset(token)
 
         for identifier, owner in [('active', None), ('bad', 'famille'), ('child', 'enfant'), ('last', None)]:
-            queue.records[identifier] = {'id': identifier, 'kind': 'youtube', 'title': identifier, 'status': 'queued', 'owner': owner}
+            queue.records[identifier] = {'id': identifier, 'kind': 'translation', 'title': identifier, 'status': 'queued', 'owner': owner}
         tasks = [asyncio.create_task(execute(identifier)) for identifier in queue.records]
         await asyncio.sleep(0)
         self.assertEqual(observed, ['active'])
@@ -64,6 +64,49 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(results[1], RuntimeError)
         self.assertEqual(observed, ['active', 'last', 'child', 'bad'])
         self.assertFalse(queue.locked())
+
+    async def test_questions_get_next_ai_slot_with_video_work_in_parallel(self):
+        queue = self.queue
+        observed = []
+        release_ai = asyncio.Event()
+        release_background = asyncio.Event()
+
+        async def run(identifier, gate=None):
+            token = work_queue.CURRENT.set(identifier)
+            kind = queue.records[identifier]['kind']
+            try:
+                async with queue.slots[work_queue.BACKGROUND_LANE.get(kind, 'ai')]:
+                    observed.append(identifier)
+                    if gate:
+                        await gate.wait()
+            finally:
+                work_queue.CURRENT.reset(token)
+
+        jobs = [('initial', 'translation'), ('background', 'translation'),
+                ('q1', 'chat'), ('q2', 'chat'), ('q3', 'chat'), ('q4', 'chat'),
+                ('download', 'youtube'), ('speech', 'speech')]
+        for identifier, kind in jobs:
+            queue.records[identifier] = {'id': identifier, 'kind': kind, 'owner': 'famille',
+                                         'title': identifier, 'status': 'queued'}
+        first = asyncio.create_task(run('initial', release_ai))
+        await asyncio.sleep(0)
+        tasks = [asyncio.create_task(run(identifier, release_background if identifier in ('download','speech') else None))
+                 for identifier, _ in jobs[1:]]
+        await asyncio.sleep(0)
+        self.assertEqual(observed, ['initial', 'download', 'speech'])
+        self.assertEqual(queue.order(), ['q1', 'q2', 'q3', 'background', 'q4'])
+        with self.assertRaises(HTTPException):
+            queue.move('background', -1, ADMIN)
+        release_ai.set()
+        await first
+        await asyncio.wait_for(asyncio.gather(*tasks[:-2]), 2)
+        self.assertEqual(observed[3:], ['q1', 'q2', 'q3', 'background', 'q4'])
+        self.assertFalse(queue.locked())
+        self.assertTrue(queue.slots['network'].locked())
+        self.assertTrue(queue.slots['local'].locked())
+        queue.set_paused(True)
+        release_background.set()
+        await asyncio.gather(*tasks[-2:])
 
     async def test_cancelled_head_releases_the_slot_to_other_jobs(self):
         queue = self.queue
@@ -131,6 +174,36 @@ class YoutubePipelineTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(any(row['id'].startswith(self.video) and row['match'] == expected for row in found), term)
             youtube_pipeline.observe(completion)
             self.assertEqual(youtube_pipeline.read(preparation['id'])['status'], 'completed')
+
+    async def test_youtube_worker_does_not_hold_the_ai_slot(self):
+        youtube_pipeline.initialize()
+        queue = work_queue.Queue()
+        queue.initialize()
+        started, finish = asyncio.Event(), asyncio.Event()
+
+        async def follow(*_):
+            started.set()
+            await finish.wait()
+
+        with patch.object(engine, 'LOCK', queue), patch.object(work_queue, 'QUEUE', queue), \
+             patch.object(operations, 'library_command', AsyncMock(return_value={'phase': 'idle'})), \
+             patch.object(youtube_pipeline, 'follow', follow):
+            try:
+                batch = await youtube_pipeline.submit('https://youtu.be/aaaaaaaaaaa', 480)
+                await asyncio.wait_for(started.wait(), 2)
+                self.assertIn(batch['job'], youtube_pipeline.TASKS)
+                await asyncio.wait_for(engine.LOCK.acquire(), 2)
+                try:
+                    value = queue.snapshot(ADMIN)
+                    self.assertTrue(value['lanes']['ai']['running'])
+                    self.assertTrue(value['lanes']['network']['running'])
+                    download = next(job for job in value['jobs'] if job['id'] == batch['job'])
+                    self.assertEqual((download['lane'], download['status']), ('network','running'))
+                finally:
+                    engine.LOCK.release()
+            finally:
+                finish.set()
+                await youtube_pipeline.stop()
 
     async def test_backfill_only_registers_local_youtube_downloads(self):
         youtube_pipeline.initialize()

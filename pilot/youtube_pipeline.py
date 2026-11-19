@@ -126,8 +126,9 @@ async def download(identifier):
                 state, own = archived, True
             if own or state.get('phase') not in youtube_downloads.ACTIVE:
                 break
+            update(identifier, stage='Le PC serveur prépare une autre opération.')
             await asyncio.sleep(3)
-        async with engine.LOCK:
+        async with work_queue.QUEUE.slots['network']:
             if read(identifier).get('retry') or not own:
                 try:
                     await operations.library_command('youtube-download', {'list': identifier, 'max_height': read(identifier)['height']})
@@ -139,7 +140,7 @@ async def download(identifier):
                     raise
                 update(identifier, submitted=True, retry=False)
                 state = await operations.library_command()
-            update(identifier, status='running', error=None)
+            update(identifier, status='running', stage='Téléchargement sur le PC serveur', error=None)
             if work_queue.QUEUE.paused:
                 await pause_active_download()
             await follow(identifier, state)
@@ -207,7 +208,7 @@ async def prepare(identifier):
     data = read(identifier)
     video_id = data['video_id']
     try:
-        async with engine.LOCK:
+        async with work_queue.QUEUE.slots['local']:
             # The preparation's own turn only chooses or schedules the next
             # stage. Its child takes a separate turn for actual inference.
             await videos.refresh_after(data['published'])
@@ -312,7 +313,7 @@ async def stop():
 
 
 async def pause_active_download():
-    active = work_queue.QUEUE.active
+    active = work_queue.QUEUE.slots['network'].active
     if not active or not active[0] or active[0] not in TASKS:
         return
     identifier = active[0]
