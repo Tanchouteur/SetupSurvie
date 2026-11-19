@@ -94,6 +94,7 @@ def status(identifier,full=False):
             result.update(provider_result=value)
         except (OSError,ValueError,KeyError):result['provider_report_unavailable']=True
     if full:result.update(source_revision=item['source_revision'],provider_id=item['provider_id'],identity_basis=item['identity_basis'],published_hash=item['published_hash'])
+    result.update(work_queue.queue_fields(identifier,item['status'],'acquisition'))
     return result
 
 

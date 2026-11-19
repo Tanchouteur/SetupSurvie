@@ -1,5 +1,6 @@
 .work-queue-nav { position: relative; flex: none; }
 .work-queue-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -17,6 +18,21 @@
 .work-queue-preview button { margin-top: 8px; }
 .work-queue-count { min-width: 1.2em; font-size: .8rem; font-weight: 700; text-align: center; }
 [data-state="attention"] > .work-queue-link { color: var(--ds-danger); }
+.work-queue-signal {
+  position: absolute;
+  inset: 3px 1px auto auto;
+  min-width: 14px;
+  padding-inline: 2px;
+  border-radius: var(--ds-r-full);
+  background: var(--ds-warn);
+  color: white;
+  font-size: .65rem;
+  line-height: 14px;
+  text-align: center;
+  font-weight: 800;
+}
+.work-queue-signal[data-level="error"] { background: var(--ds-danger); }
+.work-queue-signal[data-level="unknown"] { background: var(--ds-ink-2); }
 [data-state="paused"] > .work-queue-link { color: var(--ds-warn); background: var(--ds-warn-soft); }
 .work-queue-preview {
   position: absolute;
@@ -24,6 +40,8 @@
   inset: 100% 0 auto auto;
   width: min(325px, 40vw);
   padding: 15px 16px;
+  max-height: calc(100vh - 90px);
+  overflow: auto;
   background: var(--ds-surface);
   border: 1px solid var(--ds-line);
   border-radius: var(--ds-r);
@@ -72,3 +90,8 @@
 .work-queue-lane-rule { margin: 8px 0 0; color: var(--ds-ink-2); font-size: .875rem; }
 .work-queue-lane-jobs > ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 9px; }
 .work-queue-priority { display: inline-block; margin-inline-start: 8px; color: var(--ds-ember-strong); font-size: .8rem; }
+
+.work-queue-preview-notice, #work-queue-freshness { color: var(--ds-warn); }
+#work-queue-freshness { padding: 10px 12px; border-radius: var(--ds-r-sm); background: var(--ds-warn-soft); }
+.work-queue-card.work-queue-held { border-color: var(--ds-warn-line); background: var(--ds-warn-soft); }
+.work-queue-held .work-queue-status { color: var(--ds-warn); }

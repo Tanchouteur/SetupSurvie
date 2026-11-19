@@ -92,6 +92,7 @@ def status(identifier,*,full=False):
     if full:
         with connect() as db:rejected=[dict(row) for row in db.execute('SELECT created,position,reason,candidate FROM rejections WHERE job_id=? ORDER BY created',(identifier,))]
         result.update(source_revision=item['source_revision'],source_hash=item['source_hash'],source_track=item['source_track'],parts=parts,rejected_proposals=rejected)
+    result.update(work_queue.queue_fields(identifier,item['status'],'captions'))
     return result
 
 
