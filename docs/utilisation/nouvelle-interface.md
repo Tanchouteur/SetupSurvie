@@ -5,7 +5,7 @@
 La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
 sur Linux. Elle utilise les mêmes données et API que l’interface classique.
 Les données de production ne sont pas remplacées par les exemples de la maquette.
-La maquette fictive reste séparée sous `/maquette/`.
+La maquette fictive a été retirée du paquet en 0.59.0.
 
 ## Se repérer
 

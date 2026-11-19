@@ -681,7 +681,7 @@ vrai essai depuis un téléphone.
 Le 13 novembre 2026, Louis valide la présentation PC et demande la mise en place
 normale sur Windows/Linux, son téléchargement étant terminé. Depuis 0.1.32,
 l’entrée principale utilise la nouvelle organisation ; la classique reste
-accessible sans retour de base et la maquette demeure fictive. Les validations
+accessible sans retour de base. La maquette fictive a été retirée en 0.59.0 sur demande de Louis le 19 novembre 2026. Les validations
 simulées et recettes physiques restent distinguées dans le [bilan](../essais/2026-11-13-interface-fonctionnelle.md).
 
 Le 14 novembre 2026, Louis demande une conversation plus confortable, le retrait

@@ -218,7 +218,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Nouvelle interface Windows/Linux](utilisation/nouvelle-interface.md) — guide actuel 0.1.35 : organisation, conversation, suivi réel, navigation et mise à jour normale.
 
-- [Essayer la maquette UX](utilisation/maquette-ux.md) — prototype séparé 0.1.31, navigation mémorisée et exemples fictifs ; portail actuel conservé.
+- [Maquette UX historique](utilisation/maquette-ux.md) — prototype fictif 0.1.31, retiré du paquet en 0.59.0.
 
 - [Profils locaux, sans mot de passe](utilisation/profils-locaux.md) — accès familial, anciens comptes et liens du menu, depuis 0.1.29.
 

@@ -61,7 +61,7 @@ async function runDownload(engine,name){
       if(targetEngine&&name!==targetEngine)continue;
       const browser=await engine.launch({headless:true});
       try{
-        for(const file of ['browser_map_redesign.js','browser_map_notebook.js','browser_ux_preview.js','browser_map_defaults.js','browser_map_accesses.js','browser_map_rendering.js']){
+        for(const file of ['browser_map_redesign.js','browser_map_notebook.js','browser_map_defaults.js','browser_map_accesses.js','browser_map_rendering.js']){
           const context=await browser.newContext();
           const page=await context.newPage();
           const result=await loadRecipe(file,8766)(page);
