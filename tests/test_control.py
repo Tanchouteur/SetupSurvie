@@ -82,6 +82,18 @@ class ControlTests(unittest.TestCase):
             with self.post('/library/video-inventory-pause',control.key(self.c)) as response:self.assertEqual(response.status,202)
             pause.assert_called_once_with()
 
+    def test_youtube_pause_checks_the_list_before_pausing(self):
+        for state in ({'action':'download'}, {'action':'youtube-download','youtube_list':'another'}):
+            with patch.object(self.server.library,'current',return_value=state),patch.object(self.server.library,'pause') as pause:
+                with self.assertRaises(urllib.error.HTTPError) as error:
+                    self.post('/library/youtube-download-pause',control.key(self.c),{'list':'ours'})
+                self.assertEqual(error.exception.code,409)
+                pause.assert_not_called()
+        with patch.object(self.server.library,'current',return_value={'action':'youtube-download','youtube_list':'ours'}),patch.object(self.server.library,'pause') as pause:
+            with self.post('/library/youtube-download-pause',control.key(self.c),{'list':'ours'}) as response:
+                self.assertEqual(response.status,202)
+            pause.assert_called_once_with(state={'action':'youtube-download','youtube_list':'ours'})
+
     def test_performance_counters_are_authenticated_and_never_start_engine(self):
         import host_performance
         data={'schema':1,'source':'host_controller','cpu':{'percent':25},'disks':[]}

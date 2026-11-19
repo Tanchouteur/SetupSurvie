@@ -54,6 +54,12 @@ class Manager:
         return json.loads(self.state_path.read_text(encoding='utf-8')) if self.state_path.exists() else {'phase': 'idle'}
 
     def write(self, state):
+        identifier = state.get('youtube_list')
+        if identifier and state['phase'] in ('completed','paused','error','interrupted'):
+            keys = ('id','phase','message','options','action','youtube_list')
+            result = {key: state[key] for key in keys if key in state}
+            result['youtube'] = self.youtube_progress(state['id'])
+            setup.write_json(self.youtube_result_path(identifier),result,private=True)
         setup.write_json(self.state_path, state, private=True)
 
     def paths(self, job):
@@ -128,7 +134,9 @@ class Manager:
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
         result['action']=state.get('action')
-        if state.get('action')=='youtube-download' and state.get('id'):result['youtube']=self.youtube_progress(state['id'])
+        if state.get('action')=='youtube-download' and state.get('id'):
+            result['youtube']=self.youtube_progress(state['id'])
+            result['youtube_list']=state.get('youtube_list')
         if state.get('id'):
             if state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
                 result.update(pause_requested=True, message='Pause demandée. Attente de la fin de l’échange en cours ; les fichiers partiels seront conservés.')
@@ -259,7 +267,7 @@ class Manager:
         if body.get('resume') is True:
             if previous.get('action')!='youtube-download' or previous['phase'] not in ('paused','interrupted','error'):
                 raise setup.SetupError('Aucun téléchargement YouTube à reprendre.')
-            text=(self.paths(previous['id'])/'liste.txt').read_text(encoding='utf-8');height=previous['options']['max_height']
+            text=(self.paths(previous['id'])/'liste.txt').read_text(encoding='utf-8');height=previous['options']['max_height'];identifier=previous.get('youtube_list')
         else:
             identifier=body.get('list');height=body.get('max_height',480)
             if not isinstance(identifier,str) or not re.fullmatch('[a-f0-9]{32}',identifier):raise setup.SetupError('Liste de vidéos non valide.')
@@ -270,18 +278,30 @@ class Manager:
         from pilot.youtube_list import parse_list
         entries,_=parse_list(text)
         if not entries:raise setup.SetupError('La liste ne contient aucune adresse de vidéo YouTube valide.')
-        state={'id':uuid.uuid4().hex,'phase':'starting','options':{'max_height':height,'videos':len(entries)}}
+        state={'id':uuid.uuid4().hex,'phase':'starting','options':{'max_height':height,'videos':len(entries)},'youtube_list':identifier}
         folder=self.paths(state['id']);folder.mkdir(parents=True)
         setup.write_json(folder/'liste.json',{'count':len(entries)},private=True)
         (folder/'liste.txt').write_text(text,encoding='utf-8')
+        if identifier:self.youtube_result_path(identifier).unlink(missing_ok=True)
         return state
+
+    def youtube_result_path(self, identifier):
+        if not re.fullmatch('[a-f0-9]{32}', identifier):
+            raise setup.SetupError('Liste de vidéos non valide.')
+        return self.directory / 'youtube-results' / (identifier + '.json')
+
+    def youtube_result(self, identifier):
+        path = self.youtube_result_path(identifier)
+        if not path.is_file():
+            return None
+        return json.loads(path.read_text(encoding='utf-8'))
 
     def youtube_progress(self,job):
         try:return json.loads((self.paths(job)/'progress.json').read_text(encoding='utf-8'))
         except (OSError,ValueError):return {}
 
-    def pause(self,automatic=False):
-        state = self.current()
+    def pause(self,automatic=False,*,state=None):
+        if state is None:state = self.current()
         if state['phase'] not in ('starting', 'planning', 'downloading'):
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
         if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')
@@ -317,7 +337,9 @@ class Manager:
                     raise setup.SetupError('Le téléchargement des vidéos n’a pas pu se terminer. Vérifiez Internet et l’espace libre, puis reprenez : les vidéos déjà rangées sont conservées.')
                 counts=report.get('counts',{})
                 update('completed',f"Téléchargement terminé : {counts.get('downloaded',0)} vidéo(s) ajoutée(s), {counts.get('skipped',0)} déjà présente(s), "
-                       f"{counts.get('error',0)+counts.get('refused',0)} non téléchargée(s). Le site les répertorie tout seul.")
+                       f"{counts.get('error',0)+counts.get('refused',0)} non téléchargée(s). "
+                       +(f"{report['remaining']} restante(s), à reprendre après avoir libéré de l’espace. " if report.get('remaining') else '')
+                       +'Le site répertorie les vidéos téléchargées.')
             elif state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools

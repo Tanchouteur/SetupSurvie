@@ -13,6 +13,7 @@ import time
 import httpx
 from fastapi import HTTPException
 
+from . import work_queue
 from . import assistant_metrics,citation_links,illustrations,document_text,engine,model_runtime,model_session,operations,research,store
 
 ACTIVE={}
@@ -302,6 +303,7 @@ async def step(item):
     return True
 
 
+@work_queue.tracked('summary')
 async def run(identifier):
     try:
         with store.connect() as db:row=db.execute('SELECT * FROM summary_jobs WHERE id=?',(identifier,)).fetchone()

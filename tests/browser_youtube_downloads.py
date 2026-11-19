@@ -34,7 +34,7 @@ class Host:
     async def __call__(self,action=None,body=None):
         if action is None:
             self.polls+=1
-            if self.state.get('phase')=='downloading' and self.polls>=4:
+            if self.state.get('phase')=='downloading' and self.polls>=6:
                 self.state.update(phase='completed',message='Téléchargement terminé : 1 vidéo(s) ajoutée(s), 0 déjà présente(s), 1 non téléchargée(s).')
                 self.state['youtube'].update(current=None,counts={'downloaded':1,'skipped':0,'error':1,'refused':1},
                     items=[{'line':2,'status':'downloaded','title':'Filtrer l’eau'},{'line':3,'status':'refused','message':'liste de lecture refusée'},{'line':4,'status':'error','message':'vidéo privée'}])
@@ -42,9 +42,9 @@ class Host:
         self.commands.append((action,body))
         if action=='youtube-download':
             self.polls=0
-            self.state={'phase':'downloading','action':'youtube-download','message':'Téléchargement des vidéos YouTube et de leurs sous-titres…','options':{'max_height':body.get('max_height',480),'videos':2},
+            self.state={'phase':'downloading','action':'youtube-download','youtube_list':body.get('list'),'message':'Téléchargement des vidéos YouTube et de leurs sous-titres…','options':{'max_height':body.get('max_height',480),'videos':2},
                         'youtube':{'videos':2,'done':0,'current':{'index':1,'line':2},'counts':{'downloaded':0},'items':[]}}
-        if action=='pause':self.state.update(phase='paused',message='Téléchargement YouTube en pause. « Reprendre » continue la liste.')
+        if action=='youtube-download-pause':self.state.update(phase='paused',message='Téléchargement YouTube en pause. « Reprendre » continue la liste.')
         return {'accepted':True}
 
 
@@ -66,7 +66,7 @@ def exercise(page,name,base,host):
     page.wait_for_function("()=>!document.getElementById('next-youtube-progress').hidden")
     check(host.commands[-1][0]=='youtube-download' and host.commands[-1][1]['max_height']==720 and len(host.commands[-1][1]['list'])==32,name+' : commande transmise au PC serveur avec la qualité et l’identifiant de la liste')
     check('vidéo 1 sur 2' in page.locator('#next-youtube-status').inner_text(),name+' : progression affichée pendant le téléchargement')
-    check(page.locator('#next-youtube-pause').is_visible() and page.locator('#next-youtube-start').is_disabled(),name+' : pause proposée, nouveau lancement bloqué')
+    check(page.locator('#next-youtube-pause').is_visible() and page.locator('#next-youtube-start').is_enabled(),name+' : pause proposée et nouvelles listes acceptées')
     page.screenshot(path=str(OUTPUT/(name+'-en-cours.png')),full_page=True)
     page.wait_for_function("()=>document.getElementById('next-youtube-status').textContent.includes('Téléchargement terminé')",timeout=20000)
     status=page.locator('#next-youtube-status').inner_text()
@@ -78,7 +78,7 @@ def exercise(page,name,base,host):
     page.wait_for_function("()=>!document.getElementById('next-youtube-pause').hidden")
     page.click('#next-youtube-pause')
     page.wait_for_function("()=>!document.getElementById('next-youtube-resume').hidden")
-    check(host.commands[-1][0]=='pause' and 'en pause' in page.locator('#next-youtube-status').inner_text(),name+' : pause puis « Reprendre » proposé')
+    check(host.commands[-1][0]=='youtube-download-pause' and 'en pause' in page.locator('#next-youtube-status').inner_text(),name+' : pause puis « Reprendre » proposé')
     page.click('#next-youtube-resume');page.wait_for_function("()=>document.getElementById('next-youtube-resume').hidden")
     check(host.commands[-1]==('youtube-download',{'resume':True}),name+' : reprise demandée au PC serveur')
 

@@ -16,6 +16,7 @@ liste reprend les vidéos inachevées et passe celles déjà présentes. Le pilo
 répertorie ensuite les nouvelles vidéos tout seul (0.40.0).
 """
 import argparse
+import errno
 from datetime import datetime,timezone
 import json
 import os
@@ -46,13 +47,15 @@ PATTERNS=[
     ('too_large',r'larger than max-filesize|file is larger than'),
     ('no_format',r'requested format is not available|no video formats found'),
     ('rate_limited',r'http error 429|too many requests'),
+    ('provider_forbidden',r'http error 403|403 forbidden'),
+    ('extractor',r'signature extraction failed|failed to extract|unable to extract|challenge solving failed'),
     ('unavailable',r'video unavailable|video is unavailable|video is not available|has been removed|account associated with this video has been terminated|this video does not exist'),
     ('disk_space',r'no space left on device|not enough space'),
     ('network',r'unable to download webpage|connection (?:reset|refused|aborted)|timed? ?out|temporary failure in name resolution|getaddrinfo failed|network is unreachable'),
 ]
 
 
-SUBTITLE_FAILURE=re.compile(r'unable to download video subtitles',re.I)
+SUBTITLE_FAILURE=re.compile(r'unable to download video subtitles|unable to download subtitles|error.*writing (?:the )?subtitle',re.I)
 
 
 def existing_videos(library):
@@ -153,7 +156,7 @@ def publish(media,sidecars,library,entry):
     return target,moved,info
 
 
-def execute(args,*,cancel=None,run=subprocess.run,popen=subprocess.Popen):
+def execute(args,*,cancel=None,run=subprocess.run,popen=subprocess.Popen,on_progress=None):
     """Run yt-dlp; with a cancel file, stop it cooperatively (partial files kept).
 
     Returns (returncode, output, paused)."""
@@ -163,22 +166,38 @@ def execute(args,*,cancel=None,run=subprocess.run,popen=subprocess.Popen):
         result=run(args,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=VIDEO_TIMEOUT,**options)
         return result.returncode,(result.stdout or '')+'\n'+(result.stderr or ''),False
     import tempfile
-    with tempfile.TemporaryFile() as output:
-        process=popen(args,stdout=output,stderr=subprocess.STDOUT,**options)
+    with tempfile.TemporaryDirectory() as scratch:
+        output=Path(scratch)/'progress.log'
+        with output.open('wb') as stream:
+            process=popen(args,stdout=stream,stderr=subprocess.STDOUT,**options)
         deadline=time.monotonic()+VIDEO_TIMEOUT;paused=False
-        while process.poll() is None:
-            if Path(cancel).exists() or time.monotonic()>deadline:
-                paused=Path(cancel).exists();process.terminate()
+        next_update=0;percent=None
+        try:
+            while process.poll() is None:
+                now=time.monotonic()
+                if Path(cancel).exists() or now>deadline:
+                    paused=Path(cancel).exists()
+                    break
+                if on_progress and now>=next_update:
+                    with output.open('rb') as reader:
+                        size=reader.seek(0,2)
+                        reader.seek(max(0,size-32768))
+                        matches=re.findall(rb'\[download\]\s+(\d{1,3}(?:\.\d+)?)%',reader.read())
+                    if matches:percent=min(100,float(matches[-1]))
+                    on_progress(percent)
+                    next_update=now+3
+                time.sleep(.5)
+        finally:
+            if process.poll() is None:
+                process.terminate()
                 try:process.wait(timeout=15)
                 except subprocess.TimeoutExpired:process.kill();process.wait()
-                break
-            time.sleep(.5)
-        output.seek(0);text=output.read().decode('utf-8','replace')
+        text=output.read_text(encoding='utf-8',errors='replace')
     if not paused and process.returncode and time.monotonic()>deadline:raise subprocess.TimeoutExpired(args,VIDEO_TIMEOUT)
     return process.returncode,text,paused
 
 
-def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_runtime='deno',run=subprocess.run,cancel=None,popen=subprocess.Popen):
+def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_runtime='deno',run=subprocess.run,cancel=None,popen=subprocess.Popen,on_progress=None):
     staging=data/'state'/'video-downloads'/'en-cours'/entry['id']
     durable.mkdir(staging)
     if free_bytes(staging)<max_bytes+reserve:return {'status':'error','reason':'disk_space'}
@@ -186,7 +205,7 @@ def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_ru
     try:
         def attempt(subtitles=True):
             return execute(command(base,entry,staging,max_height=max_height,max_bytes=max_bytes,ffmpeg=ffmpeg,js_runtime=js_runtime,subtitles=subtitles),
-                           cancel=cancel,run=run,popen=popen)
+                           cancel=cancel,run=run,popen=popen,on_progress=on_progress)
         returncode,output,paused=attempt();subtitles_skipped=False
         if returncode and not paused and SUBTITLE_FAILURE.search(output):
             # Subtitles can be fetched or created later: keep the video.
@@ -239,7 +258,8 @@ def find_work_dir(application=ROOT):
 
 
 def run_list(args,*,run=subprocess.run,log=print):
-    text=Path(args.list).read_text(encoding='utf-8-sig')
+    raw=Path(args.list).read_bytes()
+    text=raw.decode('utf-16' if raw.startswith((b'\xff\xfe',b'\xfe\xff')) else 'utf-8-sig')
     entries,line_errors=parse_list(text)
     if args.action=='check':
         for item in entries:log(f'ligne {item["line"]} : {item["id"]}'+(f' → [{item["theme"]}]' if item['theme'] else ''))
@@ -266,7 +286,8 @@ def run_list(args,*,run=subprocess.run,log=print):
         value={'schema':1,'phase':phase,'total':len(entries)+len(line_errors),'videos':len(entries),'done':len(done),'current':current,
                'counts':{key:sum(1 for item in report['items'] if item['status']==key) for key in ('downloaded','skipped','refused','error')},
                'tools':{'yt_dlp':version,'ffmpeg':bool(ffmpeg),'js_runtime':js_runtime},
-               'items':[{key:item[key] for key in ('line','id','status','reason','title','path','theme','subtitles_skipped') if key in item}|({'message':REASONS[item['reason']]} if item.get('reason') in REASONS else {}) for item in report['items'][-300:]]}
+               'items':[{key:item[key] for key in ('line','id','status','reason','title','path','theme','subtitles_skipped') if key in item}|({'message':REASONS[item['reason']]} if item.get('reason') in REASONS else {}) for item in (report['items'] if phase!='running' else report['items'][-300:])]}
+        if 'unattempted_lines' in report:value['remaining']=len(report['unattempted_lines'])
         if report.get('path'):value['report']=report['path']
         setup.write_json(progress_path,value,private=True)
     if not js_runtime:log('Deno absent : YouTube peut refuser des vidéos ou limiter les formats. Relancer avec Internet pour terminer la préparation.')
@@ -276,12 +297,19 @@ def run_list(args,*,run=subprocess.run,log=print):
         for index,entry in enumerate(entries,1):
             if cancel is not None and cancel.exists():report['paused']=True;break
             item={'line':entry['line'],'id':entry['id'],'url':entry['url'],'theme':entry['theme']}
-            progress('running',{'index':index,'line':entry['line'],'url':entry['url']})
+            current={'index':index,'line':entry['line'],'url':entry['url']}
+            progress('running',current)
+            def heartbeat(percent):
+                progress('running',{**current,'percent':percent})
             if entry['id'] in present:
                 item.update(status='skipped',reason='already_present',path=present[entry['id']].relative_to(library).as_posix())
             else:
                 log(f'[{index}/{len(entries)}] {entry["url"]} …')
-                item.update(download(entry,data,library,base,max_height=args.max_height,max_bytes=max_bytes,reserve=reserve,ffmpeg=ffmpeg,js_runtime=js_runtime,run=run,cancel=cancel))
+                try:
+                    item.update(download(entry,data,library,base,max_height=args.max_height,max_bytes=max_bytes,reserve=reserve,ffmpeg=ffmpeg,js_runtime=js_runtime,run=run,cancel=cancel,on_progress=heartbeat if progress_path else None))
+                except OSError as error:
+                    reason='disk_space' if error.errno==errno.ENOSPC else 'file_error'
+                    item.update(status='error',reason=reason,detail=[type(error).__name__])
                 if item['status']=='downloaded':present[entry['id']]=library/item['path']
                 if item['status']=='paused':
                     report['paused']=True;log('Pause demandée : la vidéo en cours reprendra au même endroit.');break
@@ -289,6 +317,9 @@ def run_list(args,*,run=subprocess.run,log=print):
             report['items'].append(item)
             if item.get('reason')=='disk_space':
                 log('Arrêt : espace disque insuffisant. Les vidéos déjà rangées sont conservées.');break
+    if not report.get('paused') and any(item.get('reason')=='disk_space' for item in report['items']):
+        seen={item['line'] for item in report['items']}
+        report['unattempted_lines']=[entry['line'] for entry in entries if entry['line'] not in seen]
     report['items']=sorted((item for item in report['items'] if item['status']!='paused'),key=lambda value:value['line'])
     report['finished']=datetime.now(timezone.utc).isoformat()
     counts={key:sum(1 for item in report['items'] if item['status']==key) for key in ('downloaded','skipped','refused','error')}

@@ -27,19 +27,20 @@ def check(text):
             'refused':[{'line':item['line'],'text':item['text'][:200],'reason':item['reason'],'message':REASONS[item['reason']]} for item in errors]}
 
 
-def save(text):
+def save(text, *, prune=True):
     """Keep the list for the host; older lists are pruned (the host copies its own)."""
     directory=folder();durable.mkdir(directory)
     identifier=uuid.uuid4().hex
     # The pilot may run as root in its container while the host controller runs
     # as the installing user: the list holds public addresses and must stay readable.
     durable.write_bytes(directory/(identifier+'.txt'),text.encode('utf-8'),private=False)
-    for old in sorted(directory.glob('*.txt'),key=lambda path:path.stat().st_mtime)[:-KEEP_LISTS]:old.unlink(missing_ok=True)
+    if prune:
+        for old in sorted(directory.glob('*.txt'),key=lambda path:path.stat().st_mtime)[:-KEEP_LISTS]:old.unlink(missing_ok=True)
     return identifier
 
 
 async def start(text,max_height):
-    if len(text)>MAX_TEXT:raise HTTPException(413,'Liste trop longue : la diviser en plusieurs fichiers.')
+    if len(text.encode('utf-8'))>MAX_TEXT:raise HTTPException(413,'Liste trop longue : la diviser en plusieurs fichiers.')
     summary=check(text)
     if not summary['videos']:raise HTTPException(400,'Aucune adresse de vidéo YouTube valide dans cette liste.')
     if max_height not in (360,480,720):raise HTTPException(400,'Qualité non valide.')
@@ -55,7 +56,7 @@ async def resume():
 async def pause():
     state=await operations.library_command()
     if state.get('action')!='youtube-download' or state.get('phase') not in ACTIVE:raise HTTPException(409,'Aucun téléchargement YouTube en cours.')
-    await operations.library_command('pause',{})
+    await operations.library_command('youtube-download-pause',{'list':state.get('youtube_list')})
     return {'accepted':True}
 
 
@@ -79,5 +80,5 @@ async def status():
     progress=state.get('youtube') or {}
     if state.get('phase')=='completed':await refresh_inventory(state.get('id'))
     return {'available':True,'phase':state.get('phase'),'message':state.get('message',''),'pause_requested':bool(state.get('pause_requested')),
-            'options':state.get('options',{}),'progress':{key:progress[key] for key in ('total','videos','done','current','counts','tools','items') if key in progress},
+            'options':state.get('options',{}),'progress':{key:progress[key] for key in ('total','videos','done','current','counts','tools','items','remaining') if key in progress},
             'resumable':state.get('phase') in ('paused','interrupted','error'),'observed_at':time.time()}

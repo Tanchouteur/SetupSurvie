@@ -15,6 +15,7 @@ import uuid
 import httpx
 from fastapi import HTTPException
 
+from . import work_queue
 from . import assistant_metrics,calibration,documentary,durable,engine,library,model_runtime,model_session,operations,store,translations
 
 ACTIVE={}
@@ -286,6 +287,7 @@ def interpretation(report):
                           'capacity_occupied_is_not_proof_of_bottleneck','disk_counters_may_include_multiple_mounts','paging_counters_not_available_on_all_platforms','no_automatic_hardware_purchase_recommendation']}
 
 
+@work_queue.tracked('performance')
 async def run(report,user):
     start=time.monotonic();sampler=asyncio.create_task(samples(report,start))
     try:

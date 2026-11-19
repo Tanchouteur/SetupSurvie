@@ -15,6 +15,7 @@ import sys
 import time
 
 from fastapi import HTTPException
+from . import work_queue
 from . import captions,durable,engine,provider_subtitles,store,video_inventory,videos
 
 ACTIVE={}
@@ -186,20 +187,22 @@ def publish(identifier,value):
     return True
 
 
+@work_queue.tracked('acquisition')
 async def run(identifier):
     worker=FetchWorker()
     try:
-        item=get(identifier)
-        if item['status'] not in ('queued','running'):return
-        await asyncio.to_thread(current_source,item);update(identifier,'running')
-        value=await worker.fetch({'id':item['provider_id'],'preferred':item['preferred_language'],'language':item['language'],'origin':item['origin']})
-        await asyncio.to_thread(current_source,item)
-        publication=asyncio.create_task(asyncio.to_thread(publish,identifier,value))
-        try:published=await asyncio.shield(publication)
-        except asyncio.CancelledError:
-            update(identifier,'paused','Récupération mise en pause ; les pistes terminées restent conservées.');await asyncio.shield(publication);raise
-        if not published:return
-        try:await videos.start();update(identifier,'completed',index_status='requested')
+        async with engine.LOCK:
+            item=get(identifier)
+            if item['status'] not in ('queued','running'):return
+            await asyncio.to_thread(current_source,item);update(identifier,'running')
+            value=await worker.fetch({'id':item['provider_id'],'preferred':item['preferred_language'],'language':item['language'],'origin':item['origin']})
+            await asyncio.to_thread(current_source,item)
+            publication=asyncio.create_task(asyncio.to_thread(publish,identifier,value))
+            try:published=await asyncio.shield(publication)
+            except asyncio.CancelledError:
+                update(identifier,'paused','Récupération mise en pause ; les pistes terminées restent conservées.');await asyncio.shield(publication);raise
+            if not published:return
+        try:await videos.refresh_after(time.time());update(identifier,'completed',index_status='requested')
         except HTTPException:update(identifier,'completed',index_status='pending')
         item=get(identifier)
         if item['translate_french'] and not value['track']['language'].lower().startswith('fr'):

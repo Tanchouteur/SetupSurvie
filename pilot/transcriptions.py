@@ -15,6 +15,7 @@ import sys
 import time
 
 from fastapi import HTTPException
+from . import work_queue
 from . import captions,durable,engine,operations,store,video_inventory,videos
 
 ACTIVE={}
@@ -197,6 +198,7 @@ def publish(identifier):
     return True
 
 
+@work_queue.tracked('speech')
 async def run(identifier):
     worker=Worker()
     try:
@@ -240,7 +242,7 @@ async def run(identifier):
                     break
             # A waiting ordinary question gets the lock between audio units.
             await asyncio.sleep(1)
-        try:await videos.start();update(identifier,'completed',index_status='requested')
+        try:await videos.refresh_after(time.time());update(identifier,'completed',index_status='requested')
         except HTTPException:update(identifier,'completed',index_status='pending')
         item=get(identifier)
         if item['translate_french'] and not (item['detected_language'] or item['language']).startswith('fr'):
