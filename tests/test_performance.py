@@ -16,6 +16,9 @@ class Found(list):coverage={'status':'partial','searched':2,'failed':1,'processi
 
 
 class PerformanceTests(unittest.IsolatedAsyncioTestCase):
+    # Windows runners can take several seconds to publish the durable reports.
+    CAMPAIGN_TIMEOUT = 30
+
     def setUp(self):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
         self.calls=[];self.pause=False;self.memory_failure=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
@@ -55,7 +58,12 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
 
     async def finish(self):
         report=await perf.start('rapide','family','fixture')
-        await asyncio.wait_for(perf.ACTIVE[report['id']],5)
+        task = perf.ACTIVE[report['id']]
+        done, _ = await asyncio.wait({task}, timeout=self.CAMPAIGN_TIMEOUT)
+        if not done:
+            await perf.cancel()
+            self.fail('The fixture campaign did not finish within the test deadline')
+        await task
         return perf.status(full=True)
 
     async def test_full_campaign_separates_repeats_exports_no_private_text_and_cleans_jobs(self):
@@ -129,7 +137,9 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report['steps'][6]['status'],'failed')
 
     async def test_cancel_in_flight_keeps_completed_steps_and_releases_lock(self):
-        self.hang=True;report=await perf.start('rapide','family','fixture');await asyncio.wait_for(self.started.wait(),3)
+        self.hang=True;await perf.start('rapide','family','fixture')
+        self.addAsyncCleanup(perf.cancel)
+        await asyncio.wait_for(self.started.wait(),self.CAMPAIGN_TIMEOUT)
         result=await perf.cancel()
         self.assertEqual(result['status'],'cancelled');self.assertEqual(len(result['steps']),7)
         self.assertFalse(engine.LOCK.locked());self.assertFalse(perf.running())
