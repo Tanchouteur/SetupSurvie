@@ -211,7 +211,7 @@ async def ensure_fresh(force=False):
     CHECKED=time.monotonic()
     try:
         if not await asyncio.to_thread(stale):
-            ensure_partitions()
+            await ensure_partitions()
             return 'fresh'
         await start();return 'refreshing'
     except HTTPException:return 'refreshing'
@@ -244,9 +244,23 @@ def rebuild_partitions():
         build_partitions(db)
 
 
-def ensure_partitions():
+def partitions_ready():
+    path=store.ROOT/'videos.db'
+    if not path.is_file():return True
+    db=sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True,timeout=2)
+    try:return partition_tables(db) is not None
+    finally:db.close()
+
+
+async def ensure_partitions():
     global PARTITION_TASK
-    if PARTITION_TASK is not None and not PARTITION_TASK.done():
+    if running_task(PARTITION_TASK) is not None or STOP.is_set():
+        return
+    try:
+        if await asyncio.to_thread(partitions_ready):return
+    except (OSError,sqlite3.Error):
+        return
+    if running_task(PARTITION_TASK) is not None or STOP.is_set():
         return
     async def run():
         try:await asyncio.to_thread(rebuild_partitions)
@@ -268,7 +282,8 @@ def build_partitions(db):
         db.execute(f"""CREATE VIRTUAL TABLE {table} USING fts5(id UNINDEXED,title,language UNINDEXED,
             track UNINDEXED,start_ms UNINDEXED,end_ms UNINDEXED,text,tokenize='unicode61 remove_diacritics 2')""")
         db.execute('INSERT INTO video_search_partitions VALUES(?)',(key,))
-    for row in db.execute('SELECT * FROM video_text'):
+    for number,row in enumerate(db.execute('SELECT * FROM video_text')):
+        if number%512==0 and STOP.is_set():raise InterruptedError()
         scope=scopes.get(row['id'])
         if scope is not None:
             db.execute(f'INSERT INTO {tables[scope]} VALUES(?,?,?,?,?,?,?)',tuple(row))
@@ -289,7 +304,8 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
             payload=json.loads(serialized)
             return sorting.permits(collection_sort.video(payload),domain) and collection_matches(serialized)
         partitions=partition_tables(db)
-        if partitions is not None and (domain!='all' or sorting.excluded or plan.collection):
+        restricted=bool(sorting.excluded or domain=='other' or (domain!='all' and sorting.other))
+        if partitions is not None and (restricted or plan.collection):
             if plan.collection:
                 matches={collection_sort.video(json.loads(row[0])) for row in db.execute('SELECT payload FROM media')
                          if collection_matches(row[0])}
@@ -303,7 +319,7 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
         else:
             tables=['video_text']
             restriction=''
-            if sorting.excluded or (domain!='all' and (domain=='other' or sorting.other)) or plan.collection:
+            if restricted or plan.collection:
                 db.create_function('in_video_scope',1,in_scope,deterministic=True)
                 restriction='AND id IN (SELECT id FROM media WHERE in_video_scope(payload))'
         rows=[]
@@ -546,10 +562,9 @@ async def refresh_after(published):
 async def stop(reason='user'):
     global STOP_REASON
     STOP_REASON=reason;STOP.set()
-    task=running()
-    if task is not None:
-        # The scan thread checks STOP; a failure there is already reported
-        # in videos-report.json and must not block the service shutdown.
+    for task in (running(),running_task(PARTITION_TASK)):
+        if task is None:continue
+        # Both writing tasks check STOP and finish their SQLite transaction before shutdown.
         try:await asyncio.shield(task)
         except asyncio.CancelledError:
             if not task.cancelled():raise
@@ -559,10 +574,14 @@ async def stop(reason='user'):
 
 def running():
     """The inventory task of this event loop, if one is still running."""
-    if ACTIVE is None or ACTIVE.done():return None
-    try:same=ACTIVE.get_loop() is asyncio.get_running_loop()
+    return running_task(ACTIVE)
+
+
+def running_task(task):
+    if task is None or task.done():return None
+    try:same=task.get_loop() is asyncio.get_running_loop()
     except RuntimeError:same=False
-    return ACTIVE if same else None
+    return task if same else None
 
 
 def webvtt(key,index):
