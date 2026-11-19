@@ -112,6 +112,43 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['parts'][1]['translated'],'Le couvercle a 2 attaches. Le câble mesure 10 mètres.')
         self.assertEqual(state['parts'][1]['source_text'],second)
 
+    async def test_http_stream_disconnected_mid_json_restarts_the_whole_passage(self):
+        item=await self.create()
+        key=item['id']
+        source='The dial has 7 marks. The tray holds 4 liters.'
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(key,))
+            db.execute('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',
+                (key,0,1,source,'pending'))
+
+        class Interrupted(httpx.AsyncByteStream):
+            async def __aiter__(self):
+                event={'message':{'content':'{"translation":"Incorrect 100'},'done':False}
+                yield (json.dumps(event)+'\n').encode()
+                self_state=tr.status(key,'alice')
+                if self_state['done'] or self_state['parts'][0]['translated']:
+                    raise AssertionError('Partial text was saved before the end marker')
+                raise httpx.ReadError('Fixture transport disconnected')
+
+        original=httpx.AsyncClient
+        calls=[]
+        def handler(request):
+            payload=json.loads(request.content)
+            calls.append(payload['messages'][1]['content'])
+            if len(calls)==1:return httpx.Response(200,stream=Interrupted())
+            translated={2:'Le cadran a 7 repères.',3:'Le bac contient 4 litres.'}[len(calls)]
+            final={'message':{'content':json.dumps({'translation':translated})},'done':True,'done_reason':'stop'}
+            return httpx.Response(200,json=final)
+        runtime={'available':False,'native_context':None}
+        with patch.object(tr.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
+            httpx,'AsyncClient',side_effect=lambda **kw:original(transport=httpx.MockTransport(handler),**kw)
+        ):
+            await tr.run(key)
+        result=tr.status(key,'alice')
+        self.assertEqual(calls,[source,'The dial has 7 marks. ','The tray holds 4 liters.'])
+        self.assertEqual((result['status'],result['done']),('completed',1))
+        self.assertEqual(result['parts'][0]['translated'],'Le cadran a 7 repères. Le bac contient 4 litres.')
+
     async def test_pause_cancels_inflight_fragment_and_preserves_previous_translation(self):
         item=await self.create();started=asyncio.Event()
         async def wait(text,mode,**kwargs):started.set();await asyncio.Event().wait()

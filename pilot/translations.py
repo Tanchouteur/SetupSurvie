@@ -156,12 +156,15 @@ async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None):
             measured.model_call(last or {})
             measured.phase('metadata')
             measured.value['runtime_after']=await model_runtime.describe(engine.OLLAMA,selected['model'],fresh=True)
-    except model_session.Failure as error:
-        measured.value['failure']=error.kind
-        raise ValueError('Le moteur a interrompu la traduction. Les passages terminés restent conservés ; reprenez après vérification du moteur.') from None
+    except (model_session.Failure,httpx.HTTPError,json.JSONDecodeError) as error:
+        if last is not None and model_session.interrupted_reply(error):
+            measured.value['failure']='stream_interrupted'
+            raise UnusableResponse('La connexion a interrompu la réponse en cours.') from None
+        measured.value['failure']=error.kind if isinstance(error,model_session.Failure) else 'invalid_model_response'
+        raise ValueError('Le moteur a interrompu la traduction. Reprenez après vérification du moteur.') from None
     finally:
         if on_metrics:
-            report=measured.live();report['status']='received' if last and last.get('done_reason')=='stop' else 'interrupted'
+            report=measured.live();report['status']='received' if last and last.get('done') and last.get('done_reason')=='stop' and 'failure' not in report else 'interrupted'
             try:on_metrics(report)
             except Exception:pass  # Optional numerical observation must not lose the translation.
     if not last or not last.get('done') or last.get('done_reason')!='stop':
