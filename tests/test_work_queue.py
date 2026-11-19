@@ -95,6 +95,11 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
         self.assertEqual(observed, ['initial', 'download', 'speech'])
         self.assertEqual(queue.order(), ['q1', 'q2', 'q3', 'background', 'q4'])
+        self.assertEqual(queue.waiting_state('q1'), 'next')
+        self.assertEqual(queue.waiting_state('q2'), 'waiting')
+        queue.set_paused(True)
+        self.assertEqual(queue.waiting_state('q1'), 'paused')
+        queue.set_paused(False)
         with self.assertRaises(HTTPException):
             queue.move('background', -1, ADMIN)
         release_ai.set()
@@ -120,6 +125,14 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(following, 1)
         queue.release()
         self.assertFalse(queue.locked())
+
+    async def test_failed_video_index_is_visible_without_counting_as_running(self):
+        report = {'phase': 'failed', 'error': 'L’ancien index reste disponible.', 'videos': 3}
+        with patch.object(videos, 'ROOT', store.ROOT), patch.object(videos, 'status', return_value=report):
+            value = self.queue.snapshot(ADMIN)
+        self.assertFalse(value['lanes']['local']['running'])
+        index = next(job for job in value['jobs'] if job['id'] == 'video-index')
+        self.assertEqual((index['lane'], index['status'], index['error']), ('local', 'failed', report['error']))
 
     async def test_summary_hides_other_profile_content_but_reports_activity(self):
         queue = self.queue

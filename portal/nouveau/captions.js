@@ -22,7 +22,7 @@
     target.replaceChildren();
     for(const job of visibleJobs){
       const article=element('article',undefined,'data-card video-job');article.dataset.captionJob=job.id;
-      article.append(element('h3',target===$('next-caption-jobs')?job.title:'Traduction française'),element('p',(states[job.status]||job.status)+' · '+job.done+' / '+job.total+' segments','small'));
+      article.append(element('h3',target===$('next-caption-jobs')?job.title:'Traduction française'),element('p',((window.WorkQueuePreview?.workLabel(job,states[job.status])||states[job.status]||'État inconnu'))+' · '+job.done+' / '+job.total+' segments','small'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
       if(job.warnings)article.append(element('p',job.warnings+' segment(s) à vérifier dans le rapport.','small catalogue-warning'));
       if(job.status==='completed'&&job.index_status==='pending')article.append(element('p','Piste conservée ; actualisez les vidéos pour terminer sa mise en recherche.','small'));

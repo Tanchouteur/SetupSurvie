@@ -509,7 +509,7 @@ async function loadTranslation(id,offset){
     translationReading(id,offset);
     S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
     const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
-    $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
+    $('translation-summary').textContent=(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
     if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
     $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
@@ -568,20 +568,28 @@ async function send(event){
   if(S.summaryActive){toast('La synthèse longue est en cours. Mettez-la en pause pour poser une question dans cette conversation.');return;}
   if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
   S.sending=true;$('send-question').disabled=true;refreshSourceChoices();
+  $('chat-status').textContent='Envoi de la question…';
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
     if(!S.conversation||!$('chat-messages').querySelector('.message')){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
-  }catch(e){toast(e.message);$('send-question').disabled=false;}
+  }catch(e){
+    const problem=e.status?e.message:'Impossible de confirmer l’envoi. Votre texte reste dans la zone de saisie.';
+    $('chat-status').textContent=problem;toast(problem);$('send-question').disabled=false;
+  }
   finally{S.sending=false;refreshSourceChoices();}
 }
 function watch(id){
-  clearTimeout(S.poll);S.job=id;refreshSourceChoices();$('cancel-job').hidden=false;$('send-question').disabled=true;const pending=message('assistant','Préparation de la réponse…');
+  clearTimeout(S.poll);S.job=id;const owner=S.user?.id;refreshSourceChoices();$('cancel-job').hidden=false;$('send-question').disabled=true;const pending=message('assistant','Préparation de la réponse…');
   async function poll(){
-    try{const job=await api('/jobs/'+encodeURIComponent(id));const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),8000);
+    try{const job=await api('/jobs/'+encodeURIComponent(id),undefined,{signal:controller.signal});
+      if(S.job!==id||S.user?.id!==owner)return;
+      const seconds=Math.round((Date.now()/1000)-job.created);pending.node.querySelector('.message-label').textContent=S.status?.modes.find(p=>p.id===job.mode)?.name||'Assistant';
       document.dispatchEvent(new CustomEvent('survie:job',{detail:{...job,id}}));
       const phase={searching:'Recherche dans la bibliothèque',reading:'Lecture des documents trouvés',illustrating:'Sélection des illustrations originales',referencing:'Ajout des références aux documents consultés',switching:'Changement de modèle en cours, votre question est conservée',loading:'Chargement du modèle',retrying:'Reprise automatique, votre question est conservée',preparing:'Préparation de la réponse par le modèle',writing:'Rédaction de la réponse'}[job.progress?.stage]||'Réponse en cours';
       const read=Number(job.progress?.sources_read||0),found=Number(job.progress?.sources_found||0);const detail=read?` · ${read} source(s) consultée(s)`:found?` · ${found} résultat(s) à examiner`:'';
-      $('chat-status').textContent=job.status==='queued'?'Une autre demande est en cours. La vôtre est dans la file.':`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
-      renderText(pending.body,job.answer||(job.status==='queued'?'En attente de son tour…':phase+'…'),job.sources);
+      const waiting={paused:'Question en attente. La file est en pause.',next:'Question suivante dans le créneau IA.',waiting:'Question en attente de son tour dans le créneau IA.'}[job.queue_state]||'Question en attente dans la file.';
+      $('chat-status').textContent=job.status==='queued'?waiting:`${phase}${detail} · ${seconds} s. Vous pouvez continuer à consulter la bibliothèque.`;
+      renderText(pending.body,job.answer||(job.status==='queued'?waiting:phase+'…'),job.sources);
       documentaryStatus(pending.tracking,job.documentary);
       if(['done','failed','cancelled','interrupted','incomplete'].includes(job.status)){
         S.job=null;refreshSourceChoices();$('cancel-job').hidden=true;$('send-question').disabled=false;
@@ -590,7 +598,15 @@ function watch(id){
         if(job.sources.length)pending.node.append(sourceChips(job.sources));await histories();return;
       }
       S.poll=setTimeout(poll,1000);
-    }catch(e){S.job=null;refreshSourceChoices();$('cancel-job').hidden=true;$('send-question').disabled=false;$('chat-status').textContent=e.message;}
+    }catch(e){
+      if(S.job!==id||S.user?.id!==owner||PAGE_CLOSING)return;
+      if(!e.status||e.status>=500){
+        $('chat-status').textContent='Suivi de la réponse indisponible. Nouvelle tentative automatique.';
+        S.poll=setTimeout(poll,3000);
+        return;
+      }
+      S.job=null;refreshSourceChoices();$('cancel-job').hidden=true;$('send-question').disabled=false;$('chat-status').textContent=e.message;
+    }finally{clearTimeout(timeout);}
   }poll();
 }
 function localServiceURL(path,service){const u=new URL(location.href);u.port=service==='webui'?(u.protocol==='https:'?'8444':'3000'):(u.protocol==='https:'?'8445':'8081');u.pathname=path;u.search='';u.hash='';return u.href;}

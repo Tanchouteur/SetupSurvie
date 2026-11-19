@@ -9,6 +9,7 @@
     +'<div class="actions"><button id="next-youtube-check" class="secondary">Vérifier la liste</button><button id="next-youtube-start">Télécharger les vidéos</button><button id="next-youtube-pause" class="secondary" hidden>Mettre en pause</button><button id="next-youtube-resume" class="secondary" hidden>Reprendre</button></div>'
     +'<p class="small"><a href="#/file" data-route="file">Suivre les téléchargements et sous-titres dans la file</a></p>'
     +'<p id="next-youtube-message" class="small" role="status"></p><ul id="next-youtube-refused" class="small" hidden></ul>'
+    +'<p id="next-youtube-connection" class="small work-queue-preview-notice" role="status" hidden></p>'
     +'<div id="next-youtube-progress" hidden><progress id="next-youtube-bar" max="1" value="0" style="width:100%" aria-label="Avancement du téléchargement"></progress><p id="next-youtube-status" class="small" role="status"></p><ul id="next-youtube-items" class="small"></ul></div>'
     +'<p class="small muted">Les vidéos restent la propriété de leurs auteurs : usage privé, sans redistribution. Aucun compte YouTube n’est utilisé et aucun blocage n’est contourné.</p>';
   // Moved into Mon appareil → Bibliothèque et préparations by settings-layout.js.
@@ -27,7 +28,16 @@
     $('next-youtube-check').disabled=busy;
     $('next-youtube-file').disabled=busy;
   }
+  function trackingUnavailable(){
+    const note=$('next-youtube-connection');
+    note.textContent=latest?'Suivi du PC serveur indisponible. Dernier état connu.':'Suivi du PC serveur indisponible. Nouvelle tentative automatique.';
+    note.hidden=false;
+    $('next-youtube-pause').disabled=$('next-youtube-resume').disabled=true;
+  }
   function render(value){
+    if(value.available===false||value.phase==='unknown'){trackingUnavailable();return;}
+    $('next-youtube-connection').hidden=true;
+    $('next-youtube-pause').disabled=$('next-youtube-resume').disabled=false;
     latest=value;const progress=value.progress||{},counts=progress.counts||{},phase=value.phase;
     const admin=S.user?.role==='admin';area.hidden=!admin;
     commandButtons();
@@ -52,7 +62,7 @@
     if(!S.authReady||S.user?.role!=='admin'||loading||document.hidden)return;
     loading=true;const current=++generation,profile=S.user.id;
     try{const value=await api('/admin/youtube-downloads');if(current===generation&&profile===S.user?.id)render(value);}
-    catch(error){if(current===generation)$('next-youtube-message').textContent=error.message;}
+    catch{if(current===generation)trackingUnavailable();}
     finally{loading=false;}
   }
   function list(){return $('next-youtube-text').value;}

@@ -30,7 +30,7 @@
       if(generation!==version||conversation!==S.conversation||user!==S.user?.id)return;
       S.summaryActive=active(data.status);panel.hidden=false;
       const labels={preparing:'Préparation des textes',queued:'En attente du moteur',running:data.pending?'Lecture des passages':'Regroupement et rédaction',paused:'Synthèse en pause',error:'Étape à reprendre',incomplete:'Références à vérifier',completed:'Synthèse terminée'};
-      heading.textContent=(labels[data.status]||data.status)+' · '+data.read+'/'+data.total+' passages examinés';
+      heading.textContent=(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.read+'/'+data.total+' passages examinés';
       state.textContent=(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' page(s) sans texte extractible.':'');
       progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.read+data.unreadable;
       start.hidden=true;pause.hidden=!S.summaryActive;resume.hidden=S.summaryActive||data.status==='completed';download.hidden=false;download.href='/api/summaries/'+encodeURIComponent(id)+'/export';

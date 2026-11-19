@@ -9,6 +9,7 @@
       <button id="work-queue-pause" type="button" class="secondary" hidden>Mettre en pause</button>
     </div>
     <p id="work-queue-error" role="alert" hidden></p>
+    <p id="work-queue-freshness" role="status" hidden></p>
     <div id="work-queue-groups"></div>`;
   $('main').append(page);
 
@@ -17,14 +18,10 @@
     WorkQueuePreview.mount(document.querySelector('.top-actions'), {href: '#/file', mobile: true, refresh})
   ];
 
-  const labels = {
-    queued: 'En attente', preparing: 'Préparation', running: 'En cours',
-    paused: 'En pause', completed: 'Terminé', done: 'Terminé', error: 'En erreur',
-    failed: 'En erreur', incomplete: 'Incomplet', interrupted: 'Interrompu',
-    stopped: 'Arrêté', cancelled: 'Annulé'
-  };
-  const {waiting, failed, lanes} = WorkQueuePreview;
+  const {isSnapshot, waiting, failed, held, statusLabel, plural, freshness, lanes} = WorkQueuePreview;
   let state = null;
+  let connection = 'loading';
+  let observedAt = null;
   let lastPage = '';
   let pending = false;
   let fetching = null;
@@ -36,8 +33,9 @@
   }
 
   async function command(path, body, focus) {
-    if (pending) return;
+    if (pending || connection !== 'ready') return;
     pending = true;
+    draw();
     try {
       await api('/work-queue' + path, body);
       message('');
@@ -45,6 +43,7 @@
       message(error.message);
     } finally {
       pending = false;
+      draw();
     }
     if (fetching) await fetching;
     await refresh();
@@ -59,10 +58,11 @@
   function taskCard(job, movable) {
     const node = element('li', undefined, 'work-queue-card');
     node.classList.toggle('work-queue-problem', failed(job));
+    node.classList.toggle('work-queue-held', held(job));
     const main = element('div', undefined, 'work-queue-content');
     const title = element(job.href ? 'a' : 'strong', job.title);
     if (job.href) title.href = job.href;
-    const label = element('span', (job.next ? 'Ensuite' : labels[job.status]) || 'À vérifier', 'work-queue-status');
+    const label = element('span', job.next ? (state.paused ? 'À la reprise' : 'Ensuite') : statusLabel(job), 'work-queue-status');
     main.append(element('p', [job.type, job.model].filter(Boolean).join(' · '), 'work-queue-meta'), title);
     if (job.priority) main.append(element('span', 'Question prioritaire', 'work-queue-priority'));
     if (job.stage) main.append(element('p', job.stage, 'work-queue-meta'));
@@ -77,7 +77,10 @@
       row.append(progress, element('span', amount));
       main.append(row);
     }
-    if (job.error && job.error !== job.stage) main.append(element('p', job.error, 'work-queue-error-text'));
+    if (job.error && job.error !== job.stage) main.append(element('p', job.error, failed(job) ? 'work-queue-error-text' : 'work-queue-meta'));
+    if (failed(job) && !job.error && !job.stage && !job.failure_count) {
+      main.append(element('p', 'Le détail de cette erreur est indisponible.', 'work-queue-meta'));
+    }
     if (job.failure_count) {
       const details = element('details', undefined, 'work-queue-failures');
       const list = element('ul');
@@ -97,7 +100,7 @@
         const id = job.id + ':' + direction;
         const control = button(symbol, () => command('/' + encodeURIComponent(job.id) + '/move', {direction}, id));
         control.dataset.workControl = id;
-        control.disabled = position + direction < 0 || position + direction >= movable.length;
+        control.disabled = connection !== 'ready' || pending || position + direction < 0 || position + direction >= movable.length;
         control.setAttribute('aria-label', name + ' ' + job.title);
         control.title = name;
         order.append(control);
@@ -108,6 +111,7 @@
       const id = job.id + ':retry';
       const control = button(job.status === 'paused' ? 'Reprendre' : 'Réessayer', () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
       control.dataset.workControl = id;
+      control.disabled = connection !== 'ready' || pending;
       tools.append(control);
     }
     node.dataset.workId = job.id;
@@ -116,21 +120,39 @@
   }
 
   function draw() {
-    if (!state) return;
+    const admin = S.user?.role === 'admin';
+    for (const preview of previews) preview.draw(state, {admin, connection, pending, current: S.view === 'work-queue'});
+    if (page.hidden) return;
+    const summary = $('work-queue-state');
+    summary.tabIndex = -1;
+    const status = $('work-queue-freshness');
+    status.hidden = !state || !freshness[connection];
+    status.textContent = status.hidden ? '' : freshness[connection] +
+      (observedAt ? ' Dernière actualisation à ' + observedAt.toLocaleTimeString('fr-FR') + '.' : '');
+    const toggle = $('work-queue-pause');
+    toggle.hidden = !state || !admin;
+    toggle.disabled = connection !== 'ready' || pending;
+    if (!state) {
+      summary.textContent = freshness[connection] || 'Chargement du suivi…';
+      return;
+    }
+    const signature = JSON.stringify([state, admin, connection, pending]);
+    if (signature === lastPage) return;
+    lastPage = signature;
     const next = state.jobs.filter(waiting);
     const active = state.jobs.filter(job => job.status === 'running');
     const failures = state.jobs.filter(failed);
-    for (const preview of previews) preview.draw(state, {admin: S.user?.role === 'admin', current: S.view === 'work-queue'});
-    if (page.hidden) return;
-    const signature = JSON.stringify([state, S.user?.role]);
-    if (signature === lastPage) return;
-    lastPage = signature;
-    const summary = $('work-queue-state');
-    summary.tabIndex = -1;
-    summary.textContent = state.paused ? (state.running ? 'File en pause. Les étapes en cours se terminent ou s’arrêtent à leur point de reprise.' : 'File en pause.')
-      : state.running && !active.length ? 'Un autre travail utilise l’appareil.' : next.length ? next.length + (next.length === 1 ? ' tâche en attente.' : ' tâches en attente.') : 'Aucun travail en attente.';
-    const toggle = $('work-queue-pause');
-    toggle.hidden = S.user?.role !== 'admin';
+    const pausedJobs = state.jobs.filter(held);
+    const partial = state.jobs.filter(job => !failed(job) && job.failure_count > 0);
+    const counts = [
+      active.length && plural(active.length, 'tâche en cours', 'tâches en cours'),
+      next.length && plural(next.length, 'tâche en attente', 'tâches en attente'),
+      failures.length && plural(failures.length, 'erreur', 'erreurs'),
+      partial.length && plural(partial.length, 'lot avec des lignes à vérifier', 'lots avec des lignes à vérifier'),
+      pausedJobs.length && plural(pausedJobs.length, 'tâche à reprendre', 'tâches à reprendre')
+    ].filter(Boolean);
+    const activity = counts.join(' · ') || (state.running ? 'Un travail est en cours sur l’appareil.' : 'Aucune tâche active.');
+    summary.textContent = (state.paused ? 'File en pause. ' : '') + activity;
     toggle.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';
     const host = $('work-queue-groups');
     const previous = document.activeElement?.dataset.workControl;
@@ -157,11 +179,16 @@
       container.append(section);
     }
 
+    group('En erreur', failures, host);
+    group('À reprendre', pausedJobs, host);
+    const completedWithIssues = partial.filter(job => !waiting(job) && job.status !== 'running' && !held(job));
+    group('Lots avec des lignes à vérifier', completedWithIssues, host);
     for (const lane of lanes(state)) {
       const section = element('section', undefined, 'work-queue-lane');
       section.dataset.lane = lane.id;
       const header = element('div', undefined, 'work-queue-lane-heading');
-      const label = lane.running ? 'En cours' : state.paused ? 'En pause' : 'Disponible';
+      const label = lane.running ? 'En cours' : state.paused ? 'En pause'
+        : lane.waiting.length ? 'En attente' : 'Disponible';
       header.append(element('h2', lane.title), element('span', label, 'work-queue-meta'));
       section.append(header);
       if (lane.id === 'ai') {
@@ -173,35 +200,54 @@
       host.append(section);
     }
 
-    group('À vérifier', failures, host);
-    group('Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job)).slice(0, 30), host);
+    group('Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job) && !held(job) && !(job.failure_count > 0)).slice(0, 30), host);
     if (previous) Array.from(host.querySelectorAll('[data-work-control]')).find(control => control.dataset.workControl === previous)?.focus({preventScroll: true});
   }
 
   async function refresh() {
     if (!S.user || !S.authReady || document.hidden || fetching) return;
     const epoch = generation;
-    fetching = api('/work-queue').then(value => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    fetching = api('/work-queue', undefined, {signal: controller.signal}).then(value => {
       if (epoch !== generation) return;
+      if (!isSnapshot(value)) throw Error();
       state = value;
+      observedAt = new Date();
+      connection = 'ready';
       draw();
     }).catch(() => {
-      if (epoch === generation && !state && !page.hidden) $('work-queue-state').textContent = 'Le suivi de la file est indisponible. Nouvelle tentative dans quelques secondes.';
-    }).finally(() => { fetching = null; });
+      if (epoch !== generation) return;
+      connection = state ? 'stale' : 'unavailable';
+      draw();
+    }).finally(() => {
+      clearTimeout(timeout);
+      fetching = null;
+    });
     await fetching;
   }
 
   $('work-queue-pause').onclick = () => state && command('/pause', {paused: !state.paused});
   document.addEventListener('survie:auth', () => {
     state = null;
+    connection = S.user ? 'loading' : 'anonymous';
+    observedAt = null;
+    message('');
     lastPage = '';
     generation++;
     $('work-queue-groups').replaceChildren();
-    for (const preview of previews) preview.draw(null);
+    draw();
     if (fetching) fetching.then(refresh);
     else refresh();
   });
   document.addEventListener('survie:route', () => { draw(); refresh(); });
   document.addEventListener('visibilitychange', refresh);
+  window.addEventListener('online', refresh);
+  window.addEventListener('offline', () => {
+    if (!S.user) return;
+    connection = state ? 'stale' : 'unavailable';
+    draw();
+  });
+  draw();
   setInterval(refresh, 3500);
 })();

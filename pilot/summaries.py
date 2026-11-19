@@ -38,7 +38,7 @@ def status(identifier,user_id,offset=0):
     for source in inputs:
         source['metadata']=json.loads(source['metadata']);source['metadata'].pop('images',None)
     for node in nodes:node['notes']=json.loads(node.pop('result'))
-    return {**item,'notice':NOTICE,'inputs':inputs,'total':sum(counts.values()),'read':counts.get('done',0),
+    return {**item,**work_queue.queue_fields(identifier,item['status'],'summary'),'notice':NOTICE,'inputs':inputs,'total':sum(counts.values()),'read':counts.get('done',0),
             'unreadable':counts.get('unreadable',0),'pending':counts.get('pending',0),'nodes':nodes,'node_count':count,'offset':offset}
 
 
