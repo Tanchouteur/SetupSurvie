@@ -31,7 +31,7 @@
       .map(([id, title]) => {
         const jobs = state.jobs.filter(job => (job.lane || 'ai') === id);
         const active = jobs.filter(job => job.status === 'running');
-        return {id, title, active, waiting: jobs.filter(waiting), running: state.lanes?.[id]?.running ?? !!active.length};
+        return {id, title, active, waiting: jobs.filter(waiting), running: !!active.length || !!state.lanes?.[id]?.running};
       });
   }
 

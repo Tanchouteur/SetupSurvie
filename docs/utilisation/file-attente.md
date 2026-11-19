@@ -1,9 +1,20 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.55.2.**
+**Guide actuel — 0.56.0.**
 
 Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
-Un lien en bas donne accès au suivi détaillé des préparations.
+**À suivre** affiche les tâches actives, en attente et celles qui demandent une
+intervention. **Historique récent** rassemble les derniers travaux terminés ou
+annulés, y compris les traductions et synthèses du profil sélectionné. Les
+boutons **?** expliquent le fonctionnement de la file et de chaque groupe.
+Ils s’ouvrent au toucher, à la souris et au clavier.
+
+Pour une préparation de l’appareil, ouvrez **Détails de la préparation** sur
+sa carte. Selon le travail, vous y verrez les fichiers actifs, les volumes
+vérifiés, la dernière observation ou le nombre de documents indexés. Le
+titre de la carte renvoie à la page d’origine, qui conserve les commandes
+propres à cette préparation. Les transferts Windows indépendants restent
+consultables en lecture seule. L’ancienne adresse de suivi ouvre la file.
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône
@@ -43,7 +54,10 @@ d’un même créneau et d’un même niveau de priorité.
 
 Avec **Famille**, utilisez le bouton pause ou lecture en haut de l’aperçu,
 à côté d’**Ouvrir la file**. Sur la page dédiée, retrouvez **Mettre en pause**
-et **Reprendre la file**. La pause empêche le démarrage des étapes suivantes. L’indexation des fichiers déjà publiés peut se terminer en arrière-plan.
+et **Reprendre la file**. La pause empêche le démarrage des étapes suivantes
+pour les tâches pilotées par la file. Les préparations indépendantes suivent
+les commandes de leur page d’origine. L’indexation des fichiers déjà publiés
+peut se terminer en arrière-plan.
 Une question finit sa réponse en cours, et les travaux découpés s’arrêtent
 entre deux unités enregistrées. Le téléchargement YouTube en cours reçoit
 une demande d’arrêt et conserve son fichier partiel. **Reprendre la file**

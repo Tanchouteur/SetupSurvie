@@ -339,13 +339,6 @@
     get("monitor-stats"),
     get("monitor-updated"),
   );
-  get("view-activity").append(
-    link(
-      "telechargements",
-      "Voir les téléchargements et leurs commandes",
-      "Consulter la sélection et les préparations de documents ou de cartes.",
-    ),
-  );
   for (const name of ["data", "storage", "users", "connect"]) {
     const a = make(
       "a",
