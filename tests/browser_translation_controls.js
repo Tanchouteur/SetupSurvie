@@ -11,6 +11,12 @@ async page=>{
  await page.locator('#translation-panel').evaluate(node=>node.open=true);await page.locator('#translation-start').click();
  await page.waitForFunction(()=>S.translation&&document.getElementById('translation-progress').value>=1);
  const id=await page.evaluate(()=>S.translation),conversation=await page.evaluate(()=>S.conversation);
+ const more=page.locator('#translation-more');
+ const download=more.locator('#translation-export');
+ check(await download.count()===1&&await download.isHidden(),'Le téléchargement est dans Plus d’actions');
+ await more.locator('summary').click();
+ check(await download.isVisible()&&(await download.getAttribute('href')).endsWith('/'+id+'/export'),'Le bandeau donne accès à l’export de la traduction');
+ await more.locator('summary').click();
  await page.locator('#translation-reading-open').click();
  check(await page.locator('#translation-reading-dialog #translation-pause').isVisible()&&await page.locator('#translation-reading-dialog #translation-stop').isVisible(),'Pause et arrêt accessibles pendant la lecture');
  await page.locator('#translation-pause').click();await page.waitForFunction(()=>document.getElementById('translation-summary').textContent.includes('En pause'));

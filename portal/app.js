@@ -509,6 +509,7 @@ translationReader.innerHTML='<header><h2 id="translation-reading-title">Lire le 
 document.body.append(translationReader);
 const translationReadOpen=button('Lire le texte français',()=>openTranslationReader(),'secondary');translationReadOpen.id='translation-reading-open';translationReadOpen.hidden=true;$('translation-summary').after(translationReadOpen);
 const translationControls=$('translation-pause').parentElement;
+const translationDownload=$('translation-export');
 const translationNavigation=$('translation-previous').parentElement;
 let translationMore=null,translationMoreActions=null;
 const translationThread=document.body.classList.contains('next-interface')?element('section',undefined,'translation-thread'):null;
@@ -525,7 +526,7 @@ if(translationThread){
   translationMore.id='translation-more';
   translationMore.hidden=true;
   translationMoreActions=element('div',undefined,'translation-actions');
-  translationMoreActions.append(translationStop,$('translation-export'),translationDelete);
+  translationMoreActions.append(translationStop,translationDownload,translationDelete);
   translationMore.append(element('summary','Plus d’actions'),translationMoreActions);
   const content=$('translation-panel').querySelector('.translation-content');
   content.prepend(toolbar,$('translation-progress'),translationMore,$('translation-status'));
@@ -609,7 +610,7 @@ async function loadTranslation(id,offset){
       translationLatest.hidden=translationLatest.disabled;
     }
     translationReadingActions.hidden=!data.done||(translationThread&&translationBeginning.disabled&&translationLatest.disabled);
-    const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
+    translationDownload.hidden=false;translationDownload.href='/api/translations/'+encodeURIComponent(id)+'/export';
     renderTranslationParts(data,parts);
     $('translation-previous').hidden=offset===0;$('translation-next').hidden=offset+data.parts.length>=data.total;
     document.dispatchEvent(new CustomEvent('survie:translation',{detail:data}));
