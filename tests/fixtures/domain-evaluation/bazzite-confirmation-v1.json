@@ -1,0 +1,298 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "confirm-01",
+      "split": "verify",
+      "query": "radiodiffusion",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radiodiffusion",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Historique et aspects techniques de la transmission radio."
+    },
+    {
+      "id": "confirm-02",
+      "split": "verify",
+      "query": "communication",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Communication",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Concerne les formes de communication humaine, animale et végétale."
+    },
+    {
+      "id": "confirm-03",
+      "split": "verify",
+      "query": "antenne biologie",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Antenne_(biologie)",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Organe sensoriel des arthropodes et anatomie."
+    },
+    {
+      "id": "confirm-04",
+      "split": "verify",
+      "query": "éclipse",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Éclipse",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène astronomique."
+    },
+    {
+      "id": "confirm-05",
+      "split": "verify",
+      "query": "radio france",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Radio_France",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Histoire et organisation de l’entreprise de radio."
+    },
+    {
+      "id": "confirm-06",
+      "split": "verify",
+      "query": "générateur électrique",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Générateur_électrique",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Types de générateurs, modélisation et moyens de production."
+    },
+    {
+      "id": "confirm-07",
+      "split": "verify",
+      "query": "bois énergie",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Bois_énergie",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Appareils, combustibles et applications, avec historique et cadre économique."
+    },
+    {
+      "id": "confirm-08",
+      "split": "verify",
+      "query": "réfrigérateur",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Réfrigérateur",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Fonctionnement, usages domestiques et histoire."
+    },
+    {
+      "id": "confirm-09",
+      "split": "verify",
+      "query": "conserve",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Conserve",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Histoire et procédé de conservation."
+    },
+    {
+      "id": "confirm-10",
+      "split": "verify",
+      "query": "panne de courant",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Panne_de_courant",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Mécanismes et prévention des pannes."
+    },
+    {
+      "id": "confirm-11",
+      "split": "verify",
+      "query": "théâtre",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Théâtre",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Pratique artistique et histoire du théâtre."
+    },
+    {
+      "id": "confirm-12",
+      "split": "verify",
+      "query": "levure",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Levure",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Organismes et modes de reproduction, avec des exemples d’utilisation."
+    },
+    {
+      "id": "confirm-13",
+      "split": "verify",
+      "query": "evaporation",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Evaporation",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène physique général, vitesse et comparaison avec l’ébullition."
+    },
+    {
+      "id": "confirm-14",
+      "split": "verify",
+      "query": "refrigerator",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Refrigerator",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Fonction et types d’appareils de refroidissement."
+    },
+    {
+      "id": "confirm-15",
+      "split": "verify",
+      "query": "electric motor",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Electric_motor",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Fonctionnement d’un moteur et histoire."
+    },
+    {
+      "id": "confirm-16",
+      "split": "verify",
+      "query": "fire extinguisher",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Fire_extinguisher",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Appareil d’extinction et quelques types d’usage."
+    },
+    {
+      "id": "confirm-17",
+      "split": "verify",
+      "query": "sewing",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Sewing",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Couture et moyens utilisés pour assembler les tissus."
+    },
+    {
+      "id": "confirm-18",
+      "split": "verify",
+      "query": "smoke detector",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Smoke_detector",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Conception et types d’appareils de détection."
+    },
+    {
+      "id": "confirm-19",
+      "split": "verify",
+      "query": "ocean",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Ocean",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présente l’océan, ses espèces et ses propriétés."
+    },
+    {
+      "id": "confirm-20",
+      "split": "verify",
+      "query": "rain",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Rain",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Précipitation et types de pluie."
+    },
+    {
+      "id": "confirm-21",
+      "split": "verify",
+      "query": "earthquake",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Earthquake",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène, causes, échelles et effets."
+    },
+    {
+      "id": "confirm-22",
+      "split": "verify",
+      "query": "television",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Television",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présentation d’un média et de sa technologie."
+    },
+    {
+      "id": "confirm-23",
+      "split": "verify",
+      "query": "hydroelectricity",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Hydroelectricity",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Production d’énergie avec des centrales hydrauliques et ses limites."
+    },
+    {
+      "id": "confirm-24",
+      "split": "verify",
+      "query": "soil",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Soil",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Composition du sol et matière organique."
+    }
+  ]
+}
