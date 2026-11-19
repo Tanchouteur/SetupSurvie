@@ -60,7 +60,7 @@
     ["Aller à", "Traductions", go("#/bibliotheque/traductions")],
     ["Aller à", "Assistant", () => { focusLater("chat-input"); location.hash = "#/assistant"; }],
     ["Aller à", "Nouvelle discussion", () => { afterRoute(() => { $("chat-reset")?.click(); $("chat-input")?.focus(); }); location.hash = "#/assistant"; }],
-    ["Aller à", "Cartes hors ligne", () => { location.href = "/cartes.html?interface=nouveau"; }],
+    ["Aller à", "Cartes hors ligne", () => { location.href = "/cartes.html"; }],
     ["Aller à", "État de l’appareil", go("#/appareil/ensemble")],
     ["Aller à", "File d’attente", go("#/file")],
     ["Aller à", "Paramètres", go("#/appareil/reglages")],

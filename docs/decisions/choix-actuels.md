@@ -10,7 +10,7 @@ stockage Ollama existant. La reconnaissance vocale reste utilisée pour les
 sous-titres des vidéos. Le lot avait d’abord été numéroté 0.61.0 dans la
 PR 66. Le numéro 0.61.0 était déjà utilisé par le chantier « interface unique ».
 La version 0.62.0 identifie la livraison des modèles et permet de l’installer
-depuis une installation marquée 0.61.0. Voir le [guide d’utilisation](../utilisation/nouvelle-interface.md#télécharger-un-modèle-pour-lassistant).
+depuis une installation marquée 0.61.0. Voir le [guide d’utilisation](../utilisation/portail.md#télécharger-un-modèle-pour-lassistant).
 
 
 ## Traductions partielles publiées automatiquement — 3 décembre 2026
@@ -612,7 +612,7 @@ sur les précisions ci-dessous.
 | IA | Trois modes conseillés et autres modèles pour essais ; aucun gagnant désigné sur la seule taille |
 | Fiabilité des réponses | Depuis 0.1.18, [dates distinctes, citations lues, faits et déductions, contradictions et incertitude](../utilisation/sources-et-fiabilite.md) ; consignes renforcées et métadonnées conservées, respect par les modèles réels encore à évaluer |
 | Savoirs durables | [Référence unique des besoins de Marc](../bibliotheque/savoirs-durables.md) : principes, mesures, fabrication, contrôle, entretien et transmission ; parcours et thèmes intégrés en 0.1.19, couverture documentaire à examiner |
-| Gestion des collections | Depuis 0.1.32, **Bibliothèque → Collections** ouvre les contenus ; **Mon appareil → Paramètres → Bibliothèque et préparations** donne accès aux téléchargements et au stockage depuis 0.12.0 ; **Travaux en cours** garde le suivi. L’interface classique conserve Données locales. [Guide actuel](../utilisation/nouvelle-interface.md), organisation validée par Louis le 13 novembre |
+| Gestion des collections | Depuis 0.1.32, **Bibliothèque → Collections** ouvre les contenus ; **Mon appareil → Paramètres → Bibliothèque et préparations** donne accès aux téléchargements et au stockage depuis 0.12.0 ; **Travaux en cours** garde le suivi. L’interface classique conserve Données locales. [Guide actuel](../utilisation/portail.md), organisation validée par Louis le 13 novembre |
 | Installation Windows | Depuis 0.1.20, [un seul lanceur](../installation/deux-etapes-windows.md) prépare le PC puis installe depuis Internet ou un kit ; les deux anciens restent utilisables. Diagnostic des composants et conflits avant copie, reprise explicite et raccourcis préservés ; installation complète sur Windows vierge encore à valider |
 | Mise à jour Windows | Depuis 0.1.21, [raccourci Git fourni à l’installation](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) : récupération de main dans un dépôt séparé, sauvegarde, paquet vérifié et retour arrière ; lanceur stable hors du logiciel remplacé |
 | Prérequis du pilote Marc | Préparation initiale Windows / WSL 2 / pilotes / Python / Docker / Ollama avec Internet ; kit applicatif hors ligne ensuite, sans installateur système complet (12 novembre 2026) |
@@ -712,6 +712,16 @@ Le 14 novembre 2026, Louis demande une conversation plus confortable, le retrait
 de **Faire un retour** et des boutons de retour classique. Depuis 0.1.35,
 l’historique s’ouvre par **Conversations**, l’archive `/classique/` est conservée
 sans lien dans les menus, et l’accueil demande **Qu’avez-vous envie d’apprendre ?**.
+
+**Décision du 19 novembre 2026 (Louis) — interface unique, 0.63.0.** Préparée sous le numéro 0.61.0, elle est livrée en 0.63.0, après la 0.62.0 des téléchargements de modèles. L’interface
+classique est retirée du code livré et la « nouvelle » interface devient simplement
+l’interface du portail : `portal/nouveau/` est renommé `portal/interface/`, son
+gabarit de contrôles est `portal/interface/modele.html` et le générateur
+`scripts/build_portal.py`. Les adresses `/classique/` et `/nouveau/` redirigent vers
+la racine pour préserver les favoris. Cette décision remplace la conservation de
+l’archive `/classique/` décidée en 0.1.35. Louis demande aussi de revoir le design
+de la file d’attente, dont le principe est conservé ; voir le
+[guide de design](../architecture/guide-design.md#file-dattente).
 La recherche Kiwix isole les échecs et expose ses limites au portail et à l’assistant ;
 aucune absence de source sur le feu chez Marc n’est déduite d’un test simulé.
 

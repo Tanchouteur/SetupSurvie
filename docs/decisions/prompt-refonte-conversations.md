@@ -74,8 +74,8 @@ par profil/traduction, les comparaisons ouvertes et la sélection de texte.
 Le routeur gère les dialogues dans l’historique : ne pas doubler ses écritures.
 Les publications restent indépendantes des conversations privées supprimées.
 
-`portal/index.html` et `portal/nouveau/index.html` sont générés : modifier
-`scripts/build_next_portal.py` et les sources, puis régénérer. Incrémenter la
+`portal/index.html` et `portal/interface/index.html` sont générés : modifier
+`scripts/build_portal.py` et les sources, puis régénérer. Incrémenter la
 version du logiciel logiquement, maintenir API/release/README et les clés de
 cache des fichiers modifiés. Ne pas modifier les versions tierces épinglées
 pour une refonte d’interface.

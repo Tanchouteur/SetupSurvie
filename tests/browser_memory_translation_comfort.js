@@ -56,7 +56,7 @@ async page=>{
  stage='profil traduction';
  const profile=await page.request.post(base+'/api/profiles',{data:{name:'Recette confort traduction '+Date.now()},headers:{Origin:base}});check(profile.ok(),'Profil de traduction isolé');
  const profileId=(await profile.json()).id;
- await page.goto(base+'/nouveau/#/bibliotheque/recherche?q=Shelter');
+ await page.goto(base+'/#/bibliotheque/recherche?q=Shelter');
  await page.waitForFunction(id=>typeof S!=='undefined'&&S.authReady&&S.user?.id===id,profileId);
  await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.txt'));
  stage='création traduction';
@@ -83,7 +83,7 @@ async page=>{
  stage='navigation cartes';
  inference={...inference,models_available:true,control_available:true,models:[{name:'modele-charge-fixture'}]};
  await page.route('**/vendor/maps/maplibre-gl.js',route=>route.fulfill({contentType:'text/javascript',body:'window.maplibregl={addProtocol(){},Map:class{constructor(){throw Error("fixture driver unavailable");}}};'}));
- await page.setViewportSize({width:1440,height:900});await page.goto(base+'/cartes.html?interface=nouveau');
+ await page.setViewportSize({width:1440,height:900});await page.goto(base+'/cartes.html');
  await page.locator('.map-site-nav [aria-current=page]').waitFor();await page.locator('.map-site-nav .resource-status').filter({hasText:'modele-charge-fixture'}).waitFor();
  check(await page.locator('.map-site-nav nav a').count()===5,'La navigation principale reste dans les cartes');
  check(await page.locator('#map-sidebar').isVisible(),'Les outils cartographiques sont conservés');

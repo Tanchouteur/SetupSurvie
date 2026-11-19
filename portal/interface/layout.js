@@ -26,7 +26,7 @@
       "nav-item",
       `<span aria-hidden="true">${icon}</span><span>${label}</span>`,
     );
-    a.href = path === "cartes" ? "/cartes.html?interface=nouveau" : "#/" + path;
+    a.href = path === "cartes" ? "/cartes.html" : "#/" + path;
     if (path !== "cartes") a.dataset.route = path;
     nav.append(a);
   }
@@ -89,11 +89,6 @@
     if (host === brand) version.setAttribute("aria-hidden", "true");
     host.append(version);
   }
-  document
-    .querySelectorAll(
-      'a[href="/maquette/"],a[href="/nouveau/"],a[href^="/classique/"]',
-    )
-    .forEach((a) => a.remove());
   get("view-home").querySelector("h1").innerHTML =
     "Qu’avez-vous<br>envie d’apprendre ?";
   get("view-home").querySelector(".welcome").classList.add("next-welcome");
@@ -287,7 +282,7 @@
     make(
       "article",
       "panel next-map-intro",
-      '<h2>Cartes hors ligne</h2><p>Le fond de carte, les adresses, le relief et le réseau d’itinéraires sont préparés séparément. La présence d’un fond ne signifie pas que toutes ces données sont disponibles.</p><a class="button" href="/cartes.html?interface=nouveau">Ouvrir les cartes et mes repères →</a><p class="next-mobile-note">Sur téléphone, privilégiez la consultation des lieux et trajets préparés. Les outils complexes de création restent sur ordinateur.</p>',
+      '<h2>Cartes hors ligne</h2><p>Le fond de carte, les adresses, le relief et le réseau d’itinéraires sont préparés séparément. La présence d’un fond ne signifie pas que toutes ces données sont disponibles.</p><a class="button" href="/cartes.html">Ouvrir les cartes et mes repères →</a><p class="next-mobile-note">Sur téléphone, privilégiez la consultation des lieux et trajets préparés. Les outils complexes de création restent sur ordinateur.</p>',
     ),
   );
   get("main").append(maps);

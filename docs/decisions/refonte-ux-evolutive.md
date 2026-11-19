@@ -48,7 +48,7 @@ suivi doit distinguer travail en cours, résultat provisoire, fin et erreur. Une
 nouvelle capacité ne justifie pas à elle seule un nouvel écran ou une nouvelle
 commande permanente ; partir de l’usage et des composants déjà présents.
 
-`portal/nouveau/ui.js` fournit les primitives communes ;
+`portal/interface/ui.js` fournit les primitives communes ;
 `ux-system.css` et les styles de composants portent leurs règles.
 `ux-system.js` gère les adaptations et repères personnels. `SurvieUI.help(libellé, texte)` produit une aide
 facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
@@ -59,7 +59,7 @@ Toute nouvelle fonction précise sa destination, ses commandes, ses états,
 son aide et sa recette. Utiliser les composants existants avant d’en ajouter.
 Les modules partagent l’identifiant et l’état serveur d’un même travail.
 Les sélecteurs ne doivent pas dépendre du texte visible. Les pages générées restent
-produites par `scripts/build_next_portal.py`, jamais modifiées isolément.
+produites par `scripts/build_portal.py`, jamais modifiées isolément.
 
 ## Coordination du chantier parallèle
 
@@ -113,7 +113,7 @@ cohérence dans tout le site, pas seulement sur un écran.
   site et demande de comprendre et corriger cet écart. Dans le code actuel,
   `portal/map-site-nav.js` construit une barre distincte et
   `portal/map-site-nav.css` porte ses propres styles ; le portail construit sa
-  navigation dans `portal/nouveau/layout.js`. Cette séparation explique les
+  navigation dans `portal/interface/layout.js`. Cette séparation explique les
   implémentations différentes, mais une comparaison visuelle et fonctionnelle reste
   à mener avant de choisir la correction.
 - **Modèle, RAM et GPU :** Louis trouve ces informations mal placées et intégrées

@@ -5,7 +5,7 @@
   if (!container) return;
   const link = document.createElement('a');
   link.className = 'resource-status';
-  link.href = (mapHeader ? '/nouveau/' : '') + '#/appareil/ensemble';
+  link.href = (mapHeader ? '/' : '') + '#/appareil/ensemble';
   if (!mapHeader) link.dataset.route = 'appareil/ensemble';
   link.innerHTML = `
     <span class="resource-status-model" aria-hidden="true">

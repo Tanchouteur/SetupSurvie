@@ -1,9 +1,10 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.49.0, 18 novembre 2026.**
+**Guide actuel — 0.63.0, 19 novembre 2026.**
 
-La nouvelle organisation est l’entrée habituelle du portail, sur Windows comme
-sur Linux. Elle utilise les mêmes données et API que l’interface classique.
+Le portail a une seule interface, servie à la racine, sur Windows comme sur
+Linux. Depuis 0.63.0, l’ancienne interface « classique » est retirée et
+l’adresse `/nouveau/` n’existe plus comme entrée distincte (voir plus bas).
 Les données de production ne sont pas remplacées par les exemples de la maquette.
 La maquette fictive a été retirée du paquet en 0.59.0.
 
@@ -230,19 +231,28 @@ préparations de zones et les commandes complexes restent sur ordinateur, avec
 une indication dans la page. Les restrictions existantes des cartes pour la
 création de repères/trajets sur petit écran sont conservées.
 
-Les pages natives PDF et Cartes gardent un lien de retour vers l’interface dont
-elles proviennent.
+Les pages natives PDF et Cartes gardent un lien de retour vers le portail.
 Safari iPhone réel reste à essayer ; les tests WebKit ne le remplacent pas.
 
-## Présentation précédente conservée
+## Anciennes adresses — 0.63.0
 
-Les boutons de retour à l’interface classique et **Faire un retour** ont été
-retirés de la nouvelle interface à la demande de Louis. Pour comparer
-ponctuellement, ouvrir directement `/classique/` sur le même serveur.
-Elle conserve ses propres HTML, CSS et scripts. Les lecteurs tiers volumineux et
-les API sont partagés ; profils, conversations, favoris et données ne sont pas
-copiés. Une bascule n’arrête aucune opération et ne restaure aucune base.
-La nouvelle présentation reste aussi accessible explicitement sous `/nouveau/`.
+À la demande de Louis (19 novembre 2026), l’interface classique est retirée :
+ses scripts et styles propres ne sont plus livrés. Les favoris `/classique/…`
+et `/nouveau/…` restent valables : ces deux adresses ne contiennent plus qu’une
+petite page qui renvoie vers la racine en conservant la page demandée
+(`/nouveau/#/file` ouvre `/#/file`, `/classique/#chat` ouvre l’assistant).
+Profils, conversations, favoris et données ne sont pas touchés. Une mise à jour
+compatible n’efface pas les anciens fichiers d’une installation existante ; ils
+ne sont simplement plus référencés.
+
+## File d’attente — présentation 0.63.0
+
+La page **Mon appareil → File d’attente** et l’aperçu au survol de l’icône
+présentent chaque groupe comme une liste à plat. Une pastille indique l’état de
+chaque tâche : verte (pulsée) en cours, braise pour la suivante, cercle vide en
+attente, ambre en pause, rouge en erreur. La poignée à six points déplace une
+tâche en attente dans son groupe, à la souris ou avec les flèches du clavier.
+Les fonctions, priorités et commandes sont inchangées.
 
 ## Installer et mettre à jour
 

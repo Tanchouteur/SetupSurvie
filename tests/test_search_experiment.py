@@ -175,4 +175,4 @@ class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
 
     def test_reference_is_bundled_with_service_and_matches_static_copy(self):
         root=Path(__file__).resolve().parents[1]
-        self.assertEqual((root/'pilot/search-reference.json').read_bytes(),(root/'portal/nouveau/search-reference.json').read_bytes())
+        self.assertEqual((root/'pilot/search-reference.json').read_bytes(),(root/'portal/interface/search-reference.json').read_bytes())

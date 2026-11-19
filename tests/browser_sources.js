@@ -1,10 +1,10 @@
 // Playwright MCP recipe against the tiny local fixture API only.
 async (page) => {
   const base='http://10.0.3.2:8769';
-  await page.unrouteAll({behavior:'wait'});
+  await page.setViewportSize({width:1366,height:900});await page.unrouteAll({behavior:'wait'});
   await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base+'/#/bibliotheque/recherche');await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>readSource('guide:shelter.en.txt'));
   await page.locator('#reader .source-dates').waitFor({state:'visible'});
   const date=await page.locator('#reader .source-dates').textContent();
@@ -17,9 +17,9 @@ async (page) => {
   if(!(await page.locator('.source-chips').textContent()).includes('Deuxième édition'))throw Error('Métadonnées perdues après rechargement');
   await page.locator('.source-chips button').first().click();
   await page.locator('#reader .source-dates').waitFor({state:'visible'});
-  await page.evaluate(()=>view('settings'));
+  await page.evaluate(()=>{location.hash='#/appareil/bibliotheque';});await page.locator('#upload-form').waitFor({state:'attached'});
   await page.waitForFunction(()=>document.getElementById('assistant-policy').textContent.includes('Je ne sais pas'));
-  const form=page.locator('#upload-form');await form.locator('..').evaluate(e=>e.open=true);
+  const form=page.locator('#upload-form');await page.locator('#settings-add-guide').evaluate(e=>e.open=true);
   await form.locator('[name="title"]').fill('Notice fictive sans date');
   await form.locator('[name="file"]').setInputFiles({name:'notice.txt',mimeType:'text/plain',buffer:Buffer.from('Notice fictive. Trois compartiments.')});
   const edition='<img src=x onerror=alert(1)> '+'E'.repeat(240);
@@ -31,6 +31,7 @@ async (page) => {
   await page.waitForFunction(()=>document.getElementById('upload-status').textContent.includes('Guide ajouté'));
   const results=await(await page.request.get(base+'/api/search?q=compartiments')).json();
   if(!results.results.length)throw Error('Document ajouté introuvable');
+  await page.evaluate(()=>{location.hash='#/bibliotheque/recherche';});await page.locator('#view-library').waitFor();
   await page.evaluate(id=>readSource(id),results.results[0].id);
   await page.locator('#reader .source-dates').waitFor({state:'visible'});
   if(!(await page.locator('#reader .source-dates').textContent()).includes('Date du document inconnue'))throw Error('Date inventée');

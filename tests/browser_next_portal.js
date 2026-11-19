@@ -50,21 +50,23 @@ async page => {
   assert(page.url().includes('conversation='),'Conversation réelle adressable');
   assert((await page.locator('#chat-messages').textContent()).includes('Réponse simulée'),'Envoi fonctionne sur API simulée sans modèle');
   const conversation=await page.evaluate(()=>S.conversation);
-  // An explicitly opened classic uses the same profile and stored conversations.
-  const classic=await page.context().newPage();await classic.goto(base+'/classique/');await classic.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
-  await classic.waitForSelector('.conversation-link');
-  assert((await classic.locator('#conversation-list').textContent()).includes('Question simulée'),'Classique retrouve le même historique');await classic.close();
+  // Former bookmarks of the retired interfaces land on the same portal, route and profile.
+  for(const legacy of ['/classique/#chat','/nouveau/#/assistant']){
+    const old=await page.context().newPage();await old.goto(base+legacy);await old.waitForURL(url=>new URL(url).pathname==='/');
+    await old.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
+    assert(await old.locator('#view-chat').isVisible(),'Ancienne adresse '+legacy+' redirigée vers l’assistant');await old.close();
+  }
   await page.setViewportSize({width:390,height:844});await page.locator('#navigation [data-route="appareil"]').click();
   await page.goto(base+'/#/appareil/telechargements');
   assert(!await page.locator('#geo-download-form').isVisible(),'Préparation complexe retirée sur mobile');
   assert(await page.locator('#view-data .next-activity').isVisible(),'Suivi accessible sur mobile');
   await page.locator('#navigation').getByRole('link',{name:'Cartes',exact:true}).click();
-  await page.waitForURL('**/cartes.html?interface=nouveau');
+  await page.waitForURL('**/cartes.html');
   await page.waitForFunction(()=>window.SurvieMap);
   assert(await page.locator('#map').isVisible(),'L’onglet Cartes ouvre directement la carte sur mobile');
   for(const width of [320,390,760,820,1440]){await page.setViewportSize({width,height:950});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement à '+width);}
-  await page.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau');
-  await page.waitForFunction(()=>document.querySelector('#pdf-ask').getAttribute('href')?.includes('/nouveau/'));
+  await page.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf');
+  await page.waitForFunction(()=>document.querySelector('#pdf-ask').getAttribute('href')?.startsWith('/?document='));
   await page.getByRole('link',{name:'Questionner ce document'}).click();
   await page.waitForFunction(()=>typeof S!=='undefined'&&S.source?.id==='guide:shelter.en.pdf');
   assert(await page.locator('#view-chat').isVisible(),'Le lecteur PDF ouvre le bon assistant avec son document associé');

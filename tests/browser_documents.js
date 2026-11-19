@@ -1,17 +1,17 @@
 // UI, real PDF rendering and deliberately broken optional features; fixture only.
 async (page) => {
   const base='http://10.0.3.2:8769';
-  await page.unrouteAll({behavior:'wait'});
+  await page.setViewportSize({width:1366,height:900});await page.unrouteAll({behavior:'wait'});
   await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.request.delete(base+'/api/favorites?source_id='+encodeURIComponent('guide:shelter.en.pdf'),{headers:{Origin:base}});
-  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base+'/#/bibliotheque/recherche');await page.waitForFunction(()=>S.user?.id==='browser');
   await page.evaluate(()=>search('Shelter'));
   const pdfResult=page.locator('.result[data-source^="guide:shelter.en.pdf#page="]').first();
   await pdfResult.waitFor({state:'visible'});
   await pdfResult.locator('.favorite-toggle').click();
   await pdfResult.locator('.favorite-toggle[aria-pressed="true"]').waitFor();
-  await page.locator('[data-library-scope=favorites]').click();
+  await page.evaluate(()=>view('/bibliotheque/favoris'));await page.locator('#library-query').waitFor({state:'visible'});
   await page.locator('#library-query').fill('calibration');await page.locator('#library-search').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(()=>[...document.querySelectorAll('.result')].some(n=>n.dataset.source==='guide:shelter.en.pdf#page=6'));
   await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
@@ -27,7 +27,7 @@ async (page) => {
     throw Error('Translation publication timed out');
   },item.id);
   const shared=translated.publication.source_id;
-  await page.evaluate(()=>view('library'));await page.locator('[data-library-scope=translations]').click();
+  await page.evaluate(()=>view('/bibliotheque/traductions'));await page.locator('#library-query').waitFor({state:'visible'});
   await page.locator('#library-query').fill('');await page.locator('#library-search').evaluate(f=>f.requestSubmit());
   await page.waitForFunction(id=>[...document.querySelectorAll('.result')].some(n=>n.dataset.source===id),shared);
   await page.locator('.result').filter({hasText:'Traduction IA'}).first().locator('.favorite-toggle').click();
@@ -76,7 +76,7 @@ async (page) => {
   // A JavaScript error in the optional module must leave the old search alive.
   const fallback=await page.context().newPage();const expected=[];fallback.on('pageerror',error=>expected.push(String(error)));
   await fallback.route('**/documents.js*',route=>route.fulfill({contentType:'text/javascript',body:'throw new Error("fixture optional module failure");'}));
-  await fallback.goto(base+'/index.html#library');await fallback.locator('#library-query').fill('Shelter');await fallback.locator('#library-search').evaluate(f=>f.requestSubmit());
+  await fallback.goto(base+'/#/bibliotheque/recherche');await fallback.locator('#library-query').fill('Shelter');await fallback.locator('#library-search').evaluate(f=>f.requestSubmit());
   await fallback.waitForFunction(()=>document.querySelectorAll('.result').length>0);
   if(!expected.some(e=>e.includes('fixture optional module failure'))||expected.some(e=>!e.includes('fixture optional module failure')))throw Error('Core failure after optional module crash: '+expected.join('\n'));
   await fallback.close();

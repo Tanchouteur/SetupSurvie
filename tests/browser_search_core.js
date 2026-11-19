@@ -106,12 +106,12 @@ async page => {
   }
   await page.setViewportSize({width:1366,height:768});
   await page.locator('[data-close="next-search-check-dialog"]').click();
-  await page.route('**/nouveau/search-reference.json?*',r=>r.fulfill({json:{schema:99,cases:[]}}));
+  await page.route('**/interface/search-reference.json?*',r=>r.fulfill({json:{schema:99,cases:[]}}));
   if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('doit être mise à jour'));
   check(!await page.locator('#next-search-check-open').isDisabled(),'Liste de tests invalide expliquée et relance possible');
   await page.locator('[data-close="next-search-check-dialog"]').click();
-  await page.unroute('**/nouveau/search-reference.json?*');await page.locator('#next-search-check-suite').selectOption('short');
+  await page.unroute('**/interface/search-reference.json?*');await page.locator('#next-search-check-suite').selectOption('short');
   await page.route('**/api/search?*',async r=>{await new Promise(resolve=>setTimeout(resolve,250));await r.fulfill({json:{results:[],coverage:{status:'complete'}}}).catch(()=>{});});
   const requested=page.waitForRequest(r=>r.url().includes('/api/search?'));if(!await page.locator('#settings-test-search').evaluate(n=>n.open))await page.locator('#settings-test-search > summary').click();await page.locator('#next-search-check-open').click();await requested;await page.locator('#next-search-check-cancel').click();
   await page.waitForFunction(()=>document.getElementById('next-search-check-status').textContent.includes('Vérification arrêtée'));

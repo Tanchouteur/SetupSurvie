@@ -94,7 +94,7 @@ async page => {
   check(await page.locator('#assistant-workspace').evaluate(n=>getComputedStyle(n).transitionDuration==='0s'),'La préférence de réduction supprime aussi les transitions CSS');
   await page.locator('[data-close-panel=documents]').click();await panel.waitFor({state:'hidden'});await opener.press('Enter');await panel.waitFor({state:'visible'});
   check(await page.locator('#chat-input').inputValue()==='Brouillon à conserver','Volets utilisables sans animation');
-  for(const path of ['/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau','/cartes.html?interface=nouveau']){
+  for(const path of ['/pdf.html?id=guide%3Ashelter.en.pdf','/cartes.html']){
     await page.goto(base+path);await page.waitForFunction(()=>!!window.SurvieMotion);
     check(await page.locator('body').evaluate(n=>n.classList.contains('ux-motion')),'Retour visuel commun chargé dans '+path.split('?')[0]);
     check(await page.locator('button').first().evaluate(n=>getComputedStyle(n).transitionDuration==='0s'),'Réduction des animations respectée dans '+path.split('?')[0]);

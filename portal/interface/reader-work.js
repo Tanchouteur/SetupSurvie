@@ -14,7 +14,7 @@
     const response=await fetch('/api'+path,config),data=await response.json();
     if(!response.ok){const error=Error(typeof data.detail==='string'?data.detail:'Le service est momentanément indisponible.');error.status=response.status;throw error;}return data;
   };
-  const originalURL=portal?originalSourceURL:id=>'/pdf.html?'+new URLSearchParams({id,interface:'nouveau'});
+  const originalURL=portal?originalSourceURL:id=>'/pdf.html?'+new URLSearchParams({id});
 
   const canonical=id=>id.replace(/#page=\d+$/,'');
   async function mount(source,host,actions){
@@ -114,7 +114,7 @@
         lastDone=data.last_done_position;latest.hidden=!Number.isInteger(lastDone)||Math.floor(lastDone/10)*10===position;
         progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.done;
         pause.hidden=!active;resume.hidden=active||(data.status==='completed'&&!data.deferred);resume.dataset.deferred=String(data.status==='completed'&&!!data.deferred);resume.textContent=resume.dataset.deferred==='true'?'Reprendre les passages à vérifier':'Reprendre';stop.hidden=data.status==='completed'||data.status==='stopped';remove.hidden=false;download.hidden=false;conversation.hidden=false;
-        download.href='/api/translations/'+encodeURIComponent(id)+'/export';conversation.href=(portal?'':'/nouveau/')+'#/assistant?conversation='+encodeURIComponent(data.conversation_id);conversation.dataset.route='assistant?conversation='+encodeURIComponent(data.conversation_id);
+        download.href='/api/translations/'+encodeURIComponent(id)+'/export';conversation.href=(portal?'':'/')+'#/assistant?conversation='+encodeURIComponent(data.conversation_id);conversation.dataset.route='assistant?conversation='+encodeURIComponent(data.conversation_id);
         const publication=data.publication||{};
         const publishing=data.status==='completed'&&data.done>0&&publication.pending&&!publication.error;
         publish.hidden=data.status!=='completed'||!data.done||publishing||!!(publication.source_id&&!publication.error);

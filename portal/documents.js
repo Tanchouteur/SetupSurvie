@@ -134,7 +134,7 @@
     const chat=location.hash==='#chat'||location.hash.startsWith('#/assistant');if(chat&&!S.user){if(S.authReady)auth();return;}
     D.intent=true;
     try{
-      if(chat){const source=await request('/source?id='+encodeURIComponent(id));askSource(source);history.replaceState(null,'',location.pathname+(location.pathname.startsWith('/nouveau/')?'#/assistant':'#chat'));}
+      if(chat){const source=await request('/source?id='+encodeURIComponent(id));askSource(source);history.replaceState(null,'',location.pathname+'#/assistant');}
       else await readSource(id);
     }catch(error){D.intent=false;throw error;}
   }

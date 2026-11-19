@@ -20,6 +20,16 @@ Les études et le prototype initial sont conservés ici. Leurs hypothèses, tari
 - [Avant la première version installée chez Marc](avant-premiere-installation-marc.md)
 - [Projet : serveur autonome de connaissances avec IA locale](sources/contexte-initial.md)
 
+## Chemins renommés en 0.63.0 (19 novembre 2026)
+
+| Ancien chemin | Chemin actuel |
+| --- | --- |
+| `docs/utilisation/portail.md` | [utilisation/portail.md](../utilisation/portail.md) |
+| `portal/nouveau/` | `portal/interface/` (l’ancien dossier ne garde qu’une page de redirection) |
+| `portal/classique/index.html` | `portal/interface/modele.html` ; scripts et styles classiques supprimés, l’ancien dossier ne garde qu’une page de redirection |
+| `scripts/build_next_portal.py` | `scripts/build_portal.py` |
+| `tests/test_next_portal.py` | `tests/test_portal_build.py` |
+
 ## Correspondance des chemins avant le classement du 11 novembre 2026
 
 Les numéros indiquaient l’ordre de création. Ils sont conservés dans cette table ; les fichiers sont maintenant classés par usage. Les anciennes URL GitHub de fichiers déplacés doivent être remplacées par les liens ci-dessous ou consultées dans l’historique Git.

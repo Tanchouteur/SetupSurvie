@@ -76,7 +76,7 @@
         if (target) after = point.y >= top + target.offsetTop + target.offsetHeight / 2;
         const from = peers.indexOf(source);
         const to = target ? peers.indexOf(target) + Number(after) : from;
-        const displacement = source.offsetHeight + parseFloat(getComputedStyle(list).rowGap);
+        const displacement = source.offsetHeight + (parseFloat(getComputedStyle(list).rowGap) || 0);
         peers.forEach((card, index) => {
           if (card === source) return;
           const offset = index >= to && index < from ? displacement
@@ -277,6 +277,7 @@
           const row = make('li', '', 'work-queue-preview-card');
           row.dataset.workId = job.id;
           row.dataset.status = job.status;
+          if (job.next) row.dataset.next = '';
           const content = make('div', '', 'work-queue-preview-content');
           const label = job.next ? (state.paused ? 'À la reprise' : 'Ensuite') : statusLabel(job);
           const title = make(job.href ? 'a' : 'strong', job.title, 'work-queue-preview-task');
@@ -353,7 +354,7 @@
       if (epoch !== generation) fetchQueue();
     }
   };
-  const preview = mount(map, {href: '/nouveau/#/file', refresh: fetchQueue});
+  const preview = mount(map, {href: '/#/file', refresh: fetchQueue});
   preview.draw(null, {connection: 'loading'});
   document.addEventListener('survie:auth', () => {
     generation++;

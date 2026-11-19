@@ -29,12 +29,12 @@ toujours pas démarrer une reconnaissance ou un modèle.
 - Le moteur documentaire, les contrôleurs hôtes et les bases de données ne sont
   pas à réécrire pour changer leur présentation. Conserver conversations,
   dossiers, documents associés et préparations existantes.
-- Les commandes vidéo du portail utilisent `portal/nouveau/videos.js`,
+- Les commandes vidéo du portail utilisent `portal/interface/videos.js`,
   `captions.js`, `transcriptions.js`, `acquisitions.js` et le nouveau
   `archive-videos.js`. Les identifiants existants et événements
   `survie:video-cards`, `survie:videos-changed`, `survie:source` et `survie:auth`
   restent nécessaires tant que leurs consommateurs n’ont pas été adaptés ensemble.
-- `scripts/build_next_portal.py` inclut ces scripts ; régénérer les deux HTML
+- `scripts/build_portal.py` inclut ces scripts ; régénérer les deux HTML
   avec ce script. Réconcilier ses inclusions et versions de cache, sans perdre
   les composants du lot vidéo.
 - Les nouvelles routes `/api/zim-videos` et `/api/admin/zim-videos/{start,pause,report}`

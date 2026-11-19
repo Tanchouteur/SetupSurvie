@@ -104,8 +104,7 @@ function view(name){
   for(const section of document.querySelectorAll('.view'))section.hidden=section.id!=='view-'+name;
   document.querySelectorAll('.nav-item').forEach(b=>{b.classList.toggle('active',b.dataset.view===name);if(b.dataset.view===name)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
   $('breadcrumb').textContent=labels[name];
-  // The next portal route adapter owns its URL and history state.
-  if(!document.body.classList.contains('next-interface')&&location.hash!=='#'+name)history.replaceState(null,'','#'+name);
+  // The portal route adapter (interface/navigation.js) owns the URL and history state.
   if(name==='library')loadLearning();if(name==='monitor')refreshInference();if(name==='connect')loadNetwork();if(name==='settings'){loadAdmin();loadSettings();}if(name==='users')loadAdmin();if(name==='data')loadData();
   if(name!=='chat')window.scrollTo({top:0,behavior:'instant'});
   else{resumeConversation();if(S.conversation&&!S.loadingConversation)restoreReading(S.conversation);}
@@ -512,7 +511,7 @@ const translationControls=$('translation-pause').parentElement;
 const translationDownload=$('translation-export');
 const translationNavigation=$('translation-previous').parentElement;
 let translationMore=null,translationMoreActions=null;
-const translationThread=document.body.classList.contains('next-interface')?element('section',undefined,'translation-thread'):null;
+const translationThread=element('section',undefined,'translation-thread');
 if(translationThread){
   translationThread.id='translation-thread';
   translationThread.setAttribute('aria-label','Passages de la traduction');
@@ -546,7 +545,7 @@ function openTranslationReader(restoring=false){
     const id=S.translation,owner=S.user.id;document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{if(S.translation===id&&S.user?.id===owner)openTranslationReader(true);},0),{once:true});return;
   }
   translationReader.dataset.translationId=S.translation;translationReader.dataset.profileId=S.user.id;
-  if(restoring&&document.body.classList.contains('next-interface'))history.replaceState({...history.state,dialog:translationReader.id},'',location.href);
+  if(restoring)history.replaceState({...history.state,dialog:translationReader.id},'',location.href);
   translationReading(S.translation,S.translationOffset,true);moveTranslationReader(true);translationReader.showModal();
 }
 function rememberTranslationReaderClosed(){const id=translationReader.dataset.translationId;if(id&&S.user?.id===translationReader.dataset.profileId)translationReading(id,undefined,false);}

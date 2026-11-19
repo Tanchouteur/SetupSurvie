@@ -147,7 +147,7 @@ class VideoRequestTests(unittest.TestCase):
 
     def test_open_url_and_appendix_only_add_missing_links(self):
         url=video_requests.open_url('video:'+'a'*64+'#t=2000&track=1')
-        self.assertEqual(url,'/nouveau/#/bibliotheque/recherche?kind=videos&source=video:'+'a'*64+'%23t%3D2000%26track%3D1')
+        self.assertEqual(url,'/#/bibliotheque/recherche?kind=videos&source=video:'+'a'*64+'%23t%3D2000%26track%3D1')
         row={'id':'video:'+'a'*64,'title':'Feu [test]','open_url':url,'has_subtitles':False,'subtitle_languages':[]}
         answer=video_requests.appendix('Voici une vidéo.',[row])
         self.assertIn('[Feu  test]('+url+')',answer);self.assertIn('sans sous-titres',answer)

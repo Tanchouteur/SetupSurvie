@@ -42,8 +42,7 @@
       const explanation = document.createElement('p');
       explanation.textContent = message;
       const back = document.createElement('a');
-      back.href = new URLSearchParams(location.search).get('interface') === 'nouveau'
-        ? '/nouveau/#/bibliotheque' : '/index.html#library';
+      back.href = '/#/bibliotheque';
       back.textContent = 'Revenir à la bibliothèque';
       notice.append(title, explanation, back);
       document.querySelector('.map-stage').append(notice);

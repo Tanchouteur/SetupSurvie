@@ -22,7 +22,8 @@ GUIDANCE=('Résultat find_videos : vidéos de la bibliothèque locale. Pour prop
           'Si results est vide, lis coverage : un index absent ou en cours n’est pas une absence de vidéo. Si indexed_videos est '
           'supérieur à zéro, d’autres vidéos existent : propose une recherche plus large ou la liste sans mot-clé.')
 LIMIT=8
-PATH=r'/nouveau/#/bibliotheque/recherche\?'
+# Old answers may still contain the former /nouveau/ prefix; it redirects to /.
+PATH=r'/(?:nouveau/)?#/bibliotheque/recherche\?'
 LINKED=re.compile(r'\]\('+PATH+r'[^)\s]*source=video:([a-f0-9]{64})')
 BRACKETED=re.compile(r'\[(?:https?:/)?('+PATH+r'[^\]\s]+)\](?!\()')
 ABSOLUTE=re.compile(r'\]\(https?:/('+PATH+r')')
@@ -40,7 +41,7 @@ def query(question):
 
 
 def open_url(identifier):
-    return '/nouveau/#/bibliotheque/recherche?kind=videos&source='+quote(identifier,safe=':')
+    return '/#/bibliotheque/recherche?kind=videos&source='+quote(identifier,safe=':')
 
 
 def compact(found):

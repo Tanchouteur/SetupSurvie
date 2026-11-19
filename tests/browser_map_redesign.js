@@ -52,7 +52,9 @@ async (page) => {
   await page.locator('#point-title').fill('Réserve familiale');await page.locator('#point-new-list-title').fill('Nos ressources');
   await page.locator('#map-point-form button[type=submit]').click();await page.waitForFunction(()=>document.querySelector('#notebook-points').textContent.includes('Réserve familiale'));
   if(book.lists.length!==1||book.points.length!==1||book.points[0].list_id!==book.lists[0].id)throw new Error('Création de liste/point incorrecte.');
-  available=true;await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap);await page.locator('#map-nearby button').click();
+  available=true;await page.waitForLoadState('networkidle');await page.reload();await page.waitForFunction(()=>window.SurvieMap);
+  // Depuis 0.63.0 le dernier volet ouvert (ici le carnet) est restauré : revenir explicitement aux outils.
+  await page.locator('[data-panel="geo-tools"]').first().click();await page.locator('#map-nearby button').click();
   if(!(await page.locator('#map-nearby button').innerText()).includes('Recherche'))throw new Error('Pas d’état de chargement.');
   await page.getByRole('button',{name:'Source de démonstration',exact:true}).waitFor();
   await page.getByRole('button',{name:'Source de démonstration',exact:true}).click();

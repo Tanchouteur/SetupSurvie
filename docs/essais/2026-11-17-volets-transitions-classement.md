@@ -24,7 +24,7 @@ La version mineure correspond au nouveau mode de classement par glisser-déposer
 recherche 0.36.1, livré pendant ce chantier, est intégré sans retirer ses
 améliorations de recherche ni l’annulation des appels tardifs. La
 [référence des composants](../architecture/composants-interface.md) fixe les
-responsabilités ; le [guide utilisateur](../utilisation/nouvelle-interface.md)
+responsabilités ; le [guide utilisateur](../utilisation/portail.md)
 donne les commandes.
 
 ## Recette et limites

@@ -1,9 +1,9 @@
 // Fixture only: numbers are deliberately altered by the fake inference server.
 async page => {
   const base='http://10.0.3.2:8769';
-  await page.unrouteAll({behavior:'wait'});await page.goto('about:blank');
+  await page.setViewportSize({width:1366,height:900});await page.unrouteAll({behavior:'wait'});await page.goto('about:blank');
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
-  await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
+  await page.goto(base+'/#/bibliotheque/recherche');await page.waitForFunction(()=>S.user?.id==='browser');
   async function begin(source){
     const r=await page.request.post(base+'/api/translations',{data:{source_id:source,mode:'rapide'},headers:{Origin:base}});
     if(!r.ok())throw Error(await r.text());const t=await r.json();

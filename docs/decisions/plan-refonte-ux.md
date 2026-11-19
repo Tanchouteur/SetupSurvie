@@ -3,7 +3,7 @@
 **Statut : plan de référence du 13 novembre 2026, concrétisé par une première interface fonctionnelle en 0.1.32.**
 
 Louis valide la présentation PC et demande son activation normale sur Windows/Linux.
-Le [guide actuel](../utilisation/nouvelle-interface.md) décrit ce qui est livré ;
+Le [guide actuel](../utilisation/portail.md) décrit ce qui est livré ;
 le [bilan](../essais/2026-11-13-interface-fonctionnelle.md) distingue les essais sur
 fixtures des validations physiques restantes. Le détail du plan ci-dessous conserve
 le contexte de conception ; les passages au futur ne sont pas des résultats d’essai.

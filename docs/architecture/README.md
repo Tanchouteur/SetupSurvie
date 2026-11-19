@@ -579,9 +579,16 @@ En 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée perme
 
 ## Interface fonctionnelle — 0.1.32
 
+> **Remplacé en partie par 0.63.0 (19 novembre 2026).** L’interface classique est
+> retirée et `portal/nouveau/` est renommé `portal/interface/`. Le balisage des
+> contrôles vit désormais dans `portal/interface/modele.html` ;
+> `scripts/build_portal.py` en génère la seule entrée, `portal/index.html`.
+> `/classique/` et `/nouveau/` ne contiennent plus qu’une page de redirection
+> vers la racine. Le paragraphe ci-dessous décrit l’organisation de 0.1.32.
+
 L’entrée principale et `/nouveau/` servent la nouvelle organisation, avec les
 API existantes. `/classique/` conserve ses propres scripts/styles et les mêmes
-données. La maquette fictive a été retirée en 0.59.0. `scripts/build_next_portal.py` génère les
+données. La maquette fictive a été retirée en 0.59.0. `scripts/build_portal.py` génère les
 entrées modernes à partir du balisage classique. `layout.js` déplace les contrôles
 existants avant leur liaison ; `navigation.js` adapte historique et contexte.
 Depuis 0.12.0, `settings-layout.js` s’exécute après la création des panneaux
@@ -602,10 +609,10 @@ sans ouvrir de base ni prendre de verrou. Un cache hôte de cinq secondes borne
 les lectures concurrentes ; aucune erreur brute, chemin ou PID n’est publié.
 Le téléchargeur enregistre aussi un petit plan courant pour les transferts directs
 Windows/Linux. Aucune commande indépendante n’est ajoutée par cet endpoint.
-Voir le [guide](../utilisation/nouvelle-interface.md) et le
+Voir le [guide](../utilisation/portail.md) et le
 [bilan](../essais/2026-11-13-interface-fonctionnelle.md).
 
-Depuis 0.1.34, `portal/nouveau/collections.js` filtre uniquement les cartes de
+Depuis 0.1.34, `portal/interface/collections.js` filtre uniquement les cartes de
 l’inventaire déjà affichées ; leurs actions restent attachées aux mêmes éléments.
 Le routeur mémorise le filtre et ouvre directement la page native Cartes.
 Le relief repose sur les tuiles locales existantes, sans nouvelle source réseau.
@@ -791,7 +798,7 @@ la raccourcit au seul sujet, sans confondre deux actions explicites.
 
 ## Recette d’usage depuis le navigateur (0.10.0)
 
-`portal/nouveau/usage-recipe.js` utilise uniquement les API de lecture existantes,
+`portal/interface/usage-recipe.js` utilise uniquement les API de lecture existantes,
 sans commande d’inférence/préparation. Le contrôle comprend au maximum deux
 recherches et deux aperçus, quinze secondes par lecture et 90 secondes au total.
 Le profil, la génération et le contrôleur d’exécution isolent les réponses tardives.

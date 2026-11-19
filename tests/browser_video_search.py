@@ -40,7 +40,7 @@ def fixtures(temporary):
 
 def exercise(page,name,base,videos,video_requests):
     page.request.post(base+'/api/profiles/select',data={'id':'browser'},headers={'Origin':base})
-    page.goto(base+'/nouveau/#/bibliotheque/recherche')
+    page.goto(base+'/#/bibliotheque/recherche')
     page.wait_for_function("()=>typeof S!=='undefined'&&S.authReady")
     kind=page.locator('#search-kind');check(kind.is_visible(),name+' : menu « Documents et vidéos » visible')
     kind.select_option('videos')

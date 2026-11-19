@@ -55,7 +55,7 @@ habituels restent conservés en cas d’échec. Aucun appel de ce module n’est
 à la recherche ordinaire et aucun index sémantique n’est créé.
 
 La référence versionnée est dans `pilot/search-reference.json`, embarquée avec le
-service ; `scripts/build_next_portal.py` produit aussi sa copie statique destinée
+service ; `scripts/build_portal.py` produit aussi sa copie statique destinée
 au contrôle sans IA. Les huit cas `verify-*` restent séparés des 24 cas de réglage.
 Les documents fictifs des tests ne sont jamais des attentes imposées au fonds réel.
 

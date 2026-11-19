@@ -50,7 +50,7 @@ corrections. Un autre agent travaille sur l’indexation et la recherche.
   téléchargements. Préserve leurs commandes, contrats d’API et états.
 - Les fichiers de recherche `pilot/library.py`, `pilot/archive_index.py`,
   `pilot/retrieval.py`, `pilot/engine.py`, `scripts/index_*.py`,
-  `scripts/search_index_*.py` et `portal/nouveau/search-check.js` sont réservés
+  `scripts/search_index_*.py` et `portal/interface/search-check.js` sont réservés
   à l’autre chantier. Toute dépendance nécessitant une modification doit être
   identifiée et coordonnée, sans élargissement silencieux du périmètre.
 - Navigation commune, `pilot/app.py`, version, Compose, générateur du portail et
@@ -58,7 +58,7 @@ corrections. Un autre agent travaille sur l’indexation et la recherche.
   les intégrations sur main se font successivement après vérification. La
   recherche réserve 0.11.1 ; une évolution UX peut viser 0.12.0 après elle, en
   vérifiant la version réellement disponible au moment de l’intégration.
-- Régénère les HTML via `python3 scripts/build_next_portal.py`, sans éditer
+- Régénère les HTML via `python3 scripts/build_portal.py`, sans éditer
   directement les fichiers générés. Ne change pas les images tierces ni le schéma
   des données pour une réorganisation d’interface.
 

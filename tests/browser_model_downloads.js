@@ -67,8 +67,10 @@ async page => {
   available = false;
   await card.getByText('Démarrez le moteur IA', {exact: false}).waitFor();
   check(await start.isDisabled(), 'Moteur arrêté et téléchargements désactivés');
-  await page.goto(base + '/classique/#settings');
+  // L'interface classique est retirée en 0.63.0 : son ancienne adresse ramène au portail unique.
+  await page.goto(base + '/classique/#settings');await page.waitForURL(url => new URL(url).pathname === '/');
+  await page.goto(base + '/#/appareil/assistant');
   await card.getByText('Démarrez le moteur IA', {exact: false}).waitFor();
-  check(await page.locator('#dictate').count() === 0, 'Interface classique sans bouton de dictée');
+  check(await page.locator('#dictate').count() === 0, 'Portail sans bouton de dictée, y compris depuis l’ancienne adresse');
   return {checks};
 }

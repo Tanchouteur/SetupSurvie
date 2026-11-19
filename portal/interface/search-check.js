@@ -22,7 +22,7 @@
 
   async function casesFor(selection){
     if(selection!=='extended')return shortCases;
-    const reference=await read('/nouveau/search-reference.json?v=0.5.0',true);
+    const reference=await read('/interface/search-reference.json?v=0.5.0',true);
     const valid=reference&&reference.schema===1&&typeof reference.version==='string'&&Array.isArray(reference.cases)&&reference.cases.length>0&&reference.cases.length<=60&&reference.cases.every(item=>item&&typeof item.id==='string'&&typeof item.query==='string'&&item.query.length>0&&item.query.length<=200&&['all','resilience','culture'].includes(item.domain)&&typeof item.need==='string');
     if(!valid||new Set(reference.cases.map(item=>item.id)).size!==reference.cases.length)throw Error('La liste des recherches de test doit être mise à jour.');
     report.reference={version:reference.version,notice:reference.notice};

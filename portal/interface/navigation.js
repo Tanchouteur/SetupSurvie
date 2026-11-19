@@ -83,7 +83,7 @@
   mobileNav.addEventListener('change',fitNextChat);new ResizeObserver(fitNextChat).observe($('main-navigation'));
   function activate(route,restoring=false){
     if(!route)return;
-    if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html?interface=nouveau');return;}
+    if(route.name==='maps'){saveDraft();remember();location.replace('/cartes.html');return;}
     if(['settings','users'].includes(route.name)&&S.user?.role!=='admin'){
       if(S.authReady){toast('Choisissez le profil Famille pour ouvrir ces réglages.');if(!$('auth-dialog').open)auth();}else{pendingAdminRoute=route;S.requestedView=route.name;}
       return;
@@ -210,10 +210,6 @@
     }
     clearTimeout(activityTimer);activityTimer=setTimeout(pollActivity,5000);
   }
-  function decorateLinks(){
-    document.querySelectorAll('a[href^="/pdf.html"]').forEach(a=>{const u=new URL(a.href);u.searchParams.set('interface','nouveau');a.href=u.href;});
-    document.querySelectorAll('a[href^="/cartes.html"]').forEach(a=>{const u=new URL(a.href);u.searchParams.set('interface','nouveau');a.href=u.href;});
-  }
   document.addEventListener('survie:favorites-changed',()=>{for(const key of searches.keys())if(JSON.parse(key)[1]==='favoris')searches.delete(key);});
   document.addEventListener('toggle',event=>{const node=event.target;if(node.tagName==='DETAILS'&&node.id&&!node.matches(collectionDisclosure)&&!applying&&S.user&&!node.dataset.filtering)put('detail:'+node.id,node.open);},true);
   $('next-collections').addEventListener('click',event=>{
@@ -268,8 +264,8 @@
   }
   for(const dialog of document.querySelectorAll('dialog'))observeDialog(dialog);
   document.addEventListener('survie:dialog',event=>{if(event.detail instanceof HTMLDialogElement)observeDialog(event.detail);});
-  document.addEventListener('survie:source',()=>{decorateLinks();const back=$('reader').querySelector('.reader-actions button');if(back)back.onclick=()=>{const route=fromLegacy('library');route.params.delete('source');navigate(route);};});
-  document.addEventListener('survie:results',()=>{decorateLinks();if(pendingRestore&&pendingRestore.hash===location.hash){restorePosition(pendingRestore.state);pendingRestore=null;}});
+  document.addEventListener('survie:source',()=>{const back=$('reader').querySelector('.reader-actions button');if(back)back.onclick=()=>{const route=fromLegacy('library');route.params.delete('source');navigate(route);};});
+  document.addEventListener('survie:results',()=>{if(pendingRestore&&pendingRestore.hash===location.hash){restorePosition(pendingRestore.state);pendingRestore=null;}});
   document.addEventListener('survie:conversation',()=>{restoreDraft();if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}});
   document.addEventListener('survie:auth',()=>{
     const nextProfile=S.user?.id||null;
@@ -296,7 +292,7 @@
     if(initialDocument){const chatIntent=initialHash==='#chat'||initialHash.startsWith('#/assistant');requested.name=chatIntent?'chat':'library';requested.section=chatIntent?'assistant':'bibliotheque';requested.tab=requested.name==='library'?'recherche':'';}
     // A modal is not restored by a document reload. Do not keep its stale history marker.
     const {dialog:previousDialog,...initialState}=history.state||{};
-    historyReady=true;history.replaceState({...initialState,scroll:initialState.scroll||0},'',urlFor(requested.section,requested.tab,requested.params));activate(requested,true);decorateLinks();
+    historyReady=true;history.replaceState({...initialState,scroll:initialState.scroll||0},'',urlFor(requested.section,requested.tab,requested.params));activate(requested,true);
   });
   document.documentElement.style.setProperty('--next-banner-height','0px');
 })();

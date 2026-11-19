@@ -29,6 +29,9 @@ de branding ne constituent pas une décision de renommage du produit.
 
 - `portal/` : interface HTML, CSS et JavaScript, servie par Caddy.
   Pour toute modification de l’interface, consulter le [guide de design](docs/architecture/guide-design.md).
+  Interface unique depuis 0.63.0 : `portal/index.html` est généré par
+  `scripts/build_portal.py` à partir de `portal/interface/modele.html` ; ne pas
+  l’éditer à la main. `/classique/` et `/nouveau/` ne sont que des redirections.
 - `pilot/` : passerelle FastAPI, comptes, conversations, outils documentaires,
   recherche, inventaire local et monitoring.
 - `deploy/assistant-system.fr.txt` : contexte produit transmis à l'assistant.

@@ -1,8 +1,8 @@
 # Guide de design Veillée
 
-**Guide actuel — 0.49.0, 18 novembre 2026.** Il sert de référence aux
+**Guide actuel — 0.63.0, 19 novembre 2026.** Il sert de référence aux
 prochaines interventions sur l’interface. Le portail fonctionne avec ses assets
-locaux. Les usages de l’installation sont décrits dans le [guide du portail](../utilisation/nouvelle-interface.md).
+locaux. Les usages de l’installation sont décrits dans le [guide du portail](../utilisation/portail.md).
 
 ## Hiérarchie et alignements
 
@@ -35,6 +35,27 @@ locaux. Les usages de l’installation sont décrits dans le [guide du portail](
   le panneau peut prendre place à côté du média quand la colonne des résultats
   est vide. La transcription, la qualité des pistes et les actions secondaires
   sont dépliables. Le suivi et l’entretien ont leurs propres entrées.
+
+## File d’attente
+
+Refonte du 19 novembre 2026 (0.63.0), demandée par Louis qui garde le principe
+de la file mais jugeait sa présentation peu réussie : trois niveaux de boîtes
+imbriquées, bordures partout, grosses poignées encadrées.
+
+- Un groupe est un titre en Fraunces suivi d’**une seule surface** ; les tâches
+  sont des lignes séparées par un filet, sans carte dans la carte. L’aperçu au
+  survol reprend la même grammaire avec des intitulés de groupe en petites
+  capitales.
+- Chaque ligne commence par une **pastille d’état** : verte et pulsée en cours,
+  braise pour la suivante, cercle vide en attente, ambre en pause, rouge en
+  erreur. La pastille complète le libellé d’état, elle ne le remplace pas.
+- Les erreurs et pauses teintent la ligne entière, sans bordure rouge
+  supplémentaire. Le libellé d’état reste une pastille de texte à droite.
+- La poignée de déplacement est un motif de six points, sans cadre, avec une
+  cible de 44 px ; elle prend la braise au survol et au focus.
+- Les barres de progression sont fines (6 px), vertes pour une tâche en cours,
+  braise sinon. La pulsation et l’inclinaison de la carte déplacée s’arrêtent
+  avec `prefers-reduced-motion`.
 
 ## Mouvement et recette
 

@@ -103,10 +103,10 @@ La [maquette UX](maquette-ux.md) est une archive historique : ses fichiers ficti
 
 ## Organisation actuelle — 0.1.32
 
-Le [guide de la nouvelle interface](nouvelle-interface.md) présente les cinq
+Le [guide du portail](portail.md) présente les cinq
 rubriques de l’entrée principale, les données réelles et les suivis. Les anciennes
-procédures par « Données locales » restent accessibles dans `/classique/` ; leur
-équivalent courant est **Mon appareil → Téléchargements**, avec les inventaires
+procédures par « Données locales » de l’interface classique (retirée en 0.63.0) ont pour
+équivalent courant **Mon appareil → Téléchargements**, avec les inventaires
 dans **Bibliothèque → Collections** et **Mon appareil → Stockage**.
 
 - [Retrouver un document utile et vérifier la recherche depuis le site](recherche-documentaire.md) — guide actuel 0.6.0.

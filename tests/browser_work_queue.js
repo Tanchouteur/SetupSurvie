@@ -42,12 +42,12 @@ async page => {
   const profile = await page.request.post(base + '/api/profiles/select', {headers: {Origin: base}, data: {id: 'local-family'}});
   verify(profile.ok(), 'Le profil Famille doit pouvoir piloter la file.');
   await page.setViewportSize({width: 1440, height: 900});
-  await page.goto(base + '/nouveau/#/accueil');
-  await page.goto(base + '/nouveau/#/appareil/ensemble');
+  await page.goto(base + '/#/accueil');
+  await page.goto(base + '/#/appareil/ensemble');
   await page.locator('#next-machine-tabs').getByText('File d’attente').click();
   await page.locator('#view-work-queue:visible').waitFor();
   verify(await page.locator('#next-machine-tabs [aria-current=page]').textContent() === 'File d’attente', 'La file doit être l’onglet actif.');
-  await page.goto(base + '/nouveau/#/appareil/activite');
+  await page.goto(base + '/#/appareil/activite');
   await page.waitForURL('**/#/file');
   const queuePage = page.locator('#view-work-queue');
   await queuePage.getByLabel('Comment fonctionne la file d’attente ?').press('Enter');
@@ -56,7 +56,7 @@ async page => {
   await queuePage.getByRole('button', {name:'Historique récent'}).click();
   await queuePage.getByText('Aucun travail récent dans l’historique.').waitFor();
   await queuePage.getByRole('button', {name:'À suivre'}).click();
-  await page.goto(base + '/nouveau/#/accueil');
+  await page.goto(base + '/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
   await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '7');
   const preview = page.locator('#main-navigation .work-queue-preview');
@@ -155,7 +155,7 @@ async page => {
   verify(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'La file déborde sur ordinateur.');
 
   await page.setViewportSize({width: 390, height: 844});
-  await page.goto(base + '/nouveau/#/accueil');
+  await page.goto(base + '/#/accueil');
   const mobile = page.locator('.top-actions .work-queue-link');
   if (await page.evaluate(() => navigator.maxTouchPoints)) await mobile.tap();
   else await mobile.click();
@@ -182,7 +182,7 @@ async page => {
     }
   }
   // Exercise the actual file input and list-validation API, without pasting.
-  await page.goto(base + '/nouveau/#/appareil/bibliotheque');
+  await page.goto(base + '/#/appareil/bibliotheque');
   const youtube = page.locator('#next-youtube');
   const input = youtube.locator('input[type=file]');
   if (!await input.isVisible()) await youtube.locator('summary').click();
@@ -200,7 +200,7 @@ async page => {
   verify(submitted.text.split(/\r?\n/).length === 4 && submitted.text.includes('ccccccccccc'),
     'Le formulaire doit envoyer les trois adresses, dans leur ordre.');
   // A temporary polling failure must leave the question tracked in the assistant.
-  await page.goto(base + '/nouveau/#/assistant');
+  await page.goto(base + '/#/assistant');
   await page.waitForFunction(() => typeof S !== 'undefined' && S.authReady && S.user &&
     S.view === 'chat' && !S.loadingConversation && !S.job && !S.sending);
   await page.locator('#chat-reset').click();
@@ -247,7 +247,7 @@ async page => {
     const other = await post('/translations', startData);
     jobs.push(other.id);
     await page.setViewportSize({width:1440,height:900});
-    await page.goto(base + '/nouveau/#/assistant?conversation=' + first.conversation_id);
+    await page.goto(base + '/#/assistant?conversation=' + first.conversation_id);
     const panel = page.locator('#translation-panel');
     await page.waitForFunction(id => S.translation === id, first.id);
     await panel.evaluate(node => node.open = true);

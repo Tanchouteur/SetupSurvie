@@ -131,6 +131,7 @@
   function taskCard(job, movable) {
     const node = element('li', undefined, 'work-queue-card');
     node.dataset.status = job.status;
+    if (job.next) node.dataset.next = '';
     node.classList.toggle('work-queue-problem', failed(job));
     node.classList.toggle('work-queue-held', held(job));
     const main = element('div', undefined, 'work-queue-content');

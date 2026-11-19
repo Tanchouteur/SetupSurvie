@@ -73,9 +73,11 @@ erreur (V1-D06).
 ### Interface et simplicité
 
 - **Retirer ou isoler les anciennes interfaces** : `portal/classique/` et
-  `portal/maquette/` restent livrées à côté de `portal/nouveau/`. Décider de leur
+  `portal/maquette/` restent livrées à côté de `portal/interface/`. Décider de leur
   sort (archive hors paquet ou suppression) pour réduire la maintenance et les
   risques de régression. À arbitrer avec Louis.
+  *Réalisé en 0.63.0 :* Louis demande le 19 novembre 2026 le retrait de
+  l’interface classique ; `portal/nouveau/` devient `portal/interface/`.
 - **Mesurer la simplicité au lieu de la supposer** : nombre de clics pour les
   10 tâches principales, temps pour trouver une source, taux d’abandon. Aujourd’hui
   la validation porte sur le bon fonctionnement, pas sur la facilité.
@@ -166,7 +168,7 @@ Tant que ces critères ne sont pas remplis, rester en `0.y.z`.
 ## 7. Questions pour Louis
 
 1. Quels systèmes seront vendus en V1 : Windows seulement, Linux seulement, ou les deux ?
-2. Les anciennes interfaces `classique` et `maquette` peuvent-elles sortir du paquet ?
+2. Les anciennes interfaces `classique` et `maquette` peuvent-elles sortir du paquet ? *Oui : maquette retirée en 0.59.0, classique en 0.63.0 (Louis, 19 novembre 2026).*
 3. Qui fera la recette humaine (Marc, une autre personne) et quand ?
 4. Faut-il un avis juridique pour les droits des contenus et modèles avant la vente ?
 5. Les critères de la section 6 conviennent-ils pour la 1.0.0 ?
