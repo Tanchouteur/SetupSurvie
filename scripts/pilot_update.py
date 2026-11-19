@@ -301,9 +301,10 @@ def prune_update_history(updates, current):
     expired = [entry for _, entry in older[1:]]
     if not expired and not pending:
         return
-    report_progress("prune")
+    total = len(expired) + len(pending)
+    report_progress("prune", current=0, total=total)
     removed = 0
-    for entry in expired + pending:
+    for index, entry in enumerate(expired + pending, 1):
         try:
             if not plain_directory(entry) or entry.resolve().parent != resolved_updates:
                 continue
@@ -317,6 +318,8 @@ def prune_update_history(updates, current):
             removed += 1
         except (OSError, setup.SetupError) as exc:
             print(f'Nettoyage différé pour {entry.name} : {exc}', flush=True)
+        finally:
+            report_progress("prune", current=index, total=total)
     print(f'Anciennes copies de mise à jour supprimées : {removed}.', flush=True)
 
 

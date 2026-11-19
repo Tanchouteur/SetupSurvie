@@ -29,7 +29,11 @@ $script:updateStages = @{
 function Write-SurvieUpdateProgress([string]$Phase, [string]$Detail, [int]$Current, [int]$Total) {
     $title = $script:updateStages[$Phase]
     if (-not $title) { return }
-    if ($Total -gt 0) { $Detail = '{0:N0} fichiers sur {1:N0} sauvegardés' -f $Current, $Total }
+    if ($Total -gt 0 -and $Phase -eq 'backup') {
+        $Detail = '{0:N0} fichiers sur {1:N0} sauvegardés' -f $Current, $Total
+    } elseif ($Phase -eq 'prune') {
+        $Detail = '{0:N0} anciennes copies traitées sur {1:N0}. Le site est de nouveau disponible.' -f $Current, $Total
+    }
     $line = $title
     if ($Detail) { $line += ' — ' + $Detail }
     Write-Host ('[{0:HH:mm:ss}] {1}' -f (Get-Date), $line)
