@@ -568,9 +568,13 @@ async function send(event){
   if(S.summaryActive){toast('La synthèse longue est en cours. Mettez-la en pause pour poser une question dans cette conversation.');return;}
   if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
   S.sending=true;$('send-question').disabled=true;refreshSourceChoices();
+  $('chat-status').textContent='Envoi de la question…';
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
     if(!S.conversation||!$('chat-messages').querySelector('.message')){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
-  }catch(e){toast(e.message);$('send-question').disabled=false;}
+  }catch(e){
+    const problem=e.status?e.message:'Impossible de confirmer l’envoi. Votre texte reste dans la zone de saisie.';
+    $('chat-status').textContent=problem;toast(problem);$('send-question').disabled=false;
+  }
   finally{S.sending=false;refreshSourceChoices();}
 }
 function watch(id){

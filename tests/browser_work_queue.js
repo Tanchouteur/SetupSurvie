@@ -107,6 +107,19 @@ async page => {
   // A temporary polling failure must leave the question tracked in the assistant.
   await page.goto(base + '/nouveau/#/assistant');
   await page.waitForFunction(() => typeof S !== 'undefined' && S.authReady && S.user);
+  let failSend;
+  const pendingSend = new Promise(resolve => {failSend = resolve;});
+  await page.route('**/api/questions', async route => {
+    await pendingSend;
+    await route.abort('failed');
+  });
+  const draft = page.locator('#chat-input');
+  await draft.fill('Question à conserver');
+  await page.locator('#chat-form').evaluate(form => form.requestSubmit());
+  await page.locator('#chat-status').getByText('Envoi de la question…', {exact:true}).waitFor();
+  failSend();
+  await page.locator('#chat-status').getByText(/Impossible de confirmer l’envoi/).waitFor();
+  verify(await draft.inputValue() === 'Question à conserver', 'Le texte reste disponible si l’envoi n’est pas confirmé.');
   let answer = 'unavailable';
   await page.route('**/api/jobs/queue-fixture', route => answer === 'unavailable'
     ? route.fulfill({status:503,json:{detail:'Indisponible'}})
@@ -120,5 +133,5 @@ async page => {
   answer = 'failed';
   await page.locator('#chat-status').getByText('Le moteur a arrêté la réponse.', {exact:true}).waitFor();
   verify(!errors.length, errors.join('\n'));
-  return {passed: ['aperçu des créneaux parallèles au survol et au clavier', 'question prioritaire', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur visible pendant la pause', 'distinction pause et erreur', 'perte et retour du suivi', 'erreur et relance', 'navigation tactile', 'suivi de la réponse après reconnexion', 'import et envoi du TXT Windows entier']};
+  return {passed: ['aperçu des créneaux parallèles au survol et au clavier', 'question prioritaire', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur visible pendant la pause', 'distinction pause et erreur', 'perte et retour du suivi', 'erreur et relance', 'navigation tactile', 'envoi et brouillon visibles', 'suivi de la réponse après reconnexion', 'import et envoi du TXT Windows entier']};
 }

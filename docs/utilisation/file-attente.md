@@ -48,7 +48,8 @@ dans **À reprendre**. La pause générale laisse les erreurs visibles.
 Si la connexion au suivi est coupée, l’aperçu et la page signalent le dernier
 état connu. Les commandes de la file redeviennent disponibles après
 actualisation. L’assistant continue à suivre la réponse en cours dès que la
-connexion revient. Les lecteurs de documents, les synthèses et les préparations
+connexion revient. Un envoi qui reste sans confirmation conserve le texte
+dans la zone de saisie. Les lecteurs de documents, les synthèses et les préparations
 de pistes indiquent aussi si un travail attend son tour ou la reprise de la file.
 
 Une reprise vidéo conserve les fichiers et
