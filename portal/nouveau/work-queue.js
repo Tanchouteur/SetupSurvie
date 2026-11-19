@@ -18,7 +18,7 @@
     WorkQueuePreview.mount(document.querySelector('.top-actions'), {href: '#/file', mobile: true, refresh})
   ];
 
-  const {waiting, failed, held, statusLabel, plural, freshness, lanes} = WorkQueuePreview;
+  const {isSnapshot, waiting, failed, held, statusLabel, plural, freshness, lanes} = WorkQueuePreview;
   let state = null;
   let connection = 'loading';
   let observedAt = null;
@@ -211,6 +211,7 @@
     const timeout = setTimeout(() => controller.abort(), 8000);
     fetching = api('/work-queue', undefined, {signal: controller.signal}).then(value => {
       if (epoch !== generation) return;
+      if (!isSnapshot(value)) throw Error();
       state = value;
       observedAt = new Date();
       connection = 'ready';

@@ -15,7 +15,10 @@ async page => {
   await page.route('**/api/work-queue**', async route => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
-    if (unavailable && request.method() === 'GET') return route.fulfill({status: 503, json: {detail: 'Indisponible'}});
+    if (unavailable && request.method() === 'GET') {
+      return unavailable === 'invalid' ? route.fulfill({json: {ok: true}})
+        : route.fulfill({status: 503, json: {detail: 'Indisponible'}});
+    }
     if (path.endsWith('/pause')) paused = request.postDataJSON().paused;
     if (path.endsWith('/second/move') && request.postDataJSON().direction === -1) {
       [tasks[2], tasks[4]] = [tasks[4], tasks[2]];
@@ -72,6 +75,10 @@ async page => {
   await view.getByText(/Suivi indisponible. Dernier état connu/).waitFor();
   await view.getByText('Une vidéo est privée.').waitFor();
   verify(await view.getByRole('button', {name: 'Réessayer'}).isDisabled(), 'État ancien : commande désactivée.');
+  unavailable = 'invalid';
+  const badResponse = page.waitForResponse(response => response.url().endsWith('/api/work-queue') && response.ok());
+  await badResponse;
+  await view.getByText(/Suivi indisponible. Dernier état connu/).waitFor();
   unavailable = false;
   await view.getByText(/Suivi indisponible. Dernier état connu/).waitFor({state:'hidden'});
   await view.getByRole('button', {name: 'Réessayer'}).click();

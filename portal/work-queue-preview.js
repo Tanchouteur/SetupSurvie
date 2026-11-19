@@ -6,6 +6,7 @@
     if (className) node.className = className;
     return node;
   };
+  const isSnapshot = state => Array.isArray(state?.jobs);
   const waiting = job => ['queued', 'preparing'].includes(job.status);
   const failed = job => ['error', 'failed'].includes(job.status);
   const held = job => ['paused', 'stopped', 'interrupted', 'incomplete'].includes(job.status);
@@ -151,7 +152,7 @@
     return {draw};
   }
 
-  window.WorkQueuePreview = {mount, waiting, failed, held, statusLabel, workLabel, plural, freshness, lanes};
+  window.WorkQueuePreview = {mount, isSnapshot, waiting, failed, held, statusLabel, workLabel, plural, freshness, lanes};
   const map = document.querySelector('.map-site-nav');
   if (!map) return;
   let snapshot = null, fetching = false, generation = 0;
@@ -172,6 +173,7 @@
       if (!response.ok) throw Error();
       const result = await response.json();
       if (epoch !== generation) return;
+      if (!isSnapshot(result)) throw Error();
       snapshot = result;
       preview.draw(snapshot);
     } catch {

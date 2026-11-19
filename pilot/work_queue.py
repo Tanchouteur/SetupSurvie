@@ -115,6 +115,7 @@ class Queue(Slot):
         self.paused = False
         self.records = {}
         self.root = None
+        self.video_report = None
         self.slots = {'ai': self, 'network': Slot(self), 'local': Slot(self)}
 
     def initialize(self):
@@ -165,6 +166,18 @@ class Queue(Slot):
                        (record['id'], json.dumps(record, ensure_ascii=False)))
             db.execute('DELETE FROM work_history WHERE id IN (SELECT id FROM work_history ORDER BY updated DESC,rowid DESC LIMIT -1 OFFSET 300)')
 
+    def video_status(self, videos, indexing):
+        path = store.ROOT/'videos-report.json'
+        try:
+            info = path.stat()
+        except OSError:
+            return videos.status()
+        revision = (path, info.st_mtime_ns, info.st_size, indexing)
+        if self.video_report is None or self.video_report[0] != revision:
+            report = videos.status()
+            self.video_report = revision, {key: report.get(key) for key in ('phase', 'videos', 'error')}
+        return self.video_report[1]
+
     def snapshot(self, profile):
         from . import youtube_pipeline
 
@@ -197,7 +210,7 @@ class Queue(Slot):
         jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
         from . import videos
         indexing = videos.running() is not None
-        report = videos.status()
+        report = self.video_status(videos, indexing)
         phase = report.get('phase')
         if indexing:
             lanes['local']['running'] = True
