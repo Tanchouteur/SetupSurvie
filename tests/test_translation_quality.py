@@ -8,11 +8,35 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_protected_references_restore_exactly_and_reject_bad_anchors(self):
+        from pilot.math_text import marked
+        original='See https://example.org/a?q=2. DOI: 10.1234/abc-42\n'+marked('https://example.org/3')
+        protected=quality.ProtectedReferences(original)
+        self.assertEqual(len(protected.references),2)
+        self.assertFalse(protected.only_references)
+        self.assertEqual(protected.restore(protected.text),original)
+        first,second=(item[0] for item in protected.references)
+        for candidate in (protected.text.replace(first,''),protected.text.replace(first,first+first),protected.text.replace(first,'[broken]'),protected.text.replace(first,'TEMP').replace(second,first).replace('TEMP',second)):
+            with self.assertRaises(ValueError):protected.restore(candidate)
+        for text in ('https://example.org/path.', '10.1234/abc', 'Smith, J. (2020). A fictional title.'):
+            reference=quality.ProtectedReferences(text)
+            self.assertTrue(reference.only_references)
+            self.assertEqual(reference.restore(reference.text),text)
+        self.assertFalse(quality.ProtectedReferences('Water boils at 100 degrees.').references)
+        self.assertFalse(quality.ProtectedReferences(marked('10.1234/abc')).references)
+
+    def test_short_unchanged_english_and_reference_numbers(self):
+        self.assertEqual(quality.assess('Keep the water clean.','Keep the water clean.',source_language='en')['status'],'blocked')
+        self.assertNotEqual(quality.assess('https://example.org/123','https://example.org/123',source_language='en')['status'],'blocked')
+        self.assertEqual(quality.assess('See figure 4.','Voir la figure 5.')['status'],'warning')
+        self.assertEqual(quality.assess('Use 4 mg.','Utilisez 5 mg.')['status'],'blocked')
+
     def test_historical_ordinals_and_roman_centuries(self):
         source='World War 2 ended in the 20th century. The date was 1945.'
         target='La Seconde Guerre mondiale a fini au XXe siècle. La date était 1945.'
         self.assertEqual(quality.assess(source,target,source_language='en')['status'],'checked')
-        for changed in (target.replace('XXe','XIXe'),target.replace('1945','1946'),target.replace('Seconde','Première')):
+        self.assertEqual(quality.assess(source,target.replace('XXe','XIXe'),source_language='en')['status'],'warning')
+        for changed in (target.replace('1945','1946'),target.replace('Seconde','Première')):
             self.assertEqual(quality.assess(source,changed,source_language='en')['status'],'blocked')
 
     def test_english_document_grouping_keeps_values_and_units(self):
@@ -65,8 +89,8 @@ class TokenChecksTests(unittest.TestCase):
     def test_joined_pdf_labels_keep_their_numbers_when_french_restores_a_space(self):
         result=quality.assess('See Chapter4. The indicator X7 is off.','Voir le Chapitre 4. Le voyant X7 est éteint.')
         self.assertEqual(result['status'],'checked')
-        for target in ('Voir le Chapitre 5. Le voyant X7 est éteint.','Voir le Chapitre 4. Le voyant X8 est éteint.'):
-            self.assertEqual(quality.assess('See Chapter4. The indicator X7 is off.',target)['status'],'blocked')
+        self.assertEqual(quality.assess('See Chapter4. The indicator X7 is off.','Voir le Chapitre 5. Le voyant X7 est éteint.')['status'],'warning')
+        self.assertEqual(quality.assess('See Chapter4. The indicator X7 is off.','Voir le Chapitre 4. Le voyant X8 est éteint.')['status'],'blocked')
 
     def test_numbers_and_units_allow_decimal_comma_spacing_and_translated_names(self):
         for source,target in [
@@ -96,10 +120,10 @@ class TokenChecksTests(unittest.TestCase):
                        'Les élèves notent d’abord les 1re et 3e marques. Attendez 1 min.'):
             self.assertEqual(quality.assess(source,target)['status'],'checked')
         for target in ('Les élèves notent les première et troisième marques. Attendez 1 min.',
-                       'Les élèves notent d’abord les première et quatrième marques. Attendez 1 min.',
-                       'Les élèves notent d’abord les première et troisième marques. Attendez une minute.',
-                       'Les élèves notent d’abord les marques 1 et 3. Attendez 1 min.'):
-            self.assertEqual(quality.assess(source,target)['status'],'blocked')
+                       'Les élèves notent d’abord les première et quatrième marques. Attendez 1 min.'):
+            self.assertEqual(quality.assess(source,target)['status'],'warning')
+        self.assertEqual(quality.assess(source,'Les élèves notent d’abord les première et troisième marques. Attendez une minute.')['status'],'blocked')
+        self.assertEqual(quality.assess('See the 3rd tray.','Voir le bac 3.')['status'],'warning')
 
     def test_expand_ordinal_abbreviations_and_keep_the_missing_rank_blocked(self):
         source='Note the 1st shelf and the 3rd tray. It contains 7 pieces.'
@@ -108,7 +132,7 @@ class TokenChecksTests(unittest.TestCase):
         self.assertEqual(quality.spell_numbered_ordinals('See the 11th tray.'),'See the 11th tray.')
         report=quality.assess(source,'Notez l’étagère et le troisième bac. Il contient 7 pièces.')
         self.assertEqual([i['code'] for i in report['issues']],['ordinals'])
-        self.assertEqual(report['status'],'blocked')
+        self.assertEqual(report['status'],'warning')
 
     def test_critical_numeric_errors_are_blocked(self):
         for source,target in [
@@ -167,7 +191,7 @@ class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
         candidate='Repère supprimé.'
         with patch.object(translations,'translate',AsyncMock(side_effect=TranslationMismatch(candidate,'fixture'))):await translations.run(item['id'])
         result=translations.status(item['id'],'alice')
-        self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
+        self.assertEqual((result['status'],result['done'],result['deferred']),('completed',0,1))
         self.assertEqual(result['parts'][0]['candidate'],candidate)
         self.assertIn('formula_anchors',{i['code'] for i in result['parts'][0]['quality']['issues']})
     asyncSetUp=fixtures.TranslationTests.asyncSetUp
@@ -182,7 +206,7 @@ class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
         candidate='Formule fictive traduite. '+marked(r'\frac{7}{19}')
         with patch.object(translations,'translate',AsyncMock(return_value=(candidate,'fixture'))):await translations.run(item['id'])
         result=translations.status(item['id'],'alice')
-        self.assertEqual(result['status'],'error');self.assertEqual(result['done'],0)
+        self.assertEqual((result['status'],result['done'],result['deferred']),('completed',0,1))
         self.assertIn('formulas',{i['code'] for i in result['parts'][0]['quality']['issues']})
         self.assertEqual(result['parts'][0]['candidate'],candidate)
         self.assertIsNone(result['publication']['source_id'])
@@ -195,14 +219,14 @@ class QualityWorkerTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('touches dessinées',translations.export(item['id'],'alice'))
         published=await library.source(state['publication']['source_id'])
         self.assertIn('touches dessinées',published['text'])
-    async def test_bad_measure_stays_pending_private_and_retry_uses_original_snapshot(self):
+    async def test_bad_measure_stays_private_and_retry_uses_original_snapshot(self):
         (self.root/'guides/manual.en.txt').write_text('Use 10 mg. Do not exceed the limit.',encoding='utf-8')
         from pilot import library
         library.index_guides();item=await self.create()
         with patch.object(translations,'translate',AsyncMock(return_value=('Utilisez 100 mg. Ne dépassez pas la limite.','fixture'))):
             await translations.run(item['id'])
         state=translations.status(item['id'],'alice')
-        self.assertEqual(state['status'],'error');self.assertEqual(state['done'],0)
+        self.assertEqual((state['status'],state['done'],state['deferred']),('completed',0,1))
         self.assertEqual(state['parts'][0]['translated'],'')
         self.assertIn('100 mg',state['parts'][0]['candidate'])
         self.assertEqual(state['quality']['blocked'],1)

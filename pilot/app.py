@@ -829,7 +829,7 @@ async def delete_conversation(identifier:str,value=Depends(user)):
             raise HTTPException(404,'Conversation introuvable.')
         if store.summary_active(db,identifier):raise HTTPException(409,'Mettez la synthèse longue en pause avant de supprimer cette conversation.')
         if db.execute("SELECT 1 FROM translations WHERE conversation_id=? AND status IN ('queued','running')",(identifier,)).fetchone():raise HTTPException(409,'Mettez la traduction en pause avant de supprimer cette conversation.')
-        if db.execute("SELECT 1 FROM translations t JOIN settings s ON s.key='auto-translation:'||t.id WHERE t.conversation_id=? AND t.status='completed' AND NOT EXISTS(SELECT 1 FROM settings done WHERE done.key='published-translation:'||t.id)",(identifier,)).fetchone():
+        if db.execute("SELECT 1 FROM translations t JOIN settings s ON s.key='auto-translation:'||t.id WHERE t.conversation_id=? AND t.status='completed' AND EXISTS(SELECT 1 FROM translation_parts p WHERE p.translation_id=t.id AND p.status='done') AND NOT EXISTS(SELECT 1 FROM settings done WHERE done.key='published-translation:'||t.id)",(identifier,)).fetchone():
             raise HTTPException(409,'L’ajout d’une traduction terminée aux documents locaux reste à finaliser. Réessayez son ajout ou exportez-la avant de supprimer la conversation.')
         jobs=db.execute('SELECT id,status FROM jobs WHERE conversation_id=?',(identifier,)).fetchall()
         if any(job['status'] in ('queued','running') for job in jobs):

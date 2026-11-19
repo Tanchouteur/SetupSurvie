@@ -4,11 +4,12 @@ No model/network: compare protected tokens and flag weaker completeness signals.
 """
 from collections import Counter
 from decimal import Decimal, InvalidOperation
+import hashlib
 import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=9
+VERSION=10
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
@@ -46,6 +47,61 @@ UNIT_ALIASES={
     'psi':'psi','rpm':'rpm','mm²':'mm²','cm²':'cm²','m²':'m²','cm³':'cm³','m³':'m³',
     'mg/kg':'mg/kg','g/l':'g/l','mg/l':'mg/l','ml/min':'ml/min','km/h':'km/h','m/s':'m/s'}
 UNIT=re.compile('('+NUMBER+r')\s*('+ '|'.join(re.escape(k).replace('/',r'\s*/\s*').replace('°','°'+r'\s*') for k in sorted(UNIT_ALIASES,key=len,reverse=True))+r')(?![a-zà-ÿ\d²³])',re.I)
+
+
+# Match complete structured bibliography lines only when author initials and a
+# year provide strong evidence; ordinary prose containing a date is excluded.
+REFERENCE=re.compile(
+    r"(?im)(?P<bibliography>^[ \t]*(?:[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'’-]+,?[ \t]+(?:[A-Z]\.[ \t]*)+)(?:[&,;][ \t]*[A-ZÀ-ÖØ-Þ][a-zà-öø-ÿ'’-]+,?[ \t]+(?:[A-Z]\.[ \t]*)+)*[ \t]*\((?:18|19|20)\d{2}\)\.[ \t]+[^\n]{3,})"
+    r"|(?i:https?)://[^\s<>\[\]{}]+"
+    r"|(?<![\w/])(?i:(?:doi:\s*)?10\.\d{4,9}/[-._;()/:A-Z0-9]+)")
+REFERENCE_NUMBER=re.compile(r"\b(?:fig(?:ure)?|figura|table|tableau|chapter|chapitre|section|page|p)\.?\s*(\d{1,4})(?!\w|[.,]\d)",re.I)
+
+
+class ProtectedReferences:
+    """Protect confidently identified references without touching formula blocks."""
+    def __init__(self,text):
+        digest=hashlib.sha256(text.encode()).hexdigest()[:12].translate(str.maketrans('0123456789','ghijklmnop'))
+        self.prefix='SS_REFERENCE_'+digest+'_'
+        while self.prefix in text:self.prefix+='X'
+        self.references=[]
+        self.bibliography=set()
+        formulas=[m.span() for m in BLOCKS.finditer(text)]
+        pieces=[];prose=[];start=0
+        for match in REFERENCE.finditer(text):
+            if any(match.start()<end and match.end()>begin for begin,end in formulas):continue
+            end=match.end()
+            # Sentence punctuation is not part of a URL or DOI.
+            if match['bibliography'] is None:
+                while end>match.start():
+                    last=text[end-1];value=text[match.start():end]
+                    if last not in '.,;:!?' and not (last==')' and value.count(')')>value.count('(')):break
+                    end-=1
+            if end==match.start():continue
+            index=len(self.references);letters=''
+            while True:
+                letters=chr(65+index%26)+letters;index=index//26-1
+                if index<0:break
+            token='['+self.prefix+letters+']'
+            self.references.append((token,text[match.start():end]))
+            if match['bibliography'] is not None:self.bibliography.add(token)
+            gap=text[start:match.start()]
+            prose.extend((gap,' '));pieces.extend((gap,token));start=end
+        pieces.append(text[start:]);self.text=''.join(pieces)
+        prose.append(text[start:]);self.prose=''.join(prose)
+        self.only_references=bool(self.references) and not re.sub(r'[\s.,;:!?()\[\]{}–—-]','',self.prose)
+        self.pattern=re.compile(r'\['+re.escape(self.prefix)+r'[^\]\n]*\]')
+
+    def restore(self,result):
+        if self.pattern.findall(result)!=[token for token,_ in self.references]:
+            raise ValueError('Les repères des références ont été modifiés ou déplacés.')
+        values=dict(self.references)
+        def restore_match(match):
+            value=values[match[0]]
+            return '\n'+value+'\n' if match[0] in self.bibliography else value
+        restored=self.pattern.sub(restore_match,result)
+        if self.prefix in restored:raise ValueError('Repère de référence incorrect.')
+        return restored
 
 
 REFUSAL = re.compile(
@@ -112,9 +168,13 @@ def normalize_english_grouping(text):
 
 
 def assess(source,translated,*,source_language=None,english_grouping=False):
-    source=normalized(source);translated=normalized(translated)
     issues=[]
     def add(code,severity,message):issues.append({'code':code,'severity':severity,'message':message})
+    original_refs=ProtectedReferences(source)
+    new_refs=ProtectedReferences(translated)
+    if [value for _,value in original_refs.references]!=[value for _,value in new_refs.references]:
+        add('references','error','Une référence reconnue a disparu, été modifiée ou déplacée.')
+    source=normalized(original_refs.prose);translated=normalized(new_refs.prose)
     # PDF manuals sometimes draw key names as images; extraction leaves a hole
     # in "Press the         key". Numeric equality cannot validate that command.
     if re.search(r'\b(?:press|enter|push|appuyez|appuyer|saisissez|entrez)[^\n.!?]{0,60}[ \t]{4,}(?:keys?|buttons?|to|on|and|pour|sur|et)\b',source,re.I) or '\ufffd' in source:
@@ -140,8 +200,33 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
             if len(re.findall(original,measure_source,re.I))==len(re.findall(french,translated,re.I)):
                 measure_source=re.sub(original,'événement historique',measure_source,flags=re.I)
     source_numbers,translated_numbers,ordinals_match=separate_ordinals(measure_source,translated)
-    if not ordinals_match:add('ordinals','error','Un rang indiqué par un nombre dans l’original a disparu, été ajouté ou changé.')
-    if numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
+    if not ordinals_match:add('ordinals','warning','Un rang indiqué par un nombre dans l’original a disparu, été ajouté ou changé.')
+    if not ordinals_match:
+        # An ordinal can become a bare reference number in French. Only
+        # consume equal values when no cardinal or measurement is at stake.
+        ordinal_values=Counter(number(m[1]) for m in EN_ORDINAL.finditer(measure_source))
+        cardinal_values=numbers(source_numbers)
+        def ambiguous_bare(match):
+            value=number(match[0])
+            if ordinal_values[value] and not cardinal_values[value] and not UNIT.match(translated_numbers,match.start()):
+                ordinal_values[value]-=1
+                return ' '
+            return match[0]
+        translated_numbers=NUMBERS.sub(ambiguous_bare,translated_numbers)
+    # A figure/section number can be renumbered or rendered as a word. Keep
+    # it visible as a warning while cardinal values and measurements stay strict.
+    source_refs=Counter(number(m[1]) for m in REFERENCE_NUMBER.finditer(source_numbers))
+    target_refs=Counter(number(m[1]) for m in REFERENCE_NUMBER.finditer(translated_numbers))
+    source_cardinals=numbers(REFERENCE_NUMBER.sub(' référence ',source_numbers))
+    target_cardinals=numbers(REFERENCE_NUMBER.sub(' référence ',translated_numbers))
+    # A translated label may move away from its number ("page 12" to
+    # "page suivante, 12"). Pair only surplus cardinals with unmatched references.
+    moved_to_target=(source_refs-target_refs)&(target_cardinals-source_cardinals)
+    moved_to_source=(target_refs-source_refs)&(source_cardinals-target_cardinals)
+    if source_refs-moved_to_target!=target_refs-moved_to_source:
+        add('numbers','warning','Un numéro de référence a changé ou disparu. Comparez l’original.')
+    if source_cardinals-moved_to_source!=target_cardinals-moved_to_target:
+        add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
         pairs=Counter()
         for match in UNIT.finditer(text):
@@ -165,7 +250,12 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
         add('short','warning','Traduction beaucoup plus courte : résumé ou passages omis possibles.')
     if len(source.strip())>=160 and len(translated.strip())>len(source.strip())*3:
         add('long','warning','Traduction beaucoup plus longue : ajouts ou répétitions possibles.')
-    if len(source.strip())>=100 and re.sub(r'\s+',' ',source).strip().casefold()==re.sub(r'\s+',' ',translated).strip().casefold():
+    source_prose=BLOCKS.sub(' ',source)
+    target_prose=BLOCKS.sub(' ',translated)
+    compact=lambda text: ' '.join(text.casefold().split())
+    short_english=(english or not source_language) and re.search(
+        r'\b(?:the|and|is|are|use|press|keep|do|not|water|please|this|that|with|for|to|of)\b',source_prose,re.I)
+    if (len(source_prose.strip())>=100 or short_english) and compact(source_prose)==compact(target_prose):
         add('unchanged','error','Le passage est identique à l’original ; aucune traduction exploitable détectée.')
     if re.search(r'\b(not|never|without|neither|no)\b|\b\w+n[’\x27]t\b',source,re.I) and not re.search(r'\b(pas|jamais|sans|aucun|aucune|ni|interdit|interdite|éviter|évitez|non)\b|\bn[’\x27]',translated,re.I):
         add('negation','warning','Une négation de l’original n’a pas d’équivalent français repéré. Vérifiez le sens de la consigne.')

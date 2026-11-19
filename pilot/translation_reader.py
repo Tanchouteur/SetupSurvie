@@ -95,7 +95,7 @@ def choices(identifier):
             pages=sorted(set(pages)) if isinstance(pages,list) and len(pages)<=1200 and all(type(page) is int and 1<=page<=1200 for page in pages) else []
             saved=meta.get('source_revision');freshness='unchanged' if revision and saved and revision==saved else 'changed' if revision and saved else 'unknown'
             result.append({'id':'guide:'+row['published_path'],'title':row['title'],'published_at':row['published_at'],'pages':pages,
-                'freshness':freshness,'integrity_recorded':bool(meta.get('published_sha256')),
+                'freshness':freshness,'partial':bool(meta.get('published_missing')),'missing':meta.get('published_missing',0),'integrity_recorded':bool(meta.get('published_sha256')),
                 'original_document_date':meta.get('document_date',''),'original_edition':meta.get('edition','')})
         except (HTTPException,OSError,ValueError,TypeError):continue
     return {'original_id':original,'translations':result,'notice':publications.NOTICE}
@@ -111,8 +111,9 @@ def page(identifier,original_id,number):
     except (ValueError,TypeError):raise HTTPException(422,'Métadonnées de traduction indisponibles.') from None
     if not isinstance(meta,dict):raise HTTPException(422,'Métadonnées de traduction indisponibles.')
     pages=publication(path,meta.get('published_sha256'))
-    if number not in pages:return {'page':number,'available':False,'pages':sorted(pages),'notice':publications.NOTICE}
+    completeness={'partial':bool(meta.get('published_missing')),'missing':meta.get('published_missing',0)}
+    if number not in pages:return {'page':number,'available':False,'pages':sorted(pages),'notice':publications.NOTICE,**completeness}
     current=current_revision(original);saved=meta.get('source_revision')
     return {'page':number,'available':True,'pages':sorted(pages),'title':row['title'],'original_id':original,
         'freshness':'unchanged' if current and saved and current==saved else 'changed' if current and saved else 'unknown',
-        'notice':publications.NOTICE,'parts':pages[number]['parts'],'warnings':pages[number]['warnings']}
+        'notice':publications.NOTICE,**completeness,'parts':pages[number]['parts'],'warnings':pages[number]['warnings']}

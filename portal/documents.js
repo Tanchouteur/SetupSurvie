@@ -99,7 +99,7 @@
       select.onchange=guard(async()=>{if(select.value){await loadTranslation(select.value);$('translation-panel').open=true;}else{clearTranslation();showAssociatedSource();$('translation-panel').open=true;}});}
     const select=$('translation-choice');select.replaceChildren();const fresh=element('option','Nouvelle traduction du document associé');fresh.value='';select.append(fresh);
     const states={queued:'En attente',running:'En cours',paused:'En pause',stopped:'Arrêtée',completed:'Terminée',error:'À reprendre'};
-    for(const item of D.entries){const option=element('option',item.title+' · '+(states[item.status]||item.status)+' · '+item.mode);option.value=item.id;select.append(option);}
+    for(const item of D.entries){const option=element('option',item.title+' · '+(item.status==='completed'&&item.deferred?'Incomplète':states[item.status]||item.status)+' · '+item.mode);option.value=item.id;select.append(option);}
     select.value=S.translation||'';label.hidden=D.entries.length===0;
   }
   async function publicationStatus(event){
@@ -110,13 +110,24 @@
     translationChoices();
     const publication=data.publication||{};
     if(publication.source_id){
-      node.append(element('p','Cette traduction est dans les documents locaux, accessible à tout le monde.'),button('Lire le document partagé',()=>readSource(publication.source_id),'secondary'),favoriteButton({id:publication.source_id}));updateStars();
-    }else if(data.status==='completed'){
-      const publishing=publication.automatic&&!publication.error;
-      node.append(element('p',publication.error||(publishing?'Traduction terminée. Ajout aux documents locaux en cours…':'Cette ancienne traduction reste privée tant que vous ne l’ajoutez pas aux documents locaux.')));
-      if(!publishing){node.append(button('Ajouter aux documents locaux · visible par tous',guard(async event=>{const b=event.target,conversation=S.conversation,user=S.user?.id;b.disabled=true;try{await request('/translations/'+encodeURIComponent(data.id)+'/publish',{});if(S.conversation===conversation&&S.user?.id===user&&S.translation===data.id)await loadTranslation(data.id,0);}finally{b.disabled=false;}}),'secondary'));}
-      else if(S.view==='chat')D.timer=setTimeout(()=>{if(S.translation===data.id&&S.view==='chat')loadTranslation(data.id,S.translationOffset);},1500);
+      node.append(element('p',publication.partial?'Cette traduction partielle est dans les documents locaux, accessible à tout le monde. Les passages manquants restent consultables dans l’original.':'Cette traduction est dans les documents locaux, accessible à tout le monde.'),button(publication.partial?'Lire la traduction partielle partagée':'Lire le document partagé',()=>readSource(publication.source_id),'secondary'),favoriteButton({id:publication.source_id}));updateStars();
     }
+    if(data.status!=='completed')return;
+    if(!data.done){
+      node.append(element('p','Aucun passage français à partager. L’original reste consultable.'));
+      return;
+    }
+    if(publication.source_id&&!publication.pending&&!publication.error)return;
+    const publishing=publication.automatic&&!publication.error;
+    node.append(element('p',publication.error||(publishing?(publication.source_id?'Actualisation du document partagé en cours…':data.done<data.total?'Ajout de la traduction partielle aux documents locaux en cours…':'Ajout aux documents locaux en cours…'):'Cette ancienne traduction reste privée tant que vous ne l’ajoutez pas aux documents locaux.')));
+    if(!publishing){
+      node.append(button(publication.error?'Réessayer l’ajout aux documents locaux':'Ajouter aux documents locaux · visible par tous',guard(async event=>{
+        const b=event.target,conversation=S.conversation,user=S.user?.id;b.disabled=true;
+        try{await request('/translations/'+encodeURIComponent(data.id)+'/publish',{});if(S.conversation===conversation&&S.user?.id===user&&S.translation===data.id)await loadTranslation(data.id,0);}
+        finally{b.disabled=false;}
+      }),'secondary'));
+    }else if(S.view==='chat')D.timer=setTimeout(()=>{if(S.translation===data.id&&S.view==='chat')loadTranslation(data.id,S.translationOffset);},1500);
+
   }
   async function intent(){
     if(D.intent)return;const id=new URLSearchParams(location.search).get('document');if(!id)return;

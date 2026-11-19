@@ -64,7 +64,7 @@ class TranslationTermsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(terms.profile('alice')['terms'],[{'source':'water','french':'eau'}])
         job=await self.create()
         with patch.object(translations,'translate',AsyncMock(return_value=('Eau à 17 mm.','fixture'))):await translations.run(job['id'])
-        blocked=translations.status(job['id'],'alice');self.assertEqual(blocked['status'],'error');self.assertEqual(blocked['done'],0)
+        blocked=translations.status(job['id'],'alice');self.assertEqual((blocked['status'],blocked['done'],blocked['deferred']),('completed',0,1))
         self.assertEqual(blocked['parts'][0]['quality']['status'],'blocked');self.assertIsNone(blocked['publication']['source_id'])
 
     async def test_old_job_keeps_legacy_behavior_instead_of_borrowing_new_preferences(self):

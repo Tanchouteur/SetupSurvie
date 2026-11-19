@@ -479,7 +479,7 @@ function renderTranslationParts(data,parts){
       const text=element('div',undefined,'translation-text');
       if(window.SurvieTranslationText)window.SurvieTranslationText.render(text,part.translated);else text.textContent=part.translated;
       article.append(text);
-    }else if(!translationThread||part.status==='unreadable')article.append(element('p',part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
+    }else if(!translationThread||part.status==='unreadable'||part.status==='deferred')article.append(element('p',part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':part.status==='deferred'?'Ce passage reste à traduire après vérification.':'Ce passage reste à traduire.'));
     if(part.quality&&(!translationThread||part.status!=='unreadable'||part.quality.status!=='unchecked')){
       const labels={checked:'Contrôles limités : aucune anomalie repérée. Le sens reste à vérifier.',warning:'À relire : anomalie possible.',blocked:'Passage refusé par les contrôles.',unchecked:'Pas de contrôle automatique enregistré pour ce passage.'};
       article.append(element('p',labels[part.quality.status]||'Contrôle indisponible.',part.quality.status==='checked'?'small muted':'translation-label small'));
@@ -560,14 +560,14 @@ document.addEventListener('survie:translation',event=>{
   const key=S.user?.id+':'+data.id;
   if(key!==translationReaderRestoredFor){translationReaderRestoredFor=key;if(data.done&&S.view==='chat'&&!translationReader.open&&translationReadingState(data.id).open)openTranslationReader(true);}
   $('translation-reading-title').textContent=data.title;
-  $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',stopped:'Traduction arrêtée ; les passages terminés restent lisibles et une reprise volontaire est possible. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:'Traitement terminé. '}[data.status]||'')+(data.notice||'');
+  $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',stopped:'Traduction arrêtée ; les passages terminés restent lisibles et une reprise volontaire est possible. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:data.done<data.total?'Traduction incomplète. L’original reste consultable. ':'Traitement terminé. '}[data.status]||'')+(data.notice||'');
 });
 document.addEventListener('survie:view',()=>{if(S.view!=='chat'&&translationReader.open)translationReader.close();});
 document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;if(translationThread){translationThread.hidden=true;translationMore.hidden=true;translationMore.open=false;}translationReadOpen.hidden=true;translationStop.hidden=true;translationDelete.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
 document.addEventListener('survie:work-queue', ({detail}) => {
   const queue = window.WorkQueuePreview;
   queue.translationLabels(queue.aiBusy(detail), $('translation-start'), $('translation-resume'),
-    'Traduire en français', 'Reprendre avec le modèle choisi');
+    'Traduire en français', $('translation-resume').dataset.deferred==='true'?'Reprendre les passages à vérifier':'Reprendre avec le modèle choisi');
 });
 async function loadTranslation(id,offset){
   if(offset===undefined)offset=id===S.translation?S.translationOffset:translationReading(id);
@@ -577,12 +577,12 @@ async function loadTranslation(id,offset){
     if(offset>=data.total&&offset>0)return loadTranslation(id,Math.max(0,Math.floor((data.total-1)/10)*10));
     translationReading(id,offset);
     S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
-    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
+    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:data.done<data.total?'Traduction incomplète':'Traitement terminé'};
     const label=(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-summary').textContent=translationThread&&data.status!=='running'?'Traduction · '+label:label;
     const status=$('translation-status');
     const automaticNotice=translationThread?'Traduction automatique à vérifier avec l’original.':data.notice;
-    const notice=data.title+' — '+(data.error||automaticNotice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'')+(data.quality?.warnings?' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.':'');
+    const notice=data.title+' — '+(data.deferred?'Traduction incomplète : '+data.deferred+' passage(s) à reprendre. L’original reste consultable. ':'')+(data.error||automaticNotice||'')+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'')+(data.quality?.warnings?' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.':'');
     if(status.textContent!==notice)status.textContent=notice;
     const parts=translationThread?data.parts.filter(part=>part.status!=='pending'||part.quality?.status==='blocked'):data.parts;
     if(translationThread){
@@ -594,7 +594,7 @@ async function loadTranslation(id,offset){
         translationThread.hidden=false;
       }
     }
-    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
+    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||(finished&&!data.deferred);$('translation-resume').dataset.deferred=String(finished&&!!data.deferred);$('translation-resume').textContent=finished&&data.deferred?'Reprendre les passages à vérifier':'Reprendre avec le modèle choisi';
     translationStop.hidden=finished||data.status==='stopped';translationDelete.hidden=false;
     const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done;meter.setAttribute('aria-label','Passages réellement traduits');
     const pageStatus=(Number.isInteger(data.pages_done)?data.pages_done+' / '+data.pages+' pages ou sections entièrement traduites. ':'')+(data.pages_partial?data.pages_partial+' page(s) commencée(s). ':'')+(active&&data.current_page?'Page ou section en cours : '+data.current_page+'. ':'');

@@ -51,9 +51,9 @@
     const explanation=node('p','Vous pouvez quitter ce document et retrouver le travail ici. Après un arrêt du serveur, la reprise est volontaire.','small muted');
     const start=action('Démarrer la traduction',()=>command('start')),pause=action('Mettre en pause',()=>command('pause'),'secondary'),resume=action('Reprendre',()=>command('resume'),'secondary'),stop=action('Arrêter',()=>command('stop'),'secondary'),remove=action('Supprimer ce travail',()=>command('delete'),'text-button');
     const download=node('a','Télécharger le texte français');download.className='secondary-link';
-    const conversation=node('a','Ouvrir la conversation associée');
+    const conversation=node('a','Ouvrir la conversation associée'),shared=node('a','Lire le document partagé'),publicationNotice=node('p',undefined,'small muted');
     const publish=action('Réessayer l’ajout à la bibliothèque',()=>command('publish'),'secondary');
-    controls.append(start,pause,resume,stop,download,publish,remove,conversation);
+    controls.append(start,pause,resume,stop,download,publish,remove,conversation,shared);
     const navigation=node('div',undefined,'reader-work-actions');
     const previous=action('Passages précédents',()=>load(job,Math.max(0,offset-10)),'secondary'),next=action('Passages suivants',()=>load(job,offset+10),'secondary');
     const latest=action('Lire les derniers passages traduits',()=>{if(Number.isInteger(lastDone)){load(job,Math.floor(lastDone/10)*10);parts.scrollIntoView({block:'start'});}},'secondary');
@@ -66,7 +66,7 @@
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
     const updateQueue=({detail})=>{
       const queue=window.WorkQueuePreview;
-      queue?.translationLabels(queue.aiBusy(detail),start,resume,'Démarrer la traduction','Reprendre');
+      queue?.translationLabels(queue.aiBusy(detail),start,resume,'Démarrer la traduction',resume.dataset.deferred==='true'?'Reprendre les passages à vérifier':'Reprendre');
     };
     const checkQueue=()=>{
       if(portal||document.hidden||root.hidden||!valid())return;
@@ -74,12 +74,13 @@
     };
     updateQueue({detail:window.WorkQueuePreview?.current?.()});
     document.addEventListener('survie:work-queue',updateQueue);
+    controls.after(publicationNotice);
     const queueTimer=portal?null:setInterval(checkQueue,3500);
     const resumePolling=()=>{if(!document.hidden&&!root.hidden&&valid()&&job)load(job,offset);};
     document.addEventListener('visibilitychange',resumePolling);
     destroy=()=>{disposed=true;version++;clearTimeout(timer);clearInterval(queueTimer);document.removeEventListener('survie:work-queue',updateQueue);document.removeEventListener('visibilitychange',resumePolling);};
     const labels={queued:'En attente du moteur',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
-    function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=true;previous.hidden=next.hidden=latest.hidden=true;config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
+    function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=shared.hidden=true;previous.hidden=next.hidden=latest.hidden=true;setText(publicationNotice,'');config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
     function choose(){select.replaceChildren(new Option('Nouvelle traduction',''));for(const item of items)select.append(new Option((labels[item.status]||item.status)+' · '+new Date(item.created*1000).toLocaleDateString('fr-FR'),item.id));select.value=job||'';}
     async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}finally{if(valid())trigger.disabled=false;}}
     function newWork(){clearTimeout(timer);version++;job=null;renderedJob=null;lastDone=null;offset=0;parts.replaceChildren();setText(reading,'');state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
@@ -108,15 +109,23 @@
         if(position>=data.total&&position)return load(id,Math.max(0,Math.floor((data.total-1)/10)*10));
         if(modeForJob!==id){modeForJob=id;if([...modes.options].some(o=>o.value===data.mode))modes.value=data.mode;}
         renderedJob=id;select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)setText(option,(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR'));const active=['queued','running'].includes(data.status);
-        setText(state,(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||''));
+        setText(state,(data.status==='completed'&&data.done<data.total?'Traduction incomplète':window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+(data.deferred?data.deferred+' passage(s) à reprendre. L’original reste consultable. ':'')+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||''));
         const end=Math.min(position+data.parts.length,data.total);setText(reading,(Number.isInteger(data.current_page)?'Page/section en cours : '+data.current_page+'. ':'')+(data.total?'Passages affichés : '+(position+1)+' à '+end+' sur '+data.total+'.':'Aucun passage à afficher.'));
         lastDone=data.last_done_position;latest.hidden=!Number.isInteger(lastDone)||Math.floor(lastDone/10)*10===position;
         progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.done;
-        pause.hidden=!active;resume.hidden=active||data.status==='completed';stop.hidden=data.status==='completed'||data.status==='stopped';remove.hidden=false;download.hidden=false;conversation.hidden=false;
+        pause.hidden=!active;resume.hidden=active||(data.status==='completed'&&!data.deferred);resume.dataset.deferred=String(data.status==='completed'&&!!data.deferred);resume.textContent=resume.dataset.deferred==='true'?'Reprendre les passages à vérifier':'Reprendre';stop.hidden=data.status==='completed'||data.status==='stopped';remove.hidden=false;download.hidden=false;conversation.hidden=false;
         download.href='/api/translations/'+encodeURIComponent(id)+'/export';conversation.href=(portal?'':'/nouveau/')+'#/assistant?conversation='+encodeURIComponent(data.conversation_id);conversation.dataset.route='assistant?conversation='+encodeURIComponent(data.conversation_id);
-        publish.hidden=data.status!=='completed'||!!data.publication?.source_id;
+        const publication=data.publication||{};
+        const publishing=data.status==='completed'&&data.done>0&&publication.pending&&!publication.error;
+        publish.hidden=data.status!=='completed'||!data.done||publishing||!!(publication.source_id&&!publication.error);
+        shared.hidden=!publication.source_id;
+        if(!shared.hidden){
+          shared.textContent=publication.partial?'Lire la traduction partielle partagée':'Lire le document partagé';
+          shared.href='/?document='+encodeURIComponent(publication.source_id)+'#library';
+        }
+        setText(publicationNotice,publication.error||(publishing?'Actualisation des documents locaux en cours…':data.status==='completed'&&!data.done?'Aucun passage français à partager.':''));
         previous.hidden=position===0;next.hidden=position+data.parts.length>=data.total;
-        render(data);if(active&&!document.hidden&&!root.hidden)timer=setTimeout(()=>load(id,position),2000);
+        render(data);if((active||publishing)&&!document.hidden&&!root.hidden)timer=setTimeout(()=>load(id,position),2000);
       }catch(e){if(valid()&&own===version){state.textContent=e.message;if(e.status!==404)timer=setTimeout(()=>load(id,position),5000);}}
     }
     async function command(action){if(!valid()||busy)return;

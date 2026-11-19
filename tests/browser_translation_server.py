@@ -165,6 +165,14 @@ for number in range(1,7):
     if number==6:text+=' Appendix rotor calibration.'
     stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET'+(' 20 40 80 30 re S 160 40 80 30 re S 100 55 m 160 55 l S' if number==6 else '')).encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
+writer=PdfWriter()
+for text in ('The fictional cover is blue.', 'The fictional sample weighs 10 mg.', 'The final chapter is brief.'):
+    page=writer.add_blank_page(width=300,height=400)
+    page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
+    stream=DecodedStreamObject();stream.set_data(f'BT /F1 12 Tf 20 100 Td ({text}) Tj ET'.encode())
+    page[NameObject('/Contents')]=stream
+writer.write(library.GUIDES/'quality-partial.en.pdf')
+
 # A small file with a genuinely large image, compressed without allocating its
 # complete RGB bitmap in the fixture server.
 writer=PdfWriter();page=writer.add_blank_page(width=500,height=720)
@@ -286,6 +294,9 @@ async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None,sp
     await asyncio.sleep(.5)
     if on_metrics:on_metrics({'context':16384,'requested_context':16384,'runtime_after':{'running':{'context_length':16384}},
         'model_calls':[{'prompt_eval_count':300,'eval_count':400,'load_ms':2,'eval_ms':450}]})
+    if text.startswith('The fictional cover'):return 'La couverture fictive est bleue.',engine.MODES[mode]['model']
+    if text.startswith('The fictional sample'):return ('L’échantillon fictif pèse 100 mg.' if mode=='rapide' else 'L’échantillon fictif pèse 10 mg.'),engine.MODES[mode]['model']
+    if text.startswith('The final chapter'):return 'Le dernier chapitre est bref.',engine.MODES[mode]['model']
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
     if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']

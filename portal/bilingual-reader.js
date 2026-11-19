@@ -48,7 +48,7 @@
         const data=await get('french-page?'+new URLSearchParams({id:active.id,original_id:base,page:String(page)}));
         if(departing||own!==requestNumber||!panel.isConnected||!reading)return;
         if(Array.isArray(data.pages)){active.pages=data.pages;previous.disabled=!data.pages.some(value=>value<page);next.disabled=!data.pages.some(value=>value>page);}
-        notice.textContent=data.notice||notice.textContent;
+        notice.textContent=(data.partial?'Traduction partielle · '+data.missing+' passage(s) indisponible(s). Consultez l’original pour les passages manquants. ':'')+(data.notice||'');
         if(!data.available){status.textContent='Cette page n’est pas dans la plage traduite. Pages disponibles : '+active.pages.join(', ')+'.';if(active.pages.length)body.append(button('Ouvrir la première page traduite',()=>go(active.pages[0])));return;}
         status.textContent=data.freshness==='changed'?'L’original a changé depuis la traduction : comparez les deux versions.':data.freshness==='unknown'?'Correspondance des éditions à vérifier.':'Page/section '+data.page+' · texte français enregistré. Les contrôles automatiques ne valident pas le sens.';
         for(const warning of data.warnings||[])body.append(node('p',warning,'french-reading-notice'));
@@ -62,7 +62,7 @@
     function discover(){get('french-reading?'+new URLSearchParams({original_id:base})).then(data=>{
       if(departing||!panel.isConnected)return;choices=Array.isArray(data.translations)?data.translations:[];
       if(!choices.length){panel.remove();return;}
-      versions.replaceChildren();for(const choice of choices){const option=node('option',new Date(choice.published_at*1000).toLocaleDateString('fr-FR')+' · '+(choice.original_edition||'édition inconnue')+(choice.freshness==='changed'?' · original modifié':choice.freshness==='unknown'?' · à comparer':''));option.value=choice.id;versions.append(option);}
+      versions.replaceChildren();for(const choice of choices){const option=node('option',new Date(choice.published_at*1000).toLocaleDateString('fr-FR')+' · '+(choice.original_edition||'édition inconnue')+(choice.partial?' · traduction partielle':'')+(choice.freshness==='changed'?' · original modifié':choice.freshness==='unknown'?' · à comparer':''));option.value=choice.id;versions.append(option);}
       versionLabel.hidden=choices.length<2;active=choices[0];trigger.hidden=false;notice.textContent=data.notice||notice.textContent;
       try{const saved=JSON.parse(localStorage.getItem(key)||'null');const found=choices.find(row=>row.id===saved?.translation);if(found)active=found;versions.value=active.id;if(saved?.mode==='french'&&active.freshness==='unchanged')load();}catch(_){}
     }).catch(error=>{if(!(error instanceof PageDeparture))panel.remove();});}

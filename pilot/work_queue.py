@@ -422,8 +422,9 @@ def describe(kind, identifier):
                     row = db.execute('SELECT status,mode,error,user_id,conversation_id,question AS title FROM summary_jobs WHERE id=?', (identifier,)).fetchone()
                 else:
                     row = db.execute('SELECT status,mode,error,user_id,conversation_id,title FROM translations WHERE id=?', (identifier,)).fetchone()
-                    progress = db.execute("SELECT sum(status='done'),count(*) FROM translation_parts WHERE translation_id=?", (identifier,)).fetchone()
+                    progress = db.execute("SELECT sum(status='done'),count(*),sum(status IN ('deferred','unreadable')) FROM translation_parts WHERE translation_id=?", (identifier,)).fetchone()
                     result.update(done=progress[0] or 0, total=progress[1])
+                    if row and row['status']=='completed' and progress[2]:result['stage']='Traduction partielle'
                 if row:
                     result.update(status=row['status'], mode=row['mode'], error=row['error'], owner=row['user_id'])
                     if kind == 'chat':

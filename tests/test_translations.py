@@ -100,7 +100,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['parts'][0]['model'],'model-one')
         self.assertEqual(state['parts'][1]['model'],'model-two')
 
-    async def test_resume_retries_only_failed_passage_without_renumbering_or_publishing_partial_text(self):
+    async def test_resume_after_engine_error_keeps_positions_and_splits_truncated_reply(self):
         item=await self.create()
         key=item['id']
         first='The dial has 7 marks. The tray holds 4 liters.'
@@ -129,6 +129,86 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls,[first,second,second,'The cover has 2 clips. ','The cable measures 10 meters.'])
         self.assertEqual(state['parts'][1]['translated'],'Le couvercle a 2 attaches. Le câble mesure 10 mètres.')
         self.assertEqual(state['parts'][1]['source_text'],second)
+
+    async def test_partial_file_publishes_later_sections_and_updates_under_the_same_link(self):
+        from pilot import publications, translation_reader
+        item=await self.create()
+        key=item['id']
+        passages={
+            'The fictional cover is blue.':'La couverture fictive est bleue.',
+            'The fictional sample weighs 10 mg.':'L’échantillon fictif pèse 10 mg.',
+            'The final chapter is brief.':'Le dernier chapitre est bref.',
+        }
+        first,middle,last=passages
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(key,))
+            db.executemany('INSERT INTO translation_parts(translation_id,position,page,source_text) VALUES(?,?,?,?)',
+                [(key,i,i+1,source) for i,source in enumerate(passages)])
+        calls=[]
+        async def respond(source,mode,**options):
+            calls.append(source)
+            target=passages[source]
+            if source==middle and mode=='rapide':
+                target='PROPOSITION PRIVÉE : '+target.replace('10 mg','100 mg')
+            return target,'fixture'
+        with patch.object(tr,'translate',side_effect=respond):
+            await tr.run(key)
+            status=tr.status(key,'alice')
+            self.assertEqual((status['status'],status['done'],status['deferred']),('completed',2,1))
+            self.assertEqual(calls,[first,middle,middle,last])
+            self.assertEqual(status['parts'][1]['status'],'deferred')
+            self.assertIn('PROPOSITION PRIVÉE',status['parts'][1]['candidate'])
+            publication=status['publication']
+            self.assertTrue(publication['partial']);self.assertFalse(publication['pending'])
+            path=library.GUIDES/publication['source_id'].removeprefix('guide:')
+            before=path.read_text()
+            self.assertIn('Traduction partielle : 2/3',before)
+            self.assertIn('Passage non traduit · passage 2',before)
+            self.assertIn('Consulter l’original',before)
+            self.assertIn(passages[last],before)
+            self.assertNotIn('PROPOSITION PRIVÉE',before)
+            self.assertNotIn(middle,before)
+            self.assertIn('2/3 passages traduits',tr.export(key,'alice'))
+            reader=translation_reader.page(publication['source_id'],self.source,2)
+            self.assertTrue(reader['partial']);self.assertIn('Passage non traduit',reader['parts'][0])
+            store.init()
+            with patch.object(tr,'launch'):await tr.resume(key,'alice','moyenne')
+            with patch.object(library,'index_guides',side_effect=OSError('indexation interrompue')):
+                await tr.run(key)
+        self.assertEqual(calls,[first,middle,middle,last,middle])
+        status=tr.status(key,'alice')
+        self.assertEqual((status['done'],status['deferred']), (3,0))
+        self.assertTrue(status['publication']['pending'])
+        self.assertTrue(status['publication']['error'])
+        await publications.recover()
+        updated=tr.status(key,'alice')['publication']
+        self.assertEqual(updated['source_id'],publication['source_id'])
+        self.assertFalse(updated['partial']);self.assertFalse(updated['pending'])
+        self.assertIn(passages[middle],path.read_text())
+        self.assertNotIn('Passage non traduit',path.read_text())
+        self.assertEqual(translation_reader.page(updated['source_id'],self.source,2)['parts'],[passages[middle]])
+
+    async def test_standalone_references_skip_inference_and_inline_anchors_are_restored(self):
+        link='https://example.org/reference/35'
+        refs=f'{link}\nDOI: 10.1000/test.19'
+        with patch.object(tr,'available',AsyncMock()) as available:
+            self.assertEqual(await tr.translate(refs,'rapide'),(refs,''))
+            available.assert_not_awaited()
+        source='See this website: '+link
+        original=httpx.AsyncClient
+        def handler(request):
+            payload=json.loads(request.content)
+            text=payload['messages'][1]['content']
+            self.assertNotIn(link,text)
+            french=text.replace('See this website','Consultez ce site')
+            return httpx.Response(200,json={'message':{'content':json.dumps({'translation':french})},
+                'done':True,'done_reason':'stop'})
+        runtime={'available':False,'native_context':None}
+        with patch.object(tr.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
+            httpx,'AsyncClient',side_effect=lambda **kw:original(transport=httpx.MockTransport(handler),**kw)
+        ):
+            result,_=await tr.translate(source,'rapide')
+        self.assertEqual(result,'Consultez ce site: '+link)
 
     async def test_http_stream_disconnected_mid_json_restarts_the_whole_passage(self):
         item=await self.create()
@@ -167,7 +247,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((result['status'],result['done']),('completed',1))
         self.assertEqual(result['parts'][0]['translated'],'Le cadran a 7 repères. Le bac contient 4 litres.')
 
-    async def test_missing_ordinal_retries_with_spelled_source_and_checks_original(self):
+    async def test_missing_ordinal_warns_without_a_second_model_call(self):
         item=await self.create()
         key=item['id']
         source='Look for the 1st mark. Then count 7 clips.'
@@ -177,12 +257,11 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
                 (key,0,1,source,'pending'))
         original=httpx.AsyncClient
         calls=[]
-        target='Repérez la première marque. Comptez ensuite 7 attaches.'
+        target='Repérez la marque. Comptez ensuite 7 attaches.'
         def handler(request):
             payload=json.loads(request.content)
             calls.append(payload['messages'][1]['content'])
-            french='Repérez la marque. Comptez ensuite 7 attaches.' if len(calls)==1 else target
-            return httpx.Response(200,json={'message':{'content':json.dumps({'translation':french})},
+            return httpx.Response(200,json={'message':{'content':json.dumps({'translation':target})},
                 'done':True,'done_reason':'stop'})
         runtime={'available':False,'native_context':None}
         with patch.object(tr.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
@@ -190,7 +269,8 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         ):
             await tr.run(key)
         state=tr.status(key,'alice')
-        self.assertEqual(calls,[source,'Look for the first mark. Then count 7 clips.'])
+        self.assertEqual(calls,[source])
+        self.assertIn('ordinals',{issue['code'] for issue in state['parts'][0]['quality']['issues']})
         self.assertEqual((state['status'],state['done']),('completed',1))
         self.assertEqual(state['parts'][0]['source_text'],source)
         self.assertEqual(state['parts'][0]['translated'],target)
