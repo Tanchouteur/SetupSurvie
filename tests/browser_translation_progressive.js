@@ -55,6 +55,11 @@ async page=>{
   check(await page.evaluate(()=>S.translationOffset===0),'L’avancement ne déplace pas automatiquement la lecture');
   stage='lire les derniers passages';await page.locator('#translation-reading-latest').click();await page.waitForFunction(()=>S.translationOffset===10&&document.querySelector('#translation-parts article')?.dataset.position==='10');
   check((await page.locator('#translation-parts').textContent()).includes('Passage français fictif 13'),'Accès volontaire aux derniers passages prêts');
+  stage='fermer avec le retour navigateur';await page.goBack();await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
+  await inline.waitFor({state:'visible'});
+  check(await inline.isVisible(),'Retour navigateur ferme la lecture et retrouve les passages dans le fil');
+  await page.goForward();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
+  check(await page.evaluate(()=>translationReadingState(S.translation).open),'Avancer dans le navigateur retrouve la lecture ouverte et son repère');
   stage='fermer avant la pause';await page.locator('#translation-reading-close').click();await page.waitForFunction(()=>!document.getElementById('translation-reading-dialog').open&&!history.state?.dialog);
   await page.route('**/api/translations/'+id+'/pause',route=>{paused=true;return route.fulfill({json:{id,status:'paused'}});});
   stage='mettre en pause';await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
@@ -80,12 +85,10 @@ async page=>{
   stage='revenir au début';await page.locator('#translation-reading-first').click();await page.waitForFunction(()=>document.querySelector('#translation-parts article')?.dataset.position==='0');
   check(await page.evaluate(()=>S.translationOffset===0),'Retour explicite au début du texte disponible');
   for(const width of [1366,390,320]){await page.setViewportSize({width,height:900});check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Suivi et lecture adaptés à '+width);}
-  stage='fermer avec le retour navigateur';await page.goBack();await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
-  check(await inline.isVisible(),'Retour navigateur ferme la lecture et retrouve les passages dans le fil');
-  await page.goForward();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
-  check(await page.evaluate(()=>translationReadingState(S.translation).open),'Avancer dans le navigateur retrouve la lecture ouverte et son repère');
+  stage='fermer la lecture avec Échap';
   await page.keyboard.press('Escape');await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
-  check(await page.evaluate(()=>!translationReadingState(S.translation).open),'Échap ferme la lecture et conserve ce choix');
+  await page.waitForFunction(id=>typeof S!=='undefined'&&S.translation===id&&!translationReadingState(id).open,id);
+  check(true,'Échap ferme la lecture et conserve ce choix');
   stage='signaler un document sans texte traduit';scan=true;done=0;await page.evaluate(id=>loadTranslation(id,0),id);
   await page.waitForFunction(()=>document.getElementById('translation-reading-status').textContent.includes('Aucun passage français'));
   check((await page.locator('#translation-reading-status').textContent()).includes('Aucun passage français')&&!(await page.locator('#translation-reading-status').textContent()).includes('pas encore prêt'),'Un document sans texte extractible ne promet pas une arrivée de traduction');
@@ -101,5 +104,11 @@ async page=>{
   check(await inline.isHidden(),'Une nouvelle discussion masque les passages de la précédente');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks,real_inference:false};
-  }catch(error){const state=await page.evaluate(()=>({dialog:document.getElementById('translation-reading-dialog')?.open,history:history.state,offset:S.translationOffset,translation:S.translation,reading:JSON.parse(localStorage.getItem('survie-translation-reading:'+S.user?.id)),status:document.getElementById('translation-status')?.textContent,hash:location.hash}));throw Error(stage+' : '+error.message+' '+JSON.stringify(state));}
+  }catch(error){
+    const state=await page.evaluate(()=>{
+      const app=typeof S==='undefined'?null:S;
+      return {dialog:document.getElementById('translation-reading-dialog')?.open,history:history.state,historyLength:history.length,offset:app?.translationOffset,translation:app?.translation,status:document.getElementById('translation-status')?.textContent,url:location.href};
+    }).catch(()=>({url:page.url()}));
+    throw Error(stage+' : '+error.message+' '+JSON.stringify(state));
+  }
 }
