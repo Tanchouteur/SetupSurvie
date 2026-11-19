@@ -5,6 +5,21 @@ sur le PC qui héberge SetupSurvie ; ce PC doit avoir **Internet**. Depuis 0.42.
 et FFmpeg sont préparés automatiquement : rien à installer à la main. Il range les vidéos dans la
 bibliothèque ; le site les répertorie ensuite tout seul. Essai réel sur Bazzite ; sous Windows, voir les [limites](#limites).
 
+## À la première installation en ligne — 0.54.0
+
+Le projet maintient sa sélection dans
+[`deploy/youtube-installation.txt`](../../deploy/youtube-installation.txt).
+Ce fichier UTF-8 suit le format de la [liste](#1-préparer-la-liste) ci-dessous.
+L’installateur remet la liste à la file d’attente, en 480p, après la préparation
+des services et du modèle. Le serveur télécharge ensuite les vidéos, réutilise
+les pistes disponibles, transcrit l’audio si nécessaire, traduit en français
+et indexe les titres et les pistes exploitables.
+
+Après un redémarrage, la même liste conserve son état. Utilisez **File d’attente**
+pour reprendre un travail en erreur ou en pause. Seule l’installation en ligne
+soumet la liste automatiquement. Les vidéos téléchargées par ce parcours suivent
+les mêmes règles de [droits](#droits) que les téléchargements depuis le site.
+
 ## Depuis le site — 0.51.0
 
 Avec le profil **Famille**, ouvrir **Mon appareil → Paramètres → Bibliothèque et

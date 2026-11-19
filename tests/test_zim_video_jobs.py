@@ -12,6 +12,28 @@ class ArchiveVideoJobTests(unittest.TestCase):
     setUp=fixtures.LibraryJobTests.setUp
     seed=fixtures.LibraryJobTests.seed
 
+    def test_offline_installation_queues_archive_inventory_until_host_is_available(self):
+        data = Path(self.config['data_dir'])
+        (data / 'library/zim/encyclopedie.zim').write_bytes(b'zim fixture')
+        setup.schedule_initial_videos(self.app, self.config, offline=True)
+        pending = self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST
+        self.assertTrue(pending.exists())
+        with patch.object(self.manager, 'index_ready', return_value=False), patch.object(jobs.subprocess, 'Popen') as process:
+            self.manager.auto_index()
+            process.assert_not_called()
+            self.assertTrue(self.manager.status()['initial_video_inventory_pending'])
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(jobs.index_queue, 'gaming', return_value=True), patch.object(jobs.subprocess, 'Popen') as process:
+            self.manager.auto_index()
+            process.assert_not_called()
+            self.assertTrue(pending.exists())
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(jobs.subprocess, 'Popen', return_value=MagicMock(pid=os.getpid())) as process:
+            self.manager.auto_index()
+            self.manager.auto_index()
+            process.assert_called_once()
+        self.assertEqual(self.manager.read()['action'], 'video-inventory')
+        self.assertFalse(pending.exists())
+        self.assertFalse(self.manager.status()['initial_video_inventory_pending'])
+
     def test_prepared_reader_and_non_gaming_state_are_required_before_spawning(self):
         with patch.object(jobs.subprocess,'Popen') as process:
             with self.assertRaises(setup.SetupError):self.manager.start('video-inventory',{})

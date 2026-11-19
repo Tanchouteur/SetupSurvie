@@ -33,6 +33,26 @@ manifeste avant transfert. Les prérequis système doivent être installés sép
 Pour actualiser les cartes et vérifier les dépendances du kit avant transfert,
 suivre [Préparer et vérifier le kit hors ligne](preparer-kit-hors-ligne.md).
 
+## Préparer les vidéos à la première installation
+
+Depuis la 0.54.0, le serveur examine en arrière-plan les vidéos et les pistes
+fournies dans les encyclopédies ZIM présentes à la fin de l’installation, y compris
+depuis un kit hors ligne. Après publication de l’inventaire, le portail
+rend les titres et les pistes exploitables recherchables. Le suivi se trouve dans
+**Bibliothèque → Collections → Vidéos de la bibliothèque**. L’examen attend si
+l’outil d’indexation manque, si le serveur est occupé ou si le mode jeu est actif.
+Après une interruption, reprenez l’examen depuis le même écran.
+
+Pour une installation en ligne, renseignez
+[`deploy/youtube-installation.txt`](../../deploy/youtube-installation.txt) **avant**
+de lancer l’installateur. Le dépôt fournit le fichier avec ses consignes et
+aucune adresse présélectionnée. Le serveur télécharge les vidéos listées en 480p
+et prépare automatiquement les sous-titres manquants, leur version française
+et l’index de recherche. Consultez **File d’attente** pour suivre le travail ou
+relancer une étape en erreur. Le portail est utilisable pendant ces opérations.
+Le [guide YouTube](../utilisation/telecharger-videos-youtube.md) détaille le format,
+les prérequis et les droits d’usage.
+
 ## Préparer une installation depuis le dépôt
 
 Ce parcours télécharge ses dépendances et n’équivaut pas à l’installation du kit.

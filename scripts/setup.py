@@ -27,6 +27,7 @@ PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
              'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE','HOST_GATEWAY'}
+INITIAL_ZIM_VIDEO_REQUEST = 'initial-zim-video-inventory.json'
 DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
@@ -96,6 +97,39 @@ def prepare_youtube_tools(config,offline):
         else:print('Outils de téléchargement des vidéos YouTube : préparation terminée au premier téléchargement avec Internet.')
     except (OSError,ValueError,SetupError,subprocess.SubprocessError):
         print('Outils de téléchargement des vidéos YouTube non préparés ; ils le seront au premier téléchargement avec Internet. Les autres fonctions restent disponibles.')
+
+
+def schedule_initial_videos(app, config, *, offline):
+    """Leave durable requests for the existing host inventory and pilot queue."""
+    from delivery_paths import destination
+    from pilot.youtube_list import INSTALLATION_LIST, MAX_TEXT, parse_list
+
+    data = Path(config['data_dir'])
+    try:
+        archives = destination(data, 'library/zim')
+        if any(path.is_file() and not path.is_symlink() for path in archives.glob('*.zim')):
+            write_json(app.work / INITIAL_ZIM_VIDEO_REQUEST, {'requested': True}, private=True)
+            print('Inventaire vidéo des encyclopédies demandé en arrière-plan. Suivi dans Vidéos de la bibliothèque.')
+    except (OSError, SetupError):
+        print('Inventaire vidéo des encyclopédies à lancer depuis Vidéos de la bibliothèque.')
+
+    if offline:
+        return
+    try:
+        with (ROOT / 'deploy' / INSTALLATION_LIST).open('rb') as source:
+            raw = source.read(MAX_TEXT + 1)
+        if len(raw) > MAX_TEXT:
+            raise ValueError('liste trop longue')
+        text = raw.decode('utf-8-sig')
+        entries, errors = parse_list(text)
+        if entries:
+            path = destination(data, 'state/pilot/' + INSTALLATION_LIST)
+            durable.write_bytes(path, text.encode('utf-8'))
+            print(f'{len(entries)} vidéo(s) YouTube demandée(s) en arrière-plan. Suivi dans File d’attente.')
+        elif errors:
+            print('La liste YouTube de l’installation ne contient aucune adresse de vidéo valide.')
+    except (OSError, ValueError, SetupError):
+        print('Liste YouTube de l’installation illisible ou trop longue. Ajoutez-la depuis la bibliothèque.')
 
 
 def safe_path(value):
@@ -700,7 +734,8 @@ def main(argv=None):
             if not linux_host.controller_reachable(app,c):
                 print('Attention : le portail ne joint pas le contrôleur local ; démarrage/arrêt de l’IA et indexation automatique indisponibles depuis le site. Voir docs/installation/README.md.')
             else:print('Contrôleur local joignable depuis le portail.')
-        print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
+        schedule_initial_videos(app, c, offline=args.offline)
+        print("Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
     elif args.action == "prepare-maps":
         import map_install
         map_install.ensure(Path(c['data_dir']))

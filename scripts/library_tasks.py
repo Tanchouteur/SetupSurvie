@@ -118,6 +118,7 @@ class Manager:
         state = self.current()
         result = {k: state[k] for k in ('phase', 'message', 'options', 'id', 'reader_probe') if k in state}
         result['index_reader_ready']=self.index_ready()
+        result['initial_video_inventory_pending'] = (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).is_file()
         result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
         queued=result['index_queue'];waiting=''
         if queued['pending']:
@@ -157,12 +158,19 @@ class Manager:
 
     def auto_index(self):
         root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
-        allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not index_queue.gaming(self.app.work)
+        gaming = index_queue.gaming(self.app.work)
+        allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not gaming
         if state['phase'] in ACTIVE:
-            if state.get('action')=='video-inventory' and index_queue.gaming(self.app.work):
+            if state.get('action')=='video-inventory' and gaming:
                 self.pause(automatic=True)
             if state.get('action')=='index' and state.get('options',{}).get('automatic') and not allowed:
                 self.pause(automatic=True)
+            return
+        request = self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST
+        if (self.backend == 'compose' and state['phase'] != 'planned' and request.is_file()
+                and not gaming and self.index_ready()):
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {})
             return
         if state['phase'] not in ('idle','completed') and not (state['phase']=='paused' and state.get('action')=='index' and state.get('options',{}).get('automatic')):return
         if not allowed or not queue['pending'] or queue.get('hold') or not self.index_ready():return
@@ -261,6 +269,8 @@ class Manager:
         except Exception:
             state.update(phase='error', message='Le transfert n’a pas pu démarrer. Réessayez depuis le PC serveur.')
             self.write(state); raise
+        if action == 'video-inventory':
+            (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).unlink(missing_ok=True)
 
     def youtube_job(self,previous,body):
         """A list saved by the site in state/pilot/youtube-lists, or the paused one."""

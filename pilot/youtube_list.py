@@ -7,6 +7,9 @@ import re
 
 from .provider_subtitles import video_id
 
+MAX_TEXT = 300_000
+INSTALLATION_LIST = 'youtube-installation.txt'
+
 RESERVED=re.compile(r'(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?')
 FORBIDDEN=re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 REASONS={
