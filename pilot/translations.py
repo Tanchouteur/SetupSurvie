@@ -25,6 +25,10 @@ class UnusableResponse(ValueError):
     """A format or size failure that can be retried on shorter input."""
 
 
+class InterruptedResponse(ValueError):
+    """A connection loss after the model started generating a reply."""
+
+
 async def extract(identifier,first_page=1,last_page=None):
     from . import document_text
     return await document_text.extract(identifier,first_page,last_page)
@@ -159,7 +163,7 @@ async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None):
     except (model_session.Failure,httpx.HTTPError,json.JSONDecodeError) as error:
         if last is not None and model_session.interrupted_reply(error):
             measured.value['failure']='stream_interrupted'
-            raise UnusableResponse('La connexion a interrompu la réponse en cours.') from None
+            raise InterruptedResponse('La connexion a interrompu la réponse en cours.') from None
         measured.value['failure']=error.kind if isinstance(error,model_session.Failure) else 'invalid_model_response'
         raise ValueError('Le moteur a interrompu la traduction. Reprenez après vérification du moteur.') from None
     finally:
@@ -195,6 +199,16 @@ async def check_passage(source,mode,guidance,observations,*,correction=None):
         report['status']='blocked'
         report['issues'].append({'code':'formula_anchors','severity':'error','message':formula_error})
     return result,model,report
+
+
+async def check_passage_with_replay(source,mode,guidance,observations):
+    try:
+        return await check_passage(source,mode,guidance,observations)
+    except InterruptedResponse:
+        # A connectivity failure says nothing about the size or fidelity of the
+        # original request. Discard the partial stream and replay it unchanged.
+        await available()
+        return await check_passage(source,mode,guidance,observations)
 
 
 async def recover_passage(source,mode,guidance,observations):
@@ -248,7 +262,7 @@ async def run(identifier):
                     try:
                         async with asyncio.timeout(900):
                             try:
-                                attempt=await check_passage(part['source_text'],item['mode'],guidance,observations)
+                                attempt=await check_passage_with_replay(part['source_text'],item['mode'],guidance,observations)
                             except UnusableResponse:
                                 attempt=None
                             if attempt is None or attempt[2]['status']=='blocked':

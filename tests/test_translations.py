@@ -136,7 +136,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             payload=json.loads(request.content)
             calls.append(payload['messages'][1]['content'])
             if len(calls)==1:return httpx.Response(200,stream=Interrupted())
-            translated={2:'Le cadran a 7 repères.',3:'Le bac contient 4 litres.'}[len(calls)]
+            translated='Le cadran a 7 repères. Le bac contient 4 litres.'
             final={'message':{'content':json.dumps({'translation':translated})},'done':True,'done_reason':'stop'}
             return httpx.Response(200,json=final)
         runtime={'available':False,'native_context':None}
@@ -145,9 +145,23 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         ):
             await tr.run(key)
         result=tr.status(key,'alice')
-        self.assertEqual(calls,[source,'The dial has 7 marks. ','The tray holds 4 liters.'])
+        self.assertEqual(calls,[source,source])
         self.assertEqual((result['status'],result['done']),('completed',1))
         self.assertEqual(result['parts'][0]['translated'],'Le cadran a 7 repères. Le bac contient 4 litres.')
+
+    async def test_second_stream_interruption_leaves_the_full_passage_pending(self):
+        item=await self.create()
+        key=item['id']
+        interruption=tr.InterruptedResponse('Coupure simulée')
+        with patch.object(tr,'translate',AsyncMock(side_effect=interruption)) as translate:
+            await tr.run(key)
+        self.assertEqual(translate.await_count,2)
+        first,second=translate.await_args_list
+        self.assertEqual(first.args,second.args)
+        state=tr.status(key,'alice')
+        self.assertEqual((state['status'],state['done']),('error',0))
+        self.assertIn('Coupure simulée',state['error'])
+        self.assertEqual(state['parts'][0]['source_text'],first.args[0])
 
     async def test_pause_cancels_inflight_fragment_and_preserves_previous_translation(self):
         item=await self.create();started=asyncio.Event()
