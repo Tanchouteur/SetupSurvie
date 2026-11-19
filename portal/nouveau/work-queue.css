@@ -217,14 +217,13 @@ button.work-queue-handle:is(:hover, :focus-visible):not(:disabled) { color: var(
 .work-queue-card.work-queue-held { border-color: var(--ds-warn-line); background: var(--ds-warn-soft); }
 .work-queue-held .work-queue-status { color: var(--ds-warn); }
 
-.work-queue-heading,
-.work-queue-lane-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.work-queue-page :is(.work-queue-heading, .work-queue-lane-title) {
+  position: relative;
+  min-height: 44px;
+  padding-inline-end: 52px;
 }
 .work-queue-heading h1 { margin-block: 0; }
-.work-queue-page .next-tabs { margin-bottom: 20px; }
+.next-interface .work-queue-page .next-tabs { margin: 0 0 20px; padding-inline: 0; }
 .work-queue-toolbar {
   padding: 16px 18px;
   border: 1px solid var(--ds-line-strong);
@@ -244,7 +243,7 @@ button.work-queue-handle:is(:hover, :focus-visible):not(:disabled) { color: var(
   border-radius: var(--ds-r);
   background: var(--ds-surface-2);
 }
-.work-queue-filters button {
+.next-interface .work-queue-filters button {
   min-height: 44px;
   padding: 6px 14px;
   color: var(--ds-ink-2);
@@ -252,11 +251,16 @@ button.work-queue-handle:is(:hover, :focus-visible):not(:disabled) { color: var(
   background: transparent;
   box-shadow: none;
 }
-.work-queue-filters button[aria-pressed="true"] {
+.next-interface .work-queue-filters button[aria-pressed="true"] {
   background: var(--ds-surface);
   color: var(--ds-ink);
   border-color: var(--ds-line-strong);
   box-shadow: var(--ds-shadow-1);
+}
+.next-interface .work-queue-filters button:hover:not(:disabled) {
+  color: var(--ds-ink);
+  background: var(--ds-surface);
+  box-shadow: none;
 }
 .work-queue-page :is(.work-queue-group, .work-queue-lane) { background: var(--ds-surface); }
 .work-queue-page .work-queue-card { border-radius: var(--ds-r-sm); }
@@ -270,8 +274,9 @@ button.work-queue-handle:is(:hover, :focus-visible):not(:disabled) { color: var(
 .work-queue-problem .work-queue-status { background: var(--ds-danger-soft); }
 .work-queue-held .work-queue-status { background: var(--ds-warn-soft); }
 .work-queue-empty { color: var(--ds-ink-2); }
-.queue-help { position: relative; flex: none; }
-.queue-help > summary {
+.next-interface .queue-help > summary {
+  position: absolute;
+  inset: 0 0 auto auto;
   display: grid;
   place-items: center;
   min-width: 44px;
@@ -286,29 +291,26 @@ button.work-queue-handle:is(:hover, :focus-visible):not(:disabled) { color: var(
 }
 .queue-help > summary::-webkit-details-marker { display: none; }
 .queue-help[open] > summary { color: var(--ds-ember-strong); border-color: currentColor; }
-.queue-help > p {
-  position: absolute;
-  z-index: 3;
-  inset-block-start: 100%;
-  inset-inline-end: 0;
-  width: min(272px, calc(100vw - 42px));
-  margin: 6px 0 0;
+.next-interface .queue-help::details-content,
+.next-interface .queue-help[open]::details-content {
+  overflow: visible;
+  transition: none;
+}
+.next-interface .work-queue-page .queue-help > p {
+  margin: 14px -52px 0 0;
   padding: 12px;
-  border: 1px solid var(--ds-line-strong);
-  border-radius: var(--ds-r);
-  background: var(--ds-surface);
-  box-shadow: var(--ds-shadow-4);
+  border-inline-start: 3px solid var(--ds-ember);
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-surface-2);
   font-size: .9rem;
   font-weight: 400;
 }
-.work-queue-lane-title { position: relative; flex: 1; }
-.work-queue-lane-title .queue-help { position: static; }
-.work-queue-lane-title .queue-help > p { inset-inline: 0 auto; }
+.work-queue-lane-title { flex: 1; }
+.work-queue-page .work-queue-lane-heading { align-items: center; }
+.work-queue-lane-title h2 { padding-top: 8px; }
 @media (max-width: 480px) {
   .work-queue-card { flex-wrap: wrap; }
   .work-queue-content { flex-basis: 100%; }
   .work-queue-controls { flex-direction: row; align-items: center; flex-wrap: wrap; }
-  .work-queue-heading { position: relative; }
-  .work-queue-heading .queue-help { position: static; }
-  .work-queue-heading .queue-help > p { inset-inline: 0 auto; }
+  body.next-interface .work-queue-page .next-tabs a { padding-inline: 6px; font-size: .82rem; }
 }
