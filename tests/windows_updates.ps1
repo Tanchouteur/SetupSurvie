@@ -30,6 +30,12 @@ try {
     function Initialize-SurvieTools { }
     function Find-SurviePython { return @{ Path = 'python-fixture'; Prefix = @('-3') } }
     function Find-SurvieGit { return 'git-fixture' }
+    $script:runningWork = $false
+    $script:queueUnavailable = $false
+    function Invoke-RestMethod {
+        if ($script:queueUnavailable) { throw 'fixture unavailable' }
+        return @{ running = $script:runningWork; jobs = @(); preparations_available = $true }
+    }
     $script:calls = @(); $script:dirty = $false; $script:ahead = '0'; $script:badHash = $false
     function Get-SurvieGitOutput($Git, $Arguments) {
         switch ($Arguments[2]) {
@@ -59,6 +65,17 @@ try {
     Assert ($apply.Count -eq 1) 'Apply must run once'
     Assert ($apply[0].Arguments[0] -eq '-3') 'Python launcher prefix must be retained'
     Assert ($apply[0].Arguments -contains $work) 'Private path with spaces must remain one argument'
+    $script:runningWork = $true; $script:calls = @()
+    $failed = $false
+    try { Invoke-SurvieGitUpdate $settings } catch { $failed = $_.Exception.Message -match 'travail est en cours' }
+    Assert ($failed -and $script:calls.Count -eq 2) 'Running work must prevent building and applying an update'
+    $script:runningWork = $false
+    $script:queueUnavailable = $true
+    $failed = $false
+    try { Assert-SurvieWorkQueueIdle ([version]'0.63.0') } catch { $failed = $_.Exception.Message -match 'Impossible de' }
+    Assert $failed 'A supported but unreachable queue must prevent interruption'
+    Assert-SurvieWorkQueueIdle ([version]'0.62.0')
+    $script:queueUnavailable = $false
     $script:calls = @(); $script:badHash = $true
     $failed = $false
     try { Invoke-SurvieGitUpdate $settings } catch { $failed = $_.Exception.Message -match 'Empreinte' }

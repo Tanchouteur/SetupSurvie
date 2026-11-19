@@ -235,6 +235,22 @@ function Get-SurvieGitOutput([string]$Git, [array]$Arguments) {
     return ($value -join "`n")
 }
 
+function Assert-SurvieWorkQueueIdle([version]$Installed) {
+    try {
+        $queue = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/work-queue' -UseBasicParsing -TimeoutSec 8
+    } catch {
+        # Releases before the unified queue may have no endpoint for this check.
+        if ($Installed -lt [version]'0.63.0') { return }
+        throw 'Impossible de vérifier la file d''attente. Vérifiez que SetupSurvie répond, puis relancez la mise à jour.'
+    }
+    if ($queue.running -or @($queue.jobs | Where-Object { $_.status -in @('running', 'preparing') }).Count) {
+        throw 'Un travail est en cours dans SetupSurvie. Attendez sa fin dans la File d''attente avant de relancer la mise à jour.'
+    }
+    if (-not $queue.preparations_available) {
+        throw 'Impossible de vérifier les préparations documentaires. Réessayez quand la File d''attente est disponible.'
+    }
+}
+
 function Invoke-SurvieGitUpdate($Settings) {
     Initialize-SurvieTools
     $portable = Join-Path $Settings.Data 'tools\Python312\python.exe'
@@ -283,6 +299,7 @@ function Invoke-SurvieGitUpdate($Settings) {
     }
     $script:updateVersion = $installed.version + ' → ' + $available.version
     if ($Check) { Write-Host 'Nouvelle version disponible. Relancez sans -Check pour appliquer la mise à jour.'; return }
+    Assert-SurvieWorkQueueIdle ([version]$installed.version)
     Write-SurvieUpdateProgress 'build'
     $packages = Join-Path $maintenance 'paquets'
     $null = New-Item -ItemType Directory -Path $packages -Force
@@ -290,6 +307,7 @@ function Invoke-SurvieGitUpdate($Settings) {
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $source 'scripts\pilot_update.py'), 'build', $package))
     $digest = ((Get-Content -LiteralPath ($package + '.sha256') -Raw).Trim() -split '\s+')[0]
     if ($digest -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $digest) { throw 'Empreinte incorrecte : application conservée.' }
+    Assert-SurvieWorkQueueIdle ([version]$installed.version)
     Write-SurvieUpdateProgress 'apply' 'Le site sera indisponible pendant la sauvegarde et le redémarrage.'
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
     Write-SurvieUpdateProgress 'launcher'
