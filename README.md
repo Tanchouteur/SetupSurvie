@@ -27,7 +27,7 @@ Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le naviga
 du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
 [guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
 
-Au **19 novembre 2026**, le pilote **0.58.0** propose une recherche locale avec indexation
+Au **19 novembre 2026**, le pilote **0.59.0** propose une recherche locale avec indexation
 automatique, deux espaces documentaires et diagnostic exportable.
 La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre
 et de régler l’ordre des traitements du portail.
@@ -79,7 +79,7 @@ avec suivi des travaux et options techniques dépliables.
 
 Le portail **0.17.0** propose une [nouvelle organisation](docs/utilisation/nouvelle-interface.md)
 sur Windows et Linux, avec les données réelles. La présentation précédente reste
-conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive reste séparée.
+conservée sous `/classique/`, sans bouton dans les menus ; la maquette fictive a été retirée en 0.59.0.
 
 - **Installer sur Windows** : double-cliquer sur `Installer-SetupSurvie.cmd`, qui prépare le PC puis poursuit l’installation. Lire le [parcours Windows](docs/installation/deux-etapes-windows.md), ses validations et ses limites.
 - **Mettre à jour sur Windows** : utiliser le raccourci **Mettre à jour SetupSurvie** ou `Mettre-a-jour-SetupSurvie.cmd` dans le dossier d’installation. Le [guide de mise à jour](docs/exploitation/mises-a-jour-et-bibliotheque-pilote.md) décrit la récupération Git, la sauvegarde et le retour arrière.

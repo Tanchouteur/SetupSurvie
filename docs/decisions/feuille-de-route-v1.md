@@ -1,3 +1,5 @@
+> Actualisation du 19 novembre 2026 : la maquette fictive est retirée du paquet en 0.59.0 ; l’interface classique reste liée à la génération et aux tests de l’interface actuelle.
+
 # Feuille de route vers la V1 (1.0.0)
 
 **Statut : bilan et proposition de l’agent du 17 novembre 2026, à la demande de

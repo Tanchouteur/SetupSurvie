@@ -100,9 +100,7 @@ Voir le [guide documentaire](documents-et-traduction.md#contrôles-de-traduction
 
 ## Essayer la future organisation
 
-La [maquette UX](maquette-ux.md) est accessible séparément depuis le portail
-0.1.31. Ses contenus et mesures sont fictifs ; l’interface actuelle reste celle
-des usages réels.
+La [maquette UX](maquette-ux.md) est une archive historique : ses fichiers fictifs ont été retirés du paquet en 0.59.0.
 
 ## Organisation actuelle — 0.1.32
 

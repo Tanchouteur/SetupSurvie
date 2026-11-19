@@ -1,3 +1,5 @@
+> **Archive historique :** la maquette fictive a été retirée du paquet en 0.59.0, sur demande de Louis le 19 novembre 2026. Les indications d’accès ci-dessous décrivent la version 0.1.31 et ne s’appliquent plus.
+
 # Essayer la nouvelle organisation du portail
 
 **Depuis 0.1.32**, la [nouvelle interface fonctionnelle](nouvelle-interface.md)

@@ -575,15 +575,13 @@ interface classique conservée et utilisable. Il définit aussi les différences
 ordinateur/téléphone et les critères de non-régression. Ce plan ne décrit pas
 une refonte déjà livrée ; les composants et procédures actuels restent inchangés.
 
-Depuis 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée
-dans `portal/maquette/` permet d’essayer cette organisation sans appels API.
-Le portail actuel reste à la racine ; le suivi commun réel n’est pas encore raccordé.
+En 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée permettait d’essayer cette organisation sans appels API. Elle a été retirée du paquet en 0.59.0.
 
 ## Interface fonctionnelle — 0.1.32
 
 L’entrée principale et `/nouveau/` servent la nouvelle organisation, avec les
 API existantes. `/classique/` conserve ses propres scripts/styles et les mêmes
-données ; `/maquette/` reste fictif. `scripts/build_next_portal.py` génère les
+données. La maquette fictive a été retirée en 0.59.0. `scripts/build_next_portal.py` génère les
 entrées modernes à partir du balisage classique. `layout.js` déplace les contrôles
 existants avant leur liaison ; `navigation.js` adapte historique et contexte.
 Depuis 0.12.0, `settings-layout.js` s’exécute après la création des panneaux
