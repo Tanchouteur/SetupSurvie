@@ -136,7 +136,7 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             payload=json.loads(request.content)
             calls.append(payload['messages'][1]['content'])
             if len(calls)==1:return httpx.Response(200,stream=Interrupted())
-            translated={2:'Le cadran a 7 repères.',3:'Le bac contient 4 litres.'}[len(calls)]
+            translated='Le cadran a 7 repères. Le bac contient 4 litres.'
             final={'message':{'content':json.dumps({'translation':translated})},'done':True,'done_reason':'stop'}
             return httpx.Response(200,json=final)
         runtime={'available':False,'native_context':None}
@@ -145,9 +145,51 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         ):
             await tr.run(key)
         result=tr.status(key,'alice')
-        self.assertEqual(calls,[source,'The dial has 7 marks. ','The tray holds 4 liters.'])
+        self.assertEqual(calls,[source,source])
         self.assertEqual((result['status'],result['done']),('completed',1))
         self.assertEqual(result['parts'][0]['translated'],'Le cadran a 7 repères. Le bac contient 4 litres.')
+
+    async def test_missing_ordinal_retries_with_spelled_source_and_checks_original(self):
+        item=await self.create()
+        key=item['id']
+        source='Look for the 1st mark. Then count 7 clips.'
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(key,))
+            db.execute('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',
+                (key,0,1,source,'pending'))
+        original=httpx.AsyncClient
+        calls=[]
+        target='Repérez la première marque. Comptez ensuite 7 attaches.'
+        def handler(request):
+            payload=json.loads(request.content)
+            calls.append(payload['messages'][1]['content'])
+            french='Repérez la marque. Comptez ensuite 7 attaches.' if len(calls)==1 else target
+            return httpx.Response(200,json={'message':{'content':json.dumps({'translation':french})},
+                'done':True,'done_reason':'stop'})
+        runtime={'available':False,'native_context':None}
+        with patch.object(tr.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
+            httpx,'AsyncClient',side_effect=lambda **kw:original(transport=httpx.MockTransport(handler),**kw)
+        ):
+            await tr.run(key)
+        state=tr.status(key,'alice')
+        self.assertEqual(calls,[source,'Look for the first mark. Then count 7 clips.'])
+        self.assertEqual((state['status'],state['done']),('completed',1))
+        self.assertEqual(state['parts'][0]['source_text'],source)
+        self.assertEqual(state['parts'][0]['translated'],target)
+
+    async def test_second_stream_interruption_leaves_the_full_passage_pending(self):
+        item=await self.create()
+        key=item['id']
+        interruption=tr.InterruptedResponse('Coupure simulée')
+        with patch.object(tr,'translate',AsyncMock(side_effect=interruption)) as translate:
+            await tr.run(key)
+        self.assertEqual(translate.await_count,2)
+        first,second=translate.await_args_list
+        self.assertEqual(first.args,second.args)
+        state=tr.status(key,'alice')
+        self.assertEqual((state['status'],state['done']),('error',0))
+        self.assertIn('Coupure simulée',state['error'])
+        self.assertEqual(state['parts'][0]['source_text'],first.args[0])
 
     async def test_pause_cancels_inflight_fragment_and_preserves_previous_translation(self):
         item=await self.create();started=asyncio.Event()

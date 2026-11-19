@@ -8,7 +8,7 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=6
+VERSION=7
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
@@ -17,16 +17,16 @@ ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!
 EN_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:st|nd|rd|th)(?!\w)',re.I)
 FR_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:er|re|ère|e|ème|eme|ᵉ|ᵉʳ|ʳᵉ)s?(?!\w)',re.I)
 ORDINAL_WORDS={
-    '1':(r'first(?:ly)?',r"premi(?:er|ère)s?|d[’']abord"),
-    '2':(r'second(?:ly)?',r'second(?:e)?s?|deuxièmes?'),
-    '3':(r'third(?:ly)?',r'troisièmes?'),
-    '4':(r'fourth(?:ly)?',r'quatrièmes?'),
-    '5':(r'fifth(?:ly)?',r'cinquièmes?'),
-    '6':(r'sixth(?:ly)?',r'sixièmes?'),
-    '7':(r'seventh(?:ly)?',r'septièmes?'),
-    '8':(r'eighth(?:ly)?',r'huitièmes?'),
-    '9':(r'ninth(?:ly)?',r'neuvièmes?'),
-    '10':(r'tenth(?:ly)?',r'dixièmes?'),
+    '1':('first',r"premi(?:er|ère)s?|d[’']abord"),
+    '2':('second',r'second(?:e)?s?|deuxièmes?'),
+    '3':('third',r'troisièmes?'),
+    '4':('fourth',r'quatrièmes?'),
+    '5':('fifth',r'cinquièmes?'),
+    '6':('sixth',r'sixièmes?'),
+    '7':('seventh',r'septièmes?'),
+    '8':('eighth',r'huitièmes?'),
+    '9':('ninth',r'neuvièmes?'),
+    '10':('tenth',r'dixièmes?'),
 }
 
 UNIT_ALIASES={
@@ -69,6 +69,14 @@ def number(token):
     except InvalidOperation:return token
 
 
+def spell_numbered_ordinals(text):
+    """Expand familiar English abbreviations while preserving the original check."""
+    def expand(match):
+        words=ORDINAL_WORDS.get(number(match[1]))
+        return words[0] if words else match[0]
+    return EN_ORDINAL.sub(expand,text)
+
+
 def separate_ordinals(source,translated):
     """Compare written ordinals separately so they cannot replace a cardinal."""
     expected=Counter(number(match[1]) for match in EN_ORDINAL.finditer(source))
@@ -79,7 +87,7 @@ def separate_ordinals(source,translated):
     for value,missing in (expected-received).items():
         if value not in ORDINAL_WORDS:continue
         english,french=ORDINAL_WORDS[value]
-        old=len(re.findall(r'\b(?:'+english+r')\b',source,re.I))
+        old=len(re.findall(r'\b'+english+r'(?:ly)?\b',source,re.I))
         new=len(re.findall(r'\b(?:'+french+r')\b',translated,re.I))
         received[value]+=min(missing,max(0,new-old))
     return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',translated),expected==received
@@ -105,7 +113,8 @@ def assess(source,translated,*,source_language=None):
             text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
         return Counter(number(m.group()) for m in NUMBERS.finditer(text))
     source_numbers,translated_numbers,ordinals_match=separate_ordinals(source,translated)
-    if not ordinals_match or numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
+    if not ordinals_match:add('ordinals','error','Un rang indiqué par un nombre dans l’original a disparu, été ajouté ou changé.')
+    if numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
         pairs=Counter()
         for match in UNIT.finditer(text):
