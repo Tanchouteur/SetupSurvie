@@ -38,7 +38,7 @@ async page=>{
  check((await page.request.get(base+'/api/translations/'+id)).ok(),'Annuler la confirmation garde le travail');
  const deleting=commands.filter(x=>x.method==='DELETE').length;
  page.once('dialog',async dialog=>{check(dialog.message().includes('document original')&&dialog.message().includes('version déjà partagée'),'La confirmation précise les éléments conservés');await dialog.accept();});
- await page.locator('#translation-delete').click();await page.waitForFunction(()=>S.translation===null);
+ await page.locator('#translation-delete').click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&!S.loadingConversation&&S.translation===null);
  check(commands.filter(x=>x.method==='DELETE').length===deleting+1,'Une seule suppression est transmise');
  check((await page.request.get(base+'/api/translations/'+id)).status()===404,'Le travail privé et ses passages ne sont plus consultables');
  check((await page.request.get(base+'/api/source?id=guide%3Ashelter.en.txt')).ok(),'Le document original reste consultable');
