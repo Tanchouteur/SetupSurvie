@@ -1,5 +1,6 @@
-"""One execution slot for portal work. Existing workers own their checkpoints."""
+"""Independent execution slots for portal work. Workers own their checkpoints."""
 import asyncio
+from collections import deque
 from contextvars import ContextVar
 from functools import wraps
 import json
@@ -27,32 +28,57 @@ KINDS = {
 }
 
 
-class Queue:
-    def __init__(self):
+BACKGROUND_LANE = {'youtube': 'network', 'acquisition': 'network', 'speech': 'local', 'youtube-track': 'local', 'video-index': 'local'}
+CHAT_BURST = 3
+
+
+class Slot:
+    def __init__(self, queue, *, prioritize_chat=False):
+        self.queue = queue
+        self.prioritize_chat = prioritize_chat
         self.waiters = []
         self.active = None
-        self.paused = False
-        self.records = {}
-        self.root = None
-
-    def initialize(self):
-        with store.connect() as db:
-            saved = db.execute("SELECT value FROM settings WHERE key='work-queue-paused'").fetchone()
-        self.root = store.ROOT
-        self.paused = bool(saved and saved[0] == '1')
+        self.chats_while_waiting = 0
 
     def locked(self):
         return self.active is not None
 
+    def priority(self, key):
+        record = self.queue.records.get(key, {})
+        return self.prioritize_chat and record.get('priority', record.get('kind') == 'chat')
+
+    def choose(self, tickets, chats):
+        question = next((ticket for ticket in tickets if self.priority(ticket[0])), None)
+        background = next((ticket for ticket in tickets if not self.priority(ticket[0])), None)
+        if question and background and chats < CHAT_BURST:
+            return question, chats + 1
+        return background or question, 0
+
+    def order(self):
+        questions, background = deque(), deque()
+        for key, future in self.waiters:
+            if not future.cancelled():
+                (questions if self.priority(key) else background).append(key)
+        ordered = []
+        chats = self.chats_while_waiting
+        while questions and background:
+            if chats < CHAT_BURST:
+                ordered.append(questions.popleft())
+                chats += 1
+            else:
+                ordered.append(background.popleft())
+                chats = 0
+        return ordered + list(questions) + list(background)
+
     def dispatch(self):
-        if self.paused or self.active is not None:
+        if self.queue.paused or self.active is not None:
             return
-        while self.waiters:
-            ticket = self.waiters.pop(0)
-            if not ticket[1].cancelled():
-                self.active = ticket
-                ticket[1].set_result(None)
-                return
+        self.waiters[:] = [ticket for ticket in self.waiters if not ticket[1].cancelled()]
+        if self.waiters:
+            ticket, self.chats_while_waiting = self.choose(self.waiters, self.chats_while_waiting)
+            self.waiters.remove(ticket)
+            self.active = ticket
+            ticket[1].set_result(None)
 
     async def acquire(self):
         ticket = (CURRENT.get(), asyncio.get_running_loop().create_future())
@@ -82,20 +108,40 @@ class Queue:
     async def __aexit__(self, *_):
         self.release()
 
+
+class Queue(Slot):
+    def __init__(self):
+        super().__init__(self, prioritize_chat=True)
+        self.paused = False
+        self.records = {}
+        self.root = None
+        self.slots = {'ai': self, 'network': Slot(self), 'local': Slot(self)}
+
+    def initialize(self):
+        with store.connect() as db:
+            saved = db.execute("SELECT value FROM settings WHERE key='work-queue-paused'").fetchone()
+        self.root = store.ROOT
+        self.paused = bool(saved and saved[0] == '1')
+
     def set_paused(self, paused):
         with store.connect() as db:
             db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES('work-queue-paused',?)", ('1' if paused else '0',))
         self.paused = paused
-        self.dispatch()
+        for slot in self.slots.values():
+            slot.dispatch()
 
     def move(self, identifier, direction, profile):
-        visible = [(index, key) for index, (key, _) in enumerate(self.waiters)
-                   if key in self.records and can_move(self.records[key], profile)]
+        kind = self.records.get(identifier, {}).get('kind')
+        slot = self.slots[BACKGROUND_LANE.get(kind, 'ai')]
+        priority = slot.priority(identifier)
+        visible = [(index, key) for index, (key, future) in enumerate(slot.waiters)
+                   if not future.cancelled() and key in self.records
+                   and slot.priority(key) == priority and can_move(self.records[key], profile)]
         position = next((i for i, (_, key) in enumerate(visible) if key == identifier), None)
         if position is None or not 0 <= position + direction < len(visible):
             raise HTTPException(409, 'La position a changé. Consultez de nouveau la file.')
         first, second = visible[position][0], visible[position + direction][0]
-        self.waiters[first], self.waiters[second] = self.waiters[second], self.waiters[first]
+        slot.waiters[first], slot.waiters[second] = slot.waiters[second], slot.waiters[first]
 
     def save(self, record):
         if self.root is None or self.root != store.ROOT:
@@ -108,21 +154,23 @@ class Queue:
     def snapshot(self, profile):
         from . import youtube_pipeline
 
-        keys = [item[0] for item in self.waiters]
-        active = self.active[0] if self.active else None
+        active = {slot.active[0] for slot in self.slots.values() if slot.active and slot.active[0] is not None}
+        orders = {name: slot.order() for name, slot in self.slots.items()}
+        ordered = [key for order in orders.values() for key in order]
+        keys = set(ordered)
         records = self.records.copy()
-        running = self.active is not None
+        lanes = {name: {'running': slot.locked()} for name, slot in self.slots.items()}
         with store.connect() as db:
             history = [json.loads(row[0]) for row in db.execute('SELECT data FROM work_history ORDER BY updated DESC,rowid DESC LIMIT 300')]
         video_jobs = {row['id']: row for row in youtube_pipeline.listing()}
         jobs = []
-        for key in dict.fromkeys([active, *keys, *records]):
+        for key in dict.fromkeys([*(key for key in records if key in active), *ordered, *records]):
             row = records.get(key)
             if row is None:
                 continue
             details = youtube_pipeline.public(video_jobs[key]) if key in video_jobs else describe(row['kind'], key)
             public = {**row, **details}
-            if key == active:
+            if key in active:
                 public['status'] = 'running'
             elif key in keys:
                 public['status'] = 'queued'
@@ -133,12 +181,23 @@ class Queue:
         jobs.extend({'id': row['id'], 'kind': row['kind'], 'type': row['type'], **youtube_pipeline.public(row)}
                     for row in video_jobs.values() if row['id'] not in records)
         jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
+        from . import videos
+        if videos.running() and not any(job['kind'] == 'youtube-track' and job['status'] == 'running' for job in jobs):
+            lanes['local']['running'] = True
+            report = videos.status()
+            jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
+                         'title': 'Titres et sous-titres', 'status': 'running',
+                         'stage': f"{report.get('videos', 0)} vidéo(s) traitée(s)"})
         for job in jobs:
+            job['lane'] = BACKGROUND_LANE.get(job['kind'], 'ai')
+            job.setdefault('priority', job['kind'] == 'chat')
+            lane_order = orders[job['lane']]
+            job['next'] = bool(lane_order and lane_order[0] == job['id'])
             job['movable'] = job['id'] in keys and can_move(job, profile)
             job['retry'] = job['status'] in ('paused', 'error', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or profile['role'] == 'admin' and
                 job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test'))
-        return {'paused': self.paused, 'running': running, 'jobs': [
+        return {'paused': self.paused, 'running': any(lane['running'] for lane in lanes.values()), 'lanes': lanes, 'jobs': [
             {key: value for key, value in job.items() if key != 'owner'} for job in jobs
         ]}
 
@@ -165,6 +224,9 @@ def tracked(kind):
             if isinstance(job, dict):
                 initial.update({key: job[key] for key in ('model', 'mode') if key in job})
             record = {'id': identifier, 'kind': kind, 'type': KINDS[kind], **initial}
+            if kind == 'chat':
+                # Performance trials delegate to the response engine too.
+                record['priority'] = CURRENT.get() not in QUEUE.records
             QUEUE.records[identifier] = record
             persisted_elsewhere = kind in ('youtube', 'youtube-track')
             try:

@@ -23,7 +23,7 @@
     failed: 'En erreur', incomplete: 'Incomplet', interrupted: 'Interrompu',
     stopped: 'Arrêté', cancelled: 'Annulé'
   };
-  const {waiting, failed} = WorkQueuePreview;
+  const {waiting, failed, lanes} = WorkQueuePreview;
   let state = null;
   let lastPage = '';
   let pending = false;
@@ -62,8 +62,9 @@
     const main = element('div', undefined, 'work-queue-content');
     const title = element(job.href ? 'a' : 'strong', job.title);
     if (job.href) title.href = job.href;
-    const label = element('span', labels[job.status] || 'À vérifier', 'work-queue-status');
+    const label = element('span', (job.next ? 'Ensuite' : labels[job.status]) || 'À vérifier', 'work-queue-status');
     main.append(element('p', [job.type, job.model].filter(Boolean).join(' · '), 'work-queue-meta'), title);
+    if (job.priority) main.append(element('span', 'Question prioritaire', 'work-queue-priority'));
     if (job.stage) main.append(element('p', job.stage, 'work-queue-meta'));
     if (job.total > 0 && Number.isFinite(job.done)) {
       const percent = Math.round(100 * Math.min(job.total, job.done) / job.total);
@@ -126,7 +127,7 @@
     lastPage = signature;
     const summary = $('work-queue-state');
     summary.tabIndex = -1;
-    summary.textContent = state.paused ? (state.running ? 'File en pause. Le traitement en cours termine son étape.' : 'File en pause.')
+    summary.textContent = state.paused ? (state.running ? 'File en pause. Les étapes en cours se terminent ou s’arrêtent à leur point de reprise.' : 'File en pause.')
       : state.running && !active.length ? 'Un autre travail utilise l’appareil.' : next.length ? next.length + (next.length === 1 ? ' tâche en attente.' : ' tâches en attente.') : 'Aucun travail en attente.';
     const toggle = $('work-queue-pause');
     toggle.hidden = S.user?.role !== 'admin';
@@ -135,25 +136,45 @@
     const previous = document.activeElement?.dataset.workControl;
     const expanded = new Set(Array.from(host.querySelectorAll('li[data-work-id] > div > details[open]'), item => item.closest('li').dataset.workId));
     host.replaceChildren();
-    const movable = next.filter(job => job.movable);
-    for (const [heading, jobs] of [
-      ['En cours', active], ['En attente', next], ['À vérifier', failures],
-      ['Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job)).slice(0, 30)]
-    ]) {
-      if (!jobs.length) continue;
-      const section = element('section', undefined, 'work-queue-group');
+    function group(heading, jobs, container, className = 'work-queue-group') {
+      if (!jobs.length) return;
+      const section = element('section', undefined, className);
       const list = element('ul');
+      const movable = {priority: [], standard: []};
       for (const job of jobs) {
-        const card = taskCard(job, movable);
+        if (job.movable) movable[job.priority ? 'priority' : 'standard'].push(job);
+      }
+      for (const job of jobs) {
+        const card = taskCard(job, movable[job.priority ? 'priority' : 'standard']);
         if (expanded.has(job.id)) {
           const details = card.querySelector('details');
           if (details) details.open = true;
         }
         list.append(card);
       }
-      section.append(element('h2', heading), list);
+      if (heading) section.append(element('h2', heading));
+      section.append(list);
+      container.append(section);
+    }
+
+    for (const lane of lanes(state)) {
+      const section = element('section', undefined, 'work-queue-lane');
+      section.dataset.lane = lane.id;
+      const header = element('div', undefined, 'work-queue-lane-heading');
+      const label = lane.running ? 'En cours' : state.paused ? 'En pause' : 'Disponible';
+      header.append(element('h2', lane.title), element('span', label, 'work-queue-meta'));
+      section.append(header);
+      if (lane.id === 'ai') {
+        section.append(element('p', 'Les questions passent en priorité. Une tâche de fond avance après trois questions prioritaires si elle attend toujours.', 'work-queue-lane-rule'));
+      }
+      if (lane.running && !lane.active.length) section.append(element('p', 'Un travail utilise ce créneau.', 'work-queue-lane-rule'));
+      if (!lane.running && !lane.waiting.length) section.append(element('p', 'Aucune tâche en attente.', 'work-queue-lane-rule'));
+      group(null, [...lane.active, ...lane.waiting], section, 'work-queue-lane-jobs');
       host.append(section);
     }
+
+    group('À vérifier', failures, host);
+    group('Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job)).slice(0, 30), host);
     if (previous) Array.from(host.querySelectorAll('[data-work-control]')).find(control => control.dataset.workControl === previous)?.focus({preventScroll: true});
   }
 

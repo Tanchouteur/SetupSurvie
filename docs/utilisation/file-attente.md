@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.51.0.**
+**Guide actuel — 0.52.0.**
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône
@@ -14,7 +14,24 @@ qui attendent un créneau. Les réponses et les traductions de documents
 s’affichent dans leur propre profil. Les travaux de la bibliothèque sont
 communs et le profil **Famille** peut modifier leur ordre.
 
-Avec **Famille**, **Mettre en pause** empêche le démarrage de l’étape suivante.
+L’aperçu et la page montrent trois créneaux indépendants.
+
+- **Assistant et traductions** utilise le moteur IA, une tâche à la fois.
+  Les questions passent au prochain créneau libre. Après trois questions
+  prioritaires, une tâche de fond qui attend reçoit un tour. Un passage déjà
+  commencé se termine avant de libérer le moteur.
+- **Téléchargements** suit les lots YouTube et la récupération des sous-titres.
+  Ils peuvent avancer pendant une réponse.
+- **Préparation locale** suit la transcription audio sur le processeur et
+  l’indexation des vidéos. Whisper utilise jusqu’à quatre fils de calcul pour
+  laisser de la capacité au reste du portail. Une traduction des sous-titres rejoint le créneau IA
+  lorsque la piste source est disponible.
+
+**Ensuite** désigne le prochain travail prévu dans chaque créneau. Une nouvelle
+question peut changer ce choix pour l’IA. Les flèches règlent l’ordre au sein
+d’un même créneau et d’un même niveau de priorité.
+
+Avec **Famille**, **Mettre en pause** empêche le démarrage des étapes suivantes de la file. L’indexation des fichiers déjà publiés peut se terminer en arrière-plan.
 Une question finit sa réponse en cours, et les travaux découpés s’arrêtent
 entre deux unités enregistrées. Le téléchargement YouTube en cours reçoit
 une demande d’arrêt et conserve son fichier partiel. **Reprendre la file**

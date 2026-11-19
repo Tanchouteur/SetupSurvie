@@ -96,7 +96,7 @@ def model_config():
             if video_inventory.is_link(path) or not path.exists():raise ValueError()
         runtime={key:importlib.metadata.version(key) for key in ('faster-whisper','av','ctranslate2')}
         return {'available':True,'model_path':str(folder),'model':pin,'runtime':runtime,'device':'cpu','compute_type':'int8',
-            'threads':max(1,min(32,(os.cpu_count() or 2)-1))}
+            'threads':max(1,min(4,(os.cpu_count() or 2)//2))}
     except (OSError,ValueError,KeyError,importlib.metadata.PackageNotFoundError):
         return {'available':False,'reason':'speech_not_prepared','message':'La reconnaissance vocale n’est pas préparée. Préparez la dictée avec l’installateur, une fois avec Internet, puis réessayez.'}
 
@@ -205,7 +205,7 @@ async def run(identifier):
         config=model_config()
         if not config['available']:raise ValueError(config['message'])
         while True:
-            async with engine.LOCK:
+            async with work_queue.QUEUE.slots['local']:
                 await available();item=get(identifier)
                 if item['status'] not in ('queued','running'):return
                 _,source=await asyncio.to_thread(current_source,item)

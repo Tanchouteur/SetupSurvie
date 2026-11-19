@@ -30,3 +30,13 @@ actions manuelles. Les essais automatisés peuvent vérifier ces enchaînements
 avec un contrôleur et des modèles simulés. La recette sur le PC Windows de
 Marc, le détail exact de sa ligne 2 et la reconnaissance sur ses propres
 vidéos restent à valider sur place.
+
+## Priorité des questions et traitements simultanés
+
+Louis demande de donner la priorité aux messages envoyés à l’assistant et de
+montrer dans l’aperçu quels travaux avancent en parallèle. SetupSurvie 0.52.0
+utilise trois créneaux pour le moteur IA, les téléchargements et la préparation
+locale. Le moteur traite au plus trois questions prioritaires de suite tant
+qu’une tâche de fond attend. Les téléchargements et la transcription sur CPU
+peuvent avancer pendant une réponse. La priorité s’applique entre les étapes
+enregistrées. L’interface montre le prochain travail prévu dans chaque créneau.

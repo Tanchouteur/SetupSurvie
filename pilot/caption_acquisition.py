@@ -191,7 +191,7 @@ def publish(identifier,value):
 async def run(identifier):
     worker=FetchWorker()
     try:
-        async with engine.LOCK:
+        async with work_queue.QUEUE.slots['network']:
             item=get(identifier)
             if item['status'] not in ('queued','running'):return
             await asyncio.to_thread(current_source,item);update(identifier,'running')

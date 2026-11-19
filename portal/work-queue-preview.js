@@ -9,6 +9,15 @@
   const waiting = job => ['queued', 'preparing'].includes(job.status);
   const failed = job => ['error', 'failed', 'interrupted', 'incomplete', 'paused', 'stopped'].includes(job.status);
 
+  function lanes(state) {
+    return [['ai', 'Assistant et traductions'], ['network', 'Téléchargements'], ['local', 'Préparation locale']]
+      .map(([id, title]) => {
+        const jobs = state.jobs.filter(job => (job.lane || 'ai') === id);
+        const active = jobs.filter(job => job.status === 'running');
+        return {id, title, active, waiting: jobs.filter(waiting), running: state.lanes?.[id]?.running ?? !!active.length};
+      });
+  }
+
   function mount(container, {href, mobile = false, refresh, toggle}) {
     const host = make('div', '', 'work-queue-nav' + (mobile ? ' work-queue-mobile' : ''));
     const link = make('a', '', 'work-queue-link');
@@ -67,13 +76,19 @@
       link.setAttribute('aria-label', 'File d’attente · ' + queued.length + ' en attente' +
         (state.paused ? ' · en pause' : '') + (errors ? ' · ' + errors + ' à vérifier' : ''));
       if (mobile) return;
-      const entries = [...active, ...queued].slice(0, 4).map(job => {
-        const row = make('li');
-        row.append(make('span', job.status === 'running' ? 'En cours' : 'En attente', 'work-queue-meta'),
-          make('strong', job.title));
+      const entries = lanes(state).filter(lane => lane.id === 'ai' || lane.running || lane.waiting.length).map(lane => {
+        const row = make('li', '', 'work-queue-preview-lane');
+        row.append(make('strong', lane.title, 'work-queue-lane-title'));
+        if (lane.active.length) row.append(make('span', 'En cours · ' + lane.active[0].title, 'work-queue-preview-task'));
+        else if (lane.running) row.append(make('span', 'En cours sur l’appareil', 'work-queue-meta'));
+        else if (lane.id === 'ai' && !state.paused) row.append(make('span', 'Créneau IA libre', 'work-queue-meta'));
+        const next = lane.waiting.find(job => job.next);
+        if (next) row.append(make('span', 'Ensuite · ' + next.title, 'work-queue-preview-task'));
+        if (lane.waiting.length > (next ? 1 : 0)) {
+          row.append(make('span', lane.waiting.length + ' en attente', 'work-queue-meta'));
+        }
         return row;
       });
-      if (!entries.length) entries.push(make('li', 'Aucun travail en attente.'));
       if (errors) entries.push(make('li', errors + (errors === 1 ? ' tâche à vérifier.' : ' tâches à vérifier.'), 'work-queue-error-text'));
       list.append(...entries);
       action.hidden = !admin || !toggle;
@@ -82,7 +97,7 @@
     return {draw};
   }
 
-  window.WorkQueuePreview = {mount, waiting, failed};
+  window.WorkQueuePreview = {mount, waiting, failed, lanes};
   const map = document.querySelector('.map-site-nav');
   if (!map) return;
   const fetchQueue = async () => {
