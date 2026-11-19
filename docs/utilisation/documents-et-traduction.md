@@ -483,7 +483,8 @@ traduction automatique restent visibles dès les premiers passages.
 ## Gérer une traduction — 0.29.0
 
 Les commandes se trouvent dans le bandeau **Traduction**, au-dessus de la
-discussion, et dans la fenêtre **Lire le texte français** :
+discussion, et dans la fenêtre **Lire le texte français**. Dans le bandeau,
+ouvrez **Plus d’actions** pour arrêter, télécharger ou supprimer le travail.
 
 - **Mettre en pause** interrompt le passage en cours et conserve les précédents.
 - **Arrêter la traduction** conserve aussi le texte, avec l’état **Arrêtée**.

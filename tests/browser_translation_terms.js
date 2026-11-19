@@ -31,6 +31,7 @@ async page=>{
  check((await page.locator('#translation-terms-current').textContent()).includes('1 terme(s)'),'Le vocabulaire du travail est distingué des préférences futures');
  check((await page.locator('#translation-terms').innerText()).includes('Shelter → Abri'),'Les choix figés du travail restent visibles');
  await page.locator('#translation-resume').click();await page.waitForFunction(n=>document.querySelector('#translation-progress').value>n,count);
+ await page.locator('#translation-more > summary').click();
  await page.locator('#translation-stop').click();await page.waitForFunction(()=>document.querySelector('#translation-summary').textContent.includes('Arrêtée'));
  status=await(await page.request.get(base+'/api/translations/'+id)).json();
  check(status.parts.some(p=>p.quality?.guidance?.previous_position_proposed===0),'Les contrôles retracent le passage précédent proposé au modèle');

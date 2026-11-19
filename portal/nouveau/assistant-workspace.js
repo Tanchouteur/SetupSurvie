@@ -70,6 +70,7 @@
     usedTitle = element("h2", "Sources consultées");
   const used = element("div");
   used.id = "assistant-consulted-sources";
+  context.append($("summary-panel"));
   right.append(selectedTitle, context, usedTitle, used);
   const responseOptions = element("details");
   responseOptions.append(element("summary", "Options de réponse"));

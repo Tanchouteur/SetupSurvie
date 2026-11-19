@@ -24,7 +24,15 @@ async page=>{
   const inline=page.locator('#chat-messages #translation-parts');
   check(await page.locator('#assistant-discussion > #translation-panel').isVisible(),'Commandes dans le bandeau au-dessus de la discussion');
   check(await page.locator('#assistant-documents #translation-panel').count()===0,'Commandes indépendantes du volet Documents');
+  check(await page.locator('#assistant-documents #summary-panel').isVisible(),'La synthèse reste accessible dans le volet Documents');
   check(await inline.locator('article').count()===2,'Seuls les deux passages disponibles sont affichés dans le fil');
+  await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(()=>{
+    const text=document.querySelector('#translation-parts .translation-text').getBoundingClientRect();
+    return text.top<document.getElementById('chat-messages').getBoundingClientRect().bottom;
+  });
+  check(true,'Le premier passage est dans la zone visible sur téléphone');
+  await page.setViewportSize({width:1366,height:900});
   await page.locator('#translation-summary').click();
   done=3;
   await inline.getByText('Passage français fictif 2',{exact:true}).waitFor();
@@ -33,7 +41,7 @@ async page=>{
   stage='ouvrir la lecture';await page.locator('#translation-reading-open').click();await page.locator('#translation-reading-dialog').waitFor({state:'visible'});
   check(await page.locator('#translation-reading-dialog #translation-parts').isVisible(),'Une fenêtre de lecture libère la place occupée par la conversation');
   check((await page.locator('#translation-reading-status').textContent()).includes('3 / 30'),'Pages terminées et volume total visibles pendant le travail');
-  check((await page.locator('#translation-reading-status').textContent()).includes('déjà lire'),'Lecture possible avant la fin annoncée clairement');
+  check((await page.locator('#translation-reading-status').textContent()).includes('Passages 1 à 3'),'Le suivi indique les passages déjà disponibles');
   check((await page.locator('#translation-parts').textContent()).includes('Passage français fictif 0'),'Le premier texte terminé est lisible sans attendre le livre');
   await page.locator('#translation-parts article').first().locator('details').evaluate(node=>node.open=true);
   await page.evaluate(()=>{window.readingNode=document.querySelector('#translation-parts article');const text=readingNode.querySelectorAll('p')[1];if(text){const range=document.createRange();range.selectNodeContents(text);getSelection().removeAllRanges();getSelection().addRange(range);window.readingSelection=getSelection().toString();}});

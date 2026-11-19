@@ -378,6 +378,19 @@
 .next-interface .assistant-documents details > summary {
   cursor: pointer;
 }
+.next-interface .assistant-documents #summary-panel {
+  padding: 8px;
+  margin-bottom: 10px;
+}
+.next-interface .assistant-documents #summary-panel .translation-content {
+  max-height: none;
+  overflow: visible;
+  padding: 0 4px 8px;
+}
+.next-interface .assistant-documents #summary-panel[open] {
+  flex-shrink: 0;
+  overflow: visible;
+}
 .next-interface .assistant-documents label {
   display: grid;
   gap: 6px;
@@ -483,11 +496,18 @@
 .next-interface .translation-content :is(#translation-status, #translation-publication):empty {
   display: none;
 }
-.next-interface .translation-help {
-  margin-block: 8px 0;
-}
-.next-interface .translation-help > summary {
+.next-interface .translation-content :is(.translation-help, .translation-more) > summary {
+  padding: 4px 0;
   cursor: pointer;
+}
+.next-interface .translation-more .translation-actions,
+.next-interface #translation-reading-content > .translation-actions + .translation-actions {
+  margin-top: 8px;
+}
+.next-interface .translation-content #translation-progress {
+  display: block;
+  height: 8px;
+  margin: 8px 0 2px;
 }
 .next-interface .translation-thread {
   max-width: 78ch;
@@ -607,6 +627,9 @@
   }
   .next-interface .assistant-discussion .chat-messages {
     padding: 8px 0 16px;
+  }
+  .next-interface .assistant-discussion .translation-content {
+    max-height: min(10rem, 26dvh);
   }
   .next-interface
     .assistant-discussion
