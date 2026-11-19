@@ -91,7 +91,7 @@ class Report0100Tests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(path.startswith('/suggest?'),'The prepared archive must use SQLite, not the rejecting native API')
             return b'[]','application/json'
         with patch.object(library,'books',AsyncMock(return_value=[book])),patch.object(library,'get',get):
-            found=await library.search('faire du feu',diagnostic=True)
+            found=await library.search('faire du feu',diagnostic=True,kind='documents')
         self.assertTrue(any(row['id']=='zim:multilingual/Feu' and row.get('match')=='local_index' for row in found))
         self.assertEqual(found.coverage['locally_indexed'],1);self.assertEqual(found.coverage['native_incompatible'],0)
         self.assertEqual(found.coverage['local_query']['searched'],1)
