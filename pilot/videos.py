@@ -12,11 +12,12 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import durable,provider_subtitles,retrieval,store,zim_video_inventory
+from . import collection_sort,durable,provider_subtitles,retrieval,store,zim_video_inventory
 from . import video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
 ACTIVE=None
+PARTITION_TASK=None
 STOP=threading.Event()
 STOP_REASON='user'
 LOCK=threading.Lock()
@@ -209,7 +210,9 @@ async def ensure_fresh(force=False):
     if not force and time.monotonic()-CHECKED<CHECK_INTERVAL:return 'checked'
     CHECKED=time.monotonic()
     try:
-        if not await asyncio.to_thread(stale):return 'fresh'
+        if not await asyncio.to_thread(stale):
+            ensure_partitions()
+            return 'fresh'
         await start();return 'refreshing'
     except HTTPException:return 'refreshing'
     except Exception:return 'unavailable'
@@ -221,17 +224,104 @@ def indexed_count():
     except sqlite3.Error:return 0
 
 
-def search(plan,language='',limit=40):
+def partition_name(key):
+    return 'vtext_'+hashlib.sha256(key.encode()).hexdigest()
+
+
+def partition_tables(db):
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='video_search_partitions'").fetchone():
+        return None
+    return {row[0]:partition_name(row[0]) for row in db.execute('SELECT scope FROM video_search_partitions')}
+
+
+def rebuild_partitions():
+    if not (store.ROOT/'videos.db').is_file():
+        return
+    with LOCK, connect() as db:
+        if partition_tables(db) is not None:
+            return
+        db.execute('BEGIN IMMEDIATE')
+        build_partitions(db)
+
+
+def ensure_partitions():
+    global PARTITION_TASK
+    if PARTITION_TASK is not None and not PARTITION_TASK.done():
+        return
+    async def run():
+        try:await asyncio.to_thread(rebuild_partitions)
+        except (OSError,sqlite3.Error,ValueError):pass
+    PARTITION_TASK=asyncio.create_task(run())
+
+
+def build_partitions(db):
+    previous=partition_tables(db)
+    if previous is not None:
+        for table in previous.values():
+            db.execute(f'DROP TABLE IF EXISTS {table}')
+        db.execute('DELETE FROM video_search_partitions')
+    else:
+        db.execute('CREATE TABLE video_search_partitions(scope TEXT PRIMARY KEY)')
+    scopes={key:collection_sort.video(json.loads(payload)) for key,payload in db.execute('SELECT id,payload FROM media')}
+    tables={key:partition_name(key) for key in set(scopes.values())}
+    for key,table in tables.items():
+        db.execute(f"""CREATE VIRTUAL TABLE {table} USING fts5(id UNINDEXED,title,language UNINDEXED,
+            track UNINDEXED,start_ms UNINDEXED,end_ms UNINDEXED,text,tokenize='unicode61 remove_diacritics 2')""")
+        db.execute('INSERT INTO video_search_partitions VALUES(?)',(key,))
+    for row in db.execute('SELECT * FROM video_text'):
+        scope=scopes.get(row['id'])
+        if scope is not None:
+            db.execute(f'INSERT INTO {tables[scope]} VALUES(?,?,?,?,?,?,?)',tuple(row))
+
+
+def search(plan,language='',limit=40,sorting=None,domain='all'):
     if not ROOT.is_dir() and not (store.ROOT/'videos.db').is_file():return [],{'status':'not_available'}
     phase=status()['phase']
     if phase=='not_started' or (phase=='running' and not indexed_count()):return [],{'status':'not_indexed','indexed_videos':0}
+    sorting=sorting if sorting is not None else collection_sort.Sort()
     with connect() as db:
-        if plan.words:
-            rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,snippet(video_text,6,'','', '…',45) AS excerpt,text AS _text FROM video_text WHERE video_text MATCH ? AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY bm25(video_text) LIMIT ?",
-                            (plan.fts(relaxed=True),language,language,language[:2],limit)).fetchall()
+        db.execute('BEGIN')
+        def collection_matches(serialized):
+            payload=json.loads(serialized)
+            label=(payload.get('source') or {}).get('channel') or payload.get('collection') or ''
+            return not plan.collection or plan.collection in retrieval.normal(label).replace(' ','')
+        def in_scope(serialized):
+            payload=json.loads(serialized)
+            return sorting.permits(collection_sort.video(payload),domain) and collection_matches(serialized)
+        partitions=partition_tables(db)
+        if partitions is not None and (domain!='all' or sorting.excluded or plan.collection):
+            if plan.collection:
+                matches={collection_sort.video(json.loads(row[0])) for row in db.execute('SELECT payload FROM media')
+                         if collection_matches(row[0])}
+            else:
+                matches=set(partitions)
+            tables=[table for key,table in partitions.items() if key in matches and sorting.permits(key,domain)]
+            restriction=''
+            if plan.collection:
+                db.create_function('in_video_scope',1,in_scope,deterministic=True)
+                restriction='AND id IN (SELECT id FROM media WHERE in_video_scope(payload))'
         else:
-            rows=db.execute("SELECT id,title,language,track,start_ms,end_ms,'' AS excerpt,text AS _text FROM video_text WHERE track='metadata' AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY title COLLATE NOCASE,id LIMIT ?",
-                            (language,language,language[:2],limit)).fetchall()
+            tables=['video_text']
+            restriction=''
+            if sorting.excluded or (domain!='all' and (domain=='other' or sorting.other)) or plan.collection:
+                db.create_function('in_video_scope',1,in_scope,deterministic=True)
+                restriction='AND id IN (SELECT id FROM media WHERE in_video_scope(payload))'
+        rows=[]
+        for table in tables:
+            if plan.words:
+                query=f"""SELECT id,title,language,track,start_ms,end_ms,snippet({table},6,'','', '…',45) AS excerpt,
+                          text AS _text,bm25({table}) AS rank FROM {table} WHERE {table} MATCH ? {restriction}
+                          AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY rank LIMIT ?"""
+                args=(plan.fts(relaxed=True),language,language,language[:2],limit)
+            else:
+                query=f"""SELECT id,title,language,track,start_ms,end_ms,'' AS excerpt,text AS _text
+                          FROM {table} WHERE track='metadata' {restriction}
+                          AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY title COLLATE NOCASE,id LIMIT ?"""
+                args=(language,language,language[:2],limit)
+            rows.extend(db.execute(query,args))
+        if plan.words:rows.sort(key=lambda row:row['rank'])
+        else:rows.sort(key=lambda row:(row['title'].lower(),row['id']))
+        rows=rows[:limit]
         result=[];stale_rows=0
         for candidate in rows:
             try:stored,payload,_=row('video:'+candidate['id'])
@@ -241,13 +331,12 @@ def search(plan,language='',limit=40):
                         language=candidate['language'],excerpt=candidate['excerpt'],_text=candidate['_text'],
                         match='subtitle' if candidate['track']!='metadata' else 'title',position_ms=start,
                         transcription_origin=payload['tracks'][int(candidate['track'])]['origin'] if candidate['track']!='metadata' else 'metadata_only')
-            if plan.collection and plan.collection not in retrieval.normal(data['collection']).replace(' ',''):continue
             result.append(data)
     from . import archive_videos
     archives=archive_videos.coverage()
     total=indexed_count()
     state='refreshing' if phase=='running' else 'partial' if stale_rows or phase!='completed' or archives['status'] in ('not_indexed','partial') else 'complete'
-    return result,{'status':state,'stale_results':stale_rows,'results':len(result),'indexed_videos':total,'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
+    return result,{'status':state,'stale_results':stale_rows,'results':len(result),'indexes_queried':len(tables),'indexed_videos':total,'partitioned':partitions is not None,'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
 
 
 def status():
@@ -412,7 +501,8 @@ def scan():
                 if STOP.is_set():raise InterruptedError()
                 fresh=archive_videos.progress()
                 if fresh.get('job_id')!=archive_report.get('job_id') or fresh.get('finished')!=archive_report.get('finished'):report['archive_inventory_job']=None
-                report['stage']='Publication de l’index des vidéos';save()
+                report['stage']='Publication des index de recherche vidéo';save()
+                build_partitions(db)
             report.pop('stage')
             report.update(phase='completed',skipped=found['skipped'],inventory_errors=found['errors'],unexamined=found['unexamined'],limitations=found['limitations'],
                           per_video=[{'id':'video:'+item['inventory_id'],'path':item['path'],'title':item['title'],'subtitle_status':item['subtitle_status'],

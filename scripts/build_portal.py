@@ -14,7 +14,7 @@ TEMPLATE = ROOT / 'portal/interface/modele.html'
 
 def build():
     source = TEMPLATE.read_text()
-    source = source.replace('<script defer src="/app.js', '<script defer src="/interface/layout.js?v=0.63.0"></script><script defer src="/app.js', 1)
+    source = source.replace('<script defer src="/app.js', '<script defer src="/interface/layout.js?v=0.64.0"></script><script defer src="/app.js', 1)
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
@@ -39,6 +39,8 @@ def build():
         ('js', '/interface/performance.js', '0.26.1'),
         ('js', '/interface/translation-benchmark.js', '0.26.1'),
         ('js', '/interface/collections.js', '0.54.0'),
+        ('js', '/interface/collection-sort.js', '0.64.0'),
+        ('css', '/interface/collection-sort.css', '0.64.0'),
         ('js', '/interface/catalogue.js', '0.48.0'),
         ('js', '/interface/search-check.js', '0.63.0'),
         ('js', '/interface/search-experiment.js', '0.26.1'),

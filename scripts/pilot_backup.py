@@ -75,6 +75,7 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
         sources=[(checked_destination(app.work,name),'private/'+name) for name in PRIVATE_FILES]
         receipt=checked_destination(data,'catalog/downloaded-content.json')
         sources.append((receipt,'data/catalog/downloaded-content.json'))
+        sources.append((checked_destination(data,'catalog/collection-sort.json'),'data/catalog/collection-sort.json'))
         for name in ['state/pilot','state/openwebui','state/caddy','library/guides']:
             for path in sorted((data/name).rglob('*')):
                 relative=path.relative_to(data)
@@ -142,7 +143,7 @@ def restore(source,kit,work_dir,data_dir):
     allowed_private={'private/'+name for name in PRIVATE_FILES}
     for entry,_ in entries:
         relative=entry['path']
-        if relative not in allowed_private and relative!='data/catalog/downloaded-content.json' and not relative.startswith(('data/state/','data/library/guides/')):
+        if relative not in allowed_private and relative not in ('data/catalog/downloaded-content.json','data/catalog/collection-sort.json') and not relative.startswith(('data/state/','data/library/guides/')):
             raise setup.SetupError('Fichier de sauvegarde hors périmètre : '+relative)
     settings=next((path for entry,path in entries if entry['path']=='private/settings.json'),None)
     if settings is None:raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
@@ -169,7 +170,7 @@ def restore(source,kit,work_dir,data_dir):
     for entry,path in public_entries:
         if not entry['path'].startswith('payload/'):continue
         relative=Path(entry['path']).relative_to('payload');dest=data/relative
-        if dest.exists() and (relative.parts[:2]==('library','guides') or relative==Path('catalog/downloaded-content.json')):continue
+        if dest.exists() and (relative.parts[:2]==('library','guides') or relative in (Path('catalog/downloaded-content.json'),Path('catalog/collection-sort.json'))):continue
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
     for folder in (application,data,work):
         if folder.exists():durable.sync_tree(folder)

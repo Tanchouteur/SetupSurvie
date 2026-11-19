@@ -137,7 +137,8 @@ def execute(arguments):
         raise setup.SetupError('Étape interrompue. Les fichiers copiés sont conservés ; reprenez avec --resume.')
 
 
-def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execute_step=execute):
+def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execute_step=execute,
+            sort_file=None, confirm=input):
     base = Path(base).expanduser().absolute()
     if any(p.is_symlink() for p in (base, *base.parents)):
         raise setup.SetupError('Choisissez un dossier sans lien symbolique.')
@@ -166,6 +167,12 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
             raise setup.SetupError('Dossiers déjà occupés. Aucune donnée remplacée ; choisissez une nouvelle destination.')
         lan_host = setup.lan_host(lan_host) if lan_host else None
         options = {'base': str(base), 'kit': str(kit) if kit else None, 'startup': startup, 'lan_host': lan_host}
+        from pilot import collection_sort
+        sorting = collection_sort.read_file(sort_file) if sort_file else None
+        if sorting is None and state and state.get('options', {}).get('collection_sort') is not None:
+            sorting = collection_sort.parse(state['options']['collection_sort'])
+        if sorting is not None:
+            options['collection_sort'] = sorting.as_json()
         if state and (state.get('schema') != 1 or state.get('options') != options):
             raise setup.SetupError('Reprise avec des options différentes refusée. Réutilisez le même dossier, kit et choix de démarrage.')
         check_installation_ports(work)
@@ -173,6 +180,18 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         signature = hashlib.sha256(json.dumps([e for e, _ in records], sort_keys=True).encode()).hexdigest()
         if state and state.get('source') != signature:
             raise setup.SetupError('Le logiciel ou le kit source a changé depuis l’interruption. Reprenez avec la source initiale.')
+        if sorting is not None and kit:
+            available = []
+            for entry, source in records:
+                key = collection_sort.path_key(entry['path'].removeprefix('payload/'))
+                if sorting.permits(key, 'all'):
+                    available.append((entry, source))
+                if key:
+                    status = {'main':'Fonds principal','other':'Autre','excluded':'Exclue'}[sorting.state(key)]
+                    print(f"{status} — {Path(entry['path']).name} — {entry['bytes']/1e9:.2f} Go", flush=True)
+            if not state and confirm('Copier le kit avec ces choix ? Tapez O pour continuer : ').strip().casefold() not in ('o','oui'):
+                raise setup.SetupError('Copie des collections annulée.')
+            records = available
         # Every destination is guarded, even for manifest-controlled paths.
         targets = [(entry, source, destination(application if entry['path'].startswith('app/') else data,
                     entry['path'].split('/', 1)[1])) for entry, source in records]
@@ -211,6 +230,9 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         config = json.loads(config_path.read_text(encoding='utf-8'))
         config['app_dir'] = application.as_posix()
         setup.write_json(config_path, config, private=True)
+        if sorting is not None:
+            import collection_tasks
+            collection_tasks.merge(data, sorting.as_json())
         if kit:
             execute_step([*common, 'import-images', kit/'images.tar'])
         # Existing install orchestration validates services and installs shortcuts;
@@ -218,9 +240,23 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         arguments = [*common, 'install', '--target', 'windows', '--data-dir', data, *startup_option, *network_options]
         if kit:
             arguments.append('--offline')
-        else:
+        elif sorting is None:
             arguments.extend(['--content-pack', 'survival'])
+        selection = work/'initial-library-plan.json'
+        if sorting is not None and not kit and not state.get('initial_library_confirmed'):
+            from kiwix_select import display_plan
+            if not selection.is_file():
+                data.mkdir(parents=True,exist_ok=True)
+                execute_step([application/'scripts/kiwix_select.py','select','--work-dir',work,'--output',selection])
+            else:
+                display_plan(json.loads(selection.read_text(encoding='utf-8')))
+            if confirm('Télécharger les collections de cette sélection ? Tapez O pour continuer : ').strip().casefold() not in ('o','oui'):
+                raise setup.SetupError('Téléchargement annulé. Reprenez avec --resume pour revoir la sélection.')
+            state['initial_library_confirmed'] = True
+            setup.write_json(journal,state,private=True)
         execute_step(arguments)
+        if sorting is not None and not kit:
+            execute_step([application/'scripts/content.py','download','--work-dir',work,'--selection',selection,'--jobs','2'])
         if not kit:
             profiles = json.loads((setup.ROOT/'deploy/model-profiles.json').read_text())['profiles']
             for model in sorted({p['model'] for p in profiles if p.get('category') == 'recommended'} - {setup.VERSIONS['default_model']}):
@@ -237,6 +273,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-dir', required=True)
     parser.add_argument('--kit')
+    parser.add_argument('--collection-sort',type=Path)
     parser.add_argument('--resume', action='store_true')
     parser.add_argument('--check', action='store_true', help='Contrôler les conflits sans copie, installation ou téléchargement.')
     parser.add_argument('--no-startup', action='store_true')
@@ -248,7 +285,7 @@ def main():
         check_installation_ports(setup.safe_path(args.base_dir)/'prive')
         print('Ports disponibles ou appartenant à cette installation.')
         return
-    install(args.base_dir, args.kit, resume=args.resume, startup=not args.no_startup, lan_host=args.lan_host)
+    install(args.base_dir, args.kit, resume=args.resume, startup=not args.no_startup, lan_host=args.lan_host, sort_file=args.collection_sort)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 # One entry point; keep both existing steps independently usable.
 [CmdletBinding()]
 param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume,
-    [switch]$NoBrowser, [switch]$NoStartup, [switch]$Check, [string]$CacheDir)
+    [switch]$NoBrowser, [switch]$NoStartup, [switch]$Check, [string]$CacheDir, [string]$CollectionSort)
 $ErrorActionPreference = 'Stop'
 
 function Invoke-SurvieInstallerScript([string]$Script, [array]$Arguments) {
@@ -24,6 +24,7 @@ function Invoke-SurvieWindowsInstall {
     $installation = @()
     if ($BaseDir) { $installation += @('-BaseDir', $BaseDir) }
     if ($Kit) { $installation += @('-Kit', $Kit) }
+    if ($CollectionSort) { $installation += @('-CollectionSort', $CollectionSort) }
     if ($LanHost) { $installation += @('-LanHost', $LanHost) }
     if ($Resume) { $installation += '-Resume' }
     if ($NoBrowser) { $installation += '-NoBrowser' }

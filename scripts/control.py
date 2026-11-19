@@ -245,19 +245,27 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
         try:
             length=int(self.headers.get('Content-Length','0'))
-            if not 0<=length<=self.MAX_POST_BYTES:raise ValueError()
+            maximum=384_000 if self.path in ('/library/plan','/library/collection-move','/library/collection-preview','/library/collection-exclude') else self.MAX_POST_BYTES
+            if not 0<=length<=maximum:raise ValueError()
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return
         if self.path.startswith('/library/'):
             try:
                 with self.server.lock:
+                    if self.path in ('/library/collection-move','/library/collection-preview'):
+                        import collection_tasks
+                        root,_=self.server.library.check_storage(0)
+                        result=(collection_tasks.move(root,body) if self.path.endswith('-move') else
+                                collection_tasks.preview(root,collection_tasks.validate_keys(body)))
+                        self.respond(200,result)
+                        return
                     if self.path=='/library/index-settings':
                         import search_index_queue
                         search_index_queue.settings(Path(self.server.config['data_dir']),body)

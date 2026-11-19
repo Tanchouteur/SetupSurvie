@@ -376,3 +376,19 @@ après sauvegarde de ses données à l’arrêt. Ne pas désinstaller/réinitial
 supprimer les distributions WSL pour résoudre une erreur de clés de registre.
 Le [journal WIN-019](../exploitation/journal-incidents-windows.md#win-019--docker-desktop-introuvable-dans-le-registre-et-boîtes-derreur-répétées)
 conserve le cas Windows observé et les validations.
+
+## Reprendre le tri d’une autre installation
+
+À la seconde étape, donnez le chemin du fichier `SetupSurvie-tri.json` exporté
+depuis **Bibliothèque → Collections → Tri des collections**. Le lanceur
+accepte aussi l’option `-CollectionSort`. Le récapitulatif indique les
+collections à télécharger ou copier, les collections **Autre** et les
+exclusions. Confirmez le récapitulatif pour démarrer la préparation. Le
+journal d’installation conserve le tri et le plan pour une reprise avec
+`-Resume`. Les contenus absents du catalogue ou du kit sélectionné restent en
+attente d’une source compatible.
+
+Depuis la ligne de commande, `scripts/kiwix_select.py select --work-dir … --collection-sort …`
+prépare et affiche le plan. `scripts/content.py download --work-dir … --selection …`
+exécute le plan après vérification. Ces deux commandes sont également
+utilisables sur Linux.

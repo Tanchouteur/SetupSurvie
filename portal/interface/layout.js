@@ -148,7 +148,7 @@
   const domain = make(
     "div",
     "next-domain",
-    '<label for="search-domain">Chercher dans</label><select id="search-domain" aria-label="Espace documentaire"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="all">Toute la bibliothèque</option></select>',
+    '<label for="search-domain">Chercher dans</label><select id="search-domain" aria-label="Espace documentaire"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="other">Autre</option><option value="all">Toute la bibliothèque</option></select>',
   );
   libTabs.after(domain);
   domain.id = "next-domain-controls";
@@ -162,7 +162,7 @@
   const chatDomain = make(
     "label",
     "next-chat-domain",
-    '<span class="sr-only">Sources de l’assistant</span><select id="chat-domain" aria-label="Espace des sources de l’assistant"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="all">Toute la bibliothèque</option></select>',
+    '<span class="sr-only">Sources de l’assistant</span><select id="chat-domain" aria-label="Espace des sources de l’assistant"><option value="resilience">Autonomie et résilience</option><option value="culture">Savoirs et culture</option><option value="other">Autre</option><option value="all">Toute la bibliothèque</option></select>',
   );
   actions.append(chatDomain);
   domain.nextElementSibling.id = "next-domain-help";

@@ -17,6 +17,7 @@ REASONS={
     'playlist_refused':'liste de lecture refusée : donner l’adresse de chaque vidéo',
     'duplicate_in_list':'déjà présente plus haut dans la liste',
     'already_present':'déjà dans la bibliothèque',
+    'collection_excluded':'collection exclue du téléchargement',
     'private':'vidéo privée',
     'unavailable':'vidéo supprimée ou indisponible',
     'age_restricted':'vidéo réservée aux comptes connectés (limite d’âge) ; aucun compte n’est utilisé',

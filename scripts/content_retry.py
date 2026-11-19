@@ -9,13 +9,17 @@ import time
 
 import content
 import setup
+from pilot import collection_sort
 
 
 def remaining(root, items):
     receipt = root/'catalog/downloaded-content.json'
     recorded = {i['path']: i for i in content.catalog(receipt)} if receipt.exists() else {}
     pending = []
+    sorting = collection_sort.load(root / 'catalog')
     for item in items:
+        if not sorting.permits(collection_sort.path_key(item['path']), 'all'):
+            continue
         saved = recorded.get(item['path'], {})
         target = content.destination(root, item['path'])
         if (all(saved.get(key) == item.get(key) for key in ('id', 'path', 'bytes', 'sha256'))
