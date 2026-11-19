@@ -14,10 +14,8 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
 
 - **Vue d’ensemble** : état de l’assistant, disponibilité des fonctions et progression.
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
-- **File d’attente** : tâches en cours et en attente ; son lien vers le suivi détaillé donne accès à la progression, fichiers, dernière observation et accès aux
-  téléchargements. Un transfert Windows indépendant reste suivi en lecture seule.
-  Le suivi détaillé retrouve aussi les traductions et synthèses récentes du profil ;
-  son actualisation ne les reprend pas.
+- **File d’attente** : tâches en cours et en attente. Les cartes de préparation affichent la progression, les fichiers et la dernière observation. Un transfert Windows indépendant reste suivi en lecture seule.
+  Les traductions et synthèses apparaissent dans la file du profil courant.
 - **Paramètres** : choisir l’une des cinq rubriques ci-dessous. Ouvrir une page,
   déplier une option ou recharger ne lance aucun travail.
 
@@ -96,7 +94,7 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 | Stockage : résumé disque, modèles enregistrés, préparation/inventaire | **Bibliothèque et préparations → Voir les fichiers et l’espace disque** ; lecture seule |
 | Vue d’ensemble : état, fonctions disponibles, suivi des travaux | **Mon appareil → Vue d’ensemble** ; bouton **Gérer l’assistant** vers la bonne rubrique |
 | Mesures : GPU/VRAM, RAM, espace libre, questions, modèle chargé, date de mesure | Vue d’ensemble → **Détails techniques : mémoire et modèle chargé**, dépliable |
-| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → File d’attente → suivi détaillé des préparations** ; suivi conservé indépendamment de l’assistant |
+| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → File d’attente → Détails de la préparation** ; suivi conservé indépendamment de l’assistant |
 | Open WebUI, documents de secours | Menu ordinateur et bas de page mobile, conservés |
 
 Les favoris, conversations, traductions, classement des sources, dossiers pratiques,
@@ -110,7 +108,7 @@ Toutes les adresses sont relatives à l’adresse locale de votre installation.
 | Adresse | Page |
 | --- | --- |
 | `/#/appareil/ensemble` | Vue d’ensemble |
-| `/#/appareil/activite` | suivi détaillé des préparations (ancien onglet Travaux en cours) |
+| `/#/appareil/activite` | redirection vers la File d’attente |
 | `/#/appareil/reglages` | Accueil Paramètres (ancien écran Réglages) |
 | `/#/appareil/profils`, `/#/appareil/connexion` | Anciennes pages profils/connexion conservées |
 | `/#/appareil/telechargements`, `/#/appareil/stockage` | Anciennes pages téléchargements/stockage conservées |

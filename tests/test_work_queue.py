@@ -25,6 +25,23 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.queue = work_queue.Queue()
         self.queue.initialize()
 
+    async def test_host_preparations_use_the_same_cards_without_queue_controls(self):
+        report = {'kind': 'download', 'phase': 'verifying', 'source': 'windows',
+                  'total_bytes': 2000, 'verified_bytes': 1000,
+                  'active': [{'title': 'Collection fictive', 'phase': 'verifying'}]}
+        jobs = self.queue.snapshot(CHILD, report)['jobs']
+        transfer = next(job for job in jobs if job['id'] == 'host:download')
+        self.assertEqual((transfer['lane'], transfer['status']), ('network', 'running'))
+        self.assertEqual(transfer['preparation']['verified_bytes'], 1000)
+        self.assertFalse(transfer['movable'] or transfer['retry'])
+
+        report = {'kind': 'video-inventory', 'phase': 'paused', 'observed_at': 123}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'paused'}):
+            jobs = self.queue.snapshot(ADMIN, report)['jobs']
+        inventory = [job for job in jobs if job['kind'] in ('archive-video-index', 'host-video-inventory')]
+        self.assertEqual(len(inventory), 1)
+        self.assertEqual(inventory[0]['preparation']['observed_at'], 123)
+
     async def test_priority_pause_running_slot_and_error_isolation(self):
         queue = self.queue
         observed = []

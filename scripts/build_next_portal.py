@@ -20,7 +20,7 @@ def build():
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
         ('css', '/nouveau/style.css', '0.51.0'),
-        ('css', '/nouveau/ux-system.css', '0.43.2'),
+        ('css', '/nouveau/ux-system.css', '0.56.0'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.57.0'),
         ('css', '/nouveau/reader-work.css', '0.39.0'),
@@ -34,9 +34,9 @@ def build():
         ('js', '/nouveau/acquisitions.js', '0.54.0'),
         ('js', '/nouveau/archive-videos.js', '0.48.0'),
         ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
-        ('css', '/nouveau/work-queue.css', '0.55.2'),
-        ('js', '/work-queue-preview.js', '0.55.2'),
-        ('js', '/nouveau/work-queue.js', '0.55.1'),
+        ('css', '/nouveau/work-queue.css', '0.56.0'),
+        ('js', '/work-queue-preview.js', '0.56.0'),
+        ('js', '/nouveau/work-queue.js', '0.56.0'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.54.0'),
@@ -47,8 +47,8 @@ def build():
         ('js', '/nouveau/assistant-diagnostics.js', '0.30.0'),
         ('js', '/nouveau/practical.js', '0.34.0'),
         ('js', '/nouveau/usage-recipe.js', '0.26.1'),
-        ('js', '/nouveau/settings-layout.js', '0.55.1'),
-        ('js', '/nouveau/ux-system.js', '0.36.0'),
+        ('js', '/nouveau/settings-layout.js', '0.56.0'),
+        ('js', '/nouveau/ux-system.js', '0.56.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.57.0'),
         ('js', '/nouveau/reader-work.js', '0.55.0'),
         ('css', '/nouveau/motion.css', '0.37.0'),
@@ -59,7 +59,7 @@ def build():
         ('css', '/design/system.css', '0.49.0'),
         ('css', '/nouveau/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.55.1'),
-        ('js', '/nouveau/navigation.js', '0.55.1'),
+        ('js', '/nouveau/navigation.js', '0.56.0'),
     ]
     tags = []
     for kind, path, version in assets:

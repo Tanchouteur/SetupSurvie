@@ -138,7 +138,7 @@ de chaque page Kiwix ni une traduction de vidéo.
 4. Lire les passages terminés par groupes de dix, avec page/section, modèle utilisé, contrôle enregistré et **Comparer avec l’original**. La progression ne ferme pas les comparaisons ouvertes. Les propositions refusées restent signalées et séparées du texte traduit.
 5. **Mettre en pause** conserve les passages terminés. Choisir au besoin un autre mode puis reprendre explicitement le reste. **Arrêter** conserve les passages terminés. **Supprimer ce travail** demande confirmation ; supprimer le travail privé n’efface ni l’original ni une version déjà publiée.
 6. Une nouvelle traduction terminée est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de retenter un ajout échoué. Les anciennes traductions privées restent privées jusqu’à publication explicite.
-7. Télécharger le texte français permet aussi de conserver une traduction partielle ; les passages manquants y sont indiqués. Retrouver les travaux récents dans **Mon appareil → File d’attente → suivi détaillé des préparations → Mes traductions et synthèses**, ou depuis leur original.
+7. Télécharger le texte français permet aussi de conserver une traduction partielle ; les passages manquants y sont indiqués. Retrouver les travaux récents dans **Mon appareil → File d’attente**, ou depuis leur original.
 
 Depuis **0.49.1**, le modèle reçoit un format de réponse centré sur le texte
 traduit. GPT-OSS pouvait choisir le statut de refus proposé par l’ancien format

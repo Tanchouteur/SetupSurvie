@@ -884,7 +884,13 @@ class YoutubeList(BaseModel):
 
 @app.get('/api/work-queue')
 async def get_work_queue(value=Depends(user)):
-    return JSONResponse(work_queue.QUEUE.snapshot(value),headers={'Cache-Control':'no-store'})
+    try:
+        activity = await asyncio.wait_for(operations.activity(), timeout=1.5)
+    except TimeoutError:
+        activity = {'phase': 'unknown'}
+    snapshot = work_queue.QUEUE.snapshot(value, activity)
+    snapshot['preparations_available'] = activity.get('phase') != 'unknown'
+    return JSONResponse(snapshot, headers={'Cache-Control': 'no-store'})
 
 
 class WorkMoveStep(BaseModel):

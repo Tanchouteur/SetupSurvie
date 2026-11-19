@@ -34,7 +34,7 @@ async page=>{
  await page.locator('#translation-stop').click();await page.waitForFunction(()=>document.querySelector('#translation-summary').textContent.includes('Arrêtée'));
  status=await(await page.request.get(base+'/api/translations/'+id)).json();
  check(status.parts.some(p=>p.quality?.guidance?.previous_position_proposed===0),'Les contrôles retracent le passage précédent proposé au modèle');
- for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});if(width<=1000)await page.locator('[data-assistant-zone=documents]').click();check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Éditeur lisible à '+width);}
+ for(const width of [1366,390,320]){await page.setViewportSize({width,height:844});check(await page.locator('#assistant-discussion #translation-terms').isVisible()&&!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Éditeur lisible dans la discussion à '+width);}
  await page.locator('.translation-term-row').first().getByRole('button',{name:'Retirer ce mot',exact:true}).click();await page.getByRole('button',{name:'Enregistrer ces mots',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('#translation-terms-message').textContent.includes('0 mot(s) enregistré'));
  check((await(await page.request.get(base+'/api/translation-terms')).json()).terms.length===0,'Une liste vide rétablit le vocabulaire libre pour la suite');
