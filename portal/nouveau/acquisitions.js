@@ -8,7 +8,7 @@
     const target=$('next-acquisition-jobs');target.replaceChildren();
     for(const job of jobs){
       const article=element('article',undefined,'data-card video-job');article.dataset.acquisitionJob=job.id;
-      article.append(element('h3',job.title),element('p',states[job.status]||job.status,'small'));
+      article.append(element('h3',job.title),element('p',(window.WorkQueuePreview?.workLabel(job,states[job.status])||states[job.status]||'État inconnu'),'small'));
       if(job.language)article.append(element('p',job.language+' · '+(job.origin==='automatic'?'piste déclarée automatique':'piste déclarée fournie')+' · '+job.cues+' segments','small'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
       if(job.status==='completed')article.append(element('p',job.notice,'small catalogue-warning'));

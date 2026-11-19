@@ -15,7 +15,7 @@
     target.replaceChildren();
     for(const job of visibleJobs){
       const article=element('article',undefined,'data-card video-job');article.dataset.audioJob=job.id;
-      article.append(element('h3',target===$('next-audio-jobs')?job.title:'Transcription audio'),element('p',(states[job.status]||job.status)+' · '+duration(job.progress_ms||0)+(job.duration_ms?' / environ '+duration(job.duration_ms):''),'small'));
+      article.append(element('h3',target===$('next-audio-jobs')?job.title:'Transcription audio'),element('p',((window.WorkQueuePreview?.workLabel(job,states[job.status])||states[job.status]||'État inconnu'))+' · '+duration(job.progress_ms||0)+(job.duration_ms?' / environ '+duration(job.duration_ms):''),'small'));
       if(job.detected_language)article.append(element('p','Langue reconnue : '+job.detected_language+' · '+job.cues+' segments conservés','small muted'));
       if(job.error)article.append(element('p',job.error,'small catalogue-warning'));
       if(job.translation_job)article.append(element('p','Traduction française envoyée dans la file d’attente.','small'));

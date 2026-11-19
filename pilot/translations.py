@@ -62,7 +62,7 @@ def status(identifier,user_id,offset=0):
         guidance=translation_terms.terms(db,identifier)
     reports=[json.loads(r['report']) for r in checks.values()]
     parts=[{**dict(r),'quality':json.loads(checks[r['position']]['report']) if r['position'] in checks else {'status':'unchecked','issues':[]},'candidate':checks.get(r['position'],{}).get('candidate','')} for r in rows]
-    return {**item,'total':sum(counts.values()),'done':counts.get('done',0),'unreadable':counts.get('unreadable',0),
+    return {**item,**work_queue.queue_fields(identifier,item['status'],'translation'),'total':sum(counts.values()),'done':counts.get('done',0),'unreadable':counts.get('unreadable',0),
             'pages':pages,'pages_done':sum(r['done']==r['total'] for r in page_rows),
             'pages_partial':sum(0<r['done']<r['total'] for r in page_rows),
             'pages_unreadable':sum(r['unreadable']>0 for r in page_rows),

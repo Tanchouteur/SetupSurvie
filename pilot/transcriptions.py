@@ -70,6 +70,7 @@ def status(identifier,full=False):
     if full:
         with connect() as db:rejected=[{**dict(row),'result':json.loads(row['result'])} for row in db.execute('SELECT start_ms,created,reason,result FROM rejections WHERE job_id=? ORDER BY created',(identifier,))]
         result.update(source_revision=item['source_revision'],published_hash=item['published_hash'],probe=probe,units=units,rejected_proposals=rejected)
+    result.update(work_queue.queue_fields(identifier,item['status'],'speech'))
     return result
 
 

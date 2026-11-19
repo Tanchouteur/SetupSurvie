@@ -56,7 +56,7 @@ class Slot:
 
     def order(self):
         questions, background = deque(), deque()
-        for key, future in self.waiters:
+        for key, future in tuple(self.waiters):
             if not future.cancelled():
                 (questions if self.priority(key) else background).append(key)
         ordered = []
@@ -130,6 +130,20 @@ class Queue(Slot):
         for slot in self.slots.values():
             slot.dispatch()
 
+    def waiting_state(self, identifier, kind='chat', *, status='queued'):
+        """Report the wait even between two units of a job marked running by its worker."""
+        if status not in ('queued', 'running'):
+            return None
+        slot = self.slots[BACKGROUND_LANE.get(kind, 'ai')]
+        order = slot.order()
+        if status == 'running' and identifier not in order:
+            return None
+        if self.paused:
+            return 'paused'
+        if (slot.active and slot.active[0] == identifier) or order[:1] == [identifier]:
+            return 'next'
+        return 'waiting'
+
     def move(self, identifier, direction, profile):
         kind = self.records.get(identifier, {}).get('kind')
         slot = self.slots[BACKGROUND_LANE.get(kind, 'ai')]
@@ -170,9 +184,9 @@ class Queue(Slot):
                 continue
             details = youtube_pipeline.public(video_jobs[key]) if key in video_jobs else describe(row['kind'], key)
             public = {**row, **details}
-            if key in active:
+            if key in active and public['status'] in ('queued', 'running', 'preparing'):
                 public['status'] = 'running'
-            elif key in keys:
+            elif key in keys and public['status'] in ('queued', 'running', 'preparing'):
                 public['status'] = 'queued'
             elif public['status'] in ('queued', 'running'):
                 public['status'] = 'preparing'
@@ -182,18 +196,24 @@ class Queue(Slot):
                     for row in video_jobs.values() if row['id'] not in records)
         jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
         from . import videos
-        if videos.running() and not any(job['kind'] == 'youtube-track' and job['status'] == 'running' for job in jobs):
+        indexing = videos.running() is not None
+        report = videos.status()
+        phase = report.get('phase')
+        if indexing:
             lanes['local']['running'] = True
-            report = videos.status()
+        show_index = indexing or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
+        if show_index and not (indexing and any(job['kind'] == 'youtube-track' and job['status'] == 'running' for job in jobs)):
             jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
-                         'title': 'Titres et sous-titres', 'status': 'running',
-                         'stage': f"{report.get('videos', 0)} vidéo(s) traitée(s)"})
+                         'title': 'Titres et sous-titres', 'status': 'running' if indexing else phase,
+                         'stage': f"{report.get('videos', 0)} vidéo(s) traitée(s)",
+                         'error': report.get('error'),
+                         'href': '#/bibliotheque/collections'})
         for job in jobs:
             job['lane'] = BACKGROUND_LANE.get(job['kind'], 'ai')
             job.setdefault('priority', job['kind'] == 'chat')
             lane_order = orders[job['lane']]
-            job['next'] = bool(lane_order and lane_order[0] == job['id'])
-            job['movable'] = job['id'] in keys and can_move(job, profile)
+            job['next'] = job['status'] == 'queued' and bool(lane_order and lane_order[0] == job['id'])
+            job['movable'] = job['status'] == 'queued' and job['id'] in keys and can_move(job, profile)
             job['retry'] = job['status'] in ('paused', 'error', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or profile['role'] == 'admin' and
                 job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test'))
@@ -203,6 +223,11 @@ class Queue(Slot):
 
 
 QUEUE = Queue()
+
+
+def queue_fields(identifier, status, kind):
+    waiting = QUEUE.waiting_state(identifier, kind, status=status)
+    return {'queue_state': waiting} if waiting else {}
 
 
 def allowed(row, profile):
