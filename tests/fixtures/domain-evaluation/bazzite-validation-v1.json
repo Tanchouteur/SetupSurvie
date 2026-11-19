@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "validation-01",
+      "split": "verify",
+      "query": "Jardin potager",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Jardin_potager",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Culture vivrière et usages historiques."
+    },
+    {
+      "id": "validation-02",
+      "split": "verify",
+      "query": "Antenne radioélectrique",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Antenne_radioélectrique",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Dispositif technique, paramètres et types d’antennes."
+    },
+    {
+      "id": "validation-03",
+      "split": "verify",
+      "query": "Cyclone tropical",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Cyclone_tropical",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène météorologique et ses effets."
+    },
+    {
+      "id": "validation-04",
+      "split": "verify",
+      "query": "Colle chaude",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Pistolet_à_colle",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Outil de collage et modes d’emploi."
+    },
+    {
+      "id": "validation-05",
+      "split": "verify",
+      "query": "Réparation",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Réparation",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Homonymie au-delà du domaine de la maintenance."
+    },
+    {
+      "id": "validation-06",
+      "split": "verify",
+      "query": "Microplastique",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Microplastique",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Polluants, distribution et impacts."
+    },
+    {
+      "id": "validation-07",
+      "split": "verify",
+      "query": "Pluie",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Pluie",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène et formation météorologiques."
+    },
+    {
+      "id": "validation-08",
+      "split": "verify",
+      "query": "Couteau de poche",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Couteau_de_poche",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Outil, types et contexte historique."
+    },
+    {
+      "id": "validation-09",
+      "split": "verify",
+      "query": "Dynamo",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Dynamo",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Générateur électrique et son fonctionnement."
+    },
+    {
+      "id": "validation-10",
+      "split": "verify",
+      "query": "Langue des signes",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Langue_des_signes",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Communication linguistique et culturelle."
+    }
+  ]
+}

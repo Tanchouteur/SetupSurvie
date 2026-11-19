@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations
+from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -525,6 +525,62 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     return list(records.values()),report
 
 
+async def enrich_wikipedia(items, query, generation, normalize):
+    """Enrich the most relevant candidates within a shared lane and time budget."""
+    candidates = [item for item in items if wiki_structure.wikipedia(item)]
+    if not candidates:
+        return None
+    original = normalize(query.original)
+
+    def priority(pair):
+        position, item = pair
+        return (normalize(item['title']) != original,
+                -retrieval.rank(item, query, position, normalizer=normalize))
+
+    ranked = sorted(enumerate(candidates), key=priority)
+    selected = list(dict.fromkeys(item['id'] for _, item in ranked))[:12]
+    shared = kiwix_queries.state()
+    cache = shared['structures']
+    evidence = {}
+    started = time.monotonic()
+
+    async def inspect(identifier):
+        key = (KIWIX, generation, identifier)
+        async with shared['structure_lane']:
+            prior = cache.get(key)
+            if prior and time.monotonic() - prior[0] < kiwix_queries.TTL:
+                cache.move_to_end(key)
+                evidence[identifier] = prior[1]
+                return
+            try:
+                path = '/content/' + quote(safe_zim_path(identifier), safe='/')
+                async with asyncio.timeout(0.45):
+                    raw, content_type = await get(path, wiki_structure.MAX_HTML)
+                    if 'text/html' not in content_type:
+                        return
+                    structure = await kiwix_queries.disk_io(wiki_structure.extract, raw)
+            except (TimeoutError, httpx.HTTPError, HTTPException, ValueError):
+                return
+            evidence[identifier] = structure
+            cache[key] = (time.monotonic(), structure)
+            cache.move_to_end(key)
+            while len(cache) > 256:
+                cache.popitem(last=False)
+
+    try:
+        async with asyncio.timeout(0.7):
+            await asyncio.gather(*(inspect(identifier) for identifier in selected))
+    except TimeoutError:
+        pass
+    for item in candidates:
+        if item['id'] in evidence:
+            item['_wiki_structure'] = evidence[item['id']]
+    return {'selected': len(selected), 'read': len(evidence),
+            'categories': sum(bool(info['categories']) for info in evidence.values()),
+            'sections': sum(bool(info['sections'] or info['subsections']) for info in evidence.values()),
+            'elapsed_ms': round((time.monotonic() - started) * 1000)}
+
+
 async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12,kind='all'):
     if kind not in ('all','documents','videos'):raise ValueError('Invalid search kind')
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
@@ -648,6 +704,9 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     finally:
         if not local_task.done():local_task.cancel()
         await asyncio.gather(local_task,return_exceptions=True)
+    wiki_report = await enrich_wikipedia(local + articles, query_plan, coverage.get('cache_generation', ''), normalize)
+    if diagnostic and wiki_report is not None:
+        coverage['wikipedia_structure'] = wiki_report
     ordered,metadata_available=await selected(results+local+articles,fresh=True)
     if diagnostic:coverage['processing']={**{key:round(value,2) for key,value in processing.items()},'metadata_evaluations':annotations.evaluated,'source_revision_checks':annotations.source_checks,'normalizations':normalize.misses,'normalization_hits':normalize.hits,'normalization_cache_bytes':normalize.bytes}
     coverage['local_query']=getattr(local,'coverage',{})
@@ -737,7 +796,11 @@ async def source(identifier):
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
     result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
             'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
-    catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
+    if wiki_structure.wikipedia(result):
+        result['_wiki_structure'] = await kiwix_queries.disk_io(wiki_structure.extract, raw)
+    catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+    result.pop('_wiki_structure', None)
+    return result
 
 
 def calculate(expression):

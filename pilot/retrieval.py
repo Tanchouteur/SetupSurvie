@@ -7,6 +7,8 @@ import re
 import unicodedata
 from urllib.parse import unquote
 
+from . import wiki_structure
+
 
 def normal(text):
     decomposed=unicodedata.normalize('NFKD',unquote(str(text)))
@@ -341,9 +343,109 @@ def article_language(item):
         if suffix:return suffix[1]
     return {'fra':'fr','eng':'en'}.get(language,language)
 
-def domains(item):
+def legacy_domains(item):
     # Conservative automatic indication; never certifies a procedure.
     text=normal(item.get('title','')+' '+item.get('excerpt','')+' '+item.get('_text','')[:4000])
     resilience=bool(re.search(r'\b(eau|water|feu|fire|abri|shelter|potager|semences|seed|seeds|survie|survival|repair|reparation|reparer|maintenance|batterie|battery|generator|generateur|premiers secours|first aid|compost|plomberie|plumbing|couture|sewing|mending|conservation alimentaire|(?:(?:conservation|stockage) de(?:s| la) |(?:conserver|stocker) (?:les? |des? |la )?)(?:aliments?|nourriture)|food (?:preservation|storage)|conserves|canning|solaire|solar|photovoltaic|photovoltaique|radio|radios|antenne|antennes|communications|telecommunications|affutage|sharpening)\b',text))
     cultural=bool(re.search(r'\b(histoire|history|science|sciences|physique|physics|biologie|biology|mathematiques|mathematics|enseignement|education|geographie|geography|litterature|literature|philosophie|philosophy)\b',text))
     return (['resilience'] if resilience else [])+(['culture'] if cultural or not resilience else [])
+
+
+# Broad terms like water, fire or radio need context on Wikipedia. Use
+# concrete practices, equipment and techniques as subject evidence.
+PRACTICAL_SUBJECT = re.compile(
+    r'\b(potabilisation|eau potable|drinking water|water purification|water treatment|'
+    r'collecte (?:d eau de pluie|des eaux? pluviales?)|recuperation de l eau de pluie|'
+    r'rainwater harvesting|chateaux? d eau|water towers?|reservoirs? d eau|water tanks?|'
+    r'conservation (?:des? aliments?|de la viande|du poisson)|food preservation|conservation alimentaire|'
+    r'entreposage des aliments|lavage des mains|hand washing|handwashing|'
+    r'compostage|compost|potager|vegetable garden|permaculture|semis|sowing|stockage des semences|'
+    r'plomberie|plumbing|premiers secours|first aid|sutures? (?:en )?medecine|radioamateur|amateur radio|'
+    r'antennes? (?:radioelectriques?|de reception)|radio antennas?|dynamo|generateurs? electriques?|electrical generators?|'
+    r'batteries? (?:electriques?|rechargeables?|au lithium)|rechargeable batter(?:y|ies)|'
+    r'photovoltaique|panneaux? solaires?|solar panels?|solar power|energie solaire|eoliennes?|wind turbines?|'
+    r'traitement de l eau|filtration|couture|sewing|reparation|repair|desinfection|disinfection|'
+    r'isolation thermique|thermal insulation|habitat passif|maison passive|passive house|charpentes?|roof framing|'
+    r'reanimation cardiopulmonaire|cardiopulmonary resuscitation|premiers soins|first aid|'
+    r'nouage|noeuds? (?:de chaise|de cabestan|d ecoute|plats?)|bowline|clove hitches?|reef knots?|'
+    r'generateur a pedales|pedal generator|affutage|sharpening|construire un abri|shelter building|'
+    r'rustine|mending|semences|seed saving|abri de survie|survival shelter|soudage|welding|extincteurs?|'
+    r'fire extinguishers?|peche a la ligne|angling|navigation astronomique|celestial navigation|'
+    r'couteaux? de poche|pocket (?:knife|knives)|pistolets? a colle|glue guns?|'
+    r'domestication du feu|fire making|fire starting|allumage du feu)\b'
+)
+CULTURAL_SUBJECT = re.compile(
+    r'\b(histoire|history|sciences?|physique|physics|biologie|biology|culture|'
+    r'symbolique|symbolism|patrimoine|heritage|aspects historiques|'
+    r'mathematiques|mathematics|astronom(?:ie|ique|y|ical)|epidemiolog(?:ie|y)|litterature|literature)\b'
+)
+RADIO_EQUIPMENT = re.compile(r'\b(antenne|antenna|transmission|montage|circuit|receiver|recepteur|equipement|equipment)\b')
+CULTURAL_FORMAT = re.compile(
+    r'\b(synopsis|intrigue|distribution artistique|contenu musical|homophonies|'
+    r'plot summary|cast and characters|disambiguation)\b'
+)
+CULTURAL_TITLE = re.compile(
+    r'\b(systeme solaire|solar system|rayonnement solaire|solar radiation|'
+    r'instrument de musique|musical instrument|batterie instrument|'
+    r'homonymie|disambiguation|cycle de l eau|water cycle|eau de cologne)\b'
+)
+
+
+GENERAL_PHENOMENON = {
+    'eau', 'water', 'pluie', 'rain', 'maree', 'tide', 'vent', 'wind',
+}
+TECHNICAL_HEADINGS = re.compile(
+    r'\b(techniques? (?:de |d )?(?:construction|reparation|transmission|fabrication)|'
+    r'mise en oeuvre|mode d emploi|instructions|premiers soins|first aid|'
+    r'installation du systeme|assembly instructions|how to)\b'
+)
+
+
+def wiki_normal(label):
+    # Unicode NFKD does not expand the French œ ligature.
+    return normal(label.casefold().replace('œ', 'oe'))
+
+
+def domains(item):
+    structure = item.get('_wiki_structure')
+    if not wiki_structure.wikipedia(item) or not structure:
+        return legacy_domains(item)
+
+    title = wiki_normal(item.get('title', ''))
+    sections = [wiki_normal(label) for label in structure['sections']]
+    categories = [wiki_normal(label) for label in structure['categories']]
+    disambiguation = any(label.endswith(' au singulier') for label in sections) and any(
+        label.endswith(' au pluriel') for label in sections
+    )
+    if disambiguation or CULTURAL_TITLE.search(title) or any(CULTURAL_FORMAT.fullmatch(label) for label in sections):
+        return ['culture']
+
+    practical_title = bool(PRACTICAL_SUBJECT.search(title))
+    practical_category = any(PRACTICAL_SUBJECT.search(label) for label in categories)
+    # Minor headings can describe useful detail, but don't define the subject.
+    practical_sections = sum(bool(PRACTICAL_SUBJECT.search(label)) for label in sections)
+    methods = any(TECHNICAL_HEADINGS.search(label) or label in (
+        'domestication du feu', 'fire making', 'fire starting') for label in sections)
+    device_title = re.search(r'\b(bicyclette|bicycle|velo|radio|batterie|battery|antenne|antenna|generateur|generator)\b', title)
+    maintenance = device_title and any(
+        wiki_normal(label) in ('entretien', 'maintenance') for label in structure['sections'] + structure['subsections']
+    )
+    practical = practical_title or practical_category or practical_sections >= 2 or methods or maintenance
+
+    general = bool(CULTURAL_SUBJECT.search(title)) or any(CULTURAL_SUBJECT.search(label) for label in categories)
+    historical = any(re.match(r'^(?:historique|histoire|history|aspects historiques)(?:$| d[eu]s? | of )', label)
+                     for label in sections)
+    general_section = any(CULTURAL_SUBJECT.search(label) for label in sections)
+    cultural = general or historical or (general_section and not practical_title)
+    previous = legacy_domains(item)
+    if practical:
+        return ['resilience', 'culture'] if cultural or 'culture' in previous else ['resilience']
+
+    # Only clear evidence about the subject may remove practical membership.
+    # Weak or unfamiliar evidence should not hide sources the old rule found.
+    radio_history = historical and title.startswith('radio ') and not any(RADIO_EQUIPMENT.search(label) for label in sections)
+    if (title in GENERAL_PHENOMENON and sections) or radio_history:
+        return ['culture']
+    if cultural and 'culture' not in previous:
+        return [*previous, 'culture']
+    return previous
