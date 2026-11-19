@@ -80,16 +80,16 @@ def enqueue_installation_list():
     if path.is_symlink():
         return True
     try:
-        with path.open('rb') as source:
-            raw = source.read(youtube_downloads.MAX_TEXT + 1)
-    except FileNotFoundError:
-        return False
-    # The same list must retain its queue state after startup or install recovery.
-    identifier = hashlib.sha256(b'SetupSurvie YouTube installation\0' + raw).hexdigest()[:32]
-    try:
+        try:
+            with path.open('rb') as source:
+                raw = source.read(youtube_downloads.MAX_TEXT + 1)
+        except FileNotFoundError:
+            return False
+        # The same list must retain its queue state after startup or install recovery.
+        identifier = hashlib.sha256(b'SetupSurvie YouTube installation\0' + raw).hexdigest()[:32]
         enqueue(raw.decode('utf-8'), 480, identifier=identifier)
-    except (HTTPException, UnicodeError):
-        logging.getLogger(__name__).warning('La liste YouTube de l’installation est invalide.')
+    except (HTTPException, OSError, UnicodeError):
+        logging.getLogger(__name__).warning('La liste YouTube de l’installation n’a pas pu être ajoutée.')
     return True
 
 

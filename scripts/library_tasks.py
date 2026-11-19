@@ -170,9 +170,13 @@ class Manager:
         if (self.backend == 'compose' and state['phase'] != 'planned' and request.is_file()
                 and not gaming and self.index_ready()):
             with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
-                self.start('video-inventory', {})
+                self.start('video-inventory', {'automatic': True})
             return
-        if state['phase'] not in ('idle','completed') and not (state['phase']=='paused' and state.get('action')=='index' and state.get('options',{}).get('automatic')):return
+        automatic = state.get('options', {}).get('automatic')
+        resumable = state['phase'] == 'paused' and state.get('action') == 'index' and automatic
+        initial_video_error = state['phase'] == 'error' and state.get('action') == 'video-inventory' and automatic
+        if state['phase'] not in ('idle', 'completed') and not (resumable or initial_video_error):
+            return
         if not allowed or not queue['pending'] or queue.get('hold') or not self.index_ready():return
         try:
             # Never start during any CLI/web content publication or backup.

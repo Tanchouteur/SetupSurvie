@@ -30,9 +30,20 @@ class ArchiveVideoJobTests(unittest.TestCase):
             self.manager.auto_index()
             self.manager.auto_index()
             process.assert_called_once()
-        self.assertEqual(self.manager.read()['action'], 'video-inventory')
+        state = self.manager.read()
+        self.assertEqual(state['action'], 'video-inventory')
+        self.assertTrue(state['options']['automatic'])
         self.assertFalse(pending.exists())
         self.assertFalse(self.manager.status()['initial_video_inventory_pending'])
+
+    def test_partial_initial_video_inventory_does_not_block_text_indexing(self):
+        data = Path(self.config['data_dir'])
+        (data / 'library/zim/encyclopedie.zim').write_bytes(b'zim fixture')
+        jobs.index_queue.enqueue(data, {'path': 'library/zim/encyclopedie.zim', 'sha256': 'a' * 64})
+        self.manager.write({'phase': 'error', 'action': 'video-inventory', 'options': {'automatic': True}})
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(self.manager, 'start') as start:
+            self.manager.auto_index()
+        start.assert_called_once_with('index', {'automatic': True})
 
     def test_prepared_reader_and_non_gaming_state_are_required_before_spawning(self):
         with patch.object(jobs.subprocess,'Popen') as process:
