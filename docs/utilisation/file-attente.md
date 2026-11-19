@@ -1,20 +1,23 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.55.1.**
+**Guide actuel — 0.55.2.**
 
-Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page. Un lien en bas donne accès au suivi détaillé des préparations.
+Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
+Un lien en bas donne accès au suivi détaillé des préparations.
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône
-ou atteignez-la avec la touche Tab pour voir les tâches en cours et en attente, dans leurs cartes. Ouvrez
-la page de la file en cliquant dessus ou en appuyant sur Entrée. Sur
-téléphone, l’icône ouvre directement la page.
+ou atteignez-la avec la touche Tab pour afficher l’aperçu des tâches. Cliquez
+sur l’icône ou sur **Ouvrir la file** pour passer à la page dédiée. Sur
+téléphone, l’icône ouvre directement cette page.
 
 La page indique le contenu, l’étape, le modèle sélectionné et l’avancement
 quand le traitement sait le mesurer. Dans l’aperçu du portail et sur la page,
 maintenez la poignée à trois barres à droite d’une tâche en attente pour la
 glisser avant ou après une autre. Au clavier, sélectionnez la poignée puis
-utilisez les flèches haut et bas. Sur téléphone, faites glisser la poignée
+utilisez les flèches haut et bas. Dans l’aperçu, la carte suit la poignée,
+les cartes voisines lui font de la place et un contour souligne la section
+dans laquelle elle peut être déposée. Sur téléphone, faites glisser la poignée
 avec le doigt sur la page dédiée. Les réponses et les traductions de documents
 s’affichent dans leur propre profil. Les travaux de la bibliothèque sont
 communs et le profil **Famille** peut modifier leur ordre.
@@ -38,7 +41,9 @@ L’aperçu et la page montrent trois créneaux indépendants.
 question peut changer ce choix pour l’IA. Les poignées règlent l’ordre au sein
 d’un même créneau et d’un même niveau de priorité.
 
-Avec **Famille**, **Mettre en pause** empêche le démarrage des étapes suivantes de la file. L’indexation des fichiers déjà publiés peut se terminer en arrière-plan.
+Avec **Famille**, utilisez le bouton pause ou lecture en haut de l’aperçu,
+à côté d’**Ouvrir la file**. Sur la page dédiée, retrouvez **Mettre en pause**
+et **Reprendre la file**. La pause empêche le démarrage des étapes suivantes. L’indexation des fichiers déjà publiés peut se terminer en arrière-plan.
 Une question finit sa réponse en cours, et les travaux découpés s’arrêtent
 entre deux unités enregistrées. Le téléchargement YouTube en cours reçoit
 une demande d’arrêt et conserve son fichier partiel. **Reprendre la file**
