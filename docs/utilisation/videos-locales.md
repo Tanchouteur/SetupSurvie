@@ -58,10 +58,11 @@ que les collections ZIM non examinées sont sans vidéo.
 ## Chercher et lire
 
 Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
-Le menu **Origine des vidéos** permet d’afficher **YouTube** ou **Encyclopédie**.
+Dans le volet vidéo déplié, le menu **Origine des vidéos** propose
+**Toutes les vidéos**, **YouTube** et **Hors YouTube**.
 **YouTube** inclut les vidéos importées et les chaînes YouTube archivées dans
-Kiwix. **Encyclopédie** affiche les vidéos des autres collections Kiwix.
-**Toutes les vidéos** inclut aussi les fichiers ajoutés sans origine identifiée.
+Kiwix. **Hors YouTube** affiche les vidéos des autres collections Kiwix et
+les fichiers locaux sans origine YouTube identifiée.
 Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
 dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
 nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).

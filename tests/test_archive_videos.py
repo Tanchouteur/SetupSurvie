@@ -42,17 +42,17 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         videos.scan()
 
         self.assertEqual(videos.listing()['total'],8)
-        encyclopedia=videos.listing(grouped=True,origin='encyclopedia')
-        self.assertEqual((encyclopedia['total'],encyclopedia['group_total']),(2,1))
-        group=encyclopedia['groups'][0]['id']
+        other=videos.listing(grouped=True,origin='non_youtube')
+        self.assertEqual((other['total'],other['group_total']),(3,2))
+        group=other['groups'][0]['id']
         self.assertEqual(videos.listing(group=group)['total'],6)
-        page=videos.listing(group=group,origin='encyclopedia',limit=1,offset=1)
+        page=videos.listing(group=group,origin='non_youtube',limit=1,offset=1)
         self.assertEqual((page['total'],len(page['videos'])),(2,1))
         found=videos.listing(grouped=True,origin='youtube',query='shadow')
         self.assertEqual(found['total'],1)
         self.assertEqual(found['groups'][0]['video']['title'],'How do we measure a shadow?')
         self.assertEqual(videos.listing(grouped=True,origin='youtube')['total'],5)
-        self.assertEqual(videos.listing(grouped=True,origin='encyclopedia',query='shadow')['total'],0)
+        self.assertEqual(videos.listing(grouped=True,origin='non_youtube',query='shadow')['total'],0)
 
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])

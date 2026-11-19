@@ -280,19 +280,18 @@ def listing_card(record):
     return item
 
 
-def video_origin(provider,youtube_archive,path,extractor,url):
+def is_youtube_video(provider,youtube_archive,path,extractor,url):
     if provider=='zim':
-        return 'youtube' if youtube_archive else 'encyclopedia'
+        return bool(youtube_archive)
     if (extractor or '').lower() in ('youtube','youtube:video') or path.lower().startswith('youtube/'):
-        return 'youtube'
+        return True
     if url and '://' in url:
         try:
             provider_subtitles.video_id(url)
         except ValueError:
-            pass
-        else:
-            return 'youtube'
-    return 'local'
+            return False
+        return True
+    return False
 
 
 def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
@@ -307,10 +306,10 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
         filters.append('group_key=?')
         parameters.append(group)
     if origin!='all':
-        filters.append("""video_origin(json_extract(payload,'$.provider'),
+        filters.append("""is_youtube_video(json_extract(payload,'$.provider'),
             json_extract(payload,'$.youtube_archive'),json_extract(payload,'$.path'),
             json_extract(payload,'$.source.extractor'),json_extract(payload,'$.source.url'))=?""")
-        parameters.append(origin)
+        parameters.append(origin=='youtube')
     restriction=' WHERE '+' AND '.join(filters) if filters else ''
     prefix=VIDEO_COLLECTIONS if grouped or group else ''
     table='grouped_videos' if prefix else 'media'
@@ -320,7 +319,7 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
     with connect() as db:
         db.execute('BEGIN')
         if origin!='all':
-            db.create_function('video_origin',5,video_origin,deterministic=True)
+            db.create_function('is_youtube_video',5,is_youtube_video,deterministic=True)
         if prefix and words:
             def collection_matches(label):
                 text=retrieval.normal(label or '')

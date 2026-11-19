@@ -5,7 +5,7 @@
       <select id="next-videos-origin">
         <option value="all">Toutes les vidéos</option>
         <option value="youtube">YouTube</option>
-        <option value="encyclopedia">Encyclopédie</option>
+        <option value="non_youtube">Hors YouTube</option>
       </select>
     </label>
     <div class="video-library-status"><p id="next-videos-count" role="status"></p><p id="next-videos-feedback" class="small" role="status"></p></div>
