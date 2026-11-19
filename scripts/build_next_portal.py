@@ -36,7 +36,7 @@ def build():
         ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
         ('css', '/nouveau/work-queue.css', '0.55.2'),
         ('js', '/work-queue-preview.js', '0.55.2'),
-        ('js', '/nouveau/work-queue.js', '0.55.1'),
+        ('js', '/nouveau/work-queue.js', '0.55.3'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.54.0'),

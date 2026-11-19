@@ -166,6 +166,28 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(value['lanes']['local']['running'])
         index = next(job for job in value['jobs'] if job['id'] == 'video-index')
         self.assertEqual((index['lane'], index['status'], index['error']), ('local', 'failed', report['error']))
+        self.assertTrue(index['retry'])
+
+    async def test_paused_archive_can_be_resumed_by_administrator_from_queue(self):
+        progress = {'phase': 'paused', 'completed': 2, 'archives': 5}
+        with (patch.object(archive_videos, 'progress', return_value=progress),
+              patch.object(archive_videos, 'status', new_callable=AsyncMock, return_value=progress),
+              patch.object(archive_videos, 'start', new_callable=AsyncMock) as start):
+            for profile, allowed in ((ADMIN, True), (CHILD, False)):
+                job = next(job for job in self.queue.snapshot(profile)['jobs'] if job['id'] == 'archive-video-index')
+                self.assertEqual(job['retry'], allowed)
+            with self.assertRaises(HTTPException) as denied:
+                await work_queue.retry('archive-video-index', CHILD)
+            self.assertEqual(denied.exception.status_code, 403)
+            await work_queue.retry('archive-video-index', ADMIN)
+            start.assert_awaited_once()
+
+    async def test_completed_transcription_overrides_interrupted_queue_history(self):
+        self.queue.save({'id': 'speech', 'kind': 'speech', 'title': 'Piste', 'status': 'interrupted'})
+        with patch.object(work_queue, 'describe', return_value={'status': 'completed'}):
+            job = next(job for job in self.queue.snapshot(ADMIN)['jobs'] if job['id'] == 'speech')
+        self.assertEqual(job['status'], 'completed')
+        self.assertFalse(job['retry'])
 
     async def test_summary_hides_other_profile_content_but_reports_activity(self):
         queue = self.queue

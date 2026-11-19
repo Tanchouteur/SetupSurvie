@@ -29,6 +29,7 @@ KINDS = {
 
 
 BACKGROUND_LANE = {'youtube': 'network', 'acquisition': 'network', 'speech': 'local', 'youtube-track': 'local', 'video-index': 'local', 'archive-video-index': 'local'}
+VIDEO_INVENTORIES = ('video-index', 'archive-video-index')
 CHAT_BURST = 3
 
 
@@ -220,7 +221,14 @@ class Queue(Slot):
                 jobs.append(public)
         jobs.extend({'id': row['id'], 'kind': row['kind'], 'type': row['type'], **youtube_pipeline.public(row)}
                     for row in video_jobs.values() if row['id'] not in records)
-        jobs.extend(row for row in history if row['id'] not in records and row['kind'] not in ('youtube', 'youtube-track') and allowed(row, profile))
+        for row in history:
+            if row['id'] in records or row['kind'] in ('youtube', 'youtube-track') or not allowed(row, profile):
+                continue
+            if row['status'] == 'interrupted' and row['kind'] in ('speech', 'captions', 'acquisition'):
+                current = describe(row['kind'], row['id'])
+                if current['status'] in ('completed', 'paused', 'error'):
+                    row = {**row, **current}
+            jobs.append(row)
         indexing = videos.running() is not None
         report = self.video_status(videos, indexing)
         phase = report.get('phase')
@@ -230,7 +238,7 @@ class Queue(Slot):
         if show_index:
             jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
                          'title': 'Inventaire des vidéos et sous-titres', 'status': 'running' if indexing else phase,
-                         'stage': f"{report.get('videos', 0)} vidéo(s) traitée(s)",
+                         'stage': report.get('stage') or f"{report.get('videos', 0)} vidéo(s) traitée(s)",
                          'error': report.get('error'),
                          'href': '#/bibliotheque/collections'})
         archive = archive_videos.progress()
@@ -247,9 +255,9 @@ class Queue(Slot):
             lane_order = orders[job['lane']]
             job['next'] = job['status'] == 'queued' and bool(lane_order and lane_order[0] == job['id'])
             job['movable'] = job['status'] == 'queued' and job['id'] in keys and can_move(job, profile)
-            job['retry'] = job['status'] in ('paused', 'error', 'stopped', 'interrupted') and (
+            job['retry'] = job['status'] in ('paused', 'error', 'failed', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or profile['role'] == 'admin' and
-                job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test'))
+                job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test',*VIDEO_INVENTORIES))
         return {'paused': self.paused, 'running': any(lane['running'] for lane in lanes.values()), 'lanes': lanes, 'jobs': [
             {key: value for key, value in job.items() if key != 'owner'} for job in jobs
         ]}
@@ -380,7 +388,16 @@ def describe(kind, identifier):
 
 
 async def retry(identifier, profile):
-    from . import caption_acquisition, captions, summaries, transcriptions, translation_benchmark, translations, youtube_pipeline
+    from . import archive_videos, caption_acquisition, captions, summaries, transcriptions, translation_benchmark, translations, videos, youtube_pipeline
+
+    if identifier in VIDEO_INVENTORIES:
+        if profile['role'] != 'admin':raise HTTPException(403,'Accès réservé à l’administrateur.')
+        phase = ((await archive_videos.status())['phase'] if identifier == 'archive-video-index'
+                 else (await asyncio.to_thread(videos.status))['phase'])
+        if phase not in ('paused', 'interrupted', 'error', 'failed'):
+            raise HTTPException(409,'Cet inventaire n’est pas en pause et ne nécessite pas de relance.')
+        await (archive_videos.start() if identifier == 'archive-video-index' else videos.start())
+        return
 
     with store.connect() as db:
         row = db.execute('SELECT data FROM work_history WHERE id=?', (identifier,)).fetchone()

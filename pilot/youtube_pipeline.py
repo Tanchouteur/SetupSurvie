@@ -235,6 +235,7 @@ async def prepare(identifier):
         async with work_queue.QUEUE.slots['local']:
             # The preparation's own turn only chooses or schedules the next
             # stage. Its child takes a separate turn for actual inference.
+            update(identifier, stage='Actualisation de l’index des vidéos')
             await videos.refresh_after(data['published'])
             _, payload, _ = await asyncio.to_thread(videos.row, video_id)
             action, track = select_track(payload)
@@ -259,6 +260,7 @@ async def prepare(identifier):
                    error=result.get('error') or 'La piste n’a pas pu être préparée. Réessayez depuis la file.')
             return
         # A completed local transcription becomes the input to the next turn.
+        update(identifier, stage='Publication de la piste dans l’index des vidéos')
         await videos.refresh_after(result['updated'] if result['index_status']=='pending' else 0)
         _, payload, _ = await asyncio.to_thread(videos.row, video_id)
         next_action, _ = select_track(payload)

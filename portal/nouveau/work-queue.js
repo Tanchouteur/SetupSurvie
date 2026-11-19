@@ -110,7 +110,7 @@
     }
     if (job.retry) {
       const id = job.id + ':retry';
-      const control = button(job.status === 'paused' ? 'Reprendre' : 'Réessayer', () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
+      const control = button(held(job) ? 'Reprendre' : 'Réessayer', () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
       control.dataset.workControl = id;
       control.disabled = connection !== 'ready' || pending;
       tools.append(control);
