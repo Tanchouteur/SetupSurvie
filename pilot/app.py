@@ -121,7 +121,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.54.0'
+VERSION='0.55.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -887,8 +887,13 @@ async def get_work_queue(value=Depends(user)):
     return JSONResponse(work_queue.QUEUE.snapshot(value),headers={'Cache-Control':'no-store'})
 
 
-class WorkMove(BaseModel):
+class WorkMoveStep(BaseModel):
     direction:Literal[-1,1]
+
+
+class WorkMoveDrop(BaseModel):
+    target:str=Field(min_length=1,max_length=128)
+    after:bool
 
 
 class WorkPause(BaseModel):
@@ -903,8 +908,11 @@ async def pause_work_queue(body:WorkPause,value=Depends(admin)):
 
 
 @app.post('/api/work-queue/{identifier}/move')
-async def move_work(identifier:str,body:WorkMove,value=Depends(user)):
-    work_queue.QUEUE.move(identifier,body.direction,value)
+async def move_work(identifier:str,body:WorkMoveStep|WorkMoveDrop,value=Depends(user)):
+    if isinstance(body,WorkMoveDrop):
+        work_queue.QUEUE.move(identifier,None,value,target=body.target,after=body.after)
+    else:
+        work_queue.QUEUE.move(identifier,body.direction,value)
     return {'accepted':True}
 
 

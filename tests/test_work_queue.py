@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 
-from pilot import engine, library, operations, store, videos, work_queue, youtube_pipeline
+from pilot import archive_videos, engine, library, operations, store, videos, work_queue, youtube_pipeline
 import test_video_transcriptions as speech_fixture
 
 ADMIN = {'id': 'famille', 'role': 'admin'}
@@ -125,6 +125,39 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(following, 1)
         queue.release()
         self.assertFalse(queue.locked())
+
+    async def test_drop_moves_only_visible_waiters_in_the_same_priority_group(self):
+        queue = self.queue
+        queue.set_paused(True)
+        for key, kind, owner in [('first', 'translation', 'famille'), ('private', 'translation', 'enfant'),
+                                 ('second', 'translation', 'famille'), ('question', 'chat', 'famille'),
+                                 ('last', 'translation', 'famille')]:
+            queue.records[key] = {'kind': kind, 'owner': owner}
+            queue.waiters.append((key, asyncio.get_running_loop().create_future()))
+        with self.assertRaises(HTTPException):
+            queue.move('last', None, ADMIN, target='private')
+        with self.assertRaises(HTTPException):
+            queue.move('last', None, ADMIN, target='question')
+        queue.move('last', None, ADMIN, target='first')
+        self.assertEqual([key for key, _ in queue.waiters], ['last', 'private', 'first', 'question', 'second'])
+        queue.move('last', None, ADMIN, target='second', after=True)
+        self.assertEqual([key for key, _ in queue.waiters], ['first', 'private', 'second', 'question', 'last'])
+
+    async def test_both_video_inventories_remain_visible_during_track_preparation(self):
+        queue = self.queue
+        track = {'id': 'track', 'kind': 'youtube-track', 'title': 'Piste', 'status': 'running'}
+        queue.records['track'] = track
+        queue.slots['local'].active = ('track', None)
+        with (patch.object(videos, 'running', return_value=object()),
+              patch.object(videos, 'status', return_value={'phase': 'running', 'videos': 3}),
+              patch.object(archive_videos, 'progress', return_value={'phase': 'running', 'completed': 2, 'archives': 5}),
+              patch.object(work_queue, 'describe', return_value=track)):
+            value = queue.snapshot(ADMIN)
+        active = {job['id']: job for job in value['jobs'] if job['status'] == 'running'}
+        self.assertEqual(set(active), {'track', 'video-index', 'archive-video-index'})
+        self.assertEqual((active['archive-video-index']['done'], active['archive-video-index']['total']), (2, 5))
+        self.assertTrue(value['lanes']['local']['running'])
+        self.assertTrue(all(job['lane'] == 'local' and not job['movable'] for job in active.values()))
 
     async def test_failed_video_index_is_visible_without_counting_as_running(self):
         report = {'phase': 'failed', 'error': 'L’ancien index reste disponible.', 'videos': 3}

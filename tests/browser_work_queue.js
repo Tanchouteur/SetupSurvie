@@ -11,6 +11,10 @@ async page => {
     {id: 'download', lane: 'network', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Vidéos du jardin', status: 'running'}
   ];
   tasks.push({id:'held',lane:'local',kind:'speech',type:'Transcription audio',title:'Audio suspendu',status:'paused',retry:true});
+  tasks.push(
+    {id:'video-index', lane:'local', kind:'video-index', type:'Indexation vidéo', title:'Inventaire des vidéos et sous-titres', status:'running', stage:'19 vidéos traitées'},
+    {id:'archive-video-index', lane:'local', kind:'archive-video-index', type:'Examen des collections', title:'Inventaire des vidéos dans les collections', status:'running', done:2, total:5}
+  );
   let paused = false, unavailable = false;
   await page.route('**/api/work-queue**', async route => {
     const request = route.request();
@@ -20,7 +24,8 @@ async page => {
         : route.fulfill({status: 503, json: {detail: 'Indisponible'}});
     }
     if (path.endsWith('/pause')) paused = request.postDataJSON().paused;
-    if (path.endsWith('/second/move') && request.postDataJSON().direction === -1) {
+    if (path.endsWith('/second/move') && request.postDataJSON().target === 'document' && !request.postDataJSON().after ||
+        path.endsWith('/document/move') && request.postDataJSON().target === 'second') {
       [tasks[2], tasks[4]] = [tasks[4], tasks[2]];
     }
     if (path.endsWith('/video/retry')) {
@@ -37,20 +42,32 @@ async page => {
   await page.setViewportSize({width: 1440, height: 900});
   await page.goto(base + '/nouveau/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
-  await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '5');
+  await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '7');
   const preview = page.locator('#main-navigation .work-queue-preview');
   await shortcut.hover();
   await preview.getByText('Audio en cours').waitFor();
-  await preview.getByText('En erreur · Liste de vidéos', {exact:true}).waitFor();
+  await preview.getByText('Inventaire des vidéos et sous-titres', {exact:true}).waitFor();
+  await preview.getByText('Inventaire des vidéos dans les collections', {exact:true}).waitFor();
+  await preview.getByText('Liste de vidéos', {exact:true}).waitFor();
   await preview.getByText('Une vidéo est privée.', {exact:true}).waitFor();
   verify((await shortcut.getAttribute('aria-label')).includes('1 erreur'), 'L’erreur doit être annoncée dans la barre.');
   await shortcut.locator('.work-queue-signal[data-level=error]').waitFor();
-  await preview.getByText('En cours · Vidéos du jardin').waitFor();
-  await preview.getByText('Ensuite · Comment réparer ce mécanisme ?').waitFor();
+  await preview.getByText('Vidéos du jardin', {exact:true}).waitFor();
+  await preview.getByText('Ensuite · Question à l’assistant', {exact:true}).waitFor();
+  const previewHandle = preview.getByRole('button', {name: 'Déplacer Notice de montage'});
+  await previewHandle.scrollIntoViewIfNeeded();
+  const from = await previewHandle.boundingBox();
+  const to = await preview.getByText('Manuel en anglais', {exact:true}).locator('..').boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + 2, {steps: 8});
+  await preview.locator('[data-work-id=document].work-queue-drop-before').waitFor();
+  await page.mouse.up();
+  await page.waitForFunction(() => document.querySelectorAll('#main-navigation .work-queue-preview [data-work-id="second"]')[0]?.nextElementSibling?.dataset.workId === 'document');
   await preview.getByRole('button', {name: 'Mettre en pause'}).click();
   await preview.getByRole('button', {name: 'Reprendre la file'}).waitFor();
   await preview.getByText('File en pause', {exact:true}).waitFor();
-  await preview.getByText('À la reprise · Comment réparer ce mécanisme ?').waitFor();
+  await preview.getByText('À la reprise · Question à l’assistant', {exact:true}).waitFor();
   verify((await shortcut.getAttribute('aria-label')).includes('1 erreur'), 'La pause doit laisser l’erreur visible.');
   await shortcut.focus();
   await page.keyboard.press('Escape');
@@ -59,16 +76,20 @@ async page => {
   await page.getByRole('heading', {name: 'File d’attente', exact: true}).waitFor();
   const view = page.locator('#view-work-queue');
   await view.getByText('50 %').waitFor();
+  await view.locator('[data-work-id=archive-video-index]').getByText('2 / 5', {exact:true}).waitFor();
   await view.getByText('Une vidéo est privée.').waitFor();
   verify(await view.locator('#work-queue-groups > section').first().locator('h2').textContent() === 'En erreur',
     'Les erreurs doivent être visibles avant les créneaux.');
   await view.getByRole('heading', {name:'À reprendre', exact:true}).waitFor();
   const ai = view.locator('[data-lane=ai]');
   await ai.getByText('Question prioritaire').waitFor();
-  verify(await ai.getByRole('button', {name: 'Reculer Comment réparer ce mécanisme ?'}).isDisabled(),
+  verify(!await ai.getByRole('button', {name: 'Déplacer Comment réparer ce mécanisme ?'}).count(),
     'Une question prioritaire ne peut pas être déplacée dans les tâches de fond.');
-  await ai.getByRole('button', {name: 'Avancer Notice de montage'}).click();
-  await page.waitForFunction(() => document.querySelectorAll('[data-lane=ai] .work-queue-card')[1]?.dataset.workId === 'second');
+  const handle = ai.getByRole('button', {name: 'Déplacer Manuel en anglais'});
+  await handle.press('ArrowUp');
+  await page.waitForFunction(() => document.querySelectorAll('#view-work-queue [data-lane=ai] .work-queue-card')[1]?.dataset.workId === 'document');
+  verify(await handle.evaluate(node => node === document.activeElement), 'Le focus reste sur la tâche déplacée.');
+
   await view.getByRole('button', {name: 'Reprendre la file'}).click();
   await view.getByRole('button', {name: 'Mettre en pause'}).waitFor();
   unavailable = true;
@@ -93,6 +114,25 @@ async page => {
   await view.getByRole('heading', {name: 'File d’attente', exact: true}).waitFor();
   await view.getByText('Manuel en anglais').waitFor();
   verify(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'La file déborde sur téléphone.');
+  if (page.context().browser().browserType().name() === 'chromium') {
+    const session = await page.context().newCDPSession(page);
+    await session.send('Emulation.setTouchEmulationEnabled', {enabled:true});
+    try {
+      const handle = view.getByRole('button', {name:'Déplacer Notice de montage'});
+      await handle.scrollIntoViewIfNeeded();
+      const source = await handle.boundingBox();
+      const target = await view.locator('[data-work-id=document]').boundingBox();
+      const send = (type, touchPoints) => session.send('Input.dispatchTouchEvent', {type, touchPoints});
+      await send('touchStart', [{x:source.x + source.width / 2, y:source.y + source.height / 2}]);
+      await send('touchMove', [{x:target.x + target.width / 2, y:target.y + target.height / 4}]);
+      await view.locator('[data-work-id=document].work-queue-drop-before').waitFor();
+      await send('touchEnd', []);
+      await page.waitForFunction(() => document.querySelectorAll('#view-work-queue [data-lane=ai] .work-queue-card')[1]?.dataset.workId === 'second');
+    } finally {
+      await session.send('Emulation.setTouchEmulationEnabled', {enabled:false});
+      await session.detach();
+    }
+  }
   // Exercise the actual file input and list-validation API, without pasting.
   await page.goto(base + '/nouveau/#/appareil/bibliotheque');
   const youtube = page.locator('#next-youtube');
@@ -139,6 +179,44 @@ async page => {
   await page.locator('#chat-status').getByText(/La file est en pause/).waitFor();
   answer = 'failed';
   await page.locator('#chat-status').getByText('Le moteur a arrêté la réponse.', {exact:true}).waitFor();
+  // The real API accepts starts and resumes from separate conversations of the same profile.
+  await page.unroute('**/api/work-queue**');
+  const post = async (path, data) => {
+    const response = await page.request.post(base + '/api' + path, {headers:{Origin:base}, data});
+    verify(response.ok(), path + ' : ' + await response.text());
+    return response.json();
+  };
+  const startData = {source_id:'guide:shelter.en.txt', mode:'rapide'};
+  const jobs = [];
+  await post('/work-queue/pause', {paused:true});
+  try {
+    const first = await post('/translations', startData);
+    jobs.push(first.id);
+    await post('/translations/' + first.id + '/stop', {});
+    const other = await post('/translations', startData);
+    jobs.push(other.id);
+    await page.setViewportSize({width:1440,height:900});
+    await page.goto(base + '/nouveau/#/assistant?conversation=' + first.conversation_id);
+    const panel = page.locator('#translation-panel');
+    await page.waitForFunction(id => S.translation === id, first.id);
+    await panel.evaluate(node => node.open = true);
+    const resume = panel.getByRole('button', {name:'Ajouter à la file d’attente', exact:true});
+    await resume.waitFor();
+    await resume.click();
+    await panel.getByText(/En attente · file en pause/).waitFor();
+    await page.locator('#chat-reset').click();
+    await page.evaluate(() => attachToConversation({id:'guide:shelter.en.txt', title:'Guide fictif'}));
+    await panel.evaluate(node => node.open = true);
+    const response = page.waitForResponse(item => item.url().endsWith('/api/translations') && item.request().method() === 'POST');
+    await panel.getByRole('button', {name:'Ajouter à la file d’attente', exact:true}).click();
+    const created = await response;
+    verify(created.ok(), await created.text());
+    jobs.push((await created.json()).id);
+    await panel.getByText(/En attente · file en pause/).waitFor();
+  } finally {
+    for (const id of jobs) await post('/translations/' + id + '/stop', {});
+    await post('/work-queue/pause', {paused:false});
+  }
   verify(!errors.length, errors.join('\n'));
-  return {passed: ['aperçu des créneaux parallèles au survol et au clavier', 'question prioritaire', 'pause et reprise', 'ordre des tâches', 'avancement', 'erreur visible pendant la pause', 'distinction pause et erreur', 'perte et retour du suivi', 'erreur et relance', 'navigation tactile', 'envoi et brouillon visibles', 'suivi de la réponse après reconnexion', 'import et envoi du TXT Windows entier']};
+  return {passed: ['aperçu des créneaux parallèles au survol et au clavier', 'question prioritaire', 'pause et reprise', 'glisser-déposer et clavier', 'ajout et reprise dans plusieurs conversations', 'avancement', 'erreur visible pendant la pause', 'distinction pause et erreur', 'perte et retour du suivi', 'erreur et relance', 'navigation tactile', 'envoi et brouillon visibles', 'suivi de la réponse après reconnexion', 'import et envoi du TXT Windows entier']};
 }

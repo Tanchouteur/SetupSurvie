@@ -50,3 +50,12 @@ propre rubrique. Une coupure du suivi conserve le dernier état connu et
 désactive les commandes de la file jusqu’à la prochaine actualisation.
 La conversation et le formulaire YouTube gardent un message de suivi
 explicite quand leur service ne répond plus.
+
+
+## Cartes et glisser-déposer — 19 novembre 2026
+
+Louis demande des sections distinctes et des tâches encadrées dans l’aperçu
+et la page dédiée. En 0.55.0, une poignée à trois barres remplace les boutons
+à flèches. L’inventaire vidéo et l’examen des collections sont visibles pendant
+les autres préparations locales. Un même profil peut lancer ou reprendre des
+traductions dans des conversations distinctes. Voir le [guide de la file](../utilisation/file-attente.md).

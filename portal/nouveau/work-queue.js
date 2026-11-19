@@ -10,15 +10,16 @@
     </div>
     <p id="work-queue-error" role="alert" hidden></p>
     <p id="work-queue-freshness" role="status" hidden></p>
+    <p id="work-queue-help" class="work-queue-meta" hidden>Glissez la poignée d’une tâche en attente pour la déplacer dans son groupe. Au clavier, utilisez les flèches haut et bas sur la poignée.</p>
     <div id="work-queue-groups"></div>`;
   $('main').append(page);
 
   const previews = [
-    WorkQueuePreview.mount($('main-navigation'), {href: '#/file', refresh, toggle: () => state && command('/pause', {paused: !state.paused})}),
+    WorkQueuePreview.mount($('main-navigation'), {href: '#/file', refresh, move, toggle: () => state && command('/pause', {paused: !state.paused})}),
     WorkQueuePreview.mount(document.querySelector('.top-actions'), {href: '#/file', mobile: true, refresh})
   ];
 
-  const {isSnapshot, waiting, failed, held, statusLabel, plural, freshness, lanes} = WorkQueuePreview;
+  const {isSnapshot, waiting, failed, held, statusLabel, plural, freshness, lanes, dragHandle} = WorkQueuePreview;
   let state = null;
   let connection = 'loading';
   let observedAt = null;
@@ -30,33 +31,43 @@
   function message(text) {
     $('work-queue-error').hidden = !text;
     $('work-queue-error').textContent = text;
+    if (text && page.hidden) toast(text);
   }
 
   async function command(path, body, focus) {
     if (pending || connection !== 'ready') return;
+    const epoch = generation;
+    const preview = document.activeElement?.closest('.work-queue-nav');
     pending = true;
     draw();
     try {
       await api('/work-queue' + path, body);
-      message('');
+      if (epoch === generation) message('');
     } catch (error) {
-      message(error.message);
+      if (epoch === generation) message(error.message);
     } finally {
+      if (fetching) await fetching;
+      await refresh();
       pending = false;
       draw();
     }
-    if (fetching) await fetching;
-    await refresh();
-    if (focus) {
-      const buttons = Array.from(page.querySelectorAll('button[data-work-control]'));
-      const button = buttons.find(control => control.dataset.workControl === focus && !control.disabled);
-      const fallback = buttons.find(control => control.dataset.workControl.split(':')[0] === focus.split(':')[0] && !control.disabled);
-      (button || fallback || $('work-queue-state')).focus({preventScroll: true});
+    if (focus && epoch === generation) {
+      const within = preview || page;
+      if (!preview && page.hidden) return;
+      const button = [...within.querySelectorAll('button[data-work-control]')]
+        .find(control => control.dataset.workControl === focus && !control.disabled);
+      if (preview) preview.querySelector('.work-queue-link').focus({preventScroll: true});
+      (button || (!preview && $('work-queue-state')))?.focus?.({preventScroll: true});
     }
+  }
+
+  function move(id, target, after) {
+    return command('/' + encodeURIComponent(id) + '/move', {target, after}, id + ':move');
   }
 
   function taskCard(job, movable) {
     const node = element('li', undefined, 'work-queue-card');
+    node.dataset.status = job.status;
     node.classList.toggle('work-queue-problem', failed(job));
     node.classList.toggle('work-queue-held', held(job));
     const main = element('div', undefined, 'work-queue-content');
@@ -93,19 +104,8 @@
     }
     const tools = element('div', undefined, 'work-queue-controls');
     tools.append(label);
-    const position = movable.indexOf(job);
-    if (position >= 0) {
-      const order = element('div', undefined, 'work-queue-order');
-      for (const [direction, symbol, name] of [[-1, '↑', 'Avancer'], [1, '↓', 'Reculer']]) {
-        const id = job.id + ':' + direction;
-        const control = button(symbol, () => command('/' + encodeURIComponent(job.id) + '/move', {direction}, id));
-        control.dataset.workControl = id;
-        control.disabled = connection !== 'ready' || pending || position + direction < 0 || position + direction >= movable.length;
-        control.setAttribute('aria-label', name + ' ' + job.title);
-        control.title = name;
-        order.append(control);
-      }
-      tools.append(order);
+    if (movable.length > 1 && movable.includes(job)) {
+      tools.append(dragHandle(job, movable, move, connection !== 'ready' || pending, draw));
     }
     if (job.retry) {
       const id = job.id + ':retry';
@@ -122,7 +122,7 @@
   function draw() {
     const admin = S.user?.role === 'admin';
     for (const preview of previews) preview.draw(state, {admin, connection, pending, current: S.view === 'work-queue'});
-    if (page.hidden) return;
+    if (page.hidden || page.querySelector('.work-queue-dragging')) return;
     const summary = $('work-queue-state');
     summary.tabIndex = -1;
     const status = $('work-queue-freshness');
@@ -133,6 +133,7 @@
     toggle.hidden = !state || !admin;
     toggle.disabled = connection !== 'ready' || pending;
     if (!state) {
+      $('work-queue-help').hidden = true;
       summary.textContent = freshness[connection] || 'Chargement du suivi…';
       return;
     }
@@ -158,6 +159,7 @@
     const previous = document.activeElement?.dataset.workControl;
     const expanded = new Set(Array.from(host.querySelectorAll('li[data-work-id] > div > details[open]'), item => item.closest('li').dataset.workId));
     host.replaceChildren();
+    let reorderable = false;
     function group(heading, jobs, container, className = 'work-queue-group') {
       if (!jobs.length) return;
       const section = element('section', undefined, className);
@@ -166,6 +168,7 @@
       for (const job of jobs) {
         if (job.movable) movable[job.priority ? 'priority' : 'standard'].push(job);
       }
+      reorderable ||= movable.priority.length > 1 || movable.standard.length > 1;
       for (const job of jobs) {
         const card = taskCard(job, movable[job.priority ? 'priority' : 'standard']);
         if (expanded.has(job.id)) {
@@ -201,6 +204,7 @@
     }
 
     group('Historique récent', state.jobs.filter(job => !waiting(job) && job.status !== 'running' && !failed(job) && !held(job) && !(job.failure_count > 0)).slice(0, 30), host);
+    $('work-queue-help').hidden = !reorderable;
     if (previous) Array.from(host.querySelectorAll('[data-work-control]')).find(control => control.dataset.workControl === previous)?.focus({preventScroll: true});
   }
 
@@ -215,6 +219,7 @@
       state = value;
       observedAt = new Date();
       connection = 'ready';
+      document.dispatchEvent(new CustomEvent('survie:work-queue', {detail: state}));
       draw();
     }).catch(() => {
       if (epoch !== generation) return;
@@ -232,6 +237,7 @@
     state = null;
     connection = S.user ? 'loading' : 'anonymous';
     observedAt = null;
+    document.dispatchEvent(new CustomEvent('survie:work-queue', {detail: null}));
     message('');
     lastPage = '';
     generation++;
@@ -241,6 +247,7 @@
     else refresh();
   });
   document.addEventListener('survie:route', () => { draw(); refresh(); });
+  document.addEventListener('survie:translation-command', refresh);
   document.addEventListener('visibilitychange', refresh);
   window.addEventListener('online', refresh);
   window.addEventListener('offline', () => {
@@ -248,6 +255,7 @@
     connection = state ? 'stale' : 'unavailable';
     draw();
   });
+  WorkQueuePreview.current = () => state;
   draw();
   setInterval(refresh, 3500);
 })();

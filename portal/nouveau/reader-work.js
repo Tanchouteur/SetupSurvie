@@ -64,16 +64,27 @@
     trigger.dataset.documentAction='translate';trigger.disabled=true;if(!trigger.isConnected)actions.append(trigger);
     let job=null,offset=0,timer=null,version=0,busy=false,items=[],disposed=false,modeForJob=null,renderedJob=null,lastDone=null;
     const valid=()=>!disposed&&root.isConnected&&session.user?.id===owner;
+    const updateQueue=({detail})=>{
+      const queue=window.WorkQueuePreview;
+      queue?.translationLabels(queue.aiBusy(detail),start,resume,'Démarrer la traduction','Reprendre');
+    };
+    const checkQueue=()=>{
+      if(portal||document.hidden||root.hidden||!valid())return;
+      request('/work-queue').then(detail=>{if(valid()&&window.WorkQueuePreview?.isSnapshot(detail))updateQueue({detail});}).catch(()=>{});
+    };
+    updateQueue({detail:window.WorkQueuePreview?.current?.()});
+    document.addEventListener('survie:work-queue',updateQueue);
+    const queueTimer=portal?null:setInterval(checkQueue,3500);
     const resumePolling=()=>{if(!document.hidden&&!root.hidden&&valid()&&job)load(job,offset);};
     document.addEventListener('visibilitychange',resumePolling);
-    destroy=()=>{disposed=true;version++;clearTimeout(timer);document.removeEventListener('visibilitychange',resumePolling);};
+    destroy=()=>{disposed=true;version++;clearTimeout(timer);clearInterval(queueTimer);document.removeEventListener('survie:work-queue',updateQueue);document.removeEventListener('visibilitychange',resumePolling);};
     const labels={queued:'En attente du moteur',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
     function pending(){start.hidden=!!job;pause.hidden=resume.hidden=stop.hidden=remove.hidden=download.hidden=conversation.hidden=publish.hidden=true;previous.hidden=next.hidden=latest.hidden=true;config.hidden=false;firstLabel.hidden=lastLabel.hidden=!!job||!pdf;}
     function choose(){select.replaceChildren(new Option('Nouvelle traduction',''));for(const item of items)select.append(new Option((labels[item.status]||item.status)+' · '+new Date(item.created*1000).toLocaleDateString('fr-FR'),item.id));select.value=job||'';}
     async function discover(){try{const data=await request('/document-work?'+new URLSearchParams({source_id:canonical(source.id)}));if(!valid())return;items=data.translations;choose();if(items.length){trigger.textContent='Traduction : ouvrir ou reprendre';}}catch(e){if(valid())state.textContent=e.message;}finally{if(valid())trigger.disabled=false;}}
     function newWork(){clearTimeout(timer);version++;job=null;renderedJob=null;lastDone=null;offset=0;parts.replaceChildren();setText(reading,'');state.textContent='Choisissez la plage puis démarrez volontairement la traduction.';progress.hidden=true;pending();select.value='';}
     trigger.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();root.hidden=!root.hidden;
-      if(!root.hidden){if(!job&&items.length){job=items[0].id;select.value=job;}if(job)load(job,offset);root.scrollIntoView({block:'start'});}else{clearTimeout(timer);version++;}},true);
+      if(!root.hidden){checkQueue();if(!job&&items.length){job=items[0].id;select.value=job;}if(job)load(job,offset);root.scrollIntoView({block:'start'});}else{clearTimeout(timer);version++;}},true);
     select.onchange=()=>{if(select.value)load(select.value);else newWork();};
     function render(data){
       const keyed=new Map([...parts.children].map(n=>[n.dataset.position,n]));
@@ -119,7 +130,12 @@
           data=await request('/translations',{source_id:canonical(source.id),conversation_id:null,mode:modes.value||'rapide',first_page:a,last_page:b});
         }else if(action==='delete'){await request('/translations/'+encodeURIComponent(job),undefined,{method:'DELETE'});newWork();await discover();return;}
         else data=await request('/translations/'+encodeURIComponent(job)+'/'+action,action==='resume'?{mode:modes.value||'rapide'}:{});
-        if(!valid())return;job=data.id||job;await discover();await load(job,action==='start'?0:offset);
+        if(!valid())return;
+        if(['start','resume','pause','stop'].includes(action)){
+          if(portal)document.dispatchEvent(new CustomEvent('survie:translation-command',{detail:{action,id:data.id}}));
+          else checkQueue();
+        }
+        job=data.id||job;await discover();await load(job,action==='start'?0:offset);
       }catch(e){if(valid())state.textContent=e.message;}finally{busy=false;if(valid())for(const b of controls.querySelectorAll('button'))b.disabled=false;}
     }
     pending();await discover();

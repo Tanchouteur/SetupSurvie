@@ -176,7 +176,13 @@ Le traitement continue quand le navigateur est fermé, tant que le serveur et le
 Depuis 0.1.18, le panneau de traduction peut se réduire et défiler sur les écrans
 courts pour garder le champ de question et son bouton d’envoi accessibles.
 
-Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
+Une traduction utilise la même [file d’attente](file-attente.md) que les questions
+du portail et libère le moteur entre les passages. Quand le moteur est occupé
+ou la file en pause, **Ajouter à la file d’attente** permet de lancer ou reprendre
+une traduction. Un même profil peut mettre en file des traductions dans plusieurs
+conversations. La limite est d’une traduction en cours ou en attente par
+conversation et de quatre sur le serveur. Alterner les modèles entre questions
+et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
 
 Depuis 0.20.1, chaque passage reprend le **contexte configuré pour son modèle**,
 limité par la capacité annoncée par le moteur local. Il ne revient plus toujours
