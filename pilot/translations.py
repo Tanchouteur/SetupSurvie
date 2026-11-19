@@ -116,8 +116,9 @@ async def create(user_id,identifier,conversation_id,mode,first_page=1,last_page=
     return status(key,user_id)
 
 
-async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None):
+async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None,spell_ordinals=False):
     protected=math_text.ProtectedTranslation(text);text=protected.text
+    if spell_ordinals:text=translation_quality.spell_numbered_ordinals(text)
     selected=engine.MODES[mode]
     await available()
     requested=engine.context_size(selected['model'])
@@ -187,11 +188,12 @@ async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None):
     return protected.restore(result,selected['model']),selected['model']
 
 
-async def check_passage(source,mode,guidance,observations,*,correction=None):
+async def check_passage(source,mode,guidance,observations,*,correction=None,spell_ordinals=False):
     formula_error=None
     try:
-        result,model=await translate(source,mode,guidance=guidance,on_metrics=observations.append,**(
-            {'correction':correction} if correction else {}))
+        options={'correction':correction} if correction else {}
+        if spell_ordinals:options['spell_ordinals']=True
+        result,model=await translate(source,mode,guidance=guidance,on_metrics=observations.append,**options)
     except math_text.TranslationMismatch as error:
         result,model,formula_error=error.candidate,error.model,str(error)
     report=translation_quality.assess(source,result)
@@ -201,14 +203,21 @@ async def check_passage(source,mode,guidance,observations,*,correction=None):
     return result,model,report
 
 
-async def check_passage_with_replay(source,mode,guidance,observations):
+async def check_full_passage(source,mode,guidance,observations):
     try:
-        return await check_passage(source,mode,guidance,observations)
+        attempt=await check_passage(source,mode,guidance,observations)
     except InterruptedResponse:
-        # A connectivity failure says nothing about the size or fidelity of the
-        # original request. Discard the partial stream and replay it unchanged.
+        # Discard the partial stream and replay the original request unchanged.
         await available()
-        return await check_passage(source,mode,guidance,observations)
+        attempt=await check_passage(source,mode,guidance,observations)
+    if any(issue['code']=='ordinals' for issue in attempt[2]['issues']):
+        await available()
+        try:
+            return await check_passage(source,mode,guidance,observations,spell_ordinals=True,
+                correction='Les rangs chiffrés ont été écrits en toutes lettres dans le texte fourni. Traduis chaque rang à son emplacement en français, sans omettre ni ajouter de rang.')
+        except UnusableResponse:
+            return attempt
+    return attempt
 
 
 async def recover_passage(source,mode,guidance,observations):
@@ -262,7 +271,7 @@ async def run(identifier):
                     try:
                         async with asyncio.timeout(900):
                             try:
-                                attempt=await check_passage_with_replay(part['source_text'],item['mode'],guidance,observations)
+                                attempt=await check_full_passage(part['source_text'],item['mode'],guidance,observations)
                             except UnusableResponse:
                                 attempt=None
                             if attempt is None or attempt[2]['status']=='blocked':

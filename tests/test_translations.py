@@ -149,6 +149,34 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((result['status'],result['done']),('completed',1))
         self.assertEqual(result['parts'][0]['translated'],'Le cadran a 7 repères. Le bac contient 4 litres.')
 
+    async def test_missing_ordinal_retries_with_spelled_source_and_checks_original(self):
+        item=await self.create()
+        key=item['id']
+        source='Look for the 1st mark. Then count 7 clips.'
+        with store.connect() as db:
+            db.execute('DELETE FROM translation_parts WHERE translation_id=?',(key,))
+            db.execute('INSERT INTO translation_parts(translation_id,position,page,source_text,status) VALUES(?,?,?,?,?)',
+                (key,0,1,source,'pending'))
+        original=httpx.AsyncClient
+        calls=[]
+        target='Repérez la première marque. Comptez ensuite 7 attaches.'
+        def handler(request):
+            payload=json.loads(request.content)
+            calls.append(payload['messages'][1]['content'])
+            french='Repérez la marque. Comptez ensuite 7 attaches.' if len(calls)==1 else target
+            return httpx.Response(200,json={'message':{'content':json.dumps({'translation':french})},
+                'done':True,'done_reason':'stop'})
+        runtime={'available':False,'native_context':None}
+        with patch.object(tr.model_runtime,'describe',AsyncMock(return_value=runtime)),patch.object(
+            httpx,'AsyncClient',side_effect=lambda **kw:original(transport=httpx.MockTransport(handler),**kw)
+        ):
+            await tr.run(key)
+        state=tr.status(key,'alice')
+        self.assertEqual(calls,[source,'Look for the first mark. Then count 7 clips.'])
+        self.assertEqual((state['status'],state['done']),('completed',1))
+        self.assertEqual(state['parts'][0]['source_text'],source)
+        self.assertEqual(state['parts'][0]['translated'],target)
+
     async def test_second_stream_interruption_leaves_the_full_passage_pending(self):
         item=await self.create()
         key=item['id']

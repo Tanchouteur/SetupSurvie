@@ -160,7 +160,9 @@ Depuis **0.52.2**, une coupure réseau en cours de réponse déclenche un
 nouvel essai sur le passage entier, avec le même modèle et le même texte
 source. La réponse partielle est écartée. Si la connexion se coupe à nouveau,
 le travail attend une reprise. Une réponse complète mais inutilisable peut
-toujours déclencher un nouvel essai sur des morceaux plus courts.
+toujours déclencher un nouvel essai sur des morceaux plus courts. Si un
+rang anglais chiffré disparaît, le moteur peut le recevoir en toutes lettres
+lors d’un nouvel essai. Le résultat reste vérifié contre le passage original.
 
 Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
 d’une unité de mesure, ainsi qu’un article « A » après un numéro de page isolé.
