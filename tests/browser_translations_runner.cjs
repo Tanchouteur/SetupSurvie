@@ -32,6 +32,7 @@ const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.
     for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
       if(targetEngine&&name!==targetEngine)continue;
       browser=await engine.launch({headless:true});
+      await checkUI(browser,name,['browser_video_origin.js']);
       const context=await browser.newContext();const page=await context.newPage();
       const errors=[];page.on('pageerror',error=>errors.push(String(error)));
       const result=await recipe(page);

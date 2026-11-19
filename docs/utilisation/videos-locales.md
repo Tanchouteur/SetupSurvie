@@ -65,6 +65,8 @@ les fichiers locaux sans origine YouTube identifiée.
 Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
 dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
 nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).
+Le filtre consulte l’index disponible pendant que l’inventaire se poursuit.
+Si la liste tarde à répondre, un message s’affiche avec le bouton **Réessayer**.
 
 Les titres et descriptions participent au filtre de Collections. **Rechercher** réunit
 documents et vidéos ; les paroles ne sont cherchées que dans les pistes locales

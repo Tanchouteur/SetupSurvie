@@ -28,7 +28,7 @@ def build():
         ('js', '/long-summaries.js', '0.52.1'),
         ('css', '/bilingual-reader.css', '0.23.0'),
         ('js', '/bilingual-reader.js', '0.28.0'),
-        ('js', '/nouveau/videos.js', '0.54.0'),
+        ('js', '/nouveau/videos.js', '0.54.1'),
         ('js', '/nouveau/captions.js', '0.54.0'),
         ('js', '/nouveau/transcriptions.js', '0.54.0'),
         ('js', '/nouveau/acquisitions.js', '0.54.0'),

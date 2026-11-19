@@ -38,7 +38,8 @@ async page => {
   });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.request.post(base + '/api/profiles/select', {headers: {Origin: base}, data: {id: 'famille'}});
+  const profile = await page.request.post(base + '/api/profiles/select', {headers: {Origin: base}, data: {id: 'local-family'}});
+  verify(profile.ok(), 'Le profil Famille doit pouvoir piloter la file.');
   await page.setViewportSize({width: 1440, height: 900});
   await page.goto(base + '/nouveau/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
@@ -153,7 +154,10 @@ async page => {
     'Le formulaire doit envoyer les trois adresses, dans leur ordre.');
   // A temporary polling failure must leave the question tracked in the assistant.
   await page.goto(base + '/nouveau/#/assistant');
-  await page.waitForFunction(() => typeof S !== 'undefined' && S.authReady && S.user);
+  await page.waitForFunction(() => typeof S !== 'undefined' && S.authReady && S.user &&
+    S.view === 'chat' && !S.loadingConversation && !S.job && !S.sending);
+  await page.locator('#chat-reset').click();
+  await page.waitForFunction(() => !S.conversation && !S.loadingConversation && !S.summaryActive);
   let failSend;
   const pendingSend = new Promise(resolve => {failSend = resolve;});
   await page.route('**/api/questions', async route => {
@@ -162,7 +166,7 @@ async page => {
   });
   const draft = page.locator('#chat-input');
   await draft.fill('Question à conserver');
-  await page.locator('#chat-form').evaluate(form => form.requestSubmit());
+  await page.locator('#send-question').click();
   await page.locator('#chat-status').getByText('Envoi de la question…', {exact:true}).waitFor();
   failSend();
   await page.locator('#chat-status').getByText(/Impossible de confirmer l’envoi/).waitFor();
