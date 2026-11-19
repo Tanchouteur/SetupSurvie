@@ -12,6 +12,7 @@ from crash_harness import crash_after_ready
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 import pilot_update as update
+import library_tasks
 from delivery_paths import locked
 
 
@@ -186,6 +187,34 @@ class UpdateTests(unittest.TestCase):
             compose.assert_not_called()
         self.assertEqual(service.stops,0);self.assertFalse((self.work/'update.json').exists())
         self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1');self.assert_static_data()
+
+    def test_windows_update_waits_for_video_pause_before_stopping_services(self):
+        self.c['target']='windows'
+        setup.write_json(self.app.settings_path,self.c,private=True)
+        manager=library_tasks.Manager(self.app,self.c,'compose')
+        job={'id':'a'*32,'action':'video-inventory','phase':'downloading'}
+        manager.write(job)
+        folder=manager.paths(job['id']);folder.mkdir()
+        observed=[]
+        def current(*_):
+            if (folder/'cancel').exists():
+                with self.assertRaises(setup.SetupError),locked(manager.directory/'operation.lock'):
+                    pass
+                observed.append('paused')
+                return {**job,'phase':'paused'}
+            return job
+        with patch.object(library_tasks.Manager,'current',current),patch('pilot_backup.time.sleep'):
+            _,service=self.run_update()
+        self.assertEqual(observed,['paused'])
+        self.assertEqual(service.stops,1)
+
+    def test_windows_update_refuses_an_active_video_writer_before_stopping(self):
+        service=Services(self.app,self.c)
+        with locked(self.data/'state/pilot/zim-videos/operation.lock'),patch.object(setup,'ROOT',self.root):
+            with self.assertRaisesRegex(setup.SetupError,'opération'):
+                update.apply(self.app,self.package,self.digest,service)
+        self.assertEqual(service.stops,0)
+        self.assertFalse((self.work/'update.json').exists())
 
     def test_index_lease_survives_rollback_and_excludes_writers_through_all_transitions(self):
         index=self.data/'state/pilot/archive-index';lease=index/'operation.lock.lease';lease.write_bytes(b'lease inode sentinel')

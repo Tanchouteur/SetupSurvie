@@ -287,7 +287,7 @@ def apply(app,package,digest,services=None,*,rollback=False):
         durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),
            'old_version':old_release['version'],'new_version':manifest['release']['version']}
-        with maintenance(app,c):
+        with maintenance(app,c,pause_video_inventory=c['target']=='windows' and not rollback):
             setup.write_json(journal,j,private=True)
             try:
                 services.stop()

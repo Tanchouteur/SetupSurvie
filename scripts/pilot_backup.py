@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import secrets
 import sys
+import time
 
 import setup
 import index_locks
@@ -29,14 +30,27 @@ def backup(app,c,destination,*,resume=True):
 
 
 @contextmanager
-def maintenance(app,c):
+def maintenance(app,c,*,pause_video_inventory=False):
     """Exclude web jobs, CLI transfers and index writers throughout maintenance."""
     with locked(checked_destination(app.work,'library-web/operation.lock')):
         state=checked_destination(app.work,'library-web/state.json')
-        if state.is_file() and json.loads(state.read_text(encoding='utf-8')).get('phase') in ('starting','planning','downloading','refreshing'):
-            raise setup.SetupError('Mettez la préparation documentaire en pause et attendez son arrêt avant la sauvegarde ou la mise à jour.')
+        if state.is_file():
+            from library_tasks import ACTIVE, Manager
+            job = json.loads(state.read_text(encoding='utf-8'))
+            if pause_video_inventory and job.get('action') == 'video-inventory' and job.get('phase') in ACTIVE:
+                manager = Manager(app,c,'compose')
+                job = manager.current()
+                if job['phase'] in ('starting','planning','downloading'):
+                    print('Inventaire vidéo en cours : demande de pause. Les résultats et le point de reprise sont conservés.',flush=True)
+                    manager.pause(state=job)
+                    deadline = time.monotonic()+60
+                    while job['phase'] in ACTIVE and time.monotonic()<deadline:
+                        time.sleep(.25)
+                        job = manager.current()
+            if job.get('phase') in ACTIVE:
+                raise setup.SetupError('Une préparation documentaire est encore active. Mettez-la en pause depuis Mon appareil et attendez son arrêt avant de réessayer.')
         data=Path(c['data_dir'])
-        with locked(checked_destination(data,'catalog/publication.lock')),locked(checked_destination(data,'catalog/content.lock')),index_locks.stopped(checked_destination(data,'state/pilot/archive-index')):
+        with locked(checked_destination(data,'catalog/publication.lock')),locked(checked_destination(data,'catalog/content.lock')),index_locks.stopped(checked_destination(data,'state/pilot/archive-index')),locked(checked_destination(data,'state/pilot/zim-videos/operation.lock')):
             yield
 
 

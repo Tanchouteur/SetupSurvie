@@ -81,8 +81,12 @@ def progress():
     path=directory()/'progress.json'
     try:
         if any(video_inventory.is_link(parent) for parent in (store.ROOT,directory(),path)) or video_inventory.regular(path).st_size>2_000_000:raise ValueError()
-        value=json.loads(path.read_text())
+        value=json.loads(path.read_text(encoding='utf-8'))
         if not isinstance(value,dict) or value.get('schema')!=1:raise ValueError()
+        # Older reports counted paused and failed attempts as examined.
+        if isinstance(value.get('results'),list):
+            value['completed']=sum(row.get('status') in zim_video_inventory.EXAMINED_STATUSES
+                                   for row in value['results'] if isinstance(row,dict))
         return value
     except (OSError,ValueError):return {'schema':1,'phase':'not_started','archives':0,'completed':0,'results':[],'unexamined':[]}
 
@@ -122,7 +126,7 @@ def coverage():
     if not ZIMS.is_dir():return {'status':'not_available','archives':0,'examined':0}
     files=[path for path in ZIMS.glob('*.zim') if path.is_file() and not path.is_symlink()]
     if not files:return {'status':'not_available','archives':0,'examined':0}
-    value=progress();ready={row['archive']:row for row in value.get('results',[]) if row.get('status') in ('completed','reused','partial')}
+    value=progress();ready={row['archive']:row for row in value.get('results',[]) if row.get('status') in zim_video_inventory.EXAMINED_STATUSES}
     examined=0
     for path in files:
         saved=ready.get(path.name,{}).get('revision',{})

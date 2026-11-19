@@ -23,6 +23,7 @@ MAX_HTML=2_000_000
 MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
 YOUTUBE_TITLES='youtube_video_titles_v1'
+EXAMINED_STATUSES={'completed','reused','partial'}
 YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
 GENERIC_TITLE=re.compile(r'(?:vid[eé]o|videoplayback|clip|media|index|[0-9]+|[0-9a-f]{16,}|[A-Za-z0-9_-]{24,})',re.I)
 TECHNICAL_TITLE=re.compile(r'://|\?[\w-]+=|\.(?:m4s|webm|mp4|ts)$',re.I)

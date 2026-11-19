@@ -16,6 +16,17 @@ try {
     $settings = Get-SurvieUpdateSettings
     Assert ($settings.Work -eq $work) 'Private folder must be taken from the installation, without a fixed drive'
     Assert ($settings.Application -eq $app) ("Application must come from settings: expected [$app], actual [$($settings.Application)]")
+    $transcriptPath = Join-Path $fixture 'update.log'
+    $failure = '[Console]::Error.WriteLine("Video inventory still active."); exit 7'
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($failure))
+    Start-Transcript -Path $transcriptPath | Out-Null
+    try {
+        $message = ''
+        try { Invoke-SurvieUpdateCommand 'powershell.exe' @('-NoProfile', '-EncodedCommand', $encoded) }
+        catch { $message = $_.Exception.Message }
+    } finally { Stop-Transcript | Out-Null }
+    Assert ($message -match 'code 7.*Video inventory still active') 'Native failure must include its exit code and stderr'
+    Assert ((Get-Content -LiteralPath $transcriptPath -Raw) -match 'Video inventory still active') 'Native stderr must be in the update log'
     function Initialize-SurvieTools { }
     function Find-SurviePython { return @{ Path = 'python-fixture'; Prefix = @('-3') } }
     function Find-SurvieGit { return 'git-fixture' }
