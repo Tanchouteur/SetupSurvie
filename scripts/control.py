@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import re
 import signal
 import subprocess
 import sys
@@ -229,6 +230,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
+        match=re.fullmatch(r'/library/youtube/([a-f0-9]{32})',self.path)
+        if match:
+            try:
+                result=self.server.library.youtube_result(match[1])
+                self.respond(200 if result is not None else 404,result or {'detail':'Rapport indisponible.'})
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'Rapport indisponible.'})
+            return
         if self.path=='/library':
             try:self.respond(200,self.server.library.status())
             except (OSError,ValueError,RuntimeError,setup.SetupError):self.respond(503,{'detail':'Le suivi documentaire est indisponible sur le PC serveur.'})
@@ -237,7 +245,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download'):
+        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
@@ -256,6 +264,11 @@ class Handler(BaseHTTPRequestHandler):
                     elif self.path=='/library/video-inventory-pause':
                         if self.server.library.current().get('action')!='video-inventory':raise setup.SetupError('Aucun inventaire des vidéos de collections n’est en cours.')
                         self.server.library.pause()
+                    elif self.path=='/library/youtube-download-pause':
+                        state=self.server.library.current()
+                        if state.get('action')!='youtube-download' or body.get('list')!=state.get('youtube_list'):
+                            raise setup.SetupError('Ce téléchargement YouTube n’est plus en cours.')
+                        self.server.library.pause(state=state)
                     elif self.path=='/library/pause':self.server.library.pause()
                     else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
                 self.respond(202,{'accepted':True})

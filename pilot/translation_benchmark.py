@@ -16,6 +16,7 @@ import uuid
 
 import httpx
 from fastapi import HTTPException
+from . import work_queue
 from . import calibration,document_text,durable,engine,operations,performance,store,translation_quality,translations
 
 ACTIVE={}
@@ -178,6 +179,7 @@ async def generate(text,mode,metrics):
         await asyncio.gather(task,return_exceptions=True)
 
 
+@work_queue.tracked('translation-test')
 async def run(report):
     report['_session_start']=time.monotonic();session={'started':time.time(),'mode':report['mode'],'model':report['model'],
         'requested_context':engine.context_size(report['model']),'output_tokens':engine.PROFILE_CONFIG['output_tokens']};report['sessions'].append(session)

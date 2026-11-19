@@ -10,6 +10,7 @@ import time
 
 import httpx
 
+from . import work_queue
 from . import library,store,geography,source_metadata,durable,assistant_metrics,model_runtime,documentary,model_session,research,citation_links,illustrations,conversation_context,tool_protocol,procedure_review,video_requests
 from fastapi import HTTPException
 from .math_text import safe_prefix,reading_window
@@ -50,7 +51,7 @@ PROGRESS={}
 MEASUREMENTS={}
 PENDING={}
 DOCUMENTARY={}
-LOCK=asyncio.Semaphore(1)
+LOCK=work_queue.QUEUE
 SYSTEM_APPENDIX='Les outils permettent de rechercher/lire les sources locales, calculer, convertir et interroger la géographie téléchargée. Pour les lieux, conserve les liens map_url et annonce les données absentes. Aucune position GPS en direct, aucun trafic ou état des lieux en direct. Ne déduis jamais la potabilité ou l’accès actuel des seuls repères cartographiques. Cite les sources sous la forme [1], [2], etc. en reprenant les numéros fournis. Ne cite aucune source non reçue. Utilise calculate pour les calculs, même simples.'
 SYSTEM_APPENDIX+=SYSTEM_SEARCH_NOTE
 GENERAL_KNOWLEDGE_NOTE=' Sans source précise, aide avec tes connaissances générales clairement signalées, sans fausse citation. Pour une commande exacte d’appareil ou un geste critique (dosages, potabilité, électricité, structure), explique les limites et demande les données décisives ; ne les invente pas.'
@@ -203,6 +204,7 @@ def quoted_packet_size(value):
     return len(json.dumps(content,ensure_ascii=False).encode('utf-8'))-2
 
 
+@work_queue.tracked('chat')
 async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all',source_ids=None):
     references={};answer='';content='';tool_trace=[];rejected_answers=[];metrics=[];interrupted=False;search_cache={};read_cache={};source_cache={};read_spans=set();prepared_key=None
     evidence=documentary.Evidence();DOCUMENTARY[identifier]=evidence;evidence_recorded=False

@@ -32,6 +32,8 @@ def connect():
 def init():
     with connect() as db:
         db.executescript('''
+        CREATE TABLE IF NOT EXISTS work_history(id TEXT PRIMARY KEY, data TEXT NOT NULL, updated REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS youtube_pipeline(id TEXT PRIMARY KEY, kind TEXT NOT NULL, data TEXT NOT NULL, updated REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS profiles(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,role TEXT NOT NULL,origin TEXT NOT NULL,created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS recovery(user_id TEXT PRIMARY KEY,salt TEXT NOT NULL,digest TEXT NOT NULL,used INTEGER NOT NULL DEFAULT 0);
         CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,until REAL NOT NULL);

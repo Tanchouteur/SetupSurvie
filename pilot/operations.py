@@ -66,7 +66,7 @@ async def command(action,force=False):
 
 
 async def library_command(action=None,body=None):
-    if action not in (None,'plan','download','pause','geography','routing','index','index-prepare','index-settings','video-inventory','video-inventory-pause','youtube-download'):raise HTTPException(400,'Action documentaire inconnue.')
+    if action not in (None,'plan','download','pause','geography','routing','index','index-prepare','index-settings','video-inventory','video-inventory-pause','youtube-download','youtube-download-pause'):raise HTTPException(400,'Action documentaire inconnue.')
     try:
         if not TOKEN:raise ValueError()
         async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
@@ -76,6 +76,19 @@ async def library_command(action=None,body=None):
             if response.status_code in (400,409):raise HTTPException(response.status_code,response.json().get('detail','Vérifiez la sélection.'))
             response.raise_for_status();return response.json()
     except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service de téléchargement ne répond pas. Relancez les services depuis le PC serveur ; la bibliothèque déjà installée reste disponible.')
+
+
+async def youtube_result(identifier):
+    """Fetch the host's retained result even after another library task starts."""
+    try:
+        if not TOKEN:
+            return None
+        async with httpx.AsyncClient(trust_env=False, timeout=8) as client:
+            response = await client.get(URL+'/library/youtube/'+identifier, headers={'Authorization':'Bearer '+TOKEN})
+            response.raise_for_status()
+            return response.json()
+    except (httpx.HTTPError, ValueError):
+        return None
 
 
 async def activity():

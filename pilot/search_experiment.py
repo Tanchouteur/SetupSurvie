@@ -9,6 +9,7 @@ import uuid
 
 import httpx
 from fastapi import HTTPException
+from . import work_queue
 from . import model_session,assistant_metrics,calibration,durable,engine,library,model_runtime,store
 
 ACTIVE={}
@@ -240,6 +241,7 @@ async def run_case(report,item):
     finally:save(report)
 
 
+@work_queue.tracked('search-test')
 async def run(report,cases):
     preparing=time.monotonic()
     try:

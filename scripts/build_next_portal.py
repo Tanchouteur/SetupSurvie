@@ -19,7 +19,7 @@ def build():
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/nouveau/style.css', '0.48.1'),
+        ('css', '/nouveau/style.css', '0.51.0'),
         ('css', '/nouveau/ux-system.css', '0.43.2'),
         ('css', '/nouveau/settings.css', '0.39.0'),
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
@@ -33,7 +33,10 @@ def build():
         ('js', '/nouveau/transcriptions.js', '0.48.0'),
         ('js', '/nouveau/acquisitions.js', '0.48.0'),
         ('js', '/nouveau/archive-videos.js', '0.48.0'),
-        ('js', '/nouveau/youtube-downloads.js', '0.43.6'),
+        ('js', '/nouveau/youtube-downloads.js', '0.51.0'),
+        ('css', '/nouveau/work-queue.css', '0.51.0'),
+        ('js', '/work-queue-preview.js', '0.51.0'),
+        ('js', '/nouveau/work-queue.js', '0.51.0'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.48.1'),
@@ -56,7 +59,7 @@ def build():
         ('css', '/design/system.css', '0.49.0'),
         ('css', '/nouveau/library-video.css', '0.49.0'),
         ('js', '/design/experience.js', '0.49.0'),
-        ('js', '/nouveau/navigation.js', '0.47.1'),
+        ('js', '/nouveau/navigation.js', '0.51.0'),
     ]
     tags = []
     for kind, path, version in assets:

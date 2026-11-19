@@ -16,6 +16,7 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse,JSONResponse,StreamingResponse
 
+from . import work_queue,youtube_pipeline
 from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream,startup_diagnostic
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
@@ -59,6 +60,8 @@ async def prepare_initial_index(app):
 @asynccontextmanager
 async def lifespan(app):
     store.init()
+    work_queue.QUEUE.initialize()
+    youtube_pipeline.initialize()
     await asyncio.to_thread(profiles.initialize)
     DEGRADED.clear()
     try:map_notebook.init()
@@ -74,7 +77,11 @@ async def lifespan(app):
             with optional_feature('videos') as module:await module.ensure_fresh(force=True)
         except Exception:pass
     video_refresh=asyncio.create_task(refresh_videos())
+    youtube_watch=asyncio.create_task(youtube_pipeline.watch())
     yield
+    youtube_watch.cancel()
+    await asyncio.gather(youtube_watch,return_exceptions=True)
+    await youtube_pipeline.stop()
     video_refresh.cancel()
     await asyncio.gather(video_refresh,return_exceptions=True)
     try:
@@ -114,7 +121,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.50.3'
+VERSION='0.51.1'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -827,6 +834,11 @@ async def delete_conversation(identifier:str,value=Depends(user)):
         jobs=db.execute('SELECT id,status FROM jobs WHERE conversation_id=?',(identifier,)).fetchall()
         if any(job['status'] in ('queued','running') for job in jobs):
             raise HTTPException(409,'Une réponse est en cours. Attendez sa fin ou annulez-la avant de supprimer cette conversation.')
+        db.execute('''DELETE FROM work_history WHERE id IN (
+            SELECT id FROM jobs WHERE conversation_id=? UNION
+            SELECT id FROM translations WHERE conversation_id=? UNION
+            SELECT id FROM summary_jobs WHERE conversation_id=?
+        )''',(identifier,identifier,identifier))
         db.execute('DELETE FROM jobs WHERE conversation_id=?',(identifier,))
         db.execute('DELETE FROM conversations WHERE id=? AND user_id=?',(identifier,value['id']))
     for job in jobs:
@@ -870,6 +882,38 @@ class YoutubeList(BaseModel):
     max_height:int=480
 
 
+@app.get('/api/work-queue')
+async def get_work_queue(value=Depends(user)):
+    return JSONResponse(work_queue.QUEUE.snapshot(value),headers={'Cache-Control':'no-store'})
+
+
+class WorkMove(BaseModel):
+    direction:Literal[-1,1]
+
+
+class WorkPause(BaseModel):
+    paused:bool
+
+
+@app.post('/api/work-queue/pause')
+async def pause_work_queue(body:WorkPause,value=Depends(admin)):
+    work_queue.QUEUE.set_paused(body.paused)
+    if body.paused:await youtube_pipeline.pause_active_download()
+    return {'paused':body.paused}
+
+
+@app.post('/api/work-queue/{identifier}/move')
+async def move_work(identifier:str,body:WorkMove,value=Depends(user)):
+    work_queue.QUEUE.move(identifier,body.direction,value)
+    return {'accepted':True}
+
+
+@app.post('/api/work-queue/{identifier}/retry',status_code=202)
+async def retry_work(identifier:str,value=Depends(user)):
+    await work_queue.retry(identifier,value)
+    return {'accepted':True}
+
+
 @app.post('/api/admin/youtube-downloads/check')
 async def check_youtube_list(body:YoutubeList,value=Depends(admin)):
     with optional_feature('youtube_downloads') as module:return module.check(body.text)
@@ -877,12 +921,18 @@ async def check_youtube_list(body:YoutubeList,value=Depends(admin)):
 
 @app.post('/api/admin/youtube-downloads',status_code=202)
 async def start_youtube_downloads(body:YoutubeList,value=Depends(admin)):
-    with optional_feature('youtube_downloads') as module:return await module.start(body.text,body.max_height)
+    return await youtube_pipeline.submit(body.text,body.max_height)
 
 
 @app.post('/api/admin/youtube-downloads/resume',status_code=202)
 async def resume_youtube_downloads(value=Depends(admin)):
-    with optional_feature('youtube_downloads') as module:return await module.resume()
+    with optional_feature('youtube_downloads') as module:
+        state=await operations.library_command()
+        identifier=state.get('youtube_list')
+        if identifier:
+            await youtube_pipeline.retry(identifier)
+            return {'accepted':True}
+        return await module.resume()
 
 
 @app.post('/api/admin/youtube-downloads/pause',status_code=202)

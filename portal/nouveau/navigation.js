@@ -1,7 +1,7 @@
 /* Functional UX adapter. Existing shared controls keep their API and data contracts. */
 (() => {
-  const sections={home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',activity:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
-  const routes={accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
+  const sections={'work-queue':'file',home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',activity:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
+  const routes={file:['work-queue',''],accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
   const machine={ensemble:'monitor',activite:'activity',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings'};
   const libraryTabs=['collections','recherche','parcours','favoris','traductions'];
   const namespace='survie-next-v1:',ttl=7*86400000;
@@ -71,7 +71,7 @@
   }
   function restorePosition(state){requestAnimationFrame(()=>{const target=state?.focus&&document.getElementById(state.focus);(target||$('main')).focus({preventScroll:true});window.scrollTo({top:state?.scroll||0,behavior:'instant'});});}
   const baseView=view,baseRead=readSource,baseOpen=openConversation,baseStatus=status,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
-  labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
+  labels['work-queue']='File d’attente';labels.maps='Cartes';labels.storage='Stockage';labels.activity='Activité';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function fitNextChat(){if(current?.name!=='chat')return;const viewport=window.visualViewport;const height=viewport?.height||innerHeight;const top=$('view-chat').getBoundingClientRect().top-(viewport?.offsetTop||0);const nav=mobileNav.matches?$('main-navigation').getBoundingClientRect().height:0;document.documentElement.style.setProperty('--next-chat-height',Math.max(160,height-top-nav)+'px');}
   window.addEventListener('resize',fitNextChat,{passive:true});window.visualViewport?.addEventListener('resize',fitNextChat,{passive:true});

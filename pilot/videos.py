@@ -358,6 +358,21 @@ async def start():
     ACTIVE=asyncio.create_task(asyncio.to_thread(scan));return {'accepted':True}
 
 
+async def refresh_after(published):
+    """Wait for an index built after publication, including during another scan."""
+    task=running()
+    if task is not None:
+        await asyncio.shield(task)
+    current=status()
+    if current.get('started',0)<published or current.get('phase')!='completed':
+        if running() is None:
+            await start()
+        report=await asyncio.shield(running())
+        if report.get('phase')!='completed':
+            raise HTTPException(503,'L’index vidéo n’a pas pu être actualisé.')
+    return 'indexed'
+
+
 async def stop(reason='user'):
     global STOP_REASON
     STOP_REASON=reason;STOP.set()
