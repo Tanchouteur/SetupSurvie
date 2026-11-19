@@ -50,7 +50,7 @@ def build():
         ('js', '/nouveau/settings-layout.js', '0.56.0'),
         ('js', '/nouveau/ux-system.js', '0.56.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.58.0'),
-        ('js', '/nouveau/reader-work.js', '0.60.0'),
+        ('js', '/nouveau/reader-work.js', '0.60.1'),
         ('css', '/nouveau/motion.css', '0.37.0'),
         ('js', '/nouveau/motion.js', '0.55.2'),
         ('css', '/resource-status.css', '0.49.0'),

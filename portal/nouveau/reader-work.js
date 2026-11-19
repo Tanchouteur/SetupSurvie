@@ -118,10 +118,10 @@
         const publication=data.publication||{};
         const publishing=data.status==='completed'&&data.done>0&&publication.pending&&!publication.error;
         publish.hidden=data.status!=='completed'||!data.done||publishing||!!(publication.source_id&&!publication.error);
-        shared.hidden=!publication.source_id;
+        shared.hidden=!publication.url;
         if(!shared.hidden){
           shared.textContent=publication.partial?'Lire la traduction partielle partagée':'Lire le document partagé';
-          shared.href='/?document='+encodeURIComponent(publication.source_id)+'#library';
+          shared.href=publication.url;
         }
         setText(publicationNotice,publication.error||(publishing?'Actualisation des documents locaux en cours…':data.status==='completed'&&!data.done?'Aucun passage français à partager.':''));
         previous.hidden=position===0;next.hidden=position+data.parts.length>=data.total;

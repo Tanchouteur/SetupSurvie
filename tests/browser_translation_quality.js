@@ -37,6 +37,7 @@ async page => {
   const sharedUrl=base+'/guides/'+shared.source_id.slice(6);
   const before=await(await page.request.get(sharedUrl)).text();
   if(!before.includes('Traduction partielle')||!before.includes('Passage non traduit')||!before.includes('Consulter l’original')||before.includes('100 mg'))throw Error('Public gaps or rejected candidate incorrect');
+  if(!before.includes('/pdf.html?id=guide%3Aquality-partial.en.pdf%23page%3D2'))throw Error('The gap does not link to its original PDF page');
   await page.locator('#chat-mode').evaluate(node=>{node.value='moyenne';node.dispatchEvent(new Event('change',{bubbles:true}));});
   await retry.click();
   await page.getByRole('button',{name:'Lire le document partagé',exact:true}).waitFor();

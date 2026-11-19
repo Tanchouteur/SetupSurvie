@@ -32,6 +32,7 @@ def state(identifier):
             FROM translation_publications WHERE translation_id=?''',('published-translation:'+identifier,identifier)).fetchone()
     if not row:return {'automatic':False,'source_id':None,'error':None}
     return {'automatic':bool(row['auto_publish']),'source_id':'guide:'+row['published_path'] if row['published_at'] else None,
+            'url':'/guides/'+quote(row['published_path']) if row['published_at'] else None,
             'partial':bool(row['published_at'] and json.loads(row['source_meta']).get('published_missing')),
             'pending':bool(row['auto_publish'] and row['pending']),
             'error':row['error']}
@@ -43,6 +44,13 @@ def mark_current(db,identifier,source_id,done):
         SELECT ?,? WHERE (SELECT count(*) FROM translation_parts
         WHERE translation_id=? AND status='done')=?''',
         ('published-translation:'+identifier,source_id,identifier,done))
+
+
+def original_link(source_id,page=None):
+    identifier=source_id.split('#page=',1)[0]
+    if identifier.startswith('guide:') and identifier.lower().endswith('.pdf'):
+        return '/pdf.html?id='+quote(f'{identifier}#page={page}' if page else source_id,safe='')
+    return '/#/bibliotheque/recherche?source='+quote(source_id,safe='')
 
 
 def _publish(identifier,user_id):
@@ -84,7 +92,7 @@ def _publish(identifier,user_id):
 
     title=('Traduction IA partielle — ' if missing else 'Traduction IA — ')+record['title']
     stamp=datetime.fromtimestamp(item['updated'],timezone.utc).date().isoformat()
-    original_url='/index.html?document='+quote(record['source_id'],safe='')+'#library'
+    original_url=original_link(record['source_id'])
     models=', '.join(sorted({part['model'] for part in parts if part['model']}))
     digest=hashlib.sha256(json.dumps([(p['page'],p['source_text']) for p in parts],ensure_ascii=False).encode('utf-8')).hexdigest()
     head=f'''<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(title)}</title>
@@ -110,9 +118,7 @@ def _publish(identifier,user_id):
                 body+='<p class="part">'+escape(p['translated'])+'</p>'
             else:
                 label='Passage non traduit' if p['status']=='deferred' else 'Texte non extractible'
-                original=record['source_id']
-                if original.lower().endswith('.pdf'):original+=f'#page={page}'
-                href='/index.html?document='+quote(original,safe='')+'#library'
+                href=original_link(record['source_id'],page)
                 body+=f'<p class="part">[{label} · passage {p["position"]+1}]</p><p><a href="{escape(href,quote=True)}">Consulter l’original</a></p>'
         sections.append(f'<section id="page={page}"><h2>Page/section {page}</h2>{body}</section>')
     payload=(head+'\n'.join(sections)+'</html>').encode('utf-8')
