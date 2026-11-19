@@ -11,6 +11,9 @@ async page=>{
     for(let n=0;n<200;n++){if((await(await page.request.get(base+'/api/zim-videos')).json()).reader_ready){ready=true;break;}await new Promise(r=>setTimeout(r,100));}
     check(ready,'Le lecteur prend en compte le nouveau média sans paroles indexées');
     await page.goto(base+'/#/bibliotheque/collections');await page.waitForFunction(()=>S.authReady&&S.user);
+    const collection=page.locator('#next-videos-list .video-collection-group').filter({hasText:'Fictional video inventory'});
+    await collection.waitFor();
+    if(!await collection.evaluate(d=>d.open))await collection.locator(':scope > summary').click();
     const card=page.locator('#next-videos-list .data-card').filter({hasText:'Fictional video course'});await card.waitFor();
     check((await card.textContent()).includes('Sous-titres à préparer'),'L’absence de piste reste explicite');
     await card.getByText('Options de sous-titrage',{exact:true}).click();

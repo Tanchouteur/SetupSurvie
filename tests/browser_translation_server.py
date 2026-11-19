@@ -70,7 +70,10 @@ def fixture_videos(extra_track:bool=False):
         ('french','Vidéo de test en français','fr-FR','fr'),
     ):
         shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/(name+'.webm'))
-        (videos.ROOT/(name+'.info.json')).write_text(json.dumps({'title':title,'language':audio,'duration':12}))
+        metadata = {'title':title,'language':audio,'duration':12}
+        if name == 'english':
+            metadata['channel'] = 'Chaîne de test'
+        (videos.ROOT/(name+'.info.json')).write_text(json.dumps(metadata))
         (videos.ROOT/(name+'.'+subtitle+'.vtt')).write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nFixture.\n')
     if extra_track:
         (videos.ROOT/'cours.de.vtt').write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nTest.\n')

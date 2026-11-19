@@ -172,6 +172,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     setup.prepare_youtube_tools(c,True)
     app.up(c);app.verify(c)
     app.install_windows_shortcuts(c,startup=startup)
+    setup.schedule_initial_videos(app,c,offline=True)
     app.addresses(c)
     print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
     print('Application installée, indépendante du kit :',application)

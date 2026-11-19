@@ -121,7 +121,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.52.2'
+VERSION='0.54.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -851,10 +851,10 @@ SourceIdentifier=Annotated[str,Field(min_length=1,max_length=2000,pattern=r'^(gu
 
 
 @app.get('/api/videos')
-async def get_videos(offset:int=Query(default=0,ge=0,le=1000000),limit:int=Query(default=30,ge=1,le=100),q:str=Query(default='',max_length=160),value=Depends(user)):
+async def get_videos(offset:int=Query(default=0,ge=0,le=1000000),limit:int=Query(default=30,ge=1,le=100),q:str=Query(default='',max_length=160),grouped:bool=False,group:str=Query(default='',max_length=1000),origin:Literal['all','youtube','non_youtube']='all',value=Depends(user)):
     with optional_feature('videos') as module:
         await module.ensure_fresh()
-        return await asyncio.to_thread(module.listing,offset,limit,q)
+        return await asyncio.to_thread(module.listing,offset,limit,q,grouped,group,origin)
 
 
 @app.get('/api/zim-videos')

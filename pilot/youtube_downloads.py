@@ -10,9 +10,8 @@ import uuid
 from fastapi import HTTPException
 
 from . import durable,operations,store
-from .youtube_list import REASONS,parse_list
+from .youtube_list import MAX_TEXT,REASONS,parse_list
 
-MAX_TEXT=300_000
 KEEP_LISTS=20
 ACTIVE=('starting','planning','downloading','refreshing')
 REFRESHED=None
@@ -27,10 +26,10 @@ def check(text):
             'refused':[{'line':item['line'],'text':item['text'][:200],'reason':item['reason'],'message':REASONS[item['reason']]} for item in errors]}
 
 
-def save(text, *, prune=True):
+def save(text, *, prune=True, identifier=None):
     """Keep the list for the host; older lists are pruned (the host copies its own)."""
     directory=folder();durable.mkdir(directory)
-    identifier=uuid.uuid4().hex
+    identifier=identifier or uuid.uuid4().hex
     # The pilot may run as root in its container while the host controller runs
     # as the installing user: the list holds public addresses and must stay readable.
     durable.write_bytes(directory/(identifier+'.txt'),text.encode('utf-8'),private=False)

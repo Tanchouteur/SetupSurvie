@@ -34,6 +34,32 @@ class SiteTests(unittest.TestCase):
         self.command=AsyncMock(return_value={'accepted':True})
         p=patch.object(site.operations,'library_command',self.command);p.start();self.addCleanup(p.stop)
 
+    def test_first_online_installation_queues_its_list_once(self):
+        deploy = store.ROOT / 'deploy'
+        deploy.mkdir()
+        (deploy / youtube_pipeline.INSTALLATION_LIST).write_text(LIST, encoding='utf-8-sig')
+        data = store.ROOT / 'data'
+        state = data / 'state/pilot'
+        state.mkdir(parents=True)
+        installation = MagicMock(work=store.ROOT / 'private')
+        with patch.object(setup, 'ROOT', store.ROOT), patch.object(store, 'ROOT', state):
+            store.init()
+            self.assertFalse(youtube_pipeline.enqueue_installation_list())
+            setup.schedule_initial_videos(installation, {'data_dir': data}, offline=True)
+            self.assertFalse(youtube_pipeline.enqueue_installation_list())
+            setup.schedule_initial_videos(installation, {'data_dir': data}, offline=False)
+            self.assertTrue(youtube_pipeline.enqueue_installation_list())
+            job, = youtube_pipeline.pending()
+            identifier = job['id']
+            row = youtube_pipeline.read(identifier)
+            self.assertEqual((row['height'], row['total']), (480, 2))
+            self.assertEqual((site.folder() / (identifier + '.txt')).read_text(encoding='utf-8'), LIST)
+            youtube_pipeline.update(identifier, status='paused')
+            youtube_pipeline.initialize()
+            self.assertTrue(youtube_pipeline.enqueue_installation_list())
+            self.assertEqual(youtube_pipeline.pending(), [])
+            self.assertEqual(youtube_pipeline.read(identifier)['status'], 'paused')
+
     def test_check_explains_refused_lines_without_network(self):
         value=site.check(LIST)
         self.assertEqual([item['id'] for item in value['videos']],[A,B]);self.assertEqual(value['videos'][0]['theme'],'Eau')

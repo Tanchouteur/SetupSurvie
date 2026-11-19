@@ -31,6 +31,29 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         self.assertIn('00:00:01.000 --> 00:00:02.000',videos.webvtt(video['id'].split(':')[1],0))
         self.assertFalse(source['audio_verified']);self.assertEqual(source['human_review'],'not_performed')
 
+    def test_origin_filters_before_grouping_and_paging_within_a_collection(self):
+        from zim_video_fixture import create
+        youtube=self.root/'youtube-fixture.zim'
+        create(youtube,youtube=True,with_tracks=False)
+        zim_video_inventory.build(youtube,archive_videos.directory())
+        (videos.ROOT/'local.mp4').write_bytes(b'local fixture')
+        (videos.ROOT/'youtube').mkdir()
+        (videos.ROOT/'youtube'/'download.mp4').write_bytes(b'download fixture')
+        videos.scan()
+
+        self.assertEqual(videos.listing()['total'],8)
+        other=videos.listing(grouped=True,origin='non_youtube')
+        self.assertEqual((other['total'],other['group_total']),(3,2))
+        group=other['groups'][0]['id']
+        self.assertEqual(videos.listing(group=group)['total'],6)
+        page=videos.listing(group=group,origin='non_youtube',limit=1,offset=1)
+        self.assertEqual((page['total'],len(page['videos'])),(2,1))
+        found=videos.listing(grouped=True,origin='youtube',query='shadow')
+        self.assertEqual(found['total'],1)
+        self.assertEqual(found['groups'][0]['video']['title'],'How do we measure a shadow?')
+        self.assertEqual(videos.listing(grouped=True,origin='youtube')['total'],5)
+        self.assertEqual(videos.listing(grouped=True,origin='non_youtube',query='shadow')['total'],0)
+
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])
         cache=videos.track_file(payload['tracks'][0]);cache.unlink()

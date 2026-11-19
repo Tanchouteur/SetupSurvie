@@ -50,7 +50,8 @@ def install(app,root,base):
         shutil.rmtree(archive_videos.directory(),ignore_errors=True);source.unlink(missing_ok=True)
         enabled=active;hold=wait
         if active:
-            create(source,media=(base/'tests/fixtures/video/solid-green.webm').read_bytes(),with_tracks=not without_tracks)
+            create(source,media=(base/'tests/fixtures/video/solid-green.webm').read_bytes(),
+                   with_tracks=not without_tracks,extra=True)
             library.KIWIX='http://127.0.0.1:8769/fixture/archive-reader'
         else:library.KIWIX=original_reader
         videos.STOP.clear();await asyncio.to_thread(videos.scan)
