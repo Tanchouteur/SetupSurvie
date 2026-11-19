@@ -8,12 +8,13 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=7
+VERSION=8
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
 NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!\d|[.,]\d)')
+ENGLISH_GROUPED_NUMBER=re.compile(r'(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?!\d|[.,]\d)')
 EN_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:st|nd|rd|th)(?!\w)',re.I)
 FR_ORDINAL=re.compile(r'(?<!\w)([0-9]+)(?:er|re|ère|e|ème|eme|ᵉ|ᵉʳ|ʳᵉ)s?(?!\w)',re.I)
 ORDINAL_WORDS={
@@ -93,7 +94,18 @@ def separate_ordinals(source,translated):
     return EN_ORDINAL.sub(' ',source),FR_ORDINAL.sub(' ',translated),expected==received
 
 
-def assess(source,translated,*,source_language=None):
+def normalize_english_grouping(text):
+    # Formula text is restored verbatim by the translator.
+    def convert(prose):return ENGLISH_GROUPED_NUMBER.sub(lambda match:match[0].replace(',',''),prose)
+    start=0;pieces=[]
+    for formula in BLOCKS.finditer(text):
+        pieces.extend((convert(text[start:formula.start()]),formula[0]))
+        start=formula.end()
+    pieces.append(convert(text[start:]))
+    return ''.join(pieces)
+
+
+def assess(source,translated,*,source_language=None,english_grouping=False):
     source=normalized(source);translated=normalized(translated)
     issues=[]
     def add(code,severity,message):issues.append({'code':code,'severity':severity,'message':message})
@@ -106,13 +118,15 @@ def assess(source,translated,*,source_language=None):
     def formulas(text):return Counter(re.sub(r'\s+',' ',m['value']).strip() for m in BLOCKS.finditer(text))
     if formulas(source)!=formulas(translated):
         add('formulas','error','Une formule extraite a disparu, été ajoutée ou modifiée. Elle doit être conservée avec ses groupes, indices et puissances ; comparez l’original avant reprise.')
+    english=(source_language or '').lower().split('-')[0] in ('en','eng')
     def numbers(text):
-        if source_language and source_language.lower().split('-')[0]=='en':
+        if english and not english_grouping:
             # A leading dollar sign and English grouping make $70,000 a
             # dollar amount of 70000. Other comma decimals keep their meaning.
             text=ENGLISH_DOLLAR_AMOUNT.sub(lambda m:m[1]+m[2].replace(',',''),text)
         return Counter(number(m.group()) for m in NUMBERS.finditer(text))
-    source_numbers,translated_numbers,ordinals_match=separate_ordinals(source,translated)
+    measure_source=normalize_english_grouping(source) if english and english_grouping else source
+    source_numbers,translated_numbers,ordinals_match=separate_ordinals(measure_source,translated)
     if not ordinals_match:add('ordinals','error','Un rang indiqué par un nombre dans l’original a disparu, été ajouté ou changé.')
     if numbers(source_numbers)!=numbers(translated_numbers):add('numbers','error','Des nombres ont disparu, été ajoutés ou changé. Comparez le passage à l’original et reprenez avec un autre mode.')
     def measures(text):
@@ -133,7 +147,7 @@ def assess(source,translated,*,source_language=None):
                     continue
             pairs[number(match.group(1)),UNIT_ALIASES[unit.lower()]]+=1
         return pairs
-    if measures(source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
+    if measures(measure_source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
     if len(source.strip())>=160 and len(translated.strip())<len(source.strip())*.4:
         add('short','warning','Traduction beaucoup plus courte : résumé ou passages omis possibles.')
     if len(source.strip())>=160 and len(translated.strip())>len(source.strip())*3:

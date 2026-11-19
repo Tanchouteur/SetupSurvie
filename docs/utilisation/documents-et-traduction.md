@@ -164,6 +164,11 @@ toujours déclencher un nouvel essai sur des morceaux plus courts. Si un
 rang anglais chiffré disparaît, le moteur peut le recevoir en toutes lettres
 lors d’un nouvel essai. Le résultat reste vérifié contre le passage original.
 
+Depuis **0.54.1**, pour un document identifié comme anglais, le contrôle
+reconnaît qu’un nombre comme `400,000` correspond à `400 000` en français.
+Les changements de valeur ou d’unité bloquent toujours le passage. La reprise
+réutilise le texte et les passages déjà enregistrés.
+
 Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
 d’une unité de mesure, ainsi qu’un article « A » après un numéro de page isolé.
 Une modification de la valeur ou d’une unité explicite
