@@ -218,16 +218,48 @@ function message(role,text,sources=[],profile='',observed=null){
   if(sources.length)node.append(sourceChips(sources));
   node.sourceReferences=sources;$('chat-messages').append(node);document.dispatchEvent(new CustomEvent('survie:message',{detail:{node,sources,observed}}));return {node,body,tracking};
 }
+function resetChatMessages(empty=false){
+  const messages=$('chat-messages');
+  messages.replaceChildren(...(translationThread?[translationThread]:[]));
+  if(empty)messages.insertAdjacentHTML('beforeend',EMPTY);
+}
 function newConversation(){
   if(S.sourceChanging||S.sending){toast('Attendez la fin du choix des documents ou de l’envoi de la question.');return;}
   if(S.job){toast('Attendez la réponse ou annulez la demande avant d’ouvrir une autre conversation.');view('chat');return;}
-  rememberReading();selectReading(null);S.conversationLoad=(S.conversationLoad||0)+1;S.loadingConversation=false;S.conversation=null;S.source=null;S.sources=[];clearTranslation();showAssociatedSource();$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';$('chat-messages').innerHTML=EMPTY;bindExamples();view('chat');document.dispatchEvent(new CustomEvent('survie:new-conversation'));
+  rememberReading();selectReading(null);S.conversationLoad=(S.conversationLoad||0)+1;S.loadingConversation=false;S.conversation=null;S.source=null;S.sources=[];clearTranslation();showAssociatedSource();$('chat-title').textContent='Une question ? Prenons le temps de comprendre.';resetChatMessages(true);bindExamples();view('chat');document.dispatchEvent(new CustomEvent('survie:new-conversation'));
 }
 async function openConversation(id,{silent=false}={}){
   if(S.sending){toast('La question est en cours d’envoi.');return;}
   if(S.job){toast('Une demande est en cours. Vous pouvez l’annuler pour changer de conversation.');return;}
   rememberReading();S.loadingConversation=true;refreshSourceChoices();const load=S.conversationLoad=(S.conversationLoad||0)+1;
-  try{const data=await api('/conversations/'+encodeURIComponent(id));if(load!==S.conversationLoad)return;S.conversation=id;S.sources=data.selected_sources||(data.source?[data.source]:[]);S.source=S.sources[0]||null;clearTranslation();showAssociatedSource();$('chat-title').textContent=data.title;$('chat-messages').replaceChildren();for(const m of data.messages){message(m.role,m.content,m.sources,m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'',m.documentary).node.dataset.messageId=String(m.id);}if(!silent)view('chat');selectReading(id);if(data.jobs.length)watch(data.jobs[0].id);const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);if(match)loadTranslation(match.id);else if(!data.translation_items&&data.translations?.length)loadTranslation(data.translations[0]);document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));if(!silent)restoreReading(id);}catch(e){if(e.status===404)selectReading(null);toast(e.message);}finally{if(load===S.conversationLoad){S.loadingConversation=false;refreshSourceChoices();}}
+  try{
+    const data=await api('/conversations/'+encodeURIComponent(id));
+    if(load!==S.conversationLoad)return;
+    S.conversation=id;
+    S.sources=data.selected_sources||(data.source?[data.source]:[]);
+    S.source=S.sources[0]||null;
+    clearTranslation();
+    showAssociatedSource();
+    $('chat-title').textContent=data.title;
+    resetChatMessages();
+    for(const m of data.messages){
+      const profile=m.model?(({rapide:'Réponse rapide',moyenne:'Réponse moyenne',approfondie:'Réponse approfondie'}[m.mode]||'Comparaison')+' · '+m.model):'';
+      message(m.role,m.content,m.sources,profile,m.documentary).node.dataset.messageId=String(m.id);
+    }
+    if(!silent)view('chat');
+    selectReading(id);
+    if(data.jobs.length)watch(data.jobs[0].id);
+    const match=data.translation_items?.find(t=>t.source_id.split('#page=')[0]===S.source?.id.split('#page=')[0]);
+    const translation=match?.id||(translationThread?data.translation_items?.[0]?.id:null)||(!data.translation_items?data.translations?.[0]:null);
+    if(translation)loadTranslation(translation);
+    document.dispatchEvent(new CustomEvent('survie:conversation',{detail:data}));
+    if(!silent)restoreReading(id);
+  }catch(e){
+    if(e.status===404)selectReading(null);
+    toast(e.message);
+  }finally{
+    if(load===S.conversationLoad){S.loadingConversation=false;refreshSourceChoices();}
+  }
 }
 function bindExamples(){document.querySelectorAll('[data-question]').forEach(b=>b.onclick=()=>{$('chat-input').value=b.dataset.question;$('chat-input').focus();});}
 async function status(){
@@ -429,31 +461,34 @@ function translationReading(id,offset,open){
     for(const old of ids.slice(100))delete saved[old];localStorage.setItem(key,JSON.stringify(saved));
   }catch(_){}return 0;
 }
-function renderTranslationParts(data){
+function renderTranslationParts(data,parts){
   const parent=$('translation-parts'),key=S.user.id+':'+data.id+':'+data.offset;
   if(parent.dataset.reading!==key){parent.replaceChildren();parent.dataset.reading=key;}
   const existing=new Map([...parent.children].map(node=>[Number(node.dataset.position),node]));
-  for(const part of data.parts){
+  let next=parent.firstElementChild;
+  for(const part of parts){
     const previous=existing.get(part.position),snapshot=JSON.stringify(part);
-    existing.delete(part.position);if(previous?._translationSnapshot===snapshot)continue;
+    existing.delete(part.position);
+    if(previous?._translationSnapshot===snapshot){next=previous.nextElementSibling;continue;}
     const article=element('article',undefined,'translation-part');article.append(element('h3','Page/section '+part.page+' · passage '+(part.position+1)));
-      if(part.model||part.quality?.model)article.append(element('p',part.model||part.quality.model,'small muted'));
-      if(part.status==='done'){
-        const text=element('div',undefined,'translation-text');
-        if(window.SurvieTranslationText)window.SurvieTranslationText.render(text,part.translated);else text.textContent=part.translated;
-        article.append(text);
-      }else article.append(element('p',part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
-      if(part.quality){
-        const labels={checked:'Contrôles limités : aucune anomalie repérée. Le sens reste à vérifier.',warning:'À relire : anomalie possible.',blocked:'Passage refusé par les contrôles.',unchecked:'Pas de contrôle automatique enregistré pour ce passage.'};
-        article.append(element('p',labels[part.quality.status]||'Contrôle indisponible.',part.quality.status==='checked'?'small muted':'translation-label small'));
-        for(const issue of part.quality.issues||[])article.append(element('p',issue.message,'translation-label small'));
-      }
-      if(part.source_text){const details=element('details',undefined,'translation-comparison');details.append(element('summary','Comparer avec le texte original'),element('pre',part.source_text));article.append(details);}
-      if(part.candidate){const details=element('details');details.append(element('summary','Voir la proposition refusée · ne pas utiliser'),element('p',part.candidate));article.append(details);}
-      const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));
+    if(part.model||part.quality?.model)article.append(element('p',part.model||part.quality.model,'small muted'));
+    if(part.status==='done'){
+      const text=element('div',undefined,'translation-text');
+      if(window.SurvieTranslationText)window.SurvieTranslationText.render(text,part.translated);else text.textContent=part.translated;
+      article.append(text);
+    }else if(!translationThread||part.status==='unreadable')article.append(element('p',part.status==='unreadable'?'Aucun texte extractible : page illustrée ou reconnaissance de caractères nécessaire.':'Ce passage reste à traduire.'));
+    if(part.quality&&(!translationThread||part.status!=='unreadable'||part.quality.status!=='unchecked')){
+      const labels={checked:'Contrôles limités : aucune anomalie repérée. Le sens reste à vérifier.',warning:'À relire : anomalie possible.',blocked:'Passage refusé par les contrôles.',unchecked:'Pas de contrôle automatique enregistré pour ce passage.'};
+      article.append(element('p',labels[part.quality.status]||'Contrôle indisponible.',part.quality.status==='checked'?'small muted':'translation-label small'));
+      for(const issue of part.quality.issues||[])article.append(element('p',issue.message,'translation-label small'));
+    }
+    if(part.source_text){const details=element('details',undefined,'translation-comparison');details.append(element('summary','Comparer avec le texte original'),element('pre',part.source_text));article.append(details);}
+    if(part.candidate){const details=element('details');details.append(element('summary','Voir la proposition refusée · ne pas utiliser'),element('p',part.candidate));article.append(details);}
+    const original=data.source_id.toLowerCase().endsWith('.pdf')?data.source_id+'#page='+part.page:data.source_id;article.append(button('Consulter l’original',()=>readSource(original),'text-button'));
     article.dataset.position=part.position;article._translationSnapshot=snapshot;
     if(previous){const opened=[...previous.querySelectorAll('details')].map(node=>node.open);article.querySelectorAll('details').forEach((node,i)=>node.open=!!opened[i]);previous.replaceWith(article);}
-    else parent.append(article);
+    else parent.insertBefore(article,next);
+    next=article.nextElementSibling;
   }
   for(const node of existing.values())node.remove();
 }
@@ -470,7 +505,25 @@ const translationReader=element('dialog',undefined,'translation-reading-dialog')
 translationReader.innerHTML='<header><h2 id="translation-reading-title">Lire le texte français</h2><button id="translation-reading-close" class="secondary">Fermer la lecture</button></header><p id="translation-reading-notice" class="small muted"></p><div id="translation-reading-content"></div>';
 document.body.append(translationReader);
 const translationReadOpen=button('Lire le texte français',()=>openTranslationReader(),'secondary');translationReadOpen.id='translation-reading-open';translationReadOpen.hidden=true;$('translation-summary').after(translationReadOpen);
-const readingNodes=[$('translation-pause').parentElement,translationReadingStatus,translationReadingActions,$('translation-parts'),$('translation-previous').parentElement];
+const translationControls=$('translation-pause').parentElement;
+const translationNavigation=$('translation-previous').parentElement;
+const translationThread=document.body.classList.contains('next-interface')?element('section',undefined,'translation-thread'):null;
+if(translationThread){
+  translationThread.id='translation-thread';
+  translationThread.setAttribute('aria-label','Passages de la traduction');
+  translationThread.hidden=true;
+  $('chat-messages').append(translationThread);
+  translationThread.append(translationReadingStatus,translationReadingActions,$('translation-parts'),translationNavigation);
+
+  const toolbar=element('div',undefined,'translation-toolbar');
+  toolbar.append(translationControls,translationReadOpen);
+  const content=$('translation-panel').querySelector('.translation-content');
+  content.prepend(toolbar,$('translation-status'),$('translation-progress'));
+  const help=element('details',undefined,'translation-help');
+  help.append(element('summary','À propos de la traduction'),content.querySelector('p.small'));
+  content.append(help);
+}
+const readingNodes=[translationControls,translationReadingStatus,translationReadingActions,$('translation-parts'),translationNavigation];
 const readingMarkers=readingNodes.map(node=>{const marker=document.createComment('translation-reading-home');node.before(marker);return marker;});
 function moveTranslationReader(open){
   if(open){for(const node of readingNodes)$('translation-reading-content').append(node);}
@@ -499,7 +552,7 @@ document.addEventListener('survie:translation',event=>{
   $('translation-reading-notice').textContent=({running:'La suite continue à se traduire pendant votre lecture. ',queued:'La suite attend le moteur. ',paused:'Traduction en pause ; les passages terminés restent lisibles. ',stopped:'Traduction arrêtée ; les passages terminés restent lisibles et une reprise volontaire est possible. ',error:'La suite reste à reprendre depuis le panneau de traduction. ',completed:'Traitement terminé. '}[data.status]||'')+(data.notice||'');
 });
 document.addEventListener('survie:view',()=>{if(S.view!=='chat'&&translationReader.open)translationReader.close();});
-document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;translationReadOpen.hidden=true;translationStop.hidden=true;translationDelete.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
+document.addEventListener('survie:translation-clear',()=>{if(translationReader.open){rememberTranslationReaderClosed();translationReader.close();}translationReaderRestoredFor=null;if(translationThread)translationThread.hidden=true;translationReadOpen.hidden=true;translationStop.hidden=true;translationDelete.hidden=true;translationReadingActions.hidden=true;translationReadingStatus.textContent='';S.translationLastDone=null;});
 document.addEventListener('survie:work-queue', ({detail}) => {
   const queue = window.WorkQueuePreview;
   queue.translationLabels(queue.aiBusy(detail), $('translation-start'), $('translation-resume'),
@@ -514,17 +567,30 @@ async function loadTranslation(id,offset){
     translationReading(id,offset);
     S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
     const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',stopped:'Arrêtée',error:'Passage à reprendre',completed:'Traitement terminé'};
-    $('translation-summary').textContent=(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits';
-    $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
-    if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
+    const label=(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits';
+    $('translation-summary').textContent=translationThread?'Traduction · '+label:label;
+    const status=$('translation-status');
+    const automaticNotice=translationThread?'Traduction automatique à vérifier avec l’original.':data.notice;
+    const notice=data.title+' — '+(data.error||automaticNotice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'')+(data.quality?.warnings?' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.':'');
+    if(status.textContent!==notice)status.textContent=notice;
+    const parts=translationThread?data.parts.filter(part=>part.status!=='pending'||part.quality?.status==='blocked'):data.parts;
+    if(translationThread){
+      // Open the tools on arrival in this conversation. Polling respects manual collapse.
+      if(translationThread.hidden){
+        $('translation-panel').open=true;
+        $('chat-messages').append(translationThread);
+        translationThread.hidden=false;
+      }
+    }
     $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
     translationStop.hidden=finished||data.status==='stopped';translationDelete.hidden=false;
     const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done;meter.setAttribute('aria-label','Passages réellement traduits');
-    translationReadingStatus.textContent=(Number.isInteger(data.pages_done)?data.pages_done+' / '+data.pages+' pages ou sections entièrement traduites. ':'')+(data.pages_partial?data.pages_partial+' page(s) commencée(s). ':'')+(active&&data.current_page?'Page ou section en cours : '+data.current_page+'. ':'')+(data.done?'Vous pouvez déjà lire les passages traduits ci-dessous'+(active?', pendant que la suite avance. ':'. '):active?'Le premier passage n’est pas encore prêt. ':'Aucun passage français n’est enregistré. L’original reste consultable. ')+(data.parts.length?'Affichage des passages '+(offset+1)+' à '+(offset+data.parts.length)+'.':'');
+    const readingStatus=(Number.isInteger(data.pages_done)?data.pages_done+' / '+data.pages+' pages ou sections entièrement traduites. ':'')+(data.pages_partial?data.pages_partial+' page(s) commencée(s). ':'')+(active&&data.current_page?'Page ou section en cours : '+data.current_page+'. ':'')+(data.done?'Vous pouvez déjà lire les passages traduits'+(active?', pendant que la suite avance. ':'. '):active?'Le premier passage n’est pas encore prêt. ':'Aucun passage français n’est enregistré. L’original reste consultable. ')+(parts.length?'Affichage des passages '+(parts[0].position+1)+' à '+(parts.at(-1).position+1)+'.':data.done?'Aucun passage prêt dans ce groupe.':'');
+    if(translationReadingStatus.textContent!==readingStatus)translationReadingStatus.textContent=readingStatus;
     S.translationLastDone=data.last_done_position;translationReadingActions.hidden=!data.done;
     translationBeginning.disabled=offset===0;translationLatest.disabled=!Number.isInteger(data.last_done_position)||Math.floor(data.last_done_position/10)*10===offset;
     const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
-    renderTranslationParts(data);
+    renderTranslationParts(data,parts);
     $('translation-previous').hidden=offset===0;$('translation-next').hidden=offset+data.parts.length>=data.total;
     document.dispatchEvent(new CustomEvent('survie:translation',{detail:data}));
     if(active&&S.view==='chat')translationTimer=setTimeout(()=>loadTranslation(id,offset),2000);
@@ -576,7 +642,11 @@ async function send(event){
   S.sending=true;$('send-question').disabled=true;refreshSourceChoices();
   $('chat-status').textContent='Envoi de la question…';
   try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
-    if(!S.conversation||!$('chat-messages').querySelector('.message')){$('chat-messages').replaceChildren();$('chat-title').textContent=text.slice(0,80);}S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
+    if(!S.conversation||!$('chat-messages').querySelector('.message')){
+      const messages=$('chat-messages');
+      if(translationThread&&!translationThread.hidden)messages.querySelector('.chat-empty')?.remove();
+      else{resetChatMessages();$('chat-title').textContent=text.slice(0,80);}
+    }S.conversation=data.conversation_id;selectReading(S.conversation);message('user',text);$('chat-messages').scrollTop=$('chat-messages').scrollHeight;rememberReading();$('chat-input').value='';await histories();watch(data.id);
   }catch(e){
     const problem=e.status?e.message:'Impossible de confirmer l’envoi. Votre texte reste dans la zone de saisie.';
     $('chat-status').textContent=problem;toast(problem);$('send-question').disabled=false;

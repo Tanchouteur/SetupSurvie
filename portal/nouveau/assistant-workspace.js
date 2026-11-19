@@ -63,7 +63,7 @@
   more.hidden = true;
   left.append(more);
   const banner = $("inference-banner");
-  center.append(banner, $("chat-messages"), $("chat-form"));
+  center.append(banner, $("translation-panel"), $("chat-messages"), $("chat-form"));
   body.append(left, center, right);
   chat.append(body);
   const selectedTitle = element("h2", "Documents choisis"),
@@ -644,14 +644,12 @@
   document.addEventListener("survie:message", (event) =>
     record(event.detail.observed),
   );
-  for (const name of ["survie:translation-command", "survie:summary-command"])
-    document.addEventListener(name, () => {
-      if (S.view === "chat") {
-        body.dataset.right = "open";
-        body.dataset.zone = "documents";
-        refreshZones();
-      }
-    });
+  document.addEventListener("survie:summary-command", () => {
+    if (S.view !== "chat") return;
+    body.dataset.right = "open";
+    body.dataset.zone = "documents";
+    refreshZones();
+  });
   document.addEventListener("survie:job", () => {
     for (const node of $("chat-messages").querySelectorAll(
       ".documentary-sources button[data-source]",

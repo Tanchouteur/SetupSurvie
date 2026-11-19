@@ -21,31 +21,32 @@ async (page) => {
   const layouts=[];
   for(const [width,height] of [[1366,900],[768,900],[390,844],[320,568]]){
     await page.setViewportSize({width,height});
-    if(width<=1000&&await page.locator('#assistant-workspace').count())await page.locator('[data-close-panel]:visible').click();
     await page.locator('#send-question').waitFor({state:'visible'});
     try{await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth&&document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight);}
     catch(error){throw Error('Disposition incorrecte '+width+'x'+height+' '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,send:document.getElementById('send-question').getBoundingClientRect().toJSON(),chat:document.getElementById('view-chat').getBoundingClientRect().toJSON(),viewport:visualViewport?.height}))));}
     const valid=await page.evaluate(()=>({horizontal:document.documentElement.scrollWidth<=innerWidth,composer:document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight}));
     if(!valid.horizontal||!valid.composer)throw Error('Disposition incorrecte '+width+'x'+height);
-    await documents();await page.locator('#translation-resume').waitFor({state:'visible'});
+    await page.locator('#assistant-discussion #translation-resume').waitFor({state:'visible'});
     layouts.push({width,height,...valid});
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);
-  await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
-  if(await page.locator('#assistant-workspace').count()&&await page.locator('#chat-mode').isHidden())await page.locator('[data-close-panel]:visible').click();
-  await page.locator('#chat-mode').selectOption('moyenne');await documents();await page.locator('#translation-resume').click();
+  await page.locator('#translation-panel').evaluate(e=>e.open=true);
+  await page.locator('#chat-mode').selectOption('moyenne');await page.locator('#translation-resume').click();
   await page.waitForFunction(done=>Number(document.querySelector('#translation-progress').value)>done,before.done);
   await page.locator('#translation-pause').click();await page.locator('#translation-resume').waitFor({state:'visible'});
   const after=await(await page.request.get(base+'/api/translations/'+id)).json();
   if(after.parts[0].translated!==before.parts[0].translated)throw Error('Passage terminé modifié');
   const output=await(await page.request.get(base+'/api/translations/'+id+'/export')).text();
   if(!output.includes('Construction d’un abri'))throw Error('Export sans texte français');
-  await page.locator('#chat-source button').filter({hasText:'Retirer'}).click();
+  await documents();await page.locator('#chat-source button').filter({hasText:'Retirer'}).click();
   await page.reload();await page.waitForFunction(()=>S.conversation!==null);
+  await documents();
   if(!await page.locator('#chat-source').isHidden())throw Error('Retrait non conservé');
+  await page.locator('[data-close-panel=documents]').click();
+  await page.locator('#chat-messages #translation-parts .translation-text').first().waitFor();
   await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
   await page.getByRole('button',{name:'Poser une question sur ce document',exact:true}).click();
-  await documents();await page.locator('#translation-panel').evaluate(e=>e.open=true);
+  await page.locator('#translation-panel').evaluate(e=>e.open=true);
   await page.locator('#translation-first').fill('3');await page.locator('#translation-first').press('Tab');
   await page.locator('#translation-last').fill('5');await page.locator('#translation-last').press('Tab');
   if(await page.locator('#translation-first').inputValue()!=='3'||await page.locator('#translation-last').inputValue()!=='5')throw Error('Plage PDF modifiée avant envoi');

@@ -418,7 +418,6 @@
   for (const selector of [
     "#inference-banner",
     "#chat-source",
-    "#translation-panel",
     "#conversation-picker",
   ]) {
     const node = get("view-chat").querySelector(selector);

@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.41.0, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.57.0, 19 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -451,11 +451,13 @@ les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d�
 
 ## Lire pendant que le document se traduit — 0.28.0
 
-Déplier le panneau de traduction dans la conversation. Dès qu’un passage est
-terminé, son texte français apparaît : vous pouvez commencer à lire pendant que
-les suivants sont préparés. Le suivi indique les pages/sections entièrement
-traduites, les pages commencées et celle en cours, en plus des passages. Une page
-illustrée sans texte exploitable reste signalée, sans être comptée comme traduite.
+Depuis **0.57.0**, dans l’Assistant, le bandeau **Traduction** au-dessus de la
+discussion affiche l’état, le nombre de passages traduits et les commandes.
+Les passages terminés apparaissent dans le fil au fur et à mesure, même avec
+le bandeau replié. Les passages refusés par les contrôles et ceux dont le texte
+est illisible sont signalés dans le fil. Les passages encore en attente sont
+comptés dans la progression. Le suivi indique aussi les pages ou sections
+entièrement traduites, les pages commencées et celle en cours.
 
 Les actualisations ne referment plus une comparaison avec l’original et ne
 remplacent pas un passage déjà prêt. **Passages suivants/précédents** parcourent
@@ -480,8 +482,8 @@ traduction automatique restent visibles dès les premiers passages.
 
 ## Gérer une traduction — 0.29.0
 
-Les commandes se trouvent dans le panneau de traduction et dans **Lire le texte
-français** pendant la lecture :
+Les commandes se trouvent dans le bandeau **Traduction**, au-dessus de la
+discussion, et dans la fenêtre **Lire le texte français** :
 
 - **Mettre en pause** interrompt le passage en cours et conserve les précédents.
 - **Arrêter la traduction** conserve aussi le texte, avec l’état **Arrêtée**.
