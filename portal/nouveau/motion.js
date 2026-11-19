@@ -1,6 +1,7 @@
 /* Presentation only: no delayed action, DOM snapshot, request or saved state. */
 (() => {
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const reducedMotion = "(prefers-reduced-motion: reduce)";
+  const preference = matchMedia(reducedMotion);
   const active = new Map();
   function cancelAll() {
     for (const animation of active.values()) animation.cancel();
@@ -9,7 +10,8 @@
   function reveal(node) {
     if (!node) return;
     active.get(node)?.cancel();
-    if (reduced.matches || !node.animate || !node.getClientRects().length) return;
+    // WebKit can deliver a retained MediaQueryList change after a navigation.
+    if (matchMedia(reducedMotion).matches || !node.animate || !node.getClientRects().length) return;
     const animation = node.animate(
       // A transformed container changes the containing block of fixed children.
       // Fade only: help, navigation and reader controls keep viewport coordinates.
@@ -21,7 +23,7 @@
       if (active.get(node) === animation) active.delete(node);
     });
   }
-  reduced.addEventListener("change", () => { if (reduced.matches) cancelAll(); });
+  preference.addEventListener("change", ({ matches }) => { if (matches) cancelAll(); });
   document.addEventListener("survie:auth", cancelAll);
   window.addEventListener("pagehide", cancelAll);
   let routeKey;

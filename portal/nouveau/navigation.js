@@ -95,9 +95,10 @@
     $('breadcrumb').textContent=route.section==='appareil'?'Mon appareil':labels[route.name];
     document.querySelectorAll('#navigation [data-route]').forEach(a=>{const active=a.dataset.route===route.section;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
     for(const a of document.querySelectorAll('.next-tabs [data-route]')){
-      const active=a.dataset.route===route.section+'/'+route.tab||route.section==='appareil'&&!['ensemble','activite'].includes(route.tab)&&a.dataset.route==='appareil/reglages';
+      const active=a.dataset.route===route.section+'/'+route.tab||a.dataset.route==='file'&&(route.name==='work-queue'||route.name==='activity')||route.section==='appareil'&&!['ensemble','activite'].includes(route.tab)&&a.dataset.route==='appareil/reglages';
       if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
     }
+    if(route.name==='work-queue') document.querySelector('#view-work-queue .page-heading').after($('next-machine-tabs'));
     if(route.section==='appareil'){
       if(route.name==='settings')window.SettingsLayout.show(route.tab,route.params.get('test'));
       document.querySelector('#view-'+route.name+' .page-heading').after($('next-machine-tabs'));put('machine-tab',route.tab);
