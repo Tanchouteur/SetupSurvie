@@ -297,9 +297,9 @@ sous-titres**. **Préparer aussi la version française** utilise ensuite le mod�
 choisi dans les préparations de pistes. Aucun traitement ne démarre à la lecture
 ou à l’ouverture de Collections.
 
-La reconnaissance réutilise le modèle local préparé pour la dictée. S’il manque,
-le message demande cette préparation par l’installateur, une fois avec Internet ;
-le bouton ne télécharge rien. Une fois préparée, elle fonctionne hors ligne,
+La reconnaissance utilise le modèle local Whisper préparé par l’installateur.
+S’il manque, préparez-le sur le serveur avec Internet ou importez le cache
+du kit hors ligne. Une fois préparée, elle fonctionne hors ligne,
 sur le processeur du serveur. La traduction française utilise aussi un modèle
 local installé et volontairement démarré. La pause IA est respectée.
 

@@ -317,7 +317,7 @@ def prepare_speech():
     speech = setup.VERSIONS['speech']
     marker = MOUNT / 'data/state/openwebui/cache/whisper/ready.json'
     if marker.exists() and json.loads(marker.read_text()) == speech:
-        print('Dictée déjà préparée.')
+        print('Reconnaissance vocale déjà préparée.')
         return
     code = """from huggingface_hub import snapshot_download
 from faster_whisper import WhisperModel

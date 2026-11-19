@@ -547,11 +547,7 @@
 .next-interface .assistant-discussion .composer-controls select {
   flex: 0 1 auto;
   min-width: 0;
-  max-width: calc(100% - 140px);
-  font-size: 12px;
-}
-.next-interface .assistant-discussion .composer-controls #dictate {
-  margin-left: auto;
+  max-width: 100%;
   font-size: 12px;
 }
 .next-interface #assistant-editor {

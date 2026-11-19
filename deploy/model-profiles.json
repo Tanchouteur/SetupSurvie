@@ -74,6 +74,15 @@
       "category": "comparison"
     }
   ],
+  "download_sizes": {
+    "gpt-oss:20b": 13793441566,
+    "gemma4:e4b": 6583656505,
+    "qwen3.5:4b-q4_K_M": 3324173934,
+    "qwen3.5:9b-q4_K_M": 6550825550,
+    "qwen3.5:27b-q4_K_M": 17478556591,
+    "gemma4:26b-a4b-it-q4_K_M": 17987581215,
+    "qwen3.8:27b-q4_K_M": 17741872132
+  },
   "context": 16384,
   "output_tokens": 4096
 }

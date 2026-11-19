@@ -21,7 +21,7 @@ téléphone, utilisez **Résultats** pour retrouver la liste.
 | --- | --- |
 | Accueil | Rechercher, ouvrir une collection, aller à l’assistant ou aux cartes |
 | Bibliothèque | Collections réellement présentes, recherche, parcours, favoris et traductions |
-| Assistant | Conversations, documents associés, traduction, dictée, sources et modes de réponse |
+| Assistant | Conversations, documents associés, traduction, sources et modes de réponse |
 | Cartes | Accès direct à la carte réelle, aux repères et aux itinéraires existants |
 | Mon appareil | Vue d’ensemble, travaux en cours et paramètres par usage |
 
@@ -168,7 +168,7 @@ mémoire. Les contrôles de changement de profil et d’onglets périmés resten
 La barre de navigation principale est en haut. L’assistant utilise l’espace disponible :
 
 - **Conversations** à gauche : nouvelle discussion, recherche dans les titres et messages, dossiers personnels et liste paginée. Sur ordinateur, glissez une conversation sur un dossier pour l’y ranger : la cible est mise en évidence et le déplacement est confirmé. Déposez-la sur **Sans dossier** pour retirer son classement. Le menu d’une conversation permet aussi de la renommer, de la déplacer ou de la supprimer, notamment au clavier et sur téléphone. Supprimer un dossier conserve ses conversations.
-- **Discussion** au centre : messages, texte traduit au fur et à mesure, dictée, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
+- **Discussion** au centre : messages, texte traduit au fur et à mesure, saisie et temps de réponse. Les trois modes conseillés restent proposés ; les modèles de comparaison sont disponibles dans les options de réponse.
 - **Documents** à droite : documents choisis pour travailler et synthèse ; une zone séparée donne les sources réellement consultées quand ce suivi est disponible.
 
 Chaque volet porte une flèche de fermeture dans son en-tête. Son bouton
@@ -185,6 +185,24 @@ au-dessus du fil. On peut le replier et continuer à lire les passages traduits.
 navigateur et à la discussion mémorisée, pour le profil courant. Dans **Mon
 appareil → File d’attente**, les traductions et synthèses à suivre rejoignent les autres
 tâches. Les travaux récents terminés se retrouvent dans **Historique récent**.
+
+### Télécharger un modèle pour l’assistant
+
+Avec le profil **Famille**, ouvrez **Mon appareil → Paramètres → Assistant →
+Modèles de l’assistant**. Le PC serveur doit avoir Internet et son moteur IA doit être
+démarré. Les modèles conseillés sont visibles directement et les options
+supplémentaires s’ouvrent sous **Modèles de comparaison**.
+
+Le bouton **Télécharger** indique l’avancement en octets et vous pouvez
+**Annuler**. Le téléchargement continue si vous quittez la page. Après une
+interruption ou un redémarrage, utilisez à nouveau **Télécharger**. Un modèle
+marqué **Installé** peut servir hors ligne en choisissant le mode correspondant
+dans la discussion. La taille annoncée avant téléchargement est une estimation
+du modèle complet. Les couches déjà présentes peuvent réduire le transfert.
+
+Le catalogue du portail reprend les modèles des modes de réponse. La dictée
+de la discussion a été retirée en version 0.61.0. La [transcription des vidéos
+locales](videos-locales.md) utilise toujours son propre modèle Whisper.
 
 ## Lire et traduire sur place
 
@@ -213,7 +231,7 @@ une indication dans la page. Les restrictions existantes des cartes pour la
 création de repères/trajets sur petit écran sont conservées.
 
 Les pages natives PDF et Cartes gardent un lien de retour vers l’interface dont
-elles proviennent. La dictée conserve ses prérequis HTTPS et navigateur.
+elles proviennent.
 Safari iPhone réel reste à essayer ; les tests WebKit ne le remplacent pas.
 
 ## Présentation précédente conservée

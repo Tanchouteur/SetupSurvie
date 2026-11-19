@@ -85,7 +85,7 @@
     [
       "assistant",
       "Assistant",
-      "Démarrer ou arrêter l’assistant ; ajuster ses réglages avancés.",
+      "Démarrer l’assistant, télécharger des modèles et régler la mémoire.",
     ],
     [
       "tests",
@@ -178,6 +178,7 @@
   const engineState = make("p", "small");
   engineState.id = "settings-engine-state";
   engine.querySelector("details > summary").after(engineState);
+  panes.assistant.append(get("model-downloads"));
   panes.assistant.append(
     link(
       "ensemble",

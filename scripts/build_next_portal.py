@@ -22,7 +22,7 @@ def build():
         ('css', '/nouveau/style.css', '0.51.0'),
         ('css', '/nouveau/ux-system.css', '0.56.0'),
         ('css', '/nouveau/settings.css', '0.39.0'),
-        ('css', '/nouveau/assistant-workspace.css', '0.58.0'),
+        ('css', '/nouveau/assistant-workspace.css', '0.61.0'),
         ('css', '/nouveau/reader-work.css', '0.39.0'),
         ('js', '/source-figures.js', '0.28.0'),
         ('js', '/long-summaries.js', '0.52.1'),
@@ -47,7 +47,7 @@ def build():
         ('js', '/nouveau/assistant-diagnostics.js', '0.30.0'),
         ('js', '/nouveau/practical.js', '0.34.0'),
         ('js', '/nouveau/usage-recipe.js', '0.26.1'),
-        ('js', '/nouveau/settings-layout.js', '0.56.0'),
+        ('js', '/nouveau/settings-layout.js', '0.61.0'),
         ('js', '/nouveau/ux-system.js', '0.56.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.58.0'),
         ('js', '/nouveau/reader-work.js', '0.60.1'),
@@ -56,7 +56,7 @@ def build():
         ('css', '/resource-status.css', '0.49.0'),
         ('js', '/resource-status.js', '0.43.2'),
         ('css', '/design/tokens.css', '0.44.0'),
-        ('css', '/design/system.css', '0.49.0'),
+        ('css', '/design/system.css', '0.61.0'),
         ('css', '/nouveau/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.55.1'),
         ('js', '/nouveau/navigation.js', '0.56.0'),
@@ -65,7 +65,6 @@ def build():
     for kind, path, version in assets:
         tags.append(f'<link rel="stylesheet" href="{path}?v={version}">' if kind == 'css'
                     else f'<script defer src="{path}?v={version}"></script>')
-    source = source.replace('/app.js?v=0.60.0', '/app.js?v=0.60.2')
     source = source.replace('</head>', ''.join(tags) + '</head>', 1)
     source = source.replace('<script defer src="/nouveau/layout.js',
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)

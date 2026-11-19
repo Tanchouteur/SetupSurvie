@@ -53,7 +53,7 @@ n’est ajouté. Voir le [guide et les liens directs](parametres-et-appareil.md)
 Les deux liens sont séparés et décrits. Sur un écran court, le menu défile pour
 les atteindre. Si l’assistant avancé était ouvert avant un changement de profil,
 le recharger ou rouvrir le lien pour actualiser son espace. Son service reste
-nécessaire pour ses fonctions natives et la dictée ; le portail, la lecture et
+nécessaire pour certaines fonctions natives ; le portail, la lecture et
 la recherche ne dépendent pas de sa connexion pour identifier le profil.
 
 ## Mettre à jour une installation

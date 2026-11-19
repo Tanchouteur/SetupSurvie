@@ -40,8 +40,7 @@ permettent de se repérer. Elles ne calculent pas d’itinéraire et n’incluen
 l’état actuel des chemins ni de couche altimétrique.
 
 Pour le choix de profil, voir les [profils locaux sans mot de passe](profils-locaux.md).
-Pour la dictée, les certificats et l’état
-du moteur, suivre le [guide Marc](../installation/pilote-marc.md). Une pause de
+Pour les certificats et l’état du moteur, suivre le [guide Marc](../installation/pilote-marc.md). Une pause de
 l’IA doit être levée explicitement par l’administrateur ; consulter la bibliothèque
 ne nécessite pas de la lever.
 
