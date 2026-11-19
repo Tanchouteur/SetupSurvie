@@ -13,6 +13,11 @@ async page=>{
   check(!await page.locator('#next-videos-index').isVisible(),'Les commandes de gestion sont repliées à l’arrivée');
   await openManagement();
   await page.locator('#next-videos-index').click();await page.waitForFunction(()=>document.getElementById('next-videos-status').textContent.includes('Inventaire terminé'));
+  const collection=page.locator('#next-videos-list .video-collection-group').filter({hasText:'Chaîne de test'});
+  await collection.waitFor();
+  check(!await collection.evaluate(details=>details.open),'La chaîne locale est regroupée dans une carte repliée');
+  await collection.locator(':scope > summary').click();
+  await collection.getByRole('heading',{name:'Fabrication du rotor fictif'}).waitFor();
   check(await page.locator('#next-videos-list .data-card').count()===4,'Vidéos locales inventoriées depuis Collections');
   check((await page.locator('#next-videos-list').textContent()).includes('Sous-titres à préparer'),'Vidéo sans piste signalée séparément');
   const found=await(await page.request.get(base+'/api/search?q=rotor&domain=all')).json();const hit=found.results.find(row=>row.kind==='video'&&row.id.includes('#t=8000'));
