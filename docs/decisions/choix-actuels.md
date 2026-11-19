@@ -1,5 +1,13 @@
 # Choix et contraintes actuels
 
+## Classement des espaces documentaires — 19 novembre 2026
+
+Louis demande de mesurer la qualité du tri avant et après une modification,
+d'examiner les métadonnées des encyclopédies, de compter les vidéos dans la
+recette et de vérifier le gain sur de nouveaux documents après réglage. La 0.57.0 utilise la structure des articles Wikipédia lorsque
+disponible. Le [protocole et bilan Bazzite](../essais/mesurer-classement-documentaire.md)
+trace les gains, les écarts et la vérification à poursuivre sur le fonds de Marc.
+
 ## Carte sur téléphone hors du réseau de la maison — 18 novembre 2026
 
 Louis demande de pouvoir rouvrir la carte sur son téléphone après fermeture du

@@ -1,8 +1,20 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — 0.6.0, 14 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.57.0, 19 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
+
+## Comprendre le classement automatique
+
+Pour Wikipédia, le classement tient compte du titre, des sections principales
+et des catégories d'article quand elles sont présentes dans l'archive locale.
+Un article peut appartenir aux deux espaces. L'indication peut évoluer à la
+fin d'une recherche progressive, après lecture de la structure. Si un résultat
+attendu manque, élargir à **Toute la bibliothèque** puis corriger son
+classement si nécessaire.
+
+Le [protocole de mesure](../essais/mesurer-classement-documentaire.md) permet
+de comparer deux versions sur les mêmes documents et vidéos.
 
 ## Corriger le classement d’un document
 

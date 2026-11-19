@@ -15,7 +15,7 @@ MAX_ENTRIES=256
 
 def state():
     loop=asyncio.get_running_loop()
-    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{},'retiring':set(),'pending':OrderedDict(),'writer':None}
+    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'structure_lane':asyncio.Semaphore(2),'structures':OrderedDict(),'flights':{},'retiring':set(),'pending':OrderedDict(),'writer':None}
     return STATES[loop]
 
 
