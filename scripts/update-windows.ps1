@@ -29,8 +29,22 @@ function Get-SurvieUpdateSettings {
 }
 
 function Invoke-SurvieUpdateCommand([string]$File, [array]$Arguments) {
-    & $File @Arguments | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw ('Étape interrompue (code ' + $LASTEXITCODE + '). Les sauvegardes sont conservées ; consultez le journal.') }
+    # Windows PowerShell can wrap redirected stderr as non-terminating errors.
+    $ErrorActionPreference = 'Continue'
+    $PSNativeCommandUseErrorActionPreference = $false
+    $stderr = @()
+    & $File @Arguments 2>&1 | ForEach-Object {
+        $line = $_.ToString()
+        if ($_ -is [Management.Automation.ErrorRecord] -and $line.Trim()) {
+            $stderr = @($stderr | Select-Object -Last 2) + $line
+        }
+        Write-Host $line
+    }
+    $code = $LASTEXITCODE
+    if ($code -ne 0) {
+        $detail = if ($stderr.Count) { ' ' + ($stderr -join ' ') } else { ' Les sauvegardes sont conservées. Consultez le journal.' }
+        throw ('Étape interrompue (code ' + $code + ').' + $detail)
+    }
 }
 
 function Get-SurvieGitOutput([string]$Git, [array]$Arguments) {
@@ -81,8 +95,8 @@ function Invoke-SurvieGitUpdate($Settings) {
     Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $source 'scripts\pilot_update.py'), 'build', $package))
     $digest = ((Get-Content -LiteralPath ($package + '.sha256') -Raw).Trim() -split '\s+')[0]
     if ($digest -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash -ne $digest) { throw 'Empreinte incorrecte : application conservée.' }
-    Write-Host 'Sauvegarde puis mise à jour. Le site sera brièvement indisponible ; les préparations documentaires doivent être en pause.'
-    Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
+    Write-Host 'Sauvegarde puis mise à jour. Le site sera brièvement indisponible après les vérifications.'
+    Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', '-u', (Join-Path $Settings.Application 'scripts\pilot_update.py'), 'apply', $package, '--sha256', $digest, '--work-dir', $Settings.Work))
     $refresh = Join-Path $Settings.Application 'scripts\windows_update.py'
     if (Test-Path -LiteralPath $refresh) { Invoke-SurvieUpdateCommand $python.Path @($prefix + @('-X', 'utf8', $refresh, '--work-dir', $Settings.Work)) }
     Write-Host 'Mise à jour terminée. Actualisez http://localhost:8080.'
@@ -91,7 +105,9 @@ function Invoke-SurvieGitUpdate($Settings) {
 if ($MyInvocation.InvocationName -ne '.') {
     $mutex = New-Object Threading.Mutex($false, 'Local\SetupSurvie-MiseAJour')
     $acquired = $false; $transcript = $false
+    $previousEncoding = [Console]::OutputEncoding
     try {
+        [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
         try { $acquired = $mutex.WaitOne(0) } catch [Threading.AbandonedMutexException] { $acquired = $true }
         if (-not $acquired) { throw 'Une mise à jour est déjà lancée dans une autre fenêtre.' }
         $settings = Get-SurvieUpdateSettings
@@ -107,5 +123,5 @@ if ($MyInvocation.InvocationName -ne '.') {
         Invoke-SurvieGitUpdate $settings
         exit 0
     } catch { Write-Host ('Mise à jour arrêtée : ' + $_.Exception.Message) -ForegroundColor Red; exit 1 }
-    finally { if ($transcript) { Stop-Transcript | Out-Null }; if ($acquired) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
+    finally { [Console]::OutputEncoding = $previousEncoding; if ($transcript) { Stop-Transcript | Out-Null }; if ($acquired) { $mutex.ReleaseMutex() }; $mutex.Dispose() }
 }

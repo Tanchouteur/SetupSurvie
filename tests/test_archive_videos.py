@@ -2,6 +2,7 @@
 import asyncio
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import AsyncMock,patch
 import httpx
@@ -90,6 +91,17 @@ class ArchiveVideoIndexTests(unittest.TestCase):
 
 
 class ArchiveVideoLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    def test_legacy_report_excludes_unfinished_collections_from_examined_count(self):
+        with TemporaryDirectory() as folder,patch.object(store,'ROOT',Path(folder)):
+            directory=archive_videos.directory()
+            directory.mkdir()
+            report={'schema':1,'phase':'paused','completed':4,'archives':4,'results':[
+                {'status':'reused'},{'status':'partial'},{'status':'paused'},{'status':'error'},
+            ]}
+            (directory/'progress.json').write_text(json.dumps(report),encoding='utf-8')
+            result=archive_videos.progress()
+            self.assertEqual((result['completed'],result['archives'],result['phase']),(2,4,'paused'))
+
     async def test_host_start_failure_and_queue_are_not_hidden_by_an_old_finished_inventory(self):
         previous={'phase':'completed','job_id':'old','reader_ready':True,'reader_updating':False}
         host={'action':'video-inventory','id':'new','phase':'starting'}
