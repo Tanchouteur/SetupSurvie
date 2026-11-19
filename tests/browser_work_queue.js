@@ -42,6 +42,15 @@ async page => {
   verify(profile.ok(), 'Le profil Famille doit pouvoir piloter la file.');
   await page.setViewportSize({width: 1440, height: 900});
   await page.goto(base + '/nouveau/#/accueil');
+  await page.goto(base + '/nouveau/#/appareil/ensemble');
+  await page.locator('#next-machine-tabs').getByText('File d’attente').click();
+  await page.locator('#view-work-queue:visible').waitFor();
+  verify(await page.locator('#next-machine-tabs [aria-current=page]').textContent() === 'File d’attente', 'La file doit être l’onglet actif.');
+  await page.getByText('Voir le suivi détaillé des préparations').click();
+  await page.locator('#view-activity:visible').waitFor();
+  await page.locator('#next-machine-tabs').getByText('File d’attente').click();
+  await page.locator('#view-work-queue:visible').waitFor();
+  await page.goto(base + '/nouveau/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
   await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '7');
   const preview = page.locator('#main-navigation .work-queue-preview');

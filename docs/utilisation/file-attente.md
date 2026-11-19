@@ -1,6 +1,8 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.55.0.**
+**Guide actuel — 0.55.1.**
+
+Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page. Un lien en bas donne accès au suivi détaillé des préparations.
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône

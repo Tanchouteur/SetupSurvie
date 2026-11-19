@@ -82,7 +82,7 @@ que vos lieux ou trajets enregistrés sont perdus.
 
 **Mon appareil → Paramètres** propose quatre entrées : **Profils et connexion**,
 **Bibliothèque et préparations**, **Assistant**, **Entretien et diagnostics**.
-Les options avancées se déplient ; le suivi reste dans **Travaux en cours**.
+Les options avancées se déplient ; le suivi détaillé reste accessible depuis **File d’attente**.
 Le [guide des paramètres](parametres-et-appareil.md) donne les chemins et la
 correspondance complète des commandes. Le profil Famille propose la gestion ;
 chacun peut le sélectionner sans mot de passe.
@@ -181,7 +181,7 @@ pour choisir un document, sans lancer le moteur.
 
 À l’accueil, **Reprendre** donne accès au dernier document ouvert dans ce
 navigateur et à la discussion mémorisée, pour le profil courant. Dans **Mon
-appareil → Travaux en cours**, **Vos traductions et synthèses** rassemble les
+appareil → File d’attente → suivi détaillé des préparations**, **Vos traductions et synthèses** rassemble les
 travaux récents du profil. **Actualiser vos travaux** relit leur état ; il ne
 reprend aucun traitement.
 

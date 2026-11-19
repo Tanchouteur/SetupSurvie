@@ -308,13 +308,14 @@
   tabs.replaceChildren();
   for (const [key, title] of [
     ["ensemble", "Vue d’ensemble"],
-    ["activite", "Travaux en cours"],
+    ["file", "File d’attente"],
     ["reglages", "Paramètres"],
   ]) {
     const a = link(key, title, "");
     a.className = "";
     a.replaceChildren(document.createTextNode(title));
-    a.dataset.route = "appareil/" + key;
+    a.dataset.route = key === "file" ? "file" : "appareil/" + key;
+    if (key === "file") a.href = "#/file";
     tabs.append(a);
   }
   get("admin-nav").textContent = "Paramètres";

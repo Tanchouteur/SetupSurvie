@@ -36,7 +36,7 @@ def build():
         ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
         ('css', '/nouveau/work-queue.css', '0.55.0'),
         ('js', '/work-queue-preview.js', '0.55.0'),
-        ('js', '/nouveau/work-queue.js', '0.55.0'),
+        ('js', '/nouveau/work-queue.js', '0.55.1'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.54.0'),
@@ -47,7 +47,7 @@ def build():
         ('js', '/nouveau/assistant-diagnostics.js', '0.30.0'),
         ('js', '/nouveau/practical.js', '0.34.0'),
         ('js', '/nouveau/usage-recipe.js', '0.26.1'),
-        ('js', '/nouveau/settings-layout.js', '0.43.6'),
+        ('js', '/nouveau/settings-layout.js', '0.55.1'),
         ('js', '/nouveau/ux-system.js', '0.36.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.38.0'),
         ('js', '/nouveau/reader-work.js', '0.55.0'),
@@ -58,8 +58,8 @@ def build():
         ('css', '/design/tokens.css', '0.44.0'),
         ('css', '/design/system.css', '0.49.0'),
         ('css', '/nouveau/library-video.css', '0.54.0'),
-        ('js', '/design/experience.js', '0.49.0'),
-        ('js', '/nouveau/navigation.js', '0.51.0'),
+        ('js', '/design/experience.js', '0.55.1'),
+        ('js', '/nouveau/navigation.js', '0.55.1'),
     ]
     tags = []
     for kind, path, version in assets:

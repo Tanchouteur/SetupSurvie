@@ -62,7 +62,7 @@
     ["Aller à", "Nouvelle discussion", () => { afterRoute(() => { $("chat-reset")?.click(); $("chat-input")?.focus(); }); location.hash = "#/assistant"; }],
     ["Aller à", "Cartes hors ligne", () => { location.href = "/cartes.html?interface=nouveau"; }],
     ["Aller à", "État de l’appareil", go("#/appareil/ensemble")],
-    ["Aller à", "Travaux en cours", go("#/appareil/activite")],
+    ["Aller à", "File d’attente", go("#/file")],
     ["Aller à", "Paramètres", go("#/appareil/reglages")],
     ["Aller à", "Documents de secours", () => { location.href = "/secours.html"; }],
   ].map(([group, label, run]) => ({ group, label, run, key: fold(label) }));

@@ -11,7 +11,8 @@
     <p id="work-queue-error" role="alert" hidden></p>
     <p id="work-queue-freshness" role="status" hidden></p>
     <p id="work-queue-help" class="work-queue-meta" hidden>Glissez la poignée d’une tâche en attente pour la déplacer dans son groupe. Au clavier, utilisez les flèches haut et bas sur la poignée.</p>
-    <div id="work-queue-groups"></div>`;
+    <div id="work-queue-groups"></div>
+    <p><a href="#/appareil/activite" data-route="appareil/activite">Voir le suivi détaillé des préparations</a></p>`;
   $('main').append(page);
 
   const previews = [
