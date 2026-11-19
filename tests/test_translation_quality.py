@@ -8,6 +8,13 @@ import test_translations as fixtures
 
 
 class TokenChecksTests(unittest.TestCase):
+    def test_historical_ordinals_and_roman_centuries(self):
+        source='World War 2 ended in the 20th century. The date was 1945.'
+        target='La Seconde Guerre mondiale a fini au XXe siècle. La date était 1945.'
+        self.assertEqual(quality.assess(source,target,source_language='en')['status'],'checked')
+        for changed in (target.replace('XXe','XIXe'),target.replace('1945','1946'),target.replace('Seconde','Première')):
+            self.assertEqual(quality.assess(source,changed,source_language='en')['status'],'blocked')
+
     def test_english_document_grouping_keeps_values_and_units(self):
         original='About 400,000 years ago. That is 1,500.25 meters.'
         correct='Il y a environ 400\u202f000 ans. Cela fait 1 500,25 mètres.'
