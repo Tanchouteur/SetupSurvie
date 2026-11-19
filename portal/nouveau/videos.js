@@ -9,6 +9,7 @@
       </select>
     </label>
     <div class="video-library-status"><p id="next-videos-count" role="status"></p><p id="next-videos-feedback" class="small" role="status"></p></div>
+    <button id="next-videos-retry" class="secondary" hidden>Réessayer</button>
     <div id="next-videos-list" class="video-library-list"></div>
     <button id="next-videos-more" class="secondary" hidden>Voir la suite</button>
     <div id="video-library-tools">
@@ -24,8 +25,10 @@
     </div>`;
   document.querySelector('[data-collection-section="videos"]').append(panel);
   const states={french_available:'Sous-titres français',french_prepared:'Sous-titres français · à relire',source_transcribed:'Paroles transcrites · à relire',source_only:'Sous-titres en langue d’origine',missing:'Sous-titres à préparer',invalid:'Pistes illisibles',unknown:'Langue des pistes inconnue'};
-  let offset=0,version=0,busy=false,timer=null,latest=null,activeMedia=null;
+  let offset=0,busy=false,timer=null,latest=null,activeMedia=null,listingRequest=null,listingChanged=false;
   const originFilter=$('next-videos-origin');
+  const retry=$('next-videos-retry');
+  const moreVideos=$('next-videos-more');
   const videoFilters=()=>({q:$('collection-filter').value,origin:originFilter.value});
   let renderedFilter=null;
   let updateReaderTracks=null;
@@ -33,14 +36,36 @@
     const code=(value||'').toLowerCase().split(/[-_]/)[0];
     return ({eng:'en',fra:'fr',fre:'fr',und:''})[code]??code;
   }
-  async function refresh(append=false){
-    if(!S.authReady||!S.user)return;
-    const current=++version,filters=videoFilters();
+  async function fetchVideos(parameters,controller=new AbortController()){
+    let timedOut=false;
+    const deadline=setTimeout(()=>{timedOut=true;controller.abort();},20000);
+    try{return await api('/videos?'+new URLSearchParams(parameters),undefined,{signal:controller.signal});}
+    catch(error){
+      if(timedOut)throw Error('La liste des vidéos met trop de temps à répondre.');
+      throw error;
+    }finally{clearTimeout(deadline);}
+  }
+  function cancelListing(){
+    listingRequest?.abort();
+    listingRequest=null;
+    listingChanged=false;
+    clearTimeout(timer);timer=null;
+  }
+  async function refresh(append=false,background=false){
+    if(!S.authReady||!S.user||timer!==null||listingRequest)return;
+    const request=new AbortController(),filters=videoFilters();
     const filterKey=new URLSearchParams(filters).toString();
     const filtered=filters.q.trim()||filters.origin!=='all';
+    listingRequest=request;
+    moreVideos.disabled=true;
+    if(!background){
+      retry.hidden=true;
+      $('next-videos-feedback').textContent='Chargement des vidéos…';
+    }
     try{
-      const data=await api('/videos?'+new URLSearchParams({...filters,grouped:'true',offset:append?offset:0}));
-      if(current!==version)return;
+      const data=await fetchVideos({...filters,grouped:'true',offset:append?offset:0},request);
+      if(listingRequest!==request)return;
+      retry.hidden=true;
       const same=!append&&renderedFilter===filterKey&&offset>0&&latest?.status.finished===data.status.finished&&latest.total===data.total;
       const inventoryFinished=data.status.phase==='completed'&&(
         latest?.status.phase!=='completed'||latest.status.finished!==data.status.finished
@@ -59,8 +84,21 @@
       if(!append){target.replaceChildren();offset=0;renderedFilter=filterKey;}
       for(const group of data.groups.filter(group=>!group.video))target.append(collectionCard(group,filters,data.group_total===1));
       renderCards(target,data.groups.filter(group=>group.video).map(group=>group.video));
-      offset+=data.groups.length;$('next-videos-more').hidden=offset>=data.group_total;
-    }catch(error){if(current===version)$('next-videos-feedback').textContent=error.message;}
+      offset+=data.groups.length;moreVideos.hidden=offset>=data.group_total;
+    }catch(error){
+      if(listingRequest!==request)return;
+      $('next-videos-feedback').textContent=error.message;
+      retry.onclick=()=>refresh(append);
+      retry.hidden=false;
+    }finally{
+      if(listingRequest===request){
+        listingRequest=null;moreVideos.disabled=false;
+        if(listingChanged){
+          listingChanged=false;renderedFilter=null;
+          if(retry.hidden)void refresh(false,true);
+        }
+      }
+    }
   }
   function collectionCard(group,filters,onlyGroup){
     const details=window.CollectionsFilter.createGroup('video:'+group.id,group.name,group.count+' vidéos');
@@ -74,7 +112,7 @@
       if(loading)return;
       loading=true;more.disabled=true;notice.textContent='Chargement des vidéos…';
       try{
-        const data=await api('/videos?'+new URLSearchParams({...filters,group:group.id,offset:loaded}));
+        const data=await fetchVideos({...filters,group:group.id,offset:loaded});
         const current=videoFilters();
         if(!details.isConnected||filters.q!==current.q||filters.origin!==current.origin)return;
         renderCards(children,data.videos);
@@ -126,26 +164,31 @@
     catch(error){$('next-videos-status').textContent=error.message;}
     finally{busy=false;$('next-videos-index').disabled=latest?.status.phase==='running';}
   }
-  $('next-videos-index').onclick=()=>command('index');$('next-videos-stop').onclick=()=>command('stop');$('next-videos-more').onclick=()=>refresh(true);
+  $('next-videos-index').onclick=()=>command('index');$('next-videos-stop').onclick=()=>command('stop');moreVideos.onclick=()=>refresh(true);
   $('next-videos-report').onclick=async()=>{
     try{const report=await api('/admin/videos/report');downloadReport(report,'videos');}
     catch(error){$('next-videos-status').textContent=error.message;}
   };
   function refreshFilter(delay){
-    version++;renderedFilter=null;
+    cancelListing();renderedFilter=null;
     $('next-videos-list').hidden=true;
-    $('next-videos-more').hidden=true;
+    moreVideos.hidden=true;
+    retry.hidden=true;
     $('next-videos-count').textContent='';
     $('next-videos-feedback').textContent='Chargement des vidéos…';
-    clearTimeout(timer);timer=setTimeout(()=>refresh(),delay);
+    timer=setTimeout(()=>{timer=null;refresh();},delay);
   }
   originFilter.addEventListener('change',()=>refreshFilter(0));
   document.addEventListener('survie:collection-filter',()=>refreshFilter(250));
   document.addEventListener('survie:collection-query-restored',()=>refreshFilter(250));
   new MutationObserver(()=>{if(!$('next-collections').hidden)refresh();}).observe($('next-collections'),{attributes:true,attributeFilter:['hidden']});
-  document.addEventListener('survie:auth',()=>{version++;renderedFilter=null;$('video-reader-preparation')?.remove();refresh();});
-  document.addEventListener('survie:videos-changed',async()=>{renderedFilter=null;await refresh();updateReaderTracks?.();});
-  setInterval(()=>{if(latest?.status.phase==='running'&&!document.hidden&&(!$('next-collections').hidden||activeMedia?.isConnected&&!$('reader').hidden&&!$('view-library').hidden))refresh();},1500);
+  document.addEventListener('survie:auth',()=>{cancelListing();renderedFilter=null;$('video-reader-preparation')?.remove();refresh();});
+  document.addEventListener('survie:videos-changed',()=>{
+    if(listingRequest)listingChanged=true;
+    else{renderedFilter=null;if(retry.hidden)void refresh(false,true);}
+    updateReaderTracks?.();
+  });
+  setInterval(()=>{if(retry.hidden&&latest?.status.phase==='running'&&!document.hidden&&(!$('next-collections').hidden||activeMedia?.isConnected&&!$('reader').hidden&&!$('view-library').hidden))refresh(false,true);},1500);
   document.addEventListener('survie:source',event=>{
     updateReaderTracks=null;
     if(activeMedia){activeMedia.pause();activeMedia=null;}
