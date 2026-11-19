@@ -32,7 +32,7 @@ def build():
         ('js', '/nouveau/captions.js', '0.54.0'),
         ('js', '/nouveau/transcriptions.js', '0.54.0'),
         ('js', '/nouveau/acquisitions.js', '0.54.0'),
-        ('js', '/nouveau/archive-videos.js', '0.60.2'),
+        ('js', '/nouveau/archive-videos.js', '0.60.3'),
         ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
         ('css', '/nouveau/work-queue.css', '0.56.0-2'),
         ('js', '/work-queue-preview.js', '0.56.0'),
@@ -65,6 +65,7 @@ def build():
     for kind, path, version in assets:
         tags.append(f'<link rel="stylesheet" href="{path}?v={version}">' if kind == 'css'
                     else f'<script defer src="{path}?v={version}"></script>')
+    source = source.replace('/app.js?v=0.60.0', '/app.js?v=0.60.2')
     source = source.replace('</head>', ''.join(tags) + '</head>', 1)
     source = source.replace('<script defer src="/nouveau/layout.js',
                             '<script defer src="/nouveau/ui.js?v=0.36.0"></script><script defer src="/nouveau/layout.js', 1)

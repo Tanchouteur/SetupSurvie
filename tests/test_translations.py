@@ -161,7 +161,8 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             publication=status['publication']
             self.assertTrue(publication['partial']);self.assertFalse(publication['pending'])
             path=library.GUIDES/publication['source_id'].removeprefix('guide:')
-            before=path.read_text()
+            original_bytes=path.read_bytes()
+            before=original_bytes.decode('utf-8')
             self.assertIn('Traduction partielle : 2/3',before)
             self.assertIn('Passage non traduit · passage 2',before)
             self.assertIn('Consulter l’original',before)
@@ -171,13 +172,13 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn('2/3 passages traduits',tr.export(key,'alice'))
             reader=translation_reader.page(publication['source_id'],self.source,2)
             self.assertTrue(reader['partial']);self.assertIn('Passage non traduit',reader['parts'][0])
-            external=before+'<!-- modification extérieure -->'
-            path.write_text(external)
+            external=original_bytes+b'<!-- modification exterieure -->'
+            path.write_bytes(external)
             with self.assertRaises(HTTPException) as conflict:
                 await publications.publish(key,'alice')
             self.assertEqual(conflict.exception.status_code,409)
-            self.assertEqual(path.read_text(),external)
-            path.write_text(before)
+            self.assertEqual(path.read_bytes(),external)
+            path.write_bytes(original_bytes)
             store.init()
             with patch.object(tr,'launch'):await tr.resume(key,'alice','moyenne')
             with patch.object(library,'index_guides',side_effect=OSError('indexation interrompue')):
