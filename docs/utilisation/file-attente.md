@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.52.0.**
+**Guide actuel — 0.52.1.**
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
 de tâches visibles en cours ou en attente. Sur ordinateur, survolez l’icône
@@ -39,9 +39,20 @@ libère le prochain créneau. Les traitements interrompus par le mode jeu
 gardent leurs propres commandes de reprise, après redémarrage volontaire
 du moteur.
 
-Une tâche en erreur libère le créneau pour la suivante. Son détail reste dans
-**À vérifier**, avec **Réessayer** ou un accès au travail d’origine lorsque
-sa reprise dépend de celui-ci. Une reprise vidéo conserve les fichiers et
+Une tâche en erreur libère le créneau. Le signe **!** apparaît sur l’icône,
+et l’aperçu en indique le titre et le motif lorsque le service les fournit.
+Les erreurs sont placées en tête de la page, avec **Réessayer** ou un accès
+au travail d’origine. Les travaux en pause, interrompus ou incomplets sont
+dans **À reprendre**. La pause générale laisse les erreurs visibles.
+
+Si la connexion au suivi est coupée, l’aperçu et la page signalent le dernier
+état connu. Les commandes de la file redeviennent disponibles après
+actualisation. L’assistant continue à suivre la réponse en cours dès que la
+connexion revient. Un envoi qui reste sans confirmation conserve le texte
+dans la zone de saisie. Les lecteurs de documents, les synthèses et les préparations
+de pistes indiquent aussi si un travail attend son tour ou la reprise de la file.
+
+Une reprise vidéo conserve les fichiers et
 pistes déjà publiés. La pause globale et les étapes de la chaîne YouTube
 sont conservées sur le disque. Après un redémarrage, les questions et les
 traductions ordinaires suivent les règles de reprise de leur page.

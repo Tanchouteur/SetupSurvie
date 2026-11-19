@@ -40,3 +40,13 @@ locale. Le moteur traite au plus trois questions prioritaires de suite tant
 qu’une tâche de fond attend. Les téléchargements et la transcription sur CPU
 peuvent avancer pendant une réponse. La priorité s’applique entre les étapes
 enregistrées. L’interface montre le prochain travail prévu dans chaque créneau.
+
+## Visibilité des états dans le portail
+
+Louis demande de rendre les états et les erreurs accessibles depuis
+l’aperçu et la page de la file. Dans la version 0.52.1, le signal d’erreur
+reste présent pendant la pause et les tâches à reprendre disposent de leur
+propre rubrique. Une coupure du suivi conserve le dernier état connu et
+désactive les commandes de la file jusqu’à la prochaine actualisation.
+La conversation et le formulaire YouTube gardent un message de suivi
+explicite quand leur service ne répond plus.

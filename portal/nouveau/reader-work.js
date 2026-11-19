@@ -96,8 +96,8 @@
       try{const data=await request('/translations/'+encodeURIComponent(id)+'?offset='+position);if(!valid()||own!==version)return;
         if(position>=data.total&&position)return load(id,Math.max(0,Math.floor((data.total-1)/10)*10));
         if(modeForJob!==id){modeForJob=id;if([...modes.options].some(o=>o.value===data.mode))modes.value=data.mode;}
-        renderedJob=id;select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)setText(option,(labels[data.status]||data.status)+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR'));const active=['queued','running'].includes(data.status);
-        setText(state,(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||''));
+        renderedJob=id;select.value=id;const option=[...select.options].find(o=>o.value===id);if(option)setText(option,(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+new Date(data.created*1000).toLocaleDateString('fr-FR'));const active=['queued','running'].includes(data.status);
+        setText(state,(window.WorkQueuePreview?.workLabel(data,labels[data.status])||labels[data.status]||'État inconnu')+' · '+data.done+'/'+data.total+' passages traduits. '+(Number.isInteger(data.pages_done)?data.pages_done+'/'+data.pages+' pages ou sections entièrement traduites. ':'')+(data.error||data.notice||''));
         const end=Math.min(position+data.parts.length,data.total);setText(reading,(Number.isInteger(data.current_page)?'Page/section en cours : '+data.current_page+'. ':'')+(data.total?'Passages affichés : '+(position+1)+' à '+end+' sur '+data.total+'.':'Aucun passage à afficher.'));
         lastDone=data.last_done_position;latest.hidden=!Number.isInteger(lastDone)||Math.floor(lastDone/10)*10===position;
         progress.hidden=false;progress.max=Math.max(1,data.total);progress.value=data.done;

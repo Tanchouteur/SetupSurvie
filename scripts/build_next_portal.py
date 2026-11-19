@@ -25,18 +25,18 @@ def build():
         ('css', '/nouveau/assistant-workspace.css', '0.38.0'),
         ('css', '/nouveau/reader-work.css', '0.39.0'),
         ('js', '/source-figures.js', '0.28.0'),
-        ('js', '/long-summaries.js', '0.34.0'),
+        ('js', '/long-summaries.js', '0.52.1'),
         ('css', '/bilingual-reader.css', '0.23.0'),
         ('js', '/bilingual-reader.js', '0.28.0'),
         ('js', '/nouveau/videos.js', '0.48.0'),
-        ('js', '/nouveau/captions.js', '0.48.0'),
-        ('js', '/nouveau/transcriptions.js', '0.48.0'),
-        ('js', '/nouveau/acquisitions.js', '0.48.0'),
+        ('js', '/nouveau/captions.js', '0.52.1'),
+        ('js', '/nouveau/transcriptions.js', '0.52.1'),
+        ('js', '/nouveau/acquisitions.js', '0.52.1'),
         ('js', '/nouveau/archive-videos.js', '0.48.0'),
-        ('js', '/nouveau/youtube-downloads.js', '0.51.0'),
-        ('css', '/nouveau/work-queue.css', '0.52.0'),
-        ('js', '/work-queue-preview.js', '0.52.0'),
-        ('js', '/nouveau/work-queue.js', '0.52.0'),
+        ('js', '/nouveau/youtube-downloads.js', '0.52.1'),
+        ('css', '/nouveau/work-queue.css', '0.52.1'),
+        ('js', '/work-queue-preview.js', '0.52.1'),
+        ('js', '/nouveau/work-queue.js', '0.52.1'),
         ('js', '/nouveau/performance.js', '0.26.1'),
         ('js', '/nouveau/translation-benchmark.js', '0.26.1'),
         ('js', '/nouveau/collections.js', '0.48.1'),
@@ -50,7 +50,7 @@ def build():
         ('js', '/nouveau/settings-layout.js', '0.43.6'),
         ('js', '/nouveau/ux-system.js', '0.36.0'),
         ('js', '/nouveau/assistant-workspace.js', '0.38.0'),
-        ('js', '/nouveau/reader-work.js', '0.39.0'),
+        ('js', '/nouveau/reader-work.js', '0.52.1'),
         ('css', '/nouveau/motion.css', '0.37.0'),
         ('js', '/nouveau/motion.js', '0.37.2'),
         ('css', '/resource-status.css', '0.49.0'),
@@ -72,7 +72,7 @@ def build():
                       for name in ('atkinson-next-latin-wght', 'fraunces-latin-wght'))
     source = source.replace('<link rel="stylesheet"', preload + '<link rel="stylesheet"', 1)
     source = source.replace('<body>', '<body class="next-interface">', 1)
-    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.49.0')
+    source=source.replace('/app.js?v=map-redesign-0.1.12','/app.js?v=0.52.1')
     source=source.replace('/documents.js?v=0.1.25','/documents.js?v=0.43.3')
     source=source.replace('/style.css?v=map-redesign-0.1.12','/style.css?v=0.39.0')
     return source

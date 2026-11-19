@@ -121,7 +121,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.52.0'
+VERSION='0.52.1'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -1354,7 +1354,9 @@ async def job(identifier:str,value=Depends(user)):
     from . import documentary
     observed=engine.DOCUMENTARY.get(identifier)
     evidence=observed.view() if observed else documentary.for_job(identifier) or documentary.clean((measured or {}).get('documentary'))
-    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{}),'measurements':measured,**({'documentary':evidence} if evidence else {})}
+    queued=work_queue.queue_fields(identifier,row['status'],'chat')
+    return {**dict(row),'sources':json.loads(row['sources']),'progress':engine.PROGRESS.get(identifier,{}),'measurements':measured,
+            **queued,**({'documentary':evidence} if evidence else {})}
 
 
 @app.get('/api/jobs/{identifier}/measurements')
