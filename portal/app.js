@@ -866,18 +866,6 @@ $('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=e
 $('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};
 $('feedback-button').onclick=()=>{if(needUser())$('feedback-dialog').showModal();};$('feedback-form').onsubmit=async e=>{e.preventDefault();try{await api('/feedback',{content:new FormData(e.target).get('content'),view:S.view+(S.view==='chat'?' · '+$('chat-mode').selectedOptions[0].textContent:'')});e.target.reset();$('feedback-dialog').close();toast('Merci, votre retour a été enregistré sur cet appareil.');}catch(error){$('feedback-status').textContent=error.message;}};$('refresh-feedback').onclick=feedbacks;
-let recorder=null,tracks=[],chunks=[];
-$('dictate').onclick=async()=>{
-  if(!needUser())return;
-  if(recorder?.state==='recording'){recorder.stop();return;}
-  if(!window.isSecureContext||!navigator.mediaDevices?.getUserMedia){toast('Le micro nécessite l’adresse HTTPS de l’appareil. Vous pouvez aussi écrire votre question.');return;}
-  try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});tracks=stream.getTracks();chunks=[];
-    const mime=['audio/webm','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t));recorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
-    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=async()=>{tracks.forEach(t=>t.stop());$('dictate').textContent='● Dicter';if(!chunks.length)return;$('chat-status').textContent='Transcription de votre dictée…';const type=recorder.mimeType;const data=new FormData();data.append('file',new Blob(chunks,{type}),'dictee.'+(type.includes('mp4')?'mp4':'webm'));try{const result=await api('/transcribe',data);$('chat-input').value+=($('chat-input').value?' ':'')+result.text;$('chat-status').textContent=result.text?'Relisez la dictée, puis envoyez votre question.':'Aucune parole reconnue. Essayez de nouveau ou écrivez votre question.';}catch(e){$('chat-status').textContent=e.message;}};
-    recorder.start();$('dictate').textContent='■ Terminer la dictée';setTimeout(()=>{if(recorder?.state==='recording')recorder.stop();},120000);
-  }catch(e){tracks.forEach(t=>t.stop());toast('Le micro n’est pas accessible. Vérifiez son autorisation ou écrivez votre question.');}
-};
-window.addEventListener('pagehide',()=>tracks.forEach(t=>t.stop()));
 document.querySelectorAll('.native-webui').forEach(a=>a.href=localServiceURL('/','webui'));
 window.addEventListener('DOMContentLoaded',()=>{
 bindExamples();view(location.hash.slice(1)||'home');status();refreshInference();

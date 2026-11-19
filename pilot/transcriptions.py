@@ -99,7 +99,7 @@ def model_config():
         return {'available':True,'model_path':str(folder),'model':pin,'runtime':runtime,'device':'cpu','compute_type':'int8',
             'threads':max(1,min(4,(os.cpu_count() or 2)//2))}
     except (OSError,ValueError,KeyError,importlib.metadata.PackageNotFoundError):
-        return {'available':False,'reason':'speech_not_prepared','message':'La reconnaissance vocale n’est pas préparée. Préparez la dictée avec l’installateur, une fois avec Internet, puis réessayez.'}
+        return {'available':False,'reason':'speech_not_prepared','message':'La reconnaissance vocale n’est pas préparée. Préparez la reconnaissance vocale avec l’installateur, une fois avec Internet, puis réessayez.'}
 
 
 def current_source(item):
@@ -164,7 +164,7 @@ class Worker:
                     'archive_media_redirect_refused':'Cette référence renvoie vers un autre média ; la reconnaissance reste en attente d’une source locale vérifiée.',
                     'archive_media_response_invalid':'Le média renvoyé ne correspond pas à l’inventaire. Vérifiez la collection avant de reprendre.',
                     'archive_secondary_reference_refused':'Ce média demande d’ouvrir une autre ressource. La reconnaissance accepte ici les fichiers vidéo inclus, sans liste distante.'}
-                raise ValueError(messages.get(value.get('reason'),'Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la dictée.'))
+                raise ValueError(messages.get(value.get('reason'),'Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la reconnaissance vocale.'))
             return value['result']
         finally:
             if not response.done():response.cancel();await asyncio.gather(response,return_exceptions=True)
@@ -265,7 +265,7 @@ async def run(identifier):
         update(identifier,'completed' if get(identifier)['status']=='completed' else 'error',str(error))
     except Exception:
         if get(identifier)['status']=='completed':update(identifier,'completed','La transcription est conservée ; la préparation française reste à lancer depuis cette vidéo.')
-        else:update(identifier,'error','Transcription interrompue. Les passages terminés restent conservés ; vérifiez le fichier et la préparation de la dictée.')
+        else:update(identifier,'error','Transcription interrompue. Les passages terminés restent conservés ; vérifiez le fichier et la préparation de la reconnaissance vocale.')
     finally:await worker.close()
 
 

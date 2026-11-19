@@ -16,11 +16,12 @@ from fastapi import FastAPI,Depends,HTTPException,Request,Response,UploadFile,Fi
 from pydantic import BaseModel,Field
 from starlette.responses import FileResponse,JSONResponse,StreamingResponse
 
-from . import work_queue,youtube_pipeline
+from . import model_downloads,work_queue,youtube_pipeline
 from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream,startup_diagnostic
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
+MODEL_DOWNLOADS=model_downloads.ModelDownloads(engine.OLLAMA,engine.PROFILE_CONFIG)
 
 
 DEGRADED={}
@@ -79,6 +80,7 @@ async def lifespan(app):
     video_refresh=asyncio.create_task(refresh_videos())
     youtube_watch=asyncio.create_task(youtube_pipeline.watch())
     yield
+    await MODEL_DOWNLOADS.cancel()
     youtube_watch.cancel()
     await asyncio.gather(youtube_watch,return_exceptions=True)
     await youtube_pipeline.stop()
@@ -121,7 +123,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.60.2'
+VERSION='0.61.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -1386,18 +1388,6 @@ async def cancel(identifier:str,value=Depends(user)):
     return {'ok':True}
 
 
-@app.post('/api/transcribe')
-async def transcribe(request:Request,file:UploadFile=File(...),value=Depends(user)):
-    content=await file.read(20_000_001)
-    if len(content)>20_000_000:raise HTTPException(413,'Enregistrement trop long. Essayez une dictée plus courte.')
-    credential=await accounts.profile_token(value)
-    async with accounts.httpx.AsyncClient(trust_env=False,timeout=180) as client:
-        result=await client.post(accounts.WEBUI+'/api/v1/audio/transcriptions',headers={'Authorization':'Bearer '+credential,**profiles.webui_headers(value)},
-            files={'file':(Path(file.filename or 'dictee.webm').name,content,file.content_type or 'audio/webm')},data={'language':'fr'})
-    if result.status_code!=200:raise HTTPException(503,'La dictée est indisponible. Vous pouvez écrire votre question.')
-    return {'text':result.json().get('text','')}
-
-
 @app.get('/api/admin/users')
 async def users(value=Depends(admin)):return {'users':await asyncio.to_thread(profiles.listing)}
 
@@ -1585,3 +1575,26 @@ async def set_context(body:ContextChoice,value=Depends(admin)):
     if body.model not in {p['model'] for p in engine.MODES.values()}:raise HTTPException(400,'Modèle inconnu.')
     with store.connect() as db:db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('context:'+body.model,str(body.tokens)))
     return {'model':body.model,'tokens':body.tokens}
+
+
+class ModelDownloadChoice(BaseModel):
+    model: str = Field(min_length=1, max_length=150)
+
+
+@app.get('/api/admin/models')
+async def list_models(value=Depends(admin)):
+    return await MODEL_DOWNLOADS.status()
+
+
+@app.post('/api/admin/models/download',status_code=202)
+async def download_model(body:ModelDownloadChoice,value=Depends(admin)):
+    return await MODEL_DOWNLOADS.start(body.model)
+
+
+class ModelDownloadCancellation(BaseModel):
+    id: str = Field(pattern=r'^[a-f0-9]{32}$')
+
+
+@app.post('/api/admin/models/cancel')
+async def cancel_model_download(body:ModelDownloadCancellation,value=Depends(admin)):
+    return await MODEL_DOWNLOADS.cancel(body.id)

@@ -114,19 +114,15 @@ class ProfileTests(unittest.TestCase):
             with self.assertRaises(HTTPException):asyncio.run(accounts.profile_token(p))
         self.assertEqual(self.client.get('/api/profiles/current').status_code,200)
 
-    def test_dictation_gets_native_profile_session_without_any_browser_credential(self):
-        real=httpx.AsyncClient;seen=[]
-        def handler(request):
-            seen.append(request.url.path)
-            self.assertEqual(request.headers['X-Survie-Email'],'family@survie.local')
-            if request.url.path=='/api/v1/auths/signin':return httpx.Response(200,json={'token':'fixture-native'})
-            self.assertEqual(request.headers['Authorization'],'Bearer fixture-native')
-            return httpx.Response(200,json={'text':'Dictée fictive'})
-        with patch.object(accounts.httpx,'AsyncClient',side_effect=lambda **kw:real(transport=httpx.MockTransport(handler),**kw)):
-            result=self.client.post('/api/transcribe',files={'file':('fixture.webm',b'fixture','audio/webm')})
-        self.assertEqual(result.status_code,200,result.text)
-        self.assertEqual(result.json()['text'],'Dictée fictive')
-        self.assertEqual(seen,['/api/v1/auths/signin','/api/v1/audio/transcriptions'])
+    def test_model_downloads_require_the_settings_profile(self):
+        self.client.post('/api/profiles/select',json={'id':'original-alice'})
+        self.assertEqual(self.client.get('/api/admin/models').status_code,403)
+        self.assertEqual(self.client.post('/api/admin/models/download',json={'model':'gemma4:e4b'}).status_code,403)
+        self.assertEqual(self.client.post('/api/admin/models/cancel',json={'id':'a'*32}).status_code,403)
+
+    def test_chat_microphone_endpoint_is_removed(self):
+        result=self.client.post('/api/transcribe',files={'file':('fixture.webm',b'fixture','audio/webm')})
+        self.assertEqual(result.status_code,404)
 
     def test_lab_access_refresh_changes_only_web_containers_and_keeps_pause(self):
         import sys

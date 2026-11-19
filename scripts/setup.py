@@ -429,7 +429,7 @@ class Installation:
         marker=Path(c['data_dir'])/'state/openwebui/cache/whisper/ready.json'
         folder=marker.parent/'faster-whisper-small'
         if marker.exists() and json.loads(marker.read_text())==VERSIONS['speech'] and all((folder/name).is_file() for name in ('model.bin','config.json','tokenizer.json')):return
-        if offline:raise SetupError('Dictée non préparée. Lancez prepare avec Internet ou importez les caches du kit.')
+        if offline:raise SetupError('Reconnaissance vocale non préparée. Lancez prepare avec Internet ou importez les caches du kit.')
         self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','-e','HF_HUB_OFFLINE=0','-e','OFFLINE_MODE=false','open-webui','-c',PREPARE_SPEECH)
         script="from pathlib import Path; Path('/app/backend/data/cache/whisper/ready.json').write_text("+repr(json.dumps(VERSIONS['speech']))+")"
         self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','open-webui','-c',script)
@@ -490,7 +490,7 @@ class Installation:
         if c['bind']=='0.0.0.0':
             print('Nom facile à retenir : http://'+c.get('discovery_name','survie')+'.local:8080')
             print(f'Sur le réseau local : https://{host}:8443 ; Open WebUI : https://{host}:8444 ; Kiwix : https://{host}:8445')
-            print('Installer le certificat local sur chaque appareil pour HTTPS et la dictée. Voir docs/installation/pilote-marc.md.')
+            print('Installer le certificat local sur chaque appareil pour HTTPS. Voir docs/installation/pilote-marc.md.')
         else:print('Accès limité au PC serveur. configure --lan --lan-host ADRESSE_IP pour ouvrir le réseau privé.')
 
     def certificate(self,c,destination):
@@ -569,8 +569,8 @@ class Installation:
         try:
             self.compose(c,'exec','-T','open-webui','python','-c',
                          "from faster_whisper import WhisperModel; WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',device='cpu',compute_type='int8',local_files_only=True)")
-            print('OK : modèle de dictée chargé depuis les fichiers locaux, sur CPU')
-        except SetupError as error:failures.append('Dictée locale : '+str(error))
+            print('OK : modèle de transcription audio chargé depuis les fichiers locaux, sur CPU')
+        except SetupError as error:failures.append('Transcription audio locale : '+str(error))
         report = {"automated_checks_passed": not failures, "failures": failures, "inference_paused": paused, "ollama_checks_deferred": paused,
                   "manual_checks_pending": ["LAN depuis un téléphone", "question française sur guide anglais", "réseau Internet débranché", "redémarrage du PC", "restauration"]}
         write_json(self.work / "verification.json", report)

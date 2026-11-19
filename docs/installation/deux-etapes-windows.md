@@ -106,7 +106,9 @@ Le dossier choisi contient ensuite :
 Sans kit, le parcours prépare les services, caches, les deux modèles des trois modes conseillés et le lot
 `survival` du catalogue figé. Il ne télécharge pas tous les modèles de comparaison,
 ni toute la bibliothèque ni les cartes. Bibliothèque et cartes se complètent dans
-le portail ; les autres modèles peuvent être ajoutés avec `scripts/survie.ps1 pull-model`.
+le portail. Pour les modèles de comparaison, ouvrir **Mon appareil → Paramètres →
+Assistant → Modèles de l’assistant** dans le profil Famille. La commande
+`scripts/survie.ps1 pull-model` reste disponible sur le serveur.
 Le contrôle préliminaire réserve au moins 60 Go libres sur le disque de données,
 en plus du logiciel à copier ; cela ne garantit pas la place nécessaire au fonds
 complet. Contrôler séparément l’espace du disque Docker.
@@ -268,7 +270,7 @@ l’IPv4 choisie et exige la version installée ; un site limité à localhost o
 ancienne version ne passent pas ce contrôle. L’adresse HTTP est fournie d’abord
 pour un premier essai simple. HTTPS est également disponible, mais nécessite la
 confiance dans le certificat racine public de SetupSurvie sur chaque appareil,
-notamment pour la dictée. Ne pas contourner un avertissement TLS comme preuve
+pour les connexions chiffrées. Ne pas contourner un avertissement TLS comme preuve
 que le certificat est installé.
 
 Un contrôle effectué depuis le serveur ne remplace pas celui du téléphone : le

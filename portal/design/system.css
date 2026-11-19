@@ -869,8 +869,6 @@ body.next-interface .composer:focus-within { border-color: var(--ds-ember); box-
 body.next-interface .composer textarea,
 body.next-interface .composer textarea:focus { padding: 6px 4px; background: transparent; border: 0; border-radius: 0; box-shadow: none; resize: none; }
 body.next-interface .composer-controls select { min-height: 34px; padding-block: 4px; background-color: var(--ds-surface-2); border-color: transparent; border-radius: var(--ds-r-full); font-size: .8125rem; box-shadow: none; }
-body.next-interface .composer-controls #dictate { min-height: 34px; padding-inline: 12px; background: transparent; border-radius: var(--ds-r-full); color: var(--ds-ink-2); font-size: .8125rem; box-shadow: none; }
-body.next-interface .composer-controls #dictate:hover:not(:disabled) { background: var(--ds-surface-2); color: var(--ds-ink); }
 body.next-interface .composer-bottom > span { color: var(--ds-ink-3); font-size: .75rem; }
 body.next-interface #send-question { min-height: 40px; padding-inline: 16px; font-size: .9375rem; }
 
@@ -1006,7 +1004,6 @@ body.next-interface .next-mobile-tools a:hover { color: var(--ds-ember-strong); 
   dialog.ds-palette { top: 10px; max-height: calc(100dvh - 20px); }
   .next-interface input:not([type="checkbox"]):not([type="radio"]), .next-interface select, .next-interface textarea { font-size: 16px; }
   body.next-interface .composer-controls select { min-height: 42px; font-size: 16px; }
-  body.next-interface .composer-controls #dictate { min-height: 42px; }
   body.next-interface footer .connection { margin-left: 0; }
 }
 /* Landscape phones: the conversation keeps the height. */

@@ -27,8 +27,9 @@ Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le naviga
 du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
 [guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
 
-Au **3 décembre 2026**, le pilote **0.60.2** propose une recherche locale avec indexation
-automatique, deux espaces documentaires et diagnostic exportable.
+Le pilote **0.61.0** propose une recherche locale avec indexation
+automatique, deux espaces documentaires et un diagnostic exportable. Les
+[modèles se téléchargent depuis les paramètres](docs/utilisation/nouvelle-interface.md#télécharger-un-modèle-pour-lassistant).
 La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre
 et de régler l’ordre des traitements du portail.
 Les résultats arrivent progressivement ; un cache local réutilise les réponses
@@ -97,7 +98,7 @@ Sur le serveur, le portail est accessible à `http://localhost:8080`, Open WebUI
 `:3000` et Kiwix à `:8081`. Depuis un autre appareil, utiliser l’IP du serveur ou
 le QR code. Le nom demandé est `survie.local` ; sa résolution dépend du réseau et
 du client. Le [guide Marc](docs/installation/pilote-marc.md) détaille le LAN et le
-HTTPS local, nécessaire pour la dictée et les connexions protégées.
+HTTPS local pour protéger les connexions sur le réseau.
 
 ## Se repérer dans le dépôt
 

@@ -94,7 +94,7 @@ En cas d’échec, une fenêtre explique le problème et les journaux `demarrage
 4. Sur un réseau Windows déclaré **Privé**, exécuter une fois `scripts\open-lan-firewall.ps1` dans PowerShell administrateur. La règle concerne les ports Web et le sous-réseau local. Aucune redirection de port sur Internet n’est nécessaire. Ne pas ouvrir le port API Ollama `11435` aux lecteurs et vérifier les éventuelles règles Ollama préexistantes.
 5. Depuis les autres appareils, utiliser `https://192.168.1.50:8443` pour le site, `:8444` pour Open WebUI et `:8445` pour Kiwix. Les liens du site adaptent leurs adresses au serveur et au protocole utilisés.
 
-Les ports HTTP `8080`, `3000` et `8081` fonctionnent aussi sur le LAN, mais HTTPS reste utile pour la dictée et le transport des données ; aucun mot de passe n’est requis. Le navigateur demande un contexte sécurisé pour le micro. Caddy crée une autorité de certification locale propre à cette installation ; elle fonctionne sans Internet et conserve ses clés dans `donnees\state\caddy`. [Principe du HTTPS local Caddy](https://caddyserver.com/docs/running).
+Les ports HTTP `8080`, `3000` et `8081` fonctionnent aussi sur le LAN, mais HTTPS permet de chiffrer le transport des données. Le choix de profil se fait sans mot de passe. Caddy crée une autorité de certification locale propre à cette installation ; elle fonctionne sans Internet et conserve ses clés dans `donnees\state\caddy`. [Principe du HTTPS local Caddy](https://caddyserver.com/docs/running).
 
 Exporter son certificat **public**, puis installer sa confiance sur chaque appareil lecteur :
 
@@ -159,7 +159,7 @@ Les archives ZIM ajoutées après le kit et les nouveaux modèles doivent être 
 
 ## Recette sur le PC de Marc
 
-Avant de considérer l’essai prêt : relever GPU/RAM/version Ollama ; vérifier l’usage réel du GPU ; créer un lecteur ; chercher un article et un passage de guide ; comparer trois modèles sur une même question ; consulter et ouvrir les sources ; vérifier un calcul avec le calculateur ; annuler un gros modèle ; retrouver les conversations dans chaque interface ; tester récupération et déconnexion ; tester la dictée avec une voix humaine sur PC et téléphone ; débrancher Internet tout en conservant le LAN ; redémarrer le PC ; réaliser une sauvegarde puis une restauration distincte.
+Avant de considérer l’essai prêt : relever GPU/RAM/version Ollama ; vérifier l’usage réel du GPU ; créer un lecteur ; chercher un article et un passage de guide ; comparer trois modèles sur une même question ; consulter et ouvrir les sources ; vérifier un calcul avec le calculateur ; annuler un gros modèle ; retrouver les conversations dans chaque interface ; tester récupération et déconnexion ; vérifier le téléchargement d’un modèle et l’utilisation hors ligne ; débrancher Internet tout en conservant le LAN ; redémarrer le PC ; réaliser une sauvegarde puis une restauration distincte.
 
 Les tests automatiques et les réserves locales figurent dans le bilan de livraison. Une recette Windows ou téléphone non exécutée doit rester marquée « à vérifier sur place ».
 

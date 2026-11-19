@@ -48,7 +48,7 @@ et la vérification. Une erreur avant publication laisse l’ancien kit utilisab
 ## Contrôler le contenu avant transfert
 
 `verify` relit les empreintes de tous les fichiers, puis contrôle les dépendances
-hors ligne : couches des modèles, caches de recherche et dictée, paquets de
+hors ligne : couches des modèles, caches de recherche et de transcription audio, paquets de
 découverte réseau, images annoncées et présentes dans l’archive, versions du code,
 cartes, relief, lieux et graphes. Un kit conforme doit être revérifié après copie
 sur le support de transport. Ce contrôle ne lance aucun modèle et ne constitue
