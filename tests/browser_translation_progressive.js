@@ -79,6 +79,7 @@ async page=>{
   await page.keyboard.press('Escape');await page.locator('#translation-reading-dialog').waitFor({state:'hidden'});
   check(await page.evaluate(()=>!translationReadingState(S.translation).open),'Échap ferme la lecture et conserve ce choix');
   stage='signaler un document sans texte traduit';scan=true;done=0;await page.evaluate(id=>loadTranslation(id,0),id);
+  await page.waitForFunction(()=>document.getElementById('translation-reading-status').textContent.includes('Aucun passage français'));
   check((await page.locator('#translation-reading-status').textContent()).includes('Aucun passage français')&&!(await page.locator('#translation-reading-status').textContent()).includes('pas encore prêt'),'Un document sans texte extractible ne promet pas une arrivée de traduction');
   check(await page.locator('#translation-reading-open').isDisabled()&&await page.locator('#translation-progress').evaluate(node=>node.value===0),'Les pages illisibles ne deviennent ni lecture disponible ni passages traduits');
   stage='poser une question dans la conversation de traduction';

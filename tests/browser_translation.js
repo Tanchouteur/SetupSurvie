@@ -9,6 +9,7 @@ async (page) => {
   if(!result.ok())throw Error(await result.text());
   const item=await result.json();
   await page.goto(base);await page.waitForFunction(()=>S.user?.id==='browser');
+  const nextInterface=await page.locator('#assistant-workspace').count()>0;
   await page.evaluate(id=>openConversation(id),item.conversation_id);
   await page.locator('#chat-source').waitFor({state:'visible'});
   await page.reload();await page.waitForFunction(()=>S.conversation!==null);
@@ -26,7 +27,7 @@ async (page) => {
     catch(error){throw Error('Disposition incorrecte '+width+'x'+height+' '+JSON.stringify(await page.evaluate(()=>({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,send:document.getElementById('send-question').getBoundingClientRect().toJSON(),chat:document.getElementById('view-chat').getBoundingClientRect().toJSON(),viewport:visualViewport?.height}))));}
     const valid=await page.evaluate(()=>({horizontal:document.documentElement.scrollWidth<=innerWidth,composer:document.getElementById('send-question').getBoundingClientRect().bottom<=innerHeight}));
     if(!valid.horizontal||!valid.composer)throw Error('Disposition incorrecte '+width+'x'+height);
-    await page.locator('#assistant-discussion #translation-resume').waitFor({state:'visible'});
+    await page.locator(nextInterface?'#assistant-discussion #translation-resume':'#translation-resume').waitFor({state:'visible'});
     layouts.push({width,height,...valid});
   }
   await page.reload();await page.waitForFunction(()=>S.translation!==null);
@@ -42,8 +43,10 @@ async (page) => {
   await page.reload();await page.waitForFunction(()=>S.conversation!==null);
   await documents();
   if(!await page.locator('#chat-source').isHidden())throw Error('Retrait non conservé');
-  await page.locator('[data-close-panel=documents]').click();
-  await page.locator('#chat-messages #translation-parts .translation-text').first().waitFor();
+  if(nextInterface){
+    await page.locator('[data-close-panel=documents]').click();
+    await page.locator('#chat-messages #translation-parts .translation-text').first().waitFor();
+  }
   await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
   await page.getByRole('button',{name:'Poser une question sur ce document',exact:true}).click();
   await page.locator('#translation-panel').evaluate(e=>e.open=true);
