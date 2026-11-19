@@ -76,7 +76,8 @@ async (page) => {
   // A JavaScript error in the optional module must leave the old search alive.
   const fallback=await page.context().newPage();const expected=[];fallback.on('pageerror',error=>expected.push(String(error)));
   await fallback.route('**/documents.js*',route=>route.fulfill({contentType:'text/javascript',body:'throw new Error("fixture optional module failure");'}));
-  await fallback.goto(base+'/#/bibliotheque/recherche');await fallback.locator('#library-query').fill('Shelter');await fallback.locator('#library-search').evaluate(f=>f.requestSubmit());
+  // Wait for the profile: the portal re-applies the route once it is known.
+  await fallback.goto(base+'/#/bibliotheque/recherche');await fallback.waitForFunction(()=>typeof S!=='undefined'&&S.authReady);await fallback.locator('#library-query').fill('Shelter');await fallback.locator('#library-search').evaluate(f=>f.requestSubmit());
   await fallback.waitForFunction(()=>document.querySelectorAll('.result').length>0);
   if(!expected.some(e=>e.includes('fixture optional module failure'))||expected.some(e=>!e.includes('fixture optional module failure')))throw Error('Core failure after optional module crash: '+expected.join('\n'));
   await fallback.close();

@@ -88,7 +88,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_catalogue.py -v
       - run: python -m unittest discover -s tests -p test_library_redirects.py -v
       - run: python -m unittest discover -s tests -p test_library_monitor.py -v
-      - run: python -m unittest discover -s tests -p test_next_portal.py -v
+      - run: python -m unittest discover -s tests -p test_portal_build.py -v
       - run: python -m unittest discover -s tests -p test_library_tasks.py -v
       - run: python -m unittest discover -s tests -p test_windows_shortcuts.py -v
       - run: python -m unittest discover -s tests -p test_pilot_update.py -v
