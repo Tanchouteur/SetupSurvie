@@ -73,7 +73,7 @@
     const saved=get(draftKey,'');lastDraft=typeof saved==='string'?saved:'';$('chat-input').value=lastDraft;
   }
   function restorePosition(state){requestAnimationFrame(()=>{const target=state?.focus&&document.getElementById(state.focus);(target||$('main')).focus({preventScroll:true});window.scrollTo({top:state?.scroll||0,behavior:'instant'});});}
-  const baseView=view,baseRead=readSource,baseOpen=openConversation,baseStatus=status,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
+  const baseView=view,baseRead=readSource,baseOpen=openConversation,baseData=loadData,baseSearch=search,baseResume=resumeConversation;
   labels['work-queue']='File d’attente';labels.maps='Cartes';labels.storage='Stockage';labels.data='Téléchargements';labels.monitor='Vue d’ensemble';labels.settings='Paramètres';
   setMenu=()=>{document.body.classList.remove('nav-open');$('main-navigation').inert=false;document.querySelector('.workspace').inert=false;$('nav-overlay').hidden=true;$('menu-toggle').setAttribute('aria-expanded','false');};
   function fitNextChat(){if(current?.name!=='chat')return;const viewport=window.visualViewport;const height=viewport?.height||innerHeight;const top=$('view-chat').getBoundingClientRect().top-(viewport?.offsetTop||0);const nav=mobileNav.matches?$('main-navigation').getBoundingClientRect().height:0;document.documentElement.style.setProperty('--next-chat-height',Math.max(160,height-top-nav)+'px');}
@@ -181,7 +181,6 @@
     if(target){if(S.user&&!S.loadingConversation&&S.conversation!==target)openConversation(target);return;}
     baseResume();
   };
-  status=async()=>{await baseStatus();const grid=$('collections');if(!S.status?.books)return;grid.replaceChildren();for(const book of S.status.books){const a=element('a',undefined,'collection');a.href=localServiceURL('/content/'+encodeURIComponent(book.book)+'/','kiwix');a.target='_blank';a.rel='noopener';a.append(element('span','▤','book-icon'));const text=element('span');text.append(element('strong',book.title),element('small','Ouvrir cette collection →'));a.append(text);grid.append(a);}};
   loadData=async()=>{const user=S.user?.id;$('next-inventory-notice').textContent='Lecture des contenus installés…';await baseData();if(user!==S.user?.id)return;inventoryAt=Date.now();$('next-inventory-notice').textContent=$('data-summary').querySelector('.data-stat')?'Les collections marquées disponibles peuvent être ouvertes directement.':$('data-summary').textContent;};
   // Do not poll GPU/process state in an invisible browser tab.
   const baseInference=refreshInference;

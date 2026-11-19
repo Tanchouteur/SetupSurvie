@@ -216,7 +216,7 @@ Les bilans ne constituent pas une nouvelle validation à chaque mise à jour de 
 
 - [Recherche documentaire et recette depuis le site](utilisation/recherche-documentaire.md) — guide actuel 0.5.0 : pertinence, lecture, collections et contrôles court/complet sans terminal.
 
-- [Portail Windows/Linux](utilisation/portail.md) — guide actuel 0.63.0 : interface unique, organisation, conversation, file d’attente, navigation et anciennes adresses.
+- [Portail Windows/Linux](utilisation/portail.md) — guide actuel 0.63.4 : interface unique, organisation, conversation, file d’attente, navigation et anciennes adresses.
 
 - [Maquette UX historique](utilisation/maquette-ux.md) — prototype fictif 0.1.31, retiré du paquet en 0.59.0.
 

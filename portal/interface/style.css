@@ -89,18 +89,6 @@ body.next-interface {
 .next-interface .feature-card p {
   font-size: 15px;
 }
-.next-interface .collections .collection {
-  text-decoration: none;
-  color: var(--ink);
-  background: var(--paper);
-  font-size: 15px;
-}
-.next-interface .collection strong {
-  font-size: 16px;
-}
-.next-interface .collection small {
-  font-size: 12px;
-}
 .next-interface .panel {
   background: var(--paper);
   padding: 23px;
@@ -299,15 +287,6 @@ body.next-interface {
   }
   .next-interface .home-grid {
     grid-template-columns: 1fr;
-  }
-  .next-interface .collections {
-    grid-template-columns: 1fr;
-  }
-  .next-interface .collection strong {
-    font-size: 15px;
-  }
-  .next-interface .collection small {
-    font-size: 12px;
   }
   .next-interface .next-tabs a {
     padding: 9px 12px;

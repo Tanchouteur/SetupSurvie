@@ -241,7 +241,7 @@ body.next-interface {
 .next-interface :is(.next-collection-group, .settings-advanced, .learning-browser)[open] > summary::after { transform: rotate(180deg); }
 
 /* ---------- Surfaces ---------- */
-.next-interface :is(.panel, .data-card, .settings-destination, .settings-advanced, .next-collection-group, .result, .reader, .collection, .data-stat, .learning-browser) {
+.next-interface :is(.panel, .data-card, .settings-destination, .settings-advanced, .next-collection-group, .result, .reader, .data-stat, .learning-browser) {
   background: var(--ds-surface);
   border: 1px solid var(--ds-line);
   border-radius: var(--ds-r-lg);
@@ -253,7 +253,7 @@ body.next-interface {
 .next-interface :is(.panel, .data-card) > p { font-size: .9375rem; color: var(--ds-ink-2); }
 
 /* Anything you can open rises to meet the pointer. */
-.next-interface :is(.settings-destination, .collection, .feature-card, .practical-card) {
+.next-interface :is(.settings-destination, .feature-card, .practical-card) {
   transition: transform var(--ds-base) var(--ds-ease), box-shadow var(--ds-base) var(--ds-ease), border-color var(--ds-base) ease;
 }
 .next-interface .practical-card { color: var(--ds-ink); }
@@ -269,7 +269,7 @@ body.next-interface {
   transition: transform var(--ds-base) var(--ds-ease);
 }
 @media (hover: hover) {
-  .next-interface :is(.settings-destination, .collection, .feature-card, .practical-card):hover {
+  .next-interface :is(.settings-destination, .feature-card, .practical-card):hover {
     transform: translateY(-2px);
     border-color: var(--ds-line-strong);
     box-shadow: var(--ds-shadow-3);
@@ -759,7 +759,6 @@ body.next-interface .feature-card:focus-within:has(:focus-visible) { outline: 2p
 body.next-interface .feature-card .text-button:focus-visible { outline: none; }
 .next-interface .section-top { align-items: baseline; margin: 36px 0 14px; padding: 0; border: 0; }
 .next-interface .section-top h2 { margin: 0; font-size: 1.5rem; }
-.next-interface .collections .collection { padding: 16px 18px; color: var(--ds-ink); }
 body.next-interface .help-strip {
   display: flex;
   gap: 12px;

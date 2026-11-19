@@ -725,6 +725,10 @@ de la file d’attente, dont le principe est conservé ; voir le
 La recherche Kiwix isole les échecs et expose ses limites au portail et à l’assistant ;
 aucune absence de source sur le feu chez Marc n’est déduite d’un test simulé.
 
+**Décision du 19 novembre 2026 (Louis) — accueil simplifié, 0.63.4.** La liste des
+collections est retirée de l’accueil pour alléger l’entrée dans le portail.
+Les ressources installées s’ouvrent depuis **Bibliothèque → Collections**.
+
 Le 14 novembre 2026, le [retour d’expérience de Marc](../essais/2026-11-14-retour-experience-marc.md)
 rapporté par Louis place la pertinence de la recherche au premier rang : retrouver
 les savoir-faire réellement présents avant de conclure à leur absence ou d’ajouter

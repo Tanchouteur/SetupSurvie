@@ -18,7 +18,7 @@ def build():
     source = source.replace('<script defer src="/app.js', '<link rel="stylesheet" href="/translation-text.css?v=0.39.0"><script defer src="/translation-text.js?v=0.39.0"></script><script defer src="/app.js', 1)
     # One ordered asset list: shared primitives, feature modules, then navigation.
     assets = [
-        ('css', '/interface/style.css', '0.51.0'),
+        ('css', '/interface/style.css', '0.63.4'),
         ('css', '/interface/ux-system.css', '0.56.0'),
         ('css', '/interface/settings.css', '0.39.0'),
         ('css', '/interface/assistant-workspace.css', '0.62.0'),
@@ -55,10 +55,10 @@ def build():
         ('css', '/resource-status.css', '0.49.0'),
         ('js', '/resource-status.js', '0.63.0'),
         ('css', '/design/tokens.css', '0.44.0'),
-        ('css', '/design/system.css', '0.62.0'),
+        ('css', '/design/system.css', '0.63.4'),
         ('css', '/interface/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.63.0'),
-        ('js', '/interface/navigation.js', '0.63.0'),
+        ('js', '/interface/navigation.js', '0.63.4'),
     ]
     tags = []
     for kind, path, version in assets:

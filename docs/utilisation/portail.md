@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.63.0, 19 novembre 2026.**
+**Guide actuel — 0.63.4, 19 novembre 2026.**
 
 Le portail a une seule interface, servie à la racine, sur Windows comme sur
 Linux. Depuis 0.63.0, l’ancienne interface « classique » est retirée et
@@ -20,7 +20,7 @@ téléphone, utilisez **Résultats** pour retrouver la liste.
 
 | Rubrique | Usage |
 | --- | --- |
-| Accueil | Rechercher, ouvrir une collection, aller à l’assistant ou aux cartes |
+| Accueil | Lancer une recherche, explorer la bibliothèque ou ouvrir l’assistant |
 | Bibliothèque | Collections réellement présentes, recherche, parcours, favoris et traductions |
 | Assistant | Conversations, documents associés, traduction, sources et modes de réponse |
 | Cartes | Accès direct à la carte réelle, aux repères et aux itinéraires existants |
