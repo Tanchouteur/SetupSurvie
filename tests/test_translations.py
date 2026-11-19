@@ -171,6 +171,13 @@ class TranslationTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn('2/3 passages traduits',tr.export(key,'alice'))
             reader=translation_reader.page(publication['source_id'],self.source,2)
             self.assertTrue(reader['partial']);self.assertIn('Passage non traduit',reader['parts'][0])
+            external=before+'<!-- modification extérieure -->'
+            path.write_text(external)
+            with self.assertRaises(HTTPException) as conflict:
+                await publications.publish(key,'alice')
+            self.assertEqual(conflict.exception.status_code,409)
+            self.assertEqual(path.read_text(),external)
+            path.write_text(before)
             store.init()
             with patch.object(tr,'launch'):await tr.resume(key,'alice','moyenne')
             with patch.object(library,'index_guides',side_effect=OSError('indexation interrompue')):

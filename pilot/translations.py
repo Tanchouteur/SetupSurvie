@@ -385,6 +385,10 @@ async def resume(identifier,user_id,mode=None):
 async def _resume(identifier,user_id,mode=None):
     owned(identifier,user_id);await available()
     if mode is not None and mode not in engine.MODES:raise HTTPException(400,'Mode inconnu.')
+    task=ACTIVE.get(identifier)
+    if task and owned(identifier,user_id)['status']=='completed':
+        # Let the preceding run finish publication and release its queue record.
+        await asyncio.shield(task)
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         item=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()

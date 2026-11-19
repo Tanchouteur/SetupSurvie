@@ -98,7 +98,10 @@ class ProtectedReferences:
         values=dict(self.references)
         def restore_match(match):
             value=values[match[0]]
-            return '\n'+value+'\n' if match[0] in self.bibliography else value
+            if match[0] not in self.bibliography:return value
+            before=result[result.rfind('\n',0,match.start())+1:match.start()]
+            after=result[match.end():].split('\n',1)[0]
+            return ('\n' if before.strip() else '')+value+('\n' if after.strip() else '')
         restored=self.pattern.sub(restore_match,result)
         if self.prefix in restored:raise ValueError('Repère de référence incorrect.')
         return restored
@@ -254,8 +257,8 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
     target_prose=BLOCKS.sub(' ',translated)
     compact=lambda text: ' '.join(text.casefold().split())
     short_english=(english or not source_language) and re.search(
-        r'\b(?:the|and|is|are|use|press|keep|do|not|water|please|this|that|with|for|to|of)\b',source_prose,re.I)
-    if (len(source_prose.strip())>=100 or short_english) and compact(source_prose)==compact(target_prose):
+        r'\b(?:the|and|is|are|use|press|keep|do|not|water|please|this|that|with|for|to|of|see|read|look|turn|avoid|never|without)\b',source_prose,re.I)
+    if (len(source_prose.strip())>=100 or (short_english and len(source_prose.split())>=2)) and compact(source_prose)==compact(target_prose):
         add('unchanged','error','Le passage est identique à l’original ; aucune traduction exploitable détectée.')
     if re.search(r'\b(not|never|without|neither|no)\b|\b\w+n[’\x27]t\b',source,re.I) and not re.search(r'\b(pas|jamais|sans|aucun|aucune|ni|interdit|interdite|éviter|évitez|non)\b|\bn[’\x27]',translated,re.I):
         add('negation','warning','Une négation de l’original n’a pas d’équivalent français repéré. Vérifiez le sens de la consigne.')

@@ -1,5 +1,16 @@
 # Choix et contraintes actuels
 
+## Traductions partielles publiées automatiquement — 3 décembre 2026
+
+Louis valide l’assouplissement des contrôles ambigus, la conservation automatique
+des références et une seule tentative de correction par passage avant de continuer.
+Il demande qu’une traduction avec des passages manquants soit publiée automatiquement
+dès que le traitement a parcouru le document. Le lecteur indique que la version est
+partielle et renvoie à l’original. La reprise groupée complète la même version
+partagée. Les contrôles bloquants de fidélité gardent leurs propositions refusées
+dans le travail privé. Cette décision remplace l’exigence de résoudre tous les
+refus avant la publication automatique. [Guide de traduction](../utilisation/documents-et-traduction.md)
+
 ## Classement des espaces documentaires — 19 novembre 2026
 
 Louis demande de mesurer la qualité du tri avant et après une modification,

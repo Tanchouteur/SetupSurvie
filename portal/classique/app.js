@@ -233,11 +233,13 @@ async function loadTranslation(id,offset=S.translationOffset){
   try{const data=await api('/translations/'+encodeURIComponent(id)+'?offset='+offset);
     if(version!==translationVersion||conversation!==S.conversation||!S.user)return;
     S.translationSource=data.source_id;$('translation-panel').hidden=false;const active=['queued','running'].includes(data.status),finished=data.status==='completed';
-    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:'Traitement terminé'};
+    const labels={queued:'En attente',running:'Traduction en cours',paused:'En pause',error:'Passage à reprendre',completed:data.done<data.total?'Traduction incomplète':'Traitement terminé'};
     $('translation-summary').textContent=(labels[data.status]||data.status)+' · '+data.done+'/'+data.total+' passages traduits';
     $('translation-status').textContent=data.title+' — '+(data.error||data.notice)+(data.unreadable?' '+data.unreadable+' passage(s) sans texte extractible : pages illustrées ou reconnaissance de caractères nécessaire.':'');
+    if(data.deferred)$('translation-status').textContent+=' '+data.deferred+' passage(s) à reprendre. L’original reste consultable.';
     if(data.quality?.warnings)$('translation-status').textContent+=' '+data.quality.warnings+' passage(s) à relire après les contrôles automatiques.';
-    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||finished;
+    $('translation-start').hidden=true;$('translation-range').hidden=true;$('translation-pause').hidden=!active;$('translation-resume').hidden=active||(finished&&!data.deferred);
+    $('translation-resume').textContent=finished&&data.deferred?'Reprendre les passages à vérifier':'Reprendre avec le modèle choisi';
     const meter=$('translation-progress');meter.hidden=false;meter.max=Math.max(1,data.total);meter.value=data.done+data.unreadable;
     const download=$('translation-export');download.hidden=false;download.href='/api/translations/'+encodeURIComponent(id)+'/export';
     $('translation-parts').replaceChildren();

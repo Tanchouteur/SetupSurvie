@@ -37,6 +37,14 @@ def state(identifier):
             'error':row['error']}
 
 
+def mark_current(db,identifier,source_id,done):
+    # A concurrent manual publication may have read an older partial snapshot.
+    db.execute('''INSERT OR REPLACE INTO settings(key,value)
+        SELECT ?,? WHERE (SELECT count(*) FROM translation_parts
+        WHERE translation_id=? AND status='done')=?''',
+        ('published-translation:'+identifier,source_id,identifier,done))
+
+
 def _publish(identifier,user_id):
     with store.connect() as db:
         item=db.execute('SELECT * FROM translations WHERE id=? AND user_id=?',(identifier,user_id)).fetchone()
@@ -122,7 +130,7 @@ def _publish(identifier,user_id):
             with store.connect() as db:
                 if db.execute('SELECT 1 FROM documents WHERE id=?',(source_id,)).fetchone():
                     db.execute('UPDATE translation_publications SET error=NULL WHERE translation_id=?',(identifier,))
-                    db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('published-translation:'+identifier,source_id))
+                    mark_current(db,identifier,source_id,len(parts)-missing)
                     return result
     else:
         actual=None
@@ -147,7 +155,7 @@ def _publish(identifier,user_id):
         source_meta.update(published_sha256=digest,published_pages=sorted(pages),published_missing=missing)
         db.execute('UPDATE translation_publications SET published_path=?,source_meta=?,published_at=?,error=NULL WHERE translation_id=?',
             (path,json.dumps(source_meta,ensure_ascii=False),time.time(),identifier))
-        db.execute('INSERT OR REPLACE INTO settings VALUES(?,?)',('published-translation:'+identifier,source_id))
+        mark_current(db,identifier,source_id,len(parts)-missing)
     return result
 
 
