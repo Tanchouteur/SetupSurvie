@@ -68,7 +68,10 @@ journal des incidents Windows, manuel de secours et protocole du
 ### Architecture
 
 - [Carte du code](architecture/carte-du-code.md) — modules, scripts, configuration : où se trouve quoi.
-- [Architecture](architecture/README.md) — composants, données et comportements, par domaine et par livraison.
+- [Architecture](architecture/README.md) — vue d’ensemble des composants, puis un document par domaine :
+  [interface](architecture/interface.md), [recherche et index](architecture/recherche.md),
+  [assistant et lecture](architecture/assistant.md), [traduction](architecture/traduction.md),
+  [vidéos](architecture/videos.md), [mesures](architecture/mesures.md), [cartes](architecture/cartes.md).
 - [Guide de design « Veillée »](architecture/guide-design.md) — navigation, lecture, vidéo, recette visuelle.
 - [Composants de l’interface](architecture/composants-interface.md) — organisation CSS/JS et règles de présentation.
 

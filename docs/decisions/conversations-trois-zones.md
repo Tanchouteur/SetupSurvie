@@ -71,7 +71,7 @@ Les contrôles existants gardent leurs IDs et leurs gestionnaires. Déplacer les
 blocs plutôt que les cloner. En particulier, la 0.28.0 peut déplacer les passages
 `translation-parts` vers son lecteur dédié pendant sa lecture. Depuis 0.58.0, ils reviennent dans le fil à la fermeture. Conserver ce confort ou le remplacer par un
 parcours offrant les mêmes capacités, sans reprendre l’inférence au rechargement.
-Voir la [référence d’architecture](../architecture/README.md#lecture-pendant-une-traduction--0280).
+Voir la [référence d’architecture](../architecture/traduction.md#lecture-pendant-une-traduction--0280).
 
 État du code observé le 16 novembre : `deploy/model-profiles.json` contient dix
 profils pour sept références de modèles ; ce catalogue n’est pas une preuve de

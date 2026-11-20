@@ -1,14 +1,21 @@
-# Paramètres, déplacements et cartes hors ligne
+# Lieux de référence et cartes hors ligne
 
-**Navigation actuelle depuis 0.12.0 :** les lieux se trouvent dans
-**Mon appareil → Paramètres → Bibliothèque et préparations → Changer le domicile
-ou le point de départ**. La préparation des cartes se déplie dans les
-téléchargements, accessibles par cette même rubrique. **Cartes** ouvre le lecteur.
-Voir le [guide actuel et la correspondance des commandes](parametres-et-appareil.md).
-Les intitulés historiques ci-dessous décrivent la présentation conservée.
+**Guide de référence — revu le 20 novembre 2026 pour la 0.67.0.** Ce guide couvre
+les lieux de référence, la préparation des adresses et du relief, les outils de la
+carte et la zone téléchargée sur téléphone. Les itinéraires sont dans le
+[guide des points et itinéraires](points-et-itineraires.md) ; l’emplacement de
+chaque commande dans les paramètres, dans le [guide des paramètres](parametres-et-appareil.md).
+Les téléchargements décrits sont des fonctions du logiciel ; leur disponibilité ne
+prouve pas qu’une zone a été préparée sur un PC. La fluidité sur chaque PC et le
+cas réel de Solliès-Ville restent à contrôler.
 
-Guide initial du pilote **0.1.10**. Depuis **0.1.11**, voir aussi les [listes de points et itinéraires](points-et-itineraires.md) : préparation sans GPS et consultation mobile. Les téléchargements décrits sont des fonctions du
-logiciel ; leur disponibilité ne prouve pas qu’une zone a été préparée sur un PC.
+Où trouver les commandes (profil **Famille**) :
+
+| Besoin | Chemin |
+| --- | --- |
+| Domicile et point de départ | **Mon appareil → Paramètres → Bibliothèque et préparations → Changer le domicile ou le point de départ** |
+| Préparer adresses et relief d’une zone | **… → Bibliothèque et préparations → Télécharger des collections et préparer les cartes → Cartes, adresses et relief hors ligne** |
+| Ouvrir la carte et ses outils | Menu **Cartes** |
 
 ## Relief et fluidité — depuis 0.11.0
 
@@ -27,13 +34,7 @@ réel de Solliès-Ville restent à contrôler séparément.
 Le [guide des itinéraires](points-et-itineraires.md) décrit le choix d’un accès
 proche et les raccordements en pointillés.
 
-## Paramètres de l’appareil
-
-Avec un compte administrateur, ouvrir **Paramètres** dans le menu. Cette page
-regroupe les lieux de référence, les commandes du moteur, l’ajout de guides,
-les accès aux comptes, au réseau et aux téléchargements, ainsi que le contexte
-fourni à l’assistant et les retours. Les mesures restent dans État de l’appareil ;
-le choix du modèle reste dans la conversation.
+## Lieux de référence
 
 Deux lieux distincts sont enregistrés dans la base privée du pilote :
 
@@ -41,8 +42,8 @@ Deux lieux distincts sont enregistrés dans la base privée du pilote :
 - **Point de départ actuel** : remplace le domicile pour les recherches proches.
   Revenir au domicile efface uniquement ce remplacement.
 
-Ils sont communs aux comptes de l’appareil. Seul l’administrateur les modifie ;
-les utilisateurs connectés et l’assistant peuvent les lire. Ce n’est pas un suivi
+Ils sont communs aux profils de l’appareil. Seul le profil Famille les modifie ;
+les autres profils et l’assistant peuvent les lire. Ce n’est pas un suivi
 GPS. La recherche cartographique et les mesures restent possibles depuis un point
 choisi sans modifier ces références.
 
@@ -67,7 +68,7 @@ carte propose par défaut le départ actuel pour préserver le domicile.
 
 ## Préparer une zone avec Internet
 
-Dans **Données locales → Cartes, adresses et relief hors ligne** :
+Dans **Cartes, adresses et relief hors ligne** (voir le tableau en tête) :
 
 1. Reprendre le point de départ ou saisir le centre d’une autre zone de déplacement.
 2. Choisir un rayon de 5, 10 ou 25 km.
@@ -116,9 +117,9 @@ localement présentes.
 
 ## Utiliser les outils de carte
 
-Ouvrir **Bibliothèque → Cartes hors ligne**, puis le volet des outils.
-La consultation du fond reste publique. Se connecter au portail pour les outils
-et les données de localisation.
+Ouvrir **Cartes**, puis le volet des outils (onglets **Rechercher**, **Mes repères**,
+**Itinéraire** et **Affichage**). La consultation du fond reste publique ; les
+outils et données de localisation utilisent le profil choisi, sans mot de passe.
 
 - Rechercher une adresse locale ou toucher la carte pour choisir un point.
 - Chercher autour de ce point : eau, alimentation, santé, abri, réparation ou communications.
@@ -201,8 +202,6 @@ cartographiques restent des contenus volumineux : conserver le kit correspondant
 ou copier séparément `library/maps`, notamment les zones ajoutées depuis le kit.
 La sauvegarde privée ne les recopie pas automatiquement.
 
-Depuis le pilote 0.1.12, les outils de carte sont regroupés dans les onglets Rechercher, Mes repères, Itinéraire et Affichage ; la connexion peut se faire directement sur la carte. Voir le [parcours des points et trajets](points-et-itineraires.md).
-
 Depuis 0.1.13, une erreur temporaire du serveur Overpass principal (429 ou erreur
 serveur) déclenche un seul essai sur le serveur de secours fixe
 [Private.coffee, répertorié par OpenStreetMap](https://wiki.openstreetmap.org/wiki/Overpass_API#Public_Overpass_API_instances).
@@ -211,7 +210,7 @@ Une requête invalide ou un dépassement de taille n’entraîne pas d’essai d
 Le manifeste des lieux conserve le fournisseur réellement utilisé.
 
 
-### Préparation par défaut depuis 0.1.33
+## Préparation par défaut à l’installation (depuis 0.1.33)
 
 Le parcours d’installation en ligne inclut maintenant les deux fonds de carte du
 pilote, puis le relief de Solliès-Ville dans un rayon de 25 km. Il tente aussi les
@@ -226,7 +225,7 @@ pour d’autres centres et rayons.
 
 ## Accès direct et relief — 0.1.34
 
-L’onglet Cartes de la nouvelle interface ouvre directement la carte. Le relief
+Le menu **Cartes** ouvre directement la carte. Le relief
 local préparé s’affiche dès l’ouverture ; le bouton **Masquer le relief** permet
 de le retirer. Si aucune altitude n’est disponible, la carte reste consultable
 et explique ce manque, sans téléchargement automatique. L’existence d’une zone

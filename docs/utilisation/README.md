@@ -38,7 +38,7 @@ secours** (`/secours.html`) permet de lire les fichiers sans l’API ni l’IA.
 | [Profils locaux sans mot de passe](profils-locaux.md) | Choisir ou créer un profil, Famille, Open WebUI | 0.1.29 |
 | [File d’attente](file-attente.md) | Voir, réordonner, mettre en pause et reprendre les travaux | 0.67.0 |
 | [Préparations de la bibliothèque](preparations-bibliotheque.md) | Étapes de préparation, dépendances, cartes de la file | 0.67.0 |
-| [Inventaire des données locales](inventaire-local.md) | Ce qui est présent sur le disque | 0.12.0 |
+| [Inventaire des données locales](inventaire-local.md) | Ce qui est présent sur le disque | 0.67.0 |
 
 ### Chercher, lire et vérifier
 
@@ -65,7 +65,7 @@ secours** (`/secours.html`) permet de lire les fichiers sans l’API ni l’IA.
 
 | Guide | Contenu | Version décrite |
 | --- | --- | --- |
-| [Paramètres, lieux et cartes hors ligne](parametres-et-cartes.md) | Lieux de référence, adresses, relief, zone téléchargée sur téléphone | 0.12.0 ; zone téléphone 0.50.0 |
+| [Lieux de référence et cartes hors ligne](parametres-et-cartes.md) | Lieux de référence, adresses, relief, zone téléchargée sur téléphone | 0.67.0 |
 | [Points et itinéraires](points-et-itineraires.md) | Listes de points, itinéraires locaux, choix d’accès | 0.50.0 |
 
 ### Mesurer et tester (facultatif)
