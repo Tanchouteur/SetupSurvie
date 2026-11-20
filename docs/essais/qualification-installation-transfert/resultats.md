@@ -160,3 +160,11 @@ Les scénarios simulés contrôlent le rejeu de la préparation et la présence
 des deux manifestes sur la cible, y compris le lien relatif du manifeste Ollama
 v2. La restauration et la traduction réelles avec ces deux modèles restent à
 rejouer sur la VM de 6 Gio.
+
+Sur la révision `b4b3026`, les onze tâches de la CI ont réussi. La tâche
+Windows a exécuté 1 244 tests, vérifié les lanceurs PowerShell et recréé les
+outils YouTube après copie sans accès réseau. L'archive Linux de cette
+exécution a été téléchargée et son SHA-256 vérifié
+(`6ec69669836df13880fa732dc5aaf63cbebc4691f6c2d4808413520277a3b497`).
+Ces vérifications complètent la recette sur machine du dossier.
+[Exécution GitHub Actions](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44820180459)

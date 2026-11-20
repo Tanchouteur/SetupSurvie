@@ -67,3 +67,39 @@ et les résultats d'activation. Relever les deux unités systemd et
 `/proc/sys/kernel/random/boot_id` avant et après le redémarrage. Pour une
 recette automatique, une commande dont le résultat est inattendu doit faire
 échouer l'essai.
+
+## Comparer les modèles avant et après restauration en 0.74.0
+
+Préparer une source neuve avec l'archive 0.74.0 vérifiée, une configuration
+CPU et au moins 16 Gio de RAM détectés par Linux. Attendre que l'installation
+se termine. À ce stade, relever tous les modèles locaux et leurs empreintes
+depuis la source. Le relevé doit contenir GPT-OSS 20B et Qwen3 1,7B.
+
+```sh
+set -e
+set -o pipefail
+python=/srv/setup-survie/outils-linux/bin/python3
+curl -fsS http://127.0.0.1:11435/api/tags | "$python" -c '
+import json, sys
+for model in sorted(json.load(sys.stdin)["models"], key=lambda model: model["name"]):
+    print(model["name"], model["digest"])
+' > modeles-source.txt
+```
+
+Créer la copie puis la restaurer sur un disque distinct, dans une nouvelle
+VM de 6 Gio sans accès Internet. Après activation et redémarrage, confirmer
+que le support est toujours démonté et que le portail est sain. Démarrer le
+moteur local via le profil Famille sur cette VM de recette, puis répéter le
+relevé avec `/srv/recette-transfert/outils-linux/bin/python3` et
+`modeles-cible.txt`. Comparer les deux fichiers avec `diff -u`. Le relevé
+après redémarrage doit inclure chaque nom et chaque empreinte de la source.
+
+Dans le portail de la cible, vérifier que le profil rapide indique Qwen3
+1,7B et que GPT-OSS 20B reste proposé. Pour l'essai réel de traduction,
+partir d'un MP4 accompagné d'une piste anglaise copiée depuis la source.
+Demander la traduction avec le profil rapide, puis vérifier que la piste
+française est complète, lisible en WebVTT et trouvée par son texte dans la
+recherche. Vérifier que la piste anglaise reste utilisable. Consigner les
+deux relevés de modèles, les états de traitement, la RAM et les résultats
+de lecture. Les tests des téléchargements et de la file automatique
+s'effectuent sur la source connectée.
