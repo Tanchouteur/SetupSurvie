@@ -4,8 +4,8 @@
      stopped, by scripts/maintenance_site.py. The home page shows the tracking.
    - While the site is unavailable, open tabs switch to a maintenance mode: only the
      home page stays reachable; the previous page is remembered for afterwards.
-   - Famille profile: a navigation entry shows the last update check, lets people
-     check again and opens the confirmation before launching the Windows updater. */
+   - Famille profile: the version number shows the last update check on hover and
+     becomes a « Mettre à jour » button only when a newer version exists. */
 (() => {
   const tracker = window.SurvieMaintenance;
   if (!tracker) return;
@@ -169,18 +169,23 @@
     return `Version ${value.installed} installée, à jour selon la dernière vérification.`;
   }
 
-  function mountEntry(container, mobile) {
-    const host = make('div', 'update-nav' + (mobile ? ' update-nav-mobile' : ''));
+  /* The version number (top left, and in the phone top bar) is the entry point:
+     hovering it shows the last check; it becomes a button only when a newer
+     version exists (Louis, 20 November 2026). */
+  function mountEntry(version, mobile) {
+    if (!version) return;
+    const host = make('div', 'update-nav ' + (mobile ? 'update-nav-mobile' : 'update-nav-desktop'));
     host.hidden = true;
     const button = make('button', 'update-nav-button');
     button.type = 'button';
     button.setAttribute('aria-haspopup', 'dialog');
+    const current = make('span', 'update-nav-version');
     const icon = make('span', 'update-nav-icon', '↻');
     icon.setAttribute('aria-hidden', 'true');
-    const label = make('span', 'update-nav-label', 'Mises à jour');
+    const label = make('span', 'update-nav-label', 'Mettre à jour');
     const dot = make('span', 'update-nav-dot');
     dot.setAttribute('aria-hidden', 'true');
-    button.append(icon, label, dot);
+    button.append(current, icon, label, dot);
     button.onclick = openDialog;
     host.append(button);
     const preview = make('div', 'update-nav-preview');
@@ -196,27 +201,32 @@
     actions.append(refresh, install);
     preview.append(title, state, checked, error, actions);
     if (!mobile) host.append(preview);
-    container.append(host);
-    entries.push({host, button, dot, state, checked, error, refresh, install});
+    // The brand is a link: the entry sits beside it, never inside it.
+    (version.closest('.brand') || version).after(host);
+    entries.push({host, version, button, current, dot, state, checked, error, refresh, install});
   }
-  mountEntry($('main-navigation'), false);
-  mountEntry(document.querySelector('.top-actions'), true);
+  mountEntry(document.querySelector('.brand .ds-nav-version'), false);
+  mountEntry($('breadcrumb').parentElement.querySelector('.ds-nav-version'), true);
 
   function drawEntries() {
     const visible = !!update?.supported && S.user?.role === 'admin';
     for (const entry of entries) {
       entry.host.hidden = !visible;
+      entry.version.classList.toggle('update-nav-replaced', visible);
       if (!visible) continue;
-      entry.host.classList.toggle('update-available', !!update.update_available);
-      entry.dot.hidden = !update.update_available;
-      entry.button.setAttribute('aria-label', update.update_available
-        ? `Mises à jour : version ${update.available} disponible` : 'Mises à jour de SetupSurvie');
+      const available = !!update.update_available;
+      entry.host.classList.toggle('update-available', available);
+      entry.current.textContent = update.installed || S.status?.version || '';
+      entry.dot.hidden = !available;
+      entry.button.setAttribute('aria-label', available
+        ? `Mettre à jour : version ${update.available} disponible`
+        : `Version ${entry.current.textContent} · état des mises à jour`);
       entry.state.textContent = headline(update);
       entry.checked.textContent = update.checking ? 'Vérification en cours…' : checkedText(update);
       entry.error.textContent = update.error || '';
       entry.error.hidden = !update.error;
       entry.refresh.disabled = !!update.checking;
-      entry.install.hidden = !update.update_available || update.running;
+      entry.install.hidden = !available || update.running;
     }
     drawDialog();
   }

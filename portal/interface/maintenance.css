@@ -1,39 +1,56 @@
 /* Updates in the navigation, tracking on the home page and maintenance mode. */
 
-/* ---------- Navigation entry ---------- */
-.update-nav { position: relative; flex: none; }
-.update-nav-button {
+/* ---------- Version number and update entry ---------- */
+/* Normally the entry is just the version number; it turns into a button only
+   when a newer version exists. */
+.ds-nav-version.update-nav-replaced { display: none; }
+.update-nav { position: relative; flex: none; align-self: center; }
+.update-nav[hidden] { display: none; }
+.next-interface .update-nav > button.update-nav-button {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 42px;
-  min-width: 44px;
-  padding: 0 10px;
-  color: var(--ds-ink-2);
+  min-height: 32px;
+  padding: 0 6px;
+  color: var(--ds-ink-3);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--ds-r-full);
-  font-weight: 500;
+  font: 400 .6875rem/1.2 var(--ds-font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: none;
 }
-.update-nav-button:is(:hover, :focus-visible) { color: var(--ds-ink); background: var(--ds-surface-2); }
-.update-nav-icon { font-size: 1.2rem; line-height: 1; }
-.update-nav-label { font-size: .875rem; }
-.update-available > .update-nav-button { color: var(--ds-ember-strong); background: var(--ds-ember-soft); font-weight: 600; }
-.update-nav-dot {
+.next-interface .update-nav > button.update-nav-button:is(:hover, :focus-visible) { color: var(--ds-ink); background: var(--ds-surface-2); box-shadow: none; }
+.next-interface .update-nav > button.update-nav-button:active { scale: 1; }
+.update-nav-icon, .update-nav-label, .update-nav-dot { display: none; }
+.update-available .update-nav-version { display: none; }
+.next-interface .update-nav.update-available > button.update-nav-button {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--ds-ember-strong);
+  background: var(--ds-ember-soft);
+  border-color: var(--ds-ember);
+  font: 600 .8125rem/1.2 var(--ds-font);
+}
+.next-interface .update-nav.update-available > button.update-nav-button:is(:hover, :focus-visible) { color: var(--ds-ember-strong); background: var(--ds-ember-soft); border-color: var(--ds-ember-strong); }
+.update-available .update-nav-icon { display: inline; font-size: 1rem; line-height: 1; }
+.update-available .update-nav-label { display: inline; }
+.update-available .update-nav-dot {
+  display: block;
   position: absolute;
-  inset: 5px 4px auto auto;
+  inset: -3px -3px auto auto;
   width: 9px;
   height: 9px;
   background: var(--ds-ember);
   border: 2px solid var(--ds-surface);
   border-radius: 50%;
 }
-.update-nav-dot[hidden] { display: none; }
 .update-nav-preview {
   position: absolute;
   z-index: 35;
-  inset: calc(100% + 6px) 0 auto auto;
+  inset: calc(100% + 6px) auto auto 0;
   display: none;
   box-sizing: border-box;
   width: min(360px, 46vw);
@@ -51,9 +68,9 @@
 .update-nav-preview .update-nav-error { color: var(--ds-danger); }
 .update-nav-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .update-nav-actions [hidden], .update-nav-preview [hidden] { display: none; }
-.update-nav-mobile .update-nav-label { display: none; }
 @media (max-width: 760px) {
-  #main-navigation > .update-nav { display: none; }
+  .update-nav-desktop { display: none; }
+  .next-interface .update-nav.update-available > button.update-nav-button { min-height: 32px; padding: 0 9px; font-size: .75rem; }
 }
 
 /* ---------- Confirmation ---------- */

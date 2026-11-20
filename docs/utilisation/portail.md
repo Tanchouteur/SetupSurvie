@@ -309,9 +309,12 @@ vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
 
 ## Installer et mettre à jour
 
-Depuis la 0.69.0, le profil Famille voit **Mises à jour** dans la barre de
-navigation sous Windows : survol avec la dernière vérification, bouton
-**Vérifier maintenant** et lancement après confirmation. Le suivi d’une mise
+Depuis la 0.69.0, le profil Famille suit les mises à jour depuis le portail
+sous Windows. Depuis la 0.69.1 (demande de Louis du 20 novembre 2026), l’entrée
+est le **numéro de version**, en haut à gauche à côté du logo : son survol
+indique la dernière vérification et propose **Vérifier maintenant**. Un bouton
+**Mettre à jour** ne remplace ce numéro que lorsqu’une nouvelle version existe ;
+il ouvre la confirmation avant lancement. Le suivi d’une mise
 à jour ou d’une copie complète s’affiche sur l’accueil pour tous les
 appareils. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 

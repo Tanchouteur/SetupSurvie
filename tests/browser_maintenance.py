@@ -78,11 +78,32 @@ def exercise(page, base, name):
              'next': status('git', 'Récupération de la version disponible')}
     install_routes(page, state)
     page.request.post(base + '/api/profiles/select', data={'id': 'local-family'}, headers={'Origin': base})
+    available = state['update']
+    state['update'] = {**available, 'installed': '0.69.0', 'available': '0.69.0', 'update_available': False, 'changes': []}
     page.goto(base + '/#/bibliotheque/collections')
     page.wait_for_function("()=>typeof S!=='undefined'&&S.authReady&&S.user")
-    entry = page.locator('.update-nav-mobile' if name == 'mobile' else '#main-navigation > .update-nav')
+    entry = page.locator('.update-nav-mobile' if name == 'mobile' else '.update-nav-desktop')
     entry.wait_for()
+    button = entry.locator('.update-nav-button')
+    check(button.inner_text().strip() == '0.69.0' and not entry.locator('.update-nav-label').is_visible(),
+          name + ' : à jour, seul le numéro de version est affiché, sans bouton')
+    check(page.locator('.ds-nav-version.update-nav-replaced:visible').count() == 0, name + ' : numéro de version affiché une seule fois')
+    if name == 'bureau':
+        check(entry.bounding_box()['x'] < 400, name + ' : numéro de version en haut à gauche')
+        entry.hover()
+        entry.locator('.update-nav-preview').wait_for()
+        text = entry.locator('.update-nav-preview').inner_text()
+        check('Version 0.69.0 installée' in text and 'Dernière vérification' in text and 'Mettre à jour…' not in text,
+              name + ' : survol du numéro avec l’état des mises à jour')
+        page.screenshot(path=str(OUTPUT / (name + '-a-jour.png')))
+        page.mouse.move(700, 600)
+    state['update'] = available
+    page.evaluate("()=>document.dispatchEvent(new CustomEvent('survie:auth'))")
+    page.wait_for_function("()=>[...document.querySelectorAll('.update-nav')].some(n=>n.classList.contains('update-available'))")
+    check(entry.locator('.update-nav-label').is_visible() and '0.69.0' not in button.inner_text(),
+          name + ' : nouvelle version, le bouton remplace le numéro')
     check(entry.locator('.update-nav-dot').is_visible(), name + ' : pastille quand une version est disponible')
+    page.screenshot(path=str(OUTPUT / (name + '-disponible.png')))
     if name == 'bureau':
         entry.hover()
         preview = entry.locator('.update-nav-preview')
