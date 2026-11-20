@@ -127,10 +127,13 @@ try {
     Assert ($status.installed -eq '0.1.20' -and $status.available -eq '0.1.21') 'Both versions must be published'
     Add-SurvieMaintenanceLine 'Sortie du programme'
     Write-SurvieUpdateProgress 'rollback'
+    $status = [IO.File]::ReadAllText($statusPath) | ConvertFrom-Json
+    Assert ($status.phase -eq 'rollback' -and $status.unavailable -and -not $status.rolled_back) 'Starting rollback must wait for confirmation before announcing recovery'
+    Write-SurvieUpdateProgress 'restored'
     Write-SurvieUpdateProgress 'error' 'Etape interrompue.'
     $status = [IO.File]::ReadAllText($statusPath) | ConvertFrom-Json
     Assert ($status.state -eq 'failed' -and $status.rolled_back -and -not $status.unavailable) 'A failed update after rollback must be published as such'
-    Assert (@($status.steps).Count -eq 4 -and @($status.lines) -match 'Sortie du programme') 'Steps and recent output must be kept'
+    Assert (@($status.steps).Count -eq 5 -and @($status.lines) -match 'Sortie du programme') 'Steps and recent output must be kept'
     Assert (@(Get-ChildItem -LiteralPath $catalog -Filter '*.tmp').Count -eq 0) 'No temporary status file may remain'
     Write-Host 'Windows Git updater checks passed; no real Git fetch, installation or service action.'
 } finally {
