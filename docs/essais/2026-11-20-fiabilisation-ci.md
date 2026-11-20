@@ -46,3 +46,11 @@ d’installation des cartes simule la préparation YouTube, dont les
 binaires sont déjà exercés séparément.
 
 [Premier run de la branche](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44729474592).
+
+
+Sur la 0.69.0, la suite Windows a aussi montré que les fixtures Git de
+maintenance devaient simuler un dépôt absent en le renommant. La recette de
+recherche vidéo contrôle désormais l’instant où l’inventaire peut finir. Elle
+vérifie ainsi les résultats avant et après publication.
+
+[Run de la 0.69.0 avant ces corrections](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44731300431).

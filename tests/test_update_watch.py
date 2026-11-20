@@ -34,7 +34,7 @@ class WatcherTests(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name)
+        self.root = Path(temp.name).resolve()
         upstream = self.root/'upstream'
         upstream.mkdir()
         git('init', '-q', '-b', 'main', cwd=upstream)
@@ -90,7 +90,7 @@ class WatcherTests(unittest.TestCase):
     def test_offline_check_keeps_the_last_known_version(self):
         watcher = self.watcher()
         watcher.run_check()
-        shutil.rmtree(self.origin)
+        self.origin.rename(self.origin.with_name('origin-offline.git'))
         watcher.run_check()
         status = watcher.status()
         self.assertIn('Internet', status['error'])
@@ -100,7 +100,8 @@ class WatcherTests(unittest.TestCase):
         watcher = update_watch.Watcher(self.app, self.config, git=GIT, repository='https://example.invalid/autre.git')
         watcher.run_check()
         self.assertIn('dépôt prévu', watcher.status()['error'])
-        shutil.rmtree(self.base/'maintenance/source')
+        source = self.base/'maintenance/source'
+        source.rename(source.with_name('source-offline'))
         watcher.run_check()
         self.assertIn('raccourci', watcher.status()['error'])
 

@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import threading
 import unittest
 from unittest.mock import AsyncMock,patch
 
@@ -43,10 +44,25 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_never_indexed_folder_is_inventoried_automatically_then_listed_without_query(self):
         self.assertTrue(videos.stale())
-        found=await self.search('',kind='videos')
-        self.assertEqual(list(found),[]);self.assertEqual(found.coverage['videos']['status'],'not_indexed')
-        self.assertIn('automatiquement',found.coverage['warning'])
-        await self.wait_inventory();self.assertFalse(videos.stale())
+        release = threading.Event()
+        scan = videos.scan
+
+        def delayed_scan():
+            if not release.wait(timeout=15):
+                raise TimeoutError('La recette n’a pas libéré l’inventaire vidéo.')
+            return scan()
+
+        with patch.object(videos, 'scan', delayed_scan):
+            try:
+                found = await self.search('', kind='videos')
+                self.assertIsNotNone(videos.ACTIVE)
+                self.assertEqual(list(found), [])
+                self.assertEqual(found.coverage['videos']['status'], 'not_indexed')
+                self.assertIn('automatiquement', found.coverage['warning'])
+            finally:
+                release.set()
+                await self.wait_inventory()
+        self.assertFalse(videos.stale())
         videos.CHECKED=0.0
         found=await self.search('',kind='videos',domain='culture')
         self.assertEqual([item['title'] for item in found],['Allumer un feu sans allumettes','Bouillir de l’eau'])
