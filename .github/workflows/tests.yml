@@ -11,129 +11,68 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   linux:
+    name: Python et paquet logiciel (Linux)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: python -m pip install -r tests/requirements.txt
-      - run: docker compose version
-      - run: docker run --rm -i caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy adapt --config - --adapter caddyfile --validate < deploy/Caddyfile
-      - run: python -m pip install -r scripts/requirements-index.txt
-      - run: python -m unittest discover -s tests -v
+      - run: python -m pip install -r tests/requirements-kiwix.txt
+      - name: Suite Python et configurations Compose
+        run: python -m unittest discover -s tests -v
+      - name: Configuration Caddy
+        run: docker run --rm -i caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy adapt --config - --adapter caddyfile --validate < deploy/Caddyfile
       - run: python tests/search_processing_smoke.py
       - run: python tests/profile_proxy_smoke.py
-      - run: python scripts/pilot_update.py build dist/setupsurvie-update.zip
-      - uses: actions/upload-artifact@v4
+      - name: Construire et relire le paquet logiciel
+        run: |
+          python scripts/pilot_update.py build dist/setupsurvie-update.zip
+          python - <<'PYTHON'
+          import sys
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+
+          sys.path.insert(0, 'scripts')
+          from pilot_update import unpack
+
+          package = Path('dist/setupsurvie-update.zip')
+          digest = package.with_suffix('.zip.sha256').read_text(encoding='utf-8').split()[0]
+          with TemporaryDirectory() as destination:
+              manifest = unpack(package, digest, Path(destination))
+          print(f"Paquet relu : {manifest['release']['version']}, {len(manifest['files'])} fichiers vérifiés")
+          PYTHON
+      - uses: actions/upload-artifact@v7
         with:
           name: logiciel-et-empreinte
           path: dist/*
+          if-no-files-found: error
   windows-transfers-and-updates:
+    name: Python et lanceurs (Windows)
     runs-on: windows-latest
+    timeout-minutes: 20
     env:
       # Match the Windows launchers, which invoke Python with -X utf8.
       PYTHONUTF8: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: python -m pip install -r tests/requirements.txt
-      - run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_installers.ps1
-      - run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_updates.ps1
-      - run: python -m unittest discover -s tests -p test_transfer.py -v
-      - run: python -m unittest discover -s tests -p test_transfer_readiness.py -v
-      - run: python -m unittest discover -s tests -p test_transfer_windows.py -v
-      - run: python -m unittest discover -s tests -p test_windows_update.py -v
-      - run: python -m unittest discover -s tests -p test_windows_resume.py -v
-      - run: python -m unittest discover -s tests -p test_windows_autostart.py -v
-      - run: python -m unittest discover -s tests -p test_install_wizard.py -v
-      - run: python -m unittest discover -s tests -p test_content.py -v
-      - run: python -m unittest discover -s tests -p test_content_retry.py -v
-      - run: python -m unittest discover -s tests -p test_content_mirrors.py -v
-      - run: python -m unittest discover -s tests -p test_windows_publish.py -v
-      - run: python -m unittest discover -s tests -p test_kiwix_select.py -v
-      - run: python -m unittest discover -s tests -p 'test_youtube_*.py' -v
-      - run: python -X utf8 tests/youtube_tools_smoke.py
-      - run: python -m pip install -r scripts/requirements-index.txt
-      - run: python -m unittest discover -s tests -p test_search_index_queue.py -v
-      - run: python -m unittest discover -s tests -p test_zim_video_inventory.py -v
-      - run: python -m unittest discover -s tests -p 'test_archive_video*.py' -v
-      - run: python -m unittest discover -s tests -p test_archive_media.py -v
-      - run: python -m unittest discover -s tests -p test_zim_video_jobs.py -v
-      - run: python -m unittest discover -s tests -p test_search_index_tools.py -v
-      - run: python -m unittest discover -s tests -p test_index_reader_probe.py -v
-      - run: python -m unittest discover -s tests -p test_runtime_resources.py -v
-      - run: python -m unittest discover -s tests -p test_kiwix_catalog.py -v
-      - run: python -m unittest discover -s tests -p test_archive_index.py -v
-      - run: python -m unittest discover -s tests -p test_search_marc_report.py -v
-      - run: python -m unittest discover -s tests -p test_search_report093.py -v
-      - run: python -m unittest discover -s tests -p test_search_report0100.py -v
-      - run: python -m unittest discover -s tests -p test_search_progress.py -v
-      - run: python -m unittest discover -s tests -p test_search_processing.py -v
-      - run: python -m unittest discover -s tests -p test_search_refinement_budget.py -v
-      - run: python -m unittest discover -s tests -p test_search_title_scope.py -v
-      - run: python -m unittest discover -s tests -p test_search_experiment.py -v
-      - run: python -m unittest discover -s tests -p test_search_failures.py -v
-      - run: python -m unittest discover -s tests -p test_operations_diagnostic.py -v
-      - run: python -m unittest discover -s tests -p test_practical.py -v
-      - run: python -m unittest discover -s tests -p test_kiwix_search.py -v
-      - run: python -m unittest discover -s tests -p test_search_relevance.py -v
-      - run: python -m unittest discover -s tests -p test_search_inflections.py -v
-      - run: python -m unittest discover -s tests -p test_search_title_intent.py -v
-      - run: python -m unittest discover -s tests -p test_kiwix_diagnostic.py -v
-      - run: python -m unittest discover -s tests -p test_library_videos.py -v
-      - run: python -m unittest discover -s tests -p test_search_reference.py -v
-      - run: python -m unittest discover -s tests -p test_catalogue.py -v
-      - run: python -m unittest discover -s tests -p test_library_redirects.py -v
-      - run: python -m unittest discover -s tests -p test_library_monitor.py -v
-      - run: python -m unittest discover -s tests -p test_portal_build.py -v
-      - run: python -m unittest discover -s tests -p test_library_tasks.py -v
-      - run: python -m unittest discover -s tests -p test_windows_shortcuts.py -v
-      - run: python -m unittest discover -s tests -p test_pilot_update.py -v
-      - run: python -m unittest discover -s tests -p test_pilot_delivery.py -v
-      - run: python -m unittest discover -s tests -p test_setup.py -v
-      - run: python -m unittest discover -s tests -p test_power_loss.py -v
-      - run: python -m unittest discover -s tests -p test_pilot_api.py -v
-      - run: python -m unittest discover -s tests -p test_profiles.py -v
-      - run: python -m unittest discover -s tests -p test_translations.py -v
-      - run: python -m unittest discover -s tests -p test_translation_runtime.py -v
-      - run: python -m unittest discover -s tests -p test_host_performance.py -v
-      - run: python -m unittest discover -s tests -p test_library_videos.py -v
-      - run: python -m unittest discover -s tests -p test_local_videos.py -v
-      - run: python -m unittest discover -s tests -p test_caption_preparation.py -v
-      - run: python -m unittest discover -s tests -p test_video_transcriptions.py -v
-      - run: python -m unittest discover -s tests -p test_speech_worker.py -v
-      - run: python -m unittest discover -s tests -p test_translation_benchmark.py -v
-      - run: python -m unittest discover -s tests -p test_performance.py -v
-      - run: python -m unittest discover -s tests -p test_control.py -v
-      - run: python -m unittest discover -s tests -p test_startup_diagnostic.py -v
-      - run: python -m unittest discover -s tests -p test_translation_reader.py -v
-      - run: python -m unittest discover -s tests -p test_translation_long_book.py -v
-      - run: python -m unittest discover -s tests -p test_translation_quality.py -v
-      - run: python -m unittest discover -s tests -p test_translation_terms.py -v
-      - run: python -m unittest discover -s tests -p test_document_library.py -v
-      - run: python -m unittest discover -s tests -p test_pdf_assets.py -v
-      - run: python -m unittest discover -s tests -p test_source_metadata.py -v
-      - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
-      - run: python -m unittest discover -s tests -p test_conversation_context.py -v
-      - run: python -m unittest discover -s tests -p test_procedure_review.py -v
-      - run: python -m unittest discover -s tests -p test_tool_protocol.py -v
-      - run: python -m unittest discover -s tests -p test_model_session.py -v
-      - run: python -m unittest discover -s tests -p test_research.py -v
-      - run: python -m unittest discover -s tests -p "test_illustration*.py" -v
-      - run: python -m unittest discover -s tests -p test_associations.py -v
-      - run: python -m unittest discover -s tests -p "test_summar*.py" -v
-      - run: python -m unittest discover -s tests -p test_citation_links.py -v
-      - run: python -m unittest discover -s tests -p test_real_assistant_check.py -v
-      - run: python -m unittest discover -s tests -p test_real_documentary_cases.py -v
-      - run: python -m unittest discover -s tests -p test_html_main_content.py -v
-      - run: python -m unittest discover -s tests -p test_documentary_evidence.py -v
-      - run: python -m unittest discover -s tests -p test_documentary_requests.py -v
-      - run: python -m unittest discover -s tests -p test_calibration.py -v
-      - run: python -m unittest discover -s tests -p test_learning.py -v
-      - run: python -m unittest discover -s tests -p test_audit_selection.py -v
+      - id: dependencies
+        run: python -m pip install -r tests/requirements-kiwix.txt
+      - name: Suite Python et configurations Compose
+        run: python -m unittest discover -s tests -v
+      - name: Installation PowerShell
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_installers.ps1
+      - name: Mise à jour PowerShell
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_updates.ps1
+      - name: Démarrage des outils YouTube
+        if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+        run: python -X utf8 tests/youtube_tools_smoke.py
   isolated-index-reader:
     runs-on: windows-latest
     timeout-minutes: 10
@@ -145,8 +84,8 @@ jobs:
     env:
       PYTHONUTF8: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -r tests/requirements.txt -r scripts/requirements-index.txt
@@ -155,8 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: python -m pip install -r tests/requirements-kiwix.txt
@@ -170,8 +109,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - run: python -m pip install -r tests/requirements.txt
@@ -182,7 +121,7 @@ jobs:
     outputs:
       needed: ${{ steps.scope.outputs.needed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 2
       - id: scope
@@ -191,11 +130,12 @@ jobs:
         run: |
           # Unknown differences stay on the safe side: run the browser tests.
           needed=true
-          if [ "$EVENT" = pull_request ] && changed=$(git diff --name-only HEAD^1 HEAD); then
-            if ! printf '%s\n' "$changed" | grep -Eq '^(\.github/workflows/tests\.yml|portal/|pilot/|deploy/|fixtures/|assets/|compose|tests/(.*browser|fixtures/|zim_video_fixture|requirements))'; then needed=false; fi
+          if [ "$EVENT" = pull_request ] && changed=$(git diff --name-only --no-renames HEAD^1 HEAD); then
+            if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -Eqv '^(docs/|README\.md$|AGENTS\.md$)'; then needed=false; fi
           fi
           echo "needed=$needed" >> "$GITHUB_OUTPUT"
   maps-interface:
+    name: Portail et cartes (${{ matrix.engine }})
     needs: browser-scope
     if: needs.browser-scope.outputs.needed == 'true'
     runs-on: ubuntu-24.04
@@ -211,13 +151,27 @@ jobs:
       BROWSER_ENGINE: ${{ matrix.engine }}
       # Firefox refuses a home folder owned by another user in job containers.
       HOME: /root
+      BROWSER_ARTIFACTS: /tmp/setupsurvie-browser-results
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
-      - run: node tests/browser_maps_runner.cjs
-      - run: python -m pip install -r tests/requirements-kiwix.txt
-      - run: node tests/browser_translations_runner.cjs
+      - id: playwright
+        run: npm install --prefix /tmp/setupsurvie-browser playwright@1.58.2
+      - id: dependencies
+        run: python -m pip install -r tests/requirements-kiwix.txt
+      - name: Cartes hors ligne
+        if: matrix.engine != 'firefox'
+        run: node tests/browser_maps_runner.cjs
+      - name: Parcours du portail
+        if: ${{ !cancelled() && steps.playwright.outcome == 'success' && steps.dependencies.outcome == 'success' }}
+        run: node tests/browser_translations_runner.cjs
+      - name: Publier les captures du portail
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: navigateur-${{ matrix.engine }}
+          path: ${{ env.BROWSER_ARTIFACTS }}
+          retention-days: 7

@@ -8,6 +8,7 @@ un mécanisme au moment de sa livraison ; il reste valable sauf note de remplace
 | --- | --- |
 | Savoir où se trouve un fichier, une route, un script | [Carte du code](carte-du-code.md) |
 | Règles visuelles et composants de l’interface | [Guide de design](guide-design.md), [composants](composants-interface.md) |
+| Tests reproductibles et artefacts GitHub Actions | [Tests automatisés et CI](tests-et-ci.md) |
 | Organisation du portail, génération de la page unique | [Interface](interface.md) |
 | Index, Kiwix, recherche progressive, cache | [Recherche et index](recherche.md) |
 | Outils de l’assistant, sélection, lecture longue, illustrations | [Assistant, lecture et synthèse](assistant.md) |

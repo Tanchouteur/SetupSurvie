@@ -26,6 +26,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 20 novembre 2026
 
+- [Audit et fiabilisation de la CI](2026-11-20-fiabilisation-ci.md) — diagnostic des runs et vérification de la chaîne de tests.
+
 - [Actualisation des cartes de la file d’attente](2026-11-20-fiabilisation-file.md) — conservation des volets ouverts et du focus clavier (0.67.2).
 
 ## 19 novembre 2026
