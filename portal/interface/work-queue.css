@@ -4,6 +4,10 @@
 
 /* ---------- Raccourci de la barre ---------- */
 .work-queue-nav { position: relative; flex: none; }
+/* Barre de bureau étroite : le libellé se raccourcit plutôt que de faire déborder l’en-tête. */
+.next-interface #main-navigation > .work-queue-nav { flex: 0 1 auto; min-width: 44px; }
+.next-interface #main-navigation > .work-queue-nav .work-queue-link { max-width: 100%; }
+.next-interface #main-navigation .work-queue-label { min-width: 0; flex: 0 1 auto; }
 .work-queue-link {
   position: relative;
   display: inline-flex;

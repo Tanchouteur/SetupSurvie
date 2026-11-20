@@ -113,6 +113,9 @@ body.has-map-site-nav .map-site-nav #map-account:hover { background: var(--ds-su
   .map-floating-actions .print-action { display: none; }
   .map-floating-actions button { min-height: 40px; }
   .no-basemap a { display: inline-flex; align-items: center; min-height: 40px; }
+  /* Le message reste en haut de la carte : le centre reste libre pour toucher et déplacer. */
+  .no-basemap { top: 12px; transform: translate(-50%, 0); padding: 14px 16px; }
+  .no-basemap p { margin: 4px 0 6px; }
   footer summary { position: relative; }
   footer summary::after { content: ''; position: absolute; inset: -10px -8px; }
   .map-site-nav .brand { min-width: 44px; min-height: 44px; margin-left: -9px; justify-content: center; }
