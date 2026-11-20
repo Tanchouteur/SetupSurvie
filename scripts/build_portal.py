@@ -35,12 +35,12 @@ def build():
         ('js', '/interface/youtube-downloads.js', '0.52.1'),
         ('css', '/interface/work-queue.css', '0.63.1'),
         ('js', '/work-queue-preview.js', '0.64.2'),
-        ('js', '/interface/work-queue.js', '0.64.2'),
+        ('js', '/interface/work-queue.js', '0.65.0'),
         ('js', '/interface/performance.js', '0.26.1'),
         ('js', '/interface/translation-benchmark.js', '0.26.1'),
         ('js', '/interface/collections.js', '0.54.0'),
-        ('js', '/interface/collection-sort.js', '0.64.0'),
-        ('css', '/interface/collection-sort.css', '0.64.0'),
+        ('js', '/interface/collection-sort.js', '0.65.0'),
+        ('css', '/interface/collection-sort.css', '0.65.0'),
         ('js', '/interface/catalogue.js', '0.48.0'),
         ('js', '/interface/search-check.js', '0.63.0'),
         ('js', '/interface/search-experiment.js', '0.26.1'),
@@ -48,7 +48,7 @@ def build():
         ('js', '/interface/assistant-diagnostics.js', '0.30.0'),
         ('js', '/interface/practical.js', '0.34.0'),
         ('js', '/interface/usage-recipe.js', '0.26.1'),
-        ('js', '/interface/settings-layout.js', '0.62.0'),
+        ('js', '/interface/settings-layout.js', '0.65.0'),
         ('js', '/interface/ux-system.js', '0.56.0'),
         ('js', '/interface/assistant-workspace.js', '0.58.0'),
         ('js', '/interface/reader-work.js', '0.63.0'),
@@ -60,7 +60,7 @@ def build():
         ('css', '/design/system.css', '0.63.4'),
         ('css', '/interface/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.63.0'),
-        ('js', '/interface/navigation.js', '0.63.4'),
+        ('js', '/interface/navigation.js', '0.65.0'),
     ]
     tags = []
     for kind, path, version in assets:

@@ -179,7 +179,7 @@
       progress.setAttribute('aria-label', 'Avancement de ' + job.title);
       const row = element('div', undefined, 'work-queue-progress');
       const amount = hostBytes ? percent + ' % vérifiés'
-        : job.kind === 'speech' ? percent + ' %' : done + ' / ' + total;
+        : job.kind === 'speech' || job.unit === 'percent' ? percent + ' %' : done + ' / ' + total;
       row.append(progress, element('span', amount));
       main.append(row);
     }

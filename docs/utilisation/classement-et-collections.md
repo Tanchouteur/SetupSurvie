@@ -1,49 +1,80 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — actualisé pour la 0.64.0, 19 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.65.0, 20 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
 
-## Trier les collections pour la recherche
+## Organiser les collections
 
-Dans **Bibliothèque → Collections → Tri des collections**, utilisez le profil
-Famille pour sélectionner des archives ZIM ou des groupes locaux de vidéos.
-Le panneau affiche leur nom, leur volume, leur classement et le volume
-sélectionné. Les vidéos dans une archive suivent le classement de cette archive.
-Les guides individuels font partie du Fonds principal.
+Depuis la **0.65.0**, le tri a sa propre page : **Mon appareil → Paramètres →
+Bibliothèque et préparations → Organiser les collections**. On le fait en
+général une fois, après l’installation. **Bibliothèque → Collections** n’affiche
+plus qu’une ligne de résumé (combien de collections dans chaque fonds) et le
+raccourci **Organiser les collections →**. Les cartes rangées dans Autre portent
+l’étiquette **Rangée dans Autre**.
 
-- **Fonds principal** alimente **Autonomie et résilience** et **Savoirs et
-  culture**. Ce dernier applique aussi le classement documentaire.
-- **Autre** limite la recherche aux collections mises de côté. **Toute la
-  bibliothèque** interroge les deux fonds. L’assistant applique les mêmes choix.
-- **Supprimer et exclure** affiche les fichiers, y compris les fichiers partiels
-  concernés, et leur volume. La suppression se lance après confirmation. Une
-  exclusion s’applique aussi aux prochaines éditions et aux plans repris.
-  Les vidéos YouTube d’un groupe exclu sont écartées dès que le téléchargeur
-  connaît leur chaîne ou leur dossier de destination.
+La page rappelle en haut les trois choix possibles :
+
+- **Fonds principal** : consulté en premier par la recherche et l’assistant.
+  Il alimente **Autonomie et résilience** et **Savoirs et culture** ; ce dernier
+  applique aussi le classement documentaire.
+- **Autre** : la collection reste sur l’appareil et se lit normalement. La
+  recherche ne la consulte que si l’on choisit **Autre** ou **Toute la
+  bibliothèque**. L’assistant applique les mêmes choix.
+- **Supprimer** : efface les fichiers du PC serveur et exclut la collection des
+  prochains téléchargements, éditions suivantes et plans repris compris.
+
+Les collections sont regroupées par famille (Wikipédia, Gutenberg…, puis
+**Vidéos téléchargées**), des plus volumineuses aux plus petites. Chaque ligne
+montre le nom lisible, le type, la taille, la description du catalogue quand
+elle existe, le nom du fichier et un lien **Aperçu ↗** qui ouvre la collection
+dans Kiwix pour vérifier ce qu’elle contient. L’interrupteur **Principal / Autre**
+de chaque ligne enregistre le choix immédiatement. Pour agir sur plusieurs
+collections, cochez-les (ou cochez la famille entière) : une barre en bas de page
+propose **Fonds principal**, **Autre** ou **Supprimer…**. La suppression passe
+par une confirmation qui nomme les collections, le volume libéré et les fichiers
+concernés, y compris les fichiers partiels. Elle est suivie dans la file
+d’attente sous le titre **Suppression de collections**.
+
+Les vidéos dans une archive suivent le classement de cette archive ; les guides
+individuels font partie du Fonds principal. Les vidéos YouTube d’un groupe exclu
+sont écartées dès que le téléchargeur connaît leur chaîne ou leur dossier.
 
 Un changement entre Fonds principal et Autre est réversible et s’applique à
-la recherche suivante. **Exporter le tri** produit un fichier
+la recherche suivante. **Exporter ce classement** produit un fichier
 `SetupSurvie-tri.json` avec les listes **Autre** et **Exclues**.
 Pour l’importer, choisissez ce fichier lors de l’installation Windows,
-ou à la préparation de la sélection dans **Mon appareil → Stockage**.
+ou à la préparation de la sélection dans **Mon appareil → Téléchargements**.
 Vérifiez le volume et le classement proposés avant de lancer le transfert.
 Les éditions sont reconnues par la référence de collection, langue comprise.
 
-## Préparer les index de Wikipédia par catégorie
+Avant la 0.65.0, ce tri et l’index Wikipédia occupaient deux panneaux dans
+**Bibliothèque → Collections** ; Louis les a jugés inutilisables le 20 novembre
+2026 (on ne comprenait pas quelle collection était laquelle ni l’effet des
+boutons), d’où cette page.
 
-Dans **Bibliothèque → Collections → Index par catégorie de Wikipédia en français**,
-le profil Famille peut démarrer la préparation, la mettre en pause et la reprendre.
-SetupSurvie classe les articles pendant cette tâche, puis interroge l’index
-**Autonomie et résilience** ou **Savoirs et culture** selon le choix de recherche.
-**Toute la bibliothèque** continue de consulter l’archive complète. Pendant
-la préparation ou après une modification, l’index habituel de Wikipédia répond.
+## Classer Wikipédia par espace
 
-Le panneau indique la progression, puis le temps écoulé et la place occupée.
-Une nouvelle édition ou une correction de catégorie rend les index à
-actualiser. SetupSurvie peut relancer leur préparation pendant la plage
-d’indexation configurée. Une interruption reprend au dernier lot enregistré
-si l’archive et les corrections correspondent toujours.
+Le **classement de Wikipédia par espace** (appelé « index par catégorie » en
+0.64) se trouve dans **Mon appareil → Paramètres → Bibliothèque et préparations
+→ Préparer la recherche dans les archives**. Il range chaque article de Wikipédia
+en français dans **Autonomie et résilience** ou **Savoirs et culture**, puis la
+recherche interroge l’index de l’espace choisi. **Toute la bibliothèque**
+continue de consulter l’archive complète. Pendant la préparation ou après une
+modification, l’archive complète répond.
+
+Le panneau indique le pourcentage d’articles examinés et le nombre d’articles
+trouvés pour chaque espace, puis le temps écoulé et la place occupée. La file
+d’attente suit la même tâche sous le titre **Classement de Wikipédia :
+Autonomie et Savoirs**, avec ce pourcentage ; en 0.64 elle apparaissait à tort
+comme « Téléchargement de la bibliothèque ». Le titre de la carte ramène à ce
+panneau.
+
+Une nouvelle édition ou une correction de catégorie rend le classement à
+refaire. SetupSurvie le relance pendant la plage d’indexation configurée. Une
+interruption reprend au dernier lot enregistré si l’archive et les corrections
+correspondent toujours. Un échec ponctuel de connexion au PC serveur n’efface
+plus l’état affiché ; un message clair n’apparaît qu’après plusieurs échecs.
 
 ## Comprendre le classement automatique
 

@@ -63,6 +63,24 @@ imbriquées, bordures partout, grosses poignées encadrées.
   braise sinon. La pulsation et l’inclinaison de la carte déplacée s’arrêtent
   avec `prefers-reduced-motion`.
 
+## Pages de réglage ponctuel
+
+Ajout du 20 novembre 2026 (0.65.0), après le retour de Louis sur le tri des
+collections jugé inutilisable dans l’onglet Collections.
+
+- Un réglage fait une fois (tri des collections) vit dans sa page de
+  **Mon appareil → Paramètres** ; la page de consultation ne garde qu’une ligne
+  de résumé et un raccourci, plus une étiquette discrète sur les cartes.
+- La page commence par une légende des choix possibles, chacun avec sa couleur :
+  vert pour le fonds principal, ocre pour Autre, rouge pour la suppression.
+  La même couleur marque la ligne (filet gauche) et l’interrupteur.
+- Chaque ligne nomme l’élément tel qu’un humain le reconnaît, puis son type,
+  sa taille, un **Aperçu ↗** et le nom technique en petit. Le choix courant est
+  un interrupteur à deux positions enregistré immédiatement.
+- Les actions groupées apparaissent dans une barre collante seulement quand
+  quelque chose est coché. Une suppression passe par un écran de confirmation
+  qui nomme les éléments et le volume libéré.
+
 ## Mouvement et recette
 
 - Utiliser le mouvement pour signaler un changement précis. La pastille suit

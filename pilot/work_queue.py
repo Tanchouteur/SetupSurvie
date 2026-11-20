@@ -44,6 +44,8 @@ HOST_WORK = {
     'index-prepare': ('local', 'Préparation de la recherche'),
     'video-inventory': ('local', 'Inventaire des vidéos dans les collections'),
     'youtube-download': ('network', 'Téléchargement YouTube'),
+    'category-index': ('local', 'Classement de Wikipédia : Autonomie et Savoirs'),
+    'collection-exclude': ('local', 'Suppression de collections'),
 }
 HOST_PHASES = {
     'starting': ('running', 'Démarrage'),
@@ -53,6 +55,8 @@ HOST_PHASES = {
     'checking': ('running', 'Vérification ou passage au fichier suivant'),
     'indexing': ('running', 'Indexation'),
     'index_preparation': ('running', 'Préparation de l’outil de recherche'),
+    'category_indexing': ('running', 'Classement des articles, sans Internet ni IA'),
+    'removing': ('running', 'Suppression des fichiers et actualisation du catalogue'),
     'refreshing': ('running', 'Mise à disposition des contenus'),
     'waiting_retry': ('running', 'En attente d’une nouvelle tentative'),
     'pausing': ('running', 'Pause demandée'),
@@ -69,6 +73,11 @@ HOST_PHASES = {
 
 # Plain-language next step for a stopped host preparation; the card shows it under « Que faire ? ».
 HOST_HELP = {
+    'category-index': ('Le classement de Wikipédia s’est arrêté. La recherche continue d’utiliser l’archive complète. '
+                       'Cliquez sur le titre puis sur « Reprendre le classement » : il repart du dernier point enregistré. '
+                       'Si l’arrêt se reproduit, vérifiez l’espace libre du PC serveur.'),
+    'collection-exclude': ('La suppression s’est arrêtée. Les fichiers non supprimés restent sur le disque. '
+                           'Ouvrez « Organiser les collections » pour voir ce qui reste, puis recommencez.'),
     'video-inventory': ('L’examen des vidéos s’est arrêté. Les vidéos déjà trouvées restent disponibles. '
                         'Cliquez sur « Relancer l’examen ». Si l’arrêt se reproduit, vérifiez qu’il reste de la place '
                         'sur le disque du PC serveur, puis réessayez plus tard.'),
@@ -107,9 +116,21 @@ def add_host_work(jobs, report):
     href = {
         'index': '#/appareil/bibliotheque', 'index-prepare': '#/appareil/bibliotheque',
         'video-inventory': '#/bibliotheque/collections?rubrique=videos', 'youtube-download': '#/appareil/bibliotheque',
+        'category-index': '#/appareil/bibliotheque', 'collection-exclude': '#/bibliotheque/collections',
     }.get(kind, '#/appareil/telechargements')
     message = report.get('message') if isinstance(report.get('message'), str) else ''
     extra = {}
+    if kind == 'category-index':
+        extra['focus'] = 'category-index'
+        if counts.get('entries_total'):
+            progress = {'done': counts.get('entries_done', 0), 'total': counts['entries_total'], 'unit': 'percent'}
+        found = [f"{counts[key]:,}".replace(',', '\u202f') + ' ' + label
+                 for key, label in (('resilience', 'en Autonomie et résilience'), ('culture', 'en Savoirs et culture'))
+                 if key in counts]
+        if found and status == 'running':
+            stage = 'Articles classés : ' + ' · '.join(found)
+    if kind == 'collection-exclude' and status == 'completed' and message:
+        stage = message
     if kind == 'video-inventory':
         extra['focus'] = 'next-archive-videos'
         if status == 'partial' and message:

@@ -44,6 +44,11 @@
       "Choisissez un test selon votre question. Ouvrir cette page ne lance aucun calcul.",
     ],
     [
+      "collections",
+      "Organiser les collections",
+      "Choisir ce que la recherche consulte d’abord, ce qu’elle garde de côté et ce qu’il faut effacer.",
+    ],
+    [
       "lieux",
       "Lieux de référence",
       "Le domicile et le point de départ servent aux cartes et à l’assistant.",
@@ -118,7 +123,13 @@
       "Les profils organisent les données. Toute personne du réseau peut choisir un autre profil et consulter ses données.",
     ),
   );
+  panes.collections.append(get("collection-organizer"));
   panes.bibliotheque.append(
+    link(
+      "collections",
+      "Organiser les collections",
+      "Ranger dans le fonds principal ou dans Autre, ou supprimer du disque. À faire une fois après l’installation.",
+    ),
     link(
       "telechargements",
       "Télécharger des collections et préparer les cartes",
@@ -433,6 +444,7 @@
               assistant: "Assistant",
               tests: "Tests et diagnostics",
               entretien: "Entretien et données",
+              collections: "Organiser les collections",
               lieux: "Vos lieux de référence",
             }[tab] || "Paramètres";
       document.title =

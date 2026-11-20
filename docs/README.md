@@ -180,7 +180,7 @@
 - [Recettes progressives chez Marc](essais/recettes-progressives-marc.md) — rapports manuels actuels/prévus et conditions de blocage.
 - [Mesurer les délais et la mémoire de l’assistant](utilisation/mesurer-assistant-et-memoire.md) — guide 0.7.0, rapports et essai mémoire volontaire.
 - [Mesures assistant et contexte](essais/2026-11-14-mesures-assistant-et-contexte.md) — bilan 0.7.0, CI réussie ; R4 réel à faire.
-- [Classer les documents et nommer les collections](utilisation/classement-et-collections.md) — guide 0.6.0, corrections communes, révisions et export.
+- [Classer les documents et nommer les collections](utilisation/classement-et-collections.md) — guide actuel 0.65.0 : organiser les collections (fonds principal, Autre, suppression), classement de Wikipédia par espace, corrections communes et export.
 - [Classements et collections corrigibles](essais/2026-11-14-classement-et-collections.md) — bilan 0.6.0, CI réussie ; relecture réelle à faire.
 - [Référence de pertinence et lecture](essais/2026-11-14-reference-recherche-et-lecture.md) — bilan 0.5.0, 32 demandes, lecture redirigée et CI réussie ; fonds réel à vérifier.
 - [Indexation complémentaire des archives](utilisation/indexation-archives.md) — guide 0.4.0, automatisation et pause.

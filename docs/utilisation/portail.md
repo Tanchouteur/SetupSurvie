@@ -271,6 +271,13 @@ certaines entrées, la file affiche **Terminé avec des limites**. Le panneau
 leur taille, et le rapport donne le détail par collection. Une collection que
 l’examen n’a pas pu parcourir reste signalée en erreur et peut être relancée.
 
+Depuis la **0.65.0**, le classement de Wikipédia par espace et la suppression
+de collections ont leur propre carte dans la file (**Classement de Wikipédia :
+Autonomie et Savoirs**, avec le pourcentage d’articles examinés, et
+**Suppression de collections**) au lieu d’apparaître comme un téléchargement.
+Le tri des collections se fait dans sa page dédiée, décrite dans le
+[guide des classements](classement-et-collections.md#organiser-les-collections).
+
 L’aperçu au survol de l’icône reste ouvert quand la souris descend de l’icône
 vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
 

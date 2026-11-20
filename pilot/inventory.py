@@ -70,7 +70,7 @@ async def inventory():
             version=date[1] if date else ''
         ready = complete and bool(book)
         books.append({'id': stem, 'title': title, 'language': language,
-                      'version': version, 'bytes': path.stat().st_size, 'ready': ready,**catalogue.collection_labels(stem,title,library.GUIDES,ZIMS,saved_labels),
+                      'version': version, 'bytes': path.stat().st_size, 'ready': ready, 'sort_key': collection_sort.archive(path.name),**catalogue.collection_labels(stem,title,library.GUIDES,ZIMS,saved_labels),
                       'url': '/content/' + stem + '/',
                       'description': (book.get('description') if book and book.get('description') else '') or ('Articles encyclopédiques avec leurs illustrations.' if stem.startswith('wikipedia_') else 'Livres pédagogiques et guides pratiques.') if ready else ('Téléchargement incomplet.' if not complete else 'Archive présente, mais le service de lecture ne la propose pas actuellement.')})
     guides = []
@@ -94,20 +94,27 @@ def sortable_collections():
     sorting=collection_sort.load(network.CATALOG)
     saved=catalogue.snapshot()
     _, cached=library.kiwix_catalog.snapshot(store.ROOT,library.KIWIX)
-    titles={book['book']:book['title'] for book in (cached or {}).get('items',[])}
+    books={book['book']:book for book in (cached or {}).get('items',[]) if isinstance(book,dict) and book.get('book')}
+    titles={key:book.get('title') for key,book in books.items()}
     items={}
     for path,info in collection_sort.archive_files(ZIMS):
         key=collection_sort.archive(path.name)
         stem=path.name.removesuffix('.part').removesuffix('.zim')
         labels=catalogue.collection_labels(stem,titles.get(stem) or stem,library.GUIDES,ZIMS,saved)
+        description=books.get(stem,{}).get('description')
         item=items.setdefault(key,{'key':key,'title':labels['family']+' — '+labels['variant'],
+                                   'family':labels['family'],'variant':labels['variant'],
+                                   'description':description[:300] if isinstance(description,str) else '',
                                    'files':[],'bytes':0,'state':sorting.state(key),'kind':'archive'})
+        if path.name.endswith('.zim'):item.setdefault('url','/content/'+stem+'/')
         item['files'].append(path.name);item['bytes']+=info.st_size
     seen=set()
     for key,label,path,info in collection_sort.video_files(videos.ROOT,store.ROOT/'videos.db'):
         if (key,path) in seen:continue
         seen.add((key,path))
         item=items.setdefault(key,{'key':key,'title':label if label!='.' else 'Vidéos locales',
-                                   'files':[],'bytes':0,'state':sorting.state(key),'kind':'video'})
+                                   'family':'Vidéos','variant':label if label!='.' else 'Vidéos locales',
+                                   'description':'','files':[],'bytes':0,'state':sorting.state(key),'kind':'video','count':0})
         item['bytes']+=info.st_size
+        if path.suffix.lower() not in ('.json','.srt','.vtt'):item['count']+=1
     return sorted(items.values(),key=lambda item:(-item['bytes'],item['title'].casefold()))

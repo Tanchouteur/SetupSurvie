@@ -2,7 +2,7 @@
 (() => {
   const sections={'work-queue':'file',home:'accueil',library:'bibliotheque',chat:'assistant',maps:'cartes',monitor:'appareil',data:'appareil',storage:'appareil',settings:'appareil',users:'appareil',connect:'appareil'};
   const routes={file:['work-queue',''],accueil:['home',''],assistant:['chat',''],cartes:['maps',''],bibliotheque:['library','collections'],appareil:['monitor','ensemble']};
-  const machine={ensemble:'monitor',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings'};
+  const machine={ensemble:'monitor',telechargements:'data',stockage:'storage',reglages:'settings',profils:'users',connexion:'connect',acces:'settings',bibliotheque:'settings',assistant:'settings',entretien:'settings',tests:'settings',lieux:'settings',collections:'settings'};
   const libraryTabs=['collections','recherche','parcours','favoris','traductions'];
   const namespace='survie-next-v1:',ttl=7*86400000;
   let current=null,applying=false,popping=false,scopeCommand=false,activityTimer=null,inventoryAt=0,historyReady=false,openingSource=false,skipSearch=false,lastActivity=null,activityRequest=null,pendingRestore=null;

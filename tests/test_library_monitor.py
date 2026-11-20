@@ -45,6 +45,27 @@ class LibraryMonitorTests(unittest.TestCase):
         value=self.result();self.assertEqual((value['phase'],value['kind']),('downloading','youtube-download'))
         self.assertEqual(value['index_progress'],{'videos':3,'downloaded':1,'skipped':1,'errors':0})
 
+    def test_category_index_is_followed_as_itself_with_its_progress(self):
+        job='d'*32;(self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':job,'action':'category-index','phase':'downloading','pid':123,'identity':self.identity})
+        self.write(self.root/'state/pilot/category-index/progress.json',{'phase':'running','job_id':job,'done':2048,'total':8192,
+            'counts':{'resilience':40,'culture':300}})
+        value=self.result()
+        self.assertEqual((value['kind'],value['phase']),('category-index','category_indexing'))
+        self.assertEqual(value['index_progress'],{'entries_done':2048,'entries_total':8192,'resilience':40,'culture':300})
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+        from pilot import work_queue
+        jobs=[];work_queue.add_host_work(jobs,value)
+        self.assertEqual(jobs[0]['title'],'Classement de Wikipédia : Autonomie et Savoirs')
+        self.assertEqual((jobs[0]['done'],jobs[0]['total'],jobs[0]['unit']),(2048,8192,'percent'))
+        self.assertIn('Autonomie et résilience',jobs[0]['stage'])
+        self.assertEqual(jobs[0]['focus'],'category-index')
+
+    def test_collection_deletion_is_not_reported_as_a_download(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':'e'*32,'action':'collection-exclude','phase':'refreshing','pid':123,'identity':self.identity})
+        value=self.result();self.assertEqual((value['kind'],value['phase']),('collection-exclude','removing'))
+
     def test_stopped_web_job_keeps_its_plain_message_for_the_queue(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'c'*32,'action':'video-inventory','phase':'error','pid':303,'identity':self.identity,

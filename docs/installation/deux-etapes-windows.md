@@ -380,7 +380,7 @@ conserve le cas Windows observé et les validations.
 ## Reprendre le tri d’une autre installation
 
 À la seconde étape, donnez le chemin du fichier `SetupSurvie-tri.json` exporté
-depuis **Bibliothèque → Collections → Tri des collections**. Le lanceur
+depuis **Mon appareil → Paramètres → Bibliothèque et préparations → Organiser les collections** (0.65.0). Le lanceur
 accepte aussi l’option `-CollectionSort`. Le récapitulatif indique les
 collections à télécharger ou copier, les collections **Autre** et les
 exclusions. Confirmez le récapitulatif pour démarrer la préparation. Le

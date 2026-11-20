@@ -121,7 +121,7 @@ def snapshot(root, work, *, now=None):
         elif web.get('id') and re.fullmatch('[a-f0-9]{32}', web['id']):
             owner, alive, source = web, web_alive, 'web'
             started = web.get('started_at', 0)
-            if web.get('action') in ('geography', 'routing', 'plan','index','index-prepare','video-inventory','youtube-download'):
+            if web.get('action') in ('geography', 'routing', 'plan','index','index-prepare','video-inventory','youtube-download','category-index','collection-exclude'):
                 phase = web.get('phase', 'unknown')
                 if phase in ('starting', 'planning', 'downloading', 'refreshing') and alive is False:
                     phase = 'interrupted'
@@ -140,6 +140,16 @@ def snapshot(root, work, *, now=None):
                     if isinstance(progress,dict):extra={key:progress.get(key,0) for key in ('archives','completed','articles') if type(progress.get(key,0)) is int}
                     if phase=='downloading':phase='indexing'
                 elif web['action']=='index-prepare' and phase=='downloading':phase='index_preparation'
+                elif web['action']=='category-index':
+                    # Entries scanned in the French Wikipedia archive, saved every 1024 entries.
+                    progress=read_json(root/'state/pilot/category-index/progress.json',{})
+                    if isinstance(progress,dict) and (not progress.get('job_id') or progress.get('job_id')==web['id']):
+                        counts=progress.get('counts') if isinstance(progress.get('counts'),dict) else {}
+                        extra={'entries_done':progress.get('done'),'entries_total':progress.get('total'),
+                               'resilience':counts.get('resilience'),'culture':counts.get('culture')}
+                        extra={key:value for key,value in extra.items() if type(value) is int and value>=0}
+                    if phase=='downloading':phase='category_indexing'
+                elif web['action']=='collection-exclude' and phase=='refreshing':phase='removing'
                 elif web['action']=='youtube-download':
                     progress=read_json(destination(work,'library-web/'+web['id']+'/progress.json'),{})
                     counts=progress.get('counts') if isinstance(progress,dict) else None
