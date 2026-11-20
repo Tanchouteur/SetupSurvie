@@ -18,6 +18,7 @@ index vont vers les références actuelles ; les étapes passées sont dans les
 | Comprendre les composants et les données | [Architecture](architecture/README.md) |
 | Modifier l’interface | [Guide de design](architecture/guide-design.md) et [composants](architecture/composants-interface.md) |
 | Connaître les contenus et lots documentaires | [Bibliothèque](bibliotheque/README.md) |
+| Développer et relancer les contrôles de la CI | [Tests automatisés et CI](architecture/tests-et-ci.md) |
 | Savoir ce qui a réellement été testé | [Essais et résultats](essais/README.md) |
 | Connaître les priorités vers la V1 | [Feuille de route V1](decisions/feuille-de-route-v1.md) (proposition) |
 

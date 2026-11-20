@@ -20,10 +20,9 @@ ajouté, renommé ou supprimé.
 | Ce qui tourne sur l’hôte (hors conteneurs) | `scripts/control.py`, `scripts/library_tasks.py`, `scripts/library_monitor.py` |
 | Les tests | `tests/` (≈ 240 fichiers) ; CI : `.github/workflows/tests.yml` (Linux + Windows) |
 
-Commande de test : `python3 -m unittest discover -s tests -v` (avec les dépendances
-de `tests/requirements.txt` et `scripts/requirements-index.txt`). La CI lance aussi
-`tests/search_processing_smoke.py`, `tests/profile_proxy_smoke.py`, la
-construction d’un paquet de mise à jour et les tests PowerShell Windows.
+Commande de test : `python3 -m unittest discover -s tests -v` après installation de
+`tests/requirements-kiwix.txt`. Les points d’entrée des recettes navigateur et des
+autres jobs figurent dans le [guide des tests et de la CI](tests-et-ci.md).
 
 ## Vue d’ensemble des processus
 

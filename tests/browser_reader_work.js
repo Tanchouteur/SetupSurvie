@@ -4,6 +4,7 @@ async page=>{
  // own profile; a legitimate one-active-translation refusal is not a UI timeout.
  const profileResponse=await page.request.post(base+'/api/profiles',{data:{name:'Recette lecteur de traduction'},headers:{Origin:base}});
  check(profileResponse.ok(),'Profil de recette isolé des traductions des autres scénarios');
+ await page.emulateMedia({reducedMotion:'reduce'});
  await page.setViewportSize({width:1366,height:950});await page.goto(base+'/#/bibliotheque/recherche?q=Shelter');await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
  const before=page.url();await page.locator('#reader').getByRole('button',{name:/^(Traduire en français|Traduction : ouvrir ou reprendre)$/}).click();
  check(page.url()===before,'Traduction prépare sur place');check(await page.locator('#reader-work h3').evaluate(n=>n.getBoundingClientRect().top>=76),'Titre de traduction visible sous la navigation PC');await page.locator('#reader-work-choice').selectOption('');await page.locator('#reader-work').getByRole('button',{name:'Démarrer la traduction',exact:true}).click();

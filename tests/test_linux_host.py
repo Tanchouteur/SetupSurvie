@@ -29,6 +29,7 @@ class LinuxHostTest(unittest.TestCase):
             (proc / str(number) / 'cmdline').write_bytes(b'\0'.join(a.encode() for a in args) + b'\0')
         return proc
 
+    @unittest.skipUnless(sys.platform == "linux", "Chemins natifs de RootlessKit ou systemd sous Linux.")
     def test_socket_and_rootlesskit_detection(self):
         socket, custom = linux_host.docker_socket({'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock'})
         self.assertTrue(custom)
@@ -37,12 +38,14 @@ class LinuxHostTest(unittest.TestCase):
         self.assertNotIn('--disable-host-loopback', linux_host.rootlesskit_arguments(socket, proc))
         self.assertIsNone(linux_host.rootlesskit_arguments(Path('/ailleurs/docker.sock'), proc))
 
+    @unittest.skipUnless(sys.platform == "linux", "Chemins natifs de RootlessKit ou systemd sous Linux.")
     def test_loopback_disabled_on_custom_daemon_explains_the_remedy(self):
         proc = self.fake_proc(['rootlesskit', '--state-dir=/run/user/1000/essai/dockerd-rootless', '--disable-host-loopback'])
         with mock.patch.dict(os.environ, {'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock'}):
             with self.assertRaisesRegex(setup.SetupError, linux_host.LOOPBACK_ENV):
                 linux_host.ensure_host_loopback(proc)
 
+    @unittest.skipUnless(sys.platform == "linux", "Chemins natifs de RootlessKit ou systemd sous Linux.")
     def test_loopback_disabled_on_user_service_is_reconfigured(self):
         proc = self.fake_proc(['rootlesskit', '--state-dir=/run/user/1000/dockerd-rootless', '--disable-host-loopback'])
         config = self.root / 'config'
@@ -60,6 +63,7 @@ class LinuxHostTest(unittest.TestCase):
         self.assertIn(('restart', 'docker.service'), calls)
         self.assertIn('reconfiguré', status)
 
+    @unittest.skipUnless(sys.platform == "linux", "Chemins natifs de RootlessKit ou systemd sous Linux.")
     def test_unit_keeps_docker_host_and_runs_up_and_down(self):
         app = mock.Mock(work=Path('/srv/essai/prive'))
         with mock.patch('shutil.which', return_value='/home/louis/bin/docker'):
