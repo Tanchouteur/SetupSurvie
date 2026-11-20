@@ -58,14 +58,13 @@ que les collections ZIM non examinées sont sans vidéo.
 
 Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
 Dans le volet vidéo déplié, le menu **Origine des vidéos** propose
-**Toutes les vidéos**, **YouTube** et **Hors YouTube**.
-**YouTube** inclut les vidéos importées et les vidéos reconnues dans les
-catalogues YouTube archivés par Kiwix. **Hors YouTube** affiche les autres
-vidéos Kiwix, y compris les clips d’une archive mixte, ainsi que les fichiers
-locaux sans origine YouTube identifiée.
+**Toutes les vidéos** et **Nos vidéos ajoutées**. Depuis la demande de Louis du
+20 novembre 2026, ce second choix remplace les anciens filtres **YouTube** et
+**Hors YouTube** : il affiche seulement les fichiers rangés dans
+`library/video/` (à la main ou par l’outil de liste YouTube, dans
+`library/video/youtube/`) et écarte les vidéos lues dans les archives Kiwix.
 Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
-dépliées. Pour reconnaître les anciennes archives YouTube, reprendre si
-nécessaire l’[examen des collections ZIM](#vidéos-dans-les-collections-zim--0330).
+dépliées.
 Le filtre consulte l’index disponible pendant que l’inventaire se poursuit.
 Si la liste tarde à répondre, un message s’affiche avec le bouton **Réessayer**.
 
