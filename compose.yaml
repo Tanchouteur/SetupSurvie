@@ -94,6 +94,7 @@ services:
       PILOT_CONTROL_URL: http://host.docker.internal:11436
       PILOT_CONTROL_TOKEN: ${PILOT_CONTROL_TOKEN}
       OLLAMA_URL: ${OLLAMA_BASE_URL}
+      CHAT_MODEL: ${CHAT_MODEL:-}
       KIWIX_URL: http://kiwix:8080
       PILOT_SEARCH_CACHE_BYTES: ${PILOT_SEARCH_CACHE_BYTES:-2000000000}
       GUIDES_DIR: /guides

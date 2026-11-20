@@ -28,6 +28,15 @@ def installation_plan(base, packs):
     return plan
 
 
+def initial_model():
+    profiles = json.loads((setup.ROOT / 'deploy/model-profiles.json').read_text(encoding='utf-8'))
+    compact = profiles['compact_cpu']
+    memory = os.sysconf('SC_PHYS_PAGES') * os.sysconf('SC_PAGE_SIZE')
+    if memory < compact['default_model_ram_gib'] * 1024 ** 3:
+        return compact['model']
+    return setup.VERSIONS['default_model']
+
+
 def start(base):
     work = destination(base, 'private')
     data = destination(base, 'data')
@@ -48,7 +57,7 @@ def start(base):
                  '--no-startup', '--data-dir', str(data)]
     for pack in plan['packs']:
         arguments.extend(('--content-pack', pack))
-    setup.main(arguments)
+    setup.main(arguments, initial_chat_model=initial_model())
     config = app.load()
     config['app_dir'] = str(setup.ROOT)
     setup.write_json(app.settings_path, config, private=True)

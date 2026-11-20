@@ -132,3 +132,19 @@ impossible à obtenir. La piste anglaise est restée disponible. La machine
 minimale est donc qualifiée pour le téléchargement, la transcription et la
 recherche de cette vidéo. La traduction automatique sur cette configuration
 reste à valider.
+
+## Correction 0.73.0 pour les installations avec peu de mémoire
+
+La première installation automatique choisit le profil Qwen3 1,7B sans
+réflexion lorsque la RAM détectée est inférieure à 16 Gio. Le réglage
+enregistré se retrouve dans Compose et dans le profil rapide utilisé par la
+traduction des sous-titres. Cette évolution du choix de modèle justifie le
+passage à la version mineure 0.73.0.
+
+Les tests simulés couvrent la sélection sur 6 et 32 Gio, la conservation du
+modèle en cas de reprise, la configuration transmise au service et la
+publication d'une piste française avec une réponse Ollama simulée.
+L'essai de traduction réelle sur une VM de 6 Gio reste à rejouer avec le
+nouveau modèle. L'adaptation d'une copie provenant d'une machine plus
+puissante vers une cible moins dotée en RAM reste à qualifier. [Fiche du
+modèle](https://ollama.com/library/qwen3:1.7b-q4_K_M)

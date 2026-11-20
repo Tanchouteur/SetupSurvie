@@ -159,7 +159,7 @@ class Installation:
             raise SetupError("Installation non initialisée. Lancez d’abord install ou init.")
         return json.loads(self.settings_path.read_text(encoding="utf-8"))
 
-    def init(self, target, data_dir=None, lan=False, cpu=False):
+    def init(self, target, data_dir=None, lan=False, cpu=False, *, initial_chat_model=None):
         durable.mkdir(self.work)
         if os.name != "nt":
             self.work.chmod(0o700)
@@ -182,7 +182,7 @@ class Installation:
                       "project": "survie-" + secrets.token_hex(4),
                       "secret": secrets.token_hex(32), "admin_email": "admin@survie.local",
                       "admin_password": secrets.token_urlsafe(32),
-                      "chat_model": VERSIONS["default_model"]}
+                      "chat_model": initial_chat_model or VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"
             durable.write_bytes(credentials,("SetupSurvie — profils locaux sans mot de passe\n"
@@ -682,7 +682,7 @@ def parser():
     return p
 
 
-def main(argv=None):
+def main(argv=None, *, initial_chat_model=None):
     args = parser().parse_args(argv)
     selected_content = []
     if args.action == "install":
@@ -698,7 +698,7 @@ def main(argv=None):
             selected_content = [item for item in items if item['pack'] in packs]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
-        c = app.init(args.target, args.data_dir, args.lan, args.cpu)
+        c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model)
         if args.lan_host:
             if not args.lan:raise SetupError('--lan-host nécessite --lan.')
             c['lan_host']=args.lan_host;write_json(app.settings_path,c,private=True);app.render(c)
