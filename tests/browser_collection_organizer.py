@@ -43,6 +43,12 @@ ROWS = [
     {'key': 'zim:gutenberg_en_lcc-q', 'title': 'Gutenberg — Project Gutenberg Library', 'family': 'Gutenberg', 'variant': 'Project Gutenberg Library',
      'description': 'Science', 'files': ['gutenberg_en_lcc-q_2026-03.zim'], 'bytes': 17_000_000_000,
      'state': 'main', 'kind': 'archive', 'url': '/content/gutenberg_en_lcc-q_2026-03/'},
+    {'key': 'zim:wiktionary_en_all', 'title': 'Wiktionary — all_nopic', 'family': 'Wiktionary', 'variant': 'all_nopic',
+     'description': 'The largest dictionary on the web.', 'files': ['wiktionary_en_all_nopic_2026-11.zim'], 'bytes': 14_800_000_000,
+     'state': 'main', 'kind': 'archive', 'url': '/content/wiktionary_en_all_nopic_2026-11/'},
+    {'key': 'zim:wiktionary_fr_all', 'title': 'wiktionary — Wiktionnaire', 'family': 'wiktionary', 'variant': 'Wiktionnaire',
+     'description': 'Le plus grand dictionnaire en français', 'files': ['wiktionary_fr_all_nopic_2026-08.zim'], 'bytes': 4_900_000_000,
+     'state': 'main', 'kind': 'archive', 'url': '/content/wiktionary_fr_all_nopic_2026-08/'},
     {'key': 'video:' + 'a' * 64, 'title': 'Chaîne jardinage', 'family': 'Vidéos', 'variant': 'Chaîne jardinage',
      'description': '', 'files': [], 'bytes': 2_000_000_000, 'state': 'main', 'kind': 'video', 'count': 14},
 ]
@@ -105,9 +111,18 @@ def exercise(page, base, name):
     page.locator('#collection-organizer .organizer-group').first.wait_for()
     check(page.locator('#collection-organizer').is_visible(), name + ' : page dédiée ouverte depuis le raccourci')
     check(page.locator('.organizer-group h3').all_inner_texts()[0] == 'Wikipédia', name + ' : familles triées par taille')
-    check(page.locator('.organizer-row').count() == 0, name + ' : familles repliées à l’ouverture')
+    check(page.locator('.organizer-group:not(.is-single) .organizer-row').count() == 0, name + ' : familles repliées à l’ouverture')
+    check(page.locator('.organizer-group.is-single .organizer-row').count() == 1, name + ' : collection seule affichée sans dépliage')
+    check(page.locator('.organizer-group h3', has_text='iktionary').all_inner_texts() == ['Wiktionary'], name + ' : familles Wiktionary/wiktionary réunies')
+    check('Wiktionnaire' in page.locator('.organizer-group', has_text='Wiktionary').locator('.organizer-group-preview').inner_text(),
+          name + ' : contenu visible sans déplier')
     page.screenshot(path=str(OUTPUT / (name + '-page.png')), full_page=True)
     gutenberg = page.locator('.organizer-group', has_text='Gutenberg')
+    if name == 'bureau':
+        gutenberg.locator('.organizer-group-toggle').hover()
+        check(gutenberg.locator('.organizer-group-toggle').evaluate("b=>getComputedStyle(b).backgroundColor") in ('rgba(0, 0, 0, 0)', 'transparent'),
+              name + ' : survol de famille sans fond sombre')
+        page.screenshot(path=str(OUTPUT / (name + '-survol.png')), full_page=False)
     gutenberg.locator('.organizer-group-toggle').click()
     check(sorted(gutenberg.locator('.organizer-name strong').all_inner_texts()) == ['Fine arts', 'Livres en français', 'Science'],
           name + ' : sujets distinguant les archives au nom identique')

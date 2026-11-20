@@ -77,6 +77,11 @@ collections jugé inutilisable dans l’onglet Collections.
 - Chaque ligne nomme l’élément tel qu’un humain le reconnaît, puis son type,
   sa taille, un **Aperçu ↗** et le nom technique en petit. Le choix courant est
   un interrupteur à deux positions enregistré immédiatement.
+- Un en-tête qui se replie n’a pas l’apparence d’un bouton plein : ni fond sombre
+  au survol, ni effet d’enfoncement ; le titre se souligne et le chevron, gris,
+  garde un espace avec la case à cocher. Replié, il résume son contenu. Le choix
+  sélectionné d’un interrupteur est une pastille claire au texte coloré, pas un
+  aplat plein (retour de Louis du 20 novembre 2026, 0.65.2).
 - Les actions groupées apparaissent dans une barre collante seulement quand
   quelque chose est coché. Une suppression passe par un écran de confirmation
   qui nomme les éléments et le volume libéré.

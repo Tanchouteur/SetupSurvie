@@ -124,7 +124,7 @@
     const name=row.kind==='video'?row.title:row.variant||row.title;
     return duplicate&&row.description?row.description:name;
   }
-  function rowNode(row,duplicate){
+  function rowNode(row,duplicate,heading){
     const item=element('li',undefined,'organizer-row');
     item.dataset.state=row.state;
     const check=element('input');
@@ -132,7 +132,11 @@
     check.setAttribute('aria-label','Cocher '+row.title);
     check.onchange=()=>{check.checked?selected.add(row.key):selected.delete(row.key);render();};
     const body=element('div',undefined,'organizer-name');
-    body.append(element('strong',rowName(row,duplicate)));
+    const name=rowName(row,duplicate);
+    if(heading){
+      body.append(element('strong',heading));
+      if(normalize(name)!==normalize(heading))body.append(element('span',name,'organizer-variant'));
+    }else body.append(element('strong',name));
     const meta=[row.kind==='video'?(row.count?plural(row.count,'vidéo','vidéos'):'Vidéos'):'Collection Kiwix',bytes(row.bytes)];
     const line=element('span',meta.join(' · '),'organizer-meta');
     if(row.url){
@@ -157,21 +161,41 @@
       chip.setAttribute('aria-pressed',String(chip.dataset.view===view));
     }
     const shown=filtered(),families=new Map();
+    const labels=new Map();
     for(const row of shown){
-      const family=row.kind==='video'?'Vidéos téléchargées':row.family||row.title;
+      const name=row.kind==='video'?'Vidéos téléchargées':row.family||row.title;
+      // « wiktionary » and « Wiktionary » are one family; keep the capitalised spelling.
+      const family=normalize(name).trim();
+      const best=labels.get(family);
+      if(!best||best===best.toLowerCase()&&name!==name.toLowerCase())labels.set(family,name);
       if(!families.has(family))families.set(family,[]);
       families.get(family).push(row);
     }
+    const display=family=>{const name=labels.get(family)||family;return name.charAt(0).toLocaleUpperCase('fr')+name.slice(1);};
     const ordered=[...families].sort((a,b)=>b[1].reduce((s,r)=>s+r.bytes,0)-a[1].reduce((s,r)=>s+r.bytes,0));
     const fragment=document.createDocumentFragment();
     const filtering=!!$('organizer-filter').value.trim(),single=ordered.length===1;
+    const foldable=ordered.filter(([,members])=>members.length>1);
     const expandAll=$('organizer-expand');
-    expandAll.hidden=filtering||single||!ordered.length;
-    const allOpen=ordered.length&&ordered.every(([family])=>openGroups.has(family));
+    expandAll.hidden=filtering||single||!foldable.length;
+    const allOpen=foldable.length&&foldable.every(([family])=>openGroups.has(family));
     expandAll.textContent=allOpen?'Tout replier':'Tout déplier';
-    expandAll.onclick=()=>{for(const [family] of ordered)allOpen?openGroups.delete(family):openGroups.add(family);render();};
-    for(const [family,members] of ordered){
-      const open=filtering||single||openGroups.has(family);
+    expandAll.onclick=()=>{for(const [family] of foldable)allOpen?openGroups.delete(family):openGroups.add(family);render();};
+    const baseName=row=>row.kind==='video'?row.title:row.variant||row.title;
+    for(const [key,members] of ordered){
+      const family=display(key);
+      const names=new Map();
+      for(const row of members)names.set(baseName(row),(names.get(baseName(row))||0)+1);
+      const duplicate=row=>names.get(baseName(row))>1;
+      if(members.length===1){
+        // A single collection needs no folding: show it directly, under its family name.
+        const section=element('section',undefined,'organizer-group is-single');
+        const list=element('ul');
+        list.append(rowNode(members[0],duplicate(members[0]),family));
+        section.append(list);fragment.append(section);
+        continue;
+      }
+      const open=filtering||single||openGroups.has(key);
       const section=element('section',undefined,'organizer-group');
       section.classList.toggle('is-open',open);
       const head=element('div',undefined,'organizer-group-head');
@@ -190,9 +214,14 @@
       toggle.setAttribute('aria-controls',listId);
       toggle.disabled=filtering||single;
       const chevron=element('span',undefined,'organizer-chevron');chevron.setAttribute('aria-hidden','true');
-      toggle.append(chevron,element('h3',family),element('span',[plural(members.length,'élément','éléments'),bytes(size),
+      const titles=[...new Set(members.map(row=>rowName(row,duplicate(row))))];
+      const preview=titles.slice(0,5).join(' · ')+(titles.length>5?` · et ${titles.length-5} autre${titles.length>6?'s':''}`:'');
+      const text=element('span',undefined,'organizer-group-text');
+      text.append(element('span',undefined,'organizer-group-line'),element('span',preview,'organizer-group-preview'));
+      text.firstChild.append(element('h3',family),element('span',[plural(members.length,'collection','collections'),bytes(size),
         other===members.length?'tout dans Autre':other?other+' dans Autre':'tout dans le fonds principal'].join(' · '),'organizer-meta'));
-      toggle.onclick=()=>{openGroups.has(family)?openGroups.delete(family):openGroups.add(family);render();};
+      toggle.append(chevron,text);
+      toggle.onclick=()=>{openGroups.has(key)?openGroups.delete(key):openGroups.add(key);render();};
       head.append(all,toggle);
       if(members.length>1){
         // Move the whole family at once: pressed only when every member is already there.
@@ -206,10 +235,8 @@
       }
       section.append(head);
       if(open){
-        const names=new Map();
-        for(const row of members){const name=row.kind==='video'?row.title:row.variant||row.title;names.set(name,(names.get(name)||0)+1);}
         const list=element('ul');list.id=listId;
-        for(const row of members)list.append(rowNode(row,names.get(row.kind==='video'?row.title:row.variant||row.title)>1));
+        for(const row of members)list.append(rowNode(row,duplicate(row)));
         section.append(list);
       }
       fragment.append(section);
