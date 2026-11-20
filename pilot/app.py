@@ -127,7 +127,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.68.1'
+VERSION='0.69.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -950,6 +950,29 @@ class WorkMoveDrop(BaseModel):
 
 class WorkPause(BaseModel):
     paused:bool
+
+
+class UpdateStart(BaseModel):
+    confirmed:Literal[True]
+    pause_queue:bool=False
+
+
+@app.get('/api/maintenance/update')
+async def update_status(value=Depends(admin)):
+    return await operations.update_request()
+
+
+@app.post('/api/maintenance/update/check',status_code=202)
+async def update_check(value=Depends(admin)):
+    return await operations.update_request('check')
+
+
+@app.post('/api/maintenance/update/start',status_code=202)
+async def update_start(body:UpdateStart,value=Depends(admin)):
+    if body.pause_queue:
+        # The updater waits for running work to stop; it refuses an active, unpaused queue.
+        await pause_work_queue(WorkPause(paused=True),value)
+    return await operations.update_request('start',{'confirmed':True})
 
 
 @app.post('/api/work-queue/pause')

@@ -63,6 +63,22 @@ class ControlTests(unittest.TestCase):
                 self.assertEqual(error.exception.code,code)
             change.assert_not_called()
 
+    def test_update_routes_are_authenticated_and_require_confirmation(self):
+        token=control.key(self.c)
+        with patch.object(self.server.updates,'start_update',return_value='a'*32) as start:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/start',None,{'confirmed':True})
+            self.assertEqual(error.exception.code,401)
+            with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/start',token,{})
+            self.assertEqual(error.exception.code,409)
+            start.assert_not_called()
+            with self.post('/update/start',token,{'confirmed':True}) as response:
+                self.assertEqual(json.load(response),{'accepted':True,'id':'a'*32})
+        with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/check',token)
+        self.assertEqual(error.exception.code,409)  # Linux installations update from their own procedure.
+        request=urllib.request.Request(self.base+'/update',headers={'Authorization':'Bearer '+token})
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=3) as response:
+            self.assertFalse(json.load(response)['supported'])
+
     def test_library_routes_are_authenticated_and_limited(self):
         with patch.object(self.server.library,'start') as start:
             with self.post('/library/plan',control.key(self.c),{'themes':['eau']}) as response:

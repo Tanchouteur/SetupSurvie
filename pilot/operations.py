@@ -114,3 +114,20 @@ async def performance():
             if not isinstance(value,dict) or value.get('schema')!=1:raise ValueError()
             return {**value,'available':True}
     except (httpx.HTTPError,ValueError):return {'available':False,'reason':'controller_unavailable'}
+
+
+async def update_request(action=None,body=None):
+    """Update check and launch on the host; the portal never runs a command itself."""
+    if action not in (None,'check','start'):raise HTTPException(400,'Action de mise à jour inconnue.')
+    try:
+        if not TOKEN:raise ValueError()
+        async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
+            headers={'Authorization':'Bearer '+TOKEN}
+            path=URL+'/update'+('/'+action if action else '')
+            response=await client.post(path,json=body or {},headers=headers) if action else await client.get(path,headers=headers)
+            if response.status_code==404:return {'supported':False,'reason':'controller_update_required'}
+            if response.status_code==409:raise HTTPException(409,response.json().get('detail','Opération refusée.'))
+            response.raise_for_status();value=response.json()
+            if not isinstance(value,dict):raise ValueError()
+            return value
+    except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service de commande ne répond pas. Utilisez le raccourci de mise à jour sur le PC serveur.')

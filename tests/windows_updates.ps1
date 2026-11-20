@@ -113,6 +113,25 @@ try {
     Invoke-SurvieGitUpdate $settings
     Assert ($script:calls.Count -eq 1) 'Standalone cleanup must not use Git'
     Assert ($script:calls[0].Arguments -contains 'prune') 'Cleanup must delegate to the guarded update engine'
+    # Portal status: same schema as scripts/maintenance_site.py, written next to the catalog.
+    $catalog = Join-Path $fixture 'donnees\catalog'
+    $null = New-Item -ItemType Directory -Path $catalog -Force
+    $OperationId = 'a' * 32
+    Start-SurvieMaintenanceStatus (Join-Path $fixture 'donnees')
+    $script:updateVersion = '0.1.20 ' + [char]0x2192 + ' 0.1.21'
+    Write-SurvieUpdateProgress 'backup' '' 3 10
+    $statusPath = Join-Path $catalog 'maintenance.json'
+    $status = [IO.File]::ReadAllText($statusPath) | ConvertFrom-Json
+    Assert ($status.id -eq $OperationId) 'The portal launch identifier must be kept'
+    Assert ($status.phase -eq 'backup' -and $status.unavailable -and $status.current -eq 3 -and $status.total -eq 10) 'Backup must be published as unavailable with its progress'
+    Assert ($status.installed -eq '0.1.20' -and $status.available -eq '0.1.21') 'Both versions must be published'
+    Add-SurvieMaintenanceLine 'Sortie du programme'
+    Write-SurvieUpdateProgress 'rollback'
+    Write-SurvieUpdateProgress 'error' 'Etape interrompue.'
+    $status = [IO.File]::ReadAllText($statusPath) | ConvertFrom-Json
+    Assert ($status.state -eq 'failed' -and $status.rolled_back -and -not $status.unavailable) 'A failed update after rollback must be published as such'
+    Assert (@($status.steps).Count -eq 4 -and @($status.lines) -match 'Sortie du programme') 'Steps and recent output must be kept'
+    Assert (@(Get-ChildItem -LiteralPath $catalog -Filter '*.tmp').Count -eq 0) 'No temporary status file may remain'
     Write-Host 'Windows Git updater checks passed; no real Git fetch, installation or service action.'
 } finally {
     $absolute = [IO.Path]::GetFullPath($fixture)

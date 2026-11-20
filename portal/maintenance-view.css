@@ -1,0 +1,50 @@
+/* Update and copy tracking. Works with the portal tokens and, on the temporary
+   maintenance page, with the fallbacks below (no web font is served there). */
+.mv-panel {
+  display: grid;
+  gap: 10px;
+  padding: clamp(18px, 4vw, 28px);
+  color: var(--ds-ink, #241c14);
+  background: var(--ds-surface, #fffdf8);
+  border: 1px solid var(--ds-line, #e5dbc9);
+  border-left: 5px solid var(--ds-flame, #f28a26);
+  border-radius: var(--ds-r-lg, 18px);
+  box-shadow: var(--ds-shadow-1, 0 1px 3px #3a260f1f);
+}
+.mv-panel[data-tone="ok"] { border-left-color: var(--ds-ok, #2a6248); }
+.mv-panel[data-tone="warn"] { border-left-color: var(--ds-warn, #7c5208); background: var(--ds-warn-soft, #fdf1d6); }
+.mv-panel[data-tone="danger"] { border-left-color: var(--ds-danger, #a12c1e); }
+.mv-panel p, .mv-panel h2, .mv-panel ol { margin: 0; }
+.mv-kind { color: var(--ds-ink-3, #6f6252); font-size: .8125rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.mv-versions, .mv-times, .mv-file, .mv-amount { color: var(--ds-ink-2, #55493b); font-size: .9375rem; }
+.mv-title { font-family: var(--ds-font-display, Georgia, serif); font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.15; outline: none; }
+.mv-text { font-size: 1.0625rem; line-height: 1.5; }
+.mv-meter { display: grid; gap: 4px; }
+.mv-progress { width: 100%; height: 12px; accent-color: var(--ds-ember, #b5400e); }
+.mv-availability { padding: 10px 12px; background: var(--ds-surface-2, #f2ebde); border-radius: var(--ds-r-sm, 8px); line-height: 1.45; }
+.mv-connection { padding: 10px 12px; color: var(--ds-warn, #7c5208); background: var(--ds-warn-soft, #fdf1d6);
+  border: 1px solid var(--ds-warn-line, #ecd59f); border-radius: var(--ds-r-sm, 8px); }
+.mv-steps { display: grid; gap: 4px; padding-left: 1.4em; color: var(--ds-ink-2, #55493b); }
+.mv-step-done::marker { color: var(--ds-ok, #2a6248); }
+.mv-step-current { color: var(--ds-ink, #241c14); font-weight: 700; }
+.mv-details summary { cursor: pointer; color: var(--ds-ink-2, #55493b); min-height: 44px; display: flex; align-items: center; }
+.mv-lines { max-height: 18rem; overflow: auto; margin: 0; padding: 10px; white-space: pre-wrap; word-break: break-word;
+  font-size: .8125rem; background: var(--ds-surface-2, #f2ebde); border-radius: var(--ds-r-sm, 8px); }
+.mv-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mv-actions:empty { display: none; }
+[hidden].mv-panel, .mv-panel [hidden] { display: none !important; }
+
+/* Temporary page served while all services are stopped. */
+.mv-standalone-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f7f2e8;
+  color: #241c14;
+}
+.mv-standalone-main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
+.mv-standalone-brand { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 700; }
+.mv-standalone-brand img { width: 40px; height: 44px; }
+@media (prefers-reduced-motion: no-preference) {
+  .mv-panel[data-state="running"] .mv-step-current::after { content: " …"; }
+}

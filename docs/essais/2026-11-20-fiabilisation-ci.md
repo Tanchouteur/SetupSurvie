@@ -1,6 +1,6 @@
 # Audit et fiabilisation de la CI du 20 novembre 2026
 
-**Bilan daté — SetupSurvie 0.68.1, tests sur données synthétiques.** Louis a
+**Bilan daté — audit de la 0.68.1 puis intégration sur la 0.69.0.** Louis a
 demandé de revoir la chaîne de tests et de refondre les parties qui en avaient besoin.
 
 Le dernier run vert de `main` avant l’audit date du 19 novembre à 23 h 03 UTC.
@@ -28,3 +28,14 @@ le lecteur de mise à jour pour vérifier le contenu du zip. Le contrôle à 320
 vise l’accès à l’en-tête de la section et vérifie l’ouverture réelle de son
 contenu. Les recettes navigateur sur données fictives et la vérification du
 paquet sans l’appliquer couvrent les changements de cette livraison.
+
+La première validation GitHub Actions de la branche a exécuté 1 194 tests
+Python sous Linux, dont 7 ignorés. Le paquet téléchargé contenait 1 091
+fichiers vérifiés et son empreinte concordait. Les 51 recettes du portail
+ont réussi sur Chromium et WebKit. Une capture de Firefox a isolé un
+échec dans la recette de traduction du lecteur. La recette utilise
+désormais la préférence de mouvement réduit, tandis que les recettes
+d’animation conservent leurs réglages. L’essai WebKit de navigation
+attend la réponse initiale de la file d’attente avant de quitter les cartes.
+
+[Premier run de la branche](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44729474592).

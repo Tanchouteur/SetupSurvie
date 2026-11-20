@@ -1,6 +1,6 @@
 # Tests automatisés et CI
 
-**Guide actuel — 20 novembre 2026, SetupSurvie 0.68.1.** Le [workflow GitHub
+**Guide actuel — 20 novembre 2026, SetupSurvie 0.69.0.** Le [workflow GitHub
 Actions](../../.github/workflows/tests.yml) contrôle les PR et les commits de
 `main`. Une nouvelle révision d’une PR annule son ancien run.
 Un run de `main` déjà démarré se termine si un autre commit arrive.

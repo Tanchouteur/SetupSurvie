@@ -19,6 +19,7 @@ import discovery
 import setup
 import library_tasks
 import library_monitor
+import update_watch
 
 
 def key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
@@ -80,6 +81,7 @@ class Server(ThreadingHTTPServer):
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
         self.activity_cache=None;self.activity_time=0
         self.performance_lock=threading.Lock()
+        self.updates=update_watch.Watcher(app,c)
         super().__init__(address,Handler)
 
     def status(self):
@@ -245,6 +247,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
+        if self.path=='/update':
+            try:self.respond(200,self.server.updates.status())
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'État des mises à jour indisponible.'})
+            return
         match=re.fullmatch(r'/library/youtube/([a-f0-9]{32})',self.path)
         if match:
             try:
@@ -260,7 +266,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
+        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
@@ -271,6 +277,16 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return
+        if self.path.startswith('/update/'):
+            try:
+                if self.path=='/update/check':
+                    self.respond(202,{'accepted':self.server.updates.request_check()})
+                else:
+                    if body.get('confirmed') is not True:raise setup.SetupError('Confirmation requise.')
+                    self.respond(202,{'accepted':True,'id':self.server.updates.start_update()})
+            except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
+            except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'La mise à jour n’a pas pu être lancée sur le PC serveur.'})
+            return
         if self.path.startswith('/library/'):
             try:
                 with self.server.lock:
@@ -350,6 +366,8 @@ def serve(app,backend):
         if time.monotonic()-last_index>=5:
             last_index=time.monotonic()
             try:server.library.auto_index()
+            except (OSError,ValueError,setup.SetupError):pass
+            try:server.updates.tick()
             except (OSError,ValueError,setup.SetupError):pass
     server.server_close()
 

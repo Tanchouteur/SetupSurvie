@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.68.1, 20 novembre 2026.**
+**Guide actuel — 0.69.0, 20 novembre 2026.**
 
 Le portail a une seule interface, servie à la racine, sur Windows comme sur
 Linux. Depuis 0.63.0, l’ancienne interface « classique » est retirée et
@@ -308,6 +308,12 @@ L’aperçu au survol de l’icône reste ouvert quand la souris descend de l’
 vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
 
 ## Installer et mettre à jour
+
+Depuis la 0.69.0, le profil Famille voit **Mises à jour** dans la barre de
+navigation sous Windows : survol avec la dernière vérification, bouton
+**Vérifier maintenant** et lancement après confirmation. Le suivi d’une mise
+à jour ou d’une copie complète s’affiche sur l’accueil pour tous les
+appareils. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 
 Les pages font partie du logiciel portable : aucune dépendance Windows, aucun
 service frontend supplémentaire et aucun téléchargement de ressources externes.

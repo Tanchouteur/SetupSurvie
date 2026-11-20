@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Offline relocation of an installed portable SetupSurvie. Standard library only."""
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 import argparse
 import errno
 import hashlib
@@ -461,6 +461,29 @@ def track_copy(dest, journal, callback):
         update('Copie vérifiée',force=True,state='copied')
 
 
+def maintenance_view(dest, operation, started):
+    """Portal status during the copy, read from the destination tracker only.
+
+    Nothing is written into the source while it is frozen: the inventory must not change."""
+    status=copy_status(dest)
+    state=status.get('state','running')
+    total=status.get('bytes_total') or 0
+    done=status.get('bytes_verified') or 0
+    files_total=status.get('files_total') or 0
+    detail=''
+    if state=='interrupted':
+        detail=status.get('reason') or 'Copie interrompue. Reprenez-la depuis Transférer SetupSurvie sur le PC serveur.'
+    elif files_total:
+        detail=f"{status.get('files_done',0):,} fichiers vérifiés sur {files_total:,}".replace(',','\u202f')
+    return {'schema':1,'id':operation,'kind':'transfer',
+            'state':{'interrupted':'failed','copied':'completed'}.get(state,'running'),
+            'phase':'copy','title':status.get('phase') or 'Copie complète de SetupSurvie','detail':detail,
+            'current':done if total else None,'total':total or None,'unit':'bytes',
+            'file_bytes':status.get('file_bytes') or 0,'file_total':status.get('file_total') or 0,
+            'destination':str(dest),'unavailable':True,'started':started,
+            'updated':status.get('updated_at') or started,'steps':[],'lines':[]}
+
+
 def export_report(dest, journal):
     # No paths, filenames, users, settings values, DB contents or raw tool logs.
     report={k:journal.get(k) for k in ('schema','kind','id','phase','created','bytes','prerequisites','release','target')}
@@ -584,7 +607,12 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
             raise setup.SetupError('Un autre transfert protège cette source. Reprenez-le ou revenez à la source.')
         setup.write_json(existing,{'id':journal['id'],'destination':str(dest)},private=True)
         journal['phase']='copying';save(dest,journal);export_report(dest,journal)
-        with track_copy(dest,journal,progress) as report, stop_context(app,config):
+        # While services are stopped, the portal ports show this copy's progress.
+        page=nullcontext()
+        if stop_context is stopped:
+            import maintenance_site
+            page=maintenance_site.running(config,lambda started=time.time():maintenance_view(dest,journal['id'],started),wait=900)
+        with page, track_copy(dest,journal,progress) as report, stop_context(app,config):
             # Reinventory ONLY on first stop. Never silently merge changed source states.
             docker_disks=journal.get('host',{}).get('docker_disks',[])
             current=inventory(roots(app,config),docker_disks)

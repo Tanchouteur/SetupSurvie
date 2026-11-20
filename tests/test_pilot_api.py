@@ -348,6 +348,25 @@ class PilotAPITests(unittest.TestCase):
             command.assert_awaited_once_with('plan',{'themes':['energie'],'languages':['fr','en'],'max_add_gb':5,'include_supplements':False})
         self.assertEqual(self.client.post('/api/admin/library/download',json={'id':'../outside'},headers={'Origin':'http://testserver'}).status_code,422)
 
+    def test_update_routes_require_famille_and_can_pause_the_queue_first(self):
+        headers={'Origin':'http://testserver'}
+        self.login()
+        with patch.object(operations,'update_request',new_callable=AsyncMock) as command:
+            self.assertEqual(self.client.get('/api/maintenance/update').status_code,403)
+            self.assertEqual(self.client.post('/api/maintenance/update/start',json={'confirmed':True},headers=headers).status_code,403)
+            command.assert_not_called()
+        self.client.cookies.clear();self.login('admin')
+        with patch.object(operations,'update_request',new_callable=AsyncMock,return_value={'accepted':True,'id':'x'}) as command, \
+                patch.object(gateway.work_queue.QUEUE,'set_paused') as paused:
+            self.assertEqual(self.client.post('/api/maintenance/update/start',json={},headers=headers).status_code,422)
+            response=self.client.post('/api/maintenance/update/start',json={'confirmed':True},headers=headers)
+            self.assertEqual(response.status_code,202);paused.assert_not_called()
+            command.assert_awaited_with('start',{'confirmed':True})
+            self.client.post('/api/maintenance/update/start',json={'confirmed':True,'pause_queue':True},headers=headers)
+            paused.assert_called_once_with(True)
+            self.assertEqual(self.client.post('/api/maintenance/update/check',headers=headers).status_code,202)
+            command.assert_awaited_with('check')
+
     def test_delete_conversation_checks_owner_and_active_jobs_and_removes_data(self):
         self.login()
         with patch.object(engine,'launch'):
