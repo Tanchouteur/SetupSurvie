@@ -3,6 +3,7 @@ async page => {
   const assert=(value,label)=>{if(!value)throw Error(label);checks.push(label);};
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(r.method()==='POST')commands.push(new URL(r.url()).pathname);});
+  await page.emulateMedia({reducedMotion:'reduce'});
   await page.goto('about:blank');await page.context().clearCookies();
   await page.route('**/api/activity',r=>r.fulfill({json:{phase:'downloading',source:'windows',observed_at:Date.now()/1000,worker_alive:true,total_bytes:10000000000,verified_bytes:3000000000,total_count:4,verified_count:1,active:[{id:'book',title:'Collection fixture',bytes:1000000000,total:2000000000,phase:'downloading'}]}}));
   await page.setViewportSize({width:1440,height:950});await page.goto(base+'/#/accueil');await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
@@ -61,11 +62,17 @@ async page => {
   await page.goto(base+'/#/appareil/telechargements');
   assert(!await page.locator('#geo-download-form').isVisible(),'Préparation complexe retirée sur mobile');
   assert(await page.locator('#view-data .next-activity').isVisible(),'Suivi accessible sur mobile');
-  await page.locator('#navigation').getByRole('link',{name:'Cartes',exact:true}).click();
+  const [queueResponse] = await Promise.all([
+    page.waitForResponse(response => response.url() === base+'/api/work-queue' &&
+      response.request().frame().url().startsWith(base+'/cartes.html')),
+    page.locator('#navigation').getByRole('link',{name:'Cartes',exact:true}).click(),
+  ]);
   await page.waitForURL('**/cartes.html');
   await page.waitForFunction(()=>window.SurvieMap);
   assert(await page.locator('#map').isVisible(),'L’onglet Cartes ouvre directement la carte sur mobile');
   for(const width of [320,390,760,820,1440]){await page.setViewportSize({width,height:950});assert(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Pas de débordement à '+width);}
+  // Let the maps header finish its initial local request before leaving the page.
+  assert(queueResponse.ok() && await queueResponse.finished() === null, 'Suivi de la file disponible depuis les cartes');
   await page.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf');
   await page.waitForFunction(()=>document.querySelector('#pdf-ask').getAttribute('href')?.startsWith('/?document='));
   await page.getByRole('link',{name:'Questionner ce document'}).click();

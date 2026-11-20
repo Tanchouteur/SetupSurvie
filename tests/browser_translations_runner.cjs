@@ -96,6 +96,8 @@ async function runRecipe(browser, engine, file) {
   const directory = path.join(artifactRoot, engine, path.basename(file, '.js'));
   fs.mkdirSync(directory, { recursive: true });
   const started = Date.now();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
   const label = '[' + engine + '] ' + file;
   console.log('START ' + label);
   try {
@@ -105,6 +107,7 @@ async function runRecipe(browser, engine, file) {
     // Existing recipes are function expressions shared with the manual harness.
     const recipe = eval('(' + source + '\n)\n//# sourceURL=' + file);
     const result = await recipe(page);
+    if (errors.length) throw Error(errors.join('\n'));
     console.log(JSON.stringify({ engine, recipe: file, status: 'passed', ms: Date.now() - started, ...result }));
     return true;
   } catch (error) {
