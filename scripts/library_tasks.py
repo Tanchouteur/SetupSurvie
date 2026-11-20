@@ -23,6 +23,7 @@ import search_index_queue as index_queue
 from delivery_paths import destination, locked
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
+QUEUE_PREPARATIONS = {'index', 'index-prepare', 'category-index', 'video-inventory'}
 
 
 class Paused(Exception):
@@ -186,8 +187,19 @@ class Manager:
                 row.get('status') in zim_video_inventory.EXAMINED_STATUSES for row in report.get('results', [])))
         return len(zim_video_inventory.unexamined_files(root/'library/zim', report)) if usable else 0
 
+    def queue_paused(self):
+        return (Path(self.config['data_dir']) / 'state/pilot/work-queue.pause').is_file()
+
     def auto_index(self):
-        root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
+        root = Path(self.config['data_dir'])
+        state = self.current()
+        if self.queue_paused():
+            if (state.get('action') in QUEUE_PREPARATIONS
+                    and state['phase'] in ('starting', 'planning', 'downloading')
+                    and not (self.paths(state['id']) / 'cancel').exists()):
+                self.pause(automatic=bool(state.get('options', {}).get('automatic')), state=state)
+            return
+        queue = index_queue.read(root)
         gaming = index_queue.gaming(self.app.work)
         allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not gaming
         if state['phase'] in ACTIVE:
@@ -267,6 +279,8 @@ class Manager:
             return self.start_locked(action, body)
 
     def start_locked(self, action, body):
+        if action in QUEUE_PREPARATIONS and self.queue_paused():
+            raise setup.SetupError('Reprenez la file pour lancer cette préparation.')
         state = self.current()
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')

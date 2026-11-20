@@ -127,7 +127,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.67.2'
+VERSION='0.67.3'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -955,7 +955,11 @@ class WorkPause(BaseModel):
 @app.post('/api/work-queue/pause')
 async def pause_work_queue(body:WorkPause,value=Depends(admin)):
     work_queue.QUEUE.set_paused(body.paused)
-    if body.paused:await youtube_pipeline.pause_active_download()
+    if body.paused:
+        with optional_feature('videos') as module:
+            if module.running() is not None and not module.STOP.is_set():
+                module.request_stop('queue_paused')
+        await youtube_pipeline.pause_active_download()
     return {'paused':body.paused}
 
 

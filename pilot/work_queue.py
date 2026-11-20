@@ -9,7 +9,7 @@ import sqlite3
 
 from fastapi import HTTPException
 
-from . import store
+from . import durable, store
 
 CURRENT = ContextVar('portal_work', default=None)
 KINDS = {
@@ -264,10 +264,21 @@ class Queue(Slot):
             saved = db.execute("SELECT value FROM settings WHERE key='work-queue-paused'").fetchone()
         self.root = store.ROOT
         self.paused = bool(saved and saved[0] == '1')
+        self.publish_pause(self.paused)
+
+    @staticmethod
+    def publish_pause(paused):
+        # The Windows/Linux host controller shares this directory with the pilot.
+        marker = store.ROOT / 'work-queue.pause'
+        if paused and not marker.is_file():
+            durable.write_bytes(marker, b'', private=True)
+        elif not paused:
+            marker.unlink(missing_ok=True)
 
     def set_paused(self, paused):
         with store.connect() as db:
             db.execute("INSERT OR REPLACE INTO settings(key,value) VALUES('work-queue-paused',?)", ('1' if paused else '0',))
+            self.publish_pause(paused)
         self.paused = paused
         for slot in self.slots.values():
             slot.dispatch()
@@ -385,16 +396,16 @@ class Queue(Slot):
                     row = {**row, **current}
             jobs.append(row)
         indexing = videos.running() is not None
+        rebuilding = videos.partitions_running()
         report = self.video_status(videos, indexing)
         phase = report.get('phase')
-        if indexing:
-            lanes['local']['running'] = True
-        show_index = indexing or phase == 'completed' or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
+        show_index = indexing or rebuilding or phase == 'completed' or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
         if show_index:
             pausing = indexing and videos.STOP.is_set()
             jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
-                         'title': 'Inventaire des vidéos et sous-titres', 'status': 'running' if indexing else phase,
+                         'title': 'Inventaire des vidéos et sous-titres', 'status': 'running' if indexing or rebuilding else phase,
                          'stage': ('Pause demandée · ancien index conservé' if pausing else
+                                   'Publication des index de recherche vidéo' if rebuilding and not indexing else
                                    report.get('stage') or f"{report.get('videos', 0)} vidéo(s) traitée(s)"),
                          'pausable': indexing and not pausing,
                          'updated': report.get('finished'),

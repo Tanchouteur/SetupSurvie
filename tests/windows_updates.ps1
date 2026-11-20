@@ -32,9 +32,16 @@ try {
     function Find-SurvieGit { return 'git-fixture' }
     $script:runningWork = $false
     $script:queueUnavailable = $false
+    $script:pausedQueue = $false
+    $script:waits = 0
     function Invoke-RestMethod {
         if ($script:queueUnavailable) { throw 'fixture unavailable' }
-        return @{ running = $script:runningWork; jobs = @(); preparations_available = $true }
+        $jobs = if ($script:runningWork) { @{ status = 'running'; title = 'Inventaire vidéo' } }
+        return @{ running = $script:runningWork; paused = $script:pausedQueue; jobs = @($jobs); preparations_available = $true }
+    }
+    function Start-Sleep {
+        $script:waits += 1
+        $script:runningWork = $false
     }
     $script:calls = @(); $script:dirty = $false; $script:ahead = '0'; $script:badHash = $false
     function Get-SurvieGitOutput($Git, $Arguments) {
@@ -69,7 +76,11 @@ try {
     $failed = $false
     try { Invoke-SurvieGitUpdate $settings } catch { $failed = $_.Exception.Message -match 'travail est en cours' }
     Assert ($failed -and $script:calls.Count -eq 2) 'Running work must prevent building and applying an update'
-    $script:runningWork = $false
+    $script:pausedQueue = $true; $script:calls = @()
+    Invoke-SurvieGitUpdate $settings
+    Assert ($script:waits -eq 1) 'Paused queue must wait until the worker is idle'
+    Assert (@($script:calls | Where-Object { $_.Arguments -contains 'apply' }).Count -eq 1) 'Idle queue must allow the update to proceed'
+    $script:pausedQueue = $false
     $script:queueUnavailable = $true
     $failed = $false
     try { Assert-SurvieWorkQueueIdle ([version]'0.63.0') } catch { $failed = $_.Exception.Message -match 'Impossible de' }

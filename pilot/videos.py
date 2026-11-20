@@ -12,7 +12,7 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import collection_sort,durable,network,retrieval,store
+from . import collection_sort,durable,network,retrieval,store,work_queue
 from . import video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
@@ -231,6 +231,7 @@ async def ensure_fresh(force=False):
     Called at startup and before video searches, at most once a minute. The
     previous index stays searchable during the refresh."""
     global CHECKED
+    if work_queue.QUEUE.paused:return 'paused'
     if running() is not None:return 'refreshing'
     if not force and time.monotonic()-CHECKED<CHECK_INTERVAL:return 'checked'
     CHECKED=time.monotonic()
@@ -279,13 +280,13 @@ def partitions_ready():
 
 async def ensure_partitions():
     global PARTITION_TASK
-    if running_task(PARTITION_TASK) is not None or STOP.is_set():
+    if partitions_running() or STOP.is_set() or work_queue.QUEUE.paused:
         return
     try:
         if await asyncio.to_thread(partitions_ready):return
     except (OSError,sqlite3.Error):
         return
-    if running_task(PARTITION_TASK) is not None or STOP.is_set():
+    if partitions_running() or STOP.is_set() or work_queue.QUEUE.paused:
         return
     async def run():
         try:await asyncio.to_thread(rebuild_partitions)
@@ -294,6 +295,7 @@ async def ensure_partitions():
 
 
 def build_partitions(db):
+    if STOP.is_set():raise InterruptedError()
     previous=partition_tables(db)
     if previous is not None:
         for table in previous.values():
@@ -565,6 +567,7 @@ def scan():
 
 async def start():
     global ACTIVE
+    if work_queue.QUEUE.paused:raise HTTPException(409,'Reprenez la file pour lancer l’inventaire vidéo.')
     if running() is not None:raise HTTPException(409,'Un inventaire vidéo est déjà en cours.')
     STOP.clear()
     # Publish running before handing work to a thread: a fast poll must not
@@ -597,7 +600,7 @@ def request_stop(reason='user'):
 
 async def stop(reason='user'):
     request_stop(reason)
-    for task in (running(),running_task(PARTITION_TASK)):
+    for task in (running(),partitions_running()):
         if task is None:continue
         # Both writing tasks check STOP and finish their SQLite transaction before shutdown.
         try:await asyncio.shield(task)
@@ -610,6 +613,10 @@ async def stop(reason='user'):
 def running():
     """The inventory task of this event loop, if one is still running."""
     return running_task(ACTIVE)
+
+
+def partitions_running():
+    return running_task(PARTITION_TASK)
 
 
 def running_task(task):

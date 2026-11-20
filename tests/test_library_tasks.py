@@ -45,6 +45,22 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(folder / 'plan.json', plan)
         return state, folder
 
+    def test_global_pause_requests_a_category_checkpoint_and_holds_host_preparations(self):
+        state, folder = self.seed(action='category-index', phase='downloading')
+        marker = self.root / 'data/state/pilot/work-queue.pause'
+        marker.touch()
+        self.manager.auto_index()
+        self.assertTrue((folder / 'cancel').is_file())
+        self.assertFalse((folder / 'auto-pause').exists())
+        self.manager.write({**state, 'phase': 'paused'})
+        with self.assertRaisesRegex(setup.SetupError, 'Reprenez la file'):
+            self.manager.start('category-index', {})
+        with patch.object(self.manager, 'index_ready') as readiness:
+            self.manager.auto_index()
+        readiness.assert_not_called()
+        marker.unlink()
+        self.assertFalse(self.manager.queue_paused())
+
     def test_index_requires_finished_reader_preparation_and_reports_progress(self):
         with self.assertRaises(setup.SetupError):self.manager.start('index',{})
         binary=self.manager.index_python();binary.parent.mkdir(parents=True);binary.touch()

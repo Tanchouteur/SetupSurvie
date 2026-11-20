@@ -236,18 +236,34 @@ function Get-SurvieGitOutput([string]$Git, [array]$Arguments) {
 }
 
 function Assert-SurvieWorkQueueIdle([version]$Installed) {
-    try {
-        $queue = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/work-queue' -UseBasicParsing -TimeoutSec 8
-    } catch {
-        # Releases before the unified queue may have no endpoint for this check.
-        if ($Installed -lt [version]'0.63.0') { return }
-        throw 'Impossible de vérifier la file d''attente. Vérifiez que SetupSurvie répond, puis relancez la mise à jour.'
-    }
-    if ($queue.running -or @($queue.jobs | Where-Object { $_.status -in @('running', 'preparing') }).Count) {
-        throw 'Un travail est en cours dans SetupSurvie. Attendez sa fin dans la File d''attente avant de relancer la mise à jour.'
-    }
-    if (-not $queue.preparations_available) {
-        throw 'Impossible de vérifier les préparations documentaires. Réessayez quand la File d''attente est disponible.'
+    $wait = [Diagnostics.Stopwatch]::StartNew()
+    $lastDetail = ''
+    while ($true) {
+        try {
+            $queue = Invoke-RestMethod -Uri 'http://127.0.0.1:8080/api/work-queue' -UseBasicParsing -TimeoutSec 8
+        } catch {
+            # Releases before the unified queue may have no endpoint for this check.
+            if ($Installed -lt [version]'0.63.0') { return }
+            throw 'Impossible de vérifier la file d''attente. Vérifiez que SetupSurvie répond, puis relancez la mise à jour.'
+        }
+        if (-not $queue.preparations_available) {
+            throw 'Impossible de vérifier les préparations documentaires. Réessayez quand la File d''attente est disponible.'
+        }
+        $active = @($queue.jobs | Where-Object { $_.status -in @('running', 'preparing') })
+        if (-not $queue.running -and -not $active.Count) { return }
+        if (-not $queue.paused) {
+            throw 'Un travail est en cours dans SetupSurvie. Mettez la File d''attente en pause ou attendez sa fin, puis relancez la mise à jour.'
+        }
+        if ($wait.Elapsed.TotalMinutes -ge 5) {
+            throw 'Des travaux sont encore en cours après cinq minutes d''attente. Consultez la File d''attente, puis relancez la mise à jour quand ils sont arrêtés.'
+        }
+        $titles = @($active | ForEach-Object { $_.title } | Where-Object { $_ } | Select-Object -Unique)
+        $detail = if ($titles.Count) { $titles -join ' · ' } else { 'SetupSurvie finit les travaux déjà lancés.' }
+        if ($detail -ne $lastDetail) {
+            Write-SurvieUpdateProgress 'maintenance' $detail
+            $lastDetail = $detail
+        }
+        Start-Sleep -Seconds 3
     }
 }
 

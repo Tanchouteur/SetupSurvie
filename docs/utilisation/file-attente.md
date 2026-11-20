@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — actualisé pour la 0.67.2.**
+**Guide actuel — actualisé pour la 0.67.3.**
 
 Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
 **À suivre** affiche les tâches actives, en attente et celles qui demandent une
@@ -58,9 +58,12 @@ d’un même créneau et d’un même niveau de priorité.
 Avec **Famille**, utilisez le bouton pause ou lecture en haut de l’aperçu,
 à côté d’**Ouvrir la file**. Sur la page dédiée, retrouvez **Mettre en pause**
 et **Reprendre la file**. La pause empêche le démarrage des étapes suivantes
-pour les tâches pilotées par la file. Les préparations indépendantes suivent
-les commandes de leur carte ou de leur page d’origine. L’indexation des fichiers déjà publiés
-peut se terminer en arrière-plan.
+pour les tâches pilotées par la file. Elle demande aussi l’arrêt de l’inventaire
+des vidéos et la pause des préparations documentaires suivies par le PC serveur,
+dont le classement du fonds principal. Les cartes affichent encore ces travaux
+pendant l’enregistrement de leur progression ou la publication d’un index.
+Les autres préparations indépendantes gardent les commandes de leur carte ou de
+leur page d’origine.
 Une question finit sa réponse en cours, et les travaux découpés s’arrêtent
 entre deux unités enregistrées. Le téléchargement YouTube en cours reçoit
 une demande d’arrêt et conserve son fichier partiel. **Reprendre la file**

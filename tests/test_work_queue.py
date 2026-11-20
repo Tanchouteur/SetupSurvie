@@ -25,6 +25,35 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.queue = work_queue.Queue()
         self.queue.initialize()
 
+    async def test_global_pause_stops_video_inventory_and_updates_host_hold(self):
+        from pilot.app import WorkPause, pause_work_queue
+
+        marker = store.ROOT / 'work-queue.pause'
+        with patch.object(work_queue, 'QUEUE', self.queue), \
+                patch.object(videos, 'running', return_value=object()), \
+                patch.object(videos, 'STOP', asyncio.Event()), \
+                patch.object(videos, 'STOP_REASON', 'user'), \
+                patch.object(youtube_pipeline, 'pause_active_download', AsyncMock()):
+            self.assertEqual(await pause_work_queue(WorkPause(paused=True), ADMIN), {'paused': True})
+            self.assertTrue(marker.is_file())
+            self.assertTrue(videos.STOP.is_set())
+            self.assertTrue(self.queue.snapshot(ADMIN)['running'])
+            with self.assertRaises(HTTPException) as rejected:
+                await videos.start()
+            self.assertEqual(rejected.exception.status_code, 409)
+            self.assertEqual(await videos.ensure_fresh(force=True), 'paused')
+            self.assertEqual(await pause_work_queue(WorkPause(paused=False), ADMIN), {'paused': False})
+            self.assertFalse(marker.exists())
+
+    async def test_video_index_publication_remains_active_until_finished(self):
+        with patch.object(videos, 'running', return_value=None), \
+                patch.object(videos, 'partitions_running', return_value=True):
+            state = self.queue.snapshot(ADMIN)
+        video = next(job for job in state['jobs'] if job['id'] == 'video-index')
+        self.assertTrue(state['running'])
+        self.assertEqual(video['status'], 'running')
+        self.assertIn('Publication', video['stage'])
+
     async def test_host_preparations_use_the_same_cards_without_queue_controls(self):
         report = {'kind': 'download', 'phase': 'verifying', 'source': 'windows',
                   'total_bytes': 2000, 'verified_bytes': 1000,
