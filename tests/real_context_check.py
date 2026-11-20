@@ -58,7 +58,7 @@ async def check(args):
             read_ids={row['id'] for packet in packets for row in packet['results']}
             report={'schema':1,'version':json.loads((base/'deploy/release.json').read_text())['version'],'real_model':True,'fictional_corpus':True,
                 'customer_validation':False,'model':args.model,'options':{'context':args.context,'output':4096,'gpu_layers':32,'threads':6,'keep_alive_seconds':15},
-                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
                 'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'question':question,'result':result,'measurements':metrics,'read_packets':packets,
                 'rejected_proposals':trace.get('rejected_answers',[]),
                 'citation_proposals':[row.get('proposals') for row in trace.get('tools',[]) if row.get('stage')=='citation_linking'],

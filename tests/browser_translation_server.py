@@ -349,5 +349,5 @@ install_archive_video_fixture(gateway.app,root,BASE)
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')
 import uvicorn
-try:uvicorn.run(gateway.app,host='0.0.0.0',port=8769,log_level='warning')
+try:uvicorn.run(gateway.app,host='0.0.0.0',port=int(os.environ.get("BROWSER_FIXTURE_PORT","8769")),log_level='warning')
 finally:temporary.cleanup()

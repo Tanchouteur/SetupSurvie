@@ -18,7 +18,7 @@ async page=>{
   check(await page.locator('#search-results .other-matches').evaluate(node=>node.open),'Les passages ouverts restent dépliés quand arrivent les autres documents');
   check(await page.locator('#search-results .other-matches button').evaluate(node=>node===document.activeElement),'La navigation au clavier est conservée pendant les résultats progressifs');
   check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
-  check((await page.locator('#search-message').textContent()).includes('2 résultat(s)'),'Dernière réponse complète les résultats');
+  check((await page.locator('#search-message').textContent()).includes('2 résultats'),'Dernière réponse complète les résultats');
   const initialSearches=searches;
   await page.locator('#search-results .result button').first().click();
   await page.locator('#reader h2').waitFor();
@@ -40,15 +40,15 @@ async page=>{
   const request=async query=>{if(!await page.locator('#library-query').isVisible())await page.locator('#reader').getByRole('button',{name:'← Résultats',exact:true}).click();await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
   for(const suffix of ['complete','partial','stop','error']){
     const query='fixture-progress-empty-'+suffix;await gate(query,true);await request(query);
-    await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours — aucun résultat pour le moment')&&document.querySelector('#search-stop'));
-    check(!(await page.locator('#search-message').textContent()).includes('0 résultat(s) trouvé(s)'),'Aucun résultat provisoire annoncé comme un total final : '+suffix);
-    check((await page.locator('#search-results .empty-panel').textContent()).includes('La recherche continue'),'Attente expliquée aussi dans la liste vide : '+suffix);
+    await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours…')&&document.querySelector('#search-stop'));
+    check(!/Aucun résultat|0 résultat/.test(await page.locator('#search-message').textContent()),'Aucun résultat provisoire annoncé comme un total final : '+suffix);
+    check(await page.locator('#search-results').evaluate(e=>e.getAttribute('aria-busy')==='true'&&!e.children.length&&getComputedStyle(e).minHeight!=='0px'),'Attente montrée par des silhouettes de résultats : '+suffix);
     if(suffix==='stop')await page.locator('#search-stop').click();
     await gate(query,false);await page.waitForFunction(()=>!document.getElementById('search-stop'));
     const message=await page.locator('#search-message').textContent(),empty=await page.locator('#search-results .empty-panel').textContent();
-    check(!message.includes('Recherche en cours')&&!empty.includes('La recherche continue'),'Aucun faux suivi actif après la fin ou interruption : '+suffix);
+    check(!message.includes('Recherche en cours')&&!empty.includes('Recherche en cours'),'Aucun faux suivi actif après la fin ou interruption : '+suffix);
     check(await page.locator('#search-results').getAttribute('aria-busy')==='false','Fin de traitement accessible aux lecteurs d’écran : '+suffix);
-    check(suffix==='complete'?message.includes('Recherche terminée — aucun résultat trouvé'):suffix==='partial'?message.includes('Recherche terminée, mais incomplète'):message.includes(suffix==='stop'?'arrêtée':'interrompue'),'Fin complète, partielle, arrêt et erreur distingués : '+suffix);
+    check(suffix==='complete'?message.includes('Aucun résultat pour')&&!message.includes('incomplète'):suffix==='partial'?message.includes('Aucun résultat pour')&&message.includes('incomplète')&&empty.includes('ne prouve pas'):message.includes(suffix==='stop'?'arrêtée':'interrompue'),'Fin complète, partielle, arrêt et erreur distingués : '+suffix);
   }
   await gate('fixture-progress-stop',true);await request('fixture-progress-stop');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
   await page.locator('#search-stop').click();

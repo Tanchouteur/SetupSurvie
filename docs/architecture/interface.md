@@ -2,6 +2,34 @@
 
 **Référence d’architecture par domaine — découpée du README le 20 novembre 2026 (0.67.0).** Chaque section décrit un mécanisme au moment de sa livraison et reste valable sauf note de remplacement. Pour les fichiers, voir la [carte du code](carte-du-code.md) ; pour la vue d’ensemble, l’[architecture](README.md).
 
+## Socle commun et structure — 0.70.0
+
+`portal/core/net.js`, premier script de la page, enveloppe `fetch` une seule
+fois : les requêtes `/api/` du même site reçoivent des erreurs en français
+(`NetworkError` avec `offline: true`), et une panne réseau ou une réponse
+502/503/504 non JSON déclenche un contrôle de `/api/health` avant d’annoncer la
+perte de connexion, puis des essais à 3, 5, 10 et 15 s. Les quatre fonctions
+`api()`/`request()` et les `fetch` directs existants en profitent sans
+modification. `core/feedback.js` affiche le bandeau, l’état du pied de page et
+les boutons occupés ; il n’envoie aucune requête propre.
+
+Structure : la navigation principale (liens et icônes) et le pied de page
+(version, état de connexion) sont désormais écrits dans `modele.html` ;
+`layout.js` et `design/experience.js` ne les construisent ni ne les déplacent
+plus. La page Cartes a le même en-tête, écrit dans `cartes.html`. Les autres
+déplacements au chargement (`layout.js`, `settings-layout.js`,
+`assistant-workspace.js`, environ 150 opérations) restent à reprendre écran par
+écran, comme prévu dans l’[audit](../essais/2026-11-20-audit-ux-et-maintenabilite-portail.md#2-maintenabilité-du-portail) :
+réécrire le gabarit d’un écran, puis remplacer dans le script la création par
+une recherche des éléments, en gardant identifiants et événements, recettes
+navigateur vertes à chaque étape.
+
+Côté serveur, les 182 routes de `pilot/app.py` sont réparties en routeurs par
+domaine dans `pilot/routes/` (statut, profils, bibliothèque, cartes,
+conversations, vidéos, file, documents, administration) ; `app.py` garde
+l’application, le cycle de vie, les constantes et ré-exporte les noms utilisés
+par les tests. Les URL, réponses et messages sont inchangés.
+
 ## Interface et organisation — 0.34.0
 
 Les trois zones de `assistant-workspace` déplacent les contrôles existants sans

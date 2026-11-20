@@ -43,7 +43,7 @@ async def check(args):
             'fictional_corpus':True,'pdf_fixture':args.pdf_fixture,'real_model':True,'cases':[],'customer_hardware_validation':False}
     base=Path(__file__).resolve().parents[1]
     report['software_version']=json.loads((base/'deploy/release.json').read_text())['version']
-    report['source_digest']=hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest()
+    report['source_digest']=hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest()
     report['recipe_digest']=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     async def available(**kwargs):
         async with original_client(trust_env=False,timeout=5) as client:

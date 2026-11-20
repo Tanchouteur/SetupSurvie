@@ -14,6 +14,17 @@
     </span>
     <span class="resource-status-meters" aria-hidden="true"></span>
     <span class="resource-status-chevron" aria-hidden="true">›</span>`;
+  /* Téléphone : pastille compacte dans l'en-tête (modèle + deux jauges),
+   * pour garder la surveillance visible sans place pour la jauge complète. */
+  const chips = mapHeader ? [] : [document.querySelector('.topbar .top-actions'), container].filter(Boolean).map(host => {
+    const chip = document.createElement('a');
+    chip.className = 'resource-chip';
+    chip.href = '#/appareil/ensemble';
+    chip.dataset.route = 'appareil/ensemble';
+    chip.innerHTML = '<span class="resource-chip-dot" aria-hidden="true"></span><span class="resource-chip-bars" aria-hidden="true"><i data-meter="ram"></i><i data-meter="vram"></i></span>';
+    if (host === container) host.append(chip); else host.prepend(chip);
+    return chip;
+  });
   const caption = link.querySelector('.resource-status-caption');
   const modelName = link.querySelector('.resource-status-name');
   const meters = link.querySelector('.resource-status-meters');
@@ -47,12 +58,23 @@
     return usage === null ? meter.label + ' indisponible' : meter.label + ' ' + size(item.used) + '/' + size(item.total) + ' Go';
   }
 
-  function show(model, modelCaption, memory, gpu, spokenModel = modelCaption + ' : ' + model) {
+  function show(model, modelCaption, memory, gpu, spokenModel = modelCaption + ' : ' + model, modelState = 'unknown') {
     caption.textContent = modelCaption;
     modelName.textContent = model;
     const summary = [spokenModel, updateMeter(ram, memory), updateMeter(vram, gpu)].join(' · ');
     link.title = summary;
+    link.dataset.model = modelState;
     link.setAttribute('aria-label', 'Voir les mesures de l’appareil. ' + summary);
+    for (const chip of chips) {
+      chip.dataset.model = modelState;
+      for (const meter of [ram, vram]) {
+        const bar = chip.querySelector(`[data-meter="${meter.label.toLowerCase()}"]`);
+        bar.style.setProperty('--resource-usage', meter.element.style.getPropertyValue('--resource-usage') || 0);
+        bar.dataset.level = meter.element.dataset.level;
+      }
+      chip.title = summary;
+      chip.setAttribute('aria-label', 'État de l’appareil. ' + summary);
+    }
   }
 
   function unavailable() {
@@ -65,9 +87,11 @@
       return;
     }
 
-    let model = 'Indisponible';
+    /* Sans service de commande, le modèle chargé ne peut pas être vérifié :
+     * on le dit tel quel, sans laisser croire que l'assistant est en panne. */
+    let model = 'Non vérifié';
     let modelCaption = 'Modèle chargé';
-    let spokenModel;
+    let spokenModel = 'Modèle chargé non vérifié : le service de mesure ne répond pas. L’assistant peut tout de même répondre.';
     if (data.control_available && data.models_available !== false && Array.isArray(data.models)) {
       const names = data.models.map(item => typeof item?.name === 'string' ? item.name.trim() : '').filter(Boolean);
       if (!data.models.length) {
@@ -85,7 +109,9 @@
     const gpu = Array.isArray(gpus) && gpus.length && gpus.every(validMemory)
       ? {used: gpus.reduce((sum, item) => sum + item.used, 0),
          total: gpus.reduce((sum, item) => sum + item.total, 0)} : null;
-    show(model, modelCaption, data.memory, gpu, spokenModel);
+    const modelState = model === 'Non vérifié' ? 'unknown' : modelCaption === 'Assistant'
+      ? (data.operation ? 'busy' : data.paused ? 'paused' : 'idle') : 'loaded';
+    show(model, modelCaption, data.memory, gpu, spokenModel, modelState);
   }
 
   unavailable();

@@ -16,9 +16,9 @@ async page=>{
   await page.route('**/api/search?*',r=>{const params=new URL(r.request().url()).searchParams;queries.push(Object.fromEntries(params));return r.fulfill({json:{results:[],coverage:{status:'partial',domain:params.get('domain')}}});});
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/bibliotheque/recherche?q=feu&domain=resilience');
   await page.waitForFunction(()=>S.authReady&&S.user&&!S.loadingConversation);
-  await page.getByRole('button',{name:'Élargir à toute la bibliothèque'}).waitFor();
+  await page.getByRole('button',{name:'Chercher dans toute la bibliothèque'}).waitFor();
   check(queries.at(-1).domain==='resilience','Périmètre résilience transmis au moteur');
-  await page.getByRole('button',{name:'Élargir à toute la bibliothèque'}).click();
+  await page.getByRole('button',{name:'Chercher dans toute la bibliothèque'}).click();
   await page.waitForFunction(()=>document.querySelector('#search-domain').value==='all'&&location.hash.includes('domain=all'));
   check(queries.at(-1).domain==='all','Élargissement global visible et transmis');
   await page.reload();await page.waitForFunction(()=>document.querySelector('#search-domain')?.value==='all');

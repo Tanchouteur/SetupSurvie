@@ -50,6 +50,8 @@
   --ds-warn-soft: #fdf1d6;
   --ds-warn-line: #ecd59f;
   --ds-danger: #a12c1e;
+  --ds-ok-on-night: #8fd1a8;
+  --ds-danger-on-night: #f3a08f;
   --ds-danger-soft: #fbe6e1;
   /* Type */
   --ds-font: "Atkinson Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

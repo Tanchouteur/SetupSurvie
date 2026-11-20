@@ -60,7 +60,7 @@ async def check(args):
                 'french_indexed':source.get('language')=='fr','both_tracks':{t['origin'] for t in source['tracks']}=={'local_transcription','local_translation'},
                 'original_unchanged':hashlib.sha256((media/'fixture.mp4').read_bytes()).hexdigest()==original_hash}
             report={'schema':1,'version':json.loads((base/'deploy/release.json').read_text())['version'],'elapsed_ms':round((time.monotonic()-started)*1000),
-                'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+                'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
                 'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'synthetic_audio':True,'real_recognition':True,'real_translation':True,
                 'customer_validation':False,'translation_options':{'model':args.model,'context':16384,'output':4096,'gpu_layers':24,'threads':6,'think':False,'keep_alive_seconds':15},
                 'transcription':result,'translation':translation,'indexed_source':source,'checks':checks,'human_semantic_review':'required_separately'}

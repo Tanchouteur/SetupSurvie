@@ -48,7 +48,7 @@ async def check(args):
             report=bench.status(full=True)
             report['real_recipe']={'real_model':True,'fictional_document':True,'customer_hardware_validation':False,'gpu_layers':args.gpu_layers,'gpu_expected_mib':args.gpu_expected_mib,'threads':6,
                 'context':16384,'output_limit':4096,'keep_alive_seconds':15,'host_bridge':'native_functions_directly_HTTP_bridge_tested_separately',
-                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((BASE/'pilot').glob('*.py')))).hexdigest(),
+                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((BASE/'pilot').rglob('*.py')))).hexdigest(),
                 'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
             durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
             if report.get('fixture'):

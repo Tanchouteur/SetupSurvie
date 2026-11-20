@@ -1,6 +1,6 @@
 # Guide de design Veillée
 
-**Guide actuel — 0.63.0, 19 novembre 2026 ; compléments 0.65.0 à 0.65.2 datés dans le texte.** Il sert de référence aux
+**Guide actuel — 0.63.0, 19 novembre 2026 ; compléments 0.65.0 à 0.70.0 datés dans le texte.** Il sert de référence aux
 prochaines interventions sur l’interface. Le portail fonctionne avec ses assets
 locaux. Les usages de l’installation sont décrits dans le [guide du portail](../utilisation/portail.md).
 
@@ -85,6 +85,58 @@ collections jugé inutilisable dans l’onglet Collections.
 - Les actions groupées apparaissent dans une barre collante seulement quand
   quelque chose est coché. Une suppression passe par un écran de confirmation
   qui nomme les éléments et le volume libéré.
+
+## Toujours informer — 0.70.0
+
+Demande de Louis du 20 novembre 2026 après l’[audit du portail](../essais/2026-11-20-audit-ux-et-maintenabilite-portail.md) :
+une personne qui ne comprend pas tout doit savoir quoi faire et ne jamais rester
+sans information, avec un rendu soigné. Il demande aussi de **garder visibles
+le modèle chargé, la RAM et la VRAM**, utiles pour surveiller l’appareil.
+
+- **Réseau.** Toute requête `/api/` passe par `portal/core/net.js`. Ne pas
+  afficher `error.message` brut d’un `fetch` : la couche le traduit déjà, et
+  `toast()` applique `SurvieNet.humanize`. La perte de connexion est annoncée
+  par le seul bandeau `#connection-banner` (rouge, compte à rebours, nouvel
+  essai, lien vers les documents de secours), qui se masque pendant une
+  maintenance. Ne pas créer de second bandeau de connexion dans un module.
+- **Messages éphémères** en haut à droite (sous l’en-tête sur téléphone),
+  jamais sur la zone de saisie. Ton déduit du texte (`data-tone` : info,
+  succès, erreur) ou passé en second argument de `toast()`.
+- **Opérations.** Un bouton désactivé juste après un clic montre un cercle
+  animé (`.is-busy`) jusqu’à sa réactivation, puis un bref halo de fin.
+  Ajouter `no-busy` à un bouton qui ne doit pas l’afficher ; utiliser
+  `SurvieFeedback.busy(bouton, promesse)` pour une action qui ne désactive pas
+  son bouton. Une liste en chargement vide et marquée `aria-busy="true"`
+  montre des silhouettes de cartes (`.ds-skeleton` pour d’autres conteneurs).
+- **Une phrase d’état, puis le détail.** Les résultats et états tiennent en
+  une phrase concrète qui nomme ce qui a été fait (« Aucun résultat pour
+  « … » dans « … » »). L’avertissement utile reste visible en petit dessous ;
+  les précisions techniques vont dans un « Détails » replié. L’action suivante
+  la plus utile vient en premier.
+- **Écran vide = écran utile.** Un écran sans contenu propose un point de
+  départ (idées, dernières recherches) ou rassure (« Rien en cours »), avec une
+  seule surface plutôt qu’un encadré vide par section.
+- **Résumé avant mesures.** Mon appareil commence par « Tout fonctionne » ou
+  « N points à regarder », chaque point avec son explication et son action. Les
+  mesures (modèle chargé, RAM, VRAM) restent dessous et dans l’en-tête ; la
+  pastille compacte `.resource-chip` les garde visibles sur téléphone.
+- **Assistant.** L’état (prêt, démarre, pause, arrêté, injoignable) s’écrit
+  près de la saisie, et la frise d’étapes (préparer, chercher, lire, rédiger)
+  accompagne une réponse en cours. Le libellé du modèle reste disponible.
+- **Téléphone.** L’en-tête garde logo et commandes ; le titre de l’écran est le
+  grand titre de la page. Les rangées d’onglets défilent avec un fondu de fin.
+  Texte d’au moins 12 px, cibles d’au moins 40 px.
+- **Couleurs et tailles.** Toute nouvelle couleur vient de
+  `design/tokens.css`, chargé en premier ; `tests/test_portal_design_budget.py`
+  refuse l’ajout de couleurs ou de tailles de police brutes et ses plafonds ne
+  font que baisser. Les couleurs quasi identiques (écart ΔE ≤ 2) des anciennes
+  feuilles pointent déjà vers les variables, avec l’ancienne valeur en repli.
+- **Mouvement.** 150 à 250 ms en décélération pour les apparitions ; boucles
+  réservées à un travail réellement en cours (cercle, pulsation du point).
+  Tout s’arrête avec `prefers-reduced-motion`. Les transitions entre écrans
+  restent l’apparition courte existante (`ds-rise`) : l’API View Transitions
+  rendrait le changement d’écran asynchrone pour des modules qui l’attendent
+  synchrone.
 
 ## Mouvement et recette
 

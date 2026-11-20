@@ -116,6 +116,11 @@ cohérence dans tout le site, pas seulement sur un écran.
   navigation dans `portal/interface/layout.js`. Cette séparation explique les
   implémentations différentes, mais une comparaison visuelle et fonctionnelle reste
   à mener avant de choisir la correction.
+  *Mise à jour du 20 novembre 2026 (0.70.0) :* les deux navigations sont
+  désormais écrites en HTML avec les mêmes classes, icônes et tailles
+  (`modele.html` et `cartes.html`) ; `map-site-nav.js` ne fait plus que la
+  pastille de profil et `layout.js` ne construit plus la navigation. Voir le
+  [bilan 0.70.0](../essais/2026-11-20-portail-toujours-informe-0700.md).
 - **Modèle, RAM et GPU :** Louis trouve ces informations mal placées et intégrées
   à la hâte dans la barre. Repenser leur emplacement, leur hiérarchie et leur
   présentation, notamment lorsque l'espace manque ; étudier l'emploi de couleurs
