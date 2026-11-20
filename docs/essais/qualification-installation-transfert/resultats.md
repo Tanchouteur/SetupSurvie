@@ -106,3 +106,29 @@ Docker, Open WebUI, un PDF de l'OMS, la lecture partielle de la carte PMTiles,
 la recherche « eau assainissement », puis la recherche et l'ouverture de
 « Levain » dans Kiwix. La restauration avec MP4 et pistes VTT reste attestée
 par l'essai 0.71.0 effectué sous Debian 13 avec une sélection plus volumineuse.
+
+## Défauts injectés et rejeu avec l'archive de distribution
+
+Sur une quatrième VM de restauration Debian 12.15, un octet ajouté au
+fichier `docker-compose` a déclenché le refus « Empreinte incorrecte :
+docker-compose. Aucun outil installé. » Le rétablissement de ce fichier a
+permis d'extraire les outils. Le fonds et le manifeste local du modèle étant
+absents, le lanceur a de nouveau refusé d'activer la copie, cette fois en
+indiquant le chemin du manifeste absent. Le stockage Docker dédié est resté
+absent lors des deux tentatives et aucun dockerd n'a démarré.
+
+Sur un autre Debian 13.7 vierge, l'archive Linux téléchargée depuis la CI a
+été vérifiée à nouveau, puis extraite. Le lanceur s'est arrêté avant
+l'initialisation avec « Port 8080 occupé ». Une fois le port libre, le même
+lanceur a terminé l'installation. Le portail, la recherche, le PDF, la carte
+et la collection Wikilivres ont passé les vérifications. Deux lignes
+identiques configurées pour [Sintel](https://www.youtube.com/watch?v=eRsGyueVLvQ)
+ont soumis une seule vidéo à la file automatique. Le MP4 de 49 150 125
+octets a répondu en HTTP 206. La transcription anglaise a été publiée en
+WebVTT et la recherche « traveling alone » a retrouvé le passage parlé.
+La traduction française a échoué avec le modèle `gpt-oss:20b` sur cet
+invité de 6 Gio sans swap. Ollama a signalé une allocation d'environ 9,7 Go
+impossible à obtenir. La piste anglaise est restée disponible. La machine
+minimale est donc qualifiée pour le téléchargement, la transcription et la
+recherche de cette vidéo. La traduction automatique sur cette configuration
+reste à valider.
