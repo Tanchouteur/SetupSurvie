@@ -1,11 +1,17 @@
 ﻿[CmdletBinding()]
 param([string]$WorkDir, [switch]$Check, [switch]$Recover, [switch]$Cleanup, [switch]$ConsoleOnly,
-    [Parameter(DontShow)] [string]$ProgressLog)
+    [Parameter(DontShow)] [string]$ProgressLog, [Parameter(DontShow)] [string]$OperationId)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
 
 $script:updateVersion = $null
 $script:updateLog = $null
+# Portal status: data\catalog\maintenance.json, same schema as scripts/maintenance_site.py.
+$script:statusFile = $null
+$script:statusClock = $null
+$script:maintenanceStatus = $null
+$script:unavailablePhases = @('apply', 'stop', 'backup', 'switch', 'start', 'check', 'rollback')
+$script:finalStates = @{ done = 'completed'; clean = 'completed'; current = 'current'; error = 'failed' }
 $script:updateStages = @{
     setup = 'Vérification de l''installation'
     git = 'Récupération de la version disponible'
@@ -38,6 +44,7 @@ function Write-SurvieUpdateProgress([string]$Phase, [string]$Detail, [int]$Curre
     $line = $title
     if ($Detail) { $line += ' — ' + $Detail }
     Write-Host ('[{0:HH:mm:ss}] {1}' -f (Get-Date), $line)
+    Update-SurvieMaintenanceStatus $Phase $title $Detail $Current $Total $line
     if ($ProgressLog) {
         $entry = @{ Phase = $Phase; Title = $title; Detail = $Detail; Current = $Current; Total = $Total
             Version = $script:updateVersion; Log = $script:updateLog }
@@ -47,6 +54,88 @@ function Write-SurvieUpdateProgress([string]$Phase, [string]$Detail, [int]$Curre
         } catch [IO.IOException] {
             # The progress display is best effort. The transcript remains authoritative.
         } catch [UnauthorizedAccessException] {}
+    }
+}
+
+function Get-SurvieUnixTime { return [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() / 1000 }
+
+function Start-SurvieMaintenanceStatus([string]$DataDir) {
+    # Best effort: the portal reads this file through Caddy or the maintenance page.
+    try {
+        $catalog = Join-Path $DataDir 'catalog'
+        if (-not (Test-Path -LiteralPath $catalog -PathType Container)) { return }
+        $id = if ($OperationId -match '^[0-9a-f]{32}$') { $OperationId } else { [guid]::NewGuid().ToString('N') }
+        $now = Get-SurvieUnixTime
+        $script:maintenanceStatus = [ordered]@{
+            schema = 1; id = $id; kind = $(if ($Recover) { 'recover' } else { 'update' }); state = 'running'
+            phase = 'setup'; title = $script:updateStages.setup; detail = ''; current = $null; total = $null
+            unavailable = $false; installed = ''; available = ''; rolled_back = $false
+            started = $now; updated = $now; steps = New-Object Collections.ArrayList; lines = New-Object Collections.ArrayList
+        }
+        $script:statusFile = Join-Path $catalog 'maintenance.json'
+        Update-SurvieMaintenanceStatus 'setup' $script:updateStages.setup '' 0 0 $script:updateStages.setup
+    } catch { $script:statusFile = $null }
+}
+
+function Add-SurvieMaintenanceLine([string]$Text) {
+    if (-not $script:maintenanceStatus) { return }
+    $clean = (($Text -replace '\s+', ' ').Trim())
+    if (-not $clean) { return }
+    if ($clean.Length -gt 300) { $clean = $clean.Substring(0, 300) }
+    $lines = $script:maintenanceStatus.lines
+    $null = $lines.Add(('[{0:HH:mm:ss}] {1}' -f (Get-Date), $clean))
+    while ($lines.Count -gt 40) { $lines.RemoveAt(0) }
+    Save-SurvieMaintenanceStatus
+}
+
+function Update-SurvieMaintenanceStatus([string]$Phase, [string]$Title, [string]$Detail, [int]$Current, [int]$Total, [string]$Line) {
+    $value = $script:maintenanceStatus
+    if (-not $value) { return }
+    $changed = $value.phase -ne $Phase -or $value.steps.Count -eq 0
+    if ($changed) {
+        $null = $value.steps.Add([ordered]@{ phase = $Phase; title = $Title; at = (Get-SurvieUnixTime) })
+        while ($value.steps.Count -gt 30) { $value.steps.RemoveAt(0) }
+    }
+    if ($Phase -eq 'rollback') { $value.rolled_back = $true }
+    if ($Phase -in $script:unavailablePhases) { $value.unavailable = $true }
+    elseif ($Phase -in @('prune', 'launcher') -or $script:finalStates.ContainsKey($Phase)) { $value.unavailable = $false }
+    $value.phase = $Phase
+    $value.title = $Title
+    $value.detail = if ($Detail.Length -gt 500) { $Detail.Substring(0, 500) } else { $Detail }
+    $value.current = if ($Total -gt 0) { $Current } else { $null }
+    $value.total = if ($Total -gt 0) { $Total } else { $null }
+    $value.state = if ($script:finalStates.ContainsKey($Phase)) { $script:finalStates[$Phase] } else { 'running' }
+    if ($script:updateVersion -match '^([0-9.]+) → ([0-9.]+)$') { $value.installed = $Matches[1]; $value.available = $Matches[2] }
+    elseif ($script:updateVersion -match '([0-9]+\.[0-9]+\.[0-9]+)$' -and -not $value.installed) { $value.installed = $Matches[1] }
+    if ($changed -or $Detail) {
+        $lines = $value.lines
+        $null = $lines.Add(('[{0:HH:mm:ss}] {1}' -f (Get-Date), $Line))
+        while ($lines.Count -gt 40) { $lines.RemoveAt(0) }
+    }
+    Save-SurvieMaintenanceStatus -Force:($changed -or $value.state -ne 'running')
+}
+
+function Save-SurvieMaintenanceStatus([switch]$Force) {
+    if (-not $script:statusFile -or -not $script:maintenanceStatus) { return }
+    if (-not $Force -and $script:statusClock -and $script:statusClock.ElapsedMilliseconds -lt 1000) { return }
+    $script:maintenanceStatus.updated = Get-SurvieUnixTime
+    $temporary = $script:statusFile + '.' + $PID + '.tmp'
+    try {
+        $json = ConvertTo-Json -InputObject $script:maintenanceStatus -Depth 5 -Compress
+        [IO.File]::WriteAllText($temporary, $json, (New-Object Text.UTF8Encoding($false)))
+        for ($attempt = 1; $attempt -le 5; $attempt++) {
+            try {
+                if ([IO.File]::Exists($script:statusFile)) { [IO.File]::Replace($temporary, $script:statusFile, $null) }
+                else { [IO.File]::Move($temporary, $script:statusFile) }
+                break
+            } catch [IO.IOException] { Start-Sleep -Milliseconds (50 * $attempt) }
+            catch [UnauthorizedAccessException] { Start-Sleep -Milliseconds (50 * $attempt) }
+        }
+        $script:statusClock = [Diagnostics.Stopwatch]::StartNew()
+    } catch {
+        # The status is informative. The transcript and the update journal remain authoritative.
+    } finally {
+        if ([IO.File]::Exists($temporary)) { try { [IO.File]::Delete($temporary) } catch { } }
     }
 }
 
@@ -220,7 +309,10 @@ function Invoke-SurvieUpdateCommand([string]$File, [array]$Arguments) {
         if ($line.StartsWith('SURVIE_UPDATE_PROGRESS ')) {
             $status = $line.Substring('SURVIE_UPDATE_PROGRESS '.Length) | ConvertFrom-Json
             Write-SurvieUpdateProgress $status.phase $status.detail $status.current $status.total
-        } else { Write-Host $line }
+        } else {
+            Write-Host $line
+            Add-SurvieMaintenanceLine $line
+        }
     }
     $code = $LASTEXITCODE
     if ($code -ne 0) {
@@ -356,6 +448,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $script:updateLog = Join-Path $logs ('maj-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') + '.log')
         Start-Transcript -Path $script:updateLog | Out-Null
         $transcript = $true
+        if (-not $Check -and -not $Cleanup -and $settings.Data) { Start-SurvieMaintenanceStatus $settings.Data }
         Set-Location -LiteralPath $maintenance
         $env:SURVIE_UPDATE_PROGRESS = '1'
         Invoke-SurvieGitUpdate $settings

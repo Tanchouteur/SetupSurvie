@@ -15,6 +15,7 @@ import uuid
 import zipfile
 
 import setup
+import maintenance_site
 from pilot import durable
 from delivery_paths import destination,locked
 from pilot_backup import maintenance,stopped_backup
@@ -25,9 +26,13 @@ FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
 # First-install wrappers belong to source/kit deliveries, not software updates.
 FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
 SERVICES=('open-webui','kiwix','pilot','portal')
+# Set by main() when no PowerShell launcher publishes the portal status itself.
+STATUS=None
 
 
 def report_progress(phase, detail='', current=None, total=None):
+    if STATUS is not None:
+        STATUS.progress(phase, detail, current, total)
     if os.environ.get('SURVIE_UPDATE_PROGRESS') != '1':
         return
     print('SURVIE_UPDATE_PROGRESS '+json.dumps({
@@ -110,14 +115,22 @@ def unpack(package,expected,dest):
 
 
 class Services:
-    def __init__(self,app,c):self.app,self.c=app,c
+    def __init__(self,app,c):self.app,self.c,self.site=app,c,None
     def stop(self):
         import control,discovery
         control.stop(self.app);discovery.stop(self.app)
         self.app.compose(self.c,'stop',*SERVICES)
+        # Readers keep a page and the progress while every container is stopped.
+        if self.site is None:
+            try:self.site=maintenance_site.open_site(self.c)
+            except (OSError,ValueError,KeyError) as exc:print('Page de maintenance indisponible :',exc,flush=True)
+    def close_site(self):
+        site,self.site=self.site,None
+        if site:site.close()
     def start(self):
         # Do not start Ollama, consume VRAM, pull images or change a gaming pause.
         import control,discovery
+        self.close_site()
         self.app.render(self.c)
         self.app.compose(self.c,'up','-d','--no-deps','--force-recreate','--pull','never','--wait','--wait-timeout','420',*SERVICES)
         control.start(self.app,self.c)
@@ -367,6 +380,8 @@ def apply(app,package,digest,services=None,*,rollback=False):
         report_progress("package")
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)
+        if STATUS is not None:
+            STATUS.value.update(installed=old_release['version'],available=manifest['release']['version'])
         available=version_tuple(manifest['release']['version']);installed=version_tuple(old_release['version'])
         if (not rollback and available<=installed) or (rollback and available>=installed):
             raise setup.SetupError('Choisissez une version strictement antérieure pour le retour.' if rollback else 'Version déjà installée ou plus ancienne ; aucun remplacement effectué.')
@@ -405,6 +420,9 @@ def apply(app,package,digest,services=None,*,rollback=False):
                 try:recover_locked(app,journal,services)
                 except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
                 raise
+            finally:
+                # Never leave the temporary page holding the portal ports.
+                getattr(services,'close_site',lambda:None)()
         if c['target']=='windows' and not rollback:
             try:
                 prune_update_history(operation.parent, operation)
@@ -426,15 +444,40 @@ def main():
     args=p.parse_args()
     if args.action=='build':build(args.output);return
     app=setup.Installation(args.work_dir)
-    if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
-    elif args.action == 'prune':
-        prune_completed_update(app)
-    elif args.action in ('resume-startup','finish-switched'):
-        resume_startup(app,restart=True)
-    else:
-        # Recovery and application share the same OS lease, including after a crash.
-        with locked(app.work/'update.lock'):
-            recover(app,app.work/'update.json',Services(app,app.load()))
+    if args.action in ('apply','rollback','recover'):
+        start_status(app,args.action)
+    try:
+        if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
+        elif args.action == 'prune':
+            prune_completed_update(app)
+        elif args.action in ('resume-startup','finish-switched'):
+            resume_startup(app,restart=True)
+        else:
+            # Recovery and application share the same OS lease, including after a crash.
+            with locked(app.work/'update.lock'):
+                services=Services(app,app.load())
+                try:recover(app,app.work/'update.json',services)
+                finally:services.close_site()
+    except BaseException as exc:
+        if STATUS is not None:
+            STATUS.progress('error',str(exc) or 'Consultez le journal de mise à jour.')
+        raise
+    if STATUS is not None:
+        STATUS.progress('done','Vous pouvez actualiser SetupSurvie dans votre navigateur.')
+
+
+def start_status(app,action):
+    """Publish the portal status directly when no launcher does it for us."""
+    global STATUS
+    if os.environ.get('SURVIE_UPDATE_PROGRESS')=='1' or not maintenance_site.enabled():
+        return
+    try:
+        config=app.load()
+        STATUS=maintenance_site.StatusWriter(config['data_dir'],{'apply':'update'}.get(action,action),
+                                             installed=release_at(setup.ROOT)['version'])
+        STATUS.progress('setup')
+    except (OSError,ValueError,KeyError,setup.SetupError):
+        STATUS=None
 
 
 if __name__=='__main__':

@@ -124,9 +124,10 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 - Racine : `app.js` (application principale), `documents.js`, `settings.js`,
   lecteurs (`pdf.*`, `bilingual-reader.*`, `translation-text.*`), cartes
   (`cartes.html`, `cartes-*.js`), suivi de transfert (`suivi-copie.*`),
-  page de secours statique (`secours.*`).
+  page de secours statique (`secours.*`), suivi des mises à jour et copies
+  (`maintenance-view.*`, partagé avec la page temporaire `maintenance.html`).
 - `interface/` : un script par domaine (`videos.js`, `captions.js`,
-  `work-queue.js`, `collection-sort.js`, `catalogue.js`, `search-*.js`,
+  `work-queue.js`, `maintenance.js` (entrée Mises à jour, mode maintenance), `collection-sort.js`, `catalogue.js`, `search-*.js`,
   `assistant-workspace.*`, `reader-work.*`, `navigation.js`, `layout.js`…).
 - `design/` : jetons et système visuel « Veillée » ; `vendor/` : bibliothèques
   locales (marked, DOMPurify, PDF.js…) ; `classique/` et `nouveau/` : simples
@@ -146,6 +147,8 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `start-*.ps1`, `stop-*.ps1`, `startup-windows.ps1`, `windows_autostart.py`, `windows_background.py`, `register-startup-windows.ps1` | Démarrage et arrêt Windows |
 | `linux_host.py`, `discovery.py`, `fix-linux-local-name.sh` | Docker rootless, démarrage Linux, nom `.local` |
 | `pilot_update.py`, `windows_update.py`, `update-windows.ps1`, `rollback-windows.ps1`, `delivery_paths.py` | Mises à jour avec sauvegarde et retour arrière ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
+| `maintenance_site.py` | Suivi commun `catalog/maintenance.json` et page temporaire sur les ports du portail pendant l’arrêt des conteneurs |
+| `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |
 | `windows_resume.py`, `register-windows-resume.ps1` | Reprise après coupure ([guide](../exploitation/coupures-et-redemarrage.md)) |
 | `pilot_kit.py`, `kit_audit.py`, `kit_maps.py` | Kit hors ligne ([guide](../installation/preparer-kit-hors-ligne.md)) |
 | `pilot_backup.py` | Sauvegarde des données privées |
