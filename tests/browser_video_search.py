@@ -6,6 +6,7 @@ With a remote Playwright server: PLAYWRIGHT_WS=ws://host:port/ BROWSER_HOST=addr
 reachable from that browser (the API then listens on all interfaces).
 """
 import json
+import re
 import os
 from pathlib import Path
 import shutil
@@ -48,7 +49,7 @@ def exercise(page,name,base,videos,video_requests):
     titles=page.locator('#search-results .result h3').all_inner_texts()
     check(titles==['Allumer un feu sans allumettes','Bouillir'],name+' : recherche vide en mode vidéos = toutes les vidéos, par titre')
     check('kind=videos' in page.url,name+' : choix conservé dans l’adresse')
-    check('vidéo(s) trouvée(s)' in page.locator('#search-message').inner_text(),name+' : message adapté aux vidéos')
+    check(re.search(r'\d+ vidéos? ',page.locator('#search-message').inner_text()) is not None,name+' : message adapté aux vidéos')
     page.screenshot(path=str(OUTPUT/(name+'-videos.png')),full_page=True)
     page.fill('#library-query','allumer');page.locator('#library-search button[type=submit]').click()
     page.wait_for_function("()=>document.querySelectorAll('#search-results .result').length===1")

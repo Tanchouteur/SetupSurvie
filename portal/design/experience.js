@@ -231,14 +231,7 @@
   }
 
   function start() {
-    /* The status strip disappears: its two facts move to the footer. */
-    const footer = document.querySelector("body > .workspace footer, footer");
-    if (footer) {
-      const version = $("software-version");
-      const status = $("service-status");
-      if (version) footer.append(version);
-      if (status) footer.append(status);
-    }
+    /* La version et l’état de connexion sont écrits dans le pied de page de modele.html. */
     document.querySelector(".sidebar-bottom")?.prepend(trigger());
     document.querySelector(".top-actions")?.prepend(trigger());
     /* A few sparks above the fire. */

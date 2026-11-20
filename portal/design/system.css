@@ -91,7 +91,7 @@ body.next-interface {
 }
 .next-interface :is(#home-search, #library-search) > button[type="submit"]:hover:not(:disabled),
 .next-interface #send-question:hover:not(:disabled) {
-  background: linear-gradient(180deg, #b5400e, var(--ds-ember-strong));
+  background: linear-gradient(180deg, var(--ds-ember, #b5400e), var(--ds-ember-strong));
   color: #fff;
   box-shadow: 0 1px 2px #6b24064d, 0 10px 20px -8px #b5400e99, inset 0 1px 0 #ffffff33;
 }
@@ -956,11 +956,12 @@ body.next-interface .next-mobile-tools a:hover { color: var(--ds-ember-strong); 
   body.next-interface.ds-scrolled .topbar { border-bottom-color: var(--ds-line); }
   body.next-interface .topbar > div:not(.top-actions) { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
   body.next-interface .topbar > div:not(.top-actions)::before { content: ""; flex: none; width: 26px; height: 29px; background: url("/branding/logo.png") center / contain no-repeat; }
-  body.next-interface #breadcrumb { overflow: hidden; color: var(--ds-ink); font-family: var(--ds-font-display); font-size: 1.125rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  /* Le grand titre de la page nomme déjà l’écran : l’en-tête garde le logo et les commandes. */
+  body.next-interface #breadcrumb { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   body.next-interface .top-actions { flex: none; align-items: center; gap: 4px; }
   body.next-interface button.ds-search-trigger { width: 44px; min-height: 44px; padding: 0; background: transparent; border: 0; }
   .ds-search-trigger .ds-label, .ds-search-trigger kbd { display: none; }
-  body.next-interface #mobile-account { max-width: 130px; min-height: 44px; margin: 0; padding: 0 10px; overflow: hidden; color: var(--ds-ink-2); font-size: .875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  body.next-interface #mobile-account { max-width: 104px; min-height: 44px; margin: 0; padding: 0 10px; overflow: hidden; color: var(--ds-ink-2); font-size: .875rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
   body.next-interface .sidebar {
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     background: #fbf7effa;
@@ -974,7 +975,9 @@ body.next-interface .next-mobile-tools a:hover { color: var(--ds-ember-strong); 
   body.next-interface #navigation .nav-item > span:first-child { width: 52px; height: 28px; border-radius: var(--ds-r-full); transition: background-color var(--ds-base) var(--ds-ease), transform var(--ds-base) var(--ds-spring); }
   body.next-interface #navigation .nav-item.active > span:first-child { background: var(--ds-ember-soft); }
   body.next-interface #navigation .nav-item:active > span:first-child { transform: scale(.9); }
-  body.next-interface #navigation .nav-item > span:last-child { font-size: .6875rem; }
+  body.next-interface #navigation .nav-item > span:last-child { font-size: .75rem; }
+  /* La version reste dans le pied de page : le titre de l’écran garde sa place. */
+  body.next-interface .topbar .ds-nav-version { display: none; }
   .ds-nav-indicator { display: none; }
   .ds-read-progress { top: 54px; }
   body.next-interface #view-home { padding: 8px 12px 28px; }
@@ -999,11 +1002,29 @@ body.next-interface .next-mobile-tools a:hover { color: var(--ds-ember-strong); 
   .next-interface .next-tabs { margin-inline: -14px; padding-inline: 8px; }
   .next-interface .reader { padding: 16px; }
   .next-interface .reader-body { font-size: 1.0625rem; }
-  body.next-interface .toast:not([hidden]) { bottom: calc(84px + env(safe-area-inset-bottom)); }
   dialog.ds-palette { top: 10px; max-height: calc(100dvh - 20px); }
   .next-interface input:not([type="checkbox"]):not([type="radio"]), .next-interface select, .next-interface textarea { font-size: 16px; }
   body.next-interface .composer-controls select { min-height: 42px; font-size: 16px; }
   body.next-interface footer .connection { margin-left: 0; }
+  /* Onglets et types : une ligne qui défile, avec un fondu qui signale la suite. */
+  .next-interface .next-tabs,
+  .next-interface .next-collection-types {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+    padding-right: 36px;
+  }
+  .next-interface .next-tabs::-webkit-scrollbar,
+  .next-interface .next-collection-types::-webkit-scrollbar { display: none; }
+  .next-interface .next-tabs > a,
+  .next-interface .next-collection-types > a { flex: none; scroll-snap-align: start; white-space: nowrap; }
+  /* Filtre des collections : un simple champ, sans carte autour. */
+  .next-interface .next-collection-filter { padding: 0; border: 0; background: transparent; box-shadow: none; }
+  .next-interface #collection-organize { padding: 10px 14px; gap: 6px; }
+  .next-interface #collection-organize-text { font-size: .875rem; margin: 0; }
 }
 /* Landscape phones: the conversation keeps the height. */
 @media (max-height: 500px) {
@@ -1024,3 +1045,96 @@ body.next-interface .next-mobile-tools a:hover { color: var(--ds-ember-strong); 
   .ds-read-progress, .ds-search-trigger, dialog.ds-palette { display: none !important; }
   body.next-interface .welcome.next-welcome { background: none; color: #000; box-shadow: none; }
 }
+
+/* Le bouton d’effacement n’apparaît que lorsqu’un filtre est saisi. */
+.next-interface .next-collection-search:has(input:placeholder-shown) #collection-filter-clear { display: none; }
+
+/* Recherche : une phrase d’état, les précisions repliées, l’élargissement en évidence. */
+.next-interface #search-message { display: flex; align-items: center; gap: 10px; min-height: 28px; margin: 18px 0 12px; color: var(--ds-ink); font-size: 1rem; font-weight: 600; }
+.next-interface #search-message:empty { display: none; }
+.next-interface #search-message[data-tone="busy"]::before {
+  content: ""; flex: none; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--ds-ember); border-right-color: transparent;
+  animation: ds-spin .8s linear infinite;
+}
+.next-interface #search-message[data-tone="empty"] { color: var(--ds-ink-2); }
+.next-interface .search-details { margin: 0 0 14px; padding: 10px 14px; border-radius: var(--ds-r); background: var(--ds-surface-2); color: var(--ds-ink-2); }
+.next-interface .search-details summary { cursor: pointer; font-size: .875rem; font-weight: 600; }
+.next-interface .search-details p { margin: 8px 0 0; }
+.next-interface .search-wider { justify-self: start; width: fit-content; }
+.next-interface #search-results > .search-wider:first-child,
+.next-interface #search-results > .search-details + .search-wider { margin-bottom: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  .next-interface #search-message[data-tone="busy"]::before { animation-duration: 2.4s; }
+}
+.next-interface .search-start { margin: 22px 0 8px; padding: 26px 28px; border-radius: var(--ds-r-lg, 18px); background: var(--ds-surface); border: 1px solid var(--ds-line); box-shadow: var(--ds-shadow-1); animation: ds-rise var(--ds-base) var(--ds-ease) both; }
+.next-interface .search-start h2 { margin: 0 0 4px; font-size: 1.375rem; }
+.next-interface .search-start > p { margin: 0 0 18px; }
+.next-interface .search-start h3 { margin: 16px 0 10px; font: 600 .8125rem/1.3 var(--ds-font); letter-spacing: .04em; text-transform: uppercase; color: var(--ds-ink-3); }
+.next-interface .search-start-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.next-interface .search-start-chips button { min-height: 40px; border-radius: var(--ds-r-full); padding: 8px 16px; }
+.next-interface .search-start-recent::before { content: "↺"; margin-right: 8px; color: var(--ds-ink-3); }
+@media (max-width: 760px) { .next-interface .search-start { padding: 20px 16px; } }
+@media (prefers-reduced-motion: reduce) { .next-interface .search-start { animation: none; } }
+
+.next-interface .search-filters-toggle { display: none; }
+@media (max-width: 760px) {
+  .next-interface #library-search .search-filters-toggle { display: inline-flex; justify-content: center; }
+  .next-interface #library-search:not(.filters-open) select { display: none; }
+  .next-interface #library-search .search-filters-toggle::after { content: ""; width: 14px; height: 14px; margin-left: 8px; background: currentColor; -webkit-mask: var(--ds-i-chevron) center / contain no-repeat; mask: var(--ds-i-chevron) center / contain no-repeat; transition: transform var(--ds-base) var(--ds-ease); }
+  .next-interface #library-search.filters-open .search-filters-toggle::after { transform: rotate(180deg); }
+}
+
+/* Mon appareil : résumé avant les mesures. */
+.next-interface .device-summary {
+  grid-column: 1 / -1;
+  margin: 4px 0 18px;
+  padding: 12px 16px;
+  border-radius: var(--ds-r-lg, 18px);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line);
+  box-shadow: var(--ds-shadow-2);
+  --summary: var(--ds-ok);
+  --summary-soft: var(--ds-ok-soft);
+}
+.next-interface .device-summary[data-state="warn"] { --summary: var(--ds-warn); --summary-soft: var(--ds-warn-soft); }
+.next-interface .device-summary[data-state="danger"] { --summary: var(--ds-danger); --summary-soft: var(--ds-danger-soft); }
+.next-interface .device-summary-head { display: flex; gap: 12px; align-items: center; }
+.next-interface .device-summary-head > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.next-interface .device-summary-head h2 { margin: 0; font-size: 1.125rem; }
+.next-interface .device-summary-sub { margin: 0; font-size: .875rem; }
+.next-interface .device-summary-icon {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--summary-soft); position: relative;
+  transition: background-color var(--ds-base) var(--ds-ease);
+}
+.next-interface .device-summary-icon::before {
+  content: ""; position: absolute; inset: 8px; background: var(--summary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.next-interface .device-summary:is([data-state="warn"], [data-state="danger"]) .device-summary-icon::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 6v8M12 18.5h.01'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M12 6v8M12 18.5h.01'/%3E%3C/svg%3E");
+}
+.next-interface .device-summary-list { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.next-interface .device-summary-list li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: center;
+  padding: 7px 12px 7px 14px; border-radius: var(--ds-r);
+  background: var(--ds-surface-2); border-left: 4px solid var(--ds-ink-3);
+  animation: ds-rise var(--ds-base) var(--ds-ease) both;
+}
+.next-interface .device-summary-list li[data-tone="warn"] { background: var(--ds-warn-soft); border-left-color: var(--ds-warn); }
+.next-interface .device-summary-list li[data-tone="danger"] { background: var(--ds-danger-soft); border-left-color: var(--ds-danger); }
+.next-interface .device-summary-list strong { grid-column: 1; }
+.next-interface .device-summary-list p { grid-column: 1; margin: 0; color: var(--ds-ink-2); font-size: .875rem; line-height: 1.4; }
+.next-interface .device-summary-list :is(a, button) { grid-column: 2; grid-row: 1 / span 2; white-space: nowrap; }
+@media (max-width: 760px) {
+  .next-interface .device-summary { padding: 12px 14px; }
+  .next-interface .device-summary-list li { grid-template-columns: 1fr; }
+  .next-interface .device-summary-list :is(a, button) { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .next-interface .device-summary-list li { animation: none; } }
+.next-interface #search-message:has(.search-message-note) { flex-wrap: wrap; }
+.next-interface .search-message-note { flex-basis: 100%; padding-left: 26px; color: var(--ds-warn); font-size: .875rem; font-weight: 500; }
+.next-interface #search-message:not([data-tone="busy"]) .search-message-note { padding-left: 0; }

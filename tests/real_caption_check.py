@@ -48,7 +48,7 @@ async def check(args):
             if videos.ACTIVE:await videos.ACTIVE
             result=captions.status(job['id'],full=True);value=videos.source(identifier)
             report={'schema':1,'version':json.loads((base/'deploy/release.json').read_text())['version'],'model':args.model,
-                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
                 'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'fictional_captions':True,'real_model':True,
                 'customer_validation':False,'options':{'context':16384,'output':4096,'gpu_layers':32,'threads':6,'keep_alive_seconds':15},
                 'result':result,'indexed_source':value,'checks':{'completed':result['status']=='completed','all_cues':result['done']==len(sentences),

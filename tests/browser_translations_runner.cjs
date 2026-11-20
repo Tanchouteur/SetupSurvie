@@ -6,9 +6,11 @@ const { spawn } = require('node:child_process');
 const { once } = require('node:events');
 
 const root = path.resolve(__dirname, '..');
-const fixtureURL = 'http://127.0.0.1:8769';
+// BROWSER_FIXTURE_URL lets a remote browser reach the fixture API (for example
+// http://10.0.3.2:8769 from a Playwright server in a container).
+const fixtureURL = process.env.BROWSER_FIXTURE_URL || 'http://127.0.0.1:8769';
 const artifactRoot = path.resolve(process.env.BROWSER_ARTIFACTS || '/tmp/setupsurvie-browser-results');
-const playwright = createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
+const playwright = createRequire(process.env.BROWSER_PLAYWRIGHT || '/tmp/setupsurvie-browser/package.json')('playwright');
 
 const portalRecipes = [
   'browser_video_origin.js',
@@ -141,7 +143,11 @@ async function main() {
     await Promise.race([waitForFixture(server), exited.then(() => { throw Error('Portal fixture server exited'); })]);
     for (const engine of targetEngine ? [targetEngine] : engines) {
       const files = requested.length ? requested : engine === 'firefox' ? firefoxRecipes : portalRecipes;
-      const browser = await playwright[engine].launch({ headless: true });
+      // BROWSER_WS connects to an existing Playwright server instead of launching
+      // a local browser (runner without the system libraries of the browsers).
+      const browser = process.env.BROWSER_WS
+        ? await playwright[engine].connect(process.env.BROWSER_WS, { headers: { 'x-playwright-launch-options': JSON.stringify(engine === 'chromium' ? { channel: 'chromium' } : {}) } })
+        : await playwright[engine].launch({ headless: true });
       try {
         for (const file of files) {
           if (!await runRecipe(browser, engine, file)) failures.push(engine + '/' + file);

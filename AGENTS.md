@@ -16,10 +16,13 @@
   décrit les lots envisagés pour le laboratoire. Le [premier bilan du pilote](docs/essais/bilan-pilote-2026-11-11.md)
   sert de repère historique. Pour les arbitrages produit, consulter
   [l’offre](docs/decisions/acces-simple-et-offre.md) et la [feuille de route](docs/decisions/feuille-de-route-v1.md).
-- **Interface** : modifier `portal/interface/modele.html` et les scripts ;
-  incrémenter le paramètre `?v=` d’un fichier modifié là où il est déclaré
-  (`modele.html` ou la liste ordonnée de `scripts/build_portal.py`), puis
-  régénérer `portal/index.html` avec `python3 scripts/build_portal.py`.
+- **Interface** : modifier `portal/interface/modele.html` et les scripts, puis
+  régénérer avec `python3 scripts/build_portal.py`. Depuis 0.70.0, ce script
+  remplace chaque `?v=` local (portail et pages autonomes) par l’empreinte du
+  fichier : ne plus incrémenter de numéro à la main. Un test échoue si la
+  régénération a été oubliée. Les couleurs viennent de `portal/design/tokens.css`
+  (budget vérifié par `tests/test_portal_design_budget.py`). Réseau, erreurs et
+  bandeau de connexion passent par `portal/core/` ; lire le [guide de design](docs/architecture/guide-design.md).
 - **Tests** : voir « Vérifications et suivi » ; la CI est `.github/workflows/tests.yml`.
 
 ## Projet et utilisateurs

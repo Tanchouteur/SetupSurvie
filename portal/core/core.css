@@ -1,0 +1,192 @@
+/* Retours communs du portail : connexion, messages, boutons occupés,
+ * chargements. Chargée après `design/system.css` ; n'utilise que les
+ * variables de `design/tokens.css`. */
+
+/* ---------- Bandeau de connexion ---------- */
+.connection-banner {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px 16px;
+  margin: 12px auto 0;
+  width: min(1200px, calc(100% - 32px));
+  padding: 14px 18px;
+  border-radius: var(--ds-r);
+  background: var(--ds-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--ds-danger) 30%, transparent);
+  color: var(--ds-ink);
+  box-shadow: var(--ds-shadow-3);
+  animation: ds-banner-in var(--ds-base) var(--ds-ease) both;
+}
+@media (min-width: 761px) {
+  .connection-banner { top: calc(var(--ds-nav-h) + 8px); }
+}
+.connection-banner[data-state="restored"] {
+  background: var(--ds-ok-soft);
+  border-color: color-mix(in srgb, var(--ds-ok) 30%, transparent);
+}
+.connection-banner-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ds-danger);
+  position: relative;
+}
+.connection-banner-icon::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: var(--ds-surface);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 8.8a15 15 0 0 1 20 0M5 12.6a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M3 3l18 18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 8.8a15 15 0 0 1 20 0M5 12.6a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M3 3l18 18'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.connection-banner[data-state="offline"] .connection-banner-icon {
+  animation: ds-soft-pulse 2.4s var(--ds-ease) infinite;
+}
+.connection-banner[data-state="restored"] .connection-banner-icon { background: var(--ds-ok); }
+.connection-banner[data-state="restored"] .connection-banner-icon::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+.connection-banner-text { display: grid; gap: 2px; min-width: 0; }
+.connection-banner-text strong { font-family: var(--ds-font-display); font-size: 1.0625rem; font-weight: 600; }
+.connection-banner-text span { font-size: .9375rem; color: var(--ds-ink-2); line-height: 1.45; }
+.connection-banner-link { font-size: .875rem; font-weight: 600; color: var(--ds-ember-strong); width: fit-content; }
+.connection-banner-timer {
+  font-size: .8125rem;
+  color: var(--ds-ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.connection-banner-retry { white-space: nowrap; }
+body.maintenance-mode .connection-banner,
+.workspace:has(#maintenance-banner:not([hidden])) .connection-banner { display: none !important; }
+@media (max-width: 760px) {
+  .connection-banner {
+    top: 64px;
+    grid-template-columns: auto minmax(0, 1fr);
+    width: calc(100% - 24px);
+    padding: 12px 14px;
+  }
+  .connection-banner-timer { grid-column: 2; }
+  .connection-banner-retry { grid-column: 1 / -1; min-height: 44px; }
+}
+
+/* Pied de page : état réel de la connexion. */
+#service-status[data-state="offline"] .status-dot { background: var(--ds-danger) !important; }
+#service-status[data-state="online"] .status-dot { background: var(--ds-ok) !important; }
+
+/* ---------- Messages éphémères ----------
+ * En haut à droite sur ordinateur, sous l'en-tête sur téléphone : ils ne
+ * recouvrent jamais la zone de saisie ni le bouton Envoyer. */
+body.next-interface .toast:not([hidden]) {
+  top: calc(var(--ds-nav-h, 68px) + 14px);
+  bottom: auto !important;
+  right: 20px;
+  left: auto;
+  max-width: min(440px, calc(100vw - 40px));
+  padding: 14px 18px 14px 46px;
+  line-height: 1.45;
+  z-index: 60;
+  animation: ds-toast-in var(--ds-base) var(--ds-spring) both;
+}
+body.next-interface .toast::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 15px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ds-flame);
+  -webkit-mask: var(--ds-i-info) center / contain no-repeat;
+  mask: var(--ds-i-info) center / contain no-repeat;
+}
+body.next-interface .toast[data-tone="success"]::before {
+  background: var(--ds-ok-on-night);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+body.next-interface .toast[data-tone="error"]::before { background: var(--ds-danger-on-night); }
+@media (max-width: 760px) {
+  body.next-interface .toast:not([hidden]) {
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    left: 12px;
+    right: 12px;
+    max-width: none;
+  }
+}
+
+/* ---------- Boutons occupés ---------- */
+.is-busy {
+  position: relative;
+  cursor: progress !important;
+}
+.is-busy::after {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: .55em;
+  vertical-align: -.15em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  opacity: .8;
+  animation: ds-spin .7s linear infinite;
+}
+.is-done { animation: ds-done .6s var(--ds-ease); }
+
+/* ---------- Chargements ----------
+ * Un conteneur marqué `aria-busy="true"` et encore vide affiche des
+ * silhouettes de cartes plutôt qu'un espace blanc. */
+#search-results[aria-busy="true"]:empty,
+.ds-skeleton {
+  min-height: 260px;
+  border-radius: var(--ds-r-lg, 18px);
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(var(--ds-surface-2) 0 0) 24px 26px / 38% 14px no-repeat,
+    linear-gradient(var(--ds-surface-3) 0 0) 24px 52px / 70% 10px no-repeat,
+    linear-gradient(var(--ds-surface-3) 0 0) 24px 70px / 56% 10px no-repeat,
+    linear-gradient(var(--ds-surface-2) 0 0) 24px 116px / 34% 14px no-repeat,
+    linear-gradient(var(--ds-surface-3) 0 0) 24px 142px / 66% 10px no-repeat,
+    linear-gradient(var(--ds-surface-3) 0 0) 24px 160px / 48% 10px no-repeat,
+    linear-gradient(var(--ds-surface-2) 0 0) 24px 206px / 40% 14px no-repeat,
+    linear-gradient(var(--ds-surface-3) 0 0) 24px 232px / 62% 10px no-repeat,
+    var(--ds-surface);
+  border: 1px solid var(--ds-line);
+}
+#search-results[aria-busy="true"]:empty::after,
+.ds-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--ds-surface) 75%, transparent) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: ds-shimmer 1.5s var(--ds-ease) infinite;
+}
+
+/* ---------- Animations ---------- */
+@keyframes ds-banner-in { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes ds-toast-in { from { opacity: 0; transform: translateY(-10px) scale(.97); } }
+@keyframes ds-soft-pulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--ds-danger) 18%, transparent); } }
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+@keyframes ds-done { 40% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ds-ok) 35%, transparent); } }
+@keyframes ds-shimmer { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .connection-banner,
+  .connection-banner-icon,
+  body.next-interface .toast:not([hidden]),
+  .is-done,
+  #search-results[aria-busy="true"]:empty::after,
+  .ds-skeleton::after { animation: none !important; display: none; }
+  .is-busy::after { animation-duration: 2.4s; }
+}

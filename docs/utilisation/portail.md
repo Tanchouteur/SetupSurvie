@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.69.0, 20 novembre 2026.**
+**Guide actuel — 0.69.0, 20 novembre 2026 ; compléments 0.70.0 dans « Être toujours informé ».**
 
 Le portail a une seule interface, servie à la racine, sur Windows comme sur
 Linux. Depuis 0.63.0, l’ancienne interface « classique » est retirée et
@@ -144,6 +144,45 @@ leur position. Les commandes restent immédiates : une animation n’attend
 pas avant de lancer une action et ne remplace pas un message de réussite ou
 d’erreur. Le réglage système de réduction des animations est respecté, y compris
 dans les cartes et le lecteur PDF.
+
+## Être toujours informé — 0.70.0
+
+- **Connexion perdue.** Si l’appareil SetupSurvie ne répond plus (PC éteint,
+  autre réseau Wi-Fi), un bandeau rouge l’annonce en haut de l’écran, compte
+  les secondes avant le prochain essai et propose **Réessayer maintenant** et
+  les documents de secours. Il passe au vert « Connexion rétablie » puis
+  disparaît seul. Le pied de page indique « Appareil connecté » ou
+  « Appareil injoignable ». Les messages d’erreur sont en français ; aucun
+  message technique en anglais ne doit apparaître.
+- **Messages.** Ils s’affichent en haut à droite (sous l’en-tête sur téléphone)
+  et ne recouvrent plus la zone de saisie ni le bouton **Envoyer**.
+- **Boutons.** Un bouton qui lance une opération montre un petit cercle animé
+  tant qu’elle dure, puis un bref signal de fin.
+- **Assistant.** Une ligne au-dessus de la saisie dit, en mots simples, si
+  l’assistant est prêt, démarre, est en pause ou arrêté, avec l’action utile
+  (démarrer l’assistant pour le profil Famille). Pendant une réponse, une frise
+  montre les étapes : préparer, chercher, lire, rédiger.
+- **Mesures conservées.** La jauge « Modèle chargé · RAM · VRAM » reste dans
+  l’en-tête. Sans service de mesure, elle affiche « Non vérifié » (et non plus
+  « Indisponible », qui laissait croire à une panne). Sur téléphone et sur les
+  écrans moyens, une pastille compacte (point du modèle, deux jauges RAM et
+  VRAM) mène aux mesures détaillées.
+- **Mon appareil.** La vue d’ensemble commence par « Tout fonctionne » ou par
+  les points à regarder, chacun avec son explication et son action. Les
+  mesures détaillées suivent, inchangées.
+- **Tâches.** L’entrée de la file dans l’en-tête s’appelle **Tâches** et dit
+  son état (« 2 en cours », « 1 problème », « En pause ») ; sur téléphone, une
+  pastille donne le nombre. Une file vide affiche un seul message « Rien en cours ».
+- **Recherche.** L’onglet Rechercher propose des idées et vos dernières
+  recherches (rangées dans ce navigateur, par profil). Le résultat tient en une
+  phrase qui nomme l’espace cherché (« Aucun résultat pour « eau potable » dans
+  « Autonomie et résilience » ») ; **Chercher dans toute la bibliothèque** est
+  alors proposé en premier. Une recherche incomplète le dit ; les précisions
+  techniques sont dans **Détails de la recherche**. Sur téléphone, collection,
+  langue et type sont regroupés sous **Filtres**.
+- **Téléphone.** L’en-tête garde le logo et les commandes ; le titre de l’écran
+  est le grand titre de la page. Les onglets et les types de collections
+  défilent sur une ligne, avec un fondu qui signale la suite.
 
 ## Navigation confortable
 

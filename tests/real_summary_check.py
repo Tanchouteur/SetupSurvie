@@ -21,7 +21,7 @@ async def check(args):
     report={'schema':1,'kind':'real long summary','fictional_corpus':True,'customer_validation':False,
         'policy_digest':hashlib.sha256((base/'deploy/assistant-system.fr.txt').read_bytes()).hexdigest(),'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'illustrations_requested':args.illustrations,
         'version':json.loads((base/'deploy/release.json').read_text())['version'],
-        'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+        'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
         'model':args.model,'num_ctx':16384,'num_gpu':args.gpu_layers,'threads':6,'predict':4096,'checkpoint_states':[]}
     def save():durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
     async def available(**kwargs):

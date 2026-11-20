@@ -72,7 +72,7 @@
   overflow: auto;
   border: 1px solid #938c83;
   border-radius: 0.625rem;
-  background: #faf9f3;
+  background: var(--ds-surface, #faf9f3);
   color: #332a23;
 }
 #pdf-translation-work::backdrop {

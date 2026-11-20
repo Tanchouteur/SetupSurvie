@@ -27,6 +27,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 20 novembre 2026
 
+- [Portail toujours informatif, routes par domaine](2026-11-20-portail-toujours-informe-0700.md) — suite de l’audit (0.70.0) : connexion, assistant, Mon appareil, recherche, Cartes, empreintes et routeurs ; Chromium seulement.
 - [Installation neuve et restauration Linux hors ligne](2026-11-20-restauration-linux-hors-ligne.md) — installateurs conservés sur la copie, second SSD et VM Debian.
 - [Réinstallation de SetupSurvie sur Bazzite](2026-11-20-reinstallation-bazzite.md) — reprise du lanceur Linux, indexation automatique et téléchargement YouTube réel.
 - [Audit du portail : maintenabilité, design et expérience](2026-11-20-audit-ux-et-maintenabilite-portail.md) — constats Chromium sur données fictives, lots proposés et avis sur une réécriture en Rust.

@@ -53,7 +53,7 @@ async def check(args):
             result['sources']=json.loads(result['sources']);metrics=assistant_metrics.read(job)
             report={'schema':1,'version':json.loads((base/'deploy/release.json').read_text())['version'],'real_model':True,'fictional_corpus':True,
                 'customer_validation':False,'model':args.model,'options':{'context':16384,'output':2048,'gpu_layers':32,'threads':6,'keep_alive_seconds':15},
-                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+                'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
                 'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'question':question,'result':result,'measurements':metrics,
                 'checks':{'done':result['status']=='done','guide_cited':any(r['id'].startswith('guide:') for r in result['sources']),
                     'video_cited':any(r['id'].startswith('video:') for r in result['sources']),'17_present':'17' in result['answer'],'23_present':'23' in result['answer']},

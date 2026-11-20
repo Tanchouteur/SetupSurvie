@@ -182,12 +182,15 @@
     link.setAttribute('aria-label', 'File d’attente');
     const count = make('span', '', 'work-queue-count');
     count.setAttribute('aria-hidden', 'true');
-    const icon = make('span', '☷', 'work-queue-icon');
+    const icon = make('span', '', 'work-queue-icon');
     icon.setAttribute('aria-hidden', 'true');
+    /* Libellé en mots : « Tâches », « 2 en cours », « 1 problème »… */
+    const label = make('span', 'Tâches', 'work-queue-label');
+    label.setAttribute('aria-hidden', 'true');
     const signal = make('span', '', 'work-queue-signal');
     signal.setAttribute('aria-hidden', 'true');
     signal.hidden = true;
-    link.append(icon, count, signal);
+    link.append(icon, label, count, signal);
     host.append(link);
 
     const preview = make('div', '', 'work-queue-preview');
@@ -236,8 +239,14 @@
       const suspended = state?.jobs.filter(held).length || 0;
       host.dataset.state = errors ? 'attention' : state?.paused || partial || suspended ? 'paused' : '';
       host.dataset.connection = connection;
-      count.textContent = state ? queued + active : '';
+      count.textContent = state && queued + active ? queued + active : '';
+      count.hidden = !count.textContent;
       const unknown = connection === 'stale' || connection === 'unavailable';
+      label.textContent = errors ? plural(errors, 'problème', 'problèmes')
+        : state?.paused ? 'En pause'
+        : active ? plural(active, 'en cours', 'en cours')
+        : queued ? plural(queued, 'en attente', 'en attente')
+        : 'Tâches';
       signal.textContent = errors || partial ? '!' : unknown ? '?' : state?.paused || suspended ? 'Ⅱ' : '';
       signal.hidden = !signal.textContent;
       signal.dataset.level = errors ? 'error' : unknown ? 'unknown' : 'warning';
