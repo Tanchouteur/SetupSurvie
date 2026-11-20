@@ -1,5 +1,7 @@
 # Documentation SetupSurvie
 
+- [Préparations de la bibliothèque et suivi des travaux](utilisation/preparations-bibliotheque.md) — inventaire des étapes, dépendances et cartes de la file.
+
 - [Tri des collections sur le SSD Windows](essais/2026-11-19-tri-collections.md) — mesures par requête, portée de la recette et vérifications restantes.
 
 - [Mesurer le classement des espaces](essais/mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.

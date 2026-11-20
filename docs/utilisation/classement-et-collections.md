@@ -1,6 +1,6 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — actualisé pour la 0.65.2, 20 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.66.0, 20 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
 
@@ -16,8 +16,8 @@ l’étiquette **Rangée dans Autre**.
 La page rappelle en haut les trois choix possibles :
 
 - **Fonds principal** : consulté en premier par la recherche et l’assistant.
-  Il alimente **Autonomie et résilience** et **Savoirs et culture** ; ce dernier
-  applique aussi le classement documentaire.
+  Il alimente **Autonomie et résilience** et **Savoirs et culture**. Les deux
+  espaces appliquent le classement documentaire à la recherche générale.
 - **Autre** : la collection reste sur l’appareil et se lit normalement. La
   recherche ne la consulte que si l’on choisit **Autre** ou **Toute la
   bibliothèque**. L’assistant applique les mêmes choix.
@@ -87,7 +87,8 @@ la plage d’indexation ou au mode jeu peut reprendre à la prochaine plage auto
 Les guides et les pages de PDF reçoivent leur classement pendant l’indexation
 documentaire. Le catalogue des vidéos prépare le classement à partir du titre,
 de la description et du début des pistes exploitables du fonds principal.
-Les corrections de classement enregistrées gardent la priorité.
+Les corrections de classement enregistrées gardent la priorité. Voir
+[les préparations et leur suivi](preparations-bibliotheque.md).
 
 ## Comprendre le classement automatique
 
@@ -101,10 +102,11 @@ classement si nécessaire.
 Le [protocole de mesure](../essais/mesurer-classement-documentaire.md) permet
 de comparer deux versions sur les mêmes documents et vidéos.
 
-## Corriger le classement d’un document
+## Corriger le classement d’un document ou d’une vidéo
 
-1. Ouvrir le document depuis les résultats, puis **Corriger le classement** au
-   bas de l’aperçu.
+1. Avec le profil **Famille**, ouvrir le document ou la vidéo dans le lecteur
+   SetupSurvie depuis **Bibliothèque → Rechercher**, puis ouvrir **Corriger le
+   classement** au bas du lecteur.
 2. Choisir **Autonomie et résilience**, **Savoirs et culture**, ou les deux.
    Sans espace choisi, le document reste retrouvable dans **Toute la bibliothèque**.
 3. Indiquer ce qu’il contient surtout : présentation, explication, procédure,
@@ -118,8 +120,8 @@ automatique. Une procédure classée comme telle n’est pas certifiée correcte
 sûre. Le simple titre « guide » ne suffit pas à classer automatiquement une page
 comme procédure. Un quiz explicite peut être repéré comme exercice à vérifier.
 
-La correction s’applique à l’article ZIM ou au document entier ; les pages d’un
-même PDF partagent le classement. Elle ne modifie ni le fichier ni ses liens.
+La correction s’applique à l’article ZIM, au document entier ou à la vidéo
+entière, quel que soit le passage ouvert. Elle ne modifie ni le fichier ni ses liens.
 **Revenir au classement automatique** supprime seulement cette correction.
 Une réindexation des guides conserve les corrections.
 

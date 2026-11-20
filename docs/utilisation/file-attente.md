@@ -88,6 +88,9 @@ pistes déjà publiés. La pause globale et les étapes de la chaîne YouTube
 sont conservées sur le disque. Après un redémarrage, les questions et les
 traductions ordinaires suivent les règles de reprise de leur page.
 
+Voir [les préparations de la bibliothèque et leur suivi](preparations-bibliotheque.md)
+pour savoir où suivre chaque travail et ce que la file reçoit du PC serveur.
+
 La priorité s’applique aux traitements du portail. Une réponse envoyée
 depuis l’interface avancée Open WebUI a son propre traitement.
 
