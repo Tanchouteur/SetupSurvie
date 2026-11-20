@@ -43,8 +43,15 @@ de chaque ligne enregistre le choix immédiatement. Pour agir sur plusieurs
 collections, cochez-les (ou cochez la famille entière) : une barre en bas de page
 propose **Fonds principal**, **Autre** ou **Supprimer…**. La suppression passe
 par une confirmation qui nomme les collections, le volume libéré et les fichiers
-concernés, y compris les fichiers partiels. Elle est suivie dans la file
-d’attente sous le titre **Suppression de collections**.
+concernés, y compris les fichiers partiels. Dès la confirmation, la page
+indique l’envoi de la demande, puis affiche son acceptation ou son refus.
+Pendant l’opération, elle distingue l’effacement des fichiers et
+l’actualisation du catalogue. Le redémarrage du portail peut interrompre
+brièvement le suivi, qui se reconnecte automatiquement. La page affiche
+ensuite le résultat et actualise la liste. Vous pouvez aussi suivre
+**Suppression de collections** dans la **File d’attente** ou rouvrir la
+page d’organisation pour consulter l’état de la dernière préparation
+si c’est encore cette suppression.
 
 Les vidéos dans une archive suivent le classement de cette archive ; les guides
 individuels font partie du Fonds principal. Les vidéos YouTube d’un groupe exclu

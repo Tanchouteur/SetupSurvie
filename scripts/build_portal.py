@@ -39,7 +39,7 @@ def build():
         ('js', '/interface/performance.js', '0.26.1'),
         ('js', '/interface/translation-benchmark.js', '0.26.1'),
         ('js', '/interface/collections.js', '0.54.0'),
-        ('js', '/interface/collection-sort.js', '0.66.0'),
+        ('js', '/interface/collection-sort.js', '0.67.4'),
         ('css', '/interface/collection-sort.css', '0.65.2'),
         ('js', '/interface/catalogue.js', '0.67.0'),
         ('js', '/interface/search-check.js', '0.63.0'),

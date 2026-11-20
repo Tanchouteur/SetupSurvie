@@ -365,6 +365,7 @@ class Manager:
             self.write(state); raise
         if action == 'video-inventory':
             (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).unlink(missing_ok=True)
+        return state['id']
 
     def youtube_job(self,previous,body):
         """A list saved by the site in state/pilot/youtube-lists, or the paused one."""
@@ -434,7 +435,7 @@ class Manager:
             root, scope = self.check_storage(0) if state['action']=='collection-exclude' else self.check_storage()
             check()
             if state['action']=='collection-exclude':
-                update('refreshing','Suppression des fichiers confirmés et actualisation du catalogue…')
+                update('refreshing','Suppression des fichiers confirmés…')
                 keys=set(state['options']['keys'])
                 if self.backend == 'lab':
                     import linux_lab as lab
@@ -443,6 +444,7 @@ class Manager:
                     self.app.compose(self.config,'stop','kiwix')
                 try:
                     recovered=collection_tasks.exclude(root,keys,state['options']['token'])
+                    update('refreshing','Fichiers supprimés. Actualisation du catalogue et redémarrage des services…')
                     self.app.catalog(self.config)
                 finally:
                     if self.backend == 'lab':

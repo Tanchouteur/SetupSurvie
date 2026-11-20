@@ -75,10 +75,15 @@ def install_routes(page, state):
             files = [{'name': 'library/zim/' + name, 'bytes': row['bytes']} for row in state['rows'] if row['key'] in keys for name in row['files']]
             return fulfill(route, {'files': files, 'bytes': sum(f['bytes'] for f in files), 'token': 't' * 64})
         if path == '/admin/library/collection-sort/exclude':
-            state['deleted'].update(json.loads(request.post_data)['keys'])
-            state['job'] = {'action': 'collection-exclude', 'phase': 'completed', 'message': 'Suppression terminée : 9.0 Go libérés.'}
-            return fulfill(route, {'accepted': True}, 202)
+            if state['reject_deletion']:
+                return fulfill(route, {'detail': 'Une opération documentaire est déjà en cours.'}, 409)
+            state['confirmed'] = json.loads(request.post_data)['keys']
+            state['job'] = {'id': 'a' * 32, 'action': 'collection-exclude', 'phase': 'refreshing',
+                            'message': 'Suppression des fichiers confirmés…'}
+            return fulfill(route, {'accepted': True, 'id': state['job']['id']}, 202)
         if path == '/admin/library':
+            if state.get('restarting'):
+                return fulfill(route, {'detail': 'Redémarrage du portail.'}, 503)
             return fulfill(route, state['job'])
         if path == '/library/category-index':
             return fulfill(route, {'phase': 'running', 'done': 2_400_000, 'total': 6_000_000,
@@ -95,7 +100,7 @@ def install_routes(page, state):
 
 
 def exercise(page, base, name):
-    state = {'rows': json.loads(json.dumps(ROWS)), 'moves': [], 'deleted': set(),
+    state = {'rows': json.loads(json.dumps(ROWS)), 'moves': [], 'deleted': set(), 'reject_deletion': True,
              'job': {'action': 'category-index', 'phase': 'downloading', 'message': 'Classement…'}}
     install_routes(page, state)
     page.request.post(base + '/api/profiles/select', data={'id': 'local-family'}, headers={'Origin': base})
@@ -149,8 +154,21 @@ def exercise(page, base, name):
     check('Gutenberg' in page.locator('#organizer-confirm-names').inner_text(), name + ' : confirmation nomme les collections')
     page.screenshot(path=str(OUTPUT / (name + '-confirm.png')), full_page=False)
     page.locator('#organizer-confirm-delete').click()
-    page.wait_for_function("()=>document.querySelector('#organizer-status').textContent.includes('Suppression terminée')")
-    check(page.locator('.organizer-row', has_text='Livres en français').count() == 0, name + ' : collection supprimée retirée de la liste')
+    status = page.locator('#organizer-delete-status')
+    status.get_by_text('Suppression refusée. Une opération documentaire est déjà en cours.').wait_for()
+    state['reject_deletion'] = False
+    page.locator('#organizer-delete').click()
+    page.locator('#organizer-confirm-delete').click()
+    status.get_by_text('Suppression des fichiers confirmés…').wait_for()
+    page.locator('#organizer-delete-queue').wait_for()
+    state['restarting'] = True
+    status.get_by_text('Le suivi est momentanément indisponible.', exact=False).wait_for()
+    state['deleted'].update(state['confirmed'])
+    state['job'].update(phase='completed', message='Suppression terminée : 9.0 Go libérés.')
+    state['restarting'] = False
+    status.get_by_text('Suppression terminée', exact=False).wait_for()
+    page.locator('.organizer-row', has_text='Livres en français').wait_for(state='detached')
+    check(True, name + ' : refus, suivi, redémarrage et résultat visibles')
     state['job'] = {'action': 'category-index', 'phase': 'downloading', 'message': 'Classement…'}
     page.goto(base + '/#/appareil/bibliotheque')
     page.evaluate("()=>{const d=document.getElementById('category-index').closest('details');if(d)d.open=true;}")

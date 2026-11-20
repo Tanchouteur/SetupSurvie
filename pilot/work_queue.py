@@ -142,7 +142,7 @@ def add_host_work(jobs, report):
     href = {
         'index': '#/appareil/bibliotheque', 'index-prepare': '#/appareil/bibliotheque',
         'video-inventory': '#/bibliotheque/collections?rubrique=videos', 'youtube-download': '#/appareil/bibliotheque',
-        'category-index': '#/appareil/bibliotheque', 'collection-exclude': '#/bibliotheque/collections',
+        'category-index': '#/appareil/bibliotheque', 'collection-exclude': '#/appareil/collections',
     }.get(kind, '#/appareil/telechargements')
     message = report.get('message') if isinstance(report.get('message'), str) else ''
     extra = {}
@@ -157,7 +157,7 @@ def add_host_work(jobs, report):
             stage = 'Articles classés : ' + ' · '.join(found)
         if counts.get('archives'):
             stage = f"{counts.get('completed', 0)} / {counts['archives']} archives prêtes · {stage}"
-    if kind == 'collection-exclude' and status == 'completed' and message:
+    if kind == 'collection-exclude' and status in ('running', 'completed') and message:
         stage = message
     if kind == 'video-inventory':
         extra['focus'] = 'next-archive-videos'

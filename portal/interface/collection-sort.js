@@ -32,6 +32,8 @@
       <div data-state="delete"><strong><span class="organizer-dot" aria-hidden="true"></span>Supprimer</strong>
         <span>Efface les fichiers du PC serveur. La collection ne sera plus proposée aux prochains téléchargements.</span></div>
     </div>
+    <p id="organizer-delete-status" class="organizer-status" role="status" aria-live="polite"></p>
+    <a id="organizer-delete-queue" class="secondary-link" href="#/file" data-route="file" hidden>Voir la file d’attente →</a>
     <div id="organizer-browse">
       <div class="organizer-toolbar">
         <label class="organizer-search"><span class="sr-only">Chercher une collection</span>
@@ -303,35 +305,59 @@
     }catch(error){say(friendly(error));}
     finally{busy=false;render();}
   }
-  async function follow(attempt=0){
+  let deletionId;
+  function deletionStatus(message,tracked=true){
+    $('organizer-delete-status').textContent=message;
+    $('organizer-delete-queue').hidden=!tracked;
+  }
+  async function follow(attempt=0,checking=false){
     clearTimeout(poll);
     try{
-      const job=await api('/admin/library');
-      if(job.action==='collection-exclude'&&['starting','refreshing'].includes(job.phase)){
-        say('Suppression en cours… Vous pouvez quitter cette page : le suivi reste dans la file d’attente.');
-        poll=setTimeout(follow,1800);return;
+      const job=await api('/admin/library',undefined,{cache:'no-store'});
+      if(checking&&busy)return;
+      if(job.action==='collection-exclude'&&(!deletionId||job.id===deletionId)){
+        deletionId=job.id;
+        if(['starting','refreshing'].includes(job.phase)){
+          busy=true;render();
+          deletionStatus(job.phase==='starting'?'Démarrage de la suppression…':job.message||'Suppression en cours…');
+          poll=setTimeout(follow,1800);return;
+        }
+        deletionStatus(job.phase==='completed'?(job.message||'Suppression terminée.')
+          :'Suppression à vérifier. '+(job.message||'Consultez la file d’attente.'));
+        await refresh();
+        if(job.phase==='completed')loadData();
+      }else if(!checking){
+        deletionStatus('Le résultat de cette suppression n’est plus disponible ici. Vérifiez les collections restantes.');
+        await refresh();
       }
-      await refresh();
-      if(job.action==='collection-exclude')say(job.phase==='completed'?(job.message||'Suppression terminée.'):friendly({message:job.message}));
-      if(job.phase==='completed')loadData();
     }catch(error){
-      if(attempt<10){poll=setTimeout(()=>follow(attempt+1),2000);return;}
-      say(friendly(error));
+      if(!checking){
+        deletionStatus('Le suivi est momentanément indisponible. Vérification du résultat…');
+        if(attempt<25){poll=setTimeout(()=>follow(attempt+1),2400);return;}
+        deletionStatus('Le résultat de la suppression reste à vérifier. Consultez la file d’attente ou rouvrez cette page.');
+      }
     }
-    busy=false;render();
+    if(!checking){busy=false;render();}
   }
   async function confirmDelete(){
-    if(!confirmation)return;
-    const button=$('organizer-confirm-delete');
-    button.disabled=true;
+    if(!confirmation||busy)return;
+    const button=$('organizer-confirm-delete'),back=$('organizer-back');
+    busy=true;render();button.disabled=back.disabled=true;
+    deletionId=undefined;
+    deletionStatus('Envoi de la demande de suppression…',false);
+    $('organizer-delete-status').scrollIntoView({block:'nearest'});
     try{
-      await api('/admin/library/collection-sort/exclude',confirmation);
+      const job=await api('/admin/library/collection-sort/exclude',confirmation);
+      deletionId=job.id;
       selected.clear();confirmation=null;step(false);
-      busy=true;render();
-      say('Suppression en cours…');
+      deletionStatus('Demande acceptée. Suppression en cours…');
       await follow();
-    }catch(error){say(friendly(error));step(false);}
-    finally{button.disabled=false;}
+    }catch(error){
+      deletionStatus(error.status&&error.status<500
+        ?'Suppression refusée. '+friendly(error)
+        :'Le serveur n’a pas confirmé la demande. Vérifiez la file d’attente avant de réessayer.',!(error.status&&error.status<500));
+      confirmation=null;step(false);busy=false;render();
+    }finally{button.disabled=back.disabled=false;}
   }
 
   for(const chip of page.querySelectorAll('[data-view]'))chip.onclick=()=>{view=chip.dataset.view;render();};
@@ -347,7 +373,10 @@
     const route=event.detail||{};
     summary();  // the profile may have changed since the last load
     if(route.section==='bibliotheque'&&route.tab==='collections'&&!busy)refresh();
-    if(route.section==='appareil'&&route.tab==='collections'&&!busy){step(false);refresh();}
+    if(route.section==='appareil'&&route.tab==='collections'&&!busy){
+      step(false);refresh();
+      if(admin())follow(0,true);
+    }
     if(route.section==='appareil'&&route.tab==='bibliotheque')showCategory();
   });
 

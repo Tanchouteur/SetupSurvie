@@ -297,7 +297,11 @@ class Handler(BaseHTTPRequestHandler):
                         if 'operation_id' in body and body['operation_id'] != state.get('id'):
                             raise setup.SetupError('Cette préparation n’est plus en cours.')
                         self.server.library.pause(state=state)
-                    else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
+                    else:
+                        job_id=self.server.library.start(self.path.rsplit('/',1)[-1],body)
+                        if self.path=='/library/collection-exclude':
+                            self.respond(202,{'accepted':True,'id':job_id})
+                            return
                 self.respond(202,{'accepted':True})
             except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
             except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'Vérifiez le disque de données et le service de téléchargement sur le PC serveur.'})
