@@ -61,6 +61,16 @@ Une boîte accompagnée d’un petit routeur ou point d’accès permettrait de 
 
 Cette architecture reste une piste à prototyper, avec son coût, sa consommation et sa maintenance. Elle ne résout pas à elle seule la confiance HTTPS. Un portail d’accueil Wi-Fi pourrait guider la connexion, tout en permettant d’ouvrir ensuite le navigateur normal pour les fonctions qui l’exigent.
 
+## Périmètre V1 décidé par Louis le 20 novembre 2026
+
+Pour cette V1, les amis de Louis achèteront leur matériel et recevront
+SetupSurvie gratuitement. La machine de référence fonctionne sous Linux.
+La préparation prévoit un bureau léger et Firefox avec son traducteur et
+les langues choisies déjà téléchargées. Le bureau et les langues restent
+à choisir. Ce périmètre remplace l’hypothèse de vente du PC préinstallé
+pour la V1. Les conditions propres aux composants et contenus tiers
+restent applicables à leur partage.
+
 ## Hypothèses commerciales à tester
 
 - Présenter d’abord les usages concrets : comprendre une réparation, consulter un manuel, apprendre, préparer une réserve et vérifier un calcul. La préparation aux coupures constitue un bénéfice supplémentaire mesurable.

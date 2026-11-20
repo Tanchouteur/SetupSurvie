@@ -202,6 +202,15 @@ stockage, la pause d'inférence et les contrôles du laboratoire restent obligat
 Les assistants du produit ne reçoivent pas ces accès. Livraison de consignes et
 documentation uniquement, sans changement de version logicielle.
 
+## V1 Linux pour les proches — décision de Louis du 20 novembre 2026
+
+La V1 cible Linux. SetupSurvie sera donné à des amis, qui achèteront leur
+configuration matérielle. Ce cadrage remplace le projet de vente du PC
+préinstallé pour la V1. Louis demande un bureau léger pour préserver la RAM
+et la VRAM, ainsi que Firefox avec son traducteur et les langues utiles
+téléchargées avant remise. Voir le [cadrage de référence](acces-simple-et-offre.md)
+et la [feuille de route](feuille-de-route-v1.md).
+
 ## Offre de PC préinstallé — 16 novembre 2026
 
 Louis précise que le code propre de SetupSurvie n'est pas publié en open source
