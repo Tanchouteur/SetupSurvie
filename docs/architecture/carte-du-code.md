@@ -11,7 +11,7 @@ ajouté, renommé ou supprimé.
 | Je cherche… | Aller voir |
 | --- | --- |
 | La version du logiciel | `pilot/app.py` (`VERSION=`) et `deploy/release.json` — les garder identiques |
-| Toutes les routes HTTP du portail | `pilot/app.py` : décorateurs `@app.get/post/put/delete('/api/…')`, aucun `APIRouter` |
+| Toutes les routes HTTP du portail | `pilot/routes/` : un `APIRouter` par domaine, assemblés dans `pilot/app.py` |
 | La page du portail | `portal/interface/modele.html` → `scripts/build_portal.py` → `portal/index.html` (généré, ne pas éditer) |
 | Le contexte donné à l’assistant | `deploy/assistant-system.fr.txt` + consignes d’outils dans `pilot/engine.py` |
 | Les modèles et modes de réponse | `deploy/model-profiles.json` |
@@ -44,7 +44,17 @@ et 11436 ne sont pas exposés aux lecteurs.
 
 | Module | Rôle |
 | --- | --- |
-| `app.py` | Application FastAPI : toutes les routes, version, assemblage des services |
+| `app.py` | Application FastAPI : version, cycle de vie, contrôle d’origine, assemblage des routeurs de `routes/` |
+| `routes/deps.py` | Dépendances communes (profil courant, droits d’administration, fonctions optionnelles) et modèles partagés ; ré-exportés par `app.py` |
+| `routes/status.py` | Routes de statut, santé, réseau et moteur d’inférence |
+| `routes/profiles.py` | Routes des profils, favoris, utilisateurs et retours |
+| `routes/library.py` | Routes de la bibliothèque, recherche, sources, dossiers pratiques et lecture de documents |
+| `routes/maps.py` | Routes de géographie, carnet de cartes et itinéraires |
+| `routes/conversations.py` | Routes des conversations, dossiers et questions à l’assistant |
+| `routes/videos.py` | Routes des vidéos, sous-titres, transcriptions, acquisitions et téléchargements YouTube |
+| `routes/work.py` | Routes de la file de travail et du suivi des tâches |
+| `routes/documents.py` | Routes des résumés, traductions et mesures de tâches |
+| `routes/admin.py` | Routes d’administration : réglages, mise à jour, performance, calibrage, contexte et modèles |
 | `profiles.py` | Profils locaux sans mot de passe ([guide](../utilisation/profils-locaux.md)) |
 | `accounts.py` | Opérations sur les comptes natifs Open WebUI (internes) ; `POST /api/auth/{action}` répond 410 |
 | `configure.py` | Profils Open WebUI partagés, versionnés, sans copier les poids |
