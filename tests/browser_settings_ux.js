@@ -86,6 +86,7 @@ async page => {
   await page.locator('#profile-list').getByRole('button',{name:'Famille',exact:true}).click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user?.id==='local-family');
   await page.locator('#settings-reglages').waitFor({state:'visible'});
   await page.locator('#navigation [data-route="assistant"]').click();
+  await page.waitForFunction(() => document.querySelector('#chat-input').value === 'Brouillon Famille UX');
   check(await page.locator('#chat-input').inputValue()==='Brouillon Famille UX','Retour Famille conserve son brouillon');
   check(await page.locator('input[type="password"]').count()===0,'Aucun mot de passe ajouté');
   await route('entretien');await page.locator('#settings-navigation-memory > summary').click();
