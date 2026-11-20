@@ -112,13 +112,13 @@ body.has-map-site-nav .map-site-nav #map-account:hover { background: var(--ds-su
   .maplibregl-ctrl-group button { width: 40px; height: 40px; min-height: 40px; }
   .map-floating-actions .print-action { display: none; }
   .map-floating-actions button { min-height: 40px; }
-  .no-basemap a { display: inline-flex; align-items: center; min-height: 40px; }
+  .no-basemap a { display: inline-flex; align-items: center; min-height: 36px; }
   /* Le message reste en haut de la carte : le centre reste libre pour toucher et déplacer. */
-  .no-basemap { top: 60px; transform: translate(-50%, 0); padding: 14px 16px; }
+  .no-basemap { top: 58px; transform: translate(-50%, 0); padding: 8px 14px; }
   /* Le point choisi s’affiche juste au-dessus de « Rechercher · Mes repères », hors du centre de la carte. */
   body.has-map-site-nav .map-stage .selected-point-card,
   body.has-map-site-nav .map-stage:has(.maplibregl-compact-show) .selected-point-card { bottom: calc(var(--map-tools-height, 56px) + 30px); padding: 8px 12px; }
-  .no-basemap p { margin: 4px 0 6px; }
+  .no-basemap p { display: none; }
   footer summary { position: relative; }
   footer summary::after { content: ''; position: absolute; inset: -10px -8px; }
   .map-site-nav .brand { min-width: 44px; min-height: 44px; margin-left: -9px; justify-content: center; }
