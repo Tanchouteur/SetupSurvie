@@ -1,5 +1,6 @@
 import os
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -104,6 +105,35 @@ class LinuxHostTest(unittest.TestCase):
                     linux_host.unit_text(mock.Mock(work=value), {}, {})
                 with self.subTest(host=value), self.assertRaises(setup.SetupError):
                     linux_host.unit_text(mock.Mock(work='/tmp'), {}, {'DOCKER_HOST': value})
+
+    def test_install_wrapper_accepts_a_private_directory_with_spaces(self):
+        if sys.platform != 'linux':
+            self.skipTest('Lanceur Bash sous Linux.')
+        private = self.root / 'Réglages privés'
+        data = self.root / 'Données locales'
+        result = subprocess.run(
+            ['bash', str(ROOT / 'scripts/install.sh'), '--work-dir', str(private),
+             '--data-dir', str(data), '--offline', '--content-pack', 'health'],
+            capture_output=True, encoding='utf-8', timeout=20,
+        )
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn('Choisir le kit hors ligne', result.stderr)
+        self.assertFalse(private.exists())
+        self.assertFalse(data.exists())
+
+    def test_install_rejects_unknown_pack_without_creating_directories(self):
+        private = self.root / 'private'
+        data = self.root / 'data'
+        with self.assertRaisesRegex(setup.SetupError, 'Lots inconnus : absent'):
+            setup.main(['--work-dir', str(private), 'install', '--target', 'linux',
+                        '--data-dir', str(data), '--content-pack', 'absent'])
+        self.assertFalse(private.exists())
+        self.assertFalse(data.exists())
+
+    def test_install_preserves_global_work_dir(self):
+        args = setup.parser().parse_args(
+            ['--work-dir', str(self.root), 'install', '--target', 'linux'])
+        self.assertEqual(args.work_dir, str(self.root))
 
     def test_reader_version_follows_python(self):
         self.assertEqual(index_reader_probe.expected_version((3, 14, 2)), '3.13.1')

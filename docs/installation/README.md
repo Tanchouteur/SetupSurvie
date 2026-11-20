@@ -76,6 +76,12 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 ./scripts/install.sh --lan --data-dir /DISQUE/SetupSurvie/donnees
 ```
 
+Pour séparer les réglages privés du dépôt, ajouter
+`--work-dir '/DISQUE/SetupSurvie/Réglages privés'`. Garder ce même dossier
+lors de chaque relance. Les options `--content-pack` sont réservées à
+l’installation en ligne. Les codes des lots sont listés par
+`python3 scripts/content.py list`.
+
 Suivre le [guide de démarrage Linux](demarrage-linux.md) pour le service
 systemd, Docker rootless et les prérequis GPU correspondants.
 

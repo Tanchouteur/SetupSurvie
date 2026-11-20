@@ -655,6 +655,7 @@ def parser():
         child.add_argument('--lan-host',type=lan_host)
         child.add_argument("--cpu", action="store_true", help="Linux : essai CPU explicite, sans réservation GPU")
         if command == "install":
+            child.add_argument("--work-dir", default=argparse.SUPPRESS, help="Réglages privés (par défaut .local dans le dépôt)")
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
             child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; Linux : service utilisateur systemd au démarrage du PC. --no-startup ne l’active pas.')
@@ -683,6 +684,18 @@ def parser():
 
 def main(argv=None):
     args = parser().parse_args(argv)
+    selected_content = []
+    if args.action == "install":
+        if args.offline and args.content_pack:
+            raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
+        if args.content_pack:
+            import content
+            items = content.catalog()
+            packs = set(args.content_pack)
+            unknown = packs - {item['pack'] for item in items}
+            if unknown:
+                raise SetupError('Lots inconnus : ' + ', '.join(sorted(unknown)))
+            selected_content = [item for item in items if item['pack'] in packs]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
         c = app.init(args.target, args.data_dir, args.lan, args.cpu)
@@ -695,7 +708,6 @@ def main(argv=None):
     if args.action == "init":
         print(f"Réglages conservés dans {app.work}. Accès par profil, sans mot de passe.")
     elif args.action == "install":
-        if args.offline and args.content_pack:raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
         app.doctor(c)
         if not args.offline:
             app.compose(c, "pull")
@@ -713,11 +725,8 @@ def main(argv=None):
                 app.pull_model(c, c["chat_model"])
             else:
                 app.record(c)
-        if args.content_pack:
-            import content
-            items=content.catalog();unknown=set(args.content_pack)-{i['pack'] for i in items}
-            if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
-            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack],workers=2)
+        if selected_content:
+            content.download(Path(c['data_dir']), selected_content, workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         import map_install
         map_install.ensure(Path(c['data_dir']),offline=args.offline)
