@@ -9,6 +9,12 @@ identifiés séparément.
 - [Matrice des essais](matrice.md)
 - [Procédure de reproduction](reproduction.md)
 - [Résultats datés, défauts et reprises](resultats.md)
+- [Relevés des redémarrages Linux 0.72.0](preuves-linux-0.72.0.tsv)
+
+La [matrice](matrice.md) documente les réussites du lanceur en ligne et de la
+restauration sans Internet sur Debian 12, Debian 13 et Ubuntu 22.04 x86-64.
+Elle indique aussi les versions testées sur Bazzite et le scénario antérieur
+qui couvre la copie et la recherche de vidéos avec leurs sous-titres.
 
 ## Bilans antérieurs
 

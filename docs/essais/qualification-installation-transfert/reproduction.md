@@ -28,3 +28,42 @@
 7. Conserver les résultats anonymisés avec le code de retour, la version, la
    date, les empreintes et le statut. Garder les journaux bruts et les données
    privées hors du dépôt.
+
+## Commandes de la campagne Linux 0.72.0
+
+Les VM utilisent un disque virtuel de 100 Gio et systemd. Les installations en
+ligne ont disposé de 6 Gio de mémoire et les restaurations de 5 Gio. Les
+empreintes des images de départ et du logiciel figurent dans les
+[résultats](resultats.md#traçabilité-du-logiciel-et-des-images).
+
+```sh
+sha256sum -c SetupSurvie-linux-0.72.0.tar.gz.sha256
+tar -xzf SetupSurvie-linux-0.72.0.tar.gz
+cd SetupSurvie
+sudo ./scripts/install.sh --preparer-systeme /srv/setup-survie \
+  --content-pack health --content-pack water --content-pack books-fr
+```
+
+Pour tester une restauration, régler le réseau QEMU sur `restrict=on` dès
+la création de l'invité et n'ouvrir qu'une redirection SSH locale. Présenter
+le support en lecture seule, copier le dossier entier dans
+`/srv/recette-transfert` avec root propriétaire, puis démonter le support.
+La source `/srv/setup-survie` doit être absente. Exécuter le témoin TCP
+depuis l'invité avant la restauration, puis après le redémarrage.
+
+```sh
+test ! -e /srv/setup-survie
+! mountpoint -q /mnt/support
+! timeout 4 bash -c '</dev/tcp/1.1.1.1/443'
+sudo /srv/recette-transfert/transferer-setupsurvie.sh --restaurer-hors-ligne
+curl -fsS http://127.0.0.1:8080/api/health
+curl -fsS http://127.0.0.1:8080/api/inference
+curl -fsS http://127.0.0.1:8081/catalog/v2/entries
+curl -fsS -H 'Range: bytes=0-4' http://127.0.0.1:8080/guides/PRI-who-wash-13.en.pdf
+```
+
+Contrôler dans `transfer.json` la phase `active`, le chemin de destination
+et les résultats d'activation. Relever les deux unités systemd et
+`/proc/sys/kernel/random/boot_id` avant et après le redémarrage. Pour une
+recette automatique, une commande dont le résultat est inattendu doit faire
+échouer l'essai.
