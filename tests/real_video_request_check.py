@@ -102,7 +102,7 @@ async def check(args):
             await library.kiwix_queries.close()
     report={'schema':1,'version':json.loads((base/'deploy/release.json').read_text())['version'],'real_model':True,'fictional_corpus':True,'customer_validation':False,'model':args.model,
             'options':{'context':16384,'output':2048,'gpu_layers':args.gpu_layers,'threads':6,'keep_alive_seconds':15},
-            'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),'cases':cases,'human_review':'required_separately'}
+            'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest(),'cases':cases,'human_review':'required_separately'}
     durable.write_bytes(args.report,json.dumps(report,ensure_ascii=False,indent=2).encode(),private=True)
     return all(all(case['checks'].values()) for case in cases)
 

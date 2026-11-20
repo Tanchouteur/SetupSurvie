@@ -29,7 +29,7 @@ async def check(args):
     vocabulary=translation_terms.validate(json.loads(args.terms_file.read_text())) if args.terms_file else []
     base=Path(__file__).resolve().parents[1];original=httpx.AsyncClient;measures=[]
     report={'schema':1,'kind':'SetupSurvie real translation check','version':json.loads((base/'deploy/release.json').read_text())['version'],
-        'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+        'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
         'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'model':args.model,'customer_hardware_validation':False,
         'source':{'sha256':args.sha256,'bytes':source.stat().st_size,'title':args.title,'provenance':args.provenance},
         'pages':{'first':args.first,'last':args.last},'options':{'gpu_layers':args.gpu_layers,'threads':6,'context':16384,'think':args.think},'measurements':measures,
