@@ -55,8 +55,46 @@
     const tab=name==='settings'&&new URLSearchParams(location.search).has('lat')?'lieux':Object.keys(machine).find(k=>machine[k]===name);
     return tab?{section:'appareil',name,tab,params:new URLSearchParams()}:parse('#/'+(sections[name]||'accueil'));
   }
+  // Per-tab memory for this browser tab: the first click on another tab returns
+  // to its last screen; a click on the tab already shown resets it to its root.
+  const tabMemory=new Map();
+  const groupOf=route=>route.section==='file'?'appareil':route.section;
+  const tabOf=route=>route.section==='bibliotheque'?'bibliotheque/'+route.tab:route.section==='file'?'file':route.section==='appareil'?(route.tab==='ensemble'?'appareil/ensemble':'appareil/reglages'):null;
+  const copyRoute=route=>({...route,params:new URLSearchParams(route.params)});
+  function memorize(){
+    if(!current||current.name==='maps')return;
+    const entry={route:copyRoute(current),scroll:window.scrollY,query:current.name==='library'?$('library-query').value:null};
+    tabMemory.set(groupOf(current),entry);
+    const tab=tabOf(current);if(tab)tabMemory.set(tab,entry);
+  }
+  function forget(key){
+    // A main section forgets its sub-tabs too, so the whole section starts afresh.
+    const section=Object.hasOwn(routes,key)&&key!=='file';
+    for(const name of [...tabMemory.keys()])if(name===key||section&&(name.startsWith(key+'/')||key==='appareil'&&name==='file'))tabMemory.delete(name);
+  }
+  function resetTarget(key){
+    if(key==='bibliotheque'||key==='bibliotheque/collections'){put('collection-query','');return parse('#/bibliotheque/collections');}
+    if(key==='appareil')return parse('#/appareil/ensemble');
+    // The assistant keeps its conversation: “Nouvelle conversation” stays explicit.
+    if(key==='assistant')return fromLegacy('chat');
+    return parse('#/'+key);
+  }
+  // Reset: forget after navigate(), which memorizes the screen being left.
+  function openTab(link){
+    const key=link.dataset.route,main=!!link.closest('#navigation');
+    const active=current&&(main?groupOf(current)===key:tabOf(current)===key);
+    if(active){navigate(resetTarget(key));forget(key);return;}
+    const saved=tabMemory.get(key);
+    if(!saved){navigate(parse('#/'+key));return;}
+    const route=copyRoute(saved.route),hash=urlFor(route.section,route.tab,route.params),state={scroll:saved.scroll,focus:null};
+    saveDraft();remember();
+    if(hash!==location.hash)history.pushState(state,'',hash);else history.replaceState(state,'',hash);
+    activate(route,true);
+    if(saved.query!==null&&route.name==='library'&&current===route)$('library-query').value=saved.query;
+  }
   function remember(){
     if(!historyReady||!current)return;
+    memorize();
     const state={...history.state,scroll:window.scrollY,focus:document.activeElement?.id||null};
     if(history.state?.scroll!==state.scroll||history.state?.focus!==state.focus)history.replaceState(state,'',location.href);
     put('last',urlFor(current.section,current.tab,current.params));
@@ -238,6 +276,7 @@
         const detail=$('collection-section-'+type);
         detail.open=true;put('detail:'+detail.id,true);
       }
+      if(!type&&routeLink.closest('#navigation, .next-tabs')){openTab(routeLink);return;}
       navigate(parse('#/'+routeLink.dataset.route));return;
     }
     const scope=event.target.closest('[data-library-scope]');
@@ -268,7 +307,7 @@
   document.addEventListener('survie:conversation',()=>{restoreDraft();if(current?.name==='chat'){const route=fromLegacy('chat');history.replaceState(history.state,'',urlFor(route.section,route.tab,route.params));current=route;}});
   document.addEventListener('survie:auth',()=>{
     const nextProfile=S.user?.id||null;
-    if(searchProfile!==nextProfile){S.searchAbort?.abort();$('search-stop')?.remove();searches.clear();searchKey=null;searchActive=false;searchProfile=nextProfile;$('search-results').replaceChildren();$('search-results').dataset.signature='';$('search-message').textContent='';S.reader=null;$('reader').hidden=true;$('reader').replaceChildren();document.querySelector('.reading-layout').classList.remove('reading');}
+    if(searchProfile!==nextProfile){tabMemory.clear();S.searchAbort?.abort();$('search-stop')?.remove();searches.clear();searchKey=null;searchActive=false;searchProfile=nextProfile;$('search-results').replaceChildren();$('search-results').dataset.signature='';$('search-message').textContent='';S.reader=null;$('reader').hidden=true;$('reader').replaceChildren();document.querySelector('.reading-layout').classList.remove('reading');}
     if(!S.user){if(S.authReady&&current?.name==='library')activate(current,true);return;}
     profileId=S.user.id;draftKey=null;$('chat-domain').value=get('chat-domain','resilience');
     const saved=!initialHash?get('last',''):'';

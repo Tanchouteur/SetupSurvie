@@ -341,7 +341,7 @@ comparaison et les propositions refusées restent privées ; les avertissements
 suivent les traductions partagées et exports. Ne pas relancer d’inférence réelle
 pour un test dans le runner CPU.
 
-### Maintenance suivie dans le portail (depuis 0.68.0)
+### Maintenance suivie dans le portail (depuis 0.69.0)
 
 Lire la section du guide de mise à jour consacrée au portail. Les scripts de
 mise à jour et de transfert restent le moteur et le moyen de secours ; le portail

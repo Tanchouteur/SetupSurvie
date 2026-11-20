@@ -62,7 +62,7 @@ def status(phase, title, **values):
     now = time.time()
     return {'schema': 1, 'id': 'f' * 32, 'kind': 'update', 'state': 'running', 'phase': phase, 'title': title,
             'detail': '', 'current': None, 'total': None, 'unavailable': False, 'installed': '0.67.4',
-            'available': '0.68.0', 'rolled_back': False, 'started': now - 95, 'updated': now,
+            'available': '0.69.0', 'rolled_back': False, 'started': now - 95, 'updated': now,
             'steps': [{'phase': 'git', 'title': 'Récupération de la version disponible', 'at': now - 90}],
             'lines': ['[10:00:01] Récupération de la version disponible'], **values}
 
@@ -70,7 +70,7 @@ def status(phase, title, **values):
 def exercise(page, base, name):
     now = time.time()
     state = {'checks': 0, 'started': [], 'offline': False, 'maintenance_page': False, 'status': None,
-             'update': {'supported': True, 'installed': '0.67.4', 'available': '0.68.0', 'update_available': True,
+             'update': {'supported': True, 'installed': '0.67.4', 'available': '0.69.0', 'update_available': True,
                         'changes': ['Suivre les mises à jour depuis le portail', 'Afficher la copie complète'],
                         'checked_at': now - 300, 'error': '', 'checking': False, 'running': False,
                         'transfer_in_progress': False},
@@ -88,7 +88,7 @@ def exercise(page, base, name):
         preview = entry.locator('.update-nav-preview')
         preview.wait_for()
         text = preview.inner_text()
-        check('Nouvelle version 0.68.0' in text and 'Dernière vérification' in text and 'il y a 5 min' in text,
+        check('Nouvelle version 0.69.0' in text and 'Dernière vérification' in text and 'il y a 5 min' in text,
               name + ' : survol avec version et date de dernière vérification')
         page.screenshot(path=str(OUTPUT / (name + '-survol.png')))
         preview.get_by_text('Vérifier maintenant').click()
@@ -101,7 +101,7 @@ def exercise(page, base, name):
     dialog = page.locator('#update-dialog')
     dialog.wait_for()
     page.locator('.update-dialog-queue').wait_for()
-    check('0.67.4 → nouvelle version 0.68.0' in dialog.inner_text(), name + ' : confirmation avec les deux versions')
+    check('0.67.4 → nouvelle version 0.69.0' in dialog.inner_text(), name + ' : confirmation avec les deux versions')
     check(dialog.locator('.update-dialog-changes li').count() == 2, name + ' : changements listés')
     check('indisponible' in dialog.locator('.update-dialog-warning').inner_text(), name + ' : indisponibilité annoncée')
     check('mise en pause' in page.locator('.update-dialog-queue').inner_text(), name + ' : file active signalée')
@@ -140,7 +140,7 @@ def exercise(page, base, name):
     state['offline'] = False
     state['status'] = {**state['status'], 'state': 'completed', 'phase': 'done', 'title': 'Mise à jour terminée',
                        'unavailable': False, 'detail': ''}
-    page.locator('#maintenance-home', has_text='La version 0.68.0 est installée').wait_for()
+    page.locator('#maintenance-home', has_text='La version 0.69.0 est installée').wait_for()
     check(not page.evaluate("()=>document.body.classList.contains('maintenance-mode')"), name + ' : fin du mode maintenance')
     page.screenshot(path=str(OUTPUT / (name + '-terminee.png')), full_page=True)
     page.get_by_text('Revenir à la page précédente').click()

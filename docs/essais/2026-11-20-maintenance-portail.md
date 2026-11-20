@@ -1,7 +1,7 @@
-# Mises à jour et copies suivies dans le portail — 0.68.0
+# Mises à jour et copies suivies dans le portail — 0.69.0
 
 **Bilan daté — 20 novembre 2026, runner CPU de développement et CI GitHub.**
-Référence actuelle : [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0680).
+Référence actuelle : [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 
 ## Réalisé et vérifié
 

@@ -1,6 +1,6 @@
 # Utiliser le portail sur ordinateur et téléphone
 
-**Guide actuel — 0.63.4, 19 novembre 2026.**
+**Guide actuel — 0.69.0, 20 novembre 2026.**
 
 Le portail a une seule interface, servie à la racine, sur Windows comme sur
 Linux. Depuis 0.63.0, l’ancienne interface « classique » est retirée et
@@ -159,6 +159,29 @@ sept jours sans mise à jour ; les conversations et favoris restent sur le serve
 Le contexte courant d’historique reste propre à l’onglet navigateur. Une adresse
 explicite reste prioritaire sur le dernier écran mémorisé.
 
+Depuis 0.68.0, chaque onglet garde sa place pendant la visite (demande de Louis
+du 20 novembre 2026, pour le confort d’utilisation). Cela vaut pour la barre
+principale (Accueil, Bibliothèque, Assistant, Mon appareil) et pour les
+sous-onglets (Collections, Rechercher, Mes favoris, Vue d’ensemble, File
+d’attente, Paramètres…) :
+
+- **premier clic** sur un autre onglet : il revient exactement où vous l’aviez
+  laissé — sous-rubrique, document ouvert, recherche et mots tapés, filtre,
+  position dans la page. Les champs d’un formulaire restent remplis tant que la
+  page n’est pas rechargée ;
+- **nouveau clic** sur l’onglet déjà affiché : il revient à son point de départ.
+  **Mon appareil** revient à la vue d’ensemble, **Paramètres** à la liste des
+  rubriques, **Bibliothèque** aux collections sans filtre, **Rechercher** à une
+  recherche vide, en haut de page. Sur la barre principale, toute la section
+  repart de zéro, sous-onglets compris.
+
+Ce retour au départ n’efface aucune donnée : les champs déjà saisis dans les
+réglages restent en place, et l’**Assistant** garde la conversation ouverte
+(**Nouvelle conversation** reste le seul moyen d’en commencer une). Cette
+mémoire est propre à l’onglet du navigateur et s’efface au changement de profil
+ou au rechargement ; la reprise du dernier écran après rechargement reste celle
+décrite ci-dessus. Précédent/Suivant continuent de suivre chaque changement.
+
 Le brouillon n’est jamais envoyé automatiquement. Pendant le chargement d’une
 conversation, la saisie attend le bon contexte pour ne pas mélanger les brouillons.
 La suppression de la mémoire locale, dans Paramètres → Entretien et données, ne supprime pas les données
@@ -284,11 +307,11 @@ vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
 
 ## Installer et mettre à jour
 
-Depuis la 0.68.0, le profil Famille voit **Mises à jour** dans la barre de
+Depuis la 0.69.0, le profil Famille voit **Mises à jour** dans la barre de
 navigation sous Windows : survol avec la dernière vérification, bouton
 **Vérifier maintenant** et lancement après confirmation. Le suivi d’une mise
 à jour ou d’une copie complète s’affiche sur l’accueil pour tous les
-appareils. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0680).
+appareils. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 
 Les pages font partie du logiciel portable : aucune dépendance Windows, aucun
 service frontend supplémentaire et aucun téléchargement de ressources externes.

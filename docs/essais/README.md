@@ -26,7 +26,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 20 novembre 2026
 
-- [Mises à jour et copies suivies dans le portail](2026-11-20-maintenance-portail.md) — tests simulés et Chromium (0.68.0) ; recette Windows réelle à faire.
+- [Mises à jour et copies suivies dans le portail](2026-11-20-maintenance-portail.md) — tests simulés et Chromium (0.69.0) ; recette Windows réelle à faire.
 - [Actualisation des cartes de la file d’attente](2026-11-20-fiabilisation-file.md) — conservation des volets ouverts et du focus clavier (0.67.2).
 
 ## 19 novembre 2026

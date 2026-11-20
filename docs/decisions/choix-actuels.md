@@ -15,12 +15,12 @@ Louis demande de pouvoir lancer une mise à jour depuis la barre de navigation,
 avec un avertissement d’indisponibilité. Il demande aussi de suivre la mise à
 jour et la copie complète sur l’accueil, avec les informations des fenêtres de
 script, et de voir au survol la date de la dernière vérification avec une
-actualisation possible. La 0.68.0 garde les scripts existants comme moteur et
+actualisation possible. La 0.69.0 garde les scripts existants comme moteur et
 moyen de secours. Elle publie leur état dans `catalog/maintenance.json` et sert
 une page temporaire pendant l’arrêt des conteneurs. Le lancement depuis le
 portail est réservé au profil Famille et aux installations Windows.
 Le rechargement à chaud des collections après suppression, évoqué le même jour,
-n’est pas réalisé. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0680).
+n’est pas réalisé. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 
 ## Préparation de la bibliothèque — 20 novembre 2026
 
