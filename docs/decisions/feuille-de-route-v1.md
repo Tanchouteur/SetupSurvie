@@ -40,15 +40,35 @@ ci-dessous est proposé pour la revue. Pour chaque parcours, partir d’un usage
 concret, observer le résultat normal puis un échec ou une interruption,
 et consigner ce qui a été vérifié sur données de test et sur appareil réel.
 
-| Parcours | Vérification proposée |
-| --- | --- |
-| File d’attente et préparations | Suivre une préparation qui attend, avance, s’interrompt et reprend. Comparer la carte, le rapport et le résultat disponible. Vérifier la lecture au clavier pendant les actualisations. |
-| Bibliothèque, classement et lecteurs | Chercher un PDF, un article et un passage vidéo. Vérifier les filtres, le classement et l’accès au bon passage après correction ou indexation, moteur IA arrêté. |
-| Assistant, profils et conversations | Retrouver une conversation après changement de profil. Poser une question sourçable et une question sans réponse locale. Suivre les références jusqu’au passage réellement consulté. |
-| Traductions, synthèses et sous-titres | Interrompre puis reprendre un travail long. Comparer les passages, les chiffres et les horodatages avec la source, puis vérifier la version publiée. |
-| Cartes | Retrouver un lieu, ouvrir une zone téléchargée et calculer un trajet sur le réseau local sans Internet. Vérifier l’indication donnée quand une zone ou un mode manque. |
-| Installation, mise à jour et secours | Suivre le guide sur une installation d’essai, puis vérifier les données après interruption et reprise. Distinguer transfert sur le même PC et restauration sur un autre appareil. |
-| Portail sur téléphone | Refaire les parcours courants sur iPhone et Android, du QR code jusqu’à la recherche, la lecture et le retour à la liste. |
+Les priorités ci-dessous sont proposées par l’agent le 20 novembre 2026.
+Louis demande de les conserver dans la feuille de route. Elles restent à
+examiner et ne constituent pas des résultats d’essai.
+
+1. **Bibliothèque et lecteurs** — chercher avec des mots simples, retrouver
+   le bon guide et ouvrir la bonne page ou le bon passage vidéo, y compris
+   avec le moteur IA arrêté. Vérifier les filtres et le classement après
+   indexation ou correction. Rendre visibles les PDF mal extraits et les
+   archives encore en préparation.
+2. **Assistant, profils et conversations** — vérifier les affirmations et
+   les sources réellement consultées, les ajouts inventés et les refus
+   injustifiés. Comparer les trois modes sur les mêmes questions et retrouver
+   une conversation après changement de profil.
+3. **Traductions, synthèses et sous-titres** — essayer un vrai manuel long
+   et une vraie vidéo, comparer les chiffres, unités et horodatages à la
+   source, interrompre et reprendre le travail puis vérifier le résultat
+   publié. Tester aussi la traduction des pages locales dans Firefox avec
+   les langues téléchargées et Internet coupé.
+4. **File d’attente et préparations** — suivre attente, progression,
+   interruption et reprise. Comparer les cartes aux rapports et vérifier
+   qu’un résultat annoncé comme terminé est consultable. Vérifier la lecture
+   au clavier pendant les actualisations.
+5. **Cartes et téléphone** — scanner le QR code, retrouver un lieu, ouvrir
+   une zone téléchargée et calculer un trajet sans Internet. Vérifier le
+   message lorsqu’une zone ou un mode manque, puis le retour à la liste sur
+   iPhone et Android réels.
+6. **Installation, mise à jour et secours** — suivre le guide sur une
+   installation d’essai et vérifier les données après interruption et reprise.
+   Distinguer transfert sur le même PC et restauration sur un autre appareil.
 
 ## 1. Ce qui existe (état observé le 17 novembre 2026)
 
