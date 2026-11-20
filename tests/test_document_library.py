@@ -115,6 +115,22 @@ class DocumentLibraryTests(unittest.TestCase):
             with self.assertRaises(OSError):library.index_guides()
         self.assertEqual(self.client.get('/api/source',params={'id':'guide:manual.en.txt'}).status_code,200)
 
+    def test_guide_refresh_detects_a_new_file_and_preserves_the_index_while_paused(self):
+        before = library.guide_revision()
+        path = library.GUIDES/'ajout.fr.txt'
+        path.write_text('Un guide fictif ajouté directement.', encoding='utf-8')
+        self.assertNotEqual(library.guide_revision(), before)
+        library.pause_guide_refresh()
+        try:
+            self.assertIsNone(library.index_guides(automatic=True))
+            self.assertEqual(library.guide_index_status()['status'], 'paused')
+            self.assertEqual(self.client.get('/api/source',params={'id':'guide:manual.en.txt'}).status_code,200)
+        finally:
+            library.guide_hold().unlink(missing_ok=True)
+            library.GUIDE_REFRESH_STOP.clear()
+        library.index_guides(automatic=True)
+        self.assertEqual(self.client.get('/api/source',params={'id':'guide:ajout.fr.txt'}).status_code,200)
+
     def test_publication_failure_retains_translation_original_search_and_favorites_then_retries(self):
         item=self.pending_translation()
         with patch.object(publications,'_publish',side_effect=OSError('fixture disk failure')):
@@ -155,7 +171,7 @@ class DocumentLibraryTests(unittest.TestCase):
     def test_slow_optional_index_does_not_hold_startup_forever(self):
         release=threading.Event()
         async def check():
-            with patch.object(gateway,'STARTUP_FEATURE_TIMEOUT',.02),patch.object(library,'index_guides',side_effect=lambda:release.wait(3)):
+            with patch.object(gateway,'STARTUP_FEATURE_TIMEOUT',.02),patch.object(library,'index_guides',side_effect=lambda **_:release.wait(3)):
                 try:
                     async with gateway.lifespan(gateway.app):
                         self.assertTrue((await gateway.health())['ok'])

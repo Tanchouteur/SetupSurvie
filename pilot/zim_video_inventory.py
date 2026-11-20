@@ -24,6 +24,22 @@ MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
 YOUTUBE_TITLES='youtube_video_titles_v1'
 EXAMINED_STATUSES={'completed','reused','partial'}
+
+
+def unexamined_files(directory, report):
+    """Compare revisions without opening an archive or its index."""
+    revisions = {row['archive']: row.get('revision', {}) for row in report.get('results', [])
+                 if row.get('status') in EXAMINED_STATUSES}
+    pending = []
+    for path in sorted(Path(directory).glob('*.zim')):
+        try:
+            info = video_inventory.regular(path)
+        except (OSError, ValueError):
+            continue
+        saved = revisions.get(path.name, {})
+        if (info.st_size, info.st_mtime_ns) != (saved.get('bytes'), saved.get('mtime_ns')):
+            pending.append(path)
+    return pending
 LIMITED_INVENTORY_MESSAGE = 'Toutes les collections ont été parcourues. Le rapport indique les entrées non examinées.'
 YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
 GENERIC_TITLE=re.compile(r'(?:vid[eé]o|videoplayback|clip|media|index|[0-9]+|[0-9a-f]{16,}|[A-Za-z0-9_-]{24,})',re.I)

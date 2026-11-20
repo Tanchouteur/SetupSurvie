@@ -141,12 +141,12 @@ def snapshot(root, work, *, now=None):
                     if phase=='downloading':phase='indexing'
                 elif web['action']=='index-prepare' and phase=='downloading':phase='index_preparation'
                 elif web['action']=='category-index':
-                    # Entries scanned in the French Wikipedia archive, saved every 1024 entries.
                     progress=read_json(root/'state/pilot/category-index/progress.json',{})
                     if isinstance(progress,dict) and (not progress.get('job_id') or progress.get('job_id')==web['id']):
                         counts=progress.get('counts') if isinstance(progress.get('counts'),dict) else {}
                         extra={'entries_done':progress.get('done'),'entries_total':progress.get('total'),
-                               'resilience':counts.get('resilience'),'culture':counts.get('culture')}
+                               'resilience':counts.get('resilience'),'culture':counts.get('culture'),
+                               'archives':progress.get('archives'),'completed':progress.get('completed')}
                         extra={key:value for key,value in extra.items() if type(value) is int and value>=0}
                     if phase=='downloading':phase='category_indexing'
                 elif web['action']=='collection-exclude' and phase=='refreshing':phase='removing'
@@ -155,7 +155,10 @@ def snapshot(root, work, *, now=None):
                     counts=progress.get('counts') if isinstance(progress,dict) else None
                     if isinstance(counts,dict):extra={'videos':progress.get('videos',0),'downloaded':counts.get('downloaded',0),'skipped':counts.get('skipped',0),'errors':counts.get('error',0)}
                 return {**base, 'source': source, 'phase': phase,
-                        'kind': web['action'], 'worker_alive': alive,'index_progress':extra,'message':message[:400]}
+                        'kind': web['action'], 'operation_id': web['id'],
+                        'pause_requested': (work/'library-web'/web['id']/'cancel').is_file(),
+                        'automatic_pause': phase == 'paused' and (work/'library-web'/web['id']/'auto-pause').is_file(),
+                        'worker_alive': alive,'index_progress':extra,'message':message[:400]}
             plan_path = allowed_plan(work / 'library-web' / web['id'] / 'plan.json', root, work)
         else:
             return base

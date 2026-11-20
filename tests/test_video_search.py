@@ -73,6 +73,15 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(found[0]['title'],'Allumer un feu sans allumettes');self.assertEqual(found[0]['kind'],'video')
         self.assertFalse([key for key in found[0] if key.startswith('_')])
 
+    async def test_video_reader_uses_the_indexed_classification_even_on_subtitle_hit(self):
+        add_video(videos.ROOT,'velo','Sortie à vélo','Réparation du vélo','Histoire des vélos')
+        videos.scan()
+        result = (await self.search('histoire', kind='videos'))[0]
+        self.assertEqual(result['match'], 'subtitle')
+        self.assertEqual(set(result['classification']['domains']), {'resilience', 'culture'})
+        reader = await library.source(result['id'])
+        self.assertEqual(result['classification'], reader['classification'])
+
     async def test_collection_group_counts_include_all_pages_and_can_be_filtered(self):
         for name, title, channel in [('feu','Première vidéo','Série de tests'),('eau','Deuxième vidéo','Série de tests'),
                                      ('extra','Vidéo isolée','')]:

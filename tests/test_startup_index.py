@@ -26,7 +26,7 @@ class StartupIndexTest(unittest.IsolatedAsyncioTestCase):
         started = threading.Event()
         release = threading.Event()
 
-        def index():
+        def index(*, automatic):
             started.set()
             release.wait(5)
 

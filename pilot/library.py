@@ -80,10 +80,108 @@ async def books(*,refresh=False):
 
 
 INDEX_LOCK=threading.RLock()
+GUIDE_REFRESH_STOP=threading.Event()
+GUIDE_INDEX_STATUS={}
+GUIDE_INDEX_STATUS_ROOT=None
+GUIDE_INDEX_REVISION=None
+GUIDE_EXTENSIONS={'.txt','.md','.html','.pdf','.epub'}
 
 
-def index_guides():
-    with INDEX_LOCK:return _index_guides()
+def guide_files():
+    for path in sorted(GUIDES.rglob('*')):
+        if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()):
+            continue
+        relative = path.relative_to(GUIDES).as_posix()
+        if path.suffix.lower() in GUIDE_EXTENSIONS and not relative.startswith(('box.', 'boite.')):
+            yield path, relative
+
+
+def guide_revision():
+    if not GUIDES.is_dir():
+        raise OSError('Dossier documentaire indisponible.')
+    seed = GUIDES/'metadata.json'
+    paths = list(guide_files())
+    if seed.is_file() and not seed.is_symlink():
+        paths.append((seed, 'metadata.json'))
+    return GUIDES, tuple((name, info.st_size, info.st_mtime_ns)
+                         for path, name in paths for info in (path.stat(),))
+
+
+class GuideIndexPaused(Exception):
+    pass
+
+
+def index_guides(*, automatic=False):
+    global GUIDE_INDEX_REVISION, GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT
+    with INDEX_LOCK:
+        def check():
+            if automatic and (GUIDE_REFRESH_STOP.is_set() or guide_hold().exists()):
+                raise GuideIndexPaused()
+        GUIDE_INDEX_STATUS_ROOT = store.ROOT
+        GUIDE_INDEX_STATUS = {'status': 'running', 'pausable': automatic}
+        try:
+            check()
+            revision = guide_revision()
+            count = _index_guides(check)
+            GUIDE_INDEX_REVISION = revision
+        except GuideIndexPaused:
+            GUIDE_INDEX_STATUS = {'status': 'paused'}
+            return None
+        except Exception:
+            GUIDE_INDEX_STATUS = {'status': 'error', 'error': 'L’index des guides n’a pas pu être actualisé.'}
+            raise
+        GUIDE_INDEX_STATUS = {'status': 'completed', 'stage': f'{count} guide(s) recherchable(s)', 'updated': time.time()}
+        return count
+
+
+def guide_hold():
+    return store.ROOT/'guide-index.paused'
+
+
+def pause_guide_refresh():
+    durable.write_bytes(guide_hold(), b'paused\n', private=True)
+    GUIDE_REFRESH_STOP.set()
+
+
+def guide_index_status():
+    report = GUIDE_INDEX_STATUS.copy() if GUIDE_INDEX_STATUS_ROOT == store.ROOT else {}
+    if guide_hold().exists():
+        if report.get('status') == 'running':
+            if report.get('pausable'):
+                report.update(stage='Pause demandée · index précédent conservé', pausable=False)
+        else:
+            return {'status': 'paused', 'stage': 'Actualisation automatique en pause'}
+    return report
+
+
+async def resume_guide_refresh():
+    global GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT
+    guide_hold().unlink(missing_ok=True)
+    GUIDE_REFRESH_STOP.clear()
+    GUIDE_INDEX_STATUS_ROOT = store.ROOT
+    GUIDE_INDEX_STATUS = {'status': 'queued'}
+    asyncio.create_task(refresh_guides())
+
+
+async def refresh_guides():
+    try:
+        await asyncio.to_thread(index_guides, automatic=True)
+    except Exception:
+        logging.getLogger(__name__).warning('Actualisation des guides indisponible.')
+
+
+async def watch_guides():
+    while True:
+        await asyncio.sleep(60)
+        try:
+            if guide_index_status().get('status') in ('running', 'queued', 'paused', 'error'):
+                continue
+            if await asyncio.to_thread(guide_revision) != GUIDE_INDEX_REVISION:
+                await refresh_guides()
+        except OSError:
+            continue
+        except Exception:
+            logging.getLogger(__name__).warning('Actualisation des guides indisponible.')
 
 
 class TranslationText(Text):
@@ -103,7 +201,7 @@ class TranslationText(Text):
         if tag=='section':self.page=None
 
 
-def _index_guides():
+def _index_guides(check):
     if not GUIDES.is_dir():raise OSError('Dossier documentaire indisponible ; index précédent conservé.')
     documents=[];passages=[];report=[]
     if GUIDES.exists():
@@ -120,10 +218,9 @@ def _index_guides():
                                    (item['path'],dates['document_date'],dates['edition'] if item.get('edition') else '',dates['collected_at']))
             except (ValueError,TypeError):pass
         with store.connect() as db:metadata={r['path']:dict(r) for r in db.execute('SELECT * FROM guide_meta')}
-        for path in sorted(GUIDES.rglob('*')):
-            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()):continue
-            relative=path.relative_to(GUIDES).as_posix();suffix=path.suffix.lower()
-            if suffix not in ('.txt','.md','.html','.pdf','.epub') or relative.startswith(('box.','boite.')):continue
+        for path, relative in guide_files():
+            check()
+            suffix=path.suffix.lower()
             record={'path':relative,'bytes':path.stat().st_size,'status':'pending'}
             report.append(record)
             if record['bytes']>300_000_000:
@@ -179,6 +276,7 @@ def _index_guides():
             documents.append(('guide:'+relative,title,'/guides/'+quote(relative),language,text[:500000]))
             for number,page_text in (numbered_pages if numbered_pages is not None else enumerate(page_texts,1)):
                 if page_text.strip():passages.append(('guide:'+relative+'#page='+str(number),title+' — page '+str(number),'/guides/'+quote(relative)+'#page='+str(number),language,page_text))
+    check()
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
@@ -805,6 +903,7 @@ async def source(identifier):
         from . import videos
         result=await kiwix_queries.disk_io(videos.source,identifier)
         catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        result.pop('_indexed_domains', None)
         return result
     if identifier.startswith('guide:'):
         with store.connect() as db:

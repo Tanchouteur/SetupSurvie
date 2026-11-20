@@ -22,14 +22,16 @@ Attendre « Inventaire terminé », puis rechercher avec le filtre des Collectio
 ou dans **Rechercher**.
 
 Depuis 0.40.0, ce bouton n’est plus indispensable : le répertoire s’actualise tout
-seul au démarrage du service, puis au plus une fois par minute lors d’une
-recherche, si des vidéos, sous-titres ou `.info.json` ont été ajoutés, modifiés ou
+seul au démarrage du service, puis le pilote vérifie en arrière-plan, au plus une fois
+par minute, si des vidéos, sous-titres ou `.info.json` ont été ajoutés, modifiés ou
 retirés. Le contrôle ne lit que les noms, tailles et dates des fichiers ; il ignore
 les téléchargements en cours (`.part`, `.ytdl`…). L’ancien répertoire reste
 consultable pendant l’actualisation. Un inventaire arrêté avec **Arrêter
 l’inventaire** n’est relancé automatiquement que si les fichiers changent ensuite ;
 un inventaire interrompu par un redémarrage reprend au démarrage suivant. Les
-vidéos des collections ZIM demandent un examen distinct. La [première installation](../installation/README.md) le programme pour les archives présentes. Vous pouvez aussi le lancer depuis le portail.
+vidéos des collections ZIM demandent un examen distinct. La [première installation](../installation/README.md) le programme pour les archives présentes. Un ZIM nouveau ou remplacé est ensuite examiné automatiquement pendant le
+créneau choisi dans **Préparation automatique des archives**. Vous pouvez aussi
+lancer l’examen ou le mettre en pause depuis la file ou le portail.
 
 Le travail continue si l’onglet est fermé. **Arrêter l’inventaire** conserve l’ancien
 index ; une nouvelle actualisation recommence son examen sans altérer les fichiers.

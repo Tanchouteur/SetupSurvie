@@ -45,6 +45,28 @@ class ArchiveVideoJobTests(unittest.TestCase):
             self.manager.auto_index()
         start.assert_called_once_with('index', {'automatic': True})
 
+    def test_changed_archive_is_examined_automatically_in_window_unless_paused(self):
+        data = Path(self.config['data_dir'])
+        archive = data/'library/zim/encyclopedie.zim'
+        archive.write_bytes(b'new archive')
+        path = data/'state/pilot/zim-videos/progress.json'
+        report = {'phase': 'completed', 'results': [
+            {'archive': archive.name, 'status': 'completed',
+             'revision': {'bytes': 1, 'mtime_ns': 0}}]}
+        setup.write_json(path, report)
+        with patch.object(self.manager, 'index_ready', return_value=True), \
+                patch.object(jobs.category_index, 'availability', return_value=({'phase': 'completed'}, None)), \
+                patch.object(self.manager, 'start') as start:
+            with patch.object(jobs.index_queue, 'in_window', return_value=False):
+                self.manager.auto_index()
+            start.assert_not_called()
+            setup.write_json(path, {**report, 'phase': 'paused'})
+            self.manager.auto_index()
+            start.assert_not_called()
+            setup.write_json(path, report)
+            self.manager.auto_index()
+            start.assert_called_once_with('video-inventory', {'automatic': True})
+
     def test_prepared_reader_and_non_gaming_state_are_required_before_spawning(self):
         with patch.object(jobs.subprocess,'Popen') as process:
             with self.assertRaises(setup.SetupError):self.manager.start('video-inventory',{})

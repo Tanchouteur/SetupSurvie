@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — 0.56.0.**
+**Guide actuel — actualisé pour la 0.67.0.**
 
 Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
 **À suivre** affiche les tâches actives, en attente et celles qui demandent une
@@ -13,7 +13,9 @@ Pour une préparation de l’appareil, ouvrez **Détails de la préparation** su
 sa carte. Selon le travail, vous y verrez les fichiers actifs, les volumes
 vérifiés, la dernière observation ou le nombre de documents indexés. Le
 titre de la carte renvoie à la page d’origine, qui conserve les commandes
-propres à cette préparation. Les transferts Windows indépendants restent
+propres à cette préparation. Le profil Famille peut aussi mettre en pause
+ou reprendre une préparation depuis sa carte quand le bouton est proposé. Une
+indexation d’archives en attente affiche le motif du délai. Les transferts Windows indépendants restent
 consultables en lecture seule. L’ancienne adresse de suivi ouvre la file.
 
 Dans la barre de navigation du portail, l’icône de la file indique le nombre
@@ -56,7 +58,7 @@ Avec **Famille**, utilisez le bouton pause ou lecture en haut de l’aperçu,
 à côté d’**Ouvrir la file**. Sur la page dédiée, retrouvez **Mettre en pause**
 et **Reprendre la file**. La pause empêche le démarrage des étapes suivantes
 pour les tâches pilotées par la file. Les préparations indépendantes suivent
-les commandes de leur page d’origine. L’indexation des fichiers déjà publiés
+les commandes de leur carte ou de leur page d’origine. L’indexation des fichiers déjà publiés
 peut se terminer en arrière-plan.
 Une question finit sa réponse en cours, et les travaux découpés s’arrêtent
 entre deux unités enregistrées. Le téléchargement YouTube en cours reçoit

@@ -74,6 +74,22 @@ class VideoTranscriptionTests(unittest.IsolatedAsyncioTestCase):
         starts=[call['start_ms'] for call in self.calls if call['action']=='transcribe']
         self.assertEqual(starts,[0,60000]);self.assertEqual(result['cues'],2)
 
+    async def test_a_published_track_waits_for_a_paused_index_and_is_confirmed_on_resume(self):
+        await videos.start()
+        videos.request_stop()
+        await videos.ACTIVE
+        self.assertEqual(videos.status()['phase'], 'paused')
+
+        job = await speech.create(self.video, 'en', translate_french=False)
+        result = await self.finish(job)
+        self.assertEqual((result['status'], result['index_status']), ('completed', 'pending'))
+        self.assertEqual(videos.source(self.video)['tracks'], [])
+
+        await videos.start()
+        await videos.ACTIVE
+        self.assertEqual(speech.status(job['id'])['index_status'], 'requested')
+        self.assertEqual(videos.source(self.video)['tracks'][0]['origin'], 'local_transcription')
+
     async def test_pause_and_resume_keep_finished_audio_units_but_publish_no_draft(self):
         self.gate=asyncio.Event();job=await speech.create(self.video,'en',translate_french=False)
         for _ in range(100):

@@ -7,7 +7,8 @@
       <h1>File d’attente</h1>
       <details class="queue-help">
         <summary aria-label="Comment fonctionne la file d’attente ?">?</summary>
-        <p>Chaque carte indique où en est un travail. Ouvrez son titre pour retrouver le document ou les commandes. Les groupes peuvent avancer en parallèle.</p>
+        <p>Chaque carte indique où en est un travail. Utilisez ses boutons pour mettre une préparation en pause ou la reprendre. Ouvrez son titre pour retrouver les réglages et le rapport.</p>
+        <p>La pause générale concerne les tâches programmées par la file. Pour arrêter une préparation du PC serveur, utilisez le bouton de sa carte.</p>
       </details>
     </div>
     <div class="work-queue-toolbar">
@@ -203,6 +204,14 @@
     tools.append(label);
     if (movable.length > 1 && movable.includes(job)) {
       tools.append(dragHandle(job, movable, move, connection !== 'ready' || pending, draw));
+    }
+    if (job.pausable) {
+      const id = job.id + ':pause';
+      const control = button('Mettre en pause', () => command('/' + encodeURIComponent(job.id) + '/pause', {operation_id: job.operation_id}, id));
+      control.setAttribute('aria-label', 'Mettre en pause ' + job.title);
+      control.dataset.workControl = id;
+      control.disabled = connection !== 'ready' || pending;
+      tools.append(control);
     }
     if (job.retry) {
       const id = job.id + ':retry';

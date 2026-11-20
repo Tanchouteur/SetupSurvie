@@ -34,9 +34,9 @@ reçoivent leur complément ; la durée dépend du texte présent. Il n’est pa
 nécessaire de réparer l’outil s’il était déjà prêt. Télécharger ensuite le rapport
 d’indexation, puis le nouveau contrôle complet de recherche.
 
-Une préparation longue peut tourner la nuit. Dans **Préparation automatique après
-téléchargement**, activer/désactiver la fonction, choisir les heures du PC serveur
-et la puissance de calcul. Deux heures identiques autorisent toute la journée ;
+Une préparation longue peut tourner la nuit. Dans **Préparation automatique des archives**, activer/désactiver la fonction, choisir les heures du PC serveur
+et la puissance de calcul. Ces réglages concernent aussi le classement et
+l’examen vidéo automatiques des archives. Deux heures identiques autorisent toute la journée ;
 22 h à 6 h couvre la nuit. Fermer le navigateur n’arrête pas le travail.
 
 ## Après la correction des formules — 0.37.3

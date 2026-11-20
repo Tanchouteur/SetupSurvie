@@ -61,7 +61,18 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
             index = next(job for job in self.queue.snapshot(ADMIN, silent)['jobs'] if job['id'] == 'host:index')
         self.assertIn('pas précisé', index['error'])
         self.assertIn('Cliquez sur son titre', index['help'])
-        self.assertFalse(index['retry'])
+        self.assertTrue(index['retry'])
+
+    async def test_preparation_cards_show_wait_reason_and_safe_host_pause(self):
+        operation_id = 'a' * 32
+        report = {'kind': 'category-index', 'phase': 'category_indexing', 'operation_id': operation_id,
+                  'pending_index': {'count': 2, 'reason': 'other_operation'}}
+        jobs = {job['id']: job for job in self.queue.snapshot(ADMIN, report)['jobs']}
+        self.assertTrue(jobs['host:category-index']['pausable'])
+        self.assertIn('Une autre préparation', jobs['host:index']['stage'])
+        with patch.object(operations, 'library_command', AsyncMock()) as command:
+            await work_queue.pause('host:category-index', operation_id)
+        command.assert_awaited_once_with('pause', {'operation_id': operation_id})
 
     async def test_host_video_inventory_retry_restarts_the_collection_examination(self):
         with patch.object(archive_videos, 'status', AsyncMock(return_value={'phase': 'error'})), \

@@ -5,7 +5,9 @@
   function description(info){
     if(!info)return 'Type à vérifier';
     const type=types[info.document_type]||types.unknown;
-    return type+(info.method==='human'?' · '+(info.status==='reviewed'?'classement examiné':'classement corrigé'):info.document_type!=='unknown'?' · à vérifier':'');
+    const spaces=info.domains.map(key=>domains[key]).filter(Boolean).join(' et ')||'Toute la bibliothèque uniquement';
+    const method=info.method==='human'?(info.status==='reviewed'?'classement examiné':'classement corrigé'):'classement automatique';
+    return [info.document_type==='unknown'?'':type,method,spaces].filter(Boolean).join(' · ');
   }
   document.addEventListener('survie:results',event=>{
     for(const result of event.detail){
@@ -17,11 +19,10 @@
   document.addEventListener('survie:source',event=>{
     const source=event.detail,info=source.classification;if(!info)return;
     const reader=$('reader'),summary=element('p',description(info),'small muted');
-    if(source.kind!=='video')reader.querySelector('h2').after(summary);
+    reader.querySelector('h2').after(summary);
     if(info.status==='source_changed')reader.append(element('p','La source a changé depuis sa correction. Le classement automatique est utilisé jusqu’à une nouvelle vérification.','catalogue-warning small'));
     if(S.user?.role!=='admin')return;
     const details=element('details',undefined,'catalogue-editor'),heading=element('summary','Corriger le classement');details.append(heading);
-    if(source.kind==='video')details.append(summary);
     details.append(element('p','Ce classement aide à retrouver le document. Il ne certifie ni son exactitude ni la sécurité d’une procédure.','small muted'));
     const form=element('form'),field=element('fieldset'),legend=element('legend','Où retrouver ce document ?');field.append(legend);
     for(const [key,label] of Object.entries(domains)){const row=element('label',undefined,'catalogue-check'),input=element('input');input.type='checkbox';input.name='domain';input.value=key;input.checked=info.domains.includes(key);row.append(input,document.createTextNode(label));field.append(row);}
@@ -34,7 +35,7 @@
     if(info.has_correction)actions.append(button('Revenir au classement automatique',async()=>{
       try{await api('/admin/library/metadata?'+new URLSearchParams({source_id:source.id}),undefined,{method:'DELETE'});if(S.reader===source.id)await readSource(source.id);}catch(error){status.textContent=error.message;}
     },'secondary'));
-    form.append(field,label,reviewedLabel,actions,status);details.append(form);reader.append(details);
+    form.append(field,label,reviewedLabel,actions,status);details.append(form);summary.after(details);
     form.onsubmit=async event=>{
       event.preventDefault();save.disabled=true;
       try{

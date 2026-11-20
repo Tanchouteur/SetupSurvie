@@ -32,6 +32,17 @@ recette et de vérifier le gain sur de nouveaux documents après réglage. La 0.
 disponible. Le [protocole et bilan Bazzite](../essais/mesurer-classement-documentaire.md)
 trace les gains, les écarts et la vérification à poursuivre sur le fonds de Marc.
 
+## Préparation de la bibliothèque — 20 novembre 2026
+
+Louis demande que le classement soit lisible sur les résultats et dans le
+lecteur, et que les préparations suivent les changements de la bibliothèque.
+La 0.67.0 affiche les espaces et utilise le même classement pour une vidéo
+dans la recherche et son lecteur. La file rapproche les états, la pause et
+la reprise des préparations. Les téléchargements vérifiés déclenchent les
+compléments textuels. Les ajouts ou remplacements de ZIM entraînent aussi
+un examen vidéo dans le créneau d'indexation. Les guides et les fichiers
+vidéo locaux sont surveillés. Voir le [guide des préparations](../utilisation/preparations-bibliotheque.md).
+
 ## Carte sur téléphone hors du réseau de la maison — 18 novembre 2026
 
 Louis demande de pouvoir rouvrir la carte sur son téléphone après fermeture du

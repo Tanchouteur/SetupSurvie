@@ -1,6 +1,6 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — actualisé pour la 0.66.0, 20 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.67.0, 20 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
 
@@ -105,8 +105,9 @@ de comparer deux versions sur les mêmes documents et vidéos.
 ## Corriger le classement d’un document ou d’une vidéo
 
 1. Avec le profil **Famille**, ouvrir le document ou la vidéo dans le lecteur
-   SetupSurvie depuis **Bibliothèque → Rechercher**, puis ouvrir **Corriger le
-   classement** au bas du lecteur.
+   SetupSurvie depuis **Bibliothèque → Rechercher**. Les espaces s'affichent
+   sous le titre, avec l'indication automatique ou humaine. Ouvrir **Corriger
+   le classement** juste en dessous.
 2. Choisir **Autonomie et résilience**, **Savoirs et culture**, ou les deux.
    Sans espace choisi, le document reste retrouvable dans **Toute la bibliothèque**.
 3. Indiquer ce qu’il contient surtout : présentation, explication, procédure,
@@ -119,6 +120,9 @@ Le résultat distingue classement **corrigé**, classement **examiné** et indic
 automatique. Une procédure classée comme telle n’est pas certifiée correcte ou
 sûre. Le simple titre « guide » ne suffit pas à classer automatiquement une page
 comme procédure. Un quiz explicite peut être repéré comme exercice à vérifier.
+
+Pour une vidéo, le formulaire utilise la même indication automatique que la
+recherche, même si le lecteur est ouvert sur un passage précis.
 
 La correction s’applique à l’article ZIM, au document entier ou à la vidéo
 entière, quel que soit le passage ouvert. Elle ne modifie ni le fichier ni ses liens.

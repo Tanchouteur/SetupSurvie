@@ -85,6 +85,24 @@ HOST_HELP = {
 HOST_HELP_DEFAULT = ('Cette préparation s’est arrêtée. Cliquez sur son titre pour ouvrir la page où la relancer. '
                      'Si l’arrêt se reproduit, notez le message et demandez de l’aide à la personne qui s’occupe de l’appareil.')
 HOST_RETRY = {'video-inventory': 'Relancer l’examen'}
+HOST_PREPARATIONS = ('index', 'index-prepare', 'category-index', 'video-inventory')
+TRACK_PREPARATIONS = ('captions', 'speech', 'acquisition')
+INDEX_WAITING = {
+    'schedule': 'Attente de la plage d’indexation',
+    'gaming': 'Attente de la fin du mode jeu',
+    'disabled': 'Préparation automatique désactivée dans les réglages',
+    'missing_reader': 'L’outil d’indexation doit être préparé',
+    'selection_pending': 'Une sélection de téléchargement attend une décision',
+    'other_operation': 'Une autre préparation du PC serveur est en cours',
+    'other_operation_stopped': 'Une préparation interrompue attend une intervention',
+    'waiting_text': 'Attente de l’indexation des textes',
+    'operation_busy': 'Le PC serveur est occupé',
+    'source_changed': 'Une archive a changé et doit être vérifiée de nouveau',
+    'insufficient_storage': 'La marge de stockage est insuffisante',
+    'user': 'En pause à votre demande',
+    'interrupted': 'L’indexation a été interrompue',
+    'error': 'L’indexation demande une intervention',
+}
 
 
 def work_item(kind, identifier, **fields):
@@ -105,12 +123,20 @@ def add_host_work(jobs, report):
         'source', 'stale', 'observed_at', 'progress_at', 'active', 'total_bytes',
         'verified_bytes', 'verified_count', 'total_count', 'pending_errors', 'index_progress'
     ) if key in report}
+    controls = {'operation_id': report['operation_id']} if (
+        kind in HOST_PREPARATIONS and status == 'running' and report.get('operation_id')
+        and not report.get('pause_requested')) else {}
+    if report.get('pause_requested') and status == 'running':
+        stage = 'Pause demandée · enregistrement du point de reprise'
+    if report.get('automatic_pause') and status == 'paused':
+        stage = 'Reprise automatique à la prochaine plage autorisée'
     existing = next((job for job in jobs if job['kind'] == 'archive-video-index'), None)
     if kind == 'video-inventory' and existing:
-        existing['preparation'] = details
+        existing.update(preparation=details, stage=stage, **controls)
         return
     if kind == 'video-inventory':
-        stage = 'Examen des collections, sans IA' if status == 'running' else stage
+        if status == 'running' and not report.get('pause_requested'):
+            stage = 'Examen des collections, sans IA'
     counts = report.get('index_progress') or {}
     progress = {'done': counts.get('completed', 0), 'total': counts['archives']} if counts.get('archives') else {}
     href = {
@@ -127,8 +153,10 @@ def add_host_work(jobs, report):
         found = [f"{counts[key]:,}".replace(',', '\u202f') + ' ' + label
                  for key, label in (('resilience', 'en Autonomie et résilience'), ('culture', 'en Savoirs et culture'))
                  if key in counts]
-        if found and status == 'running':
+        if found and status == 'running' and not report.get('pause_requested'):
             stage = 'Articles classés : ' + ' · '.join(found)
+        if counts.get('archives'):
+            stage = f"{counts.get('completed', 0)} / {counts['archives']} archives prêtes · {stage}"
     if kind == 'collection-exclude' and status == 'completed' and message:
         stage = message
     if kind == 'video-inventory':
@@ -142,7 +170,7 @@ def add_host_work(jobs, report):
             extra['retry_label'] = HOST_RETRY[kind]
     jobs.append(work_item('host-' + kind, 'host:' + kind, type='Préparation sur le PC serveur',
                           title=title, lane=lane, status=status, stage=stage, href=href,
-                          preparation=details, **progress, **extra))
+                          preparation=details, **progress, **extra, **controls))
 
 
 class Slot:
@@ -305,7 +333,7 @@ class Queue(Slot):
         return self.video_report[1]
 
     def snapshot(self, profile, activity=None):
-        from . import archive_videos, videos, youtube_pipeline
+        from . import archive_videos, library, videos, youtube_pipeline
 
         active = {slot.active[0] for slot in self.slots.values() if slot.active and slot.active[0] is not None}
         orders = {name: slot.order() for name, slot in self.slots.items()}
@@ -361,11 +389,15 @@ class Queue(Slot):
         phase = report.get('phase')
         if indexing:
             lanes['local']['running'] = True
-        show_index = indexing or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
+        show_index = indexing or phase == 'completed' or (phase in ('failed','interrupted','paused') and videos.ROOT.is_dir())
         if show_index:
+            pausing = indexing and videos.STOP.is_set()
             jobs.append({'id': 'video-index', 'kind': 'video-index', 'type': 'Indexation vidéo',
                          'title': 'Inventaire des vidéos et sous-titres', 'status': 'running' if indexing else phase,
-                         'stage': report.get('stage') or f"{report.get('videos', 0)} vidéo(s) traitée(s)",
+                         'stage': ('Pause demandée · ancien index conservé' if pausing else
+                                   report.get('stage') or f"{report.get('videos', 0)} vidéo(s) traitée(s)"),
+                         'pausable': indexing and not pausing,
+                         'updated': report.get('finished'),
                          'error': report.get('error'),
                          'href': '#/bibliotheque/collections'})
         archive = archive_videos.progress()
@@ -379,6 +411,30 @@ class Queue(Slot):
                          **({'help': HOST_HELP['video-inventory'], 'retry_label': HOST_RETRY['video-inventory']}
                             if phase in ('error', 'failed', 'interrupted') else {})})
         add_host_work(jobs, activity or {})
+        guides = library.guide_index_status()
+        if guides:
+            jobs.append(work_item('guide-index', 'guide-index', type='Indexation documentaire',
+                title='Indexation des guides et PDF', lane='local', **guides))
+        pending_index = (activity or {}).get('pending_index') or {}
+        pending_count = pending_index.get('count', 0)
+        index_row = next((job for job in jobs if job['id'] == 'host:index'), None)
+        if pending_count and (index_row is None or index_row['status'] == 'completed'):
+            if index_row is not None:
+                jobs.remove(index_row)
+            jobs.append(work_item('host-index', 'host:index', title='Indexation des documents',
+                type='Préparation sur le PC serveur', status='queued', lane='local',
+                stage=f'{pending_count} archive(s) en attente · ' +
+                    INDEX_WAITING.get(pending_index.get('reason'), 'Démarrage automatique prévu'),
+                href='#/appareil/bibliotheque'))
+        pending_archives = (activity or {}).get('pending_archive_video') or {}
+        if pending_archives.get('count') and not any(
+                job['kind'] in ('archive-video-index', 'host-video-inventory') and
+                job['status'] not in ('completed', 'partial') for job in jobs):
+            jobs.append(work_item('archive-video-index', 'archive-video-pending', lane='local',
+                title='Inventaire des vidéos dans les collections', status='queued',
+                stage=f"{pending_archives['count']} archive(s) à examiner · " +
+                INDEX_WAITING.get(pending_archives.get('reason'), 'Démarrage automatique prévu'),
+                href='#/bibliotheque/collections?rubrique=videos', focus='next-archive-videos'))
         if ((activity or {}).get('kind') != 'video-inventory'
                 and archive_videos.zim_video_inventory.partial_with_all_archives(archive)):
             jobs.append(work_item('archive-video-index', 'archive-video-index', status='partial',
@@ -392,9 +448,17 @@ class Queue(Slot):
             lane_order = orders[job['lane']]
             job['next'] = job['status'] == 'queued' and bool(lane_order and lane_order[0] == job['id'])
             job['movable'] = job['status'] == 'queued' and job['id'] in keys and can_move(job, profile)
+            if job['status'] == 'running':
+                lanes[job['lane']]['running'] = True
+            admin = profile['role'] == 'admin'
+            job['pausable'] = admin and (
+                bool(job.get('pausable')) or
+                bool(job.get('operation_id')) or
+                job['kind'] in TRACK_PREPARATIONS and job['status'] in ('queued', 'running', 'preparing'))
             job['retry'] = job['status'] in ('paused', 'error', 'failed', 'stopped', 'interrupted') and (
-                job['kind'] in ('translation', 'summary') or profile['role'] == 'admin' and
-                job['kind'] in ('youtube','youtube-track','captions','speech','acquisition','translation-test',*VIDEO_INVENTORIES,'host-video-inventory'))
+                job['kind'] in ('translation', 'summary') or admin and
+                job['kind'] in ('youtube','youtube-track',*TRACK_PREPARATIONS,'translation-test','guide-index',*VIDEO_INVENTORIES,
+                                *('host-' + kind for kind in HOST_PREPARATIONS)))
         return {'paused': self.paused, 'running': any(lane['running'] for lane in lanes.values()), 'lanes': lanes, 'jobs': [
             {key: value for key, value in job.items() if key != 'owner'} for job in jobs
         ]}
@@ -498,6 +562,9 @@ def describe(kind, identifier):
             module = {'captions': captions, 'speech': transcriptions, 'acquisition': caption_acquisition}[kind]
             row = module.get(identifier)
             result.update({key: row[key] for key in ('status', 'title', 'mode', 'error') if key in row})
+            if row['status'] == 'completed':
+                result['stage'] = ('Piste recherchable' if row.get('index_status') == 'requested'
+                                   else 'Piste publiée · actualisation de la recherche à suivre')
             result['href'] = '#/bibliotheque/recherche?source=' + row['video_id']
             if kind == 'captions':
                 with module.connect() as db:
@@ -525,12 +592,51 @@ def describe(kind, identifier):
     return result
 
 
+async def pause(identifier, operation_id=None):
+    from . import operations, videos, captions, transcriptions, caption_acquisition, library
+
+    host_ids = {'host:' + kind for kind in HOST_PREPARATIONS} | {'archive-video-index'}
+    if identifier in host_ids and operation_id:
+        await operations.library_command('pause', {'operation_id': operation_id})
+        return
+    if identifier == 'video-index' and videos.running() is not None:
+        videos.request_stop()
+        return
+    if identifier == 'guide-index' and library.guide_index_status().get('pausable'):
+        await asyncio.to_thread(library.pause_guide_refresh)
+        return
+    record = QUEUE.records.get(identifier)
+    if record and record['kind'] in TRACK_PREPARATIONS:
+        module = {'captions': captions, 'speech': transcriptions, 'acquisition': caption_acquisition}[record['kind']]
+        await module.pause(identifier)
+        return
+    raise HTTPException(409, 'Cette préparation n’est plus en cours.')
+
+
 async def retry(identifier, profile):
     from . import archive_videos, caption_acquisition, captions, summaries, transcriptions, translation_benchmark, translations, videos, youtube_pipeline
+    if identifier == 'guide-index':
+        from . import library
+        if profile['role'] != 'admin':
+            raise HTTPException(403, 'Accès réservé à l’administrateur.')
+        if library.guide_index_status().get('status') not in ('paused', 'error'):
+            raise HTTPException(409, 'L’indexation des guides ne demande plus de reprise.')
+        await library.resume_guide_refresh()
+        return
 
     if identifier == 'host:video-inventory':
         # The host examination of collections is the same work as the archive inventory.
         identifier = 'archive-video-index'
+    if identifier in ('host:index', 'host:index-prepare', 'host:category-index'):
+        from . import operations
+        if profile['role'] != 'admin':
+            raise HTTPException(403, 'Accès réservé à l’administrateur.')
+        action = identifier.removeprefix('host:')
+        report = await operations.library_command()
+        if report.get('action') != action or report.get('phase') not in ('paused', 'error', 'interrupted'):
+            raise HTTPException(409, 'Cette préparation ne demande plus de reprise.')
+        await operations.library_command(action)
+        return
     if identifier in VIDEO_INVENTORIES:
         if profile['role'] != 'admin':raise HTTPException(403,'Accès réservé à l’administrateur.')
         report = (await archive_videos.status() if identifier == 'archive-video-index'

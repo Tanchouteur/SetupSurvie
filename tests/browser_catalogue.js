@@ -14,6 +14,7 @@ async page => {
   await page.setViewportSize({width:1366,height:900});await page.goto(base+'/#/bibliotheque/recherche?q=sewing&domain=all');
   await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   await page.locator('#search-results .result').filter({hasText:'craft'}).getByRole('button',{name:'Lire le document →',exact:true}).click();
+  check((await page.locator('#reader h2 + .small').textContent()).includes('Autonomie et résilience'),'Espace visible sous le titre');
   const editor=page.locator('#reader .catalogue-editor');await editor.locator('summary').click();
   check(dossierReads.length===0,'Lire et classer un document ne charge pas les dossiers repliés');
   await editor.locator('[name="domain"][value="resilience"]').uncheck();await editor.locator('[name="domain"][value="culture"]').check();

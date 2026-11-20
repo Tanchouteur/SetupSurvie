@@ -44,7 +44,7 @@ def optional_feature(name):
 async def prepare_initial_index(app):
     async def index():
         try:
-            await asyncio.to_thread(library.index_guides)
+            await asyncio.to_thread(library.index_guides, automatic=True)
             DEGRADED.pop('index',None)
         except Exception:
             DEGRADED['index']=True
@@ -67,6 +67,7 @@ async def lifespan(app):
     DEGRADED.clear()
     try:map_notebook.init()
     except Exception:DEGRADED['map_notebook']=True
+    library.GUIDE_REFRESH_STOP.clear()
     await prepare_initial_index(app)
     try:
         with optional_feature('publications') as module:await asyncio.wait_for(module.recover(),STARTUP_FEATURE_TIMEOUT)
@@ -78,6 +79,7 @@ async def lifespan(app):
             with optional_feature('videos') as module:await module.ensure_fresh(force=True)
         except Exception:pass
     video_refresh=asyncio.create_task(refresh_videos())
+    guide_watch=asyncio.create_task(library.watch_guides())
     youtube_watch=asyncio.create_task(youtube_pipeline.watch())
     yield
     await MODEL_DOWNLOADS.cancel()
@@ -85,7 +87,9 @@ async def lifespan(app):
     await asyncio.gather(youtube_watch,return_exceptions=True)
     await youtube_pipeline.stop()
     video_refresh.cancel()
-    await asyncio.gather(video_refresh,return_exceptions=True)
+    library.GUIDE_REFRESH_STOP.set()
+    guide_watch.cancel()
+    await asyncio.gather(video_refresh,guide_watch,return_exceptions=True)
     try:
         with optional_feature('archive_videos') as module:await module.stop_all()
     except HTTPException:pass
@@ -967,6 +971,16 @@ async def move_work(identifier:str,body:WorkMoveStep|WorkMoveDrop,value=Depends(
 @app.post('/api/work-queue/{identifier}/retry',status_code=202)
 async def retry_work(identifier:str,value=Depends(user)):
     await work_queue.retry(identifier,value)
+    return {'accepted':True}
+
+
+class WorkPausePreparation(BaseModel):
+    operation_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$')
+
+
+@app.post('/api/work-queue/{identifier}/pause',status_code=202)
+async def pause_queued_preparation(identifier:str,body:WorkPausePreparation,value=Depends(admin)):
+    await work_queue.pause(identifier,body.operation_id)
     return {'accepted':True}
 
 

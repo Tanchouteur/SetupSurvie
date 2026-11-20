@@ -139,8 +139,15 @@ def public(payload,revision):
         'video_notice':NOTICE,'audio_verified':False,'human_review':'not_performed'}
 
 
+def search_domains(payload, sorting):
+    if sorting.state(collection_sort.video(payload)) == 'main' and 'search_domains' in payload:
+        return payload['search_domains']
+    return retrieval.domains({'title': payload['title'], '_text': payload.get('description') or ''})
+
+
 def source(identifier):
     stored,payload,position=row(identifier);result=public(payload,stored['revision']);result['id']=identifier
+    result['_indexed_domains'] = search_domains(payload, collection_sort.load(network.CATALOG))
     # Favor a declared French track unless a search result selects a specific track.
     candidates=[(i,t) for i,t in enumerate(payload['tracks']) if t['technical_status']=='passed']
     candidates.sort(key=lambda pair:(not (pair[1]['language_declared'] or '').startswith('fr'),pair[0]))
@@ -157,16 +164,33 @@ def source(identifier):
     return result
 
 
+def confirm_indexed_tracks(published):
+    if not published:
+        return
+    from . import caption_acquisition, captions, transcriptions
+    modules = {'acquired_job': caption_acquisition, 'prepared_job': captions,
+               'transcription_job': transcriptions}
+    for origin, identifiers in published.items():
+        try:
+            with modules[origin].connect() as db:
+                db.executemany("UPDATE jobs SET index_status='requested' WHERE id=? "
+                               "AND status='completed' AND index_status='pending'",
+                               ((identifier,) for identifier in identifiers))
+        except (OSError, sqlite3.Error):
+            # The searchable index has already been committed.
+            continue
+
+
 def signature():
     """Cheap fingerprint of finished local files: names, sizes and dates only.
 
     Nothing is opened or decoded; partial downloads are ignored so that a
     download in progress does not trigger repeated inventories."""
-    if not ROOT.is_dir() or inventory.is_link(ROOT):return None
+    local = ROOT.is_dir() and not inventory.is_link(ROOT)
     digest=hashlib.sha256(b'archive-display-titles-and-origin-v2')
     digest.update(json.dumps(collection_sort.load(network.CATALOG).as_json()).encode())
     count=0
-    for directory,folders,files in os.walk(ROOT,followlinks=False):
+    for directory,folders,files in os.walk(ROOT,followlinks=False) if local else ():
         folders.sort();base=Path(directory)
         for name in sorted(files):
             if inventory.INCOMPLETE.search(name):continue
@@ -175,12 +199,15 @@ def signature():
             try:info=(base/name).lstat()
             except OSError:continue
             digest.update(json.dumps([str((base/name).relative_to(ROOT)),info.st_size,info.st_mtime_ns],ensure_ascii=False).encode()+b'\n');count+=1
+    archived = False
     try:
         from . import archive_videos
         progress=archive_videos.progress()
-        if progress.get('phase') in ('completed','partial'):digest.update(json.dumps(['archives',progress.get('job_id'),progress.get('finished')]).encode())
+        if progress.get('phase') in ('completed','partial'):
+            archived = True
+            digest.update(json.dumps(['archives',progress.get('job_id'),progress.get('finished')]).encode())
     except Exception:pass
-    return digest.hexdigest()+':'+str(count)
+    return digest.hexdigest()+':'+str(count) if local or archived else None
 
 
 CHECKED=0.0
@@ -345,8 +372,7 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
                         language=candidate['language'],excerpt=candidate['excerpt'],_text=candidate['_text'],
                         match='subtitle' if candidate['track']!='metadata' else 'title',position_ms=start,
                         transcription_origin=payload['tracks'][int(candidate['track'])]['origin'] if candidate['track']!='metadata' else 'metadata_only')
-            if payload.get('search_domains') and sorting.state(collection_sort.video(payload)) == 'main':
-                data['_indexed_domains'] = payload['search_domains']
+            data['_indexed_domains'] = search_domains(payload, sorting)
             result.append(data)
     from . import archive_videos
     archives=archive_videos.coverage()
@@ -458,6 +484,7 @@ def scan():
             found['limitations']=[text.replace(' et vidéos dans les ZIM','') for text in found['limitations']]
             found['limitations'].append('Collections : médias et pistes explicites des pages HTML examinées ; lecteurs JavaScript, sens et synchronisation non certifiés.')
             sorting = collection_sort.load(network.CATALOG)
+            published = {}
             with connect() as db:
                 db.execute('DELETE FROM media');db.execute('DELETE FROM video_text')
                 for item in found['videos']:
@@ -496,6 +523,9 @@ def scan():
                         if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise ValueError('subtitle_changed')
                         for cue in parsed['cues']:
                             db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],track['language_declared'] or '',str(index),cue['start_ms'],cue['end_ms'],cue['text']))
+                        for origin in ('acquired_job', 'prepared_job', 'transcription_job'):
+                            if track.get(origin):
+                                published.setdefault(origin, set()).add(track[origin])
                         if main:
                             sample = []
                             length = 0
@@ -517,6 +547,7 @@ def scan():
                 if fresh.get('job_id')!=archive_report.get('job_id') or fresh.get('finished')!=archive_report.get('finished'):report['archive_inventory_job']=None
                 report['stage']='Publication des index de recherche vidéo';save()
                 build_partitions(db)
+            confirm_indexed_tracks(published)
             report.pop('stage')
             report.update(phase='completed',skipped=found['skipped'],inventory_errors=found['errors'],unexamined=found['unexamined'],limitations=found['limitations'],
                           per_video=[{'id':'video:'+item['inventory_id'],'path':item['path'],'title':item['title'],'subtitle_status':item['subtitle_status'],
@@ -549,6 +580,8 @@ async def refresh_after(published):
         await asyncio.shield(task)
     current=status()
     if current.get('started',0)<published or current.get('phase')!='completed':
+        if current.get('phase') == 'paused' and current.get('stopped_by') == 'user':
+            raise HTTPException(409,'L’actualisation des vidéos est en pause.')
         if running() is None:
             await start()
         report=await asyncio.shield(running())
@@ -557,9 +590,13 @@ async def refresh_after(published):
     return 'indexed'
 
 
-async def stop(reason='user'):
+def request_stop(reason='user'):
     global STOP_REASON
     STOP_REASON=reason;STOP.set()
+
+
+async def stop(reason='user'):
+    request_stop(reason)
     for task in (running(),running_task(PARTITION_TASK)):
         if task is None:continue
         # Both writing tasks check STOP and finish their SQLite transaction before shutdown.

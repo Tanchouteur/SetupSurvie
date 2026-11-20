@@ -13,7 +13,7 @@ async page => {
   tasks.push({id:'held',lane:'local',kind:'speech',type:'Transcription audio',title:'Audio suspendu',status:'paused',retry:true});
   tasks.push(
     {id:'video-index', lane:'local', kind:'video-index', type:'Indexation vidéo', title:'Inventaire des vidéos et sous-titres', status:'running', stage:'19 vidéos traitées'},
-    {id:'archive-video-index', lane:'local', kind:'archive-video-index', type:'Examen des collections', title:'Inventaire des vidéos dans les collections', status:'running', done:2, total:5}
+    {id:'archive-video-index', lane:'local', kind:'archive-video-index', type:'Examen des collections', title:'Inventaire des vidéos dans les collections', status:'running', done:2, total:5, pausable:true, operation_id:'a'.repeat(32)}
   );
   let paused = false, unavailable = false, moveRequests = 0;
   await page.route('**/api/work-queue**', async route => {
@@ -24,7 +24,10 @@ async page => {
         : route.fulfill({status: 503, json: {detail: 'Indisponible'}});
     }
     if (path.endsWith('/move')) moveRequests++;
-    if (path.endsWith('/pause')) paused = request.postDataJSON().paused;
+    if (path === '/api/work-queue/pause') paused = request.postDataJSON().paused;
+    if (path.endsWith('/archive-video-index/pause') && request.postDataJSON().operation_id === 'a'.repeat(32)) {
+      Object.assign(tasks.find(task => task.id === 'archive-video-index'), {status:'paused', pausable:false, retry:true});
+    }
     if (path.endsWith('/second/move') && request.postDataJSON().target === 'document' && !request.postDataJSON().after ||
         path.endsWith('/document/move') && request.postDataJSON().target === 'second') {
       [tasks[2], tasks[4]] = [tasks[4], tasks[2]];
@@ -148,7 +151,7 @@ async page => {
   verify(await handle.evaluate(node => node === document.activeElement), 'Le focus reste sur la tâche déplacée.');
 
   await view.getByRole('button', {name: 'Reprendre la file'}).click();
-  await view.getByRole('button', {name: 'Mettre en pause'}).waitFor();
+  await view.getByRole('button', {name: 'Mettre en pause', exact:true}).waitFor();
   unavailable = true;
   await view.getByText(/Suivi indisponible. Dernier état connu/).waitFor();
   await view.getByText('Une vidéo est privée.').waitFor();
@@ -161,6 +164,10 @@ async page => {
   await view.getByText(/Suivi indisponible. Dernier état connu/).waitFor({state:'hidden'});
   await view.getByRole('button', {name: 'Réessayer'}).click();
   await view.getByText('Une vidéo est privée.').waitFor({state: 'hidden'});
+  const archiveTask = view.locator('[data-work-id="archive-video-index"]');
+  await archiveTask.getByRole('button', {name: 'Mettre en pause Inventaire des vidéos dans les collections'}).click();
+  await archiveTask.getByRole('button', {name: 'Reprendre', exact:true}).waitFor();
+  verify(await view.locator('#work-queue-pause').textContent() === 'Mettre en pause', 'La pause de l’inventaire ne doit pas bloquer la file.');
   verify(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'La file déborde sur ordinateur.');
 
   await page.setViewportSize({width: 390, height: 844});

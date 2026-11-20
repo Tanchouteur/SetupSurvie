@@ -93,7 +93,8 @@ class SearchIndexQueueTests(unittest.TestCase):
         archive_key = library_tasks.collection_sort.archive(self.file.name)
         sorting = library_tasks.collection_sort.Sort().change([archive_key], 'other')
         library_tasks.collection_sort.save(self.data/'catalog', sorting)
-        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(self.manager, 'start') as start:
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(self.manager, 'start') as start, \
+                patch.object(self.manager, 'pending_video_archives', return_value=0):
             self.manager.auto_index()
             start.assert_not_called()
             library_tasks.collection_sort.save(self.data/'catalog', library_tasks.collection_sort.Sort())

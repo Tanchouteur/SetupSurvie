@@ -134,17 +134,8 @@ class Manager:
         result['index_reader_ready']=self.index_ready()
         result['initial_video_inventory_pending'] = (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).is_file()
         result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
-        queued=result['index_queue'];waiting=''
-        if queued['pending']:
-            if queued['hold']:waiting=queued['hold']
-            elif not queued['settings']['enabled']:waiting='disabled'
-            elif index_queue.gaming(self.app.work):waiting='gaming'
-            elif not index_queue.in_window(queued['settings']):waiting='schedule'
-            elif not result['index_reader_ready']:waiting='missing_reader'
-            elif state['phase']=='planned':waiting='selection_pending'
-            elif state['phase'] in ACTIVE:waiting='other_operation' if state.get('action')!='index' else ''
-            else:waiting=index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
-        queued['waiting_reason']=waiting
+        queued=result['index_queue']
+        queued['waiting_reason']=self.index_waiting_reason(queued, state, result['index_reader_ready'])
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         root=Path(self.config['data_dir'])
@@ -174,19 +165,46 @@ class Manager:
                     result['progress']['active'] = [{k: entry[k] for k in ('id','title','bytes','total','status') if k in entry} for entry in value.get('active',[])]
         return result
 
+    def index_waiting_reason(self, queued, state, reader_ready):
+        if not queued['pending']:return ''
+        if queued['hold']:return queued['hold']
+        if not queued['settings']['enabled']:return 'disabled'
+        if index_queue.gaming(self.app.work):return 'gaming'
+        if not index_queue.in_window(queued['settings']):return 'schedule'
+        if not reader_ready:return 'missing_reader'
+        if state['phase']=='planned':return 'selection_pending'
+        if state['phase'] in ACTIVE:return 'other_operation' if state.get('action')!='index' else ''
+        if state['phase'] in ('paused','error','interrupted') and state.get('action') != 'index':
+            return 'other_operation_stopped'
+        return index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
+
+    def pending_video_archives(self, root):
+        from pilot.archive_index import status as index_status
+        report = index_status(root/'state/pilot/zim-videos')
+        usable = report['phase'] in ('not_prepared', 'completed') or (
+            report['phase'] == 'partial' and all(
+                row.get('status') in zim_video_inventory.EXAMINED_STATUSES for row in report.get('results', [])))
+        return len(zim_video_inventory.unexamined_files(root/'library/zim', report)) if usable else 0
+
     def auto_index(self):
         root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
         gaming = index_queue.gaming(self.app.work)
         allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not gaming
         if state['phase'] in ACTIVE:
-            if state.get('action')=='video-inventory' and gaming:
+            if state.get('action')=='video-inventory' and (gaming or state.get('options',{}).get('automatic') and not allowed):
                 self.pause(automatic=True)
             if state.get('action') in ('index','category-index') and state.get('options',{}).get('automatic') and not allowed:
                 self.pause(automatic=True)
             return
         request = self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST
+        video_resume = (state.get('action') == 'video-inventory' and state.get('options', {}).get('automatic')
+                        and state['phase'] == 'paused' and (self.paths(state['id'])/'auto-pause').is_file())
+        if allowed and video_resume and self.index_ready():
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {'automatic': True})
+            return
         if (self.backend == 'compose' and state['phase'] != 'planned' and request.is_file()
-                and not gaming and self.index_ready()):
+                and allowed and self.index_ready()):
             with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
                 self.start('video-inventory', {'automatic': True})
             return
@@ -198,9 +216,18 @@ class Manager:
                 (state['phase'] in ('idle', 'completed') or automatic_category_resume)):
             category,_=category_index.availability(root/'library/zim',root/'state/pilot',collection_sort.load(root/'catalog'))
             if category['phase'] in ('outdated','not_prepared') or automatic_category_resume and category['phase'] != 'completed':
-                try:self.start('category-index',{'automatic':True})
+                try:
+                    with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                        self.start('category-index',{'automatic':True})
                 except setup.SetupError:pass
                 return
+        # Existing ZIM indexes remain usable. Only examine new or changed
+        # archives during the configured window and after pending text indexes.
+        if (allowed and not queue['pending'] and self.index_ready() and
+                state['phase'] in ('idle', 'completed') and self.pending_video_archives(root)):
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {'automatic': True})
+            return
         automatic = state.get('options', {}).get('automatic')
         resumable = state['phase'] == 'paused' and state.get('action') == 'index' and automatic
         initial_video_error = state['phase'] == 'error' and state.get('action') == 'video-inventory' and automatic
@@ -369,7 +396,7 @@ class Manager:
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
         if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')
         folder = self.paths(state['id'])
-        if state.get('action') == 'category-index':
+        if state.get('action') in ('category-index', 'video-inventory'):
             marker = folder / 'auto-pause'
             if automatic and not (folder / 'cancel').exists():
                 marker.touch()

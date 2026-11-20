@@ -113,6 +113,21 @@ class Server(ThreadingHTTPServer):
         with self.lock:
             if self.activity_cache is None or time.monotonic()-self.activity_time>5:
                 self.activity_cache=library_monitor.snapshot(self.config['data_dir'],self.app.work)
+                try:
+                    import search_index_queue as index_queue
+                    root = Path(self.config['data_dir'])
+                    queued = index_queue.summary(root)
+                    state, reader_ready = self.library.read(), self.library.index_ready()
+                    if queued['pending']:
+                        waiting = self.library.index_waiting_reason(queued, state, reader_ready)
+                        self.activity_cache['pending_index'] = {'count': queued['pending'], 'reason': waiting}
+                    videos = self.library.pending_video_archives(root)
+                    if videos:
+                        waiting = self.library.index_waiting_reason({**queued, 'pending': videos, 'hold': ''}, state, reader_ready)
+                        self.activity_cache['pending_archive_video'] = {'count': videos, 'reason': waiting or (
+                            'waiting_text' if queued['pending'] else '')}
+                except (OSError, ValueError, setup.SetupError):
+                    pass
                 self.activity_time=time.monotonic()
             return self.activity_cache
 
@@ -277,7 +292,11 @@ class Handler(BaseHTTPRequestHandler):
                         if state.get('action')!='youtube-download' or body.get('list')!=state.get('youtube_list'):
                             raise setup.SetupError('Ce téléchargement YouTube n’est plus en cours.')
                         self.server.library.pause(state=state)
-                    elif self.path=='/library/pause':self.server.library.pause()
+                    elif self.path=='/library/pause':
+                        state=self.server.library.current()
+                        if 'operation_id' in body and body['operation_id'] != state.get('id'):
+                            raise setup.SetupError('Cette préparation n’est plus en cours.')
+                        self.server.library.pause(state=state)
                     else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
                 self.respond(202,{'accepted':True})
             except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
