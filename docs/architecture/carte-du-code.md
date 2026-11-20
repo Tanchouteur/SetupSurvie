@@ -146,7 +146,8 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `start-*.ps1`, `stop-*.ps1`, `startup-windows.ps1`, `windows_autostart.py`, `windows_background.py`, `register-startup-windows.ps1` | Démarrage et arrêt Windows |
 | `linux_host.py`, `discovery.py`, `fix-linux-local-name.sh` | Docker rootless, démarrage Linux, nom `.local` |
 | `linux_offline_tools.py`, `installer-outils-linux-hors-ligne.sh` | Collecte vérifiée et extraction des prérequis Linux pour le transfert hors ligne |
-| `linux_offline_restore.py`, `restaurer-linux-hors-ligne.sh` | Activation et démarrage autonome sur Debian 13 depuis une copie hors ligne |
+| `linux_offline_restore.py`, `restaurer-linux-hors-ligne.sh` | Activation et démarrage autonome sur Linux systemd depuis une copie hors ligne |
+| `linux_auto_install.py`, `installer-systeme-linux.sh` | Préparation des systèmes Linux pris en charge depuis Bash, installation initiale et reprise de la sélection |
 | `pilot_update.py`, `windows_update.py`, `update-windows.ps1`, `rollback-windows.ps1`, `delivery_paths.py` | Mises à jour avec sauvegarde et retour arrière ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `maintenance_site.py` | Suivi commun `catalog/maintenance.json` et page temporaire sur les ports du portail pendant l’arrêt des conteneurs |
 | `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |

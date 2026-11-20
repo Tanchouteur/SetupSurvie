@@ -14,3 +14,24 @@ c2f87d4b4e8db3abddb0f116c6ccfc503d0cbdbb9ee8faacddad1b679ec12e99 68163679 python
 c7cbee3dce8452ae5c3c4269f6f52e96b896d36a46ea3c490e0e11e8ff359896 332448 libnftables1_1.1.3-1_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/libnftables1_1.1.3-1_amd64.deb
 b002ea172b9c1e34a67bc497c523c67bb74c3f0a4e98113cb083990a1f1d3bfe 93832 libedit2_3.1-20250104-1_amd64.deb https://deb.debian.org/debian/pool/main/libe/libedit/libedit2_3.1-20250104-1_amd64.deb
 2ddfa61baaf3a76e2c499db9e521ba6affb226f85af0b6fef739f346ac5f0c39 75864 nftables_1.1.3-1_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/nftables_1.1.3-1_amd64.deb
+
+# Dépendances réseau Debian 12.
+3fc9742f9f1a37bcb9931df6074b4d1483419ef832ad5349f47323e75fc27864 40788 debian12/libjansson4_2.14-2_amd64.deb https://deb.debian.org/debian/pool/main/j/jansson/libjansson4_2.14-2_amd64.deb
+4581f42e3373cb72f9ea4e88163b17873afca614a6c6f54637e95aa75983ea7c 12476 debian12/libmnl0_1.0.4-3_amd64.deb https://deb.debian.org/debian/pool/main/libm/libmnl/libmnl0_1.0.4-3_amd64.deb
+9e619e1470a1915264e906020f3bfc046fd8458043b1342686d997b5078213af 61632 debian12/libnftnl11_1.2.4-2_amd64.deb https://deb.debian.org/debian/pool/main/libn/libnftnl/libnftnl11_1.2.4-2_amd64.deb
+cb841d66950a43af4a398625313d2f3da9065299c9738538de6c2c3495857040 30752 debian12/libxtables12_1.8.9-2_amd64.deb https://deb.debian.org/debian/pool/main/i/iptables/libxtables12_1.8.9-2_amd64.deb
+3a8223f9bfba99d97bf25296ac83de307ab036e1df63e5965f88809266851947 299116 debian12/libnftables1_1.0.6-2+deb12u2_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/libnftables1_1.0.6-2%2bdeb12u2_amd64.deb
+bb31cc8b40f962a85b2cec970f7f79cc704a1ae4bad24257a822055404b2c60b 117416 debian12/libbsd0_0.11.7-2_amd64.deb https://deb.debian.org/debian/pool/main/libb/libbsd/libbsd0_0.11.7-2_amd64.deb
+1cf14abf2716d3279db12d0657a5737cf70074a1e71d3bdf73206625e3c89ce6 92992 debian12/libedit2_3.1-20221030-2_amd64.deb https://deb.debian.org/debian/pool/main/libe/libedit/libedit2_3.1-20221030-2_amd64.deb
+966ff20ce58c17163a771c02ddbca264291408f94c512bd85dd18da0ebdbe88c 70292 debian12/nftables_1.0.6-2+deb12u2_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/nftables_1.0.6-2%2bdeb12u2_amd64.deb
+
+# Dépendances réseau Ubuntu 22.04.
+bcdad5e400aeb660f0337a1c5c1a77e3effa91d0803e64ce2d000e9006f67cdb 22964 ubuntu2204/libmd0_1.0.4-1build1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/libm/libmd/libmd0_1.0.4-1build1_amd64.deb
+09367acdf59f28ffb71ba7bc36c516cff03b2765930cf9be7bb7ea7273e4c312 44760 ubuntu2204/libbsd0_0.11.5-1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/libb/libbsd/libbsd0_0.11.5-1_amd64.deb
+e0ed2e88526830896a9efcef75a3d019b40cdac5a56d6605c426296979708f4a 13216 ubuntu2204/libmnl0_1.0.4-3build2_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/libm/libmnl/libmnl0_1.0.4-3build2_amd64.deb
+c2e99be5d2f06ce776883c3d11dbe58f1c735e2ad9acd9ea2faa584829eddb16 31300 ubuntu2204/libxtables12_1.8.7-1ubuntu5.2_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/i/iptables/libxtables12_1.8.7-1ubuntu5.2_amd64.deb
+fb8783bdf0a59aaabf4e9b29192170f6cc17aa2eb94bc672c15add37ff39525b 96766 ubuntu2204/libedit2_3.1-20210910-1build1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/libe/libedit/libedit2_3.1-20210910-1build1_amd64.deb
+4af5e5f18d6a5a701ecad452449494a21004307cac18b9369e26345986de5d4d 32358 ubuntu2204/libjansson4_2.13.1-1.1build3_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/j/jansson/libjansson4_2.13.1-1.1build3_amd64.deb
+a2c19952be8ca65e3464773009490701a0a49e1ef984d9140158371f909f2606 65544 ubuntu2204/libnftnl11_1.2.1-1build1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/libn/libnftnl/libnftnl11_1.2.1-1build1_amd64.deb
+c23880032dcf0a6f7afd12c599230d226240ff829153cc2e5b4b09ce7f6080b3 332054 ubuntu2204/libnftables1_1.0.2-1ubuntu3.1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/n/nftables/libnftables1_1.0.2-1ubuntu3.1_amd64.deb
+a18cd9b477bc0277dc6a5190ca84131e0e0ff809283049e3c8f2e4e735d83f28 67202 ubuntu2204/nftables_1.0.2-1ubuntu3.1_amd64.deb https://archive.ubuntu.com/ubuntu/pool/main/n/nftables/nftables_1.0.2-1ubuntu3.1_amd64.deb

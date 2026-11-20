@@ -102,11 +102,18 @@ esac
 
     def test_activation_recovery_skips_preparation(self):
         self.journal.update(phase='activating', destination=str(self.base))
-        with patch.object(transfer, 'read', return_value=self.journal), \
+        with patch.object(restore, 'bind_controller_to_engine'), \
+                patch.object(transfer, 'read', return_value=self.journal), \
                 patch.object(transfer, 'prepare') as prepare, patch.object(transfer, 'activate') as activate:
             restore.start(self.base)
         prepare.assert_not_called()
         activate.assert_called_once_with(self.base)
+
+    def test_dedicated_engine_uses_the_ipv4_bridge_gateway(self):
+        with patch.dict(os.environ, {}, clear=True), \
+                patch.object(setup, 'run', return_value='fd00::1\n172.29.0.1'):
+            restore.bind_controller_to_engine()
+            self.assertEqual(os.environ['SURVIE_SYSTEM_DOCKER_GATEWAY'], '172.29.0.1')
 
     def test_existing_different_unit_is_preserved(self):
         service = self.base / 'setupsurvie.service'

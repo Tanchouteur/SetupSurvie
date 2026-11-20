@@ -186,6 +186,9 @@ class LinuxHostTest(unittest.TestCase):
             self.assertEqual(init.call_args.args[0], ('127.0.0.1', 11436))
             control.Server(app, {**c, 'docker_rootless': False}, 'compose')
             self.assertEqual(init.call_args.args[0], ('0.0.0.0', 11436))
+            with mock.patch.dict(os.environ, {'SURVIE_SYSTEM_DOCKER_GATEWAY': '172.29.0.1'}):
+                control.Server(app, {**c, 'docker_rootless': False}, 'compose')
+            self.assertEqual(init.call_args.args[0], ('172.29.0.1', 11436))
 
 
 if __name__ == '__main__':

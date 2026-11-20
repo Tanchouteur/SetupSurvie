@@ -7,6 +7,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## Protocoles, plans et suivis transversaux
 
+- [Dossier de qualification installation et transfert](qualification-installation-transfert/README.md) — matrice, reproduction et résultat des essais.
 - [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de 89 questions, modes dégradés et premier essai ciblé.
 - [Installation neuve et transfert entre SSD sur Bazzite](plan-installation-neuve-et-transfert-bazzite.md) — protocole du 17 novembre 2026, non exécuté.
 - [Recette de modèle réel](assistant-modele-reel.md) — corpus temporaire, ressources explicites et rapports privés, hors CI.

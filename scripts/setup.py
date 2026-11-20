@@ -713,7 +713,7 @@ def main(argv=None):
             if c['target'] == 'linux':
                 import linux_offline_tools
                 if linux_offline_tools.prepare(c['data_dir']):
-                    print('Installateurs hors ligne vérifiés : Docker, Compose, Python et réseau Debian 13.')
+                    print('Installateurs hors ligne vérifiés : Docker, Compose, Python et paquets réseau Linux.')
                 else:
                     print('Installateurs hors ligne indisponibles pour cette architecture ou version de Python.')
             app.compose(c, "pull")

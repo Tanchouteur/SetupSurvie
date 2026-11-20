@@ -6,10 +6,13 @@ if [[ $# -ne 1 || $EUID -ne 0 ]]; then
     exit 2
 fi
 source /etc/os-release
-if [[ "$(uname -m)" != x86_64 || "${ID:-}:${VERSION_ID:-}" != debian:13 || ! -d /run/systemd/system ]]; then
-    echo 'La restauration automatique demande Debian 13 x86-64 avec systemd.' >&2
-    exit 1
-fi
+case "${ID:-}:${VERSION_ID:-}:$(uname -m)" in
+    debian:13:x86_64|debian:12:x86_64|ubuntu:22.04:x86_64)
+        if [[ ! -d /run/systemd/system ]]; then echo 'systemd doit être démarré.' >&2; exit 1; fi ;;
+    *)
+        echo 'Ce lanceur prend en charge Debian 12, Debian 13 et Ubuntu 22.04 x86-64.' >&2
+        exit 1 ;;
+esac
 
 base=$(realpath -e -- "$1")
 application="$base/application"

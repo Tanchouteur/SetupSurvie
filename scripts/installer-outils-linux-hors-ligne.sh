@@ -28,7 +28,23 @@ if [[ ! "$python_archive" =~ ^python-3\.1[1-5]\.tar\.gz$ ]]; then
     exit 1
 fi
 
-mapfile -t network_packages < <(awk '$3 ~ /^[[:alnum:]_+.-]+[.]deb$/ {print $3}' "$catalog")
+network_packages=()
+if [[ -r /etc/os-release ]]; then
+    source /etc/os-release
+    case "${ID:-}:${VERSION_ID:-}" in
+        debian:13) prefix= ;;
+        debian:12) prefix=debian12/ ;;
+        ubuntu:22.04) prefix=ubuntu2204/ ;;
+        *) prefix= ;;
+    esac
+    case "${ID:-}:${VERSION_ID:-}" in
+        debian:13|debian:12|ubuntu:22.04)
+            mapfile -t network_packages < <(awk -v p="$prefix" '
+                index($3,p)==1 && substr($3,length(p)+1) ~ /^[[:alnum:]_+.-]+[.]deb$/ {print $3}
+            ' "$catalog")
+            ;;
+    esac
+fi
 for name in docker.tar.gz docker-compose "$python_archive" "${network_packages[@]}"; do
     expected=$(awk -v name="$name" '$3==name {print $1; exit}' "$catalog")
     file="$source_dir/$name"
@@ -57,24 +73,24 @@ exec "$python_root/bin/python3" "$@"
 PYTHON
 chmod 755 "$stage/bin/python3"
 install -m 755 -- "$source_dir/docker-compose" "$stage/docker-cli/cli-plugins/docker-compose"
-if [[ -r /etc/os-release ]] && ! command -v nft >/dev/null; then
-    # These Debian packages remain inside the tools directory.
-    source /etc/os-release
-    if [[ "${ID:-}:${VERSION_ID:-}" == debian:13 ]]; then
-        mkdir "$stage/nftables"
-        for name in "${network_packages[@]}"; do
-            dpkg-deb --extract "$source_dir/$name" "$stage/nftables"
-        done
-        cat >"$stage/bin/nft" <<'NFT'
+if [[ ${#network_packages[@]} -gt 0 ]] && ! command -v nft >/dev/null; then
+    mkdir "$stage/nftables"
+    for name in "${network_packages[@]}"; do
+        dpkg-deb --extract "$source_dir/$name" "$stage/nftables"
+    done
+    cat >"$stage/bin/nft" <<'NFT'
 #!/usr/bin/env bash
 set -euo pipefail
 nft_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../nftables" && pwd)"
-export LD_LIBRARY_PATH="$nft_root/usr/lib/x86_64-linux-gnu"
-exec "$nft_root/usr/sbin/nft" "$@"
+export LD_LIBRARY_PATH="$nft_root/usr/lib/x86_64-linux-gnu:$nft_root/lib/x86_64-linux-gnu"
+for executable in "$nft_root/usr/sbin/nft" "$nft_root/sbin/nft"; do
+    if [[ -x "$executable" ]]; then exec "$executable" "$@"; fi
+done
+echo 'Exécutable nftables absent.' >&2
+exit 1
 NFT
-        chmod 755 "$stage/bin/nft"
-        "$stage/bin/nft" --version
-    fi
+    chmod 755 "$stage/bin/nft"
+    "$stage/bin/nft" --version
 fi
 cat >"$stage/environnement.sh" <<'ENV'
 # Charger dans Bash avant de démarrer Docker ou d'utiliser les lanceurs.

@@ -1,6 +1,7 @@
-"""Activate a verified transfer on a Debian 13 machine using the bundled tools."""
+"""Activate a verified transfer on a Linux systemd machine using the bundled tools."""
 import argparse
 import hashlib
+import ipaddress
 import os
 from pathlib import Path
 import subprocess
@@ -13,7 +14,7 @@ from delivery_paths import destination
 from pilot import durable
 
 
-def unit_contents(base, name):
+def unit_contents(base, name, *, initial=False):
     tools = base / 'outils-linux'
     engine = name + '-docker.service'
     socket = f'/run/{name}/docker.sock'
@@ -39,14 +40,16 @@ def unit_contents(base, name):
         + f'ExecStart={engine_command}\n'
         + '[Install]\nWantedBy=multi-user.target\n'
     )
+    entrypoint = 'linux_auto_install.py' if initial else 'linux_offline_restore.py'
     command = ' '.join(linux_host.unit_quote(value, True) for value in (
-        tools / 'bin/python3', setup.ROOT / 'scripts/linux_offline_restore.py', base, '--demarrage',
+        tools / 'bin/python3', setup.ROOT / 'scripts' / entrypoint, base, '--demarrage',
     ))
     stop = ' '.join(linux_host.unit_quote(value, True) for value in (
         setup.ROOT / 'scripts/survie.sh', '--work-dir', work, 'down',
     ))
+    description = 'SetupSurvie' if initial else 'SetupSurvie restauré hors ligne'
     app_unit = (
-        f'[Unit]\nDescription=SetupSurvie restauré hors ligne\nAfter={engine}\nRequires={engine}\n' + common
+        f'[Unit]\nDescription={description}\nAfter={engine}\nRequires={engine}\n' + common
         + '[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=infinity\n'
         + f'Environment={environment}\n'
         + 'Environment=' + linux_host.unit_quote(f'DOCKER_CONFIG={tools}/docker-cli') + '\n'
@@ -64,9 +67,22 @@ def publish_managed(path, content):
         durable.write_bytes(path, content)
 
 
+def bind_controller_to_engine():
+    gateways = setup.run(
+        ['docker', 'network', 'inspect', 'bridge', '--format', '{{range .IPAM.Config}}{{println .Gateway}}{{end}}'],
+        capture=True, timeout=20,
+    ).split()
+    for gateway in gateways:
+        if ipaddress.ip_address(gateway).version == 4:
+            os.environ['SURVIE_SYSTEM_DOCKER_GATEWAY'] = gateway
+            return
+    raise setup.SetupError('Le réseau interne Docker ne fournit pas de passerelle IPv4.')
+
+
 def start(base):
     journal = transfer.read(base / 'transfer.json')
     phase = check_transfer(base, journal)
+    bind_controller_to_engine()
     if phase in ('copied', 'adapting'):
         transfer.prepare(base)
         phase = 'prepared'
@@ -105,25 +121,29 @@ def check_service_tree(base):
                 raise setup.SetupError('Droits insuffisamment restrictifs pour un service système : ' + str(path))
 
 
-def install(base):
-    journal = transfer.read(base / 'transfer.json')
-    phase = check_transfer(base, journal)
-    check_service_tree(base)
-    name = 'setupsurvie-hors-ligne-' + hashlib.sha256(os.fsencode(base)).hexdigest()[:16]
-    service = name + '.service'
+def service_name(base, *, initial=False):
+    prefix = 'setupsurvie-installation-' if initial else 'setupsurvie-hors-ligne-'
+    return prefix + hashlib.sha256(os.fsencode(base)).hexdigest()[:16]
+
+
+def check_engine(name):
     engine = name + '-docker.service'
     status = subprocess.run(['systemctl', 'is-active', '--quiet', engine], check=False)
     if status.returncode and subprocess.run(['pgrep', '-x', 'dockerd'], stdout=subprocess.DEVNULL,
                                             check=False).returncode != 1:
         raise setup.SetupError('Un autre Docker fonctionne sur la cible. Choisissez une machine dédiée ou la bascule manuelle.')
-    if phase in ('copied', 'adapting') or phase == 'prepared' and journal.get('destination') != str(base):
-        transfer.prepare(base)
+
+
+
+def launch_services(base, name, *, initial=False):
+    service = name + '.service'
+    engine = name + '-docker.service'
     config = destination(base, 'restauration-docker.json')
     engine_store = destination(base, 'stockage-docker')
     if not config.exists() and engine_store.exists():
         raise setup.SetupError('Stockage Docker déjà présent, laissé en place.')
     publish_managed(config, b'{}\n')
-    for unit, content in unit_contents(base, name).items():
+    for unit, content in unit_contents(base, name, initial=initial).items():
         publish_managed(Path('/etc/systemd/system') / unit, content.encode('utf-8'))
     setup.run(['systemctl', 'daemon-reload'])
     try:
@@ -131,6 +151,17 @@ def install(base):
     except setup.SetupError as error:
         raise setup.SetupError(f'Consultez journalctl -u {engine} -u {service}, puis relancez la même commande.') from error
     setup.run(['systemctl', 'enable', service])
+
+
+def install(base):
+    journal = transfer.read(base / 'transfer.json')
+    phase = check_transfer(base, journal)
+    check_service_tree(base)
+    name = service_name(base)
+    check_engine(name)
+    if phase in ('copied', 'adapting') or (phase == 'prepared' and journal.get('destination') != str(base)):
+        transfer.prepare(base)
+    launch_services(base, name)
     print('SetupSurvie restauré. Ouvrez http://127.0.0.1:8080 sur cette machine.')
 
 

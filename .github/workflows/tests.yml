@@ -43,6 +43,16 @@ jobs:
               manifest = unpack(package, digest, Path(destination))
           print(f"Paquet relu : {manifest['release']['version']}, {len(manifest['files'])} fichiers vérifiés")
           PYTHON
+      - name: Construire et contrôler l’installateur Linux
+        run: |
+          version=$(python -c "import json; print(json.load(open('deploy/release.json'))['version'])")
+          archive="SetupSurvie-linux-${version}.tar.gz"
+          git archive --format=tar.gz --prefix=SetupSurvie/ --output="dist/$archive" HEAD
+          unpacked=$(mktemp -d)
+          tar -xzf "dist/$archive" -C "$unpacked"
+          test -x "$unpacked/SetupSurvie/scripts/install.sh"
+          "$unpacked/SetupSurvie/scripts/install.sh" --preparer-systeme --help
+          (cd dist && sha256sum "$archive" > "$archive.sha256")
       - uses: actions/upload-artifact@v7
         with:
           name: logiciel-et-empreinte
