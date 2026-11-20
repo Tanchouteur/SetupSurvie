@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
+from . import category_index,collection_sort,network,store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
 
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
@@ -273,7 +273,7 @@ def search_terms(query,maximum=10):
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:maximum]
 
 
-async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12):
+async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12,sorting=None,domain="all",skip_native=()):
     """Explicit homogeneous archive sets; multilingual archives queried separately.
 
     Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
@@ -288,10 +288,12 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     if not getattr(available,'available',True):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
+    scoped=[book for book in available if book.get('book') not in skip_native and
+            (sorting is None or sorting.permits(collection_sort.archive(book.get('book') or ''),domain))]
     groups={};eligible=[];selected_books=[];incompatible=[]
     saved_labels=catalogue.snapshot()
     manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
-    generation=await asyncio.to_thread(search_cache.snapshot,Path(os.environ.get('ZIM_DIR','/zim')),available,store.ROOT/'archive-index')
+    generation=await asyncio.to_thread(search_cache.snapshot,Path(os.environ.get('ZIM_DIR','/zim')),scoped,store.ROOT/'archive-index')
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
     def priority(book):
@@ -308,7 +310,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             (r'\b(plomberie|fuite|leak)\b',('diy','wikihow'))))
         return (not indexed,not targeted,preferred,'fra' not in str(book.get('language','')))
     report['locally_indexed']=0
-    for original in sorted(available,key=priority):
+    for original in sorted(scoped,key=priority):
         book=dict(original)
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
@@ -585,13 +587,19 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     if kind not in ('all','documents','videos'):raise ValueError('Invalid search kind')
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
+    try:
+        sorting=await asyncio.to_thread(collection_sort.load,network.CATALOG)
+    except (OSError,ValueError):
+        raise HTTPException(503,'Le fichier de tri de la bibliothèque est illisible.') from None
+    def archive_allowed(book):
+        return sorting.permits(collection_sort.archive(book),domain)
     candidate_limit=min(80,max(20,limit*4))
     results=[];video_coverage={'status':'not_run'}
     if kind != 'documents' and not translations_only:
         try:
             from . import videos
             await videos.ensure_fresh()
-            video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit)
+            video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit,sorting,domain)
             if favorite_user is not None:
                 with store.connect() as db:video_favorites={row['source_id'].split('#t=')[0] for row in db.execute('SELECT source_id FROM favorites WHERE user_id=?',(favorite_user,))}
                 video_rows=[item for item in video_rows if item['id'].split('#t=')[0] in video_favorites]
@@ -610,7 +618,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
             for item in sorted(results,key=lambda row:row.get('match')!='subtitle'):unique.setdefault(item['id'].split('#t=')[0],item)
             ordered=[{k:v for k,v in item.items() if not k.startswith('_')} for item in list(unique.values())[:limit*2]]
         state=video_coverage['status']
-        coverage={'status':'complete' if state=='complete' else 'partial','coverage_scope':'indexed_videos','domain':'all','collection':query_plan.collection,'videos':video_coverage,'kind':'videos'}
+        coverage={'status':'complete' if state=='complete' else 'partial','coverage_scope':'indexed_videos','domain':domain,'collection':query_plan.collection,'videos':video_coverage,'kind':'videos'}
         warnings={'not_indexed':'Les vidéos n’ont pas encore été répertoriées. L’inventaire se lance automatiquement ; vous pouvez aussi le lancer dans Bibliothèque → Collections → Vidéos de la bibliothèque.',
                   'refreshing':'Le répertoire des vidéos est en cours d’actualisation ; les nouvelles vidéos apparaîtront à la fin.',
                   'not_available':'Le dossier des vidéos locales n’est pas disponible sur ce serveur.',
@@ -618,7 +626,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                   'partial':'Certaines vidéos ne sont pas encore répertoriées (dossier modifié ou collections non examinées) ; les résultats affichés restent utilisables.'}
         if state in warnings:coverage['warning']=warnings[state]
         return SearchResults(ordered,coverage)
-    if words:
+    if words and domain!='other':
         expression=query_plan.fts()
         with store.connect() as db:
             for table in ('documents','passages'):
@@ -633,13 +641,15 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                     relaxed=[query_plan.fts(relaxed=True),*parameters[1:]]
                     rows+=db.execute(f"SELECT id,title,url,language,substr(text,1,20000) AS _text,snippet({table},4,'','', '…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*relaxed,candidate_limit)).fetchall()
                 results.extend([{**dict(r),'_rank':position,'_query_complete':r['id'] in strict_ids,'kind':'guide',**guide_metadata(db,r['id'])} for position,r in enumerate(rows)])
-            if favorite_user is not None and not translations_only:
-                rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
-                results.extend([{**dict(row),'kind':'article'} for row in rows])
+    if words and favorite_user is not None and not translations_only:
+        with store.connect() as db:
+            db.create_function('archive_allowed',1,lambda source: archive_allowed(source.split('/',1)[0].removeprefix('zim:')),deterministic=True)
+            rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND archive_allowed(id) AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(query_plan.fts(),favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
+            results.extend([{**dict(row),'kind':'article'} for row in rows])
     if query_plan.collection:results=[r for r in results if query_plan.collection in retrieval.normal(str(r.get('provenance',''))+' '+r['title']+' '+r['id']).replace(' ','')]
     if favorite_user is not None or translations_only:
         catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
-        if domain!='all':results=[r for r in results if domain in r['domains']]
+        if domain in ('resilience','culture'):results=[r for r in results if domain in r['domains']]
         return retrieval.ordered(results,query_plan,limit*2)
     def pattern_for(lang,selected_words=None):
         english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
@@ -679,7 +689,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         metadata_available=annotations.annotate(combined,fresh=fresh)
         allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
         combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
-        if domain!='all':combined=[r for r in combined if domain in r['domains']]
+        if domain in ('resilience','culture'):combined=[r for r in combined if domain in r['domains']]
         ordered=retrieval.ordered(combined,query_plan,limit*2,normalizer=normalize)
         processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
         return ordered,metadata_available
@@ -692,14 +702,27 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     async def native_update(rows,coverage):
         nonlocal current_articles,current_coverage
         current_articles=rows;current_coverage=coverage;await notify()
+    category_report={}
+    chosen=()
+    if domain in category_index.DOMAINS and words:
+        category_report, category_path=await asyncio.to_thread(category_index.availability,zims,store.ROOT)
+        if category_path and archive_allowed(Path(category_report['archive']).stem):
+            result=await asyncio.to_thread(archive_index.search,category_path.parent,query_plan,language,candidate_limit,zims,
+                collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),
+                category=domain,only_path=category_path)
+            if result.coverage.get('searched'):
+                local_rows.extend(result)
+                chosen=(Path(category_report['archive']).stem,)
+            elif result.coverage.get('failed') or result.coverage.get('outdated'):
+                category_report={**category_report,'phase':'unavailable'}
     async def read_local():
         found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
-            collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata))
+            collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),archive_allowed=archive_allowed,skip_books=chosen)
         local_rows.extend(found);await notify();return found
     local_task=asyncio.create_task(read_local())
     try:
         await notify()
-        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic,on_update=native_update if on_update else None,budget=budget)
+        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic,on_update=native_update if on_update else None,budget=budget,sorting=sorting,domain=domain,skip_native=chosen)
         local=await local_task
     finally:
         if not local_task.done():local_task.cancel()
@@ -707,9 +730,14 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     wiki_report = await enrich_wikipedia(local + articles, query_plan, coverage.get('cache_generation', ''), normalize)
     if diagnostic and wiki_report is not None:
         coverage['wikipedia_structure'] = wiki_report
-    ordered,metadata_available=await selected(results+local+articles,fresh=True)
+    ordered,metadata_available=await selected(results+local_rows+articles,fresh=True)
     if diagnostic:coverage['processing']={**{key:round(value,2) for key,value in processing.items()},'metadata_evaluations':annotations.evaluated,'source_revision_checks':annotations.source_checks,'normalizations':normalize.misses,'normalization_hits':normalize.hits,'normalization_cache_bytes':normalize.bytes}
     coverage['local_query']=getattr(local,'coverage',{})
+    if category_report:
+        coverage['category_index']={key:category_report[key] for key in ('phase','archive','done','total','bytes','elapsed_seconds') if key in category_report}
+        coverage['category_index']['searched']=len(chosen)
+    if diagnostic:
+        coverage['indexes_queried']=coverage.get('searched',0)+coverage['local_query'].get('searched',0)+len(chosen)
     if any(coverage['local_query'].get(key,0) for key in ('failed','outdated')):
         if coverage['status']=='complete':coverage['status']='partial'
         coverage['warning']=coverage.get('warning','')+' Certains index locaux sont indisponibles ou périmés ; relancez leur préparation.'

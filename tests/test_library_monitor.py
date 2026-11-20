@@ -52,6 +52,24 @@ class LibraryMonitorTests(unittest.TestCase):
         value=self.result();self.assertEqual((value['kind'],value['phase']),('video-inventory','error'))
         self.assertEqual(value['message'],'Certaines collections n’ont pas pu être examinées.')
 
+    def test_video_inventory_with_skipped_entries_is_complete_for_the_matching_job(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        job = 'c' * 32
+        self.write(self.work/'library-web/state.json',
+                   {'id': job, 'action': 'video-inventory', 'phase': 'error',
+                    'message': 'L’opération a échoué. Les fichiers existants sont conservés.'})
+        report = {'job_id': job, 'phase': 'partial', 'archives': 2,
+                  'results': [{'status': 'reused'}, {'status': 'partial', 'skipped_html': 390}]}
+        path = self.root/'state/pilot/zim-videos/progress.json'
+        self.write(path, report)
+        value = self.result()
+        self.assertEqual(value['phase'], 'partial')
+        self.assertEqual(value['index_progress'], {'archives': 2, 'completed': 2})
+        self.write(path, {**report, 'job_id': 'd' * 32})
+        self.assertEqual(self.result()['phase'], 'error')
+        self.write(path, {**report, 'results': [{'status': 'partial'}, {'status': 'error'}]})
+        self.assertEqual(self.result()['phase'], 'error')
+
     def test_index_activity_tracks_live_child_and_does_not_report_it_as_download(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'index','phase':'downloading','pid':101,'identity':{'path':'old','created':'0'},'index_pid':202,'index_identity':self.identity})

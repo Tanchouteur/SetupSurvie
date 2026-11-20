@@ -84,7 +84,7 @@
     if (data.pending_errors) details.append(element('p', data.pending_errors + ' contenu(s) à vérifier.'));
     const progress = data.index_progress;
     if (progress?.archives > 0) details.append(element('p', progress.completed + ' / ' + progress.archives +
-      ' archives examinées · ' + progress.articles + ' articles indexés.'));
+      ' archives examinées' + (Number.isFinite(progress.articles) ? ' · ' + progress.articles + ' articles indexés' : '') + '.'));
     if (progress?.videos > 0) details.append(element('p', progress.downloaded + ' / ' + progress.videos +
       ' vidéos ajoutées · ' + progress.skipped + ' déjà présentes · ' + progress.errors + ' en erreur.'));
     return details;
@@ -302,6 +302,7 @@
     group('En erreur', failures, host);
     group('À vérifier', unknown, host);
     group('À reprendre', pausedJobs, host);
+    group('Inventaires terminés', state.jobs.filter(job => job.status === 'partial'), host);
     const completedWithIssues = partial.filter(job => !waiting(job) && job.status !== 'running' && !held(job));
     group('Lots avec des lignes à vérifier', completedWithIssues, host);
     for (const lane of lanes(state)) {

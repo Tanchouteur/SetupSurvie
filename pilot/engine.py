@@ -273,7 +273,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
                 return {'results':[{**reference(references,item),'excerpt':item.get('excerpt','')[:450]} for item in found[:12]],'coverage':compact}
             video_suggestions={}
             async def find_videos(query,language='',*,suggest=True):
-                with measured.during('search'):found=await library.search(query,language,limit=video_requests.LIMIT,kind='videos',budget=60)
+                with measured.during('search'):found=await library.search(query,language,limit=video_requests.LIMIT,kind='videos',domain=domain,budget=60)
                 value=video_requests.compact(found)
                 # Off-topic fallback listings are context, not links to append.
                 for row in value['results'] if suggest else []:video_suggestions.setdefault(row['id'].split('#t=')[0],row)

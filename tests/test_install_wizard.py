@@ -122,6 +122,37 @@ class WizardTests(unittest.TestCase):
         self.assertIn('--offline', self.calls[-1])
         self.assertNotIn('--content-pack', self.calls[-1])
 
+    def test_new_installation_imports_sort_and_preserves_it_on_resume(self):
+        from pilot import collection_sort
+        kit=self.root/'kit'
+        kit.mkdir()
+        other=self.root/'other.zim'
+        other.write_bytes(b'kept')
+        removed=self.root/'removed.zim'
+        removed.write_bytes(b'not copied')
+        files=[(self.entry,self.source)]
+        for name,path in [('ted_mul_history_2027-01.zim',other),('gutenberg_en_lcc-d_2027-01.zim',removed)]:
+            files.append(({'path':'payload/library/zim/'+name,'bytes':path.stat().st_size,
+                           'sha256':setup.file_hash(path)},path))
+        self.records.stop()
+        self.records=patch.object(wizard,'source_records',return_value=(files,{}))
+        self.records.start()
+        sorting=collection_sort.Sort(frozenset({'zim:ted_mul_history'}),frozenset({'zim:gutenberg_en_lcc-d'}))
+        collection_sort.save(self.root,sorting)
+
+        def interrupt(args):
+            self.step(args)
+            if 'install' in args:
+                raise setup.SetupError('simulated interruption')
+
+        with self.assertRaisesRegex(setup.SetupError,'simulated interruption'):
+            wizard.install(self.base,kit,sort_file=self.root/collection_sort.FILENAME,
+                           confirm=lambda _: 'O',execute_step=interrupt)
+        wizard.install(self.base,kit,resume=True,execute_step=self.step)
+        data=self.base/'donnees'
+        self.assertEqual(collection_sort.load(data/'catalog'),sorting)
+        self.assertEqual(sorted(path.name for path in (data/'library/zim').glob('*.zim')),['ted_mul_history_2027-01.zim'])
+
     def test_corrupt_copy_never_becomes_final(self):
         self.entry['sha256'] = 'f'*64
         target = self.root/'target.py'

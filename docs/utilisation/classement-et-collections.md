@@ -1,8 +1,49 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — actualisé pour la 0.57.0, 19 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.64.0, 19 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
+
+## Trier les collections pour la recherche
+
+Dans **Bibliothèque → Collections → Tri des collections**, utilisez le profil
+Famille pour sélectionner des archives ZIM ou des groupes locaux de vidéos.
+Le panneau affiche leur nom, leur volume, leur classement et le volume
+sélectionné. Les vidéos dans une archive suivent le classement de cette archive.
+Les guides individuels font partie du Fonds principal.
+
+- **Fonds principal** alimente **Autonomie et résilience** et **Savoirs et
+  culture**. Ce dernier applique aussi le classement documentaire.
+- **Autre** limite la recherche aux collections mises de côté. **Toute la
+  bibliothèque** interroge les deux fonds. L’assistant applique les mêmes choix.
+- **Supprimer et exclure** affiche les fichiers, y compris les fichiers partiels
+  concernés, et leur volume. La suppression se lance après confirmation. Une
+  exclusion s’applique aussi aux prochaines éditions et aux plans repris.
+  Les vidéos YouTube d’un groupe exclu sont écartées dès que le téléchargeur
+  connaît leur chaîne ou leur dossier de destination.
+
+Un changement entre Fonds principal et Autre est réversible et s’applique à
+la recherche suivante. **Exporter le tri** produit un fichier
+`SetupSurvie-tri.json` avec les listes **Autre** et **Exclues**.
+Pour l’importer, choisissez ce fichier lors de l’installation Windows,
+ou à la préparation de la sélection dans **Mon appareil → Stockage**.
+Vérifiez le volume et le classement proposés avant de lancer le transfert.
+Les éditions sont reconnues par la référence de collection, langue comprise.
+
+## Préparer les index de Wikipédia par catégorie
+
+Dans **Bibliothèque → Collections → Index par catégorie de Wikipédia en français**,
+le profil Famille peut démarrer la préparation, la mettre en pause et la reprendre.
+SetupSurvie classe les articles pendant cette tâche, puis interroge l’index
+**Autonomie et résilience** ou **Savoirs et culture** selon le choix de recherche.
+**Toute la bibliothèque** continue de consulter l’archive complète. Pendant
+la préparation ou après une modification, l’index habituel de Wikipédia répond.
+
+Le panneau indique la progression, puis le temps écoulé et la place occupée.
+Une nouvelle édition ou une correction de catégorie rend les index à
+actualiser. SetupSurvie peut relancer leur préparation pendant la plage
+d’indexation configurée. Une interruption reprend au dernier lot enregistré
+si l’archive et les corrections correspondent toujours.
 
 ## Comprendre le classement automatique
 

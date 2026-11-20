@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import AsyncMock,patch
 
 from fastapi.testclient import TestClient
-from pilot import app as gateway,engine,library,store,video_requests,videos
+from pilot import app as gateway,collection_sort,engine,library,network,store,video_requests,videos
 import test_engine_evidence as harness
 
 
@@ -50,7 +50,22 @@ class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
         videos.CHECKED=0.0
         found=await self.search('',kind='videos',domain='culture')
         self.assertEqual([item['title'] for item in found],['Allumer un feu sans allumettes','Bouillir de l’eau'])
-        self.assertTrue(all(item['kind']=='video' for item in found));self.assertEqual(found.coverage['domain'],'all')
+        self.assertTrue(all(item['kind']=='video' for item in found));self.assertEqual(found.coverage['domain'],'culture')
+
+    async def test_video_group_reclassification_applies_to_title_and_subtitle_partitions(self):
+        sidecar=videos.ROOT/'eau.info.json'
+        sidecar.write_text(json.dumps({**json.loads(sidecar.read_text()),'channel':'Autre chaîne'}))
+        videos.scan()
+        key=collection_sort.video({'source':{'channel':'Chaîne fictive'}})
+        with patch.object(network,'CATALOG',self.root/'catalog'):
+            collection_sort.save(network.CATALOG,collection_sort.Sort(frozenset({key})))
+            self.assertFalse(await self.search('allumettes',kind='videos',domain='resilience'))
+            result=await self.search('planche',kind='videos',domain='other')
+            self.assertEqual(result[0]['match'],'subtitle')
+            self.assertEqual(result.coverage['videos']['indexes_queried'],1)
+            self.assertTrue(await self.search('allumettes',kind='videos',domain='all'))
+            collection_sort.save(network.CATALOG,collection_sort.Sort())
+            self.assertTrue(await self.search('allumettes',kind='videos',domain='resilience'))
 
     async def test_long_video_question_keeps_partial_matches(self):
         videos.scan()

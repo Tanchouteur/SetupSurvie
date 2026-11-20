@@ -62,6 +62,7 @@ HOST_PHASES = {
     'verified': ('completed', 'Fichiers vérifiés'),
     'planned': ('completed', 'Sélection prête'),
     'completed': ('completed', 'Préparation terminée'),
+    'partial': ('partial', 'Examen terminé avec des limites'),
     'unknown': ('unknown', 'État non confirmé'),
 }
 
@@ -111,6 +112,8 @@ def add_host_work(jobs, report):
     extra = {}
     if kind == 'video-inventory':
         extra['focus'] = 'next-archive-videos'
+        if status == 'partial' and message:
+            stage = message
     if status in ('error', 'interrupted'):
         extra |= {'error': message or 'Le PC serveur n’a pas précisé la cause de l’arrêt.',
                  'help': HOST_HELP.get(kind, HOST_HELP_DEFAULT)}
@@ -355,6 +358,13 @@ class Queue(Slot):
                          **({'help': HOST_HELP['video-inventory'], 'retry_label': HOST_RETRY['video-inventory']}
                             if phase in ('error', 'failed', 'interrupted') else {})})
         add_host_work(jobs, activity or {})
+        if ((activity or {}).get('kind') != 'video-inventory'
+                and archive_videos.zim_video_inventory.partial_with_all_archives(archive)):
+            jobs.append(work_item('archive-video-index', 'archive-video-index', status='partial',
+                                  title='Inventaire des vidéos dans les collections',
+                                  done=archive['completed'], total=archive['archives'],
+                                  stage=archive_videos.zim_video_inventory.LIMITED_INVENTORY_MESSAGE,
+                                  href='#/bibliotheque/collections?rubrique=videos', focus='next-archive-videos'))
         for job in jobs:
             job.setdefault('lane', BACKGROUND_LANE.get(job['kind'], 'ai'))
             job.setdefault('priority', job['kind'] == 'chat')
@@ -502,9 +512,11 @@ async def retry(identifier, profile):
         identifier = 'archive-video-index'
     if identifier in VIDEO_INVENTORIES:
         if profile['role'] != 'admin':raise HTTPException(403,'Accès réservé à l’administrateur.')
-        phase = ((await archive_videos.status())['phase'] if identifier == 'archive-video-index'
-                 else (await asyncio.to_thread(videos.status))['phase'])
-        if phase not in ('paused', 'interrupted', 'error', 'failed'):
+        report = (await archive_videos.status() if identifier == 'archive-video-index'
+                  else await asyncio.to_thread(videos.status))
+        needs_retry = (identifier == 'archive-video-index' and report['phase'] == 'partial'
+                       and not archive_videos.zim_video_inventory.partial_with_all_archives(report))
+        if report['phase'] not in ('paused', 'interrupted', 'error', 'failed') and not needs_retry:
             raise HTTPException(409,'Cet inventaire n’est pas en pause et ne nécessite pas de relance.')
         await (archive_videos.start() if identifier == 'archive-video-index' else videos.start())
         return

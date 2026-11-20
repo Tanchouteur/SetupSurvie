@@ -69,6 +69,22 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
             await work_queue.retry('host:video-inventory', ADMIN)
         start.assert_awaited_once()
 
+    async def test_partial_video_inventory_distinguishes_coverage_from_failure(self):
+        report = {'phase': 'partial', 'archives': 1, 'completed': 1,
+                  'results': [{'status': 'partial', 'skipped_html': 390}]}
+        with patch.object(archive_videos, 'progress', return_value=report):
+            card = next(job for job in self.queue.snapshot(ADMIN)['jobs'] if job['id'] == 'archive-video-index')
+        self.assertEqual((card['status'], card['done'], card['retry']), ('partial', 1, False))
+        with patch.object(archive_videos, 'status', AsyncMock(return_value=report)), \
+                patch.object(archive_videos, 'start', AsyncMock()) as start:
+            with self.assertRaises(HTTPException) as exception:
+                await work_queue.retry('host:video-inventory', ADMIN)
+            self.assertEqual(exception.exception.status_code, 409)
+            start.assert_not_awaited()
+            report['results'][0]['status'] = 'error'
+            await work_queue.retry('host:video-inventory', ADMIN)
+            start.assert_awaited_once()
+
     async def test_priority_pause_running_slot_and_error_isolation(self):
         queue = self.queue
         observed = []

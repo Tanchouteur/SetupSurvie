@@ -62,6 +62,19 @@ class ArchiveVideoJobTests(unittest.TestCase):
         self.assertIn('--cancel',command);self.assertIn('--job-id',command);self.assertNotIn('pip',command);compose.assert_not_called()
         self.assertEqual(self.manager.read()['phase'],'completed')
 
+    def test_inventory_with_skipped_entries_finishes_without_a_host_error(self):
+        state, _ = self.seed(action='video-inventory', phase='starting')
+        state['options'] = {}
+        self.manager.write(state)
+        report = Path(self.config['data_dir'])/'state/pilot/zim-videos/progress.json'
+        setup.write_json(report, {'job_id': state['id'], 'phase': 'partial', 'archives': 1,
+                                  'results': [{'status': 'partial', 'skipped_html': 390}]})
+        with patch.object(jobs.subprocess, 'Popen', return_value=MagicMock(pid=os.getpid(), wait=lambda: 0)):
+            self.manager.run(state['id'])
+        current = self.manager.read()
+        self.assertEqual(current['phase'], 'completed')
+        self.assertEqual(current['message'], jobs.zim_video_inventory.LIMITED_INVENTORY_MESSAGE)
+
     def test_cancelled_inventory_keeps_pause_and_gaming_requests_a_cooperative_pause(self):
         state,folder=self.seed(action='video-inventory',phase='downloading');(folder/'cancel').touch()
         with patch.object(jobs.subprocess,'Popen') as process:self.manager.run(state['id'])

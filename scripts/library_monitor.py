@@ -11,6 +11,7 @@ import time
 
 import discovery
 from delivery_paths import destination
+from pilot import zim_video_inventory
 
 MAX_JSON = 32 * 1024 * 1024
 MAX_ITEMS = 20000
@@ -125,6 +126,15 @@ def snapshot(root, work, *, now=None):
                 if phase in ('starting', 'planning', 'downloading', 'refreshing') and alive is False:
                     phase = 'interrupted'
                 extra={}
+                message=web.get('message') if isinstance(web.get('message'),str) else ''
+                if web['action'] == 'video-inventory' and phase in ('completed', 'error'):
+                    report = read_json(destination(root, 'state/pilot/zim-videos/progress.json'), {})
+                    if (isinstance(report, dict) and report.get('job_id') == web['id']
+                            and zim_video_inventory.partial_with_all_archives(report)
+                            and (phase == 'completed' or message.startswith('L’opération a échoué.'))):
+                        phase = 'partial'
+                        message = zim_video_inventory.LIMITED_INVENTORY_MESSAGE
+                        extra = {'archives': report['archives'], 'completed': report['archives']}
                 if web['action']=='index':
                     progress=read_json(root/'state/pilot/archive-index/progress.json',{})
                     if isinstance(progress,dict):extra={key:progress.get(key,0) for key in ('archives','completed','articles') if type(progress.get(key,0)) is int}
@@ -134,8 +144,6 @@ def snapshot(root, work, *, now=None):
                     progress=read_json(destination(work,'library-web/'+web['id']+'/progress.json'),{})
                     counts=progress.get('counts') if isinstance(progress,dict) else None
                     if isinstance(counts,dict):extra={'videos':progress.get('videos',0),'downloaded':counts.get('downloaded',0),'skipped':counts.get('skipped',0),'errors':counts.get('error',0)}
-                # The supervisor's own sentence explains a stop to non-specialists.
-                message=web.get('message') if isinstance(web.get('message'),str) else ''
                 return {**base, 'source': source, 'phase': phase,
                         'kind': web['action'], 'worker_alive': alive,'index_progress':extra,'message':message[:400]}
             plan_path = allowed_plan(work / 'library-web' / web['id'] / 'plan.json', root, work)

@@ -12,7 +12,7 @@
   const held = job => ['paused', 'stopped', 'interrupted', 'incomplete'].includes(job.status);
   const statusLabel = job => ({
     queued: 'En attente', preparing: 'Préparation', running: 'En cours', paused: 'En pause',
-    completed: 'Terminé', done: 'Terminé', error: 'En erreur', failed: 'En erreur',
+    completed: 'Terminé', done: 'Terminé', partial: 'Terminé avec des limites', error: 'En erreur', failed: 'En erreur',
     incomplete: 'Incomplet', interrupted: 'Interrompu', stopped: 'Arrêté', cancelled: 'Annulé'
   })[job.status] || 'État inconnu';
   const workLabel = (job, fallback) => ({
@@ -309,6 +309,8 @@
         const problems = state.jobs.filter(job => failed(job) ||
           (job.failure_count > 0 && !held(job) && !waiting(job) && job.status !== 'running'));
         if (problems.length) section('À vérifier', problems);
+        const limited = state.jobs.filter(job => job.status === 'partial');
+        if (limited.length) section('Inventaires terminés', limited);
         const pausedJobs = state.jobs.filter(held);
         if (pausedJobs.length) section('À reprendre', pausedJobs);
         const activeLanes = lanes(state).filter(lane => lane.running || lane.waiting.length);

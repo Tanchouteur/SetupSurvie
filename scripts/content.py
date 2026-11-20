@@ -18,7 +18,7 @@ import urllib.request
 
 import setup
 from delivery_paths import locked
-from pilot import durable
+from pilot import collection_sort, durable
 
 CATALOG=setup.ROOT/'deploy/content-catalog.json'
 DEFAULT_BUDGET=500_000_000_000
@@ -169,6 +169,10 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
     root=setup.safe_path(root)
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
+        sorting = collection_sort.load(root / 'catalog')
+        items = [item for item in items if sorting.permits(collection_sort.path_key(item['path']), 'all')]
+        if not items:
+            return []
         missing=0
         for item in items:
             final=destination(root,item['path']);part=destination(root,item['path']+'.part')

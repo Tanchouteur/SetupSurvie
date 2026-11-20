@@ -265,6 +265,12 @@ avec une flèche. L’examen des vidéos des collections se relance directement 
 Collections → Vidéos** et déplie le panneau d’examen, au lieu de la page
 Entretien. Si le PC serveur n’a pas donné de cause, la carte le dit.
 
+Si toutes les collections ont été parcourues et que l’examen a laissé de côté
+certaines entrées, la file affiche **Terminé avec des limites**. Le panneau
+**Vidéos dans les collections** indique le nombre de pages HTML ignorées pour
+leur taille, et le rapport donne le détail par collection. Une collection que
+l’examen n’a pas pu parcourir reste signalée en erreur et peut être relancée.
+
 L’aperçu au survol de l’icône reste ouvert quand la souris descend de l’icône
 vers lui : l’écart de 0.63.0, qui le refermait, est corrigé.
 

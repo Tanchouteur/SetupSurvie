@@ -31,7 +31,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'scripts'))
 import setup
 from delivery_paths import locked
-from pilot import durable
+from pilot import collection_sort, durable
 from pilot.youtube_list import REASONS,folder_name,parse_list
 from pilot.video_inventory import INCOMPLETE,SUBTITLE_EXTENSIONS,VIDEO_EXTENSIONS
 import youtube_tools
@@ -132,7 +132,7 @@ def free_stem(folder,stem,suffixes):
     raise setup.SetupError('Trop de fichiers du même nom dans '+str(folder))
 
 
-def publish(media,sidecars,library,entry):
+def publish(media,sidecars,library,entry,*,sorting=None):
     """Move finished files into the library: sidecars first, media last.
 
     The pilot ignores a video until its media file appears, so it never sees
@@ -143,6 +143,10 @@ def publish(media,sidecars,library,entry):
             try:info=json.loads(path.read_text(encoding='utf-8'))
             except (OSError,ValueError):info={}
     folder=library/'youtube'/(entry['theme'] or folder_name(info.get('channel') or info.get('uploader'),'Sans chaîne'))
+    if sorting is not None:
+        key=collection_sort.video({'source':{'channel':info.get('channel')},'collection':folder.relative_to(library).as_posix()})
+        if not sorting.permits(key,'all'):
+            return None,[],info
     durable.mkdir(folder)
     original=media.name[:-len(media.suffix)]
     suffixes=[media.suffix,*[path.name[len(original):] for path in sidecars]]
@@ -217,8 +221,11 @@ def download(entry,data,library,base,*,max_height,max_bytes,reserve,ffmpeg,js_ru
     if returncode or media is None:
         detail=[line.strip()[:300] for line in output.splitlines() if line.startswith('ERROR')][-3:]
         return {'status':'error','reason':classify(output,returncode),'detail':detail,'warnings':warnings}
-    target,moved,info=publish(media,sidecars,library,entry)
+    with locked(data/'catalog/content.lock'):
+        sorting=collection_sort.load(data/'catalog')
+        target,moved,info=publish(media,sidecars,library,entry,sorting=sorting)
     shutil.rmtree(staging,ignore_errors=True)
+    if target is None:return {'status':'refused','reason':'collection_excluded'}
     subtitles=sorted(p.name for p in moved if p.suffix.lower() in SUBTITLE_EXTENSIONS)
     return {'status':'downloaded','subtitles_skipped':subtitles_skipped,'path':target.relative_to(library).as_posix(),'title':str(info.get('title') or '')[:300],
             'channel':str(info.get('channel') or info.get('uploader') or '')[:200],'duration_seconds':info.get('duration'),

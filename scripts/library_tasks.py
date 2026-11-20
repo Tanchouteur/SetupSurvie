@@ -12,6 +12,8 @@ import time
 import uuid
 
 import content
+import collection_tasks
+from pilot import category_index, zim_video_inventory
 import discovery
 import kiwix_select
 import geography_data
@@ -67,7 +69,7 @@ class Manager:
             raise setup.SetupError('Opération documentaire non valide.')
         return self.directory / job
 
-    def check_storage(self):
+    def check_storage(self,reserve=15_000_000_000):
         root = setup.safe_path(self.config['data_dir'])
         scope = None
         if self.backend == 'lab':
@@ -75,7 +77,7 @@ class Manager:
             lab.checked_mount(); scope = lab.MOUNT
             if root != lab.MOUNT / 'data':
                 raise setup.SetupError('Données du laboratoire hors du volume dédié.')
-        content.check_capacity(root, storage_root=scope)
+        content.check_capacity(root, storage_root=scope, reserve=reserve)
         return root, scope
 
     def current(self):
@@ -86,9 +88,16 @@ class Manager:
                 # The worker can finish between the first read and the PID check.
                 state = self.read()
                 if state['phase'] not in ACTIVE:return state
-                if state.get('action')=='youtube-download':
+                if state.get('action') in ('youtube-download','category-index'):
                     child=state.get('index_pid');identity=state.get('index_identity')
                     if child and identity and discovery.identity(child)==identity:return state
+                    if state.get('action')=='category-index':
+                        root=Path(self.config['data_dir'])/'state/pilot'
+                        report=category_index.read_status(root)
+                        if report.get('job_id')==state.get('id') and report['phase'] in ('completed','paused'):
+                            state.update(phase=report['phase'],message='État de la préparation Wikipédia récupéré.')
+                            self.write(state)
+                            return state
                 if state.get('action')=='video-inventory':
                     child=state.get('index_pid');identity=state.get('index_identity')
                     if child and identity and discovery.identity(child)==identity:return state
@@ -96,7 +105,12 @@ class Manager:
                     try:report=json.loads(report_path.read_text(encoding='utf-8'))
                     except (OSError,ValueError):report={}
                     if report.get('job_id')==state.get('id') and report.get('phase') in ('completed','partial','paused'):
-                        state.update(phase={'completed':'completed','partial':'error','paused':'paused'}[report['phase']],message='État de l’inventaire vidéo récupéré après l’arrêt du superviseur.')
+                        phase = report['phase']
+                        if zim_video_inventory.partial_with_all_archives(report):
+                            state.update(phase='completed', message=zim_video_inventory.LIMITED_INVENTORY_MESSAGE)
+                        else:
+                            state.update(phase='error' if phase == 'partial' else phase,
+                                         message='État de l’inventaire vidéo récupéré après l’arrêt du superviseur.')
                         self.write(state);return state
                 if state.get('action')=='index':
                     child=state.get('index_pid');identity=state.get('index_identity')
@@ -133,6 +147,10 @@ class Manager:
         queued['waiting_reason']=waiting
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
+        root=Path(self.config['data_dir'])
+        result['category_index']=category_index.availability(root/'library/zim',root/'state/pilot')[0]
+        if result['category_index']['phase']=='running' and (state.get('action')!='category-index' or state['phase'] not in ACTIVE):
+            result['category_index']['phase']='interrupted'
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
         result['action']=state.get('action')
         if state.get('action')=='youtube-download' and state.get('id'):
@@ -163,7 +181,7 @@ class Manager:
         if state['phase'] in ACTIVE:
             if state.get('action')=='video-inventory' and gaming:
                 self.pause(automatic=True)
-            if state.get('action')=='index' and state.get('options',{}).get('automatic') and not allowed:
+            if state.get('action') in ('index','category-index') and state.get('options',{}).get('automatic') and not allowed:
                 self.pause(automatic=True)
             return
         request = self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST
@@ -172,6 +190,12 @@ class Manager:
             with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
                 self.start('video-inventory', {'automatic': True})
             return
+        if allowed and state['phase'] in ('idle','completed') and self.index_ready():
+            category,_=category_index.availability(root/'library/zim',root/'state/pilot')
+            if category['phase']=='outdated':
+                try:self.start('category-index',{'automatic':True})
+                except setup.SetupError:pass
+                return
         automatic = state.get('options', {}).get('automatic')
         resumable = state['phase'] == 'paused' and state.get('action') == 'index' and automatic
         initial_video_error = state['phase'] == 'error' and state.get('action') == 'video-inventory' and automatic
@@ -214,8 +238,16 @@ class Manager:
         state = self.current()
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
-        self.check_storage()
-        if action in ('index','index-prepare','video-inventory'):
+        if action=='collection-exclude':self.check_storage(0)
+        else:self.check_storage()
+        if action == 'category-index':
+            if not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
+            if index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’indexation après la pause.')
+            root=Path(self.config['data_dir'])
+            if not category_index.source(root/'library/zim'):raise setup.SetupError('Wikipédia en français est indisponible.')
+            state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':body.get('automatic') is True}}
+            self.paths(state['id']).mkdir(parents=True)
+        elif action in ('index','index-prepare','video-inventory'):
             if action in ('index','video-inventory') and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
             if action=='video-inventory' and index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’inventaire vidéo après la pause ; les résultats terminés restent disponibles.')
             automatic=body.get('automatic') is True
@@ -231,6 +263,14 @@ class Manager:
             options = geography_data.validate(body)
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
             self.paths(state['id']).mkdir(parents=True)
+        elif action == 'collection-exclude':
+            keys = collection_tasks.validate_keys(body)
+            current = collection_tasks.preview(Path(self.config['data_dir']), keys)
+            if not current['files'] or current['token'] != body.get('token'):
+                raise setup.SetupError('Affichez et confirmez la liste actuelle des fichiers à supprimer.')
+            state = {'id': uuid.uuid4().hex, 'phase': 'starting',
+                     'options': {'keys': sorted(keys), 'token': current['token']}}
+            self.paths(state['id']).mkdir(parents=True)
         elif action == 'plan':
             requested = body.get('themes')
             size = body.get('max_add_gb', 0)
@@ -243,6 +283,10 @@ class Manager:
                 raise setup.SetupError('Le plafond de téléchargement doit être positif, ou 0 pour tous les ajouts possibles.')
             if not isinstance(languages, list) or not languages or any(l not in ('fr', 'en') for l in languages):
                 raise setup.SetupError('Choisissez le français, l’anglais ou les deux.')
+            try:
+                collection_tasks.merge(Path(self.config['data_dir']), body.get('collection_sort'))
+            except ValueError as exc:
+                raise setup.SetupError(str(exc)) from exc
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': {
                 'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages)),'include_supplements':supplements}}
             self.paths(state['id']).mkdir(parents=True)
@@ -334,9 +378,28 @@ class Manager:
         def check():
             if (folder / 'cancel').exists(): raise Paused()
         try:
-            root, scope = self.check_storage()
+            root, scope = self.check_storage(0) if state['action']=='collection-exclude' else self.check_storage()
             check()
-            if state['action']=='youtube-download':
+            if state['action']=='collection-exclude':
+                update('refreshing','Suppression des fichiers confirmés et actualisation du catalogue…')
+                keys=set(state['options']['keys'])
+                if self.backend == 'lab':
+                    import linux_lab as lab
+                    if any(key.startswith('zim:') for key in keys):lab.podman('stop',lab.PREFIX+'kiwix',capture=True)
+                elif any(key.startswith('zim:') for key in keys):
+                    self.app.compose(self.config,'stop','kiwix')
+                try:
+                    recovered=collection_tasks.exclude(root,keys,state['options']['token'])
+                    self.app.catalog(self.config)
+                finally:
+                    if self.backend == 'lab':
+                        lab.podman('start',lab.PREFIX+'kiwix',capture=True)
+                        lab.podman('restart',lab.PREFIX+'pilot',capture=True)
+                    else:
+                        self.app.compose(self.config,'start','kiwix')
+                        self.app.compose(self.config,'restart','pilot')
+                update('completed',f'Collections supprimées et exclues. {recovered/1e9:.2f} Go de fichiers retirés.')
+            elif state['action']=='youtube-download':
                 update('downloading','Téléchargement des vidéos YouTube et de leurs sous-titres…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
                 command=[sys.executable,'-X','utf8',str(setup.ROOT/'scripts/youtube_videos.py'),'download',str(folder/'liste.txt'),
@@ -354,6 +417,18 @@ class Manager:
                        f"{counts.get('error',0)+counts.get('refused',0)} non téléchargée(s). "
                        +(f"{report['remaining']} restante(s), à reprendre après avoir libéré de l’espace. " if report.get('remaining') else '')
                        +'Le site répertorie les vidéos téléchargées.')
+            elif state['action']=='category-index':
+                update('downloading','Préparation des index par catégorie de Wikipédia en français…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                command=[str(self.index_python()),'-X','utf8',str(setup.ROOT/'scripts/index_categories.py'),
+                         '--data-dir',str(root),'--cancel',str(folder/'cancel'),'--job-id',job]
+                process=subprocess.Popen(command,**hidden)
+                state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
+                code=process.wait();check()
+                report=category_index.read_status(root/'state/pilot')
+                if code or report['phase']!='completed':
+                    raise setup.SetupError('Les index par catégorie doivent être repris.')
+                update('completed','Index de Wikipédia par catégorie prêts.')
             elif state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools
@@ -371,8 +446,14 @@ class Manager:
                 state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
                 code=process.wait();check()
                 report=json.loads((root/'state/pilot/zim-videos/progress.json').read_text(encoding='utf-8'))
-                if code or report.get('job_id')!=job or report.get('phase')!='completed':raise setup.SetupError('Certaines collections n’ont pas pu être examinées. Les inventaires terminés restent disponibles ; consultez le rapport vidéo.')
-                update('completed','Inventaire des vidéos terminé. Leur présence ne valide pas leur lecture ou leurs sous-titres.')
+                if code or report.get('job_id') != job:
+                    update('error', 'L’examen des vidéos a échoué. Les résultats précédents restent disponibles.')
+                elif zim_video_inventory.partial_with_all_archives(report):
+                    update('completed', zim_video_inventory.LIMITED_INVENTORY_MESSAGE)
+                elif report.get('phase') == 'completed':
+                    update('completed', 'Inventaire des vidéos terminé. Leur présence ne valide pas leur lecture ou leurs sous-titres.')
+                else:
+                    update('error', 'Certaines collections n’ont pas pu être examinées. Consultez le rapport vidéo avant de relancer.')
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
@@ -445,6 +526,12 @@ class Manager:
             if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')
             if state.get('action') in ('index','index-prepare') and getattr(exc,'report',None):state['reader_probe']=exc.report
             print(type(exc).__name__, str(exc), flush=True)
+            if state.get('action')=='category-index':
+                update('error','La préparation des index Wikipédia doit être reprise. La recherche habituelle reste disponible.')
+                return
+            if state.get('action')=='collection-exclude':
+                update('error','La suppression ou l’actualisation a été interrompue. Rechargez les collections pour voir les fichiers restants.')
+                return
             update('error',getattr(exc,'public_message',None) or ('L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.'))
 
 

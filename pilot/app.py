@@ -17,7 +17,7 @@ from pydantic import BaseModel,Field
 from starlette.responses import FileResponse,JSONResponse,StreamingResponse
 
 from . import model_downloads,work_queue,youtube_pipeline
-from . import accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream,startup_diagnostic
+from . import collection_sort,accounts,engine,inventory,library,maps,network,operations,store,geography,map_notebook,routing,translations,source_metadata,learning,profiles,catalogue,assistant_metrics,calibration,search_stream,startup_diagnostic
 
 TERRAIN_LOCK=asyncio.Semaphore(2)
 COOKIE='survie_session'
@@ -123,7 +123,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.63.5'
+VERSION='0.64.2'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -183,6 +183,7 @@ class LibrarySelection(BaseModel):
     languages:list[str]=Field(default_factory=lambda:['fr','en'],min_length=1,max_length=2)
     max_add_gb:int=Field(default=0,ge=0)
     include_supplements:bool=False
+    collection_sort:dict|None=None
 
 
 class LibraryDownload(BaseModel):
@@ -213,12 +214,50 @@ async def library_status(value=Depends(admin)):
 
 @app.post('/api/admin/library/plan',status_code=202)
 async def library_plan(body:LibrarySelection,value=Depends(admin)):
-    return await operations.library_command('plan',body.model_dump())
+    if body.collection_sort is not None:
+        try:
+            collection_sort.parse(body.collection_sort)
+        except ValueError as exc:
+            raise HTTPException(400,str(exc)) from exc
+    return await operations.library_command('plan',body.model_dump(exclude_none=True))
 
 
 @app.post('/api/admin/library/download',status_code=202)
 async def library_download(body:LibraryDownload,value=Depends(admin)):
     return await operations.library_command('download',body.model_dump())
+
+
+class CollectionBatch(BaseModel):
+    keys:list[str]=Field(min_length=1,max_length=500)
+    state:Literal['main','other']|None=None
+    token:str|None=Field(default=None,pattern='^[a-f0-9]{64}$')
+
+
+@app.get('/api/library/collection-sort')
+async def library_collection_sort():
+    return await asyncio.to_thread(inventory.sortable_collections)
+
+
+@app.get('/api/admin/library/collection-sort/export')
+async def export_collection_sort(value=Depends(admin)):
+    sorting=await asyncio.to_thread(collection_sort.load,network.CATALOG)
+    return JSONResponse(sorting.as_json(),headers={'Content-Disposition':'attachment; filename="SetupSurvie-tri.json"'})
+
+
+@app.post('/api/admin/library/collection-sort/{action}')
+async def change_collection_sort(action:Literal['move','preview','exclude'],body:CollectionBatch,value=Depends(admin)):
+    return await operations.library_command('collection-'+action,body.model_dump())
+
+
+@app.get('/api/library/category-index')
+async def category_index_status():
+    report,_=await asyncio.to_thread(library.category_index.availability,inventory.ZIMS,store.ROOT)
+    return {key:report[key] for key in ('phase','archive','done','total','bytes','elapsed_seconds','counts') if key in report}
+
+
+@app.post('/api/admin/library/category-index',status_code=202)
+async def prepare_category_index(value=Depends(admin)):
+    return await operations.library_command('category-index')
 
 
 @app.post('/api/admin/library/pause',status_code=202)
@@ -549,7 +588,7 @@ async def search_diagnostic():
 
 
 @app.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture']='all',diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture','other']='all',diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
     owner=(await user(request))['id'] if favorites_only else None
     if stream:
         return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic,kind=kind),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
@@ -1172,7 +1211,7 @@ async def associate_sources(identifier:str,body:AssociatedSources,value=Depends(
 class Question(BaseModel):
     message:str=Field(min_length=1,max_length=6000)
     mode:str='rapide'
-    domain:Literal['all','resilience','culture']='all'
+    domain:Literal['all','resilience','culture','other']='resilience'
     conversation_id:str|None=Field(default=None,max_length=100)
     source_id:str|None=Field(default=None,max_length=2000)
     source_ids:list[SourceIdentifier]|None=Field(default=None,max_length=12)

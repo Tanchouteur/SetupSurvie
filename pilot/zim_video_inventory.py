@@ -24,9 +24,17 @@ MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
 YOUTUBE_TITLES='youtube_video_titles_v1'
 EXAMINED_STATUSES={'completed','reused','partial'}
+LIMITED_INVENTORY_MESSAGE = 'Toutes les collections ont été parcourues. Le rapport indique les entrées non examinées.'
 YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
 GENERIC_TITLE=re.compile(r'(?:vid[eé]o|videoplayback|clip|media|index|[0-9]+|[0-9a-f]{16,}|[A-Za-z0-9_-]{24,})',re.I)
 TECHNICAL_TITLE=re.compile(r'://|\?[\w-]+=|\.(?:m4s|webm|mp4|ts)$',re.I)
+
+
+def partial_with_all_archives(report):
+    results = report.get('results')
+    return (report.get('phase') == 'partial' and not report.get('unexamined')
+            and isinstance(results, list) and 0 < len(results) == report.get('archives')
+            and all(isinstance(row, dict) and row.get('status') in EXAMINED_STATUSES for row in results))
 
 
 def readable_title(title):

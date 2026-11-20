@@ -293,6 +293,10 @@ async function runSearch(event){
       for(const card of $('search-results').querySelectorAll('.result')){if(opened.has(card.dataset.source)&&card.querySelector('details'))card.querySelector('details').open=true;if(source===card.dataset.source&&position>=0)card.querySelectorAll(controls)[position]?.focus({preventScroll:true});}
     }
     $('search-results').querySelectorAll('.search-extra').forEach(node=>node.remove());
+    const category=data.coverage?.category_index;
+    if(['running','paused','outdated','error'].includes(category?.phase)){
+      $('search-results').append(element('p','Wikipédia utilise son index habituel pendant la préparation de ses index par catégorie.','small muted'));
+    }
     if(data.coverage?.domain&&data.coverage.domain!=='all'){const wider=button('Élargir à toute la bibliothèque',()=>{$('search-domain').value='all';$('search-domain').dispatchEvent(new Event('change'));},'secondary search-extra');$('search-results').append(wider);}
     if(!data.results.length&&kind==='videos'&&!ongoing)$('search-results').append(element('div',q?'Aucune vidéo ne correspond à ces mots. Effacez la recherche pour voir toutes les vidéos répertoriées, ou essayez un mot plus court.':'Aucune vidéo répertoriée pour le moment. Ajoutez des vidéos dans le dossier library/video, puis patientez : le répertoire s’actualise automatiquement.','empty-panel search-extra'));
     else if(!data.results.length)$('search-results').append(element('div',ongoing?'Aucun résultat pour le moment. La recherche continue ; les premiers documents apparaîtront ici.':partial?'Aucun résultat dans la partie interrogée. La recherche est incomplète ; cela ne prouve pas l’absence d’information.':'Aucun résultat trouvé. La recherche est terminée. Essayez un autre mot, une formulation plus courte ou une autre langue.','empty-panel search-extra'));
@@ -792,9 +796,9 @@ function renderContentState(){
   if(plan?.legacy_selection)$('content-plan-summary').append(document.createTextNode(' Ancien plan : les nouveaux filtres de pertinence ne lui sont pas appliqués. Pour les utiliser, mettez le transfert en pause puis préparez une nouvelle sélection.'));
   $('content-results').hidden=!plan;
   if(plan){
-    const labels={selected:data.phase==='completed'?'Téléchargée et vérifiée':'À télécharger',already_local:'Déjà présent',covered_by_full_collection:'Collection complète présente ou sélectionnée',budget_excluded:'Dépasse le plafond choisi',optional_excluded:'Complément non demandé',out_of_scope:'Hors du fonds pratique',metadata_unavailable:'Informations de téléchargement indisponibles',existing_conflict:'Fichier existant conservé',partial_conflict:'Fichier partiel à vérifier'};
+    const labels={selected:data.phase==='completed'?'Téléchargée et vérifiée':'À télécharger',already_local:'Déjà présent',covered_by_full_collection:'Collection complète présente ou sélectionnée',budget_excluded:'Dépasse le plafond choisi',optional_excluded:'Complément non demandé',sort_excluded:'Exclue par le fichier de tri',out_of_scope:'Hors du fonds pratique',metadata_unavailable:'Informations de téléchargement indisponibles',existing_conflict:'Fichier existant conservé',partial_conflict:'Fichier partiel à vérifier'};
     $('content-candidates').replaceChildren();
-    for(const item of plan.candidates){const row=element('li');row.append(element('strong',item.title),element('span',labels[item.status]||item.status,'small'),element('span',[item.themes.map(t=>names.get(t)||t).join(', '),bytes(item.bytes||item.estimated_bytes),item.fulltext_index?'':'Consultation directe dans Kiwix'].filter(Boolean).join(' · '),'small muted'));$('content-candidates').append(row);}
+    for(const item of plan.candidates){const row=element('li');row.append(element('strong',item.title),element('span',(labels[item.status]||item.status)+(item.classification==='other'?' · Autre':''),'small'),element('span',[item.themes.map(t=>names.get(t)||t).join(', '),bytes(item.bytes||item.estimated_bytes),item.fulltext_index?'':'Consultation directe dans Kiwix'].filter(Boolean).join(' · '),'small muted'));$('content-candidates').append(row);}
   }
 }
 async function loadContentManager(){
@@ -819,7 +823,19 @@ async function contentAction(action,body){
   catch(e){$('content-message').textContent=e.message;}
   finally{contentCommandBusy=false;if(contentState)renderGeoJob(contentState);if(contentState){const message=$('content-message').textContent;renderContentState();$('content-message').textContent=message;}}
 }
-$('content-form').onsubmit=e=>{e.preventDefault();const options=contentOptions();if(!options.themes.length){$('content-message').textContent='Choisissez au moins un thème.';return;}contentAction('plan',options);};
+$('content-form').onsubmit=async e=>{
+  e.preventDefault();
+  const options=contentOptions(),file=$('content-sort-file').files[0];
+  if(!options.themes.length){$('content-message').textContent='Choisissez au moins un thème.';return;}
+  if(file){
+    try{
+      if(file.size>256000)throw Error();
+      options.collection_sort=JSON.parse(await file.text());
+      if(!options.collection_sort||typeof options.collection_sort!=='object')throw Error();
+    }catch(_){$('content-message').textContent='Choisissez un fichier de tri SetupSurvie au format JSON.';return;}
+  }
+  contentAction('plan',options);
+};
 $('content-form').onchange=renderContentState;
 $('content-download').onclick=()=>contentAction('download',{id:contentState.id});
 $('content-pause').onclick=()=>contentAction('pause');

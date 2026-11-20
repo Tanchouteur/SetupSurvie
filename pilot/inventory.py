@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import re
 
-from . import library, store,catalogue
+from . import collection_sort,network,library, store,catalogue
 
 ZIMS = Path(os.environ.get('ZIM_DIR', '/zim'))
 MODELS = Path(os.environ.get('MODELS_DIR', '/models'))
@@ -87,3 +87,27 @@ async def inventory():
                        'description': meta.get('provenance') or 'Document consultable directement dans la bibliothèque.'})
     return {'books': books, 'guides': guides, 'models': model_inventory(),
             'note': 'L’inventaire vérifie la présence des fichiers et leur disponibilité pour la lecture. Il ne télécharge rien et ne lance aucun modèle. Les tailles des modèles incluent des fichiers qui peuvent être partagés entre plusieurs modèles.'}
+
+
+def sortable_collections():
+    from . import videos
+    sorting=collection_sort.load(network.CATALOG)
+    saved=catalogue.snapshot()
+    _, cached=library.kiwix_catalog.snapshot(store.ROOT,library.KIWIX)
+    titles={book['book']:book['title'] for book in (cached or {}).get('items',[])}
+    items={}
+    for path,info in collection_sort.archive_files(ZIMS):
+        key=collection_sort.archive(path.name)
+        stem=path.name.removesuffix('.part').removesuffix('.zim')
+        labels=catalogue.collection_labels(stem,titles.get(stem) or stem,library.GUIDES,ZIMS,saved)
+        item=items.setdefault(key,{'key':key,'title':labels['family']+' — '+labels['variant'],
+                                   'files':[],'bytes':0,'state':sorting.state(key),'kind':'archive'})
+        item['files'].append(path.name);item['bytes']+=info.st_size
+    seen=set()
+    for key,label,path,info in collection_sort.video_files(videos.ROOT,store.ROOT/'videos.db'):
+        if (key,path) in seen:continue
+        seen.add((key,path))
+        item=items.setdefault(key,{'key':key,'title':label if label!='.' else 'Vidéos locales',
+                                   'files':[],'bytes':0,'state':sorting.state(key),'kind':'video'})
+        item['bytes']+=info.st_size
+    return sorted(items.values(),key=lambda item:(-item['bytes'],item['title'].casefold()))
