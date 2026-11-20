@@ -123,8 +123,15 @@ body.has-map-site-nav .map-site-nav #map-account:hover { background: var(--ds-su
   body.has-map-site-nav .map-stage :is(.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right) { bottom: 50px; }
   body.has-map-site-nav .map-stage .map-route-chip,
   body.has-map-site-nav .map-stage:has(.maplibregl-compact-show) .map-route-chip { bottom: 58px; }
-  body.has-map-site-nav .map-stage .selected-point-card { bottom: 86px; left: 12px; right: 12px; max-width: none; flex-wrap: nowrap; justify-content: space-between; padding: 6px 6px 6px 14px; }
-  body.has-map-site-nav .map-stage:has(.maplibregl-compact-show) .selected-point-card { bottom: 136px; }
+  body.has-map-site-nav .map-stage .selected-point-card { bottom: 86px; left: 12px; right: 12px; max-width: none; flex-wrap: nowrap; justify-content: space-between; }
+  body.has-map-site-nav .map-stage:has(.maplibregl-compact-show) .selected-point-card { bottom: 156px; }
+  /* Fiche courte : titre et coordonnées sur deux lignes serrées, bouton « Ajouter »
+     (son nom accessible reste « Ajouter à une liste »). */
+  body.has-map-site-nav .map-stage .selected-point-card { padding: 4px 4px 4px 12px; gap: 8px; }
+  body.has-map-site-nav .map-stage #selected-point-title { font-size: .8125rem; line-height: 1.3; }
+  body.has-map-site-nav .map-stage #map-point { margin: 0; font-size: .75rem; line-height: 1.3; }
+  body.has-map-site-nav .map-stage #save-selected-point { min-height: 44px; padding: 0 14px; font-size: 0; }
+  body.has-map-site-nav .map-stage #save-selected-point::after { content: "Ajouter"; content: "Ajouter" / ""; font-size: .875rem; }
   body.has-map-site-nav .map-stage .selected-point-card > div { min-width: 0; }
   body.has-map-site-nav .map-stage .selected-point-card #map-point:empty { display: none; }
   body.has-map-site-nav .map-stage .selected-point-card button { flex: none; }
