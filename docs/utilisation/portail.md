@@ -57,7 +57,7 @@ Depuis 0.1.36, les archives d’une source connue ou de même titre sont regroup
 avec des variantes et leurs liens directs conservés. Les groupes ouverts sont
 mémorisés. **Apprendre par thème** indique l’usage de l’ancien onglet Parcours.
 La [recherche documentaire](recherche-documentaire.md) explique le classement,
-les filtres et **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**.
+les filtres et **Mon appareil → Paramètres → Tests et diagnostics → Vérifier la recherche**.
 
 Depuis 0.1.34, le champ **Chercher une ressource installée** filtre les
 encyclopédies, livres et guides de Collections par nom, nom de fichier,
@@ -81,8 +81,9 @@ Si le navigateur ne peut pas afficher la carte, une explication apparaît dans
 son espace de lecture avec un retour à la bibliothèque. Cela ne signifie pas
 que vos lieux ou trajets enregistrés sont perdus.
 
-**Mon appareil → Paramètres** propose quatre entrées : **Profils et connexion**,
-**Bibliothèque et préparations**, **Assistant**, **Entretien et diagnostics**.
+**Mon appareil → Paramètres** propose cinq entrées : **Profils et connexion**,
+**Bibliothèque et préparations**, **Assistant**, **Tests et diagnostics** et
+**Entretien et données**.
 Les options avancées se déplient ; les détails apparaissent sur la carte correspondante dans **File d’attente**.
 Le [guide des paramètres](parametres-et-appareil.md) donne les chemins et la
 correspondance complète des commandes. Le profil Famille propose la gestion ;
@@ -160,7 +161,7 @@ explicite reste prioritaire sur le dernier écran mémorisé.
 
 Le brouillon n’est jamais envoyé automatiquement. Pendant le chargement d’une
 conversation, la saisie attend le bon contexte pour ne pas mélanger les brouillons.
-La suppression de la mémoire locale, dans Paramètres → Entretien et diagnostics, ne supprime pas les données
+La suppression de la mémoire locale, dans Paramètres → Entretien et données, ne supprime pas les données
 du serveur. Un profil ou document supprimé ne peut pas être recréé depuis cette
 mémoire. Les contrôles de changement de profil et d’onglets périmés restent actifs.
 

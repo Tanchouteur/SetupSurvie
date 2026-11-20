@@ -9,7 +9,7 @@ annulés, y compris les traductions et synthèses du profil sélectionné. Les
 boutons **?** expliquent le fonctionnement de la file et de chaque groupe.
 Ils s’ouvrent au toucher, à la souris et au clavier.
 
-Pour une préparation de l’appareil, ouvrez **Détails de la préparation** sur
+Pour une préparation de l’appareil, ouvrez **Détails techniques** sur
 sa carte. Selon le travail, vous y verrez les fichiers actifs, les volumes
 vérifiés, la dernière observation ou le nombre de documents indexés. Le
 titre de la carte renvoie à la page d’origine, qui conserve les commandes

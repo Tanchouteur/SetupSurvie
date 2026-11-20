@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.60.2, 3 décembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.60.2, 19 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -398,7 +398,7 @@ La publication est actuellement limitée à 20 millions de caractères traduits.
 
 ## Si une fonction ne répond plus
 
-Le lien **Lecture de secours** ouvre `/secours.html`. Il donne un accès aux fichiers
+Le lien **Documents de secours** ouvre `/secours.html`. Il donne un accès aux fichiers
 locaux et à Kiwix sans API du pilote ni moteur IA. Sa liste est la dernière liste
 statique produite par l’indexation (ou le catalogue d’installation précédent) ; son
 filtre porte sur les titres. Si elle manque, le lien Kiwix reste accessible. Le

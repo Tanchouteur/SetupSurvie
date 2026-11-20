@@ -15,72 +15,38 @@ distingue préparation avant livraison, usage client et validations restantes.
 
 ## État du projet
 
-La [refonte UX](docs/decisions/refonte-ux-evolutive.md) organise les conversations,
-les documents et la traduction dans leurs parcours, sur PC et téléphone.
-L’assistant propose des volets repliables pour conversations/dossiers et documents,
-la traduction reste dans les lecteurs, et les travaux personnels se retrouvent
-depuis leur original ou Mon appareil. Le
-[retour volontaire](docs/exploitation/retour-version-avant-refonte.md) conserve
-les données récentes et une référence de la version précédente.
+Version **0.67.0** (20 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
+une offre commerciale validée. Fonctions disponibles :
 
-Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le navigateur
-du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
-[guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
+- **Bibliothèque hors ligne** (Kiwix, guides, PDF) avec recherche locale indexée,
+  deux espaces documentaires, [organisation des collections](docs/utilisation/classement-et-collections.md)
+  et documents de secours lisibles sans IA. Elle reste accessible quand le moteur IA est arrêté.
+- **Assistant local** qui cherche et lit les documents, garde la trace des
+  sources réellement consultées, peut [lire plusieurs documents](docs/utilisation/documents-et-traduction.md)
+  ou un [livre entier par étapes](docs/utilisation/synthese-documentaire.md) et proposer les
+  [illustrations d’origine](docs/utilisation/illustrations-et-references.md).
+  Les [modèles se téléchargent depuis les paramètres](docs/utilisation/portail.md#télécharger-un-modèle-pour-lassistant).
+- **Traduction** progressive des documents, avec contrôles et publication partagée.
+- **Vidéos** des encyclopédies et [listes YouTube](docs/utilisation/telecharger-videos-youtube.md),
+  avec [sous-titres et transcription locale](docs/utilisation/videos-locales.md).
+- **Cartes** hors ligne avec [points et itinéraires locaux](docs/utilisation/points-et-itineraires.md)
+  et [zone téléchargeable sur téléphone](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
+- **File d’attente** commune des [travaux du portail](docs/utilisation/file-attente.md).
+- **Profils locaux sans mot de passe**, partagés avec Open WebUI (historiques distincts).
+- **Exploitation** : mises à jour avec retour arrière, reprise après coupure,
+  [transfert vers un autre SSD](docs/exploitation/transfert-installation.md), diagnostics exportables.
 
-Le pilote **0.67.0** propose une recherche locale avec indexation
-automatique, deux espaces documentaires et un diagnostic exportable. Les
-[modèles se téléchargent depuis les paramètres](docs/utilisation/portail.md#télécharger-un-modèle-pour-lassistant).
-La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre
-et de régler l’ordre des traitements du portail.
-Les résultats arrivent progressivement ; un cache local réutilise les réponses
-valides pour le même état du fonds, avec budget disque ajustable. Des outils
-permettent de mesurer les délais Kiwix, sans IA ni modification des contenus.
-La première installation prépare aussi les [vidéos des encyclopédies et les vidéos YouTube de la liste du projet](docs/installation/README.md#préparer-les-vidéos-à-la-première-installation).
-Le traitement progressif réutilise aussi les textes et métadonnées déjà préparés
-pendant la demande ; le diagnostic sépare ce coût des appels aux encyclopédies.
-Le nombre d’appels autorisés s’adapte aux lots d’archives dans le flux long,
-avec une durée et une concurrence bornées.
-Le tri distingue les titres de tâche, les questions périphériques et les sujets
-généraux, sans certifier le contenu à partir du seul titre.
-Les nouvelles réponses de l’assistant conservent aussi un suivi des recherches
-et lectures réellement effectuées, indépendant du texte du modèle, avec accès
-aux documents consultés même lorsqu’ils ne sont pas cités.
-On peut [choisir plusieurs documents](docs/utilisation/documents-et-traduction.md#choisir-les-documents-dune-conversation--0170)
-pour une même question ; leur sélection est conservée et les PDF peuvent fournir
-une page pertinente au-delà de leur aperçu de début. Une
-[synthèse longue](docs/utilisation/synthese-documentaire.md#lire-un-livre-entier-par-étapes--0180)
-peut aussi lire les textes choisis par étapes, avec suivi, pause et reprise.
-L’assistant peut proposer les [illustrations originales](docs/utilisation/illustrations-et-references.md)
-des sources consultées, selon leurs légendes, avec accès aux pages PDF entières.
-Il ajoute un contrôle complet de 32 demandes, la relecture des résultats et la
-prise en charge des redirections d’articles. Les espaces, types de documents et
-noms de collections sont corrigibles et exportables. Des rapports de délais et un
-essai mémoire volontaire complètent le contexte IA réglable par modèle. Un
-comparatif facultatif permet de mesurer une aide IA à la recherche, conservée
-désactivée dans l’usage habituel en attendant les résultats réels. Six dossiers
-pratiques facultatifs donnent quelques repères, sans limiter les sujets recherchables.
-Un [contrôle d’usage hors ligne](docs/utilisation/verifier-usage-hors-ligne.md)
-réunit les mesures sans IA et les observations humaines dans un rapport.
-L’outil d’indexation vérifie ses prérequis isolés avant le parcours des archives.
-Les données existantes restent compatibles et conservées. La qualité sur le fonds
-réel, l’installation complète sur PC vierge, Safari réel et la recette complète
-hors ligne restent à qualifier ; consulter les [bilans datés](docs/essais/README.md).
-Le pilote n’est pas une offre commerciale validée.
-
-La bibliothèque reste accessible quand le moteur IA est arrêté. Le portail et
-Open WebUI partagent les comptes, avec des historiques de conversations distincts.
-Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été essayé.
-
-Les cartes proposent désormais un [choix d’accès aux itinéraires](docs/utilisation/points-et-itineraires.md), avec relief transparent et liaisons hors réseau distinguées. La recette sur les deux PC reste à réaliser.
-
-Les [paramètres sont regroupés par usage](docs/utilisation/parametres-et-appareil.md),
-avec suivi des travaux et options techniques dépliables.
+Restent à qualifier : la qualité sur le fonds réel de Marc, l’installation
+complète sur PC vierge, Safari sur iPhone réel et la recette complète hors ligne.
+Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été essayé ;
+la [feuille de route V1](docs/decisions/feuille-de-route-v1.md) liste les bloquants.
 
 ## Commencer
 
-Le portail **0.17.0** propose une [nouvelle organisation](docs/utilisation/portail.md)
-sur Windows et Linux, avec les données réelles. La présentation précédente (« classique ») a été
-retirée en 0.63.0 (les anciennes adresses `/classique/` et `/nouveau/` renvoient vers la racine) ; la maquette fictive a été retirée en 0.59.0.
+Le [portail](docs/utilisation/portail.md) a une interface unique sur Windows et
+Linux. L’ancienne présentation « classique » est retirée depuis la 0.63.0 (les
+adresses `/classique/` et `/nouveau/` renvoient vers la racine) et la maquette
+fictive depuis la 0.59.0.
 
 - **Installer sur Windows** : double-cliquer sur `Installer-SetupSurvie.cmd`, qui prépare le PC puis poursuit l’installation. Lire le [parcours Windows](docs/installation/deux-etapes-windows.md), ses validations et ses limites.
 - **Mettre à jour sur Windows** : utiliser le raccourci **Mettre à jour SetupSurvie** ou `Mettre-a-jour-SetupSurvie.cmd` dans le dossier d’installation. Le [guide de mise à jour](docs/exploitation/mises-a-jour-et-bibliotheque-pilote.md) décrit la récupération Git, la sauvegarde et le retour arrière.
@@ -92,7 +58,7 @@ retirée en 0.63.0 (les anciennes adresses `/classique/` et `/nouveau/` renvoien
 - **Utiliser le serveur** : consulter le [guide d’utilisation](docs/utilisation/README.md).
 - **Entretenir une installation existante** : suivre les [sauvegardes, restaurations et mises à jour](docs/exploitation/README.md).
 - **Comprendre une panne et préparer le secours** : lire le [manuel humain](docs/exploitation/manuel-de-secours.md) et le [protocole du disque de secours complet](docs/exploitation/disque-de-secours-hors-ligne.md), dont l’installateur autonome reste à réaliser.
-- **Comprendre ou développer le projet** : partir de l’[architecture](docs/architecture/README.md) et des [choix actuels](docs/decisions/choix-actuels.md).
+- **Comprendre ou développer le projet** : lire [AGENTS.md](AGENTS.md), la [carte du code](docs/architecture/carte-du-code.md), l’[architecture](docs/architecture/README.md) et les [choix actuels](docs/decisions/choix-actuels.md).
 
 Sur le serveur, le portail est accessible à `http://localhost:8080`, Open WebUI à
 `:3000` et Kiwix à `:8081`. Depuis un autre appareil, utiliser l’IP du serveur ou

@@ -94,7 +94,7 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 | Stockage : résumé disque, modèles enregistrés, préparation/inventaire | **Bibliothèque et préparations → Voir les fichiers et l’espace disque** ; lecture seule |
 | Vue d’ensemble : état, fonctions disponibles, suivi des travaux | **Mon appareil → Vue d’ensemble** ; bouton **Gérer l’assistant** vers la bonne rubrique |
 | Mesures : GPU/VRAM, RAM, espace libre, questions, modèle chargé, date de mesure | Vue d’ensemble → **Détails techniques : mémoire et modèle chargé**, dépliable |
-| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → File d’attente → Détails de la préparation** ; suivi conservé indépendamment de l’assistant |
+| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → File d’attente → Détails techniques** de la carte ; suivi conservé indépendamment de l’assistant |
 | Open WebUI, documents de secours | Menu ordinateur et bas de page mobile, conservés |
 
 Les favoris, conversations, traductions, classement des sources, dossiers pratiques,

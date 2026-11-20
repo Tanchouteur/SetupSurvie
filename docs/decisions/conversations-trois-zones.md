@@ -75,7 +75,7 @@ Voir la [référence d’architecture](../architecture/README.md#lecture-pendant
 
 État du code observé le 16 novembre : `deploy/model-profiles.json` contient dix
 profils pour sept références de modèles ; ce catalogue n’est pas une preuve de
-leur présence sur un PC. Le lanceur a déjà `scripts/setup.py pull-model --model`,
+leur présence sur un PC. Le lanceur a déjà `scripts/setup.py pull-model <modèle>`,
 qui appelle le moteur local et refuse les références cloud. Le contrôleur du site
 ne propose pas encore une file dédiée de téléchargement de modèles. Le futur
 menu doit donc réutiliser ces distinctions, ajouter suivi/reprise et vérification

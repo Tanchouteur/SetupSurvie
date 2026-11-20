@@ -1,119 +1,105 @@
 # Utiliser le serveur familial
 
-- [Préparations de la bibliothèque et suivi des travaux](preparations-bibliotheque.md) — inventaire des étapes, dépendances et cartes de la file.
+**Index des guides d’utilisation — revu le 20 novembre 2026 pour la 0.66.0.**
+Chaque guide indique en tête la version qu’il décrit. Les usages réels chez Marc
+et sur Safari iPhone restent à vérifier sur place.
 
-- [Faire une synthèse des documents](synthese-documentaire.md) — dossier multi-source, lectures par passages et limites des références, 0.16.0.
+## Premiers pas
 
-- [Inventorier les vidéos et sous-titres locaux](inventaire-videos.md) — outil volontaire en lecture seule, 0.14.0.
-- [Télécharger une liste de vidéos YouTube](telecharger-videos-youtube.md) — 0.43.0, depuis le site ou en ligne de commande, rangement automatique, pause et reprise.
+1. Relier l’appareil au même réseau que le serveur, puis ouvrir l’adresse ou le
+   QR code affichés dans **Mon appareil → Paramètres → Profils et connexion**
+   (raccourci **Autre appareil**). Un Wi-Fi invité peut empêcher la connexion.
+2. Ouvrir la **Bibliothèque** pour chercher et consulter guides et archives.
+   Elle reste disponible lorsque le moteur IA est arrêté.
+3. Ouvrir l’**Assistant**, choisir son profil (sans mot de passe), puis un mode :
+   réponse rapide, moyenne ou approfondie. Les autres modèles restent
+   disponibles pour les comparaisons.
+4. Vérifier les sources de la réponse en ouvrant les documents consultés. Une
+   réponse sans source consultée ne doit pas être présentée comme issue de la
+   bibliothèque.
 
-- [Rechercher un document](recherche-documentaire.md) — premiers résultats, filtres et contrôle exportable.
+L’assistant peut rechercher et lire les documents locaux, calculer et convertir
+des unités. Il n’a ni Internet, ni accès aux fichiers du PC. Il ne certifie ni
+une conduite médicale, ni la potabilité, ni la sécurité d’un ouvrage.
 
-- [Paramètres et Mon appareil](parametres-et-appareil.md) — suivi, quatre rubriques et options avancées.
+Le lien **Open WebUI** donne accès aux dossiers et conversations avancées avec
+le même profil ; les historiques restent distincts et la bibliothèque du portail
+n’est pas importée automatiquement dans ses collections. Le lien **Documents de
+secours** (`/secours.html`) permet de lire les fichiers sans l’API ni l’IA.
 
-- [Vérifier l’usage hors ligne](verifier-usage-hors-ligne.md) — contrôle sans IA, étapes humaines, arrêt et rapport R7.
-- [Dossiers pratiques](dossiers-pratiques.md) — objectifs, sources et points à examiner.
+## Guides par sujet
 
-- [Comparer une aide IA à la recherche](comparer-recherche-ia.md) — essai facultatif, mesures et relecture.
+### Se repérer et régler
 
-- [Rendre les archives recherchables](indexation-archives.md) — guide 0.4.0.
-- [Mesurer les délais et le contexte de l’assistant](mesurer-assistant-et-memoire.md) — guide 0.7.0 ; essai volontaire sur le PC cible.
+| Guide | Contenu | Version décrite |
+| --- | --- | --- |
+| [Portail sur ordinateur et téléphone](portail.md) | Rubriques, navigation, conversation, modèles, anciennes adresses | 0.63.4 |
+| [Paramètres et Mon appareil](parametres-et-appareil.md) | Cinq rubriques de paramètres, où trouver chaque commande | 0.36.0 |
+| [Profils locaux sans mot de passe](profils-locaux.md) | Choisir ou créer un profil, Famille, Open WebUI | 0.1.29 |
+| [File d’attente](file-attente.md) | Voir, réordonner, mettre en pause et reprendre les travaux | 0.67.0 |
+| [Préparations de la bibliothèque](preparations-bibliotheque.md) | Étapes de préparation, dépendances, cartes de la file | 0.67.0 |
+| [Inventaire des données locales](inventaire-local.md) | Ce qui est présent sur le disque | 0.12.0 |
 
-Guide du pilote, mis à jour le 14 novembre 2026. Les usages réels chez Marc et sur
-Safari iPhone restent à vérifier sur place.
+### Chercher, lire et vérifier
 
-1. Relier l’appareil au même réseau que le serveur, puis ouvrir l’adresse ou le QR code de la page **Autre appareil**. Un Wi-Fi invité peut empêcher la connexion.
-2. Ouvrir la **Bibliothèque** pour chercher et consulter les guides et archives. Elle reste disponible lorsque le moteur IA est arrêté.
-3. Ouvrir l’assistant, choisir son profil sans mot de passe, puis un mode : réponse rapide, moyenne ou approfondie. Les autres modèles restent disponibles pour les comparaisons.
-4. Vérifier les sources de la réponse en ouvrant les documents cités. Une réponse sans source consultée ne doit pas être présentée comme issue de la bibliothèque.
+| Guide | Contenu | Version décrite |
+| --- | --- | --- |
+| [Recherche documentaire](recherche-documentaire.md) | Résultats, filtres, espaces, contrôle de la recherche depuis le site | 0.36.1 |
+| [Rendre les archives recherchables](indexation-archives.md) | Indexation complémentaire automatique et pause | 0.37.3 |
+| [Classer les documents et nommer les collections](classement-et-collections.md) | Fonds principal, Autre, suppression, corrections et export | 0.67.0 |
+| [Sources, dates et fiabilité](sources-et-fiabilite.md) | Sources réellement lues, dates, relances, limites | 0.38.3 |
+| [Documents, favoris et traductions](documents-et-traduction.md) | Lecteur PDF, favoris, documents d’une conversation, traduction et contrôles | 0.60.2 |
+| [Synthèse documentaire](synthese-documentaire.md) | Plusieurs documents, lecture d’un livre entier par étapes | 0.19.0 |
+| [Illustrations et références](illustrations-et-references.md) | Images d’origine et pages PDF | 0.19.0 |
+| [Dossiers pratiques](dossiers-pratiques.md) | Six dossiers de repères facultatifs | 0.9.0 |
 
-L’assistant du portail peut rechercher et lire les documents locaux, calculer et
-convertir des unités. Il n’a pas implicitement Internet ni accès aux fichiers du
-PC. Les documents manquants doivent être signalés. Les réponses sensibles ne
-certifient ni une conduite médicale, ni la potabilité, ni la sécurité d’un ouvrage.
+### Vidéos
 
-Le lien vers **Open WebUI** donne accès aux dossiers et conversations avancées.
-Le profil choisi est repris sans mot de passe ; les historiques sont distincts. L’index
-du portail et les archives Kiwix ne constituent pas un import automatique dans
-les collections Open WebUI.
+| Guide | Contenu | Version décrite |
+| --- | --- | --- |
+| [Vidéos locales et sous-titres](videos-locales.md) | Lecteur, recherche des passages, pistes françaises | 0.63.3 |
+| [Télécharger une liste YouTube](telecharger-videos-youtube.md) | Bouton du site ou ligne de commande, avec Internet | 0.51.0 |
+| [Inventaire des vidéos et sous-titres](inventaire-videos.md) | Outil en lecture seule, rapports privés | 0.23.0 |
 
-Depuis **Bibliothèque → Cartes hors ligne**, les cartes du Sud et de Solliès-Ville
-permettent de se repérer. Elles ne calculent pas d’itinéraire et n’incluent pas
-l’état actuel des chemins ni de couche altimétrique.
+### Cartes
 
-Pour le choix de profil, voir les [profils locaux sans mot de passe](profils-locaux.md).
-Pour les certificats et l’état du moteur, suivre le [guide Marc](../installation/pilote-marc.md). Une pause de
-l’IA doit être levée explicitement par l’administrateur ; consulter la bibliothèque
-ne nécessite pas de la lever.
+| Guide | Contenu | Version décrite |
+| --- | --- | --- |
+| [Paramètres, lieux et cartes hors ligne](parametres-et-cartes.md) | Lieux de référence, adresses, relief, zone téléchargée sur téléphone | 0.12.0 ; zone téléphone 0.50.0 |
+| [Points et itinéraires](points-et-itineraires.md) | Listes de points, itinéraires locaux, choix d’accès | 0.50.0 |
 
-Pour les stocks et objets, voir le [guide de l’inventaire local](inventaire-local.md).
-Le fonds recensé et ses limites sont dans la [documentation de bibliothèque](../bibliotheque/README.md).
+### Mesurer et tester (facultatif)
 
-## Ajouter des collections par thème
+| Guide | Contenu | Version décrite |
+| --- | --- | --- |
+| [Vérifier l’usage hors ligne](verifier-usage-hors-ligne.md) | Contrôle sans IA et étapes humaines | 0.10.0 |
+| [Mesurer les délais et la mémoire de l’assistant](mesurer-assistant-et-memoire.md) | Rapports de délais, essai mémoire volontaire | 0.43.2 |
+| [Comparer une aide IA à la recherche](comparer-recherche-ia.md) | Essai volontaire et avis humains | 0.9.1 |
 
-Avec le profil Famille ou un profil administrateur : **Données locales → Enrichir la bibliothèque**.
-Choisir les thèmes, langues et plafond, puis **Chercher les contenus** pour voir
-le volume proposé. **Télécharger la sélection** lance le transfert sur le PC
-serveur ; fermer la page ne l’arrête pas. Le même bloc permet de suivre, mettre
-en pause et reprendre. La consultation quotidienne garde le même menu.
-Voir le [guide de sélection Kiwix](../bibliotheque/selection-kiwix-par-theme.md).
+Les diagnostics de performances et de Kiwix sont dans
+l’[exploitation](../exploitation/README.md).
 
-La version affichée dans l’en-tête vient désormais du serveur. Après une mise à
-jour, recharger la page pour charger également le nouveau JavaScript.
+### Archive
 
-Les [paramètres et outils cartographiques](parametres-et-cartes.md) permettent de préparer les lieux, adresses et altitudes pour le hors ligne.
+- [Maquette UX](maquette-ux.md) — prototype fictif 0.1.31, retiré en 0.59.0.
 
-Le pilote 0.1.11 ajoute les [listes de points et itinéraires hors ligne](points-et-itineraires.md), avec consultation mobile et préparation sur ordinateur.
+## Raccourcis Windows
 
-## Ouvrir et arrêter depuis le PC Windows
+Depuis l’installation 0.1.13, le Bureau propose **Ouvrir SetupSurvie** et
+**Arrêter SetupSurvie**, et le serveur démarre à l’ouverture de session Windows.
+Arrêter conserve comptes, conversations et contenus, mais coupe l’accès depuis
+les autres appareils. Fermer seulement le navigateur laisse le serveur disponible.
+Voir le [parcours Windows](../installation/deux-etapes-windows.md).
 
-À partir de l’installation 0.1.13, le Bureau propose **Ouvrir SetupSurvie** et
-**Arrêter SetupSurvie**. Le serveur démarre aussi à l’ouverture de session
-Windows. Ouvrir lance les services et le navigateur ; arrêter conserve les
-comptes, conversations et contenus, mais coupe l’accès depuis les autres appareils.
-Le PC reste allumé. Fermer uniquement le navigateur laisse le serveur disponible.
-Voir le [guide des raccourcis](../installation/pilote-marc.md#installer-à-partir-du-kit)
-pour désactiver le démarrage automatique ou équiper une installation existante.
+## Ajouter des collections
 
-## Documents et traduction
+Avec le profil **Famille** : **Mon appareil → Paramètres → Bibliothèque et
+préparations → Télécharger des collections et préparer les cartes → Enrichir la
+bibliothèque**. Choisir thèmes, langues et plafond, puis **Chercher les
+contenus**. Le téléchargement continue sur le serveur si la page est fermée et
+se suit dans la [file d’attente](file-attente.md). Voir la
+[sélection Kiwix par thème](../bibliotheque/selection-kiwix-par-theme.md) et les
+[parcours de savoir-faire](../bibliotheque/savoirs-durables.md)
+(**Bibliothèque → Explorer les savoir-faire**).
 
-Depuis 0.1.19, **Bibliothèque → Explorer les savoir-faire** permet de choisir un
-sujet, chercher ses documents et préparer une question pédagogique à envoyer.
-Les [parcours de savoir-faire](../bibliotheque/savoirs-durables.md) regroupent les
-besoins de Marc, sans ajout au menu principal.
-
-Le [guide des sources et de la fiabilité](sources-et-fiabilite.md) décrit les dates
-affichées, les citations réellement lues, la distinction entre faits et déductions
-et les réponses que la base ne permet pas d’établir, à partir de 0.1.18.
-
-Le [guide des documents, favoris et traductions](documents-et-traduction.md)
-explique la lecture PDF en pleine page, les favoris personnels et leur recherche,
-les associations aux conversations et la traduction progressive. Depuis 0.1.25,
-les nouvelles traductions terminées rejoignent les documents locaux partagés ;
-les anciennes restent privées jusqu’à publication explicite. **Lecture de secours**
-permet de consulter les fichiers sans l’API ni l’IA.
-
-Depuis 0.1.28, les nouveaux passages traduits sont contrôlés pour repérer des
-nombres ou unités altérés, et signaler certaines omissions possibles. Le panneau
-permet de comparer le texte source ; une anomalie bloquante attend une reprise.
-Les contrôles ne valident pas le sens et ne certifient pas les anciens travaux.
-Voir le [guide documentaire](documents-et-traduction.md#contrôles-de-traduction--depuis-0128).
-
-## Essayer la future organisation
-
-La [maquette UX](maquette-ux.md) est une archive historique : ses fichiers fictifs ont été retirés du paquet en 0.59.0.
-
-## Organisation actuelle — 0.1.32
-
-Le [guide du portail](portail.md) présente les cinq
-rubriques de l’entrée principale, les données réelles et les suivis. Les anciennes
-procédures par « Données locales » de l’interface classique (retirée en 0.63.0) ont pour
-équivalent courant **Mon appareil → Téléchargements**, avec les inventaires
-dans **Bibliothèque → Collections** et **Mon appareil → Stockage**.
-
-- [Retrouver un document utile et vérifier la recherche depuis le site](recherche-documentaire.md) — guide actuel 0.6.0.
-
-## Classement et collections
-
-Voir le [guide actuel 0.6.0](classement-et-collections.md) pour corriger les espaces,
-les types de documents et les noms de collections, puis exporter ces métadonnées.
+Après une mise à jour, recharger la page : la version affichée vient du serveur.

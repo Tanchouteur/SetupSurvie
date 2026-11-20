@@ -1,6 +1,33 @@
 # Architecture du pilote
 
-- [Composants et présentation du portail](composants-interface.md) — référence 0.36.0, responsabilités CSS/JS et recette de finition.
+**Référence d’architecture — sommaire revu le 20 novembre 2026 (0.66.0).**
+Ce document s’est construit livraison par livraison : chaque section décrit un
+mécanisme au moment où il a été livré, puis reste valable sauf note de
+remplacement. Pour savoir **où se trouve un fichier**, lire d’abord la
+[carte du code](carte-du-code.md) ; pour les règles de présentation, le
+[guide de design](guide-design.md) et les [composants de l’interface](composants-interface.md).
+
+## Sommaire par domaine
+
+| Domaine | Sections |
+| --- | --- |
+| Vue d’ensemble | [Composants](#composants), [Interface et organisation](#interface-et-organisation--0340), [Interface fonctionnelle](#interface-fonctionnelle--0132), [Plan de refonte](#plan-de-refonte-du-portail--13-novembre-2026) |
+| Profils | [Profils locaux sans mot de passe](#profils-locaux-sans-mot-de-passe--0129) |
+| Recherche et index | [Socle Kiwix](#socle-de-recherche-kiwix), [Consolidation 0.1.36](#consolidation-documentaire-0136), [Index complémentaires](#index-complémentaires--030), [Préparation automatique](#préparation-automatique-et-catalogue--040), [Référence de recherche](#référence-de-recherche-et-lecture--050), [Métadonnées corrigibles](#métadonnées-corrigibles--060), [Corrections 0.9.1](#corrections-de-recherche-091), [Lecteur isolé](#vérification-du-lecteur-isolé-092), [Écrivains d’index](#maintenance-et-écrivains-dindex-093), [Ordonnancement](#ordonnancement-et-volume-des-recherches-094), [Index multilingues](#index-multilingues-et-traces-explicites-0111), [Recherche progressive et cache](#recherche-progressive-et-cache--0130) |
+| Assistant et lecture | [Suivi documentaire](#suivi-documentaire-de-lassistant--0150), [Demandes de synthèse](#préparation-des-demandes-de-synthèse--0151), [Dossiers documentaires](#dossiers-documentaires--0160), [Sélection persistante](#sélection-documentaire-persistante--0170), [Lecture longue](#lecture-longue-et-notes-reprenables--0180), [Illustrations](#illustrations-originales-et-références--0190), [Procédures ordinaires](#procédures-ordinaires--0191), [Relances et outils](#relances-conditions-et-appels-doutils--0200), [Budget des dossiers](#budget-des-dossiers-documentaires--0231), [Extraction mathématique](#extraction-mathématique--0373), [Dossiers pratiques](#dossiers-de-lecture-pratique-090) |
+| Traduction | [Association et traduction](#association-documentaire-et-traduction--0116), [Lecture et défaillances](#lecture-et-défaillances-partielles--0125), [Contrôles](#contrôles-de-traduction--0128), [Cycle du modèle](#cycle-du-modèle-de-traduction--0201), [Lecture française intégrée](#lecture-française-intégrée--0210), [Essai long](#essai-de-traduction-longue--0250), [Lecture pendant une traduction](#lecture-pendant-une-traduction--0280), [Contrôle des travaux](#contrôle-des-traductions--0290), [Cohérence](#cohérence-des-traductions--0320) |
+| Vidéos et sous-titres | [Vidéos locales](#vidéos-et-sous-titres-locaux--0230), [Préparation des sous-titres](#préparation-des-sous-titres--0240), [Transcription audio](#transcription-audio--0260), [Acquisition de pistes](#acquisition-de-pistes-vidéo--0310) |
+| Mesures et diagnostics | [Mesures et calibration](#mesures-et-calibration--070), [Comparatif facultatif](#comparatif-facultatif-de-recherche-080), [Recette d’usage](#recette-dusage-depuis-le-navigateur-0100), [Diagnostic des performances](#diagnostic-commun-des-performances--0220), [Refus avant lancement](#refus-avant-lancement-et-diagnostic--0300), [Ressources et lecture progressive](#ressources-et-lecture-progressive--0390) |
+| Cartes | [Cartes et itinéraires](#cartes-et-accès-aux-itinéraires--0110) |
+
+Non couverts ici (voir les guides) : file d’attente des travaux
+([décision](../decisions/file-attente-travaux.md)), organisation des collections et
+classement du fonds principal ([guide](../utilisation/classement-et-collections.md)),
+téléchargement YouTube ([guide](../utilisation/telecharger-videos-youtube.md)),
+transfert vers un SSD ([guide](../exploitation/transfert-installation.md)),
+téléchargement des modèles ([portail](../utilisation/portail.md#télécharger-un-modèle-pour-lassistant)).
+
+Toutes les routes HTTP sont déclarées dans `pilot/app.py` sous le préfixe `/api/`.
 
 ## Extraction mathématique — 0.37.3
 
@@ -586,10 +613,10 @@ En 0.1.31, une [maquette navigable](../utilisation/maquette-ux.md) isolée perme
 > `/classique/` et `/nouveau/` ne contiennent plus qu’une page de redirection
 > vers la racine. Le paragraphe ci-dessous décrit l’organisation de 0.1.32.
 
-L’entrée principale et `/nouveau/` servent la nouvelle organisation, avec les
-API existantes. `/classique/` conserve ses propres scripts/styles et les mêmes
-données. La maquette fictive a été retirée en 0.59.0. `scripts/build_portal.py` génère les
-entrées modernes à partir du balisage classique. `layout.js` déplace les contrôles
+En 0.1.32, l’entrée principale et `/nouveau/` servaient la nouvelle organisation,
+avec les API existantes, et `/classique/` conservait ses propres scripts/styles.
+`scripts/build_portal.py` générait alors les entrées modernes à partir du balisage
+classique ; il part aujourd’hui de `portal/interface/modele.html`. `layout.js` déplace les contrôles
 existants avant leur liaison ; `navigation.js` adapte historique et contexte.
 Depuis 0.12.0, `settings-layout.js` s’exécute après la création des panneaux
 fonctionnels et avant la navigation : il déplace une seule fois les nœuds existants,
@@ -991,13 +1018,13 @@ avec délais courts ; pas de show/pull/chat/generate.
 
 Le contrôleur écrit `last-engine-diagnostic.json` même après une commande en
 échec, avec étape et durée, et expose uniquement ce résumé autorisé dans status.
-L’export admin `/admin/assistant/startup-report` combine historique et nouvel
+L’export admin `/api/admin/assistant/startup-report` combine historique et nouvel
 instantané ; les deux dates restent explicites. Il n’est pas interrogé au
 chargement de l’interface et ne change aucun état du moteur.
 
 ## Acquisition de pistes vidéo — 0.31.0
 
-Les routes admin `/video-acquisitions` isolent la récupération YouTube dans
+Les routes admin `/api/admin/video-acquisitions` isolent la récupération YouTube dans
 `caption_acquisition.py`. Aucun réseau à l’import, à la lecture ou à l’ouverture
 de Collections. Un enfant à environnement minimal exécute `caption_fetch_worker` ;
 son délai et sa sortie sont bornés, la pause et l’arrêt du service le rejoignent.
@@ -1023,7 +1050,7 @@ Voir le [guide](../utilisation/videos-locales.md) et les
 `translation_terms.py` conserve les termes par profil dans `settings`, puis une
 copie immuable dans `translation_guidance` (clé étrangère à `translations`,
 suppression en cascade). Les anciennes lignes sans copie n’adoptent pas les
-nouveaux réglages. GET/PUT `/translation-terms` lisent seulement le profil choisi ;
+nouveaux réglages. GET/PUT `/api/translation-terms` lisent seulement le profil choisi ;
 ils ne lancent ni modèle ni traduction.
 
 Chaque fragment reçoit ses termes présents et au plus les 600 derniers caractères

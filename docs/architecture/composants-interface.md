@@ -1,6 +1,6 @@
 # Composants et règles de présentation du portail
 
-**Référence de développement — 0.37.2, 17 novembre 2026.** Cette organisation
+**Référence de développement — 0.37.2, 17 novembre 2026 ; direction « Veillée » 0.44.0 ajoutée plus bas.** Pour les règles visuelles actuelles, le [guide de design](guide-design.md) prime. Cette organisation
 remplace l’empilement de styles de la maquette utilisé en 0.34.0. Elle répond
 aux captures de Louis : aides trop grandes, case mal alignée, commandes de volets
 redondantes et cartes de paramètres incohérentes. Les tests de fonctionnement

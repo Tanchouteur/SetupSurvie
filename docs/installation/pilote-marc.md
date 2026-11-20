@@ -1,6 +1,6 @@
 # Première version d’essai chez Marc
 
-> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.22. Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
+> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.22 ; sections ultérieures datées dans le texte. Pour le portail actuel (0.66.0), voir le [guide du portail](../utilisation/portail.md) ; pour l’installation Windows actuelle, le [parcours Windows](deux-etapes-windows.md). Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
 
 Ce guide décrit le paquet pilote. Les essais réalisés sur le PC Linux de Louis ne remplacent pas la recette sur le Windows de Marc, sa RTX 5060 8 Go et ses appareils du réseau local. Les mesures de la RTX 2060 ne prédisent pas directement ses temps de réponse. La RAM, le contexte, les fichiers du modèle et la mémoire vidéo disponible comptent aussi.
 
@@ -109,7 +109,7 @@ Pour revenir à un usage limité au serveur : `configure --no-lan`, puis `up`. L
 
 Sur le laboratoire Linux de Louis, le réglage correspondant est `./scripts/lab.sh network --lan-host ADRESSE_IP` ; sans `--lan-host`, cette commande revient à l’accès local seul. Un pare-feu Linux peut nécessiter une règle séparée. Ce lanceur ne demande pas de privilèges administrateur et ne modifie pas automatiquement le pare-feu.
 
-## Mot de passe et code de secours
+## Mot de passe et code de secours (retirés depuis 0.1.29)
 
 **Depuis 0.1.29, ils ne sont plus nécessaires.** Le portail utilise des profils
 librement sélectionnables sur le réseau local. Choisir son nom pour retrouver
@@ -194,9 +194,11 @@ Suivre le [guide des mises à jour du pilote](../exploitation/mises-a-jour-et-bi
 
 **Historique, remplacé depuis 0.1.29 par les [profils sans mot de passe](../utilisation/profils-locaux.md).** Les nouvelles installations n’utilisent plus ce mot de passe initial pour accéder au produit.
 
-Les nouvelles installations utilisent l’identifiant `admin` (compte interne
-`admin@survie.local`) et le mot de passe initial demandé par Louis dans
-l’installateur. Le mot de passe n’est pas recopié dans cette documentation.
+En 0.1.12, les installations utilisaient l’identifiant `admin` (compte interne
+`admin@survie.local`) et un mot de passe initial saisi dans l’installateur.
+Aujourd’hui, `scripts/setup.py` génère ce mot de passe interne aléatoirement ;
+il sert seulement au compte natif d’Open WebUI et n’est jamais demandé aux
+utilisateurs. Le mot de passe n’est pas recopié dans cette documentation.
 Ces valeurs ne remplacent jamais le mot de passe d’une installation existante.
 Les secrets techniques de session et de contrôle restent générés aléatoirement.
 La connexion sur la carte utilise le même compte que le portail. La publication

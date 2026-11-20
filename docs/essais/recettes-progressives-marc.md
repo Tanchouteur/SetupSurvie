@@ -103,7 +103,7 @@ ou une indexation complète pour chacun des contrôles suivants.
 2. Après cette réponse, passer à un mode utilisant un autre modèle et poser une
    petite question. La première demande doit aboutir sans renvoi manuel. En cas
    d’erreur, noter l’heure et le mode puis exporter **Voir les durées** si disponible.
-   Dans **Paramètres → Entretien et diagnostics → Tests et diagnostics → Mémoire
+   Dans **Paramètres → Tests et diagnostics → Mémoire
    et contexte**, **Télécharger le diagnostic de démarrage** fournit l’état actuel
    en lecture seule. Les refus enregistrés de tests sont distincts de cette demande
    réelle : le diagnostic ne reconstitue pas un échec ancien de conversation.
@@ -196,7 +196,7 @@ Faire ces étapes progressivement, sans tout lancer en même temps. La
 testé et ce qui nécessite le PC de Marc.
 
 1. Appliquer la mise à jour habituelle et vérifier **0.15.0**. Avec **Famille**,
-   aller dans **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier
+   aller dans **Mon appareil → Paramètres → Tests et diagnostics → Vérifier
    la recherche → Contrôle complet · 32 recherches**. Ce R2 ne lance pas l’IA et
    n’exige pas de réindexation intégrale pour ces corrections. Il attend au plus
    90 secondes par demande ; réserver jusqu’à une cinquantaine de minutes au
@@ -231,7 +231,7 @@ sans effacer les caches ni prétendre à un départ froid non établi.
 ## Ce qui est utilisable maintenant
 
 Le contrôle de recherche est disponible depuis 0.3.0. Le chemin actuel est
-**Famille → Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**,
+**Famille → Mon appareil → Paramètres → Tests et diagnostics → Vérifier la recherche**,
 puis **Télécharger le rapport**. Les recherches de ce contrôle n’appellent aucun
 modèle ; le rapport exporte version, délais, couverture, résultats et extraits.
 La [création/reprise des index](../utilisation/indexation-archives.md) est une

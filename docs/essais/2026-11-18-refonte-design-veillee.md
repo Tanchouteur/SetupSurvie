@@ -1,7 +1,7 @@
 # Refonte du design « Veillée » — 0.44.0
 
 **Bilan daté du 18 novembre 2026.** Les règles durables sont dans
-[composants et présentation](../architecture/composants-interface.md#direction-visuelle--veillée--0440).
+[composants et présentation](../architecture/composants-interface.md#direction-visuelle--veillée---0440).
 
 ## Livré
 

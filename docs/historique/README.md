@@ -19,6 +19,19 @@ Les études et le prototype initial sont conservés ici. Leurs hypothèses, tari
 - [Dictée, trois modèles et bibliothèque — 11 novembre 2026](dictee-modeles-bibliotheque.md)
 - [Avant la première version installée chez Marc](avant-premiere-installation-marc.md)
 - [Projet : serveur autonome de connaissances avec IA locale](sources/contexte-initial.md)
+- [Nouveautés documentées par livraison](nouveautes-par-livraison.md) — ancien index chronologique de `docs/README.md` (0.3.0 → 0.66.0)
+- [Notes de livraison retirées des choix actuels](livraisons.md) — ancienne section « Livraisons disponibles »
+
+## Contenus déplacés le 20 novembre 2026
+
+Revue documentaire du 20 novembre 2026 : les fichiers gardent leur chemin, seuls
+des blocs de texte ont été déplacés.
+
+| Ancien emplacement | Emplacement actuel |
+| --- | --- |
+| Liste chronologique en tête de `docs/README.md` | [historique/nouveautes-par-livraison.md](nouveautes-par-livraison.md) |
+| Section « Livraisons disponibles » de `docs/decisions/choix-actuels.md` | [historique/livraisons.md](livraisons.md) |
+| Section « Commencer » / état du projet du README racine | Résumé par fonction dans le [README](../../README.md) |
 
 ## Chemins renommés en 0.63.0 (19 novembre 2026)
 

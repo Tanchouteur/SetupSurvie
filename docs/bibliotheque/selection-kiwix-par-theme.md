@@ -19,7 +19,7 @@ Depuis 0.1.19, les [savoirs durables](savoirs-durables.md) étendent la sélecti
 38 thèmes pratiques, avec les fonds culturels et grandes vidéos sur choix explicite, et rattachent des guides figés aux thèmes concernés. Le plan affiche
 les sujets à examiner pour chaque parcours, sans certifier leur couverture.
 
-1. Se connecter avec un compte administrateur et ouvrir **Données locales**.
+1. Choisir le profil **Famille** (sans mot de passe), puis ouvrir **Mon appareil → Paramètres → Bibliothèque et préparations → Télécharger des collections et préparer les cartes**.
 2. Déplier **Enrichir la bibliothèque**. Les lecteurs ne voient pas ce bloc et
    aucune entrée supplémentaire n’est ajoutée au menu principal.
 3. Cocher les thèmes, choisir les langues et le maximum à ajouter, puis cliquer

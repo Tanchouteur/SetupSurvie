@@ -1,6 +1,6 @@
 # Guide de design Veillée
 
-**Guide actuel — 0.63.0, 19 novembre 2026.** Il sert de référence aux
+**Guide actuel — 0.63.0, 19 novembre 2026 ; compléments 0.65.0 à 0.65.2 datés dans le texte.** Il sert de référence aux
 prochaines interventions sur l’interface. Le portail fonctionne avec ses assets
 locaux. Les usages de l’installation sont décrits dans le [guide du portail](../utilisation/portail.md).
 
