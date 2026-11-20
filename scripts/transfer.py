@@ -529,7 +529,10 @@ def bundle_launcher(base):
     durable.write_bytes(base/'Transferer-SetupSurvie.cmd',
         b'@echo off\r\nrem SetupSurvie managed transfer\r\nif exist "%~dp0data\\tools\\Python312\\python.exe" (\r\n"%~dp0data\\tools\\Python312\\python.exe" -X utf8 "%~dp0application\\scripts\\transfer_wizard.py" --base "%~dp0."\r\nexit /b %ERRORLEVEL%\r\n)\r\npy -3 -X utf8 "%~dp0application\\scripts\\transfer_wizard.py" --base "%~dp0."\r\nif errorlevel 1 pause\r\n')
     durable.write_bytes(base/'transferer-setupsurvie.sh',
-        b'#!/bin/sh\nexec python3 "$(dirname "$0")/application/scripts/transfer_wizard.py" --base "$(dirname "$0")"\n')
+        b'#!/bin/sh\nbase=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1\n'
+        b'if [ "$#" = 1 ] && [ "$1" = --restaurer-hors-ligne ]; then\n'
+        b'    exec "$base/application/scripts/restaurer-linux-hors-ligne.sh" "$base"\n'
+        b'fi\nexec python3 "$base/application/scripts/transfer_wizard.py" --base "$base" "$@"\n')
     (base/'transferer-setupsurvie.sh').chmod(0o700)
 
 

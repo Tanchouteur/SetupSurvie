@@ -111,3 +111,27 @@ La recette couvre un Debian 13 déjà démarrable, en VM sur le second SSD,
 avec Docker système. Le démarrage sur matériel vierge, les pilotes GPU
 de la cible, l'inférence dans la VM et les autres distributions restent
 hors de cette validation.
+
+## Lanceur automatique 0.71.0
+
+Le support généré expose `transferer-setupsurvie.sh --restaurer-hors-ligne`.
+Sur une nouvelle Debian 13.7 x86-64, ce parcours extrait les outils vérifiés
+de la copie, enregistre le démon Docker et l'application dans systemd,
+importe les images et active les services. Le transfert vérifié compte
+3 862 fichiers. La commande Python système est masquée pendant l'essai et le
+support est démonté avant lancement. Le réseau WAN reste inaccessible.
+
+Le premier passage a détecté une bibliothèque Tcl/Tk de l'archive Python
+avec droit d'écriture de groupe. Le contrôle des fichiers destinés aux
+services système a arrêté le lancement. Après correction du bootstrap,
+les outils ont été extraits de nouveau depuis la copie et le lanceur a
+repris sans changer les fichiers inventoriés. La seconde invocation sur
+le même dossier a réussi sans réinstaller les outils ni les services.
+
+Les deux unités systemd sont actives après redémarrage de la VM, avec
+le support démonté. Santé 0.71.0, contrôleur, Open WebUI, les trois
+collections Kiwix, article iFixit, PDF, PMTiles, MP4 et recherches dans les
+sous-titres sont vérifiés avant et après le redémarrage. La suite finale
+compte 1 232 tests, dont 7 ignorés, sans échec. Le lanceur automatique vise
+Debian 13 déjà installé. Les pilotes GPU et les autres distributions
+restent en dehors de cette recette.

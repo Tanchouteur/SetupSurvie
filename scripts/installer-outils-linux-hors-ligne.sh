@@ -92,6 +92,9 @@ ENV
     docker --version
     docker compose version
 )
+# A root service must never load a file that another user can change.
+find "$stage" \( -type f -o -type d \) -perm /022 -exec chmod go-w -- {} +
+install -m 644 -- "$catalog" "$stage/.setupsurvie-restauration"
 mv -T --no-clobber -- "$stage" "$target"
 test ! -e "$stage"
 printf 'Outils prêts dans %s. Chargez environnement.sh dans Bash.\n' "$target"
