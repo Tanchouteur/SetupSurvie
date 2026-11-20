@@ -99,7 +99,8 @@ def unit_text(app,c,environ=None):
            'After=network-online.target docker.service','Wants=network-online.target','StartLimitIntervalSec=0','',
            '[Service]','Type=oneshot','RemainAfterExit=yes','Restart=on-failure','RestartSec=15','TimeoutStartSec=900',
            'Environment='+unit_quote('PATH='+':'.join(dict.fromkeys(paths)))]
-    if environ.get('DOCKER_HOST'):lines.append('Environment='+unit_quote('DOCKER_HOST='+environ['DOCKER_HOST']))
+    for key in ('DOCKER_HOST', 'DOCKER_CONFIG'):
+        if environ.get(key):lines.append('Environment='+unit_quote(key+'='+environ[key]))
     survie=setup.ROOT/'scripts/survie.sh'
     command=unit_quote(survie,True)+' --work-dir '+unit_quote(app.work,True)
     lines+=[f'ExecStart={command} up',f'ExecStop={command} down','',

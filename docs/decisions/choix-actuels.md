@@ -484,3 +484,12 @@ de démarrage de l’agent. Portail 0.41.0, recherche, lecture, secours et trois
 routeurs sont vérifiés ; voir le [bilan réel](../essais/2026-11-17-installation-neuve-bazzite.md#redémarrage-physique-confirmé--17-novembre-2026).
 Ce résultat complète la recette Linux ; téléphone réel, chargement de modèle,
 transfert entre SSD et coupure électrique brutale restent distincts.
+
+
+### Préparer les installateurs pour le transfert hors ligne — 20 novembre 2026
+
+Louis demande que l'installation neuve conserve les installateurs des outils
+nécessaires sur la cible, pour que la copie puisse ensuite servir à une
+installation hors ligne. La 0.70.0 ajoute ce parcours pour Linux x86-64.
+Les dépendances de l'OS et les pilotes restent propres au système cible.
+[Guide de restauration Linux](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne)

@@ -145,6 +145,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `survie.ps1`, `survie.sh` | Points d’entrée en ligne de commande |
 | `start-*.ps1`, `stop-*.ps1`, `startup-windows.ps1`, `windows_autostart.py`, `windows_background.py`, `register-startup-windows.ps1` | Démarrage et arrêt Windows |
 | `linux_host.py`, `discovery.py`, `fix-linux-local-name.sh` | Docker rootless, démarrage Linux, nom `.local` |
+| `linux_offline_tools.py`, `installer-outils-linux-hors-ligne.sh` | Collecte vérifiée et extraction des prérequis Linux pour le transfert hors ligne |
 | `pilot_update.py`, `windows_update.py`, `update-windows.ps1`, `rollback-windows.ps1`, `delivery_paths.py` | Mises à jour avec sauvegarde et retour arrière ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `maintenance_site.py` | Suivi commun `catalog/maintenance.json` et page temporaire sur les ports du portail pendant l’arrêt des conteneurs |
 | `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |

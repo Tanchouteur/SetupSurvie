@@ -710,6 +710,12 @@ def main(argv=None):
     elif args.action == "install":
         app.doctor(c)
         if not args.offline:
+            if c['target'] == 'linux':
+                import linux_offline_tools
+                if linux_offline_tools.prepare(c['data_dir']):
+                    print('Installateurs hors ligne vérifiés : Docker, Compose, Python et réseau Debian 13.')
+                else:
+                    print('Installateurs hors ligne indisponibles pour cette architecture ou version de Python.')
             app.compose(c, "pull")
         app.prepare(c, args.offline)
         import search_index_tools

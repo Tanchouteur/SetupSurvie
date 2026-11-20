@@ -82,6 +82,14 @@ lors de chaque relance. Les options `--content-pack` sont réservées à
 l’installation en ligne. Les codes des lots sont listés par
 `python3 scripts/content.py list`.
 
+Depuis la 0.70.0, une installation Linux x86-64 en ligne conserve dans
+`donnees/tools/linux-offline-installers/` les archives vérifiées de Docker
+Engine, Compose, du même Python mineur (3.11 à 3.15) et des dépendances
+réseau pour Debian 13. Le transfert
+emporte ces archives avec les données. Elles permettent de préparer les
+outils sur une cible Linux glibc sans accès à Internet.
+[Restaurer sur une autre machine Linux](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne)
+
 Suivre le [guide de démarrage Linux](demarrage-linux.md) pour le service
 systemd, Docker rootless et les prérequis GPU correspondants.
 

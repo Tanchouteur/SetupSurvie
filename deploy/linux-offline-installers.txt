@@ -1,0 +1,16 @@
+# SHA-256  octets  nom local  URL officielle
+3fb5d1f13014c18cc54945bc177c58a9056a482dada031e17d12cf2e6922c973 86360685 docker.tar.gz https://download.docker.com/linux/static/stable/x86_64/docker-29.9.3.tgz
+b8840f5008c447f41fce0a57ae3adeab42c89b1eb6e6012524bcabbfb4ffbaf6 34442228 docker-compose https://github.com/docker/compose/releases/download/v5.8.0/docker-compose-linux-x86_64
+ac0b758b6ae4ba1cb87f7091eb6bb17c9a383a9bcdb5c18493cdd4f34e35ae8c 49244720 python-3.11.tar.gz https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.11.18%2B20261110-x86_64-unknown-linux-gnu-install_only.tar.gz
+c2f87d4b4e8db3abddb0f116c6ccfc503d0cbdbb9ee8faacddad1b679ec12e99 68163679 python-3.12.tar.gz https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.12.16%2B20261110-x86_64-unknown-linux-gnu-install_only.tar.gz
+50c774f6674740739f791c05a9177ed03e2fe02abebda9bca3512eb7309b37cc 77155083 python-3.13.tar.gz https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-x86_64-unknown-linux-gnu-install_only.tar.gz
+3fe0d7c0538eb5d190c34582992d26230532551355cbd789fabc6591621cfc07 76373285 python-3.14.tar.gz https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.14.10%2B20261110-x86_64-unknown-linux-gnu-install_only.tar.gz
+182e7adf7e4f0e32dafac5143f00d466afd20eef45918ea170f78884e503ac18 83276502 python-3.15.tar.gz https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.15.2%2B20261110-x86_64-unknown-linux-gnu-install_only.tar.gz
+# Dépendances réseau Debian 13 pour Docker en mode nftables.
+60707a62fe6c1228c3389b12a13ca4efd76defc5532473e547a29e99cf7d2a6e 39792 libjansson4_2.14-2+b3_amd64.deb https://deb.debian.org/debian/pool/main/j/jansson/libjansson4_2.14-2%2bb3_amd64.deb
+4ec9c1096e0b954e3bdb03a62314ee7f49999045d3d55be3e4ded520ffc9baf5 11928 libmnl0_1.0.5-3_amd64.deb https://deb.debian.org/debian/pool/main/libm/libmnl/libmnl0_1.0.5-3_amd64.deb
+1b3eae46bfb9c6ab44e404797fb45278045f926d73974a84097ad47a3e27d983 65012 libnftnl11_1.2.9-1_amd64.deb https://deb.debian.org/debian/pool/main/libn/libnftnl/libnftnl11_1.2.9-1_amd64.deb
+4de5aa59faef5e98d6ba9f5f521a915be5641f224f597862f8d29e8319e8db16 31896 libxtables12_1.8.11-2_amd64.deb https://deb.debian.org/debian/pool/main/i/iptables/libxtables12_1.8.11-2_amd64.deb
+c7cbee3dce8452ae5c3c4269f6f52e96b896d36a46ea3c490e0e11e8ff359896 332448 libnftables1_1.1.3-1_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/libnftables1_1.1.3-1_amd64.deb
+b002ea172b9c1e34a67bc497c523c67bb74c3f0a4e98113cb083990a1f1d3bfe 93832 libedit2_3.1-20250104-1_amd64.deb https://deb.debian.org/debian/pool/main/libe/libedit/libedit2_3.1-20250104-1_amd64.deb
+2ddfa61baaf3a76e2c499db9e521ba6affb226f85af0b6fef739f346ac5f0c39 75864 nftables_1.1.3-1_amd64.deb https://deb.debian.org/debian/pool/main/n/nftables/nftables_1.1.3-1_amd64.deb

@@ -834,6 +834,9 @@ def activate(dest):
         if setup.run(['docker','info','--format','{{.OSType}}'],capture=True)!='linux':
             raise setup.SetupError('Docker doit utiliser les conteneurs Linux.')
         if not journal.get('images_sha256'):raise setup.SetupError('Archive des images absente ; activation hors ligne impossible.')
+        if host == 'linux':
+            import linux_host
+            config['docker_rootless'] = linux_host.docker_rootless()
         journal['phase']='activating';save(dest,journal);export_report(dest,journal)
         config.pop('local_images',None);config.pop('routing_image',None)
         setup.write_json(app.settings_path,config,private=True)

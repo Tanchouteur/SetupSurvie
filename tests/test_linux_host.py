@@ -69,9 +69,11 @@ class LinuxHostTest(unittest.TestCase):
         app = mock.Mock(work=Path('/srv/essai/prive'))
         with mock.patch('shutil.which', return_value='/home/louis/bin/docker'):
             text = linux_host.unit_text(app, {'project': 'survie-abc'},
-                                        {'PATH': '/home/louis/bin', 'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock'})
+                                        {'PATH': '/home/louis/bin', 'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock',
+                                         'DOCKER_CONFIG': '/srv/Outils SetupSurvie/docker-cli'})
         self.assertIn('Environment="DOCKER_HOST=unix:///run/user/1000/essai/docker.sock"', text)
         self.assertIn('Environment="PATH=/home/louis/bin:', text)
+        self.assertIn('Environment="DOCKER_CONFIG=/srv/Outils SetupSurvie/docker-cli"', text)
         self.assertIn('--work-dir "/srv/essai/prive" up', text)
         self.assertIn('--work-dir "/srv/essai/prive" down', text)
         self.assertIn('RemainAfterExit=yes', text)
@@ -134,6 +136,37 @@ class LinuxHostTest(unittest.TestCase):
         args = setup.parser().parse_args(
             ['--work-dir', str(self.root), 'install', '--target', 'linux'])
         self.assertEqual(args.work_dir, str(self.root))
+
+    def test_offline_installers_match_the_installation_python_minor(self):
+        import linux_offline_tools
+        version = mock.Mock(major=3, minor=13)
+        with mock.patch.object(linux_offline_tools.platform, 'machine', return_value='x86_64'), \
+                mock.patch.object(linux_offline_tools.sys, 'version_info', version), \
+                mock.patch.object(linux_offline_tools.content, 'check_capacity'), \
+                mock.patch.object(linux_offline_tools.content, 'transfer') as download:
+            self.assertTrue(linux_offline_tools.prepare(self.root))
+        names = [call.args[1]['id'] for call in download.call_args_list]
+        self.assertEqual(names[:3], ['docker.tar.gz', 'docker-compose', 'python-3.13.tar.gz'])
+        self.assertTrue(any(name.startswith('nftables_') for name in names[3:]))
+        self.assertTrue(all(name.endswith('.deb') for name in names[3:]))
+        receipt = self.root / linux_offline_tools.FOLDER / 'python-archive.txt'
+        self.assertEqual(receipt.read_text(), 'python-3.13.tar.gz\n')
+
+    @unittest.skipUnless(sys.platform == 'linux' and os.uname().machine == 'x86_64',
+                         'Bootstrap Bash pour Linux x86-64.')
+    def test_offline_bootstrap_refuses_a_tampered_archive_before_installing(self):
+        import linux_offline_tools
+        cache = self.root / linux_offline_tools.FOLDER
+        cache.mkdir(parents=True)
+        (cache / 'python-archive.txt').write_text('python-3.13.tar.gz\n')
+        (cache / 'docker.tar.gz').write_bytes(b'archive alteree')
+        target = self.root / 'Outils restaurés'
+        result = subprocess.run(
+            ['bash', str(ROOT / 'scripts/installer-outils-linux-hors-ligne.sh'),
+             str(self.root), str(target)], capture_output=True, encoding='utf-8', timeout=20)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Empreinte incorrecte', result.stderr)
+        self.assertFalse(target.exists())
 
     def test_reader_version_follows_python(self):
         self.assertEqual(index_reader_probe.expected_version((3, 14, 2)), '3.13.1')
