@@ -123,7 +123,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.65.2'
+VERSION='0.66.0'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 
@@ -251,8 +251,9 @@ async def change_collection_sort(action:Literal['move','preview','exclude'],body
 
 @app.get('/api/library/category-index')
 async def category_index_status():
-    report,_=await asyncio.to_thread(library.category_index.availability,inventory.ZIMS,store.ROOT)
-    return {key:report[key] for key in ('phase','archive','done','total','bytes','elapsed_seconds','counts') if key in report}
+    report,_=await asyncio.to_thread(library.category_index.availability,inventory.ZIMS,store.ROOT,
+                                     await asyncio.to_thread(library.collection_sort.load,library.network.CATALOG))
+    return {key:report[key] for key in ('phase','archive','archives','completed','done','total','bytes','elapsed_seconds','counts') if key in report}
 
 
 @app.post('/api/admin/library/category-index',status_code=202)

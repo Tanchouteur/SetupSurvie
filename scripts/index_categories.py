@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Run or resume the French Wikipedia category index on the host."""
+"""Run or resume the main collection indexes by space on the host."""
 import argparse
 from pathlib import Path
 
 import setup
 from delivery_paths import locked
 from pilot import category_index
-from runtime_resources import background_worker
+from runtime_resources import background_worker, index_workers
+from search_index_queue import read as index_settings
 
 
 def main():
@@ -19,7 +20,9 @@ def main():
     state=data/'state/pilot'
     background_worker()
     with locked(state/'archive-index/operation.lock'):
-        category_index.prepare(data/'library/zim',state,cancel=args.cancel,job_id=args.job_id)
+        category_index.prepare(data/'library/zim',state,cancel=args.cancel,job_id=args.job_id,
+                               workers=index_workers(index_settings(data)['settings']['workers']),
+                               catalog=data/'catalog')
 
 
 if __name__=='__main__':

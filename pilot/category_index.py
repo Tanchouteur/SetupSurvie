@@ -1,4 +1,4 @@
-"""Optional French Wikipedia pilot with an FTS index for each search category."""
+"""Resumable search indexes by space for the main collection."""
 import hashlib
 import json
 from pathlib import Path
@@ -6,7 +6,7 @@ import re
 import sqlite3
 import time
 
-from . import archive_index, durable
+from . import archive_index, collection_sort, durable
 
 DIRECTORY = 'category-index'
 DOMAINS = ('resilience', 'culture')
@@ -14,10 +14,13 @@ FORMAT = 1
 PILOT_ARCHIVE = re.compile(r'wikipedia_fr_all(?:_(?:maxi|mini|nopic))?_\d{4}-\d{2}(?:-\d{2})?[a-z]?\.zim')
 
 
-def source(zims):
-    candidates = [p for p in Path(zims).glob('wikipedia_fr_all*.zim')
-                  if PILOT_ARCHIVE.fullmatch(p.name) and not p.is_symlink()]
-    return max(candidates, key=lambda p: ('_maxi_' in p.name, p.name), default=None)
+def sources(zims, sorting=None):
+    sorting = sorting or collection_sort.Sort()
+    paths = [path for path in Path(zims).glob('*.zim')
+             if path.is_file() and not path.is_symlink()
+             and sorting.state(collection_sort.archive(path.name)) == 'main']
+    return sorted(paths, key=lambda path: (not bool(PILOT_ARCHIVE.fullmatch(path.name)),
+                                           '_maxi_' not in path.name, path.name))
 
 
 def signature(path, state):
@@ -29,7 +32,7 @@ def signature(path, state):
         with archive_index.connect(database, True) as db:
             prefix = f'catalogue:v1:zim:{path.stem}/'
             if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='settings'").fetchone():
-                for key, value in db.execute('SELECT key,value FROM settings WHERE substr(key,1,?)=? ORDER BY key',(len(prefix),prefix)):
+                for key, value in db.execute('SELECT key,value FROM settings WHERE key>=? AND key<? ORDER BY key',(prefix,prefix[:-1]+'0')):
                     try:
                         record = json.loads(value)
                         domains = record.get('domains')
@@ -46,56 +49,120 @@ def read_status(state):
     return archive_index.status(root)
 
 
-def availability(zims, state):
+def _record(root, path):
+    return root / (archive_index.index_name(path.name) + '.json')
+
+
+def ready_indexes(zims, state, sorting=None):
+    root = Path(state) / DIRECTORY
+    legacy = read_status(state)
+    ready = {}
+    for path in sources(zims, sorting):
+        index = root / (archive_index.index_name(path.name) + '.sqlite')
+        if not index.is_file():
+            continue
+        try:
+            record = _record(root, path)
+            saved = json.loads(record.read_text(encoding='utf-8')) if record.is_file() else legacy
+            if saved.get('archive') != path.name or saved.get('phase') != 'completed':
+                continue
+            fingerprint, _ = signature(path, state)
+            if saved.get('fingerprint') == fingerprint:
+                ready[path.stem] = index
+        except (OSError, ValueError, AttributeError, sqlite3.Error):
+            continue
+    return ready
+
+
+def availability(zims, state, sorting=None, *, indexes=None):
+    paths = sources(zims, sorting)
+    if not paths:
+        return {'phase': 'unavailable', 'archives': 0, 'completed': 0}, None
     report = read_status(state)
-    path = source(zims)
-    if path is None:
-        return {'phase':'unavailable'}, None
-    if report['phase'] != 'completed':
-        return {**report,'archive':path.name}, None
-    try:
-        fingerprint, _ = signature(path,state)
-        index = Path(state)/DIRECTORY/(archive_index.index_name(path.name)+'.sqlite')
-        if report.get('fingerprint') == fingerprint and index.is_file():
-            return report, index
-    except (OSError,sqlite3.Error):
-        pass
-    return {**report,'archive':path.name,'phase':'outdated'}, None
+    ready = ready_indexes(zims, state, sorting) if indexes is None else indexes
+    report = {**report, 'archives': len(paths), 'completed': len(ready)}
+    if len(ready) == len(paths) and report['phase'] != 'running':
+        report['phase'] = 'completed'
+    elif report['phase'] in ('completed', 'unavailable'):
+        report['phase'] = 'outdated'
+    return report, next(iter(ready.values()), None)
 
 
-def prepare(zims, state, *, cancel=None, job_id=None, reserve=15_000_000_000):
-    root = Path(state)/DIRECTORY
-    path = source(zims)
-    if path is None:
-        raise FileNotFoundError('Aucune archive Wikipédia francophone compatible.')
+def prepare(zims, state, *, cancel=None, job_id=None, reserve=15_000_000_000, workers=1, catalog=None):
+    root = Path(state) / DIRECTORY
     durable.mkdir(root)
-    fingerprint, corrections = signature(path,state)
-    previous, published = availability(zims,state)
-    if published is not None:
-        return previous
-    elapsed_before=previous.get('elapsed_seconds',0) if previous.get('fingerprint')==fingerprint else 0
+    sorting = collection_sort.load(catalog) if catalog is not None else None
+    paths = sources(zims, sorting)
+    ready = ready_indexes(zims, state, sorting)
+    report = {'phase': 'running', 'job_id': job_id, 'archives': len(paths), 'completed': len(ready)}
     started = time.monotonic()
-    report = {'phase':'running','archive':path.name,'fingerprint':fingerprint,'job_id':job_id,'done':0,'total':None}
-    def report_progress(done,total,counts):
-        report.update(done=done,total=total,counts=counts,elapsed_seconds=round(elapsed_before+time.monotonic()-started,2))
-        save()
+    previous = read_status(state)
+
     def save():
-        durable.write_bytes(root/'progress.json',json.dumps(report).encode(),private=True)
-    save()
+        report['elapsed_seconds'] = round(elapsed_before + time.monotonic() - started, 2)
+        durable.write_bytes(root / 'progress.json', json.dumps(report).encode(), private=True)
+
+    elapsed_before = previous.get('elapsed_seconds', 0) if previous.get('phase') in ('running', 'paused') else 0
+    # Preserve a valid index published by the single-archive release.
+    if previous.get('phase') == 'completed':
+        for path in paths:
+            if path.stem in ready and previous.get('archive') == path.name and not _record(root, path).exists():
+                durable.write_bytes(_record(root, path), json.dumps(previous).encode(), private=True)
+
+    class MovedFromMain(Exception):
+        pass
+
+    def in_main(path):
+        return catalog is None or collection_sort.load(catalog).state(collection_sort.archive(path.name)) == 'main'
+
+    def progress(done, total, counts):
+        if not in_main(path):
+            raise MovedFromMain()
+        report.update(done=done, total=total, counts=counts)
+        save()
+
     try:
-        result = archive_index.build_archive(path,root,cancel=cancel,force=True,reserve=reserve,
-            categories=DOMAINS,corrections=corrections,category_signature=fingerprint,progress=report_progress)
-        if signature(path,state)[0] != fingerprint:
-            report['phase'] = 'outdated'
-        else:
-            report.update(phase='completed',bytes=(root/(archive_index.index_name(path.name)+'.sqlite')).stat().st_size,
-                          articles=result['articles'])
+        failures = []
+        for path in paths:
+            if cancel and Path(cancel).exists():
+                raise archive_index.Paused()
+            if path.stem in ready:
+                continue
+            if not in_main(path):
+                continue
+            fingerprint, corrections = signature(path, state)
+            report.update(archive=path.name, fingerprint=fingerprint, done=0, total=None, counts={})
+            save()
+            try:
+                result = archive_index.build_archive(path, root, cancel=cancel, force=True, reserve=reserve,
+                    categories=DOMAINS, corrections=corrections, category_signature=fingerprint,
+                    progress=progress, workers=workers)
+            except MovedFromMain:
+                continue
+            except archive_index.StorageReserve:
+                raise
+            except (OSError, RuntimeError, sqlite3.Error) as error:
+                failures.append({'archive': path.name, 'error': type(error).__name__})
+                report['failures'] = failures
+                save()
+                continue
+            if signature(path, state)[0] != fingerprint:
+                continue
+            index = root / (archive_index.index_name(path.name) + '.sqlite')
+            record = {**report, 'phase': 'completed', 'bytes': index.stat().st_size,
+                      'articles': result['articles']}
+            durable.write_bytes(_record(root, path), json.dumps(record).encode(), private=True)
+            ready[path.stem] = index
+            report.update(completed=len(ready), bytes=sum(index.stat().st_size for index in ready.values()))
+            save()
+        current = sources(zims, collection_sort.load(catalog) if catalog is not None else sorting)
+        complete = all(path.stem in ready for path in current)
+        report['phase'] = 'completed' if complete else 'error' if failures else 'outdated'
     except archive_index.Paused:
         report['phase'] = 'paused'
     except Exception:
         report['phase'] = 'error'
         raise
     finally:
-        report['elapsed_seconds']=round(elapsed_before+time.monotonic()-started,2)
         save()
     return report

@@ -44,7 +44,7 @@ HOST_WORK = {
     'index-prepare': ('local', 'Préparation de la recherche'),
     'video-inventory': ('local', 'Inventaire des vidéos dans les collections'),
     'youtube-download': ('network', 'Téléchargement YouTube'),
-    'category-index': ('local', 'Classement de Wikipédia : Autonomie et Savoirs'),
+    'category-index': ('local', 'Classement du fonds principal'),
     'collection-exclude': ('local', 'Suppression de collections'),
 }
 HOST_PHASES = {
@@ -73,7 +73,7 @@ HOST_PHASES = {
 
 # Plain-language next step for a stopped host preparation; the card shows it under « Que faire ? ».
 HOST_HELP = {
-    'category-index': ('Le classement de Wikipédia s’est arrêté. La recherche continue d’utiliser l’archive complète. '
+    'category-index': ('Le classement du fonds principal s’est arrêté. La recherche habituelle reste disponible. '
                        'Cliquez sur le titre puis sur « Reprendre le classement » : il repart du dernier point enregistré. '
                        'Si l’arrêt se reproduit, vérifiez l’espace libre du PC serveur.'),
     'collection-exclude': ('La suppression s’est arrêtée. Les fichiers non supprimés restent sur le disque. '

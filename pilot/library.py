@@ -182,6 +182,11 @@ def _index_guides():
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
+        db.execute('DELETE FROM guide_search_domains')
+        db.executemany('INSERT INTO guide_search_domains VALUES(?,?)', (
+            (identifier, json.dumps(retrieval.domains({'id': identifier, 'title': title, '_text': text})))
+            for records in (documents, passages) for identifier, title, _, _, text in records
+        ))
     durable.mkdir(store.ROOT)
     try:durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
     except OSError:logging.getLogger(__name__).warning('Rapport documentaire non actualisé ; index de recherche conservé.')
@@ -705,16 +710,16 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     category_report={}
     chosen=()
     if domain in category_index.DOMAINS and words:
-        category_report, category_path=await asyncio.to_thread(category_index.availability,zims,store.ROOT)
-        if category_path and archive_allowed(Path(category_report['archive']).stem):
-            result=await asyncio.to_thread(archive_index.search,category_path.parent,query_plan,language,candidate_limit,zims,
-                collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),
-                category=domain,only_path=category_path)
-            if result.coverage.get('searched'):
-                local_rows.extend(result)
-                chosen=(Path(category_report['archive']).stem,)
-            elif result.coverage.get('failed') or result.coverage.get('outdated'):
-                category_report={**category_report,'phase':'unavailable'}
+        indexes = await asyncio.to_thread(category_index.ready_indexes, zims, store.ROOT, sorting)
+        category_report, _ = await asyncio.to_thread(category_index.availability, zims, store.ROOT, sorting, indexes=indexes)
+        paths = [path for book, path in indexes.items() if archive_allowed(book)]
+        if paths:
+            result = await asyncio.to_thread(
+                archive_index.search, paths[0].parent, query_plan, language, candidate_limit, zims,
+                collection_match=lambda book, selection: catalogue.matches_collection(book, selection, GUIDES, zims, saved_metadata),
+                category=domain, index_paths=paths)
+            local_rows.extend(result)
+            chosen = tuple(result.coverage.get('books', ()))
     async def read_local():
         found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
             collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),archive_allowed=archive_allowed,skip_books=chosen)
@@ -771,7 +776,9 @@ def guide_metadata(db,identifier):
     path=identifier.removeprefix('guide:').split('#page=')[0]
     row=db.execute('SELECT m.provenance,m.licence,d.document_date,d.edition,d.collected_at FROM guide_meta m LEFT JOIN guide_dates d ON m.path=d.path WHERE m.path=?',(path,)).fetchone()
     item=dict(row) if row else {}
-    return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path)}
+    classified = db.execute('SELECT domains FROM guide_search_domains WHERE id=?', (identifier,)).fetchone()
+    domains = {'_indexed_domains': json.loads(classified[0])} if classified else {}
+    return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path),**domains}
 
 
 def focused_page(identifier,query):

@@ -355,11 +355,9 @@
   const category=element('section',undefined,'category-index');
   category.id='category-index';
   category.innerHTML=`
-    <h3>Classement de Wikipédia par espace</h3>
-    <p class="small">Range chaque article de Wikipédia en français dans <strong>Autonomie et résilience</strong>
-      ou <strong>Savoirs et culture</strong>, pour qu’une recherche limitée à un espace soit plus rapide et plus pertinente.
-      Il se fait sur le PC serveur, sans Internet ni IA, et se relance seul quand Wikipédia change.
-      En attendant, la recherche utilise l’archive complète. Le suivi apparaît aussi dans la file d’attente.</p>
+    <h3>Classement du fonds principal par espace</h3>
+    <p class="small">Prépare la recherche dans <strong>Autonomie et résilience</strong> et <strong>Savoirs et culture</strong>.
+      Les archives du fonds principal sont classées en arrière-plan. La recherche reste disponible pendant la préparation.</p>
     <p id="category-index-status" role="status"></p>
     <div class="category-progress" id="category-index-meter" hidden><progress id="category-index-progress" max="100"></progress><span id="category-index-percent"></span></div>
     <p id="category-index-counts" class="small muted"></p>
@@ -370,11 +368,11 @@
     not_prepared:'Pas encore préparé.',
     running:'Classement en cours.',
     completed:'Prêt : la recherche par espace utilise ce classement.',
-    outdated:'Wikipédia a changé : le classement doit être refait. Il se relancera automatiquement.',
+    outdated:'Une partie du fonds principal reste à classer.',
     paused:'En pause. La reprise repart du dernier point enregistré.',
     interrupted:'Interrompu. La reprise repart du dernier point enregistré.',
     error:'Arrêté sur un problème. La recherche habituelle reste disponible ; vous pouvez reprendre.',
-    unavailable:'Aucune archive Wikipédia en français sur cet appareil : rien à classer.'
+    unavailable:'Le fonds principal ne contient aucune archive.'
   };
   const number=value=>Number(value||0).toLocaleString('fr-FR');
   let categoryPoll,categoryFailures=0;
@@ -392,13 +390,15 @@
       phase=active?'running':mine&&job.phase==='error'?'error':mine&&job.phase==='paused'?'paused':report.phase==='running'?'interrupted':report.phase;
       let text=categoryLabels[phase]||categoryLabels.not_prepared;
       if(phase==='completed'&&report.bytes)text+=` ${bytes(report.bytes)} sur le disque · ${Math.max(1,Math.round((report.elapsed_seconds||0)/60))} min pour la dernière préparation.`;
+      if(report.archives)text+=` ${number(report.completed)} / ${number(report.archives)} archives prêtes.`;
+      if(phase==='running'&&report.archive)text+=` Archive en cours : ${report.archive}.`;
       $('category-index-status').textContent=text;
       const showMeter=['running','paused','interrupted','error'].includes(phase)&&report.total>0;
       $('category-index-meter').hidden=!showMeter;
       if(showMeter){
         const percent=Math.min(100,100*(report.done||0)/report.total);
         $('category-index-progress').value=percent;
-        $('category-index-percent').textContent=`${percent.toFixed(percent<10?1:0)} % des articles examinés`;
+        $('category-index-percent').textContent=`${percent.toFixed(percent<10?1:0)} % de l’archive en cours`;
       }
       const found=report.counts||{};
       $('category-index-counts').textContent=(found.resilience||found.culture)

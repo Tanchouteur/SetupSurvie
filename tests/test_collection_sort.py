@@ -140,3 +140,56 @@ class CategorySearchTests(unittest.TestCase):
         plan=retrieval.plan('conservation',['conservation'],{})
         self.assertFalse(archive_index.search(path.parent,plan,category='resilience',only_path=path))
         self.assertTrue(archive_index.search(path.parent,plan,category='culture',only_path=path))
+
+    def test_return_to_main_fund_reuses_index_and_prepares_new_archive(self):
+        other = self.root / 'guides_fr_2026-11.zim'
+        with Creator(other).config_indexing(False, 'fra') as creator:
+            creator.add_metadata('Title', 'Guides fictifs')
+            creator.add_metadata('Language', 'fra')
+            creator.add_item(Article('Potager', 'Potager', 'Semences pour le potager.'))
+        catalog = self.root / 'catalog'
+        main = collection_sort.Sort()
+        other_key = collection_sort.archive(other.name)
+        selection = main.change([other_key], 'other')
+        collection_sort.save(catalog, selection)
+        category_index.prepare(self.root, self.state, catalog=catalog, reserve=0)
+        self.assertEqual(set(category_index.ready_indexes(self.root, self.state, selection)), {self.zim.stem})
+        collection_sort.save(catalog, main)
+        report, _ = category_index.availability(self.root, self.state, main)
+        self.assertEqual((report['phase'], report['completed']), ('outdated', 1))
+        category_index.prepare(self.root, self.state, catalog=catalog, reserve=0)
+        indexes = category_index.ready_indexes(self.root, self.state, main)
+        self.assertEqual(set(indexes), {self.zim.stem, other.stem})
+        plan = retrieval.plan('potager', ['potager'], {})
+        hits = archive_index.search(indexes[other.stem].parent, plan, category='resilience',
+                                    index_paths=indexes.values())
+        self.assertIn('Potager', [hit['title'] for hit in hits])
+        self.assertEqual(set(hits.coverage['books']), set(indexes))
+        self.assertEqual(set(category_index.ready_indexes(self.root, self.state, selection)), {self.zim.stem})
+        self.assertEqual(category_index.ready_indexes(self.root, self.state, main), indexes)
+
+    def test_parallel_resume_preserves_committed_cursor_and_search_results(self):
+        other = self.root / 'parallel_fr_2026-11.zim'
+        with Creator(other).config_indexing(False, 'fra') as creator:
+            creator.add_metadata('Language', 'fra')
+            for number in range(1600):
+                creator.add_item(Article(f'Potager{number}', f'Potager {number}', 'Semences pour le potager.'))
+        cancel = self.root / 'cancel'
+        root = self.root / 'parallel'
+        options = dict(force=True, categories=category_index.DOMAINS, reserve=0, workers=2)
+
+        def checkpoint(done, total, counts):
+            if done >= 1024:
+                cancel.touch()
+
+        with self.assertRaises(archive_index.Paused):
+            archive_index.build_archive(other, root, cancel=cancel, progress=checkpoint, **options)
+        self.assertFalse(list(root.glob('*.sqlite')))
+        with archive_index.connect(next(root.glob('*.building')), True) as db:
+            self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0], '1024')
+        cancel.unlink()
+        completed = archive_index.build_archive(other, root, cancel=cancel, **options)
+        self.assertEqual(completed['articles'], 1600)
+        plan = retrieval.plan('potager', ['potager'], {})
+        hits = archive_index.search(root, plan, category='resilience', limit=1700)
+        self.assertEqual(len({hit['id'] for hit in hits}), 1600)

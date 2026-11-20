@@ -56,7 +56,7 @@ class LibraryMonitorTests(unittest.TestCase):
         sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
         from pilot import work_queue
         jobs=[];work_queue.add_host_work(jobs,value)
-        self.assertEqual(jobs[0]['title'],'Classement de Wikipédia : Autonomie et Savoirs')
+        self.assertEqual(jobs[0]['title'],'Classement du fonds principal')
         self.assertEqual((jobs[0]['done'],jobs[0]['total'],jobs[0]['unit']),(2048,8192,'percent'))
         self.assertIn('Autonomie et résilience',jobs[0]['stage'])
         self.assertEqual(jobs[0]['focus'],'category-index')

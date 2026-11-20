@@ -13,7 +13,7 @@ import uuid
 
 import content
 import collection_tasks
-from pilot import category_index, zim_video_inventory
+from pilot import category_index, collection_sort, zim_video_inventory
 import discovery
 import kiwix_select
 import geography_data
@@ -148,7 +148,7 @@ class Manager:
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
         root=Path(self.config['data_dir'])
-        result['category_index']=category_index.availability(root/'library/zim',root/'state/pilot')[0]
+        result['category_index']=category_index.availability(root/'library/zim',root/'state/pilot',collection_sort.load(root/'catalog'))[0]
         if result['category_index']['phase']=='running' and (state.get('action')!='category-index' or state['phase'] not in ACTIVE):
             result['category_index']['phase']='interrupted'
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
@@ -190,9 +190,14 @@ class Manager:
             with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
                 self.start('video-inventory', {'automatic': True})
             return
-        if allowed and state['phase'] in ('idle','completed') and self.index_ready():
-            category,_=category_index.availability(root/'library/zim',root/'state/pilot')
-            if category['phase']=='outdated':
+        automatic_category_resume = (state.get('action') == 'category-index' and
+            state.get('options', {}).get('automatic') and
+            (state['phase'] == 'interrupted' or state['phase'] == 'paused' and
+             (self.paths(state['id']) / 'auto-pause').is_file()))
+        if (allowed and (automatic_category_resume or not queue['pending']) and self.index_ready() and
+                (state['phase'] in ('idle', 'completed') or automatic_category_resume)):
+            category,_=category_index.availability(root/'library/zim',root/'state/pilot',collection_sort.load(root/'catalog'))
+            if category['phase'] in ('outdated','not_prepared') or automatic_category_resume and category['phase'] != 'completed':
                 try:self.start('category-index',{'automatic':True})
                 except setup.SetupError:pass
                 return
@@ -244,7 +249,7 @@ class Manager:
             if not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
             if index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’indexation après la pause.')
             root=Path(self.config['data_dir'])
-            if not category_index.source(root/'library/zim'):raise setup.SetupError('Wikipédia en français est indisponible.')
+            if not category_index.sources(root/'library/zim',collection_sort.load(root/'catalog')):raise setup.SetupError('Le fonds principal ne contient aucune archive disponible.')
             state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':body.get('automatic') is True}}
             self.paths(state['id']).mkdir(parents=True)
         elif action in ('index','index-prepare','video-inventory'):
@@ -363,7 +368,14 @@ class Manager:
         if state['phase'] not in ('starting', 'planning', 'downloading'):
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
         if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')
-        (self.paths(state['id']) / 'cancel').touch()
+        folder = self.paths(state['id'])
+        if state.get('action') == 'category-index':
+            marker = folder / 'auto-pause'
+            if automatic and not (folder / 'cancel').exists():
+                marker.touch()
+            elif not automatic:
+                marker.unlink(missing_ok=True)
+        (folder / 'cancel').touch()
 
     def run(self, job):
         folder = self.paths(job)
@@ -418,7 +430,7 @@ class Manager:
                        +(f"{report['remaining']} restante(s), à reprendre après avoir libéré de l’espace. " if report.get('remaining') else '')
                        +'Le site répertorie les vidéos téléchargées.')
             elif state['action']=='category-index':
-                update('downloading','Préparation des index par catégorie de Wikipédia en français…')
+                update('downloading','Classement des archives du fonds principal…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
                 command=[str(self.index_python()),'-X','utf8',str(setup.ROOT/'scripts/index_categories.py'),
                          '--data-dir',str(root),'--cancel',str(folder/'cancel'),'--job-id',job]
@@ -426,9 +438,11 @@ class Manager:
                 state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
                 code=process.wait();check()
                 report=category_index.read_status(root/'state/pilot')
-                if code or report['phase']!='completed':
-                    raise setup.SetupError('Les index par catégorie doivent être repris.')
-                update('completed','Index de Wikipédia par catégorie prêts.')
+                if code or report['phase'] not in ('completed','outdated'):
+                    raise setup.SetupError('Le classement du fonds principal doit être repris.')
+                message = ('Classement des archives du fonds principal terminé.' if report['phase']=='completed'
+                           else 'Le fonds principal a changé pendant le classement.')
+                update('completed',message)
             elif state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools

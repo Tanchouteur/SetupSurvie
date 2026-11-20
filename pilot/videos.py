@@ -12,7 +12,7 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import collection_sort,durable,retrieval,store
+from . import collection_sort,durable,network,retrieval,store
 from . import video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
@@ -163,7 +163,9 @@ def signature():
     Nothing is opened or decoded; partial downloads are ignored so that a
     download in progress does not trigger repeated inventories."""
     if not ROOT.is_dir() or inventory.is_link(ROOT):return None
-    digest=hashlib.sha256(b'archive-display-titles-and-origin-v1');count=0
+    digest=hashlib.sha256(b'archive-display-titles-and-origin-v2')
+    digest.update(json.dumps(collection_sort.load(network.CATALOG).as_json()).encode())
+    count=0
     for directory,folders,files in os.walk(ROOT,followlinks=False):
         folders.sort();base=Path(directory)
         for name in sorted(files):
@@ -343,6 +345,8 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
                         language=candidate['language'],excerpt=candidate['excerpt'],_text=candidate['_text'],
                         match='subtitle' if candidate['track']!='metadata' else 'title',position_ms=start,
                         transcription_origin=payload['tracks'][int(candidate['track'])]['origin'] if candidate['track']!='metadata' else 'metadata_only')
+            if payload.get('search_domains') and sorting.state(collection_sort.video(payload)) == 'main':
+                data['_indexed_domains'] = payload['search_domains']
             result.append(data)
     from . import archive_videos
     archives=archive_videos.coverage()
@@ -453,6 +457,7 @@ def scan():
             report['archive_inventory_phase']=archive_report['phase']
             found['limitations']=[text.replace(' et vidéos dans les ZIM','') for text in found['limitations']]
             found['limitations'].append('Collections : médias et pistes explicites des pages HTML examinées ; lecteurs JavaScript, sens et synchronisation non certifiés.')
+            sorting = collection_sort.load(network.CATALOG)
             with connect() as db:
                 db.execute('DELETE FROM media');db.execute('DELETE FROM video_text')
                 for item in found['videos']:
@@ -479,7 +484,10 @@ def scan():
                     except Exception:report['errors'].append({'id':item['inventory_id'],'reason':'prepared_captions_unavailable'})
                     key=item['inventory_id'];version=stat_revision(item)
                     if not version:report['errors'].append({'id':key,'reason':'source_changed'});continue
-                    db.execute('INSERT INTO media VALUES(?,?,?,?)',(key,item['path'],version,json.dumps(item,ensure_ascii=False)))
+                    main = sorting.state(collection_sort.video(item)) == 'main'
+                    description = (item['description'] or '')[:100000]
+                    subject = {'title': item['title'], '_text': description}
+                    domains = set(retrieval.domains(subject)) if main else set()
                     language=item['media']['language_declared'] or ''
                     db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],language,'metadata',0,0,(item['description'] or '')[:100000]))
                     for index,track in enumerate(item['tracks']):
@@ -488,7 +496,19 @@ def scan():
                         if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise ValueError('subtitle_changed')
                         for cue in parsed['cues']:
                             db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],track['language_declared'] or '',str(index),cue['start_ms'],cue['end_ms'],cue['text']))
+                        if main:
+                            sample = []
+                            length = 0
+                            for cue in parsed['cues']:
+                                sample.append(cue['text'])
+                                length += len(cue['text']) + 1
+                                if length >= 4000:
+                                    break
+                            domains.update(retrieval.domains({**subject, '_text': ' '.join(sample)}))
                         report['tracks']+=1
+                    if main:
+                        item['search_domains'] = sorted(domains)
+                    db.execute('INSERT INTO media VALUES(?,?,?,?)',(key,item['path'],version,json.dumps(item,ensure_ascii=False)))
                     report['videos']+=1
                     if time.monotonic()-last_saved>2:
                         save();last_saved=time.monotonic()

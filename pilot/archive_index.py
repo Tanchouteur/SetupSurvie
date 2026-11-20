@@ -1,6 +1,7 @@
 """Rebuildable SQLite article indexes. Reading requires no libzim or model."""
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from collections import deque
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import closing, contextmanager
 import hashlib
 import json
 import os
@@ -74,11 +75,10 @@ def index_name(archive):
     return hashlib.sha256(archive.encode()).hexdigest()[:24]
 
 
-def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=None,archive_allowed=None,category=None,only_path=None,skip_books=()):
+def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=None,archive_allowed=None,category=None,only_path=None,skip_books=(),index_paths=None):
     if not plan.groups:return Matches()
     if category is not None and category not in ('resilience','culture'):
         raise ValueError('Unknown archive index category')
-    table='articles' if category is None else 'articles_'+category
     domains_column=',domains' if category else ''
     deadline=time.monotonic()+3
     def one(path):
@@ -86,21 +86,28 @@ def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=Non
             with connect(path.resolve(),True) as db:
                 db.set_progress_handler(lambda:int(time.monotonic()>deadline),1000)
                 meta=json.loads(db.execute('SELECT value FROM metadata WHERE key=?',('source',)).fetchone()[0])
-                if meta['book'] in skip_books or (archive_allowed is not None and not archive_allowed(meta['book'])):return [],'excluded'
+                if meta['book'] in skip_books or (archive_allowed is not None and not archive_allowed(meta['book'])):return [],'excluded',None
                 if plan.collection:
                     allowed=collection_match(meta,plan.collection) if collection_match else plan.collection in retrieval.normal(meta['book']+' '+meta['title']).replace(' ','')
-                    if not allowed:return [],'excluded'
+                    if not allowed:return [],'excluded',None
                 if source_dir is not None and Path(source_dir).is_dir():
                     source=Path(source_dir)/(meta['book']+'.zim')
-                    if not source.is_file():return [],'outdated'
+                    if not source.is_file():return [],'outdated',None
                     stat=source.stat();_,size,mtime=meta['fingerprint'].rsplit(':',2)
-                    if (stat.st_size,stat.st_mtime_ns)!=(int(size),int(mtime)):return [],'outdated'
+                    if (stat.st_size,stat.st_mtime_ns)!=(int(size),int(mtime)):return [],'outdated',None
+                shared = category is not None and db.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='articles'").fetchone() is not None
+                table = 'articles_' + category if category and not shared else 'articles'
+                category_filter = ' AND instr(domains, ?) > 0' if shared else ''
                 lang={'fra':'fr','eng':'en'}.get(language,language)
-                rows=db.execute(f"SELECT path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) ORDER BY bm25({table},0,3,1,0) LIMIT ?",(plan.fts(),lang,lang,limit)).fetchall()
+                parameters = (plan.fts(), lang, lang) + ((json.dumps(category),) if shared else ()) + (limit,)
+                rows=db.execute(f"SELECT path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?){category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters).fetchall()
                 return [{'id':'zim:'+meta['book']+'/'+r['path'],'title':r['title'],'language':r['language'],'excerpt':r['excerpt'],'_text':r['_text'],
-                    'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i,**({'_indexed_domains':json.loads(r['domains'])} if category else {})} for i,r in enumerate(rows)],'searched'
-        except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return [],'failed'
-    if only_path is not None:
+                    'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i,**({'_indexed_domains':json.loads(r['domains'])} if category else {})} for i,r in enumerate(rows)],'searched',meta['book']
+        except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return [],'failed',None
+    if index_paths is not None:
+        paths = list(index_paths)
+    elif only_path is not None:
         paths=[Path(only_path)]
     elif archive_allowed is not None and source_dir is not None and Path(source_dir).is_dir():
         paths=[Path(root)/(index_name(source.name)+'.sqlite') for source in Path(source_dir).glob('*.zim')
@@ -111,8 +118,10 @@ def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=Non
     if not paths:return Matches(coverage={'searched':0,'failed':0,'outdated':0})
     with ThreadPoolExecutor(max_workers=min(8,max(1,os.cpu_count() or 1))) as pool:
         values=list(pool.map(one,paths))
-        coverage={key:sum(status==key for _,status in values) for key in ('searched','failed','outdated')}
-        return Matches([row for rows,_ in values for row in rows],coverage)
+        coverage={key:sum(status==key for _,status,_ in values) for key in ('searched','failed','outdated')}
+        if category is not None:
+            coverage['books'] = [book for _, status, book in values if status == 'searched']
+        return Matches([row for rows, _, _ in values for row in rows],coverage)
 
 
 def metadata(archive,key,default=''):
@@ -124,14 +133,75 @@ def languages(value):
     return tuple(sorted(set(re.findall(r'[a-z]{2,3}',str(value).lower()))))
 
 
+def _article(entry, info, categories, corrections):
+    if entry.is_redirect:
+        return None, False
+    item = entry.get_item()
+    if item.mimetype not in ('text/html', 'application/xhtml+xml', 'text/plain') or item.size > 2_000_000:
+        return None, True
+    raw = bytes(item.content).decode('utf-8', errors='replace')
+    parser = ArticleText()
+    if item.mimetype == 'text/plain':
+        parser.parts.append(raw)
+    else:
+        parser.feed(raw)
+    text = parser.text()
+    if not text:
+        return None, False
+    language = parser.language or {'fra': 'fr', 'eng': 'en'}.get(info['language'], info['language'])
+    domains = corrections.get(entry.path)
+    if categories and domains is None:
+        candidate = {'id': 'zim:' + info['book'] + '/' + entry.path, 'title': entry.title, '_text': text}
+        if wiki_structure.wikipedia(candidate) and item.mimetype != 'text/plain':
+            candidate['_wiki_structure'] = wiki_structure.extract(raw[:wiki_structure.MAX_HTML].encode('utf-8'))
+        domains = retrieval.domains(candidate)
+    return (entry.path, entry.title, text[:502_400], language, domains), False
+
+
+def _entry_reader(archive):
+    return getattr(archive, 'get_entry_by_id', None) or archive._get_entry_by_id
+
+
+def _init_category_reader(source, info, categories, corrections):
+    from libzim.reader import Archive
+    global _category_reader
+    _category_reader = (_entry_reader(Archive(source)), info, categories, corrections)
+
+
+def _read_category_batch(bounds):
+    read, info, categories, corrections = _category_reader
+    return [_article(read(index), info, categories, corrections) for index in range(*bounds)]
+
+
+def _articles(source, archive, cursor, info, categories, corrections, workers):
+    total = archive.entry_count
+    if not categories or workers <= 1 or total - cursor < 512:
+        read = _entry_reader(archive)
+        for index in range(cursor, total):
+            yield _article(read(index), info, categories, corrections)
+        return
+    # Keep a bounded window of batches and consume them in archive order.
+    # SQLite has one writer, so the existing cursor still resumes exactly.
+    batch_size = 16
+    bounds = iter((start, min(start + batch_size, total)) for start in range(cursor, total, batch_size))
+    with ProcessPoolExecutor(max_workers=workers, initializer=_init_category_reader,
+                             initargs=(source, info, categories, corrections)) as pool:
+        pending = deque(pool.submit(_read_category_batch, batch)
+                        for _, batch in zip(range(workers * 2), bounds))
+        while pending:
+            yield from pending.popleft().result()
+            batch = next(bounds, None)
+            if batch is not None:
+                pending.append(pool.submit(_read_category_batch, batch))
+
+
 def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
-                  categories=(),corrections=None,category_signature='',progress=None):
+                  categories=(),corrections=None,category_signature='',progress=None,workers=1):
     """One process owns one archive. Every committed cursor is resumable."""
     from libzim.reader import Archive
     source=Path(source);root=Path(root);durable.mkdir(root)
     key=index_name(source.name)
     published=root/(key+'.sqlite');building=root/(key+'.building')
-    tables=['articles_'+domain for domain in categories] or ['articles']
     correction_map=corrections or {}
     def check():
         if cancel and Path(cancel).exists():raise Paused()
@@ -159,6 +229,9 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
     with connect(building) as db:
         db.execute('PRAGMA journal_mode=DELETE');db.execute('PRAGMA synchronous=FULL')
         db.execute('CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY,value TEXT)')
+        legacy = categories and db.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='articles_resilience'").fetchone()
+        tables = ['articles_' + domain for domain in categories] if legacy else ['articles']
         extra=',domains UNINDEXED' if categories else ''
         for table in tables:
             db.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS {table} USING fts5(path UNINDEXED,title,text,language UNINDEXED{extra},tokenize='unicode61 remove_diacritics 2')")
@@ -169,43 +242,36 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
         counts=json.loads(counts_row[0]) if counts_row else dict.fromkeys(categories,0)
         skipped=0
         if progress:progress(cursor,archive.entry_count,counts)
-        entry_by_id=getattr(archive,'get_entry_by_id',None) or archive._get_entry_by_id  # libzim 4.x / 3.13.1
-        for index in range(cursor,archive.entry_count):
-            if not categories or index%64==0:check()
-            elif cancel and Path(cancel).exists():raise Paused()
-            entry=entry_by_id(index)
-            if not entry.is_redirect:
-                item=entry.get_item()
-                if item.mimetype in ('text/html','application/xhtml+xml','text/plain') and item.size<=2_000_000:
-                    raw=bytes(item.content).decode('utf-8',errors='replace')
-                    parser=ArticleText();parser.feed(raw) if item.mimetype!='text/plain' else parser.parts.append(raw)
-                    text=parser.text();language=parser.language or {'fra':'fr','eng':'en'}.get(info['language'],info['language'])
-                    if text:
-                        selected=tables
-                        if categories:
-                            domains=correction_map.get(entry.path)
-                            if domains is None:
-                                candidate={'id':'zim:'+book+'/'+entry.path,'title':entry.title,'_text':text}
-                                if item.mimetype!='text/plain':
-                                    candidate['_wiki_structure']=wiki_structure.extract(raw[:wiki_structure.MAX_HTML].encode('utf-8'))
-                                domains=retrieval.domains(candidate)
-                            selected=['articles_'+domain for domain in categories if domain in domains]
-                            for domain in domains:
-                                if domain in counts:counts[domain]+=1
-                        suffix=(json.dumps(domains),) if categories else ()
-                        values='?,?,?,?,?' if categories else '?,?,?,?'
-                        for table in selected:
-                            db.executemany(f'INSERT INTO {table} VALUES({values})',
-                                ((entry.path,entry.title,text[start:start+2400],language,*suffix)
-                                 for start in range(0,min(len(text),500_000),2200)))
-                        count+=1
-                else:skipped+=1
-            if (index+1)%64==0:
-                db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(index+1)))
-                db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)))
-                if categories:db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('category_counts',json.dumps(counts)))
-                db.commit()
-                if progress and (index+1)%1024==0:progress(index+1,archive.entry_count,counts)
+        articles = _articles(source, archive, cursor, info, categories, correction_map, workers)
+        with closing(articles):
+            for index, (article, skipped_entry) in enumerate(articles, cursor):
+                if not categories or index % 64 == 0:
+                    check()
+                elif cancel and Path(cancel).exists():
+                    raise Paused()
+                skipped += skipped_entry
+                if article:
+                    path, title, text, language, domains = article
+                    selected = tables
+                    if categories:
+                        if legacy:
+                            selected = ['articles_' + domain for domain in categories if domain in domains]
+                        for domain in domains:
+                            if domain in counts:
+                                counts[domain] += 1
+                    suffix = (json.dumps(domains),) if categories else ()
+                    values = '?,?,?,?,?' if categories else '?,?,?,?'
+                    for table in selected:
+                        db.executemany(f'INSERT INTO {table} VALUES({values})',
+                            ((path, title, text[start:start+2400], language, *suffix)
+                             for start in range(0, min(len(text), 500_000), 2200)))
+                    count += 1
+                if (index+1)%64==0:
+                    db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(index+1)))
+                    db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('articles',str(count)))
+                    if categories:db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('category_counts',json.dumps(counts)))
+                    db.commit()
+                    if progress and (index+1)%1024==0:progress(index+1,archive.entry_count,counts)
         current=source.stat()
         if current.st_size!=stat.st_size or current.st_mtime_ns!=stat.st_mtime_ns:raise ArchiveChanged('Archive modifiée pendant l’indexation ; ancien index conservé.')
         db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(archive.entry_count)))

@@ -70,6 +70,36 @@ class SearchIndexQueueTests(unittest.TestCase):
         self.assertEqual(queue.read(self.data)['hold'],'')
         queue.validate_selection(self.data,queue.read(self.data)['pending'])
 
+    def test_category_job_restarts_in_the_window_only_after_automatic_pause(self):
+        state = {'phase': 'paused', 'action': 'category-index', 'id': 'b'*32,
+                 'options': {'automatic': True}}
+        self.manager.write(state)
+        folder = self.manager.paths(state['id'])
+        folder.mkdir(parents=True, exist_ok=True)
+        report = self.data/'state/pilot/category-index/progress.json'
+        setup.write_json(report, {'phase': 'paused'})
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(self.manager, 'start') as start:
+            self.manager.auto_index()
+            start.assert_not_called()
+            (folder/'auto-pause').touch()
+            with patch.object(queue, 'in_window', return_value=False):
+                self.manager.auto_index()
+            start.assert_not_called()
+            self.manager.auto_index()
+            start.assert_called_once_with('category-index', {'automatic': True})
+
+    def test_returned_archive_is_eligible_at_the_next_automatic_run(self):
+        self.manager.write({'phase': 'completed', 'action': 'category-index', 'id': 'b'*32})
+        archive_key = library_tasks.collection_sort.archive(self.file.name)
+        sorting = library_tasks.collection_sort.Sort().change([archive_key], 'other')
+        library_tasks.collection_sort.save(self.data/'catalog', sorting)
+        with patch.object(self.manager, 'index_ready', return_value=True), patch.object(self.manager, 'start') as start:
+            self.manager.auto_index()
+            start.assert_not_called()
+            library_tasks.collection_sort.save(self.data/'catalog', library_tasks.collection_sort.Sort())
+            self.manager.auto_index()
+            start.assert_called_once_with('category-index', {'automatic': True})
+
     def test_window_handles_midnight_and_settings_reject_unknown_values(self):
         opts={'start_hour':22,'end_hour':6}
         for hour,expected in [(21,False),(22,True),(0,True),(5,True),(6,False)]:

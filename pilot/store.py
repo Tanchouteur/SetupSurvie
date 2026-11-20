@@ -49,6 +49,7 @@ def init():
         CREATE TABLE IF NOT EXISTS feedback(id TEXT PRIMARY KEY,user_id TEXT,content TEXT NOT NULL,view TEXT,created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS guide_meta(path TEXT PRIMARY KEY,title TEXT,language TEXT,provenance TEXT,licence TEXT);
+        CREATE TABLE IF NOT EXISTS guide_search_domains(id TEXT PRIMARY KEY,domains TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS guide_dates(path TEXT PRIMARY KEY,document_date TEXT NOT NULL DEFAULT '',edition TEXT NOT NULL DEFAULT '',collected_at TEXT NOT NULL DEFAULT '');
         CREATE VIRTUAL TABLE IF NOT EXISTS documents USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');
         CREATE VIRTUAL TABLE IF NOT EXISTS passages USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');

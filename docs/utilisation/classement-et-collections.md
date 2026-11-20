@@ -63,28 +63,31 @@ Avant la 0.65.0, ce tri et l’index Wikipédia occupaient deux panneaux dans
 2026 (on ne comprenait pas quelle collection était laquelle ni l’effet des
 boutons), d’où cette page.
 
-## Classer Wikipédia par espace
+## Préparer la recherche du fonds principal par espace
 
-Le **classement de Wikipédia par espace** (appelé « index par catégorie » en
-0.64) se trouve dans **Mon appareil → Paramètres → Bibliothèque et préparations
-→ Préparer la recherche dans les archives**. Il range chaque article de Wikipédia
-en français dans **Autonomie et résilience** ou **Savoirs et culture**, puis la
-recherche interroge l’index de l’espace choisi. **Toute la bibliothèque**
-continue de consulter l’archive complète. Pendant la préparation ou après une
-modification, l’archive complète répond.
+Le classement du fonds principal se lance dans **Mon appareil → Paramètres →
+Bibliothèque et préparations → Préparer la recherche dans les archives**. La
+recherche utilise chaque archive classée dès que son index est prêt. Elle continue
+d’interroger l’archive habituelle pendant la préparation et utilise les index
+habituels pour **Toute la bibliothèque**.
 
-Le panneau indique le pourcentage d’articles examinés et le nombre d’articles
-trouvés pour chaque espace, puis le temps écoulé et la place occupée. La file
-d’attente suit la même tâche sous le titre **Classement de Wikipédia :
-Autonomie et Savoirs**, avec ce pourcentage ; en 0.64 elle apparaissait à tort
-comme « Téléchargement de la bibliothèque ». Le titre de la carte ramène à ce
-panneau.
+Les archives rangées dans **Autre** sont écartées de la préparation. Si une
+archive revient dans le fonds principal, elle est immédiatement recherchable.
+Son classement est réutilisé si l’édition et les corrections correspondent
+encore. Sinon, la prochaine plage d’indexation autorisée reprend la préparation.
+Le panneau affiche les archives prêtes et la progression dans l’archive en cours.
 
-Une nouvelle édition ou une correction de catégorie rend le classement à
-refaire. SetupSurvie le relance pendant la plage d’indexation configurée. Une
-interruption reprend au dernier lot enregistré si l’archive et les corrections
-correspondent toujours. Un échec ponctuel de connexion au PC serveur n’efface
-plus l’état affiché ; un message clair n’apparaît qu’après plusieurs échecs.
+Les gros fichiers sont lus et analysés par plusieurs processus. Un seul processus
+écrit l’index dans l’ordre et enregistre le point de reprise. Les nouveaux index
+stockent chaque passage une seule fois avec ses espaces. Un index déjà engagé
+dans l’ancien format reprend depuis son dernier point enregistré.
+
+Une pause manuelle se reprend depuis le panneau. Une pause automatique liée à
+la plage d’indexation ou au mode jeu peut reprendre à la prochaine plage autorisée.
+Les guides et les pages de PDF reçoivent leur classement pendant l’indexation
+documentaire. Le catalogue des vidéos prépare le classement à partir du titre,
+de la description et du début des pistes exploitables du fonds principal.
+Les corrections de classement enregistrées gardent la priorité.
 
 ## Comprendre le classement automatique
 
