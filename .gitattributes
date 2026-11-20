@@ -7,5 +7,9 @@
 *.cmd text eol=crlf
 deploy/Caddyfile text eol=lf
 
+# The portal uses the actual CSS and JS bytes for its asset fingerprints.
+portal/**/*.css text eol=lf
+portal/**/*.js text eol=lf
+
 # Verified upstream assets: preserve exact bytes on Windows and upstream spacing.
 portal/vendor/pdfjs/** -text -whitespace
