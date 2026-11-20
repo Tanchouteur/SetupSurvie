@@ -38,4 +38,11 @@ désormais la préférence de mouvement réduit, tandis que les recettes
 d’animation conservent leurs réglages. L’essai WebKit de navigation
 attend la réponse initiale de la file d’attente avant de quitter les cartes.
 
+La découverte Windows a révélé quatre scénarios système propres à Linux
+et un test du kit dont l’injection d’erreur dépendait du chemin temporaire
+Windows. Les premiers restent exécutés sur Linux. Le test du kit compare
+désormais le chemin résolu, comme le code de publication. La recette
+d’installation des cartes simule la préparation YouTube, dont les
+binaires sont déjà exercés séparément.
+
 [Premier run de la branche](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44729474592).

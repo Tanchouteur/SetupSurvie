@@ -21,7 +21,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -r tests/requirements-kiwix.txt
       - name: Suite Python et configurations Compose
-        run: python -m unittest discover -s tests -v
+        run: python -m unittest discover -s tests -v --durations 10
       - name: Configuration Caddy
         run: docker run --rm -i caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d caddy adapt --config - --adapter caddyfile --validate < deploy/Caddyfile
       - run: python tests/search_processing_smoke.py
@@ -63,7 +63,7 @@ jobs:
       - id: dependencies
         run: python -m pip install -r tests/requirements-kiwix.txt
       - name: Suite Python et configurations Compose
-        run: python -m unittest discover -s tests -v
+        run: python -m unittest discover -s tests -v --durations 10
       - name: Installation PowerShell
         if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
         run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/windows_installers.ps1

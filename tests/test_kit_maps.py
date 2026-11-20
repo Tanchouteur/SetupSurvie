@@ -96,8 +96,9 @@ class MapsKitTests(unittest.TestCase):
 
     def test_publication_failure_restores_old_manifest_images_and_files(self):
         original=setup.write_json
+        manifest=self.kit.resolve()/'manifest.json'
         def fail(path,value,**kwargs):
-            if path==self.kit/'manifest.json' and 'map_bundles' in value:raise OSError('power failure simulation')
+            if path==manifest and 'map_bundles' in value:raise OSError('power failure simulation')
             return original(path,value,**kwargs)
         with patch.object(setup,'write_json',side_effect=fail),self.assertRaises(OSError):self.refresh()
         self.assertEqual(json.loads((self.kit/'manifest.json').read_text()),self.old)
