@@ -24,6 +24,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
 
+## 20 novembre 2026
+
+- [Actualisation des cartes de la file d’attente](2026-11-20-fiabilisation-file.md) — conservation des volets ouverts et du focus clavier (0.67.2).
+
 ## 19 novembre 2026
 
 - [Tri des collections sur le SSD Windows](2026-11-19-tri-collections.md) — mesures par requête, portée de la recette et vérifications restantes.

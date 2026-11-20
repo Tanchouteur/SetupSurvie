@@ -36,7 +36,7 @@ secours** (`/secours.html`) permet de lire les fichiers sans l’API ni l’IA.
 | [Portail sur ordinateur et téléphone](portail.md) | Rubriques, navigation, conversation, modèles, anciennes adresses | 0.63.4 |
 | [Paramètres et Mon appareil](parametres-et-appareil.md) | Cinq rubriques de paramètres, où trouver chaque commande | 0.36.0 |
 | [Profils locaux sans mot de passe](profils-locaux.md) | Choisir ou créer un profil, Famille, Open WebUI | 0.1.29 |
-| [File d’attente](file-attente.md) | Voir, réordonner, mettre en pause et reprendre les travaux | 0.67.0 |
+| [File d’attente](file-attente.md) | Voir, réordonner, mettre en pause et reprendre les travaux | 0.67.2 |
 | [Préparations de la bibliothèque](preparations-bibliotheque.md) | Étapes de préparation, dépendances, cartes de la file | 0.67.0 |
 | [Inventaire des données locales](inventaire-local.md) | Ce qui est présent sur le disque | 0.67.0 |
 

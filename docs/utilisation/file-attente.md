@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — actualisé pour la 0.67.0.**
+**Guide actuel — actualisé pour la 0.67.2.**
 
 Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
 **À suivre** affiche les tâches actives, en attente et celles qui demandent une
@@ -10,7 +10,8 @@ boutons **?** expliquent le fonctionnement de la file et de chaque groupe.
 Ils s’ouvrent au toucher, à la souris et au clavier.
 
 Pour une préparation de l’appareil, ouvrez **Détails techniques** sur
-sa carte. Selon le travail, vous y verrez les fichiers actifs, les volumes
+sa carte. Les volets ouverts et le focus sur leur titre restent en place
+quand les chiffres de la carte s’actualisent. Selon le travail, vous y verrez les fichiers actifs, les volumes
 vérifiés, la dernière observation ou le nombre de documents indexés. Le
 titre de la carte renvoie à la page d’origine, qui conserve les commandes
 propres à cette préparation. Le profil Famille peut aussi mettre en pause

@@ -6,7 +6,7 @@ async page => {
     {id: 'question', lane: 'ai', kind: 'chat', type: 'Question à l’assistant', title: 'Comment réparer ce mécanisme ?', model: 'gemma', status: 'queued', priority: true, next: true, movable: true},
     {id: 'document', lane: 'ai', kind: 'translation', type: 'Traduction de document', title: 'Manuel en anglais', model: 'gemma', status: 'queued', done: 3, total: 8, movable: true},
     {id: 'video', lane: 'network', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Liste de vidéos', model: 'yt-dlp', status: 'error',
-      error: 'Une vidéo est privée.', retry: true, failure_count: 1, failures: [{line: 2, message: 'vidéo privée'}]},
+      error: 'Une vidéo est privée.', preparation: {source: 'host'}, retry: true, failure_count: 1, failures: [{line: 2, message: 'vidéo privée'}]},
     {id: 'second', lane: 'ai', kind: 'translation', type: 'Traduction de document', title: 'Notice de montage', model: 'gemma', status: 'queued', movable: true},
     {id: 'download', lane: 'network', kind: 'youtube', type: 'Téléchargement YouTube', title: 'Vidéos du jardin', status: 'running'}
   ];
@@ -58,7 +58,28 @@ async page => {
   await queuePage.getByLabel('Comment fonctionne la file d’attente ?').press('Enter');
   await queuePage.getByRole('button', {name:'Historique récent'}).click();
   await queuePage.getByText('Aucun travail récent dans l’historique.').waitFor();
+  const completed = {
+    id: 'host:index', lane: 'local', kind: 'index', title: 'Indexation terminée',
+    status: 'completed', preparation: {total_bytes: 100, verified_bytes: 100, verified_count: 1, total_count: 1}
+  };
+  tasks.push(completed);
+  const historyCard = queuePage.locator('[data-work-id="host:index"]');
+  const historySummary = historyCard.locator('summary');
+  await historySummary.press('Enter');
+  completed.stage = 'Rapport d’index disponible';
+  await historyCard.getByText(completed.stage).waitFor();
+  verify(await historySummary.evaluate(node => node.parentElement.open && node === document.activeElement),
+    'Le volet technique ouvert doit garder le focus dans l’historique.');
   await queuePage.getByRole('button', {name:'À suivre'}).click();
+  const videoCard = queuePage.locator('[data-work-id=video]');
+  const technicalDetails = videoCard.locator('details').filter({hasText: 'Détails techniques'});
+  const failures = videoCard.locator('details').filter({hasText: 'ligne(s) à vérifier'});
+  await failures.locator('summary').press('Enter');
+  tasks[3].preparation.pending_errors = 2;
+  await page.waitForFunction(() => document.querySelector('[data-work-id=video] details')?.textContent.includes('2 contenu(s) à vérifier.'));
+  verify(await failures.evaluate(node => node.open), 'Les erreurs ouvertes doivent rester visibles après actualisation.');
+  verify(await technicalDetails.evaluate(node => !node.open), 'Les détails techniques doivent rester repliés.');
+  verify(await failures.locator('summary').evaluate(node => node === document.activeElement), 'Le focus doit rester sur les erreurs.');
   await page.goto(base + '/#/accueil');
   const shortcut = page.locator('#main-navigation .work-queue-link');
   await page.waitForFunction(() => document.querySelector('#main-navigation .work-queue-count').textContent === '7');

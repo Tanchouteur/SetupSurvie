@@ -64,6 +64,7 @@
   function preparationDetails(job) {
     const data = job.preparation;
     const details = element('details', undefined, 'work-queue-failures');
+    details.dataset.queueDetails = JSON.stringify([job.id, 'preparation']);
     details.append(element('summary', 'Détails techniques'));
     const stamp = data.observed_at && new Date(data.observed_at * 1000).toLocaleTimeString('fr-FR');
     if (stamp) details.append(element('p', 'Dernière observation à ' + stamp + '.'));
@@ -192,6 +193,7 @@
     if (job.preparation) main.append(preparationDetails(job));
     if (job.failure_count) {
       const details = element('details', undefined, 'work-queue-failures');
+      details.dataset.queueDetails = JSON.stringify([job.id, 'failures']);
       const list = element('ul');
       for (const failure of job.failures) {
         list.append(element('li', 'Ligne ' + failure.line + ' · ' + failure.message));
@@ -267,9 +269,9 @@
     toggle.textContent = state.paused ? 'Reprendre la file' : 'Mettre en pause';
     const host = $('work-queue-groups');
     const previous = document.activeElement?.dataset.workControl;
-    const focusedDetails = document.activeElement?.matches('li[data-work-id] details > summary')
-      ? document.activeElement.closest('li').dataset.workId : null;
-    const expanded = new Set(Array.from(host.querySelectorAll('li[data-work-id] > div > details[open]'), item => item.closest('li').dataset.workId));
+    const focusedDetails = document.activeElement?.matches('details[data-queue-details] > summary')
+      ? document.activeElement.parentElement.dataset.queueDetails : null;
+    const expanded = new Set(Array.from(host.querySelectorAll('details[data-queue-details][open]'), item => item.dataset.queueDetails));
     const openHelp = new Set(Array.from(host.querySelectorAll('[data-lane] .queue-help[open]'), item => item.closest('[data-lane]').dataset.lane));
     const focusedLane = document.activeElement?.closest('.queue-help')?.closest('[data-lane]')?.dataset.lane;
     const history = state.jobs.filter(job => !waiting(job) && !['running', 'unknown'].includes(job.status) &&
@@ -280,6 +282,7 @@
     }
     host.replaceChildren();
     let reorderable = false;
+    let focusedSummary;
     function group(heading, jobs, container, className = 'work-queue-group') {
       if (!jobs.length) return;
       const section = element('section', undefined, className);
@@ -291,9 +294,9 @@
       reorderable ||= movable.priority.length > 1 || movable.standard.length > 1;
       for (const job of jobs) {
         const card = taskCard(job, movable[job.priority ? 'priority' : 'standard']);
-        if (expanded.has(job.id)) {
-          const details = card.querySelector('details');
-          if (details) details.open = true;
+        for (const details of card.querySelectorAll('details[data-queue-details]')) {
+          details.open = expanded.has(details.dataset.queueDetails);
+          if (details.dataset.queueDetails === focusedDetails) focusedSummary = details.querySelector('summary');
         }
         list.append(card);
       }
@@ -306,6 +309,7 @@
       group('Historique récent', history, host);
       if (!history.length) host.append(element('p', 'Aucun travail récent dans l’historique.', 'work-queue-empty'));
       $('work-queue-help').hidden = true;
+      focusedSummary?.focus({preventScroll: true});
       return;
     }
     group('En erreur', failures, host);
@@ -331,10 +335,7 @@
     }
 
     $('work-queue-help').hidden = !reorderable;
-    if (focusedDetails) {
-      [...host.querySelectorAll('li[data-work-id]')].find(item => item.dataset.workId === focusedDetails)
-        ?.querySelector('details > summary')?.focus({preventScroll: true});
-    }
+    focusedSummary?.focus({preventScroll: true});
     if (focusedLane) host.querySelector('[data-lane="' + focusedLane + '"] .queue-help summary')?.focus({preventScroll: true});
     if (previous) Array.from(host.querySelectorAll('[data-work-control]')).find(control => control.dataset.workControl === previous)?.focus({preventScroll: true});
   }
