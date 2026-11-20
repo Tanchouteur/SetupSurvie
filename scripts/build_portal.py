@@ -60,7 +60,7 @@ def build():
         ('css', '/design/system.css', '0.63.4'),
         ('css', '/interface/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.63.0'),
-        ('js', '/interface/navigation.js', '0.65.0'),
+        ('js', '/interface/navigation.js', '0.68.0'),
     ]
     tags = []
     for kind, path, version in assets:
