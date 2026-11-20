@@ -1,5 +1,7 @@
 > Actualisation du 19 novembre 2026 : la maquette fictive est retirée du paquet en 0.59.0 ; l’interface classique a ensuite été retirée en 0.63.0 (`/classique/` et `/nouveau/` redirigent vers la racine).
 
+> La liste de clôture, les preuves pour la 0.69.4 et les recettes sur appareils réels figurent dans l’[audit V1 du 20 novembre 2026](../essais/2026-11-20-audit-v1.md).
+
 # Feuille de route vers la V1 (1.0.0)
 
 **Statut : bilan et proposition de l’agent du 17 novembre 2026, à la demande de

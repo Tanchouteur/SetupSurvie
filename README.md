@@ -9,9 +9,10 @@ et un assistant IA local, accessibles depuis les appareils du réseau domestique
 même sans Internet. Il sert au quotidien, à l’éducation familiale et à la
 préparation aux périodes de services dégradés.
 
-L'offre visée est un **PC vendu avec SetupSurvie préinstallé**, dont le code
-propre n'est pas publié en open source. Le [cadrage de l'offre](docs/decisions/acces-simple-et-offre.md)
-distingue préparation avant livraison, usage client et validations restantes.
+La **V1 vise Linux**. Louis fournit gratuitement SetupSurvie à ses proches, qui
+achètent leur matériel. À terme, l’offre envisagée est un PC vendu avec
+SetupSurvie préinstallé. Le code propre n’est pas publié en open source.
+Le [cadrage de l’offre](docs/decisions/acces-simple-et-offre.md) précise ces étapes.
 
 ## État du projet
 
@@ -36,10 +37,10 @@ une offre commerciale validée. Fonctions disponibles :
 - **Exploitation** : mises à jour avec retour arrière, reprise après coupure,
   [transfert vers un autre SSD](docs/exploitation/transfert-installation.md), diagnostics exportables.
 
-Restent à qualifier : la qualité sur le fonds réel de Marc, l’installation
-complète sur PC vierge, Safari sur iPhone réel et la recette complète hors ligne.
-Les [bilans datés](docs/essais/README.md) précisent ce qui a réellement été essayé ;
-la [feuille de route V1](docs/decisions/feuille-de-route-v1.md) liste les bloquants.
+Pour la V1, restent notamment à qualifier l’installation Linux sur disque vide,
+la qualité sur le fonds livré, Safari sur iPhone réel et la restauration hors
+ligne. La [liste de clôture V1](docs/essais/2026-11-20-audit-v1.md#liste-de-clôture-v1)
+relie le travail restant aux [bilans datés](docs/essais/README.md).
 
 ## Commencer
 
