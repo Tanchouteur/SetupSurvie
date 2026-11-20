@@ -25,6 +25,7 @@ $script:updateStages = @{
     start = 'Redémarrage des services'
     check = 'Vérification du fonctionnement'
     rollback = 'Restauration de la version précédente'
+    restored = 'Version précédente remise en service'
     prune = 'Nettoyage des anciennes copies de mise à jour'
     launcher = 'Actualisation des raccourcis et du lanceur'
     done = 'Mise à jour terminée'
@@ -96,9 +97,9 @@ function Update-SurvieMaintenanceStatus([string]$Phase, [string]$Title, [string]
         $null = $value.steps.Add([ordered]@{ phase = $Phase; title = $Title; at = (Get-SurvieUnixTime) })
         while ($value.steps.Count -gt 30) { $value.steps.RemoveAt(0) }
     }
-    if ($Phase -eq 'rollback') { $value.rolled_back = $true }
+    if ($Phase -eq 'restored') { $value.rolled_back = $true }
     if ($Phase -in $script:unavailablePhases) { $value.unavailable = $true }
-    elseif ($Phase -in @('prune', 'launcher') -or $script:finalStates.ContainsKey($Phase)) { $value.unavailable = $false }
+    elseif ($Phase -in @('restored', 'prune', 'launcher') -or $script:finalStates.ContainsKey($Phase)) { $value.unavailable = $false }
     $value.phase = $Phase
     $value.title = $Title
     $value.detail = if ($Detail.Length -gt 500) { $Detail.Substring(0, 500) } else { $Detail }

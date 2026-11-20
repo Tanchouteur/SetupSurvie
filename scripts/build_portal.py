@@ -61,7 +61,7 @@ def build():
         ('css', '/interface/library-video.css', '0.54.0'),
         ('js', '/design/experience.js', '0.63.0'),
         ('css', '/maintenance-view.css', '0.69.0'),
-        ('js', '/maintenance-view.js', '0.69.0'),
+        ('js', '/maintenance-view.js', '0.69.3'),
         ('css', '/interface/maintenance.css', '0.69.1'),
         ('js', '/interface/maintenance.js', '0.69.2'),
         ('js', '/interface/navigation.js', '0.68.1'),

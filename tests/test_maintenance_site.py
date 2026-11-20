@@ -68,9 +68,16 @@ class StatusWriterTests(unittest.TestCase):
         writer.progress('error', 'Étape interrompue.')
         status = maintenance_site.read_status(self.data)
         self.assertEqual(status['state'], 'failed')
-        self.assertTrue(status['rolled_back'])
+        self.assertFalse(status['rolled_back'])
         self.assertFalse(status['unavailable'])
         self.assertEqual([step['phase'] for step in status['steps']], ['git', 'backup', 'rollback', 'error'])
+
+        writer.progress('rollback')
+        writer.progress('restored')
+        writer.progress('error', 'Mise à jour annulée.')
+        status = maintenance_site.read_status(self.data)
+        self.assertTrue(status['rolled_back'])
+        self.assertFalse(status['unavailable'])
 
     def test_lines_are_bounded_and_unknown_phases_ignored(self):
         writer = maintenance_site.StatusWriter(self.data)

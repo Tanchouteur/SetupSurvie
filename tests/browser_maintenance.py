@@ -190,15 +190,23 @@ def exercise(page, base, name):
     state['status'] = {**state['status'], 'state': 'running', 'phase': 'start', 'title': 'Redémarrage des services',
                        'unavailable': True, 'id': 'e' * 32, 'updated': time.time()}
     other = page.context.new_page()
+    state['pilot_ready'] = False
+    other.route('**/api/health', lambda route: route.fulfill(
+        status=200 if state['pilot_ready'] else 502, content_type='application/json',
+        body=json.dumps({'ok': state['pilot_ready']})))
     other.route('**/catalog/maintenance.json', lambda route: route.fulfill(
         status=200, content_type='application/json', body=json.dumps(state['status']),
         headers={'X-SetupSurvie-Maintenance': '1'} if state['maintenance_page'] else {}))
     other.goto(base + '/maintenance.html')
     other.locator('#maintenance-standalone', has_text='Redémarrage des services').wait_for()
     other.screenshot(path=str(OUTPUT / (name + '-page-autonome.png')), full_page=True)
-    state['maintenance_page'] = False
+    with other.expect_response(lambda response: response.url.endswith('/api/health') and response.status == 502):
+        state['maintenance_page'] = False
+        state['status'] = {**state['status'], 'state': 'completed', 'unavailable': False}
+    check(other.locator('#maintenance-standalone').is_visible(),
+          name + ' : le serveur web répond mais le suivi attend encore le pilote')
     with other.expect_navigation(timeout=8000):
-        pass
+        state['pilot_ready'] = True
     check(True, name + ' : page autonome rechargée quand le portail répond')
     other.close()
 

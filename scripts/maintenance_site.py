@@ -40,6 +40,7 @@ PHASES = {
     'start': 'Redémarrage des services',
     'check': 'Vérification du fonctionnement',
     'rollback': 'Restauration de la version précédente',
+    'restored': 'Version précédente remise en service',
     'prune': 'Nettoyage des anciennes copies de mise à jour',
     'launcher': 'Actualisation des raccourcis et du lanceur',
     'done': 'Mise à jour terminée',
@@ -107,11 +108,11 @@ class StatusWriter:
         if changed:
             value['steps'].append({'phase': phase, 'title': title, 'at': time.time()})
             del value['steps'][:-30]
-        if phase == 'rollback':
+        if phase == 'restored':
             value['rolled_back'] = True
         if phase in UNAVAILABLE:
             value['unavailable'] = True
-        elif phase in ('prune', 'launcher', *FINAL):
+        elif phase in ('restored', 'prune', 'launcher', *FINAL):
             value['unavailable'] = False
         value.update(phase=phase, title=title, detail=str(detail or '')[:500],
                      current=current, total=total, state=FINAL.get(phase, 'running'))

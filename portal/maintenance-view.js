@@ -166,12 +166,15 @@
   async function poll() {
     try {
       const {status, maintenancePage} = await fetchStatus();
-      failures = 0;
-      if (!maintenancePage) {
+      if (status) last = status;
+      const stillUpdating = status?.state === 'running' && status.unavailable && !stale(status);
+      if (!maintenancePage && !stillUpdating) {
+        const health = await fetch('/api/health', {cache: 'no-store', credentials: 'same-origin'});
+        if (!health.ok || (await health.json()).ok !== true) throw new Error('api-health');
         location.reload();
         return;
       }
-      if (status) last = status;
+      failures = 0;
       if (last) render(standalone, last);
     } catch (_) {
       failures += 1;

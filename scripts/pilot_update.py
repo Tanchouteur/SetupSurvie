@@ -274,6 +274,7 @@ def recover_locked(app,journal,services):
     setup.ROOT=root
     services.start();services.check(j['old_version'])
     j['phase']='rolled_back';setup.write_json(journal,j,private=True)
+    report_progress('restored')
 
 
 def plain_directory(path):
