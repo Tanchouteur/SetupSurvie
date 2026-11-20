@@ -26,13 +26,17 @@ def add_video(root,name,title,description='',subtitle=None):
 class VideoSearchTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);self.root=Path(temporary.name)
-        for module,key,value in [(store,'ROOT',self.root/'state'),(videos,'ROOT',self.root/'video'),(videos,'ACTIVE',None),(videos,'CHECKED',0.0),(library,'GUIDES',self.root/'guides')]:
+        for module,key,value in [(store,'ROOT',self.root/'state'),(videos,'ROOT',self.root/'video'),(videos,'ACTIVE',None),
+                                 (videos,'PARTITION_TASK',None),(videos,'CHECKED',0.0),(library,'GUIDES',self.root/'guides')]:
             p=patch.object(module,key,value);p.start();self.addCleanup(p.stop)
         videos.ROOT.mkdir();library.GUIDES.mkdir();store.init();videos.STOP.clear()
         add_video(videos.ROOT,'feu','Allumer un feu sans allumettes','Méthode fictive de démonstration.','Frotter le bâton fictif contre la planche.')
         add_video(videos.ROOT,'eau','Bouillir de l’eau','Vidéo fictive.')
         (library.GUIDES/'feu.fr.txt').write_text('Allumer un feu : guide fictif avec du petit bois.')
         library.index_guides()
+
+    async def asyncTearDown(self):
+        await videos.stop()
 
     def plan(self,text):return library.retrieval.plan(text,library.search_terms(text),library.SYNONYMS)
 
