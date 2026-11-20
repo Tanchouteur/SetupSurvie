@@ -1,5 +1,27 @@
 # Contexte et consignes pour les agents
 
+## Démarrage rapide pour un agent
+
+- **Version actuelle** : `VERSION` dans `pilot/app.py` et `deploy/release.json`
+  (identiques). Ne pas déduire la version des documents : leurs en-têtes donnent
+  la version de leur dernière révision.
+- **Trouver le code** : [carte du code](docs/architecture/carte-du-code.md)
+  (module → rôle, routes, scripts, configuration).
+- **Trouver la doc** : [index général](docs/README.md), puis l’index du dossier
+  concerné ; décisions en vigueur dans les [choix actuels](docs/decisions/choix-actuels.md).
+- **Lecture ciblée** : ouvrir le guide du sujet traité. Pour l’installation chez
+  Marc, partir du [guide du pilote](docs/installation/pilote-marc.md). Pour le
+  fonds documentaire, partir de la [préparation du fonds complet](docs/bibliotheque/bibliotheque-complete-marc.md).
+  Le [plan des 500 Go](docs/bibliotheque/plan-bibliotheque-hors-ligne-500go.md)
+  décrit les lots envisagés pour le laboratoire. Le [premier bilan du pilote](docs/essais/bilan-pilote-2026-11-11.md)
+  sert de repère historique. Pour les arbitrages produit, consulter
+  [l’offre](docs/decisions/acces-simple-et-offre.md) et la [feuille de route](docs/decisions/feuille-de-route-v1.md).
+- **Interface** : modifier `portal/interface/modele.html` et les scripts ;
+  incrémenter le paramètre `?v=` d’un fichier modifié là où il est déclaré
+  (`modele.html` ou la liste ordonnée de `scripts/build_portal.py`), puis
+  régénérer `portal/index.html` avec `python3 scripts/build_portal.py`.
+- **Tests** : voir « Vérifications et suivi » ; la CI est `.github/workflows/tests.yml`.
+
 ## Projet et utilisateurs
 
 SetupSurvie est le projet de Louis et Marc Tanchou : un serveur familial de
@@ -24,29 +46,6 @@ Le logo feu et livre est dans `assets/branding/`, avec ses variantes dans
 `portal/branding/`. Conserver les ajouts de l'utilisateur et lire les nouvelles
 documentations avant de modifier le produit. Les noms proposés dans les documents
 de branding ne constituent pas une décision de renommage du produit.
-
-## Démarrage rapide pour un agent
-
-- **Version actuelle** : `VERSION` dans `pilot/app.py` et `deploy/release.json`
-  (identiques). Ne pas déduire la version des documents : leurs en-têtes donnent
-  la version de leur dernière révision.
-- **Trouver le code** : [carte du code](docs/architecture/carte-du-code.md)
-  (module → rôle, routes, scripts, configuration).
-- **Trouver la doc** : [index général](docs/README.md), puis l’index du dossier
-  concerné ; décisions en vigueur dans les [choix actuels](docs/decisions/choix-actuels.md).
-- **Lire en priorité** : `README.md`, `docs/README.md`,
-  `docs/architecture/carte-du-code.md`, `docs/decisions/choix-actuels.md`,
-  `docs/decisions/acces-simple-et-offre.md` et `docs/decisions/feuille-de-route-v1.md`,
-  puis le guide de référence du sujet (pour l’installation chez Marc :
-  `docs/installation/pilote-marc.md` ; pour les contenus :
-  `docs/bibliotheque/plan-bibliotheque-hors-ligne-500go.md`, qui est un plan et
-  non la preuve que les lots proposés sont téléchargés). Le
-  `docs/essais/bilan-pilote-2026-11-11.md` reste le premier bilan du pilote.
-- **Interface** : modifier `portal/interface/modele.html` et les scripts ;
-  incrémenter le paramètre `?v=` d’un fichier modifié là où il est déclaré
-  (`modele.html` ou la liste ordonnée de `scripts/build_portal.py`), puis
-  régénérer `portal/index.html` avec `python3 scripts/build_portal.py`.
-- **Tests** : voir « Vérifications et suivi » ; la CI est `.github/workflows/tests.yml`.
 
 ## Architecture et points d'entrée
 

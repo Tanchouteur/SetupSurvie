@@ -1,7 +1,6 @@
 """The version shown by the API must match the published release."""
 import ast
 import json
-import re
 import unittest
 from pathlib import Path
 
@@ -16,12 +15,15 @@ class VersionConsistencyTests(unittest.TestCase):
                    if isinstance(node, ast.Assign)
                    and any(getattr(target, 'id', None) == 'VERSION' for target in node.targets))
         self.assertEqual(api, release)
+        self.assertIn(f'Version **{release}**', (ROOT / 'README.md').read_text())
         self.assertRegex(release, r'^\d+\.\d+\.\d+$')
 
     def test_launchers_require_the_same_python(self):
-        survie = (ROOT / 'scripts/survie.sh').read_text()
-        self.assertIn('>= (3,11)', survie)
-        self.assertIn('Python 3.11+', (ROOT / 'scripts/setup.py').read_text().splitlines()[1])
+        for launcher in ('survie.sh', 'survie.ps1'):
+            with self.subTest(launcher=launcher):
+                source = (ROOT / 'scripts' / launcher).read_text(encoding='utf-8-sig')
+                self.assertIn('sys.version_info >= (3,11)', source)
+        self.assertIn('Python 3.11+', (ROOT / 'scripts/setup.py').read_text())
 
 
 if __name__ == '__main__':

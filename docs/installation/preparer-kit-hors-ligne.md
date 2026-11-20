@@ -1,15 +1,38 @@
 # Préparer et vérifier le kit de transport
 
-Guide de référence du pilote 0.1.14 — 12 novembre 2026.
+**Guide de référence — revu le 20 novembre 2026 pour la 0.67.0.** Les commandes
+sont celles de `scripts/pilot_kit.py` ; les mesures et la recette citées restent
+celles du kit 0.1.14 (12 novembre 2026). La recette finale chez Marc reste à faire.
 
 Le kit transporte l’application, les images de services, sept modèles et les
-contenus sélectionnés. Les prérequis Windows restent séparés : suivre le
-[guide Marc](pilote-marc.md#avant-de-copier-le-kit). Préparer ces logiciels avec
-Internet une première fois ; un Windows vierge ne peut pas être installé avec
-ce seul kit. Les commandes ci-dessous préparent le kit sur le laboratoire de
-Louis ; elles ne sont pas des prérequis à installer chez Marc.
+contenus sélectionnés. Il **ne contient pas les prérequis Windows** (WSL 2,
+Python, Docker Desktop, Git, Ollama, pilote NVIDIA) : les installer d’abord avec
+Internet, voir le [guide Marc](pilote-marc.md#avant-de-copier-le-kit) et le
+[parcours Windows](deux-etapes-windows.md). Un Windows vierge ne s’installe pas
+avec ce seul kit. Les commandes ci-dessous se lancent sur le laboratoire de Louis,
+pas chez Marc.
 
-Le besoin de reconstruction complète sur une autre machine, Windows ou Linux, sans aucun téléchargement est formalisé dans le [protocole du disque de secours](../exploitation/disque-de-secours-hors-ligne.md), daté du 13 novembre 2026. Il inclut prérequis, fonds réel complet, états personnels et manuel humain. Il reste à développer et qualifier : les résultats du kit ci-dessous conservent leur périmètre historique.
+La reconstruction complète sur une autre machine sans aucun téléchargement est un
+protocole à réaliser, pas une fonction : voir le
+[disque de secours](../exploitation/disque-de-secours-hors-ligne.md) (13 novembre 2026).
+
+## Sous-commandes de `pilot_kit.py`
+
+| Commande | Rôle |
+| --- | --- |
+| `export-lab DESTINATION` | Crée un kit depuis le laboratoire ; Wikipédia anglaise incluse par défaut si présente (`--no-english-wikipedia` pour un support réduit) |
+| `refresh-app KIT` | Remplace le logiciel du kit par la version courante |
+| `refresh-library KIT --data-dir DONNEES` | Ajoute les contenus publics épinglés ou téléchargés, avec contrôle des sources ; complète aussi un ancien kit sans Wikipédia anglaise |
+| `refresh-maps-lab KIT [--geography ID]… [--routing]` | Actualise les cartes sans recopier les modèles |
+| `recover-maps KIT` | Restaure la publication cartographique précédente après une interruption |
+| `verify KIT` | Contrôle les empreintes et les dépendances hors ligne |
+| `install KIT --target windows --data-dir … --work-dir …` | Installe depuis le kit : voir le [guide Marc](pilote-marc.md#installer-à-partir-du-kit) |
+
+Le kit constaté en 0.1.14 fait environ 161 Go ; aucune taille nouvelle n’est
+annoncée sans préparation réelle. Le laboratoire ne reproduit pas tout le fonds
+de Marc : les compléments se préparent sur son installation, sans plafond
+documentaire, selon la [préparation du fonds complet](../bibliotheque/bibliotheque-complete-marc.md).
+La copie du kit sur le volume limité de Louis garde tous ses contrôles de capacité.
 
 ## Actualiser les cartes sans recopier les modèles
 
@@ -21,66 +44,61 @@ python3 scripts/pilot_kit.py refresh-app /run/media/louis/SetupSurvie/livraison-
 python3 scripts/pilot_kit.py verify /run/media/louis/SetupSurvie/livraison-marc
 ```
 
-L’identifiant ci-dessus désigne la zone publique préparée autour de Solliès-Ville
-(centre 6,04° E / 43,18° N, rayon 10 km). Pour une autre zone, utiliser son
-identifiant de manifeste après préparation. Répéter `--geography` pour plusieurs
-zones. La commande copie les fonds PMTiles recensés et seulement les fichiers
-référencés des zones explicitement choisies. Aucun domicile, point personnel,
-compte ou réglage privé n’est exporté par ce parcours.
+- `--geography` prend l’identifiant d’une zone préparée, c’est-à-dire un dossier de
+  `library/maps/geography/` du volume de données. L’exemple est la zone publique
+  autour de Solliès-Ville telle qu’elle était en 0.1.14 (rayon 10 km) ;
+  `deploy/map-catalog.json` déclare aujourd’hui un rayon de 25 km, donc une zone
+  préparée maintenant a un autre identifiant. Répéter l’option pour plusieurs
+  zones. Seuls les fichiers référencés des zones choisies et les fonds PMTiles
+  recensés sont copiés ; aucun domicile, point personnel, compte ou réglage privé
+  n’est exporté.
+- `--routing` ajoute le réseau marche/moto/voiture et l’image OSRM figée ; si la
+  liste des images change, l’archive est reconstruite depuis les images locales
+  sans registre. Modèles et documents existants restent en place, les anciens lots
+  cartographiques ne sont pas supprimés implicitement.
+- Une réserve de 15 Go libres et l’espace de préparation sont exigés.
 
-`--routing` ajoute le réseau courant marche/moto/voiture et l’image OSRM figée.
-Si la liste des images change, l’archive est reconstruite à partir des images
-locales sans registre. Les modèles et documents existants restent en place.
-Une réserve de 15 Go et l’espace de préparation sont exigés. Les anciens lots
-cartographiques déjà présents ne sont pas supprimés implicitement.
-
-La publication remplace les fichiers avec un journal et un marqueur bloquant
-l’installation. En cas d’interruption signalée, conserver le kit et lancer :
+La publication remplace les fichiers avec un journal et un marqueur qui bloque
+l’installation. Après une interruption signalée, conserver le kit et lancer :
 
 ```bash
 python3 scripts/pilot_kit.py recover-maps /run/media/louis/SetupSurvie/livraison-marc
 ```
 
-Cette commande restaure la publication cartographique précédente ; elle ne
-récupère pas d’autres types d’export interrompus. Relancer ensuite l’actualisation
-et la vérification. Une erreur avant publication laisse l’ancien kit utilisable.
+Cette commande ne restaure que la publication cartographique précédente (pas les
+autres types d’export interrompus) ; relancer ensuite l’actualisation et la
+vérification. Une erreur avant publication laisse l’ancien kit utilisable.
 
 ## Contrôler le contenu avant transfert
 
 `verify` relit les empreintes de tous les fichiers, puis contrôle les dépendances
-hors ligne : couches des modèles, caches de recherche et de transcription audio, paquets de
-découverte réseau, images annoncées et présentes dans l’archive, versions du code,
-cartes, relief, lieux et graphes. Un kit conforme doit être revérifié après copie
-sur le support de transport. Ce contrôle ne lance aucun modèle et ne constitue
-pas une installation Windows réussie.
+hors ligne : couches des modèles, caches de recherche et de transcription, paquets
+de découverte réseau, images annoncées et présentes dans l’archive, versions du
+code, cartes, relief, lieux et graphes. Revérifier le kit après copie sur le
+support de transport. Ce contrôle ne lance aucun modèle et ne vaut pas une
+installation Windows réussie.
 
-Pour refaire une recette réelle des cartes à partir du kit sur Linux :
+Recette réelle des cartes à partir du kit, sur Linux :
 
 ```bash
 python3 scripts/audit_kit_lab.py /run/media/louis/SetupSurvie/livraison-marc --output /run/media/louis/SetupSurvie/results/kit-offline-0.1.14/isolation.json
 ```
 
-Cette recette importe les images dans le cache Podman existant du laboratoire,
-emploie un réseau interne sans passerelle Internet, et calcule les trois types
-de trajet avec les seules données du kit. Aucun compte réel, modèle ou GPU
-n’est monté. Seuls les conteneurs, le réseau et les copies temporaires de la recette sont retirés
-ensuite ; le cache partagé est conservé. Ce test ne reconstitue pas une machine vierge. Le rapport
-et les limites de la campagne sont dans le [bilan daté](../essais/2026-11-12-kit-marc-hors-ligne.md).
+Elle importe les images dans le cache Podman existant du laboratoire, emploie un
+réseau interne sans passerelle Internet et calcule les trois types de trajet avec
+les seules données du kit. Aucun compte réel, modèle ni GPU n’est monté ; seuls
+les conteneurs, le réseau et les copies temporaires de la recette sont retirés
+ensuite (le cache partagé est conservé). Elle ne reconstitue pas une machine
+vierge. Rapport et limites : [bilan daté](../essais/2026-11-12-kit-marc-hors-ligne.md).
 
-## Recette finale chez Marc
+## Recette finale chez Marc (à faire)
 
-Après préparation des prérequis, couper Internet en conservant le réseau local,
-vérifier et installer depuis le kit, ouvrir la bibliothèque et les cartes,
-calculer un trajet dans la zone couverte, puis essayer l’assistant. Redémarrer
-Windows, tester les deux icônes et l’accès depuis un autre appareil. Refaire ces
-essais après retrait du support de transport. La présence de fichiers ne valide
-ni les performances de la RTX 5060, ni Safari iOS, ni la praticabilité des voies.
-
-Les conditions de redistribution commerciale de chaque source restent à examiner ;
-le transport familial pour le pilote ne vaut pas validation d’une offre vendue.
-
-## Fonds complet depuis 0.1.15
-
-Le kit constaté en 0.1.14 reste à environ 161 Go ; aucune taille nouvelle n'est annoncée sans préparation réelle. Les nouveaux exports `export-lab` incluent Wikipédia anglais par défaut si présent. L'option `--no-english-wikipedia` conserve la possibilité d'un support réduit. `refresh-library KIT --data-dir DONNEES` complète aussi un ancien kit marqué sans Wikipédia anglais et ajoute les collections publiques enregistrées par le téléchargeur, avec contrôle des sources.
-
-Le laboratoire ne doit pas reproduire tout le fonds de Marc : préparer les compléments directement sur son installation, sans plafond documentaire, selon le [guide actuel](../bibliotheque/bibliotheque-complete-marc.md). La copie du kit sur le volume limité de Louis conserve tous ses contrôles de capacité.
+Après préparation des prérequis : couper Internet en gardant le réseau local ;
+vérifier et installer depuis le kit ; ouvrir la bibliothèque et les cartes ;
+calculer un trajet dans la zone couverte ; essayer l’assistant ; redémarrer
+Windows ; tester les deux icônes et l’accès depuis un autre appareil ; refaire
+ces essais après retrait du support de transport. La présence des fichiers ne
+valide ni les performances de la RTX 5060 Ti, ni Safari iOS, ni la praticabilité
+des voies. Les conditions de redistribution commerciale de chaque source restent
+à examiner : le transport familial du pilote ne vaut pas validation d’une offre
+vendue.

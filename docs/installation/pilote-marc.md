@@ -1,45 +1,76 @@
-# Première version d’essai chez Marc
+# Pilote chez Marc : kit, accès réseau, sauvegarde
 
-> Guide de référence, actualisé le 12 novembre 2026 pour le pilote 0.1.22 ; sections ultérieures datées dans le texte. Pour le portail actuel (0.66.0), voir le [guide du portail](../utilisation/portail.md) ; pour l’installation Windows actuelle, le [parcours Windows](deux-etapes-windows.md). Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md) distingue les contrôles réalisés et la recette complète encore à faire.
+**Guide de référence — revu le 20 novembre 2026 pour la 0.67.0.** Les essais
+sur le PC Linux de Louis ne remplacent pas la recette sur le Windows de Marc
+(RTX 5060 Ti 8 Go) et ses appareils du réseau local : elle reste à faire sur
+place. Pour l’installation Windows pas à pas, voir le
+[parcours Windows](deux-etapes-windows.md) ; pour le portail, le
+[guide du portail](../utilisation/portail.md) ; pour la préparation du kit, le
+[guide du kit](preparer-kit-hors-ligne.md). Le [bilan Windows](../essais/2026-11-12-installateur-windows-simple.md)
+distingue les contrôles réalisés de la recette complète.
 
-Ce guide décrit le paquet pilote. Les essais réalisés sur le PC Linux de Louis ne remplacent pas la recette sur le Windows de Marc, sa RTX 5060 8 Go et ses appareils du réseau local. Les mesures de la RTX 2060 ne prédisent pas directement ses temps de réponse. La RAM, le contexte, les fichiers du modèle et la mémoire vidéo disponible comptent aussi.
+## Ce que Marc peut essayer
 
-## Ce que Marc pourra essayer
+- **Assistant du portail** : trois modes conseillés et un groupe « Autres modèles
+  à comparer ». Le kit contient sept modèles : GPT-OSS 20B, Gemma4 E4B, Qwen3.5
+  4B/9B/27B, Gemma4 26B A4B et Qwen3.8 27B (`deploy/model-profiles.json`). Plusieurs
+  réglages d’un même modèle ne recopient pas ses fichiers. Le choix définitif
+  des modes ne se déduit pas du seul nombre de paramètres : voir le bilan des tests.
+- **Ses outils** : recherche et lecture des documents locaux, calcul, conversion
+  d’unités.
+- **Open WebUI** (lien **Assistant avancé · Open WebUI**) : dossiers, collections
+  et conversations avancées. Il reprend le profil choisi dans le portail, mais
+  **les historiques restent distincts** : une conversation créée dans une
+  interface n’est pas recopiée dans l’autre. Les outils des deux interfaces
+  diffèrent (le calculateur et le connecteur Kiwix du portail ne sont pas des
+  outils natifs d’Open WebUI).
+- **Comparer des modèles** : nouvelle conversation, même question et mêmes
+  documents ; noter le modèle, le délai, les erreurs et l’utilité. Refaire la
+  question avec un autre modèle sans lui montrer la réponse précédente.
 
-Le site propose trois modes conseillés et un groupe « Autres modèles à comparer ». Les sept modèles téléchargés sont conservés pour cette première campagne : Gemma4 E4B, GPT-OSS 20B, Qwen3.5 4B/9B/27B, Gemma4 26B A4B et Qwen3.8 27B. Plusieurs réglages d’un même modèle ne recopient pas ses fichiers. Le choix définitif des modes est documenté dans le bilan des tests, pas déduit du seul nombre de paramètres.
+Les mesures de la RTX 2060 de Louis ne prédisent pas celles de Marc : la RAM, le
+contexte, les fichiers du modèle et la mémoire vidéo disponible comptent aussi.
 
-Pour comparer : nouvelle conversation, même question et mêmes documents, puis noter le modèle, le délai, les erreurs et l’utilité. Refaire aussi la question avec un autre modèle sans lui montrer la réponse précédente. Une carte graphique plus grande permettra de refaire les mesures avec les mêmes cas.
-
-L’assistant du site peut rechercher et lire les documents locaux, calculer et convertir des unités. Open WebUI reste disponible pour ses conversations, dossiers et collections documentaires. **Même compte, historiques distincts** : les conversations créées dans une interface ne sont pas recopiées dans l’autre. Le site fournit un lien visible vers Open WebUI. Les outils du site et ceux d’Open WebUI ne sont pas identiques ; le connecteur Kiwix et le calculateur du site ne sont pas automatiquement des outils natifs Open WebUI.
-
-## Fonds complet souhaité par Marc
-
-Depuis 0.1.15, aucun plafond documentaire logiciel chez Marc. Le kit existant reste une sélection réduite ; compléter directement sur son PC avec la [préparation automatique du fonds complet](../bibliotheque/bibliotheque-complete-marc.md). Les limites de taille du laboratoire de Louis ne fixent pas le contenu cible de Marc.
+**Fonds complet.** Aucun plafond documentaire logiciel chez Marc depuis 0.1.15.
+Le kit reste une sélection réduite ; on complète directement sur son PC avec la
+[préparation du fonds complet](../bibliotheque/bibliotheque-complete-marc.md). Les
+limites de taille du laboratoire de Louis ne fixent pas le contenu cible de Marc.
 
 ## Avant de copier le kit
 
-Depuis 0.1.20, le [lanceur Windows unique](deux-etapes-windows.md)
-enchaîne la préparation des prérequis avec Internet et l’installation. Ses diagnostics,
-conflits et raccourcis ont été testés chez Marc sans modifier la 0.1.16 en service.
-L’installation complète sur un Windows vierge reste à valider.
+Le kit ne contient pas les logiciels système et ne prépare pas un Windows vierge
+hors ligne. Il faut d’abord, **avec Internet**, installer ou vérifier :
 
-Pour un PC sans prérequis, préparer Windows, WSL 2, le pilote NVIDIA,
-Python, Docker Desktop et Ollama **avec
-Internet**, puis utiliser le kit sans Internet. Le kit ne contient pas leurs
-installateurs et ne prépare pas un Windows vierge entièrement hors ligne.
-Un installateur système hors ligne complet reste hors du périmètre de ce pilote.
+- Windows 11 24H2 ou plus récent (x64), virtualisation activée, WSL 2 ;
+- le pilote NVIDIA adapté à la carte ([GPU pris en charge par Ollama](https://github.com/ollama/ollama/blob/main/docs/gpu.mdx)) ;
+- Python 3.11 à 3.15 (x64), Docker Desktop (conteneurs Linux), Git et Ollama
+  Windows. Le [parcours Windows](deux-etapes-windows.md#préparer-le-pc) les prépare ;
+  la référence Ollama du projet est dans `deploy/versions.json`.
 
+Ensuite, hors ligne :
 
-- Windows 11 à jour, pilote NVIDIA compatible avec la RTX 5060, Python 3.11 à 3.15 (x64), Docker Desktop utilisant les conteneurs Linux et Ollama Windows. La référence Ollama du projet est dans `deploy/versions.json` ; relever toute différence pour les comparaisons. [GPU pris en charge par Ollama](https://github.com/ollama/ollama/blob/main/docs/gpu.mdx).
-- Vérifier la quantité de RAM et l’espace libre. Les modèles de 27B peuvent utiliser beaucoup de RAM et rester lents avec 8 Go de VRAM. Le pilote doit permettre de les annuler.
-- Docker Desktop doit être configuré pour placer son disque virtuel sur le SSD de données choisi ; le paquet ne déplace pas automatiquement un disque Docker existant.
-- Le kit contient les images de services, les sept modèles, BGE-M3, Whisper et les archives sélectionnées. Le kit initial, constaté en 0.1.14, exclut la très grosse Wikipédia anglaise ; Wikipédia français et Wikilivres français/anglais sont inclus. Wikipédia anglaise reste disponible sur le PC de Louis. Les nouveaux exports 0.1.15 l’incluent par défaut lorsqu’elle est présente ; elle peut aussi être téléchargée directement chez Marc.
-- Depuis le kit 0.1.14 : deux fonds PMTiles (Sud et Solliès-Ville), lieux, adresses et relief autour du centre public de Solliès-Ville sur 10 km, trois graphes de trajet (marche, moto, voiture) et leur image OSRM. Ces données ne couvrent pas les trajets dans toute la France. Voir la [préparation et vérification du kit](preparer-kit-hors-ligne.md).
-- Le kit ne contient aucun compte, mot de passe, historique ni certificat privé de Louis. Les réglages et identifiants de Marc sont créés à l’installation.
+- **Place** : vérifier la RAM et l’espace libre. Le kit constaté en 0.1.14 fait
+  environ 161 Go : prévoir NTFS ou exFAT (FAT32 ne convient pas) et de la place
+  pour la copie des données et les images Docker.
+- **Docker** : régler son disque virtuel sur le SSD de données avant d’installer ;
+  le paquet ne déplace pas un disque Docker existant.
+- **Modèles** : les 27B peuvent utiliser beaucoup de RAM et rester lents avec 8 Go
+  de VRAM ; le pilote doit permettre de les annuler.
+- **Contenu du kit** : images de services, sept modèles, BGE-M3, Whisper, archives
+  sélectionnées (Wikipédia français, Wikilivres français et anglais). Wikipédia
+  anglais, exclue du kit 0.1.14, est incluse par défaut dans les exports depuis
+  0.1.15 si elle est présente.
+- **Cartes** : deux fonds PMTiles (Sud et Solliès-Ville), lieux, adresses et relief
+  autour du centre public de Solliès-Ville (10 km dans le kit 0.1.14), trois
+  graphes de trajet (marche, moto, voiture) et leur image OSRM. Ces données ne
+  couvrent pas toute la France.
+- **Confidentialité** : le kit ne contient aucun compte, historique ni certificat
+  privé de Louis.
 
 ## Installer à partir du kit
 
-Copier le dossier complet `livraison-marc` sur le disque choisi. Le kit 0.1.14 actualisé fait environ 161 Go ; prévoir un support NTFS ou exFAT et suffisamment d’espace pour la copie des données et les images Docker. FAT32 ne convient pas aux gros fichiers de ce kit. Ne pas modifier les fichiers après la vérification des empreintes. Les exemples utilisent `D:` : adapter à la lettre réelle du SSD. Choisir des dossiers de données et réglages **vides**. Le contrôle complet des empreintes et la copie de plus de 100 Go peuvent prendre plusieurs minutes.
+Le plus simple est `Installer-SetupSurvie.cmd -Kit D:\livraison-marc` (voir le
+[parcours Windows](deux-etapes-windows.md)). La commande directe est :
 
 ```powershell
 cd D:\livraison-marc\app
@@ -47,159 +78,213 @@ py -3 scripts\pilot_kit.py verify D:\livraison-marc
 py -3 scripts\pilot_kit.py install D:\livraison-marc --target windows --data-dir D:\SetupSurvie\donnees --work-dir D:\SetupSurvie\prive
 ```
 
-L’installation importe les images locales, copie les fichiers, vérifie les caches hors ligne, démarre les services et configure les profils partagés dans Open WebUI. Elle ne télécharge pas les modèles. Les logiciels prérequis doivent être installés auparavant. Depuis 0.1.29, ouvrir le portail et choisir un profil, sans mot de passe. Conserver le dossier privé pour les réglages et sauvegardes.
+Copier le dossier complet `livraison-marc` sur le disque choisi (adapter la lettre
+`D:`), sans modifier les fichiers après la vérification des empreintes, et
+choisir des dossiers de données et de réglages **vides**. Le contrôle et la copie
+de plus de 100 Go prennent plusieurs minutes.
 
-Le code installé se trouve dans `D:\SetupSurvie\application`, séparé du kit de transport. À partir de 0.1.13, l’installation Windows crée automatiquement **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** sur le Bureau, avec le logo du projet, et active le démarrage à l’ouverture de session de cet utilisateur. Le kit de transport peut ensuite être débranché.
+`install` importe les images locales, copie les fichiers, vérifie les caches hors
+ligne, démarre les services et configure les profils partagés dans Open WebUI. Il
+ne télécharge pas les modèles. Ouvrir ensuite le portail et choisir un profil
+(sans mot de passe). Conserver le dossier privé : réglages et sauvegardes.
 
-Pour une installation existante, ajouter ou recréer ces raccourcis depuis la copie installée :
+Le code installé est dans `D:\SetupSurvie\application`, séparé du kit, qui peut
+ensuite être débranché. L’installation crée sur le Bureau **Ouvrir SetupSurvie**,
+**Arrêter SetupSurvie**, **Mettre à jour SetupSurvie**, **Transférer SetupSurvie**
+(et **Suivi bibliothèque SetupSurvie** si le suivi est présent), et active le démarrage à l’ouverture
+de session.
+
+- **Ouvrir SetupSurvie** démarre Docker Desktop si nécessaire, lance les services,
+  puis ouvre le portail. À l’ouverture de session, le même lancement se fait sans
+  ouvrir le navigateur. Une pause du moteur est conservée. Ce n’est pas un service
+  avant ouverture de session.
+- **Arrêter SetupSurvie** met en pause les préparations, puis arrête les services
+  de cette installation et son Ollama dédié ; les données restent. Le PC, Docker
+  Desktop et les autres projets ne sont pas arrêtés. Les autres appareils perdent
+  l’accès jusqu’à la remise en route ; fermer seulement le navigateur laisse le
+  serveur disponible.
+- En cas d’échec, une fenêtre explique le problème ; les journaux `demarrage.log`
+  et `arret.log` sont dans le dossier privé.
+
+Pour recréer les raccourcis ou régler le démarrage automatique :
 
 ```powershell
 cd D:\SetupSurvie\application
-.\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -Startup
+.\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -Startup          # activer
+.\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -DisableStartup   # garder les raccourcis, sans démarrage automatique
 ```
 
-**Ouvrir SetupSurvie** démarre Docker Desktop si nécessaire, attend son démarrage, lance les services puis ouvre le portail. À l’ouverture de session, le même lancement s’effectue sans ouvrir le navigateur. Aucun modèle n’est interrogé et une pause du moteur est conservée. Il s’agit d’un démarrage après connexion à Windows, pas d’un service avant ouverture de session.
-
-**Arrêter SetupSurvie** met en pause les préparations en cours, puis arrête les services de cette installation et son Ollama dédié ; les données restent conservées. Il peut attendre la fin d’un échange réseau avant de terminer. Le PC, Docker Desktop et les autres projets ne sont pas arrêtés. Les autres appareils du réseau perdent l’accès au serveur jusqu’à sa remise en route. Fermer seulement le navigateur laisse le serveur disponible.
-
-Pour désactiver le démarrage automatique tout en gardant les deux raccourcis du Bureau :
-
-```powershell
-.\scripts\create-shortcuts.ps1 -WorkDir D:\SetupSurvie\prive -DisableStartup
-```
-
-Une nouvelle installation peut aussi demander `--no-startup` à `pilot_kit.py install` ou `-NoStartup` à `install.ps1`. Les raccourcis manuels restent créés. Après mise à jour d’une ancienne installation, la commande de création est volontaire : une mise à jour ne réactive pas une préférence de démarrage désactivée.
-
-En cas d’échec, une fenêtre explique le problème et les journaux `demarrage.log` ou `arret.log` restent dans le dossier privé. Les lanceurs et l’ouverture de session doivent encore être essayés sur le Windows réel de Marc.
+Une nouvelle installation peut aussi recevoir `--no-startup` (`pilot_kit.py install`)
+ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
+désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
+de session restent à essayer sur le Windows réel de Marc.
 
 ## Accès sur le PC serveur
 
-- Site : `http://localhost:8080`
-- Open WebUI, dossiers et conversations : `http://localhost:3000`
+- Portail : `http://localhost:8080`
+- Open WebUI : `http://localhost:3000`
 - Kiwix : `http://localhost:8081`
 
-`localhost` désigne toujours l’appareil sur lequel on le saisit. Sur un téléphone, il ne désigne donc pas le PC de Marc.
+`localhost` désigne l’appareil sur lequel on le saisit ; sur un téléphone, ce n’est
+pas le PC de Marc.
 
 ## Accès depuis tout le réseau local
 
-1. Relier le serveur et les lecteurs au même réseau domestique. Un réseau Wi-Fi invité ou une option d’isolation des appareils peut empêcher l’accès.
-2. Sur le PC serveur, relever l’adresse IPv4 avec `ipconfig`, par exemple `192.168.1.50`. Réserver cette adresse dans le routeur pour éviter qu’elle change.
-3. Configurer l’écoute réseau, puis redémarrer les services avec le lanceur :
+1. Relier serveur et lecteurs au même réseau domestique (un Wi-Fi invité ou
+   l’isolation des appareils bloque l’accès).
+2. Relever l’IPv4 du serveur avec `ipconfig` (par exemple `192.168.1.50`) et la
+   réserver dans le routeur.
+3. Configurer l’écoute réseau, puis redémarrer les services :
 
 ```powershell
 .\scripts\survie.ps1 --work-dir D:\SetupSurvie\prive configure --lan --lan-host 192.168.1.50 --name survie
 .\scripts\survie.ps1 --work-dir D:\SetupSurvie\prive up
 ```
 
-4. Sur un réseau Windows déclaré **Privé**, exécuter une fois `scripts\open-lan-firewall.ps1` dans PowerShell administrateur. La règle concerne les ports Web et le sous-réseau local. Aucune redirection de port sur Internet n’est nécessaire. Ne pas ouvrir le port API Ollama `11435` aux lecteurs et vérifier les éventuelles règles Ollama préexistantes.
-5. Depuis les autres appareils, utiliser `https://192.168.1.50:8443` pour le site, `:8444` pour Open WebUI et `:8445` pour Kiwix. Les liens du site adaptent leurs adresses au serveur et au protocole utilisés.
+4. Sur un réseau Windows déclaré **Privé**, exécuter une fois
+   `scripts\open-lan-firewall.ps1` dans PowerShell administrateur : règle limitée
+   aux ports Web et au sous-réseau local, sans redirection de port Internet. Le
+   script bloque aussi les ports internes `11435` et `11436` sur les interfaces
+   physiques ; ne jamais les ouvrir aux lecteurs, et vérifier les règles Ollama
+   préexistantes. (Le lanceur d’installation applique ces règles lorsqu’une IPv4
+   lui est donnée.)
+5. Depuis les autres appareils : `https://192.168.1.50:8443` (portail), `:8444`
+   (Open WebUI), `:8445` (Kiwix). Les liens du portail s’adaptent à l’adresse et
+   au protocole utilisés.
 
-Les ports HTTP `8080`, `3000` et `8081` fonctionnent aussi sur le LAN, mais HTTPS permet de chiffrer le transport des données. Le choix de profil se fait sans mot de passe. Caddy crée une autorité de certification locale propre à cette installation ; elle fonctionne sans Internet et conserve ses clés dans `donnees\state\caddy`. [Principe du HTTPS local Caddy](https://caddyserver.com/docs/running).
-
-Exporter son certificat **public**, puis installer sa confiance sur chaque appareil lecteur :
+Les ports HTTP (`8080`, `3000`, `8081`) fonctionnent aussi sur le réseau local ;
+HTTPS chiffre le transport. Caddy crée une autorité de certification locale propre
+à l’installation, sans Internet ; ses clés sont dans `donnees\state\caddy`
+([principe](https://caddyserver.com/docs/running)). Exporter son certificat
+**public**, puis l’installer sur chaque appareil :
 
 ```powershell
 .\scripts\survie.ps1 --work-dir D:\SetupSurvie\prive certificate D:\SetupSurvie\certificat-local.crt
 Import-Certificate -FilePath D:\SetupSurvie\certificat-local.crt -CertStoreLocation Cert:\CurrentUser\Root
 ```
 
-Pour les téléphones : transférer ce même fichier public ; sous Android, passer par les réglages de sécurité / installation d’un certificat d’autorité ; sous iOS, installer le profil puis activer sa confiance dans Réglages / Général / Informations / Réglages de confiance des certificats. Les intitulés peuvent varier selon l’appareil. Références : [Apple](https://support.apple.com/fr-fr/102390), [Google Pixel / Android](https://support.google.com/pixelphone/answer/2844832?hl=fr). Comparer l’empreinte avec le certificat remis depuis le serveur, puis tester que la page HTTPS n’affiche plus d’avertissement et que la permission micro est proposée. Ne jamais transférer le dossier contenant les clés privées Caddy.
+Téléphones : transférer ce même fichier public ; Android : réglages de sécurité /
+installation d’un certificat d’autorité ; iOS : installer le profil, puis activer
+sa confiance dans Réglages / Général / Informations / Réglages de confiance des
+certificats (intitulés variables). Références : [Apple](https://support.apple.com/fr-fr/102390),
+[Google Pixel / Android](https://support.google.com/pixelphone/answer/2844832?hl=fr).
+Comparer l’empreinte avec le certificat remis par le serveur, puis vérifier que la
+page HTTPS n’affiche plus d’avertissement et que la permission micro est proposée.
+Ne jamais transférer le dossier des clés privées Caddy.
 
-Pour revenir à un usage limité au serveur : `configure --no-lan`, puis `up`. La règle de pare-feu peut se supprimer avec `Remove-NetFirewallRule -Name SetupSurvie-Web-Private`.
+Revenir à un usage limité au serveur : `configure --no-lan`, puis `up`. Supprimer
+la règle de pare-feu : `Remove-NetFirewallRule -Name SetupSurvie-Web-Private`.
 
-Sur le laboratoire Linux de Louis, le réglage correspondant est `./scripts/lab.sh network --lan-host ADRESSE_IP` ; sans `--lan-host`, cette commande revient à l’accès local seul. Un pare-feu Linux peut nécessiter une règle séparée. Ce lanceur ne demande pas de privilèges administrateur et ne modifie pas automatiquement le pare-feu.
+Laboratoire Linux de Louis : `./scripts/lab.sh network --lan-host ADRESSE_IP` (sans
+`--lan-host`, retour à l’accès local). Cette commande ne demande pas de privilèges
+administrateur et ne touche pas au pare-feu Linux.
 
-## Mot de passe et code de secours (retirés depuis 0.1.29)
-
-**Depuis 0.1.29, ils ne sont plus nécessaires.** Le portail utilise des profils
-librement sélectionnables sur le réseau local. Choisir son nom pour retrouver
-ses conversations et favoris ; **Famille** ouvre les réglages. Les anciens
-comptes et leurs données sont conservés. Voir les [profils locaux](../utilisation/profils-locaux.md).
-
-Les anciens outils techniques `recover-account` restent disponibles pour une
-maintenance native ou une ancienne version ; ils ne font plus partie du parcours
-normal. Ne jamais supprimer les bases pour retrouver un profil.
+Le nom `survie.local` et Safari sur iPhone ne sont pas validés : conserver l’accès
+par IP et QR code (**Mon appareil → Paramètres → Profils et connexion**).
 
 ## Sauvegarder et restaurer
 
-Conserver le kit public d’origine et une sauvegarde privée des comptes, historiques, guides et certificats. La sauvegarde arrête brièvement le site et les services de compte pour obtenir une copie cohérente, puis les redémarre. Les modèles, ZIM et caches déjà présents dans le kit ne sont pas recopiés dans cette sauvegarde privée.
-
-Depuis 0.1.22, elle conserve aussi la pause du moteur et le registre des contenus
-téléchargés. Mettre d’abord les préparations documentaires en pause et attendre leur
-arrêt ; un transfert ou une préparation concurrente entraîne un refus explicite.
-Depuis 0.1.23, les verrous du système se libèrent à la mort du processus ; leurs
-fichiers `.lease` restent présents et ne doivent pas être supprimés. Les anciens
-verrous inconnus sont conservés pour diagnostic. Lire [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md).
-
-Depuis 0.9.3, les index de recherche et leur progression sont copiés seulement
-quand leurs écrivains CLI et Web ont libéré leurs verrous. Un refus se produit
-avant l’arrêt du site. Les `.lease` ne sont pas des données à restaurer : les
-nouvelles sauvegardes les excluent et les anciennes entrées sont ignorées. Un
-index restauré dont l’archive a changé reste signalé périmé et demande une reprise.
+Conserver le kit public d’origine et une sauvegarde privée des comptes,
+historiques, guides et certificats. La sauvegarde arrête brièvement le site et
+les services de compte pour obtenir une copie cohérente, puis les redémarre. Les
+modèles, ZIM et caches du kit ne sont pas recopiés.
 
 ```powershell
 py -3 scripts\pilot_backup.py backup E:\Sauvegardes\survie-essai-01 --work-dir D:\SetupSurvie\prive
-```
-
-Pour restaurer sur une installation arrêtée ou une autre machine, utiliser des dossiers vides et le kit correspondant :
-
-```powershell
 py -3 scripts\pilot_backup.py restore E:\Sauvegardes\survie-essai-01 --kit D:\livraison-marc --work-dir D:\SurvieRestaure\prive --data-dir D:\SurvieRestaure\donnees
 ```
 
-Sauvegarde, kit, données, réglages et application doivent être dans des dossiers
-séparés, sans imbrication. La restauration conserve une pause sauvegardée ; un
-diagnostic en pause contrôle la bibliothèque et reporte les contrôles Ollama.
-Un test avec inférence est refusé tant que la pause n’a pas été explicitement levée.
-Les anciennes sauvegardes restent acceptées mais ne peuvent restituer les fichiers
-qu’elles ne contenaient pas. Le registre restauré décrit les téléchargements passés :
-il ne remplace ni leurs fichiers ni une nouvelle vérification de leur intégrité.
+Règles de la restauration (sur une installation arrêtée ou une autre machine) :
 
-Les archives ZIM ajoutées après le kit et les nouveaux modèles doivent être sauvegardés séparément ou inclus dans un nouveau kit. Les sauvegardes privées contiennent des secrets : les conserver hors de la bibliothèque publique. La restauration conserve les comptes et secrets ; l’installation neuve du kit en crée de nouveaux. Les ports doivent être libres et l’adresse LAN doit être reconfigurée si elle change.
+- dossiers vides ; sauvegarde, kit, données, réglages et application dans des
+  dossiers séparés, sans imbrication ;
+- ports libres ; adresse LAN à reconfigurer si elle change ;
+- la sauvegarde conserve la pause du moteur, le registre des contenus téléchargés
+  et le classement des collections (`collection-sort.json`) ; la restauration
+  conserve une pause sauvegardée. Un diagnostic en pause contrôle la bibliothèque
+  et reporte les contrôles Ollama ; un test avec inférence est refusé tant que la
+  pause n’est pas levée ;
+- le registre restauré décrit les téléchargements passés : il ne remplace ni leurs
+  fichiers ni une vérification d’intégrité ;
+- les anciennes sauvegardes restent acceptées mais ne restituent pas ce qu’elles
+  ne contenaient pas ;
+- la restauration conserve les comptes et secrets ; une installation neuve du kit
+  en crée de nouveaux.
 
-## Recette sur le PC de Marc
+Avant de sauvegarder, mettre les préparations documentaires en pause et attendre
+leur arrêt : un transfert ou une préparation concurrente entraîne un refus
+explicite. Les index de recherche sont copiés seulement quand leurs écrivains ont
+libéré leurs verrous (le refus a lieu avant l’arrêt du site) ; un index restauré
+dont l’archive a changé est signalé périmé et demande une reprise. Les fichiers
+`.lease` ne sont pas des données à restaurer et ne doivent pas être supprimés :
+voir [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md).
 
-Avant de considérer l’essai prêt : relever GPU/RAM/version Ollama ; vérifier l’usage réel du GPU ; créer un lecteur ; chercher un article et un passage de guide ; comparer trois modèles sur une même question ; consulter et ouvrir les sources ; vérifier un calcul avec le calculateur ; annuler un gros modèle ; retrouver les conversations dans chaque interface ; tester récupération et déconnexion ; vérifier le téléchargement d’un modèle et l’utilisation hors ligne ; débrancher Internet tout en conservant le LAN ; redémarrer le PC ; réaliser une sauvegarde puis une restauration distincte.
+Les ZIM ajoutés après le kit et les nouveaux modèles se sauvegardent séparément ou
+s’incluent dans un nouveau kit. Les sauvegardes privées contiennent des secrets :
+les garder hors de la bibliothèque publique.
 
-Les tests automatiques et les réserves locales figurent dans le bilan de livraison. Une recette Windows ou téléphone non exécutée doit rester marquée « à vérifier sur place ».
+## Moteur, mode jeu et comparaisons
 
+**Mon appareil → Vue d’ensemble** (« État de l’appareil ») affiche le moteur, le
+modèle chargé, la file des questions, la VRAM, l’activité et la température du
+GPU (tous programmes confondus), la RAM et l’espace libre. Le démarrage et l’arrêt
+du moteur sont dans **Mon appareil → Paramètres → Assistant**, réservés au profil
+Famille. Lorsque le moteur est en pause (mode jeu), le bouton devient **Forcer le
+démarrage de l’IA**, avec un avertissement sur les performances du jeu ; le
+modèle se charge à la prochaine question. Un redémarrage des services respecte la
+pause.
 
-## État du moteur et priorité au jeu
+Le portail parle à un petit contrôleur du PC hôte, authentifié par un secret propre
+à l’installation, sans accès au shell. Les ports `11435` et `11436` ne doivent pas
+être ouverts aux lecteurs. Le blocage par le pare-feu Windows reste à vérifier
+sur le Windows réel.
 
-La page **État de l’appareil** affiche le moteur, le modèle chargé, la file des questions, la VRAM, l’activité et la température du GPU, la RAM et l’espace libre. Les valeurs du GPU comprennent tous les programmes du PC. Les administrateurs peuvent démarrer ou arrêter le moteur ; lorsqu’il est en pause, **Forcer le démarrage de l’IA** permet de le reprendre explicitement, avec un avertissement sur les performances du jeu. Le modèle attend la prochaine question pour se charger.
-
-Un simple redémarrage des services respecte le marqueur de pause. Le panneau communique avec un petit contrôleur sur le PC hôte, authentifié par un secret propre à l’installation. Aucun accès au shell n’est proposé. Les lecteurs peuvent consulter les mesures mais ne peuvent pas lancer les commandes réservées à l’administration. Les ports internes 11435 et 11436 ne doivent pas être ouverts aux lecteurs ; le script de pare-feu Windows les bloque sur les interfaces physiques, tout en ouvrant les ports Web et mDNS sur le réseau privé. Cette règle reste à vérifier sur le Windows réel.
-
-## Refaire les comparaisons sur la RTX 5060
-
-La même série de cas peut se lancer après arrêt des jeux :
+Pour refaire les comparaisons de modèles (jeux arrêtés ; aucun modèle n’est
+téléchargé) :
 
 ```powershell
 py -3 scripts\compare_models.py --work-dir D:\SetupSurvie\prive --profiles rapide moyenne approfondie --repetitions 3
-# Alternatives, à lancer séparément pour limiter la durée :
 py -3 scripts\compare_models.py --work-dir D:\SetupSurvie\prive --profiles test-qwen4 test-qwen9 test-qwen27 test-gemma26 test-qwen38
 ```
 
-Les résultats, la version Ollama et le relevé du GPU sont enregistrés dans le dossier privé `comparaisons`. Les essais demandés ne téléchargent aucun modèle. Comparer également les réponses dans le site sur les questions concrètes de Marc.
+La seconde ligne se lance séparément pour limiter la durée. Résultats, version
+Ollama et relevé du GPU sont dans le dossier privé `comparaisons`.
 
-## Arrêt et nettoyage
+## Recette sur le PC de Marc (à faire)
 
-Utiliser `survie.ps1 --work-dir D:\SetupSurvie\prive down` pour arrêter les services, le contrôleur, l’annonce du nom local et l’Ollama dédié. Les données restent conservées. Après sauvegarde, les dossiers choisis pour les données, réglages et kit peuvent se supprimer dans l’Explorateur ; ne pas supprimer les répertoires d’autres projets Docker. Pour retirer les règles ajoutées par le projet : `Remove-NetFirewallRule -Name SetupSurvie-Web-Private,SetupSurvie-mDNS-Private,SetupSurvie-Engine-Physical` dans PowerShell administrateur.
+Relever GPU, RAM et version Ollama ; vérifier l’usage réel du GPU ; choisir un
+profil ; chercher un article et un passage de guide ; comparer trois modèles sur
+une même question ; ouvrir les sources ; vérifier un calcul ; annuler un gros
+modèle ; retrouver les conversations dans chaque interface ; télécharger un
+modèle et l’utiliser hors ligne ; couper Internet en gardant le réseau local ;
+redémarrer le PC ; faire une sauvegarde puis une restauration distincte. Une
+recette Windows ou téléphone non exécutée reste « à vérifier sur place ».
 
-## Mises à jour et nouveaux contenus
+## Arrêt, nettoyage, mises à jour
 
-Suivre le [guide des mises à jour du pilote](../exploitation/mises-a-jour-et-bibliotheque-pilote.md) pour remplacer seulement le logiciel, préserver les comptes et ajouter des lots sans réinstallation.
+`survie.ps1 --work-dir D:\SetupSurvie\prive down` arrête les services, le
+contrôleur, l’annonce du nom local et l’Ollama dédié ; les données restent. Après
+sauvegarde, les dossiers de données, réglages et kit peuvent se supprimer dans
+l’Explorateur (sans toucher aux répertoires d’autres projets Docker). Règles de
+pare-feu du projet, en PowerShell administrateur :
+`Remove-NetFirewallRule -Name SetupSurvie-Web-Private,SetupSurvie-mDNS-Private,SetupSurvie-Engine-Physical`.
 
-## Identifiant initial du pilote 0.1.12
+Pour remplacer seulement le logiciel, préserver les comptes et ajouter des lots,
+suivre le [guide des mises à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md).
 
-**Historique, remplacé depuis 0.1.29 par les [profils sans mot de passe](../utilisation/profils-locaux.md).** Les nouvelles installations n’utilisent plus ce mot de passe initial pour accéder au produit.
+## Historique
 
-En 0.1.12, les installations utilisaient l’identifiant `admin` (compte interne
-`admin@survie.local`) et un mot de passe initial saisi dans l’installateur.
-Aujourd’hui, `scripts/setup.py` génère ce mot de passe interne aléatoirement ;
-il sert seulement au compte natif d’Open WebUI et n’est jamais demandé aux
-utilisateurs. Le mot de passe n’est pas recopié dans cette documentation.
-Ces valeurs ne remplacent jamais le mot de passe d’une installation existante.
-Les secrets techniques de session et de contrôle restent générés aléatoirement.
-La connexion sur la carte utilise le même compte que le portail. La publication
-du code ne modifie aucun compte sur les machines existantes.
+- **Avant 0.1.29** : le produit demandait un compte, un mot de passe et un code
+  de secours (identifiant `admin` en 0.1.12). **Depuis 0.1.29**, on choisit un
+  profil local sans mot de passe ; les anciens comptes et leurs données sont
+  conservés. Voir les [profils locaux](../utilisation/profils-locaux.md).
+- `scripts/setup.py recover-account` reste disponible pour une maintenance native
+  ou une ancienne version, hors parcours normal. Ne jamais supprimer les bases
+  pour retrouver un profil.
+- Le mot de passe interne du compte natif Open WebUI est généré aléatoirement par
+  `scripts/setup.py` ; il n’est jamais demandé aux utilisateurs ni écrit dans la
+  documentation. Les secrets de session et de contrôle sont aussi générés
+  aléatoirement.
+- **0.1.13** : création automatique des raccourcis du Bureau. **0.1.14** : kit
+  de référence (161 Go, sans Wikipédia anglaise). **0.1.15** : fonds complet
+  possible chez Marc. **0.1.20** : lanceur Windows unique.

@@ -14,8 +14,9 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
 
 - **Vue d’ensemble** : état de l’assistant, disponibilité des fonctions et progression.
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
-- **File d’attente** : tâches en cours et en attente. Les cartes de préparation affichent la progression, les fichiers et la dernière observation. Un transfert Windows indépendant reste suivi en lecture seule.
-  Les traductions et synthèses apparaissent dans la file du profil courant.
+- **File d’attente** : progression des travaux du PC et du profil courant. Le
+  [guide de la file d’attente](file-attente.md) décrit les commandes de suivi et
+  de reprise.
 - **Paramètres** : choisir l’une des cinq rubriques ci-dessous. Ouvrir une page,
   déplier une option ou recharger ne lance aucun travail.
 
@@ -26,6 +27,9 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
 | Assistant | Démarrer/arrêter le moteur ; ouvrir le réglage manuel du contexte et les instructions |
 | Tests et diagnostics | Mesurer les lenteurs, vérifier la recherche, comparer une aide IA, tester la mémoire et une traduction de 40 pages, vérifier l’usage hors ligne |
 | Entretien et données | Exporter les classements/dossiers, gérer les repères du navigateur et consulter les anciens retours |
+
+Pour les procédures détaillées, consulter les [préparations de la bibliothèque](preparations-bibliotheque.md),
+les [cartes hors ligne](parametres-et-cartes.md) et l’[inventaire du stockage](inventaire-local.md).
 
 Les tests sont rangés en cinq rubriques dépliables : lenteurs, recherche (avec son comparatif IA), mémoire, traduction longue et usage hors ligne. Le [guide du test de 40 pages](../exploitation/test-traduction-40-pages.md) explique la durée, le rapport et la reprise. Le lien depuis Assistant mène à l’essai mémoire ; le réglage du contexte reste dans Assistant.
 
