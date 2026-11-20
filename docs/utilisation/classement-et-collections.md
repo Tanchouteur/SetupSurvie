@@ -1,6 +1,6 @@
 # Classer les documents et nommer les collections
 
-**Guide actuel — actualisé pour la 0.65.0, 20 novembre 2026.** Ces corrections se font depuis le
+**Guide actuel — actualisé pour la 0.65.1, 20 novembre 2026.** Ces corrections se font depuis le
 profil **Famille**, librement accessible sur le réseau local. Elles sont communes
 aux lecteurs et à l’assistant. Aucun modèle IA n’est nécessaire.
 
@@ -25,7 +25,14 @@ La page rappelle en haut les trois choix possibles :
   prochains téléchargements, éditions suivantes et plans repris compris.
 
 Les collections sont regroupées par famille (Wikipédia, Gutenberg…, puis
-**Vidéos téléchargées**), des plus volumineuses aux plus petites. Chaque ligne
+**Vidéos téléchargées**), des plus volumineuses aux plus petites. Depuis la
+**0.65.1**, chaque famille est repliée à l’ouverture : son en-tête donne le
+nombre d’éléments, le volume et où ils sont rangés, avec un interrupteur
+**Principal / Autre** qui range toute la famille d’un coup. Un clic sur le nom
+la déplie ; **Tout déplier / Tout replier** agit sur toutes. Une recherche par
+nom déplie les familles trouvées. Quand plusieurs archives d’une famille portent
+le même nom (« Project Gutenberg Library »), la ligne affiche leur sujet tiré du
+catalogue (« Fine arts », « Science »…). Chaque ligne
 montre le nom lisible, le type, la taille, la description du catalogue quand
 elle existe, le nom du fichier et un lien **Aperçu ↗** qui ouvre la collection
 dans Kiwix pour vérifier ce qu’elle contient. L’interrupteur **Principal / Autre**

@@ -42,7 +42,8 @@
           <button type="button" data-view="other"></button>
         </div>
       </div>
-      <p id="organizer-status" class="organizer-status" role="status" aria-live="polite"></p>
+      <div class="organizer-subbar"><p id="organizer-status" class="organizer-status" role="status" aria-live="polite"></p>
+        <button type="button" class="text-button" id="organizer-expand" hidden>Tout déplier</button></div>
       <div id="organizer-groups" class="organizer-groups"></div>
       <p class="organizer-empty" id="organizer-empty" hidden></p>
       <div class="organizer-bar" id="organizer-bar" hidden>
@@ -73,6 +74,7 @@
   document.getElementById('view-settings').append(page);
 
   let rows=[],view='all',selected=new Set(),busy=false,pending=new Set(),confirmation=null,poll,loaded=false;
+  const openGroups=new Set();  // families are folded until opened
   const status=$('organizer-status');
   const say=text=>{status.textContent=text||'';};
 
@@ -99,7 +101,7 @@
     return rows.filter(row=>row.state!=='excluded'&&(view==='all'||row.state===view)&&
       words.every(word=>normalize([row.title,row.description,...row.files].join(' ')).includes(word)));
   }
-  function toggle(row){
+  function stateToggle(row,choose,waiting){
     const group=element('div',undefined,'organizer-toggle');
     group.setAttribute('role','group');
     group.setAttribute('aria-label','Classement de '+row.title);
@@ -108,13 +110,21 @@
       choice.type='button';
       choice.dataset.choice=state;
       choice.setAttribute('aria-pressed',String(row.state===state));
-      choice.disabled=busy||pending.has(row.key);
-      choice.onclick=()=>{if(row.state!==state)move([row.key],state);};
+      choice.disabled=busy||waiting;
+      choice.onclick=()=>{if(row.state!==state)choose(state);};
       group.append(choice);
     }
     return group;
   }
-  function rowNode(row){
+  function toggle(row){return stateToggle(row,state=>move([row.key],state),pending.has(row.key));}
+  const groupId=family=>'organizer-family-'+[...family].reduce((hash,char)=>Math.imul(hash^char.charCodeAt(0),16777619)>>>0,2166136261).toString(16);
+  // Several archives of a family often share one generic name (« Project Gutenberg Library »);
+  // their catalogue description (« Fine arts », « Science »…) is what tells them apart.
+  function rowName(row,duplicate){
+    const name=row.kind==='video'?row.title:row.variant||row.title;
+    return duplicate&&row.description?row.description:name;
+  }
+  function rowNode(row,duplicate){
     const item=element('li',undefined,'organizer-row');
     item.dataset.state=row.state;
     const check=element('input');
@@ -122,7 +132,7 @@
     check.setAttribute('aria-label','Cocher '+row.title);
     check.onchange=()=>{check.checked?selected.add(row.key):selected.delete(row.key);render();};
     const body=element('div',undefined,'organizer-name');
-    body.append(element('strong',row.kind==='video'?row.title:row.variant||row.title));
+    body.append(element('strong',rowName(row,duplicate)));
     const meta=[row.kind==='video'?(row.count?plural(row.count,'vidéo','vidéos'):'Vidéos'):'Collection Kiwix',bytes(row.bytes)];
     const line=element('span',meta.join(' · '),'organizer-meta');
     if(row.url){
@@ -132,7 +142,8 @@
       line.append(' · ',open);
     }
     body.append(line);
-    if(row.description)body.append(element('span',row.description,'organizer-description'));
+    if(row.description&&!duplicate)body.append(element('span',row.description,'organizer-description'));
+    else if(duplicate&&row.description)body.append(element('span',row.kind==='video'?row.title:row.variant||row.title,'organizer-description'));
     const file=element('span',row.files.join(' · '),'organizer-file');
     body.append(file);
     item.append(check,body,toggle(row));
@@ -153,8 +164,16 @@
     }
     const ordered=[...families].sort((a,b)=>b[1].reduce((s,r)=>s+r.bytes,0)-a[1].reduce((s,r)=>s+r.bytes,0));
     const fragment=document.createDocumentFragment();
+    const filtering=!!$('organizer-filter').value.trim(),single=ordered.length===1;
+    const expandAll=$('organizer-expand');
+    expandAll.hidden=filtering||single||!ordered.length;
+    const allOpen=ordered.length&&ordered.every(([family])=>openGroups.has(family));
+    expandAll.textContent=allOpen?'Tout replier':'Tout déplier';
+    expandAll.onclick=()=>{for(const [family] of ordered)allOpen?openGroups.delete(family):openGroups.add(family);render();};
     for(const [family,members] of ordered){
+      const open=filtering||single||openGroups.has(family);
       const section=element('section',undefined,'organizer-group');
+      section.classList.toggle('is-open',open);
       const head=element('div',undefined,'organizer-group-head');
       const all=element('input');
       all.type='checkbox';all.disabled=busy;
@@ -162,13 +181,37 @@
       all.indeterminate=!all.checked&&members.some(row=>selected.has(row.key));
       all.setAttribute('aria-label','Cocher toute la famille '+family);
       all.onchange=()=>{for(const row of members)all.checked?selected.add(row.key):selected.delete(row.key);render();};
-      const title=element('h3',family);
       const size=members.reduce((sum,row)=>sum+row.bytes,0);
       const other=members.filter(row=>row.state==='other').length;
-      head.append(all,title,element('span',[plural(members.length,'élément','éléments'),bytes(size),other?other+' dans Autre':''].filter(Boolean).join(' · '),'organizer-meta'));
-      const list=element('ul');
-      for(const row of members)list.append(rowNode(row));
-      section.append(head,list);
+      const listId=groupId(family);
+      const toggle=element('button',undefined,'organizer-group-toggle');
+      toggle.type='button';
+      toggle.setAttribute('aria-expanded',String(open));
+      toggle.setAttribute('aria-controls',listId);
+      toggle.disabled=filtering||single;
+      const chevron=element('span',undefined,'organizer-chevron');chevron.setAttribute('aria-hidden','true');
+      toggle.append(chevron,element('h3',family),element('span',[plural(members.length,'élément','éléments'),bytes(size),
+        other===members.length?'tout dans Autre':other?other+' dans Autre':'tout dans le fonds principal'].join(' · '),'organizer-meta'));
+      toggle.onclick=()=>{openGroups.has(family)?openGroups.delete(family):openGroups.add(family);render();};
+      head.append(all,toggle);
+      if(members.length>1){
+        // Move the whole family at once: pressed only when every member is already there.
+        const familyRow={key:'family:'+family,title:'toute la famille '+family,
+          state:members.every(row=>row.state==='main')?'main':members.every(row=>row.state==='other')?'other':'mixed'};
+        const switcher=stateToggle(familyRow,state=>move(members.filter(row=>row.state!==state).map(row=>row.key),state),
+          members.some(row=>pending.has(row.key)));
+        switcher.classList.add('organizer-family-toggle');
+        switcher.title='Ranger toute la famille';
+        head.append(switcher);
+      }
+      section.append(head);
+      if(open){
+        const names=new Map();
+        for(const row of members){const name=row.kind==='video'?row.title:row.variant||row.title;names.set(name,(names.get(name)||0)+1);}
+        const list=element('ul');list.id=listId;
+        for(const row of members)list.append(rowNode(row,names.get(row.kind==='video'?row.title:row.variant||row.title)>1));
+        section.append(list);
+      }
       fragment.append(section);
     }
     $('organizer-groups').replaceChildren(fragment);

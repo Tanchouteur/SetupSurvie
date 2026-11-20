@@ -37,6 +37,12 @@ ROWS = [
     {'key': 'zim:gutenberg_fr_all', 'title': 'Gutenberg — Livres en français', 'family': 'Gutenberg', 'variant': 'Livres en français',
      'description': 'Livres du domaine public.', 'files': ['gutenberg_fr_all_2026-09.zim'], 'bytes': 9_000_000_000,
      'state': 'other', 'kind': 'archive', 'url': '/content/gutenberg_fr_all_2026-09/'},
+    {'key': 'zim:gutenberg_en_lcc-n', 'title': 'Gutenberg — Project Gutenberg Library', 'family': 'Gutenberg', 'variant': 'Project Gutenberg Library',
+     'description': 'Fine arts', 'files': ['gutenberg_en_lcc-n_2026-03.zim'], 'bytes': 22_000_000_000,
+     'state': 'main', 'kind': 'archive', 'url': '/content/gutenberg_en_lcc-n_2026-03/'},
+    {'key': 'zim:gutenberg_en_lcc-q', 'title': 'Gutenberg — Project Gutenberg Library', 'family': 'Gutenberg', 'variant': 'Project Gutenberg Library',
+     'description': 'Science', 'files': ['gutenberg_en_lcc-q_2026-03.zim'], 'bytes': 17_000_000_000,
+     'state': 'main', 'kind': 'archive', 'url': '/content/gutenberg_en_lcc-q_2026-03/'},
     {'key': 'video:' + 'a' * 64, 'title': 'Chaîne jardinage', 'family': 'Vidéos', 'variant': 'Chaîne jardinage',
      'description': '', 'files': [], 'bytes': 2_000_000_000, 'state': 'main', 'kind': 'video', 'count': 14},
 ]
@@ -96,16 +102,29 @@ def exercise(page, base, name):
     page.screenshot(path=str(OUTPUT / (name + '-collections.png')), full_page=False)
     page.locator('#collection-organize-open').click()
     page.wait_for_function("()=>location.hash.includes('appareil/collections')")
-    page.locator('#collection-organizer .organizer-row').first.wait_for()
+    page.locator('#collection-organizer .organizer-group').first.wait_for()
     check(page.locator('#collection-organizer').is_visible(), name + ' : page dédiée ouverte depuis le raccourci')
     check(page.locator('.organizer-group h3').all_inner_texts()[0] == 'Wikipédia', name + ' : familles triées par taille')
+    check(page.locator('.organizer-row').count() == 0, name + ' : familles repliées à l’ouverture')
     page.screenshot(path=str(OUTPUT / (name + '-page.png')), full_page=True)
+    gutenberg = page.locator('.organizer-group', has_text='Gutenberg')
+    gutenberg.locator('.organizer-group-toggle').click()
+    check(sorted(gutenberg.locator('.organizer-name strong').all_inner_texts()) == ['Fine arts', 'Livres en français', 'Science'],
+          name + ' : sujets distinguant les archives au nom identique')
+    gutenberg.locator('.organizer-family-toggle [data-choice="other"]').click()
+    page.wait_for_function("()=>[...document.querySelectorAll('.organizer-group')].find(g=>g.textContent.includes('Gutenberg'))?.textContent.includes('tout dans Autre')")
+    check(sorted(state['moves'][-1]['keys']) == ['zim:gutenberg_en_lcc-n', 'zim:gutenberg_en_lcc-q'], name + ' : famille entière rangée en une fois')
+    page.screenshot(path=str(OUTPUT / (name + '-famille.png')), full_page=True)
+    gutenberg.locator('.organizer-family-toggle [data-choice="main"]').click()
+    page.wait_for_function("()=>[...document.querySelectorAll('.organizer-group')].find(g=>g.textContent.includes('Gutenberg'))?.textContent.includes('tout dans le fonds principal')")
+    page.locator('#organizer-expand').click()
+    page.wait_for_function("()=>document.querySelector('#organizer-expand').textContent==='Tout replier'")
     row = page.locator('.organizer-row', has_text='Anglais, complet')
     row.locator('[data-choice="other"]').click()
     page.wait_for_function("()=>[...document.querySelectorAll('.organizer-row')].some(r=>r.textContent.includes('Anglais')&&r.dataset.state==='other')")
     check(state['moves'][-1] == {'keys': ['zim:wikipedia_en_all'], 'state': 'other'}, name + ' : bascule Principal → Autre enregistrée')
     page.locator('[data-view="other"]').click()
-    check(page.locator('.organizer-row').count() == 2, name + ' : filtre « Autre »')
+    check(page.locator('.organizer-row').count() == 1, name + ' : filtre « Autre »')
     page.locator('[data-view="all"]').click()
     page.locator('.organizer-row', has_text='Livres en français').locator('input[type=checkbox]').check()
     check(page.locator('#organizer-bar').is_visible(), name + ' : barre d’actions après sélection')
