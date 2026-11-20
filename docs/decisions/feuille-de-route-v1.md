@@ -68,7 +68,11 @@ examiner et ne constituent pas des résultats d’essai.
    une zone téléchargée et calculer un trajet sans Internet. Vérifier le
    message lorsqu’une zone ou un mode manque, puis le retour à la liste sur
    iPhone et Android réels.
-6. **Installation, mise à jour et secours** — suivre le guide sur une
+6. **Installation, mise à jour et secours** — prévoir un retour à une
+   installation initiale saine en cas de bibliothèque modifiée, de corruption
+   ou de blocage incompris, avec protection des données personnelles. Voir le
+   [protocole de secours](../exploitation/disque-de-secours-hors-ligne.md).
+   Suivre aussi le guide sur une
    installation d’essai et vérifier les données après interruption et reprise.
    Distinguer transfert sur le même PC et restauration sur un autre appareil.
 

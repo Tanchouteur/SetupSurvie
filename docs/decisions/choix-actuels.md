@@ -215,6 +215,15 @@ stockage, la pause d'inférence et les contrôles du laboratoire restent obligat
 Les assistants du produit ne reçoivent pas ces accès. Livraison de consignes et
 documentation uniquement, sans changement de version logicielle.
 
+## Retour à l’installation de départ — décision de Louis du 20 novembre 2026
+
+Prévoir une image ou un moyen équivalent pour retrouver une installation
+initiale saine après une mauvaise manipulation de la bibliothèque, une
+corruption ou un blocage dont la cause est inconnue. Le choix technique et
+la validation restent à faire. Le parcours doit préserver les données
+personnelles et expliquer les changements qui seraient perdus.
+[Protocole de secours](../exploitation/disque-de-secours-hors-ligne.md).
+
 ## V1 Linux pour les proches — décision de Louis du 20 novembre 2026
 
 La V1 cible Linux. SetupSurvie sera donné à des amis, qui achèteront leur
