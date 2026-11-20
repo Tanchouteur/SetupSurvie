@@ -9,6 +9,22 @@ signalés. Les notes de chaque livraison sont dans les
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
 
+## Portail toujours informatif et socle commun — décision de Louis du 20 novembre 2026
+
+Après l’[audit du portail](../essais/2026-11-20-audit-ux-et-maintenabilite-portail.md),
+Louis demande de corriger tous les points relevés pour le site en gardant un
+beau design, d’appliquer ce qui donne un rendu professionnel et de répartir les
+routes du serveur. Il demande de **ne pas retirer** « Modèle chargé », la RAM et
+la VRAM, qui servent à surveiller l’appareil : ils restent dans l’en-tête et
+Mon appareil, avec des libellés plus clairs. Il juge peu utile de reformater le
+code compact, écrit et relu par des IA : ce point de l’audit n’est pas traité.
+La 0.70.0 livre le socle réseau commun, le bandeau de connexion, les états
+de l’assistant et de l’appareil, la recherche réécrite, l’en-tête Cartes
+aligné, les empreintes automatiques des fichiers et les routeurs par domaine.
+La reprise des autres déplacements de balisage au chargement continue écran par
+écran. Voir le [guide de design](../architecture/guide-design.md#toujours-informer--0700)
+et le [bilan](../essais/2026-11-20-portail-toujours-informe-0700.md).
+
 ## Mises à jour et copies suivies dans le portail — 20 novembre 2026
 
 Louis demande de pouvoir lancer une mise à jour depuis la barre de navigation,

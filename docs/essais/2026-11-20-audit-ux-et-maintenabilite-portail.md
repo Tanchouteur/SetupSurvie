@@ -200,7 +200,16 @@ traitement en arrière-plan. En dernier recours, cette seule fonction pourrait
 passer dans un module Rust via PyO3. Côté portail, la lenteur ressentie se
 corrige surtout par le retour visuel immédiat (lots 1 et 4).
 
-## 6. Limites
+## 6. Suite donnée — 0.70.0
+
+Le 20 novembre 2026, Louis a demandé de corriger tous les points du site en
+gardant un beau design, d’appliquer ce qui donne un rendu professionnel et de
+répartir les routes. Il a demandé de garder le modèle chargé, la RAM et la VRAM,
+et de laisser de côté le reformatage du code compact. Le détail point par point
+est dans le [bilan 0.70.0](2026-11-20-portail-toujours-informe-0700.md) ; la
+reprise des autres déplacements de balisage continue écran par écran.
+
+## 7. Limites
 
 - Serveur de démonstration et données fictives. Délais, fonds réel, démarrage
   du moteur IA et carte avec fond préparé non observés.

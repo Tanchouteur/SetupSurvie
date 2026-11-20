@@ -33,6 +33,16 @@ Sans nom de recette, le lanceur joue le lot du moteur choisi. Sans
 port 8769 et crée un contexte de navigation par recette. Ajouter les
 recettes de ce serveur aux listes du lanceur. `BROWSER_PYTHON` permet de
 choisir le Python du serveur, et `BROWSER_ARTIFACTS` le dossier de captures.
+Sans les bibliothèques système des navigateurs (runner CPU), le lanceur peut
+utiliser un serveur Playwright déjà démarré : `BROWSER_WS` (adresse WebSocket),
+`BROWSER_FIXTURE_URL` (adresse de l’API de test vue depuis ce navigateur, par
+exemple `http://10.0.3.2:8769`) et `BROWSER_PLAYWRIGHT` (le `package.json`
+d’un Playwright de même version que le serveur). `BROWSER_FIXTURE_PORT` change
+le port du serveur de test `tests/browser_translation_server.py` (8769 par défaut).
+Le 20 novembre 2026, cinq recettes échouaient déjà ainsi sur la référence
+`1a281be` (`browser_documents`, `browser_archive_videos`, `browser_archive_audio`,
+`browser_next_portal`, `browser_work_queue`) : elles supposent un navigateur
+local (`127.0.0.1`, médias de fixture) et restent vérifiées par la CI.
 Les cartes hors ligne ont leur propre lanceur, `tests/browser_maps_runner.cjs`.
 
 ## Lire les résultats GitHub Actions

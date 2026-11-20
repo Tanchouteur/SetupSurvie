@@ -128,8 +128,19 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 
 - `interface/modele.html` : gabarit de la page unique ; `scripts/build_portal.py`
   y injecte les feuilles et scripts dans l’ordre et produit `index.html`.
-  Les paramètres `?v=` (dans `modele.html` ou dans `build_portal.py`) invalident
-  le cache des navigateurs : les incrémenter quand un fichier change.
+  Depuis 0.70.0, il remplace chaque `?v=` local de `index.html` et des pages
+  autonomes (`cartes.html`, `pdf.html`, `secours.html`, `suivi-copie.html`,
+  `maintenance.html`) par l’empreinte SHA-256 du fichier chargé ; aucun numéro
+  n’est plus incrémenté à la main. La navigation principale et le pied de page
+  (version, état de connexion) sont écrits dans le gabarit.
+- `core/` (0.70.0) : `net.js` (enveloppe unique de `fetch` pour `/api/` :
+  erreurs en français, détection de perte de connexion et nouvel essai),
+  `feedback.js` (bandeau `#connection-banner`, état du pied de page, boutons
+  occupés) et `core.css` (bandeau, messages, boutons occupés, silhouettes de
+  chargement). `net.js` est le premier script chargé.
+- `design/tokens.css` : seule source des couleurs, chargée en premier ;
+  `tests/test_portal_design_budget.py` empêche l’ajout de couleurs ou de tailles
+  de police brutes.
 - Racine : `app.js` (application principale), `documents.js`, `settings.js`,
   lecteurs (`pdf.*`, `bilingual-reader.*`, `translation-text.*`), cartes
   (`cartes.html`, `cartes-*.js`), suivi de transfert (`suivi-copie.*`),
@@ -138,6 +149,10 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 - `interface/` : un script par domaine (`videos.js`, `captions.js`,
   `work-queue.js`, `maintenance.js` (entrée Mises à jour, mode maintenance), `collection-sort.js`, `catalogue.js`, `search-*.js`,
   `assistant-workspace.*`, `reader-work.*`, `navigation.js`, `layout.js`…).
+  Ajouts 0.70.0 : `assistant-status.js` (état de l’assistant près de la saisie,
+  étapes d’une réponse), `device-summary.js` (« Tout fonctionne » ou points à
+  regarder dans Mon appareil), `search-start.js` (écran de départ de Rechercher,
+  dernières recherches, filtres repliés sur téléphone).
 - `design/` : jetons et système visuel « Veillée » ; `vendor/` : bibliothèques
   locales (marked, DOMPurify, PDF.js…) ; `classique/` et `nouveau/` : simples
   redirections vers `/`.
