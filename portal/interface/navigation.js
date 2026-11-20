@@ -57,7 +57,7 @@
   }
   // Per-tab memory for this browser tab: the first click on another tab returns
   // to its last screen; a click on the tab already shown resets it to its root.
-  const tabMemory=new Map();
+  const tabMemory=new Map();let readerOrigin=null;
   const groupOf=route=>route.section==='file'?'appareil':route.section;
   const tabOf=route=>route.section==='bibliotheque'?'bibliotheque/'+route.tab:route.section==='file'?'file':route.section==='appareil'?(route.tab==='ensemble'?'appareil/ensemble':'appareil/reglages'):null;
   const copyRoute=route=>({...route,params:new URLSearchParams(route.params)});
@@ -65,6 +65,9 @@
     if(!current||current.name==='maps')return;
     const entry={route:copyRoute(current),scroll:window.scrollY,query:current.name==='library'?$('library-query').value:null};
     tabMemory.set(groupOf(current),entry);
+    // A document opened from Collections, the home page or the assistant uses the
+    // search route; it must not replace what the Rechercher tab shows.
+    if(current.name==='library'&&current.params.has('source')&&readerOrigin!==current.tab)return;
     const tab=tabOf(current);if(tab)tabMemory.set(tab,entry);
   }
   function forget(key){
@@ -199,6 +202,7 @@
   };
   readSource=async id=>{
     if(openingSource)return baseRead(id);
+    readerOrigin=current?.name==='library'?current.tab:null;
     const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}

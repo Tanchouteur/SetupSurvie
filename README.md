@@ -15,7 +15,7 @@ distingue préparation avant livraison, usage client et validations restantes.
 
 ## État du projet
 
-Version **0.68.0** (20 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
+Version **0.68.1** (20 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
 une offre commerciale validée. Fonctions disponibles :
 
 - **Bibliothèque hors ligne** (Kiwix, guides, PDF) avec recherche locale indexée,
