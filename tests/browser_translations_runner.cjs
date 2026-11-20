@@ -119,6 +119,7 @@ async function runRecipe(browser, engine, file) {
     }
     return false;
   } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
     await context.close();
   }
 }
