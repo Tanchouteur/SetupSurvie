@@ -49,7 +49,13 @@ trap 'printf "Préparation interrompue. Dossier temporaire conservé : %s\n" "$s
 mkdir -p "$stage/bin" "$stage/python" "$stage/docker-cli/cli-plugins"
 tar -xzf "$source_dir/docker.tar.gz" --no-same-owner --strip-components=1 -C "$stage/bin"
 tar -xzf "$source_dir/$python_archive" --no-same-owner --strip-components=1 -C "$stage/python"
-ln -s ../python/bin/python3 "$stage/bin/python3"
+cat >"$stage/bin/python3" <<'PYTHON'
+#!/usr/bin/env bash
+set -euo pipefail
+python_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../python" && pwd)"
+exec "$python_root/bin/python3" "$@"
+PYTHON
+chmod 755 "$stage/bin/python3"
 install -m 755 -- "$source_dir/docker-compose" "$stage/docker-cli/cli-plugins/docker-compose"
 if [[ -r /etc/os-release ]] && ! command -v nft >/dev/null; then
     # These Debian packages remain inside the tools directory.
@@ -80,6 +86,9 @@ ENV
 (
     source "$stage/environnement.sh"
     python3 --version
+    python3 -m venv --without-pip "$stage/python-probe"
+    "$stage/python-probe/bin/python" -c 'import encodings, ensurepip'
+    python3 -c 'import shutil, sys; shutil.rmtree(sys.argv[1])' "$stage/python-probe"
     docker --version
     docker compose version
 )
