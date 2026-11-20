@@ -168,7 +168,9 @@ d’attente, Paramètres…) :
 - **premier clic** sur un autre onglet : il revient exactement où vous l’aviez
   laissé — sous-rubrique, document ouvert, recherche et mots tapés, filtre,
   position dans la page. Les champs d’un formulaire restent remplis tant que la
-  page n’est pas rechargée ;
+  page n’est pas rechargée. Un document ouvert depuis Collections, l’accueil ou
+  l’assistant est retrouvé par **Bibliothèque**, mais ne remplace pas ce
+  qu’affiche **Rechercher** (0.68.1) ;
 - **nouveau clic** sur l’onglet déjà affiché : il revient à son point de départ.
   **Mon appareil** revient à la vue d’ensemble, **Paramètres** à la liste des
   rubriques, **Bibliothèque** aux collections sans filtre, **Rechercher** à une

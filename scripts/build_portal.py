@@ -64,7 +64,7 @@ def build():
         ('js', '/maintenance-view.js', '0.69.0'),
         ('css', '/interface/maintenance.css', '0.69.0'),
         ('js', '/interface/maintenance.js', '0.69.0'),
-        ('js', '/interface/navigation.js', '0.68.0'),
+        ('js', '/interface/navigation.js', '0.68.1'),
     ]
     tags = []
     for kind, path, version in assets:
