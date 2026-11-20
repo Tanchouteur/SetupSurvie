@@ -515,6 +515,16 @@ class Installation:
                    "target": c["target"], "images": VERSIONS["images"], "embedding": VERSIONS["embedding"],
                    "ollama": versions, "models": [{key: m.get(key) for key in ("name", "digest", "size", "details")} for m in tags.get("models", [])]})
 
+    def prepare_models(self, c, additional_models=()):
+        existing = self.request('http://127.0.0.1:11435/api/tags').get('models', [])
+        installed = {model['name'] for model in existing}
+        required = dict.fromkeys((c['chat_model'], *additional_models))
+        missing = [model for model in required if model not in installed]
+        for model in missing:
+            self.pull_model(c, model)
+        if not missing:
+            self.record(c)
+
     def verify(self, c, inference=False):
         paused=(self.work/'inference-paused.json').exists()
         if paused and inference:
@@ -682,7 +692,7 @@ def parser():
     return p
 
 
-def main(argv=None, *, initial_chat_model=None):
+def main(argv=None, *, initial_chat_model=None, additional_models=()):
     args = parser().parse_args(argv)
     selected_content = []
     if args.action == "install":
@@ -726,11 +736,7 @@ def main(argv=None, *, initial_chat_model=None):
         prepare_youtube_tools(c,args.offline)
         app.up(c)
         if not args.offline:
-            existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])
-            if c['chat_model'] not in {model['name'] for model in existing}:
-                app.pull_model(c, c["chat_model"])
-            else:
-                app.record(c)
+            app.prepare_models(c, additional_models)
         if selected_content:
             content.download(Path(c['data_dir']), selected_content, workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')

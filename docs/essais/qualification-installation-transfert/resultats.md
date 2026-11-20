@@ -148,3 +148,15 @@ L'essai de traduction réelle sur une VM de 6 Gio reste à rejouer avec le
 nouveau modèle. L'adaptation d'une copie provenant d'une machine plus
 puissante vers une cible moins dotée en RAM reste à qualifier. [Fiche du
 modèle](https://ollama.com/library/qwen3:1.7b-q4_K_M)
+
+## Conservation des modèles et adaptation à la cible en 0.74.0
+
+L'installation automatique prépare maintenant GPT-OSS 20B et Qwen3 1,7B.
+Les profils GPT-OSS restent disponibles. Une restauration CPU peut affecter
+le modèle compact déjà copié au profil rapide d'une machine à faible mémoire.
+Cette nouvelle option de restauration justifie la version mineure 0.74.0.
+
+Les scénarios simulés contrôlent le rejeu de la préparation et la présence
+des deux manifestes sur la cible, y compris le lien relatif du manifeste Ollama
+v2. La restauration et la traduction réelles avec ces deux modèles restent à
+rejouer sur la VM de 6 Gio.

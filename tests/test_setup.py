@@ -197,6 +197,19 @@ class InstallationTests(unittest.TestCase):
                 self.app.import_images(self.config, archive)
             run.assert_not_called()
 
+    def test_preparing_additional_model_preserves_installed_models_and_resumes(self):
+        compact = 'qwen3:1.7b-q4_K_M'
+        standard = setup.VERSIONS['default_model']
+        installed = {'models': [{'name': standard}, {'name': 'marc:custom'}]}
+        with patch.object(self.app, 'request', return_value=installed), \
+                patch.object(self.app, 'pull_model') as pull, patch.object(self.app, 'record') as record:
+            self.app.prepare_models(dict(self.config, chat_model=compact), (standard, compact))
+            pull.assert_called_once_with(dict(self.config, chat_model=compact), compact)
+            installed['models'].append({'name': compact})
+            self.app.prepare_models(self.config, (standard, compact))
+            pull.assert_called_once()
+            record.assert_called_once_with(self.config)
+
     def test_compose_windows_cpu_and_gpu_with_spaces(self):
         for target, cpu in [('windows', False), ('linux', True), ('linux', False)]:
             with self.subTest(target=target, cpu=cpu):

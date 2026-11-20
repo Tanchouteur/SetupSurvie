@@ -8,6 +8,7 @@ import sys
 import content
 import json
 from delivery_paths import destination
+import linux_host
 import linux_offline_restore as system
 import setup
 from pilot import durable
@@ -28,11 +29,8 @@ def installation_plan(base, packs):
     return plan
 
 
-def initial_model():
-    profiles = json.loads((setup.ROOT / 'deploy/model-profiles.json').read_text(encoding='utf-8'))
-    compact = profiles['compact_cpu']
-    memory = os.sysconf('SC_PHYS_PAGES') * os.sysconf('SC_PAGE_SIZE')
-    if memory < compact['default_model_ram_gib'] * 1024 ** 3:
+def initial_model(compact):
+    if linux_host.needs_compact_model(compact):
         return compact['model']
     return setup.VERSIONS['default_model']
 
@@ -57,7 +55,11 @@ def start(base):
                  '--no-startup', '--data-dir', str(data)]
     for pack in plan['packs']:
         arguments.extend(('--content-pack', pack))
-    setup.main(arguments, initial_chat_model=initial_model())
+    compact = linux_host.compact_cpu_profile()
+    setup.main(
+        arguments, initial_chat_model=initial_model(compact),
+        additional_models=(setup.VERSIONS['default_model'], compact['model']),
+    )
     config = app.load()
     config['app_dir'] = str(setup.ROOT)
     setup.write_json(app.settings_path, config, private=True)

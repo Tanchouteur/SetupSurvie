@@ -75,12 +75,13 @@ SetupSurvie et active le routage IPv4. Après l'installation, accéder au
 portail sur `http://127.0.0.1:8080`. Les services démarrent avec le système.
 En cas d'interruption, relancer la même commande avec les mêmes lots.
 
-Avec la 0.73.0, une première installation automatique qui détecte moins de
-16 Gio de RAM prépare Qwen3 1,7B comme modèle rapide. Le portail et la
-traduction automatique des vidéos utilisent ce profil, avec un contexte
-initial de 8 192 tokens. Le modèle retenu est enregistré à la première
-initialisation et suit l'installation lors du transfert hors ligne. Les
-installations existantes conservent leur réglage de modèle.
+Avec la 0.74.0, une première installation automatique prépare GPT-OSS 20B
+et Qwen3 1,7B. Sur les machines qui détectent moins de 16 Gio de RAM,
+le profil rapide et la traduction automatique des vidéos utilisent Qwen3
+avec un contexte initial de 8 192 tokens. GPT-OSS 20B et les autres choix
+restent accessibles dans la liste des modèles. Le réglage est enregistré
+à la première initialisation. La copie hors ligne conserve tous les modèles
+présents et peut adapter le profil rapide à la [mémoire de la cible](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne).
 
 Pour utiliser une autre distribution ou un Docker déjà configuré, suivre
 le parcours manuel ci-dessous.

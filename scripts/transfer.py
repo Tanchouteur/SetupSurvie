@@ -792,6 +792,21 @@ def local_runtime(dest):
     return [str(executable),'-X','utf8',str(dest/'application/scripts/transfer.py')]
 
 
+def select_restored_cpu_model(config, inventory):
+    import linux_host
+    if not config.get('cpu') or config.get('chat_model') != setup.VERSIONS['default_model']:
+        return
+    profile = linux_host.compact_cpu_profile()
+    if not profile or not linux_host.needs_compact_model(profile):
+        return
+    name, tag = profile['model'].split(':', 1)
+    v1 = f'data/models/manifests/registry.ollama.ai/library/{name}/{tag}'
+    v2 = f'models/manifests-v2/ollama.com/library/{name}/{tag}'
+    copied = {record['path'] for record in inventory['files']}
+    if v1 in copied or 'data/' + v2 in copied or v2 in inventory.get('ollama_links', {}):
+        config['chat_model'] = profile['model']
+
+
 def activate(dest):
     dest=setup.safe_path(dest)
     if setup.ROOT.resolve()!=dest/'application':
@@ -840,6 +855,8 @@ def activate(dest):
         if host == 'linux':
             import linux_host
             config['docker_rootless'] = linux_host.docker_rootless()
+            if not same_pc:
+                select_restored_cpu_model(config, journal['inventory'])
         journal['phase']='activating';save(dest,journal);export_report(dest,journal)
         config.pop('local_images',None);config.pop('routing_image',None)
         setup.write_json(app.settings_path,config,private=True)

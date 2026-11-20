@@ -51,6 +51,8 @@ class LinuxAutoInstallTests(unittest.TestCase):
                 installer.start(self.base)
         self.assertIn('--no-startup', install.call_args.args[0])
         self.assertIn('health', install.call_args.args[0])
+        self.assertEqual(install.call_args.kwargs['additional_models'],
+                         (setup.VERSIONS['default_model'], 'qwen3:1.7b-q4_K_M'))
         self.assertFalse((app.work / 'installation-linux-terminee').exists())
 
     def test_first_boot_selects_compact_model_on_a_six_gib_system(self):
@@ -71,7 +73,8 @@ class LinuxAutoInstallTests(unittest.TestCase):
     def test_initial_model_keeps_standard_model_on_a_larger_system(self):
         sysconf = {'SC_PHYS_PAGES': 32 * 1024 ** 3 // 4096, 'SC_PAGE_SIZE': 4096}
         with patch.object(installer.os, 'sysconf', side_effect=sysconf.__getitem__, create=True):
-            self.assertEqual(installer.initial_model(), setup.VERSIONS['default_model'])
+            self.assertEqual(installer.initial_model(installer.linux_host.compact_cpu_profile()),
+                             setup.VERSIONS['default_model'])
 
     def test_pilot_profile_and_subtitle_context_follow_compose_model(self):
         for model, context, think in (
@@ -85,10 +88,13 @@ import json
 from pilot import captions, engine, store
 store.init()
 profile = captions.engine.MODES['rapide']
-print(json.dumps([profile['model'], captions.engine.context_size(profile['model']), profile['think']]))
+standard = engine.MODES.get('rapide-gpt-oss', profile)
+print(json.dumps([profile['model'], captions.engine.context_size(profile['model']), profile['think'],
+                  standard['model'], standard['think']]))
 '''],
                     cwd=ROOT,
                     env={**os.environ, 'CHAT_MODEL': model, 'PILOT_STATE_DIR': str(self.base)},
                     check=True, capture_output=True, text=True,
                 )
-                self.assertEqual(json.loads(result.stdout), [model, context, think])
+                self.assertEqual(json.loads(result.stdout),
+                                 [model, context, think, setup.VERSIONS['default_model'], 'low'])

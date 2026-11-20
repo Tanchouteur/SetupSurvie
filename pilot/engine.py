@@ -23,6 +23,7 @@ PROFILE_CONFIG=json.loads(PROFILE_PATH.read_text())
 MODES={item['id']:item for item in PROFILE_CONFIG['profiles']}
 COMPACT_CPU=PROFILE_CONFIG.get('compact_cpu',{})
 if COMPACT_CPU and os.environ.get('CHAT_MODEL') == COMPACT_CPU['model']:
+    MODES['rapide-gpt-oss']={**MODES['rapide'], 'id':'rapide-gpt-oss', 'category':'comparison'}
     MODES['rapide']={**MODES['rapide'], **{key:COMPACT_CPU[key] for key in ('model','name','think','description')}}
 
 

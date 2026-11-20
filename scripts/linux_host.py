@@ -6,6 +6,7 @@ Windows has its own launchers and scheduled tasks. On Linux the host processes
 and after a reboot. Nothing here needs root.
 """
 import getpass
+import json
 import os
 from pathlib import Path
 import shutil
@@ -17,6 +18,16 @@ import setup
 LOOPBACK_ENV='DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK'
 # rootlesskit maps the host loopback to this address when it is allowed.
 ROOTLESS_GATEWAY='10.0.2.2'
+
+
+def compact_cpu_profile():
+    path = setup.ROOT / 'deploy/model-profiles.json'
+    return json.loads(path.read_text(encoding='utf-8')).get('compact_cpu', {}) if path.is_file() else {}
+
+
+def needs_compact_model(profile):
+    memory = os.sysconf('SC_PHYS_PAGES') * os.sysconf('SC_PAGE_SIZE')
+    return memory < profile['default_model_ram_gib'] * 1024 ** 3
 
 
 def docker_rootless():
