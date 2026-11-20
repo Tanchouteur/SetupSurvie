@@ -44,12 +44,13 @@
     $('next-youtube-pause').hidden=!running(phase)||value.pause_requested;$('next-youtube-resume').hidden=!value.resumable;
     const shown=value.options&&phase&&!['idle','busy','unknown'].includes(phase);$('next-youtube-progress').hidden=!shown;
     if(!shown){if(value.message&&!$('next-youtube-message').textContent)$('next-youtube-message').textContent=value.message;return;}
-    const total=progress.videos||value.options.videos||0,done=Math.min(total,(counts.downloaded||0)+(counts.skipped||0)+(counts.error||0));
-    $('next-youtube-bar').max=Math.max(1,total);$('next-youtube-bar').value=done;
+    const total=progress.videos??value.options.videos??0;
+    const processed=Number.isInteger(progress.done)&&Number.isInteger(progress.total)
+      ?progress.done-(progress.total-total)
+      :(counts.downloaded||0)+(counts.skipped||0)+(counts.error||0);
+    $('next-youtube-bar').max=Math.max(1,total);$('next-youtube-bar').value=Math.max(0,Math.min(total,processed));
     const current=progress.current&&running(phase)?' En cours : vidéo '+progress.current.index+' sur '+total+(progress.current.percent==null?'':', fichier '+Math.round(progress.current.percent)+' %')+'.':'';
-    // The host's final message already gives the totals; repeat them only while working.
-    const tally=phase==='completed'?'':' '+(counts.downloaded||0)+' ajoutée(s), '+(counts.skipped||0)+' déjà présente(s), '+((counts.error||0)+(counts.refused||0))+' non téléchargée(s) jusqu’ici.';
-    $('next-youtube-status').textContent=(value.message||'')+current+tally;
+    $('next-youtube-status').textContent=(value.message||'')+current;
     const items=$('next-youtube-items');items.replaceChildren();
     for(const item of (progress.items||[]).slice(-12).reverse()){
       const text=(icons[item.status]||'')+' Ligne '+item.line+' : '+(item.status==='downloaded'?(item.title||item.path||'vidéo')+' — ajoutée'+(item.subtitles_skipped?' sans piste YouTube ; préparation automatique dans la file':''):item.message||item.status);

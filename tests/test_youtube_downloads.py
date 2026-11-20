@@ -156,6 +156,23 @@ class HostJobTests(unittest.TestCase):
         state=self.manager.read();self.assertEqual(state['phase'],'completed');self.assertIn('1 vidéo(s) ajoutée(s)',state['message']);self.assertIn('2 non téléchargée(s)',state['message'])
         self.assertEqual(self.manager.status()['youtube']['counts']['downloaded'],1)
 
+    def test_summary_distinguishes_existing_videos_from_ignored_lines(self):
+        progress = {
+            'phase': 'completed',
+            'counts': {'downloaded': 0, 'skipped': 2, 'error': 1, 'refused': 1},
+            'items': [
+                {'id': A, 'status': 'skipped', 'reason': 'already_present'},
+                {'id': B, 'status': 'error', 'reason': 'unavailable'},
+                {'status': 'skipped', 'reason': 'duplicate_in_list'},
+                {'status': 'refused', 'reason': 'playlist_refused'},
+            ],
+        }
+        self.run_job(progress, code=2)
+        message = self.manager.read()['message']
+        self.assertIn('1 déjà présente(s)', message)
+        self.assertIn('1 non téléchargée(s)', message)
+        self.assertIn('2 ligne(s) écartée(s)', message)
+
     def test_paused_or_failed_tool_and_resume(self):
         self.run_job({'phase':'paused','counts':{}},code=3)
         state=self.manager.read();self.assertEqual(state['phase'],'paused');self.assertIn('Reprendre',state['message'])

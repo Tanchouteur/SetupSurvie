@@ -35,6 +35,8 @@ préparations → Ajouter des vidéos depuis YouTube**. Un raccourci se trouve a
 Le PC serveur poursuit le travail quand vous fermez la page. La
 [file d’attente](file-attente.md) affiche le numéro de la vidéo en cours, le
 pourcentage du fichier lorsque yt-dlp le fournit et les lignes à vérifier.
+Le compteur de vidéos porte sur les adresses uniques retenues. Le bilan
+indique séparément les lignes écartées, dont les doublons et les listes de lecture.
 Si une vidéo échoue, la suivante est essayée. Si le disque manque d’espace,
 le lot s’arrête et indique combien de vidéos restent à traiter. **Réessayer**
 reprend les fichiers partiels et saute les vidéos déjà rangées.

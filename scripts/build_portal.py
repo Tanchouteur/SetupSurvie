@@ -32,7 +32,7 @@ def build():
         ('js', '/interface/transcriptions.js', '0.54.0'),
         ('js', '/interface/acquisitions.js', '0.54.0'),
         ('js', '/interface/archive-videos.js', '0.64.2'),
-        ('js', '/interface/youtube-downloads.js', '0.52.1'),
+        ('js', '/interface/youtube-downloads.js', '0.69.6'),
         ('css', '/interface/work-queue.css', '0.63.1'),
         ('js', '/work-queue-preview.js', '0.64.2'),
         ('js', '/interface/work-queue.js', '0.67.2'),
