@@ -4,8 +4,7 @@
   panel.innerHTML=`<label class="video-origin-filter">Origine des vidéos
       <select id="next-videos-origin">
         <option value="all">Toutes les vidéos</option>
-        <option value="youtube">YouTube</option>
-        <option value="non_youtube">Hors YouTube</option>
+        <option value="local">Nos vidéos ajoutées</option>
       </select>
     </label>
     <div class="video-library-status"><p id="next-videos-count" role="status"></p><p id="next-videos-feedback" class="small" role="status"></p></div>

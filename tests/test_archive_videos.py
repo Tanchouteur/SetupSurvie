@@ -32,7 +32,7 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         self.assertIn('00:00:01.000 --> 00:00:02.000',videos.webvtt(video['id'].split(':')[1],0))
         self.assertFalse(source['audio_verified']);self.assertEqual(source['human_review'],'not_performed')
 
-    def test_origin_filters_before_grouping_and_paging_within_a_collection(self):
+    def test_local_filter_keeps_only_files_from_the_video_folder(self):
         from zim_video_fixture import create
         youtube=self.root/'youtube-fixture.zim'
         create(youtube,youtube=True,with_tracks=False)
@@ -43,28 +43,13 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         videos.scan()
 
         self.assertEqual(videos.listing()['total'],8)
-        other=videos.listing(grouped=True,origin='non_youtube')
-        self.assertEqual((other['total'],other['group_total']),(5,2))
-        group=next(row['id'] for row in other['groups'] if row['count']==4)
-        self.assertEqual(videos.listing(group=group)['total'],6)
-        page=videos.listing(group=group,origin='non_youtube',limit=1,offset=1)
-        self.assertEqual((page['total'],len(page['videos'])),(4,1))
-        other_archive=videos.listing(group=group,origin='non_youtube')['videos']
-        self.assertEqual(sorted(videos.row(item['id'])[1]['path'] for item in other_archive),
-                         ['media/clip.webm','media/clip.webm','media/unlinked.mp4','media/unlinked.mp4'])
-
-        imported=videos.listing(grouped=True,origin='youtube')
-        self.assertEqual((imported['total'],imported['group_total']),(3,2))
-        self.assertEqual(next(row['count'] for row in imported['groups'] if row['id']==group),2)
-        first=videos.listing(group=group,origin='youtube',limit=1)
-        second=videos.listing(group=group,origin='youtube',limit=1,offset=1)
-        self.assertEqual((first['total'],second['total']),(2,2))
-        self.assertEqual([item['title'] for page in (first,second) for item in page['videos']],
-                         ['A different lesson','How do we measure a shadow?'])
-        found=videos.listing(grouped=True,origin='youtube',query='shadow')
-        self.assertEqual(found['total'],1)
-        self.assertEqual(found['groups'][0]['video']['title'],'How do we measure a shadow?')
-        self.assertEqual(videos.listing(grouped=True,origin='non_youtube',query='shadow')['total'],0)
+        local=videos.listing(origin='local')
+        self.assertEqual(sorted(videos.row(item['id'])[1]['path'] for item in local['videos']),
+                         ['local.mp4','youtube/download.mp4'])
+        grouped=videos.listing(grouped=True,origin='local')
+        self.assertEqual(grouped['total'],2)
+        self.assertEqual(videos.listing(grouped=True,origin='local',query='shadow')['total'],0)
+        self.assertEqual(videos.listing(grouped=True,origin='local',query='download')['total'],1)
 
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])

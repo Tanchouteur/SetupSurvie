@@ -12,7 +12,7 @@ import threading
 import time
 
 from fastapi import HTTPException
-from . import collection_sort,durable,provider_subtitles,retrieval,store,zim_video_inventory
+from . import collection_sort,durable,retrieval,store
 from . import video_inventory as inventory
 
 ROOT=Path(os.environ.get('VIDEO_DIR','/videos'))
@@ -386,21 +386,6 @@ def listing_card(record):
     return item
 
 
-def is_youtube_video(provider,youtube_archive,path,extractor,url):
-    if provider=='zim':
-        # The catalogue identifies the archive format. The path identifies the video.
-        return bool(youtube_archive and zim_video_inventory.YOUTUBE_MEDIA.fullmatch(path or ''))
-    if (extractor or '').lower() in ('youtube','youtube:video') or path.lower().startswith('youtube/'):
-        return True
-    if url and '://' in url:
-        try:
-            provider_subtitles.video_id(url)
-        except ValueError:
-            return False
-        return True
-    return False
-
-
 def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
     words=retrieval.normal(query).split()[:10]
     filters=[]
@@ -412,11 +397,10 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
     if group:
         filters.append('group_key=?')
         parameters.append(group)
-    if origin!='all':
-        filters.append("""is_youtube_video(json_extract(payload,'$.provider'),
-            json_extract(payload,'$.youtube_archive'),json_extract(payload,'$.path'),
-            json_extract(payload,'$.source.extractor'),json_extract(payload,'$.source.url'))=?""")
-        parameters.append(origin=='youtube')
+    if origin=='local':
+        # Files placed in library/video/ (by hand or by the YouTube list tool),
+        # as opposed to videos read inside Kiwix ZIM archives.
+        filters.append("COALESCE(json_extract(payload,'$.provider'),'local')<>'zim'")
     restriction=' WHERE '+' AND '.join(filters) if filters else ''
     prefix=VIDEO_COLLECTIONS if grouped or group else ''
     table='grouped_videos' if prefix else 'media'
@@ -425,8 +409,6 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
         report={key:report[key] for key in ('phase','finished','videos','error') if key in report}
     with connect() as db:
         db.execute('BEGIN')
-        if origin!='all':
-            db.create_function('is_youtube_video',5,is_youtube_video,deterministic=True)
         if prefix and words:
             def collection_matches(label):
                 text=retrieval.normal(label or '')
