@@ -125,11 +125,10 @@ function Save-SurvieMaintenanceStatus([switch]$Force) {
         [IO.File]::WriteAllText($temporary, $json, (New-Object Text.UTF8Encoding($false)))
         for ($attempt = 1; $attempt -le 5; $attempt++) {
             try {
-                if ([IO.File]::Exists($script:statusFile)) { [IO.File]::Replace($temporary, $script:statusFile, $null) }
+                if ([IO.File]::Exists($script:statusFile)) { [IO.File]::Replace($temporary, $script:statusFile, [NullString]::Value) }
                 else { [IO.File]::Move($temporary, $script:statusFile) }
                 break
-            } catch [IO.IOException] { Start-Sleep -Milliseconds (50 * $attempt) }
-            catch [UnauthorizedAccessException] { Start-Sleep -Milliseconds (50 * $attempt) }
+            } catch { Start-Sleep -Milliseconds (50 * $attempt) }
         }
         $script:statusClock = [Diagnostics.Stopwatch]::StartNew()
     } catch {

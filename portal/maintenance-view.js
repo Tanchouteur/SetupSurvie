@@ -146,9 +146,11 @@
 
   async function fetchStatus(signal) {
     const response = await fetch(STATUS_URL, {cache: 'no-store', credentials: 'same-origin', signal});
+    // Always read the body: an unread response keeps its connection busy.
+    const text = await response.text();
     if (response.status === 404) return {status: null, maintenancePage: false};
     if (!response.ok) throw new Error('status');
-    const status = await response.json();
+    const status = JSON.parse(text);
     return {
       status: status && typeof status === 'object' ? status : null,
       maintenancePage: response.headers.get('X-SetupSurvie-Maintenance') === '1',
