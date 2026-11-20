@@ -67,7 +67,7 @@ class WatcherTests(unittest.TestCase):
         return update_watch.Watcher(self.app, self.config, git=GIT, repository=str(self.origin), **options)
 
     def test_check_reads_origin_main_without_touching_the_working_tree(self):
-        watcher = self.watcher()
+        watcher = update_watch.Watcher(self.app, self.config, repository=str(self.origin))
         before = git('rev-parse', 'HEAD', cwd=self.base/'maintenance/source')
         watcher.run_check()
         status = watcher.status()

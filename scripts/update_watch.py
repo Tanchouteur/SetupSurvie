@@ -33,13 +33,21 @@ def version_tuple(value):
 
 
 def find_git():
-    found = shutil.which('git')
-    candidates = [found] if found else []
-    if os.name == 'nt':
-        for variable, tail in (('ProgramFiles', 'Git/cmd/git.exe'), ('LOCALAPPDATA', 'Programs/Git/cmd/git.exe')):
-            if os.environ.get(variable):
-                candidates.append(str(Path(os.environ[variable])/tail))
-    return next((path for path in candidates if path and Path(path).is_file()), None)
+    if os.name != 'nt':
+        return shutil.which('git')
+    system = Path(os.environ.get('SystemRoot', r'C:\Windows'))
+    powershell = system/'System32/WindowsPowerShell/v1.0/powershell.exe'
+    command = (r". .\windows-common.ps1; Update-SurviePath; "
+               '[Console]::OutputEncoding = [Text.UTF8Encoding]::new(); Find-SurvieGit')
+    try:
+        result = subprocess.run([str(powershell), '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+                                 '-Command', command], cwd=Path(__file__).resolve().parent, stdin=subprocess.DEVNULL,
+                                capture_output=True, timeout=30, **hidden())
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode == 0:
+        return result.stdout.decode('utf-8', 'replace').strip() or None
+    return None
 
 
 def hidden():
@@ -155,7 +163,9 @@ class Watcher:
             self.git = self.git or find_git()
             source = self.source()
             if not self.git:
-                raise setup.SetupError('Git est absent : utilisez une fois le raccourci Mettre à jour SetupSurvie.')
+                raise setup.SetupError(
+                    'Git est introuvable sur le PC serveur. Lancez la préparation du PC Windows pour installer Git, '
+                    'puis utilisez le raccourci Mettre à jour SetupSurvie.')
             if not source or not (source/'.git').exists():
                 raise setup.SetupError('Le dépôt de maintenance n’est pas encore préparé : utilisez une fois le raccourci Mettre à jour SetupSurvie.')
             if self.git_output('remote', 'get-url', 'origin').strip().rstrip('/') != self.repository:

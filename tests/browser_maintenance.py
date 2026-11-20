@@ -97,6 +97,16 @@ def exercise(page, base, name):
               name + ' : survol du numéro avec l’état des mises à jour')
         page.screenshot(path=str(OUTPUT / (name + '-a-jour.png')))
         page.mouse.move(700, 600)
+    state['update'] = {**state['update'], 'error': 'Git est introuvable sur le PC serveur.'}
+    page.evaluate("()=>document.dispatchEvent(new CustomEvent('survie:auth'))")
+    button.click()
+    dialog = page.locator('#update-dialog')
+    dialog.get_by_text('Git est introuvable sur le PC serveur.').wait_for()
+    error_text = dialog.inner_text()
+    check('La vérification a échoué.' in error_text and 'Dernière tentative' in error_text
+          and 'à jour selon' not in error_text and not entry.locator('.update-nav-label').is_visible(),
+          name + ' : un échec de vérification laisse le numéro et indique que l’état est inconnu')
+    dialog.get_by_text('Plus tard').click()
     state['update'] = available
     page.evaluate("()=>document.dispatchEvent(new CustomEvent('survie:auth'))")
     page.wait_for_function("()=>[...document.querySelectorAll('.update-nav')].some(n=>n.classList.contains('update-available'))")
@@ -119,7 +129,6 @@ def exercise(page, base, name):
         preview.get_by_text('Mettre à jour…').click()
     else:
         entry.locator('.update-nav-button').click()
-    dialog = page.locator('#update-dialog')
     dialog.wait_for()
     page.locator('.update-dialog-queue').wait_for()
     check('0.67.4 → nouvelle version 0.69.0' in dialog.inner_text(), name + ' : confirmation avec les deux versions')

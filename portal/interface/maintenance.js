@@ -160,13 +160,19 @@
     if (!value?.checked_at) return 'Aucune vérification enregistrée.';
     const minutes = Math.round((Date.now() / 1000 - value.checked_at) / 60);
     const ago = minutes < 1 ? 'à l’instant' : minutes < 60 ? `il y a ${minutes} min` : `il y a ${Math.round(minutes / 60)} h`;
-    return `Dernière vérification : ${dateFormat.format(new Date(value.checked_at * 1000))} (${ago}).`;
+    const label = value.error ? 'Dernière tentative' : 'Dernière vérification';
+    return `${label} : ${dateFormat.format(new Date(value.checked_at * 1000))} (${ago}).`;
   }
 
   function headline(value) {
     if (value.running) return 'Mise à jour en cours : suivez-la sur l’accueil.';
+    if (value.error) return value.update_available
+      ? `Dernière version repérée : ${value.available}. La vérification a échoué.`
+      : `Version ${value.installed} installée. La vérification a échoué.`;
     if (value.update_available) return `Nouvelle version ${value.available} disponible.`;
-    return `Version ${value.installed} installée, à jour selon la dernière vérification.`;
+    return value.checked_at
+      ? `Version ${value.installed} installée, à jour selon la dernière vérification.`
+      : `Version ${value.installed} installée. Les mises à jour restent à vérifier.`;
   }
 
   /* The version number (top left, and in the phone top bar) is the entry point:
@@ -300,8 +306,9 @@
 
   function drawDialog() {
     if (!update) return;
-    dialogState.textContent = update.update_available
-      ? `Version installée ${update.installed} → nouvelle version ${update.available}.` : headline(update);
+    dialogState.textContent = update.update_available && !update.running
+      ? `Version installée ${update.installed} → ${update.error ? 'dernière version repérée' : 'nouvelle version'} ${update.available}.`
+      : headline(update);
     dialogChecked.textContent = update.checking ? 'Vérification en cours…' : checkedText(update);
     dialogError.textContent = update.error || '';
     dialogError.hidden = !update.error;

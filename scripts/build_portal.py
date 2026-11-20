@@ -63,7 +63,7 @@ def build():
         ('css', '/maintenance-view.css', '0.69.0'),
         ('js', '/maintenance-view.js', '0.69.0'),
         ('css', '/interface/maintenance.css', '0.69.1'),
-        ('js', '/interface/maintenance.js', '0.69.1'),
+        ('js', '/interface/maintenance.js', '0.69.2'),
         ('js', '/interface/navigation.js', '0.68.1'),
     ]
     tags = []
