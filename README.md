@@ -27,7 +27,7 @@ Depuis la **0.50.0**, une zone de carte peut être téléchargée dans le naviga
 du téléphone, puis rouverte depuis un favori loin du serveur. Voir le
 [guide de téléchargement](docs/utilisation/parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone).
 
-Le pilote **0.64.2** propose une recherche locale avec indexation
+Le pilote **0.64.3** propose une recherche locale avec indexation
 automatique, deux espaces documentaires et un diagnostic exportable. Les
 [modèles se téléchargent depuis les paramètres](docs/utilisation/portail.md#télécharger-un-modèle-pour-lassistant).
 La [file d’attente des travaux](docs/utilisation/file-attente.md) permet de suivre

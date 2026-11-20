@@ -352,8 +352,10 @@ un document. Une vidéo sans piste n’a **aucune parole consultée** : son titr
 sa description ne deviennent pas une transcription. L’IA ne voit pas les images
 et ne comprend pas les gestes grâce au seul texte des sous-titres.
 
+À l’ouverture, l’aperçu est lu directement dans la piste associée à la vidéo.
+Les vidéos déjà inventoriées profitent de cet accès sans nouvel inventaire.
 L’aperçu contient au plus 80 segments et 100 000 caractères à partir du passage
-demandé ; la lecture partielle reste signalée. La synthèse longue et la traduction
+demandé. La lecture partielle reste signalée. La synthèse longue et la traduction
 documentaire intégrale refusent cet aperçu au lieu de perdre ses horodatages.
 La traduction synchronisée utilise le parcours vidéo ci-dessus. Les favoris et classements humains gardent
 la même référence vidéo ; un classement humain ne certifie pas la procédure.

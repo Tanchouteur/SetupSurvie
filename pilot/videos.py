@@ -141,23 +141,19 @@ def public(payload,revision):
 
 def source(identifier):
     stored,payload,position=row(identifier);result=public(payload,stored['revision']);result['id']=identifier
-    key,_=identity(identifier)
-    with connect() as db:
-        # Favor a declared French track, then the source language. Never combine
-        # translations into one alleged original transcript.
-        candidates=[(i,t) for i,t in enumerate(payload['tracks']) if t['technical_status']=='passed']
-        candidates.sort(key=lambda pair:(not (pair[1]['language_declared'] or '').startswith('fr'),pair[0]))
-        requested=re.search(r'&track=(\d+)$',identifier)
-        if requested:candidates=[pair for pair in candidates if pair[0]==int(requested[1])]
-        if candidates:
-            track=candidates[0][0]
-            cues=db.execute('SELECT start_ms,end_ms,text,language FROM video_text WHERE id=? AND track=? AND end_ms>? ORDER BY CAST(start_ms AS INTEGER) LIMIT 80',(key,str(track),position)).fetchall()
-        else:cues=[]
+    # Favor a declared French track unless a search result selects a specific track.
+    candidates=[(i,t) for i,t in enumerate(payload['tracks']) if t['technical_status']=='passed']
+    candidates.sort(key=lambda pair:(not (pair[1]['language_declared'] or '').startswith('fr'),pair[0]))
+    requested=re.search(r'&track=(\d+)$',identifier)
+    if requested:candidates=[pair for pair in candidates if pair[0]==int(requested[1])]
+    track=candidates[0][1] if candidates else None
+    cues=[]
+    if track:
+        cues=[cue for cue in track_cues(payload,track) if cue['end_ms']>position][:80]
+        if track.get('translation_notice'):result['video_notice']=track['translation_notice']+' '+NOTICE
     text='\n'.join(f'[{int(c["start_ms"])//60000:02d}:{(int(c["start_ms"])//1000)%60:02d}] {c["text"]}' for c in cues)
-    if candidates and candidates[0][1].get('translation_notice'):result['video_notice']=candidates[0][1]['translation_notice']+' '+NOTICE
     result.update(text=text[:100000],position_ms=position,text_truncated=bool(len(text)>100000 or cues and len(cues)>=80),preview=True,
-                  transcription_available=bool(cues),language=cues[0]['language'] if cues else result['language'])
-    if not text:result['text']=''
+                  transcription_available=bool(cues),language=(track['language_declared'] or '') if cues else result['language'])
     return result
 
 
@@ -584,12 +580,16 @@ def running_task(task):
     return task if same else None
 
 
+def track_cues(payload,track):
+    parsed=inventory.inspect_subtitle(track_file(track),payload['media']['duration_seconds_declared'],include_cues=True)
+    if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise HTTPException(409,'Cette piste a changé ; actualisez les vidéos.')
+    return parsed['cues']
+
+
 def webvtt(key,index):
-    stored,payload,_=row('video:'+key)
+    _,payload,_=row('video:'+key)
     if not 0<=index<len(payload['tracks']):raise HTTPException(404,'Piste introuvable.')
     track=payload['tracks'][index]
     if track['technical_status']!='passed':raise HTTPException(422,'Cette piste ne passe pas les contrôles techniques. Consultez son rapport.')
-    parsed=inventory.inspect_subtitle(track_file(track),payload['media']['duration_seconds_declared'],include_cues=True)
-    if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise HTTPException(409,'Cette piste a changé ; actualisez les vidéos.')
     def stamp(ms):return f'{ms//3600000:02d}:{ms//60000%60:02d}:{ms//1000%60:02d}.{ms%1000:03d}'
-    return 'WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in parsed['cues'])+'\n'
+    return 'WEBVTT\n\n'+'\n\n'.join(stamp(c['start_ms'])+' --> '+stamp(c['end_ms'])+'\n'+html.escape(c['text'],quote=False) for c in track_cues(payload,track))+'\n'

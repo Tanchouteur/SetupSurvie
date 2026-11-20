@@ -38,6 +38,15 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         later=videos.source(self.id+'#t=8000');self.assertIn('dynamo',later['text']);self.assertNotIn('rotor',later['text'])
         self.assertEqual(catalogue.canonical(found[0]['id']),self.id)
 
+    async def test_opening_uses_the_selected_track_without_the_text_search_index(self):
+        with videos.connect() as db:
+            db.execute('DELETE FROM video_text')
+        source=await library.source(self.id+'#t=4000')
+        self.assertIn('dynamo',source['text'])
+        self.assertNotIn('rotor',source['text'])
+        self.assertEqual(source['language'],'fr')
+        self.assertIn('31 mm',(await library.source(self.id+'#t=1000&track=0'))['text'])
+
     async def test_common_search_returns_documents_and_caption_then_assistant_reads_only_text(self):
         (library.GUIDES/'guide.fr.txt').write_text('Fabrication du générateur à pédales : construire un support. Texte fictif.')
         library.index_guides()
@@ -101,7 +110,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
     async def test_previous_index_remains_readable_during_replacement_transaction(self):
         reached=threading.Event();release=threading.Event();original=videos.inventory.inspect_subtitle
         def inspected(*args,**kwargs):
-            if kwargs.get('include_cues'):
+            if kwargs.get('include_cues') and not reached.is_set():
                 reached.set()
                 if not release.wait(5):raise RuntimeError('Test release not received.')
             return original(*args,**kwargs)
