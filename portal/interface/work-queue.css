@@ -19,8 +19,36 @@
   text-decoration: none;
 }
 .work-queue-link:is(:hover, :focus-visible, [aria-current]) { background: var(--ds-surface-2); color: var(--ds-ink); }
-.work-queue-icon { flex: none; font-size: 1.35rem; line-height: 1; }
-.work-queue-count { min-width: 1.2em; font-size: .8rem; font-weight: 700; text-align: center; }
+.work-queue-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6h11M9 12h11M9 18h11M4 5.5l1 1 2-2M4 11.5l1 1 2-2M4 17.5l1 1 2-2'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6h11M9 12h11M9 18h11M4 5.5l1 1 2-2M4 11.5l1 1 2-2M4 17.5l1 1 2-2'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.work-queue-label { max-width: 11ch; overflow: hidden; text-overflow: ellipsis; font-size: .8125rem; font-weight: 600; white-space: nowrap; }
+.work-queue-nav:not(.work-queue-mobile) .work-queue-link { gap: 4px; padding-inline: 6px; }
+.next-interface .work-queue-nav > .work-queue-link:not([aria-current]) { color: var(--ds-ink-2); }
+.next-interface .work-queue-nav[data-state="attention"] > .work-queue-link { color: var(--ds-danger); }
+.next-interface .work-queue-nav[data-state="paused"] > .work-queue-link { color: var(--ds-warn); }
+.work-queue-count {
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 5px;
+  border-radius: var(--ds-r-full);
+  background: var(--ds-ember);
+  color: var(--ds-surface);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+/* Ordinateur : le libellé porte déjà le nombre. Téléphone : icône + pastille. */
+.work-queue-nav:not(.work-queue-mobile) .work-queue-count { display: none; }
+.work-queue-mobile .work-queue-label { display: none; }
+.map-site-nav .work-queue-label { display: none; }
+.map-site-nav .work-queue-nav .work-queue-count:not([hidden]) { display: inline-block; }
 [data-state="attention"] > .work-queue-link { color: var(--ds-danger); }
 .work-queue-signal {
   position: absolute;
@@ -195,7 +223,7 @@
   background: var(--ds-surface);
 }
 .work-queue-preview-card + .work-queue-preview-card { box-shadow: inset 0 1px var(--ds-line); }
-.work-queue-preview-card:has(a:hover) { background: #fbf6ec; }
+.work-queue-preview-card:has(a:hover) { background: var(--ds-bg, #fbf6ec); }
 .work-queue-preview-card:is([data-status="error"], [data-status="failed"]) { background: var(--ds-danger-soft); }
 .work-queue-preview-content { display: grid; flex: 1; min-width: 0; gap: 1px; overflow-wrap: anywhere; }
 .work-queue-preview-content .work-queue-meta { font-size: .78rem; }
@@ -485,3 +513,28 @@ button.work-queue-handle:disabled { cursor: default; opacity: .4; }
   body.next-interface .work-queue-page .next-tabs a { padding-inline: 6px; font-size: .82rem; }
 }
 .next-interface .work-queue-page .work-queue-heading { max-width: none; }
+
+/* File vide : un seul état, rassurant. */
+.work-queue-idle {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 28px 0;
+  padding: 44px 24px;
+  border-radius: var(--ds-r-lg, 18px);
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line);
+  text-align: center;
+  animation: ds-rise var(--ds-base) var(--ds-ease) both;
+}
+.work-queue-idle::before {
+  content: "";
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: var(--ds-ok-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a6248' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 24px no-repeat;
+}
+.work-queue-idle strong { font-family: var(--ds-font-display); font-size: 1.375rem; font-weight: 600; }
+.work-queue-idle p { max-width: 46ch; margin: 0; color: var(--ds-ink-2); }
+@media (prefers-reduced-motion: reduce) { .work-queue-idle { animation: none; } }

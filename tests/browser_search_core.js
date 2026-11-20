@@ -130,7 +130,7 @@ async page => {
   check(await page.locator('#search-results .result').first().getAttribute('data-source')==='guide:nouvelle-demande','Les résultats correspondent à la requête actuelle');
   await page.route('**/api/profiles/current',route=>route.fulfill({status:503,json:{detail:'Fixture sans profil'}}));
   await page.goto(base+'/?fixture=public#/bibliotheque/recherche?q=recherche-publique');
-  await page.waitForFunction(()=>S.authReady&&!S.user&&document.getElementById('search-message').textContent.includes('recherche-publique')&&document.getElementById('search-message').textContent.includes('trouvé'));
+  await page.waitForFunction(()=>S.authReady&&!S.user&&document.getElementById('search-message').textContent.includes('recherche-publique')&&document.getElementById('search-message').textContent.includes('Aucun résultat pour'));
   check(await page.locator('#search-message').textContent().then(text=>text.includes('recherche-publique')),'Recherche publique conservée si le profil ne répond pas');
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));return {checks:checks.length,results:checks};
 }

@@ -1,5 +1,6 @@
 """Single portal entrypoint, its control template and the retired legacy addresses."""
 from html.parser import HTMLParser
+import hashlib
 import importlib.util
 from pathlib import Path
 import unittest
@@ -26,6 +27,18 @@ class PortalBuildTests(unittest.TestCase):
         self.assertLess(next(i for i,s in enumerate(new.scripts) if s.startswith('/interface/layout.js')), next(i for i,s in enumerate(new.scripts) if s.startswith('/app.js')))
         self.assertTrue(new.scripts[-1].startswith('/interface/navigation.js'))
         self.assertIn('/vendor/marked.js',expected)
+
+    def test_local_assets_carry_their_content_hash(self):
+        # build_portal.py stamps every local `?v=` with the file hash: a stale
+        # stamp means the generator was not run after a CSS/JS change.
+        spec=importlib.util.spec_from_file_location('portal_builder',ROOT/'scripts/build_portal.py')
+        builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+        for name,text in builder.stamped_pages().items():
+            self.assertEqual((ROOT/'portal'/name).read_text(),text,name+' : relancez python3 scripts/build_portal.py')
+        for page in ('index.html',)+builder.PAGES:
+            for match in builder.ASSET.finditer((ROOT/'portal'/page).read_text()):
+                digest=hashlib.sha256((ROOT/'portal'/match.group(2).lstrip('/')).read_bytes()).hexdigest()[:10]
+                self.assertIn(f'{match.group(2)}?v={digest}',match.group(0),page)
 
     def test_design_assets_are_local_licensed_and_loaded_last(self):
         design=ROOT/'portal/design'

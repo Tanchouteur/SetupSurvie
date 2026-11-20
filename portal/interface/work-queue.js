@@ -318,7 +318,21 @@
     group('Inventaires terminés', state.jobs.filter(job => job.status === 'partial'), host);
     const completedWithIssues = partial.filter(job => !waiting(job) && job.status !== 'running' && !held(job));
     group('Lots avec des lignes à vérifier', completedWithIssues, host);
-    for (const lane of lanes(state)) {
+    const laneList = lanes(state);
+    const idle = !failures.length && !unknown.length && !pausedJobs.length && !completedWithIssues.length &&
+      !state.jobs.some(job => job.status === 'partial') &&
+      laneList.every(lane => !lane.running && !lane.active.length && !lane.waiting.length);
+    if (idle) {
+      /* Un seul état vide plutôt qu'un encadré vide par créneau. */
+      const empty = element('div', undefined, 'work-queue-idle');
+      empty.append(element('strong', 'Rien en cours'),
+        element('p', 'Les téléchargements, les préparations et les réponses de l’assistant apparaîtront ici pendant leur traitement. Vous pouvez utiliser SetupSurvie normalement.'));
+      host.append(empty);
+      $('work-queue-help').hidden = true;
+      focusedSummary?.focus({preventScroll: true});
+      return;
+    }
+    for (const lane of laneList) {
       const section = element('section', undefined, 'work-queue-lane');
       section.dataset.lane = lane.id;
       const header = element('div', undefined, 'work-queue-lane-heading');

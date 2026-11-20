@@ -11,38 +11,7 @@
     `<a href="#/${path}" data-route="${path}">${label}</a>`;
   const header = (title, text) =>
     make("div", "page-heading", `<h1>${title}</h1><p>${text}</p>`);
-  const nav = make("nav", "next-main-nav");
-  nav.id = "navigation";
-  nav.setAttribute("aria-label", "Navigation principale");
-  for (const [path, icon, label] of [
-    ["accueil", "⌂", "Accueil"],
-    ["bibliotheque", "▤", "Bibliothèque"],
-    ["assistant", "◌", "Assistant"],
-    ["cartes", "⌖", "Cartes"],
-    ["appareil", "◴", "Mon appareil"],
-  ]) {
-    const a = make(
-      "a",
-      "nav-item",
-      `<span aria-hidden="true">${icon}</span><span>${label}</span>`,
-    );
-    a.href = path === "cartes" ? "/cartes.html" : "#/" + path;
-    if (path !== "cartes") a.dataset.route = path;
-    nav.append(a);
-  }
-  const navIcons = {
-    accueil: "M3 10l9-7 9 7 M5 9v12h14V9 M9 21v-7h6v7",
-    bibliotheque:
-      "M3 5h7c1 0 2 1 2 2v14c0-2-2-3-4-3H3z M21 5h-7c-1 0-2 1-2 2v14c0-2 2-3 4-3h5z",
-    assistant: "M4 4h16v12H9l-5 4z M8 8h8 M8 12h5",
-    cartes: "M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2z M9 3v16 M15 5v16",
-    appareil: "M3 4h18v13H3z M8 21h8 M12 17v4",
-  };
-  for (const item of nav.children) {
-    const section = item.dataset.route || "cartes";
-    item.firstElementChild.replaceChildren(SurvieUI.icon(navIcons[section]));
-  }
-  get("main-navigation").querySelector("nav").replaceWith(nav);
+  /* La navigation principale (liens et icônes) est écrite dans modele.html. */
   const history = make("dialog", "next-history-dialog");
   history.id = "next-history-dialog";
   history.setAttribute("aria-labelledby", "next-history-title");

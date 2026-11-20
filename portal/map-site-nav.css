@@ -70,7 +70,7 @@ body.has-map-site-nav .map-site-nav #map-account:hover { background: var(--ds-su
 /* Très petits écrans : « Bibliothèque » ne tient plus sur une cellule, on abrège sans passer sous 12 px. */
 @media screen and (max-width: 359px) {
   .map-site-nav .nav-item > span[data-short] { font-size: 0; }
-  .map-site-nav .nav-item > span[data-short]::after { content: attr(data-short); font-size: .75rem; }
+  .map-site-nav .nav-item > span[data-short]::after { content: attr(data-short); content: attr(data-short) / ""; font-size: .75rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .map-site-nav *, .map-site-nav *::before, .map-site-nav *::after { transition: none !important; animation: none !important; }
@@ -118,3 +118,8 @@ body.has-map-site-nav .map-site-nav #map-account:hover { background: var(--ds-su
   .map-site-nav .brand { min-width: 44px; min-height: 44px; margin-left: -9px; justify-content: center; }
 }
 @media print { .print-action { display: none !important; } }
+
+/* Très petits écrans : le titre coupé (« C… ») n’aide pas ; il reste lisible par les lecteurs d’écran. */
+@media (max-width: 360px) {
+  .map-site-nav .map-page-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}

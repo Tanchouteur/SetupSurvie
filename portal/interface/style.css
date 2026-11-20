@@ -15,7 +15,7 @@ body.next-interface {
   gap: 14px;
   min-height: 52px;
   padding: 10px 24px;
-  background: #eee8dd;
+  background: var(--ds-surface-2, #eee8dd);
   color: #4e4239;
   font-size: 12px;
 }

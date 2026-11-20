@@ -737,3 +737,88 @@
 .next-interface .assistant-workspace.assistant-resizing { transition: none; user-select: none; }
 .next-interface .assistant-workspace[data-left=closed] .assistant-resize { display: none; }
 @media(max-width:1000px) { .next-interface .assistant-workspace > .assistant-resize { display: none !important; } }
+
+/* État de l’assistant (0.70.0) : une ligne en mots simples au-dessus de la saisie.
+   Le bandeau historique #inference-banner est remplacé par cette ligne. */
+.next-interface #inference-banner { display: none !important; }
+.assistant-ready {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  border-radius: var(--ds-r-full);
+  width: fit-content;
+  max-width: 100%;
+  font-size: .875rem;
+  line-height: 1.4;
+  color: var(--ds-ink-2);
+  background: var(--ds-surface-2);
+}
+.assistant-ready-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ds-ink-3); }
+.assistant-ready[data-tone="ready"] { background: var(--ds-ok-soft); color: var(--ds-ok); }
+.assistant-ready[data-tone="ready"] .assistant-ready-dot { background: var(--ds-ok); }
+.assistant-ready[data-tone="busy"] .assistant-ready-dot { background: var(--ds-flame); animation: assistant-ready-pulse 1.2s ease-in-out infinite; }
+.assistant-ready:is([data-tone="paused"], [data-tone="stopped"]) { background: var(--ds-warn-soft); color: var(--ds-warn); border-radius: var(--ds-r); }
+.assistant-ready:is([data-tone="paused"], [data-tone="stopped"]) .assistant-ready-dot { background: var(--ds-warn); }
+.assistant-ready[data-tone="offline"] { background: var(--ds-danger-soft); color: var(--ds-danger); border-radius: var(--ds-r); }
+.assistant-ready[data-tone="offline"] .assistant-ready-dot { background: var(--ds-danger); }
+.assistant-ready-action { padding: 0; min-height: 0; font-weight: 700; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Étapes d’une réponse en cours */
+.answer-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 12px;
+  padding: 0;
+  list-style: none;
+  transition: opacity var(--ds-base) var(--ds-ease), transform var(--ds-base) var(--ds-ease);
+}
+.answer-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 9px;
+  border-radius: var(--ds-r-full);
+  background: var(--ds-surface-2);
+  color: var(--ds-ink-3);
+  font-size: .8125rem;
+  font-weight: 600;
+  transition: background-color var(--ds-base) var(--ds-ease), color var(--ds-base) var(--ds-ease);
+}
+.answer-steps li::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+  opacity: .55;
+}
+.answer-steps li[data-status="active"] { background: var(--ds-ember-soft); color: var(--ds-ember-strong); }
+.answer-steps li[data-status="active"]::before { opacity: 1; border-right-color: transparent; animation: ds-spin .8s linear infinite; }
+.answer-steps li[data-status="done"] { background: var(--ds-ok-soft); color: var(--ds-ok); }
+.answer-steps li[data-status="done"]::before {
+  opacity: 1;
+  border: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.answer-steps li[data-status="stopped"] { background: var(--ds-warn-soft); color: var(--ds-warn); }
+.answer-steps[data-state="queued"] li:first-child::after { content: " · en attente"; font-weight: 500; }
+.answer-steps-leaving { opacity: 0; transform: translateY(-4px); }
+@keyframes assistant-ready-pulse { 50% { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) {
+  .assistant-ready-dot, .answer-steps li::before { animation: none !important; }
+  .answer-steps, .answer-steps li { transition: none; }
+}
+/* La ligne active porte la couleur ; le bouton qu’elle contient reste transparent. */
+body.next-interface .assistant-history .conversation-row > button.conversation-link,
+body.next-interface .assistant-history .conversation-row > button.conversation-link:is(:hover, [aria-current="true"]) {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
