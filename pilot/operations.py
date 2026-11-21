@@ -91,14 +91,41 @@ async def youtube_result(identifier):
         return None
 
 
+def local_activity():
+    """Read a recent, public report from the laboratory's host-side monitor."""
+    path = network.CATALOG / 'lab-activity.json'
+    try:
+        if path.is_symlink():
+            return {}
+        with path.open('rb') as stream:
+            data = stream.read(32_769)
+        if len(data) > 32_768:
+            return {}
+        value = json.loads(data)
+        observed = value.get('observed_at') if isinstance(value, dict) else None
+        if type(observed) in (float, int) and -5 <= time.time() - observed <= 30:
+            return value
+    except (OSError, ValueError):
+        pass
+    return {}
+
+
 async def activity():
     """Read-only filtered host activity; no profile content or raw diagnostics."""
     try:
-        if not TOKEN:raise ValueError()
-        async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
-            response=await client.get(URL+'/activity',headers={'Authorization':'Bearer '+TOKEN})
-            response.raise_for_status();return response.json()
+        if not TOKEN:
+            raise ValueError()
+        async with httpx.AsyncClient(trust_env=False, timeout=1) as client:
+            response = await client.get(URL+'/activity', headers={'Authorization': 'Bearer '+TOKEN})
+            response.raise_for_status()
+            value = response.json()
+            if not isinstance(value, dict):
+                raise ValueError()
+            return value
     except (httpx.HTTPError,ValueError):
+        report = local_activity()
+        if report:
+            return report
         return {'phase':'unknown','source':None,'stale':True,'active':[],'commands':False,
                 'control_available':False,'observed_at':time.time()}
 
