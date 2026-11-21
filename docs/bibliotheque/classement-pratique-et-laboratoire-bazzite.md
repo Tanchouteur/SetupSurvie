@@ -469,6 +469,17 @@ intégration, vérifier l’accès au fichier, l’édition et les droits associ
 | Élevage familial | Mesures de prévention pour les détenteurs d’une basse-cour. Pour l’alimentation et l’entretien courant des poules, chercher aussi un manuel d’élevage. [Ministère de l’Agriculture](https://agriculture.gouv.fr/influenza-aviaire-les-mesures-de-biosecurite-pour-les-operateurs-professionnels-et-les-particuliers) |
 | Observation du ciel | Repères illustrés pour reconnaître les nuages. [Les différents types de nuages, Météo-France](https://meteofrance.com/meteo-a-z/les-differents-types-de-nuages) |
 
+Pour les thèmes agricoles sans ouverture, les sources suivantes ont été
+consultées en ligne. Elles restent à comparer aux documents du fonds
+complet et à vérifier hors ligne avant toute intégration.
+
+| Besoin | Contenu vérifié et limites |
+| --- | --- |
+| Élevage familial de poules | Le manuel technique en français couvre l’alimentation et le logement. Il date de 2004 et prend ses exemples dans plusieurs régions du monde. La FAO autorise une diffusion éducative non commerciale avec attribution et exige un accord écrit pour la redistribution commerciale. [Production en aviculture familiale, FAO](https://www.fao.org/4/y5169f/y5169f00.htm) |
+| Biodiversité et fertilité du potager | La fiche décrit le paillage, le compost et les habitats utiles à l’échelle du jardin. Pour un plan de cultures complet, rechercher encore un guide de rotation et d’association des cultures. [Conseils de gestion des jardins, INRAE](https://ephytia.inrae.fr/fr/C/25197/jardibiodiv-Conseils-de-gestion-des-jardins) |
+| Pêche de loisir | La fiche donne des repères sur la protection de la ressource et le cadre de la pêche. Un contenu hors ligne doit être daté et renvoyer aux règles locales en vigueur. Un support d’initiation pratique reste à vérifier. [Respecter les tailles, les saisons et les quantités, OFB](https://ofb.gouv.fr/actions-citoyennes/respecter-a-la-peche-les-tailles-les-saisons-et-les-quantites) |
+| Champignons sauvages | La fiche de septembre 2025 documente la prévention des intoxications et l’orientation vers les centres antipoison. Elle couvre le besoin de prévention. L’identification des espèces demande une source distincte et vérifiée. [Intoxications liées à la cueillette de champignons, Anses](https://www.anses.fr/fr/article/intoxications-liees-cueillette-champignons-restez-vigilants) |
+
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche
 qui les démarre. Le pilote est resté joignable après un redémarrage
