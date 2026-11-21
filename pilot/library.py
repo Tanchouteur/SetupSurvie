@@ -782,7 +782,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
             concept=next((c for c in retrieval.CONCEPTS.values() if word in c['terms']),None)
             if lang=='eng':translated.append(english.get(word,concept['en'][0] if concept else word))
             else:translated.append(concept['fr'][0] if concept and word not in concept['fr'] else word)
-        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
+        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'recognize':('identification','identification'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
     saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))

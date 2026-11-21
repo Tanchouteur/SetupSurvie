@@ -243,7 +243,7 @@ latences avec des caches dans le même état.
 Le repère encyclopédique garde le classement documentaire de l’article.
 La recherche en Autonomie en ajoute jusqu’à trois après les premiers
 résultats si aucun guide ou article pratique ne traite directement du
-sujet. Un passage PDF doit faire correspondre le sujet dans le titre et
+sujet. Son titre doit correspondre au sujet demandé. Un passage PDF doit faire correspondre le sujet dans le titre et
 l’extrait pris ensemble. Ces règles permettent de distinguer un résultat
 sur le sujet d’une simple mention dans le reste de la page.
 
@@ -252,7 +252,9 @@ persistante de préparation. Le contrôleur hôte dédié n’y étant pas joign
 lancer explicitement les deux outils sur le SSD et contrôler les deux
 `progress.json` dans `data/state/pilot/archive-index/` et
 `data/state/pilot/zim-videos/`. L’inventaire indique les pistes réellement
-détectées. La création ou traduction des sous-titres est une étape distincte.
+détectées. Le lecteur libzim 4.x expose une méthode publique de lecture
+que l’inventaire utilise aussi pour les titres des vidéos YouTube archivées.
+La création ou traduction des sous-titres est une étape distincte.
 
 Le relevé du 21 novembre a parcouru les 136 requêtes sur 89 collections
 servies. Il a trouvé 47 requêtes sans résultat et signalé une couverture

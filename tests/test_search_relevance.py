@@ -127,7 +127,7 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     async def test_autonomy_surfaces_only_strong_main_encyclopedia_fallbacks(self):
         books = [
             {'id': 'zim:wikipedia_fr_all/Orage', 'book': 'wikipedia_fr_all',
-             'kind': 'article', 'title': 'Orage', 'excerpt': 'Reconnaître un orage.',
+             'kind': 'article', 'title': 'Orage', 'excerpt': 'Phénomène météorologique.',
              'language': 'fr'},
             {'id': 'zim:wikipedia_fr_all/Feu', 'book': 'wikipedia_fr_all',
              'kind': 'article', 'title': 'Production de feu', 'excerpt': 'Allumage fictif.',
@@ -138,12 +138,16 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
             {'id': 'zim:encyclopedie-environnement_fr_all/Orage', 'book': 'encyclopedie-environnement_fr_all',
              'kind': 'article', 'title': 'Orage', 'excerpt': 'Reconnaître un orage.',
              'language': 'fr'},
+            {'id': 'zim:wikipedia_fr_all/Tanner', 'book': 'wikipedia_fr_all',
+             'kind': 'article', 'title': 'Classification de Tanner', 'excerpt': 'Description de la peau.',
+             'language': 'fr'},
         ]
         # A fixture without a named publisher exercises the guide-kind condition.
         with patch.object(library, 'search_archives', AsyncMock(return_value=(books, {'status': 'complete'}))):
             results = await library.search('reconnaître un orage', domain='resilience', kind='documents')
             self.assertEqual([row['id'] for row in results], [books[0]['id']])
             self.assertTrue(results[0]['reference_fallback'])
+            self.assertFalse(await library.search('tanner une peau', domain='resilience', kind='documents'))
             results = await library.search('faire du feu', domain='resilience', kind='documents')
             self.assertEqual(results[0]['id'], 'guide:feu.fr.txt')
             self.assertFalse(any(row.get('reference_fallback') for row in results))

@@ -1,5 +1,5 @@
 """Small, deterministic query planning and ranking. No model or network required."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from collections import OrderedDict
 from functools import cached_property
 from itertools import islice,product
@@ -68,7 +68,7 @@ class NormalCache:
 
 # Intent words are useful for ranking, but must not exclude a book that uses
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
-ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
+ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation identifier reconnaitre identification recognize recognise identify'.split())
 EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y pourquoi why'.split())
 EXTRA_STOP.update('comme dois doit doivent devrais devrait devraient pourrais pourrait pouvons pouvez utiliser utilisez utilise utilisation puis ensuite'.split())
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
@@ -289,10 +289,11 @@ def encyclopedic_matches(items, query, limit, *, normalizer=None):
     candidates = []
     for item in items:
         title = set(normalize(item.get('title', '')).split())
-        if (any(term <= title for group in query.token_groups for term in group)
-                and subject_in_passage(item, query, normalize)):
+        if query.token_groups and all(any(term <= title for term in group) for group in query.token_groups):
             candidates.append({**item, 'reference_fallback': True})
-    return ordered(candidates, query, limit, normalizer=normalize)
+    # Require the subject in the title. The encyclopedia can introduce that
+    # topic even if the excerpt does not describe the requested action.
+    return ordered(candidates, replace(query, action=''), limit, normalizer=normalize)
 
 
 def match_quality(item,query,*,normalizer=None):
@@ -322,7 +323,7 @@ def ordered(items,query,limit,*,normalizer=None):
         title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)
         native_without_excerpt=item.get('_query_complete') and not excerpt and title_hits>0
         if hits<required and not native_without_excerpt:continue
-        pdf_passage = re.search(r'\.pdf#page=\d+$', item['id'], re.I)
+        pdf_passage = item.get('kind') == 'guide' and re.search(r'\.pdf#page=\d+$', item['id'], re.I)
         if pdf_passage and not subject_in_passage(item, query, normalize):
             continue
         if query.practical and query.action:
@@ -359,6 +360,7 @@ INTENTS={
  'purify':r'\b(potable|potabilisation|potabiliser|purifier|purification|filtrer|filtration|disinfection|desinfection|purifying|treatment|traitement)\b',
  'build':r'\b(fabriquer|fabrication|construire|construction|build|building|assembly|assemble|diy)\b',
  'install':r'\b(installer|installation|install|installing)\b',
+ 'recognize':r'\b(reconnaitre|reconnaissance|identifier|identification|recognize|recognise|identify|distinguish)\b',
  'sharpen':r'\b(affutage|affuter|aiguiser|sharpen|sharpening)\b',
  'ignite':r'\b(allumer|allumage|amadou|tinder|campfire|feu de camp|ignition|ignite|friction|percussion|production de feu|faire du feu|fire making|fire starting|start a fire|lighting a fire|making a fire)\b',
 }
