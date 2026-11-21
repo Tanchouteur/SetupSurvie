@@ -182,10 +182,11 @@ function Assert-SurvieInstallerHash($Path, $Expected) {
     }
 }
 
-function Install-SurvieDependency($Item, $CacheDir) {
-    $null = New-Item -ItemType Directory -Force -Path $CacheDir
+function Get-SurvieInstaller($Item, $CacheDir, [switch]$Offline) {
     $path = Join-Path $CacheDir $Item.file
-    if (-not (Test-Path -LiteralPath $path)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        if ($Offline) { throw ('Installateur manquant dans le kit : ' + $Item.file) }
+        $null = New-Item -ItemType Directory -Force -Path $CacheDir
         Write-Host ('Téléchargement : ' + $Item.id + ' ' + $Item.version)
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Invoke-WebRequest -UseBasicParsing -Uri $Item.url -OutFile ($path + '.part')
@@ -193,6 +194,11 @@ function Install-SurvieDependency($Item, $CacheDir) {
         Move-Item -LiteralPath ($path + '.part') -Destination $path -Force
     }
     Assert-SurvieInstallerHash $path $Item.sha256
+    return $path
+}
+
+function Install-SurvieDependency($Item, $CacheDir, [switch]$Offline) {
+    $path = Get-SurvieInstaller $Item $CacheDir -Offline:$Offline
     Write-Host ('Ouverture de l''installateur ' + $Item.id + '. Suivez ses écrans et sa licence.')
     $options = @{ FilePath = $path; Wait = $true; PassThru = $true }
     if (@($Item.arguments).Count) { $options.ArgumentList = @($Item.arguments) }
