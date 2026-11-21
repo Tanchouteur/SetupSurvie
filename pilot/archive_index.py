@@ -165,7 +165,7 @@ def _article(entry, info, categories, corrections):
         candidate = {'id': 'zim:' + info['book'] + '/' + entry.path, 'title': entry.title, '_text': text}
         if wiki_structure.wikipedia(candidate) and item.mimetype != 'text/plain':
             candidate['_wiki_structure'] = wiki_structure.extract(raw[:wiki_structure.MAX_HTML].encode('utf-8'))
-        domains = retrieval.domains(candidate)
+        domains = retrieval.application_domains(candidate)
     return (entry.path, entry.title, text[:502_400], language, domains), False
 
 

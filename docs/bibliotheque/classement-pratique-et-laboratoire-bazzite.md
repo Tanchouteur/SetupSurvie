@@ -175,3 +175,15 @@ et le reste de l’édition sont anglais. Le candidat test reconnaît l’anglai
 sur le fichier réel et conserve l’indication française sur la page mixte
 de l’édition française. Les essais unitaires couvrent le passage dans le filtre
 et l’absence de requête Kiwix vers le Wiktionnaire rangé dans Autre.
+
+La recette se rejoue depuis le dépôt avec la liste des 38 thèmes et les
+variantes linguistiques du cas OMS.
+
+```sh
+python3 scripts/evaluate_domains.py scan-library tests/fixtures/domain-evaluation/autonomie-38-themes.json rapport.json --portal http://127.0.0.1:18080
+```
+
+Le rapport conserve la couverture, l’ordre et les titres. Il indique si le
+lecteur a renvoyé du texte. L’analyse de la pertinence et la lecture humaine
+des passages restent à ajouter. Conserver chaque rapport dans un dossier de
+recette hors du dépôt.

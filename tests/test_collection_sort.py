@@ -118,8 +118,11 @@ class CategorySearchTests(unittest.TestCase):
         self.assertEqual(prepared['phase'],'completed')
         self.assertGreater(prepared['bytes'],0)
         with patch.object(library,'search_archives',AsyncMock(return_value=([],{'status':'complete'}))) as native:
-            found=asyncio.run(library.search('conservation des aliments',kind='documents',domain='resilience'))
-            self.assertEqual(found[0]['title'],'Conservation des aliments')
+            practical = asyncio.run(library.search('conservation des aliments', kind='documents', domain='resilience'))
+            self.assertFalse(practical)
+            found = asyncio.run(library.search('conservation des aliments', kind='documents', domain='culture'))
+            self.assertEqual(found[0]['title'], 'Conservation des aliments')
+            self.assertEqual(found[0]['classification']['source_role'], 'reference')
             self.assertEqual(native.call_args.kwargs['skip_native'],(self.zim.stem,))
             self.assertEqual(found.coverage['category_index']['searched'],1)
             asyncio.run(library.search('conservation des aliments',kind='documents',domain='all'))
@@ -130,7 +133,7 @@ class CategorySearchTests(unittest.TestCase):
         category_index.prepare(self.root,self.state,reserve=0)
         identifier=f'zim:{self.zim.stem}/Conservation'
         revision=catalogue.revision(identifier,self.guide,self.root)
-        catalogue.save(identifier,{'domains':['culture'],'document_type':'overview','status':'corrected'},
+        catalogue.save(identifier,{'domains':['resilience'],'document_type':'procedure','status':'reviewed'},
                        revision,self.guide,self.root)
         report,path=category_index.availability(self.root,self.state)
         self.assertEqual(report['phase'],'outdated')
@@ -138,8 +141,8 @@ class CategorySearchTests(unittest.TestCase):
         category_index.prepare(self.root,self.state,reserve=0)
         _,path=category_index.availability(self.root,self.state)
         plan=retrieval.plan('conservation',['conservation'],{})
-        self.assertFalse(archive_index.search(path.parent,plan,category='resilience',only_path=path))
-        self.assertTrue(archive_index.search(path.parent,plan,category='culture',only_path=path))
+        self.assertTrue(archive_index.search(path.parent,plan,category='resilience',only_path=path))
+        self.assertFalse(archive_index.search(path.parent,plan,category='culture',only_path=path))
 
     def test_return_to_main_fund_reuses_index_and_prepares_new_archive(self):
         other = self.root / 'guides_fr_2026-11.zim'

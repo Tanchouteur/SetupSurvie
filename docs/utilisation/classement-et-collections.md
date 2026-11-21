@@ -105,12 +105,18 @@ Les corrections de classement enregistrées gardent la priorité. Voir
 
 ## Comprendre le classement automatique
 
-Pour Wikipédia, le classement tient compte du titre, des sections principales
-et des catégories d'article quand elles sont présentes dans l'archive locale.
-Un article peut appartenir aux deux espaces. L'indication peut évoluer à la
-fin d'une recherche progressive, après lecture de la structure. Si un résultat
-attendu manque, élargir à **Toute la bibliothèque** puis corriger son
-classement si nécessaire.
+Le rôle indiqué dépend de la source. **Guide pratique** repère notamment les
+fiches OMS, les manuels Hesperian et les tutoriels iFixit. **Référence** couvre
+les encyclopédies comme Wikipédia. **Langue** désigne les dictionnaires.
+**Culture** regroupe notamment les collections littéraires comme Gutenberg.
+Une source non reconnue continue à être classée d’après son contenu.
+
+Les références, dictionnaires et collections culturelles connues sont classés
+automatiquement dans **Savoirs et culture**. Pour un article de référence qui
+contient une méthode utile, le profil Famille peut ajouter **Autonomie et
+résilience** après lecture. Le choix Fonds principal / Autre détermine
+toujours les collections parcourues. Pour inclure aussi **Autre**, élargir à
+**Toute la bibliothèque**.
 
 Le [protocole de mesure](../essais/mesurer-classement-documentaire.md) permet
 de comparer deux versions sur les mêmes documents et vidéos.

@@ -348,6 +348,7 @@ ARCHIVE_ROLES = {
     'appropedia': 'practical', 'ifixit': 'practical', 'wikihow': 'practical',
     'solar.lowtechmagazine.com': 'practical', 'wikipedia': 'reference',
     'vikidia': 'reference', 'encyclopedie-environnement.org': 'reference',
+    'encyclopedie-environnement': 'reference', 'environment-encyclopedia': 'reference',
     'wiktionary': 'language', 'gutenberg': 'culture', 'wikisource': 'culture',
     'wikivoyage': 'culture', 'alexandria.dk': 'culture',
 }
@@ -370,6 +371,15 @@ def source_role(item):
     if family.endswith('.stackexchange.com'):
         return 'reference'
     return ARCHIVE_ROLES.get(family, '')
+
+
+CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})
+
+
+def application_domains(item, indexed=None):
+    if source_role(item) in CULTURE_SOURCE_ROLES:
+        return ['culture']
+    return domains(item) if indexed is None else indexed
 
 
 def ifixit_edition(book):

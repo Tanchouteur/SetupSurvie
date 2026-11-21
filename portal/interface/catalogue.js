@@ -2,12 +2,13 @@
 (() => {
   const types={unknown:'Type à vérifier',overview:'Présentation générale',explanation:'Explication',procedure:'Procédure',exercise:'Exercice',manual:'Notice technique'};
   const domains={resilience:'Autonomie et résilience',culture:'Savoirs et culture'};
+  const roles={practical:'Guide pratique',reference:'Référence',language:'Langue',culture:'Culture'};
   function description(info){
     if(!info)return 'Type à vérifier';
     const type=types[info.document_type]||types.unknown;
     const spaces=info.domains.map(key=>domains[key]).filter(Boolean).join(' et ')||'Toute la bibliothèque uniquement';
     const method=info.method==='human'?(info.status==='reviewed'?'classement examiné':'classement corrigé'):'classement automatique';
-    return [info.document_type==='unknown'?'':type,method,spaces].filter(Boolean).join(' · ');
+    return [roles[info.source_role],info.document_type==='unknown'?'':type,method,spaces].filter(Boolean).join(' · ');
   }
   document.addEventListener('survie:results',event=>{
     for(const result of event.detail){
