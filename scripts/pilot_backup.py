@@ -17,6 +17,14 @@ from pilot import durable
 from delivery_paths import destination as checked_destination,locked
 
 PRIVATE_FILES=('settings.json','identifiants.txt','inference-paused.json')
+# Rebuilt from the ZIM archives without Internet or AI; often hundreds of GB.
+REBUILDABLE=(('state','pilot','category-index'),)
+
+
+def rebuildable(relative):
+    """True for derived state that backups skip and restorations keep in place."""
+    parts=Path(relative).parts
+    return any(parts[:len(prefix)]==prefix for prefix in REBUILDABLE)
 
 
 def separate_roots(*roots):
@@ -79,7 +87,7 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
         for name in ['state/pilot','state/openwebui','state/caddy','library/guides']:
             for path in sorted((data/name).rglob('*')):
                 relative=path.relative_to(data)
-                if 'cache' in relative.parts or path.name.endswith('-shm') or relative.parts[0]=='state' and path.name.endswith('.lease'):continue
+                if 'cache' in relative.parts or rebuildable(relative) or path.name.endswith('-shm') or relative.parts[0]=='state' and path.name.endswith('.lease'):continue
                 if path.is_symlink():raise setup.SetupError('Lien refusé dans la sauvegarde : '+relative.as_posix())
                 if path.is_file():sources.append((path,'data/'+relative.as_posix()))
         sources = [(source, relative) for source, relative in sources if source.exists()]
