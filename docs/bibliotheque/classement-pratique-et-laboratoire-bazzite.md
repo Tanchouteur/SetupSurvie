@@ -129,7 +129,7 @@ Avec environ 85 archives et un relevé de recherche en parallèle du
 téléchargement, Kiwix a été arrêté par manque de mémoire : le conteneur du
 labo était limité à 1 Gio et ne redémarrait pas. Le relevé des 68 thèmes
 de Marc mesuré pendant cet arrêt n’a interrogé que les guides PDF ; il est
-écarté. Depuis la 0.86.1, le labo donne 6 Gio à Kiwix et le relance en cas
+écarté. Depuis la 0.86.2, le labo donne 6 Gio à Kiwix et le relance en cas
 d’échec. L’installation du produit (`compose.yaml`) ne limite pas Kiwix et
 le redémarre déjà automatiquement. Sur ce fonds, 51 collections, surtout
 vidéo, n’annoncent pas d’index plein texte : leur recherche dépend des
