@@ -174,7 +174,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `linux_host.py`, `discovery.py`, `fix-linux-local-name.sh` | Docker rootless, démarrage Linux, nom `.local` |
 | `linux_offline_tools.py`, `installer-outils-linux-hors-ligne.sh` | Collecte vérifiée et extraction des prérequis Linux pour le transfert hors ligne |
 | `linux_offline_restore.py`, `restaurer-linux-hors-ligne.sh` | Activation et démarrage autonome sur Linux systemd depuis une copie hors ligne |
-| `linux_recovery.py`, `linux_recovery_admin.sh`, `linux_recovery_gui.sh`, `installer-depuis-le-ssd.desktop` | Installation graphique depuis une copie Linux, point immuable et préparation d’une nouvelle copie de travail ([guide](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours)) |
+| `linux_recovery.py`, `linux_recovery_admin.sh`, `linux_recovery_gui.sh`, `installer-depuis-le-ssd.desktop` | Installation graphique depuis une copie Linux, duplication de SSD de secours, point immuable et préparation d’une nouvelle copie de travail ([guide](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours)) |
 | `linux_auto_install.py`, `installer-systeme-linux.sh` | Préparation des systèmes Linux pris en charge depuis Bash, installation initiale et reprise de la sélection |
 | `pilot_update.py`, `windows_update.py`, `update-windows.ps1`, `rollback-windows.ps1`, `delivery_paths.py` | Mises à jour avec sauvegarde et retour arrière ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `maintenance_site.py` | Suivi commun `catalog/maintenance.json` et page temporaire sur les ports du portail pendant l’arrêt des conteneurs |

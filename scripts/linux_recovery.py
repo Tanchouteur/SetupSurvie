@@ -187,9 +187,10 @@ def copy_verified(source, target, record, expected):
     copy.chmod(record['mode'] & ~0o022)
 
 
-def fill_target(source, target, journal, *, detached=False, portable_cpu=False):
+def fill_target(source, target, journal, *, detached=False, portable_cpu=False, identity=None):
     marker = target / '.copie-installation.json'
-    identity = {'id': journal['id'], 'source': str(source)}
+    if identity is None:
+        identity = {'id': journal['id'], 'source': str(source)}
     if target.exists():
         if not marker.is_file() or transfer.read(marker) != identity:
             raise setup.SetupError('Dossier déjà utilisé. Choisissez une destination dédiée.')
@@ -206,7 +207,7 @@ def fill_target(source, target, journal, *, detached=False, portable_cpu=False):
         if local.get('id') != journal['id']:
             raise setup.SetupError('La copie présente correspond à un autre support.')
         restrict_application_directories(target, journal['inventory'])
-        return
+        return False
     copy_payload(source, target, journal)
     local = deepcopy(journal)
     if portable_cpu:
@@ -219,6 +220,28 @@ def fill_target(source, target, journal, *, detached=False, portable_cpu=False):
                            for role in local['source']}
     transfer.save(target, local)
     transfer.verify_copy(target)
+    return True
+
+
+def duplicate(source, target):
+    if source.is_relative_to(target) or target.is_relative_to(source):
+        raise setup.SetupError('Choisissez un dossier sur un autre disque.')
+    journal = transfer_manifest(source)
+    manifest_hash = setup.file_hash(source / 'transfer.json')
+    identity = {'id': journal['id'], 'manifest_sha256': manifest_hash, 'operation': 'duplicate'}
+    with locked(target.parent / ('.' + target.name + '-duplication.lock')):
+        phase('Copie du SSD de secours…')
+        newly_verified = fill_target(source, target, journal, identity=identity)
+        phase('Vérification du second SSD…')
+        verified = transfer_manifest(target)
+        if verified != journal or setup.file_hash(source / 'transfer.json') != manifest_hash:
+            raise setup.SetupError('Le manifeste de secours a changé pendant la copie.')
+        if not newly_verified:
+            transfer.verify_copy(target)
+        transfer.bundle_launcher(target)
+        transfer.publish_linux_installer(target, verified)
+        transfer.export_report(target, verified)
+        durable.sync_directory(target)
 
 
 def point_path(recovery):
@@ -462,12 +485,17 @@ def main():
     installer.add_argument('source', type=setup.safe_path)
     installer.add_argument('base', type=setup.safe_path)
     installer.add_argument('point', choices=('yes', 'no'))
+    duplicator = actions.add_parser('duplicate')
+    duplicator.add_argument('source', type=setup.safe_path)
+    duplicator.add_argument('base', type=setup.safe_path)
     for name in ('point', 'restore'):
         actions.add_parser(name).add_argument('base', type=setup.safe_path)
     args = parser.parse_args()
     try:
         if args.action == 'install':
             install(args.recovery, args.source, args.base, args.point == 'yes')
+        elif args.action == 'duplicate':
+            duplicate(args.source, args.base)
         elif args.action == 'point':
             create_existing_point(args.recovery, args.base)
         else:

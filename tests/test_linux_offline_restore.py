@@ -81,6 +81,15 @@ esac
         self.assertEqual((target / 'python/bin/python3').stat().st_mode & 0o022, 0)
         self.assertTrue((target / '.setupsurvie-restauration').is_file())
 
+        (cache / 'docker.tar.gz').unlink()
+        (cache / 'docker-compose').unlink()
+        python_only = self.base / 'python seulement'
+        result = subprocess.run(['bash', str(launcher), '--python-seul', str(self.base / 'data'),
+                                 str(python_only)], capture_output=True, text=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((python_only / 'bin/python3').is_file())
+        self.assertFalse((python_only / 'bin/docker').exists())
+
     def test_unit_file_orders_engine_and_escapes_paths(self):
         units = restore.unit_contents(self.base, 'setupsurvie-test')
         app = units['setupsurvie-test.service']

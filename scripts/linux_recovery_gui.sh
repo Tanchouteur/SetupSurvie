@@ -61,6 +61,16 @@ case "$mode" in
         [[ -n "$selection" ]] && point=yes
         action=install
         ;;
+    duplicate)
+        parent=$(zenity --file-selection --directory --title="Choisir le second SSD" \
+            --filename="$(dirname -- "$base")/") || exit 0
+        [[ "$parent" == /* ]] || exit 0
+        destination="${parent%/}/SetupSurvie-Secours"
+        zenity --question --title="Dupliquer le SSD de secours" \
+            --text="SetupSurvie va copier les données et le logiciel vers le dossier SetupSurvie-Secours du second disque. En cas d’interruption, choisissez le même dossier pour reprendre." \
+            --ok-label="Dupliquer" --cancel-label="Annuler" || exit 0
+        action=duplicate
+        ;;
     maintenance|maintenance-select)
         if [[ "$mode" == maintenance-select ]]; then
             base=$(zenity --file-selection --directory --title="Choisir le dossier SetupSurvie déjà installé" --filename="/srv/") || exit 0
@@ -89,6 +99,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
 (
     case "$action" in
         install) pkexec --disable-internal-agent /bin/bash "$admin" install "$base" "$destination" "$point" ;;
+        duplicate) pkexec --disable-internal-agent /bin/bash "$admin" duplicate "$base" "$destination" ;;
         point|restore) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
     esac 2>&1
     printf '%s\n' "$?" >"$tmpdir/statut"
@@ -97,7 +108,9 @@ trap 'rm -rf -- "$tmpdir"' EXIT
     while IFS= read -r line; do
         printf '%s\n' "$line" >>"$tmpdir/resultat"
         case "$line" in
-            'Copie vérifiée '*|'Copie en cours '*|'Protection du point '*|'Préparation de la copie '*|            'Installation des outils '*|'Préparation du point '*|'Vérification et copie '*|            'Mise à l’abri '*)
+            'Copie vérifiée '*|'Copie en cours '*|'Protection du point '*|'Préparation de la copie '*|\
+            'Installation des outils '*|'Préparation du point '*|'Vérification et copie '*|\
+            'Mise à l’abri '*|'Copie du SSD '*|'Vérification du second SSD '*)
                 printf '# %s\n' "$line" 2>/dev/null || : ;;
         esac
     done
@@ -107,6 +120,8 @@ trap 'rm -rf -- "$tmpdir"' EXIT
 if [[ -f "$tmpdir/statut" ]] && [[ $(cat "$tmpdir/statut") == 0 ]]; then
     if [[ "$action" == point ]]; then
         zenity --info --title="SetupSurvie" --text="Le point de restauration a été vérifié et protégé."
+    elif [[ "$action" == duplicate ]]; then
+        zenity --info --title="SetupSurvie" --text="Le second SSD est vérifié. Ouvrez son dossier SetupSurvie-Secours pour retrouver le lanceur. Vous pouvez maintenant éjecter les disques."
     elif zenity --question --title="SetupSurvie" --text="Opération terminée. Ouvrir SetupSurvie ?" --ok-label="Ouvrir SetupSurvie" --cancel-label="Fermer"; then
         xdg-open http://127.0.0.1:8080 >/dev/null 2>&1 ||
             zenity --info --text="Ouvrez http://127.0.0.1:8080 dans votre navigateur."

@@ -153,6 +153,50 @@ class LinuxRecoveryTests(unittest.TestCase):
         self.assertEqual((self.active / 'data/guide.txt').read_bytes(), self.files['data/guide.txt'])
         self.assertFalse(partial.exists())
 
+    def test_duplicate_can_resume_after_remount_and_exports_a_ready_second_disk(self):
+        self.add_graphical_launchers()
+        manifest = self.source / 'transfer.json'
+        original_manifest = manifest.read_bytes()
+        real_copy = recovery.copy_payload
+
+        def interrupted(source, target, journal):
+            partial = target / 'data/guide.txt.transfer-part'
+            partial.parent.mkdir()
+            partial.write_bytes(self.files['data/guide.txt'][:10])
+            raise OSError('câble débranché')
+
+        with patch.object(recovery, 'copy_payload', side_effect=interrupted):
+            with self.assertRaisesRegex(OSError, 'câble débranché'):
+                recovery.duplicate(self.source, self.active)
+        self.assertFalse((self.active / 'Installer-SetupSurvie.desktop').exists())
+        self.assertEqual(manifest.read_bytes(), original_manifest)
+
+        moved = self.directory / 'SSD remonté'
+        self.source.rename(moved)
+        with patch.object(recovery, 'copy_payload', wraps=real_copy) as payload:
+            recovery.duplicate(moved, self.active)
+            recovery.duplicate(moved, self.active)
+        payload.assert_called_once()
+        self.assertEqual((self.active / 'transfer.json').read_bytes(), original_manifest)
+        self.assertIn(' duplicate ', (self.active / 'Dupliquer-SetupSurvie.desktop').read_text())
+        self.assertTrue((self.active / 'Installer-SetupSurvie.desktop').is_file())
+        self.assertFalse((self.active / 'data/guide.txt.transfer-part').exists())
+        self.assertEqual((self.active / 'private').stat().st_mode & 0o077, 0)
+        self.assertEqual((moved / 'transfer.json').read_bytes(), original_manifest)
+
+    def test_duplicate_does_not_publish_a_corrupt_or_unrelated_destination(self):
+        self.active.mkdir()
+        (self.active / 'document').write_text('à conserver')
+        with self.assertRaisesRegex(setup.SetupError, 'Dossier déjà utilisé'):
+            recovery.duplicate(self.source, self.active)
+        self.assertEqual((self.active / 'document').read_text(), 'à conserver')
+        target = self.directory / 'Disque de test'
+        (self.source / 'data/guide.txt').write_bytes(b'X' * len(self.files['data/guide.txt']))
+        with self.assertRaisesRegex(setup.SetupError, 'altéré'):
+            recovery.duplicate(self.source, target)
+        self.assertFalse((target / 'Installer-SetupSurvie.desktop').exists())
+        self.assertFalse((target / 'transfer.json').exists())
+
     def test_existing_point_releases_only_its_transfer_guard(self):
         work = self.active / 'private'
         work.mkdir(parents=True)
@@ -170,10 +214,19 @@ class LinuxRecoveryTests(unittest.TestCase):
         self.assertFalse(guard.exists())
         service.assert_called_once_with(['systemctl', 'start', 'dedicated.service'])
 
-    def test_bundle_launchers_public_and_data_private(self):
+    def add_graphical_launchers(self):
         scripts = self.source / 'application/scripts'
         for name in ('installer-depuis-le-ssd.desktop', 'linux_recovery_gui.sh', 'linux_recovery_admin.sh'):
-            (scripts / name).write_bytes((ROOT / 'scripts' / name).read_bytes())
+            path = scripts / name
+            path.write_bytes((ROOT / 'scripts' / name).read_bytes())
+            record = {'path': 'application/scripts/' + name, 'bytes': path.stat().st_size,
+                      'mtime_ns': path.stat().st_mtime_ns, 'mode': 0o755}
+            self.journal['inventory']['files'].append(record)
+            self.journal['verified'][record['path']] = setup.file_hash(path)
+        transfer.save(self.source, self.journal)
+
+    def test_bundle_launchers_public_and_data_private(self):
+        self.add_graphical_launchers()
         transfer.publish_linux_installer(self.source, self.journal)
         launcher = self.source / 'Installer-SetupSurvie.desktop'
         self.assertIn(' install ', launcher.read_text())
@@ -183,7 +236,7 @@ class LinuxRecoveryTests(unittest.TestCase):
             self.assertEqual((self.source / name).stat().st_mode & 0o077, 0)
 
 
-    def test_graphical_install_passes_opt_out_and_finishes_progress(self):
+    def test_graphical_install_and_duplication_pass_options_and_finish_progress(self):
         scripts = self.directory / 'interface'
         scripts.mkdir()
         (scripts / 'linux_recovery_gui.sh').write_bytes((ROOT / 'scripts/linux_recovery_gui.sh').read_bytes())
@@ -193,7 +246,7 @@ class LinuxRecoveryTests(unittest.TestCase):
             '--file-selection) printf "/srv/Disque SSD\\n";;\n'
             '--list) if [ "$2" = --radiolist ]; then printf "autre\\n"; fi;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
-            '--question) exit 1;;\n'
+            '--question) case "$*" in *--ok-label=Dupliquer*) exit 0;; *) exit 1;; esac;;\n'
             'esac\n')
         (scripts / 'pkexec').write_text(
             '#!/bin/sh\nprintf "%s\\n" "$@" >"$RESULT.args"\n'
@@ -210,3 +263,10 @@ class LinuxRecoveryTests(unittest.TestCase):
                          ['install', str(self.source), '/srv/Disque SSD/SetupSurvie', 'no'])
         self.assertEqual(result.with_suffix('.progress').read_text().splitlines(),
                          ['# Préparation de la copie de travail…', '100'])
+
+        subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'duplicate', self.source],
+                       check=True, timeout=10, env={**os.environ,
+                           'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[-3:], ['duplicate', str(self.source),
+                                          '/srv/Disque SSD/SetupSurvie-Secours'])
