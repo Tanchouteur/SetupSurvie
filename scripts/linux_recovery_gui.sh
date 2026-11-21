@@ -76,9 +76,14 @@ case "$mode" in
             base=$(zenity --file-selection --directory --title="Choisir le dossier SetupSurvie déjà installé" --filename="/srv/") || exit 0
             base=${base%/}
         fi
-        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore) || exit 0
+        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore FALSE "Revenir à mon installation" cancel-point) || exit 0
         case "$action" in
             point) ;;
+            cancel-point)
+                zenity --question --title="Revenir à mon installation" \
+                    --text="Si un point est en cours de création, sa copie partielle sera mise de côté. SetupSurvie redémarrera avec vos données actuelles. Continuer ?" \
+                    --ok-label="Redémarrer SetupSurvie" --cancel-label="Annuler" || exit 0
+                ;;
             restore)
                 zenity --question --title="Confirmer la restauration" --text="SetupSurvie sera arrêté et remplacé par une nouvelle copie du point de restauration. Les données récentes seront gardées dans l'ancien dossier, sans être remises automatiquement dans la nouvelle copie. Continuer ?" || exit 0
                 ;;
@@ -100,7 +105,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
     case "$action" in
         install) pkexec --disable-internal-agent /bin/bash "$admin" install "$base" "$destination" "$point" ;;
         duplicate) pkexec --disable-internal-agent /bin/bash "$admin" duplicate "$base" "$destination" ;;
-        point|restore) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
+        point|restore|cancel-point) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
     esac 2>&1
     printf '%s\n' "$?" >"$tmpdir/statut"
 ) | (
@@ -110,7 +115,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
         case "$line" in
             'Copie vérifiée '*|'Copie en cours '*|'Protection du point '*|'Préparation de la copie '*|\
             'Installation des outils '*|'Préparation du point '*|'Vérification et copie '*|\
-            'Mise à l’abri '*|'Copie du SSD '*|'Vérification du second SSD '*)
+            'Mise à l’abri '*|'Copie du SSD '*|'Vérification du second SSD '*|'Redémarrage de votre installation '*)
                 printf '# %s\n' "$line" 2>/dev/null || : ;;
         esac
     done
