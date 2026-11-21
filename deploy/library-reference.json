@@ -85,87 +85,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-f9b7de4233b0bbeb",
-      "title": "ArchWiki",
-      "language": "eng",
-      "edition": "2026-10-21",
-      "url": "https://lb.download.kiwix.org/zim/other/archlinux_en_all_maxi_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/archlinux_en_all_maxi_2026-10.zim",
-      "bytes": 38311014,
-      "sha256": "e0cabb299ce29d7a60e0a65cab4d3e14d8e60b5995daeb60b2932bbac04e505b",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Arch Linux documentation",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/other/archlinux_en_all_maxi_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-615140344eec2cf2",
-      "title": "Arduino Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/arduino.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/arduino.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 259577739,
-      "sha256": "a7fb8bba8845f4c30712d587cc369c994baf120bc1e881abfb0ca8d7937d387b",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A about open-source Arduino hardware and software",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/arduino.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "main"
-    },
-    {
-      "id": "kiwix-9753c4dd382981cf",
-      "title": "Ask Ubuntu Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/askubuntu.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/askubuntu.com_en_all_2026-10.zim",
-      "bytes": 2767228112,
-      "sha256": "126123033e9f06b9a98461be2c57c926b9501e80cf7851ba110a57574a97d248",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for Ubuntu users and developers",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/askubuntu.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-89aaa9d6a9c7a660",
       "title": "Bicycles Q&A",
       "language": "eng",
@@ -244,141 +163,6 @@
       "pictures": true,
       "videos": false,
       "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-96b159eafdf5ad29",
-      "title": "BNR ebooks",
-      "language": "fra",
-      "edition": "2024-06-05",
-      "url": "https://lb.download.kiwix.org/zim/zimit/bnr_fr_all_2024-06.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/bnr_fr_all_2024-06.zim",
-      "bytes": 8279131671,
-      "sha256": "b29921544912a5b78aa611509e55b0dee267e542b992a189ddb67954d60ca3b9",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Les ebooks gratuits de la Bibliothèque numérique romande",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/bnr_fr_all_2024-06.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-a4327aeaaeb0f524",
-      "title": "Board & Card Games Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/boardgames.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/boardgames.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 107639507,
-      "sha256": "01a3c283f3c730166d7ac354197252e94c22812b46bb2df238ab92f056fb841b",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for people playing, modifying, designing board or card games",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/boardgames.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-39f0170f4b1be444",
-      "title": "Bouquineux",
-      "language": "fra",
-      "edition": "2025-12-13",
-      "url": "https://lb.download.kiwix.org/zim/zimit/bouquineux.com_fr_all_2025-12.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/bouquineux.com_fr_all_2025-12.zim",
-      "bytes": 5951945213,
-      "sha256": "9df77b60a05fab6e4fa331090cd762e2222b787bccbeb7d4f56de3e95c90d95e",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Livres numériques gratuits et libres de droits",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/bouquineux.com_fr_all_2025-12.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-ea5eb3b32c54b118",
-      "title": "Breizh partitions",
-      "language": "fra",
-      "edition": "2026-02-11",
-      "url": "https://lb.download.kiwix.org/zim/zimit/breizhpartitions_fr_all_2026-02.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/breizhpartitions_fr_all_2026-02.zim",
-      "bytes": 5655987325,
-      "sha256": "b8840acd14b5a24744d9046c1ddb6e88133267c795b097013b7a74a77b2aaccb",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Partitions gratuites et libres",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/breizhpartitions_fr_all_2026-02.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-a625452b1a0be668",
-      "title": "Buddhism Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/buddhism.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/buddhism.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 84026490,
-      "sha256": "90c2081a5914e4cfc31635aa1cf7028be24ccb652ce37701a4fb22ec36701675",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A on Buddhist philosophy, teaching, and practice",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/buddhism.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "other"
     },
     {
@@ -1003,87 +787,6 @@
       "classification": "other"
     },
     {
-      "id": "kiwix-536014998a2b037f",
-      "title": "Chemistry Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/chemistry.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/chemistry.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 419958885,
-      "sha256": "29df06f911373044997678301ebe894ef10fdf15c8e83d39ab83f7ae91f65394",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for scientists, academics, teachers and students in chemistry",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/chemistry.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-ce40304654ebd5ca",
-      "title": "Chess Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/chess.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/chess.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 82198929,
-      "sha256": "83b23a5ebec0c79a9d37cece0aaec942f8ce2a38150a5ad61608b328fc3bf014",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for serious players and enthusiasts of chess",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/chess.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-e8c1497bb5d8dfd6",
-      "title": "Christianity Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/christianity.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/christianity.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 193592092,
-      "sha256": "d8cee8c2b0d27e5fa41a834f77d871806c59ee3a12d70f7171561d61bea781d4",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for Christians and experts in Christianity",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/christianity.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-67bdf56d2aecea57",
       "title": "CloudFlare Learning Center",
       "language": "eng",
@@ -1219,33 +922,6 @@
       "classification": "other"
     },
     {
-      "id": "kiwix-e4e339d4d967f05b",
-      "title": "DirtyBiology",
-      "language": "fra",
-      "edition": "2026-10-23",
-      "url": "https://lb.download.kiwix.org/zim/videos/dirtybiology_fr_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/dirtybiology_fr_all_2026-10.zim",
-      "bytes": 4857148847,
-      "sha256": "07983d8b63e3682262eb6357c9080b9a0b807f7af0284698be9a0da2855cdc0c",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Docus scientifiques faits avec amour sur des sujets improbables.",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/videos/dirtybiology_fr_all_2026-10.zim.meta4",
-      "fulltext_index": false,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-04622c0e90a7a3f0",
       "title": "Home Improvement Q&A",
       "language": "eng",
@@ -1298,33 +974,6 @@
       "videos": true,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-8e9d7991f30ffa9b",
-      "title": "e-penser 2.0",
-      "language": "fra",
-      "edition": "2026-08-27",
-      "url": "https://lb.download.kiwix.org/zim/videos/e-penser_fr_all_2026-08.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/e-penser_fr_all_2026-08.zim",
-      "bytes": 7041389139,
-      "sha256": "0cb1bdbf4023e782fd8840b12a211cecb252f1faf122e55e3c406f710657a357",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Ici, je parle de ce dont j'ai envie de parler quoi qu'en pense la plate-forme :…",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/videos/e-penser_fr_all_2026-08.zim.meta4",
-      "fulltext_index": false,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-695778b7fade0386",
@@ -1489,33 +1138,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-56f8e26a6143da95",
-      "title": "English Language Learners Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/ell.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/ell.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 475144163,
-      "sha256": "e5dd3b5f404b4a715b9ada21816ee96aa30d994a57d687bae007164fa72a3926",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for speakers of other languages learning English",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/ell.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-c07f7f8d834e771b",
       "title": "Environment Encyclopedia",
       "language": "eng",
@@ -1595,33 +1217,6 @@
       "videos": false,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-993fcb98cbd28cd2",
-      "title": "English Language & Usage Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/english.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/english.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 774321256,
-      "sha256": "34ed3eee2203b69b7813c7789c0f6f005da3aeb772b49f20e4e96cc17c9ccc9e",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for people discussing the finer points of English language",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/english.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-8042bb648aea8950",
@@ -1705,33 +1300,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-e494a0509cba6524",
-      "title": "French Language Q&A",
-      "language": "eng,fra",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/french.stackexchange.com_mul_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/french.stackexchange.com_mul_all_2026-10.zim",
-      "bytes": 94726163,
-      "sha256": "fb8fc8ae4888c0c88dc5aee3963ce2a45d6cfe9ca2bb7c5af06254745b6ca9a1",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for people discussing the finer points of the French language",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/french.stackexchange.com_mul_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-327bcf97ea5f4e35",
       "title": "Gardening & Landscaping Q&A",
       "language": "eng",
@@ -1810,33 +1378,6 @@
       "pictures": true,
       "videos": false,
       "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-a474ac7104f6a3e5",
-      "title": "German Language Q&A",
-      "language": "eng,deu",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/german.stackexchange.com_mul_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/german.stackexchange.com_mul_all_2026-10.zim",
-      "bytes": 119564591,
-      "sha256": "fbb98c7eda7f0f170a85915af3c083498161b01eaed11c4b60678b9dc1e02a99",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for people discussing the finer points of the German language",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/german.stackexchange.com_mul_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "other"
     },
     {
@@ -2785,60 +2326,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-9579ac5668ed7741",
-      "title": "Islam Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/islam.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/islam.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 89427695,
-      "sha256": "4f89733ea08882bf504e875758d16a8c68cf461fded38ca7cee2b5167265782a",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for everything related to Islam and Muslims",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/islam.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-df529c87d9a686f1",
-      "title": "Mi Yodeya Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/judaism.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/judaism.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 304364031,
-      "sha256": "7c6f84aaa9cf1c1877fb8149b0762286204c54180198dfa3bd402778245c05f8",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for everything related to Jewish law and tradition",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/judaism.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-e2f47ca521a9bc4d",
       "title": "Khan Academy (Français)",
       "language": "fra",
@@ -2891,33 +2378,6 @@
       "videos": true,
       "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-3d9376711ba0c344",
-      "title": "Law Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/law.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/law.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 187221476,
-      "sha256": "87e5242718014a6b28e7e11e9192ef4b2e7d08365336c75070815475e58eb7f7",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for everything related to law and legal matter",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/law.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-55ed284986c0a1a4",
@@ -3134,33 +2594,6 @@
       "videos": true,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-e6f7c6f0c6813d97",
-      "title": "Literature Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/literature.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/literature.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 74143640,
-      "sha256": "994eb19f41da482ff21e185254fcf269cba14f310ceeca27be5d4c7f652a3a5e",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for scholars and enthusiasts of literature",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/literature.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-b4d0570f62505a1a",
@@ -4351,87 +3784,6 @@
       "classification": "other"
     },
     {
-      "id": "kiwix-75889790862c3f3b",
-      "title": "Music: Practice & Theory",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/music.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/music.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 345164234,
-      "sha256": "7922fc6699ae617312657ce7b84211338e1c4cca639e472a5ce200d3d7bb31e0",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for musicians, students, and enthusiasts",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/music.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-f66d2074f0f537a0",
-      "title": "Mutopia Project",
-      "language": "eng",
-      "edition": "2026-11-02",
-      "url": "https://lb.download.kiwix.org/zim/zimit/mutopiaproject.org_en_all_2026-11.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/mutopiaproject.org_en_all_2026-11.zim",
-      "bytes": 6632490059,
-      "sha256": "ce5fd49f36657228bf329ba2b7408da235e9afa866b504f78f399a4e709826b1",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "2124 pieces of free classic music",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/mutopiaproject.org_en_all_2026-11.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-1fcb3cdfa84b5afa",
-      "title": "Network Engineering Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/networkengineering.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/networkengineering.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 130182665,
-      "sha256": "358b4bd4cc4691c3c78358a28095b6a16bde10979fe545a68f635706e8e2a1c5",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for network engineers",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/networkengineering.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-1a3b6d68b6c76775",
       "title": "NHS' Medicines A to Z",
       "language": "eng",
@@ -4486,33 +3838,6 @@
       "classification": "other"
     },
     {
-      "id": "kiwix-ff2f945ca7c232db",
-      "title": "Open Music Theory",
-      "language": "eng",
-      "edition": "2026-09-11",
-      "url": "https://lb.download.kiwix.org/zim/zimit/openmusictheory.com_en_all_2026-09.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/openmusictheory.com_en_all_2026-09.zim",
-      "bytes": 76967370,
-      "sha256": "8ec2fe2df659386fbb9ef5d4557ecba820cfff75eeafc8113399601fe2f3b6d7",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "An open-source, interactive, online textbook",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/openmusictheory.com_en_all_2026-09.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-9ca7f4e0d3672f7d",
       "title": "OpenStreetMap Wiki",
       "language": "eng",
@@ -4536,33 +3861,6 @@
       "fulltext_index": true,
       "pictures": false,
       "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-436aec0d58f0c7ac",
-      "title": "OpenWRT",
-      "language": "eng",
-      "edition": "2026-07-04",
-      "url": "https://lb.download.kiwix.org/zim/zimit/openwrt.org_en_all_2026-07.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/openwrt.org_en_all_2026-07.zim",
-      "bytes": 519894596,
-      "sha256": "87f0cc7df86f33f0c265d424b6722ac9be1d19dc2c9f6920c9fef32890ca1399",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "A Linux operating system targeting embedded devices",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/openwrt.org_en_all_2026-07.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "other"
     },
@@ -4673,60 +3971,6 @@
       "videos": false,
       "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-90d92594353565b0",
-      "title": "Philosophy Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/philosophy.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/philosophy.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 219115198,
-      "sha256": "4a3026b40978d5344ebd322ce8eb4968a2acbf4f6ca09efcce3b08bfec4a8a51",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for the study of knowledge, reality, and existence",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/philosophy.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-ca6f2b3fd94fce02",
-      "title": "Physics Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/physics.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/physics.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 1839301288,
-      "sha256": "1f1767bcca84d5af7c8fb44d2e45c6fc1a28117b33bc5aa75f55cff9e4d3735e",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for active researchers, academics and students of physics",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/physics.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-b007ce6d502af96c",
@@ -4864,33 +4108,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-6a0b804522df3307",
-      "title": "Raspberry Pi Q&A",
-      "language": "eng",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/raspberrypi.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/raspberrypi.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 298502933,
-      "sha256": "e66ad00f65531d2e8863ad6c7a24a1e4d29cb837abebfd0b83ce2e2c16e99e9b",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for users and developers of Raspberry Pi hardware or software",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/raspberrypi.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "main"
-    },
-    {
       "id": "kiwix-f543d667c97003d3",
       "title": "Ready.gov",
       "language": "eng",
@@ -4945,33 +4162,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-cd0aea9520d9b000",
-      "title": "Server Fault",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/serverfault.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/serverfault.com_en_all_2026-10.zim",
-      "bytes": 1636338002,
-      "sha256": "b734f98236e2190d508f60e73cd24ac1f2708b16c2b1d9f7ba5851228a781692",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for system and network administrators",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/serverfault.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-51dd111ab64e5eac",
       "title": "Solar Powered LowTech Magazine",
       "language": "eng,fra,deu,nld,spa,ita,por,pol,ara,vie,kor",
@@ -4999,33 +4189,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-998fd906d349b185",
-      "title": "Spanish Language Q&A",
-      "language": "eng,spa",
-      "edition": "2026-10-20",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/spanish.stackexchange.com_mul_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/spanish.stackexchange.com_mul_all_2026-10.zim",
-      "bytes": 72120860,
-      "sha256": "494947e21372c0dcd28f58ea805e7de56eaa096b0a6c23c0ae9d8adb3406d056",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for people discussing the finer points of Spanish language",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/spanish.stackexchange.com_mul_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-46100fca916153da",
       "title": "Sports Q&A",
       "language": "eng",
@@ -5050,33 +4213,6 @@
       "pictures": true,
       "videos": false,
       "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
-      "classification": "other"
-    },
-    {
-      "id": "kiwix-75b319594d87555b",
-      "title": "Super User",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/superuser.com_en_all_2026-10.zim",
-      "bytes": 4014454341,
-      "sha256": "e2392c0ccb7627740c4bd8e922d41b5d592da35ab4985f89d833298dc7e92f76",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for computer enthusiasts and power users",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/superuser.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "other"
     },
     {
@@ -5620,33 +4756,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-7d7951253e772036",
-      "title": "Français langue étrangère",
-      "language": "fra",
-      "edition": "2026-08-26",
-      "url": "https://lb.download.kiwix.org/zim/videos/test-delf-dalf_fr_all_2026-08.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/test-delf-dalf_fr_all_2026-08.zim",
-      "bytes": 1186726904,
-      "sha256": "fff3378e76637f27a6c4d87ad83d0ffbaf303623def0dd53edeb27f06386c9fe",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Apprentissage du français : se préparer au DELF, DALF, TCF et TEF",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/videos/test-delf-dalf_fr_all_2026-08.zim.meta4",
-      "fulltext_index": false,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-9308cb3024df1e51",
       "title": "True prepper",
       "language": "eng",
@@ -5726,33 +4835,6 @@
       "videos": true,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-93127d102c22f19b",
-      "title": "Unix & Linux Q&A",
-      "language": "eng",
-      "edition": "2026-10-19",
-      "url": "https://lb.download.kiwix.org/zim/stack_exchange/unix.stackexchange.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/unix.stackexchange.com_en_all_2026-10.zim",
-      "bytes": 1316253305,
-      "sha256": "793f0fbaf64e9eb8d2fd59fec80f62cf94acb22ca94c87eb25ae145dd589e551",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Stack Exchange Q&A for users of Linux, FreeBSD and other Unix-like OS",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/stack_exchange/unix.stackexchange.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-d79361b3fd752594",
@@ -6295,33 +5377,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-c3e1967cbcf888f3",
-      "title": "ManKier - Linux man pages",
-      "language": "eng",
-      "edition": "2026-10-27",
-      "url": "https://lb.download.kiwix.org/zim/zimit/www.mankier.com_en_all_2026-10.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/www.mankier.com_en_all_2026-10.zim",
-      "bytes": 182885768,
-      "sha256": "8b64e6c8b18bc9521b8770e42ade0226653d9f3148ee9b6287c7ba4ebae463b8",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "ManKier, a collection of Linux man pages, main documentation of Linux programs",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/zimit/www.mankier.com_en_all_2026-10.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
-    },
-    {
       "id": "kiwix-3fb1bbc66bb0729e",
       "title": "Travelers' Health",
       "language": "eng",
@@ -6347,33 +5402,6 @@
       "videos": true,
       "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
       "classification": "main"
-    },
-    {
-      "id": "kiwix-3de2ff1da3661cdd",
-      "title": "Audiolivres de littérature classique",
-      "language": "fra",
-      "edition": "2023-03-06",
-      "url": "https://lb.download.kiwix.org/zim/other/youscribe_fr_audiobooks_2023-03.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "path": "library/zim/youscribe_fr_audiobooks_2023-03.zim",
-      "bytes": 5026010862,
-      "sha256": "96e6c083679b08aa7ce6f44f54548554b3b63490aa2120c7ca7409f99afcd7f8",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "120 romans et nouvelles en audiolivres",
-      "selection_reasons": [
-        "Ajout 2026-11-21 : demande de Louis et thèmes de Marc"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/other/youscribe_fr_audiobooks_2023-03.zim.meta4",
-      "fulltext_index": false,
-      "pictures": true,
-      "videos": true,
-      "reference_source": "Ajout 2026-11-21 : demande de Louis et thèmes de Marc",
-      "classification": "other"
     },
     {
       "id": "kiwix-2af802313ddbfb1f",
@@ -6516,5 +5544,5 @@
     "wiki_en_all_maxi_2026-10.zim"
   ],
   "unavailable": [],
-  "total_bytes": 1107968372940
+  "total_bytes": 1046614916577
 }

@@ -16,8 +16,8 @@ par leur nom exact). Pour que chaque installation reçoive le même fonds, le
 manifeste [`deploy/library-reference.json`](../../deploy/library-reference.json)
 fixe le nom exact, la taille et l’empreinte SHA-256 officielle de chaque archive.
 
-Contenu de la **version de travail** du 21 novembre 2026 : **241 archives,
-1 108,0 Go**, guidée par la [liste de thèmes de Marc](savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026). Louis précise que l’inventaire de Marc était un premier essai
+Contenu de la **version de travail** du 21 novembre 2026 : **205 archives,
+1 046,6 Go**, guidée par la [liste de thèmes de Marc](savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026). Louis précise que l’inventaire de Marc était un premier essai
 large : la référence doit être ajustée aux besoins réels, sans retirer ce
 qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
 - Le fonds relevé chez Marc, à l’édition installée, sauf les 2 collections
@@ -30,13 +30,14 @@ qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
   WikiCiv, Restarters, recettes du domaine public, questions-réponses
   brassage, animaux et ingénierie, LibreTexts médecine et ingénierie.
 - Des contenus éducatifs et de lecture : Les Fondamentaux, Ubongo, Éducation
-  et Numérique, livres Prunelle et Ganndal, Bouquineux, BNR, livres audio,
+  et Numérique, livres Prunelle et Ganndal, poésie et littérature audio,
   vulgarisation scientifique française, rangés dans **Autre** quand ils ne
   servent pas la recherche pratique.
-- Pour les thèmes de Marc : documentation Ubuntu en français, Raspberry Pi,
-  Arduino, bibliothèque de nœuds, wiki OpenStreetMap ; dans **Autre** :
-  forums informatiques et réseaux, religions, échecs, jeux, musique et
-  partitions, langues, littérature, philosophie et droit.
+- Pour les thèmes de Marc : documentation Ubuntu en français, bibliothèque
+  de nœuds, wiki OpenStreetMap. Pour la religion, Internet, la culture, les
+  langues et les loisirs, Marc ne veut qu’une base pour « avoir de tout » :
+  Wikipédia, Vikidia et C'est pas sorcier la fournissent ; aucun forum ou
+  fonds spécialisé n’est ajouté pour ces sujets.
 
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :

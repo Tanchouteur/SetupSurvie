@@ -37,11 +37,13 @@ entretien, diagnostic), les **solutions avec ressources limitées** (substituts,
 réparation, réemploi, fabrication d’outils) et la **transmission** (plans,
 illustrations, exercices, critères de réussite, erreurs fréquentes).
 
-Conséquences appliquées le 21 novembre 2026 (proposition de l’agent) : les
-religions, la culture, les langues, la musique, les jeux et l’informatique
-restent dans le fonds, rangés dans **Autre** quand ils ne servent pas la
-recherche pratique ; seules deux encyclopédies de fans sans usage sont
-exclues. Les thèmes sans collection Kiwix adaptée (NRBC, gaz, armes et
+Précision de Marc transmise par Louis le 21 novembre 2026 : pour la religion,
+Internet, la culture, les langues et les loisirs, il veut seulement des
+connaissances de base, pour « avoir de tout », pas l’ensemble des savoirs.
+Wikipédia, Vikidia et C'est pas sorcier fournissent ce socle ; aucun fonds
+spécialisé n’est ajouté pour ces sujets. Les collections déjà installées
+restent dans **Autre** ; seules deux encyclopédies de fans sans usage sont
+exclues en attendant le tri de Marc. Les thèmes sans collection Kiwix adaptée (NRBC, gaz, armes et
 réglementation, tannage, vannerie, météorologie, chasse sous-marine, vie à
 bord) demandent des guides officiels ou spécialisés à repérer, de préférence
 en français ; ils ne sont pas couverts tant que la recette ne le montre pas.
