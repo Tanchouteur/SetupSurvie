@@ -4,6 +4,7 @@ from copy import deepcopy
 import fcntl
 import os
 from pathlib import Path
+import re
 import shlex
 import shutil
 import stat
@@ -390,6 +391,73 @@ def release_current_source(base, point, unit):
     setup.run(['systemctl', 'start', unit + '.service'])
 
 
+def cancel_point(recovery, base):
+    if destination(recovery, 'remplacement.json').exists():
+        raise setup.SetupError('Reprenez d’abord la restauration en cours.')
+    unit = managed_unit(base)
+    point = point_path(recovery)
+    work = destination(base, 'private')
+    with locked(work / 'update.lock'), locked(work / 'transfer.lock'):
+        guard = destination(work, 'transfer-guard.json')
+        marker = transfer.read(guard) if guard.is_file() else None
+        if marker is not None:
+            copy_id = marker.get('id', '')
+            if marker.get('destination') != str(point) or not re.fullmatch('[0-9a-f]{32}', copy_id):
+                raise setup.SetupError('Un autre transfert protège l’installation. Utilisez son assistant.')
+            archive = destination(recovery, 'point-interrompu-' + copy_id)
+            pending = archive if archive.exists() else point
+            journal = transfer.read(destination(pending, 'transfer.json'))
+            if local_point_id(journal, base, point) != copy_id:
+                raise setup.SetupError('Le journal de la copie ne correspond pas à cette installation.')
+            if journal['phase'] in ('planned', 'copying'):
+                if pending == point:
+                    archive_interrupted_point(point, archive)
+                else:
+                    if point.exists():
+                        raise setup.SetupError('Deux copies différentes ont été trouvées. Les dossiers sont conservés.')
+                    durable.sync_directory(recovery)
+            elif journal['phase'] != 'copied' or pending != point:
+                raise setup.SetupError('La copie est en cours d’activation ou a déjà été utilisée.')
+            guard.unlink()
+            durable.sync_directory(work)
+        elif point.is_dir():
+            journal_file = destination(point, 'transfer.json')
+            if journal_file.is_file():
+                try:
+                    journal = transfer.read(journal_file)
+                except (OSError, ValueError):
+                    journal = {}
+                copy_id = local_point_id(journal, base, point)
+                if copy_id and journal['phase'] in ('planned', 'copying'):
+                    archive_interrupted_point(point, destination(recovery, 'point-interrompu-' + copy_id))
+            elif not any(point.iterdir()):
+                # A cut between mkdir and publication of the transfer journal.
+                archive_interrupted_point(point, destination(recovery, 'point-interrompu-' + uuid.uuid4().hex))
+    phase('Redémarrage de votre installation…')
+    setup.run(['systemctl', 'start', unit + '.service'])
+    setup.Installation.request('http://127.0.0.1:8080/api/health')
+
+
+def local_point_id(journal, base, point):
+    if not isinstance(journal, dict) or (journal.get('kind'), journal.get('schema'), journal.get('target')) != (
+            transfer.KIND, 1, 'linux'):
+        return None
+    copy_id = journal.get('id', '')
+    roles = journal.get('source', {})
+    if (isinstance(copy_id, str) and re.fullmatch('[0-9a-f]{32}', copy_id)
+            and journal.get('destination') == str(point) and isinstance(roles, dict)
+            and all(roles.get(role) == str(base / role) for role in ('application', 'data', 'private'))):
+        return copy_id
+    return None
+
+
+def archive_interrupted_point(point, archive):
+    if archive.exists():
+        raise setup.SetupError('Une copie interrompue est déjà conservée à cet emplacement.')
+    os.rename(point, archive)
+    durable.sync_directory(point.parent)
+
+
 def validate_local_layout(base, config):
     if (config.get('target') != 'linux'
             or config.get('app_dir') != str(base / 'application')
@@ -488,7 +556,7 @@ def main():
     duplicator = actions.add_parser('duplicate')
     duplicator.add_argument('source', type=setup.safe_path)
     duplicator.add_argument('base', type=setup.safe_path)
-    for name in ('point', 'restore'):
+    for name in ('point', 'restore', 'cancel-point'):
         actions.add_parser(name).add_argument('base', type=setup.safe_path)
     args = parser.parse_args()
     try:
@@ -498,6 +566,8 @@ def main():
             duplicate(args.source, args.base)
         elif args.action == 'point':
             create_existing_point(args.recovery, args.base)
+        elif args.action == 'cancel-point':
+            cancel_point(args.recovery, args.base)
         else:
             restore(args.recovery, args.base)
     except (OSError, ValueError, KeyError, TypeError, setup.SetupError, subprocess.SubprocessError) as error:
