@@ -233,7 +233,9 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         def handler(request):
             payload = json.loads(request.content)
             payloads.append(payload)
-            parts = json.loads(payload['messages'][1]['content'])
+            instruction, _, segments = payload['messages'][1]['content'].partition('\n')
+            self.assertIn('Translate the following subtitles into French', instruction)
+            parts = json.loads(segments)
             rows = [{'id': part['id'], 'text': f'Le rotor fictif mesure {part["id"] + 17} mm. Ne pas dépasser cette cote.'}
                     for part in parts]
             reply = {'message': {'content': json.dumps({'status': 'translated', 'cues': rows})},

@@ -149,6 +149,8 @@ nouveau modèle. L'adaptation d'une copie provenant d'une machine plus
 puissante vers une cible moins dotée en RAM reste à qualifier. [Fiche du
 modèle](https://ollama.com/library/qwen3:1.7b-q4_K_M)
 
+Ces deux points ont été repris pendant la [confirmation sur deux SSD](#confirmation-sur-deux-ssd-physiques).
+
 ## Conservation des modèles et adaptation à la cible en 0.74.0
 
 L'installation automatique prépare maintenant GPT-OSS 20B et Qwen3 1,7B.
@@ -168,3 +170,65 @@ exécution a été téléchargée et son SHA-256 vérifié
 (`6ec69669836df13880fa732dc5aaf63cbebc4691f6c2d4808413520277a3b497`).
 Ces vérifications complètent la recette sur machine du dossier.
 [Exécution GitHub Actions](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44820180459)
+
+## Confirmation sur deux SSD physiques
+
+La recette 0.76.0 s'est déroulée sur le PC Bazzite de Louis, dans deux invités
+Debian 13 x86-64. Le disque système de l'invité source était sur le Crucial
+CT4000P3PSSD8 de 4 To. Le support de copie et le disque système de
+l'invité cible étaient sur le Samsung 990 PRO de 1 To. Le support était
+présenté comme un disque virtio indépendant. L'image Debian correspondait au
+SHA-256 indiqué plus haut pour Debian 13 Generic AMD64.
+
+- L'archive Linux 0.76.0 du commit `0948298` était identique à l'archive
+  reconstruite localement. SHA-256
+  `ed907987b335e757f07234bec531c23f3252db0bb74891581381d5b3dc382288`.
+  [Exécution GitHub Actions](https://github.com/Tanchouteur/SetupSurvie/actions/runs/44878918985)
+- L'installation depuis cette archive partait d'un invité sans Docker, Compose,
+  nftables ni commande Python système. Les lots santé, eau et livres français
+  ont été installés. Le rejeu du lanceur et le démarrage suivant ont réussi.
+- La file a téléchargé et indexé automatiquement le film Blender *Sintel*.
+  La recherche l'a retrouvé par son titre, le MP4 a répondu en HTTP 206 et
+  la piste anglaise WebVTT était lisible. Une courte vidéo de recette avec
+  deux sous-titres anglais contrôlait séparément la traduction.
+- Le lanceur a vérifié 1 404 fichiers et 21 269 205 482 octets inventoriés.
+  La copie complète, dont l'archive Docker, occupait 26 362 965 980 octets.
+  SHA-256 du journal avant activation
+  `c16955c055ebb8e618a219472ed209dcf3e6a309188581dc76bf5d1ed81d7412`.
+- L'invité de restauration avait 6 Gio de RAM et aucun Docker, Compose,
+  nftables ou Python utilisable globalement. Il a importé le dossier depuis
+  le support monté en lecture seule. L'invité source a été arrêté et le
+  support de transfert a été détaché avant activation. Le chemin source
+  était absent et la sortie Internet était bloquée par QEMU. Le témoin TCP
+  vers `1.1.1.1:443` échouait. Le lanceur a terminé en 2 min 24 s.
+- Le démon Docker dédié a démarré avec les outils de la copie. Le portail,
+  Open WebUI, le PDF de l'OMS, la carte PMTiles, l'article Wikilivres
+  « Levain », *Sintel* et sa piste anglaise ont été lus sur la cible.
+  Les empreintes Ollama de GPT-OSS 20B et Qwen3 1,7B étaient identiques
+  entre les invités. La cible a choisi Qwen3 pour son profil rapide et
+  GPT-OSS est resté disponible dans les profils.
+
+### Reprise d'une traduction sur la cible
+
+Avec 0.76.0, Qwen3 1,7B a recopié l'anglais pour la vidéo de recette.
+Le contrôle qualité a arrêté le travail à 0 segment publié sur 2. La
+piste anglaise est restée accessible. La correction 0.76.1 transmet la
+consigne de traduction au modèle compact avec les segments. Cette
+correction compatible justifie l'incrément de version de maintenance.
+Le paquet logiciel a été appliqué sur la cible isolée avec le lanceur
+de mise à jour existant.
+
+La reprise du même travail a publié les deux segments. Le contrôle a
+retrouvé la piste française par son texte, vérifié la valeur « 17 mm »
+dans les deux segments et relu l'horodatage attendu. Le rejeu du lanceur
+de restauration a réussi. Au redémarrage suivant, Docker et SetupSurvie
+étaient actifs. La sortie WAN restait bloquée, le disque de support
+était absent et la lecture de la vidéo, les pistes, le fonds documentaire
+et les empreintes des deux modèles ont été vérifiés de nouveau.
+[Relevés de la confirmation](preuves-ssd-0.76.tsv)
+
+Cette campagne vérifie la traduction française du court document de
+recette, et le téléchargement automatique, l'indexation et la piste
+anglaise de *Sintel*. La restauration était destinée à un Debian déjà
+installé. Les résultats de Debian 12 et Ubuntu 22.04 restent ceux de
+la campagne 0.72.0. La campagne 0.76 a utilisé Bazzite comme hôte des VM.
