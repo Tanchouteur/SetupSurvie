@@ -126,10 +126,12 @@ passage ; le nombre de collections terminées et les pistes lisibles sont affich
 volontaire après un redémarrage ou une pause.
 
 L’examen continue si la page est fermée. Les anciennes données terminées restent
-disponibles pendant le suivant. Ensuite, une mise à jour du lecteur et de la
-recherche prend les pistes en compte. Si le service a redémarré entre-temps,
-**Actualiser le lecteur vidéo** permet de terminer cette étape. Le rapport des
-collections conserve l’examen, les erreurs et les archives non examinées.
+disponibles pendant le suivant. Le portail vérifie régulièrement si de
+nouvelles collections ont été examinées et actualise la recherche. Les vidéos
+déjà prêtes peuvent apparaître pendant l’examen des
+collections restantes. **Actualiser le lecteur vidéo** permet aussi de demander
+cette mise à jour. Le rapport des collections conserve l’examen, les erreurs
+et les archives non examinées.
 
 Depuis la version 0.51.1, les collections YouTube de Kiwix donnent leurs titres
 à la vidéothèque et à la recherche hors ligne. Après la mise à jour, relancer

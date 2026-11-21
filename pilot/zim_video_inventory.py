@@ -42,6 +42,7 @@ def unexamined_files(directory, report):
     return pending
 LIMITED_INVENTORY_MESSAGE = 'Toutes les collections ont été parcourues. Le rapport indique les entrées non examinées.'
 YOUTUBE_MEDIA=re.compile(r'videos/([A-Za-z0-9_-]{11})/video\.(?:webm|mp4)')
+MEDIA_TAG = re.compile(rb'<(?:video|iframe)', re.IGNORECASE)
 GENERIC_TITLE=re.compile(r'(?:vid[eé]o|videoplayback|clip|media|index|[0-9]+|[0-9a-f]{16,}|[A-Za-z0-9_-]{24,})',re.I)
 TECHNICAL_TITLE=re.compile(r'://|\?[\w-]+=|\.(?:m4s|webm|mp4|ts)$',re.I)
 
@@ -185,6 +186,28 @@ class Videos(HTMLParser):
     def handle_endtag(self,tag):
         if tag in ('script','style'):self.skip=max(0,self.skip-1)
         if tag=='video':self.active=None
+
+
+def scan_html_references(db, entry, content):
+    # Both tag names are ASCII. The parser still handles every candidate
+    # page, including comments, scripts, embedded links and relative paths.
+    if not MEDIA_TAG.search(content):
+        return
+    parser = Videos()
+    parser.feed(content.decode('utf-8', errors='replace'))
+    parser.close()
+    for position, value in enumerate(parser.items):
+        for group in ('sources', 'tracks'):
+            for ref in value[group]:
+                ref.update(resolved=resolve(entry.path, ref['src'], parser.base))
+                if len(ref['src']) > 4000:
+                    ref['src'] = ''
+                    parser.errors.append('reference_too_long')
+        db.execute('INSERT OR REPLACE INTO video_refs VALUES(?,?,?,?)',
+                   (entry.path, position, (value['title'] or entry.title)[:400], json.dumps(value, ensure_ascii=False)))
+    if parser.errors:
+        db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',
+                   (entry.path, ','.join(sorted(set(parser.errors)))))
 
 
 @contextmanager
@@ -355,15 +378,10 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
                         db.execute('DELETE FROM subtitle_cues WHERE path=?',(entry.path,))
                         db.executemany('INSERT INTO subtitle_cues VALUES(?,?,?,?,?)',[(entry.path,n,c['start_ms'],c['end_ms'],c['text']) for n,c in enumerate(cues)])
                 elif mime in ('text/html','application/xhtml+xml'):
-                    if item.size>MAX_HTML:db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'html_too_large'));continue
-                    parser=Videos();parser.feed(bytes(item.content).decode('utf-8',errors='replace'));parser.close()
-                    for position,value in enumerate(parser.items):
-                        for group in ('sources','tracks'):
-                            for ref in value[group]:
-                                ref.update(resolved=resolve(entry.path,ref['src'],parser.base))
-                                if len(ref['src'])>4000:ref['src']='';parser.errors.append('reference_too_long')
-                        db.execute('INSERT OR REPLACE INTO video_refs VALUES(?,?,?,?)',(entry.path,position,(value['title'] or entry.title)[:400],json.dumps(value,ensure_ascii=False)))
-                    if parser.errors:db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,','.join(sorted(set(parser.errors)))))
+                    if item.size > MAX_HTML:
+                        db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)', (entry.path, 'html_too_large'))
+                    else:
+                        scan_html_references(db, entry, bytes(item.content))
             except (RuntimeError,KeyError,ValueError):db.execute('INSERT OR REPLACE INTO issues VALUES(?,?)',(entry.path,'entry_unreadable'))
             if (index+1)%checkpoint==0:
                 db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(index+1),));db.commit()
