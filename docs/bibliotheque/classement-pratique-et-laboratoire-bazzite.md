@@ -353,6 +353,18 @@ requêtes passent à une couverture complète (ruche, orage, crevaison).
 Le résultat sur le tannage reste hors sujet. Les deux relevés sont conservés
 dans `results/comparaison-recherche/` sur le labo.
 
+Le relevé de lecture `lecture-fonds-204-indexe.json` a ensuite rejoué les
+136 requêtes sur le portail 0.88.1 avec le même fonds et le même tri. Les
+136 recherches signalent une couverture complète. Les mêmes 87 requêtes
+ouvrent un premier résultat (54 en français et 33 en anglais) et les
+mêmes 49 restent sans résultat. La couverture complète signifie que le
+moteur a parcouru son périmètre. Les 49 requêtes restent à examiner sous
+d’autres formulations et sur le fonds final. Les trois témoins OMS
+retrouvent la fiche au deuxième rang en recherche bilingue et en anglais,
+et l’écartent avec le filtre Français. En Autonomie, le contrôle
+Wiktionnaire sélectionne zéro collection. Dans Autre, il sélectionne une
+collection, trouve dix résultats et ouvre le premier.
+
 Le contrôle des reformulations sur les 204 archives indexées a donné les
 résultats suivants avec la 0.88.1. Les quatre premières pistes de chaque
 recherche sont conservées dans `reformulations-204-indexees.json`.
