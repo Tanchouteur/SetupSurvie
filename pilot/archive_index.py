@@ -100,8 +100,18 @@ def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=Non
                 table = 'articles_' + category if category and not shared else 'articles'
                 category_filter = ' AND instr(domains, ?) > 0' if shared else ''
                 lang={'fra':'fr','eng':'en'}.get(language,language)
-                parameters = (plan.fts(), lang, lang) + ((json.dumps(category),) if shared else ()) + (limit,)
-                rows=db.execute(f"SELECT path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?){category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters).fetchall()
+                language_filter = " AND (?='' OR language=?)"
+                parameters = (plan.fts(), lang, lang)
+                if lang and retrieval.ifixit_edition(meta['book']):
+                    # Old local indexes trusted the HTML hint. Read the
+                    # candidates and classify them using the same rule as Kiwix.
+                    db.create_function('article_language', 2, lambda hint, text: retrieval.article_language({
+                        'book': meta['book'], 'language': hint, 'text': text,
+                    }), deterministic=True)
+                    language_filter = ' AND article_language(language, substr(text,1,4000))=?'
+                    parameters = (plan.fts(), lang)
+                parameters += ((json.dumps(category),) if shared else ()) + (limit,)
+                rows=db.execute(f"SELECT path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt FROM {table} WHERE {table} MATCH ?{language_filter}{category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters).fetchall()
                 return [{'id':'zim:'+meta['book']+'/'+r['path'],'title':r['title'],'language':r['language'],'excerpt':r['excerpt'],'_text':r['_text'],
                     'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i,**({'_indexed_domains':json.loads(r['domains'])} if category else {})} for i,r in enumerate(rows)],'searched',meta['book']
         except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return [],'failed',None
@@ -148,7 +158,8 @@ def _article(entry, info, categories, corrections):
     text = parser.text()
     if not text:
         return None, False
-    language = parser.language or {'fra': 'fr', 'eng': 'en'}.get(info['language'], info['language'])
+    language = retrieval.article_language({'id': 'zim:' + info['book'] + '/' + entry.path,
+        'book': info['book'], 'language': parser.language or info['language'], 'text': text})
     domains = corrections.get(entry.path)
     if categories and domains is None:
         candidate = {'id': 'zim:' + info['book'] + '/' + entry.path, 'title': entry.title, '_text': text}

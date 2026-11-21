@@ -24,6 +24,21 @@ class MarcReportTests(unittest.TestCase):
         items=[{'id':'zim:wikipedia/Category:Fire_making','title':'Category:Fire making'}, {'id':'zim:wikipedia/Production','title':'Techniques de production de feu'}]
         self.assertEqual(retrieval.ordered(items,self.plan('faire du feu'),5)[0]['id'],items[1]['id'])
 
+    def test_ifixit_language_uses_the_edition_and_article_instead_of_the_html_shell(self):
+        self.assertEqual(retrieval.article_language({
+            'id': 'zim:ifixit_en_all_2025-12/Device/Water_Purification_Systems',
+            'language': 'fr',
+        }), 'en')
+        key = 'zim:ifixit_fr_all_2026-03/Device/Water_Purification_Systems'
+        self.assertEqual(retrieval.article_language({
+            'id': key, 'language': 'fr',
+            'excerpt': 'A system for treating water with a filter that removes debris from the source.',
+        }), 'en')
+        self.assertEqual(retrieval.article_language({
+            'id': key, 'language': 'fr',
+            'excerpt': 'Sur cette page, les consignes pour utiliser une pompe avec un filtre.',
+        }), 'fr')
+
     def test_title_lookup_is_not_starved_by_many_slow_archives(self):
         catalog=[{'book':'slow'+str(i),'language':'eng','fulltext':True} for i in range(40)]+[{'book':'wikipedia_fr','language':'fra','fulltext':True}]
         async def run():
