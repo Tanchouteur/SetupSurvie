@@ -9,15 +9,21 @@ signalés. Les notes de chaque livraison sont dans les
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
 
-## Restauration par double-clic — décision de Louis du 21 novembre 2026
+## Installation depuis le SSD et point de restauration — décision de Louis du 21 novembre 2026
 
 La machine de remplacement démarre déjà sur un système compatible. Depuis le
 SSD de secours, un proche ouvre un lanceur, choisit le disque de destination et
-confirme la restauration. La copie et l’installation des prérequis se font hors
+clique sur **Installer**. La copie et l’installation des prérequis se font hors
 ligne. Louis accepte une demande de droits administrateur dans une fenêtre.
 Le parcours entier doit être réalisable sans terminal. Deux lanceurs distincts
 sont possibles. Linux reste la cible V1. Le parcours graphique reste à réaliser.
-[Protocole de restauration](../exploitation/disque-de-secours-hors-ligne.md#7-restaurer-sur-une-autre-machine)
+[Installation depuis le SSD](../exploitation/disque-de-secours-hors-ligne.md#7-installer-depuis-le-ssd-de-secours)
+
+Lors d’une installation normale, la première installation saine sert de point
+de restauration. La seconde sert au quotidien. En cas de problème, **Restaurer**
+remet en service la seconde à partir de la première. Le mécanisme reste à
+concevoir et à valider.
+[Point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026)
 
 ## Portail toujours informatif et socle commun — décision de Louis du 20 novembre 2026
 
