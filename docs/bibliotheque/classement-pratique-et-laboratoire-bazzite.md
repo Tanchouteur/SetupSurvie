@@ -327,3 +327,16 @@ dans `/var/mnt/data/AI/.setupsurvie-biblio-code` et sa copie servie sur
 le volume du labo. Si cette copie est reconstruite à partir d’une
 livraison, conserver les ports propres au labo et régénérer la page avec
 `scripts/build_portal.py` avant de publier les fichiers du portail.
+
+Une fois la préparation texte des 204 archives terminée, le relevé compte
+183 index Kiwix et 21 index locaux. Les cinq réglages ont été rejoués sur
+sept requêtes, avec les mêmes archives, le même tri et le même code que le
+passage où 115 archives étaient traitées. Avec le réglage livré, trois
+requêtes passent à une couverture complète (ruche, orage, crevaison).
+Le résultat sur le tannage reste hors sujet. Les deux relevés sont conservés
+dans `results/comparaison-recherche/` sur le labo.
+
+Les relances documentaires automatisées utilisent une unité transitoire
+de type scope pour garder les conteneurs actifs après la fin de la tâche
+qui les démarre. Le pilote est resté joignable après un redémarrage
+ainsi lancé depuis une tâche courte. Le redémarrage du PC reste à tester.
