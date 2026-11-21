@@ -166,6 +166,20 @@ class OfflineClosureTests(unittest.TestCase):
         result=kit_audit.validate(self.root,self.manifest())
         self.assertEqual(result['models'],1);self.assertEqual(result['images'],4)
 
+    def test_duplicate_preserves_a_complete_kit_without_a_runtime(self):
+        import kit_duplicate
+
+        manifest = {**self.manifest(), 'schema': 1, 'kind': 'SetupSurvie public pilot kit'}
+        setup.write_json(self.root / 'manifest.json', manifest)
+        second_disk = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        duplicate = second_disk / 'Nouveau kit'
+        kit_duplicate.duplicate(self.root, duplicate)
+        with patch('content.transfer', side_effect=AssertionError('Téléchargement interdit')):
+            entries = pilot_kit.checked_entries(duplicate, manifest)
+            result = kit_audit.validate(duplicate, manifest)
+        self.assertEqual(len(entries), len(self.files))
+        self.assertEqual((result['models'], result['images']), (1, 4))
+
     def test_public_download_receipt_and_root_launchers_are_allowed(self):
         self.add('payload/catalog/downloaded-content.json', {'items': []})
         self.add('app/Installer-SetupSurvie.cmd', b'fixture')

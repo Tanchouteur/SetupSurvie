@@ -25,6 +25,7 @@ protocole à réaliser, pas une fonction : voir le
 | `refresh-maps-lab KIT [--geography ID]… [--routing]` | Actualise les cartes sans recopier les modèles |
 | `recover-maps KIT` | Restaure la publication cartographique précédente après une interruption |
 | `verify KIT` | Contrôle les empreintes et les dépendances hors ligne |
+| `duplicate KIT DESTINATION` | Duplique un kit public complet sans accès réseau, avec reprise |
 | `prepare-windows KIT [--verify-only]` | Prépare les installateurs Windows sur le kit ou les vérifie sans accès réseau |
 | `install KIT --target windows --data-dir … --work-dir …` | Installe depuis le kit : voir le [guide Marc](pilote-marc.md#installer-à-partir-du-kit) |
 
@@ -33,6 +34,29 @@ annoncée sans préparation réelle. Le laboratoire ne reproduit pas tout le fon
 de Marc : les compléments se préparent sur son installation, sans plafond
 documentaire, selon la [préparation du fonds complet](../bibliotheque/bibliotheque-complete-marc.md).
 La copie du kit sur le volume limité de Louis garde tous ses contrôles de capacité.
+
+## Dupliquer un kit public
+
+Depuis la 0.84.0, ouvrir un terminal sur un poste Linux ou Windows équipé
+de Python et utiliser le dossier du kit comme source. Par exemple, sur Linux :
+
+```bash
+python3 scripts/pilot_kit.py duplicate /media/SSD-A/SetupSurvie /media/SSD-B/SetupSurvie
+```
+
+Le parent de la destination doit déjà exister. Choisir un dossier vide sur
+le second disque. Le lanceur copie les éléments du manifeste, puis publie
+le manifeste du second support après contrôle des empreintes. Les
+installateurs Windows préparés sont vérifiés et inclus, avec les paquets
+CAB éventuellement fournis dans `installateurs-windows/sxs`. Si la préparation
+des installateurs a commencé sur A, la terminer avant la duplication.
+Les fichiers hors inventaire restent sur la source.
+
+Après une interruption, relancer la même commande vers le même dossier.
+Si le système a remonté le support source sous un autre chemin, indiquer ce
+nouveau chemin. Le deuxième support peut servir à son tour de source.
+Cette commande concerne le kit public. Les profils, conversations et autres
+données privées utilisent le [disque de secours](../exploitation/disque-de-secours-hors-ligne.md).
 
 ## Ajouter les installateurs Windows depuis Linux
 

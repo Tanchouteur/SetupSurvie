@@ -338,7 +338,7 @@ def hash_progress(path, progress=lambda *args:None, phase='Contrôle SHA-256'):
     return digest.hexdigest()
 
 
-def copy_file(source, target, record, progress):
+def copy_file(source, target, record, progress, *, expected_sha256=None):
     """Resume a large file using its verified prefix; never trust a partial's size."""
     durable.mkdir(target.parent)
     partial=target.with_name(target.name+'.transfer-part')
@@ -350,7 +350,8 @@ def copy_file(source, target, record, progress):
     unchanged()
     if target.is_file():
         digest=hash_progress(source,progress,'Vérification source')
-        if target.stat().st_size==record['bytes'] and hash_progress(target,progress)==digest:
+        if (target.stat().st_size==record['bytes'] and hash_progress(target,progress)==digest
+                and (expected_sha256 is None or digest==expected_sha256)):
             return digest
         raise setup.SetupError('Copie publiée corrompue : conservez ce dossier et choisissez une nouvelle destination.')
     offset=0;digest=hashlib.sha256()
@@ -373,6 +374,8 @@ def copy_file(source, target, record, progress):
     unchanged()
     if offset!=record['bytes'] or hash_progress(partial,progress)!=digest.hexdigest():
         raise setup.SetupError('Copie incomplète ou corrompue ; destination non démarrable.')
+    if expected_sha256 is not None and digest.hexdigest()!=expected_sha256:
+        raise setup.SetupError('Source différente de son empreinte vérifiée : '+source.name)
     # On Windows a read-only source may make the published copy read-only.
     # Flush using the still-writable handle before publishing those attributes.
     if os.name=='nt':

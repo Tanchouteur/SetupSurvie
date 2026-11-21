@@ -44,7 +44,8 @@ def export_lab(destination,english=True):
     # The Linux lab's export must stay inside the size-limited SSD volume.
     if not dest.is_relative_to(lab.MOUNT):raise setup.SetupError('Le kit doit rester sur le volume SSD dédié.')
     marker=dest/'kit-building.json'
-    if dest.exists() and not marker.exists():raise setup.SetupError('Destination existante non reconnue ; choisissez un dossier vide.')
+    if dest.exists() and (not marker.is_file() or json.loads(marker.read_text(encoding='utf-8')).get('kind')!='SetupSurvie public pilot kit'):
+        raise setup.SetupError('Destination existante non reconnue ; choisissez un dossier vide.')
     dest.mkdir(parents=True,exist_ok=True)
     setup.write_json(marker,{'kind':'SetupSurvie public pilot kit'})
     records=[]
@@ -302,6 +303,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action=argparse.BooleanOptionalAction,default=True)
     p=subs.add_parser('verify');p.add_argument('kit')
+    p=subs.add_parser('duplicate');p.add_argument('kit');p.add_argument('destination')
     p=subs.add_parser('prepare-windows');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
@@ -311,6 +313,9 @@ def main():
     p.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrer à l’ouverture de session ; --no-startup conserve les raccourcis manuels.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
+    elif args.action=='duplicate':
+        import kit_duplicate
+        kit_duplicate.duplicate(args.kit, args.destination)
     elif args.action=='prepare-windows':
         import windows_kit_installers
         windows_kit_installers.prepare(args.kit, verify_only=args.verify_only)
