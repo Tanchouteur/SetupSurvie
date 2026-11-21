@@ -126,7 +126,7 @@ class ContentTests(unittest.TestCase):
         read_text = Path.read_text
 
         def sysfs(path, *args, **kwargs):
-            if str(path).endswith('/loop/backing_file'):
+            if Path(path).as_posix().endswith('/loop/backing_file'):
                 return str(backing)+'\n'
             return read_text(path, *args, **kwargs)
 
