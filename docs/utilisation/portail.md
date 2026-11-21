@@ -190,6 +190,20 @@ dans les cartes et le lecteur PDF.
   est le grand titre de la page. Les onglets et les types de collections
   défilent sur une ligne, avec un fondu qui signale la suite.
 
+## Accueil, collections et transitions — 0.76.0
+
+- **Trouver par besoin** : sur l’accueil, huit tuiles (eau, santé et secours,
+  nourriture, énergie, potager, abri et chaleur, réparer, radio et alerte)
+  lancent directement la recherche correspondante dans la bibliothèque.
+- **Sur cet appareil** : une ligne indique le nombre de collections et de
+  guides prêts et l’état de l’assistant ; un clic ouvre Mon appareil.
+- **Cartes de collections** : chaque carte montre l’illustration de la
+  collection quand Kiwix la fournit (sinon un pictogramme), une couleur par type
+  et une description courte.
+- **Transitions** : changer d’écran ou d’onglet fait glisser le contenu dans le
+  sens de la navigation. Avec l’option « réduire les animations » du système,
+  tout reste immobile.
+
 ## Navigation confortable
 
 Précédent/Suivant suivent les changements de rubrique, les recherches, les documents

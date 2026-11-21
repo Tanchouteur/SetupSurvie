@@ -152,7 +152,9 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
   Ajouts 0.70.0 : `assistant-status.js` (état de l’assistant près de la saisie,
   étapes d’une réponse), `device-summary.js` (« Tout fonctionne » ou points à
   regarder dans Mon appareil), `search-start.js` (écran de départ de Rechercher,
-  dernières recherches, filtres repliés sur téléphone).
+  dernières recherches, filtres repliés sur téléphone). Ajout 0.76.0 :
+  `home.js` (ligne « Sur cet appareil » de l’accueil) ; `motion.js` porte les
+  transitions directionnelles et l’apparition en cascade des cartes.
 - `design/` : jetons et système visuel « Veillée » ; `vendor/` : bibliothèques
   locales (marked, DOMPurify, PDF.js…) ; `classique/` et `nouveau/` : simples
   redirections vers `/`.

@@ -781,7 +781,7 @@ async function loadData(){
   try{const data=await api('/inventory');$('data-summary').replaceChildren();for(const [title,text] of [['Collections',String(data.books.length)],['Guides',String(data.guides.length)],['Modèles locaux',String(data.models.length)]]){const card=element('div',undefined,'data-stat');card.append(element('strong',text),element('span',title));$('data-summary').append(card);}
     for(const [kind,id] of [['books','data-books'],['guides','data-guides'],['models','data-models']]){
       const grid=$(id);grid.replaceChildren();
-      for(const item of data[kind]){const card=element('article',undefined,'data-card');card.dataset.collectionId=item.id||'';card.dataset.catalogSearch=[item.id,item.name,item.title,item.description,item.language,item.version,item.family,item.variant].filter(Boolean).join(' ');card.dataset.inventoryReady=String(!!item.ready);card.dataset.family=item.family||item.title||item.name||'';card.dataset.variant=item.variant||'';card.dataset.archiveName=item.archive_name||'';card.dataset.sortKey=item.sort_key||'';card.append(element('span',item.ready?'Disponible sur cet appareil':'Préparation à vérifier',item.ready?'ready-label':'muted small'),element('h3',item.title||item.name),element('p',[item.language,item.version,bytes(item.bytes)].filter(Boolean).join(' · '),'muted small'));
+      for(const item of data[kind]){const card=element('article',undefined,'data-card');card.dataset.collectionId=item.id||'';card.dataset.catalogSearch=[item.id,item.name,item.title,item.description,item.language,item.version,item.family,item.variant].filter(Boolean).join(' ');card.dataset.inventoryReady=String(!!item.ready);card.dataset.family=item.family||item.title||item.name||'';card.dataset.variant=item.variant||'';card.dataset.archiveName=item.archive_name||'';card.dataset.sortKey=item.sort_key||'';card.dataset.kind=kind;card.append(collectionIcon(item,kind),element('span',item.ready?'Disponible sur cet appareil':'Préparation à vérifier',item.ready?'ready-label':'muted small'),element('h3',item.title||item.name),element('p',[item.language,item.version,bytes(item.bytes)].filter(Boolean).join(' · '),'muted small'));
         if(item.description)card.append(element('p',item.description,'small'));
         if(item.ready&&kind==='books'){const link=element('a','Ouvrir cette collection →','text-button');link.href=localServiceURL(item.url,'kiwix');link.target='_blank';link.rel='noopener';card.append(link);}
         if(item.ready&&kind==='guides')card.append(button('Lire le guide →',()=>readSource(item.id),'text-button'));
@@ -791,6 +791,16 @@ async function loadData(){
     }
     $('data-preparation').textContent=data.note;document.dispatchEvent(new CustomEvent('survie:inventory',{detail:data}));
   }catch(e){$('data-summary').textContent=e.message;}
+}
+/* Vignette d’une carte : l’illustration fournie par Kiwix pour l’archive, sinon un pictogramme du type. */
+function collectionIcon(item,kind){
+  const box=element('span',undefined,'data-card-icon');box.setAttribute('aria-hidden','true');box.dataset.kind=kind;
+  if(kind==='books'&&item.ready&&/^[0-9a-fA-F-]{36}$/.test(item.icon_id||'')){
+    const url=new URL(localServiceURL('/catalog/v2/illustration/'+item.icon_id+'/','kiwix'));url.search='?size=48';
+    const img=element('img');img.alt='';img.loading='lazy';img.decoding='async';img.width=48;img.height=48;img.src=url.href;
+    img.addEventListener('error',()=>img.remove(),{once:true});img.addEventListener('load',()=>box.classList.add('has-image'),{once:true});box.append(img);
+  }
+  return box;
 }
 function contentOptions(){return {themes:[...$('content-themes').querySelectorAll('input:checked')].map(e=>e.value),languages:$('content-languages').value.split(','),max_add_gb:Number($('content-budget').value),include_supplements:$('content-supplements').checked};}
 function sameContentOptions(a,b){return !!a&&JSON.stringify([...a.themes].sort())===JSON.stringify([...b.themes].sort())&&JSON.stringify([...a.languages].sort())===JSON.stringify([...b.languages].sort())&&a.max_add_gb===b.max_add_gb&&!!a.include_supplements===!!b.include_supplements;}
