@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock,patch
 from urllib.parse import parse_qs,urlsplit
-from pilot import library,retrieval,store
+from pilot import collection_sort,library,network,retrieval,store
 
 
 DOCUMENTS=[
@@ -151,6 +151,36 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
             results = await library.search('faire du feu', domain='resilience', kind='documents')
             self.assertEqual(results[0]['id'], 'guide:feu.fr.txt')
             self.assertFalse(any(row.get('reference_fallback') for row in results))
+
+    async def test_technical_forums_offer_a_precise_reference_below_a_practical_guide(self):
+        forum = 'diy.stackexchange.com_en_all'
+        entry = {'id': f'zim:{forum}/question', 'book': forum, 'kind': 'article', 'language': 'en',
+                 'title': 'How to repair a leaking pipe', 'excerpt': 'Fictional search fixture.'}
+        context = {'id': 'zim:ifixit_fr_all/aquarium', 'book': 'ifixit_fr_all', 'kind': 'article',
+                   'language': 'fr', 'title': 'Remplacement du filtre de l’aquarium',
+                   'excerpt': 'Un cas fictif de réparation de fuite liée à un tuyau.'}
+        guide = {**context, 'id': 'zim:ifixit_fr_all/tuyau',
+                 'title': 'Réparer une fuite sur un tuyau'}
+        rows = [entry, context, {**entry, 'id': f'zim:{forum}/other',
+                                'title': 'How to repair a table'}]
+        with patch.object(library, 'search_archives', AsyncMock(return_value=(rows, {'status': 'complete'}))), \
+             patch.object(network, 'CATALOG', store.ROOT):
+            query = 'réparer une fuite de tuyau'
+            results = await library.search(query, domain='resilience', kind='documents')
+            self.assertEqual([row['id'] for row in results], [entry['id'], context['id']])
+            self.assertEqual(results[0]['classification']['source_role'], 'reference')
+            self.assertNotIn('reference_fallback', results[0])
+            french = await library.search(query, 'fr', domain='resilience', kind='documents')
+            self.assertEqual([row['id'] for row in french], [context['id']])
+
+            rows.append(guide)
+            results = await library.search(query, domain='resilience', kind='documents')
+            self.assertEqual([row['id'] for row in results], [guide['id'], context['id']])
+
+            rows.remove(guide)
+            collection_sort.save(store.ROOT, collection_sort.Sort(other=frozenset({collection_sort.archive(forum)})))
+            results = await library.search(query, domain='resilience', kind='documents')
+            self.assertEqual([row['id'] for row in results], [context['id']])
 
     def test_encyclopedia_fallback_prefers_the_exact_spelled_subject_over_an_accent_homograph(self):
         bee_home = {'id': 'zim:wikipedia_fr_all/Ruche', 'title': 'Ruche', 'language': 'fr'}

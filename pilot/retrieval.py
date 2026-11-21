@@ -88,6 +88,7 @@ CONCEPTS={
  'crevaison':{'terms':['crevaison','crevaisons','puncture','punctures','rustine','patching'],'fr':['crevaison'],'en':['puncture']},
  'filtration':{'terms':['filtrer','filtration','filter','filtering','filteration'],'fr':['filtration'],'en':['filtering']},
  'fuite':{'terms':['fuite','fuites','leak','leaks','leaking'],'fr':['fuite'],'en':['leak']},
+ 'tuyau':{'terms':['tuyau','tuyaux','pipe','pipes'],'fr':['tuyau'],'en':['pipe']},
  'eau':{'terms':['eau','water'],'fr':['eau'],'en':['water']},
  'abri':{'terms':['abri','abris','shelter','shelters'],'fr':['abri'],'en':['shelter']},
  'couture':{'terms':['couture','coudre','recoudre','ravauder','sewing','mending'],'fr':['couture'],'en':['sewing']},
@@ -187,7 +188,8 @@ def plan(query,words,synonyms,collection=''):
     title_fr=[];title_en=[]
     for word,group in zip(dedup,groups):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
-        title_fr.append(concept['fr'][0] if concept else word)
+        french = concept['fr'][0] if concept else word
+        title_fr.append(word if word in number_forms(french) else french)
         title_en.append(concept['en'][0] if concept else next((x for x in reversed(synonyms.get(word,[])) if x!=word),word))
     if action=='preserve' and len(dedup)==1 and dedup[0] in CONCEPTS['aliment']['terms']:
         title_fr=['conservation des aliments'];title_en=['food preservation']
@@ -200,9 +202,13 @@ def title_forms(query,english=False):
     original=query.title_en if english else query.title_fr
     if not original:return []
     changes=[]
+    literal = original == ' '.join(query.words)
     for word,group in zip(query.words,query.groups):
-        if not word.endswith(('s','x')) or group!=number_forms(word) or not re.search(r'\b'+re.escape(word)+r'\b',original):continue
-        alternatives=[form for form in group[1:] if not form.endswith(('s','x'))]
+        if not word.endswith(('s','x')) or not re.search(r'\b'+re.escape(word)+r'\b',original):continue
+        forms = number_forms(word)
+        if group != forms and not literal:
+            continue
+        alternatives=[form for form in forms[1:] if form in group and not form.endswith(('s','x'))]
         if alternatives:changes.append((word,alternatives))
     values=[original]
     if changes:
@@ -429,6 +435,16 @@ def source_role(item):
 
 def fallback_encyclopedia(book):
     return book.lower().partition('_')[0] in ('wikipedia', 'vikidia')
+
+
+PRACTICAL_FORUMS = frozenset({
+    'bicycles.stackexchange.com', 'crafts.stackexchange.com', 'diy.stackexchange.com',
+    'gardening.stackexchange.com', 'mechanics.stackexchange.com', 'woodworking.stackexchange.com',
+})
+
+
+def practical_forum(book):
+    return book.lower().partition('_')[0] in PRACTICAL_FORUMS
 
 
 CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})

@@ -26,7 +26,7 @@ orientent la recette de classement et de filtrage.
 | Rôle | Sources de départ | Usage dans la recherche |
 | --- | --- | --- |
 | Guide pratique | Fiches OMS, manuels Hesperian, Appropedia, tutoriels iFixit, guides de premiers secours | Candidats à Autonomie et résilience. Vérifier que l’article ou la fiche propose une méthode utile pour la requête. |
-| Référence | Wikipédia, encyclopédies | Savoirs et culture et recherche générale. En Autonomie, Wikipédia et Vikidia du Fonds principal peuvent aussi donner des repères encyclopédiques en l’absence d’un guide qui traite directement du sujet. |
+| Référence | Wikipédia, encyclopédies et forums techniques | Savoirs et culture et recherche générale. En Autonomie, Wikipédia, Vikidia et certains forums techniques du Fonds principal peuvent fournir des pistes si aucun guide ne traite directement du sujet. |
 | Langue | Dictionnaires et Wiktionnaire | Recherche de définitions et de vocabulaire. |
 | Culture | Gutenberg et autres fonds littéraires ou culturels | Consultation culturelle et recherche générale. |
 
@@ -34,6 +34,12 @@ Une page de navigation, un catalogue d’appareils ou une table des matières
 peut servir d’accès à la bonne procédure dans une collection pratique.
 Les contrôles de recette distinguent ces pages des fiches qui expliquent
 quoi faire. Les corrections humaines déjà enregistrées restent prioritaires.
+
+Depuis la 0.89.0, Autonomie peut afficher jusqu’à trois discussions des
+forums techniques de bricolage, jardinage, artisanat, menuiserie, vélo et
+mécanique du Fonds principal. Le titre doit couvrir tous les termes
+du sujet, avec au moins deux termes distincts. Les forums gardent le
+rôle Référence et restent soumis au tri manuel.
 
 Le fichier [de tri fourni avec l’installateur](../../deploy/collection-sort-default.json)
 reprend les 24 collections rangées dans **Autre** et les 20 références exclues
@@ -365,6 +371,28 @@ et l’écartent avec le filtre Français. En Autonomie, le contrôle
 Wiktionnaire sélectionne zéro collection. Dans Autre, il sélectionne une
 collection, trouve dix résultats et ouvre le premier.
 
+| Famille de thèmes | Requêtes | Premier résultat ouvert | Aucun résultat |
+| --- | ---: | ---: | ---: |
+| Autonomie et ressources | 20 | 14 | 6 |
+| Alimentation et agriculture | 28 | 15 | 13 |
+| Santé et soins | 8 | 4 | 4 |
+| Techniques, fabrication et réparation | 32 | 23 | 9 |
+| Milieux naturels, déplacement et survie | 14 | 10 | 4 |
+| Risques et situations de conflit | 12 | 6 | 6 |
+| Connaissances fondamentales et transmission | 14 | 9 | 5 |
+| Communication et informatique | 8 | 6 | 2 |
+
+Sur le portail 0.88.2, une actualisation du lecteur a indexé **3 525 vidéos
+et huit pistes** alors que l’inventaire avait traité 119 archives sur 122.
+Les recherches « couture » et « addition » étaient vides avant l’actualisation.
+« Couture » trouve ensuite
+Mondial Tissus, « addition » trouve Maître Lucas et « énergie » trouve
+C’est pas sorcier. Les trois premiers résultats correspondants s’ouvrent
+dans le catalogue et leurs titres sont recherchables. Le relevé n’a pas
+trouvé de transcription pour ces trois vidéos et la recherche vidéo
+reste partielle. Les identifiants et les résultats de lecture sont
+conservés dans `videos-119-archives.json` sur le labo.
+
 Le contrôle des reformulations sur les 204 archives indexées a donné les
 résultats suivants avec la 0.88.1. Les quatre premières pistes de chaque
 recherche sont conservées dans `reformulations-204-indexees.json`.
@@ -377,6 +405,14 @@ recherche sont conservées dans `reformulations-204-indexees.json`.
 | Fertilité du sol | Un article MDWiki en anglais s’ouvre en deuxième position. Il explique la fertilité et évoque le compost. Le passage retenu ne fournit pas de plan de permaculture. |
 | Isolation fenêtre | Les trois premiers résultats abordent la performance énergétique, les matériaux ou le chauffage sans répondre directement à l’isolation d’une fenêtre. |
 | Installer une ruche | Le premier résultat est le repère Wikipédia « Ruche ». Le lecteur l’ouvre. La disponibilité d’un guide d’installation reste à établir. |
+
+Sur les mêmes 204 archives, la recherche « réparer une fuite de tuyau »
+renvoyait surtout des pages sur des appareils. Avec le candidat 0.89.0,
+une discussion du forum de bricolage remonte en premier et son texte
+anglais s’ouvre. Le filtre Français l’écarte. Les sondages ciblés sur
+la fertilité des sols, le cuir et l’outillage de menuiserie montrent que
+les trois forums correspondants sont consultables en Savoirs et culture.
+Leurs pistes demandent encore une lecture avant d’être retenues.
 
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche
