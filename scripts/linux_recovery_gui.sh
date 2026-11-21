@@ -56,7 +56,7 @@ case "$mode" in
         parent=$(choose_disk) || exit 0
         [[ "$parent" == /* ]] || exit 0
         destination="${parent%/}/SetupSurvie"
-        selection=$(zenity --list --checklist --title="Point de restauration" --text="Un point de restauration permet de retrouver cette installation plus tard. Décochez la case si vous ne souhaitez pas en créer." --column="Créer" --column="Option" TRUE "Créer un point de restauration") || exit 0
+        selection=$(zenity --list --checklist --title="Point de restauration" --text="Le point de restauration garde une copie supplémentaire sur ce disque. Décochez la case si vous ne souhaitez pas en créer." --column="Créer" --column="Option" TRUE "Créer un point de restauration") || exit 0
         point=no
         [[ -n "$selection" ]] && point=yes
         action=install
@@ -88,19 +88,20 @@ tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/setupsurvie-gui.XXXXXXXX") || {
 trap 'rm -rf -- "$tmpdir"' EXIT
 (
     case "$action" in
-        install) pkexec /bin/bash "$admin" install "$base" "$destination" "$point" ;;
-        point|restore) pkexec /bin/bash "$admin" "$action" "$base" ;;
+        install) pkexec --disable-internal-agent /bin/bash "$admin" install "$base" "$destination" "$point" ;;
+        point|restore) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
     esac 2>&1
     printf '%s\n' "$?" >"$tmpdir/statut"
 ) | (
+    trap '' PIPE
     while IFS= read -r line; do
         printf '%s\n' "$line" >>"$tmpdir/resultat"
         case "$line" in
             'Copie vérifiée '*|'Copie en cours '*|'Protection du point '*|'Préparation de la copie '*|            'Installation des outils '*|'Préparation du point '*|'Vérification et copie '*|            'Mise à l’abri '*)
-                printf '# %s\n' "$line" ;;
+                printf '# %s\n' "$line" 2>/dev/null || : ;;
         esac
     done
-    printf '100\n'
+    printf '100\n' 2>/dev/null || :
 ) | zenity --progress --pulsate --auto-close --no-cancel --title="SetupSurvie" --text="Opération en cours. Autorisez l'administration si cela vous est demandé."
 
 if [[ -f "$tmpdir/statut" ]] && [[ $(cat "$tmpdir/statut") == 0 ]]; then

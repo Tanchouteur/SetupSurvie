@@ -194,7 +194,9 @@ class LinuxRecoveryTests(unittest.TestCase):
         subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'install', self.source],
                        check=True, timeout=10, env={**os.environ,
                            'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
-        self.assertEqual(result.with_suffix('.args').read_text().splitlines()[-4:],
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[0], '--disable-internal-agent')
+        self.assertEqual(arguments[-4:],
                          ['install', str(self.source), '/srv/Disque SSD/SetupSurvie', 'no'])
         self.assertEqual(result.with_suffix('.progress').read_text().splitlines(),
                          ['# Préparation de la copie de travail…', '100'])

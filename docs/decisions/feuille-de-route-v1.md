@@ -44,7 +44,9 @@ administrateur peuvent être demandés dans une fenêtre. Faire réussir ce parc
 
 L’installation normale prépare deux installations de SetupSurvie. La première
 reste saine et sert de point de restauration. La seconde sert au quotidien.
-Valider l’action **Restaurer** après une panne qui empêche la seconde de démarrer.
+La 0.77.0 fournit le [lanceur hors ligne et son menu d’entretien](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+La recette doit couvrir **Restaurer** après une panne qui empêche la seconde de
+démarrer, puis un essai par un proche sur le bureau de référence.
 Voir le [point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026).
 
 ## Revue des fonctionnalités existantes — 20 novembre 2026
