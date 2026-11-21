@@ -259,8 +259,9 @@ recette hors du dépôt.
 
 La grille `tests/fixtures/domain-evaluation/besoins-marc-2026-11-21.json`
 contient 136 requêtes pour 68 thèmes. Comparer le classement précédent,
-le repli encyclopédique seul, le filtre PDF seul et les deux réglages
-ensemble sur le même catalogue Kiwix, le même tri et les mêmes index.
+le repli encyclopédique seul, le filtre PDF seul, les deux réglages
+ensemble, le classement de tutoriels de la 0.88.1 et l’ajout des forums
+de la 0.89.0. Garder le même catalogue Kiwix, le même tri et les mêmes index.
 Relever les requêtes sans résultat, les trois premiers titres, la place des
 guides attendus et les recherches partielles. Un résultat présent demande
 une lecture du passage avant de déclarer le besoin couvert. Comparer les
@@ -388,10 +389,13 @@ Les recherches « couture » et « addition » étaient vides avant l’actualis
 « Couture » trouve ensuite
 Mondial Tissus, « addition » trouve Maître Lucas et « énergie » trouve
 C’est pas sorcier. Les trois premiers résultats correspondants s’ouvrent
-dans le catalogue et leurs titres sont recherchables. Le relevé n’a pas
+dans le catalogue et leurs titres sont recherchables. Le lecteur a renvoyé
+les 1 024 premiers octets de chaque média avec une réponse HTTP 206.
+Le relevé n’a pas
 trouvé de transcription pour ces trois vidéos et la recherche vidéo
-reste partielle. Les identifiants et les résultats de lecture sont
-conservés dans `videos-119-archives.json` sur le labo.
+reste partielle. Les identifiants, les résultats de lecture et les plages
+renvoyées se trouvent dans `videos-119-archives.json` et
+`lecture-video-extraits-119.json` sur le labo.
 
 Le contrôle des reformulations sur les 204 archives indexées a donné les
 résultats suivants avec la 0.88.1. Les quatre premières pistes de chaque
@@ -407,12 +411,41 @@ recherche sont conservées dans `reformulations-204-indexees.json`.
 | Installer une ruche | Le premier résultat est le repère Wikipédia « Ruche ». Le lecteur l’ouvre. La disponibilité d’un guide d’installation reste à établir. |
 
 Sur les mêmes 204 archives, la recherche « réparer une fuite de tuyau »
-renvoyait surtout des pages sur des appareils. Avec le candidat 0.89.0,
+renvoyait surtout des pages sur des appareils. Dans le portail 0.89.0,
 une discussion du forum de bricolage remonte en premier et son texte
-anglais s’ouvre. Le filtre Français l’écarte. Les sondages ciblés sur
+anglais s’ouvre. Le filtre Français testé sur ce forum l’écarte. Les sondages ciblés sur
 la fertilité des sols, le cuir et l’outillage de menuiserie montrent que
 les trois forums correspondants sont consultables en Savoirs et culture.
 Leurs pistes demandent encore une lecture avant d’être retenues.
+
+Avec le portail 0.89.0, 42 formulations ont été testées sur 14 besoins.
+Le catalogue de 204 archives est resté stable. Le relevé
+`reformulations-prioritaires.json` indique aussi si le texte du premier
+résultat s’ouvre et si une transcription est disponible. Cas vérifiés :
+
+| Besoin | Résultat des reformulations |
+| --- | --- |
+| Calfeutrer une fenêtre | Deux formulations françaises sans résultat. « Weatherstripping windows » retrouve une discussion technique en anglais sur le changement des joints d’une fenêtre. |
+| Récupérer l’eau de pluie | La phrase de départ trouve le guide du jardinier. « Récupération eau pluie » fait remonter une page du même sujet. |
+| Élever des poules pondeuses | Deux formulations françaises sans résultat. La demande anglaise ouvre la piste générale « Livestock and Animal Management ». Un guide français consacré aux poules reste à repérer. |
+| Fabriquer un panier en osier | La phrase précise reste sans résultat. « Vannerie osier » retrouve l’article français de Low-tech Magazine consacré aux objets tressés. |
+| Recoudre une déchirure | Les variantes dans les vidéos ramènent des titres de couture sur des patrons et des vêtements. Aucun de ces premiers résultats ne décrit le raccommodage demandé. |
+| S’orienter sans boussole | Aucun résultat dans les trois formulations testées. |
+| Exercices d’addition au CE1 | Une recherche plus courte retrouve le guide de l’enseignement du calcul. Les requêtes vidéo trouvent des titres de Maître Lucas sur les additions et le calcul mental. |
+
+Le relevé des lacunes indique aussi des sources françaises à examiner. Ces
+références n’ont pas été intégrées au manifeste. Les deux liens PDF de l’ADEME
+renvoient actuellement une erreur 403 depuis Bazzite. Le PDF de l’Anses sur
+l’hygiène en cuisine renvoie une page de contrôle anti-robot. Pour toute
+intégration, vérifier l’accès au fichier, l’édition et les droits associés.
+
+| Lacune observée | Contenu de la source à examiner |
+| --- | --- |
+| Isolation des fenêtres | Choix de rénovation et points à contrôler sur les menuiseries et la ventilation. [Comment isoler sa maison ?, ADEME](https://librairie.ademe.fr/ged/9380/guide-comment-isoler-sa-maison.pdf) |
+| Humidité et moisissures | Repérage des causes fréquentes et renouvellement de l’air. [Bien ventiler son logement, ADEME](https://librairie.ademe.fr/cadic/7180/guide-bien-ventiler-logement-202307.pdf) |
+| Conservation et hygiène en cuisine | Conseils pour limiter les contaminations et conserver les plats. [Hygiène dans la cuisine, Anses](https://www.anses.fr/fr/article/conseils-dhygiene-cuisine-dix-gestes-simples-prevenir-risques-microbiologiques) |
+| Élevage familial | Mesures de prévention pour les détenteurs d’une basse-cour. Pour l’alimentation et l’entretien courant des poules, chercher aussi un manuel d’élevage. [Ministère de l’Agriculture](https://agriculture.gouv.fr/influenza-aviaire-les-mesures-de-biosecurite-pour-les-operateurs-professionnels-et-les-particuliers) |
+| Observation du ciel | Repères illustrés pour reconnaître les nuages. [Les différents types de nuages, Météo-France](https://meteofrance.com/meteo-a-z/les-differents-types-de-nuages) |
 
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche
