@@ -8,6 +8,13 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+## Plafonds du laboratoire Bazzite — décision de Louis du 21 novembre 2026
+
+Le laboratoire dédié reste sur le SSD de 4 To. Louis retire les anciens
+plafonds de 500 Go documentaires et de 600 Go globaux. Les contrôles de
+montage, d’espace réellement libre et de marge de stockage restent en vigueur.
+[Plan et état du volume](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md)
+
 ## Guides pratiques et laboratoire Bazzite — décision de Louis du 21 novembre 2026
 
 Louis confirme la priorité à Autonomie et résilience, les rôles Guide

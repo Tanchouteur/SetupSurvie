@@ -44,20 +44,21 @@ class KiwixSelectionTests(unittest.TestCase):
             return ks.select(entries, self.root, list(requested), reserve=0,
                              reader=lambda url, **kw: self.metalink(by_url[url]), **kwargs)
 
-    def test_marc_can_select_more_than_500gb_but_lab_remains_bounded(self):
+    def test_large_catalogue_is_bounded_by_space_and_any_explicit_budget(self):
         from collections import namedtuple
         usage=namedtuple('Usage','total used free')(2_000_000_000_000,0,2_000_000_000_000)
         entry=self.entry(estimated_bytes=550_000_000_000)
-        with patch.object(ks.shutil,'disk_usage',return_value=usage):
+        with patch.object(shutil,'disk_usage',return_value=usage):
             plan=self.plan([entry])
             self.assertEqual(len(plan['items']),1)
             self.assertIsNone(plan['budget_bytes'])
             with patch.object(Path,'is_mount',return_value=True):
                 plan=self.plan([entry],storage_root=self.root)
-                self.assertEqual(plan['budget_bytes'],500_000_000_000)
-                self.assertFalse(plan['items'])
-                with self.assertRaises(setup.SetupError):
-                    content.check_capacity(self.root,550_000_000_000,storage_root=self.root,budget=900_000_000_000,reserve=0)
+                self.assertIsNone(plan['budget_bytes'])
+                self.assertEqual(len(plan['items']), 1)
+                content.check_capacity(self.root, 550_000_000_000, storage_root=self.root, reserve=0)
+                budgeted=self.plan([entry],storage_root=self.root,budget=500_000_000_000)
+                self.assertFalse(budgeted['items'])
             content.check_capacity(self.root,550_000_000_000,reserve=0)
             with self.assertRaises(setup.SetupError):
                 content.check_capacity(self.root,2_000_000_000_000,reserve=15_000_000_000)
@@ -243,7 +244,7 @@ class KiwixSelectionTests(unittest.TestCase):
     def test_physical_reserve_and_document_budget_restrict_selection(self):
         from collections import namedtuple
         usage = namedtuple('Usage', 'total used free')(590, 570, 20)
-        with patch.object(ks.shutil, 'disk_usage', return_value=usage):
+        with patch.object(shutil, 'disk_usage', return_value=usage):
             plan = self.plan([self.entry()], max_add=1000)
         self.assertEqual(plan['available_additional_bytes'], 20)
         self.assertFalse(plan['items'])

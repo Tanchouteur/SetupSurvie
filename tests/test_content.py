@@ -119,8 +119,25 @@ class ContentTests(unittest.TestCase):
         self.assertFalse((self.root/self.item['path']).exists())
         self.assertEqual((self.root/(self.item['path']+'.part')).stat().st_size,0)
 
-    def test_default_budget_is_500_decimal_gb(self):
-        self.assertEqual(content.DEFAULT_BUDGET,500_000_000_000)
+    def test_loop_capacity_counts_the_real_ssd_space(self):
+        backing = self.root/'storage.img'
+        backing.touch()
+        usage = namedtuple('Usage', 'total used free')
+        read_text = Path.read_text
+
+        def sysfs(path, *args, **kwargs):
+            if str(path).endswith('/loop/backing_file'):
+                return str(backing)+'\n'
+            return read_text(path, *args, **kwargs)
+
+        with patch.object(Path, 'is_mount', return_value=True), \
+                patch.object(content.sys, 'platform', 'linux'), \
+                patch.object(content.os, 'major', create=True, return_value=7), \
+                patch.object(content.os, 'minor', create=True, return_value=0), \
+                patch.object(Path, 'read_text', sysfs), \
+                patch.object(content.shutil, 'disk_usage', side_effect=[usage(900, 10, 890), usage(900, 890, 10)]):
+            with self.assertRaises(setup.SetupError):
+                content.check_capacity(self.root, 5, reserve=6, storage_root=self.root)
 
     def test_metadata_distinguishes_edition_from_collection_and_keeps_unknown_old_collection_unknown(self):
         item={**self.item,'title':'Notice','language':'fr','publisher':'Fixture','edition':'2010','licence':'Test'}
@@ -144,7 +161,7 @@ class ContentTests(unittest.TestCase):
         with patch.object(sys,'argv',['content.py','download','--lab','--no-refresh','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download') as download,patch.object(content,'check_capacity'),patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab,'podman') as podman:
             content.main()
             # Windows temporary paths may use an 8.3 alias resolved by safe_path.
-            download.assert_called_once_with((self.root/'data').resolve(),[item],budget=500_000_000_000,storage_root=self.root,workers=2)
+            download.assert_called_once_with((self.root/'data').resolve(),[item],budget=None,storage_root=self.root,workers=2)
             podman.assert_not_called()
 
 

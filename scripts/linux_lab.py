@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated, size-limited Podman lab for this Linux PC; no system reconfiguration."""
+"""Isolated Podman lab on the dedicated Bazzite SSD."""
 from __future__ import annotations
 
 import argparse
@@ -16,8 +16,7 @@ import setup
 
 BASE = Path('/var/mnt/data/AI/SetupSurvie')
 IMAGE = BASE / 'storage.img'
-# Decimal bytes, leaving room below the user's 600 GB ceiling for outer metadata.
-CAPACITY = 590_000_000_000
+SSD = Path('/var/mnt/data')
 MOUNT = Path('/run/media') / getpass.getuser() / 'SetupSurvie'
 NAMES = ('router-foot','router-motorcycle','router-car','pilot', 'open-webui', 'portal', 'kiwix', 'ollama')
 PREFIX = 'setupsurvie-lab-'
@@ -42,34 +41,75 @@ def loop_device():
     return lines[0].split(':', 1)[0] if lines else None
 
 
-def checked_mount():
+def disk_capacity():
+    if not os.path.ismount(SSD):
+        raise RuntimeError('SSD de données non monté.')
+    return shutil.disk_usage(SSD).total // 4096 * 4096
+
+
+def checked_image():
+    capacity = disk_capacity()
+    if (IMAGE.is_symlink() or not IMAGE.is_file()
+            or not 0 < IMAGE.stat().st_size <= capacity
+            or IMAGE.stat().st_dev != SSD.stat().st_dev):
+        raise RuntimeError('Image absente ou extérieure au SSD de 4 To.')
+
+
+def checked_mount(mountpoint=None):
     """Fail closed: never silently write into the mountpoint on the system SSD."""
-    if not IMAGE.is_file() or IMAGE.is_symlink() or IMAGE.stat().st_size != CAPACITY:
-        raise RuntimeError('Image absente ou taille inattendue ; aucun téléchargement autorisé.')
+    mountpoint = mountpoint or MOUNT
+    checked_image()
     device = loop_device()
-    result = command(['findmnt', '-rn', '-o', 'SOURCE,TARGET', '--mountpoint', MOUNT],
+    result = command(['findmnt', '-rn', '-o', 'SOURCE,TARGET', '--mountpoint', mountpoint],
                      capture=True, check=False)
-    if not device or result.returncode or result.stdout.strip() != f'{device} {MOUNT}':
+    if not device or result.returncode or result.stdout.strip() != f'{device} {mountpoint}':
         raise RuntimeError('Le volume dédié doit être monté : lancez mount.')
     backing = Path('/sys/class/block') / Path(device).name / 'loop/backing_file'
     if Path(backing.read_text().strip()).resolve() != IMAGE.resolve():
         raise RuntimeError('Le volume ne correspond pas au fichier du SSD de 4 To.')
-    if os.stat(IMAGE).st_dev != os.stat('/var/mnt/data').st_dev:
-        raise RuntimeError('Le fichier de stockage doit rester sur le SSD de 4 To.')
+    return device
+
+
+def grow(mountpoint):
+    """Extend the existing sparse image and mounted ext4 volume in place."""
+    if os.geteuid() != 0:
+        raise RuntimeError('L’agrandissement du volume monté demande les droits administrateur.')
+    device = checked_mount(mountpoint)
+    capacity = disk_capacity()
+    if shutil.disk_usage(SSD).free < 20_000_000_000:
+        raise RuntimeError('Place libre insuffisante pour agrandir le système de fichiers.')
+    import fcntl
+
+    catalog = mountpoint / 'data/catalog'
+    owner = catalog.stat()
+    flags = os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW
+    lease = os.open(catalog / 'publication.lock.lease', flags, 0o600)
+    try:
+        os.fchown(lease, owner.st_uid, owner.st_gid)
+        try:
+            fcntl.flock(lease, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError('Un transfert ou une publication documentaire est encore en cours.') from None
+        with IMAGE.open('r+b') as image:
+            image.truncate(capacity)
+            os.fsync(image.fileno())
+        command(['losetup', '--set-capacity', device])
+        command(['resize2fs', device])
+    finally:
+        os.close(lease)
+    print(f'Volume du laboratoire : {shutil.disk_usage(mountpoint).total / 1e9:.1f} Go.')
 
 
 def mount():
     if not IMAGE.exists():
-        if not os.path.ismount('/var/mnt/data'):
-            raise RuntimeError('SSD de données non monté.')
+        capacity = disk_capacity()
         BASE.mkdir(mode=0o700, parents=True, exist_ok=True)
         IMAGE.touch(mode=0o600, exist_ok=False)
         command(['chattr', '+C', IMAGE])
-        command(['truncate', '-s', str(CAPACITY), IMAGE])
+        command(['truncate', '-s', str(capacity), IMAGE])
         command(['mkfs.ext4', '-q', '-L', 'SetupSurvie', '-m', '0', '-T', 'largefile4',
                  '-E', f'root_owner={os.getuid()}:{os.getgid()},lazy_itable_init=1,lazy_journal_init=1', IMAGE])
-    if IMAGE.stat().st_size != CAPACITY or IMAGE.is_symlink():
-        raise RuntimeError('Image existante de taille inattendue ; aucune modification.')
+    checked_image()
     device = loop_device()
     if not device:
         result = command(['udisksctl', 'loop-setup', '--no-user-interaction', '--file', IMAGE], capture=True)
@@ -337,14 +377,20 @@ WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('mount', 'pull', 'prepare', 'up', 'refresh-access', 'down', 'status',
+    parser.add_argument('action', choices=('mount', 'grow', 'pull', 'prepare', 'up', 'refresh-access', 'down', 'status',
                                          'pull-model', 'record', 'unmount', 'clean', 'prepare-speech',
                                          'download-corpus', 'jobs', 'pause-inference', 'resume-inference', 'network'))
     parser.add_argument('--erase-data', action='store_true', help='Supprime définitivement le volume et toutes ses données')
     parser.add_argument('--lan-host',type=setup.lan_host,help='network : adresse IPv4 du PC sur le réseau privé ; sans option, retour au PC seul')
     parser.add_argument('--name',help='network : nom local court, par exemple survie-marc')
+    parser.add_argument('--mount-user', help='Utilisateur du montage existant pour grow.')
     args = parser.parse_args()
-    if args.action == 'mount':
+    if args.mount_user and (args.action != 'grow' or not re.fullmatch(r'[a-z_][a-z0-9_-]*', args.mount_user)):
+        parser.error('--mount-user attend un nom d’utilisateur valide et s’utilise avec grow.')
+    if args.action == 'grow':
+        mountpoint = Path('/run/media') / args.mount_user / 'SetupSurvie' if args.mount_user else MOUNT
+        grow(mountpoint)
+    elif args.action == 'mount':
         mount()
         configuration()
     elif args.action in ('unmount', 'clean'):
@@ -359,8 +405,7 @@ def main():
         if device:
             command(['udisksctl', 'loop-delete', '--no-user-interaction', '-b', device])
         if args.action == 'clean':
-            if IMAGE.is_symlink() or IMAGE.stat().st_size != CAPACITY:
-                raise RuntimeError('Image inattendue ; suppression refusée.')
+            checked_image()
             IMAGE.unlink()
             print('Volume supprimé. Code source conservé.')
     elif args.action == 'pull':
