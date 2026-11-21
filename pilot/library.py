@@ -796,8 +796,27 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         metadata_available=annotations.annotate(combined,fresh=fresh)
         allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
         combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
-        if domain in ('resilience','culture'):combined=[r for r in combined if domain in r['domains']]
-        ordered=retrieval.ordered(combined,query_plan,limit*2,normalizer=normalize)
+        primary = [row for row in combined if domain not in category_index.DOMAINS or domain in row['domains']]
+        ordered = retrieval.ordered(primary, query_plan, limit * 2, normalizer=normalize)
+        remaining = min(3, limit * 2 - len(ordered))
+        if domain == 'resilience' and remaining > 0 and not any(
+            row['match_quality'] == 'subject' and (
+                row.get('kind') == 'guide'
+                or row['classification']['source_role'] == 'practical'
+                or row['classification']['document_type'] in ('procedure', 'manual')
+            ) for row in ordered
+        ):
+            references = [
+                row for row in combined
+                if row['classification']['method'] == 'automatic'
+                and 'resilience' not in row['domains']
+                and retrieval.fallback_encyclopedia(row.get('book', ''))
+                and archive_allowed(row['book'])
+            ]
+            ordered += retrieval.encyclopedic_matches(
+                references, query_plan, remaining,
+                normalizer=normalize,
+            )
         processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
         return ordered,metadata_available
     async def selected(items,*,fresh=False):return await kiwix_queries.disk_io(selected_sync,items,fresh)
@@ -815,13 +834,26 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         indexes = await asyncio.to_thread(category_index.ready_indexes, zims, store.ROOT, sorting)
         category_report, _ = await asyncio.to_thread(category_index.availability, zims, store.ROOT, sorting, indexes=indexes)
         paths = [path for book, path in indexes.items() if archive_allowed(book)]
-        if paths:
+        reference_paths = [path for book, path in indexes.items()
+                           if domain == 'resilience' and archive_allowed(book) and retrieval.fallback_encyclopedia(book)]
+        searched = set()
+        for category, category_paths in ((domain, paths), ('culture', reference_paths)):
+            if not category_paths:
+                continue
             result = await asyncio.to_thread(
-                archive_index.search, paths[0].parent, query_plan, language, candidate_limit, zims,
+                archive_index.search, category_paths[0].parent, query_plan, language, candidate_limit, zims,
                 collection_match=lambda book, selection: catalogue.matches_collection(book, selection, GUIDES, zims, saved_metadata),
-                category=domain, index_paths=paths)
+                category=category, index_paths=category_paths)
             local_rows.extend(result)
-            chosen = tuple(result.coverage.get('books', ()))
+            books = set(result.coverage.get('books', ()))
+            if category != domain:
+                # A failed secondary scan must leave the native fallback available.
+                searched.difference_update(
+                    book for book, path in indexes.items() if path in reference_paths and book not in books
+                )
+            else:
+                searched.update(books)
+        chosen = tuple(sorted(searched))
     async def read_local():
         found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
             collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),archive_allowed=archive_allowed,skip_books=chosen)

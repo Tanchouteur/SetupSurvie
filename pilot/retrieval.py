@@ -275,6 +275,26 @@ def rank(item,query,position=0,*,normalizer=None):
     return score
 
 
+def subject_in_passage(item, query, normalize=normal):
+    title = set(normalize(item.get('title', '')).split())
+    excerpt = set(normalize(item.get('excerpt', '')).split())
+    topic = title | excerpt
+    return bool(query.token_groups) and all(
+        any(term <= topic for term in group) for group in query.token_groups
+    )
+
+
+def encyclopedic_matches(items, query, limit, *, normalizer=None):
+    normalize = normalizer or NormalCache()
+    candidates = []
+    for item in items:
+        title = set(normalize(item.get('title', '')).split())
+        if (any(term <= title for group in query.token_groups for term in group)
+                and subject_in_passage(item, query, normalize)):
+            candidates.append({**item, 'reference_fallback': True})
+    return ordered(candidates, query, limit, normalizer=normalize)
+
+
 def match_quality(item,query,*,normalizer=None):
     normalize=normalizer or normal
     title=set(normalize(item.get('title','')).split())
@@ -302,6 +322,9 @@ def ordered(items,query,limit,*,normalizer=None):
         title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)
         native_without_excerpt=item.get('_query_complete') and not excerpt and title_hits>0
         if hits<required and not native_without_excerpt:continue
+        pdf_passage = re.search(r'\.pdf#page=\d+$', item['id'], re.I)
+        if pdf_passage and not subject_in_passage(item, query, normalize):
+            continue
         if query.practical and query.action:
             evidence=INTENTS[query.action]
             named_device=query.action=='build' and (not excerpt or item.get('match')=='title') and len(query.groups)>1 and title_hits==len(query.groups)
@@ -371,6 +394,10 @@ def source_role(item):
     if family.endswith('.stackexchange.com'):
         return 'reference'
     return ARCHIVE_ROLES.get(family, '')
+
+
+def fallback_encyclopedia(book):
+    return book.lower().partition('_')[0] in ('wikipedia', 'vikidia')
 
 
 CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})

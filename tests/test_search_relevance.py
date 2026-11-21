@@ -122,3 +122,38 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
             found=await library.search('faire du feu')
         self.assertEqual({r['id'] for r in found if r['id'].startswith('zim:')},{'zim:wikipedia_en/A/Fire_making','zim:wikipedia_en/Wikijunior:Survie'})
         self.assertEqual(found.coverage['status'],'partial')
+
+
+    async def test_autonomy_surfaces_only_strong_main_encyclopedia_fallbacks(self):
+        books = [
+            {'id': 'zim:wikipedia_fr_all/Orage', 'book': 'wikipedia_fr_all',
+             'kind': 'article', 'title': 'Orage', 'excerpt': 'Reconnaître un orage.',
+             'language': 'fr'},
+            {'id': 'zim:wikipedia_fr_all/Feu', 'book': 'wikipedia_fr_all',
+             'kind': 'article', 'title': 'Production de feu', 'excerpt': 'Allumage fictif.',
+             'language': 'fr'},
+            {'id': 'zim:wiktionary_fr_all/Orage', 'book': 'wiktionary_fr_all',
+             'kind': 'article', 'title': 'Orage', 'excerpt': 'Reconnaître un orage.',
+             'language': 'fr'},
+            {'id': 'zim:encyclopedie-environnement_fr_all/Orage', 'book': 'encyclopedie-environnement_fr_all',
+             'kind': 'article', 'title': 'Orage', 'excerpt': 'Reconnaître un orage.',
+             'language': 'fr'},
+        ]
+        # A fixture without a named publisher exercises the guide-kind condition.
+        with patch.object(library, 'search_archives', AsyncMock(return_value=(books, {'status': 'complete'}))):
+            results = await library.search('reconnaître un orage', domain='resilience', kind='documents')
+            self.assertEqual([row['id'] for row in results], [books[0]['id']])
+            self.assertTrue(results[0]['reference_fallback'])
+            results = await library.search('faire du feu', domain='resilience', kind='documents')
+            self.assertEqual(results[0]['id'], 'guide:feu.fr.txt')
+            self.assertFalse(any(row.get('reference_fallback') for row in results))
+
+    async def test_pdf_passages_need_the_subject_in_the_visible_match(self):
+        items = [
+            ('guide:jardin.fr.pdf#page=1', 'Jardin scolaire', '', 'fr', 'Éviter les insectes et organiser le jardin.'),
+            ('guide:habitat.fr.pdf#page=2', 'Limiter les moisissures', '', 'fr', 'Comment éviter les moisissures.'),
+        ]
+        with store.connect() as db:
+            db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)', items)
+        results = await library.search('éviter les moisissures', kind='documents')
+        self.assertEqual([row['id'] for row in results], [items[1][0]])
