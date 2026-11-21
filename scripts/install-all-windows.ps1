@@ -3,9 +3,10 @@
 param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume,
     [switch]$NoBrowser, [switch]$NoStartup, [switch]$Check, [string]$CacheDir, [string]$CollectionSort)
 $ErrorActionPreference = 'Stop'
+$survieInstallerScripts = $PSScriptRoot
 
 function Invoke-SurvieInstallerScript([string]$Script, [array]$Arguments) {
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot $Script) @Arguments | Out-Host
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $survieInstallerScripts $Script) @Arguments | Out-Host
     return $LASTEXITCODE
 }
 
@@ -14,12 +15,12 @@ function Get-SurvieResumeKit([string]$Directory) {
     return $journal.options.kit
 }
 
-function Select-SurvieInstallKit {
+function Select-SurvieInstallKit([string]$ScriptsDirectory) {
     if ($Kit) { return $Kit }
     if ($Resume) { return (Get-SurvieResumeKit $BaseDir) }
-    $application = Split-Path $PSScriptRoot
-    if ((Split-Path $application -Leaf) -eq 'app') {
-        $root = Split-Path $application
+    $application = Split-Path -LiteralPath $ScriptsDirectory
+    if ([IO.Path]::GetFileName($application) -eq 'app') {
+        $root = Split-Path -LiteralPath $application
         if ((Test-Path -LiteralPath (Join-Path $root 'manifest.json') -PathType Leaf) -or
                 (Test-Path -LiteralPath (Join-Path $root 'kit-building.json') -PathType Leaf)) { return $root }
     }
@@ -35,7 +36,7 @@ function Invoke-SurvieWindowsInstall {
         $BaseDir = Read-Host ("Dossier de l'installation à reprendre [Entrée : " + $suggested + ']')
         if (-not $BaseDir) { $BaseDir = $suggested }
     }
-    $selectedKit = Select-SurvieInstallKit
+    $selectedKit = Select-SurvieInstallKit $survieInstallerScripts
     Write-Host 'SetupSurvie : 1/2 - vérification et préparation du PC'
     $preparation = @()
     if ($Check) { $preparation += '-Check' }

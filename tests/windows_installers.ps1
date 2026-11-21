@@ -287,7 +287,9 @@ try {
         Set-Content -LiteralPath (Join-Path $fixture 'manifest.json') -Value '{}'
         . $entry
         function Read-Host { throw 'An embedded kit should be detected without asking' }
-        Assert ((Select-SurvieInstallKit) -eq $fixture) 'The double-clicked launcher must use its own kit'
+        $actual = Select-SurvieInstallKit $survieInstallerScripts
+        $expected = (Resolve-Path -LiteralPath $fixture).ProviderPath
+        Assert ($actual -and (Resolve-Path -LiteralPath $actual).ProviderPath -eq $expected) 'The double-clicked launcher must use its own kit'
     } finally {
         Remove-Item -LiteralPath $fixture -Recurse -Force
     }
