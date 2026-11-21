@@ -283,3 +283,38 @@ appels en provenance de `/api/search` et d’une question réelle adressée
 demandées à Kiwix pour la préparation de la réponse et lors d’un appel
 d’outil du modèle. Le Wiktionnaire et Gutenberg rangés dans Autre
 sont consultés uniquement dans les recherches explicitement élargies.
+
+
+### Relevé de recherche sur 204 archives — 21 novembre 2026
+
+Kiwix servait les 204 archives déjà vérifiées du manifeste. La comparaison
+a parcouru les 136 requêtes des 68 thèmes de Marc et sept témoins. Le
+candidat a renvoyé au moins un résultat pour 82 des 136 requêtes.
+Les 136 recherches étaient partielles avec le délai de 12 secondes et
+l’index local encore incomplet. À titre de contrôle, avec 60 secondes
+sur « eau potable », Kiwix a interrogé 119 collections et a signalé huit
+collections incompatibles avec la recherche native et 21 collections
+sans annonce d’index texte. Ce relevé ne suffit pas à établir une absence
+de ressource.
+
+Un second passage rejoue les mêmes candidats avec les deux classements, à
+60 secondes. Le tutoriel iFixit de réparation de crevaison passe de la
+deuxième à la première place. La fiche OMS sur le traitement au point
+d’utilisation reste deuxième. Les deux repères sur le compas de relèvement
+sont trouvés avec chaque classement. L’audit du lecteur s’exécute ensuite
+par thème sur le même laboratoire.
+
+Les trois éditions installées du Wiktionnaire sont rangées dans Autre.
+La recherche « compost » dans le Wiktionnaire français sélectionne zéro
+collection en Autonomie et en sélectionne une dans Autre. Le premier
+article s’ouvre et renvoie du texte français. Depuis la navigation
+Collections, Chromium à 1 366 px et WebKit à 390 px ouvrent la page
+d’accueil hors ligne du Wiktionnaire sur **18081** et la carte indique
+« Rangée dans Autre ».
+
+Les liens du portail isolé 18080 utilisent **18081** pour Kiwix et
+**13000** pour Open WebUI. Cette adaptation concerne la copie du portail
+dans `/var/mnt/data/AI/.setupsurvie-biblio-code` et sa copie servie sur
+le volume du labo. Si cette copie est reconstruite à partir d’une
+livraison, conserver les ports propres au labo et régénérer la page avec
+`scripts/build_portal.py` avant de publier les fichiers du portail.
