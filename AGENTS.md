@@ -12,7 +12,7 @@
 - **Lecture ciblée** : ouvrir le guide du sujet traité. Pour l’installation chez
   Marc, partir du [guide du pilote](docs/installation/pilote-marc.md). Pour le
   fonds documentaire, partir de la [préparation du fonds complet](docs/bibliotheque/bibliotheque-complete-marc.md).
-  Le [plan des 500 Go](docs/bibliotheque/plan-bibliotheque-hors-ligne-500go.md)
+  Le [plan historique des 500 Go](docs/bibliotheque/plan-bibliotheque-hors-ligne-500go.md)
   décrit les lots envisagés pour le laboratoire. Le [premier bilan du pilote](docs/essais/bilan-pilote-2026-11-11.md)
   sert de repère historique. Pour les arbitrages produit, consulter
   [l’offre](docs/decisions/acces-simple-et-offre.md) et la [feuille de route](docs/decisions/feuille-de-route-v1.md).
@@ -112,18 +112,15 @@ Marc : Windows, RTX 5060 Ti **8 Go**, **32 Go de RAM** (GPU détecté dans les
 rapports du 14 novembre 2026, auparavant noté RTX 5060). Des GPU plus gros pourront
 suivre. Les mesures Linux ne prédisent pas les performances Windows de Marc.
 
-Sur le PC de Louis, toute donnée volumineuse doit rester sur le SSD de 4 To,
-avec un plafond total de **600 Go** et un nettoyage simple. Le laboratoire utilise
-`/var/mnt/data/AI/SetupSurvie/storage.img`, de 590 milliards d'octets, monté sur
-`/run/media/louis/SetupSurvie`. Respecter les contrôles de montage et capacité de
-`linux_lab.py` ; ne pas télécharger dans un point de montage absent ni utiliser
-le stockage Podman par défaut sur le disque système.
-
-Louis a confirmé le **12 novembre 2026** : aucun plafond documentaire logiciel chez Marc ; le laboratoire peut conserver un fonds réduit. Le téléchargement complet se prépare directement chez Marc sans imposer sa réplication au laboratoire. Lire `docs/bibliotheque/bibliotheque-complete-marc.md`.
-
-Dans le laboratoire, les **500 Go documentaires** excluent les modèles et caches
-d'essai ; le kit ne compte pas deux fois les mêmes documents. Le plafond
-physique du laboratoire et sa marge libre restent distincts et obligatoires.
+Sur le PC de Louis, toute donnée volumineuse du laboratoire reste sur le SSD
+de 4 To. Louis a levé les plafonds fixes de 500 Go documentaires et de 600 Go
+globaux le **21 novembre 2026**. Le laboratoire utilise son image clairsemée
+`/var/mnt/data/AI/SetupSurvie/storage.img`, montée sous
+`/run/media/louis/SetupSurvie`. Vérifier le montage et la marge réelle du SSD.
+Le stockage Podman du laboratoire reste séparé du moteur par défaut. Consulter
+le [plan du laboratoire Bazzite](docs/bibliotheque/classement-pratique-et-laboratoire-bazzite.md)
+pour l’état du volume existant. Chez Marc, l’absence de plafond logiciel a été
+confirmée le 12 novembre. Lire `docs/bibliotheque/bibliotheque-complete-marc.md`.
 
 Respecter le marqueur `private/inference-paused.json` et les demandes de mode jeu.
 Ne pas lancer de LLM, benchmark ou action de démarrage forcé tant que la pause

@@ -133,7 +133,11 @@ sélectionnée. Cela ne garantit pas l'identité des éditions ni l'absence de
 recoupements entre éditeurs différents. Les fichiers existants ne sont jamais
 supprimés. Leur présence ne constitue pas une nouvelle vérification SHA-256.
 
-Hors laboratoire, il n’y a **aucun plafond documentaire ni plafond de transfert par défaut**. `--max-add-gb` limite volontairement les nouveaux transferts, `--budget-gb` limite volontairement le fonds total ; 0 signifie aucun plafond hors laboratoire. La marge physique libre de **15 Go** reste obligatoire. En mode `--lab`, les **500 Go documentaires** et le plafond physique du laboratoire restent appliqués. Les partiels comptent
+Par défaut, la sélection est limitée par l’espace disponible et la marge
+physique libre de **15 Go**. `--max-add-gb` limite volontairement les ajouts
+et `--budget-gb` le fonds total. La valeur 0 laisse s’appliquer la capacité
+disponible. `--lab` contrôle aussi le montage et le SSD qui porte l’image
+du laboratoire. Les partiels comptent
 dans l'occupation et réduisent les octets restant à transférer. Les contrôles
 sont rejoués pendant le téléchargement. Les tailles OPDS étant arrondies, les
 tailles exactes des ajouts proviennent des Metalinks officiels.

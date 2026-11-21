@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Fetch the agreed French illustrated Wikipedia archive inside the capped lab."""
+"""Fetch the agreed French illustrated Wikipedia archive inside the isolated lab."""
 import hashlib
 import json
-import shutil
 import time
 
+import content
 import linux_lab as lab
 from lab_library_ranges import download
 
@@ -24,7 +24,7 @@ def main():
     if not destination.exists():
         lab.setup.write_json(status, {'preparing': NAME, 'archives': []})
         remaining = SIZE - (partial.stat().st_size if partial.exists() else 0)
-        if remaining < 0 or shutil.disk_usage(lab.MOUNT).free < remaining + 2_000_000_000:
+        if remaining < 0 or content.free_space(lab.MOUNT / 'data', lab.MOUNT) < remaining + 2_000_000_000:
             raise RuntimeError('Espace insuffisant ou fichier partiel trop grand.')
         download(partial, NAME, SIZE)
     candidate = destination if destination.exists() else partial
