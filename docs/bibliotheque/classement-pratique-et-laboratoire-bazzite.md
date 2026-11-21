@@ -372,16 +372,26 @@ et l’écartent avec le filtre Français. En Autonomie, le contrôle
 Wiktionnaire sélectionne zéro collection. Dans Autre, il sélectionne une
 collection, trouve dix résultats et ouvre le premier.
 
-| Famille de thèmes | Requêtes | Premier résultat ouvert | Aucun résultat |
-| --- | ---: | ---: | ---: |
-| Autonomie et ressources | 20 | 14 | 6 |
-| Alimentation et agriculture | 28 | 15 | 13 |
-| Santé et soins | 8 | 4 | 4 |
-| Techniques, fabrication et réparation | 32 | 23 | 9 |
-| Milieux naturels, déplacement et survie | 14 | 10 | 4 |
-| Risques et situations de conflit | 12 | 6 | 6 |
-| Connaissances fondamentales et transmission | 14 | 9 | 5 |
-| Communication et informatique | 8 | 6 | 2 |
+| Famille de thèmes | Requêtes | Premier résultat ouvert | Aucun résultat | Thèmes sans ouverture sur leurs deux requêtes |
+| --- | ---: | ---: | ---: | ---: |
+| Autonomie et ressources | 20 | 14 | 6 | 2 |
+| Alimentation et agriculture | 28 | 15 | 13 | 5 |
+| Santé et soins | 8 | 4 | 4 | 0 |
+| Techniques, fabrication et réparation | 32 | 23 | 9 | 1 |
+| Milieux naturels, déplacement et survie | 14 | 10 | 4 | 0 |
+| Risques et situations de conflit | 12 | 6 | 6 | 1 |
+| Connaissances fondamentales et transmission | 14 | 9 | 5 | 1 |
+| Communication et informatique | 8 | 6 | 2 | 0 |
+| **Total** | **136** | **87** | **49** | **10** |
+
+Sur les 68 thèmes, 29 ont ouvert un premier résultat pour leurs deux
+requêtes, 29 pour une seule et 10 pour aucune. La famille Alimentation
+et agriculture compte cinq de ces dix thèmes, dont la permaculture,
+l’élevage et les champignons et plantes sauvages. C’est la première famille
+à reprendre sur le fonds complet. Pour chaque besoin, vérifier les
+variantes de la requête, puis ouvrir les documents trouvés avant de décider
+s’il faut ajouter une source. Les documents accessibles doivent encore être
+évalués sur leur adéquation au besoin.
 
 Sur le portail 0.88.2, une actualisation du lecteur a indexé **3 525 vidéos
 et huit pistes** alors que l’inventaire avait traité 119 archives sur 122.
@@ -418,6 +428,18 @@ la fertilité des sols, le cuir et l’outillage de menuiserie montrent que
 les trois forums correspondants sont consultables en Savoirs et culture.
 Leurs pistes demandent encore une lecture avant d’être retenues.
 
+Le relevé `comparaison-6-reglages-204-0890.json` compare six réglages
+sur sept requêtes témoins, à catalogue et tri stables et avec un délai
+de 12 secondes. Cinq requêtes donnent un résultat avec le réglage de
+départ et avec le filtrage PDF seul. Ce nombre passe à six avec le
+repli encyclopédique, seul ou combiné au filtrage PDF, ainsi qu’avec le
+classement livré et sa variante avec forums. Le repli retrouve le repère
+« Ruche ». Le classement livré place le tutoriel de réparation de la
+crevaison en premier. Ce sondage montre aussi un faux positif persistant :
+un guide médical ressort pour les règles des échecs avec les six réglages.
+Le délai et les sept témoins limitent cette comparaison. La campagne
+sur le fonds complet doit confirmer les effets sur les 136 requêtes.
+
 Avec le portail 0.89.0, 42 formulations ont été testées sur 14 besoins.
 Le catalogue de 204 archives est resté stable. Le relevé
 `reformulations-prioritaires.json` indique aussi si le texte du premier
@@ -446,6 +468,17 @@ intégration, vérifier l’accès au fichier, l’édition et les droits associ
 | Conservation et hygiène en cuisine | Conseils pour limiter les contaminations et conserver les plats. [Hygiène dans la cuisine, Anses](https://www.anses.fr/fr/article/conseils-dhygiene-cuisine-dix-gestes-simples-prevenir-risques-microbiologiques) |
 | Élevage familial | Mesures de prévention pour les détenteurs d’une basse-cour. Pour l’alimentation et l’entretien courant des poules, chercher aussi un manuel d’élevage. [Ministère de l’Agriculture](https://agriculture.gouv.fr/influenza-aviaire-les-mesures-de-biosecurite-pour-les-operateurs-professionnels-et-les-particuliers) |
 | Observation du ciel | Repères illustrés pour reconnaître les nuages. [Les différents types de nuages, Météo-France](https://meteofrance.com/meteo-a-z/les-differents-types-de-nuages) |
+
+Pour les thèmes agricoles sans ouverture, les sources suivantes ont été
+consultées en ligne. Elles restent à comparer aux documents du fonds
+complet et à vérifier hors ligne avant toute intégration.
+
+| Besoin | Contenu vérifié et limites |
+| --- | --- |
+| Élevage familial de poules | Le manuel technique en français couvre l’alimentation et le logement. Il date de 2004 et prend ses exemples dans plusieurs régions du monde. La FAO autorise une diffusion éducative non commerciale avec attribution et exige un accord écrit pour la redistribution commerciale. [Production en aviculture familiale, FAO](https://www.fao.org/4/y5169f/y5169f00.htm) |
+| Biodiversité et fertilité du potager | La fiche décrit le paillage, le compost et les habitats utiles à l’échelle du jardin. Pour un plan de cultures complet, rechercher encore un guide de rotation et d’association des cultures. [Conseils de gestion des jardins, INRAE](https://ephytia.inrae.fr/fr/C/25197/jardibiodiv-Conseils-de-gestion-des-jardins) |
+| Pêche de loisir | La fiche donne des repères sur la protection de la ressource et le cadre de la pêche. Un contenu hors ligne doit être daté et renvoyer aux règles locales en vigueur. Un support d’initiation pratique reste à vérifier. [Respecter les tailles, les saisons et les quantités, OFB](https://ofb.gouv.fr/actions-citoyennes/respecter-a-la-peche-les-tailles-les-saisons-et-les-quantites) |
+| Champignons sauvages | La fiche de septembre 2025 documente la prévention des intoxications et l’orientation vers les centres antipoison. Elle couvre le besoin de prévention. L’identification des espèces demande une source distincte et vérifiée. [Intoxications liées à la cueillette de champignons, Anses](https://www.anses.fr/fr/article/intoxications-liees-cueillette-champignons-restez-vigilants) |
 
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche

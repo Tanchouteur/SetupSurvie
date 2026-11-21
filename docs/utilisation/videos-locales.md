@@ -126,7 +126,7 @@ passage ; le nombre de collections terminées et les pistes lisibles sont affich
 volontaire après un redémarrage ou une pause.
 
 L’examen continue si la page est fermée. Depuis la 0.89.1, les anciennes données
-terminées restent disponibles pendant le suivant et le portail vérifie régulièrement si de
+terminées restent disponibles pendant le suivant et le portail vérifie si de
 nouvelles collections ont été examinées et actualise la recherche. Les vidéos
 déjà prêtes peuvent apparaître pendant l’examen des
 collections restantes. **Actualiser le lecteur vidéo** permet aussi de demander
@@ -138,6 +138,12 @@ Depuis la version 0.51.1, les collections YouTube de Kiwix donnent leurs titres
 **Examiner ou reprendre les collections** pour récupérer les titres des archives
 déjà examinées à partir de leur catalogue embarqué. Les liens vidéo et les
 pistes déjà préparées gardent leurs références.
+
+Depuis la 0.90.0, les sous-titres déclarés dans ce catalogue rejoignent aussi
+le lecteur et la recherche lorsque leur fichier est présent et lisible dans
+le ZIM. **Examiner ou reprendre les collections** récupère ces pistes à
+partir des inventaires existants. Les chapitres restent distincts des
+sous-titres.
 
 Les autres collections utilisent le titre de la page qui contient la vidéo ou
 un nom de fichier lisible. Quand le titre manque, **Vidéo sans titre** indique
