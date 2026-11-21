@@ -8,6 +8,12 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+## Lots téléchargés par défaut — décision de Louis du 21 novembre 2026
+
+À la première installation en ligne, tous les lots de contenus proposés par
+l’installateur devront être téléchargés par défaut. Pour écarter un lot,
+l’utilisateur devra l’exclure explicitement. Ce comportement reste à mettre
+en œuvre. [Guide d’installation](../installation/README.md#installation-automatique-linux)
 
 ## Installation depuis le SSD et point de restauration — décision de Louis du 21 novembre 2026
 

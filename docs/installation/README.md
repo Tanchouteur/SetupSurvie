@@ -75,6 +75,11 @@ SetupSurvie et active le routage IPv4. Après l'installation, accéder au
 portail sur `http://127.0.0.1:8080`. Les services démarrent avec le système.
 En cas d'interruption, relancer la même commande avec les mêmes lots.
 
+**À mettre en œuvre.** Télécharger par défaut tous les lots de contenus
+proposés et permettre à l’utilisateur d’exclure explicitement ceux qu’il
+souhaite écarter. Pour l’instant, sélectionner les lots avec `--content-pack`
+comme dans la commande ci-dessus. [Décision de Louis](../decisions/choix-actuels.md#lots-téléchargés-par-défaut--décision-de-louis-du-21-novembre-2026)
+
 Avec la 0.74.0, une première installation automatique prépare GPT-OSS 20B
 et Qwen3 1,7B. Sur les machines qui détectent moins de 16 Gio de RAM,
 le profil rapide et la traduction automatique des vidéos utilisent Qwen3
