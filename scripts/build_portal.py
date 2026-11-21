@@ -85,6 +85,7 @@ def build():
         ('css', '/interface/maintenance.css'),
         ('js', '/interface/maintenance.js'),
         ('js', '/interface/device-summary.js'),
+        ('js', '/interface/home.js'),
         ('css', '/core/core.css'),
         ('js', '/core/feedback.js'),
         ('js', '/interface/navigation.js'),

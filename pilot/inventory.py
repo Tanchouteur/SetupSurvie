@@ -72,6 +72,8 @@ async def inventory():
         books.append({'id': stem, 'title': title, 'language': language,
                       'version': version, 'bytes': path.stat().st_size, 'ready': ready, 'sort_key': collection_sort.archive(path.name),**catalogue.collection_labels(stem,title,library.GUIDES,ZIMS,saved_labels),
                       'url': '/content/' + stem + '/',
+                      # Kiwix identifier of the archive: the portal shows its own illustration.
+                      'icon_id': (book.get('search_id') or '') if book else '',
                       'description': (book.get('description') if book and book.get('description') else '') or ('Articles encyclopédiques avec leurs illustrations.' if stem.startswith('wikipedia_') else 'Livres pédagogiques et guides pratiques.') if ready else ('Téléchargement incomplet.' if not complete else 'Archive présente, mais le service de lecture ne la propose pas actuellement.')})
     guides = []
     with store.connect() as db:

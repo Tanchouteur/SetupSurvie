@@ -1,6 +1,6 @@
 # Guide de design Veillée
 
-**Guide actuel — 0.63.0, 19 novembre 2026 ; compléments 0.65.0 à 0.70.0 datés dans le texte.** Il sert de référence aux
+**Guide actuel — 0.63.0, 19 novembre 2026 ; compléments 0.65.0 à 0.76.0 datés dans le texte.** Il sert de référence aux
 prochaines interventions sur l’interface. Le portail fonctionne avec ses assets
 locaux. Les usages de l’installation sont décrits dans le [guide du portail](../utilisation/portail.md).
 
@@ -137,6 +137,31 @@ le modèle chargé, la RAM et la VRAM**, utiles pour surveiller l’appareil.
   restent l’apparition courte existante (`ds-rise`) : l’API View Transitions
   rendrait le changement d’écran asynchrone pour des modules qui l’attendent
   synchrone.
+
+## Cartes, accueil et transitions — 0.76.0
+
+Demande de Louis du 21 novembre 2026 : des cartes de collections plus riches,
+un accueil plus vivant à condition qu’il soit vraiment utile, et des transitions
+animées entre les écrans.
+
+- **Cartes de collections.** Vignette de 52 px à gauche : l’illustration que
+  Kiwix fournit pour l’archive (`/catalog/v2/illustration/<id>/?size=48`), ou à
+  défaut un pictogramme du type (livre, document). Liseré de 3 px en haut,
+  braise pour les encyclopédies, vert pour les guides. Description limitée à
+  trois lignes, action en pied de carte. Au survol, la carte monte de 3 px et sa
+  vignette pivote légèrement. Une collection non prête est grisée. Les classes,
+  textes et attributs `data-*` existants sont conservés pour les filtres et tests.
+- **Accueil utile.** Sous la recherche, **Trouver par besoin** propose huit
+  tuiles (eau, santé et secours, nourriture, énergie, potager, abri et chaleur,
+  réparer, radio et alerte). Chacune lance une recherche ciblée, comme les
+  suggestions du bandeau. **Sur cet appareil** résume les contenus prêts et l’état
+  de l’assistant, et mène à Mon appareil. Pas de contenu décoratif sans action.
+- **Transitions.** Au changement d’écran ou d’onglet, la vue apparaît en fondu
+  et ses blocs glissent de 24 px dans le sens de la navigation (ordre du menu ou
+  des onglets), en cascade de 35 ms, 240 ms au total. Les blocs qui contiennent un
+  élément en position fixe (aide, lecteur, message, dialogue) gardent un simple
+  fondu. Les cartes de collections et les tuiles de l’accueil apparaissent en
+  cascade. Tout s’arrête avec `prefers-reduced-motion`.
 
 ## Mouvement et recette
 

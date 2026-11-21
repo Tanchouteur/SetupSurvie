@@ -25,6 +25,15 @@ remet en service la seconde à partir de la première. Le mécanisme reste à
 concevoir et à valider.
 [Point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026)
 
+## Cartes riches, accueil utile et transitions — demande de Louis du 21 novembre 2026
+
+Louis demande des cartes de collections plus riches et des transitions animées.
+Il accepte un accueil plus vivant à condition qu’il soit vraiment utile. La
+0.76.0 ajoute la vignette Kiwix et la couleur par type sur les cartes, les tuiles
+**Trouver par besoin** et la ligne **Sur cet appareil** sur l’accueil, ainsi
+que des transitions directionnelles. Les mesures et commandes existantes sont
+conservées. Voir le [guide de design](../architecture/guide-design.md#cartes-accueil-et-transitions--0760).
+
 ## Éléments terminés marqués comme vus — demande de Louis du 21 novembre 2026
 
 Louis voyait depuis plusieurs versions l’inventaire des vidéos « Terminé avec
