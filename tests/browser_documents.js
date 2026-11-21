@@ -11,8 +11,10 @@ async (page) => {
   await pdfResult.waitFor({state:'visible'});
   await pdfResult.locator('.favorite-toggle').click();
   await pdfResult.locator('.favorite-toggle[aria-pressed="true"]').waitFor();
-  await page.evaluate(()=>view('/bibliotheque/favoris'));await page.locator('#library-query').waitFor({state:'visible'});
-  await page.locator('#library-query').fill('calibration');await page.locator('#library-search').evaluate(f=>f.requestSubmit());
+  await page.getByRole('link',{name:'Mes favoris',exact:true}).click();
+  await page.locator('.result[data-source="guide:shelter.en.pdf"]').waitFor({state:'visible'});
+  await page.locator('#library-query').fill('calibration');
+  await page.locator('#library-search button[type="submit"]').click();
   await page.waitForFunction(()=>[...document.querySelectorAll('.result')].some(n=>n.dataset.source==='guide:shelter.en.pdf#page=6'));
   await page.reload();await page.waitForFunction(()=>S.user?.id==='browser');
   const saved=await(await page.request.get(base+'/api/favorites')).json();
