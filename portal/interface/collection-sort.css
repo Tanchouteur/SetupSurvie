@@ -52,6 +52,10 @@
 .next-interface .organizer-subbar .text-button { margin: 0 0 0 auto; }
 @media (prefers-reduced-motion: reduce) { .organizer-chevron { transition: none; } }
 .organizer-group ul { list-style: none; margin: 0; padding: 0; }
+.organizer-reference-content { padding: .75rem 1rem; }
+.organizer-reference-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .2rem 1rem; padding: .6rem .75rem; border-top: 1px solid var(--ds-line); }
+.organizer-reference-row[data-status="missing"] { background: var(--ds-surface-2); color: var(--ds-ink-2); }
+.organizer-reference-row .organizer-name { flex: 1 1 16rem; }
 .organizer-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: .7rem 1rem; border-top: 1px solid var(--ds-line, #e5dbc9); border-left: 3px solid var(--org-main); }
 .organizer-row[data-state="other"] { border-left-color: var(--org-other); }
 .organizer input[type=checkbox] { width: 1.2rem; height: 1.2rem; margin: 0; accent-color: var(--ds-ember, #b5400e); }

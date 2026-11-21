@@ -284,8 +284,7 @@ class Manager:
         state = self.current()
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
-        if action=='collection-exclude':self.check_storage(0)
-        else:self.check_storage()
+        storage = self.check_storage(0) if action=='collection-exclude' else self.check_storage()
         if action == 'category-index':
             if not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
             if index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’indexation après la pause.')
@@ -337,7 +336,38 @@ class Manager:
                 'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages)),'include_supplements':supplements}}
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'download':
-            if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error'):
+            if 'reference_archive' in body:
+                import library_reference
+                archive = body['reference_archive']
+                root, scope = storage
+                reference = library_reference.load()
+                item = next((item for item in reference['items'] if Path(item['path']).name == archive), None)
+                if item is None:
+                    raise setup.SetupError('Cette édition ne figure pas dans la référence.')
+                if not collection_sort.load(root/'catalog').permits(collection_sort.path_key(item['path']), 'all'):
+                    raise setup.SetupError('Cette collection est exclue par le classement actuel.')
+                previous_download = state['phase'] == 'planned' or (
+                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted')
+                )
+                if previous_download:
+                    if state.get('options', {}).get('reference_archive') != archive:
+                        raise setup.SetupError('Reprenez d’abord le téléchargement précédent depuis la File d’attente.')
+                else:
+                    if content.destination(root, item['path']).exists():
+                        raise setup.SetupError('Cette édition est déjà sur le disque. Actualisez la comparaison.')
+                    report = library_reference.preview(root, {'items': [item]}, collection_sort.load(root/'catalog'), storage_root=scope)
+                    if report['download_bytes'] + content.STORAGE_RESERVE > report['available_bytes']:
+                        raise setup.SetupError('L’espace libre est insuffisant pour télécharger cette archive.')
+                    state = {'id': uuid.uuid4().hex, 'phase': 'planned', 'options': {'reference_archive': archive}}
+                    folder = self.paths(state['id'])
+                    folder.mkdir(parents=True)
+                    setup.write_json(folder/'plan.json', {
+                        'schema': 1, 'kind': library_reference.KIND, 'items': [item],
+                        'candidates': [], 'remaining_download_bytes': report['download_bytes'],
+                        'missing_themes': [], 'library_bytes': 0, 'include_supplements': False,
+                    }, private=True)
+                body = {'id': state['id']}
+            if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error', 'interrupted'):
                 raise setup.SetupError('Préparez une sélection avant de télécharger.')
             plan_path = self.paths(state['id']) / 'plan.json'
             if not plan_path.is_file() or not content.catalog(plan_path):

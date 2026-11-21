@@ -61,6 +61,27 @@ class LibraryJobTests(unittest.TestCase):
         marker.unlink()
         self.assertFalse(self.manager.queue_paused())
 
+    def test_reference_download_pins_only_the_requested_edition_and_keeps_previous_plan(self):
+        import library_reference
+
+        item = {**self.item, 'classification': 'main'}
+        archive = Path(item['path']).name
+        worker = MagicMock(pid=os.getpid())
+        with patch.object(library_reference, 'load', return_value={'items': [item]}), \
+             patch.object(jobs.subprocess, 'Popen', return_value=worker) as launch:
+            with self.assertRaisesRegex(setup.SetupError, 'ne figure pas'):
+                self.manager.start('download', {'reference_archive': 'old.zim'})
+            launch.assert_not_called()
+            job = self.manager.start('download', {'reference_archive': archive})
+            self.assertEqual(content.catalog(self.manager.paths(job)/'plan.json'), [item])
+            self.assertEqual(self.manager.status()['plan']['count'], 1)
+            self.assertEqual(self.manager.status()['action'], 'download')
+
+            self.manager.write({**self.manager.read(), 'phase': 'paused', 'options': {}})
+            with self.assertRaisesRegex(setup.SetupError, 'téléchargement précédent'):
+                self.manager.start('download', {'reference_archive': archive})
+            launch.assert_called_once()
+
     def test_index_requires_finished_reader_preparation_and_reports_progress(self):
         with self.assertRaises(setup.SetupError):self.manager.start('index',{})
         binary=self.manager.index_python();binary.parent.mkdir(parents=True);binary.touch()

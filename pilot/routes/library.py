@@ -87,6 +87,15 @@ async def preview_library_reference(value=Depends(admin)):
     return await operations.library_command('reference-preview')
 
 
+class ReferenceDownload(BaseModel):
+    archive: str = Field(min_length=1, max_length=240)
+
+
+@router.post('/api/admin/library/reference/download',status_code=202)
+async def download_reference_archive(body:ReferenceDownload,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_archive': body.archive})
+
+
 @router.post('/api/admin/library/collection-sort/{action}')
 async def change_collection_sort(action:Literal['move','preview','exclude'],body:CollectionBatch,value=Depends(admin)):
     return await operations.library_command('collection-'+action,body.model_dump())

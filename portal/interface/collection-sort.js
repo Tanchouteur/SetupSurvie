@@ -35,6 +35,14 @@
     <p id="organizer-delete-status" class="organizer-status" role="status" aria-live="polite"></p>
     <a id="organizer-delete-queue" class="secondary-link" href="#/file" data-route="file" hidden>Voir la file d’attente →</a>
     <div id="organizer-browse">
+      <details id="organizer-reference" class="organizer-group">
+        <summary class="organizer-group-head">Comparer avec la bibliothèque de référence</summary>
+        <div class="organizer-reference-content">
+          <p id="organizer-reference-status" class="organizer-status" role="status"></p>
+          <ul id="organizer-reference-rows"></ul>
+          <button type="button" class="secondary" id="organizer-reference-refresh">Actualiser</button>
+        </div>
+      </details>
       <div class="organizer-toolbar">
         <label class="organizer-search"><span class="sr-only">Chercher une collection</span>
           <input type="search" id="organizer-filter" maxlength="160" placeholder="Chercher une collection : Wikipédia, cuisine, vidéos…" autocomplete="off"></label>
@@ -79,6 +87,68 @@
   const openGroups=new Set();  // families are folded until opened
   const status=$('organizer-status');
   const say=text=>{status.textContent=text||'';};
+  const reference=$('organizer-reference');
+  const referenceRefresh=$('organizer-reference-refresh');
+  const referenceStatus=$('organizer-reference-status');
+  const referenceJobs=new Set();
+  const referenceLabels={
+    missing:'À télécharger', size_mismatch:'Taille différente',
+    other_edition:'Autre édition', extra:'Hors référence',
+    main:'Fonds principal', other:'Autre', excluded:'Exclue'
+  };
+
+  async function refreshReference(){
+    if(referenceRefresh.disabled||!admin())return;
+    referenceRefresh.disabled=true;
+    referenceStatus.textContent='Comparaison en cours…';
+    try{
+      const report=await api('/admin/library/reference',undefined,{cache:'no-store'});
+      const differences=report.archives.filter(row=>row.status!=='size_matches'||row.state!==row.expected_state);
+      const titles=new Map(report.archives.filter(row=>row.title).map(row=>[row.archive,row.title]));
+      $('organizer-reference-rows').replaceChildren(...differences.map(row=>{
+        const entry=element('li',undefined,'organizer-reference-row');
+        entry.dataset.status=row.status;
+        const name=element('div',undefined,'organizer-name');
+        name.append(element('strong',row.title||titles.get(row.expected)||row.archive));
+        if((row.title||row.expected)&&row.archive)name.append(element('span',row.archive,'organizer-file'));
+        const note=[referenceLabels[row.status]];
+        if(row.state!==row.expected_state&&row.expected_state)note.push(`${referenceLabels[row.state]} → ${referenceLabels[row.expected_state]}`);
+        if(row.remaining_bytes)note.push(bytes(row.remaining_bytes)+' à télécharger');
+        entry.append(name,element('span',note.filter(Boolean).join(' · '),'organizer-meta'));
+        if(row.status==='missing'&&row.state!=='excluded'){
+          const download=element('button',referenceJobs.has(row.archive)?'Dans la File d’attente':'Télécharger','secondary');
+          download.type='button';
+          download.disabled=referenceJobs.has(row.archive);
+          download.setAttribute('aria-label','Télécharger '+(row.title||row.archive));
+          download.onclick=async()=>{
+            download.disabled=true;
+            try{
+              await api('/admin/library/reference/download',{archive:row.archive});
+              referenceJobs.add(row.archive);
+              download.textContent='Dans la File d’attente';
+              const queue=element('a','Voir la file d’attente →','secondary-link');
+              queue.href='#/file';queue.dataset.route='file';
+              referenceStatus.replaceChildren('Téléchargement demandé. ',queue);
+            }catch(error){
+              download.disabled=false;
+              referenceStatus.textContent='Téléchargement non lancé. '+friendly(error);
+            }
+          };
+          entry.append(download);
+        }
+        return entry;
+      }));
+      const comparison=differences.length?plural(differences.length,'écart','écarts')+' avec la référence.':'Aucun écart de fichier ou de classement.';
+      const transfer=report.download_bytes?` ${bytes(report.download_bytes)} à télécharger. ${bytes(report.available_bytes)} disponibles.`:'';
+      referenceStatus.textContent=comparison+transfer+' La taille des archives présentes a été contrôlée.';
+    }catch(error){
+      referenceStatus.textContent='Comparaison indisponible. '+friendly(error);
+    }finally{
+      referenceRefresh.disabled=false;
+    }
+  }
+  reference.addEventListener('toggle',()=>{if(reference.open)refreshReference();});
+  referenceRefresh.onclick=()=>{referenceJobs.clear();refreshReference();};
 
   function cardTags(){
     const state=new Map(rows.map(row=>[row.key,row.state]));
@@ -279,6 +349,7 @@
     }finally{
       for(const key of keys)pending.delete(key);
       await refresh();
+      if(reference.open)refreshReference();
     }
   }
   function step(confirming){

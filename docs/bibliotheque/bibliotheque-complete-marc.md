@@ -82,6 +82,13 @@ publier. Cette observation ne décrit pas la liste
 des PDF de Marc. [Page de l’Anses](https://www.anses.fr/fr/article/confusion-entre-plantes-toxiques-plantes-comestibles)
 
 
+Dans **Mon appareil → Bibliothèque → Organiser les collections**, la section
+**Comparer avec la bibliothèque de référence** affiche les fichiers manquants,
+les éditions différentes et les changements de classement. Le contrôle rapide
+compare la taille des archives présentes. **Télécharger** demande l’édition
+indiquée et ouvre un lien vers la **File d’attente**. Le serveur contrôle
+l’empreinte pendant le téléchargement.
+
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :
 
