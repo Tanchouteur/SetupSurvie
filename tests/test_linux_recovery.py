@@ -79,6 +79,16 @@ class LinuxRecoveryTests(unittest.TestCase):
         self.assertFalse((self.state / 'point').exists())
         self.assertEqual((self.active / 'data/guide.txt').read_bytes(), self.files['data/guide.txt'])
 
+    def test_group_writable_application_directory_is_protected_on_copy_and_resume(self):
+        self.journal['inventory']['directories'].append('application/deploy')
+        self.journal['inventory']['directory_modes']['application/deploy'] = 0o775
+        recovery.fill_target(self.source, self.active, self.journal)
+        directory = self.active / 'application/deploy'
+        self.assertEqual(directory.stat().st_mode & 0o777, 0o755)
+        directory.chmod(0o775)
+        recovery.fill_target(self.source, self.active, self.journal)
+        self.assertEqual(directory.stat().st_mode & 0o777, 0o755)
+
     def test_prepare_uses_cpu_on_the_portable_working_copy(self):
         recovery.fill_target(self.source, self.active, self.journal, portable_cpu=True)
         transfer.prepare(self.active)

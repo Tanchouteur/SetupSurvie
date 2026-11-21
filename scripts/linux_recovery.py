@@ -141,6 +141,20 @@ def copy_payload(source, target, journal):
                                       'mtime_ns': info.st_mtime_ns, 'mode': 0o600}, journal[key])
     transfer.manifest_links(target, inventory, publish=True)
     transfer.restore_directory_modes(target, inventory)
+    restrict_application_directories(target, inventory)
+
+
+def restrict_application_directories(target, inventory):
+    # A transfer can come from a workspace with group-writable directories.
+    # The dedicated system service may only load code from protected paths.
+    names = ['application'] + [name for name in inventory['directories']
+                               if name.startswith('application/')]
+    for name in names:
+        path = destination(target, name)
+        mode = stat.S_IMODE(path.stat().st_mode)
+        if mode & 0o022:
+            path.chmod(mode & ~0o022)
+            durable.sync_directory(path)
 
 
 def partial_size(target, relative):
@@ -191,6 +205,7 @@ def fill_target(source, target, journal, *, detached=False, portable_cpu=False):
         local = transfer.read(target / 'transfer.json')
         if local.get('id') != journal['id']:
             raise setup.SetupError('La copie présente correspond à un autre support.')
+        restrict_application_directories(target, journal['inventory'])
         return
     copy_payload(source, target, journal)
     local = deepcopy(journal)
