@@ -178,7 +178,7 @@ def restore_snapshot(snapshot,app,c):
     report=json.loads((snapshot/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(snapshot,report)
     data=Path(c['data_dir'])
     for entry,_ in entries:
-        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json'):
+        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json','data/catalog/collection-sort.json'):
             raise setup.SetupError('Sauvegarde non reconnue ; restauration manuelle requise.')
     # Only mutable service state; models, ZIM and caches are never removed.
     for name in ('state/pilot','state/caddy'):

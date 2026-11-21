@@ -193,7 +193,11 @@ class UpdateTests(unittest.TestCase):
         index=self.data/'state/pilot/category-index/book.sqlite'
         index.parent.mkdir(parents=True);index.write_bytes(b'rebuildable-index')
         (index.parent/'progress.json').write_text('{"phase":"completed"}')
-        with self.assertRaises(setup.SetupError):self.run_update(fail=True)
+        # Saved by every backup since the collection sort exists; rollback must accept it.
+        sort=self.data/'catalog/collection-sort.json'
+        sort.parent.mkdir(parents=True,exist_ok=True);sort.write_text('{"schema":1}')
+        with self.assertRaisesRegex(setup.SetupError,'Unhealthy'):self.run_update(fail=True)
+        self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
         operation=next(path for path in (self.root.parent/'updates').iterdir())
         report=json.loads((operation/'snapshot/backup.json').read_text(encoding='utf-8'))
         saved={entry['path'] for entry in report['files']}
