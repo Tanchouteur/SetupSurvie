@@ -96,10 +96,11 @@ def save_youtube_titles(db, archive, check):
     titles={}
     conflicts=set()
     if candidates:
+        entry_by_id = getattr(archive, 'get_entry_by_id', None) or archive._get_entry_by_id
         for index in range(archive.entry_count):
             if index%128==0:
                 check()
-            entry=archive._get_entry_by_id(index)
+            entry=entry_by_id(index)
             if entry.is_redirect or not re.fullmatch(r'videos/[^/]+\.json',entry.path):
                 continue
             try:

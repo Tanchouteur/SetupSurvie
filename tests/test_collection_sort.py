@@ -1,4 +1,5 @@
 """The catalogue sort is portable and prevents old plans from restoring a deleted ZIM."""
+import json
 import asyncio
 from pathlib import Path
 import sys
@@ -113,20 +114,30 @@ class CategorySearchTests(unittest.TestCase):
             self.addCleanup(p.stop)
         store.init()
 
-    def test_search_queries_only_the_precomputed_category_and_global_search_uses_kiwix(self):
+    def test_reference_fallback_uses_the_category_index_and_respects_collection_sort(self):
         prepared=category_index.prepare(self.root,self.state,reserve=0)
         self.assertEqual(prepared['phase'],'completed')
         self.assertGreater(prepared['bytes'],0)
         with patch.object(library,'search_archives',AsyncMock(return_value=([],{'status':'complete'}))) as native:
             practical = asyncio.run(library.search('conservation des aliments', kind='documents', domain='resilience'))
-            self.assertFalse(practical)
+            self.assertEqual(practical[0]['title'], 'Conservation des aliments')
+            self.assertTrue(practical[0]['reference_fallback'])
+            self.assertEqual(practical[0]['domains'], ['culture'])
+            self.assertEqual(native.call_args.kwargs['skip_native'], (self.zim.stem,))
             found = asyncio.run(library.search('conservation des aliments', kind='documents', domain='culture'))
             self.assertEqual(found[0]['title'], 'Conservation des aliments')
             self.assertEqual(found[0]['classification']['source_role'], 'reference')
+            self.assertNotIn('reference_fallback', found[0])
             self.assertEqual(native.call_args.kwargs['skip_native'],(self.zim.stem,))
             self.assertEqual(found.coverage['category_index']['searched'],1)
             asyncio.run(library.search('conservation des aliments',kind='documents',domain='all'))
             self.assertEqual(native.call_args.kwargs['skip_native'],())
+            catalog_dir = self.root / 'catalog'
+            catalog_dir.mkdir(exist_ok=True)
+            (catalog_dir / collection_sort.FILENAME).write_text(json.dumps(
+                collection_sort.Sort().change([collection_sort.archive(self.zim.name)], 'other').as_json()
+            ))
+            self.assertFalse(asyncio.run(library.search('conservation des aliments', kind='documents', domain='resilience')))
 
     def test_correction_invalidates_then_rebuilds_the_category_index(self):
         from pilot import catalogue

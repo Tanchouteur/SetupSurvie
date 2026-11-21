@@ -26,7 +26,7 @@ orientent la recette de classement et de filtrage.
 | Rôle | Sources de départ | Usage dans la recherche |
 | --- | --- | --- |
 | Guide pratique | Fiches OMS, manuels Hesperian, Appropedia, tutoriels iFixit, guides de premiers secours | Candidats à Autonomie et résilience. Vérifier que l’article ou la fiche propose une méthode utile pour la requête. |
-| Référence | Wikipédia, encyclopédies | Savoirs et culture et enrichissement de la recherche générale. Un article qui contient une méthode peut être proposé à l’examen humain pour Autonomie. |
+| Référence | Wikipédia, encyclopédies | Savoirs et culture et recherche générale. En Autonomie, Wikipédia et Vikidia du Fonds principal peuvent aussi donner des repères encyclopédiques en l’absence d’un guide qui traite directement du sujet. |
 | Langue | Dictionnaires et Wiktionnaire | Recherche de définitions et de vocabulaire. |
 | Culture | Gutenberg et autres fonds littéraires ou culturels | Consultation culturelle et recherche générale. |
 
@@ -239,3 +239,36 @@ Le rapport conserve la couverture, l’ordre et les titres. Il indique si le
 lecteur a renvoyé du texte. L’analyse de la pertinence et la lecture humaine
 des passages restent à ajouter. Conserver chaque rapport dans un dossier de
 recette hors du dépôt.
+
+
+### Comparer la recherche sur les thèmes de Marc
+
+La grille `tests/fixtures/domain-evaluation/besoins-marc-2026-11-21.json`
+contient 136 requêtes pour 68 thèmes. Comparer le classement précédent,
+le repli encyclopédique seul, le filtre PDF seul et les deux réglages
+ensemble sur le même catalogue Kiwix, le même tri et les mêmes index.
+Relever les requêtes sans résultat, les trois premiers titres, la place des
+guides attendus et les recherches partielles. Un résultat présent demande
+une lecture du passage avant de déclarer le besoin couvert. Comparer les
+latences avec des caches dans le même état.
+
+Le repère encyclopédique garde le classement documentaire de l’article.
+La recherche en Autonomie en ajoute jusqu’à trois après les premiers
+résultats si aucun guide ou article pratique ne traite directement du
+sujet. Son titre doit correspondre au sujet demandé. Un passage PDF doit faire correspondre le sujet dans le titre et
+l’extrait pris ensemble. Ces règles permettent de distinguer un résultat
+sur le sujet d’une simple mention dans le reste de la page.
+
+Sur le laboratoire isolé, les téléchargements alimentent bien la file
+persistante de préparation. Le contrôleur hôte dédié n’y étant pas joignable,
+lancer explicitement les deux outils sur le SSD et contrôler les deux
+`progress.json` dans `data/state/pilot/archive-index/` et
+`data/state/pilot/zim-videos/`. L’inventaire indique les pistes réellement
+détectées. Le lecteur libzim 4.x expose une méthode publique de lecture
+que l’inventaire utilise aussi pour les titres des vidéos YouTube archivées.
+La création ou traduction des sous-titres est une étape distincte.
+
+Le relevé du 21 novembre a parcouru les 136 requêtes sur 89 collections
+servies. Il a trouvé 47 requêtes sans résultat et signalé une couverture
+partielle pour chaque requête. Les archives et les index en cours de
+préparation restent à couvrir avant de conclure à des lacunes documentaires.
