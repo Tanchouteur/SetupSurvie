@@ -284,12 +284,14 @@ try {
     try {
         $entry = Join-Path $scripts 'install-all-windows.ps1'
         Copy-Item -LiteralPath (Join-Path $root 'scripts\install-all-windows.ps1') -Destination $entry
-        Set-Content -LiteralPath (Join-Path $fixture 'manifest.json') -Value '{}'
+        $kitIdentity = [guid]::NewGuid().ToString()
+        Set-Content -LiteralPath (Join-Path $fixture 'manifest.json') -Value ('{"id":"' + $kitIdentity + '"}')
         . $entry
         function Read-Host { throw 'An embedded kit should be detected without asking' }
         $actual = Select-SurvieInstallKit $survieInstallerScripts
-        $expected = (Resolve-Path -LiteralPath $fixture).ProviderPath
-        Assert ($actual -and (Resolve-Path -LiteralPath $actual).ProviderPath -eq $expected) 'The double-clicked launcher must use its own kit'
+        Assert $actual 'The double-clicked launcher must find a kit'
+        $selectedManifest = Get-Content -LiteralPath (Join-Path $actual 'manifest.json') -Raw | ConvertFrom-Json
+        Assert ($selectedManifest.id -eq $kitIdentity) 'The double-clicked launcher must use its own kit'
     } finally {
         Remove-Item -LiteralPath $fixture -Recurse -Force
     }
