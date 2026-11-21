@@ -77,7 +77,7 @@ def exclude(root, keys, token):
                 continue
             index_name = archive_index.index_name(name.removeprefix('library/zim/'))
             for folder_name in ('archive-index', category_index.DIRECTORY):
-                for suffix in ('.sqlite', '.building', '.building-journal'):
+                for suffix in ('.sqlite', '.building', '.building-journal', '.compressing'):
                     destination(root, f'state/pilot/{folder_name}/' + index_name + suffix).unlink(missing_ok=True)
         if any(key.startswith('zim:') for key in keys):
             with search_index_queue.edit(root) as queue:
