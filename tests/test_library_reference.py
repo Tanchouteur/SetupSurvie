@@ -104,6 +104,27 @@ class LibraryReferenceTests(unittest.TestCase):
         with self.assertRaises(setup.SetupError):
             ref.read_names(plain)
 
+    def test_preview_preserves_explicit_sort_and_estimates_remaining_download(self):
+        wikis = 'gutenberg_fr_all_2026-01.zim'
+        current_video = 'cest-pas-sorcier_fr_energie_2024-11.zim'
+        old_video = 'cest-pas-sorcier_fr_energie_2023-01.zim'
+        initial = collection_sort.Sort(other=frozenset({'zim:gutenberg_fr_all'}))
+        data = self.build([wikis, current_video], sorting=initial)
+        folder = self.root/'library/zim'
+        folder.mkdir(parents=True)
+        (folder/wikis).write_bytes(RAW)
+        (folder/old_video).write_bytes(b'previous')
+        (folder/(current_video+'.part')).write_bytes(RAW[:4])
+        state = collection_sort.Sort()
+        report = ref.preview(self.root, data, state)
+        self.assertEqual(report['download_bytes'], len(RAW)-4)
+        rows = {row['archive']: row for row in report['archives']}
+        self.assertEqual(rows[wikis]['status'], 'size_matches')
+        self.assertEqual((rows[wikis]['state'], rows[wikis]['expected_state']), ('main','other'))
+        self.assertEqual(rows[old_video]['expected'], current_video)
+        self.assertEqual(rows[current_video]['remaining_bytes'], len(RAW)-4)
+        self.assertTrue((folder/old_video).is_file())
+
     def test_diff_reports_archive_and_sort_changes_since_the_snapshot(self):
         before = ['gutenberg_fr_all_2026-01.zim', 'evageeks_en_all_maxi_2022-11.zim', 'ifixit_fr_all_2026-03.zim']
         after = ['gutenberg_fr_all_2026-11a.zim', 'ifixit_fr_all_2026-03.zim', 'zimgit-knots_en_2024-08.zim']
@@ -120,6 +141,49 @@ class LibraryReferenceTests(unittest.TestCase):
         folder = Path(__file__).resolve().parents[1] / 'docs/bibliotheque/inventaires'
         self.assertEqual(len(ref.read_names(folder / 'marc-2026-11-21-archives.tsv')), 115)
         collection_sort.read_file(folder / 'marc-2026-11-21-tri.json')
+
+    def test_restoration_confirmation_covers_exact_editions_and_rejects_a_changed_snapshot(self):
+        title = 'cest-pas-sorcier_fr_energie_2024-11.zim'
+        previous = 'cest-pas-sorcier_fr_energie_2023-01.zim'
+        extra = 'notes_fr_all_2026-01.zim'
+        data = self.build([title], sorting=collection_sort.Sort(other=frozenset({'zim:cest-pas-sorcier_fr_energie'})))
+        folder = self.root/'library/zim'
+        folder.mkdir(parents=True)
+        (folder/previous).write_bytes(b'old')
+        (folder/extra).write_bytes(b'extra')
+
+        first = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual([row['archive'] for row in first['downloads']], [title])
+        self.assertEqual({row['archive'] for row in first['removals']}, {previous, extra})
+        self.assertEqual(first['moves'][0]['expected_state'], 'other')
+        (folder/(title+'.part')).write_bytes(RAW[:3])
+        second = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual(first['confirmation_token'], second['confirmation_token'])
+        self.assertEqual(second['download_bytes'], len(RAW)-3)
+        (folder/previous).write_bytes(b'changed')
+        third = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertNotEqual(second['confirmation_token'], third['confirmation_token'])
+        self.assertTrue((folder/previous).is_file())
+
+    def test_preview_only_uses_the_recorded_checksum_for_the_current_file_revision(self):
+        import search_index_queue
+
+        archive = 'gutenberg_fr_all_2026-01.zim'
+        data = self.build([archive])
+        item = data['items'][0]
+        path = self.root/item['path']
+        path.parent.mkdir(parents=True)
+        wrong = b'x'*len(RAW)
+        path.write_bytes(wrong)
+        search_index_queue.enqueue(self.root, {**item, 'sha256': hashlib.sha256(wrong).hexdigest()})
+        plan = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual(plan['downloads'][0]['status'], 'hash_mismatch')
+        self.assertFalse(plan['conform'])
+        path.write_bytes(RAW)
+        changed = ref.preview(self.root, data, collection_sort.Sort())
+        self.assertEqual(changed['counts'], {'size_matches': 1})
+        search_index_queue.enqueue(self.root, item)
+        self.assertEqual(ref.preview(self.root, data, collection_sort.Sort())['counts'], {'ok': 1})
 
     def test_shipped_reference_is_valid_and_respects_the_default_sort(self):
         data = ref.load()

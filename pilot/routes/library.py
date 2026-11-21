@@ -82,6 +82,34 @@ async def export_collection_sort(value=Depends(admin)):
     return JSONResponse(sorting.as_json(),headers={'Content-Disposition':'attachment; filename="SetupSurvie-tri.json"'})
 
 
+@router.get('/api/admin/library/reference')
+async def preview_library_reference(value=Depends(admin)):
+    return await operations.library_command('reference-preview')
+
+
+@router.get('/api/admin/library/reference/restoration')
+async def preview_reference_restoration(value=Depends(admin)):
+    return await operations.library_command('reference-preview', {'restore': True})
+
+
+class ReferenceDownload(BaseModel):
+    archive: str = Field(min_length=1, max_length=240)
+
+
+class ReferenceRestoration(BaseModel):
+    confirmation_token: str = Field(pattern='^[a-f0-9]{64}$')
+
+
+@router.post('/api/admin/library/reference/restoration',status_code=202)
+async def restore_library_reference(body:ReferenceRestoration,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_confirmation': body.confirmation_token})
+
+
+@router.post('/api/admin/library/reference/download',status_code=202)
+async def download_reference_archive(body:ReferenceDownload,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_archive': body.archive})
+
+
 @router.post('/api/admin/library/collection-sort/{action}')
 async def change_collection_sort(action:Literal['move','preview','exclude'],body:CollectionBatch,value=Depends(admin)):
     return await operations.library_command('collection-'+action,body.model_dump())

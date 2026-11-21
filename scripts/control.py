@@ -268,7 +268,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
+        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
@@ -291,6 +291,15 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path.startswith('/library/'):
             try:
+                if self.path == '/library/reference-preview':
+                    import library_reference
+                    from pilot import collection_sort
+                    root, scope = self.server.library.check_storage(0)
+                    inspect = library_reference.restoration_plan if body.get('restore') is True else library_reference.preview
+                    result = inspect(root, library_reference.load(),
+                                     collection_sort.load(root/'catalog'), storage_root=scope)
+                    self.respond(200, result)
+                    return
                 with self.server.lock:
                     if self.path in ('/library/collection-move','/library/collection-preview'):
                         import collection_tasks

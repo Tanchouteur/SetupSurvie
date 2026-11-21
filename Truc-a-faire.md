@@ -13,7 +13,7 @@
   - afficher aussi les collections du manifeste absentes de l'installation, grisées, avec un bouton **Télécharger** par collection ;
   - montrer l'écart avec le manifeste : manquante, autre édition, hors référence, taille ou empreinte différente (même logique que `library_reference.py verify`) ;
   - bouton en haut **Revenir à l'état du manifeste**, avec confirmation détaillée (ce qui sera téléchargé, retiré ou reclassé, place nécessaire) : téléchargements suivis dans la File d'attente, aucune suppression sans confirmation ;
-  - à développer puis à tester sur le labo Bazzite (ordinateur et téléphone), en plus de la campagne de tests de la bibliothèque complète ;
+  - Le rapprochement et la confirmation sont implémentés. La recette sur le fonds réel du labo Bazzite reste à faire, sur ordinateur et téléphone ;
   - réutiliser la vérification rapide et la File d’attente pour les plans figés. Indiquer quand seule la taille a été contrôlée. Pour remplacer une édition, cibler le fichier exact confirmé et conserver l’ancienne édition jusqu’à vérification de la nouvelle. La suppression actuelle agit sur toute la famille de la collection.
   - **Décision de Louis du 21/11** : cette page **remplace « Enrichir la bibliothèque »** dans le portail. Raisons : Enrichir prend les dernières éditions (dérive par rapport à la référence), choisit par mots-clés hors référence, crée des doublons d'édition, et remplace le plan suivi par la reprise automatique (un seul plan à la fois). La découverte par thème (`kiwix_select.py`) reste un outil en ligne de commande pour proposer des ajouts à la référence. D'ici là, ne pas utiliser Enrichir chez Marc.
 - Campagne de tests sur le labo Bazzite (fonds de référence complet) :

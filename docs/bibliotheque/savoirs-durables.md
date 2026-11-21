@@ -96,11 +96,10 @@ restent à examiner. Un compteur de repères ne certifie pas une couverture comp
   entretenir → transmettre**. Les parcours et la recherche restent accessibles
   sans modèle chargé ; une question n’est générée qu’après envoi et disponibilité
   du moteur. Une pause IA n’est pas levée.
-- **Données locales → Enrichir la bibliothèque** : 38 thèmes. Les nouveaux thèmes
-  couvrent sciences, mesure, textile, matériaux, machines, métallurgie, chimie
-  pratique, organisation et histoire des techniques. Les axes existants sont
-  approfondis. Les anciennes sélections conservent leurs choix : cocher les
-  nouveaux thèmes puis préparer une nouvelle sélection.
+- La sélection en ligne de commande connaît 38 thèmes, dont sciences,
+  mesure, textile, matériaux, machines, métallurgie, chimie pratique,
+  organisation et histoire des techniques.
+  [Sélection par thème](selection-kiwix-par-theme.md)
 - Les thèmes peuvent sélectionner des manuels déjà référencés : mathématiques,
   lecture, semences, jardin scolaire, mesure du chlore, santé et prévention en
   atelier. Un guide commun à plusieurs thèmes est téléchargé une seule fois.

@@ -16,13 +16,15 @@ import urllib.parse
 import content
 import kiwix_select
 import setup
-from pilot import collection_sort
+from pilot import collection_sort, durable
+from delivery_paths import locked
 
 KIND = 'SetupSurvie library reference'
 PATH = setup.ROOT / 'deploy/library-reference.json'
 DEFAULT_SORT = setup.ROOT / 'deploy/collection-sort-default.json'
 EDITION = re.compile(r'_(\d{4}-\d{2})[a-z]?\.zim$')
 ZIM_NAME = re.compile(r'[a-z0-9][a-z0-9_.-]*_\d{4}-\d{2}[a-z]?\.zim')
+REPLACEMENTS = ('size_mismatch', 'hash_mismatch')
 
 
 def load(path=PATH):
@@ -109,10 +111,11 @@ def build(names, additions, entries, *, sorting, reader=metalink, reference=''):
             'total_bytes': sum(item['bytes'] for item in items)}
 
 
-def sha256(path):
+def sha256(path, check=lambda: None):
     value = hashlib.sha256()
     with path.open('rb') as handle:
         for block in iter(lambda: handle.read(8 * 1024 * 1024), b''):
+            check()
             value.update(block)
     return value.hexdigest()
 
@@ -143,6 +146,190 @@ def verify(root, data, *, deep=False):
         counts[row['status']] = counts.get(row['status'], 0) + 1
     conform = not any(row['status'] in ('missing', 'size_mismatch', 'hash_mismatch', 'other_edition') for row in rows)
     return {'reference': data.get('reference', ''), 'conform': conform, 'counts': counts, 'archives': rows}
+
+
+def preview(root, data, sorting, *, storage_root=None):
+    """Describe the exact files and ranking changes for a reconciliation."""
+    import search_index_queue
+
+    report = verify(root, data)
+    expected = {Path(item['path']).name: item for item in data['items']}
+    try:
+        queue = search_index_queue.read(root)
+        indexed_revisions = {**queue['completed'], **queue['pending']}
+    except (OSError, ValueError, setup.SetupError):
+        indexed_revisions = {}
+    download_bytes = 0
+    for row in report['archives']:
+        name = row['archive']
+        key = collection_sort.archive(name)
+        row.update(key=key, state=sorting.state(key))
+        item = expected.get(name)
+        if item is None:
+            continue
+        row.update(title=item['title'], expected_state=item['classification'])
+        saved = indexed_revisions.get(item['path'])
+        if row['status'] == 'size_matches' and isinstance(saved, dict) and re.fullmatch('[a-f0-9]{64}', str(saved.get('sha256'))):
+            path = content.destination(root, item['path'])
+            revision = file_revision(path)
+            if revision and revision[:2] == [saved.get('bytes'), saved.get('mtime_ns')]:
+                row['status'] = 'ok' if saved.get('sha256') == item['sha256'] else 'hash_mismatch'
+        if row['status'] == 'missing' or row['status'] in REPLACEMENTS:
+            partial = content.destination(root, item['path'] + '.part')
+            staged = content.destination(root, item['path'] + '.verified')
+            offset = (file_revision(partial) or [0])[0]
+            if row['status'] in REPLACEMENTS and (file_revision(staged) or [0])[0] == item['bytes']:
+                offset = item['bytes']
+            row['remaining_bytes'] = item['bytes'] - offset if 0 <= offset <= item['bytes'] else item['bytes']
+            download_bytes += row['remaining_bytes']
+    counts = {}
+    for row in report['archives']:
+        counts[row['status']] = counts.get(row['status'], 0) + 1
+    return {**report, 'counts': counts, 'conform': report['conform'] and not counts.get('hash_mismatch'),
+            'download_bytes': download_bytes,
+            'available_bytes': content.free_space(root, storage_root)}
+
+
+def file_revision(path):
+    try:
+        stat = path.stat()
+    except FileNotFoundError:
+        return None
+    if not path.is_file():
+        raise setup.SetupError('Un fichier de la bibliothèque est devenu inaccessible.')
+    return [stat.st_size, stat.st_mtime_ns, stat.st_ino]
+
+
+def restoration_plan(root, data, sorting, *, storage_root=None):
+    """Bind confirmation to the exact files, editions and tri being reviewed."""
+    report = preview(root, data, sorting, storage_root=storage_root)
+    items = {Path(item['path']).name: item for item in data['items']}
+    downloads, removals, moves, observed = [], [], [], []
+    for row in report['archives']:
+        name = row['archive']
+        status = row['status']
+        expected = items.get(name)
+        revision = None
+        if status != 'missing':
+            revision = file_revision(content.destination(root, 'library/zim/' + name))
+            if revision is None:
+                raise setup.SetupError('Le contenu a changé pendant la comparaison. Actualisez la liste.')
+            observed.append([name, revision])
+        if expected and (status == 'missing' or status in REPLACEMENTS):
+            downloads.append({**row, 'sha256': expected['sha256'], 'revision': revision})
+        if status in ('extra', 'other_edition'):
+            removals.append({**row, 'revision': revision})
+        if expected and row['state'] != row['expected_state']:
+            moves.append({key: row[key] for key in ('key', 'title', 'state', 'expected_state')})
+    states = {row['key']: [row['state'], row['expected_state']] for row in report['archives'] if 'expected_state' in row}
+    changes = {'downloads': downloads, 'removals': removals, 'moves': moves, 'states': states}
+    # Keep the confirmation valid while a previously agreed partial file grows.
+    content_signature = [[item['path'], item['bytes'], item['sha256'], item['classification']]
+                         for item in data['items']]
+    fingerprint = [content_signature, observed, [[row['key'], row['state'], row['status']] for row in report['archives']]]
+    token = hashlib.sha256(json.dumps(fingerprint, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return {**report, **changes, 'confirmation_token': token,
+            'space_sufficient': report['available_bytes'] >= report['download_bytes'] + content.STORAGE_RESERVE}
+
+
+def restoration_downloads(root, plan):
+    """Reconcile progress with the pinned job, including a previous partial publication."""
+    import content_retry
+
+    items = {Path(item['path']).name: item for item in plan['items']}
+    normal, staged = [], []
+    for row in plan['restoration']['downloads']:
+        item = items[row['archive']]
+        path = content.destination(root, item['path'])
+        if row['status'] in REPLACEMENTS and file_revision(path) == row['revision']:
+            staged.append(item)
+        elif path.exists() and path.stat().st_size != item['bytes']:
+            raise setup.SetupError('Un fichier du plan a changé. Actualisez la comparaison.')
+        else:
+            normal.append(item)
+    pending = content_retry.remaining(root, normal, sorting=collection_sort.Sort())
+    stage_paths = {item['path'] for item in staged}
+    return pending + staged, stage_paths
+
+
+def finish_restoration(root, plan, check, before_apply=lambda: None):
+    """Publish replacements first, then retire only the explicitly confirmed files."""
+    import search_index_queue
+    from pilot import archive_index, category_index
+
+    job = plan['restoration']
+    items = {Path(item['path']).name: item for item in job['manifest']}
+    def path(name):
+        return content.destination(root, 'library/zim/' + name)
+
+    with locked(root/'catalog/content.lock'), locked(root/'catalog/publication.lock'), \
+         locked(root/'state/pilot/archive-index/operation.lock'):
+        sorting = collection_sort.load(root/'catalog')
+        if any(sorting.state(key) not in states for key, states in job['states'].items()):
+            raise setup.SetupError('Le classement a changé. Actualisez la comparaison.')
+        for row in job['removals']:
+            if file_revision(path(row['archive'])) not in (None, row['revision']):
+                raise setup.SetupError('Un fichier à retirer a changé. Actualisez la comparaison.')
+        replacements = {}
+        for row in job['downloads']:
+            if row['status'] not in REPLACEMENTS:
+                continue
+            item = items[row['archive']]
+            target = path(row['archive'])
+            staged = content.destination(root, item['path'] + '.verified')
+            if file_revision(target) == row['revision']:
+                if not staged.is_file() or staged.stat().st_size != item['bytes'] or sha256(staged, check) != item['sha256']:
+                    raise setup.SetupError('Le fichier de remplacement n’a pas été vérifié.')
+                replacements[row['archive']] = staged, row['revision']
+            elif not target.is_file() or sha256(target, check) != item['sha256']:
+                raise setup.SetupError('Le fichier à remplacer a changé. Actualisez la comparaison.')
+        def candidate(name):
+            return replacements[name][0] if name in replacements else path(name)
+        if any(not candidate(name).is_file() or candidate(name).stat().st_size != item['bytes'] for name, item in items.items()):
+            raise setup.SetupError('Certaines éditions de référence sont encore manquantes ou incomplètes.')
+        for name in sorted({row['expected'] for row in job['removals'] if row.get('expected')} - replacements.keys()):
+            check()
+            target = path(name)
+            item = items[name]
+            if sha256(target, check) != item['sha256']:
+                raise setup.SetupError('L’édition de référence doit être vérifiée avant de retirer l’ancienne.')
+        check()
+        before_apply()
+        for name, (staged, saved) in replacements.items():
+            check()
+            if file_revision(path(name)) != saved:
+                raise setup.SetupError('Le fichier à remplacer a changé. Actualisez la comparaison.')
+            durable.publish(staged, path(name))
+            content.record_download(root, items[name], 'downloaded')
+            search_index_queue.enqueue(root, items[name])
+        removed_paths = set()
+        for row in job['removals']:
+            check()
+            archive = row['archive']
+            target = path(archive)
+            if file_revision(target) not in (None, row['revision']):
+                raise setup.SetupError('Un fichier à retirer a changé. Actualisez la comparaison.')
+            target.unlink(missing_ok=True)
+            durable.sync_directory(target.parent)
+            removed_paths.add('library/zim/' + archive)
+            index = archive_index.index_name(archive)
+            for folder in ('archive-index', category_index.DIRECTORY):
+                for suffix in ('.sqlite', '.building', '.building-journal', '.compressing', '.json'):
+                    content.destination(root, f'state/pilot/{folder}/{index}{suffix}').unlink(missing_ok=True)
+        with search_index_queue.edit(root) as queue:
+            for field in ('pending', 'completed'):
+                for relative in removed_paths:
+                    queue[field].pop(relative, None)
+            if queue.get('last_problem') in removed_paths:
+                queue['hold'] = ''
+                queue.pop('last_problem', None)
+        receipt = content.destination(root, 'catalog/downloaded-content.json')
+        if receipt.is_file() and removed_paths:
+            records = [item for item in content.catalog(receipt) if item['path'] not in removed_paths]
+            setup.write_json(receipt, {'schema': 1, 'items': records})
+        for state in ('main', 'other'):
+            sorting = sorting.change({move['key'] for move in job['moves'] if move['expected_state'] == state}, state)
+        collection_sort.save(root/'catalog', sorting)
 
 
 def diff(before, after, sort_before=None, sort_after=None):

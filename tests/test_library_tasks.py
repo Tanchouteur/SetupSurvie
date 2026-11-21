@@ -61,6 +61,74 @@ class LibraryJobTests(unittest.TestCase):
         marker.unlink()
         self.assertFalse(self.manager.queue_paused())
 
+    def test_reference_download_pins_only_the_requested_edition_and_keeps_previous_plan(self):
+        import library_reference
+
+        item = {**self.item, 'classification': 'main'}
+        archive = Path(item['path']).name
+        worker = MagicMock(pid=os.getpid())
+        with patch.object(library_reference, 'load', return_value={'items': [item]}), \
+             patch.object(jobs.subprocess, 'Popen', return_value=worker) as launch:
+            with self.assertRaisesRegex(setup.SetupError, 'ne figure pas'):
+                self.manager.start('download', {'reference_archive': 'old.zim'})
+            launch.assert_not_called()
+            job = self.manager.start('download', {'reference_archive': archive})
+            self.assertEqual(content.catalog(self.manager.paths(job)/'plan.json'), [item])
+            self.assertEqual(self.manager.status()['plan']['count'], 1)
+            self.assertEqual(self.manager.status()['action'], 'download')
+
+            self.manager.write({**self.manager.read(), 'phase': 'paused', 'options': {}})
+            with self.assertRaisesRegex(setup.SetupError, 'téléchargement précédent'):
+                self.manager.start('download', {'reference_archive': archive})
+            launch.assert_called_once()
+
+    def test_reference_restoration_verifies_before_replacing_or_removing_exact_files(self):
+        import library_reference
+        from pilot import collection_sort
+
+        root = self.root/'data'
+        item = {**self.item, 'classification': 'other'}
+        target = root/item['path']
+        previous = target.with_name('garden_en_all_2025-12.zim')
+        extra = target.with_name('notes_fr_all_2026-01.zim')
+        target.write_bytes(b'wrong size')
+        previous.write_bytes(b'older edition')
+        extra.write_bytes(b'extra archive')
+        catalog = {'items': [item]}
+        preview = library_reference.restoration_plan(root, catalog, collection_sort.Sort())
+        with patch.object(library_reference, 'load', return_value=catalog), \
+             patch.object(jobs.subprocess, 'Popen', return_value=MagicMock(pid=os.getpid())):
+            with self.assertRaisesRegex(setup.SetupError, 'a changé'):
+                self.manager.start('download', {'reference_confirmation': '1'*64})
+            job = self.manager.start('download', {'reference_confirmation': preview['confirmation_token']})
+
+        class Response(io.BytesIO):
+            status = 200
+            headers = {}
+
+            def geturl(self):
+                return item['url']
+
+        with patch('content_mirrors.opener_for', return_value=None), \
+             patch('content_mirrors.network_open', return_value=Response(b'x'*len(self.raw))), \
+             patch.object(self.app, 'compose') as compose:
+            self.manager.run(job)
+            compose.assert_not_called()
+        self.assertEqual(self.manager.read()['phase'], 'error')
+        self.assertEqual(target.read_bytes(), b'wrong size')
+        self.assertTrue(previous.is_file())
+        self.assertTrue(extra.is_file())
+
+        target.with_name(target.name+'.part').write_bytes(self.raw)
+        with patch.object(self.app, 'catalog'), patch.object(self.app, 'compose') as compose:
+            self.manager.run(job)
+        self.assertEqual(self.manager.read()['phase'], 'completed')
+        self.assertEqual(target.read_bytes(), self.raw)
+        self.assertFalse(previous.exists())
+        self.assertFalse(extra.exists())
+        self.assertEqual(collection_sort.load(root/'catalog').state(collection_sort.archive(target.name)), 'other')
+        self.assertEqual([call.args[1:] for call in compose.call_args_list], [('stop', 'kiwix'), ('start', 'kiwix')])
+
     def test_index_requires_finished_reader_preparation_and_reports_progress(self):
         with self.assertRaises(setup.SetupError):self.manager.start('index',{})
         binary=self.manager.index_python();binary.parent.mkdir(parents=True);binary.touch()

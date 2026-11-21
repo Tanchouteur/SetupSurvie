@@ -91,7 +91,7 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 | Dossiers pratiques : exporter les dossiers | Même rubrique dépliable ; édition des références toujours dans la bibliothèque |
 | Mémoire de navigation : effacer onglets/filtres/brouillons locaux | **Entretien et données → Effacer les repères de ce navigateur** ; confirmation avant effacement, données serveur conservées |
 | Retours déjà enregistrés : actualiser/lire | **Entretien et données → Consulter les retours déjà enregistrés**, secondaire ; aucune création de retour réintroduite |
-| Téléchargements : thèmes, langues, maximum à ajouter, suppléments culturels, chercher les contenus | **Bibliothèque et préparations → Télécharger des collections et préparer les cartes → Enrichir la bibliothèque**, ordinateur |
+| Comparer, télécharger et revenir au fonds de référence | **Bibliothèque → Organiser les collections** |
 | Sélection : collections proposées, besoins à vérifier, télécharger, pause, actualiser, progression | Même page de téléchargements ; suivi/pause du portail disponibles sur téléphone |
 | Géographie : zones préparées, ouvrir la carte, actualiser, arrêter | Même page → **Préparer des cartes, adresses et itinéraires**, dépliable ; suivi/pause sur téléphone |
 | Géographie : point enregistré, latitude/longitude, rayon, relief, télécharger, préparer itinéraires | Même préparation, formulaires sur ordinateur ; aucune modification des cartes ou téléchargements |

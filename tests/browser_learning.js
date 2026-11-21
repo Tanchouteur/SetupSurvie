@@ -43,10 +43,5 @@ async(page)=>{
   await page.waitForFunction(()=>document.getElementById('learning-notice').textContent.includes('pas disponibles'));
   if(!await page.locator('#library-query').isEnabled())throw Error('Recherche bloquée par les parcours');
   await page.unroute('**/api/library/learning');
-  await page.evaluate(()=>view('data'));
-  await page.locator('#content-manager').evaluate(e=>e.open=true);
-  await page.waitForFunction(()=>document.querySelectorAll('#content-themes input').length===38);
-  await page.locator('#content-learning').waitFor({state:'visible'});await page.locator('#content-learning').evaluate(e=>e.open=true);
-  if(!(await page.locator('#content-learning-list').textContent()).includes('Algèbre'))throw Error('Besoins à examiner absents');
-  return {domains:domains.length,themes:38,bilingualSearch:true,questionPreparedWithoutInference:true,missingCatalogueFallback:true,reviewGrid:true,layouts};
+  return {domains:domains.length,bilingualSearch:true,questionPreparedWithoutInference:true,missingCatalogueFallback:true,layouts};
 }

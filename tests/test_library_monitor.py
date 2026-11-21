@@ -162,6 +162,24 @@ class LibraryMonitorTests(unittest.TestCase):
         self.write(self.work/'library-web'/job/'plan.json',{'items':[self.item]})
         value=self.result();self.assertEqual(value['source'],'web');self.assertEqual(value['total_bytes'],6)
 
+    def test_reference_job_keeps_its_controls_after_starting_the_shared_downloader(self):
+        job = 'a'*32
+        plan = self.work/'library-web'/job/'plan.json'
+        web = {'id': job, 'action': 'download', 'phase': 'downloading', 'pid': 123,
+               'identity': self.identity, 'started_at': time.time()-10}
+        self.write(plan, {'items': [self.item]})
+        self.write(self.work/'library-web/state.json', web)
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json', {
+            'pid': 123, 'identity': self.identity, 'plan': str(plan), 'started': time.time()-10,
+        })
+        report = self.result()
+        self.assertEqual(report['source'], 'web')
+        self.assertEqual(report['operation_id'], job)
+        self.assertTrue(report['web_download'])
+        self.write(self.work/'library-web/state.json', {**web, 'phase': 'error', 'message': 'Échec de la vérification.'})
+        report = self.result()
+        self.assertEqual((report['phase'], report['message']), ('error', 'Échec de la vérification.'))
+
     def test_web_geography_has_no_private_coordinates(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'geography','phase':'downloading','pid':123,'identity':self.identity,'options':{'lat':43.12}})
