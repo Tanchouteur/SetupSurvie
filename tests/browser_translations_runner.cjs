@@ -56,6 +56,7 @@ const portalRecipes = [
   'browser_bilingual_reader.js',
   'browser_next_portal.js',
   'browser_work_queue.js',
+  'browser_work_queue_seen.js',
   'browser_memory_translation_comfort.js',
   'browser_motion_resilience.js',
   'browser_motion_and_drag.js',

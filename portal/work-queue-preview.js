@@ -10,6 +10,8 @@
   const waiting = job => ['queued', 'preparing'].includes(job.status);
   const failed = job => ['error', 'failed'].includes(job.status);
   const held = job => ['paused', 'stopped', 'interrupted', 'incomplete'].includes(job.status);
+  /* Les éléments terminés marqués comme vus ne comptent plus dans les signaux. */
+  const visible = state => state && {...state, jobs: state.jobs.filter(job => !(job.dismissible && job.seen))};
   const statusLabel = job => ({
     queued: 'En attente', preparing: 'Préparation', running: 'En cours', paused: 'En pause',
     completed: 'Terminé', done: 'Terminé', partial: 'Terminé avec des limites', error: 'En erreur', failed: 'En erreur',
@@ -231,7 +233,8 @@
     }
     container.append(host);
 
-    function draw(state, {admin = false, current = false, connection = 'ready', pending = false} = {}) {
+    function draw(full, {admin = false, current = false, connection = 'ready', pending = false} = {}) {
+      const state = visible(full);
       const queued = state?.jobs.filter(waiting).length || 0;
       const active = state?.jobs.filter(job => job.status === 'running').length || 0;
       const errors = state?.jobs.filter(failed).length || 0;

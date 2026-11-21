@@ -53,7 +53,7 @@
       out.push({ tone: "info", title: "État de l’assistant inconnu", text: "La vérification n’a pas abouti ; elle sera refaite automatiquement." });
     }
     if (facts.queue) {
-      const jobs = Array.isArray(facts.queue.jobs) ? facts.queue.jobs : [];
+      const jobs = (Array.isArray(facts.queue.jobs) ? facts.queue.jobs : []).filter((job) => !(job.dismissible && job.seen));
       const errors = jobs.filter((job) => ["error", "failed"].includes(job.status)).length;
       if (errors) out.push({ tone: "danger", title: errors === 1 ? "Une tâche a échoué" : `${errors} tâches ont échoué`, text: "Ouvrez la file pour lire le message et la marche à suivre.", action: ["Ouvrir les tâches", "#/file"] });
       if (facts.queue.paused) out.push({ tone: "warn", title: "La file des tâches est en pause", text: "Les téléchargements et préparations attendent sa reprise.", action: ["Ouvrir les tâches", "#/file"] });

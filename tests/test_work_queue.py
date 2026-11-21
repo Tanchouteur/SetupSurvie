@@ -103,6 +103,30 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
             await work_queue.pause('host:category-index', operation_id)
         command.assert_awaited_once_with('pause', {'operation_id': operation_id})
 
+    async def test_finished_item_marked_seen_leaves_followup_until_its_state_changes(self):
+        report = {'phase': 'partial', 'archives': 1, 'completed': 1,
+                  'results': [{'status': 'partial', 'skipped_html': 12}]}
+        card = lambda profile: next(job for job in self.queue.snapshot(profile)['jobs'] if job['id'] == 'archive-video-index')
+        with patch.object(archive_videos, 'progress', return_value=report):
+            first = card(ADMIN)
+            self.assertTrue(first['dismissible'])
+            self.assertFalse(first['seen'])
+            work_queue.mark_seen(ADMIN, 'archive-video-index', first['signature'])
+            self.assertTrue(card(ADMIN)['seen'])
+            # The mark belongs to the profile that saw the item.
+            self.assertFalse(card(CHILD)['seen'])
+        report.update(archives=2, completed=2, results=[{'status': 'partial', 'skipped_html': 12}, {'status': 'partial', 'skipped_html': 3}])
+        with patch.object(archive_videos, 'progress', return_value=report):
+            changed = card(ADMIN)
+        self.assertNotEqual(changed['signature'], first['signature'])
+        self.assertFalse(changed['seen'])
+
+    def test_only_finished_items_can_be_marked_seen(self):
+        self.assertTrue(work_queue.dismissible({'status': 'error'}))
+        self.assertTrue(work_queue.dismissible({'status': 'completed', 'failure_count': 2}))
+        for status in ('queued', 'running', 'paused', 'interrupted', 'completed'):
+            self.assertFalse(work_queue.dismissible({'status': status}), status)
+
     async def test_host_video_inventory_retry_restarts_the_collection_examination(self):
         with patch.object(archive_videos, 'status', AsyncMock(return_value={'phase': 'error'})), \
                 patch.object(archive_videos, 'start', AsyncMock()) as start:

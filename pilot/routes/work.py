@@ -1,7 +1,7 @@
 """Routes du pilote — file de travail et suivi des tâches de l’utilisateur."""
 import asyncio
 from typing import Literal
-from fastapi import APIRouter,Depends,Query
+from fastapi import APIRouter,Depends,HTTPException,Query
 from pydantic import BaseModel,Field
 from starlette.responses import JSONResponse
 from .. import work_queue,youtube_pipeline
@@ -58,6 +58,18 @@ async def move_work(identifier:str,body:WorkMoveStep|WorkMoveDrop,value=Depends(
         work_queue.QUEUE.move(identifier,None,value,target=body.target,after=body.after)
     else:
         work_queue.QUEUE.move(identifier,body.direction,value)
+    return {'accepted':True}
+
+
+class WorkSeen(BaseModel):
+    signature: str = Field(pattern=r'^[a-f0-9]{16}$')
+
+
+@router.post('/api/work-queue/{identifier}/seen')
+async def mark_work_seen(identifier:str,body:WorkSeen,value=Depends(user)):
+    """Hide a finished item from « À suivre » for this profile until its state changes."""
+    if len(identifier)>300:raise HTTPException(400,'Élément inconnu.')
+    await asyncio.to_thread(work_queue.mark_seen,value,identifier,body.signature)
     return {'accepted':True}
 
 

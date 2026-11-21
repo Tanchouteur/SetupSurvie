@@ -173,6 +173,12 @@ dans les cartes et le lecteur PDF.
 - **Tâches.** L’entrée de la file dans l’en-tête s’appelle **Tâches** et dit
   son état (« 2 en cours », « 1 problème », « En pause ») ; sur téléphone, une
   pastille donne le nombre. Une file vide affiche un seul message « Rien en cours ».
+- **Marquer comme vu — 0.75.0.** Un élément terminé qui reste dans « À suivre »
+  (inventaire terminé avec des limites, erreur, lot avec des lignes à vérifier)
+  propose **Marquer comme vu**. Il quitte alors « À suivre », ne compte plus dans
+  l’en-tête ni dans Mon appareil, et reste dans **Historique récent** avec la
+  mention « Vu ». Le choix est propre à chaque profil. Si l’élément change (nouvel
+  examen, autre erreur), il revient dans « À suivre ».
 - **Recherche.** L’onglet Rechercher propose des idées et vos dernières
   recherches (rangées dans ce navigateur, par profil). Le résultat tient en une
   phrase qui nomme l’espace cherché (« Aucun résultat pour « eau potable » dans
