@@ -87,6 +87,31 @@ class ArchiveVideoIndexTests(unittest.TestCase):
 
         asyncio.run(scenario())
 
+    def test_youtube_subtitles_already_in_the_zim_join_search_after_reusing_the_inventory(self):
+        from zim_video_fixture import create
+
+        youtube = self.root/'youtube-with-subtitles.zim'
+        create(youtube, youtube=True, youtube_tracks=True, with_tracks=False)
+        with patch.object(zim_video_inventory, 'save_youtube_metadata'):
+            zim_video_inventory.build(youtube, archive_videos.directory())
+        videos.scan()
+        query = retrieval.plan('règle graduée', ['regle', 'graduee'], library.SYNONYMS)
+        self.assertFalse(videos.search(query, 'fr')[0])
+
+        upgraded = zim_video_inventory.build(youtube, archive_videos.directory())
+        self.assertEqual(upgraded['status'], 'reused')
+        self.assertTrue(videos.stale())
+        self.assertEqual(videos.scan()['phase'], 'completed')
+
+        found, _ = videos.search(query, 'fr')
+        self.assertEqual(len(found), 1)
+        source = videos.source(found[0]['id'])
+        self.assertEqual(source['title'], 'How do we measure a shadow?')
+        self.assertEqual(source['position_ms'], 1000)
+        self.assertIn('règle graduée fictive', source['text'])
+        self.assertEqual(source['subtitle_status'], 'french_available')
+        self.assertEqual(len(source['tracks']), 1)
+
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])
         cache=videos.track_file(payload['tracks'][0]);cache.unlink()

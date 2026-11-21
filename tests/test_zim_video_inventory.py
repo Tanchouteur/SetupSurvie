@@ -77,7 +77,7 @@ class ArchiveVideoTests(unittest.TestCase):
     def test_youtube_titles_enrich_existing_inventory_without_changing_video_identity(self):
         from zim_video_fixture import create
         create(self.zim,youtube=True)
-        with patch.object(inventory,'save_youtube_titles',lambda *args:None):
+        with patch.object(inventory,'save_youtube_metadata',lambda *args:None):
             original=inventory.build(self.zim,self.state)
         path=self.state/original['file']
         with inventory.connect(path,True) as db:
