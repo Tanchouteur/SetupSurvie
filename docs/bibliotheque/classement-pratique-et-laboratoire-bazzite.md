@@ -78,7 +78,12 @@ Le portail documentaire 0.76.3 répond sur la boucle locale de Bazzite
 (port 18080), avec Kiwix (18081), Open WebUI (13000) et le pilote (18000).
 L’installation existante répond sur 8080. Le volume conserve le lanceur de
 recette dans `private/demarrer-recherche.py` et son marqueur de pause
-d’inférence.
+d’inférence. Sur Bazzite, après vérification du montage dédié, exécuter
+`python3 /run/media/louis/SetupSurvie/private/demarrer-recherche.py`
+depuis `/var/mnt/data/AI/.setupsurvie-biblio-code`. Le transfert en cours
+se suit avec `systemctl --user status setupsurvie-biblio-enrichissement`
+et le catalogue du laboratoire. L’accès SSH distant demande un montage du
+volume séparé quand UDisks refuse l’autorisation de la session.
 
 ## Mesurer avant chaque changement
 
@@ -129,7 +134,9 @@ point d’utilisation s’ouvre depuis le portail. La recherche bilingue « eau
 potable » renvoie trois pages d’Appropedia dans les trois premiers résultats
 et le chapitre Wikilivres arrive dixième. Le PDF attendu ne figure pas dans
 les seize résultats rendus. En français, Wikilivres arrive premier. Le
-parcours a aussi été ouvert avec Chromium à 1 366 et 390 pixels.
+parcours a aussi été ouvert avec Chromium à 1 366 et 390 pixels. Le
+portail signalait des index d’archives et de vidéos incomplets lors de cette
+recette.
 
 La fiche de premiers secours citoyen arrive deuxième sur sa requête. La
 recherche de crevaison renvoie d’abord un tutoriel pour une chambre à air.
