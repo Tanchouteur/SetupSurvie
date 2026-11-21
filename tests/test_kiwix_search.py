@@ -73,6 +73,28 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
             await library.search('feu',language='fr')
         self.assertEqual(set(calls),{'wikipedia_fr','video'})
 
+    async def test_french_search_skips_the_english_ifixit_edition_and_english_pages(self):
+        english, french = 'ifixit_en_all_2025-12', 'ifixit_fr_all_2026-03'
+        catalog = [dict(self.catalog[0], book=book) for book in (english, french)]
+        calls = []
+        async def fetch(path, *args):
+            names = parse_qs(urlsplit(path).query).get('books.name', [])
+            calls.extend(names)
+            if path.startswith('/suggest?'):
+                return b'[]', 'application/json'
+            return (f'<rss><channel><item><title>Water purification system</title>'
+                    f'<link>/content/{names[0]}/Device/Water_Purification_System</link>'
+                    '<description>This is a system for drinking water with a filter that removes particles from the water.</description>'
+                    '</item></channel></rss>').encode(), 'application/xml'
+
+        with patch.object(library, 'books', AsyncMock(return_value=catalog)), \
+                patch.object(library, 'get', fetch), patch.object(library.search_cache, 'budget', return_value=0):
+            found = await library.search('eau potable', 'fr', kind='documents')
+            self.assertEqual(found, [])
+            self.assertEqual(set(calls), {french})
+            found = await library.search('eau potable', 'en', kind='documents')
+            self.assertEqual({(item['book'], item['language']) for item in found}, {(english, 'en')})
+
     async def test_wiktionary_in_other_is_only_queried_when_requested(self):
         from pilot.routes.conversations import Question
 
