@@ -72,8 +72,14 @@ toxiques reste en attente après interruption et échec de reprise.
 L’enrichissement suivant a démarré avec les lots éducatifs et locaux,
 Wikilivres et Wikipédia en français et en anglais. Le transfert du
 catalogue figé est plafonné à 215 Go documentaires pour cette tranche.
-La liste exacte des éditions de Marc et les écarts de couverture restent
-à établir.
+L’[audit de Marc du 13 novembre](../essais/2026-11-13-audit-fonds-marc.md)
+recensait 753,34 Go, dont 241,56 Go de Gutenberg et 43,05 Go de jeux de
+société Alexandria. Ce fonds historique dépasse à lui seul le plafond
+documentaire du laboratoire de 253,34 Go. Ses éditions et les volumes
+actuels restent à comparer après le tri de Louis et les téléchargements
+ultérieurs. Pour la comparaison, l’inventaire des archives avec tailles
+et éditions peut être relevé via le [catalogue local](../utilisation/inventaire-local.md),
+sans copier les comptes, vidéos privées ou historiques.
 
 Le portail documentaire 0.76.3 répond sur la boucle locale de Bazzite
 (port 18080), avec Kiwix (18081), Open WebUI (13000) et le pilote (18000).
