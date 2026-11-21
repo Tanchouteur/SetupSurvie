@@ -24,7 +24,9 @@ précise que l’inventaire de Marc n’est qu’une première version large :
 la référence est une version de travail à ajuster au besoin, sans retirer
 ce qui pourrait servir ; seules les collections sans usage sont exclues.
 Le même jour, Marc transmet sa [liste de thèmes](../bibliotheque/savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026),
-qui devient la grille du fonds, du tri et de la recette de recherche.
+qui devient la grille du fonds, du tri et de la recette de recherche. Pour religion, Internet, culture et loisirs, Marc ne veut qu’une
+base ; les fonds culturels déjà installés chez lui restent dans **Autre**
+jusqu’à son propre tri (décision de Louis).
 [Fonds de référence](../bibliotheque/bibliotheque-complete-marc.md#fonds-de-référence-figé) ·
 [tri fourni](../utilisation/classement-et-collections.md)
 

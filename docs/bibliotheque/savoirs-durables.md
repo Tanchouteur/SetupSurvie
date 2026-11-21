@@ -43,7 +43,13 @@ connaissances de base, pour « avoir de tout », pas l’ensemble des savoirs.
 Wikipédia, Vikidia et C'est pas sorcier fournissent ce socle ; aucun fonds
 spécialisé n’est ajouté pour ces sujets. Les collections déjà installées
 restent dans **Autre** ; seules deux encyclopédies de fans sans usage sont
-exclues en attendant le tri de Marc. Les thèmes sans collection Kiwix adaptée (NRBC, gaz, armes et
+exclues en attendant le tri de Marc. Le même jour, Louis décide de garder dans la référence,
+rangés dans **Autre**, les fonds culturels volumineux déjà installés chez
+Marc (environ 270 Go : Gutenberg anglais hors sections pratiques, Alexandria,
+Wikisource, Nota Bene, Wiktionnaire anglais, TED histoire, internet et
+religion, petits forums) : Marc décidera en triant sa bibliothèque. Les
+sections Gutenberg sciences, médecine, agriculture et technologie restent
+dans le fonds principal. Les thèmes sans collection Kiwix adaptée (NRBC, gaz, armes et
 réglementation, tannage, vannerie, météorologie, chasse sous-marine, vie à
 bord) demandent des guides officiels ou spécialisés à repérer, de préférence
 en français ; ils ne sont pas couverts tant que la recette ne le montre pas.
