@@ -16,7 +16,7 @@ from pilot_kit import install
 from pilot_backup import backup,restore
 from delivery_paths import locked
 import index_locks
-from pilot import archive_index,retrieval
+from pilot import archive_index,collection_sort,retrieval
 
 
 class DeliveryTests(unittest.TestCase):
@@ -223,7 +223,14 @@ class DeliveryTests(unittest.TestCase):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         original=application/'scripts/setup.py';original.write_text('transport copy')
         (application/'unlisted-private.txt').write_text('must not be copied')
-        setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':original.stat().st_size,'sha256':setup.file_hash(original)}]})
+        preset=application/'deploy/collection-sort-default.json'
+        setup.write_json(preset,collection_sort.Sort(excluded=frozenset({'zim:wiktionary_en_all'})).as_json())
+        excluded=kit/'payload/library/zim/wiktionary_en_all_2026-10.zim'
+        excluded.parent.mkdir(parents=True)
+        excluded.write_bytes(b'excluded archive fixture')
+        files=(original,preset,excluded)
+        setup.write_json(kit/'manifest.json',{'files':[{'path':p.relative_to(kit).as_posix(),
+            'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in files]})
         work=self.root/'installed/private';data=self.root/'installed/data'
         with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'):
             install(kit,'linux',data,work)
@@ -232,6 +239,8 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(settings['app_dir'],installed.as_posix())
         self.assertEqual((installed/'scripts/setup.py').read_text(),'transport copy')
         self.assertFalse((installed/'unlisted-private.txt').exists())
+        self.assertFalse((data/'library/zim'/excluded.name).exists())
+        self.assertEqual(collection_sort.load(data/'catalog').state('zim:wiktionary_en_all'),'excluded')
         (installed/'scripts/setup.py').write_text('new software')
         self.assertEqual(original.read_text(),'transport copy')
         checked_entries(kit,json.loads((kit/'manifest.json').read_text()))
