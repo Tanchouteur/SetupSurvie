@@ -373,7 +373,7 @@ sous Windows. Depuis la 0.69.1 (demande de Louis du 20 novembre 2026), l’entr�
 est le **numéro de version**, en haut à gauche à côté du logo : son survol
 indique la dernière vérification et propose **Vérifier maintenant**. Un bouton
 **Mettre à jour** ne remplace ce numéro que lorsqu’une nouvelle version existe ;
-il ouvre la confirmation avant lancement. Depuis la 0.76.2, le serveur
+il ouvre la confirmation avant lancement. Depuis la 0.76.3, le serveur
 vérifie automatiquement toutes les 15 minutes. La fenêtre affiche **Hors
 ligne pour les mises à jour** lorsque le serveur ne peut pas accéder au
 dépôt GitHub. Le suivi d’une mise

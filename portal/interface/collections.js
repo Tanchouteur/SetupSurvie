@@ -70,7 +70,6 @@
       group.append(children);grouped.append(group);
       for(const {card,heading,variant} of cards){
         if(variant)heading.textContent=variant;
-        if(!guides&&card.dataset.archiveName){const info=document.createElement('details'),label=document.createElement('summary'),name=document.createElement('p');label.textContent='Référence de cette collection';name.textContent=card.dataset.archiveName;info.append(label,name);card.append(info);}
         children.append(card);
       }
     }
