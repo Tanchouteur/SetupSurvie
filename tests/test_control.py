@@ -79,6 +79,19 @@ class ControlTests(unittest.TestCase):
         with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=3) as response:
             self.assertFalse(json.load(response)['supported'])
 
+    def test_library_reference_preview_is_authenticated_and_read_only(self):
+        import library_reference
+
+        path = '/library/reference-preview'
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.post(path)
+        self.assertEqual(error.exception.code, 401)
+        with self.post(path, control.key(self.c)) as response:
+            preview = json.load(response)
+        self.assertEqual(preview['counts'], {'missing': len(library_reference.load()['items'])})
+        self.assertGreater(preview['download_bytes'], 0)
+        self.assertFalse(list((self.root/'data/library/zim').iterdir()))
+
     def test_library_routes_are_authenticated_and_limited(self):
         with patch.object(self.server.library,'start') as start:
             with self.post('/library/plan',control.key(self.c),{'themes':['eau']}) as response:

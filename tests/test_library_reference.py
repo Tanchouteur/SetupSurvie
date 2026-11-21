@@ -104,6 +104,27 @@ class LibraryReferenceTests(unittest.TestCase):
         with self.assertRaises(setup.SetupError):
             ref.read_names(plain)
 
+    def test_preview_preserves_explicit_sort_and_estimates_remaining_download(self):
+        wikis = 'gutenberg_fr_all_2026-01.zim'
+        current_video = 'cest-pas-sorcier_fr_energie_2024-11.zim'
+        old_video = 'cest-pas-sorcier_fr_energie_2023-01.zim'
+        initial = collection_sort.Sort(other=frozenset({'zim:gutenberg_fr_all'}))
+        data = self.build([wikis, current_video], sorting=initial)
+        folder = self.root/'library/zim'
+        folder.mkdir(parents=True)
+        (folder/wikis).write_bytes(RAW)
+        (folder/old_video).write_bytes(b'previous')
+        (folder/(current_video+'.part')).write_bytes(RAW[:4])
+        state = collection_sort.Sort()
+        report = ref.preview(self.root, data, state)
+        self.assertEqual(report['download_bytes'], len(RAW)-4)
+        rows = {row['archive']: row for row in report['archives']}
+        self.assertEqual(rows[wikis]['status'], 'size_matches')
+        self.assertEqual((rows[wikis]['state'], rows[wikis]['expected_state']), ('main','other'))
+        self.assertEqual(rows[old_video]['expected'], current_video)
+        self.assertEqual(rows[current_video]['remaining_bytes'], len(RAW)-4)
+        self.assertTrue((folder/old_video).is_file())
+
     def test_diff_reports_archive_and_sort_changes_since_the_snapshot(self):
         before = ['gutenberg_fr_all_2026-01.zim', 'evageeks_en_all_maxi_2022-11.zim', 'ifixit_fr_all_2026-03.zim']
         after = ['gutenberg_fr_all_2026-11a.zim', 'ifixit_fr_all_2026-03.zim', 'zimgit-knots_en_2024-08.zim']

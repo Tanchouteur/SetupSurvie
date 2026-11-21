@@ -145,6 +145,33 @@ def verify(root, data, *, deep=False):
     return {'reference': data.get('reference', ''), 'conform': conform, 'counts': counts, 'archives': rows}
 
 
+def preview(root, data, sorting, *, storage_root=None):
+    """Describe the exact files and ranking changes for a reconciliation."""
+    report = verify(root, data)
+    expected = {Path(item['path']).name: item for item in data['items']}
+    download_bytes = 0
+    for row in report['archives']:
+        name = row['archive']
+        key = collection_sort.archive(name)
+        row.update(key=key, state=sorting.state(key))
+        item = expected.get(name)
+        if item is None:
+            continue
+        row.update(title=item['title'], expected_state=item['classification'])
+        if row['status'] in ('missing', 'size_mismatch'):
+            partial = content.destination(root, item['path'] + '.part')
+            offset = 0
+            if row['status'] == 'missing' and not partial.is_symlink() and partial.is_file():
+                try:
+                    offset = partial.stat().st_size
+                except FileNotFoundError:
+                    pass  # A download may have finished while displaying the preview.
+            row['remaining_bytes'] = item['bytes'] - offset if 0 <= offset < item['bytes'] else item['bytes']
+            download_bytes += row['remaining_bytes']
+    return {**report, 'download_bytes': download_bytes,
+            'available_bytes': content.free_space(root, storage_root)}
+
+
 def diff(before, after, sort_before=None, sort_after=None):
     """Changes made on an installation since a snapshot: archives and sort."""
     old = {kiwix_select.family(n): n for n in before}

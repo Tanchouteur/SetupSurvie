@@ -82,6 +82,11 @@ async def export_collection_sort(value=Depends(admin)):
     return JSONResponse(sorting.as_json(),headers={'Content-Disposition':'attachment; filename="SetupSurvie-tri.json"'})
 
 
+@router.get('/api/admin/library/reference')
+async def preview_library_reference(value=Depends(admin)):
+    return await operations.library_command('reference-preview')
+
+
 @router.post('/api/admin/library/collection-sort/{action}')
 async def change_collection_sort(action:Literal['move','preview','exclude'],body:CollectionBatch,value=Depends(admin)):
     return await operations.library_command('collection-'+action,body.model_dump())
