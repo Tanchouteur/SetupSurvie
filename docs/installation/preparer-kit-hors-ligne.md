@@ -4,13 +4,12 @@
 sont celles de `scripts/pilot_kit.py` ; les mesures et la recette citées restent
 celles du kit 0.1.14 (12 novembre 2026). La recette finale chez Marc reste à faire.
 
-Le kit transporte l’application, les images de services, sept modèles et les
-contenus sélectionnés. Il **ne contient pas les prérequis Windows** (WSL 2,
-Python, Docker Desktop, Git, Ollama, pilote NVIDIA) : les installer d’abord avec
-Internet, voir le [guide Marc](pilote-marc.md#avant-de-copier-le-kit) et le
-[parcours Windows](deux-etapes-windows.md). Un Windows vierge ne s’installe pas
-avec ce seul kit. Les commandes ci-dessous se lancent sur le laboratoire de Louis,
-pas chez Marc.
+Le kit transporte l’application, les images de services, les modèles et les
+contenus sélectionnés. Les installateurs Windows peuvent être ajoutés depuis
+Linux ou Windows avant de partir hors ligne. Le pilote NVIDIA et les composants
+Windows propres à la machine restent à préparer selon le
+[guide Windows](deux-etapes-windows.md#préparer-un-kit-pour-windows-sans-internet).
+Les commandes propres au laboratoire se lancent sur le PC de Louis.
 
 La reconstruction complète sur une autre machine sans aucun téléchargement est un
 protocole à réaliser, pas une fonction : voir le
@@ -26,6 +25,7 @@ protocole à réaliser, pas une fonction : voir le
 | `refresh-maps-lab KIT [--geography ID]… [--routing]` | Actualise les cartes sans recopier les modèles |
 | `recover-maps KIT` | Restaure la publication cartographique précédente après une interruption |
 | `verify KIT` | Contrôle les empreintes et les dépendances hors ligne |
+| `prepare-windows KIT [--verify-only]` | Prépare les installateurs Windows sur le kit ou les vérifie sans accès réseau |
 | `install KIT --target windows --data-dir … --work-dir …` | Installe depuis le kit : voir le [guide Marc](pilote-marc.md#installer-à-partir-du-kit) |
 
 Le kit constaté en 0.1.14 fait environ 161 Go ; aucune taille nouvelle n’est
@@ -33,6 +33,23 @@ annoncée sans préparation réelle. Le laboratoire ne reproduit pas tout le fon
 de Marc : les compléments se préparent sur son installation, sans plafond
 documentaire, selon la [préparation du fonds complet](../bibliotheque/bibliotheque-complete-marc.md).
 La copie du kit sur le volume limité de Louis garde tous ses contrôles de capacité.
+
+## Ajouter les installateurs Windows depuis Linux
+
+Depuis un poste connecté avec Python 3.11 ou ultérieur, utiliser un kit dont
+le dossier **app** est en 0.82.0 ou ultérieur.
+
+```bash
+python3 scripts/pilot_kit.py prepare-windows /chemin/du/kit
+python3 scripts/pilot_kit.py prepare-windows /chemin/du/kit --verify-only
+```
+
+La première commande utilise le catalogue du kit et reprend les téléchargements
+interrompus. Elle prévoit environ 2,8 Go pour les cinq installateurs. Seuls les
+fichiers ayant la taille et l’empreinte attendues sont publiés dans
+`installateurs-windows`. Relancer avec `--verify-only` après copie sur
+le SSD pour tout vérifier sans téléchargement. Sur le PC Windows déconnecté,
+ouvrir le lanceur habituel dans le dossier **app** du kit.
 
 ## Actualiser les cartes sans recopier les modèles
 

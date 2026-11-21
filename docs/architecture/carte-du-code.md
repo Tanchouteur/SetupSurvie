@@ -181,6 +181,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |
 | `windows_resume.py`, `register-windows-resume.ps1` | Reprise après coupure ([guide](../exploitation/coupures-et-redemarrage.md)) |
 | `pilot_kit.py`, `kit_audit.py`, `kit_maps.py` | Kit hors ligne ([guide](../installation/preparer-kit-hors-ligne.md)) |
+| `windows_kit_installers.py` | Préparation et contrôle des prérequis Windows sur un kit même depuis Linux ([guide](../installation/preparer-kit-hors-ligne.md#ajouter-les-installateurs-windows-depuis-linux)) |
 | `pilot_backup.py` | Sauvegarde des données privées |
 | `transfer.py`, `transfer_*.py`, `transfer-*.ps1` | Transfert vers un autre SSD ([guide](../exploitation/transfert-installation.md)) |
 
