@@ -391,11 +391,16 @@ INTENTS={
 
 ENGLISH_PROSE = frozenset('the and of with for this that from which when into each'.split())
 FRENCH_PROSE = frozenset('les une des avec pour dans cette qui sur est sont aux'.split())
+LOWTECH_ARCHIVE = 'solar.lowtechmagazine.com'
+LOWTECH_ARTICLE_PATH = re.compile(
+    r'(?:solar\.lowtechmagazine\.com/)?(?:(en|fr|de|nl|es|it|pt|pl|ar|vi|ko)/)?'
+    r'\d{4}/(?:0[1-9]|1[0-2])/[^/]+/?$'
+)
 
 
 ARCHIVE_ROLES = {
     'appropedia': 'practical', 'ifixit': 'practical', 'wikihow': 'practical',
-    'solar.lowtechmagazine.com': 'practical', 'wikipedia': 'reference',
+    LOWTECH_ARCHIVE: 'practical', 'wikipedia': 'reference',
     'vikidia': 'reference', 'encyclopedie-environnement.org': 'reference',
     'encyclopedie-environnement': 'reference', 'environment-encyclopedia': 'reference',
     'wiktionary': 'language', 'gutenberg': 'culture', 'wikisource': 'culture',
@@ -445,6 +450,11 @@ def article_language(item):
     identifier = item.get('id', '')
     book = (item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]).lower()
     language = item.get('language', '')
+    if book.partition('_')[0] == LOWTECH_ARCHIVE:
+        # Translated articles share the English HTML shell and article slugs.
+        article = LOWTECH_ARTICLE_PATH.fullmatch(identifier.partition('/')[2])
+        if article:
+            return article[1] or 'en'
     if 'appropedia' in book:
         suffix = re.search(r'/([a-z]{2})(?:-[a-z]+)?$', identifier)
         if suffix:
