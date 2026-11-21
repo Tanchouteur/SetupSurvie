@@ -20,3 +20,6 @@
   - liste des manques par thème et recherche de guides français (NRBC, gaz, armes et réglementation, tannage, vannerie, météo, chasse sous-marine, vie à bord…) ;
   - essais de l'assistant (documents ouverts et cités) quand Louis lève la pause IA ;
   - vérifier la reprise automatique après un vrai redémarrage (labo, puis installation Linux du produit) ; manques Windows restants : première installation avec lots non armée, tâche `register-windows-resume.ps1` jamais enregistrée.
+
+- Faire en sorte de crée les sous titre francais, meme si la vidéo est francais, comme ça on peux aussi indexé les sous titre des vidéo francaise
+  - Lien constaté le 21/11 sur le labo : 51 collections (surtout vidéo : C'est pas sorcier, Maître Lucas…) n'ont pas d'index plein texte et ne sont trouvées que par leur titre. Des sous-titres français indexés rendraient leur contenu cherchable. Voir `docs/essais/protocole-sous-titres-videos.md` et les sous-titres existants avant de développer.
