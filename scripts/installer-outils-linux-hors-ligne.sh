@@ -2,8 +2,13 @@
 # Run from the copied application. This bootstrap needs Bash and core utilities.
 set -euo pipefail
 
+python_only=no
+if [[ ${1:-} == --python-seul ]]; then
+    python_only=yes
+    shift
+fi
 if [[ $# -ne 2 ]]; then
-    echo 'Usage : installer-outils-linux-hors-ligne.sh DOSSIER_DONNÉES NOUVEAU_DOSSIER_OUTILS' >&2
+    echo 'Usage : installer-outils-linux-hors-ligne.sh [--python-seul] DOSSIER_DONNÉES NOUVEAU_DOSSIER_OUTILS' >&2
     exit 2
 fi
 if [[ "$(uname -s):$(uname -m)" != Linux:x86_64 ]]; then
@@ -29,7 +34,7 @@ if [[ ! "$python_archive" =~ ^python-3\.1[1-5]\.tar\.gz$ ]]; then
 fi
 
 network_packages=()
-if [[ -r /etc/os-release ]]; then
+if [[ "$python_only" == no && -r /etc/os-release ]]; then
     source /etc/os-release
     case "${ID:-}:${VERSION_ID:-}" in
         debian:13) prefix= ;;
@@ -45,7 +50,12 @@ if [[ -r /etc/os-release ]]; then
             ;;
     esac
 fi
-for name in docker.tar.gz docker-compose "$python_archive" "${network_packages[@]}"; do
+if [[ "$python_only" == yes ]]; then
+    archives=("$python_archive")
+else
+    archives=(docker.tar.gz docker-compose "${python_archive}" "${network_packages[@]}")
+fi
+for name in "${archives[@]}"; do
     expected=$(awk -v name="$name" '$3==name {print $1; exit}' "$catalog")
     file="$source_dir/$name"
     if [[ ! "$expected" =~ ^[0-9a-f]{64}$ || ! -f "$file" || -L "$file" ]]; then
@@ -62,8 +72,12 @@ done
 parent=$(dirname -- "$target")
 stage=$(mktemp -d -- "$parent/.setupsurvie-outils.XXXXXXXX")
 trap 'printf "Préparation interrompue. Dossier temporaire conservé : %s\n" "$stage" >&2' ERR
-mkdir -p "$stage/bin" "$stage/python" "$stage/docker-cli/cli-plugins"
-tar -xzf "$source_dir/docker.tar.gz" --no-same-owner --strip-components=1 -C "$stage/bin"
+mkdir -p "$stage/bin" "$stage/python"
+if [[ "$python_only" == no ]]; then
+    mkdir -p "$stage/docker-cli/cli-plugins"
+    tar -xzf "$source_dir/docker.tar.gz" --no-same-owner --strip-components=1 -C "$stage/bin"
+    install -m 755 -- "$source_dir/docker-compose" "$stage/docker-cli/cli-plugins/docker-compose"
+fi
 tar -xzf "$source_dir/$python_archive" --no-same-owner --strip-components=1 -C "$stage/python"
 cat >"$stage/bin/python3" <<'PYTHON'
 #!/usr/bin/env bash
@@ -72,7 +86,6 @@ python_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../python" && pwd)"
 exec "$python_root/bin/python3" "$@"
 PYTHON
 chmod 755 "$stage/bin/python3"
-install -m 755 -- "$source_dir/docker-compose" "$stage/docker-cli/cli-plugins/docker-compose"
 if [[ ${#network_packages[@]} -gt 0 ]] && ! PATH=/usr/sbin:/usr/bin:/sbin:/bin command -v nft >/dev/null; then
     mkdir "$stage/nftables"
     for name in "${network_packages[@]}"; do
@@ -105,8 +118,10 @@ ENV
     python3 -m venv --without-pip "$stage/python-probe"
     "$stage/python-probe/bin/python" -c 'import encodings, ensurepip'
     python3 -c 'import shutil, sys; shutil.rmtree(sys.argv[1])' "$stage/python-probe"
-    docker --version
-    docker compose version
+    if [[ "$python_only" == no ]]; then
+        docker --version
+        docker compose version
+    fi
 )
 # A root service must never load a file that another user can change.
 find "$stage" \( -type f -o -type d \) -perm /022 -exec chmod go-w -- {} +
