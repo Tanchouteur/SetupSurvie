@@ -14,9 +14,10 @@ d’iFixit en anglais, apparaît avec l’étiquette Français. La recherche doi
 aider à trouver une méthode d’un organisme identifiable et vérifier que le
 passage ouvert répond à la question.
 
-Sur l’installation Bazzite en service (0.71.0, fonds réduit), deux pages iFixit
-en anglais arrivent en tête de la même recherche limitée au français.
-Wikilivres propose un chapitre sur la potabilisation en troisième position.
+Sur l’installation Bazzite en service (0.71.0, fonds réduit), deux pages à
+titre anglais de la collection iFixit française arrivent en tête en mode
+français. Leurs extraits mêlent les deux langues. Wikilivres propose un
+chapitre sur la potabilisation en troisième position.
 Le résultat obtenu chez Marc inclut d’autres collections. Les deux relevés
 orientent la recette de classement et de filtrage.
 
