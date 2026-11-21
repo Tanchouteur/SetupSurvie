@@ -73,7 +73,7 @@ exec "$python_root/bin/python3" "$@"
 PYTHON
 chmod 755 "$stage/bin/python3"
 install -m 755 -- "$source_dir/docker-compose" "$stage/docker-cli/cli-plugins/docker-compose"
-if [[ ${#network_packages[@]} -gt 0 ]] && ! command -v nft >/dev/null; then
+if [[ ${#network_packages[@]} -gt 0 ]] && ! PATH=/usr/sbin:/usr/bin:/sbin:/bin command -v nft >/dev/null; then
     mkdir "$stage/nftables"
     for name in "${network_packages[@]}"; do
         dpkg-deb --extract "$source_dir/$name" "$stage/nftables"
