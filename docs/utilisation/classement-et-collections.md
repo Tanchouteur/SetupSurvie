@@ -66,7 +66,17 @@ Vérifiez le volume et le classement proposés avant de lancer le transfert.
 Les éditions sont reconnues par la référence de collection, langue comprise.
 
 Les nouvelles installations partent du [tri fourni avec le logiciel](../../deploy/collection-sort-default.json)
-lorsqu’aucun fichier personnalisé n’est donné. Le tri initial peut être ajusté
+lorsqu’aucun fichier personnalisé n’est donné. Le 21 novembre 2026, ce tri
+part de l’export de Louis et y ajoute, à sa demande : 7 exclusions très hors
+sujet (encyclopédies Evangelion et Magic, Folgerpedia, football, hindouisme,
+TED religion et internet), et un rangement dans **Autre** de ce qui peut
+servir sans aider la recherche pratique : encyclopédies et forums savants
+(dont Internet des objets, sport, généalogie, Cloudflare), des
+textes Wikisource, de l’histoire, de la vulgarisation, des livres à lire et
+des thèmes C'est pas sorcier sans rapport direct avec l’autonomie (arts,
+sport, défense, économie, histoire, astronomie, géographie, écologie,
+géologie, transports). Gutenberg reste disponible pour la lecture. Le tri
+initial peut être ajusté
 puis exporté depuis la même page. Le réglage enregistré par une installation
 existante reste prioritaire.
 [Décision et plan de recette](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md)

@@ -194,6 +194,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `library_tasks.py`, `library_monitor.py`, `collection_tasks.py` | Travaux Kiwix et collections côté hôte ; vue bornée des travaux |
 | `content.py`, `content_mirrors.py`, `content_retry.py`, `content-monitor.ps1` | Téléchargement des lots figés ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `kiwix_select.py`, `audit_selection.py` | Sélection Kiwix par thème ([guide](../bibliotheque/selection-kiwix-par-theme.md)) |
+| `library_reference.py` | Manifeste du fonds de référence figé (`deploy/library-reference.json`) : construction et vérification d’une installation ([guide](../bibliotheque/bibliotheque-complete-marc.md#fonds-de-référence-figé)) |
 | `index_archives.py`, `index_categories.py`, `search_index_*.py`, `index_locks.py`, `index_reader_probe.py` | Indexation des archives et du fonds principal |
 | `inventory_zim_videos.py`, `library_videos.py`, `youtube_videos.py`, `youtube_tools.py` | Vidéos ZIM et YouTube ([guide](../utilisation/telecharger-videos-youtube.md)) |
 | `maps.py`, `map_install.py`, `geography_data.py`, `routing_prepare.py` | Cartes, adresses, relief et graphes OSRM |

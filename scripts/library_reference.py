@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+"""Fonds de référence figé : éditions exactes, tailles et SHA-256 des archives Kiwix.
+
+Le manifeste `deploy/library-reference.json` décrit le fonds attendu sur une
+installation complète. `content.py download --selection` l'installe tel quel ;
+`verify` compare une installation à ce manifeste sans rien télécharger.
+"""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+import urllib.parse
+
+import content
+import kiwix_select
+import setup
+from pilot import collection_sort
+
+KIND = 'SetupSurvie library reference'
+PATH = setup.ROOT / 'deploy/library-reference.json'
+DEFAULT_SORT = setup.ROOT / 'deploy/collection-sort-default.json'
+EDITION = re.compile(r'_(\d{4}-\d{2})[a-z]?\.zim$')
+ZIM_NAME = re.compile(r'[a-z0-9][a-z0-9_.-]*_\d{4}-\d{2}[a-z]?\.zim')
+
+
+def load(path=PATH):
+    data = json.loads(Path(path).read_text(encoding='utf-8'))
+    if data.get('schema') != 1 or data.get('kind') != KIND:
+        raise setup.SetupError('Manifeste de référence non reconnu.')
+    content.catalog(path)
+    if any(not item['path'].startswith('library/zim/') for item in data['items']):
+        raise setup.SetupError('Le manifeste de référence ne décrit que des archives ZIM.')
+    return data
+
+
+def read_names(path):
+    """Archive names from a saved /api/inventory page or a plain list (first column)."""
+    text = Path(path).read_text(encoding='utf-8')
+    try:
+        names = [book['archive_name'] for book in json.loads(text)['books']]
+    except (ValueError, KeyError, TypeError):
+        names = [line.split('\t')[0].strip() for line in text.splitlines()]
+    names = [name for name in names if name]
+    if not names or any(not ZIM_NAME.fullmatch(name) for name in names):
+        raise setup.SetupError('Inventaire attendu : /api/inventory enregistré ou liste de fichiers .zim.')
+    return list(dict.fromkeys(names))
+
+
+def entry_for(name, by_file, by_family):
+    """Exact catalogue entry, or the official Metalink of an older edition of the same family."""
+    if name in by_file:
+        return by_file[name]
+    family = kiwix_select.family(name)
+    model = by_family.get(family)
+    sibling = None
+    if model is None:
+        prefix = family.split('_', 1)[0]
+        sibling = next((e for f, e in sorted(by_family.items()) if f.split('_', 1)[0] == prefix), None)
+        if sibling is None:
+            raise setup.SetupError('Collection introuvable dans le catalogue Kiwix : ' + name)
+    base = (model or sibling)['meta4'].rsplit('/', 1)[0]
+    edition = EDITION.search(name)[1]
+    return {**(model or sibling), 'filename': name, 'meta4': base + '/' + name + '.meta4', 'edition': edition,
+            'summary': (model or {}).get('summary', ''), 'name': family}
+
+
+def metalink(url, maximum=2_000_000):
+    # Large collections publish long piece lists in their Metalink.
+    return kiwix_select.fetch(url, maximum=max(maximum, 40_000_000))
+
+
+def build(names, additions, entries, *, sorting, reader=metalink, reference=''):
+    """Pin each wanted archive; additions replace any listed edition of the same family."""
+    by_file = {e['filename']: e for e in entries}
+    by_family = {}
+    for e in sorted(entries, key=lambda e: e['filename']):
+        by_family[kiwix_select.family(e['filename'])] = e
+    wanted = {}
+    for name in names:
+        wanted[kiwix_select.family(name)] = (name, reference)
+    for pattern, reason in additions:
+        for e in entries:
+            if pattern.fullmatch(e['filename']):
+                wanted[kiwix_select.family(e['filename'])] = (by_family[kiwix_select.family(e['filename'])]['filename'], reason)
+    items, excluded, unavailable = [], [], []
+    directories = sorted({e['meta4'].rsplit('/', 1)[0] for e in entries})
+    for family, (name, reason) in sorted(wanted.items()):
+        if sorting.state('zim:' + family) == 'excluded':
+            excluded.append(name)
+            continue
+        entry = entry_for(name, by_file, by_family)
+        # Kiwix sometimes moves a family to another folder and keeps old editions in place.
+        folders = [entry['meta4'].rsplit('/', 1)[0]] + [f for f in directories if f != entry['meta4'].rsplit('/', 1)[0]]
+        for attempt, folder in enumerate(folders if name not in by_file else folders[:1]):
+            try:
+                item = kiwix_select.pin({**entry, 'meta4': folder + '/' + name + '.meta4'}, [reason], reader=reader)
+                break
+            except (OSError, ValueError, setup.SetupError) as exc:
+                error = str(exc)
+        else:
+            unavailable.append({'archive': name, 'error': error})
+            continue
+        item.update(reference_source=reason, classification=sorting.state('zim:' + family))
+        items.append(item)
+    return {'schema': 1, 'kind': KIND, 'reference': reference, 'items': items,
+            'excluded_by_sort': sorted(excluded), 'unavailable': unavailable,
+            'total_bytes': sum(item['bytes'] for item in items)}
+
+
+def sha256(path):
+    value = hashlib.sha256()
+    with path.open('rb') as handle:
+        for block in iter(lambda: handle.read(8 * 1024 * 1024), b''):
+            value.update(block)
+    return value.hexdigest()
+
+
+def verify(root, data, *, deep=False):
+    expected = {Path(item['path']).name: item for item in data['items']}
+    families = {kiwix_select.family(name): name for name in expected}
+    folder = content.destination(root, 'library/zim')
+    local = {p.name: p for p in folder.glob('*.zim') if p.is_file() and not p.is_symlink()} if folder.is_dir() else {}
+    rows = []
+    for name, item in sorted(expected.items()):
+        path = local.get(name)
+        if path is None:
+            status = 'missing'
+        elif path.stat().st_size != item['bytes']:
+            status = 'size_mismatch'
+        elif deep and sha256(path) != item['sha256']:
+            status = 'hash_mismatch'
+        else:
+            status = 'ok' if deep else 'size_matches'
+        rows.append({'archive': name, 'status': status, 'bytes': item['bytes']})
+    for name in sorted(set(local) - set(expected)):
+        family = kiwix_select.family(name)
+        rows.append({'archive': name, 'status': 'other_edition' if family in families else 'extra',
+                     'expected': families.get(family, ''), 'bytes': local[name].stat().st_size})
+    counts = {}
+    for row in rows:
+        counts[row['status']] = counts.get(row['status'], 0) + 1
+    conform = not any(row['status'] in ('missing', 'size_mismatch', 'hash_mismatch', 'other_edition') for row in rows)
+    return {'reference': data.get('reference', ''), 'conform': conform, 'counts': counts, 'archives': rows}
+
+
+LABELS = {'ok': 'Conforme (empreinte vérifiée)', 'size_matches': 'Présente, taille conforme',
+          'missing': 'Manquante', 'size_mismatch': 'Taille différente', 'hash_mismatch': 'Empreinte différente',
+          'other_edition': 'Autre édition que la référence', 'extra': 'Hors référence (conservée)'}
+
+
+def data_root(args, parser):
+    if args.lab:
+        import linux_lab as lab
+        lab.checked_mount()
+        return lab.MOUNT / 'data'
+    if args.work_dir:
+        return setup.safe_path(setup.Installation(args.work_dir).load()['data_dir'])
+    if args.data_dir:
+        return setup.safe_path(args.data_dir)
+    parser.error('--lab, --work-dir ou --data-dir requis.')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('action', choices=['build', 'verify'])
+    parser.add_argument('--inventory', type=Path, help='build : /api/inventory enregistré ou liste de fichiers .zim.')
+    parser.add_argument('--add', action='append', default=[], metavar='MOTIF',
+                        help='build : expression régulière de noms de fichiers à ajouter, dernière édition du catalogue.')
+    parser.add_argument('--reason', default='ajout documenté', help='build : motif inscrit pour les ajouts.')
+    parser.add_argument('--reference', default='', help='build : nom de la référence (origine et date).')
+    parser.add_argument('--feed', type=Path, help='build : catalogue OPDS déjà enregistré.')
+    parser.add_argument('--sort', type=Path, default=DEFAULT_SORT, help='build : tri appliqué (collections exclues).')
+    parser.add_argument('--output', type=Path, default=PATH)
+    parser.add_argument('--manifest', type=Path, default=PATH, help='verify : manifeste à comparer.')
+    parser.add_argument('--lab', action='store_true')
+    parser.add_argument('--work-dir')
+    parser.add_argument('--data-dir')
+    parser.add_argument('--deep', action='store_true', help='verify : recalculer chaque SHA-256 (long).')
+    parser.add_argument('--json', type=Path, help='verify : enregistrer le rapport détaillé.')
+    args = parser.parse_args()
+    if args.action == 'build':
+        if not args.inventory:
+            parser.error('build demande --inventory.')
+        raw = args.feed.read_bytes() if args.feed else kiwix_select.fetch(kiwix_select.CATALOG_URL, maximum=60_000_000)
+        additions = [(re.compile(pattern), args.reason) for pattern in args.add]
+        report = build(read_names(args.inventory), additions, kiwix_select.parse_feed(raw),
+                       sorting=collection_sort.read_file(args.sort), reference=args.reference)
+        setup.write_json(args.output, report)
+        print(f"{len(report['items'])} archives, {report['total_bytes'] / 1e9:.1f} Go ; "
+              f"{len(report['excluded_by_sort'])} écartées par le tri. Manifeste : {args.output}")
+        for row in report['unavailable']:
+            print('Introuvable :', row['archive'], '—', row['error'], file=sys.stderr)
+        return
+    report = verify(data_root(args, parser), load(args.manifest), deep=args.deep)
+    for row in report['archives']:
+        if row['status'] not in ('ok', 'size_matches'):
+            print(f"{LABELS[row['status']]} : {row['archive']}" + (f" (attendu : {row['expected']})" if row.get('expected') else ''))
+    print('Bilan :', ', '.join(f'{LABELS[k]} {v}' for k, v in sorted(report['counts'].items())))
+    print('Installation conforme à la référence.' if report['conform'] else 'Écarts à corriger : relancer le téléchargement de la référence.')
+    if args.json:
+        setup.write_json(args.json, report)
+    if not report['conform']:
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (setup.SetupError, OSError, ValueError, KeyError) as exc:
+        print('ERREUR :', exc, file=sys.stderr)
+        sys.exit(1)
