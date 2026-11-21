@@ -1,5 +1,7 @@
 """Real queue, SQLite and media search with a simulated YouTube host and models."""
 import asyncio
+import json
+import time
 from pathlib import Path
 import tempfile
 import unittest
@@ -53,6 +55,26 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(state['running'])
         self.assertEqual(video['status'], 'running')
         self.assertIn('Publication', video['stage'])
+
+    async def test_recent_lab_download_is_visible_without_the_host_controller(self):
+        from pilot.routes.work import get_work_queue
+
+        report = {'kind': 'download', 'phase': 'downloading', 'source': 'local',
+                  'observed_at': time.time(), 'active': [{'title': 'Archive fictive',
+                  'bytes': 750, 'total': 2000, 'phase': 'downloading'}]}
+        snapshot = store.ROOT / 'lab-activity.json'
+        snapshot.write_text(json.dumps(report), encoding='utf-8')
+        with patch.object(operations, 'TOKEN', ''), patch.object(operations.network, 'CATALOG', store.ROOT), \
+                patch.object(work_queue, 'QUEUE', self.queue):
+            value = json.loads((await get_work_queue(CHILD)).body)
+            self.assertTrue(value['preparations_available'])
+            download = next(job for job in value['jobs'] if job['id'] == 'host:download')
+            self.assertEqual(download['preparation']['active'], report['active'])
+            report['observed_at'] -= 31
+            snapshot.write_text(json.dumps(report), encoding='utf-8')
+            value = json.loads((await get_work_queue(CHILD)).body)
+            self.assertFalse(value['preparations_available'])
+            self.assertFalse(any(job['id'] == 'host:download' for job in value['jobs']))
 
     async def test_host_preparations_use_the_same_cards_without_queue_controls(self):
         report = {'kind': 'download', 'phase': 'verifying', 'source': 'windows',

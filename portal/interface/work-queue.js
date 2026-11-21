@@ -61,6 +61,16 @@
     draw();
   });
 
+  function appendActiveFiles(container, files) {
+    if (!files?.length) return;
+    const list = element('ul', undefined, 'work-queue-meta');
+    for (const file of files) {
+      const phase = file.phase === 'verifying' ? 'Vérification' : 'Transfert';
+      list.append(element('li', file.title + ' · ' + bytes(file.bytes) + ' / ' + bytes(file.total) + ' · ' + phase));
+    }
+    container.append(list);
+  }
+
   function preparationDetails(job) {
     const data = job.preparation;
     const details = element('details', undefined, 'work-queue-failures');
@@ -75,14 +85,7 @@
         ' vérifiés · ' + data.verified_count + ' / ' + data.total_count + ' éléments.'));
       details.append(element('p', 'Les fichiers partiels sont vérifiés après réception. Un fichier vérifié peut encore attendre sa mise à disposition.'));
     }
-    if (data.active?.length) {
-      const list = element('ul');
-      for (const file of data.active) {
-        const phase = file.phase === 'verifying' ? 'Vérification' : 'Transfert';
-        list.append(element('li', file.title + ' · ' + bytes(file.bytes) + ' / ' + bytes(file.total) + ' · ' + phase));
-      }
-      details.append(list);
-    }
+    if (job.kind !== 'host-download') appendActiveFiles(details, data.active);
     if (data.pending_errors) details.append(element('p', data.pending_errors + ' contenu(s) à vérifier.'));
     const progress = data.index_progress;
     if (progress?.archives > 0) details.append(element('p', progress.completed + ' / ' + progress.archives +
@@ -187,6 +190,7 @@
       row.append(progress, element('span', amount));
       main.append(row);
     }
+    if (job.kind === 'host-download') appendActiveFiles(main, job.preparation?.active);
     if (job.error && job.error !== job.stage) main.append(element('p', job.error, failed(job) ? 'work-queue-error-text' : 'work-queue-meta'));
     if (failed(job) && !job.error && !job.stage && !job.failure_count) {
       main.append(element('p', 'Le détail de cette erreur est indisponible.', 'work-queue-meta'));
