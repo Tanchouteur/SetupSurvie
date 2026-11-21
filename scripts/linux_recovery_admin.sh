@@ -5,19 +5,27 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
 die() { printf '%s\n' "$*" >&2; exit 1; }
 [[ $EUID == 0 ]] || die 'Autorisation administrateur nécessaire.'
+action=${1:-}
 source /etc/os-release
 case "${ID:-}:${VERSION_ID:-}:$(uname -m)" in
     debian:12:x86_64|debian:13:x86_64|ubuntu:22.04:x86_64) ;;
-    *) die 'Choisissez un PC Debian 12, Debian 13 ou Ubuntu 22.04 (64 bits).';;
+    *) [[ "$action" == duplicate ]] ||
+        die 'Choisissez un PC Debian 12, Debian 13 ou Ubuntu 22.04 (64 bits).';;
 esac
-[[ -d /run/systemd/system ]] || die 'Le système doit avoir démarré normalement.'
+if [[ "$action" != duplicate && ! -d /run/systemd/system ]]; then
+    die 'Le système doit avoir démarré normalement.'
+fi
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
-action=${1:-}
 case "$action:$#" in
     install:4)
         source_base=$(realpath -e -- "$2")
         dest=$3
         [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
+        [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
+        ;;
+    duplicate:3)
+        source_base=$(realpath -e -- "$2")
+        dest=$3
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
     point:2|restore:2) dest=$2; source_base=$2 ;;
@@ -38,11 +46,23 @@ for directory in "$parent" "$base"; do
         directory=$(dirname -- "$directory")
     done
 done
-if [[ "$action" == install && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
+if [[ ( "$action" == install || "$action" == duplicate ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
     die 'Choisissez une destination distincte du dossier de secours.'
 fi
-if [[ "$action" == install && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
+if [[ ( "$action" == install || "$action" == duplicate ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
     die 'Choisissez un disque différent du SSD de secours.'
+fi
+if [[ "$action" == duplicate ]]; then
+    application="$source_base/application"
+    export PYTHONDONTWRITEBYTECODE=1
+    if /usr/bin/python3 -c 'import sqlite3, sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
+        exec /usr/bin/python3 "$application/scripts/linux_recovery.py" "$parent" duplicate "$source_base" "$base"
+    fi
+    scratch=$(mktemp -d /var/tmp/.setupsurvie-duplication.XXXXXXXX)
+    trap 'rm -rf -- "$scratch"' EXIT
+    /bin/bash "$application/scripts/installer-outils-linux-hors-ligne.sh" --python-seul "$source_base/data" "$scratch/outils"
+    "$scratch/outils/bin/python3" "$application/scripts/linux_recovery.py" "$parent" duplicate "$source_base" "$base"
+    exit
 fi
 recovery="$parent/.$(basename -- "$base")-secours"
 [[ ! -L "$recovery" ]] || die 'Dossier de secours invalide.'

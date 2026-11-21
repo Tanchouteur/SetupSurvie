@@ -511,6 +511,8 @@ def export_report(dest, journal):
     graphical = (dest / 'Installer-SetupSurvie.desktop').is_file()
     first_step = ('Double-cliquez sur Installer-SetupSurvie.desktop pour installer hors ligne.\n'
                   if graphical else f'Ouvrez {launcher} pour vérifier, activer ou revenir à la source.\n')
+    if (dest / 'Dupliquer-SetupSurvie.desktop').is_file():
+        first_step += 'Ouvrez Dupliquer-SetupSurvie.desktop pour préparer un second disque de secours.\n'
     docker_help=('Sous Windows, utilisez Vérifier Docker pour repérer le moteur et son stockage.\n'
                  if journal.get('target')=='windows' else
                  'Le guide HTML décrit le choix du disque, les prérequis et la reprise.\n')
@@ -551,18 +553,25 @@ def publish_linux_installer(base, journal):
     interface.chmod(0o755)
     for name in ('linux_recovery_gui.sh', 'linux_recovery_admin.sh'):
         durable.write_bytes(interface / name, (scripts / name).read_bytes())
-    shortcut = base / 'Installer-SetupSurvie.desktop'
-    durable.write_bytes(shortcut, template.read_bytes())
-    shortcut.chmod(0o755)
+    description = template.read_text(encoding='utf-8')
+    launchers = (
+        ('Installer-SetupSurvie.desktop', 'Installer SetupSurvie',
+         'Installer SetupSurvie depuis ce disque de secours', 'install'),
+        ('Entretien-SetupSurvie.desktop', 'Entretien de SetupSurvie',
+         'Entretenir une installation existante', 'maintenance-select'),
+        ('Dupliquer-SetupSurvie.desktop', 'Dupliquer le SSD de secours',
+         'Préparer un second SSD de secours', 'duplicate'),
+    )
+    for filename, name, comment, mode in launchers:
+        shortcut = base / filename
+        contents = (description.replace('Name=Installer SetupSurvie', 'Name=' + name)
+                    .replace('Installer SetupSurvie depuis ce disque de secours', comment)
+                    .replace(' install ', ' ' + mode + ' '))
+        durable.write_bytes(shortcut, contents.encode())
+        shortcut.chmod(0o755)
     # Reveal the launchers while keeping the data and journals private.
-    maintenance = base / 'Entretien-SetupSurvie.desktop'
-    durable.write_bytes(maintenance, template.read_text(encoding='utf-8')
-                        .replace('Name=Installer SetupSurvie', 'Name=Entretien de SetupSurvie')
-                        .replace('Installer SetupSurvie depuis ce disque de secours',
-                                 'Entretenir une installation existante')
-                        .replace(' install ', ' maintenance-select ').encode())
-    maintenance.chmod(0o755)
-    public = {interface.name, shortcut.name, maintenance.name, 'LISEZ-MOI.html', 'LIRE-MOI-SECOURS.txt'}
+    public = {interface.name, 'LISEZ-MOI.html', 'LIRE-MOI-SECOURS.txt'}
+    public.update(filename for filename, _, _, _ in launchers)
     for entry in base.iterdir():
         if entry.name not in public and not entry.is_symlink():
             entry.chmod(stat.S_IMODE(entry.stat().st_mode) & ~0o077)
