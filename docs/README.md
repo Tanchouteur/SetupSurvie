@@ -79,6 +79,7 @@ journal des incidents Windows, manuel de secours et protocole du
 ### Bibliothèque
 
 - [Index de la bibliothèque](bibliotheque/README.md)
+- [Guides pratiques et laboratoire Bazzite](bibliotheque/classement-pratique-et-laboratoire-bazzite.md) — décision et recette Autonomie et résilience.
 - [Savoirs et savoir-faire durables](bibliotheque/savoirs-durables.md) — référence unique des besoins de Marc.
 - [Bibliothèque complète de Marc et laboratoire réduit](bibliotheque/bibliotheque-complete-marc.md)
 - [Sélection automatique Kiwix par thème](bibliotheque/selection-kiwix-par-theme.md)

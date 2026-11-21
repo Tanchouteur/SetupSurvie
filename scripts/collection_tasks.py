@@ -5,6 +5,8 @@ import setup
 from delivery_paths import destination, locked
 from pilot import category_index, collection_sort
 
+DEFAULT_SORT_PATH = 'deploy/collection-sort-default.json'
+
 
 def validate_keys(body):
     values = body.get('keys')
@@ -17,6 +19,17 @@ def validate_keys(body):
 
 def catalog_directory(root):
     return destination(root, 'catalog')
+
+
+def installation_default():
+    return collection_sort.read_file(setup.ROOT / DEFAULT_SORT_PATH)
+
+
+def seed(root, sorting):
+    with locked(destination(root, 'catalog/content.lock')):
+        path = destination(root, 'catalog/' + collection_sort.FILENAME)
+        if not path.exists():
+            collection_sort.save(path.parent, sorting)
 
 
 def merge(root, value):

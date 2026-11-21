@@ -207,7 +207,13 @@ installation interrompue reste distincte d’une mise à jour à récupérer).
 
 ## Reprendre le tri d’une autre installation
 
-À la seconde étape, donner le chemin du fichier `SetupSurvie-tri.json` exporté
+À la seconde étape, laisser la réponse vide pour utiliser le
+[tri fourni](../../deploy/collection-sort-default.json). Les collections
+classées **Autre** restent dans le kit à copier si elles y figurent, et les
+collections exclues sont omises. Après installation, ajuster le tri depuis
+**Organiser les collections**.
+
+Pour le personnaliser dès cette étape, donner le chemin du fichier `SetupSurvie-tri.json` exporté
 depuis **Mon appareil → Paramètres → Bibliothèque et préparations → Organiser les
 collections** (0.65.0), ou l’option `-CollectionSort`. Le récapitulatif liste les
 collections à télécharger ou copier, les collections **Autre** et les exclusions ;

@@ -214,6 +214,111 @@ class LinuxRecoveryTests(unittest.TestCase):
         self.assertFalse(guard.exists())
         service.assert_called_once_with(['systemctl', 'start', 'dedicated.service'])
 
+    def interrupted_local_point(self, phase='copying'):
+        point = self.state / 'point'
+        point.mkdir()
+        work = self.active / 'private'
+        work.mkdir(parents=True)
+        copy_id = 'a12b' * 8
+        journal = {**self.journal, 'phase': phase, 'id': copy_id, 'destination': str(point),
+                   'source': {role: str(self.active / role) for role in ('application', 'data', 'private')}}
+        transfer.save(point, journal)
+        guard = work / 'transfer-guard.json'
+        setup.write_json(guard, {'id': copy_id, 'destination': str(point)})
+        return point, guard, self.state / ('point-interrompu-' + copy_id)
+
+    def test_cancel_after_interruption_between_archive_and_guard_removal(self):
+        point, guard, archived = self.interrupted_local_point()
+        partial = point / 'guide.transfer-part'
+        partial.write_text('données partielles')
+        user_file = self.active / 'mes-guides'
+        user_file.write_text('document actuel')
+        sync = recovery.durable.sync_directory
+
+        def cut_after_rename(directory):
+            if directory == self.state and archived.is_dir():
+                raise OSError('coupure après publication')
+            sync(directory)
+
+        with (
+            patch.object(recovery, 'managed_unit', return_value='dedicated'),
+            patch.object(recovery.setup, 'run') as service,
+            patch.object(recovery.setup.Installation, 'request') as health,
+        ):
+            with patch.object(recovery.durable, 'sync_directory', side_effect=cut_after_rename):
+                with self.assertRaisesRegex(OSError, 'coupure après publication'):
+                    recovery.cancel_point(self.state, self.active)
+            service.assert_not_called()
+            self.assertTrue(guard.is_file())
+            self.assertTrue(archived.is_dir())
+            recovery.cancel_point(self.state, self.active)
+        self.assertFalse(guard.exists())
+        self.assertFalse(point.exists())
+        self.assertEqual((archived / partial.name).read_text(), 'données partielles')
+        self.assertEqual(user_file.read_text(), 'document actuel')
+        service.assert_called_once_with(['systemctl', 'start', 'dedicated.service'])
+        health.assert_called_once_with('http://127.0.0.1:8080/api/health')
+
+    def test_cancel_preserves_a_complete_point(self):
+        point, guard, archived = self.interrupted_local_point('copied')
+        before = (point / 'transfer.json').read_bytes()
+        with (
+            patch.object(recovery, 'managed_unit', return_value='dedicated'),
+            patch.object(recovery.setup, 'run'),
+            patch.object(recovery.setup.Installation, 'request'),
+        ):
+            recovery.cancel_point(self.state, self.active)
+        self.assertFalse(guard.exists())
+        self.assertFalse(archived.exists())
+        self.assertEqual((point / 'transfer.json').read_bytes(), before)
+
+    def test_cancel_refuses_guard_for_a_different_transfer(self):
+        point, guard, archived = self.interrupted_local_point()
+        setup.write_json(guard, {'id': 'a12b' * 8, 'destination': '/disque/externe'})
+        with (
+            patch.object(recovery, 'managed_unit', return_value='dedicated'),
+            patch.object(recovery.setup, 'run') as service,
+        ):
+            with self.assertRaisesRegex(setup.SetupError, 'Un autre transfert'):
+                recovery.cancel_point(self.state, self.active)
+        self.assertTrue(guard.exists())
+        self.assertTrue(point.is_dir())
+        self.assertFalse(archived.exists())
+        service.assert_not_called()
+
+    def test_cancel_refuses_when_a_restoration_is_in_progress(self):
+        (self.state / 'remplacement.json').write_text('{}')
+        with patch.object(recovery, 'managed_unit') as unit:
+            with self.assertRaisesRegex(setup.SetupError, 'restauration en cours'):
+                recovery.cancel_point(self.state, self.active)
+        unit.assert_not_called()
+
+    def test_cancel_moves_empty_point_left_before_journal_publication(self):
+        point = self.state / 'point'
+        point.mkdir()
+        self.active.mkdir()
+        with (
+            patch.object(recovery, 'managed_unit', return_value='dedicated'),
+            patch.object(recovery.setup, 'run'),
+            patch.object(recovery.setup.Installation, 'request'),
+        ):
+            recovery.cancel_point(self.state, self.active)
+        self.assertFalse(point.exists())
+        self.assertEqual(len(list(self.state.glob('point-interrompu-*'))), 1)
+
+    def test_cancel_can_restart_when_unfenced_point_has_an_unreadable_journal(self):
+        point, guard, _ = self.interrupted_local_point()
+        guard.unlink()
+        (point / 'transfer.json').write_text('copie endommagée')
+        with (
+            patch.object(recovery, 'managed_unit', return_value='dedicated'),
+            patch.object(recovery.setup, 'run') as service,
+            patch.object(recovery.setup.Installation, 'request'),
+        ):
+            recovery.cancel_point(self.state, self.active)
+        self.assertEqual((point / 'transfer.json').read_text(), 'copie endommagée')
+        service.assert_called_once_with(['systemctl', 'start', 'dedicated.service'])
+
     def add_graphical_launchers(self):
         scripts = self.source / 'application/scripts'
         for name in ('installer-depuis-le-ssd.desktop', 'linux_recovery_gui.sh', 'linux_recovery_admin.sh'):
@@ -244,9 +349,11 @@ class LinuxRecoveryTests(unittest.TestCase):
         (scripts / 'zenity').write_text(
             '#!/bin/sh\ncase "$1" in\n'
             '--file-selection) printf "/srv/Disque SSD\\n";;\n'
-            '--list) if [ "$2" = --radiolist ]; then printf "autre\\n"; fi;;\n'
+            '--list) case "$*" in *--title="Entretien de SetupSurvie"*) printf "cancel-point\\n";; '
+            '*--radiolist*) printf "autre\\n";; esac;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
-            '--question) case "$*" in *--ok-label=Dupliquer*) exit 0;; *) exit 1;; esac;;\n'
+            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
+            '*) exit 1;; esac;;\n'
             'esac\n')
         (scripts / 'pkexec').write_text(
             '#!/bin/sh\nprintf "%s\\n" "$@" >"$RESULT.args"\n'
@@ -270,3 +377,9 @@ class LinuxRecoveryTests(unittest.TestCase):
         arguments = result.with_suffix('.args').read_text().splitlines()
         self.assertEqual(arguments[-3:], ['duplicate', str(self.source),
                                           '/srv/Disque SSD/SetupSurvie-Secours'])
+
+        subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'maintenance', self.active],
+                       check=True, timeout=10, env={**os.environ,
+                           'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[-2:], ['cancel-point', str(self.active)])

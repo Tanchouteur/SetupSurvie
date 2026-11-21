@@ -28,7 +28,7 @@ case "$action:$#" in
         dest=$3
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
-    point:2|restore:2) dest=$2; source_base=$2 ;;
+    point:2|restore:2|cancel-point:2) dest=$2; source_base=$2 ;;
     *) die 'Action inconnue.' ;;
 esac
 [[ "$dest" == /* && "$dest" != / && "$dest" != */ && "$dest" != *$'\n'* && "$dest" != *$'\r'* ]] ||
@@ -93,4 +93,9 @@ if [[ ! -d "$runtime" ]]; then
 fi
 export PYTHONDONTWRITEBYTECODE=1
 source "$runtime/outils-linux/environnement.sh"
-exec "$runtime/outils-linux/bin/python3" "$runtime/application/scripts/linux_recovery.py" "$recovery" "$@"
+entry="$runtime/application/scripts/linux_recovery.py"
+# A new rescue SSD can unblock a point made by an older maintenance launcher.
+if [[ "$action" == cancel-point && "$(basename -- "$script_dir")" == Interface-SetupSurvie ]]; then
+    entry="$(dirname -- "$script_dir")/application/scripts/linux_recovery.py"
+fi
+exec "$runtime/outils-linux/bin/python3" "$entry" "$recovery" "$@"

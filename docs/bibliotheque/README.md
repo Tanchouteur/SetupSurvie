@@ -2,6 +2,7 @@
 
 | Document | Statut et rôle |
 | --- | --- |
+| [Guides pratiques et laboratoire Bazzite](classement-pratique-et-laboratoire-bazzite.md) | Décision, début de la copie et plan de recette par besoin |
 | [Savoirs et savoir-faire durables](savoirs-durables.md) | Besoins de Marc, parcours, sélection concrète et grille des besoins restant à vérifier, pilote 0.1.19 |
 | [Bibliothèque complète de Marc](bibliotheque-complete-marc.md) | Guide actuel : tous les thèmes et fonds de base, sans plafond chez Marc ; laboratoire réduit et plafonné |
 | [Notice Baofeng et antennes](baofeng-et-antennes.md) | Guide actuel : ajout volontaire du PDF, variante exacte, calculs et limites |
