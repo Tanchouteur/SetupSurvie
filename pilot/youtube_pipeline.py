@@ -18,6 +18,9 @@ def initialize():
     with store.connect() as db:
         db.execute("UPDATE youtube_pipeline SET data=json_set(data,'$.status','queued') WHERE json_extract(data,'$.status') IN ('running','preparing')")
 
+        db.execute("""UPDATE youtube_pipeline SET data=json_set(data,'$.done',json_extract(data,'$.total'))
+            WHERE kind='youtube' AND json_extract(data,'$.done')>json_extract(data,'$.total')""")
+
 
 def read(identifier):
     with store.connect() as db:
@@ -185,9 +188,15 @@ async def follow(identifier, state):
             progress = state.get('youtube') or {}
             if progress:
                 counts = progress.get('counts', {})
-                done = sum(counts.get(key, 0) for key in ('downloaded', 'skipped', 'error'))
+                total = progress.get('videos', read(identifier)['total'])
+                if 'done' in progress and 'total' in progress:
+                    # The host also counts rejected and duplicate input lines as processed.
+                    done = progress['done'] - (progress['total'] - total)
+                else:
+                    done = sum(counts.get(key, 0) for key in ('downloaded', 'skipped', 'error'))
+                done = max(0, min(done, total))
                 current = progress.get('current') or {}
-                stage = f"Vidéo {current.get('index', done)} / {progress.get('videos', read(identifier)['total'])}"
+                stage = f"Vidéo {current.get('index', done)} / {total}"
                 if current.get('percent') is not None:
                     stage += f" · fichier en cours {current['percent']:.0f} %"
                 update(identifier, done=done, items=progress.get('items', []), stage=stage)

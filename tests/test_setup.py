@@ -197,15 +197,31 @@ class InstallationTests(unittest.TestCase):
                 self.app.import_images(self.config, archive)
             run.assert_not_called()
 
+    def test_preparing_additional_model_preserves_installed_models_and_resumes(self):
+        compact = 'qwen3:1.7b-q4_K_M'
+        standard = setup.VERSIONS['default_model']
+        installed = {'models': [{'name': standard}, {'name': 'marc:custom'}]}
+        with patch.object(self.app, 'request', return_value=installed), \
+                patch.object(self.app, 'pull_model') as pull, patch.object(self.app, 'record') as record:
+            self.app.prepare_models(dict(self.config, chat_model=compact), (standard, compact))
+            pull.assert_called_once_with(dict(self.config, chat_model=compact), compact)
+            installed['models'].append({'name': compact})
+            self.app.prepare_models(self.config, (standard, compact))
+            pull.assert_called_once()
+            record.assert_called_once_with(self.config)
+
     def test_compose_windows_cpu_and_gpu_with_spaces(self):
         for target, cpu in [('windows', False), ('linux', True), ('linux', False)]:
             with self.subTest(target=target, cpu=cpu):
                 c = dict(self.config, target=target, cpu=cpu)
+                if target == 'linux' and cpu:
+                    c['chat_model'] = 'qwen3:1.7b-q4_K_M'
                 self.app.render(c)
                 result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True,env={**self.app.environment(),'PILOT_SEARCH_CACHE_BYTES':'8000000000'})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 services = json.loads(result.stdout)['services']
                 self.assertEqual(services['pilot']['environment']['PILOT_SEARCH_CACHE_BYTES'],'8000000000')
+                self.assertEqual(services['pilot']['environment']['CHAT_MODEL'], c['chat_model'])
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')
                 self.assertEqual(services['open-webui']['environment']['WEBUI_SECRET_KEY'], self.config['secret'])
                 self.assertEqual(services['open-webui']['environment']['WEBUI_AUTH_TRUSTED_EMAIL_HEADER'],'X-Survie-Email')

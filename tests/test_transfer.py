@@ -81,6 +81,32 @@ class TransferTests(unittest.TestCase):
         with self.assertRaisesRegex(setup.SetupError,'externe'):
             transfer.inventory({'data':self.data})
 
+    @unittest.skipIf(os.name == 'nt', 'Linux model store fixture')
+    def test_smaller_target_uses_verified_compact_model_without_removing_any_model(self):
+        import linux_host
+        profile = linux_host.compact_cpu_profile()
+        standard = setup.VERSIONS['default_model']
+        config = {'cpu': True, 'chat_model': standard}
+        standard_path = self.data / 'models/manifests/registry.ollama.ai/library/gpt-oss/20b'
+        compact_path = self.data / 'models/manifests-v2/ollama.com/library/qwen3/1.7b-q4_K_M'
+        blob = self.data / 'models/blobs' / ('sha256-' + 'c' * 64)
+        standard_path.parent.mkdir(parents=True)
+        standard_path.write_bytes(b'standard fixture')
+        blob.parent.mkdir(parents=True)
+        blob.write_bytes(b'compact fixture')
+        compact_path.parent.mkdir(parents=True)
+        compact_path.symlink_to(os.path.relpath(blob, compact_path.parent))
+        self.copy()
+        inventory = transfer.verify_copy(self.dest)['inventory']
+        with patch.object(linux_host, 'compact_cpu_profile', return_value=profile), \
+                patch.object(linux_host, 'needs_compact_model', return_value=True):
+            transfer.select_restored_cpu_model(config, {'files': []})
+            self.assertEqual(config['chat_model'], standard)
+            transfer.select_restored_cpu_model(config, inventory)
+            self.assertEqual(config['chat_model'], profile['model'])
+        for path in (standard_path, compact_path):
+            self.assertEqual((self.dest / 'data' / path.relative_to(self.data)).read_bytes(), path.read_bytes())
+
     @unittest.skipIf(os.name=='nt','Permissions Unix')
     def test_copy_preserves_directory_permissions_under_private_destination(self):
         zim=self.data/'library/zim'
@@ -376,6 +402,31 @@ class ActivationTests(unittest.TestCase):
         config=up.call_args.args[0];self.assertFalse(config['inference_autostart'])
         self.assertTrue(transfer.read(self.dest/'transfer.json')['checks']['mounts'])
         mounts.assert_called_once()
+
+    @unittest.skipIf(os.name == 'nt', 'Linux runtime fixture')
+    def test_activation_from_other_machine_selects_a_copied_compact_model(self):
+        import linux_host
+        self.config.update(cpu=True, chat_model=setup.VERSIONS['default_model'])
+        profile = linux_host.compact_cpu_profile()
+        for model in (self.config['chat_model'], profile['model']):
+            name, tag = model.split(':', 1)
+            manifest = self.data / 'models/manifests/registry.ollama.ai/library' / name / tag
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text(model)
+        self.prepared()
+        self.work.rename(self.work.with_name('source retirée de la VM cible'))
+        with patch.object(setup, 'ROOT', self.dest / 'application'), \
+                patch.object(setup, 'run', return_value='linux'), \
+                patch.object(setup.Installation, 'import_images'), \
+                patch.object(setup.Installation, 'up') as up, \
+                patch.object(setup.Installation, 'compose', return_value='{}'), \
+                patch.object(transfer, 'validate_mounts'), \
+                patch.object(linux_host, 'compact_cpu_profile', return_value=profile), \
+                patch.object(linux_host, 'needs_compact_model', return_value=True):
+            transfer.activate(self.dest)
+        self.assertEqual(up.call_args.args[0]['chat_model'], profile['model'])
+        self.assertFalse(up.call_args.args[0]['inference_autostart'])
+        self.assertEqual(transfer.read(self.dest / 'transfer.json')['phase'], 'active')
 
     def test_activation_failure_stays_fenced_then_resumes(self):
         if os.name=='nt':self.skipTest('Linux runtime fixture')

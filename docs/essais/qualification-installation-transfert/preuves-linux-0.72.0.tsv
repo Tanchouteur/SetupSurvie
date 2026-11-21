@@ -1,0 +1,6 @@
+scenario	distribution	boot_avant	boot_apres	rejeu	service_apres	docker_apres	sante_apres	recherche_apres	pdf_apres	carte_apres	article_zim_apres	sortie_wan_apres	support_apres
+installation	Debian 12.15	81821cdd-ef9f-4127-8f70-b5457502071a	db4fc764-eb0e-45ef-b5a1-22998697b19b	ok	actif	actif	ok	ok	ok	ok	non vérifié	en ligne	sans objet
+installation	Ubuntu 22.04.5 Minimal	bff0c8b2-113d-48cb-831c-2489b302cffe	4ef4441e-85c1-409e-ac10-dd72fd000126	ok	actif	actif	ok	ok	ok	ok	non vérifié	en ligne	sans objet
+restauration	Debian 13.7	a6adb5f7-9b09-4228-96a6-fbae160d7f51	3b4ebee8-9dbb-41e5-b6a7-f3122f042065	ok	actif	actif	ok	ok	ok	ok	Levain	bloquée	démonté
+restauration	Debian 12.15	d36bb8b0-042e-4b68-a54c-3d85fa94a4d2	e679f42f-094f-4feb-a6a5-a55d1cf10906	ok	actif	actif	ok	ok	ok	ok	Levain	bloquée	démonté
+restauration	Ubuntu 22.04.5 Minimal	7db3dbae-9a9e-4c31-a130-d359ee007073	5a8bea70-ba31-4a08-9a6c-4b554065f02f	ok	actif	actif	ok	ok	ok	ok	Levain	bloquée	démonté

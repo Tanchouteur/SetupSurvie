@@ -55,6 +55,39 @@ les prérequis et les droits d’usage.
 
 ## Préparer une installation depuis le dépôt
 
+### Installation automatique Linux
+
+Depuis la 0.72.0, le lanceur accepte Debian 12, Debian 13 et Ubuntu 22.04
+x86-64 avec systemd, Bash, curl et les certificats HTTPS. Lancer depuis le
+dossier logiciel obtenu. L'artefact de qualification GitHub Actions contient
+`SetupSurvie-linux-VERSION.tar.gz` et son fichier SHA-256. Après contrôle de
+l'archive et extraction, ouvrir le dossier `SetupSurvie`.
+
+```sh
+sudo ./scripts/install.sh --preparer-systeme /srv/setup-survie --content-pack health --content-pack water
+```
+
+Le mode automatique prépare et vérifie Docker, Compose, Python et nftables,
+puis installe SetupSurvie en mode CPU. Le dossier `/srv/setup-survie` est
+créé avec un stockage Docker dédié, le code, les réglages privés, les données
+et les installateurs destinés au transfert. Le lanceur utilise les ports de
+SetupSurvie et active le routage IPv4. Après l'installation, accéder au
+portail sur `http://127.0.0.1:8080`. Les services démarrent avec le système.
+En cas d'interruption, relancer la même commande avec les mêmes lots.
+
+Avec la 0.74.0, une première installation automatique prépare GPT-OSS 20B
+et Qwen3 1,7B. Sur les machines qui détectent moins de 16 Gio de RAM,
+le profil rapide et la traduction automatique des vidéos utilisent Qwen3
+avec un contexte initial de 8 192 tokens. GPT-OSS 20B et les autres choix
+restent accessibles dans la liste des modèles. Le réglage est enregistré
+à la première initialisation. La copie hors ligne conserve tous les modèles
+présents et peut adapter le profil rapide à la [mémoire de la cible](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne).
+
+Pour utiliser une autre distribution ou un Docker déjà configuré, suivre
+le parcours manuel ci-dessous.
+
+### Installation manuelle
+
 Ce parcours télécharge ses dépendances et n’équivaut pas à l’installation du kit.
 Sous Windows : Python x64 3.11 à 3.15, Docker Desktop avec conteneurs Linux,
 Ollama Windows et pilote NVIDIA adapté. Sous Linux : Python 3.11+, Docker avec
@@ -75,6 +108,20 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 ```bash
 ./scripts/install.sh --lan --data-dir /DISQUE/SetupSurvie/donnees
 ```
+
+Pour séparer les réglages privés du dépôt, ajouter
+`--work-dir '/DISQUE/SetupSurvie/Réglages privés'`. Garder ce même dossier
+lors de chaque relance. Les options `--content-pack` sont réservées à
+l’installation en ligne. Les codes des lots sont listés par
+`python3 scripts/content.py list`.
+
+Depuis la 0.70.0, une installation Linux x86-64 en ligne conserve dans
+`donnees/tools/linux-offline-installers/` les archives vérifiées de Docker
+Engine, Compose, du même Python mineur (3.11 à 3.15) et des dépendances
+réseau pour Debian 13. Depuis la 0.72.0, le lot contient aussi les paquets
+résolus pour Debian 12 et Ubuntu 22.04. Le transfert emporte ces archives avec les données. Elles permettent de préparer les
+outils sur une cible Linux glibc sans accès à Internet.
+[Restaurer sur une autre machine Linux](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne)
 
 Suivre le [guide de démarrage Linux](demarrage-linux.md) pour le service
 systemd, Docker rootless et les prérequis GPU correspondants.

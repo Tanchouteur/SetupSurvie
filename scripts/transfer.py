@@ -529,7 +529,10 @@ def bundle_launcher(base):
     durable.write_bytes(base/'Transferer-SetupSurvie.cmd',
         b'@echo off\r\nrem SetupSurvie managed transfer\r\nif exist "%~dp0data\\tools\\Python312\\python.exe" (\r\n"%~dp0data\\tools\\Python312\\python.exe" -X utf8 "%~dp0application\\scripts\\transfer_wizard.py" --base "%~dp0."\r\nexit /b %ERRORLEVEL%\r\n)\r\npy -3 -X utf8 "%~dp0application\\scripts\\transfer_wizard.py" --base "%~dp0."\r\nif errorlevel 1 pause\r\n')
     durable.write_bytes(base/'transferer-setupsurvie.sh',
-        b'#!/bin/sh\nexec python3 "$(dirname "$0")/application/scripts/transfer_wizard.py" --base "$(dirname "$0")"\n')
+        b'#!/bin/sh\nbase=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1\n'
+        b'if [ "$#" = 1 ] && [ "$1" = --restaurer-hors-ligne ]; then\n'
+        b'    exec "$base/application/scripts/restaurer-linux-hors-ligne.sh" "$base"\n'
+        b'fi\nexec python3 "$base/application/scripts/transfer_wizard.py" --base "$base" "$@"\n')
     (base/'transferer-setupsurvie.sh').chmod(0o700)
 
 
@@ -789,6 +792,21 @@ def local_runtime(dest):
     return [str(executable),'-X','utf8',str(dest/'application/scripts/transfer.py')]
 
 
+def select_restored_cpu_model(config, inventory):
+    import linux_host
+    if not config.get('cpu') or config.get('chat_model') != setup.VERSIONS['default_model']:
+        return
+    profile = linux_host.compact_cpu_profile()
+    if not profile or not linux_host.needs_compact_model(profile):
+        return
+    name, tag = profile['model'].split(':', 1)
+    v1 = f'data/models/manifests/registry.ollama.ai/library/{name}/{tag}'
+    v2 = f'models/manifests-v2/ollama.com/library/{name}/{tag}'
+    copied = {record['path'] for record in inventory['files']}
+    if v1 in copied or 'data/' + v2 in copied or v2 in inventory.get('ollama_links', {}):
+        config['chat_model'] = profile['model']
+
+
 def activate(dest):
     dest=setup.safe_path(dest)
     if setup.ROOT.resolve()!=dest/'application':
@@ -834,6 +852,11 @@ def activate(dest):
         if setup.run(['docker','info','--format','{{.OSType}}'],capture=True)!='linux':
             raise setup.SetupError('Docker doit utiliser les conteneurs Linux.')
         if not journal.get('images_sha256'):raise setup.SetupError('Archive des images absente ; activation hors ligne impossible.')
+        if host == 'linux':
+            import linux_host
+            config['docker_rootless'] = linux_host.docker_rootless()
+            if not same_pc:
+                select_restored_cpu_model(config, journal['inventory'])
         journal['phase']='activating';save(dest,journal);export_report(dest,journal)
         config.pop('local_images',None);config.pop('routing_image',None)
         setup.write_json(app.settings_path,config,private=True)

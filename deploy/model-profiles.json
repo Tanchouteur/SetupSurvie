@@ -74,7 +74,16 @@
       "category": "comparison"
     }
   ],
+  "compact_cpu": {
+    "model": "qwen3:1.7b-q4_K_M",
+    "name": "Réponse rapide · Qwen3 1,7B",
+    "think": false,
+    "description": "Modèle compact utilisé par l’installation automatique sur les machines à faible mémoire.",
+    "context": 8192,
+    "default_model_ram_gib": 16
+  },
   "download_sizes": {
+    "qwen3:1.7b-q4_K_M": 1359293444,
     "gpt-oss:20b": 13793441566,
     "gemma4:e4b": 6583656505,
     "qwen3.5:4b-q4_K_M": 3324173934,

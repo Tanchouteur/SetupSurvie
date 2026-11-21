@@ -468,8 +468,14 @@ class Manager:
                 if code not in (0,2) or report.get('phase')!='completed':
                     raise setup.SetupError('Le téléchargement des vidéos n’a pas pu se terminer. Vérifiez Internet et l’espace libre, puis reprenez : les vidéos déjà rangées sont conservées.')
                 counts=report.get('counts',{})
-                update('completed',f"Téléchargement terminé : {counts.get('downloaded',0)} vidéo(s) ajoutée(s), {counts.get('skipped',0)} déjà présente(s), "
-                       f"{counts.get('error',0)+counts.get('refused',0)} non téléchargée(s). "
+                items=report.get('items',[])
+                duplicates=sum(item.get('reason')=='duplicate_in_list' for item in items)
+                rejected_lines=sum(item.get('status')=='refused' and not item.get('id') for item in items)
+                existing=counts.get('skipped',0)-duplicates
+                failed=counts.get('error',0)+counts.get('refused',0)-rejected_lines
+                update('completed',f"Téléchargement terminé : {counts.get('downloaded',0)} vidéo(s) ajoutée(s), {existing} déjà présente(s), "
+                       f"{failed} non téléchargée(s). "
+                       +(f"{duplicates+rejected_lines} ligne(s) écartée(s) de la liste. " if duplicates or rejected_lines else '')
                        +(f"{report['remaining']} restante(s), à reprendre après avoir libéré de l’espace. " if report.get('remaining') else '')
                        +'Le site répertorie les vidéos téléchargées.')
             elif state['action']=='category-index':

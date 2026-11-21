@@ -225,6 +225,34 @@ class CaptionPreparationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('runtime_after',metrics);self.assertIsNotNone(metrics['first_text_ms'])
         self.assertEqual(len(payloads),2);self.assertNotIn('start_ms',payloads[0]['messages'][1]['content'])
 
+    async def test_compact_cpu_profile_is_used_to_publish_a_french_track(self):
+        compact = engine.COMPACT_CPU
+        original = httpx.AsyncClient
+        payloads = []
+
+        def handler(request):
+            payload = json.loads(request.content)
+            payloads.append(payload)
+            parts = json.loads(payload['messages'][1]['content'])
+            rows = [{'id': part['id'], 'text': f'Le rotor fictif mesure {part["id"] + 17} mm. Ne pas dépasser cette cote.'}
+                    for part in parts]
+            reply = {'message': {'content': json.dumps({'status': 'translated', 'cues': rows})},
+                     'done': True, 'done_reason': 'stop'}
+            return httpx.Response(200, content=json.dumps(reply).encode() + b'\n')
+
+        runtime = {'available': True, 'installed': True, 'native_context': 32768, 'running': None, 'other_models': 0}
+        with patch.dict(engine.MODES, {'rapide': {**engine.MODES['rapide'], **compact}}), \
+                patch.object(captions, 'translate_batch', self.real_translate), \
+                patch.object(captions.model_runtime, 'describe', AsyncMock(return_value=runtime)), \
+                patch.object(httpx, 'AsyncClient', lambda **kwargs: original(transport=httpx.MockTransport(handler), **kwargs)):
+            result = await self.finish(await captions.create(self.video, 0, 'rapide'))
+        self.assertEqual(result['status'], 'completed', result)
+        self.assertTrue(any(track['language'] == 'fr' for track in videos.source(self.video)['tracks']))
+        self.assertEqual(len(payloads), 1)
+        self.assertEqual(payloads[0]['model'], compact['model'])
+        self.assertEqual(payloads[0]['options']['num_ctx'], 8192)
+        self.assertIs(payloads[0]['think'], False)
+
     async def test_real_protocol_clarifies_status_but_never_accepts_an_explicit_refusal(self):
         original=httpx.AsyncClient;payloads=[];refused=False
         def handler(request):

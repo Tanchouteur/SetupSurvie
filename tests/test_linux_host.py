@@ -1,5 +1,6 @@
 import os
 import shlex
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -68,9 +69,11 @@ class LinuxHostTest(unittest.TestCase):
         app = mock.Mock(work=Path('/srv/essai/prive'))
         with mock.patch('shutil.which', return_value='/home/louis/bin/docker'):
             text = linux_host.unit_text(app, {'project': 'survie-abc'},
-                                        {'PATH': '/home/louis/bin', 'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock'})
+                                        {'PATH': '/home/louis/bin', 'DOCKER_HOST': 'unix:///run/user/1000/essai/docker.sock',
+                                         'DOCKER_CONFIG': '/srv/Outils SetupSurvie/docker-cli'})
         self.assertIn('Environment="DOCKER_HOST=unix:///run/user/1000/essai/docker.sock"', text)
         self.assertIn('Environment="PATH=/home/louis/bin:', text)
+        self.assertIn('Environment="DOCKER_CONFIG=/srv/Outils SetupSurvie/docker-cli"', text)
         self.assertIn('--work-dir "/srv/essai/prive" up', text)
         self.assertIn('--work-dir "/srv/essai/prive" down', text)
         self.assertIn('RemainAfterExit=yes', text)
@@ -105,6 +108,66 @@ class LinuxHostTest(unittest.TestCase):
                 with self.subTest(host=value), self.assertRaises(setup.SetupError):
                     linux_host.unit_text(mock.Mock(work='/tmp'), {}, {'DOCKER_HOST': value})
 
+    def test_install_wrapper_accepts_a_private_directory_with_spaces(self):
+        if sys.platform != 'linux':
+            self.skipTest('Lanceur Bash sous Linux.')
+        private = self.root / 'Réglages privés'
+        data = self.root / 'Données locales'
+        result = subprocess.run(
+            ['bash', str(ROOT / 'scripts/install.sh'), '--work-dir', str(private),
+             '--data-dir', str(data), '--offline', '--content-pack', 'health'],
+            capture_output=True, encoding='utf-8', timeout=20,
+        )
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn('Choisir le kit hors ligne', result.stderr)
+        self.assertFalse(private.exists())
+        self.assertFalse(data.exists())
+
+    def test_install_rejects_unknown_pack_without_creating_directories(self):
+        private = self.root / 'private'
+        data = self.root / 'data'
+        with self.assertRaisesRegex(setup.SetupError, 'Lots inconnus : absent'):
+            setup.main(['--work-dir', str(private), 'install', '--target', 'linux',
+                        '--data-dir', str(data), '--content-pack', 'absent'])
+        self.assertFalse(private.exists())
+        self.assertFalse(data.exists())
+
+    def test_install_preserves_global_work_dir(self):
+        args = setup.parser().parse_args(
+            ['--work-dir', str(self.root), 'install', '--target', 'linux'])
+        self.assertEqual(args.work_dir, str(self.root))
+
+    def test_offline_installers_match_the_installation_python_minor(self):
+        import linux_offline_tools
+        version = mock.Mock(major=3, minor=13)
+        with mock.patch.object(linux_offline_tools.platform, 'machine', return_value='x86_64'), \
+                mock.patch.object(linux_offline_tools.sys, 'version_info', version), \
+                mock.patch.object(linux_offline_tools.content, 'check_capacity'), \
+                mock.patch.object(linux_offline_tools.content, 'transfer') as download:
+            self.assertTrue(linux_offline_tools.prepare(self.root))
+        names = [call.args[1]['id'] for call in download.call_args_list]
+        self.assertEqual(names[:3], ['docker.tar.gz', 'docker-compose', 'python-3.13.tar.gz'])
+        self.assertTrue(any(name.startswith('nftables_') for name in names[3:]))
+        self.assertTrue(all(name.endswith('.deb') for name in names[3:]))
+        receipt = self.root / linux_offline_tools.FOLDER / 'python-archive.txt'
+        self.assertEqual(receipt.read_text(), 'python-3.13.tar.gz\n')
+
+    @unittest.skipUnless(sys.platform == 'linux' and os.uname().machine == 'x86_64',
+                         'Bootstrap Bash pour Linux x86-64.')
+    def test_offline_bootstrap_refuses_a_tampered_archive_before_installing(self):
+        import linux_offline_tools
+        cache = self.root / linux_offline_tools.FOLDER
+        cache.mkdir(parents=True)
+        (cache / 'python-archive.txt').write_text('python-3.13.tar.gz\n')
+        (cache / 'docker.tar.gz').write_bytes(b'archive alteree')
+        target = self.root / 'Outils restaurés'
+        result = subprocess.run(
+            ['bash', str(ROOT / 'scripts/installer-outils-linux-hors-ligne.sh'),
+             str(self.root), str(target)], capture_output=True, encoding='utf-8', timeout=20)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('Empreinte incorrecte', result.stderr)
+        self.assertFalse(target.exists())
+
     def test_reader_version_follows_python(self):
         self.assertEqual(index_reader_probe.expected_version((3, 14, 2)), '3.13.1')
         self.assertEqual(index_reader_probe.expected_version((3, 15, 2)), '4.1.0')
@@ -123,6 +186,9 @@ class LinuxHostTest(unittest.TestCase):
             self.assertEqual(init.call_args.args[0], ('127.0.0.1', 11436))
             control.Server(app, {**c, 'docker_rootless': False}, 'compose')
             self.assertEqual(init.call_args.args[0], ('0.0.0.0', 11436))
+            with mock.patch.dict(os.environ, {'SURVIE_SYSTEM_DOCKER_GATEWAY': '172.29.0.1'}):
+                control.Server(app, {**c, 'docker_rootless': False}, 'compose')
+            self.assertEqual(init.call_args.args[0], ('172.29.0.1', 11436))
 
 
 if __name__ == '__main__':

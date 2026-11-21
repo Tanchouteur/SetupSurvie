@@ -7,6 +7,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## Protocoles, plans et suivis transversaux
 
+- [Dossier de qualification installation et transfert](qualification-installation-transfert/README.md) — matrice, reproduction et résultat des essais.
 - [Ingénierie de tests](ingenierie-de-tests.md) — stratégie, banque de 89 questions, modes dégradés et premier essai ciblé.
 - [Installation neuve et transfert entre SSD sur Bazzite](plan-installation-neuve-et-transfert-bazzite.md) — protocole du 17 novembre 2026, non exécuté.
 - [Recette de modèle réel](assistant-modele-reel.md) — corpus temporaire, ressources explicites et rapports privés, hors CI.
@@ -27,6 +28,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 ## 20 novembre 2026
 
 - [Portail toujours informatif, routes par domaine](2026-11-20-portail-toujours-informe-0700.md) — suite de l’audit (0.70.0) : connexion, assistant, Mon appareil, recherche, Cartes, empreintes et routeurs ; Chromium seulement.
+- [Installation neuve et restauration Linux hors ligne](2026-11-20-restauration-linux-hors-ligne.md) — installateurs conservés sur la copie, second SSD et VM Debian.
+- [Réinstallation de SetupSurvie sur Bazzite](2026-11-20-reinstallation-bazzite.md) — reprise du lanceur Linux, indexation automatique et téléchargement YouTube réel.
 - [Audit du portail : maintenabilité, design et expérience](2026-11-20-audit-ux-et-maintenabilite-portail.md) — constats Chromium sur données fictives, lots proposés et avis sur une réécriture en Rust.
 - [Audit V1](2026-11-20-audit-v1.md) — liste de clôture Linux, preuves sur la 0.69.4 et campagne Bazzite.
 - [Audit et fiabilisation de la CI](2026-11-20-fiabilisation-ci.md) — diagnostic des runs et vérification de la chaîne de tests.

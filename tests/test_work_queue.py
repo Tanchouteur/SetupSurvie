@@ -343,6 +343,28 @@ class YoutubePipelineTests(unittest.IsolatedAsyncioTestCase):
             youtube_pipeline.observe(completion)
             self.assertEqual(youtube_pipeline.read(preparation['id'])['status'], 'completed')
 
+    async def test_download_counter_excludes_rejected_input_lines(self):
+        youtube_pipeline.initialize()
+        text = 'https://youtu.be/aaaaaaaaaaa\nhttps://youtu.be/bbbbbbbbbbb\nhttps://youtu.be/aaaaaaaaaaa'
+        with patch.object(youtube_pipeline, 'launch'):
+            batch = await youtube_pipeline.submit(text, 480)
+        identifier = batch['job']
+        state = {
+            'phase': 'completed', 'youtube_list': identifier,
+            'youtube': {
+                'videos': 2, 'total': 4, 'done': 3,
+                'counts': {'downloaded': 1, 'skipped': 1, 'refused': 1},
+                'items': [{'status': 'skipped', 'reason': 'duplicate_in_list'},
+                          {'status': 'refused', 'reason': 'playlist_refused'}],
+            },
+        }
+        await youtube_pipeline.follow(identifier, state)
+        self.assertEqual(youtube_pipeline.details(identifier)['done'], 1)
+        self.assertEqual(youtube_pipeline.details(identifier)['total'], 2)
+        youtube_pipeline.update(identifier, done=3)
+        youtube_pipeline.initialize()
+        self.assertEqual(youtube_pipeline.details(identifier)['done'], 2)
+
     async def test_youtube_worker_does_not_hold_the_ai_slot(self):
         youtube_pipeline.initialize()
         queue = work_queue.Queue()

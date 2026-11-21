@@ -159,7 +159,7 @@ class Installation:
             raise SetupError("Installation non initialisée. Lancez d’abord install ou init.")
         return json.loads(self.settings_path.read_text(encoding="utf-8"))
 
-    def init(self, target, data_dir=None, lan=False, cpu=False):
+    def init(self, target, data_dir=None, lan=False, cpu=False, *, initial_chat_model=None):
         durable.mkdir(self.work)
         if os.name != "nt":
             self.work.chmod(0o700)
@@ -182,7 +182,7 @@ class Installation:
                       "project": "survie-" + secrets.token_hex(4),
                       "secret": secrets.token_hex(32), "admin_email": "admin@survie.local",
                       "admin_password": secrets.token_urlsafe(32),
-                      "chat_model": VERSIONS["default_model"]}
+                      "chat_model": initial_chat_model or VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"
             durable.write_bytes(credentials,("SetupSurvie — profils locaux sans mot de passe\n"
@@ -515,6 +515,16 @@ class Installation:
                    "target": c["target"], "images": VERSIONS["images"], "embedding": VERSIONS["embedding"],
                    "ollama": versions, "models": [{key: m.get(key) for key in ("name", "digest", "size", "details")} for m in tags.get("models", [])]})
 
+    def prepare_models(self, c, additional_models=()):
+        existing = self.request('http://127.0.0.1:11435/api/tags').get('models', [])
+        installed = {model['name'] for model in existing}
+        required = dict.fromkeys((c['chat_model'], *additional_models))
+        missing = [model for model in required if model not in installed]
+        for model in missing:
+            self.pull_model(c, model)
+        if not missing:
+            self.record(c)
+
     def verify(self, c, inference=False):
         paused=(self.work/'inference-paused.json').exists()
         if paused and inference:
@@ -655,6 +665,7 @@ def parser():
         child.add_argument('--lan-host',type=lan_host)
         child.add_argument("--cpu", action="store_true", help="Linux : essai CPU explicite, sans réservation GPU")
         if command == "install":
+            child.add_argument("--work-dir", default=argparse.SUPPRESS, help="Réglages privés (par défaut .local dans le dépôt)")
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
             child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; Linux : service utilisateur systemd au démarrage du PC. --no-startup ne l’active pas.')
@@ -681,11 +692,23 @@ def parser():
     return p
 
 
-def main(argv=None):
+def main(argv=None, *, initial_chat_model=None, additional_models=()):
     args = parser().parse_args(argv)
+    selected_content = []
+    if args.action == "install":
+        if args.offline and args.content_pack:
+            raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
+        if args.content_pack:
+            import content
+            items = content.catalog()
+            packs = set(args.content_pack)
+            unknown = packs - {item['pack'] for item in items}
+            if unknown:
+                raise SetupError('Lots inconnus : ' + ', '.join(sorted(unknown)))
+            selected_content = [item for item in items if item['pack'] in packs]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
-        c = app.init(args.target, args.data_dir, args.lan, args.cpu)
+        c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model)
         if args.lan_host:
             if not args.lan:raise SetupError('--lan-host nécessite --lan.')
             c['lan_host']=args.lan_host;write_json(app.settings_path,c,private=True);app.render(c)
@@ -695,9 +718,14 @@ def main(argv=None):
     if args.action == "init":
         print(f"Réglages conservés dans {app.work}. Accès par profil, sans mot de passe.")
     elif args.action == "install":
-        if args.offline and args.content_pack:raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
         app.doctor(c)
         if not args.offline:
+            if c['target'] == 'linux':
+                import linux_offline_tools
+                if linux_offline_tools.prepare(c['data_dir']):
+                    print('Installateurs hors ligne vérifiés : Docker, Compose, Python et paquets réseau Linux.')
+                else:
+                    print('Installateurs hors ligne indisponibles pour cette architecture ou version de Python.')
             app.compose(c, "pull")
         app.prepare(c, args.offline)
         import search_index_tools
@@ -708,16 +736,9 @@ def main(argv=None):
         prepare_youtube_tools(c,args.offline)
         app.up(c)
         if not args.offline:
-            existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])
-            if c['chat_model'] not in {model['name'] for model in existing}:
-                app.pull_model(c, c["chat_model"])
-            else:
-                app.record(c)
-        if args.content_pack:
-            import content
-            items=content.catalog();unknown=set(args.content_pack)-{i['pack'] for i in items}
-            if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
-            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack],workers=2)
+            app.prepare_models(c, additional_models)
+        if selected_content:
+            content.download(Path(c['data_dir']), selected_content, workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         import map_install
         map_install.ensure(Path(c['data_dir']),offline=args.offline)

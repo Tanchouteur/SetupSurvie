@@ -21,6 +21,10 @@ PROFILE_PATH=Path(os.environ.get('MODEL_PROFILES','/srv/model-profiles.json'))
 if not PROFILE_PATH.exists():PROFILE_PATH=Path(__file__).resolve().parents[1]/'deploy/model-profiles.json'
 PROFILE_CONFIG=json.loads(PROFILE_PATH.read_text())
 MODES={item['id']:item for item in PROFILE_CONFIG['profiles']}
+COMPACT_CPU=PROFILE_CONFIG.get('compact_cpu',{})
+if COMPACT_CPU and os.environ.get('CHAT_MODEL') == COMPACT_CPU['model']:
+    MODES['rapide-gpt-oss']={**MODES['rapide'], 'id':'rapide-gpt-oss', 'category':'comparison'}
+    MODES['rapide']={**MODES['rapide'], **{key:COMPACT_CPU[key] for key in ('model','name','think','description')}}
 
 
 def spec(name,description,properties,required):
@@ -665,8 +669,9 @@ def cancel(identifier):
 
 
 def context_size(model):
+    default=COMPACT_CPU['context'] if model==COMPACT_CPU.get('model') else PROFILE_CONFIG['context']
     try:
         with store.connect() as db:row=db.execute('SELECT value FROM settings WHERE key=?',('context:'+model,)).fetchone()
-        value=int(row['value']) if row else PROFILE_CONFIG['context']
-        return value if value in (8192,16384,32768,65536) else PROFILE_CONFIG['context']
-    except (ValueError,TypeError):return PROFILE_CONFIG['context']
+        value=int(row['value']) if row else default
+        return value if value in (8192,16384,32768,65536) else default
+    except (ValueError,TypeError):return default
