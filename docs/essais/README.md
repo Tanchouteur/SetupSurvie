@@ -7,6 +7,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## Protocoles, plans et suivis transversaux
 
+- [Préparation locale du kit Windows](2026-11-21-preparation-kit-windows-hors-ligne.md) — installateurs figés, dossier local et reprise après redémarrage.
 - [Retour à l’installation après un point interrompu](2026-11-21-retour-apres-point-interrompu.md) — données conservées, refus des autres transferts et reprise après coupure.
 - [Duplication du SSD de secours hors ligne](2026-11-21-duplication-secours-linux.md) — chaîne de copies sur trois volumes et reprise après interruption.
 - [Installation Linux et point de restauration immuable](2026-11-21-installation-point-restauration-linux.md) — recette du lanceur hors ligne et remise en service sans SSD.
@@ -30,6 +31,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 21 novembre 2026
 
+- [Suivi de l’enrichissement sur Bazzite](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#suivi-du-transfert-dans-la-file-dattente) — fichiers et volumes en cours, vérifiés sur un transfert réel.
 - [Guides pratiques et laboratoire Bazzite](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#premier-relevé-sur-le-fonds-pratique--21-novembre-2026) — premier fonds vérifié et relevé Autonomie et résilience.
 - [Cartes riches, accueil utile et transitions](2026-11-21-cartes-accueil-transitions-0760.md) — 0.76.0 ; Chromium distant et captures.
 - [Marquer comme vu dans la file](2026-11-21-file-marquer-vu-0750.md) — éléments terminés masqués par profil (0.75.0) ; Chromium et tests unitaires.

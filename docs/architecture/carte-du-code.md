@@ -168,6 +168,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | Fichier | Rôle |
 | --- | --- |
 | `setup.py` | Lanceur principal (Python 3.11+, bibliothèque standard) : `up`, `down`, `doctor`, `prepare`, `prepare-maps`, `pull-model`, `configure`, `certificate`, `shortcuts`, `recover-account`… |
+| `library_monitor.py`, `lab_activity.py` | Relevé des préparations du PC et publication en lecture seule pour le laboratoire isolé ([file d’attente](../utilisation/file-attente.md)) |
 | `install_wizard.py`, `install*.ps1`, `prepare-windows.ps1`, `install.sh` | Première installation Windows/Linux ([Windows](../installation/deux-etapes-windows.md), [dépôt](../installation/README.md)) |
 | `survie.ps1`, `survie.sh` | Points d’entrée en ligne de commande |
 | `start-*.ps1`, `stop-*.ps1`, `startup-windows.ps1`, `windows_autostart.py`, `windows_background.py`, `register-startup-windows.ps1` | Démarrage et arrêt Windows |
@@ -181,6 +182,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |
 | `windows_resume.py`, `register-windows-resume.ps1` | Reprise après coupure ([guide](../exploitation/coupures-et-redemarrage.md)) |
 | `pilot_kit.py`, `kit_audit.py`, `kit_maps.py` | Kit hors ligne ([guide](../installation/preparer-kit-hors-ligne.md)) |
+| `windows_kit_installers.py` | Préparation et contrôle des prérequis Windows sur un kit même depuis Linux ([guide](../installation/preparer-kit-hors-ligne.md#ajouter-les-installateurs-windows-depuis-linux)) |
 | `pilot_backup.py` | Sauvegarde des données privées |
 | `transfer.py`, `transfer_*.py`, `transfer-*.ps1` | Transfert vers un autre SSD ([guide](../exploitation/transfert-installation.md)) |
 

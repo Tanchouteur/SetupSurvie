@@ -45,6 +45,8 @@ rangés dans **Autre**. Voir [Retrouver et lire les vidéos](videos-locales.md).
 Le portail reçoit une liste commune via `/api/work-queue`. Le pilote y assemble
 les travaux qu'il programme, les états des inventaires relus dans leurs rapports
 et la préparation que le contrôleur du PC serveur signale via `/activity`.
+Le laboratoire documentaire isolé peut aussi publier un relevé local daté
+qui sert au suivi des transferts lorsque le contrôleur est indisponible.
 Le classement du fonds, les compléments d'index et la préparation de l'outil
 remontent par ce contrôleur. L'examen vidéo des collections peut remonter par
 deux voies. Le pilote rattache alors les détails du PC serveur à la carte

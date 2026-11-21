@@ -39,7 +39,11 @@ Le fichier [de tri fourni avec l’installateur](../../deploy/collection-sort-de
 reprend les 24 collections rangées dans **Autre** et les 20 références exclues
 par Louis. Ce réglage initial porte sur les collections et leurs éditions,
 langue comprise. Les quatre rôles concernent la nature des sources et
-guideront le classement et la recherche. Comparer plusieurs réglages sur le
+guideront le classement et la recherche. Le tri manuel Fonds principal /
+Autre reste le réglage qui détermine les collections consultées par défaut.
+Les dictionnaires et le Wiktionnaire rangés dans Autre restent ouvrables
+depuis les Collections. Les rechercher demande de choisir Autre ou Toute
+la bibliothèque. Comparer plusieurs réglages sur le
 même fonds et garder un export par configuration mesurée.
 [Guide des classements](../utilisation/classement-et-collections.md)
 
@@ -88,8 +92,10 @@ recette dans `private/demarrer-recherche.py` et son marqueur de pause
 d’inférence. Sur Bazzite, après vérification du montage dédié, exécuter
 `python3 /run/media/louis/SetupSurvie/private/demarrer-recherche.py`
 depuis `/var/mnt/data/AI/.setupsurvie-biblio-code`. Le transfert en cours
-se suit avec `systemctl --user status setupsurvie-biblio-enrichissement`
-et le catalogue du laboratoire. L’accès SSH distant demande un montage du
+se suit dans **Mon appareil → File d’attente → Téléchargements**. Le
+lanceur démarre aussi le relevé local avec `scripts/lab_activity.py`. Ce
+relevé publie le nom et les volumes des fichiers en cours ainsi que le
+résultat du transfert, en lecture seule. L’accès SSH distant demande un montage du
 volume séparé quand UDisks refuse l’autorisation de la session.
 
 ## Mesurer avant chaque changement
@@ -152,6 +158,15 @@ d’appareil photo. « Arrosage économe » et « écouter les informations loca
 ne donnent aucun résultat dans Autonomie. Ces constats décrivent ce que la
 recherche fait remonter sur le fonds initial. La couverture et la qualité
 de chaque guide restent à apprécier après lecture et comparaison des éditions.
+
+### Suivi du transfert dans la file d’attente
+
+**Recette du 21 novembre 2026.** Sous Chromium, à 1 366 et 390 pixels,
+la carte **Téléchargement de la bibliothèque** affiche Wikipédia anglais,
+son volume reçu et sa taille totale pendant le transfert réel. La file
+reste accessible pendant l’enrichissement. La carte compte séparément les
+volumes vérifiés et indique la dernière observation dans les détails.
+La 0.80.1 corrige le suivi en lecture seule sans migration de données.
 
 ### Relevé étendu et premiers correctifs en essai
 
