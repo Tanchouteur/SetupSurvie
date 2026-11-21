@@ -203,7 +203,7 @@
   readSource=async id=>{
     if(openingSource)return baseRead(id);
     readerOrigin=current?.name==='library'?current.tab:null;
-    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
+    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'resilience');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}
   };
@@ -267,7 +267,7 @@
   $('chat-domain').addEventListener('change',()=>put('chat-domain',$('chat-domain').value));
   $('search-domain').addEventListener('change',()=>{put('domain',$('search-domain').value);const route=fromLegacy('library');route.params.set('domain',$('search-domain').value);if($('library-query').value)route.params.set('q',$('library-query').value);navigate(route);});
   $('search-kind')?.addEventListener('change',()=>{const route=fromLegacy('library');route.params.delete('source');route.params.set('kind',$('search-kind').value);route.params.set('q',$('library-query').value);if(!$('library-query').value&&$('search-kind').value!=='videos')route.params.delete('q');navigate(route);});
-  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;searchActive=true;},true);
+  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'resilience');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;searchActive=true;},true);
   document.addEventListener('click',event=>{
     if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.closest('#content-download,#routing-download')){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Ce suivi reste en lecture seule.');return;}
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;

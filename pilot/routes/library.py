@@ -123,7 +123,9 @@ async def search_diagnostic():
 
 
 @router.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture','other']='all',diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture','other']|None=None,diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
+    if domain is None:
+        domain = 'all' if favorites_only or translations_only else library.DEFAULT_SEARCH_DOMAIN
     owner=(await user(request))['id'] if favorites_only else None
     if stream:
         return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic,kind=kind),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})

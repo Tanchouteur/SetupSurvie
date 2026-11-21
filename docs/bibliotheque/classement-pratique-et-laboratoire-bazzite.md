@@ -272,3 +272,14 @@ Le relevé du 21 novembre a parcouru les 136 requêtes sur 89 collections
 servies. Il a trouvé 47 requêtes sans résultat et signalé une couverture
 partielle pour chaque requête. Les archives et les index en cours de
 préparation restent à couvrir avant de conclure à des lacunes documentaires.
+
+
+### Recette du périmètre de recherche
+
+La 0.87.1 applique l’espace Autonomie et résilience aux recherches
+ordinaires qui n’indiquent pas d’espace. La recette Kiwix intercepte les
+appels en provenance de `/api/search` et d’une question réelle adressée
+à `/api/questions`, avec un modèle simulé. Elle vérifie les archives
+demandées à Kiwix pour la préparation de la réponse et lors d’un appel
+d’outil du modèle. Le Wiktionnaire et Gutenberg rangés dans Autre
+sont consultés uniquement dans les recherches explicitement élargies.

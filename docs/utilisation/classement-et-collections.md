@@ -87,6 +87,13 @@ Avant la 0.65.0, ce tri et l’index Wikipédia occupaient deux panneaux dans
 2026 (on ne comprenait pas quelle collection était laquelle ni l’effet des
 boutons), d’où cette page.
 
+Le portail et l’assistant ouvrent **Autonomie et résilience** par défaut.
+Le même réglage s’applique à `/api/search` sans espace indiqué. Une
+recherche limitée aux favoris ou aux traductions partagées peut chercher
+dans toute sa sélection. Le choix **Autre** ou **Toute la bibliothèque**
+élargit la recherche quand vous le demandez. L’assistant conserve l’espace
+choisi pendant sa préparation et ses recherches complémentaires.
+
 ## Préparer la recherche du fonds principal par espace
 
 Le classement du fonds principal se lance dans **Mon appareil → Paramètres →

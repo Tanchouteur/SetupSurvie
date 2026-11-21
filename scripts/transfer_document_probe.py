@@ -39,7 +39,7 @@ def probe():
     if row is None:return {'search':'not_tested_no_indexed_guide','open_document':'not_tested','routing':routing,'kiwix':kiwix}
     def get(route):
         with opener.open('http://127.0.0.1:8000'+route,timeout=90) as response:return json.load(response)
-    results=get('/api/search?'+urllib.parse.urlencode({'q':row[0][:160],'limit':3}))['results']
+    results=get('/api/search?'+urllib.parse.urlencode({'q':row[0][:160],'limit':3,'domain':'all'}))['results']
     if not results:raise ValueError('Recherche sans résultat après transfert.')
     document=get('/api/source?'+urllib.parse.urlencode({'id':results[0]['id']}))
     if not document:raise ValueError('Ouverture documentaire vide après transfert.')
