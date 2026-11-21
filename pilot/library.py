@@ -800,7 +800,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         primary = [row for row in combined if domain not in category_index.DOMAINS or domain in row['domains']]
         ordered = retrieval.ordered(primary, query_plan, limit * 2, normalizer=normalize)
         remaining = min(3, limit * 2 - len(ordered))
-        if domain == 'resilience' and remaining > 0 and not any(
+        if domain == 'resilience' and not any(
             row['match_quality'] == 'subject' and (
                 row.get('kind') == 'guide'
                 or row['classification']['source_role'] == 'practical'
@@ -811,13 +811,25 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                 row for row in combined
                 if row['classification']['method'] == 'automatic'
                 and 'resilience' not in row['domains']
-                and retrieval.fallback_encyclopedia(row.get('book', ''))
-                and archive_allowed(row['book'])
+                and row.get('book') and archive_allowed(row['book'])
             ]
-            ordered += retrieval.encyclopedic_matches(
-                references, query_plan, remaining,
-                normalizer=normalize,
-            )
+            if len(query_plan.groups) > 1:
+                direct = [row for row in ordered if row['match_quality'] == 'subject']
+                room = min(3, limit * 2 - len(direct))
+                forum_matches = retrieval.ordered(
+                    [row for row in references if retrieval.practical_forum(row['book'])
+                     and retrieval.match_quality(row, query_plan, normalizer=normalize) == 'subject'],
+                    query_plan, room, normalizer=normalize,
+                ) if room else []
+                if forum_matches:
+                    context = [row for row in ordered if row['match_quality'] != 'subject']
+                    ordered = (direct + forum_matches + context)[:limit * 2]
+                    remaining = min(3 - len(forum_matches), limit * 2 - len(ordered))
+            if remaining:
+                ordered += retrieval.encyclopedic_matches(
+                    [row for row in references if retrieval.fallback_encyclopedia(row['book'])],
+                    query_plan, remaining, normalizer=normalize,
+                )
         processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
         return ordered,metadata_available
     async def selected(items,*,fresh=False):return await kiwix_queries.disk_io(selected_sync,items,fresh)
@@ -835,8 +847,10 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         indexes = await asyncio.to_thread(category_index.ready_indexes, zims, store.ROOT, sorting)
         category_report, _ = await asyncio.to_thread(category_index.availability, zims, store.ROOT, sorting, indexes=indexes)
         paths = [path for book, path in indexes.items() if archive_allowed(book)]
-        reference_paths = [path for book, path in indexes.items()
-                           if domain == 'resilience' and archive_allowed(book) and retrieval.fallback_encyclopedia(book)]
+        reference_paths = [
+            path for book, path in indexes.items() if domain == 'resilience' and archive_allowed(book)
+            and (retrieval.fallback_encyclopedia(book) or retrieval.practical_forum(book))
+        ]
         searched = set()
         for category, category_paths in ((domain, paths), ('culture', reference_paths)):
             if not category_paths:
