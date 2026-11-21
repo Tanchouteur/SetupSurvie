@@ -80,6 +80,9 @@ actualisation possible. La 0.69.0 garde les scripts existants comme moteur et
 moyen de secours. Elle publie leur état dans `catalog/maintenance.json` et sert
 une page temporaire pendant l’arrêt des conteneurs. Le lancement depuis le
 portail est réservé au profil Famille et aux installations Windows.
+Le 21 novembre 2026, Louis fixe la cadence des contrôles à 15 minutes et
+demande un message explicite dans la fenêtre si le serveur est hors ligne
+pour les mises à jour. La 0.76.3 applique cette décision.
 Le rechargement à chaud des collections après suppression, évoqué le même jour,
 n’est pas réalisé. Voir le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#depuis-le-portail-et-suivi-sur-laccueil--0690).
 

@@ -93,7 +93,8 @@ class WatcherTests(unittest.TestCase):
         self.origin.rename(self.origin.with_name('origin-offline.git'))
         watcher.run_check()
         status = watcher.status()
-        self.assertIn('Internet', status['error'])
+        self.assertIn('Hors ligne pour les mises à jour', status['error'])
+        self.assertIn('connexion Internet du PC serveur', status['error'])
         self.assertEqual(status['available'], '0.68.0')
 
     def test_unexpected_remote_or_missing_clone_is_reported(self):
@@ -111,6 +112,16 @@ class WatcherTests(unittest.TestCase):
         self.assertFalse(self.watcher().supported())
         with self.assertRaises(setup.SetupError):
             self.watcher().start_update()
+
+    def test_automatic_checks_start_after_two_minutes_then_run_every_fifteen(self):
+        clock = [0]
+        watcher = self.watcher(clock=lambda: clock[0])
+        with patch.object(watcher, 'check') as check:
+            for elapsed, count in ((119, 0), (120, 1), (1019, 1), (1020, 2), (1920, 3)):
+                with self.subTest(elapsed=elapsed):
+                    clock[0] = elapsed
+                    watcher.tick()
+                    self.assertEqual(check.call_count, count)
 
     def test_manual_checks_are_spaced(self):
         clock = [1000.0]

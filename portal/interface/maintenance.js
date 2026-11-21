@@ -310,8 +310,10 @@
       ? `Version installée ${update.installed} → ${update.error ? 'dernière version repérée' : 'nouvelle version'} ${update.available}.`
       : headline(update);
     dialogChecked.textContent = update.checking ? 'Vérification en cours…' : checkedText(update);
-    dialogError.textContent = update.error || '';
-    dialogError.hidden = !update.error;
+    const transferNotice = update.transfer_in_progress
+      ? 'Un transfert est en cours. La mise à jour attendra sa fin.' : '';
+    dialogError.textContent = [update.error, transferNotice].filter(Boolean).join(' ');
+    dialogError.hidden = !dialogError.textContent;
     const items = update.update_available ? update.changes || [] : [];
     changes.replaceChildren(...items.map(text => make('li', '', text)));
     changesTitle.hidden = changes.hidden = !items.length;
@@ -320,8 +322,6 @@
     launch.hidden = !ready;
     launch.disabled = launching;
     recheck.disabled = !!update.checking;
-    if (update.transfer_in_progress) dialogError.textContent = 'Un transfert est en cours : la mise à jour attendra sa fin.';
-    if (update.transfer_in_progress) dialogError.hidden = false;
   }
 
   async function openDialog() {
