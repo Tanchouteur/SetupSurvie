@@ -52,6 +52,10 @@ sont chacune consultables et recherchables. Une piste française disponible
 évite un nouveau passage par le modèle. L’anglais est conservé quand c’est
 la langue du fichier ou d’une piste fournie.
 
+Si le modèle renvoie le texte dans sa langue d’origine, le contrôle qualité
+peut suspendre la traduction. La piste source reste lisible. Après une mise à
+jour, la commande **Reprendre** relance le travail conservé depuis la file.
+
 Les anciens téléchargements reconnus dans le dossier YouTube rejoignent aussi cette préparation.
 
 La transcription demande que la reconnaissance vocale ait été préparée sur

@@ -10,6 +10,7 @@ identifiés séparément.
 - [Procédure de reproduction](reproduction.md)
 - [Résultats datés, défauts et reprises](resultats.md)
 - [Relevés des redémarrages Linux 0.72.0](preuves-linux-0.72.0.tsv)
+- [Relevés de la confirmation entre SSD, 0.76.0 et 0.76.1](preuves-ssd-0.76.tsv)
 
 La [matrice](matrice.md) documente les réussites du lanceur en ligne et de la
 restauration sans Internet sur Debian 12, Debian 13 et Ubuntu 22.04 x86-64.

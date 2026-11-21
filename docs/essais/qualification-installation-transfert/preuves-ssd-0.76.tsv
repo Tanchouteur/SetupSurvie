@@ -1,0 +1,20 @@
+controle	version	mesure
+installation_premier_rejeu	0.76.0	réussi
+installation_boot_avant	0.76.0	ac81028f-d542-4254-a261-41b57552605b
+installation_boot_apres	0.76.0	3a2f1a9c-b054-43cd-a6c3-e16de2e9a9c0
+copie_fichiers_inventories	0.76.0	1404
+copie_octets_inventories	0.76.0	21269205482
+copie_octets_total	0.76.0	26362965980
+copie_journal_sha256	0.76.0	c16955c055ebb8e618a219472ed209dcf3e6a309188581dc76bf5d1ed81d7412
+restauration_premier_lancement	0.76.0	réussi
+traduction_segments_publies_sur_2	0.76.0	0
+mise_a_jour_paquet_sha256	0.76.1	bbf46e88b5bc81de1626c9b88fa88021e1f76a117fe1a35f380fa3a8d40ccb4a
+traduction_segments_publies_sur_2	0.76.1	2
+restauration_rejeu	0.76.1	réussi
+restauration_boot_avant	0.76.1	6d852cfe-5ede-420c-9447-3341cb2eb374
+restauration_boot_apres	0.76.1	65734086-7c05-4859-ab34-172a3344ed6b
+restauration_sortie_wan_apres	0.76.1	bloquée
+restauration_support_apres	0.76.1	détaché
+restauration_pistes_originale_et_fr_apres	0.76.1	WebVTT lus, index français vérifié
+restauration_gpt_oss_20b_apres	0.76.1	f38aa0c53da5f8c49d08c43a99df24ff53167fe68e24664a7777288e7656fdfe
+restauration_qwen3_1_7b_apres	0.76.1	8f68893c685c3ddff2aa3fffce2aa60a30bb2da65ca488b61fff134a4d1730e7
