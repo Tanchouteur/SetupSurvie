@@ -64,6 +64,19 @@ def check_file(path, item):
         raise setup.SetupError('Installateur Windows absent ou modifié : ' + path.name)
 
 
+def download_progress(name):
+    last_step = 0
+
+    def update(copied, total):
+        nonlocal last_step
+        step = copied * 10 // total
+        if step > last_step:
+            last_step = step
+            print(f'{name} : {copied * 100 // total} %', flush=True)
+
+    return update
+
+
 def prepare(root, *, verify_only=False):
     root = setup.safe_path(root)
     if not root.is_dir():
@@ -80,5 +93,6 @@ def prepare(root, *, verify_only=False):
                     partial = destination(root, item['path'] + '.part')
                     copied = partial.stat().st_size if partial.is_file() else 0
                     content.check_capacity(root, max(0, item['bytes'] - copied), reserve=256 * 1024**2)
-                content.transfer(root, item)
+                    print('Téléchargement : ' + target.name, flush=True)
+                content.transfer(root, item, progress=download_progress(target.name))
     print('Installateurs Windows vérifiés sur le kit.', flush=True)
