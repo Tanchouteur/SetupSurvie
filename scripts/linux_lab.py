@@ -214,7 +214,7 @@ def container_specifications(c):
                     for key,port in [('TLS_PORTAL_ADDRESSES',8443),('TLS_WEBUI_ADDRESSES',8444),('TLS_KIWIX_ADDRESSES',8445)]}}),
         'kiwix': (['--network', 'setupsurvie-lab', '--network-alias', 'kiwix', '-p', f'{c["bind"]}:8081:8080',
                    '-v', f'{MOUNT}/runtime/deploy/kiwix-entrypoint.sh:/config/kiwix-entrypoint.sh:ro',
-                   '-v', f'{MOUNT}/data/library/zim:/data:ro', '--memory=1g',
+                   '-v', f'{MOUNT}/data/library/zim:/data:ro', '--memory=6g', '--restart=on-failure',
                    '--entrypoint', '/bin/sh'], {}),
         'pilot': (['--network', 'setupsurvie-lab', '--network-alias', 'pilot', '--workdir', '/srv',
                    '-v', f'{MOUNT}/runtime/pilot:/srv/pilot:ro',

@@ -16,7 +16,7 @@ Le [cadrage de l’offre](docs/decisions/acces-simple-et-offre.md) précise ces 
 
 ## État du projet
 
-Version **0.86.1** (21 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
+Version **0.86.2** (21 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
 une offre commerciale validée. Fonctions disponibles :
 
 - **Bibliothèque hors ligne** (Kiwix, guides, PDF) avec recherche locale indexée,
