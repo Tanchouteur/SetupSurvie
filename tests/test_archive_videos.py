@@ -51,6 +51,42 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         self.assertEqual(videos.listing(grouped=True,origin='local',query='shadow')['total'],0)
         self.assertEqual(videos.listing(grouped=True,origin='local',query='download')['total'],1)
 
+    def test_published_archive_is_searchable_before_the_host_inventory_finishes(self):
+        from zim_video_fixture import create
+
+        async def scenario():
+            directory = archive_videos.directory()
+            progress = directory/'progress.json'
+            host = {'schema': 1, 'job_id': 'batch', 'phase': 'running', 'archives': 3,
+                    'results': [self.report]}
+            progress.write_text(json.dumps(host), encoding='utf-8')
+            self.assertEqual(videos.scan()['videos'], 2)
+            self.assertFalse(videos.stale())
+            query = retrieval.plan('measure a shadow', ['measure', 'shadow'], library.SYNONYMS)
+            self.assertFalse(videos.search(query)[0])
+
+            (directory/'aaaaaaaaaaaaaaaaaaaaaaaa.building').write_bytes(b'incomplete fixture')
+            self.assertFalse(videos.stale())
+            second = self.root/'youtube-fixture.zim'
+            create(second, youtube=True, with_tracks=False)
+            host['results'].append(zim_video_inventory.build(second, directory))
+            progress.write_text(json.dumps(host), encoding='utf-8')
+            self.assertTrue(videos.stale())
+
+            with patch.object(videos, 'ACTIVE', None), patch.object(videos, 'CHECKED', 0.0):
+                self.assertEqual(await videos.ensure_fresh(force=True), 'refreshing')
+                report = await asyncio.wait_for(videos.ACTIVE, 5)
+            self.assertEqual(report['videos'], 6)
+            self.assertFalse(videos.stale())
+            self.assertEqual(archive_videos.progress()['phase'], 'running')
+            self.assertFalse(archive_videos.state()['reader_ready'])
+            self.assertEqual(videos.listing()['total'], 6)
+            found, coverage = videos.search(query)
+            self.assertEqual(found[0]['title'], 'How do we measure a shadow?')
+            self.assertEqual(coverage['status'], 'partial')
+
+        asyncio.run(scenario())
+
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])
         cache=videos.track_file(payload['tracks'][0]);cache.unlink()

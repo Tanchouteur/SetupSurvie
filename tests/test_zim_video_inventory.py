@@ -2,7 +2,8 @@
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock,patch
 import json
 import subprocess
 import sys
@@ -43,6 +44,24 @@ class ReferenceTests(unittest.TestCase):
     def test_reference_limit_is_an_explicit_issue_instead_of_complete_coverage(self):
         parser=inventory.Videos();parser.feed('<video src="v.webm"></video>'*(inventory.MAX_VIDEOS_PER_PAGE+1))
         self.assertEqual(len(parser.items),inventory.MAX_VIDEOS_PER_PAGE);self.assertIn('video_reference_limit',parser.errors)
+
+    def test_html_prefilter_ignores_plain_pages_but_preserves_media_in_mixed_case(self):
+        db = Mock()
+        entry = SimpleNamespace(path='A/course.html', title='Cours fictif')
+        with patch.object(inventory, 'Videos', side_effect=AssertionError('Unnecessary HTML parse')):
+            inventory.scan_html_references(db, entry, b'<p>Un guide sur les videos sans lecteur.</p>')
+        db.execute.assert_not_called()
+
+        inventory.scan_html_references(
+            db, entry, b'<script>"<VIDEO src=ignored.webm>"</script>'
+            b'<VIDEO><SOURCE src="../clip.webm"><TRACK src="fr.vtt" SRCLANG="fr"></VIDEO>'
+            b'<IFrame src="https://youtube.com/embed/fixture"></IFrame>',
+        )
+        outputs = [json.loads(call.args[1][3]) for call in db.execute.call_args_list]
+        self.assertEqual(len(outputs), 2)
+        self.assertEqual(outputs[0]['sources'][0]['resolved']['path'], 'clip.webm')
+        self.assertEqual(outputs[0]['tracks'][0]['resolved']['path'], 'A/fr.vtt')
+        self.assertEqual(outputs[1]['sources'][0]['resolved']['status'], 'remote_reference')
 
 
 @unittest.skipUnless(HAS_ZIM,'Optional libzim reader required')
