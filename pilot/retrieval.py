@@ -213,6 +213,11 @@ def title_forms(query,english=False):
     return values
 
 
+EQUIPMENT = r'kits?|trousses?|materiel|equipements?|outils?|outillage|fournitures?|equipment|tools?|supplies|materials?'
+EQUIPMENT_REQUEST = re.compile(rf'\b(?:{EQUIPMENT}|pieces?|parts?)\b')
+EQUIPMENT_HEADING = re.compile(rf'^(?:{EQUIPMENT})\b|\b(?:kits?|tools and supplies)\s*$')
+
+
 def rank(item,query,position=0,*,normalizer=None):
     normalize=normalizer or normal
     title=normalize(item.get('title',''));text=normalize(item.get('excerpt','')+' '+item.get('_text',''))
@@ -234,7 +239,12 @@ def rank(item,query,position=0,*,normalizer=None):
             # searchable, while explicit how-to titles may still discuss costs.
             prices=bool(re.search(r'\b(prix|tarifs?|couts?|prices?|pricing|costs?)\b',title))
             steps=bool(re.search(r'\b(comment|tutorial|tutoriels?|instructions|etapes|steps|methode|method)\b|\bhow (to|(can|do|should) (i|we|you|one))\b',title))
-            if prices and not steps:contextual=True;instruction=False
+            heading=normalize(item.get('title','').rsplit('/',1)[-1])
+            equipment=(query.practical and EQUIPMENT_HEADING.search(heading)
+                       and not EQUIPMENT_REQUEST.search(normalize(query.original)))
+            # The heading carries the article's subject. A breadcrumb may
+            # contain the action even when the leaf is a list of supplies.
+            if (prices or equipment) and not steps:contextual=True;instruction=False
             direct=query.practical and title_hits==1 and len(title_tokens)>1 and (not contextual or instruction)
             score+=55 if direct else 12 if query.practical and contextual and not instruction else 28
             if direct and (instruction or title.startswith('diy ')):score+=12 # A reading lead, never a verified procedure.

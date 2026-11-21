@@ -259,6 +259,15 @@ sujet. Son titre doit correspondre au sujet demandé. Un passage PDF doit faire 
 l’extrait pris ensemble. Ces règles permettent de distinguer un résultat
 sur le sujet d’une simple mention dans le reste de la page.
 
+Depuis la 0.88.1, un titre de trousse de réparation ou de liste de
+fournitures reçoit la priorité d’une piste de matériel. Pour une demande
+de méthode, un titre de tutoriel passe plus haut. Les titres qui
+expliquent comment employer un kit gardent leur priorité, et les
+demandes explicites de matériel conservent leurs résultats. Cette règle
+s’appuie sur le titre propre de l’article à l’intérieur d’un ouvrage.
+Le classement reste un point de départ pour ouvrir et lire le document.
+
+
 Sur le laboratoire isolé, les téléchargements alimentent bien la file
 persistante de préparation. Le contrôleur hôte dédié n’y étant pas joignable,
 lancer explicitement les deux outils sur le SSD et contrôler les deux
