@@ -60,6 +60,19 @@ class MarcReportTests(unittest.TestCase):
             'excerpt': 'Sur cette page, les consignes pour utiliser une pompe avec un filtre.',
         }), 'fr')
 
+    def test_lowtech_magazine_uses_the_article_path_for_language(self):
+        book = 'solar.lowtechmagazine.com_mul_all_2025-01'
+        for path, hint, expected in (
+            ('solar.lowtechmagazine.com/fr/2024/02/small-system/', 'en', 'fr'),
+            ('2023/12/small-system/', 'eng,fra', 'en'),
+            ('es/2024/02/small-system/', 'en', 'es'),
+            ('assets/logo.svg', 'eng', 'en'),
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(retrieval.article_language({
+                    'id': f'zim:{book}/{path}', 'language': hint,
+                }), expected)
+
     def test_title_lookup_is_not_starved_by_many_slow_archives(self):
         catalog=[{'book':'slow'+str(i),'language':'eng','fulltext':True} for i in range(40)]+[{'book':'wikipedia_fr','language':'fra','fulltext':True}]
         async def run():

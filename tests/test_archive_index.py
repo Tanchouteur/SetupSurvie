@@ -77,6 +77,21 @@ class ArchiveIndexTests(unittest.TestCase):
             new=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
         self.assertTrue(new['fingerprint'].startswith('2:'));self.assertTrue(self.query())
 
+    def test_lowtech_language_filter_corrects_the_language_of_already_indexed_articles(self):
+        archive = self.root / 'solar.lowtechmagazine.com_mul_all_test.zim'
+        with Creator(archive).config_indexing(False, 'eng') as writer:
+            writer.add_metadata('Title', 'Magazine fictif')
+            writer.add_metadata('Language', 'eng,fra')
+            writer.add_item(Article('fr/2024/02/test/', 'Solaire', 'Un projet solaire fictif.'))
+            writer.add_item(Article('2024/02/test/', 'Solar', 'A fictitious solar project.'))
+        plan = retrieval.plan('solaire', library.search_terms('solaire'), library.SYNONYMS)
+        with patch.object(retrieval, 'article_language', return_value='en'):
+            archive_index.build_archive(archive, self.index)
+        french = archive_index.search(self.index, plan, 'fr')
+        english = archive_index.search(self.index, plan, 'en')
+        self.assertEqual([row['id'].split('/', 1)[1] for row in french], ['fr/2024/02/test/'])
+        self.assertEqual([row['id'].split('/', 1)[1] for row in english], ['2024/02/test/'])
+
     def test_interruption_resumes_from_committed_cursor_and_preserves_old_publication(self):
         archive_index.build_archive(self.zim,self.index);original=self.query()
         # Force replacement after the source changes, interrupt after the first batch.

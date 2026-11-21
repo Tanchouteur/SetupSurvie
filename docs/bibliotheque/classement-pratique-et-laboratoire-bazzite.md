@@ -228,6 +228,14 @@ sur le fichier réel et conserve l’indication française sur la page mixte
 de l’édition française. Les essais unitaires couvrent le passage dans le filtre
 et l’absence de requête Kiwix vers le Wiktionnaire rangé dans Autre.
 
+Le relevé sur 204 archives a aussi trouvé un article de Low-tech Magazine
+écrit en français alors que son HTML indiquait `en-us`. Depuis la 0.88.2,
+SetupSurvie lit la langue dans le chemin des articles datés de cette archive.
+Le classement et le filtre de langue fonctionnent aussi sur les index du
+magazine déjà construits. Sur l’archive réelle, la recherche « dimensionner
+une installation solaire » limitée au magazine en français retrouve le guide
+et le lecteur renvoie son texte en français.
+
 La recette se rejoue depuis le dépôt avec la liste des 38 thèmes et les
 variantes linguistiques du cas OMS.
 
@@ -310,8 +318,17 @@ Un second passage rejoue les mêmes candidats avec les deux classements, à
 60 secondes. Le tutoriel iFixit de réparation de crevaison passe de la
 deuxième à la première place. La fiche OMS sur le traitement au point
 d’utilisation reste deuxième. Les deux repères sur le compas de relèvement
-sont trouvés avec chaque classement. L’audit du lecteur s’exécute ensuite
-par thème sur le même laboratoire.
+sont trouvés avec chaque classement. Dans le passage suivant, le lecteur a
+ouvert le premier résultat de 87 des 136 requêtes et renvoyé du texte à
+chaque ouverture (53 en français, 34 en anglais). Les 49 autres requêtes
+n’ont trouvé aucun résultat avec ce réglage. Le catalogue est resté stable
+et chaque recherche signalait encore une couverture partielle. La lecture
+automatique vérifie l’accès au texte et ne qualifie pas sa pertinence.
+
+Kiwix a été relancé deux fois après avoir atteint 6 Gio. La limite a
+été portée à 10 Gio sur ce laboratoire pour terminer le relevé. Le lecteur
+écrit un point de reprise après chaque requête pour conserver les résultats
+en cas d’interruption.
 
 Les trois éditions installées du Wiktionnaire sont rangées dans Autre.
 La recherche « compost » dans le Wiktionnaire français sélectionne zéro

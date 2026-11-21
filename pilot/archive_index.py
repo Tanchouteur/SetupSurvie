@@ -148,14 +148,18 @@ def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=Non
                 lang={'fra':'fr','eng':'en'}.get(language,language)
                 language_filter = f" AND (?='' OR {column}language=?)"
                 parameters = (plan.fts(), lang, lang)
-                if lang and retrieval.ifixit_edition(meta['book']):
-                    # Old local indexes trusted the HTML hint. Read the
-                    # candidates and classify them using the same rule as Kiwix.
-                    db.create_function('article_language', 2, lambda hint, text: retrieval.article_language({
-                        'book': meta['book'], 'language': hint, 'text': text,
+                book = meta['book']
+                ifixit = retrieval.ifixit_edition(book)
+                if lang and (ifixit or book.lower().partition('_')[0] == retrieval.LOWTECH_ARCHIVE):
+                    # Reclassify candidates in existing indexes. Only iFixit
+                    # needs the body text to determine the article language.
+                    db.create_function('article_language', 3, lambda path, hint, text: retrieval.article_language({
+                        'id': f'zim:{book}/{path}', 'book': book, 'language': hint, 'text': text,
                     }), deterministic=True)
-                    text = 'unz(d.ztext)' if compressed else 'text'
-                    language_filter = f' AND article_language({column}language, substr({text},1,4000))=?'
+                    text = 'substr(unz(d.ztext),1,4000)' if compressed else 'substr(text,1,4000)'
+                    if not ifixit:
+                        text = 'NULL'
+                    language_filter = f' AND article_language({column}path, {column}language, {text})=?'
                     parameters = (plan.fts(), lang)
                 parameters += ((json.dumps(category),) if shared else ()) + (limit,)
                 shown=f"path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt"
