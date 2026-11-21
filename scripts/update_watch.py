@@ -19,7 +19,7 @@ import setup
 import maintenance_site
 
 REPOSITORY = 'https://github.com/Tanchouteur/SetupSurvie.git'
-INTERVAL = 6 * 3600
+INTERVAL = 15 * 60
 FIRST_CHECK = 120
 MANUAL_SPACING = 60
 STALE_RUNNING = 1200  # Same limit as portal/maintenance-view.js.
@@ -173,7 +173,9 @@ class Watcher:
             try:
                 self.git_output('fetch', '--quiet', 'origin', 'main', timeout=180)
             except (setup.SetupError, subprocess.TimeoutExpired):
-                raise setup.SetupError('Vérification impossible : connexion Internet ou accès GitHub indisponible.')
+                raise setup.SetupError(
+                    'Hors ligne pour les mises à jour. Vérifiez la connexion Internet du PC serveur. '
+                    'Si elle fonctionne, GitHub ou l’accès au dépôt peut être indisponible.')
             release = json.loads(self.git_output('show', 'origin/main:deploy/release.json'))
             available = release['version']
             version_tuple(available)

@@ -106,10 +106,22 @@ def exercise(page, base, name):
     check('La vérification a échoué.' in error_text and 'Dernière tentative' in error_text
           and 'à jour selon' not in error_text and not entry.locator('.update-nav-label').is_visible(),
           name + ' : un échec de vérification laisse le numéro et indique que l’état est inconnu')
-    dialog.get_by_text('Plus tard').click()
+    offline_message = ('Hors ligne pour les mises à jour. Vérifiez la connexion Internet du PC serveur. '
+                       'Si elle fonctionne, GitHub ou l’accès au dépôt peut être indisponible.')
+    state['update'] = {**available, 'error': offline_message, 'transfer_in_progress': True}
+    page.evaluate("()=>document.dispatchEvent(new CustomEvent('survie:auth'))")
+    dialog.get_by_text('Hors ligne pour les mises à jour.', exact=False).wait_for()
+    offline_text = dialog.inner_text()
+    check('dernière version repérée 0.69.0' in offline_text and 'Un transfert est en cours' in offline_text
+          and dialog.get_by_role('button', name='Vérifier maintenant').is_enabled(),
+          name + ' : message hors ligne, dernière version connue et vérification manuelle visibles')
+    page.screenshot(path=str(OUTPUT / (name + '-maj-hors-ligne.png')))
     state['update'] = available
     page.evaluate("()=>document.dispatchEvent(new CustomEvent('survie:auth'))")
-    page.wait_for_function("()=>[...document.querySelectorAll('.update-nav')].some(n=>n.classList.contains('update-available'))")
+    dialog.get_by_text('Version installée 0.67.4 → nouvelle version 0.69.0.').wait_for()
+    check(not dialog.get_by_text('Hors ligne pour les mises à jour.', exact=False).is_visible(),
+          name + ' : message hors ligne retiré après une vérification réussie')
+    dialog.get_by_text('Plus tard').click()
     check(entry.locator('.update-nav-label').is_visible() and '0.69.0' not in button.inner_text(),
           name + ' : nouvelle version, le bouton remplace le numéro')
     check(entry.locator('.update-nav-dot').is_visible(), name + ' : pastille quand une version est disponible')
