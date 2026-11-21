@@ -50,6 +50,9 @@ ultérieur. Exécuter une fois cette commande avec le chemin du kit.
 .\1-Preparer-le-PC.cmd -Kit E:\livraison-marc -DownloadOnly
 ```
 
+Depuis Linux, la 0.82.0 propose le même téléchargement et un contrôle hors ligne
+avec [prepare-windows](preparer-kit-hors-ligne.md#ajouter-les-installateurs-windows-depuis-linux).
+
 Cette commande place les installateurs vérifiés de WSL, Python, Docker Desktop,
 Git et Ollama dans `installateurs-windows` à la racine du kit. Elle prépare
 le support sans installer les composants sur le PC connecté.

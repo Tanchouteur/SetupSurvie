@@ -302,6 +302,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action=argparse.BooleanOptionalAction,default=True)
     p=subs.add_parser('verify');p.add_argument('kit')
+    p=subs.add_parser('prepare-windows');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
     p=subs.add_parser('refresh-maps-lab');p.add_argument('kit');p.add_argument('--geography',action='append',default=[]);p.add_argument('--routing',action='store_true')
@@ -310,6 +311,9 @@ def main():
     p.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrer à l’ouverture de session ; --no-startup conserve les raccourcis manuels.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
+    elif args.action=='prepare-windows':
+        import windows_kit_installers
+        windows_kit_installers.prepare(args.kit, verify_only=args.verify_only)
     elif args.action=='refresh-app':refresh_app(setup.safe_path(args.kit))
     elif args.action=='refresh-library':refresh_library(setup.safe_path(args.kit),setup.safe_path(args.data_dir))
     elif args.action=='refresh-maps-lab':
