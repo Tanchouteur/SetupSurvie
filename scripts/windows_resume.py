@@ -1,4 +1,6 @@
-"""Opt-in Windows boot recovery for one pinned library plan, independent of AI."""
+"""Automatic recovery of one pinned library plan after a restart, independent of AI.
+
+Windows runs it from the startup task; Linux from the controller service."""
 import argparse
 from contextlib import redirect_stdout, redirect_stderr
 import hashlib
@@ -10,12 +12,15 @@ import sys
 import time
 
 
+PLAN_KINDS=('SetupSurvie Kiwix thematic selection','SetupSurvie library reference')
+
+
 def runtime(work_dir):
     work=Path(work_dir).resolve()
     config=json.loads((work/'settings.json').read_text(encoding='utf-8-sig'))
     application=Path(config['app_dir']).resolve()
-    if config['target']!='windows' or not application.is_dir():
-        raise ValueError('Application Windows installée requise.')
+    if config['target'] not in ('windows','linux') or not application.is_dir():
+        raise ValueError('Application installée requise.')
     sys.path.insert(0,str(application/'scripts'))
     import setup
     return setup.Installation(work),config
@@ -39,12 +44,13 @@ def configure(work_dir, selection, jobs=2):
     if not authorized_plan_path(app.work,root,plan):
         raise ValueError('Le plan doit être conservé dans le catalogue de cette installation.')
     value=json.loads(plan.read_text(encoding='utf-8'))
-    if value.get('schema')!=1 or value.get('kind')!='SetupSurvie Kiwix thematic selection':
-        raise ValueError('Plan figé Kiwix non reconnu.')
+    if value.get('schema')!=1 or value.get('kind') not in PLAN_KINDS:
+        raise ValueError('Plan figé Kiwix ou fonds de référence non reconnu.')
     if not content.catalog(plan):raise ValueError('Sélection vide.')
     state={'schema':1,'enabled':True,'selection':str(plan),'sha256':setup.file_hash(plan),
            'data_dir':str(root),'jobs':jobs}
     setup.write_json(app.work/'content-resume.json',state,private=True)
+    if config['target']!='windows':return app.work/'content-resume.json'
     stable=Path(config['app_dir']).parent/'maintenance/windows_resume.py'
     stable.parent.mkdir(parents=True,exist_ok=True)
     source=Path(__file__).resolve()
@@ -113,7 +119,7 @@ def run(work_dir, *, probe=False):
                 'pid':os.getpid(),'identity':app.native_identity(os.getpid()),'started':time.time(),
                 'plan':str(plan),'log':str(log),'errors':str(log),'state':'reprise_automatique',
                 'supervision':str(root/'catalog/content-retry.json')})
-            print('Reprise automatique Windows ; aucun démarrage du moteur IA.',flush=True)
+            print('Reprise automatique du téléchargement ; aucun démarrage du moteur IA.',flush=True)
             if web_job:
                 import library_tasks
                 manager=library_tasks.Manager(app,config,'compose')
@@ -144,8 +150,22 @@ def prepare_login(work_dir):
         if not marker.exists():setup.write_json(marker,{'reason':'windows_no_inference_autostart'},private=True)
 
 
+def frozen_plan(root,selection):
+    """Keep the reference manifest used for a download inside the installation catalogue."""
+    import setup,content
+    plan=Path(selection).resolve()
+    value=json.loads(plan.read_text(encoding='utf-8'))
+    if value.get('kind')!='SetupSurvie library reference' or plan.is_relative_to((root/'catalog').resolve()):return plan
+    target=content.destination(root,'catalog/library-reference-'+setup.file_hash(plan)[:16]+'.json')
+    if not target.exists():setup.write_json(target,value)
+    return target
+
+
 def arm_if_installed(app,config,selection,jobs=2):
-    if config.get('target')!='windows' or not config.get('app_dir'):return
+    """Windows: when the startup task is installed. Linux: the controller service resumes."""
+    if not config.get('app_dir'):return
+    if config.get('target')=='linux':configure(app.work,selection,jobs);return
+    if config.get('target')!='windows':return
     marker=Path(config['app_dir']).parent/'maintenance/startup-settings.json'
     if marker.is_file():configure(app.work,selection,jobs)
 

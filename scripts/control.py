@@ -360,9 +360,23 @@ def stop(app):
     marker.unlink(missing_ok=True)
 
 
+RESUME_INTERVAL=300
+
+
+def resume_downloads(app,config,previous=None):
+    """Linux: relaunch a pinned library plan after a restart; Windows uses its startup task."""
+    if config.get('target')!='linux' or (previous is not None and previous.poll() is None):return previous
+    try:state=json.loads((app.work/'content-resume.json').read_text(encoding='utf-8'))
+    except (OSError,ValueError):return None
+    if state.get('enabled') is not True:return None
+    with (app.work/'content-resume.log').open('ab') as log:
+        return subprocess.Popen([sys.executable,str(setup.ROOT/'scripts/windows_resume.py'),'run','--work-dir',str(app.work)],
+                                stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
+
+
 def serve(app,backend):
     server=Server(app,app.load(),backend);server.timeout=.5
-    last_index=0
+    last_index=0;last_resume=-RESUME_INTERVAL+60;resume=None
     while not (app.work/'control.stop').exists():
         server.handle_request()
         if time.monotonic()-last_index>=5:
@@ -370,6 +384,10 @@ def serve(app,backend):
             try:server.library.auto_index()
             except (OSError,ValueError,setup.SetupError):pass
             try:server.updates.tick()
+            except (OSError,ValueError,setup.SetupError):pass
+        if time.monotonic()-last_resume>=RESUME_INTERVAL:
+            last_resume=time.monotonic()
+            try:resume=resume_downloads(app,server.config,resume)
             except (OSError,ValueError,setup.SetupError):pass
     server.server_close()
 
