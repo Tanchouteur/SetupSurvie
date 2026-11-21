@@ -65,6 +65,12 @@ ou à la préparation de la sélection dans **Mon appareil → Téléchargements
 Vérifiez le volume et le classement proposés avant de lancer le transfert.
 Les éditions sont reconnues par la référence de collection, langue comprise.
 
+Les nouvelles installations partent du [tri fourni avec le logiciel](../../deploy/collection-sort-default.json)
+lorsqu’aucun fichier personnalisé n’est donné. Le tri initial peut être ajusté
+puis exporté depuis la même page. Le réglage enregistré par une installation
+existante reste prioritaire.
+[Décision et plan de recette](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md)
+
 Avant la 0.65.0, ce tri et l’index Wikipédia occupaient deux panneaux dans
 **Bibliothèque → Collections** ; Louis les a jugés inutilisables le 20 novembre
 2026 (on ne comprenait pas quelle collection était laquelle ni l’effet des

@@ -125,6 +125,8 @@ def export_lab(destination,english=True):
 
 
 def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
+    import collection_tasks
+    from pilot import collection_sort
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
     entries=checked_entries(root,manifest)
@@ -140,7 +142,11 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     if application.exists():raise setup.SetupError('Le dossier application existe déjà ; utiliser la mise à jour, pas une réinstallation.')
     if (data.exists() and any(data.iterdir())) or (work.exists() and any(work.iterdir())):
         raise setup.SetupError('Installation du kit réservée à des dossiers de données et réglages vides.')
-    if shutil.disk_usage(data.parent if data.parent.exists() else root).free < sum(e['bytes'] for e in manifest['files'] if e['path'].startswith('payload/'))+15_000_000_000:
+    preset = next((path for entry,path in entries if entry['path'] == 'app/'+collection_tasks.DEFAULT_SORT_PATH), None)
+    sorting = collection_sort.read_file(preset) if preset else collection_sort.Sort()
+    payload = [(entry,path) for entry,path in entries if entry['path'].startswith('payload/')
+               and sorting.permits(collection_sort.path_key(entry['path'].removeprefix('payload/')), 'all')]
+    if shutil.disk_usage(data.parent if data.parent.exists() else root).free < sum(e['bytes'] for e,_ in payload)+15_000_000_000:
         raise setup.SetupError('Espace libre insuffisant pour copier les données du kit.')
     durable.mkdir(application)
     for entry,path in entries:
@@ -153,12 +159,13 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
     c=app.init(target,data,lan=bool(lan_address))
     c['app_dir']=application.as_posix();setup.write_json(app.settings_path,c,private=True)
     if lan_address:c['lan_host']=setup.lan_host(lan_address);setup.write_json(app.settings_path,c,private=True);app.render(c)
-    for entry,path in entries:
-        if not entry['path'].startswith('payload/'):continue
+    for entry,path in payload:
         relative=Path(entry['path']).relative_to('payload');destination=data/relative
         destination.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,destination)
     import search_index_queue
-    for entry,path in entries:
+    if preset:
+        collection_tasks.seed(data, sorting)
+    for entry,path in payload:
         if entry['path'].startswith('payload/library/zim/'):
             target=data/Path(entry['path']).relative_to('payload')
             if setup.file_hash(target)!=entry['sha256']:raise setup.SetupError('Copie de l’archive non conforme ; indexation non lancée.')

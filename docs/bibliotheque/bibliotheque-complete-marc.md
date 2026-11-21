@@ -2,6 +2,10 @@
 
 **Guide de référence — pilote 0.1.19, 12 novembre 2026.** Besoin confirmé par Louis : Marc souhaite le fonds utile le plus complet possible ; son installation ne possède aucun plafond documentaire logiciel. Le laboratoire de Louis peut conserver une sélection plus petite.
 
+Le 21 novembre 2026, Louis demande de rapprocher le laboratoire Bazzite du
+fonds de Marc, avec priorité aux guides pratiques et écarts documentés quand
+la capacité impose une sélection. [Plan et état du laboratoire](classement-pratique-et-laboratoire-bazzite.md)
+
 ## Préparer directement chez Marc
 
 Installer le kit et ses prérequis selon le [guide Marc](../installation/pilote-marc.md), puis utiliser le logiciel 0.1.15 ou ultérieur. Le kit existant ne se complète pas simplement parce que le code change. Avec Internet sur le PC de Marc :

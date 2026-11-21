@@ -8,6 +8,16 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+## Guides pratiques et laboratoire Bazzite — décision de Louis du 21 novembre 2026
+
+Louis confirme la priorité à Autonomie et résilience, les rôles Guide
+pratique, Référence, Langue et Culture, et un laboratoire Bazzite aussi proche
+du fonds de Marc que la capacité le permet. L’export de son tri sert de
+réglage initial et de point de départ aux comparaisons. La recherche par
+rôle, le filtrage par langue réelle et l’audit de la couverture pratique
+restent à valider sur le fonds comparable.
+[Décision et recette](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md)
+
 ## Lots téléchargés par défaut — décision de Louis du 21 novembre 2026
 
 À la première installation en ligne, tous les lots de contenus proposés par
