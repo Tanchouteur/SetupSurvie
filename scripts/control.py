@@ -295,8 +295,9 @@ class Handler(BaseHTTPRequestHandler):
                     import library_reference
                     from pilot import collection_sort
                     root, scope = self.server.library.check_storage(0)
-                    result = library_reference.preview(root, library_reference.load(),
-                                                       collection_sort.load(root/'catalog'), storage_root=scope)
+                    inspect = library_reference.restoration_plan if body.get('restore') is True else library_reference.preview
+                    result = inspect(root, library_reference.load(),
+                                     collection_sort.load(root/'catalog'), storage_root=scope)
                     self.respond(200, result)
                     return
                 with self.server.lock:

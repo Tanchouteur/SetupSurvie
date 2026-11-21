@@ -87,6 +87,11 @@ async def preview_library_reference(value=Depends(admin)):
     return await operations.library_command('reference-preview')
 
 
+@router.get('/api/admin/library/reference/restoration')
+async def preview_reference_restoration(value=Depends(admin)):
+    return await operations.library_command('reference-preview', {'restore': True})
+
+
 class ReferenceDownload(BaseModel):
     archive: str = Field(min_length=1, max_length=240)
 

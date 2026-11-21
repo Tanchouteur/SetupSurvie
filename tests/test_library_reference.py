@@ -142,6 +142,29 @@ class LibraryReferenceTests(unittest.TestCase):
         self.assertEqual(len(ref.read_names(folder / 'marc-2026-11-21-archives.tsv')), 115)
         collection_sort.read_file(folder / 'marc-2026-11-21-tri.json')
 
+    def test_restoration_confirmation_covers_exact_editions_and_rejects_a_changed_snapshot(self):
+        title = 'cest-pas-sorcier_fr_energie_2024-11.zim'
+        previous = 'cest-pas-sorcier_fr_energie_2023-01.zim'
+        extra = 'notes_fr_all_2026-01.zim'
+        data = self.build([title], sorting=collection_sort.Sort(other=frozenset({'zim:cest-pas-sorcier_fr_energie'})))
+        folder = self.root/'library/zim'
+        folder.mkdir(parents=True)
+        (folder/previous).write_bytes(b'old')
+        (folder/extra).write_bytes(b'extra')
+
+        first = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual([row['archive'] for row in first['downloads']], [title])
+        self.assertEqual({row['archive'] for row in first['removals']}, {previous, extra})
+        self.assertEqual(first['moves'][0]['expected_state'], 'other')
+        (folder/(title+'.part')).write_bytes(RAW[:3])
+        second = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual(first['confirmation_token'], second['confirmation_token'])
+        self.assertEqual(second['download_bytes'], len(RAW)-3)
+        (folder/previous).write_bytes(b'changed')
+        third = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertNotEqual(second['confirmation_token'], third['confirmation_token'])
+        self.assertTrue((folder/previous).is_file())
+
     def test_shipped_reference_is_valid_and_respects_the_default_sort(self):
         data = ref.load()
         sorting = collection_sort.read_file(ref.DEFAULT_SORT)

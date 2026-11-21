@@ -90,6 +90,11 @@ class ControlTests(unittest.TestCase):
             preview = json.load(response)
         self.assertEqual(preview['counts'], {'missing': len(library_reference.load()['items'])})
         self.assertGreater(preview['download_bytes'], 0)
+        with self.post(path, control.key(self.c), {'restore': True}) as response:
+            plan = json.load(response)
+        self.assertEqual(len(plan['confirmation_token']), 64)
+        self.assertEqual(len(plan['downloads']), preview['counts']['missing'])
+        self.assertEqual(plan['removals'], [])
         self.assertFalse(list((self.root/'data/library/zim').iterdir()))
 
     def test_library_routes_are_authenticated_and_limited(self):

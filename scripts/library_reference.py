@@ -172,6 +172,38 @@ def preview(root, data, sorting, *, storage_root=None):
             'available_bytes': content.free_space(root, storage_root)}
 
 
+def restoration_plan(root, data, sorting, *, storage_root=None):
+    """Bind confirmation to the exact files, editions and tri being reviewed."""
+    report = preview(root, data, sorting, storage_root=storage_root)
+    items = {Path(item['path']).name: item for item in data['items']}
+    downloads, removals, moves, observed = [], [], [], []
+    for row in report['archives']:
+        name = row['archive']
+        status = row['status']
+        expected = items.get(name)
+        if expected and status in ('missing', 'size_mismatch'):
+            downloads.append({**row, 'sha256': expected['sha256']})
+        if status in ('extra', 'other_edition'):
+            removals.append(row)
+        if expected and row['state'] != row['expected_state']:
+            moves.append({key: row[key] for key in ('key', 'title', 'state', 'expected_state')})
+        if status != 'missing':
+            path = content.destination(root, 'library/zim/' + name)
+            try:
+                stat = path.stat()
+            except FileNotFoundError as exc:
+                raise setup.SetupError('Le contenu a changé pendant la comparaison. Actualisez la liste.') from exc
+            observed.append([name, stat.st_size, stat.st_mtime_ns, stat.st_ino])
+    changes = {'downloads': downloads, 'removals': removals, 'moves': moves}
+    # Keep the confirmation valid while a previously agreed partial file grows.
+    content_signature = [[item['path'], item['bytes'], item['sha256'], item['classification']]
+                         for item in data['items']]
+    fingerprint = [content_signature, observed, [[row['key'], row['state']] for row in report['archives']]]
+    token = hashlib.sha256(json.dumps(fingerprint, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+    return {**report, **changes, 'confirmation_token': token,
+            'space_sufficient': report['available_bytes'] >= report['download_bytes'] + content.STORAGE_RESERVE}
+
+
 def diff(before, after, sort_before=None, sort_after=None):
     """Changes made on an installation since a snapshot: archives and sort."""
     old = {kiwix_select.family(n): n for n in before}
