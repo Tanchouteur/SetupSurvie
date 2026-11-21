@@ -75,6 +75,16 @@ def install_routes(page, state):
         if path == '/admin/library/reference/download':
             state['reference_download'] = json.loads(request.post_data)
             return fulfill(route, {'accepted': True}, 202)
+        if path == '/admin/library/reference/restoration':
+            if request.method == 'POST':
+                state['reference_restore'] = json.loads(request.post_data)
+                return fulfill(route, {'accepted': True}, 202)
+            return fulfill(route, {'download_bytes': 1_000_000_000, 'available_bytes': 22_000_000_000,
+                'space_sufficient': True, 'confirmation_token': '1'*64,
+                'downloads': [{'title': 'Manuel de bricolage', 'archive': 'manuel_fr_2026-11.zim'}],
+                'removals': [{'archive': 'manuel_fr_2026-10.zim'}],
+                'moves': [{'title': 'Notes pratiques', 'state': 'main', 'expected_state': 'other'}],
+            })
         if path == '/admin/library/collection-sort/move':
             body = json.loads(request.post_data)
             for row in state['rows']:
@@ -128,7 +138,7 @@ def exercise(page, base, name):
     page.locator('#organizer-groups .organizer-group').first.wait_for()
     check(page.locator('#collection-organizer').is_visible(), name + ' : page dédiée ouverte depuis le raccourci')
     reference = page.locator('#organizer-reference')
-    reference.locator('summary').click()
+    reference.locator(':scope > summary').click()
     missing = reference.locator('[data-status="missing"]')
     missing.wait_for()
     check('À télécharger' in missing.inner_text(), name + ' : fichier manquant visible')
@@ -137,8 +147,18 @@ def exercise(page, base, name):
     missing.get_by_role('button', name='Télécharger Manuel de bricolage').click()
     reference.get_by_role('link', name='Voir la file d’attente →').wait_for()
     check(state['reference_download'] == {'archive': 'manuel_fr_2026-11.zim'}, name + ' : édition exacte envoyée à la file')
-    reference.locator('summary').click()
-    check(page.locator('.organizer-group h3').all_inner_texts()[0] == 'Wikipédia', name + ' : familles triées par taille')
+    reference.get_by_role('button', name='Revenir à l’état de la référence…').click()
+    confirm = reference.locator('#organizer-reference-confirm')
+    confirm.get_by_text('Fichiers à supprimer (1)').click()
+    confirm.get_by_text('manuel_fr_2026-10.zim').wait_for()
+    confirm.get_by_role('button', name='Annuler').click()
+    check('reference_restore' not in state, name + ' : annulation de la confirmation')
+    reference.get_by_role('button', name='Revenir à l’état de la référence…').click()
+    confirm.get_by_role('button', name='Confirmer les changements').click()
+    reference.get_by_text('Retour à la référence demandé.', exact=False).wait_for()
+    check(state['reference_restore'] == {'confirmation_token': '1'*64}, name + ' : retour global confirmé')
+    reference.locator(':scope > summary').click()
+    check(page.locator('#organizer-groups .organizer-group h3').all_inner_texts()[0] == 'Wikipédia', name + ' : familles triées par taille')
     check(page.locator('.organizer-group:not(.is-single) .organizer-row').count() == 0, name + ' : familles repliées à l’ouverture')
     check(page.locator('.organizer-group.is-single .organizer-row').count() == 1, name + ' : collection seule affichée sans dépliage')
     check(page.locator('.organizer-group h3', has_text='iktionary').all_inner_texts() == ['Wiktionary'], name + ' : familles Wiktionary/wiktionary réunies')

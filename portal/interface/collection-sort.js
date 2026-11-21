@@ -40,7 +40,19 @@
         <div class="organizer-reference-content">
           <p id="organizer-reference-status" class="organizer-status" role="status"></p>
           <ul id="organizer-reference-rows"></ul>
-          <button type="button" class="secondary" id="organizer-reference-refresh">Actualiser</button>
+          <div class="organizer-actions">
+            <button type="button" class="secondary" id="organizer-reference-refresh">Actualiser</button>
+            <button type="button" class="secondary" id="organizer-reference-restore">Revenir à l’état de la référence…</button>
+          </div>
+          <section id="organizer-reference-confirm" class="organizer-confirm" hidden aria-labelledby="organizer-reference-confirm-title">
+            <h3 id="organizer-reference-confirm-title">Confirmer le retour à la référence</h3>
+            <p id="organizer-reference-confirm-space"></p>
+            <div id="organizer-reference-confirm-changes"></div>
+            <div class="organizer-actions">
+              <button type="button" class="secondary" id="organizer-reference-cancel">Annuler</button>
+              <button type="button" class="organizer-danger is-strong" id="organizer-reference-apply">Confirmer les changements</button>
+            </div>
+          </section>
         </div>
       </details>
       <div class="organizer-toolbar">
@@ -91,8 +103,12 @@
   const referenceRefresh=$('organizer-reference-refresh');
   const referenceStatus=$('organizer-reference-status');
   const referenceJobs=new Set();
+  const restore=$('organizer-reference-restore');
+  const restorePanel=$('organizer-reference-confirm');
+  const restoreApply=$('organizer-reference-apply');
+  let restorationPlan=null;
   const referenceLabels={
-    missing:'À télécharger', size_mismatch:'Taille différente',
+    missing:'À télécharger', size_mismatch:'Taille différente', hash_mismatch:'Empreinte différente',
     other_edition:'Autre édition', extra:'Hors référence',
     main:'Fonds principal', other:'Autre', excluded:'Exclue'
   };
@@ -103,7 +119,7 @@
     referenceStatus.textContent='Comparaison en cours…';
     try{
       const report=await api('/admin/library/reference',undefined,{cache:'no-store'});
-      const differences=report.archives.filter(row=>row.status!=='size_matches'||row.state!==row.expected_state);
+      const differences=report.archives.filter(row=>!['size_matches','ok'].includes(row.status)||row.state!==row.expected_state);
       const titles=new Map(report.archives.filter(row=>row.title).map(row=>[row.archive,row.title]));
       $('organizer-reference-rows').replaceChildren(...differences.map(row=>{
         const entry=element('li',undefined,'organizer-reference-row');
@@ -140,7 +156,7 @@
       }));
       const comparison=differences.length?plural(differences.length,'écart','écarts')+' avec la référence.':'Aucun écart de fichier ou de classement.';
       const transfer=report.download_bytes?` ${bytes(report.download_bytes)} à télécharger. ${bytes(report.available_bytes)} disponibles.`:'';
-      referenceStatus.textContent=comparison+transfer+' La taille des archives présentes a été contrôlée.';
+      referenceStatus.textContent=comparison+transfer+' Contrôle rapide par taille et empreintes déjà enregistrées.';
     }catch(error){
       referenceStatus.textContent='Comparaison indisponible. '+friendly(error);
     }finally{
@@ -149,6 +165,56 @@
   }
   reference.addEventListener('toggle',()=>{if(reference.open)refreshReference();});
   referenceRefresh.onclick=()=>{referenceJobs.clear();refreshReference();};
+  $('organizer-reference-cancel').onclick=()=>{
+    restorePanel.hidden=true;
+    restorationPlan=null;
+    restore.focus();
+  };
+  restore.onclick=async()=>{
+    restore.disabled=true;
+    try{
+      const plan=await api('/admin/library/reference/restoration',undefined,{cache:'no-store'});
+      restorationPlan=plan;
+      const groups=[
+        ['À télécharger ou remplacer',plan.downloads,row=>`${row.title} · ${row.archive}`],
+        ['Fichiers à supprimer',plan.removals,row=>row.archive],
+        ['Collections à reclasser',plan.moves,row=>`${row.title} · ${referenceLabels[row.state]} → ${referenceLabels[row.expected_state]}`],
+      ];
+      $('organizer-reference-confirm-changes').replaceChildren(...groups.filter(([,rows])=>rows.length).map(([label,rows,display])=>{
+        const details=element('details');
+        details.append(element('summary',`${label} (${rows.length})`));
+        const list=element('ul',undefined,'organizer-confirm-names');
+        list.append(...rows.map(row=>element('li',display(row))));
+        details.append(list);
+        return details;
+      }));
+      const anyChanges=groups.some(([,rows])=>rows.length);
+      const available=`${bytes(plan.download_bytes)} à télécharger · ${bytes(plan.available_bytes)} disponibles.`;
+      $('organizer-reference-confirm-space').textContent=anyChanges
+        ? available+(plan.space_sufficient?'':' L’espace libre est insuffisant pour préparer les éditions de référence.')
+        :'La bibliothèque correspond déjà à la référence.';
+      restoreApply.disabled=!anyChanges||!plan.space_sufficient;
+      restorePanel.hidden=false;
+      $('organizer-reference-cancel').focus();
+    }catch(error){referenceStatus.textContent='Comparaison indisponible. '+friendly(error);}
+    finally{restore.disabled=false;}
+  };
+  restoreApply.onclick=async()=>{
+    if(!restorationPlan)return;
+    restoreApply.disabled=true;
+    try{
+      await api('/admin/library/reference/restoration',{confirmation_token:restorationPlan.confirmation_token});
+      restorePanel.hidden=true;
+      restorationPlan=null;
+      const queue=element('a','Voir la file d’attente →','secondary-link');
+      queue.href='#/file';queue.dataset.route='file';
+      referenceStatus.replaceChildren('Retour à la référence demandé. ',queue);
+      queue.focus();
+    }catch(error){
+      referenceStatus.textContent='Retour à la référence non lancé. '+friendly(error);
+      restoreApply.disabled=false;
+    }
+  };
 
   function cardTags(){
     const state=new Map(rows.map(row=>[row.key,row.state]));

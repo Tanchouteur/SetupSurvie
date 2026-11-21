@@ -85,9 +85,18 @@ des PDF de Marc. [Page de l’Anses](https://www.anses.fr/fr/article/confusion-e
 Dans **Mon appareil → Bibliothèque → Organiser les collections**, la section
 **Comparer avec la bibliothèque de référence** affiche les fichiers manquants,
 les éditions différentes et les changements de classement. Le contrôle rapide
-compare la taille des archives présentes. **Télécharger** demande l’édition
+compare la taille des fichiers et les empreintes déjà enregistrées pour leur
+révision actuelle. **Télécharger** demande l’édition
 indiquée et ouvre un lien vers la **File d’attente**. Le serveur contrôle
 l’empreinte pendant le téléchargement.
+
+**Revenir à l’état de la référence** ouvre la liste des archives à télécharger,
+des anciennes éditions et archives hors référence à retirer, et des collections
+à reclasser. La confirmation concerne les fichiers affichés. Une archive de
+remplacement est vérifiée avant publication et l’ancienne édition reste
+disponible jusqu’à cette vérification. Les fichiers locaux hors ZIM, dont les
+guides PDF et les vidéos ajoutées à la main, restent accessibles. La File
+d’attente indique le déroulement de l’opération.
 
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :
@@ -189,10 +198,9 @@ une vérification HTTPS avec le client système, pour permettre à Windows de
 récupérer les autorités nécessaires, puis retente Python. Aucun certificat
 invalide n’est accepté et aucune vérification HTTPS n’est désactivée.
 
-Depuis **Données locales → Enrichir la bibliothèque**, les nouvelles sélections proposent tous les thèmes et « Tout ce qui tient sur le disque ». Les choix d'une opération précédente restent conservés : cocher les nouveaux thèmes et choisir ce maximum pour étendre une ancienne sélection. Le parcours conserve les boutons de recherche, téléchargement, pause et reprise.
-
-Depuis 0.1.19, les fonds culturels complets et grandes collections vidéo demandent
-le choix explicite des compléments ; [voir la sélection et l’audit des volumes](savoirs-durables.md#éviter-les-volumes-sans-rapport-avec-le-besoin). Un transfert déjà lancé garde son ancien plan.
+Le portail propose le fonds de référence depuis **Organiser les collections**.
+La sélection de nouvelles collections par sujet reste disponible en ligne de
+commande. Un transfert déjà lancé reprend avec son plan d’origine.
 
 ## Sujets recherchés
 

@@ -46,7 +46,8 @@ def configure(work_dir, selection, jobs=2):
     value=json.loads(plan.read_text(encoding='utf-8'))
     if value.get('schema')!=1 or value.get('kind') not in PLAN_KINDS:
         raise ValueError('Plan figé Kiwix ou fonds de référence non reconnu.')
-    if not content.catalog(plan):raise ValueError('Sélection vide.')
+    if not content.catalog(plan) and not (value.get('restoration') and plan.parent.parent == (app.work/'library-web').resolve()):
+        raise ValueError('Sélection vide.')
     state={'schema':1,'enabled':True,'selection':str(plan),'sha256':setup.file_hash(plan),
            'data_dir':str(root),'jobs':jobs}
     setup.write_json(app.work/'content-resume.json',state,private=True)

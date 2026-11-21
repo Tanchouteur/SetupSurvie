@@ -37,10 +37,8 @@ async page => {
   await page.waitForFunction(()=>document.querySelector('.next-activity .next-transfer-title').textContent==='Téléchargement en cours');
   assert((await page.locator('#view-monitor .next-transfer-message').textContent()).includes('3.0 Go'),'Vrais volumes API, pas de mesures fictives codées en dur');
   await page.goto(base+'/#/appareil/telechargements');
-  await page.locator('#content-manager').evaluate(d=>d.open=true);
-  assert(await page.locator('#content-form').isVisible(),'Préparation documentaire conservée sur ordinateur');
-  await page.locator('#content-plan').click();
-  assert(!commands.includes('/api/admin/library/plan'),'Pas de préparation concurrente pendant le transfert indépendant');
+  assert(await page.locator('#library-reference-link [data-route="appareil/collections"]').isVisible(),'Accès au fonds de référence');
+  assert(!commands.includes('/api/admin/library/plan'),'La sélection par thèmes reste hors du portail');
   await page.locator('#next-machine-tabs [data-route="appareil/reglages"]').click();
   assert(await page.locator('#upload-form').count()===1,'Ajout de guide et réglages conservés');
   await page.locator('#navigation [data-route="assistant"]').click();

@@ -165,6 +165,26 @@ class LibraryReferenceTests(unittest.TestCase):
         self.assertNotEqual(second['confirmation_token'], third['confirmation_token'])
         self.assertTrue((folder/previous).is_file())
 
+    def test_preview_only_uses_the_recorded_checksum_for_the_current_file_revision(self):
+        import search_index_queue
+
+        archive = 'gutenberg_fr_all_2026-01.zim'
+        data = self.build([archive])
+        item = data['items'][0]
+        path = self.root/item['path']
+        path.parent.mkdir(parents=True)
+        wrong = b'x'*len(RAW)
+        path.write_bytes(wrong)
+        search_index_queue.enqueue(self.root, {**item, 'sha256': hashlib.sha256(wrong).hexdigest()})
+        plan = ref.restoration_plan(self.root, data, collection_sort.Sort())
+        self.assertEqual(plan['downloads'][0]['status'], 'hash_mismatch')
+        self.assertFalse(plan['conform'])
+        path.write_bytes(RAW)
+        changed = ref.preview(self.root, data, collection_sort.Sort())
+        self.assertEqual(changed['counts'], {'size_matches': 1})
+        search_index_queue.enqueue(self.root, item)
+        self.assertEqual(ref.preview(self.root, data, collection_sort.Sort())['counts'], {'ok': 1})
+
     def test_shipped_reference_is_valid_and_respects_the_default_sort(self):
         data = ref.load()
         sorting = collection_sort.read_file(ref.DEFAULT_SORT)

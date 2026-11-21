@@ -9,51 +9,16 @@ IA n’intervient.
 
 ## Fonds complet de Marc
 
-Voir le [guide de la bibliothèque complète](bibliotheque-complete-marc.md). `prepare --work-dir DOSSIER_PRIVE` sélectionne tous les thèmes et télécharge les ajouts en une commande. `select` prépare uniquement le plan. Tous les thèmes sont retenus par défaut en CLI ; les premières sélections du portail cochent aussi tous les thèmes. Les préférences précédemment enregistrées restent conservées.
+Voir le [guide de la bibliothèque complète](bibliotheque-complete-marc.md). `prepare --work-dir DOSSIER_PRIVE` sélectionne tous les thèmes et télécharge les ajouts en une commande. `select` prépare uniquement le plan. La commande retient tous les thèmes par défaut.
 
 Le thème `fonds-general` ajoute tous les guides du catalogue figé et les encyclopédies FR/EN, y compris Wikipédia anglais. Les plans peuvent donc contenir des PDF et des ZIM. Les langues et éditions locales sont respectées ; la présence locale ne vaut pas une nouvelle vérification d'intégrité. Le téléchargeur enregistre les références effectivement vérifiées pour les futurs exports du kit.
 
 ## Depuis le site
 
-Depuis 0.1.19, les [savoirs durables](savoirs-durables.md) étendent la sélection à
-38 thèmes pratiques, avec les fonds culturels et grandes vidéos sur choix explicite, et rattachent des guides figés aux thèmes concernés. Le plan affiche
-les sujets à examiner pour chaque parcours, sans certifier leur couverture.
-
-1. Choisir le profil **Famille** (sans mot de passe), puis ouvrir **Mon appareil → Paramètres → Bibliothèque et préparations → Télécharger des collections et préparer les cartes**.
-2. Déplier **Enrichir la bibliothèque**. Les lecteurs ne voient pas ce bloc et
-   aucune entrée supplémentaire n’est ajoutée au menu principal.
-3. Cocher les thèmes, choisir les langues et le maximum à ajouter, puis cliquer
-   sur **Chercher les contenus**. Cette étape prépare une sélection sans
-   télécharger d’archive. Une connexion Internet est nécessaire sur le serveur.
-4. Consulter le volume proposé, les thèmes sans correspondance et, au besoin,
-   **Voir les collections proposées**. Après modification des choix, préparer
-   une nouvelle sélection avant de lancer le téléchargement.
-5. Cliquer sur **Télécharger la sélection**. La progression est conservée sur
-   le PC serveur : changer de page ou fermer le navigateur n’arrête pas le travail.
-   **Mettre en pause** conserve les partiels ; **Reprendre le téléchargement**
-   reprend et vérifie les fichiers. Une réponse réseau peut demander jusqu’à
-   une minute avant de prendre en compte la pause.
-
-Les choix et le plan courant sont conservés dans le dossier privé du serveur,
-sous `library-web/`. L’interface n’accepte ni chemin, ni URL, ni commande libre.
-Les tâches s’exécutent dans un processus hôte distinct, par l’intermédiaire du
-contrôleur authentifié. Elles survivent à son redémarrage. Une tâche disparue
-après une coupure est signalée comme interrompue : préparer une nouvelle sélection
-pour reprendre les partiels. Ne pas lancer simultanément un transfert CLI sur les
-mêmes données : le verrou existant refuserait le second téléchargement.
-Si une coupure a laissé un verrou de transfert, vérifier depuis le PC serveur
-que son processus propriétaire est arrêté avant de retirer ce verrou ; les
-fichiers partiels eux-mêmes doivent être conservés.
-
-À la fin, Kiwix est redémarré pour rendre les nouvelles archives disponibles. Si le plan comprend des guides PDF, le pilote est aussi redémarré pour les indexer.
-Le pilote interroge son catalogue à chaque recherche ; il n’est pas nécessaire
-pour ces seuls ZIM de réindexer les PDF ou de démarrer Ollama. Cela ne remplit pas
-les collections Open WebUI. Une archive sans index plein texte reste signalée
-comme consultable directement, sans promettre une recherche par l’assistant.
-
-Si le service de téléchargement est indisponible, les contenus existants restent
-lisibles. Le lanceur doit démarrer le contrôleur hôte ; la récupération du
-laboratoire `scripts/lab_refresh_library.py` le rétablit sans démarrer le moteur IA.
+Ouvrir **Mon appareil → Bibliothèque → Organiser les collections** pour
+comparer et télécharger les éditions figées. La sélection de nouvelles
+collections par sujet se fait avec les commandes d’atelier ci-dessous.
+[Utiliser le fonds de référence](bibliotheque-complete-marc.md#fonds-de-référence-figé)
 
 ## Préparer une sélection en ligne de commande
 

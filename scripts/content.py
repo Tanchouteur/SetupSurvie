@@ -90,7 +90,7 @@ def catalog(path=CATALOG):
     return items
 
 
-def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None,write_lock=None):
+def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None,write_lock=None,staged=False):
     def check():
         if cancelled and cancelled():raise DownloadPaused()
     def digest(path):
@@ -101,7 +101,7 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
                 check();value.update(block)
         check();return value.hexdigest()
     check()
-    target=destination(root,item['path']);partial=destination(root,item['path']+'.part')
+    target=destination(root,item['path']+('.verified' if staged else ''));partial=destination(root,item['path']+'.part')
     size=item['bytes'];target.parent.mkdir(parents=True,exist_ok=True)
     if target.exists():
         if target.stat().st_size==size and digest(target)==item['sha256']:return 'present'
@@ -174,7 +174,7 @@ def record_download(root,item,state):
 
 
 def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,cancelled=None,
-             workers=1,continue_on_error=False,repair_tls=None):
+             workers=1,continue_on_error=False,repair_tls=None,confirmed_reference=False,stage_paths=()):
     if type(workers) is not int or not 1<=workers<=3:
         raise setup.SetupError('Choisissez entre un et trois téléchargements simultanés.')
     items=list(items)
@@ -184,12 +184,14 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
         sorting = collection_sort.load(root / 'catalog')
-        items = [item for item in items if sorting.permits(collection_sort.path_key(item['path']), 'all')]
+        if not confirmed_reference:
+            items = [item for item in items if sorting.permits(collection_sort.path_key(item['path']), 'all')]
         if not items:
             return []
         missing=0
         for item in items:
-            final=destination(root,item['path']);part=destination(root,item['path']+'.part')
+            final=destination(root,item['path']+('.verified' if item['path'] in stage_paths else ''))
+            part=destination(root,item['path']+'.part')
             if not final.exists():missing+=max(0,item['bytes']-(part.stat().st_size if part.exists() else 0))
         check_capacity(root,missing,budget=budget,reserve=reserve,storage_root=storage_root)
         # Shared read-only monitoring for direct Linux/Windows CLI transfers too.
@@ -221,18 +223,20 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
             def progress(done,total):report(item,done,total,'downloading')
             def before_write(count):
                 check_capacity(root,count+1_000_000,budget=budget,reserve=reserve,storage_root=storage_root)
+            transfer_options = {'staged': True} if item['path'] in stage_paths else {}
             try:
                 try:
-                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes,**transfer_options)
                 except Exception as exc:
                     if not repair_tls or 'CERTIFICATE_VERIFY_FAILED' not in str(exc):raise
                     if stopped():raise DownloadPaused()
                     repair_tls(item['url'])
-                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
-                with metadata:
-                    record_download(root,item,state)
-                    import search_index_queue
-                    search_index_queue.enqueue(root,item)
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes,**transfer_options)
+                if not transfer_options:
+                    with metadata:
+                        record_download(root,item,state)
+                        import search_index_queue
+                        search_index_queue.enqueue(root,item)
                 return {'id':item['id'],'status':state}
             except DownloadPaused:
                 stop.set();raise

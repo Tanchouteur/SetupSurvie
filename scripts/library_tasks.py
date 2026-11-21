@@ -125,7 +125,9 @@ class Manager:
                         if report['phase']=='partial':index_queue.hold(root,'error')
                         self.write(state);return state
                     index_queue.hold(root,'interrupted')
-                state.update(phase='interrupted', message='Opération interrompue. Préparez une nouvelle sélection pour reprendre les fichiers partiels.')
+                message = ('Téléchargement interrompu. Retrouvez la reprise dans la File d’attente.'
+                           if state.get('action') == 'download' else 'Opération interrompue. Relancez la préparation.')
+                state.update(phase='interrupted', message=message)
                 self.write(state)
         return state
 
@@ -336,7 +338,38 @@ class Manager:
                 'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages)),'include_supplements':supplements}}
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'download':
-            if 'reference_archive' in body:
+            if 'reference_confirmation' in body:
+                import library_reference
+                root, scope = storage
+                previous = state.get('options', {}).get('reference_restore')
+                if not previous and (state['phase'] == 'planned' or (
+                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted')
+                )):
+                    raise setup.SetupError('Reprenez d’abord le téléchargement précédent depuis la File d’attente.')
+                with locked(root/'catalog/content.lock'):
+                    reference = library_reference.load()
+                    sorting = collection_sort.load(root/'catalog')
+                    plan = library_reference.restoration_plan(root, reference, sorting, storage_root=scope)
+                    if plan['confirmation_token'] != body['reference_confirmation']:
+                        raise setup.SetupError('La bibliothèque a changé. Actualisez la comparaison avant de confirmer.')
+                    if not any(plan[key] for key in ('downloads', 'removals', 'moves')):
+                        raise setup.SetupError('La bibliothèque correspond déjà à la référence.')
+                    if not plan['space_sufficient']:
+                        raise setup.SetupError('L’espace libre est insuffisant pour préparer les éditions de référence.')
+                    names = {row['archive'] for row in plan['downloads']}
+                    state = {'id': uuid.uuid4().hex, 'phase': 'planned', 'options': {'reference_restore': True}}
+                    folder = self.paths(state['id'])
+                    folder.mkdir(parents=True)
+                    setup.write_json(folder/'plan.json', {
+                        'schema': 1, 'kind': library_reference.KIND,
+                        'items': [item for item in reference['items'] if Path(item['path']).name in names],
+                        'candidates': [], 'remaining_download_bytes': plan['download_bytes'],
+                        'missing_themes': [], 'library_bytes': 0, 'include_supplements': False,
+                        'restoration': {**{key: plan[key] for key in ('downloads', 'moves', 'removals', 'states')},
+                                        'manifest': reference['items']},
+                    }, private=True)
+                body = {'id': state['id']}
+            elif 'reference_archive' in body:
                 import library_reference
                 archive = body['reference_archive']
                 root, scope = storage
@@ -370,7 +403,7 @@ class Manager:
             if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error', 'interrupted'):
                 raise setup.SetupError('Préparez une sélection avant de télécharger.')
             plan_path = self.paths(state['id']) / 'plan.json'
-            if not plan_path.is_file() or not content.catalog(plan_path):
+            if not plan_path.is_file() or (not content.catalog(plan_path) and not state['options'].get('reference_restore')):
                 raise setup.SetupError('Cette sélection ne contient aucun ajout à télécharger.')
             state['phase'] = 'starting'
         else:
@@ -602,6 +635,43 @@ class Manager:
                 # Cancellation is checked before each network request/write/hash block.
                 import windows_resume
                 windows_resume.arm_if_installed(self.app,self.config,folder/'plan.json',2)
+                if state['options'].get('reference_restore'):
+                    import library_reference
+                    plan = json.loads((folder/'plan.json').read_text(encoding='utf-8'))
+                    pending, staged = library_reference.restoration_downloads(root, plan)
+                    content.download(root, pending, storage_root=scope, workers=2,
+                                     cancelled=lambda: (folder/'cancel').exists(),
+                                     confirmed_reference=True, stage_paths=staged)
+                    check()
+                    update('refreshing', 'Vérification des éditions avant de retirer les anciens fichiers…')
+                    stopped = False
+                    def stop_kiwix():
+                        nonlocal stopped
+                        if plan['restoration']['removals'] or staged:
+                            if self.backend == 'lab':
+                                import linux_lab as lab
+                                lab.podman('stop', lab.PREFIX + 'kiwix', capture=True)
+                            else:
+                                self.app.compose(self.config, 'stop', 'kiwix')
+                            stopped = True
+                    try:
+                        library_reference.finish_restoration(root, plan, check, stop_kiwix)
+                        self.app.catalog(self.config)
+                    finally:
+                        if stopped:
+                            if self.backend == 'lab':
+                                import linux_lab as lab
+                                lab.podman('start', lab.PREFIX + 'kiwix', capture=True)
+                            else:
+                                self.app.compose(self.config, 'start', 'kiwix')
+                    if not stopped and items:
+                        if self.backend == 'lab':
+                            import linux_lab as lab
+                            lab.podman('restart', lab.PREFIX + 'kiwix', capture=True)
+                        else:
+                            self.app.compose(self.config, 'restart', 'kiwix')
+                    update('completed', 'La bibliothèque a été remise à l’état de la référence.')
+                    return
                 import content_retry
                 pending=content_retry.remaining(root,items)
                 content.download(root, pending, storage_root=scope, workers=2, cancelled=lambda: (folder / 'cancel').exists())

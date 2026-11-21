@@ -96,6 +96,15 @@ class ReferenceDownload(BaseModel):
     archive: str = Field(min_length=1, max_length=240)
 
 
+class ReferenceRestoration(BaseModel):
+    confirmation_token: str = Field(pattern='^[a-f0-9]{64}$')
+
+
+@router.post('/api/admin/library/reference/restoration',status_code=202)
+async def restore_library_reference(body:ReferenceRestoration,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_confirmation': body.confirmation_token})
+
+
 @router.post('/api/admin/library/reference/download',status_code=202)
 async def download_reference_archive(body:ReferenceDownload,value=Depends(admin)):
     return await operations.library_command('download', {'reference_archive': body.archive})
