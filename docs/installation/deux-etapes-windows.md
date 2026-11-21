@@ -85,8 +85,7 @@ vérifie réellement Docker, Compose et les services.
   native est dans `deploy/versions.json`.
 - Les installateurs affichent leurs écrans et licences : pour Python, garder
   l’ajout au PATH ; pour Docker, choisir WSL 2 et les conteneurs Linux. Ils sont
-  conservés dans `%LOCALAPPDATA%\SetupSurvie\installateurs` (cache ; ce n’est pas
-  le dossier de préparation locale du PC).
+  conservés dans `%LOCALAPPDATA%\SetupSurvie\installateurs` (cache local du PC).
 - Si WSL doit être préparé ou si un installateur demande un redémarrage, le
   lanceur rend le code 3010 et affiche la marche à suivre : redémarrer Windows,
   puis relancer **le même fichier**. Il n’installe pas Ubuntu et ne redémarre pas
