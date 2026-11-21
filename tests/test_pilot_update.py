@@ -189,6 +189,22 @@ class UpdateTests(unittest.TestCase):
         self.assert_static_data()
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
 
+    def test_snapshot_skips_rebuildable_category_index_and_rollback_keeps_it(self):
+        index=self.data/'state/pilot/category-index/book.sqlite'
+        index.parent.mkdir(parents=True);index.write_bytes(b'rebuildable-index')
+        (index.parent/'progress.json').write_text('{"phase":"completed"}')
+        with self.assertRaises(setup.SetupError):self.run_update(fail=True)
+        operation=next(path for path in (self.root.parent/'updates').iterdir())
+        report=json.loads((operation/'snapshot/backup.json').read_text(encoding='utf-8'))
+        saved={entry['path'] for entry in report['files']}
+        self.assertFalse(any('category-index' in path for path in saved))
+        self.assertIn('data/state/pilot/archive-index/text.sqlite',saved)
+        self.assertFalse((operation/'snapshot/data/state/pilot/category-index').exists())
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
+        self.assertEqual(index.read_bytes(),b'rebuildable-index')
+        self.assertTrue((index.parent/'progress.json').is_file())
+        self.assert_static_data()
+
     def test_voluntary_rollback_preserves_recent_data_and_allows_updating_again(self):
         # Real package verification and filesystem swaps, simulated services only.
         with patch.object(setup,'ROOT',self.root):
