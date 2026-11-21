@@ -179,6 +179,8 @@ def plan(query,words,synonyms,collection=''):
     for word in terms:
         concept=next((value for value in CONCEPTS.values() if word in value['terms']),None)
         group=list(dict.fromkeys([word]+synonyms.get(word,[])+(concept['terms'] if concept else [])))
+        if (concept is CONCEPTS['potable'] and any(term in CONCEPTS['eau']['terms'] for term in terms)):
+            group.extend(('traitement', 'treatment', 'potabiliser'))
         if not concept and word not in synonyms:group=number_forms(word)
         if any(set(group)&set(g) for g in groups):continue
         groups.append(group);dedup.append(word)
@@ -254,6 +256,9 @@ def rank(item,query,position=0,*,normalizer=None):
     if query.practical:
         classification=item.get('classification',{})
         if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
+        if (title_hits == 1 and query.action and re.search(INTENTS[query.action], title)
+                and item.get('id', '').startswith('guide:') and source_role(item) == 'practical'):
+            score += 24
         if any('feu' in group for group in query.groups) and re.search(r'\b(production de feu|faire du feu|allumage|fire making|fire starting|start a fire)\b',title):score+=20
         if re.search(r'\b(construction|fabrication|allumage|production|techniques|guide|instructions|tutorial|making|build|repair|starting)\b',title):score+=15
         if re.search(r'\b(quiz|questionnaire|qcm)\b',title+' '+text):score-=24
@@ -337,6 +342,34 @@ INTENTS={
 
 ENGLISH_PROSE = frozenset('the and of with for this that from which when into each'.split())
 FRENCH_PROSE = frozenset('les une des avec pour dans cette qui sur est sont aux'.split())
+
+
+ARCHIVE_ROLES = {
+    'appropedia': 'practical', 'ifixit': 'practical', 'wikihow': 'practical',
+    'solar.lowtechmagazine.com': 'practical', 'wikipedia': 'reference',
+    'vikidia': 'reference', 'encyclopedie-environnement.org': 'reference',
+    'wiktionary': 'language', 'gutenberg': 'culture', 'wikisource': 'culture',
+    'wikivoyage': 'culture', 'alexandria.dk': 'culture',
+}
+PRACTICAL_PUBLISHERS = frozenset({
+    'who wedc', 'hesperian health guides', 'msf', 'ifrc', 'unhcr', 'inrs',
+    'ministere de l interieur securite civile sgdsn', 'croix rouge francaise ifrc',
+    'oms war trauma foundation world vision', 'usda nchfp university of georgia',
+    'victron energy', 'fao', 'anfr', 'baofeng radioddity',
+})
+
+
+def source_role(item):
+    """Recognise established source families and publishers by stable metadata."""
+    identifier = item.get('id', '')
+    if identifier.startswith('guide:'):
+        publisher = normal(item.get('provenance', '').partition(' — ')[0])
+        return 'practical' if publisher in PRACTICAL_PUBLISHERS else ''
+    book = item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]
+    family = book.lower().split('_', 1)[0]
+    if family.endswith('.stackexchange.com'):
+        return 'reference'
+    return ARCHIVE_ROLES.get(family, '')
 
 
 def ifixit_edition(book):

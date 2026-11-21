@@ -24,6 +24,27 @@ class MarcReportTests(unittest.TestCase):
         items=[{'id':'zim:wikipedia/Category:Fire_making','title':'Category:Fire making'}, {'id':'zim:wikipedia/Production','title':'Techniques de production de feu'}]
         self.assertEqual(retrieval.ordered(items,self.plan('faire du feu'),5)[0]['id'],items[1]['id'])
 
+    def test_water_treatment_guide_can_rank_ahead_of_general_hydrology_articles(self):
+        items = [
+            {'id': 'zim:appropedia_en_all/Study', 'title': 'Small-scale water purification technologies',
+             'excerpt': 'Study of drinking water, purification and water scarcity.', 'language': 'en'},
+            {'id': 'guide:fixture.en.pdf#page=1', 'title': 'Eau : traitement au point d’utilisation — OMS',
+             'excerpt': 'Emergency treatment of drinking water at the point of use.', 'language': 'en',
+             'provenance': 'WHO/WEDC — édition 2025'},
+        ]
+        plan = self.plan('eau potable')
+        self.assertEqual(retrieval.ordered(items, plan, 2)[0]['id'], items[1]['id'])
+        self.assertNotIn('treatment', self.plan('eau de pluie').groups[0])
+
+    def test_source_roles_follow_the_source_identity_not_incidental_words(self):
+        for archive, expected in [('wikipedia_fr_all', 'reference'), ('wiktionary_fr_all', 'language'),
+                                  ('gutenberg_en_lcc-v', 'culture'), ('ifixit_en_all', 'practical'),
+                                  ('appropedia_en_all', 'practical'), ('earthscience.stackexchange.com_en_all', 'reference')]:
+            self.assertEqual(retrieval.source_role({'id': f'zim:{archive}/Eau', 'title': 'Eau potable'}), expected)
+        self.assertEqual(retrieval.source_role({'id': 'guide:specimen.pdf', 'provenance': 'WHO/WEDC — édition 2025'}),
+                         'practical')
+        self.assertEqual(retrieval.source_role({'id': 'guide:specimen.pdf', 'title': 'OMS, guide de référence'}), '')
+
     def test_ifixit_language_uses_the_edition_and_article_instead_of_the_html_shell(self):
         self.assertEqual(retrieval.article_language({
             'id': 'zim:ifixit_en_all_2025-12/Device/Water_Purification_Systems',

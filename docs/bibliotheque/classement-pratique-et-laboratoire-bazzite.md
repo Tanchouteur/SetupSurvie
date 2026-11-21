@@ -152,3 +152,26 @@ d’appareil photo. « Arrosage économe » et « écouter les informations loca
 ne donnent aucun résultat dans Autonomie. Ces constats décrivent ce que la
 recherche fait remonter sur le fonds initial. La couverture et la qualité
 de chaque guide restent à apprécier après lecture et comparaison des éditions.
+
+### Relevé étendu et premiers correctifs en essai
+
+Le relevé initial a couvert les **38 thèmes** du catalogue, pendant
+l’enrichissement. Kiwix servait six ZIM au début et à la fin. Parmi les 32
+réponses de recherche partielles, dix requêtes ne renvoyaient aucun résultat.
+Six relevés ont dépassé le délai du client de mesure. Ces chiffres décrivent
+la recherche sur ce fonds intermédiaire. Ils restent à comparer à ceux du fonds
+enrichi, avant de conclure sur les documents manquants.
+
+Sur le scénario bilingue « eau potable », la fiche OMS sur le traitement au
+point d’utilisation passe du **12e au 2e rang** lorsque les mêmes 411 candidats
+sont reclassés avec la formulation bilingue et la priorité aux guides
+documentaires. L’essai isole l’effet du classement. La couverture de la
+requête en production et la lecture des résultats sur tous les thèmes
+restent à mesurer.
+
+Dans l’archive iFixit anglaise de décembre 2025, le HTML de la page
+« Water Purification Systems » indique le français, tandis que le contenu
+et le reste de l’édition sont anglais. Le candidat test reconnaît l’anglais
+sur le fichier réel et conserve l’indication française sur la page mixte
+de l’édition française. Les essais unitaires couvrent le passage dans le filtre
+et l’absence de requête Kiwix vers le Wiktionnaire rangé dans Autre.
