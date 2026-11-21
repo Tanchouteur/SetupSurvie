@@ -104,17 +104,29 @@ def check_sealing(recovery):
             probe.unlink()
 
 
+IMAGE_ARCHIVES = (('images.tar', 'images_sha256'), ('images.tar.json', 'images_manifest_sha256'))
+COPY_MARGIN = 256 * 1024**2
+
+
+def remaining_bytes(source, target, journal):
+    amounts = [(record['path'], record['bytes']) for record in journal['inventory']['files']]
+    amounts.extend((name, destination(source, name).stat().st_size) for name, _ in IMAGE_ARCHIVES)
+    return sum(max(0, size - partial_size(target, name)) for name, size in amounts)
+
+
+def require_space(source, targets, journal):
+    needed = sum(remaining_bytes(source, target, journal) for target in targets)
+    docker = destination(source, 'images.tar').stat().st_size * 2
+    if shutil.disk_usage(targets[0].parent).free < needed + docker + COPY_MARGIN:
+        raise setup.SetupError('Place insuffisante pour les copies et la réinstallation des images Docker.')
+
+
 def copy_payload(source, target, journal):
     """Copy only verified entries and re-create the allowed Ollama manifest links."""
     inventory = journal['inventory']
     transfer.manifest_links(source, inventory)
     records = inventory['files']
-    archives = (('images.tar', 'images_sha256'), ('images.tar.json', 'images_manifest_sha256'))
-    remaining = sum(record['bytes'] - partial_size(target, record['path'])
-                    for record in records)
-    remaining += sum(destination(source, name).stat().st_size - partial_size(target, name)
-                     for name, _ in archives)
-    if shutil.disk_usage(target.parent).free < remaining + 256 * 1024**2:
+    if shutil.disk_usage(target.parent).free < remaining_bytes(source, target, journal) + COPY_MARGIN:
         raise setup.SetupError('Espace insuffisant pour copier les fichiers et les images Docker.')
     for folder in inventory['directories']:
         durable.mkdir(destination(target, folder))
@@ -123,7 +135,7 @@ def copy_payload(source, target, journal):
         if number == 1 or number % 100 == 0:
             phase(f'Copie vérifiée : {number} / {len(records)} fichiers…')
         copy_verified(source, target, record, journal['verified'][relative])
-    for name, key in archives:
+    for name, key in IMAGE_ARCHIVES:
         info = destination(source, name).stat()
         copy_verified(source, target, {'path': name, 'bytes': info.st_size,
                                       'mtime_ns': info.st_mtime_ns, 'mode': 0o600}, journal[key])
@@ -222,6 +234,18 @@ def read_point(point):
     return journal
 
 
+def mark_ready(recovery, point):
+    receipt = {'manifest_sha256': setup.file_hash(point / 'transfer.json')}
+    setup.write_json(recovery / 'point-verifie.json', receipt, private=True)
+
+
+def require_ready(recovery, point):
+    receipt = recovery / 'point-verifie.json'
+    if (not receipt.is_file() or transfer.read(receipt).get('manifest_sha256')
+            != setup.file_hash(point / 'transfer.json')):
+        raise setup.SetupError('La création du point n’est pas terminée. Reprenez l’installation ou la création du point.')
+
+
 def activate(base):
     journal = transfer.read(base / 'transfer.json')
     if journal['phase'] != 'active':
@@ -232,6 +256,7 @@ def activate(base):
     unit = system.service_name(base) + '.service'
     setup.run(['systemctl', 'start', unit])
     setup.run(['systemctl', 'enable', unit])
+    setup.Installation(base / 'private').request('http://127.0.0.1:8080/api/health')
 
 
 def install(recovery, source, base, create_point):
@@ -242,6 +267,10 @@ def install(recovery, source, base, create_point):
         raise setup.SetupError('Reprenez avec le même SSD et le même choix de point de restauration.')
     if base.exists() and not (base / '.copie-installation.json').is_file():
         raise setup.SetupError('Le dossier choisi contient déjà une installation ou des fichiers.')
+    active_manifest = base / 'transfer.json'
+    if not active_manifest.is_file() or transfer.read(active_manifest).get('phase') != 'active':
+        targets = [base, point_path(recovery)] if create_point else [base]
+        require_space(source, targets, journal)
     if not state.exists():
         setup.write_json(state, specification, private=True)
     install_shortcut(recovery, base)
@@ -257,6 +286,8 @@ def install(recovery, source, base, create_point):
     phase('Préparation de la copie de travail…')
     fill_target(source, base, journal, portable_cpu=True)
     activate(base)
+    if create_point:
+        mark_ready(recovery, point)
 
 
 def managed_unit(base):
@@ -271,6 +302,9 @@ def create_existing_point(recovery, base):
     point = point_path(recovery)
     if point.is_dir() and (point / 'point-de-restauration.json').is_file() and immutable(point):
         read_point(point)
+        if not (recovery / 'point-verifie.json').is_file():
+            release_current_source(base, point, managed_unit(base))
+            mark_ready(recovery, point)
         phase('Le point de restauration existant est déjà protégé.')
         return
     unit = managed_unit(base)
@@ -293,6 +327,7 @@ def create_existing_point(recovery, base):
     else:
         release_current_source(base, point, unit)
     seal_point(point, transfer_manifest(point))
+    mark_ready(recovery, point)
     install_shortcut(recovery, base)
 
 
@@ -323,6 +358,7 @@ def validate_local_layout(base, config):
 def restore(recovery, base):
     point = point_path(recovery)
     journal = read_point(point)
+    require_ready(recovery, point)
     state_path = recovery / 'remplacement.json'
     if state_path.exists():
         state = transfer.read(state_path)
@@ -339,11 +375,10 @@ def restore(recovery, base):
         for name in ('.', 'data', 'private', 'application', 'stockage-docker'):
             if (base / name).is_mount():
                 raise setup.SetupError('Un dossier de l’installation est un point de montage. Aucune bascule effectuée.')
+        require_space(point, [staged], journal)
         phase('Vérification et copie du point protégé…')
         fill_target(point, staged, journal, detached=True, portable_cpu=True)
         transfer.verify_copy(staged)
-        if shutil.disk_usage(recovery).free < (point / 'images.tar').stat().st_size * 2:
-            raise setup.SetupError('Pas assez de place libre pour réimporter les images Docker après la copie.')
         phase('Mise à l’abri de l’ancienne installation, données comprises…')
         unit = state['unit']
         if unit != managed_unit(base):

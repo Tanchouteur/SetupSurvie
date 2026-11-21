@@ -68,6 +68,7 @@ class LinuxRecoveryTests(unittest.TestCase):
             recovery.install(self.state, self.source, self.active, True)
         point = self.state / 'point'
         self.assertTrue((point / 'point-de-restauration.json').is_file())
+        recovery.require_ready(self.state, point)
         self.assertEqual((point / 'data/guide.txt').read_bytes(), self.files['data/guide.txt'])
         self.assertNotEqual((point / 'data/guide.txt').stat().st_ino, (self.active / 'data/guide.txt').stat().st_ino)
         self.assertEqual([call.args for call in activate.call_args_list], [(self.active,), (self.active,)])
@@ -96,6 +97,9 @@ class LinuxRecoveryTests(unittest.TestCase):
         recovery.fill_target(self.source, point, self.journal)
         with patch.object(recovery, 'seal'):
             recovery.seal_point(point, self.journal)
+        with self.assertRaisesRegex(setup.SetupError, 'création du point'):
+            recovery.require_ready(self.state, point)
+        recovery.mark_ready(self.state, point)
         self.active.mkdir()
         (self.active / 'plus-recent').write_text('à conserver')
         activated = []
