@@ -100,4 +100,47 @@ class WindowsRecoveryTests(unittest.TestCase):
         for count in (0,4,True):
             with self.assertRaises(ValueError):windows_resume.configure(self.app.work,self.plan,count)
 
+class ReferenceAndLinuxRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        self.root=Path(self.temp.name)
+        self.item=dict(id='a',title='A',path='library/zim/a_2026-01.zim',url='https://example.org/a.zim',bytes=3,sha256=hashlib.sha256(b'abc').hexdigest())
+        self.reference=self.root/'deploy/library-reference.json'
+        setup.write_json(self.reference,{'schema':1,'kind':'SetupSurvie library reference','items':[self.item]})
+    def install(self,target):
+        app=setup.Installation(self.root/target/'private');config=app.init(target,self.root/target/'data',cpu=True)
+        application=self.root/target/'application';(application/'scripts').mkdir(parents=True)
+        config['app_dir']=str(application);setup.write_json(app.settings_path,config,private=True)
+        return app,config,Path(config['data_dir'])
+    def test_reference_manifest_is_frozen_in_catalogue_and_armed_on_windows(self):
+        app,config,data=self.install('windows')
+        maintenance=self.root/'windows/maintenance';maintenance.mkdir(parents=True)
+        (maintenance/'startup-settings.json').write_text('{}')
+        with self.assertRaises(ValueError):windows_resume.configure(app.work,self.reference)
+        plan=windows_resume.frozen_plan(data,self.reference)
+        self.assertTrue(plan.is_relative_to(data/'catalog'));self.assertEqual(plan.read_bytes(),self.reference.read_bytes())
+        self.assertEqual(windows_resume.frozen_plan(data,plan),plan)
+        windows_resume.arm_if_installed(app,config,plan)
+        state=json.loads((app.work/'content-resume.json').read_text())
+        self.assertEqual(Path(state['selection']),plan.resolve())
+        with patch.object(content_retry,'supervise',return_value=True) as download:
+            self.assertEqual(windows_resume.run(app.work),'complete')
+        self.assertEqual(download.call_args.args[1],[self.item])
+    def test_linux_arms_without_windows_task_and_controller_resumes(self):
+        import control
+        app,config,data=self.install('linux')
+        plan=windows_resume.frozen_plan(data,self.reference)
+        windows_resume.arm_if_installed(app,config,plan)
+        self.assertTrue((app.work/'content-resume.json').is_file())
+        self.assertFalse((self.root/'linux/maintenance').exists())
+        with patch.object(control.subprocess,'Popen') as popen:
+            process=control.resume_downloads(app,config)
+            self.assertIn('run',popen.call_args.args[0])
+            process.poll.return_value=None
+            self.assertIs(control.resume_downloads(app,config,process),process)
+            self.assertEqual(popen.call_count,1)
+            self.assertIsNone(control.resume_downloads(app,{**config,'target':'windows'}))
+        with patch.object(content_retry,'supervise',return_value=True):
+            self.assertEqual(windows_resume.run(app.work),'complete')
+
 if __name__=='__main__':unittest.main()
