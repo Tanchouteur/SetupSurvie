@@ -8,6 +8,20 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+## « Enrichir la bibliothèque » remplacé par le rapprochement avec la référence — décision de Louis du 21 novembre 2026
+
+Louis décide de retirer **Enrichir la bibliothèque** du portail au profit
+d’une page qui confronte l’installation au fonds de référence : collections
+manquantes grisées avec un bouton **Télécharger**, écarts affichés (manquante,
+autre édition, hors référence) et retour à l’état de la référence après
+confirmation détaillée. Motifs : Enrichir prend les dernières éditions et
+ses propres choix par mots-clés, crée des doublons d’édition et remplace le
+plan suivi par la reprise automatique, qui n’en suit qu’un. La découverte
+par thème (`kiwix_select.py`) reste un outil en ligne de commande pour
+proposer des ajouts à la référence. À développer et tester ; d’ici là,
+Enrichir ne doit pas être utilisé chez Marc. Remplace, pour le parcours
+client, la [préparation de la bibliothèque du 20 novembre](#préparation-de-la-bibliothèque--20-novembre-2026).
+
 ## Fonds de référence figé et tri resserré — décision de Louis du 21 novembre 2026
 
 Louis demande que le code installe des éditions documentaires connues, sans

@@ -14,6 +14,7 @@
   - montrer l'écart avec le manifeste : manquante, autre édition, hors référence, taille ou empreinte différente (même logique que `library_reference.py verify`) ;
   - bouton en haut **Revenir à l'état du manifeste**, avec confirmation détaillée (ce qui sera téléchargé, retiré ou reclassé, place nécessaire) : téléchargements suivis dans la File d'attente, aucune suppression sans confirmation ;
   - à développer puis à tester sur le labo Bazzite (ordinateur et téléphone), en plus de la campagne de tests de la bibliothèque complète.
+  - **Décision de Louis du 21/11** : cette page **remplace « Enrichir la bibliothèque »** dans le portail. Raisons : Enrichir prend les dernières éditions (dérive par rapport à la référence), choisit par mots-clés hors référence, crée des doublons d'édition, et remplace le plan suivi par la reprise automatique (un seul plan à la fois). La découverte par thème (`kiwix_select.py`) reste un outil en ligne de commande pour proposer des ajouts à la référence. D'ici là, ne pas utiliser Enrichir chez Marc.
 - Campagne de tests sur le labo Bazzite (fonds de référence complet) :
   - relevé des 136 requêtes des 68 thèmes de Marc, puis comparaison des réglages de recherche (rôles, langue, traduction des requêtes, priorité aux guides, tri) ;
   - liste des manques par thème et recherche de guides français (NRBC, gaz, armes et réglementation, tannage, vannerie, météo, chasse sous-marine, vie à bord…) ;
