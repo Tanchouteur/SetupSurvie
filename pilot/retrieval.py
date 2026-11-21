@@ -288,7 +288,10 @@ def encyclopedic_matches(items, query, limit, *, normalizer=None):
     normalize = normalizer or NormalCache()
     candidates = []
     for item in items:
-        title = set(normalize(item.get('title', '')).split())
+        label = item.get('title', '').strip()
+        if label.casefold().endswith((' (homonymie)', ' (disambiguation)')):
+            continue
+        title = set(normalize(label).split())
         if query.token_groups and all(any(term <= title for term in group) for group in query.token_groups):
             candidates.append({**item, 'reference_fallback': True})
     if len(query.words) == 1:

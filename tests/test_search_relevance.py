@@ -155,9 +155,10 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     def test_encyclopedia_fallback_prefers_the_exact_spelled_subject_over_an_accent_homograph(self):
         bee_home = {'id': 'zim:wikipedia_fr_all/Ruche', 'title': 'Ruche', 'language': 'fr'}
         grape = {'id': 'zim:wikipedia_fr_all/Ruche_vin', 'title': 'Ruché', 'language': 'fr'}
+        index = {'id': 'zim:wikipedia_fr_all/Ruche_homonymie', 'title': 'Ruche (homonymie)', 'language': 'fr'}
         query = 'installer une ruche'
         plan = retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
-        self.assertEqual([item['id'] for item in retrieval.encyclopedic_matches([grape, bee_home], plan, 3)],
+        self.assertEqual([item['id'] for item in retrieval.encyclopedic_matches([grape, index, bee_home], plan, 3)],
                          [bee_home['id']])
         self.assertTrue(retrieval.encyclopedic_matches([grape], plan, 3))
 
