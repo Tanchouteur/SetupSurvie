@@ -291,8 +291,19 @@ def encyclopedic_matches(items, query, limit, *, normalizer=None):
         title = set(normalize(item.get('title', '')).split())
         if query.token_groups and all(any(term <= title for term in group) for group in query.token_groups):
             candidates.append({**item, 'reference_fallback': True})
-    # Require the subject in the title. The encyclopedia can introduce that
-    # topic even if the excerpt does not describe the requested action.
+    if len(query.words) == 1:
+        # Accent folding lets an unaccented query find an accented title. When
+        # the typed spelling has an exact subject heading, discard homographs
+        # with a different spelling (for example Ruche and Ruché).
+        spelling = unicodedata.normalize('NFC', query.original.casefold())
+        labels = {word for word in re.findall(r'[^\W_]+', spelling) if normalize(word) == query.words[0]}
+        headings = [(item, unicodedata.normalize('NFC', item.get('title', '').strip().casefold()))
+                    for item in candidates]
+        if any(heading in labels for _, heading in headings):
+            candidates = [item for item, heading in headings
+                          if heading in labels or normalize(heading) != query.words[0]]
+    # An encyclopedia can introduce the subject even if its excerpt does not
+    # describe the requested action.
     return ordered(candidates, replace(query, action=''), limit, normalizer=normalize)
 
 

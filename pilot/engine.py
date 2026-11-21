@@ -209,7 +209,7 @@ def quoted_packet_size(value):
 
 
 @work_queue.tracked('chat')
-async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all',source_ids=None):
+async def run(identifier,user_id,conversation_id,mode,source_id=None,domain=library.DEFAULT_SEARCH_DOMAIN,source_ids=None):
     references={};answer='';content='';tool_trace=[];rejected_answers=[];metrics=[];interrupted=False;search_cache={};read_cache={};source_cache={};read_spans=set();prepared_key=None
     evidence=documentary.Evidence();DOCUMENTARY[identifier]=evidence;evidence_recorded=False
     def record_evidence(name,arguments,value,key=None):
@@ -656,7 +656,7 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain='all
         measured.finish(outcome);MEASUREMENTS.pop(identifier,None);ACTIVE.pop(identifier,None);PROGRESS.pop(identifier,None);DOCUMENTARY.pop(identifier,None)
 
 
-def launch(identifier,*args,domain='all',source_ids=None):
+def launch(identifier,*args,domain=library.DEFAULT_SEARCH_DOMAIN,source_ids=None):
     ACTIVE[identifier]=asyncio.create_task(run(identifier,*args,domain=domain,source_ids=source_ids))
     ACTIVE[identifier].add_done_callback(lambda task:ACTIVE.pop(identifier,None))
 

@@ -133,7 +133,7 @@ async def associate_sources(identifier:str,body:AssociatedSources,value=Depends(
 class Question(BaseModel):
     message:str=Field(min_length=1,max_length=6000)
     mode:str='rapide'
-    domain:Literal['all','resilience','culture','other']='resilience'
+    domain:Literal['all','resilience','culture','other']=library.DEFAULT_SEARCH_DOMAIN
     conversation_id:str|None=Field(default=None,max_length=100)
     source_id:str|None=Field(default=None,max_length=2000)
     source_ids:list[SourceIdentifier]|None=Field(default=None,max_length=12)

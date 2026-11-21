@@ -30,7 +30,7 @@ def audit(base,data_root=None):
     fixture=json.loads((setup.ROOT/'fixtures/evaluation/library-coverage.json').read_text())
     report={'cases':[],'coverage':get('/api/library/coverage'),'maps':get('/api/maps')['maps']}
     for case in fixture['cases']:
-        results=get('/api/search?'+urllib.parse.urlencode({'q':case['query'],'language':'','limit':3}))['results'][:5]
+        results=get('/api/search?'+urllib.parse.urlencode({'q':case['query'],'language':'','limit':3,'domain':'all'}))['results'][:5]
         found=next((item for item in results if case['expected'] in item['id']),None)
         record={**case,'found':bool(found)}
         if found:

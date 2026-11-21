@@ -24,6 +24,7 @@ from fastapi import HTTPException
 
 from . import category_index,collection_sort,network,store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
 
+DEFAULT_SEARCH_DOMAIN = 'resilience'
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
 

@@ -321,7 +321,7 @@ async function runSearch(event){
   $('search-results').dataset.signature='';
   function interrupted(message){$('search-message').textContent=message;$('search-message').classList.add('search-warning');$('search-results').setAttribute('aria-busy','false');$('search-message').dataset.tone='empty';if(!$('search-results').querySelector('.result')){const empty=$('search-results').querySelector('.empty-panel.search-extra')||$('search-results').appendChild(element('div','','empty-panel search-extra'));empty.textContent='Aucun résultat reçu avant l’interruption. Vous pouvez relancer la recherche.';}}
   $('search-stop')?.remove();const stop=button('Arrêter la recherche',()=>{controller.abort();if(S.searchAbort===controller){interrupted('Recherche arrêtée. Les résultats reçus sont conservés ; la recherche peut être incomplète.');stop.remove();}},'secondary');stop.id='search-stop';$('search-message').after(stop);
-  try{const data=await api('/search?q='+encodeURIComponent(q)+'&stream=true&kind='+encodeURIComponent(kind)+'&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'all')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal,onResult:display});display(data);
+  try{const data=await api('/search?q='+encodeURIComponent(q)+'&stream=true&kind='+encodeURIComponent(kind)+'&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'resilience')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal,onResult:display});display(data);
   }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)interrupted(e.message);}
   finally{stop.remove();}
 }
@@ -682,7 +682,7 @@ async function send(event){
   if(S.source&&wholeDocumentTranslation(text)){$('translation-panel').open=true;if(S.translation&&S.translationSource?.split('#page=')[0]===S.source.id.split('#page=')[0]){$('translation-status').textContent='Une traduction existe déjà pour cette conversation. Consultez-la ou reprenez-la ci-dessus.';return;}$('translation-first').value='1';$('translation-last').value='';if(await translationAction('start'))$('chat-input').value='';return;}
   S.sending=true;$('send-question').disabled=true;refreshSourceChoices();
   $('chat-status').textContent='Envoi de la question…';
-  try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'all',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
+  try{const data=await api('/questions',{message:text,mode:$('chat-mode').value,domain:$('chat-domain')?.value||'resilience',conversation_id:S.conversation,source_ids:selectedSourceChoices().map(source=>source.id)});
     if(!S.conversation||!$('chat-messages').querySelector('.message')){
       const messages=$('chat-messages');
       if(translationThread&&!translationThread.hidden)messages.querySelector('.chat-empty')?.remove();
