@@ -53,6 +53,21 @@ final dans `results/comparaison-recherche/rapprochement-reference.json` sur
 son volume dédié. Ce contrôle distingue la présence d’un fichier, la
 vérification de son empreinte et sa disponibilité dans Kiwix.
 
+Le second contrôle du 21 novembre porte sur **204 archives vérifiées et
+servies**, totalisant **826,27 Go**. La dernière archive est Survivor Library
+(220,35 Go). Le transfert a repris vers 3,15 Go depuis un miroir déclaré
+dans son Metalink, après validation de la taille et du SHA-256 du manifeste.
+Le test mesure séparément le classement sur ces 204 archives et l’ouverture
+des passages sur le portail. L’audit définitif attend la dernière archive.
+
+Le contrôle des PDF trouve **100 fichiers du catalogue public**, chacun
+vérifié par SHA-256 et indexé sur le labo. Le 101ᵉ document du catalogue,
+les fiches de l’Anses sur les plantes toxiques, reste absent. Le point de
+téléchargement testé depuis Bazzite rend une page HTML et aucun PDF de
+l’édition figée n’a été publié. Cette observation ne décrit pas la liste
+des PDF de Marc. [Page de l’Anses](https://www.anses.fr/fr/article/confusion-entre-plantes-toxiques-plantes-comestibles)
+
+
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :
 
