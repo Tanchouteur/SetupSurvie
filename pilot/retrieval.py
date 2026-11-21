@@ -179,6 +179,8 @@ def plan(query,words,synonyms,collection=''):
     for word in terms:
         concept=next((value for value in CONCEPTS.values() if word in value['terms']),None)
         group=list(dict.fromkeys([word]+synonyms.get(word,[])+(concept['terms'] if concept else [])))
+        if (concept is CONCEPTS['potable'] and any(term in CONCEPTS['eau']['terms'] for term in terms)):
+            group.extend(('traitement', 'treatment', 'potabiliser'))
         if not concept and word not in synonyms:group=number_forms(word)
         if any(set(group)&set(g) for g in groups):continue
         groups.append(group);dedup.append(word)
@@ -254,6 +256,9 @@ def rank(item,query,position=0,*,normalizer=None):
     if query.practical:
         classification=item.get('classification',{})
         if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
+        if (title_hits == 1 and query.action and re.search(INTENTS[query.action], title)
+                and item.get('id', '').startswith('guide:') and source_role(item) == 'practical'):
+            score += 24
         if any('feu' in group for group in query.groups) and re.search(r'\b(production de feu|faire du feu|allumage|fire making|fire starting|start a fire)\b',title):score+=20
         if re.search(r'\b(construction|fabrication|allumage|production|techniques|guide|instructions|tutorial|making|build|repair|starting)\b',title):score+=15
         if re.search(r'\b(quiz|questionnaire|qcm)\b',title+' '+text):score-=24
@@ -335,12 +340,75 @@ INTENTS={
  'ignite':r'\b(allumer|allumage|amadou|tinder|campfire|feu de camp|ignition|ignite|friction|percussion|production de feu|faire du feu|fire making|fire starting|start a fire|lighting a fire|making a fire)\b',
 }
 
+ENGLISH_PROSE = frozenset('the and of with for this that from which when into each'.split())
+FRENCH_PROSE = frozenset('les une des avec pour dans cette qui sur est sont aux'.split())
+
+
+ARCHIVE_ROLES = {
+    'appropedia': 'practical', 'ifixit': 'practical', 'wikihow': 'practical',
+    'solar.lowtechmagazine.com': 'practical', 'wikipedia': 'reference',
+    'vikidia': 'reference', 'encyclopedie-environnement.org': 'reference',
+    'encyclopedie-environnement': 'reference', 'environment-encyclopedia': 'reference',
+    'wiktionary': 'language', 'gutenberg': 'culture', 'wikisource': 'culture',
+    'wikivoyage': 'culture', 'alexandria.dk': 'culture',
+}
+PRACTICAL_PUBLISHERS = frozenset({
+    'who wedc', 'hesperian health guides', 'msf', 'ifrc', 'unhcr', 'inrs',
+    'ministere de l interieur securite civile sgdsn', 'croix rouge francaise ifrc',
+    'oms war trauma foundation world vision', 'usda nchfp university of georgia',
+    'victron energy', 'fao', 'anfr', 'baofeng radioddity',
+})
+
+
+def source_role(item):
+    """Recognise established source families and publishers by stable metadata."""
+    identifier = item.get('id', '')
+    if identifier.startswith('guide:'):
+        publisher = normal(item.get('provenance', '').partition(' — ')[0])
+        return 'practical' if publisher in PRACTICAL_PUBLISHERS else ''
+    book = item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]
+    family = book.lower().split('_', 1)[0]
+    if family.endswith('.stackexchange.com'):
+        return 'reference'
+    return ARCHIVE_ROLES.get(family, '')
+
+
+CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})
+
+
+def application_domains(item, indexed=None):
+    if source_role(item) in CULTURE_SOURCE_ROLES:
+        return ['culture']
+    return domains(item) if indexed is None else indexed
+
+
+def ifixit_edition(book):
+    match = re.match(r'ifixit_(en|fr)_all(?:_|$)', book)
+    return match[1] if match else ''
+
+
 def article_language(item):
-    """Wiki translation suffixes describe the article, not its archive language."""
-    language=item.get('language','')
-    if 'appropedia' in item.get('book',item.get('id','')).lower():
-        suffix=re.search(r'/([a-z]{2})(?:-[a-z]+)?$',item.get('id',''))
-        if suffix:return suffix[1]
+    """Prefer available evidence about the page over a general metadata hint."""
+    identifier = item.get('id', '')
+    book = (item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]).lower()
+    language = item.get('language', '')
+    if 'appropedia' in book:
+        suffix = re.search(r'/([a-z]{2})(?:-[a-z]+)?$', identifier)
+        if suffix:
+            return suffix[1]
+    edition = ifixit_edition(book)
+    if edition:
+        # Both iFixit editions can declare html lang=fr. Keep the edition
+        # language unless the content gives a strong signal of the other language.
+        content = item.get('_text') or item.get('text') or item.get('excerpt') or ''
+        tokens = set(normal(content[:4_000]).split())
+        english = len(tokens & ENGLISH_PROSE)
+        french = len(tokens & FRENCH_PROSE)
+        if english >= max(3, 2 * french):
+            return 'en'
+        if french >= max(3, 2 * english):
+            return 'fr'
+        return edition
     return {'fra':'fr','eng':'en'}.get(language,language)
 
 def legacy_domains(item):

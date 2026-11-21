@@ -6,7 +6,7 @@ import re
 import sqlite3
 import time
 
-from . import archive_index, collection_sort, durable
+from . import archive_index, collection_sort, durable, retrieval
 
 DIRECTORY = 'category-index'
 DOMAINS = ('resilience', 'culture')
@@ -40,7 +40,9 @@ def signature(path, state):
                             saved[key[len(prefix):]] = sorted(set(domains))
                     except (AttributeError,TypeError,ValueError):
                         continue
-    payload = [FORMAT, path.name, info.st_size, info.st_mtime_ns, saved]
+    role = retrieval.source_role({'book': path.stem})
+    format_version = FORMAT + 1 if role in retrieval.CULTURE_SOURCE_ROLES else FORMAT
+    payload = [format_version, path.name, info.st_size, info.st_mtime_ns, saved]
     return hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest(), saved
 
 

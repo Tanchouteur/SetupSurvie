@@ -90,6 +90,14 @@ ext4 monté, conservé le fichier témoin et confirmé la relance de la commande
 L’agrandissement de l’image de travail attend la fin du transfert actif.
 La liste exacte des éditions de Marc et les écarts de couverture restent
 à établir.
+L’[audit de Marc du 13 novembre](../essais/2026-11-13-audit-fonds-marc.md)
+recensait 753,34 Go, dont 241,56 Go de Gutenberg et 43,05 Go de jeux de
+société Alexandria. Ce fonds historique dépassait de 253,34 Go l’ancien
+plafond documentaire de 500 Go du laboratoire, levé depuis. Ses éditions et les volumes
+actuels restent à comparer après le tri de Louis et les téléchargements
+ultérieurs. Pour la comparaison, l’inventaire des archives avec tailles
+et éditions peut être relevé via le [catalogue local](../utilisation/inventaire-local.md),
+sans copier les comptes, vidéos privées ou historiques.
 
 Le portail documentaire 0.76.3 répond sur la boucle locale de Bazzite
 (port 18080), avec Kiwix (18081), Open WebUI (13000) et le pilote (18000).
@@ -173,3 +181,38 @@ son volume reçu et sa taille totale pendant le transfert réel. La file
 reste accessible pendant l’enrichissement. La carte compte séparément les
 volumes vérifiés et indique la dernière observation dans les détails.
 La 0.80.1 corrige le suivi en lecture seule sans migration de données.
+
+### Relevé étendu et premiers correctifs en essai
+
+Le relevé initial a couvert les **38 thèmes** du catalogue, pendant
+l’enrichissement. Kiwix servait six ZIM au début et à la fin. Parmi les 32
+réponses de recherche partielles, dix requêtes ne renvoyaient aucun résultat.
+Six relevés ont dépassé le délai du client de mesure. Ces chiffres décrivent
+la recherche sur ce fonds intermédiaire. Ils restent à comparer à ceux du fonds
+enrichi, avant de conclure sur les documents manquants.
+
+Sur le scénario bilingue « eau potable », la fiche OMS sur le traitement au
+point d’utilisation passe du **12e au 2e rang** lorsque les mêmes 411 candidats
+sont reclassés avec la formulation bilingue et la priorité aux guides
+documentaires. L’essai isole l’effet du classement. La couverture de la
+requête en production et la lecture des résultats sur tous les thèmes
+restent à mesurer.
+
+Dans l’archive iFixit anglaise de décembre 2025, le HTML de la page
+« Water Purification Systems » indique le français, tandis que le contenu
+et le reste de l’édition sont anglais. Le candidat test reconnaît l’anglais
+sur le fichier réel et conserve l’indication française sur la page mixte
+de l’édition française. Les essais unitaires couvrent le passage dans le filtre
+et l’absence de requête Kiwix vers le Wiktionnaire rangé dans Autre.
+
+La recette se rejoue depuis le dépôt avec la liste des 38 thèmes et les
+variantes linguistiques du cas OMS.
+
+```sh
+python3 scripts/evaluate_domains.py scan-library tests/fixtures/domain-evaluation/autonomie-38-themes.json rapport.json --portal http://127.0.0.1:18080
+```
+
+Le rapport conserve la couverture, l’ordre et les titres. Il indique si le
+lecteur a renvoyé du texte. L’analyse de la pertinence et la lecture humaine
+des passages restent à ajouter. Conserver chaque rapport dans un dossier de
+recette hors du dépôt.

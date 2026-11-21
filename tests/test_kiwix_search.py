@@ -8,7 +8,7 @@ from html import escape
 from unittest.mock import AsyncMock,patch
 from urllib.parse import urlsplit,parse_qs,quote
 from fastapi import HTTPException
-from pilot import library,store,videos
+from pilot import collection_sort,library,network,store,videos
 
 
 class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
@@ -72,6 +72,64 @@ class KiwixSearchTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(library,'books',AsyncMock(return_value=self.catalog)),patch.object(library,'get',AsyncMock(side_effect=fetch)):
             await library.search('feu',language='fr')
         self.assertEqual(set(calls),{'wikipedia_fr','video'})
+
+    async def test_french_search_skips_the_english_ifixit_edition_and_english_pages(self):
+        english, french = 'ifixit_en_all_2025-12', 'ifixit_fr_all_2026-03'
+        catalog = [dict(self.catalog[0], book=book) for book in (english, french)]
+        calls = []
+        async def fetch(path, *args):
+            names = parse_qs(urlsplit(path).query).get('books.name', [])
+            calls.extend(names)
+            if path.startswith('/suggest?'):
+                return b'[]', 'application/json'
+            return (f'<rss><channel><item><title>Water purification system</title>'
+                    f'<link>/content/{names[0]}/Device/Water_Purification_System</link>'
+                    '<description>This is a system for drinking water with a filter that removes particles from the water.</description>'
+                    '</item></channel></rss>').encode(), 'application/xml'
+
+        with patch.object(library, 'books', AsyncMock(return_value=catalog)), \
+                patch.object(library, 'get', fetch), patch.object(library.search_cache, 'budget', return_value=0):
+            found = await library.search('eau potable', 'fr', kind='documents')
+            self.assertEqual(found, [])
+            self.assertEqual(set(calls), {french})
+            found = await library.search('eau potable', 'en', kind='documents')
+            self.assertEqual({(item['book'], item['language']) for item in found}, {(english, 'en')})
+
+    async def test_wiktionary_in_other_is_only_queried_when_requested(self):
+        from pilot.routes.conversations import Question
+
+        dictionary = 'wiktionary_fr_all'
+        catalog = [self.catalog[0], {
+            'book': dictionary, 'language': 'fra', 'fulltext': True, 'title': 'Wiktionnaire',
+        }]
+        sorting = collection_sort.Sort(other=frozenset({collection_sort.archive(dictionary)}))
+        calls = []
+        async def fetch(path, *args):
+            names = parse_qs(urlsplit(path).query).get('books.name', [])
+            calls.extend(names)
+            if path.startswith('/suggest?'):
+                return b'[]', 'application/json'
+            return self.xml(names[0], 'Compost')
+
+        root = Path(self.temp.name)
+        collection_sort.save(root, sorting)
+        with patch.object(network, 'CATALOG', root), \
+                patch.object(library, 'books', AsyncMock(return_value=catalog)), \
+                patch.object(library, 'get', fetch), \
+                patch.object(library.search_cache, 'budget', return_value=0):
+            scope = Question(message='compost').domain
+            self.assertEqual(scope, 'resilience')
+            await library.search('compost', domain=scope, kind='documents')
+            self.assertIn('wikipedia_fr', calls)
+            self.assertNotIn(dictionary, calls)
+
+            calls.clear()
+            await library.search('compost', domain='other', kind='documents')
+            self.assertEqual(set(calls), {dictionary})
+
+            calls.clear()
+            await library.search('compost', domain='all', kind='documents')
+            self.assertEqual(set(calls), {'wikipedia_fr', dictionary})
 
     async def test_duplicate_hits_are_deduplicated_and_unknown_books_rejected(self):
         async def fetch(path,*args):

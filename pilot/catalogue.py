@@ -93,9 +93,9 @@ def classification(item,guides,zims,saved=None,*,revisions=None):
     try:key=canonical(item['id']);current=current_revision(key,guides,zims,revisions)
     except HTTPException:key='';current=None
     record=saved.get(key)
-    domains=item.get('_indexed_domains')
-    if domains is None:domains=retrieval.domains({**item,'_text':item.get('_text',item.get('text',''))})
-    automatic={'domains':domains,'document_type':'exercise' if re.search(r'\b(quiz|qcm|questionnaire|exercices?|exercises?)\b',retrieval.normal(item.get('title',''))) else 'unknown',
+    domains = retrieval.application_domains({**item, '_text': item.get('_text', item.get('text', ''))},
+                                            item.get('_indexed_domains'))
+    automatic={'domains':domains,'source_role':retrieval.source_role(item),'document_type':'exercise' if re.search(r'\b(quiz|qcm|questionnaire|exercices?|exercises?)\b',retrieval.normal(item.get('title',''))) else 'unknown',
                'method':'automatic','status':'unreviewed','revision':current,'has_correction':bool(record)}
     if record and current and record['revision']==current:
         return {**automatic,**{k:record[k] for k in ('domains','document_type','status')},'method':'human'}

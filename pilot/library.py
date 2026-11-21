@@ -418,7 +418,11 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
         if query_plan and query_plan.collection and not catalogue.matches_collection(book,query_plan.collection,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')),saved_labels):continue
-        languages=archive_index.languages(book.get('language') or '')
+        edition = retrieval.ifixit_edition(book['book'])
+        declared = {'en': 'eng', 'fr': 'fra'}.get(edition, book.get('language') or '')
+        if edition:
+            book['language'] = declared
+        languages=archive_index.languages(declared)
         if requested and requested not in languages:continue
         selected_books.append(book)
         if book.get('fulltext') is False and known.get('status')!='ready':
@@ -929,7 +933,8 @@ async def source(identifier):
     text=p.text()
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
     result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':retrieval.article_language({'id': identifier, 'book': book['book'],
+                'language': p.language or book.get('language', ''), 'text': text}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
     if wiki_structure.wikipedia(result):
         result['_wiki_structure'] = await kiwix_queries.disk_io(wiki_structure.extract, raw)
     catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
