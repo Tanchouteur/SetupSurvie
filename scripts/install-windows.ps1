@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume, [switch]$NoBrowser, [switch]$NoStartup, [string]$CollectionSort)
+param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume, [switch]$NoBrowser, [switch]$NoStartup, [string]$CollectionSort, [switch]$SourceChosen)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
 try {
@@ -15,7 +15,7 @@ try {
     $prefix = $python.Prefix
     & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'install_wizard.py') --base-dir $BaseDir --check
     if ($LASTEXITCODE -ne 0) { throw 'Installation non démarrée. Suivez le message ci-dessus pour conserver votre installation existante.' }
-    if (-not $Kit -and -not $Resume) {
+    if (-not $Kit -and -not $Resume -and -not $SourceChosen) {
         $Kit = Read-Host 'Dossier du kit local, ou Entrée pour télécharger avec Internet'
     }
     if (-not $Resume -and -not $CollectionSort) {
