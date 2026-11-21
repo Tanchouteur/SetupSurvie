@@ -112,6 +112,17 @@ relevé publie le nom et les volumes des fichiers en cours ainsi que le
 résultat du transfert, en lecture seule. L’accès SSH distant demande un montage du
 volume séparé quand UDisks refuse l’autorisation de la session.
 
+### Alignement sur la référence de Marc — 21 novembre 2026
+
+Louis a fourni l’inventaire réel de Marc (115 archives, 700,2 Go, 91 guides).
+Le labo reçoit d’abord les 54 archives vidéo demandées (C'est pas sorcier
+par thème, Mondial Tissus, Maître Lucas, 86,9 Go), puis l’ensemble du
+[fonds de référence](bibliotheque-complete-marc.md#fonds-de-référence-figé)
+après agrandissement du volume. Le tri fourni du 21 novembre est fusionné
+au tri du labo avant ce transfert. État à compléter avec le bilan de
+`library_reference.py verify --lab` ; aucune conformité n’est annoncée
+avant ce contrôle.
+
 ## Mesurer avant chaque changement
 
 Reprendre le [protocole de mesure existant](../essais/mesurer-classement-documentaire.md)

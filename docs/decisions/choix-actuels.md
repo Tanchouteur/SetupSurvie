@@ -8,6 +8,26 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+## Fonds de référence figé et tri resserré — décision de Louis du 21 novembre 2026
+
+Louis demande que le code installe des éditions documentaires connues, sans
+dérive selon la date d’installation. Le fonds réellement installé chez Marc
+(relevé `/api/inventory` du 21 novembre) devient la base du manifeste
+`deploy/library-reference.json` : éditions exactes, tailles et SHA-256.
+Louis demande aussi d’ajouter les vidéos C'est pas sorcier (au moins une
+collection par sujet), Mondial Tissus et Maître Lucas, de retirer les
+collections très hors sujet, de garder quelques livres à lire et de ranger
+le reste peu pertinent dans **Autre** pour une recherche efficace. Les ajouts
+pratiques et le tri détaillé sont des propositions de l’agent appliquées à
+sa demande ; la liste de sujets que prépare Marc pourra les modifier. Louis
+précise que l’inventaire de Marc n’est qu’une première version large :
+la référence est une version de travail à ajuster au besoin, sans retirer
+ce qui pourrait servir ; seules les collections sans usage sont exclues.
+Le même jour, Marc transmet sa [liste de thèmes](../bibliotheque/savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026),
+qui devient la grille du fonds, du tri et de la recette de recherche.
+[Fonds de référence](../bibliotheque/bibliotheque-complete-marc.md#fonds-de-référence-figé) ·
+[tri fourni](../utilisation/classement-et-collections.md)
+
 ## Plafonds du laboratoire Bazzite — décision de Louis du 21 novembre 2026
 
 Le laboratoire dédié reste sur le SSD de 4 To. Louis retire les anciens

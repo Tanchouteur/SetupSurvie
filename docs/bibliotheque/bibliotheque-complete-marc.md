@@ -6,6 +6,92 @@ Le 21 novembre 2026, Louis demande de rapprocher le laboratoire Bazzite du
 fonds de Marc, avec priorité aux guides pratiques et écarts documentés quand
 la capacité impose une sélection. [Plan et état du laboratoire](classement-pratique-et-laboratoire-bazzite.md)
 
+## Fonds de référence figé
+
+**Depuis 0.85.0 — demande de Louis du 21 novembre 2026.** Le catalogue Kiwix
+change d’édition sans prévenir : neuf jours après l’installation de Marc,
+28 de ses 115 archives n’étaient plus l’édition proposée et deux familles
+avaient quitté le catalogue (les anciennes éditions restent téléchargeables
+par leur nom exact). Pour que chaque installation reçoive le même fonds, le
+manifeste [`deploy/library-reference.json`](../../deploy/library-reference.json)
+fixe le nom exact, la taille et l’empreinte SHA-256 officielle de chaque archive.
+
+Contenu de la **version de travail** du 21 novembre 2026 : **205 archives,
+1 046,6 Go**, guidée par la [liste de thèmes de Marc](savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026). Louis précise que l’inventaire de Marc était un premier essai
+large : la référence doit être ajustée aux besoins réels, sans retirer ce
+qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
+- Le fonds relevé chez Marc, à l’édition installée, sauf les 2 collections
+  sans usage exclues par le [tri fourni](../../deploy/collection-sort-default.json).
+- Les vidéos C'est pas sorcier par thème (édition 2026-11, qui remplace les
+  trois thèmes 2024-11 de Marc), Mondial Tissus (couture) et Maître Lucas
+  (apprentissages du primaire).
+- Des ajouts pratiques : Survivor Library (220 Go de manuels techniques
+  anciens), Ready.gov, MedlinePlus, NHS Medicines, CDC, médecine militaire,
+  WikiCiv, Restarters, recettes du domaine public, questions-réponses
+  brassage, animaux et ingénierie, LibreTexts médecine et ingénierie.
+- Des contenus éducatifs et de lecture : Les Fondamentaux, Ubongo, Éducation
+  et Numérique, livres Prunelle et Ganndal, poésie et littérature audio,
+  vulgarisation scientifique française, rangés dans **Autre** quand ils ne
+  servent pas la recherche pratique.
+- Pour les thèmes de Marc : documentation Ubuntu en français, bibliothèque
+  de nœuds, wiki OpenStreetMap. Pour la religion, Internet, la culture, les
+  langues et les loisirs, Marc ne veut qu’une base pour « avoir de tout » :
+  Wikipédia, Vikidia et C'est pas sorcier la fournissent ; aucun forum ou
+  fonds spécialisé n’est ajouté pour ces sujets.
+
+Installer ou compléter exactement cette référence (les collections exclues
+par le tri local restent ignorées) :
+
+```powershell
+py -3 scripts\content.py download --work-dir D:\SetupSurvie\prive --selection deploy\library-reference.json
+```
+
+Comparer une installation à la référence, sans rien télécharger ;
+`--deep` recalcule les empreintes, ce qui est long :
+
+```powershell
+py -3 scripts\library_reference.py verify --work-dir D:\SetupSurvie\prive
+```
+
+Le rapport distingue archive conforme, manquante, de taille ou d’empreinte
+différente, autre édition et archive hors référence (conservée). Une autre
+édition n’est jamais remplacée sans téléchargement de la référence. Pour
+faire évoluer le fonds, régénérer le manifeste à partir d’un inventaire puis
+livrer une nouvelle version :
+
+```sh
+python3 scripts/library_reference.py build --inventory inventaire.json --add 'MOTIF' --reason 'motif' --reference 'origine et date'
+```
+
+### Reporter le tri fait chez Marc
+
+Le fonds et le tri de Marc au 21 novembre 2026 sont conservés dans
+[`inventaires/`](inventaires/README.md). Quand Marc a trié sa bibliothèque,
+récupérer depuis son réseau la page `http://ADRESSE:8080/api/inventory`
+(enregistrer la page au format JSON) et l’export **Mon appareil → Paramètres →
+Organiser les collections → Exporter ce classement** (`SetupSurvie-tri.json`).
+Puis afficher ses changements :
+
+```sh
+python3 scripts/library_reference.py diff \
+  --before docs/bibliotheque/inventaires/marc-2026-11-21-archives.tsv --after inventaire-marc.json \
+  --sort-before docs/bibliotheque/inventaires/marc-2026-11-21-tri.json --sort-after SetupSurvie-tri.json
+```
+
+Le rapport liste les archives retirées, ajoutées ou changées d’édition et
+chaque collection déplacée entre Fonds principal, Autre et Exclues. Reporter
+ces choix dans `deploy/collection-sort-default.json`, régénérer le manifeste
+avec `build`, puis enregistrer les deux fichiers de Marc comme nouveau relevé
+daté dans `inventaires/`.
+
+`--inventory` accepte la page `/api/inventory` enregistrée depuis le portail
+ou une liste de fichiers `.zim`. Le manifeste liste aussi les archives
+écartées par le tri et celles dont le Metalink est introuvable. La taille
+de la référence dépasse la capacité de nombreux disques : vérifier la place
+chez Marc avant le téléchargement. `kiwix_select.py prepare` reste la
+découverte des dernières éditions par thème ; il ne garantit pas un fonds
+reproductible.
+
 ## Préparer directement chez Marc
 
 Installer le kit et ses prérequis selon le [guide Marc](../installation/pilote-marc.md), puis utiliser le logiciel 0.1.15 ou ultérieur. Le kit existant ne se complète pas simplement parce que le code change. Avec Internet sur le PC de Marc :

@@ -284,12 +284,12 @@ def main():
     p.add_argument('--lab',action='store_true',help='Montage Linux vérifié, marge physique contrôlée sur le SSD.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     p.add_argument('--jobs',type=int,choices=(1,2,3),default=2,help='Téléchargements simultanés (2 par défaut).')
-    p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
+    p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ou manifeste deploy/library-reference.json ; installe exactement ces archives.')
     args=p.parse_args()
     if args.selection:
         if args.pack or args.id:p.error('--selection ne se combine pas avec --pack ou --id.')
         plan=json.loads(args.selection.read_text(encoding='utf-8'))
-        if plan.get('schema')!=1 or plan.get('kind')!='SetupSurvie Kiwix thematic selection':p.error('Plan de sélection Kiwix non reconnu.')
+        if plan.get('schema')!=1 or plan.get('kind') not in ('SetupSurvie Kiwix thematic selection','SetupSurvie library reference'):p.error('Plan de sélection Kiwix ou manifeste de référence non reconnu.')
         items=catalog(args.selection);selected=items
     else:
         items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
