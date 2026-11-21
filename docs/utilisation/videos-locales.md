@@ -125,8 +125,8 @@ passage ; le nombre de collections terminées et les pistes lisibles sont affich
 **Mettre l’examen en pause** conserve les points de reprise. Reprendre reste
 volontaire après un redémarrage ou une pause.
 
-L’examen continue si la page est fermée. Les anciennes données terminées restent
-disponibles pendant le suivant. Le portail vérifie régulièrement si de
+L’examen continue si la page est fermée. Depuis la 0.89.1, les anciennes données
+terminées restent disponibles pendant le suivant et le portail vérifie régulièrement si de
 nouvelles collections ont été examinées et actualise la recherche. Les vidéos
 déjà prêtes peuvent apparaître pendant l’examen des
 collections restantes. **Actualiser le lecteur vidéo** permet aussi de demander
