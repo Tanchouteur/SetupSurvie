@@ -259,7 +259,7 @@ sujet. Son titre doit correspondre au sujet demandé. Un passage PDF doit faire 
 l’extrait pris ensemble. Ces règles permettent de distinguer un résultat
 sur le sujet d’une simple mention dans le reste de la page.
 
-Depuis la 0.87.2, un titre de trousse de réparation ou de liste de
+Depuis la 0.88.1, un titre de trousse de réparation ou de liste de
 fournitures reçoit la priorité d’une piste de matériel. Pour une demande
 de méthode, un titre de tutoriel passe plus haut. Les titres qui
 expliquent comment employer un kit gardent leur priorité, et les
