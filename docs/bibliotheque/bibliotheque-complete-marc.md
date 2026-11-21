@@ -79,7 +79,9 @@ lacunes nécessitent toujours des manuels et une recette réelle, sans inventer 
 
 ## Laboratoire et kit de transport
 
-`--lab` conserve le montage SSD obligatoire, le plafond de **500 Go documentaires**, la marge de 15 Go et les contrôles physiques du laboratoire sous 600 Go. Même `--budget-gb 0` ou un budget supérieur ne lève pas ce plafond en mode laboratoire. Pour un échantillon réduit :
+`--lab` conserve le montage SSD obligatoire et une marge libre de 15 Go.
+Le 21 novembre 2026, Louis a levé les plafonds fixes du laboratoire. Un
+échantillon réduit reste possible avec une limite explicite :
 
 ```bash
 python3 scripts/kiwix_select.py prepare --lab --theme autonomie --theme agriculture --max-add-gb 10 --no-refresh

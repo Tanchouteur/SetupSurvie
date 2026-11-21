@@ -53,9 +53,10 @@ même fonds et garder un export par configuration mesurée.
    manifeste ou d’un export d’inventaire. Utiliser les mêmes sources vérifiées
    quand elles tiennent dans le laboratoire. La comparaison porte sur les
    collections et les ressources publiques.
-2. Utiliser le montage dédié du SSD de 4 To. Respecter les 600 Go globaux,
-   le plafond documentaire de 500 Go et les marges d’indexation. Si le fonds
-   complet dépasse la capacité, conserver en priorité les guides pratiques,
+2. Utiliser le montage dédié du SSD de 4 To. Louis a levé le 21 novembre
+   les anciens plafonds de 500 Go documentaires et de 600 Go globaux.
+   La marge reste calculée sur l’espace réel du SSD. Si le fonds
+   complet dépasse la capacité disponible, conserver en priorité les guides pratiques,
    puis prendre des éditions encyclopédiques ou littéraires plus petites.
    Consigner pour chaque écart la collection, l’édition et le volume.
 3. Vérifier les fichiers à la copie ou au téléchargement. Recréer le catalogue
@@ -75,11 +76,24 @@ L’ajout des lots pratiques porte le fonds à **100 ressources vérifiées**
 toxiques reste en attente après interruption et échec de reprise.
 L’enrichissement suivant a démarré avec les lots éducatifs et locaux,
 Wikilivres et Wikipédia en français et en anglais. Le transfert du
-catalogue figé est plafonné à 215 Go documentaires pour cette tranche.
+catalogue figé a démarré avec une limite de 215 Go pour cette tranche, avant
+la levée des plafonds. Le volume existant reste à agrandir après ce transfert.
+Les nouvelles images sont dimensionnées d’après la taille du SSD et sont
+clairsemées. Les écritures consomment l’espace au fur et à mesure. Une fois
+la publication des téléchargements terminée, l’agrandissement d’un montage
+existant se lance avec les droits administrateur par
+`./scripts/lab.sh grow --mount-user louis`. L’opération conserve le volume
+et les fichiers existants. La commande peut être relancée si la taille de
+l’image a changé avant la fin de l’agrandissement du système de fichiers.
+Sur le SSD Bazzite, une recette réelle sur image jetable a doublé le volume
+ext4 monté, conservé le fichier témoin et confirmé la relance de la commande.
+L’agrandissement de l’image de travail attend la fin du transfert actif.
+La liste exacte des éditions de Marc et les écarts de couverture restent
+à établir.
 L’[audit de Marc du 13 novembre](../essais/2026-11-13-audit-fonds-marc.md)
 recensait 753,34 Go, dont 241,56 Go de Gutenberg et 43,05 Go de jeux de
-société Alexandria. Ce fonds historique dépasse à lui seul le plafond
-documentaire du laboratoire de 253,34 Go. Ses éditions et les volumes
+société Alexandria. Ce fonds historique dépassait de 253,34 Go l’ancien
+plafond documentaire de 500 Go du laboratoire, levé depuis. Ses éditions et les volumes
 actuels restent à comparer après le tri de Louis et les téléchargements
 ultérieurs. Pour la comparaison, l’inventaire des archives avec tailles
 et éditions peut être relevé via le [catalogue local](../utilisation/inventaire-local.md),

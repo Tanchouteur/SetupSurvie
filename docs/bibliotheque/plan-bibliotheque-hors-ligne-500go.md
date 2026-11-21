@@ -2,7 +2,9 @@
 
 > Actualisation du 12 novembre 2026 : les plafonds concernent le laboratoire de Louis. Marc souhaite un fonds complet sans plafond documentaire logiciel ; voir le [guide actuel](bibliotheque-complete-marc.md). Les tableaux historiques ci-dessous ne fixent pas une limite chez Marc.
 
-> Plan de sélection — les lots proposés ne sont pas tous téléchargés. La règle actuelle est de 500 Go documentaires, hors modèles et caches ; voir l’[inventaire daté](inventaire-ressources-telechargees.md) pour les fichiers recensés.
+> Plan historique. Le 21 novembre 2026, Louis a levé les plafonds fixes du
+> [laboratoire Bazzite](classement-pratique-et-laboratoire-bazzite.md).
+> Les volumes ci-dessous documentent la sélection envisagée à cette date.
 
 **Précision de Louis après ce plan : les 500 Go portent sur la bibliothèque
 documentaire, hors modèles IA et caches de comparaison. Une copie du kit ne compte

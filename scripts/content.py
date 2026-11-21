@@ -21,7 +21,7 @@ from delivery_paths import locked
 from pilot import collection_sort, durable
 
 CATALOG=setup.ROOT/'deploy/content-catalog.json'
-DEFAULT_BUDGET=500_000_000_000
+STORAGE_RESERVE = 15_000_000_000
 
 
 class DownloadPaused(Exception):
@@ -29,20 +29,34 @@ class DownloadPaused(Exception):
     pass
 
 
-def check_capacity(root,missing=0,*,budget=None,reserve=15_000_000_000,storage_root=None):
-    """Cap documents once; enforce physical free space separately from test models."""
-    scope=Path(storage_root) if storage_root is not None else root
-    if storage_root is not None:
-        if not scope.is_mount() or not root.resolve().is_relative_to(scope.resolve()):
-            raise setup.SetupError('Volume de stockage absent ou extérieur aux données.')
-        disk=shutil.disk_usage(scope)
-    else:
-        disk=shutil.disk_usage(root)
-    library=destination(root,'library')
-    used=sum(p.stat().st_size for p in library.rglob('*') if p.is_file() and not p.is_symlink())
-    if storage_root is not None:
-        budget=min(budget if budget is not None else DEFAULT_BUDGET, DEFAULT_BUDGET)
-    if (budget is not None and used+missing>budget) or disk.free<missing+reserve:
+def free_space(root, storage_root=None):
+    if storage_root is None:
+        return shutil.disk_usage(root).free
+    scope = Path(storage_root)
+    if not scope.is_mount() or not root.resolve().is_relative_to(scope.resolve()):
+        raise setup.SetupError('Volume de stockage absent ou extérieur aux données.')
+    free = shutil.disk_usage(scope).free
+    if sys.platform == 'linux':
+        # A sparse loop image shares space with the rest of its physical SSD.
+        device = scope.stat().st_dev
+        attribute = Path(f'/sys/dev/block/{os.major(device)}:{os.minor(device)}/loop/backing_file')
+        try:
+            backing = Path(attribute.read_text().rstrip('\n'))
+        except FileNotFoundError:
+            pass
+        else:
+            if not backing.is_file():
+                raise setup.SetupError('Fichier du volume de stockage inaccessible.')
+            free = min(free, shutil.disk_usage(backing.parent).free)
+    return free
+
+
+def check_capacity(root, missing=0, *, budget=None, reserve=STORAGE_RESERVE, storage_root=None):
+    """Enforce the supplied budget and physical reserve before writing."""
+    free = free_space(root, storage_root)
+    library = destination(root, 'library')
+    used = sum(p.stat().st_size for p in library.rglob('*') if p.is_file() and not p.is_symlink())
+    if (budget is not None and used + missing > budget) or free < missing + reserve:
         raise setup.SetupError('Budget documentaire ou marge physique insuffisants ; transfert arrêté sans publication.')
     return used
 
@@ -70,7 +84,7 @@ def catalog(path=CATALOG):
             raise setup.SetupError('Catalogue ambigu ou chemin non documentaire.')
         if url.scheme!='https' or not url.hostname or url.username or url.password or url.fragment:
             raise setup.SetupError('URL HTTPS publique requise.')
-        if not isinstance(item['bytes'],int) or not 0<item['bytes']<=600_000_000_000 or not re.fullmatch('[a-f0-9]{64}',item['sha256']):
+        if type(item['bytes']) is not int or item['bytes'] <= 0 or not re.fullmatch('[a-f0-9]{64}',item['sha256']):
             raise setup.SetupError('Taille ou empreinte absente du catalogue.')
         seen.add(item['id']);paths.add(relative.casefold())
     return items
@@ -267,7 +281,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['list','download','clean-partials']);p.add_argument('--data-dir');p.add_argument('--pack',action='append',default=[]);p.add_argument('--id',action='append',default=[])
     p.add_argument('--budget-gb',type=int,default=0,help='0 : pas de plafond documentaire hors laboratoire.');p.add_argument('--work-dir')
-    p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
+    p.add_argument('--lab',action='store_true',help='Montage Linux vérifié, marge physique contrôlée sur le SSD.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     p.add_argument('--jobs',type=int,choices=(1,2,3),default=2,help='Téléchargements simultanés (2 par défaut).')
     p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
@@ -305,7 +319,6 @@ def main():
         print('Seuls les téléchargements partiels sélectionnés ont été supprimés.');return
     if args.budget_gb<0:p.error('Budget positif ou 0 pour aucun plafond.')
     budget=args.budget_gb*1_000_000_000 or None
-    if storage_root is not None:budget=min(budget if budget is not None else DEFAULT_BUDGET,DEFAULT_BUDGET)
     download_and_refresh(args,app,c,root,selected,budget,storage_root)
 
 
