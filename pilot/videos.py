@@ -187,7 +187,7 @@ def signature():
     Nothing is opened or decoded; partial downloads are ignored so that a
     download in progress does not trigger repeated inventories."""
     local = ROOT.is_dir() and not inventory.is_link(ROOT)
-    digest=hashlib.sha256(b'archive-display-titles-and-origin-v2')
+    digest=hashlib.sha256(b'archive-display-titles-and-origin-v3')
     digest.update(json.dumps(collection_sort.load(network.CATALOG).as_json()).encode())
     count=0
     for directory,folders,files in os.walk(ROOT,followlinks=False) if local else ():
@@ -202,10 +202,12 @@ def signature():
     archived = False
     try:
         from . import archive_videos
+        published = [[path.name, info.st_size, info.st_mtime_ns]
+                     for path, info in archive_videos.published_indexes()]
         progress=archive_videos.progress()
-        if progress.get('phase') in ('completed','partial'):
-            archived = True
-            digest.update(json.dumps(['archives',progress.get('job_id'),progress.get('finished')]).encode())
+        archived = bool(published) or progress.get('phase') in ('completed','partial')
+        if archived:
+            digest.update(json.dumps(['archives', published, progress.get('job_id'), progress.get('finished')]).encode())
     except Exception:pass
     return digest.hexdigest()+':'+str(count) if local or archived else None
 
