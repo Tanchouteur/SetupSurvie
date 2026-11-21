@@ -16,12 +16,12 @@ par leur nom exact). Pour que chaque installation reçoive le même fonds, le
 manifeste [`deploy/library-reference.json`](../../deploy/library-reference.json)
 fixe le nom exact, la taille et l’empreinte SHA-256 officielle de chaque archive.
 
-Contenu de la **version de travail** du 21 novembre 2026 : **203 archives,
-1 068,4 Go**. Louis précise que l’inventaire de Marc était un premier essai
+Contenu de la **version de travail** du 21 novembre 2026 : **241 archives,
+1 108,0 Go**, guidée par la [liste de thèmes de Marc](savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026). Louis précise que l’inventaire de Marc était un premier essai
 large : la référence doit être ajustée aux besoins réels, sans retirer ce
 qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
-- Le fonds relevé chez Marc, à l’édition installée, sauf les 7 collections
-  très hors sujet exclues par le [tri fourni](../../deploy/collection-sort-default.json).
+- Le fonds relevé chez Marc, à l’édition installée, sauf les 2 collections
+  sans usage exclues par le [tri fourni](../../deploy/collection-sort-default.json).
 - Les vidéos C'est pas sorcier par thème (édition 2026-11, qui remplace les
   trois thèmes 2024-11 de Marc), Mondial Tissus (couture) et Maître Lucas
   (apprentissages du primaire).
@@ -33,6 +33,10 @@ qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
   et Numérique, livres Prunelle et Ganndal, Bouquineux, BNR, livres audio,
   vulgarisation scientifique française, rangés dans **Autre** quand ils ne
   servent pas la recherche pratique.
+- Pour les thèmes de Marc : documentation Ubuntu en français, Raspberry Pi,
+  Arduino, bibliothèque de nœuds, wiki OpenStreetMap ; dans **Autre** :
+  forums informatiques et réseaux, religions, échecs, jeux, musique et
+  partitions, langues, littérature, philosophie et droit.
 
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :

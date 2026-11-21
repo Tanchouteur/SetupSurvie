@@ -67,11 +67,12 @@ Les éditions sont reconnues par la référence de collection, langue comprise.
 
 Les nouvelles installations partent du [tri fourni avec le logiciel](../../deploy/collection-sort-default.json)
 lorsqu’aucun fichier personnalisé n’est donné. Le 21 novembre 2026, ce tri
-part de l’export de Louis et y ajoute, à sa demande : 7 exclusions très hors
-sujet (encyclopédies Evangelion et Magic, Folgerpedia, football, hindouisme,
-TED religion et internet), et un rangement dans **Autre** de ce qui peut
-servir sans aider la recherche pratique : encyclopédies et forums savants
-(dont Internet des objets, sport, généalogie, Cloudflare), des
+part de l’export de Louis et y ajoute, à sa demande et d’après la
+[liste de thèmes de Marc](../bibliotheque/savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026) :
+2 exclusions sans usage (encyclopédies de fans Evangelion et Magic), et un
+rangement dans **Autre** de ce qui peut servir sans aider la recherche
+pratique : encyclopédies et forums savants, informatique et réseaux,
+religions, langues, musique, jeux, littérature, philosophie, droit, des
 textes Wikisource, de l’histoire, de la vulgarisation, des livres à lire et
 des thèmes C'est pas sorcier sans rapport direct avec l’autonomie (arts,
 sport, défense, économie, histoire, astronomie, géographie, écologie,

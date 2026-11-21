@@ -1,0 +1,822 @@
+{
+ "schema": 1,
+ "source": "Liste de thèmes de Marc transmise par Louis le 21 novembre 2026",
+ "cases": [
+  {
+   "theme": "autonomie-large",
+   "family": "Autonomie et ressources",
+   "query": "réparer plutôt que jeter",
+   "domain": "resilience"
+  },
+  {
+   "theme": "autonomie-large",
+   "family": "Autonomie et ressources",
+   "query": "remplacer un produit introuvable",
+   "domain": "resilience"
+  },
+  {
+   "theme": "energie",
+   "family": "Autonomie et ressources",
+   "query": "dimensionner une installation solaire",
+   "domain": "resilience"
+  },
+  {
+   "theme": "energie",
+   "family": "Autonomie et ressources",
+   "query": "entretenir un groupe électrogène",
+   "domain": "resilience"
+  },
+  {
+   "theme": "electricite",
+   "family": "Autonomie et ressources",
+   "query": "calculer la section d'un câble",
+   "domain": "resilience"
+  },
+  {
+   "theme": "electricite",
+   "family": "Autonomie et ressources",
+   "query": "mise à la terre d'une installation",
+   "domain": "resilience"
+  },
+  {
+   "theme": "plomberie",
+   "family": "Autonomie et ressources",
+   "query": "réparer une fuite de tuyau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "plomberie",
+   "family": "Autonomie et ressources",
+   "query": "installer une pompe de surface",
+   "domain": "resilience"
+  },
+  {
+   "theme": "isolation-habitat",
+   "family": "Autonomie et ressources",
+   "query": "isoler une fenêtre",
+   "domain": "resilience"
+  },
+  {
+   "theme": "isolation-habitat",
+   "family": "Autonomie et ressources",
+   "query": "éviter les moisissures dans une maison",
+   "domain": "resilience"
+  },
+  {
+   "theme": "eau",
+   "family": "Autonomie et ressources",
+   "query": "rendre l'eau potable",
+   "domain": "resilience"
+  },
+  {
+   "theme": "eau",
+   "family": "Autonomie et ressources",
+   "query": "récupérer l'eau de pluie",
+   "domain": "resilience"
+  },
+  {
+   "theme": "gaz",
+   "family": "Autonomie et ressources",
+   "query": "détecter une fuite de gaz",
+   "domain": "resilience"
+  },
+  {
+   "theme": "gaz",
+   "family": "Autonomie et ressources",
+   "query": "stocker une bouteille de gaz",
+   "domain": "resilience"
+  },
+  {
+   "theme": "carburants",
+   "family": "Autonomie et ressources",
+   "query": "conserver de l'essence longtemps",
+   "domain": "resilience"
+  },
+  {
+   "theme": "carburants",
+   "family": "Autonomie et ressources",
+   "query": "stockage du gazole en jerrican",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chauffage",
+   "family": "Autonomie et ressources",
+   "query": "éviter l'intoxication au monoxyde de carbone",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chauffage",
+   "family": "Autonomie et ressources",
+   "query": "entretenir un poêle à bois",
+   "domain": "resilience"
+  },
+  {
+   "theme": "feu",
+   "family": "Autonomie et ressources",
+   "query": "allumer un feu sans allumettes",
+   "domain": "resilience"
+  },
+  {
+   "theme": "feu",
+   "family": "Autonomie et ressources",
+   "query": "éteindre un feu de cuisine",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nourriture",
+   "family": "Alimentation et agriculture",
+   "query": "aliments sauvages comestibles",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nourriture",
+   "family": "Alimentation et agriculture",
+   "query": "reconnaître un aliment avarié",
+   "domain": "resilience"
+  },
+  {
+   "theme": "conservation-alimentaire",
+   "family": "Alimentation et agriculture",
+   "query": "faire des conserves de légumes",
+   "domain": "resilience"
+  },
+  {
+   "theme": "conservation-alimentaire",
+   "family": "Alimentation et agriculture",
+   "query": "fumer du poisson",
+   "domain": "resilience"
+  },
+  {
+   "theme": "cuisine-economie",
+   "family": "Alimentation et agriculture",
+   "query": "cuire du riz avec peu d'eau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "cuisine-economie",
+   "family": "Alimentation et agriculture",
+   "query": "recette avec des lentilles",
+   "domain": "resilience"
+  },
+  {
+   "theme": "encyclopedie-alimentation",
+   "family": "Alimentation et agriculture",
+   "query": "valeur nutritive des légumineuses",
+   "domain": "resilience"
+  },
+  {
+   "theme": "encyclopedie-alimentation",
+   "family": "Alimentation et agriculture",
+   "query": "parties comestibles d'une plante",
+   "domain": "resilience"
+  },
+  {
+   "theme": "potager",
+   "family": "Alimentation et agriculture",
+   "query": "calendrier des semis du potager",
+   "domain": "resilience"
+  },
+  {
+   "theme": "potager",
+   "family": "Alimentation et agriculture",
+   "query": "lutter contre les pucerons",
+   "domain": "resilience"
+  },
+  {
+   "theme": "arbres-fruitiers",
+   "family": "Alimentation et agriculture",
+   "query": "tailler un pommier",
+   "domain": "resilience"
+  },
+  {
+   "theme": "arbres-fruitiers",
+   "family": "Alimentation et agriculture",
+   "query": "greffer un arbre fruitier",
+   "domain": "resilience"
+  },
+  {
+   "theme": "semences",
+   "family": "Alimentation et agriculture",
+   "query": "conserver des graines de tomates",
+   "domain": "resilience"
+  },
+  {
+   "theme": "semences",
+   "family": "Alimentation et agriculture",
+   "query": "test de germination",
+   "domain": "resilience"
+  },
+  {
+   "theme": "permaculture",
+   "family": "Alimentation et agriculture",
+   "query": "concevoir un jardin en permaculture",
+   "domain": "resilience"
+  },
+  {
+   "theme": "permaculture",
+   "family": "Alimentation et agriculture",
+   "query": "garder un sol fertile",
+   "domain": "resilience"
+  },
+  {
+   "theme": "elevage",
+   "family": "Alimentation et agriculture",
+   "query": "élever des poules pondeuses",
+   "domain": "resilience"
+  },
+  {
+   "theme": "elevage",
+   "family": "Alimentation et agriculture",
+   "query": "soigner une chèvre malade",
+   "domain": "resilience"
+  },
+  {
+   "theme": "apiculture",
+   "family": "Alimentation et agriculture",
+   "query": "installer une ruche",
+   "domain": "resilience"
+  },
+  {
+   "theme": "apiculture",
+   "family": "Alimentation et agriculture",
+   "query": "traiter le varroa",
+   "domain": "resilience"
+  },
+  {
+   "theme": "peche",
+   "family": "Alimentation et agriculture",
+   "query": "pêcher en rivière",
+   "domain": "resilience"
+  },
+  {
+   "theme": "peche",
+   "family": "Alimentation et agriculture",
+   "query": "nœud pour hameçon",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chasse-sous-marine",
+   "family": "Alimentation et agriculture",
+   "query": "sécurité en chasse sous-marine",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chasse-sous-marine",
+   "family": "Alimentation et agriculture",
+   "query": "apnée et syncope",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chasse",
+   "family": "Alimentation et agriculture",
+   "query": "préparer un gibier",
+   "domain": "resilience"
+  },
+  {
+   "theme": "chasse",
+   "family": "Alimentation et agriculture",
+   "query": "réglementation de la chasse",
+   "domain": "resilience"
+  },
+  {
+   "theme": "champignons-plantes",
+   "family": "Alimentation et agriculture",
+   "query": "champignons toxiques mortels",
+   "domain": "resilience"
+  },
+  {
+   "theme": "champignons-plantes",
+   "family": "Alimentation et agriculture",
+   "query": "plantes sauvages comestibles",
+   "domain": "resilience"
+  },
+  {
+   "theme": "medecine",
+   "family": "Santé et soins",
+   "query": "arrêter une hémorragie",
+   "domain": "resilience"
+  },
+  {
+   "theme": "medecine",
+   "family": "Santé et soins",
+   "query": "soigner une diarrhée chez l'enfant",
+   "domain": "resilience"
+  },
+  {
+   "theme": "medicaments",
+   "family": "Santé et soins",
+   "query": "posologie du paracétamol",
+   "domain": "resilience"
+  },
+  {
+   "theme": "medicaments",
+   "family": "Santé et soins",
+   "query": "conserver les médicaments périmés",
+   "domain": "resilience"
+  },
+  {
+   "theme": "plantes-medicinales",
+   "family": "Santé et soins",
+   "query": "tisane de thym usage",
+   "domain": "resilience"
+  },
+  {
+   "theme": "plantes-medicinales",
+   "family": "Santé et soins",
+   "query": "huiles essentielles contre-indications",
+   "domain": "resilience"
+  },
+  {
+   "theme": "animaux-compagnie",
+   "family": "Santé et soins",
+   "query": "premiers soins pour un chien",
+   "domain": "resilience"
+  },
+  {
+   "theme": "animaux-compagnie",
+   "family": "Santé et soins",
+   "query": "vermifuger un chat",
+   "domain": "resilience"
+  },
+  {
+   "theme": "bricolage",
+   "family": "Techniques, fabrication et réparation",
+   "query": "percer un mur en béton",
+   "domain": "resilience"
+  },
+  {
+   "theme": "bricolage",
+   "family": "Techniques, fabrication et réparation",
+   "query": "choisir une vis",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mecanique",
+   "family": "Techniques, fabrication et réparation",
+   "query": "changer des plaquettes de frein",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mecanique",
+   "family": "Techniques, fabrication et réparation",
+   "query": "réparer une crevaison de vélo",
+   "domain": "resilience"
+  },
+  {
+   "theme": "soudure",
+   "family": "Techniques, fabrication et réparation",
+   "query": "souder à l'arc",
+   "domain": "resilience"
+  },
+  {
+   "theme": "soudure",
+   "family": "Techniques, fabrication et réparation",
+   "query": "souder à l'étain un fil",
+   "domain": "resilience"
+  },
+  {
+   "theme": "menuiserie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "assemblage tenon mortaise",
+   "domain": "resilience"
+  },
+  {
+   "theme": "menuiserie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "sécher du bois de construction",
+   "domain": "resilience"
+  },
+  {
+   "theme": "construction-abri",
+   "family": "Techniques, fabrication et réparation",
+   "query": "construire un abri",
+   "domain": "resilience"
+  },
+  {
+   "theme": "construction-abri",
+   "family": "Techniques, fabrication et réparation",
+   "query": "étanchéité d'une toiture",
+   "domain": "resilience"
+  },
+  {
+   "theme": "cabanes",
+   "family": "Techniques, fabrication et réparation",
+   "query": "construire une cabane",
+   "domain": "resilience"
+  },
+  {
+   "theme": "cabanes",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fondations légères",
+   "domain": "resilience"
+  },
+  {
+   "theme": "low-tech",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fabriquer un four solaire",
+   "domain": "resilience"
+  },
+  {
+   "theme": "low-tech",
+   "family": "Techniques, fabrication et réparation",
+   "query": "marmite norvégienne",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mecanismes-degrades",
+   "family": "Techniques, fabrication et réparation",
+   "query": "générateur à pédales",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mecanismes-degrades",
+   "family": "Techniques, fabrication et réparation",
+   "query": "machine à laver manuelle",
+   "domain": "resilience"
+  },
+  {
+   "theme": "outils-machines",
+   "family": "Techniques, fabrication et réparation",
+   "query": "affûter un couteau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "outils-machines",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fabriquer une poulie",
+   "domain": "resilience"
+  },
+  {
+   "theme": "materiaux",
+   "family": "Techniques, fabrication et réparation",
+   "query": "préparer de la chaux",
+   "domain": "resilience"
+  },
+  {
+   "theme": "materiaux",
+   "family": "Techniques, fabrication et réparation",
+   "query": "extraire de l'argile",
+   "domain": "resilience"
+  },
+  {
+   "theme": "fabrication-materiaux",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fabriquer du charbon de bois",
+   "domain": "resilience"
+  },
+  {
+   "theme": "fabrication-materiaux",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fabriquer de la colle",
+   "domain": "resilience"
+  },
+  {
+   "theme": "metallurgie-chimie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "fabriquer du savon",
+   "domain": "resilience"
+  },
+  {
+   "theme": "metallurgie-chimie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "tremper de l'acier",
+   "domain": "resilience"
+  },
+  {
+   "theme": "tannage",
+   "family": "Techniques, fabrication et réparation",
+   "query": "tanner une peau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "tannage",
+   "family": "Techniques, fabrication et réparation",
+   "query": "tannage végétal",
+   "domain": "resilience"
+  },
+  {
+   "theme": "textile",
+   "family": "Techniques, fabrication et réparation",
+   "query": "recoudre une déchirure",
+   "domain": "resilience"
+  },
+  {
+   "theme": "textile",
+   "family": "Techniques, fabrication et réparation",
+   "query": "filer de la laine",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vannerie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "apprendre la vannerie",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vannerie",
+   "family": "Techniques, fabrication et réparation",
+   "query": "tresser un panier en osier",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nuisibles",
+   "family": "Techniques, fabrication et réparation",
+   "query": "protéger les réserves des rongeurs",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nuisibles",
+   "family": "Techniques, fabrication et réparation",
+   "query": "éliminer les punaises de lit",
+   "domain": "resilience"
+  },
+  {
+   "theme": "bushcraft",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "monter un campement",
+   "domain": "resilience"
+  },
+  {
+   "theme": "bushcraft",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "fabriquer un abri en forêt",
+   "domain": "resilience"
+  },
+  {
+   "theme": "survie-nature",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "s'orienter sans boussole",
+   "domain": "resilience"
+  },
+  {
+   "theme": "survie-nature",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "signaler sa position aux secours",
+   "domain": "resilience"
+  },
+  {
+   "theme": "survie-urbaine",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "coupure d'eau en ville",
+   "domain": "resilience"
+  },
+  {
+   "theme": "survie-urbaine",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "hygiène sans eau courante",
+   "domain": "resilience"
+  },
+  {
+   "theme": "meteorologie",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "prévoir la météo en observant le ciel",
+   "domain": "resilience"
+  },
+  {
+   "theme": "meteorologie",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "reconnaître un orage",
+   "domain": "resilience"
+  },
+  {
+   "theme": "navigation",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "lire une carte marine",
+   "domain": "resilience"
+  },
+  {
+   "theme": "navigation",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "utiliser un compas de relèvement",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vie-bateau",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "eau potable à bord",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vie-bateau",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "entretien d'un moteur de bateau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "resilience",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "plan de continuité familial",
+   "domain": "resilience"
+  },
+  {
+   "theme": "resilience",
+   "family": "Milieux naturels, déplacement et survie",
+   "query": "diversifier ses ressources",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nrbc",
+   "family": "Risques et situations de conflit",
+   "query": "que faire en cas d'accident nucléaire",
+   "domain": "resilience"
+  },
+  {
+   "theme": "nrbc",
+   "family": "Risques et situations de conflit",
+   "query": "pastilles d'iode",
+   "domain": "resilience"
+  },
+  {
+   "theme": "protection-individuelle",
+   "family": "Risques et situations de conflit",
+   "query": "choisir un masque filtrant",
+   "domain": "resilience"
+  },
+  {
+   "theme": "protection-individuelle",
+   "family": "Risques et situations de conflit",
+   "query": "porter des gants de protection chimique",
+   "domain": "resilience"
+  },
+  {
+   "theme": "armes",
+   "family": "Risques et situations de conflit",
+   "query": "stocker une arme en sécurité",
+   "domain": "resilience"
+  },
+  {
+   "theme": "armes",
+   "family": "Risques et situations de conflit",
+   "query": "réglementation des armes en France",
+   "domain": "resilience"
+  },
+  {
+   "theme": "guerre-siege",
+   "family": "Risques et situations de conflit",
+   "query": "protection civile en temps de guerre",
+   "domain": "resilience"
+  },
+  {
+   "theme": "guerre-siege",
+   "family": "Risques et situations de conflit",
+   "query": "abri en cas de bombardement",
+   "domain": "resilience"
+  },
+  {
+   "theme": "stocks",
+   "family": "Risques et situations de conflit",
+   "query": "constituer un stock alimentaire",
+   "domain": "resilience"
+  },
+  {
+   "theme": "stocks",
+   "family": "Risques et situations de conflit",
+   "query": "rotation des réserves",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vie-degradee",
+   "family": "Risques et situations de conflit",
+   "query": "organiser la vie sans électricité",
+   "domain": "resilience"
+  },
+  {
+   "theme": "vie-degradee",
+   "family": "Risques et situations de conflit",
+   "query": "éclairage sans réseau",
+   "domain": "resilience"
+  },
+  {
+   "theme": "sciences",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "exercices de loi d'Ohm",
+   "domain": "resilience"
+  },
+  {
+   "theme": "sciences",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "photosynthèse expliquée",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mesure",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "convertir des unités",
+   "domain": "resilience"
+  },
+  {
+   "theme": "mesure",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "mesurer le pH",
+   "domain": "resilience"
+  },
+  {
+   "theme": "enseignement",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "apprendre à lire à un enfant",
+   "domain": "resilience"
+  },
+  {
+   "theme": "enseignement",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "exercices de calcul CE1",
+   "domain": "resilience"
+  },
+  {
+   "theme": "organisation-collective",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "prendre une décision en groupe",
+   "domain": "resilience"
+  },
+  {
+   "theme": "organisation-collective",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "tenir une comptabilité simple",
+   "domain": "resilience"
+  },
+  {
+   "theme": "histoire-techniques",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "histoire des moulins à eau",
+   "domain": "culture"
+  },
+  {
+   "theme": "histoire-techniques",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "fabrication du pain autrefois",
+   "domain": "culture"
+  },
+  {
+   "theme": "histoire-religions",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "histoire du christianisme",
+   "domain": "culture"
+  },
+  {
+   "theme": "histoire-religions",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "principes du bouddhisme",
+   "domain": "culture"
+  },
+  {
+   "theme": "culture-loisirs",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "règles des échecs",
+   "domain": "culture"
+  },
+  {
+   "theme": "culture-loisirs",
+   "family": "Connaissances fondamentales et transmission",
+   "query": "apprendre la guitare",
+   "domain": "culture"
+  },
+  {
+   "theme": "communication",
+   "family": "Communication et informatique",
+   "query": "portée d'une radio VHF",
+   "domain": "resilience"
+  },
+  {
+   "theme": "communication",
+   "family": "Communication et informatique",
+   "query": "fabriquer une antenne",
+   "domain": "resilience"
+  },
+  {
+   "theme": "informatique",
+   "family": "Communication et informatique",
+   "query": "installer Linux",
+   "domain": "resilience"
+  },
+  {
+   "theme": "informatique",
+   "family": "Communication et informatique",
+   "query": "sauvegarder ses fichiers",
+   "domain": "resilience"
+  },
+  {
+   "theme": "base-connaissances",
+   "family": "Communication et informatique",
+   "query": "organiser une bibliothèque",
+   "domain": "resilience"
+  },
+  {
+   "theme": "base-connaissances",
+   "family": "Communication et informatique",
+   "query": "classer des archives",
+   "domain": "resilience"
+  },
+  {
+   "theme": "ia-locale",
+   "family": "Communication et informatique",
+   "query": "vérifier une réponse d'intelligence artificielle",
+   "domain": "resilience"
+  },
+  {
+   "theme": "ia-locale",
+   "family": "Communication et informatique",
+   "query": "citer ses sources",
+   "domain": "resilience"
+  }
+ ]
+}
