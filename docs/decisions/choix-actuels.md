@@ -22,13 +22,18 @@ SSD de secours, un proche ouvre un lanceur, choisit le disque de destination et
 clique sur **Installer**. La copie et l’installation des prérequis se font hors
 ligne. Louis accepte une demande de droits administrateur dans une fenêtre.
 Le parcours entier doit être réalisable sans terminal. Deux lanceurs distincts
-sont possibles. Linux reste la cible V1. Le parcours graphique reste à réaliser.
+sont possibles. Linux reste la cible V1. Le parcours graphique Linux est livré
+en 0.77.0 et reste à faire suivre par un proche.
 [Installation depuis le SSD](../exploitation/disque-de-secours-hors-ligne.md#7-installer-depuis-le-ssd-de-secours)
 
 Lors d’une installation normale, la première installation saine sert de point
 de restauration. La seconde sert au quotidien. En cas de problème, **Restaurer**
-remet en service la seconde à partir de la première. Le mécanisme reste à
-concevoir et à valider.
+vérifie le point immuable, en produit une nouvelle copie de travail et conserve
+l’ancienne installation avec ses données. Louis précise le 21 novembre que le
+point doit toujours rester protégé et ne doit jamais servir directement
+d’installation active. La création du point est activée par défaut dans
+l’installateur hors ligne et peut être décochée. Une installation Linux système
+dédiée existante peut créer son point sans réinstallation.
 [Point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026)
 
 ## Cartes riches, accueil utile et transitions — demande de Louis du 21 novembre 2026

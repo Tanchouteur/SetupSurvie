@@ -53,6 +53,16 @@ relancer une étape en erreur. Le portail est utilisable pendant ces opérations
 Le [guide YouTube](../utilisation/telecharger-videos-youtube.md) détaille le format,
 les prérequis et les droits d’usage.
 
+## Installer hors ligne depuis le SSD sur Linux
+
+Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64 déjà démarré avec un bureau
+compatible, ouvrir **Installer SetupSurvie** depuis une copie de transfert
+Linux créée en 0.77.0 ou ultérieure. Choisir le disque de destination puis
+laisser l’assistant installer les outils et ouvrir SetupSurvie. La demande
+administrateur se fait dans une fenêtre. Le point de restauration protégé est
+coché au départ et peut être décoché. Voir le
+[parcours graphique et ses prérequis](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+
 ## Préparer une installation depuis le dépôt
 
 ### Installation automatique Linux

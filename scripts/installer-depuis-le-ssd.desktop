@@ -2,6 +2,6 @@
 Type=Application
 Name=Installer SetupSurvie
 Comment=Installer SetupSurvie depuis ce disque de secours
-Exec=sh -c "exec /bin/bash \"\\$(dirname \"\\$1\")/application/scripts/linux_recovery_gui.sh\" install \"\\$(dirname \"\\$1\")\"" sh %k
+Exec=/bin/sh -c "exec /bin/bash \\"\\$(dirname \\"\\$1\\")/Interface-SetupSurvie/linux_recovery_gui.sh\\" install \\"\\$(dirname \\"\\$1\\")\\"" sh %k
 Terminal=false
 Categories=Utility;
