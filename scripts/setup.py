@@ -159,7 +159,8 @@ class Installation:
             raise SetupError("Installation non initialisée. Lancez d’abord install ou init.")
         return json.loads(self.settings_path.read_text(encoding="utf-8"))
 
-    def init(self, target, data_dir=None, lan=False, cpu=False, *, initial_chat_model=None):
+    def init(self, target, data_dir=None, lan=False, cpu=False, *, initial_chat_model=None,
+             seed_collection_sort=False):
         durable.mkdir(self.work)
         if os.name != "nt":
             self.work.chmod(0o700)
@@ -177,6 +178,9 @@ class Installation:
                 raise SetupError("Choisissez un sous-dossier dédié aux données, pas le dépôt ou son parent.")
             if data == self.work or self.work.is_relative_to(data / "library"):
                 raise SetupError("Les réglages privés ne doivent pas être placés dans la bibliothèque publique.")
+            if seed_collection_sort and not any((data / "library/zim").glob("*.zim")):
+                import collection_tasks
+                collection_tasks.seed(data, collection_tasks.installation_default())
             config = {"schema": 1, "target": target, "data_dir": data.as_posix(),
                       "bind": "0.0.0.0" if lan else "127.0.0.1", "cpu": cpu,
                       "project": "survie-" + secrets.token_hex(4),
@@ -708,7 +712,8 @@ def main(argv=None, *, initial_chat_model=None, additional_models=()):
             selected_content = [item for item in items if item['pack'] in packs]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
-        c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model)
+        c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model,
+                     seed_collection_sort=args.action == 'install')
         if args.lan_host:
             if not args.lan:raise SetupError('--lan-host nécessite --lan.')
             c['lan_host']=args.lan_host;write_json(app.settings_path,c,private=True);app.render(c)

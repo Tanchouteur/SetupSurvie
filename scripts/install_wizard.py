@@ -168,9 +168,20 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         lan_host = setup.lan_host(lan_host) if lan_host else None
         options = {'base': str(base), 'kit': str(kit) if kit else None, 'startup': startup, 'lan_host': lan_host}
         from pilot import collection_sort
+        import collection_tasks
         sorting = collection_sort.read_file(sort_file) if sort_file else None
-        if sorting is None and state and state.get('options', {}).get('collection_sort') is not None:
-            sorting = collection_sort.parse(state['options']['collection_sort'])
+        use_default = False
+        if state:
+            saved_options = state.get('options', {})
+            use_default = saved_options.get('default_collection_sort', False) and sorting is None
+            if sorting is None and saved_options.get('collection_sort') is not None:
+                sorting = collection_sort.parse(saved_options['collection_sort'])
+        elif sorting is None:
+            sorting = collection_tasks.installation_default()
+            use_default = True
+        custom_sort = sorting is not None and not use_default
+        if use_default:
+            options['default_collection_sort'] = True
         if sorting is not None:
             options['collection_sort'] = sorting.as_json()
         if state and (state.get('schema') != 1 or state.get('options') != options):
@@ -189,7 +200,7 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
                 if key:
                     status = {'main':'Fonds principal','other':'Autre','excluded':'Exclue'}[sorting.state(key)]
                     print(f"{status} — {Path(entry['path']).name} — {entry['bytes']/1e9:.2f} Go", flush=True)
-            if not state and confirm('Copier le kit avec ces choix ? Tapez O pour continuer : ').strip().casefold() not in ('o','oui'):
+            if not state and custom_sort and confirm('Copier le kit avec ces choix ? Tapez O pour continuer : ').strip().casefold() not in ('o','oui'):
                 raise setup.SetupError('Copie des collections annulée.')
             records = available
         # Every destination is guarded, even for manifest-controlled paths.
@@ -230,8 +241,9 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         config = json.loads(config_path.read_text(encoding='utf-8'))
         config['app_dir'] = application.as_posix()
         setup.write_json(config_path, config, private=True)
-        if sorting is not None:
-            import collection_tasks
+        if use_default:
+            collection_tasks.seed(data, sorting)
+        elif custom_sort:
             collection_tasks.merge(data, sorting.as_json())
         if kit:
             execute_step([*common, 'import-images', kit/'images.tar'])
@@ -240,10 +252,10 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
         arguments = [*common, 'install', '--target', 'windows', '--data-dir', data, *startup_option, *network_options]
         if kit:
             arguments.append('--offline')
-        elif sorting is None:
+        elif not custom_sort:
             arguments.extend(['--content-pack', 'survival'])
         selection = work/'initial-library-plan.json'
-        if sorting is not None and not kit and not state.get('initial_library_confirmed'):
+        if custom_sort and not kit and not state.get('initial_library_confirmed'):
             from kiwix_select import display_plan
             if not selection.is_file():
                 data.mkdir(parents=True,exist_ok=True)
@@ -255,7 +267,7 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
             state['initial_library_confirmed'] = True
             setup.write_json(journal,state,private=True)
         execute_step(arguments)
-        if sorting is not None and not kit:
+        if custom_sort and not kit:
             execute_step([application/'scripts/content.py','download','--work-dir',work,'--selection',selection,'--jobs','2'])
         if not kit:
             profiles = json.loads((setup.ROOT/'deploy/model-profiles.json').read_text())['profiles']

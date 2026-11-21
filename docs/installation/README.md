@@ -116,7 +116,11 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 
 Pour séparer les réglages privés du dépôt, ajouter
 `--work-dir '/DISQUE/SetupSurvie/Réglages privés'`. Garder ce même dossier
-lors de chaque relance. Les options `--content-pack` sont réservées à
+lors de chaque relance. Une nouvelle installation sur un fonds vide applique le
+[tri de collections fourni](../../deploy/collection-sort-default.json).
+Le parcours [d’installation d’un kit public](pilote-marc.md) omet les
+collections exclues lors de la copie. Les copies de restauration suivent le
+tri de leur installation source. Les options `--content-pack` sont réservées à
 l’installation en ligne. Les codes des lots sont listés par
 `python3 scripts/content.py list`.
 
