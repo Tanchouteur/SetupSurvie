@@ -174,6 +174,7 @@ try {
 # The single entry point must never continue after a failed check or reboot request.
 & {
     . (Join-Path $root 'scripts\install-all-windows.ps1') -BaseDir 'D:\test avec espaces' -Resume -NoStartup -NoBrowser
+    function Get-SurvieResumeKit($Directory) { return 'E:\kit hors ligne' }
     $script:steps = @()
     $script:preparationCode = 3010
     $script:installationCode = 0
@@ -193,10 +194,103 @@ try {
     $script:steps = @(); $Check = $false
     Assert ((Invoke-SurvieWindowsInstall) -eq 0) 'Prepared PC must continue automatically'
     Assert ($script:steps.Count -eq 2) 'Both stages must run'
+    Assert ($script:steps[0].Arguments -contains '-Kit' -and $script:steps[0].Arguments -contains 'E:\kit hors ligne') 'The journal kit must select offline preparation'
+    Assert ($script:steps[1].Arguments -contains 'E:\kit hors ligne' -and $script:steps[1].Arguments -contains '-SourceChosen') 'The same kit must reach the application installer'
     Assert ($script:steps[1].Arguments -contains 'D:\test avec espaces') 'Paths with spaces must remain one argument'
     Assert ($script:steps[1].Arguments -contains '-Resume') 'Resume must reach the application installer'
     Assert ($script:steps[1].Arguments -contains '-NoStartup') 'Startup choice must be preserved'
     $script:steps = @(); $script:installationCode = 1
     Assert ((Invoke-SurvieWindowsInstall) -eq 1) 'Application installation errors must reach the caller'
 }
+# Offline preparation uses only installers on the media and preserves the reboot boundary.
+& {
+    $fixture = Join-Path $env:TEMP ('survie-offline-' + [guid]::NewGuid())
+    $null = New-Item -ItemType Directory -Path $fixture
+    try {
+        $cache = Join-Path $fixture 'local-status'
+        . (Join-Path $root 'scripts\prepare-windows.ps1') -Kit $fixture -CacheDir $cache
+        '{"schema":1,"kind":"SetupSurvie public pilot kit","files":[]}' |
+            Set-Content -LiteralPath (Join-Path $fixture 'manifest.json')
+        $script:boot = 'first'
+        $script:platform = $false
+        $script:wslReady = $false
+        $script:missing = 'docker'
+        $script:launched = @()
+        $script:downloads = @()
+        function Initialize-SurvieTools { }
+        function Get-SurvieWindowsFacts { return @{ Build = 26100; X64 = $true; Virtualization = $true; Boot = $script:boot } }
+        function Test-SurvieWSL { return $script:wslReady }
+        function Test-SurvieVirtualMachinePlatform { return $script:platform }
+        function Test-SurvieDependencyPresent($Id) { return ($Id -eq 'docker' -and -not $script:missing) -or $Id -ne 'docker' }
+        function Invoke-SurvieWSLInstall { throw 'Internet WSL flow attempted' }
+        function Get-SurvieInstaller($Item, $CacheDir, [switch]$Offline) {
+            Assert ($CacheDir -eq (Join-Path $fixture 'installateurs-windows')) 'Installers must be found in the kit'
+            if ($DownloadOnly) {
+                Assert (-not $Offline) 'Only the explicit media preparation may download'
+                $script:downloads += $Item.id
+            } else {
+                Assert $Offline 'Installer lookup must stay offline'
+                if ($Item.id -eq $script:missing) { throw 'Docker manquant dans la fixture.' }
+            }
+            return (Join-Path $CacheDir $Item.file)
+        }
+        function Start-Process($FilePath, $ArgumentList, $Verb, [switch]$Wait, [switch]$PassThru) {
+            $script:launched += @{
+                Path = $FilePath; Arguments = $ArgumentList; Verb = $Verb
+            }
+            return @{ ExitCode = 3010 }
+        }
+        function Get-Command { param($Name, $ErrorAction) return $null }
+        $failed = $false
+        try { Invoke-SurviePreparation } catch { $failed = $_.Exception.Message -match 'Docker manquant' }
+        Assert ($failed -and $script:launched.Count -eq 0) 'All installers needed must be checked before DISM or MSI'
+        $script:missing = ''
+        Assert ((Invoke-SurviePreparation) -eq 3010) 'Enabling the Windows feature can require reboot'
+        Assert ((Invoke-SurviePreparation) -eq 3010 -and $script:launched.Count -eq 1) 'Same boot must not run DISM again'
+        Assert ($script:launched[0].Path -like '*dism.exe' -and $script:launched[0].Arguments -match '/LimitAccess' -and $script:launched[0].Verb -eq 'RunAs') 'DISM must use local sources and UAC'
+        $script:boot = 'after-platform'
+        $script:platform = $true
+        Assert ((Invoke-SurviePreparation) -eq 3010) 'Installing the WSL MSI requires an explicit restart'
+        Assert ($script:launched.Count -eq 2 -and $script:launched[1].Path -like '*msiexec.exe' -and $script:launched[1].Arguments -match 'installateurs-windows.*\.msi') 'WSL must come from the local MSI'
+        $script:boot = 'after-msi'
+        $script:wslReady = $true
+        Assert ((Invoke-SurviePreparation) -eq 0) 'A disconnected setup can continue without NVIDIA'
+        Assert ($script:launched.Count -eq 2) 'Ready machine must not install prerequisites again'
+        $DownloadOnly = $true
+        Assert ((Invoke-SurviePreparation) -eq 0 -and $script:downloads.Count -eq 5) 'Preloading prepares WSL and four dependencies'
+        Assert ($script:launched.Count -eq 2) 'Preloading must not run any installer'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
+
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    function Invoke-WebRequest { throw 'Network was used' }
+    $fixture = Join-Path $env:TEMP ('survie-no-network-' + [guid]::NewGuid())
+    $item = @{ file = 'fixture.exe'; id = 'fixture'; sha256 = ('0' * 64) }
+    $failed = $false
+    try { Get-SurvieInstaller $item $fixture -Offline } catch {
+        $failed = $_.Exception.Message -match 'Installateur manquant dans le kit'
+    }
+    Assert ($failed -and -not (Test-Path -LiteralPath $fixture)) 'Offline missing dependency must not download or alter the kit'
+}
+
+# A double-click launched inside kit/app must select the media before preparation.
+& {
+    $fixture = Join-Path $env:TEMP ('survie-kit-entry-' + [guid]::NewGuid())
+    $scripts = Join-Path $fixture 'app\scripts'
+    $null = New-Item -ItemType Directory -Path $scripts -Force
+    try {
+        $entry = Join-Path $scripts 'install-all-windows.ps1'
+        Copy-Item -LiteralPath (Join-Path $root 'scripts\install-all-windows.ps1') -Destination $entry
+        Set-Content -LiteralPath (Join-Path $fixture 'manifest.json') -Value '{}'
+        . $entry
+        function Read-Host { throw 'An embedded kit should be detected without asking' }
+        Assert ((Select-SurvieInstallKit) -eq $fixture) 'The double-clicked launcher must use its own kit'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
+
 Write-Host 'Windows installer checks passed; no real dependency installed.'

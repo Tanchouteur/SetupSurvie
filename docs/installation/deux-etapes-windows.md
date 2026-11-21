@@ -40,11 +40,38 @@ deux étapes. Un kit ancien sans `Installer-SetupSurvie.cmd` à sa racine s’in
 avec le second lanceur du dépôt, en lui indiquant le dossier du kit : le logiciel
 installé reste celui du kit.
 
+## Préparer un kit pour Windows sans Internet
+
+Avec la 0.81.0, depuis un PC connecté qui dispose du lanceur de préparation,
+prendre un kit public SetupSurvie dont le dossier **app** est en 0.81.0 ou
+ultérieur. Exécuter une fois cette commande avec le chemin du kit.
+
+```powershell
+.\1-Preparer-le-PC.cmd -Kit E:\livraison-marc -DownloadOnly
+```
+
+Cette commande place les installateurs vérifiés de WSL, Python, Docker Desktop,
+Git et Ollama dans `installateurs-windows` à la racine du kit. Elle prépare
+le support sans installer les composants sur le PC connecté.
+
+Sur le PC hors ligne, ouvrir **Installer-SetupSurvie.cmd** dans le dossier
+**app** du kit. Le lanceur détecte ce kit et vérifie les installateurs
+manquants avant de modifier Windows. Si la plateforme de virtualisation est
+désactivée, DISM utilise les composants locaux. Un dossier
+`installateurs-windows\sxs` issu de la version de Windows correspondante peut
+servir de source au besoin. WSL est installé depuis le MSI du kit. Après
+chaque demande de redémarrage, rouvrir le même lanceur. En l’absence de pilote
+NVIDIA utilisable, la préparation du PC peut continuer. Les écrans de licence
+et de placement de Docker restent à suivre.
+
+[Installation WSL hors ligne](https://learn.microsoft.com/en-us/windows/wsl/install#offline-install) · [Préparation DISM](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/enable-or-disable-windows-features-using-dism?view=windows-11)
+
 ## Préparer le PC
 
 **`1-Preparer-le-PC.cmd`** (ni Python ni WinGet requis) exige Windows 11 24H2 ou
 plus récent **x64** (build 26100), la virtualisation activée dans le BIOS/UEFI,
-Internet et la validation des demandes administrateur. Il vérifie WSL 2, Python x64
+la validation des demandes administrateur et un accès Internet ou un kit préparé.
+Il vérifie WSL 2, Python x64
 3.11 à 3.15, Docker Desktop, Git et Ollama, conserve ce qui est présent, installe
 ce qui manque et **ne met pas à niveau** les logiciels existants. Les versions
 présentes ne sont pas toutes certifiées compatibles par ce diagnostic : l’étape 2
@@ -59,7 +86,7 @@ vérifie réellement Docker, Compose et les services.
 - Les installateurs affichent leurs écrans et licences : pour Python, garder
   l’ajout au PATH ; pour Docker, choisir WSL 2 et les conteneurs Linux. Ils sont
   conservés dans `%LOCALAPPDATA%\SetupSurvie\installateurs` (cache ; ce n’est pas
-  un kit système hors ligne complet).
+  le dossier de préparation locale du PC).
 - Si WSL doit être préparé ou si un installateur demande un redémarrage, le
   lanceur rend le code 3010 et affiche la marche à suivre : redémarrer Windows,
   puis relancer **le même fichier**. Il n’installe pas Ubuntu et ne redémarre pas
@@ -302,10 +329,9 @@ téléchargées.
   [WIN-008](../exploitation/journal-incidents-windows.md#win-008--observations-et-essais-du-13-novembre).
   Ni `survie.local` ni Safari iOS ne sont validés.
 - **Reste à tester** : démarrage à froid, installation complète sur Windows vierge,
-  téléphones. Ce parcours ne fournit pas les installateurs système hors ligne, la
-  réinstallation de Windows, les sauvegardes planifiées depuis le portail ni les
-  métadonnées enrichies des notices : ne pas annoncer une réinstallation complète
-  hors ligne validée.
+  téléphones. Depuis la 0.81.0, la préparation vérifie et utilise les
+  installateurs système du kit. La chaîne complète sur un Windows fraîchement
+  installé et déconnecté reste à qualifier.
 - Aucun téléchargement lourd ni installation système dans le runner de
   développement.
 

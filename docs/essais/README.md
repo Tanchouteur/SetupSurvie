@@ -7,6 +7,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## Protocoles, plans et suivis transversaux
 
+- [Préparation locale du kit Windows](2026-11-21-preparation-kit-windows-hors-ligne.md) — installateurs figés, dossier local et reprise après redémarrage.
 - [Duplication du SSD de secours hors ligne](2026-11-21-duplication-secours-linux.md) — chaîne de copies sur trois volumes et reprise après interruption.
 - [Installation Linux et point de restauration immuable](2026-11-21-installation-point-restauration-linux.md) — recette du lanceur hors ligne et remise en service sans SSD.
 - [Dossier de qualification installation et transfert](qualification-installation-transfert/README.md) — matrice, reproduction et résultat des essais.
