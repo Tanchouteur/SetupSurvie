@@ -26,7 +26,7 @@ async def get_work_queue(value=Depends(user)):
     try:
         activity = await asyncio.wait_for(operations.activity(), timeout=1.5)
     except TimeoutError:
-        activity = {'phase': 'unknown'}
+        activity = operations.local_activity() or {'phase': 'unknown'}
     snapshot = work_queue.QUEUE.snapshot(value, activity)
     snapshot['preparations_available'] = activity.get('phase') != 'unknown'
     return JSONResponse(snapshot, headers={'Cache-Control': 'no-store'})

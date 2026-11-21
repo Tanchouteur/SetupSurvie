@@ -42,8 +42,12 @@ L’aperçu et la page montrent trois créneaux indépendants.
   Les questions passent au prochain créneau libre. Après trois questions
   prioritaires, une tâche de fond qui attend reçoit un tour. Un passage déjà
   commencé se termine avant de libérer le moteur.
-- **Téléchargements** suit les lots YouTube et la récupération des sous-titres.
-  Ils peuvent avancer pendant une réponse.
+- **Téléchargements** suit les collections de la bibliothèque, les lots
+  YouTube et la récupération des sous-titres. La carte de la bibliothèque
+  indique les fichiers en cours et leur volume reçu. Le pourcentage du lot
+  compte les fichiers vérifiés. Le résultat du dernier transfert se consulte
+  dans **Historique récent** en cas de succès ou **À reprendre** en cas d’arrêt.
+  Ces travaux peuvent avancer pendant une réponse.
 - **Préparation locale** suit la transcription audio sur le processeur et
   l’inventaire des vidéos et sous-titres ainsi que l’examen des vidéos dans
   les collections. Les deux inventaires restent visibles pendant un autre
