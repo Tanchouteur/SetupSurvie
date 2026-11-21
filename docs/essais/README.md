@@ -30,6 +30,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 21 novembre 2026
 
+- [Suivi de l’enrichissement sur Bazzite](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#suivi-du-transfert-dans-la-file-dattente) — fichiers et volumes en cours, vérifiés sur un transfert réel.
 - [Guides pratiques et laboratoire Bazzite](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#premier-relevé-sur-le-fonds-pratique--21-novembre-2026) — premier fonds vérifié et relevé Autonomie et résilience.
 - [Cartes riches, accueil utile et transitions](2026-11-21-cartes-accueil-transitions-0760.md) — 0.76.0 ; Chromium distant et captures.
 - [Marquer comme vu dans la file](2026-11-21-file-marquer-vu-0750.md) — éléments terminés masqués par profil (0.75.0) ; Chromium et tests unitaires.

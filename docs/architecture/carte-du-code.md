@@ -168,6 +168,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | Fichier | Rôle |
 | --- | --- |
 | `setup.py` | Lanceur principal (Python 3.11+, bibliothèque standard) : `up`, `down`, `doctor`, `prepare`, `prepare-maps`, `pull-model`, `configure`, `certificate`, `shortcuts`, `recover-account`… |
+| `library_monitor.py`, `lab_activity.py` | Relevé des préparations du PC et publication en lecture seule pour le laboratoire isolé ([file d’attente](../utilisation/file-attente.md)) |
 | `install_wizard.py`, `install*.ps1`, `prepare-windows.ps1`, `install.sh` | Première installation Windows/Linux ([Windows](../installation/deux-etapes-windows.md), [dépôt](../installation/README.md)) |
 | `survie.ps1`, `survie.sh` | Points d’entrée en ligne de commande |
 | `start-*.ps1`, `stop-*.ps1`, `startup-windows.ps1`, `windows_autostart.py`, `windows_background.py`, `register-startup-windows.ps1` | Démarrage et arrêt Windows |
