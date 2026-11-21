@@ -145,6 +145,21 @@ def verify(root, data, *, deep=False):
     return {'reference': data.get('reference', ''), 'conform': conform, 'counts': counts, 'archives': rows}
 
 
+def diff(before, after, sort_before=None, sort_after=None):
+    """Changes made on an installation since a snapshot: archives and sort."""
+    old = {kiwix_select.family(n): n for n in before}
+    new = {kiwix_select.family(n): n for n in after}
+    report = {'removed': sorted(old[f] for f in set(old) - set(new)),
+              'added': sorted(new[f] for f in set(new) - set(old)),
+              'edition_changed': sorted([old[f], new[f]] for f in set(old) & set(new) if old[f] != new[f]),
+              'sort_changed': []}
+    if sort_before and sort_after:
+        keys = sorted(set(sort_before.other | sort_before.excluded | sort_after.other | sort_after.excluded))
+        report['sort_changed'] = [{'collection': k, 'before': sort_before.state(k), 'after': sort_after.state(k)}
+                                  for k in keys if sort_before.state(k) != sort_after.state(k)]
+    return report
+
+
 LABELS = {'ok': 'Conforme (empreinte vérifiée)', 'size_matches': 'Présente, taille conforme',
           'missing': 'Manquante', 'size_mismatch': 'Taille différente', 'hash_mismatch': 'Empreinte différente',
           'other_edition': 'Autre édition que la référence', 'extra': 'Hors référence (conservée)'}
@@ -164,7 +179,7 @@ def data_root(args, parser):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('action', choices=['build', 'verify'])
+    parser.add_argument('action', choices=['build', 'verify', 'diff'])
     parser.add_argument('--inventory', type=Path, help='build : /api/inventory enregistré ou liste de fichiers .zim.')
     parser.add_argument('--add', action='append', default=[], metavar='MOTIF',
                         help='build : expression régulière de noms de fichiers à ajouter, dernière édition du catalogue.')
@@ -178,7 +193,11 @@ def main():
     parser.add_argument('--work-dir')
     parser.add_argument('--data-dir')
     parser.add_argument('--deep', action='store_true', help='verify : recalculer chaque SHA-256 (long).')
-    parser.add_argument('--json', type=Path, help='verify : enregistrer le rapport détaillé.')
+    parser.add_argument('--json', type=Path, help='verify, diff : enregistrer le rapport détaillé.')
+    parser.add_argument('--before', type=Path, help='diff : inventaire de départ (docs/bibliotheque/inventaires).')
+    parser.add_argument('--after', type=Path, help='diff : nouvel inventaire /api/inventory enregistré.')
+    parser.add_argument('--sort-before', type=Path, help='diff : tri de départ.')
+    parser.add_argument('--sort-after', type=Path, help='diff : nouvel export SetupSurvie-tri.json.')
     args = parser.parse_args()
     if args.action == 'build':
         if not args.inventory:
@@ -192,6 +211,22 @@ def main():
               f"{len(report['excluded_by_sort'])} écartées par le tri. Manifeste : {args.output}")
         for row in report['unavailable']:
             print('Introuvable :', row['archive'], '—', row['error'], file=sys.stderr)
+        return
+    if args.action == 'diff':
+        if not args.before or not args.after or bool(args.sort_before) != bool(args.sort_after):
+            parser.error('diff demande --before et --after, et les deux tris ou aucun.')
+        sorts = [collection_sort.read_file(p) for p in (args.sort_before, args.sort_after)] if args.sort_before else [None, None]
+        report = diff(read_names(args.before), read_names(args.after), *sorts)
+        for key, label in (('removed', 'Retirée'), ('added', 'Ajoutée')):
+            for name in report[key]:
+                print(f'{label} : {name}')
+        for old, new in report['edition_changed']:
+            print(f'Autre édition : {old} -> {new}')
+        names = {'main': 'Fonds principal', 'other': 'Autre', 'excluded': 'Exclue'}
+        for row in report['sort_changed']:
+            print(f"Tri : {row['collection']} : {names[row['before']]} -> {names[row['after']]}")
+        if args.json:
+            setup.write_json(args.json, report)
         return
     report = verify(data_root(args, parser), load(args.manifest), deep=args.deep)
     for row in report['archives']:

@@ -104,6 +104,23 @@ class LibraryReferenceTests(unittest.TestCase):
         with self.assertRaises(setup.SetupError):
             ref.read_names(plain)
 
+    def test_diff_reports_archive_and_sort_changes_since_the_snapshot(self):
+        before = ['gutenberg_fr_all_2026-01.zim', 'evageeks_en_all_maxi_2022-11.zim', 'ifixit_fr_all_2026-03.zim']
+        after = ['gutenberg_fr_all_2026-11a.zim', 'ifixit_fr_all_2026-03.zim', 'zimgit-knots_en_2024-08.zim']
+        old = collection_sort.Sort(frozenset({'zim:gutenberg_fr_all'}), frozenset())
+        new = collection_sort.Sort(frozenset(), frozenset({'zim:ifixit_fr_all'}))
+        report = ref.diff(before, after, old, new)
+        self.assertEqual(report['removed'], ['evageeks_en_all_maxi_2022-11.zim'])
+        self.assertEqual(report['added'], ['zimgit-knots_en_2024-08.zim'])
+        self.assertEqual(report['edition_changed'], [['gutenberg_fr_all_2026-01.zim', 'gutenberg_fr_all_2026-11a.zim']])
+        self.assertEqual({r['collection']: (r['before'], r['after']) for r in report['sort_changed']},
+                         {'zim:gutenberg_fr_all': ('other', 'main'), 'zim:ifixit_fr_all': ('main', 'excluded')})
+
+    def test_marc_snapshot_is_readable(self):
+        folder = Path(__file__).resolve().parents[1] / 'docs/bibliotheque/inventaires'
+        self.assertEqual(len(ref.read_names(folder / 'marc-2026-11-21-archives.tsv')), 115)
+        collection_sort.read_file(folder / 'marc-2026-11-21-tri.json')
+
     def test_shipped_reference_is_valid_and_respects_the_default_sort(self):
         data = ref.load()
         sorting = collection_sort.read_file(ref.DEFAULT_SORT)

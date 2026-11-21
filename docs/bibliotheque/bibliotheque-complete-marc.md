@@ -62,6 +62,27 @@ livrer une nouvelle version :
 python3 scripts/library_reference.py build --inventory inventaire.json --add 'MOTIF' --reason 'motif' --reference 'origine et date'
 ```
 
+### Reporter le tri fait chez Marc
+
+Le fonds et le tri de Marc au 21 novembre 2026 sont conservés dans
+[`inventaires/`](inventaires/README.md). Quand Marc a trié sa bibliothèque,
+récupérer depuis son réseau la page `http://ADRESSE:8080/api/inventory`
+(enregistrer la page au format JSON) et l’export **Mon appareil → Paramètres →
+Organiser les collections → Exporter ce classement** (`SetupSurvie-tri.json`).
+Puis afficher ses changements :
+
+```sh
+python3 scripts/library_reference.py diff \
+  --before docs/bibliotheque/inventaires/marc-2026-11-21-archives.tsv --after inventaire-marc.json \
+  --sort-before docs/bibliotheque/inventaires/marc-2026-11-21-tri.json --sort-after SetupSurvie-tri.json
+```
+
+Le rapport liste les archives retirées, ajoutées ou changées d’édition et
+chaque collection déplacée entre Fonds principal, Autre et Exclues. Reporter
+ces choix dans `deploy/collection-sort-default.json`, régénérer le manifeste
+avec `build`, puis enregistrer les deux fichiers de Marc comme nouveau relevé
+daté dans `inventaires/`.
+
 `--inventory` accepte la page `/api/inventory` enregistrée depuis le portail
 ou une liste de fichiers `.zim`. Le manifeste liste aussi les archives
 écartées par le tri et celles dont le Metalink est introuvable. La taille
