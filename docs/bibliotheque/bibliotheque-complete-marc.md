@@ -62,9 +62,11 @@ des passages sur le portail. L’audit définitif attend la dernière archive.
 
 Le contrôle des PDF trouve **100 fichiers du catalogue public**, chacun
 vérifié par SHA-256 et indexé sur le labo. Le 101ᵉ document du catalogue,
-les fiches de l’Anses sur les plantes toxiques, reste absent. Le point de
-téléchargement testé depuis Bazzite rend une page HTML et aucun PDF de
-l’édition figée n’a été publié. Cette observation ne décrit pas la liste
+les fiches de l’Anses sur les plantes toxiques, reste absent. Les adresses
+du catalogue et des PDF directs de l’Anses renvoient une page de contrôle
+anti-robot au téléchargeur depuis Bazzite et le runner. La taille et
+l’empreinte du PDF de l’édition figée restent donc à vérifier avant de le
+publier. Cette observation ne décrit pas la liste
 des PDF de Marc. [Page de l’Anses](https://www.anses.fr/fr/article/confusion-entre-plantes-toxiques-plantes-comestibles)
 
 

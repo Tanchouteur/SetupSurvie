@@ -336,6 +336,19 @@ requêtes passent à une couverture complète (ruche, orage, crevaison).
 Le résultat sur le tannage reste hors sujet. Les deux relevés sont conservés
 dans `results/comparaison-recherche/` sur le labo.
 
+Le contrôle des reformulations sur les 204 archives indexées a donné les
+résultats suivants avec la 0.88.1. Les quatre premières pistes de chaque
+recherche sont conservées dans `reformulations-204-indexees.json`.
+
+| Recherche | Résultat observé |
+| --- | --- |
+| Mise à la terre | La requête courte place le passage INRS sur la mise à la terre en premier et la page 64 de Victron en troisième. Les deux pages s’ouvrent. Sur la formulation longue du premier relevé, le passage Victron était précédé d’un article sur les colombiers. |
+| Tannage | La requête courte retrouve le repère Vikidia en troisième position. Le premier résultat traite de la gélatine en photographie. Aucun manuel de tannage des peaux n’a été confirmé parmi les pistes examinées. |
+| Vannerie | Les deux articles français de Low-tech Magazine s’ouvrent et abordent le tressage. Le résultat les affiche en anglais en 0.88.1. |
+| Fertilité du sol | Un article MDWiki en anglais s’ouvre en deuxième position. Il explique la fertilité et évoque le compost. Le passage retenu ne fournit pas de plan de permaculture. |
+| Isolation fenêtre | Les trois premiers résultats abordent la performance énergétique, les matériaux ou le chauffage sans répondre directement à l’isolation d’une fenêtre. |
+| Installer une ruche | Le premier résultat est le repère Wikipédia « Ruche ». Le lecteur l’ouvre. La disponibilité d’un guide d’installation reste à établir. |
+
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche
 qui les démarre. Le pilote est resté joignable après un redémarrage
