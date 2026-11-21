@@ -2,6 +2,14 @@
   "schema": 1,
   "checked_at": "2026-11-12",
   "verification": "Métadonnées x64 relues dans microsoft/winget-pkgs et API officielle git-for-windows ; binaires vérifiés au téléchargement, installation réelle à valider sur Windows.",
+  "wsl": {
+    "id": "wsl",
+    "version": "3.0.5",
+    "file": "wsl.3.0.5.0.x64.msi",
+    "url": "https://github.com/microsoft/WSL/releases/download/3.0.5/wsl.3.0.5.0.x64.msi",
+    "sha256": "2313efc5873e3f8552f42e77f950fabd913c0289078fa89d2100f3421a525eaa",
+    "source": "https://api.github.com/repos/microsoft/WSL/releases/tags/3.0.5"
+  },
   "installers": [
     {
       "id": "python",
