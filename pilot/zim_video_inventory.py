@@ -23,6 +23,7 @@ MAX_HTML=2_000_000
 MAX_VIDEOS_PER_PAGE=100
 MAX_TRACKS_PER_VIDEO=100
 YOUTUBE_TITLES='youtube_video_titles_v1'
+YOUTUBE_SUBTITLES = 'youtube_video_subtitles_v1'
 EXAMINED_STATUSES={'completed','reused','partial'}
 
 
@@ -87,15 +88,16 @@ def youtube_collection(archive):
     return archive.has_entry_by_path('channel.json') and archive.has_entry_by_path('home_playlists.json')
 
 
-def save_youtube_titles(db, archive, check):
-    """Match the offline YouTube catalogue to the exact internal video path."""
+def save_youtube_metadata(db, archive, check):
+    """Match offline YouTube titles and declared tracks to the exact video."""
     if not youtube_collection(archive):
         return
-    if db.execute('SELECT 1 FROM metadata WHERE key=?',(YOUTUBE_TITLES,)).fetchone():
+    if db.execute('SELECT 1 FROM metadata WHERE key=?', (YOUTUBE_SUBTITLES,)).fetchone():
         return
     candidates={row[0] for row in db.execute("SELECT path FROM resources WHERE category='video'") if YOUTUBE_MEDIA.fullmatch(row[0])}
     titles={}
     conflicts=set()
+    tracks = {}
     if candidates:
         entry_by_id = getattr(archive, 'get_entry_by_id', None) or archive._get_entry_by_id
         for index in range(archive.entry_count):
@@ -112,8 +114,21 @@ def save_youtube_titles(db, archive, check):
                 if not isinstance(data,dict):
                     continue
                 path=video_inventory.text_field(data,'videoPath')
-                if path not in candidates or YOUTUBE_MEDIA.fullmatch(path)[1]!=data.get('id'):
+                video_id = data.get('id')
+                if path not in candidates or YOUTUBE_MEDIA.fullmatch(path)[1] != video_id:
                     continue
+                directory = data.get('subtitlePath')
+                entries = data.get('subtitleList')
+                if directory == f'videos/{video_id}' and isinstance(entries, list):
+                    declared = tracks.setdefault(path, {})
+                    for subtitle_info in entries[:MAX_TRACKS_PER_VIDEO]:
+                        if len(declared) >= MAX_TRACKS_PER_VIDEO:
+                            break
+                        code = subtitle_info.get('code') if isinstance(subtitle_info, dict) else None
+                        if isinstance(code, str) and re.fullmatch(r'[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8}){0,3}', code):
+                            subtitle = f'{directory}/video.{code}.vtt'
+                            if db.execute('SELECT 1 FROM subtitles WHERE path=?', (subtitle,)).fetchone():
+                                declared[subtitle] = code
                 title=readable_title(video_inventory.text_field(data,'title') or '')
                 title.encode('utf-8')
                 if not title:
@@ -122,8 +137,9 @@ def save_youtube_titles(db, archive, check):
                     conflicts.add(path)
             except (RuntimeError,KeyError,ValueError,RecursionError):
                 continue
-    db.execute('INSERT INTO metadata VALUES(?,?)',(YOUTUBE_TITLES,json.dumps(
+    db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',(YOUTUBE_TITLES,json.dumps(
         {path:title for path,title in titles.items() if path not in conflicts},ensure_ascii=False)))
+    db.execute('INSERT INTO metadata VALUES(?,?)', (YOUTUBE_SUBTITLES, json.dumps(tracks)))
 
 
 def resolve(article,reference,base=''):
@@ -265,9 +281,20 @@ def video_items(db,root,source,check=lambda:None):
         for ref in value['tracks']:
             found=resource(ref,'subtitle')
             if found and not any(track['source_path']==found['path'] for track in item['tracks']):
-                item['tracks'].append({'source_path':found['path'],'language_declared':ref.get('language_declared') or None})
+                item['tracks'].append({'source_path':found['path'],'language_declared':ref.get('language_declared') or None,
+                                       'language_basis':'html_track_declared'})
     for row in db.execute("SELECT path FROM resources WHERE category='video'"):
         if row[0] not in seen:items.setdefault(row[0],{'title':row[0].rsplit('/',1)[-1],'articles':[],'tracks':[]})
+    embedded = db.execute('SELECT value FROM metadata WHERE key=?', (YOUTUBE_SUBTITLES,)).fetchone()
+    if embedded:
+        for video, declared in json.loads(embedded[0]).items():
+            if video not in items:
+                continue
+            tracks = items[video]['tracks']
+            known = {track['source_path'] for track in tracks}
+            tracks.extend({'source_path': track, 'language_declared': language,
+                           'language_basis': 'youtube_archive_catalogue'}
+                          for track, language in declared.items() if track not in known)
     db.execute('DELETE FROM video_items')
     for path,value in items.items():
         check()
@@ -282,7 +309,7 @@ def video_items(db,root,source,check=lambda:None):
                 report=video_inventory.inspect_subtitle(cache)
                 track.update(path='zim-videos/tracks/'+cache.name,archive_cache=cache_key)
             else:track['path']='unavailable:'+track['source_path']
-            tracks.append({**track,'origin':'unknown','language_basis':'html_track_declared',**report})
+            tracks.append({**track,'origin':'unknown',**report})
         usable=[track for track in tracks if track['technical_status']=='passed']
         state='french_available' if any((t['language_declared'] or '').lower().startswith('fr') for t in usable) else 'source_only' if usable else 'invalid' if tracks else 'missing'
         payload={'inventory_id':key,'provider':'zim','path':path,'archive':archive,'book':book,'archive_revision':revision,'articles':value['articles'],
@@ -324,12 +351,13 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
                 for row in db.execute('SELECT path,webvtt FROM subtitles WHERE usable=1'):
                     check();cache_track(root,prior,row['path'],row['webvtt'])
                 reused={**summary(db),'status':'reused','file':published.name}
-                needs_titles=(youtube_collection(archive)
-                              and not db.execute('SELECT 1 FROM metadata WHERE key=?',(YOUTUBE_TITLES,)).fetchone())
+                needs_metadata = (youtube_collection(archive)
+                                  and not db.execute('SELECT 1 FROM metadata WHERE key=?', (YOUTUBE_SUBTITLES,)).fetchone())
         if prior['revision']==revision:
-            if needs_titles:
+            if needs_metadata:
                 with connect(published) as db:
-                    save_youtube_titles(db,archive,check)
+                    save_youtube_metadata(db, archive, check)
+                    video_items(db, root, prior, check)
                     if fingerprint(source,archive)!=revision:raise ArchiveChanged()
             return reused
     if building.exists():
@@ -388,8 +416,8 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
         db.execute("UPDATE metadata SET value=? WHERE key='cursor'",(str(archive.entry_count),));db.commit()
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
+        save_youtube_metadata(db, archive, check)
         video_items(db,root,json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0]),check)
-        save_youtube_titles(db,archive,check)
         db.commit()
         check()
         if fingerprint(source,archive)!=revision:raise ArchiveChanged()
