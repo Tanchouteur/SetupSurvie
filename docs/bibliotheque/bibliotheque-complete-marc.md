@@ -39,6 +39,20 @@ qui peut servir (le moins utile passe dans **Autre** plutôt qu’en exclusion).
   Wikipédia, Vikidia et C'est pas sorcier la fournissent ; aucun forum ou
   fonds spécialisé n’est ajouté pour ces sujets.
 
+Le rapprochement du 21 novembre compte **110 éditions identiques** sur les
+115 archives de Marc, **trois éditions remplacées**, **deux collections
+écartées** et **92 ajouts**. Le tri par défaut conserve les choix de son
+export et classe 129 archives de la référence dans le Fonds principal,
+76 dans Autre.
+
+Bazzite disposait de **2,44 To libres sur son SSD physique** au contrôle en
+cours de transfert. Les 128 archives présentes avaient le nom et la taille
+attendus. La File d’attente en comptait 121 avec un reçu d’empreinte conforme
+au manifeste. Le laboratoire poursuit le transfert et publie le rapprochement
+final dans `results/comparaison-recherche/rapprochement-reference.json` sur
+son volume dédié. Ce contrôle distingue la présence d’un fichier, la
+vérification de son empreinte et sa disponibilité dans Kiwix.
+
 Installer ou compléter exactement cette référence (les collections exclues
 par le tri local restent ignorées) :
 
