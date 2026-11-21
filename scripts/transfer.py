@@ -508,12 +508,15 @@ def export_report(dest, journal):
                        'Activation sur un autre PC : recette séparée']
     setup.write_json(dest/'Rapport-transfert.json',report)
     launcher='transferer-setupsurvie.sh' if journal.get('target')=='linux' else 'Transferer-SetupSurvie.cmd'
+    graphical = (dest / 'Installer-SetupSurvie.desktop').is_file()
+    first_step = ('Double-cliquez sur Installer-SetupSurvie.desktop pour installer hors ligne.\n'
+                  if graphical else f'Ouvrez {launcher} pour vérifier, activer ou revenir à la source.\n')
     docker_help=('Sous Windows, utilisez Vérifier Docker pour repérer le moteur et son stockage.\n'
                  if journal.get('target')=='windows' else
-                 'Sous Linux, ouvrez le lanceur dans votre session avec accès au moteur Docker.\n')
+                 'Le guide HTML décrit le choix du disque, les prérequis et la reprise.\n')
     durable.write_bytes(dest/'LIRE-MOI-SECOURS.txt',
         (f"SetupSurvie — copie privée du foyer\nÉtat : {journal['phase']}\n"
-         f'Ouvrez {launcher} pour vérifier, activer ou revenir à la source.\n'
+         f'{first_step}'
          'Les données sont dans data ; les guides PDF dans data/library/guides.\n'
          'Documentation complète : application/docs ; guide court : LISEZ-MOI.html.\n'
          'Ne supprimez pas la source. Ne démarrez pas deux installations.\n'
@@ -534,6 +537,37 @@ def bundle_launcher(base):
         b'    exec "$base/application/scripts/restaurer-linux-hors-ligne.sh" "$base"\n'
         b'fi\nexec python3 "$base/application/scripts/transfer_wizard.py" --base "$base" "$@"\n')
     (base/'transferer-setupsurvie.sh').chmod(0o700)
+
+
+def publish_linux_installer(base, journal):
+    if journal['target'] != 'linux':
+        return
+    scripts = base / 'application/scripts'
+    template = scripts / 'installer-depuis-le-ssd.desktop'
+    if not template.is_file():
+        return
+    interface = base / 'Interface-SetupSurvie'
+    interface.mkdir(mode=0o755, exist_ok=True)
+    interface.chmod(0o755)
+    for name in ('linux_recovery_gui.sh', 'linux_recovery_admin.sh'):
+        durable.write_bytes(interface / name, (scripts / name).read_bytes())
+    shortcut = base / 'Installer-SetupSurvie.desktop'
+    durable.write_bytes(shortcut, template.read_bytes())
+    shortcut.chmod(0o755)
+    # Reveal the launchers while keeping the data and journals private.
+    maintenance = base / 'Entretien-SetupSurvie.desktop'
+    durable.write_bytes(maintenance, template.read_text(encoding='utf-8')
+                        .replace('Name=Installer SetupSurvie', 'Name=Entretien de SetupSurvie')
+                        .replace('Installer SetupSurvie depuis ce disque de secours',
+                                 'Entretenir une installation existante')
+                        .replace(' install ', ' maintenance-select ').encode())
+    maintenance.chmod(0o755)
+    public = {interface.name, shortcut.name, maintenance.name, 'LISEZ-MOI.html', 'LIRE-MOI-SECOURS.txt'}
+    for entry in base.iterdir():
+        if entry.name not in public and not entry.is_symlink():
+            entry.chmod(stat.S_IMODE(entry.stat().st_mode) & ~0o077)
+    base.chmod(0o755)
+    durable.sync_directory(base)
 
 
 def copy_images(app, config, dest, progress):
@@ -674,6 +708,7 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)
             journal['checks']['source_stopped']=True
+            publish_linux_installer(dest,journal)
             journal['phase']='copied';save(dest,journal);export_report(dest,journal)
         return journal
 
@@ -746,6 +781,8 @@ def prepare(dest):
             config=edits.get('private/settings.json',read(dest/'private/settings.json'))
             config.update({'data_dir':(dest/'data').as_posix(),'app_dir':(dest/'application').as_posix(),
                            'project':'survie-transfer-'+journal['id'][:8], 'inference_autostart':False})
+            if config.get('target') == 'linux' and journal.get('linux_portable_cpu') is True:
+                config['cpu'] = True
             edits['private/settings.json']=config
             queue_path=dest/'data/catalog/search-index-queue.json'
             if queue_path.is_file():

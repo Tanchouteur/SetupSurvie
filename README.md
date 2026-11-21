@@ -16,7 +16,7 @@ Le [cadrage de l’offre](docs/decisions/acces-simple-et-offre.md) précise ces 
 
 ## État du projet
 
-Version **0.76.3** (21 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
+Version **0.77.0** (21 novembre 2026), pilote accompagné chez Marc ; ce n’est pas
 une offre commerciale validée. Fonctions disponibles :
 
 - **Bibliothèque hors ligne** (Kiwix, guides, PDF) avec recherche locale indexée,
@@ -58,7 +58,7 @@ fictive depuis la 0.59.0.
 - **Trouver un document utile** : lire le [guide de recherche et de vérification depuis le site](docs/utilisation/recherche-documentaire.md).
 - **Utiliser le serveur** : consulter le [guide d’utilisation](docs/utilisation/README.md).
 - **Entretenir une installation existante** : suivre les [sauvegardes, restaurations et mises à jour](docs/exploitation/README.md).
-- **Comprendre une panne et préparer le secours** : lire le [manuel humain](docs/exploitation/manuel-de-secours.md) et le [protocole du disque de secours complet](docs/exploitation/disque-de-secours-hors-ligne.md), dont l’installateur autonome reste à réaliser.
+- **Installer ou remettre en service hors ligne sur Linux** : suivre le [parcours depuis le SSD de secours](docs/exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours) et le [manuel humain](docs/exploitation/manuel-de-secours.md).
 - **Comprendre ou développer le projet** : lire [AGENTS.md](AGENTS.md), la [carte du code](docs/architecture/carte-du-code.md), l’[architecture](docs/architecture/README.md) et les [choix actuels](docs/decisions/choix-actuels.md).
 
 Sur le serveur, le portail est accessible à `http://localhost:8080`, Open WebUI à
