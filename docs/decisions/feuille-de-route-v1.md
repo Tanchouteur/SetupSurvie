@@ -34,6 +34,14 @@ traducteur et les langues utiles téléchargées avant remise. Vérifier la
 traduction sur les pages locales concernées après coupure d’Internet.
 Voir le [cadrage de référence](acces-simple-et-offre.md).
 
+**Complément de Louis du 21 novembre 2026 (V1-D02 et V1-D11).** La restauration
+depuis le SSD suppose un Linux compatible déjà installé. L’interface doit
+permettre à un proche d’ouvrir le lanceur par double-clic, de choisir son disque
+et de restaurer l’installation hors ligne sans terminal. Les droits
+administrateur peuvent être demandés dans une fenêtre. Faire réussir ce parcours
+à une personne non accompagnée avec la notice locale. Voir le
+[protocole de restauration](../exploitation/disque-de-secours-hors-ligne.md#7-restaurer-sur-une-autre-machine).
+
 ## Revue des fonctionnalités existantes — 20 novembre 2026
 
 Louis demande d’approfondir les fonctions existantes, de vérifier leur

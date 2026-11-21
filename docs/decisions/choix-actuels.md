@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-**Référence des décisions en vigueur — revue le 20 novembre 2026 (0.66.0).**
+**Référence des décisions en vigueur — revue le 21 novembre 2026.**
 Les décisions sont datées, les plus récentes en premier. Une décision plus
 récente l’emporte sur une plus ancienne du même sujet ; les remplacements sont
 signalés. Les notes de chaque livraison sont dans les
@@ -8,6 +8,16 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+
+## Restauration par double-clic — décision de Louis du 21 novembre 2026
+
+La machine de remplacement démarre déjà sur un système compatible. Depuis le
+SSD de secours, un proche ouvre un lanceur, choisit le disque de destination et
+confirme la restauration. La copie et l’installation des prérequis se font hors
+ligne. Louis accepte une demande de droits administrateur dans une fenêtre.
+Le parcours entier doit être réalisable sans terminal. Deux lanceurs distincts
+sont possibles. Linux reste la cible V1. Le parcours graphique reste à réaliser.
+[Protocole de restauration](../exploitation/disque-de-secours-hors-ligne.md#7-restaurer-sur-une-autre-machine)
 
 ## Portail toujours informatif et socle commun — décision de Louis du 20 novembre 2026
 
