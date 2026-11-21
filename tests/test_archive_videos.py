@@ -92,7 +92,7 @@ class ArchiveVideoIndexTests(unittest.TestCase):
 
         youtube = self.root/'youtube-with-subtitles.zim'
         create(youtube, youtube=True, youtube_tracks=True, with_tracks=False)
-        with patch.object(zim_video_inventory, 'save_youtube_metadata'):
+        with patch.object(zim_video_inventory, 'save_youtube_metadata', lambda *args: None):
             previous = zim_video_inventory.build(youtube, archive_videos.directory())
         with zim_video_inventory.connect(archive_videos.directory()/previous['file']) as db:
             db.execute('INSERT INTO metadata VALUES(?,?)', (zim_video_inventory.YOUTUBE_TITLES, json.dumps({
