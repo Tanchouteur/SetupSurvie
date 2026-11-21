@@ -34,6 +34,15 @@ class MirrorTests(unittest.TestCase):
         self.urls+=['http://unsafe.example/a','https://127.0.0.1/a']
         self.assertEqual(len(mirrors.metalink_urls(self.metalink(),self.item)),2)
         with self.assertRaises(setup.SetupError):mirrors.SecureRedirect().redirect_request(None,None,302,'',{},'http://example.org')
+    def test_large_metalink_keeps_the_verified_mirror_selection(self):
+        # A real >200 GB archive has over 3 MB of piece hashes before its URLs.
+        raw = self.metalink().replace(b'<url>', b'<!--' + b'x' * 3_100_000 + b'--><url>', 1)
+        selector = mirrors.Selector(self.root, opener=lambda request, **kwargs: Response(raw, request.full_url, 200))
+        with patch.object(selector, 'probe', side_effect=(1, 10)):
+            self.assertEqual(selector.ranked(self.item, 3)[0], self.urls[1])
+        with self.assertRaises(ValueError):
+            mirrors.metalink_urls(b'x' * (mirrors.MAX_METALINK_BYTES + 1), self.item)
+
     def test_measured_rank_cache_and_failover(self):
         calls=[]
         def open(req,**kwargs):

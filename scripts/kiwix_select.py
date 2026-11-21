@@ -15,6 +15,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import content
+from content_mirrors import MAX_METALINK_BYTES, parse_metalink
 import setup
 from pilot import collection_sort
 
@@ -142,7 +143,7 @@ def inventory(root, pinned):
 
 
 def pin(entry, reasons, reader=fetch):
-    root = ET.fromstring(reader(entry['meta4'], maximum=2_000_000))
+    root = parse_metalink(reader(entry['meta4'], maximum=MAX_METALINK_BYTES))
     files = root.findall('m:file', METALINK)
     if len(files) != 1 or files[0].get('name') != entry['filename']:
         raise setup.SetupError('Metalink ne correspondant pas à l’archive.')
