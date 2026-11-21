@@ -109,6 +109,25 @@ texte terminée ne signifie pas que le contenu parlé ou les images sont recherc
 ni qu’une procédure est bonne. Le volume final et la durée sur le fonds réel restent
 à mesurer. Les sauvegardes de l’état peuvent grossir ; prévoir leur capacité.
 
+### Index compressés depuis 0.88.0
+
+Les nouveaux index rangent le texte des passages une seule fois, compressé (zlib),
+dans une table `docs` ; la table de recherche le lit au besoin (contenu externe
+FTS5). Le classement n’utilise que l’index de recherche : les résultats, leur ordre
+et les extraits sont identiques à l’ancien format, pour un fichier environ 40 %
+plus petit. La recherche classe d’abord sans décompresser, puis ne décompresse que
+les résultats affichés. Les anciens index restent lisibles tels quels.
+
+Le classement du fonds principal (« Lancer le classement » dans Mon appareil ›
+Bibliothèque, proposé dès qu’une archive est ajoutée ou modifiée ; script
+`index_categories.py`) convertit ensuite les index déjà prêts, un par un, sans
+relire les ZIM ni changer leur empreinte : rien n’est réindexé. La copie compressée
+(`.compressing`) remplace l’ancien fichier seulement une fois complète, comptée et
+vérifiée (`integrity-check`) ; une pause, un manque de place ou un index republié
+entre-temps laisse l’ancien fichier en service. Il faut environ 70 % de la taille de
+l’index converti en place libre temporaire, en plus de la réserve de 15 Go.
+Mesures du 21 novembre 2026 chez Marc : voir le [bilan](../essais/2026-11-21-index-compresse.md).
+
 ## Kit hors ligne et maintenance
 
 Le lecteur `libzim==3.13.1` est isolé dans `prive/search-tools`. Ses paquets et

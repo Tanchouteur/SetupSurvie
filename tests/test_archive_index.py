@@ -43,6 +43,28 @@ class ArchiveIndexTests(unittest.TestCase):
         self.assertEqual(self.query()[0]['id'],'zim:manual_fr/Reparer_velo')
         body=self.query('crevaison');self.assertTrue(body);self.assertIn('/content/manual_fr/Reparer_velo',body[0]['url'])
         self.assertEqual(archive_index.build_archive(self.zim,self.index)['articles'],result['articles'])
+        with archive_index.connect(next(self.index.glob('*.sqlite')),True) as db:
+            self.assertTrue(archive_index.is_compressed(db))
+
+    def test_category_build_is_compressed_and_matches_the_former_format(self):
+        categories=dict(categories=('resilience','culture'),category_signature='s')
+        def found(path):
+            return [archive_index.search(self.index,retrieval.plan(words,library.search_terms(words),library.SYNONYMS),
+                                         category=category,only_path=path)
+                    for words in ('réparer un vélo','crevaison','document fictif') for category in ('resilience','culture')]
+        create,insert=archive_index._create_tables,archive_index._insert
+        with patch.object(archive_index,'_create_tables',lambda db,tables,domains,_:create(db,tables,domains,False)),\
+             patch.object(archive_index,'_insert',lambda db,table,rows,_:insert(db,table,rows,False)):
+            archive_index.build_archive(self.zim,self.index,force=True,**categories)
+        path=next(self.index.glob('*.sqlite'));former=path.read_bytes();before=found(path)
+        path.unlink()
+        archive_index.build_archive(self.zim,self.index,force=True,**categories)
+        with archive_index.connect(path,True) as db:self.assertTrue(archive_index.is_compressed(db))
+        self.assertEqual(found(path),before)
+        self.assertTrue(any(before))
+        legacy=self.index/'legacy.sqlite';legacy.write_bytes(former)
+        archive_index.compress(legacy,reserve=0)
+        self.assertEqual(found(legacy),before)
 
     def test_old_index_stays_readable_until_explicit_rebuild_with_new_parser(self):
         with patch.object(archive_index,'FORMAT',1):archive_index.build_archive(self.zim,self.index)
