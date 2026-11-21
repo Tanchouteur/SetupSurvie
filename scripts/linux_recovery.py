@@ -161,7 +161,7 @@ def copy_verified(source, target, record, expected):
     copy.chmod(record['mode'] & ~0o022)
 
 
-def fill_target(source, target, journal, *, detached=False):
+def fill_target(source, target, journal, *, detached=False, portable_cpu=False):
     marker = target / '.copie-installation.json'
     identity = {'id': journal['id'], 'source': str(source)}
     if target.exists():
@@ -182,6 +182,8 @@ def fill_target(source, target, journal, *, detached=False):
         return
     copy_payload(source, target, journal)
     local = deepcopy(journal)
+    if portable_cpu:
+        local['linux_portable_cpu'] = True
     if detached:
         # Keep the real original paths for metadata substitution, never for a same-PC cutover.
         for role, path in local['source'].items():
@@ -253,7 +255,7 @@ def install(recovery, source, base, create_point):
         seal_point(point, journal)
         source, journal = point, read_point(point)
     phase('Préparation de la copie de travail…')
-    fill_target(source, base, journal)
+    fill_target(source, base, journal, portable_cpu=True)
     activate(base)
 
 
@@ -338,7 +340,7 @@ def restore(recovery, base):
             if (base / name).is_mount():
                 raise setup.SetupError('Un dossier de l’installation est un point de montage. Aucune bascule effectuée.')
         phase('Vérification et copie du point protégé…')
-        fill_target(point, staged, journal, detached=True)
+        fill_target(point, staged, journal, detached=True, portable_cpu=True)
         transfer.verify_copy(staged)
         if shutil.disk_usage(recovery).free < (point / 'images.tar').stat().st_size * 2:
             raise setup.SetupError('Pas assez de place libre pour réimporter les images Docker après la copie.')

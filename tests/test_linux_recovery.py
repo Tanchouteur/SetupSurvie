@@ -30,7 +30,7 @@ class LinuxRecoveryTests(unittest.TestCase):
             'application/compose.yaml': b'services: {}',
             'application/deploy/release.json': b'{"version":"0.77.0"}',
             'application/scripts/restaurer-linux-hors-ligne.sh': b'#!/bin/sh\n',
-            'private/settings.json': b'{}',
+            'private/settings.json': b'{"target":"linux","cpu":false}',
             'data/guide.txt': b'Contenu du point de restauration',
         }
         records = []
@@ -77,6 +77,12 @@ class LinuxRecoveryTests(unittest.TestCase):
             recovery.install(self.state, self.source, self.active, False)
         self.assertFalse((self.state / 'point').exists())
         self.assertEqual((self.active / 'data/guide.txt').read_bytes(), self.files['data/guide.txt'])
+
+    def test_prepare_uses_cpu_on_the_portable_working_copy(self):
+        recovery.fill_target(self.source, self.active, self.journal, portable_cpu=True)
+        transfer.prepare(self.active)
+        self.assertTrue(transfer.read(self.active / 'private/settings.json')['cpu'])
+        self.assertFalse(transfer.read(self.source / 'private/settings.json')['cpu'])
 
     def test_changed_support_is_refused_before_activation(self):
         (self.source / 'data/guide.txt').write_bytes(b'X' * len(self.files['data/guide.txt']))
@@ -162,7 +168,7 @@ class LinuxRecoveryTests(unittest.TestCase):
         (scripts / 'zenity').write_text(
             '#!/bin/sh\ncase "$1" in\n'
             '--file-selection) printf "/srv/Disque SSD\\n";;\n'
-            '--list) ;;\n'
+            '--list) if [ "$2" = --radiolist ]; then printf "autre\\n"; fi;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
             '--question) exit 1;;\n'
             'esac\n')

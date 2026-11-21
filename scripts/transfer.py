@@ -782,6 +782,8 @@ def prepare(dest):
             config=edits.get('private/settings.json',read(dest/'private/settings.json'))
             config.update({'data_dir':(dest/'data').as_posix(),'app_dir':(dest/'application').as_posix(),
                            'project':'survie-transfer-'+journal['id'][:8], 'inference_autostart':False})
+            if config.get('target') == 'linux' and journal.get('linux_portable_cpu') is True:
+                config['cpu'] = True
             edits['private/settings.json']=config
             queue_path=dest/'data/catalog/search-index-queue.json'
             if queue_path.is_file():

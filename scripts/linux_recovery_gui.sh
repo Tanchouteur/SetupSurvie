@@ -22,9 +22,39 @@ if [[ ! -f "$admin" || -z "$base" ]]; then
     exit 1
 fi
 
+free_space() {
+    df -h --output=avail -- "$1" 2>/dev/null | tail -n 1 | tr -d ' '
+}
+
+choose_disk() {
+    local location device fs label
+    local -a disks=(TRUE "Disque système" "$(free_space /srv)" /srv)
+    while read -r location device fs; do
+        case "$fs" in ext4|btrfs|xfs) ;; *) continue ;; esac
+        location=$(printf '%b' "$location")
+        case "$location" in /mnt/*|/media/*|/run/media/*) ;; *) continue ;; esac
+        [[ -d "$location" && $(stat -c %u -- "$location") == 0 ]] || continue
+        [[ $((8#$(stat -c %a -- "$location") & 8#22)) == 0 ]] || continue
+        label=$(lsblk -dno LABEL -- "${device%%[*}" 2>/dev/null)
+        disks+=(FALSE "${label:-${location##*/}}" "$(free_space "$location")" "$location")
+    done < <(findmnt --noheadings --raw --real --output TARGET,SOURCE,FSTYPE)
+    disks+=(FALSE "Choisir un autre dossier…" "" autre)
+    location=$(zenity --list --radiolist --title="Choisir le disque de destination" \
+        --text="Le nouveau dossier SetupSurvie sera créé sur le disque choisi." \
+        --width=560 --height=330 --column="Choix" --column="Disque" \
+        --column="Espace libre" --column="Dossier" --hide-column=4 --print-column=4 \
+        "${disks[@]}") || return 1
+    if [[ "$location" == autre ]]; then
+        zenity --file-selection --directory --title="Choisir le dossier de destination" --filename="/srv/"
+    else
+        printf '%s\n' "$location"
+    fi
+}
+
 case "$mode" in
     install)
-        parent=$(zenity --file-selection --directory --title="Choisir le dossier où installer SetupSurvie" --filename="/srv/") || exit 0
+        parent=$(choose_disk) || exit 0
+        [[ "$parent" == /* ]] || exit 0
         destination="${parent%/}/SetupSurvie"
         selection=$(zenity --list --checklist --title="Point de restauration" --text="Un point de restauration permet de retrouver cette installation plus tard. Décochez la case si vous ne souhaitez pas en créer." --column="Créer" --column="Option" TRUE "Créer un point de restauration") || exit 0
         point=no

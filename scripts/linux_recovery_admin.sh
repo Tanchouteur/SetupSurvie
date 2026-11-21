@@ -41,6 +41,9 @@ done
 if [[ "$action" == install && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
     die 'Choisissez une destination distincte du dossier de secours.'
 fi
+if [[ "$action" == install && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
+    die 'Choisissez un disque différent du SSD de secours.'
+fi
 recovery="$parent/.$(basename -- "$base")-secours"
 [[ ! -L "$recovery" ]] || die 'Dossier de secours invalide.'
 mkdir -p -- "$recovery"
