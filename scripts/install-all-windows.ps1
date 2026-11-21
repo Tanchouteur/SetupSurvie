@@ -1,4 +1,4 @@
-# One entry point; keep both existing steps independently usable.
+﻿# One entry point; keep both existing steps independently usable.
 [CmdletBinding()]
 param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume,
     [switch]$NoBrowser, [switch]$NoStartup, [switch]$Check, [string]$CacheDir, [string]$CollectionSort)
