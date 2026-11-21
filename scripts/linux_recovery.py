@@ -251,7 +251,10 @@ def activate(base):
     if journal['phase'] != 'active':
         script = destination(base, 'application/scripts/restaurer-linux-hors-ligne.sh')
         phase('Installation des outils et démarrage de SetupSurvie…')
-        setup.run(['/bin/bash', script, base])
+        # The maintenance tools can include nft. Only the system PATH tells
+        # the nested bootstrap whether its own service needs a bundled copy.
+        env = {**os.environ, 'PATH': '/usr/sbin:/usr/bin:/sbin:/bin'}
+        setup.run(['/bin/bash', script, base], env=env)
     # Enabling the unit can have failed after the transfer became active.
     unit = system.service_name(base) + '.service'
     setup.run(['systemctl', 'start', unit])
@@ -299,6 +302,8 @@ def managed_unit(base):
 
 
 def create_existing_point(recovery, base):
+    if (recovery / 'remplacement.json').exists():
+        raise setup.SetupError('Reprenez la restauration en cours avant de créer un point.')
     point = point_path(recovery)
     if point.is_dir() and (point / 'point-de-restauration.json').is_file() and immutable(point):
         read_point(point)
@@ -379,22 +384,9 @@ def restore(recovery, base):
         phase('Vérification et copie du point protégé…')
         fill_target(point, staged, journal, detached=True, portable_cpu=True)
         transfer.verify_copy(staged)
-        phase('Mise à l’abri de l’ancienne installation, données comprises…')
-        unit = state['unit']
-        if unit != managed_unit(base):
-            raise setup.SetupError('Le service SetupSurvie a changé pendant la préparation.')
-        setup.run(['systemctl', 'disable', unit + '.service'])
-        # ExecStop can be damaged along with the old installation. Stop its
-        # dedicated daemon anyway and require that both units are inactive.
-        subprocess.run(['systemctl', 'stop', unit + '.service'], check=False)
-        setup.run(['systemctl', 'stop', unit + '-docker.service'])
-        for service in (unit + '.service', unit + '-docker.service'):
-            result = subprocess.run(['systemctl', 'is-active', '--quiet', service], check=False)
-            if result.returncode != 3:
-                raise setup.SetupError('Impossible de confirmer l’arrêt de ' + service)
-        os.rename(base, saved)
-        durable.sync_directory(base.parent)
-        durable.sync_directory(recovery)
+        work = destination(base, 'private')
+        with locked(work / 'update.lock'), locked(work / 'transfer.lock'), locked(base / 'operation.lock'):
+            archive_active(base, saved, state['unit'])
     if not base.exists():
         os.rename(staged, base)
         durable.sync_directory(recovery)
@@ -403,6 +395,24 @@ def restore(recovery, base):
     state_path.unlink()
     durable.sync_directory(recovery)
     phase('L’ancienne installation a été conservée dans le dossier de secours : ' + str(saved))
+
+
+def archive_active(base, saved, unit):
+    phase('Mise à l’abri de l’ancienne installation, données comprises…')
+    if unit != managed_unit(base):
+        raise setup.SetupError('Le service SetupSurvie a changé pendant la préparation.')
+    setup.run(['systemctl', 'disable', unit + '.service'])
+    # ExecStop can be damaged along with the old installation. Stop its
+    # dedicated daemon anyway and require that both units are inactive.
+    subprocess.run(['systemctl', 'stop', unit + '.service'], check=False)
+    setup.run(['systemctl', 'stop', unit + '-docker.service'])
+    for service in (unit + '.service', unit + '-docker.service'):
+        result = subprocess.run(['systemctl', 'is-active', '--quiet', service], check=False)
+        if result.returncode != 3:
+            raise setup.SetupError('Impossible de confirmer l’arrêt de ' + service)
+    os.rename(base, saved)
+    durable.sync_directory(base.parent)
+    durable.sync_directory(saved.parent)
 
 
 def install_shortcut(recovery, base):

@@ -708,9 +708,8 @@ def transfer(app, dest, *, progress=lambda *args:None, stop_context=stopped, exp
                 raise setup.SetupError('La source a changé pendant la copie : destination conservée sans validation.')
             bundle_launcher(dest)
             journal['checks']['source_stopped']=True
-            journal['phase']='copied';save(dest,journal)
             publish_linux_installer(dest,journal)
-            export_report(dest,journal)
+            journal['phase']='copied';save(dest,journal);export_report(dest,journal)
         return journal
 
 

@@ -92,6 +92,15 @@ class LinuxRecoveryTests(unittest.TestCase):
                 recovery.install(self.state, self.source, self.active, False)
         activate.assert_not_called()
 
+    def test_nested_activation_does_not_inherit_maintenance_tools(self):
+        recovery.fill_target(self.source, self.active, self.journal)
+        with patch.dict(os.environ, {'PATH': '/maintenance/outils-linux/bin'}), \
+                patch.object(recovery.setup, 'run') as run, \
+                patch.object(recovery.setup.Installation, 'request'):
+            recovery.activate(self.active)
+        self.assertNotIn('/maintenance/', run.call_args_list[0].kwargs['env']['PATH'])
+        self.assertEqual(run.call_args_list[0].args[0][0], '/bin/bash')
+
     def test_restoration_preserves_old_data_and_resumes_after_failed_activation(self):
         point = self.state / 'point'
         recovery.fill_target(self.source, point, self.journal)
