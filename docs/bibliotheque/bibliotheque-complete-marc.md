@@ -60,6 +60,18 @@ dans son Metalink, après validation de la taille et du SHA-256 du manifeste.
 Le test mesure séparément le classement sur ces 204 archives et l’ouverture
 des passages sur le portail. L’audit définitif attend la dernière archive.
 
+Le SSD physique de Bazzite annonce environ **4 To**, dont **2,15 To libres**
+au contrôle du 21 novembre en cours de transfert. Le volume clairsemé du
+labo annonce davantage de place libre que le disque physique. Le disque
+physique fixe la marge réelle. Chez Marc, le diagnostic Windows du
+18 novembre confirme que les données utilisent le SSD de **2 To**. Le
+relevé du 21 novembre y mesure **252 Go d’index de classement avant
+compression**. Il faut ajouter ces index et les autres données aux
+**1 046,6 Go** des archives de référence. L’espace libre actuel chez Marc
+reste à mesurer.
+[Diagnostic Windows](../installation/configuration-materielle-cible.md#18-novembre-2026--transfert-déclaré-réussi-et-rapports-0430),
+[mesure des index](../essais/2026-11-21-index-compresse.md)
+
 Le contrôle des PDF trouve **100 fichiers du catalogue public**, chacun
 vérifié par SHA-256 et indexé sur le labo. Le 101ᵉ document du catalogue,
 les fiches de l’Anses sur les plantes toxiques, reste absent. Les adresses
