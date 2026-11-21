@@ -99,6 +99,8 @@
     if (text && page.hidden) toast(text);
   }
 
+  const seen = job => Boolean(job.dismissible && job.seen);
+
   async function command(path, body, focus) {
     if (pending || connection !== 'ready') return;
     const epoch = generation;
@@ -222,6 +224,17 @@
       control.disabled = connection !== 'ready' || pending;
       tools.append(control);
     }
+    if (job.dismissible && !job.seen && job.signature) {
+      const id = job.id + ':seen';
+      const control = button('Marquer comme vu', () => command('/' + encodeURIComponent(job.id) + '/seen', {signature: job.signature}, id));
+      control.className = 'quiet work-queue-seen';
+      control.setAttribute('aria-label', 'Marquer comme vu : ' + job.title + '. Il restera dans l’historique récent.');
+      control.dataset.workControl = id;
+      control.disabled = connection !== 'ready' || pending;
+      tools.append(control);
+    } else if (job.dismissible && job.seen) {
+      tools.append(element('span', 'Vu', 'work-queue-seen-label'));
+    }
     node.dataset.workId = job.id;
     node.append(main, tools);
     return node;
@@ -252,10 +265,12 @@
     lastPage = signature;
     const next = state.jobs.filter(waiting);
     const active = state.jobs.filter(job => job.status === 'running');
-    const failures = state.jobs.filter(failed);
-    const unknown = state.jobs.filter(job => job.status === 'unknown');
-    const pausedJobs = state.jobs.filter(held);
-    const partial = state.jobs.filter(job => !failed(job) && job.failure_count > 0);
+    /* Un élément terminé marqué comme vu quitte « À suivre » et reste dans l’historique. */
+    const live = state.jobs.filter(job => !seen(job));
+    const failures = live.filter(failed);
+    const unknown = live.filter(job => job.status === 'unknown');
+    const pausedJobs = live.filter(held);
+    const partial = live.filter(job => !failed(job) && job.failure_count > 0);
     const counts = [
       active.length && plural(active.length, 'tâche en cours', 'tâches en cours'),
       next.length && plural(next.length, 'tâche en attente', 'tâches en attente'),
@@ -274,7 +289,7 @@
     const expanded = new Set(Array.from(host.querySelectorAll('details[data-queue-details][open]'), item => item.dataset.queueDetails));
     const openHelp = new Set(Array.from(host.querySelectorAll('[data-lane] .queue-help[open]'), item => item.closest('[data-lane]').dataset.lane));
     const focusedLane = document.activeElement?.closest('.queue-help')?.closest('[data-lane]')?.dataset.lane;
-    const history = state.jobs.filter(job => !waiting(job) && !['running', 'unknown'].includes(job.status) &&
+    const history = state.jobs.filter(job => seen(job) || !waiting(job) && !['running', 'unknown'].includes(job.status) &&
       !failed(job) && !held(job) && !job.failure_count)
       .sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 30);
     for (const control of filters.querySelectorAll('button')) {
@@ -315,12 +330,12 @@
     group('En erreur', failures, host);
     group('À vérifier', unknown, host);
     group('À reprendre', pausedJobs, host);
-    group('Inventaires terminés', state.jobs.filter(job => job.status === 'partial'), host);
+    group('Inventaires terminés', live.filter(job => job.status === 'partial'), host);
     const completedWithIssues = partial.filter(job => !waiting(job) && job.status !== 'running' && !held(job));
     group('Lots avec des lignes à vérifier', completedWithIssues, host);
     const laneList = lanes(state);
     const idle = !failures.length && !unknown.length && !pausedJobs.length && !completedWithIssues.length &&
-      !state.jobs.some(job => job.status === 'partial') &&
+      !live.some(job => job.status === 'partial') &&
       laneList.every(lane => !lane.running && !lane.active.length && !lane.waiting.length);
     if (idle) {
       /* Un seul état vide plutôt qu'un encadré vide par créneau. */

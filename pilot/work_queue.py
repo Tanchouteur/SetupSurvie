@@ -3,6 +3,7 @@ import asyncio
 from collections import deque
 from contextvars import ContextVar
 from functools import wraps
+import hashlib
 import json
 import logging
 import sqlite3
@@ -103,6 +104,30 @@ INDEX_WAITING = {
     'interrupted': 'L’indexation a été interrompue',
     'error': 'L’indexation demande une intervention',
 }
+
+
+# Finished items that stay in « À suivre » (inventory with limits, error, lot with
+# lines to check) can be marked as seen by a profile. The mark keeps a short
+# fingerprint of the state: if the item changes, it shows up again.
+SEEN_STATUSES = ('partial', 'error', 'failed')
+SEEN_FIELDS = ('status', 'done', 'total', 'stage', 'error', 'message', 'failure_count')
+
+
+def dismissible(job):
+    return job.get('status') in SEEN_STATUSES or (
+        job.get('status') == 'completed' and (job.get('failure_count') or 0) > 0)
+
+
+def signature(job):
+    state = {key: job.get(key) for key in SEEN_FIELDS}
+    return hashlib.sha256(json.dumps(state, sort_keys=True, default=str).encode()).hexdigest()[:16]
+
+
+def mark_seen(profile, identifier, value):
+    with store.connect() as db:
+        db.execute("INSERT OR REPLACE INTO work_seen VALUES(?,?,?,strftime('%s','now'))", (profile['id'], identifier, value))
+        db.execute('DELETE FROM work_seen WHERE profile=? AND id NOT IN '
+                   '(SELECT id FROM work_seen WHERE profile=? ORDER BY seen DESC LIMIT 500)', (profile['id'], profile['id']))
 
 
 def work_item(kind, identifier, **fields):
@@ -470,6 +495,13 @@ class Queue(Slot):
                 job['kind'] in ('translation', 'summary') or admin and
                 job['kind'] in ('youtube','youtube-track',*TRACK_PREPARATIONS,'translation-test','guide-index',*VIDEO_INVENTORIES,
                                 *('host-' + kind for kind in HOST_PREPARATIONS)))
+        with store.connect() as db:
+            seen = dict(db.execute('SELECT id,signature FROM work_seen WHERE profile=?', (profile['id'],)).fetchall())
+        for job in jobs:
+            if dismissible(job):
+                job['dismissible'] = True
+                job['signature'] = signature(job)
+                job['seen'] = seen.get(job['id']) == job['signature']
         return {'paused': self.paused, 'running': any(lane['running'] for lane in lanes.values()), 'lanes': lanes, 'jobs': [
             {key: value for key, value in job.items() if key != 'owner'} for job in jobs
         ]}

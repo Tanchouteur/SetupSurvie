@@ -9,6 +9,15 @@ signalés. Les notes de chaque livraison sont dans les
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
 
+## Éléments terminés marqués comme vus — demande de Louis du 21 novembre 2026
+
+Louis voyait depuis plusieurs versions l’inventaire des vidéos « Terminé avec
+des limites » rester dans « À suivre ». La 0.75.0 ajoute **Marquer comme vu**
+pour les éléments terminés (inventaire avec limites, erreur, lot à vérifier),
+par profil, sans supprimer l’information : l’élément passe dans l’historique et
+réapparaît si son état change. Les travaux en cours, en attente ou à reprendre
+ne peuvent pas être masqués. Voir le [guide du portail](../utilisation/portail.md#être-toujours-informé--0700).
+
 ## Portail toujours informatif et socle commun — décision de Louis du 20 novembre 2026
 
 Après l’[audit du portail](../essais/2026-11-20-audit-ux-et-maintenabilite-portail.md),

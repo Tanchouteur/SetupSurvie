@@ -25,6 +25,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
 
+## 21 novembre 2026
+
+- [Marquer comme vu dans la file](2026-11-21-file-marquer-vu-0750.md) — éléments terminés masqués par profil (0.75.0) ; Chromium et tests unitaires.
+
 ## 20 novembre 2026
 
 - [Portail toujours informatif, routes par domaine](2026-11-20-portail-toujours-informe-0700.md) — suite de l’audit (0.70.0) : connexion, assistant, Mon appareil, recherche, Cartes, empreintes et routeurs ; Chromium seulement.
