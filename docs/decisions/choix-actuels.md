@@ -1,6 +1,6 @@
 # Choix et contraintes actuels
 
-**Référence des décisions en vigueur — revue le 20 novembre 2026 (0.66.0).**
+**Référence des décisions en vigueur — revue le 21 novembre 2026.**
 Les décisions sont datées, les plus récentes en premier. Une décision plus
 récente l’emporte sur une plus ancienne du même sujet ; les remplacements sont
 signalés. Les notes de chaque livraison sont dans les
@@ -8,6 +8,22 @@ signalés. Les notes de chaque livraison sont dans les
 [bilans datés](../essais/README.md). Les consignes permanentes pour les agents
 (Git, versions, données privées, tests) sont dans [AGENTS.md](../../AGENTS.md).
 
+
+## Installation depuis le SSD et point de restauration — décision de Louis du 21 novembre 2026
+
+La machine de remplacement démarre déjà sur un système compatible. Depuis le
+SSD de secours, un proche ouvre un lanceur, choisit le disque de destination et
+clique sur **Installer**. La copie et l’installation des prérequis se font hors
+ligne. Louis accepte une demande de droits administrateur dans une fenêtre.
+Le parcours entier doit être réalisable sans terminal. Deux lanceurs distincts
+sont possibles. Linux reste la cible V1. Le parcours graphique reste à réaliser.
+[Installation depuis le SSD](../exploitation/disque-de-secours-hors-ligne.md#7-installer-depuis-le-ssd-de-secours)
+
+Lors d’une installation normale, la première installation saine sert de point
+de restauration. La seconde sert au quotidien. En cas de problème, **Restaurer**
+remet en service la seconde à partir de la première. Le mécanisme reste à
+concevoir et à valider.
+[Point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026)
 
 ## Éléments terminés marqués comme vus — demande de Louis du 21 novembre 2026
 

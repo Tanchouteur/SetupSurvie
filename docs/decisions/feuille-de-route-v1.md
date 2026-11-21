@@ -34,6 +34,19 @@ traducteur et les langues utiles téléchargées avant remise. Vérifier la
 traduction sur les pages locales concernées après coupure d’Internet.
 Voir le [cadrage de référence](acces-simple-et-offre.md).
 
+**Complément de Louis du 21 novembre 2026 (V1-D02 et V1-D11).** L’installation
+depuis le SSD suppose un Linux compatible déjà installé. L’interface doit
+permettre à un proche d’ouvrir le lanceur par double-clic, de choisir son disque
+et de cliquer sur **Installer** pour une installation hors ligne sans terminal. Les droits
+administrateur peuvent être demandés dans une fenêtre. Faire réussir ce parcours
+à une personne non accompagnée avec la notice locale. Voir le
+[parcours depuis le SSD](../exploitation/disque-de-secours-hors-ligne.md#7-installer-depuis-le-ssd-de-secours).
+
+L’installation normale prépare deux installations de SetupSurvie. La première
+reste saine et sert de point de restauration. La seconde sert au quotidien.
+Valider l’action **Restaurer** après une panne qui empêche la seconde de démarrer.
+Voir le [point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026).
+
 ## Revue des fonctionnalités existantes — 20 novembre 2026
 
 Louis demande d’approfondir les fonctions existantes, de vérifier leur
