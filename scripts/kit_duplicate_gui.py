@@ -6,7 +6,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-from kit_duplicate import duplicate
+from kit_duplicate import duplicate, verify_support
 import setup
 
 
@@ -14,21 +14,25 @@ def main():
     source = setup.safe_path(sys.argv[1])
     window = tk.Tk()
     window.withdraw()
-    parent = filedialog.askdirectory(parent=window, title='Choisir un dossier sur le second disque',
-                                     mustexist=True)
-    if not parent:
-        window.destroy()
-        return
-    target = Path(parent) / 'SetupSurvie-Kit'
-    if not messagebox.askokcancel(
-            'Dupliquer le kit SetupSurvie',
-            f'Copier le kit vers ce dossier ?\n\n{target}\n\n'
-            'Pour reprendre une copie interrompue, choisissez le même dossier sur le second disque.',
-            parent=window):
-        window.destroy()
-        return
+    checking = '--verify' in sys.argv[2:]
+    title = 'Vérifier le kit SetupSurvie' if checking else 'Dupliquer le kit SetupSurvie'
+    target = source
+    if not checking:
+        parent = filedialog.askdirectory(parent=window, title='Choisir un dossier sur le second disque',
+                                         mustexist=True)
+        if not parent:
+            window.destroy()
+            return
+        target = Path(parent) / 'SetupSurvie-Kit'
+        if not messagebox.askokcancel(
+                'Dupliquer le kit SetupSurvie',
+                f'Copier le kit vers ce dossier ?\n\n{target}\n\n'
+                'Pour reprendre une copie interrompue, choisissez le même dossier sur le second disque.',
+                parent=window):
+            window.destroy()
+            return
 
-    window.title('Dupliquer le kit SetupSurvie')
+    window.title(title)
     frame = ttk.Frame(window, padding=18)
     frame.pack(fill='both', expand=True)
     ttk.Label(frame, text=str(target), wraplength=460).pack(anchor='w')
@@ -42,11 +46,16 @@ def main():
 
     def copy():
         try:
-            duplicate(source, target, report=lambda line: messages.put(('progress', line)))
+            report = lambda line: messages.put(('progress', line))
+            if checking:
+                result = verify_support(source, report=report)
+            else:
+                duplicate(source, target, report=report)
+                result = 'Le second kit est vérifié. Vous pouvez éjecter le support.'
         except (OSError, ValueError, KeyError, TypeError, setup.SetupError) as error:
             messages.put(('error', str(error)))
         else:
-            messages.put(('done', 'Le second kit est vérifié. Vous pouvez éjecter le support.'))
+            messages.put(('done', result))
 
     def poll():
         while not messages.empty():
@@ -55,9 +64,9 @@ def main():
                 status.configure(text=line)
                 continue
             if state == 'error':
-                messagebox.showerror('Copie interrompue', line, parent=window)
+                messagebox.showerror(title, line, parent=window)
             else:
-                messagebox.showinfo('Copie terminée', line, parent=window)
+                messagebox.showinfo(title, line, parent=window)
             window.destroy()
             return
         window.after(150, poll)

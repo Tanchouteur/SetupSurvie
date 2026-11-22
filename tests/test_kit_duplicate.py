@@ -166,11 +166,28 @@ class KitDuplicateTests(unittest.TestCase):
         with patch('linux_offline_tools.content.transfer', side_effect=AssertionError('Réseau interdit')):
             kit_duplicate.duplicate(self.source, self.target)
             linux_offline_tools.prepare_kit(self.target, verify_only=True)
+            report = kit_duplicate.verify_support(self.target, report=lambda _line: None)
+        self.assertIn('Linux : les installateurs présents sur le SSD sont vérifiés.', report)
         self.assertEqual((self.target/receipt).read_bytes(), (self.source/receipt).read_bytes())
         docker = self.target/folder/linux_offline_tools.FOLDER/'docker-compose'
         docker.write_bytes(b'x'*docker.stat().st_size)
         with self.assertRaisesRegex(setup.SetupError, 'absent ou modifié'):
             linux_offline_tools.prepare_kit(self.target, verify_only=True)
+
+    def test_verify_support_reports_missing_tools_without_writing_and_rejects_damage(self):
+        self.publish_manifest()
+        files = {path.relative_to(self.source): path.read_bytes()
+                 for path in self.source.rglob('*') if path.is_file()}
+        with patch('content.transfer', side_effect=AssertionError('Réseau interdit')):
+            report = kit_duplicate.verify_support(self.source, report=lambda _line: None)
+        self.assertIn('Windows : aucun installateur embarqué', report)
+        self.assertIn('Linux : aucun installateur embarqué', report)
+        self.assertEqual({path.relative_to(self.source): path.read_bytes()
+                          for path in self.source.rglob('*') if path.is_file()}, files)
+        path = self.source/'payload/library/guides/exemple.txt'
+        path.write_bytes(b'x'*path.stat().st_size)
+        with self.assertRaisesRegex(setup.SetupError, 'Kit incomplet ou modifié'):
+            kit_duplicate.verify_support(self.source, report=lambda _line: None)
 
     def test_same_size_altered_source_never_publishes_the_file_or_the_kit(self):
         self.publish_manifest()

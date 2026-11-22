@@ -2,6 +2,11 @@
 set -eu
 
 title='Dupliquer le kit SetupSurvie'
+mode=duplicate
+if [ "${2:-}" = --verify ]; then
+    title='Vérifier le kit SetupSurvie'
+    mode=verify-support
+fi
 show_error() {
     if command -v zenity >/dev/null 2>&1; then
         zenity --error --title="$title" --text="$1"
@@ -21,7 +26,8 @@ if [ ! -f "$base/manifest.json" ]; then
 fi
 export PYTHONDONTWRITEBYTECODE=1
 if python3 -c 'import sys, tkinter; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
-    if ! python3 "$base/app/scripts/kit_duplicate_gui.py" "$base"; then
+    shift
+    if ! python3 "$base/app/scripts/kit_duplicate_gui.py" "$base" "$@"; then
         show_error "La fenêtre de copie ne s’est pas ouverte. Vérifiez que vous utilisez une session graphique."
         exit 1
     fi
@@ -42,14 +48,20 @@ if ! "$python" -c 'import sqlite3, sys; sys.exit(sys.version_info < (3, 11))' >/
     python=
 fi
 
-parent=$(zenity --file-selection --directory --title='Choisir un dossier sur le second disque') || exit 0
-[ -n "$parent" ] || exit 0
-target="${parent%/}/SetupSurvie-Kit"
-zenity --question --title="$title" --text="Copier le kit vers ce dossier ?
-$target
+if [ "$mode" = duplicate ]; then
+    parent=$(zenity --file-selection --directory --title='Choisir un dossier sur le second disque') || exit 0
+    [ -n "$parent" ] || exit 0
+    target="${parent%/}/SetupSurvie-Kit"
+    zenity --question --title="$title" --text="Copier le kit vers ce dossier ?
+    $target
 
-Pour reprendre, choisissez le même dossier." ||
-    exit 0
+    Pour reprendre, choisissez le même dossier." ||
+        exit 0
+
+    set -- "$target"
+else
+    set --
+fi
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/setupsurvie-copie.XXXXXXXX") || {
     show_error 'Impossible de créer un dossier temporaire pour la copie.'
@@ -72,7 +84,7 @@ trap 'rm -rf -- "$scratch"' EXIT
         fi
         python="$scratch/outils/bin/python3"
     fi
-    "$python" "$base/app/scripts/pilot_kit.py" duplicate "$base" "$target"
+    "$python" "$base/app/scripts/pilot_kit.py" "$mode" "$base" "$@"
     printf '%s
 ' "$?" > "$scratch/statut"
 ) 2>&1 | (
@@ -88,7 +100,11 @@ trap 'rm -rf -- "$scratch"' EXIT
 ) | zenity --progress --pulsate --auto-close --no-cancel --title="$title" --text='Préparation de la copie…' || :
 
 if [ -f "$scratch/statut" ] && [ "$(cat "$scratch/statut")" = 0 ]; then
-    zenity --info --title="$title" --text='Le second kit est vérifié. Vous pouvez éjecter le support.' || :
+    if [ "$mode" = verify-support ]; then
+        zenity --text-info --title="$title" --filename="$scratch/resultat" || :
+    else
+        zenity --info --title="$title" --text='Le second kit est vérifié. Vous pouvez éjecter le support.' || :
+    fi
 else
     if [ ! -s "$scratch/resultat" ]; then
         printf '%s

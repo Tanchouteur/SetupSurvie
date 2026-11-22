@@ -63,6 +63,30 @@ def inventory(root):
     return manifest, files
 
 
+def verify_support(root, *, report=print):
+    """Read a kit and its bundled tools without starting or preparing a PC."""
+    from pilot_kit import checked_entries
+
+    root = setup.safe_path(root)
+    manifest, files = inventory(root)
+    def progress(done, total, _size):
+        if done == 1 or done == total or done % 100 == 0:
+            report(f'Vérification : {done}/{total} fichiers.')
+
+    checked_entries(root, {'files': files}, progress)
+    if destination(root, MARKER).exists() or destination(root, 'manifest.json').read_bytes() != manifest:
+        raise setup.SetupError('Le kit a changé pendant la vérification. Relancez le contrôle.')
+    lines = ['Les fichiers du kit sont vérifiés.']
+    for platform, folder in (('Windows', windows_kit_installers.FOLDER),
+                             ('Linux', linux_offline_tools.KIT_FOLDER)):
+        if destination(root, folder).is_dir():
+            lines.append(f'{platform} : les installateurs présents sur le SSD sont vérifiés.')
+        else:
+            lines.append(f'{platform} : aucun installateur embarqué. Le PC doit déjà être préparé.')
+    lines.append('Ce contrôle porte sur le kit public. Vérifiez séparément votre sauvegarde personnelle.')
+    return '\n'.join(lines)
+
+
 def windows_component_files(root):
     base = windows_kit_installers.FOLDER + '/sxs'
     folder = destination(root, base)

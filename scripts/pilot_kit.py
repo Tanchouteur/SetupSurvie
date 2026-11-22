@@ -22,6 +22,7 @@ KIT_GUIDE = 'LISEZ-MOI.html'
 KIT_GUIDE_SOURCE = Path('docs/installation/lisez-moi-kit.html')
 
 KIT_APP_FILES = (
+    'Verifier-Kit-SetupSurvie.cmd', 'Verifier-Kit-SetupSurvie.desktop',
     'README.md', 'AGENTS.md', 'compose.yaml', 'compose.linux.yaml', 'compose.gpu.yaml',
     'Installer-SetupSurvie.cmd', 'Mettre-a-jour-SetupSurvie.cmd',
     '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd',
@@ -472,6 +473,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('export-lab');p.add_argument('destination');p.add_argument('--english-wikipedia',action=argparse.BooleanOptionalAction,default=True)
     p=subs.add_parser('verify');p.add_argument('kit')
+    p=subs.add_parser('verify-support');p.add_argument('kit')
     p=subs.add_parser('duplicate');p.add_argument('kit');p.add_argument('destination')
     p=subs.add_parser('prepare-windows');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
     p=subs.add_parser('prepare-linux');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
@@ -484,6 +486,9 @@ def main():
     p.add_argument('--cpu', action='store_true', help='Linux : utiliser le processeur, sans GPU NVIDIA.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
+    elif args.action=='verify-support':
+        import kit_duplicate
+        print(kit_duplicate.verify_support(args.kit, report=kit_duplicate.console_report))
     elif args.action=='duplicate':
         import kit_duplicate
         kit_duplicate.duplicate(args.kit, args.destination)

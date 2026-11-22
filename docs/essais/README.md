@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Contrôle graphique du kit hors ligne](2026-11-22-verifier-kit-hors-ligne.md) — 0.110.0, empreintes des fichiers et installateurs.
+
 - [Sauvegarde personnelle depuis l’assistant](2026-11-22-sauvegarde-personnelle-graphique.md) — 0.109.0, destination et exclusion mutuelle testées.
 
 - [Restauration avec un kit plus récent](2026-11-22-restauration-kit-compatible.md) — 0.108.0, contrôle du format des données et des images.
