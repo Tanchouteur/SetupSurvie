@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Dupliquer le kit SetupSurvie
+Comment=Copier ce kit hors ligne vers un autre disque
+Exec=/bin/sh -c "exec /bin/sh \\"\\$(dirname \\"\\$1\\")/scripts/dupliquer-kit-linux.sh\\" \\"\\$(dirname \\"\\$1\\")/..\\"" sh %k
+Terminal=false
+Categories=Utility;

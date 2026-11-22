@@ -1,5 +1,7 @@
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -64,6 +66,25 @@ class KitDuplicateTests(unittest.TestCase):
         third = self.base / 'Troisième SSD'
         kit_duplicate.duplicate(self.target, third)
         checked_entries(third, self.manifest)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Lanceur de bureau Linux.')
+    def test_linux_launcher_uses_its_own_kit_without_shell_prompt(self):
+        self.publish_manifest()
+        driver = self.base / 'python3'
+        driver.write_text(
+            '#!/bin/sh\nif [ "$1" = "-c" ]; then exit 0; fi\nprintf "%s\\n" "$@"\n',
+            encoding='utf-8',
+        )
+        driver.chmod(0o755)
+        result = subprocess.run(
+            ['/bin/sh', ROOT / 'scripts/dupliquer-kit-linux.sh', self.source / 'app' / '..'],
+            env={**os.environ, 'PATH': str(self.base) + ':' + os.environ['PATH']},
+            cwd=ROOT, capture_output=True, text=True, check=True, timeout=10,
+        )
+        self.assertEqual(
+            result.stdout.splitlines(),
+            [str(self.source / 'app/scripts/kit_duplicate_gui.py'), str(self.source)],
+        )
 
     def test_windows_installers_and_components_are_retained(self):
         packages = {}

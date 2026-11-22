@@ -186,6 +186,7 @@ class OfflineClosureTests(unittest.TestCase):
         self.add('app/Mettre-a-jour-SetupSurvie.cmd', b'fixture')
         self.add('app/1-Preparer-le-PC.cmd', b'fixture')
         self.add('app/2-Installer-SetupSurvie.cmd', b'fixture')
+        self.add('app/Dupliquer-Kit-SetupSurvie.desktop', b'fixture')
         self.assertEqual(kit_audit.validate(self.root,self.manifest())['models'],1)
         self.add('payload/catalog/settings.json', {'secret': 'fixture'})
         with self.assertRaisesRegex(setup.SetupError,'personnel interdit'):

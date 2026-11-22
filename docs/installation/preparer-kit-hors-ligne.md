@@ -43,6 +43,13 @@ dossier sur le second disque et confirmer. Une fenêtre suit la copie. Le
 nouveau kit apparaît dans **SetupSurvie-Kit** sous le dossier choisi. Il
 contient à son tour le lanceur.
 
+Depuis la 0.93.0, sur Linux équipé de Python 3.11 ou ultérieur avec Tkinter,
+ouvrir **Dupliquer-Kit-SetupSurvie.desktop** dans le même dossier **app**.
+Si le bureau demande de faire confiance au lanceur, l’autoriser pour ce kit.
+Choisir un dossier accessible en écriture sur le second disque. L’assistant
+utilise les droits de la session et reprend une copie interrompue vers la
+même destination.
+
 Les postes Linux ou Windows équipés de Python peuvent aussi utiliser la
 commande suivante. Exemple sur Linux.
 
