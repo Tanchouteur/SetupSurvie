@@ -276,9 +276,10 @@ les garder hors de la bibliothèque publique.
 Depuis la 0.94.0, une machine Linux préparée peut charger une sauvegarde privée
 Windows, et une machine Windows préparée peut charger une sauvegarde privée
 Linux. Il faut créer cette sauvegarde avec la 0.94.0 ou une version ultérieure et
-emporter le kit public complet correspondant exactement à l’installation
-d’origine, avec la même version d’Open WebUI. Le kit fournit les modèles, les
-ZIM et les cartes. Préparer sur la machine cible Python, Docker avec Compose
+emporter un kit public complet de même version. Depuis la 0.108.0, un kit
+plus récent convient aussi si le format des données et l’image Open WebUI
+sont identiques. Le lanceur refuse un kit plus ancien. Le kit fournit les
+modèles, les ZIM et les cartes. Préparer sur la machine cible Python, Docker avec Compose
 et les conteneurs Linux. Sous Windows, préparer aussi Ollama pour pouvoir
 réactiver l’IA après restauration. Voir le
 [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle)

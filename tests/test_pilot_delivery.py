@@ -167,6 +167,34 @@ class DeliveryTests(unittest.TestCase):
                 self.assertEqual({path.relative_to(snapshot): setup.file_hash(path)
                                   for path in snapshot.rglob('*') if path.is_file()}, original_files)
 
+    def test_portable_restore_accepts_newer_kit_with_matching_data_format_and_open_webui(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        report_path = snapshot/'backup.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        installed = report['installation'].copy()
+        work, data = self.root/'target/private', self.root/'target/data'
+        with patch('pilot_backup.host_target', return_value='linux'), patch('kit_audit.validate'), \
+             patch('pilot_backup.portable_restore_preflight'), patch.object(setup.Installation, 'doctor'), \
+             patch.object(setup.Installation, 'import_images'), patch.object(setup.Installation, 'prepare'), \
+             patch.object(setup.Installation, 'up') as up, patch.object(setup.Installation, 'verify'):
+            report['installation'] = {**installed, 'version': '99.0.0'}
+            setup.write_json(report_path, report, private=True)
+            with self.assertRaisesRegex(setup.SetupError, 'plus ancien que la sauvegarde'):
+                restore(snapshot, kit, work, data, target='linux')
+            report['installation'] = {**installed, 'version': '0.94.0', 'data_schema': installed['data_schema'] + 1}
+            setup.write_json(report_path, report, private=True)
+            with self.assertRaisesRegex(setup.SetupError, 'format des données'):
+                restore(snapshot, kit, work, data, target='linux')
+            self.assertFalse(work.parent.exists())
+            report['installation'] = {**installed, 'version': '0.94.0'}
+            setup.write_json(report_path, report, private=True)
+            restore(snapshot, kit, work, data, target='linux')
+        up.assert_called_once()
+        with closing(sqlite3.connect(data/'state/pilot/conversations.sqlite3')) as db:
+            self.assertEqual(db.execute('SELECT * FROM conversation').fetchall(),
+                             [('profil-fixe', 'Échange de test')])
+        self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+
     def test_cross_system_restore_checks_version_host_and_space_before_writing(self):
         snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
         work, data = self.root/'target/private', self.root/'target/data'

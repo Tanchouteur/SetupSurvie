@@ -112,6 +112,7 @@ def portable_settings(saved, target):
 
 def validate_portable_restore(report, kit, public, public_entries, source_target):
     from kit_audit import validate
+    from pilot_update import version_tuple
     if source_target not in ('windows', 'linux'):
         raise setup.SetupError('Système de la sauvegarde inconnu.')
     identity = report.get('installation')
@@ -124,8 +125,16 @@ def validate_portable_restore(report, kit, public, public_entries, source_target
         raise setup.SetupError('Version et composants du kit manquants.')
     version_data = json.loads(versions.read_text(encoding='utf-8'))
     expected = restore_identity(json.loads(release.read_text(encoding='utf-8')), version_data)
-    if identity != expected:
-        raise setup.SetupError('Kit incompatible avec la sauvegarde. Choisissez un kit de la même version et avec la même image Open WebUI.')
+    if (not isinstance(identity, dict)
+            or type(identity.get('data_schema')) is not int
+            or identity['data_schema'] != expected['data_schema']
+            or identity.get('open_webui') != expected['open_webui']):
+        raise setup.SetupError('Kit incompatible avec la sauvegarde : format des données ou image Open WebUI différent.')
+    version = identity.get('version')
+    if not isinstance(version, str):
+        raise setup.SetupError('Version de la sauvegarde inconnue.')
+    if version_tuple(expected['version']) < version_tuple(version):
+        raise setup.SetupError(f'Ce kit est plus ancien que la sauvegarde ({version}). Choisissez un kit compatible plus récent.')
     validate(kit, public)
     return version_data
 
@@ -505,7 +514,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('backup');p.add_argument('destination');p.add_argument('--work-dir',required=True)
     p=subs.add_parser('restore');p.add_argument('source');p.add_argument('--kit',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--data-dir',required=True)
-    p.add_argument('--target',choices=('linux','windows'),help='Adapter la restauration au système de cet ordinateur (kit de même version requis).')
+    p.add_argument('--target',choices=('linux','windows'),help='Adapter la restauration au système de cet ordinateur (kit de même version ou plus récent et compatible).')
     p.add_argument('--resume', action='store_true', help='Reprendre vers le même dossier après une interruption.')
     args=parser.parse_args()
     if args.action=='backup':
