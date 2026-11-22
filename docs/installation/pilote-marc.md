@@ -119,6 +119,16 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
+Depuis la 0.99.0, sur un PC Linux déjà préparé, ouvrir
+**Installer-Kit-SetupSurvie.desktop** dans le dossier `app` du SSD.
+Il faut Python avec Tkinter, Docker et Compose déjà disponibles. Choisir
+le disque et confirmer la création d’un nouveau dossier. Le kit
+fonctionne sur le processeur et le site se lance avec l’IA en pause.
+Après un redémarrage, ouvrir **Ouvrir-SetupSurvie.desktop** dans le
+dossier installé, avec Docker démarré. Le SSD peut être retiré après
+l’installation terminée. Si la première installation s’arrête pendant
+la copie, relancer vers un nouveau dossier vide.
+
 Sur un PC Linux avec Python 3.11, Docker et Compose déjà installés, le kit
 public peut utiliser le processeur sans GPU NVIDIA depuis la 0.98.0. Depuis
 le dossier `app` du SSD, lancer la commande suivante. Choisir un autre

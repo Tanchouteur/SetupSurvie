@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Installation du kit public par double-clic sous Linux](2026-11-22-installation-graphique-kit-linux.md) — 0.99.0, sélection du disque et relance locale simulée.
+
 - [Notice à la racine du kit public](2026-11-22-notice-kit-public.md) — 0.98.0, copie et contrôle de la notice, mode CPU Linux.
 
 - [Relance locale d’une installation restaurée](2026-11-22-relance-installation-restauree.md) — 0.97.0, support retiré en simulation.

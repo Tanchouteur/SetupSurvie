@@ -482,6 +482,36 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
                 with self.assertRaises(setup.SetupError):backup(app,c,target)
             compose.assert_not_called()
 
+    def test_linux_graphical_kit_creates_a_local_launcher_and_keeps_inference_paused(self):
+        from pilot_kit import start_installed
+        _, kit, _ = self.cross_system_fixture(self.root, 'linux')
+        name = 'Ouvrir-SetupSurvie.desktop'
+        relative = 'app/scripts/restored-launchers/'+name
+        template = kit/relative
+        template.parent.mkdir(parents=True)
+        template.write_bytes((setup.ROOT/'scripts/restored-launchers'/name).read_bytes())
+        manifest = json.loads((kit/'manifest.json').read_text(encoding='utf-8'))
+        manifest['files'].append({'path': relative, 'bytes': template.stat().st_size, 'sha256': setup.file_hash(template)})
+        setup.write_json(kit/'manifest.json', manifest)
+        base = self.root/'installée'; work, data = base/'private', base/'data'
+        with patch.object(setup,'ROOT',kit/'app'), patch('kit_audit.validate'), \
+             patch('pilot_backup.portable_restore_preflight'), patch.object(setup.Installation,'import_images'), \
+             patch.object(setup.Installation,'doctor'), patch.object(setup.Installation,'prepare') as prepare, \
+             patch.object(setup.Installation,'up'), patch.object(setup.Installation,'verify'), \
+             patch.object(setup.Installation,'addresses'):
+            install(kit,'linux',data,work,cpu=True,graphical=True)
+            self.assertTrue(prepare.call_args.kwargs['offline'])
+        self.assertEqual((base/name).read_bytes(), template.read_bytes())
+        self.assertTrue((work/'inference-paused.json').is_file())
+        self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), b'guide public')
+        kit.rename(self.root/'kit-retiré')
+        with patch.object(setup,'ROOT',base/'application'), \
+             patch.object(setup.Installation,'up') as up, patch.object(setup.Installation,'verify') as verify:
+            start_installed(base)
+        self.assertTrue(up.call_args.args[0]['kit_linux_graphical'])
+        self.assertTrue(up.call_args.args[0]['cpu'])
+        verify.assert_called_once_with(up.call_args.args[0])
+
     def test_kit_installs_independent_application_and_retains_transport_copy(self):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         original=application/'scripts/setup.py';original.write_text('transport copy')
