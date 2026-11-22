@@ -417,4 +417,16 @@ else:
         self.assert_abrupt_cut_recovery('rollback-copy')
 
 
+class KiwixStartupTests(unittest.TestCase):
+    def test_kiwix_start_period_covers_a_large_library_within_the_update_wait(self):
+        import re
+        text=(Path(__file__).resolve().parents[1]/'compose.yaml').read_text(encoding='utf-8')
+        block=text.split('\n  kiwix:\n',1)[1].split('\n  pilot:\n',1)[0]
+        seconds=int(re.search(r'start_period: (\d+)s',block).group(1))
+        wait=int(re.search(r"'--wait-timeout','(\d+)'",(Path(update.__file__)).read_text(encoding='utf-8')).group(1))
+        # 210 archives took about 100 s on Marc's PC; an update failed at 130 s.
+        self.assertGreaterEqual(seconds,300)
+        self.assertLess(seconds,wait)
+
+
 if __name__=='__main__':unittest.main()

@@ -29,3 +29,7 @@
 
 - Faire en sorte de crée les sous titre francais, meme si la vidéo est francais, comme ça on peux aussi indexé les sous titre des vidéo francaise
   - Lien constaté le 21/11 sur le labo : 51 collections (surtout vidéo : C'est pas sorcier, Maître Lucas…) n'ont pas d'index plein texte et ne sont trouvées que par leur titre. Des sous-titres français indexés rendraient leur contenu cherchable. Voir `docs/essais/protocole-sous-titres-videos.md` et les sous-titres existants avant de développer.
+- Campagne Bazzite du 22/11 (0.100.0) : 18 guides officiels ajoutés pour les thèmes vides, guides pratiques gardés en Autonomie, recherche par question naturelle, caches de Kiwix bornés. Banc : 87 → 105 requêtes sur 136 avec résultat. Assistant gemma4:e4b essayé sur 10 questions (labo, IA levée par Louis le 22/11).
+  - Reste sans source fiable : stockage domestique des carburants, rongeurs, pêche en rivière, chèvres ; organisation collective limitée à la comptabilité.
+  - Chez Marc après mise à jour : télécharger les nouveaux guides (commande dans `docs/bibliotheque/bibliotheque-complete-marc.md`), puis index par espace.
+  - Assistant : réponses variables d'un essai à l'autre (paracétamol), chasse sous-marine incomplète, réponses « de connaissances générales » sans document à encadrer pour les sujets à risque.

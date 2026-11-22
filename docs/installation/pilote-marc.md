@@ -119,7 +119,7 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
-Depuis la 0.100.0, le kit public peut aussi démarrer sur un PC Linux sans
+Depuis la 0.101.0, le kit public peut aussi démarrer sur un PC Linux sans
 Python ni Docker. Préparer à l’avance
 [les installateurs du kit Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux).
 Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64, avec un bureau équipé de
