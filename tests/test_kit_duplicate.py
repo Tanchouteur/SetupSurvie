@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 
 import kit_duplicate
+import linux_offline_tools
 from pilot_kit import checked_entries
 import setup
 import transfer
@@ -100,6 +101,30 @@ class KitDuplicateTests(unittest.TestCase):
         windows_kit_installers.prepare(self.target, verify_only=True)
         self.assertEqual((self.target / 'installateurs-windows/sxs/platform.cab').read_bytes(), b'composant fixture')
         self.assertEqual((self.target / 'manifest.json').read_bytes(), (self.source / 'manifest.json').read_bytes())
+
+    def test_linux_tool_bundle_is_verified_and_duplicated_without_network(self):
+        names = ['docker.tar.gz', 'docker-compose', linux_offline_tools.KIT_PYTHON]
+        names += [prefix + 'nftables_test.deb' for prefix in ('', 'debian12/', 'ubuntu2204/')]
+        entries = []
+        folder = linux_offline_tools.KIT_FOLDER
+        for name in names:
+            record = self.add_file(f'{folder}/{linux_offline_tools.FOLDER}/{name}', name.encode(),
+                                   add_to_manifest=False)
+            entries.append(f"{record['sha256']} {record['bytes']} {name} https://example.invalid/tools")
+        self.add_file(linux_offline_tools.CATALOG, '\n'.join(entries).encode())
+        self.publish_manifest()
+        with self.assertRaisesRegex(setup.SetupError, 'préparation des installateurs Linux'):
+            kit_duplicate.duplicate(self.source, self.target)
+        receipt = f'{folder}/{linux_offline_tools.RECEIPT}'
+        self.add_file(receipt, (linux_offline_tools.KIT_PYTHON+'\n').encode(), add_to_manifest=False)
+        with patch('linux_offline_tools.content.transfer', side_effect=AssertionError('Réseau interdit')):
+            kit_duplicate.duplicate(self.source, self.target)
+            linux_offline_tools.prepare_kit(self.target, verify_only=True)
+        self.assertEqual((self.target/receipt).read_bytes(), (self.source/receipt).read_bytes())
+        docker = self.target/folder/linux_offline_tools.FOLDER/'docker-compose'
+        docker.write_bytes(b'x'*docker.stat().st_size)
+        with self.assertRaisesRegex(setup.SetupError, 'absent ou modifié'):
+            linux_offline_tools.prepare_kit(self.target, verify_only=True)
 
     def test_same_size_altered_source_never_publishes_the_file_or_the_kit(self):
         self.publish_manifest()

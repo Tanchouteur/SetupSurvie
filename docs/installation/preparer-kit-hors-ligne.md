@@ -21,6 +21,28 @@ conservée lors d’une duplication. Ouvrez-la directement dans un navigateur
 avant de remettre le SSD.
 
 
+## Ajouter les installateurs Linux
+
+Depuis la 0.101.0, préparer les outils Linux sur un ordinateur connecté,
+Windows ou Linux, avec le logiciel du kit à jour. Depuis le dossier `app`
+du kit, lancer la commande suivante sous Linux.
+
+```sh
+python3 scripts/pilot_kit.py prepare-linux ..
+python3 scripts/pilot_kit.py prepare-linux .. --verify-only
+```
+
+Sous Windows, utiliser `py -3 scripts\pilot_kit.py prepare-linux ..`.
+La préparation ajoute les installateurs vérifiés au dossier
+`installateurs-linux` du kit. Le contrôle hors ligne et la duplication y
+incluent Python, Docker, Compose et les paquets réseau. Prévoir environ
+200 Mo supplémentaires. Sur le PC cible, suivre **LISEZ-MOI.html** et
+ouvrir **Installer-Kit-SetupSurvie.desktop**. Le lanceur graphique demande
+l’autorisation administrateur et déploie les outils dans la destination
+choisie. Il utilise les paquets du support pour Debian 12, Debian 13 ou
+Ubuntu 22.04 x86-64. Le bureau doit proposer Zenity et PolicyKit.
+
+
 ## Sous-commandes de `pilot_kit.py`
 
 | Commande | Rôle |

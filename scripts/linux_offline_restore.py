@@ -14,7 +14,7 @@ from delivery_paths import destination
 from pilot import durable
 
 
-def unit_contents(base, name, *, initial=False):
+def unit_contents(base, name, *, initial=False, public_kit=False):
     tools = base / 'outils-linux'
     engine = name + '-docker.service'
     socket = f'/run/{name}/docker.sock'
@@ -41,13 +41,17 @@ def unit_contents(base, name, *, initial=False):
         + '[Install]\nWantedBy=multi-user.target\n'
     )
     entrypoint = 'linux_auto_install.py' if initial else 'linux_offline_restore.py'
+    app_dir = setup.ROOT
+    if public_kit:
+        entrypoint = 'linux_public_kit.py'
+        app_dir = base / 'application'
     command = ' '.join(linux_host.unit_quote(value, True) for value in (
-        tools / 'bin/python3', setup.ROOT / 'scripts' / entrypoint, base, '--demarrage',
+        tools / 'bin/python3', app_dir / 'scripts' / entrypoint, base, '--demarrage',
     ))
-    stop = ' '.join(linux_host.unit_quote(value, True) for value in (
-        setup.ROOT / 'scripts/survie.sh', '--work-dir', work, 'down',
-    ))
-    description = 'SetupSurvie' if initial else 'SetupSurvie restauré hors ligne'
+    stop_args = ['/bin/bash'] if public_kit else []
+    stop_args.extend((app_dir / 'scripts/survie.sh', '--work-dir', work, 'down'))
+    stop = ' '.join(linux_host.unit_quote(value, True) for value in stop_args)
+    description = 'SetupSurvie' if initial or public_kit else 'SetupSurvie restauré hors ligne'
     app_unit = (
         f'[Unit]\nDescription={description}\nAfter={engine}\nRequires={engine}\n' + common
         + '[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=infinity\n'
@@ -106,11 +110,11 @@ def check_transfer(base, journal):
     return phase
 
 
-def check_service_tree(base):
+def check_service_tree(base, *, directories=('application', 'outils-linux')):
     for parent in (base, *base.parents):
         if parent.stat().st_uid != 0 or parent.stat().st_mode & 0o022:
             raise setup.SetupError(f'Le dossier doit appartenir à root et être protégé en écriture : {parent}')
-    for directory in ('application', 'outils-linux'):
+    for directory in directories:
         root = destination(base, directory)
         for path in (root, *root.rglob('*')):
             info = path.lstat()
@@ -135,17 +139,21 @@ def check_engine(name):
 
 
 
-def launch_services(base, name, *, initial=False):
-    service = name + '.service'
-    engine = name + '-docker.service'
+def publish_units(base, units):
     config = destination(base, 'restauration-docker.json')
     engine_store = destination(base, 'stockage-docker')
     if not config.exists() and engine_store.exists():
         raise setup.SetupError('Stockage Docker déjà présent, laissé en place.')
     publish_managed(config, b'{}\n')
-    for unit, content in unit_contents(base, name, initial=initial).items():
+    for unit, content in units.items():
         publish_managed(Path('/etc/systemd/system') / unit, content.encode('utf-8'))
     setup.run(['systemctl', 'daemon-reload'])
+
+
+def launch_services(base, name, *, initial=False, public_kit=False):
+    service = name + '.service'
+    engine = name + '-docker.service'
+    publish_units(base, unit_contents(base, name, initial=initial, public_kit=public_kit))
     try:
         setup.run(['systemctl', 'start', service])
     except setup.SetupError as error:

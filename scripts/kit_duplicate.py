@@ -8,6 +8,7 @@ import tarfile
 
 from delivery_paths import destination, locked
 import kit_audit
+import linux_offline_tools
 from pilot import durable
 import setup
 import transfer
@@ -53,6 +54,12 @@ def inventory(root):
                 raise setup.SetupError('Terminez la préparation des installateurs Windows : ' + path.name)
         files.extend(installers)
         files.extend(windows_component_files(root))
+    if destination(root, linux_offline_tools.KIT_FOLDER).exists():
+        for item in linux_offline_tools.kit_items(root):
+            path = destination(root, item['path'])
+            if not path.is_file() or path.stat().st_size != item['bytes']:
+                raise setup.SetupError('Installateur Linux absent ou incomplet : '+path.name)
+            files.append(item)
     return manifest, files
 
 
