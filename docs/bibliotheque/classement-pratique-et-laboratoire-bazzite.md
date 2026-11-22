@@ -501,3 +501,17 @@ redémarrage du seul pilote a conservé le même processus de transfert. La
 file IA est inactive et le marqueur de pause de l’inférence est toujours
 présent. Le paquet 0.91.0 a été copié sur le volume du labo et son empreinte
 a été vérifiée. Sa validation sur cette installation reste à faire.
+
+### Fonds complet vérifié — 22 novembre 2026
+
+La dernière archive, *Survivor Library*, a terminé le transfert. La File
+d’attente affiche « Fichiers vérifiés ». Le rapprochement compte **205 éditions
+exactes** et **205 reçus de vérification SHA‑256**, pour 1 046 614 916 577
+octets. Le SSD a 1,98 To libres lors du relevé. Le volume ext4 annonce
+2,94 To libres, mais son image clairsemée partage l’espace physique du SSD.
+
+Kiwix sert les 205 éditions et la préparation du texte est terminée avec
+184 index natifs et 21 index locaux. La comparaison des six réglages a
+démarré sur ce fonds. Le relevé de lecture du portail et la vérification des
+vidéos suivent dans la même recette. L’inventaire vidéo continue séparément.
+Les résultats de cette campagne restent à examiner.
