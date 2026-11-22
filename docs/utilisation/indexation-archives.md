@@ -85,6 +85,13 @@ et la raison du complément (`native_multilingual`, `native_language_missing` ou
 `missing_index`). Ce contrôle de métadonnées ne certifie pas tous les usages de
 l’API Kiwix. Une langue d’article non déterminée n’est pas déclarée française.
 
+Depuis 0.106.1, le classement du fonds principal par espace continue après une
+archive qu’il ne parvient pas à lire : elle est inscrite dans `failures` (nom et
+type d’erreur), les autres archives sont classées, puis la phase finale indique
+`error` jusqu’à la reprise. Le 22 novembre 2026 chez Marc, une page de
+`ready.gov` portant un attribut sans valeur (`<span class>`) arrêtait tout le
+classement ; les lecteurs HTML lisent désormais un tel attribut comme vide.
+
 Si un fichier a été remplacé depuis sa vérification, la file est suspendue et
 l’indique. Refaire la vérification ou le téléchargement de cette archive avant de
 reprendre ; la nouvelle édition ne doit pas être marquée traitée par l’ancien travail.

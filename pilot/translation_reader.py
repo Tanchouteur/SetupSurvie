@@ -18,7 +18,7 @@ class Pages(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True);self.pages={};self.page=None;self.part=None;self.notice=None
     def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs)
+        attrs={k:v or '' for k,v in attrs}
         if tag=='section':
             match=re.fullmatch(r'page=([1-9]\d{0,3})',attrs.get('id',''))
             self.page=int(match[1]) if match and int(match[1])<=1200 else None
