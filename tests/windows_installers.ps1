@@ -53,6 +53,52 @@ function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } 
         Remove-Item -LiteralPath $fixture -Recurse -Force
     }
 }
+# Recovery on a fresh PC uses preparation, then starts Docker, then opens the picker.
+& {
+    . (Join-Path $root 'scripts\restaurer-donnees-windows.ps1')
+    $events = [Collections.Generic.List[string]]::new()
+    $testState = @{Docker = ''; Python = $false; Code = 0}
+    function Initialize-SurvieTools { $events.Add('paths') }
+    function Get-SurvieDockerType { return $testState.Docker }
+    function Find-SurvieDockerDesktop { return $null }
+    function Find-SurviePython { param([switch]$RequireTk)
+        if ($RequireTk -and $testState.Python) { return @{Path='python.exe'; Prefix=@()} }
+    }
+    function Invoke-SurvieOfflineRestorePreparation([string]$Kit) {
+        if ($Kit -ne 'Kit avec espaces') { throw 'The original kit must be passed without splitting its path' }
+        $events.Add('prepare')
+        if ($testState.Code -eq 0) {
+            $testState.Docker = 'linux'
+            $testState.Python = $true
+        }
+        return @{Code=$testState.Code; Details='test error'}
+    }
+    function Start-SurvieDocker { $events.Add('docker') }
+    function Install-SurvieKitPython([string]$Kit) {
+        $events.Add('python')
+        return @{Path='python.exe'; Prefix=@()}
+    }
+    $kit = 'Kit avec espaces'
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $events.Add('confirm'); $true }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,confirm,prepare,paths,docker') 'Fresh PC setup must run before Docker opens'
+    $events.Clear()
+    $python = Initialize-SurvieRestoreRuntime $kit -Installed -Confirm { throw 'Do not ask to install dependencies after restoration' }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,docker') 'The installed launcher only needs local services'
+    $events.Clear()
+    $testState.Python = $false
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $events.Add('confirm'); $true }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,confirm,python,docker') 'Prepare only Python when Docker is ready'
+    $events.Clear()
+    $testState.Docker = ''
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $false }
+    Assert ($null -eq $python -and ($events -join ',') -eq 'paths') 'Cancel before changing Windows'
+    $events.Clear()
+    $testState.Code = 3010
+    $failed = $false
+    try { $null = Initialize-SurvieRestoreRuntime $kit -Confirm { $true } }
+    catch { $failed = $_.Exception.Message -like 'Redémarrez Windows*' }
+    Assert ($failed -and ($events -join ',') -eq 'paths,prepare') 'A required reboot must stop before the picker and Docker'
+}
 # Network selection and health checks are isolated from this PC's real network.
 & {
     . (Join-Path $root 'scripts\windows-common.ps1')

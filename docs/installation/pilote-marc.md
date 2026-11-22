@@ -284,6 +284,14 @@ réactiver l’IA après restauration. Voir le
 [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle)
 pour les prérequis hors ligne.
 
+Depuis la 0.106.0, le lanceur Windows peut préparer un PC neuf avant
+d’ouvrir la fenêtre de restauration. Il utilise le dossier
+`installateurs-windows` du kit pour compléter les outils manquants.
+Valider la demande dans la fenêtre. Si un redémarrage est demandé,
+laisser le SSD branché et rouvrir le même lanceur. Docker Desktop
+peut demander de terminer sa configuration ou d’accepter sa licence.
+Voir [la préparation Windows hors ligne](deux-etapes-windows.md).
+
 Sur une machine préparée avec Python et son interface Tkinter, ouvrir dans le
 dossier `app` du kit **Restaurer-Mes-Donnees-SetupSurvie.cmd** sous Windows ou
 **Restaurer-Mes-Donnees-SetupSurvie.desktop** sous Linux. La fenêtre demande de
