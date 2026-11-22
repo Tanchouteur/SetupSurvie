@@ -37,8 +37,14 @@ La copie du kit sur le volume limité de Louis garde tous ses contrôles de capa
 
 ## Dupliquer un kit public
 
-Depuis la 0.84.0, ouvrir un terminal sur un poste Linux ou Windows équipé
-de Python et utiliser le dossier du kit comme source. Par exemple, sur Linux :
+Depuis la 0.92.0, sur Windows équipé de Python avec Tcl/Tk, ouvrir
+**Dupliquer-Kit-SetupSurvie.cmd** dans le dossier **app** du kit. Choisir un
+dossier sur le second disque et confirmer. Une fenêtre suit la copie. Le
+nouveau kit apparaît dans **SetupSurvie-Kit** sous le dossier choisi. Il
+contient à son tour le lanceur.
+
+Les postes Linux ou Windows équipés de Python peuvent aussi utiliser la
+commande suivante. Exemple sur Linux.
 
 ```bash
 python3 scripts/pilot_kit.py duplicate /media/SSD-A/SetupSurvie /media/SSD-B/SetupSurvie

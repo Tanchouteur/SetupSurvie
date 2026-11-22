@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import tarfile
 
 from delivery_paths import destination, locked
 import kit_audit
@@ -39,7 +40,10 @@ def inventory(root):
         source = destination(root, name)
         if not source.is_file() or source.stat().st_size != item['bytes']:
             raise setup.SetupError('Fichier absent ou incomplet dans le kit : ' + name)
-    kit_audit.validate(root, catalog)
+    try:
+        kit_audit.validate(root, catalog)
+    except (tarfile.TarError, KeyError) as error:
+        raise setup.SetupError("Les dépendances du kit sont manquantes ou l’archive d’images est illisible.") from error
     tools = destination(root, windows_kit_installers.FOLDER)
     if tools.exists():
         installers = windows_kit_installers.items(root)
@@ -75,7 +79,11 @@ def windows_component_files(root):
     return result
 
 
-def duplicate(source, target):
+def console_report(message):
+    print(message, flush=True)
+
+
+def duplicate(source, target, *, report=console_report):
     source, target = setup.safe_path(source), setup.safe_path(target)
     if source.is_relative_to(target) or target.is_relative_to(source):
         raise setup.SetupError('Choisissez un dossier de destination extérieur au kit source.')
@@ -94,16 +102,16 @@ def duplicate(source, target):
                 raise setup.SetupError('Le dossier de destination est déjà utilisé. Choisissez un dossier vide.')
             durable.mkdir(target)
             setup.write_json(marker, identity)
-        copy_files(source, target, files)
+        copy_files(source, target, files, report)
         if destination(source, MARKER).exists() or destination(source, 'manifest.json').read_bytes() != manifest:
             raise setup.SetupError('Le kit source a changé pendant la duplication. Aucun kit publié.')
         durable.write_bytes(destination(target, 'manifest.json'), manifest)
         marker.unlink()
         durable.sync_directory(target)
-    print('Second kit vérifié. Vous pouvez éjecter le support.', flush=True)
+    report('Second kit vérifié. Vous pouvez éjecter le support.')
 
 
-def copy_files(source, target, files):
+def copy_files(source, target, files, report):
     missing = 0
     for item in files:
         path = destination(target, item['path'])
@@ -115,13 +123,13 @@ def copy_files(source, target, files):
     for number, item in enumerate(files, 1):
         origin, copy = destination(source, item['path']), destination(target, item['path'])
         if number == 1 or number == len(files) or number % 100 == 0:
-            print(f'Copie du kit : {number}/{len(files)} fichiers.', flush=True)
+            report(f'Copie du kit : {number}/{len(files)} fichiers.')
         info = origin.stat()
         record = {**item, 'mtime_ns': info.st_mtime_ns}
-        transfer.copy_file(origin, copy, record, file_progress(copy.name), expected_sha256=item['sha256'])
+        transfer.copy_file(origin, copy, record, file_progress(copy.name, report), expected_sha256=item['sha256'])
 
 
-def file_progress(name):
+def file_progress(name, report):
     last = 0
 
     def progress(phase, copied, total):
@@ -129,6 +137,6 @@ def file_progress(name):
         gib = copied // 1024**3
         if phase == 'Copie' and gib > last:
             last = gib
-            print(f'{name} : {copied * 100 // total} %', flush=True)
+            report(f'{name} : {copied * 100 // total} %')
 
     return progress
