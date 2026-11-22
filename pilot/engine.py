@@ -134,7 +134,7 @@ def document_request(history):
     if not plan.words:return None
     if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
-    if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
+    if re.search(r'\b(calculer|calcule|calculez|calcul|combien|convertir|convertis|convertissez|conversion|multiplier|multiplie)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
     if (research.synthesis(question) or illustrations.requested(question) or
         research.planning_request(raw) or library.retrieval.author_subject(topic) or
         re.search(r'\b(comment|how to)\b',raw)):return question,''
@@ -146,7 +146,16 @@ def document_request(history):
     # library first; otherwise a small model may answer from memory instead.
     if re.search(r'\b(quel|quelle|quels|quelles|que faire|qu est ce|pourquoi|faut il|peut on|est il|est elle|what|which|why)\b',raw):
         return question,''
-    return None
+    # Any other request with a subject consults the library first; otherwise a
+    # small model may answer from memory. Greetings and thanks are skipped.
+    if set(plan.words) <= CONVERSATIONAL or video_requests.requested(question):
+        return None
+    return question,''
+
+
+CONVERSATIONAL = frozenset({'bonjour','bonsoir','salut','coucou','hello','merci','beaucoup','super','parfait',
+                            'ok','okay','daccord','accord','revoir','bientot','bonne','journee','soiree','nuit',
+                            'thanks','thank','bye','oui','non','cool','top','genial'})
 
 
 def fit_context(messages,maximum=24000):

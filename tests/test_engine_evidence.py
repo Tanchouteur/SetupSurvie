@@ -114,7 +114,8 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(answer['sources'],[])
         self.assertEqual(assistant_metrics.read('j')['sources_read'],0)
 
-    def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_textual_tool_proposals_get_one_native_retry_then_explicit_failure(self,_automatic):
         proposal={'content':'{"name":"search_library","arguments":{"query":"notice"}}'}
         payloads,answer=self.run_chat([proposal,proposal],expected_status='incomplete')
         self.assertEqual(len(payloads),2);self.assertEqual(self.lookup_calls,[])
@@ -131,7 +132,8 @@ class EvidenceTests(unittest.TestCase):
         self.run_chat([{'content':'{"name":"calculate","arguments":{"expression":"2+2"}}'},{'content':''},{'content':''}],expected_status='incomplete')
         self.assertEqual(assistant_metrics.read('j')['failure'],'tool_protocol')
 
-    def test_malformed_native_arguments_return_a_tool_error_and_keep_conversation(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_malformed_native_arguments_return_a_tool_error_and_keep_conversation(self,_automatic):
         payloads,answer=self.run_chat([self.call('calculate','not JSON'),{'content':'Le calcul n’a pas abouti.'}])
         self.assertIn('error',json.loads(payloads[1]['messages'][-1]['content']))
         call=next(row for row in payloads[1]['messages'] if row.get('tool_calls'))['tool_calls'][0]
@@ -181,7 +183,8 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(len(payloads),1);self.assertEqual(answer['content'],'Réponse fictive conservée [1].')
         self.assertEqual(assistant_metrics.read('j')['procedure_review']['status'],'unavailable')
 
-    def test_read_metadata_replaces_search_metadata_and_only_read_citations_are_saved(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_read_metadata_replaces_search_metadata_and_only_read_citations_are_saved(self,_automatic):
         messages=[self.call('search_library',{'query':'notice'}),self.call('read_source',{'id':'guide:a'}),
                   {'content':'Le document indique 10 kg (2010, édition A) [1]. Citation non lue [2], inventée [99].'}]
         payloads,answer=self.run_chat([*messages,{'content':'{"citations":[]}'}],[{**self.a,'document_date':'2026'},self.b],expected_status='incomplete')
@@ -272,7 +275,8 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(answer['documentary']['consulted_sources'],[{'id':self.a['id'],'title':self.a['title']}])
         self.assertNotIn(self.a['id'],json.dumps(assistant_metrics.read('j')['documentary']))
 
-    def test_failed_read_is_saved_as_unread_without_becoming_a_citation(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_failed_read_is_saved_as_unread_without_becoming_a_citation(self,_automatic):
         def unavailable(identifier):raise HTTPException(404,'PRIVATE READ FAILURE')
         _,answer=self.run_chat([self.call('read_source',{'id':'guide:missing'}),{'content':'Texte fictif sans source lue.'}],read=unavailable)
         self.assertEqual(answer['documentary']['sources_read'],0);self.assertEqual(answer['documentary']['failed_reads'],1)
@@ -496,7 +500,8 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(part['text'].count('```math'),len(list(BLOCKS.finditer(part['text']))))
             self.assertNotIn(r'\frac',part['text'])
 
-    def test_explicit_read_continues_at_formula_boundary_with_original_offsets(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_explicit_read_continues_at_formula_boundary_with_original_offsets(self,_automatic):
         from pilot.math_text import marked,BLOCKS
         text=('Avant. '*497)+'\n'+marked(r'\frac{19}{7}')+' Après.'*300
         source={**self.a,'text':text}
@@ -541,11 +546,13 @@ class EvidenceTests(unittest.TestCase):
         self.assertLessEqual(measured['reading_packets'][0]['encoded_bytes'],measured['reading_packets'][0]['maximum_bytes'])
         self.assertEqual(len(saved['sources']),len(packet['results']))
 
-    def test_repeated_searches_are_cached_within_the_same_question(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_repeated_searches_are_cached_within_the_same_question(self,_automatic):
         self.run_chat([self.call('search_library',{'query':'notice'}),self.call('search_library',{'query':'notice'}),{'content':'Fin avec la source effectivement lue [1].'}],[self.a])
         self.assertEqual(len(self.lookup_calls),1)
 
-    def test_plain_equipment_question_reads_search_hit_before_the_model_can_stop(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_plain_equipment_question_reads_search_hit_before_the_model_can_stop(self,_automatic):
         with store.connect() as db:db.execute("UPDATE messages SET content='Le clavier du poste est bloqué ; peux-tu rechercher la procédure ?' WHERE conversation_id='c'")
         payloads,answer=self.run_chat([self.call('search_library',{'query':'verrouillage clavier'}),{'content':'La notice donne la procédure [1].'}],[self.a])
         tools=[m for m in payloads[-1]['messages'] if m['role']=='tool']
@@ -555,7 +562,8 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(answer['sources'][0]['id'],self.a['id'])
         self.assertEqual(answer['documentary']['sources_read'],1)
 
-    def test_a_complementary_search_reads_the_new_document_without_rereading_the_first(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_a_complementary_search_reads_the_new_document_without_rereading_the_first(self,_automatic):
         read=[]
         def source(identifier):read.append(identifier);return {self.a['id']:self.a,self.b['id']:self.b}[identifier]
         def lookup(query,*args,**kwargs):return [self.a] if query=='first' else [self.b]

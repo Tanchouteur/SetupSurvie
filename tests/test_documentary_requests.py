@@ -95,10 +95,11 @@ class DocumentaryRequestTests(unittest.TestCase):
     def test_factual_questions_search_the_library_before_answering(self):
         for question in ('Quelle est la posologie du paracétamol pour un adulte ?',
                          'Quelles règles de sécurité pour la chasse sous-marine en apnée ?',
-                         'Que faire en cas d’accident nucléaire ?', 'Pourquoi le pain lève-t-il ?'):
+                         'Que faire en cas d’accident nucléaire ?', 'Pourquoi le pain lève-t-il ?',
+                         'Tanner une peau ?', 'Réparer plutôt que jeter ?'):
             with self.subTest(question=question):
                 self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
-        for question in ('Bonjour', 'Merci beaucoup', 'Combien font deux plus deux ?'):
+        for question in ('Bonjour', 'Merci beaucoup', 'Bonne journée !', 'Combien font deux plus deux ?', 'Calcule 12 * 4'):
             self.assertIsNone(engine.document_request([{'role':'user','content':question}]))
 
     def test_numeric_answer_instructions_do_not_cancel_document_reading(self):
