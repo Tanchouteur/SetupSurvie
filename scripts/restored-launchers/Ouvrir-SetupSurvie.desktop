@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Ouvrir SetupSurvie
+Comment=Démarrer l’installation restaurée et ouvrir le site
+Exec=/bin/sh -c "exec /bin/sh \\"\\$(dirname \\"\\$1\\")/application/scripts/restaurer-donnees-linux.sh\\" --open \\"\\$(dirname \\"\\$1\\")\\"" sh %k
+Terminal=false
+Categories=Utility;

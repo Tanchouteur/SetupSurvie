@@ -271,6 +271,14 @@ utilise le processeur par défaut. Le moteur IA reste en pause sur les deux
 systèmes jusqu’à une action volontaire. Avant de retirer le SSD de secours,
 ouvrir un profil, un échange existant et un document personnel.
 
+À partir de la 0.97.0, le nouveau dossier de destination contient
+**Ouvrir-SetupSurvie.cmd** sous Windows ou **Ouvrir-SetupSurvie.desktop** sous
+Linux. Après un redémarrage du PC, ce lanceur démarre et vérifie les services
+locaux, puis ouvre le site. Laisser le dossier restauré à son emplacement.
+Le kit et la sauvegarde peuvent être retirés après la restauration terminée.
+Docker et Python doivent rester disponibles sur le PC. Sous Linux, le service
+Docker doit avoir démarré. Sous Windows, le lanceur peut démarrer Docker Desktop.
+
 Depuis la 0.96.0, en cas de coupure, rouvrir le lanceur, choisir la même
 sauvegarde et le même disque, puis accepter la reprise. Le journal
 `restauration.json` dans le dossier de destination identifie l’opération.

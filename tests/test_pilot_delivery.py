@@ -16,7 +16,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 from pilot_kit import checked_entries
 from pilot_kit import install
-from pilot_backup import backup,host_target,restore,restore_copy
+from pilot_backup import backup,host_target,restore,restore_copy,start_restored
 from delivery_paths import locked
 import index_locks
 from pilot import archive_index,collection_sort,retrieval
@@ -309,6 +309,47 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
                 self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'], 'complete')
                 with self.assertRaisesRegex(setup.SetupError, 'déjà terminée'):
                     restore(snapshot, kit, work, data, target=target, resume=True)
+
+    def test_restored_launcher_reopens_after_transport_is_removed(self):
+        target = host_target()
+        if target is None:
+            self.skipTest('Restauration portable disponible sous Windows et Linux')
+        snapshot, kit, _ = self.cross_system_fixture(self.root, target)
+        extension = {'linux': 'desktop', 'windows': 'cmd'}[target]
+        name = 'Ouvrir-SetupSurvie.'+extension
+        relative = 'app/scripts/restored-launchers/'+name
+        script = kit/relative
+        script.parent.mkdir(parents=True)
+        script.write_bytes((setup.ROOT/'scripts/restored-launchers'/name).read_bytes())
+        manifest = json.loads((kit/'manifest.json').read_text(encoding='utf-8'))
+        manifest['files'].append({'path': relative, 'bytes': script.stat().st_size, 'sha256': setup.file_hash(script)})
+        setup.write_json(kit/'manifest.json', manifest)
+        base = self.root/'target'
+        work, data = base/'private', base/'data'
+        with patch('kit_audit.validate'), patch('pilot_backup.portable_restore_preflight'), \
+             patch.object(setup.Installation, 'doctor'), patch.object(setup.Installation, 'import_images'), \
+             patch.object(setup.Installation, 'prepare'), patch.object(setup.Installation, 'up'), \
+             patch.object(setup.Installation, 'verify'):
+            restore(snapshot, kit, work, data, target=target)
+        self.assertEqual((base/name).read_bytes(), script.read_bytes())
+        if target == 'linux':
+            self.assertTrue((base/name).stat().st_mode & 0o100)
+        kit.rename(self.root/'kit-ejected')
+        snapshot.rename(self.root/'snapshot-ejected')
+        with patch.object(setup, 'ROOT', base/'application'), \
+             patch.object(setup.Installation, 'up') as up, patch.object(setup.Installation, 'verify') as verify:
+            start_restored(base)
+            config = setup.Installation(work).load()
+            up.assert_called_once_with(config)
+            verify.assert_called_once_with(config)
+            journal = json.loads((base/'restauration.json').read_text(encoding='utf-8'))
+            journal['phase'] = 'activating'
+            setup.write_json(base/'restauration.json', journal, private=True)
+            up.reset_mock()
+            with self.assertRaisesRegex(setup.SetupError, 'doit être terminée'):
+                start_restored(base)
+            up.assert_not_called()
+        self.assertTrue((work/'inference-paused.json').is_file())
 
     def test_restore_rejects_overlapping_targets_before_hashing_or_copying(self):
         with patch('pilot_kit.checked_entries') as entries:

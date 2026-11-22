@@ -9,7 +9,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import webbrowser
 
-from pilot_backup import RESTORE_JOURNAL, host_target, read_restore_job, restore, restore_inputs
+from pilot_backup import RESTORE_JOURNAL, host_target, read_restore_job, restore, restore_inputs, start_restored
 import setup
 
 
@@ -30,9 +30,14 @@ def find_pending(disk, inputs):
 
 
 def main():
-    kit = setup.safe_path(sys.argv[1])
     window = tk.Tk()
     window.withdraw()
+    if sys.argv[1] == '--open':
+        base = setup.safe_path(sys.argv[2])
+        show_operation(window, base, 'Démarrage de SetupSurvie…',
+                       lambda progress: start_restored(base, progress=progress))
+        return
+    kit = setup.safe_path(sys.argv[1])
     target = host_target()
     if target is None:
         messagebox.showerror(TITLE, 'Utilisez ce lanceur sur Linux ou Windows.', parent=window)
@@ -85,11 +90,21 @@ def main():
             window.destroy()
             return
 
-    window.title(TITLE)
+    def action(progress):
+        restore(snapshot, kit, destination/'private', destination/'data', target=target,
+                resume=resume, progress=progress)
+
+    show_operation(window, destination, 'Vérification de la sauvegarde…', action,
+                   restoring=True)
+
+
+def show_operation(window, destination, initial_status, action, *, restoring=False):
+    title = TITLE if restoring else 'Ouvrir SetupSurvie'
+    window.title(title)
     frame = ttk.Frame(window, padding=18)
     frame.pack(fill='both', expand=True)
     ttk.Label(frame, text=str(destination), wraplength=460).pack(anchor='w')
-    status = ttk.Label(frame, text='Vérification de la sauvegarde…', wraplength=460)
+    status = ttk.Label(frame, text=initial_status, wraplength=460)
     status.pack(anchor='w', pady=10)
     bar = ttk.Progressbar(frame, mode='indeterminate', length=460)
     bar.pack(fill='x')
@@ -97,10 +112,9 @@ def main():
     window.protocol('WM_DELETE_WINDOW', lambda: None)
     messages = queue.SimpleQueue()
 
-    def run_restore():
+    def run_operation():
         try:
-            restore(snapshot, kit, destination/'private', destination/'data', target=target, resume=resume,
-                    progress=lambda line: messages.put(('progress', line)))
+            action(lambda line: messages.put(('progress', line)))
         except (OSError, ValueError, KeyError, TypeError, tarfile.TarError, setup.SetupError) as error:
             messages.put(('error', str(error)))
         else:
@@ -113,14 +127,16 @@ def main():
                 status.configure(text=body)
                 continue
             if kind == 'error':
-                messagebox.showerror(TITLE, f'{body}\n\nPour reprendre, rouvrez le lanceur et choisissez la même sauvegarde et le même disque.', parent=window)
-            elif messagebox.askyesno(TITLE, 'Restauration terminée. Ouvrir SetupSurvie ?', parent=window):
+                if restoring:
+                    body += '\n\nPour reprendre, rouvrez le lanceur et choisissez la même sauvegarde et le même disque.'
+                messagebox.showerror(title, body, parent=window)
+            elif not restoring or messagebox.askyesno(title, 'Restauration terminée. Ouvrir SetupSurvie ?', parent=window):
                 webbrowser.open('http://127.0.0.1:8080')
             window.destroy()
             return
         window.after(150, poll)
 
-    threading.Thread(target=run_restore, daemon=True).start()
+    threading.Thread(target=run_operation, daemon=True).start()
     window.deiconify()
     window.after(150, poll)
     window.mainloop()
