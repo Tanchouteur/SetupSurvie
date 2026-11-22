@@ -387,6 +387,7 @@ def main():
     p=subs.add_parser('verify');p.add_argument('kit')
     p=subs.add_parser('duplicate');p.add_argument('kit');p.add_argument('destination')
     p=subs.add_parser('prepare-windows');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
+    p=subs.add_parser('prepare-linux');p.add_argument('kit');p.add_argument('--verify-only',action='store_true')
     p=subs.add_parser('refresh-app');p.add_argument('kit')
     p=subs.add_parser('refresh-library');p.add_argument('kit');p.add_argument('--data-dir',required=True)
     p=subs.add_parser('refresh-maps-lab');p.add_argument('kit');p.add_argument('--geography',action='append',default=[]);p.add_argument('--routing',action='store_true')
@@ -402,6 +403,9 @@ def main():
     elif args.action=='prepare-windows':
         import windows_kit_installers
         windows_kit_installers.prepare(args.kit, verify_only=args.verify_only)
+    elif args.action=='prepare-linux':
+        import linux_offline_tools
+        linux_offline_tools.prepare_kit(args.kit, verify_only=args.verify_only)
     elif args.action=='refresh-app':refresh_app(setup.safe_path(args.kit))
     elif args.action=='refresh-library':refresh_library(setup.safe_path(args.kit),setup.safe_path(args.data_dir))
     elif args.action=='refresh-maps-lab':
@@ -422,6 +426,9 @@ def main():
                 print(f'Vérification : {number}/{total} fichiers, {done/1e9:.2f} Go contrôlés',flush=True);last=time.monotonic()
         checked_entries(root,manifest,progress)
         print('Toutes les empreintes du kit sont conformes.');print(json.dumps(kit_audit.validate(root,manifest),ensure_ascii=False))
+        import linux_offline_tools
+        if (root/linux_offline_tools.KIT_FOLDER).exists():
+            linux_offline_tools.prepare_kit(root, verify_only=True)
     else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host,startup=args.startup,cpu=args.cpu)
 
 

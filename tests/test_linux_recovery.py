@@ -352,7 +352,7 @@ class LinuxRecoveryTests(unittest.TestCase):
             '--list) case "$*" in *--title="Entretien de SetupSurvie"*) printf "cancel-point\\n";; '
             '*--radiolist*) printf "autre\\n";; esac;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
-            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
+            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label=Installer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
             '*) exit 1;; esac;;\n'
             'esac\n')
         (scripts / 'pkexec').write_text(
@@ -370,6 +370,13 @@ class LinuxRecoveryTests(unittest.TestCase):
                          ['install', str(self.source), '/srv/Disque SSD/SetupSurvie', 'no'])
         self.assertEqual(result.with_suffix('.progress').read_text().splitlines(),
                          ['# Préparation de la copie de travail…', '100'])
+
+        subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'install-kit', self.source],
+                       check=True, timeout=10, env={**os.environ,
+                           'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[-3:-1], ['install-kit', str(self.source)])
+        self.assertTrue(arguments[-1].startswith('/srv/Disque SSD/SetupSurvie-Kit-'))
 
         subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'duplicate', self.source],
                        check=True, timeout=10, env={**os.environ,

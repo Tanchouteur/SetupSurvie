@@ -24,6 +24,15 @@ if [ "$mode" != open ] && [ ! -f "$base/manifest.json" ]; then
     show_error 'Ouvrez ce lanceur depuis le dossier app d’un kit SetupSurvie complet.'
     exit 1
 fi
+if [ "$mode" = install ] &&
+   { ! python3 -c 'import sys, tkinter; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1 ||
+     ! command -v docker >/dev/null 2>&1; }; then
+    if [ ! -f "$base/installateurs-linux/tools/linux-offline-installers/python-archive.txt" ]; then
+        show_error 'Le kit doit contenir le dossier installateurs-linux pour préparer ce PC. Consultez LISEZ-MOI.html.'
+        exit 1
+    fi
+    exec /bin/bash "$base/app/scripts/linux_recovery_gui.sh" install-kit "$base"
+fi
 if ! python3 -c 'import sys, tkinter; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
     show_error 'Cette fenêtre nécessite Python 3.11 ou ultérieur avec Tkinter. Utilisez un ordinateur équipé ou installez le paquet python3-tk de votre distribution.'
     exit 1

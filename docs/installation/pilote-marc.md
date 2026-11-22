@@ -119,6 +119,18 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
+Depuis la 0.100.0, le kit public peut aussi démarrer sur un PC Linux sans
+Python ni Docker. Préparer à l’avance
+[les installateurs du kit Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux).
+Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64, avec un bureau équipé de
+Zenity et PolicyKit, lancer le même fichier et choisir un dossier système
+sur le disque cible. L’autorisation administrateur se fait dans une
+fenêtre. Le lanceur installe ses outils et un moteur Docker dédié dans
+le dossier choisi. Les services locaux démarrent avec le système après
+installation. Le kit public crée une nouvelle installation. La
+[copie de secours Linux complète](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours)
+propose le point de restauration protégé.
+
 Depuis la 0.99.0, sur un PC Linux déjà préparé, ouvrir
 **Installer-Kit-SetupSurvie.desktop** dans le dossier `app` du SSD.
 Il faut Python avec Tkinter, Docker et Compose déjà disponibles. Choisir

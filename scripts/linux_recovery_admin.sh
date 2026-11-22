@@ -23,6 +23,12 @@ case "$action:$#" in
         [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
+    install-kit:3)
+        source_base=$(realpath -e -- "$2")
+        dest=$3
+        [[ -f "$source_base/manifest.json" && "$source_base/app/scripts" == "$script_dir" ]] ||
+            die 'Ouvrez le lanceur Linux depuis le dossier app du kit public.'
+        ;;
     duplicate:3)
         source_base=$(realpath -e -- "$2")
         dest=$3
@@ -46,10 +52,10 @@ for directory in "$parent" "$base"; do
         directory=$(dirname -- "$directory")
     done
 done
-if [[ ( "$action" == install || "$action" == duplicate ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
     die 'Choisissez une destination distincte du dossier de secours.'
 fi
-if [[ ( "$action" == install || "$action" == duplicate ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
     die 'Choisissez un disque différent du SSD de secours.'
 fi
 if [[ "$action" == duplicate ]]; then
@@ -63,6 +69,15 @@ if [[ "$action" == duplicate ]]; then
     /bin/bash "$application/scripts/installer-outils-linux-hors-ligne.sh" --python-seul "$source_base/data" "$scratch/outils"
     "$scratch/outils/bin/python3" "$application/scripts/linux_recovery.py" "$parent" duplicate "$source_base" "$base"
     exit
+fi
+if [[ "$action" == install-kit ]]; then
+    # Never change a pre-existing folder. The graphical entry chooses a new one.
+    mkdir -- "$base" || die 'Dossier de destination déjà utilisé.'
+    printf '%s\n' 'Installation des outils Linux depuis le SSD…'
+    /bin/bash "$script_dir/installer-outils-linux-hors-ligne.sh" "$source_base/installateurs-linux" "$base/outils-linux"
+    export PYTHONDONTWRITEBYTECODE=1
+    source "$base/outils-linux/environnement.sh"
+    exec "$base/outils-linux/bin/python3" "$script_dir/linux_public_kit.py" "$base" --kit "$source_base"
 fi
 recovery="$parent/.$(basename -- "$base")-secours"
 [[ ! -L "$recovery" ]] || die 'Dossier de secours invalide.'
