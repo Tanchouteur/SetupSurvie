@@ -25,6 +25,11 @@ lanceur Git, avec sauvegarde et récupération ; voir le
 
 ## Installer le kit hors ligne chez Marc
 
+Sur un kit public préparé avec la 0.98.0 ou ultérieure, ouvrir
+**LISEZ-MOI.html** à la racine du SSD. La notice s’ouvre dans un navigateur
+avant l’installation et indique quel lanceur utiliser pour installer,
+dupliquer ou restaurer. Elle reste disponible sur les copies du kit.
+
 Le [guide Marc](pilote-marc.md) est la référence : prérequis, vérification du kit,
 installation dans des dossiers vides, raccourcis, LAN, certificats et recette.
 Le kit contient les services, modèles et contenus sélectionnés ; vérifier son

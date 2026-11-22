@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Notice à la racine du kit public](2026-11-22-notice-kit-public.md) — 0.98.0, copie et contrôle de la notice, mode CPU Linux.
+
 - [Relance locale d’une installation restaurée](2026-11-22-relance-installation-restauree.md) — 0.97.0, support retiré en simulation.
 
 - [Reprise de restauration privée après interruption](2026-11-22-reprise-restauration-privee.md) — 0.96.0, arrêt brutal du processus pendant la copie puis pendant l’activation simulée.

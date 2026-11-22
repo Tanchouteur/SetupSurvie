@@ -119,6 +119,19 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
+Sur un PC Linux avec Python 3.11, Docker et Compose déjà installés, le kit
+public peut utiliser le processeur sans GPU NVIDIA depuis la 0.98.0. Depuis
+le dossier `app` du SSD, lancer la commande suivante. Choisir un autre
+emplacement si les dossiers sont déjà utilisés.
+
+```sh
+python3 scripts/pilot_kit.py install .. --target linux --cpu --data-dir "$HOME/SetupSurvie/data" --work-dir "$HOME/SetupSurvie/private"
+```
+
+Le lanceur graphique pour préparer un PC Linux depuis le SSD est dans la
+[copie de secours Linux complète](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+La notice **LISEZ-MOI.html** à la racine du kit public décrit les deux parcours.
+
 ## Accès sur le PC serveur
 
 - Portail : `http://localhost:8080`

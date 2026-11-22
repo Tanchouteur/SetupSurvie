@@ -15,6 +15,12 @@ La reconstruction complète sur une autre machine sans aucun téléchargement es
 protocole à réaliser, pas une fonction : voir le
 [disque de secours](../exploitation/disque-de-secours-hors-ligne.md) (13 novembre 2026).
 
+Depuis la 0.98.0, l’export et le rafraîchissement du kit ajoutent
+**LISEZ-MOI.html** à sa racine. La notice est contrôlée par le manifeste et
+conservée lors d’une duplication. Ouvrez-la directement dans un navigateur
+avant de remettre le SSD.
+
+
 ## Sous-commandes de `pilot_kit.py`
 
 | Commande | Rôle |

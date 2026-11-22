@@ -14,6 +14,9 @@ import setup
 from pilot import durable
 
 
+KIT_GUIDE = 'LISEZ-MOI.html'
+KIT_GUIDE_SOURCE = Path('docs/installation/lisez-moi-kit.html')
+
 KIT_APP_FILES = (
     'README.md', 'AGENTS.md', 'compose.yaml', 'compose.linux.yaml', 'compose.gpu.yaml',
     'Installer-SetupSurvie.cmd', 'Mettre-a-jour-SetupSurvie.cmd',
@@ -44,6 +47,23 @@ def checked_entries(root,manifest,progress=None):
         result.append((entry,path))
         if progress:progress(number,len(manifest['files']),entry['bytes'])
     return result
+
+
+def kit_guide(root, records):
+    from delivery_paths import destination
+    path = destination(root, KIT_GUIDE)
+    body = (setup.ROOT/KIT_GUIDE_SOURCE).read_bytes()
+    tracked = any(entry['path'] == KIT_GUIDE for entry in records)
+    if path.exists() and not tracked and (not path.is_file()
+            or path.stat().st_size != len(body) or path.read_bytes() != body):
+        raise setup.SetupError('Un fichier LISEZ-MOI.html déjà présent appartient à une autre copie.')
+    return path, body
+
+
+def publish_kit_guide(path, body, records):
+    durable.write_bytes(path, body)
+    records[:] = [entry for entry in records if entry['path'] != KIT_GUIDE]
+    records.append({'path': KIT_GUIDE, 'bytes': len(body), 'sha256': setup.file_hash(path)})
 
 
 def export_lab(destination,english=True):
@@ -128,6 +148,7 @@ def export_lab(destination,english=True):
             if path.is_file() and not path.is_symlink() and path.suffix in ('.whl','.json'):copy(path,'app/vendor/search-index/'+path.name)
     complete_youtube_caches(data)
     for source,relative in youtube_vendor(data):copy(source,relative)
+    publish_kit_guide(*kit_guide(dest, records), records)
     setup.write_json(dest/'manifest.json',{'schema':1,'kind':'SetupSurvie public pilot kit','files':records,
         'models':sorted({p['model'] for p in profiles}),'english_wikipedia':english,
         'notice':'Aucun compte, secret, historique ni certificat privé du PC source. Python, Docker Desktop, Ollama et pilote NVIDIA requis sur Windows.'})
@@ -135,9 +156,11 @@ def export_lab(destination,english=True):
     print('KIT PRÊT',dest,flush=True)
 
 
-def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
+def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True,cpu=False):
     import collection_tasks
     from pilot import collection_sort
+    if cpu and target != 'linux':
+        raise setup.SetupError('L’option --cpu du kit est réservée à Linux.')
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
     manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
     entries=checked_entries(root,manifest)
@@ -167,7 +190,7 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True):
         shutil.copymode(path,destination)
     setup.ROOT=application
     app=setup.Installation(work)
-    c=app.init(target,data,lan=bool(lan_address))
+    c=app.init(target,data,lan=bool(lan_address),cpu=cpu)
     c['app_dir']=application.as_posix();setup.write_json(app.settings_path,c,private=True)
     if lan_address:c['lan_host']=setup.lan_host(lan_address);setup.write_json(app.settings_path,c,private=True);app.render(c)
     for entry,path in payload:
@@ -231,6 +254,7 @@ def refresh_app(root):
     if (root/'kit-building.json').exists():raise setup.SetupError('Attendre la fin de l’export initial.')
     manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
     records=[entry for entry in manifest['files'] if not entry['path'].startswith('app/')]
+    guide = kit_guide(root, records)
     paths=[]
     for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
         paths.extend(p for p in (setup.ROOT/name).rglob('*') if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix!='.pyc')
@@ -263,6 +287,7 @@ def refresh_app(root):
             relative='app/vendor/youtube/'+source.relative_to(youtube).as_posix();dest=root/relative;dest.parent.mkdir(parents=True,exist_ok=True)
             if source.resolve()!=dest.resolve():shutil.copyfile(source,dest)
             records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
+    publish_kit_guide(*guide, records)
     manifest['files']=records;setup.write_json(root/'manifest.json',manifest)
     print('Application du kit mise à jour ; données lourdes conservées.')
 
@@ -322,6 +347,7 @@ def main():
     p=subs.add_parser('recover-maps');p.add_argument('kit')
     p=subs.add_parser('install');p.add_argument('kit');p.add_argument('--target',choices=['windows','linux'],required=True);p.add_argument('--data-dir',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--lan-host',type=setup.lan_host)
     p.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrer à l’ouverture de session ; --no-startup conserve les raccourcis manuels.')
+    p.add_argument('--cpu', action='store_true', help='Linux : utiliser le processeur, sans GPU NVIDIA.')
     args=parser.parse_args()
     if args.action=='export-lab':export_lab(args.destination,args.english_wikipedia)
     elif args.action=='duplicate':
@@ -350,7 +376,7 @@ def main():
                 print(f'Vérification : {number}/{total} fichiers, {done/1e9:.2f} Go contrôlés',flush=True);last=time.monotonic()
         checked_entries(root,manifest,progress)
         print('Toutes les empreintes du kit sont conformes.');print(json.dumps(kit_audit.validate(root,manifest),ensure_ascii=False))
-    else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host,startup=args.startup)
+    else:install(setup.safe_path(args.kit),args.target,args.data_dir,args.work_dir,args.lan_host,startup=args.startup,cpu=args.cpu)
 
 
 if __name__=='__main__':
