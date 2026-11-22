@@ -1,6 +1,6 @@
 # Reprise de l’installation du kit public Linux
 
-**Bilan daté — 22 novembre 2026, SetupSurvie 0.101.0.** La version mineure
+**Bilan daté — 22 novembre 2026, SetupSurvie 0.102.0.** La version mineure
 permet de poursuivre l’installation depuis le même kit et le même disque.
 Le lanceur choisit le dossier SetupSurvie-Kit et vérifie le journal avant
 d’y écrire.

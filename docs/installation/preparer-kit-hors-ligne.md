@@ -23,7 +23,7 @@ avant de remettre le SSD.
 
 ## Ajouter les installateurs Linux
 
-Depuis la 0.100.0, préparer les outils Linux sur un ordinateur connecté,
+Depuis la 0.101.0, préparer les outils Linux sur un ordinateur connecté,
 Windows ou Linux, avec le logiciel du kit à jour. Depuis le dossier `app`
 du kit, lancer la commande suivante sous Linux.
 

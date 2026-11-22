@@ -1,6 +1,6 @@
 # Préparation du kit sur un Linux sans Python ni Docker
 
-**Bilan daté — 22 novembre 2026, SetupSurvie 0.100.0.** Le kit public peut
+**Bilan daté — 22 novembre 2026, SetupSurvie 0.101.0.** Le kit public peut
 embarquer les outils Linux et en vérifier les empreintes. La duplication
 propage les installateurs et refuse une préparation incomplète. La version
 mineure raccorde ces outils au lanceur d’installation qui prévoit une
