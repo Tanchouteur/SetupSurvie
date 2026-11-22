@@ -100,7 +100,7 @@ def host_target():
     return {'win32': 'windows', 'linux': 'linux'}.get(sys.platform)
 
 
-def cross_system_settings(saved, target):
+def portable_settings(saved, target):
     saved['target'] = target
     saved['cpu'] = saved['target'] == 'linux'
     saved['bind'] = '127.0.0.1'
@@ -108,7 +108,7 @@ def cross_system_settings(saved, target):
         saved.pop(key, None)
 
 
-def validate_cross_system(report, kit, public, public_entries, source_target):
+def validate_portable_restore(report, kit, public, public_entries, source_target):
     from kit_audit import validate
     if source_target not in ('windows', 'linux'):
         raise setup.SetupError('Système de la sauvegarde inconnu.')
@@ -140,7 +140,7 @@ def check_portable_layout(files):
                 raise setup.SetupError('Conflit de noms entre le kit et la sauvegarde : '+path.as_posix())
 
 
-def cross_system_preflight(copies):
+def portable_restore_preflight(copies):
     # Sum space needed for all destinations on a shared filesystem. On Windows
     # st_dev is not reliable across drives, so use the nearest existing drive.
     volumes = {}
@@ -245,7 +245,7 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
     print('Sauvegarde privée créée :',dest)
 
 
-def restore(source,kit,work_dir,data_dir,*,target=None):
+def restore(source,kit,work_dir,data_dir,*,target=None,progress=None):
     from pilot_kit import checked_entries
     source=setup.safe_path(source);kit=setup.safe_path(kit);data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
     application=work.parent/'application'
@@ -263,21 +263,23 @@ def restore(source,kit,work_dir,data_dir,*,target=None):
     settings=next((path for entry,path in entries if entry['path']=='private/settings.json'),None)
     if settings is None:raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
     saved=json.loads(settings.read_text(encoding='utf-8'))
-    cross_system = target is not None and saved['target'] != target
+    portable = target is not None
     host = host_target()
     if target is None and host is not None and saved['target'] != host:
         raise setup.SetupError('Sauvegarde d’un autre système. Indiquez --target linux ou --target windows sur la machine cible.')
     if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
+    if progress:
+        progress('Vérification du kit hors ligne…')
     public=json.loads((kit/'manifest.json').read_text(encoding='utf-8'));public_entries=checked_entries(kit,public)
     versions = setup.VERSIONS
-    if cross_system:
-        versions = validate_cross_system(report, kit, public, public_entries, saved['target'])
+    if portable:
+        versions = validate_portable_restore(report, kit, public, public_entries, saved['target'])
         for entry, _ in entries:
             relative = entry['path']
             if relative.startswith('data/state/') and not relative.startswith(PRIVATE_DATA):
                 raise setup.SetupError('Données du système source inconnues : '+relative)
         entries = [(entry, path) for entry, path in entries if not entry['path'].startswith('data/state/caddy/')]
-        cross_system_settings(saved, target)
+        portable_settings(saved, target)
     saved['data_dir']=data.as_posix()
     saved['app_dir']=application.as_posix()
     saved['project']='survie-restored-'+secrets.token_hex(4)
@@ -296,7 +298,7 @@ def restore(source,kit,work_dir,data_dir,*,target=None):
             continue
         copies.append((entry, path, dest))
     private_destinations = {dest for _, _, dest in copies}
-    if cross_system:
+    if portable:
         data_paths = [dest.relative_to(data) for dest in private_destinations if dest.is_relative_to(data)]
         data_paths.extend(Path(entry['path']).relative_to('payload') for entry, _ in public_entries if entry['path'].startswith('payload/'))
         check_portable_layout(data_paths)
@@ -312,19 +314,21 @@ def restore(source,kit,work_dir,data_dir,*,target=None):
         else:
             continue
         copies.append((entry, path, dest))
-    if cross_system:
+    if portable:
         check_portable_layout([Path(entry['path']).relative_to('app') for entry, _, _ in copies if entry['path'].startswith('app/')])
-        cross_system_preflight([(dest, entry['bytes']) for entry, _, dest in copies])
+        portable_restore_preflight([(dest, entry['bytes']) for entry, _, dest in copies])
     durable.mkdir(application.parent)
     application.mkdir(exist_ok=False)
     durable.sync_directory(application.parent)
-    if cross_system:
+    if portable:
         durable.mkdir(work)
         work.chmod(0o700)
+    if progress:
+        progress('Copie dans le nouveau dossier…')
     for entry, path, dest in copies:
-        restore_copy(entry, path, dest, verify=cross_system)
-    if cross_system and not (work/'inference-paused.json').exists():
-        setup.write_json(work/'inference-paused.json', {'reason': 'cross_system_restore'}, private=True)
+        restore_copy(entry, path, dest, verify=portable)
+    if portable and not (work/'inference-paused.json').exists():
+        setup.write_json(work/'inference-paused.json', {'reason': 'portable_restore'}, private=True)
     for folder in (application,data,work):
         if folder.exists():durable.sync_tree(folder)
     previous_root, previous_versions = setup.ROOT, setup.VERSIONS
@@ -332,12 +336,14 @@ def restore(source,kit,work_dir,data_dir,*,target=None):
         setup.ROOT, setup.VERSIONS = application, versions
         app=setup.Installation(work);setup.write_json(app.settings_path,saved,private=True)
         app.init(saved['target'],data,cpu=saved['cpu'])
-        if cross_system:
+        if portable:
             app.doctor(saved)
+        if progress:
+            progress('Chargement des services hors ligne…')
         app.import_images(saved,kit/'images.tar');app.prepare(saved,True);app.up(saved);app.verify(saved)
     finally:
         setup.ROOT, setup.VERSIONS = previous_root, previous_versions
-    if cross_system:
+    if portable:
         print('Restauration vérifiée. Ouvrez http://127.0.0.1:8080 sur cet ordinateur. Le moteur IA reste en pause.')
     else:
         print('Restauration effectuée. Les mêmes ports sont utilisés : arrêter l’ancienne installation avant de démarrer celle-ci.')
@@ -347,7 +353,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('backup');p.add_argument('destination');p.add_argument('--work-dir',required=True)
     p=subs.add_parser('restore');p.add_argument('source');p.add_argument('--kit',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--data-dir',required=True)
-    p.add_argument('--target',choices=('linux','windows'),help='Système de cet ordinateur, obligatoire pour une restauration entre systèmes.')
+    p.add_argument('--target',choices=('linux','windows'),help='Adapter la restauration au système de cet ordinateur (kit de même version requis).')
     args=parser.parse_args()
     if args.action=='backup':
         app=setup.Installation(args.work_dir);c=app.load();app.render(c);backup(app,c,args.destination)

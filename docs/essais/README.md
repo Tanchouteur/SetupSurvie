@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Lanceur de restauration des données personnelles](2026-11-22-lanceur-restauration.md) — 0.95.0, parcours graphique et copie simulés.
+
 - [Restauration des données personnelles entre Windows et Linux](2026-11-22-restauration-intersystemes.md) — 0.94.0, copie et garde-fous vérifiés avec des services simulés.
 
 ## 21 novembre 2026

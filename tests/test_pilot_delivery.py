@@ -130,9 +130,9 @@ class DeliveryTests(unittest.TestCase):
         return snapshot, kit, config
 
     def test_restore_between_systems_recreates_host_settings_and_preserves_private_files(self):
-        for source, target in [('windows', 'linux'), ('linux', 'windows')]:
+        for source, target in [('windows', 'linux'), ('linux', 'windows'), ('linux', 'linux'), ('windows', 'windows')]:
             with self.subTest(source=source, target=target):
-                root = self.root/target
+                root = self.root/f'{source}-{target}'
                 snapshot, kit, config = self.cross_system_fixture(root, source)
                 original_files = {path.relative_to(snapshot): setup.file_hash(path)
                                   for path in snapshot.rglob('*') if path.is_file()}
@@ -221,7 +221,7 @@ class DeliveryTests(unittest.TestCase):
                 destination.write_bytes(b'X'*destination.stat().st_size)
 
         with patch('pilot_backup.host_target', return_value='linux'), patch('kit_audit.validate'), \
-             patch('pilot_backup.cross_system_preflight'), patch.object(shutil, 'copyfile', side_effect=faulty_copy), \
+             patch('pilot_backup.portable_restore_preflight'), patch.object(shutil, 'copyfile', side_effect=faulty_copy), \
              patch.object(setup.Installation, 'up') as up:
             with self.assertRaisesRegex(setup.SetupError, 'Copie non conforme'):
                 restore(snapshot, kit, work, data, target='linux')
