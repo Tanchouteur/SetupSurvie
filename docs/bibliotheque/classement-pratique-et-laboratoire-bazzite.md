@@ -540,3 +540,41 @@ Victron passe en tête pour l’entretien d’un moteur de bateau. Les pages MSF
 visées restent absentes, car la page où les deux termes sont proches (page
 23 pour le paracétamol) n’arrive pas parmi les candidats retenus. La
 sélection des pages candidates d’un même PDF est la prochaine piste.
+
+### Guides pratiques, nouveaux guides et questions naturelles — 0.100.0, 22 novembre 2026
+
+Trois causes expliquaient la plupart des réponses perdues. Les pages des
+guides PDF étaient classées une à une par mots-clés : 924 pages du guide MSF
+des médicaments, le guide SGDSN et d’autres étaient rangés en Savoirs et
+culture et absents d’Autonomie. Depuis la 0.100.0, un guide d’éditeur
+pratique (MSF, OMS, SGDSN, INRS, ADEME, ANSES, FFESSM, ministères…) reste
+toujours cherchable en Autonomie. Les mots « chez », « sont » et « cas » sont
+ignorés. Enfin, quand le titre d’un guide porte un mot-sujet de la question
+(hors mots génériques comme « sécurité » ou « règles »), deux tiers des notions
+de la question suffisent, ce qui permet à l’assistant de chercher avec une
+phrase complète.
+
+18 guides officiels en français sont ajoutés au catalogue pour les thèmes de
+Marc sans résultat : armes (préfecture de la Gironde, DGA), réparation et
+compost (ADEME), stockage des produits inflammables (INRS), champignons et
+cueillette (ministère de la Santé, ANSES), chasse sous-marine (FFESSM,
+ministère de la Mer), élevage (Polynésie française, FAO, ITAVI), punaises de
+lit (ANSES), comptabilité associative (DJEPVA), pêche en Méditerranée (DIRM).
+Leurs conditions de réutilisation ne sont pas précisées : ils sont marqués à
+vérifier avant diffusion commerciale. Aucune source fiable n’a été trouvée
+pour le stockage domestique des carburants, les rongeurs, la pêche en rivière
+et les chèvres.
+
+Banc du labo, 205 archives, 136 requêtes, réglage livré : 87 requêtes avec
+résultat en 0.99.1, 94 avec le rôle des guides pratiques, 99 avec les
+nouveaux guides, 105 avec l’ancrage par le titre. Assistant `gemma4:e4b`
+sur la RTX 2060 du labo, 10 questions : il cite les bons guides pour l’eau
+potable, l’arme, les champignons, les punaises, les poules, le compost et la
+crevaison. Le paracétamol, trouvé lors d’un essai, ne l’est pas au suivant ;
+la chasse sous-marine reste incomplète. Ces essais ne valident pas la
+justesse médicale ou réglementaire des réponses.
+
+Kiwix dépassait 10 Go de mémoire pendant les recherches sur les 205
+archives. Le lanceur limite désormais les archives et moteurs de recherche
+gardés ouverts (16, 8 et 8) : pic de 6,0 Go sur les 136 requêtes, sans
+redémarrage ni perte de résultat, et 90 % des requêtes sous 3,3 s.
