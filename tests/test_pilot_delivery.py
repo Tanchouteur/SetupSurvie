@@ -1,5 +1,7 @@
 from collections import namedtuple
+from contextlib import closing
 import shutil
+import sqlite3
 import importlib.util
 import json
 import os
@@ -81,12 +83,151 @@ class DeliveryTests(unittest.TestCase):
         read_text=Path.read_text
         def windows_read(path,encoding=None,errors=None):
             return read_text(path,encoding=encoding or 'cp1252',errors=errors)
-        with patch.object(Path,'read_text',windows_read),patch.object(setup,'ROOT',setup.ROOT),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'up') as up:
+        with patch('pilot_backup.host_target',return_value='linux'),patch.object(Path,'read_text',windows_read),patch.object(setup,'ROOT',setup.ROOT),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'up') as up:
             restore(dest,kit,work,data)
         self.assertEqual(json.loads((work/'settings.json').read_text(encoding='utf-8'))['fixture_label'],'Réglages de Marc')
         self.assertEqual((work/'inference-paused.json').read_text(),'{"reason":"gaming"}')
         self.assertEqual((data/'catalog/downloaded-content.json').read_text(),receipt.read_text())
         self.assertTrue(up.called)
+
+    def cross_system_fixture(self, root, source_target):
+        app = setup.Installation(root/'source/private')
+        config = app.init(source_target, root/'source/data', cpu=source_target == 'linux')
+        config.update(lan_host='192.168.1.9', bind='0.0.0.0', docker_rootless=True,
+                      routing_image={'id': 'obsolete'}, local_images={'portal': {}},
+                      app_dir=str(setup.ROOT))
+        setup.write_json(app.settings_path, config, private=True)
+        data = Path(config['data_dir'])
+        with closing(sqlite3.connect(data/'state/pilot/conversations.sqlite3')) as db:
+            db.execute('CREATE TABLE conversation (id TEXT PRIMARY KEY, titre TEXT)')
+            db.execute('INSERT INTO conversation VALUES (?, ?)', ('profil-fixe', 'Échange de test'))
+            db.commit()
+        paths = {
+            'state/caddy/host.crt': b'ancien certificat',
+            'library/guides/guide.fr.md': b'guide personnel',
+        }
+        for name, body in paths.items():
+            path = data/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+        snapshot = root/'snapshot'
+        with patch.object(app,'compose'):
+            backup(app, config, snapshot)
+        kit = root/'kit'
+        files = {
+            'app/deploy/release.json': (setup.ROOT/'deploy/release.json').read_bytes(),
+            'app/deploy/versions.json': (setup.ROOT/'deploy/versions.json').read_bytes(),
+            'payload/library/guides/guide.fr.md': b'guide public',
+            'payload/library/guides/kit.fr.md': b'autre guide public',
+        }
+        records = []
+        for name, body in files.items():
+            path = kit/name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(body)
+            records.append({'path': name, 'bytes': len(body), 'sha256': setup.file_hash(path)})
+        setup.write_json(kit/'manifest.json', {'files': records})
+        return snapshot, kit, config
+
+    def test_restore_between_systems_recreates_host_settings_and_preserves_private_files(self):
+        for source, target in [('windows', 'linux'), ('linux', 'windows')]:
+            with self.subTest(source=source, target=target):
+                root = self.root/target
+                snapshot, kit, config = self.cross_system_fixture(root, source)
+                original_files = {path.relative_to(snapshot): setup.file_hash(path)
+                                  for path in snapshot.rglob('*') if path.is_file()}
+                work, data = root/'target/private', root/'target/data'
+                with patch('pilot_backup.host_target', return_value=target), patch('kit_audit.validate') as audit, \
+                     patch('pilot_backup.socket.socket') as socket, patch.object(setup,'run',return_value='linux'), \
+                     patch.object(setup.Installation, 'doctor') as doctor, \
+                     patch.object(setup.Installation, 'import_images') as images, \
+                     patch.object(setup.Installation, 'prepare') as prepare, \
+                     patch.object(setup.Installation, 'up'), patch.object(setup.Installation, 'verify'):
+                    socket.return_value.__enter__.return_value.connect_ex.return_value = 1
+                    restore(snapshot, kit, work, data, target=target)
+                audit.assert_called_once()
+                doctor.assert_called_once()
+                self.assertEqual(images.call_args.args[1], kit/'images.tar')
+                self.assertIs(prepare.call_args.args[1], True)
+                settings = json.loads((work/'settings.json').read_text(encoding='utf-8'))
+                self.assertEqual((settings['target'], settings['cpu']), (target, target == 'linux'))
+                self.assertEqual(settings['secret'], config['secret'])
+                self.assertEqual(settings['bind'], '127.0.0.1')
+                self.assertEqual(settings['app_dir'], (root/'target/application').as_posix())
+                self.assertNotEqual(settings['project'], config['project'])
+                self.assertFalse({'lan_host', 'docker_rootless', 'local_images', 'routing_image'} & settings.keys())
+                self.assertTrue((work/'inference-paused.json').is_file())
+                self.assertFalse((data/'state/caddy/host.crt').exists())
+                self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+                self.assertEqual((data/'library/guides/kit.fr.md').read_bytes(), b'autre guide public')
+                with closing(sqlite3.connect(data/'state/pilot/conversations.sqlite3')) as db:
+                    self.assertEqual(db.execute('SELECT * FROM conversation').fetchall(),
+                                     [('profil-fixe', 'Échange de test')])
+                self.assertEqual({path.relative_to(snapshot): setup.file_hash(path)
+                                  for path in snapshot.rglob('*') if path.is_file()}, original_files)
+
+    def test_cross_system_restore_checks_version_host_and_space_before_writing(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        work, data = self.root/'target/private', self.root/'target/data'
+        report_path = snapshot/'backup.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        self.assertEqual(report['installation']['version'], json.loads((kit/'app/deploy/release.json').read_text())['version'])
+        with patch('pilot_backup.host_target', return_value='linux'), patch('kit_audit.validate'):
+            with self.assertRaisesRegex(setup.SetupError, 'système demandé'):
+                restore(snapshot, kit, work, data, target='windows')
+            with self.assertRaisesRegex(setup.SetupError, 'autre système'):
+                restore(snapshot, kit, work, data)
+            with patch.object(shutil, 'disk_usage', return_value=namedtuple('Usage', 'total used free')(1, 1, 0)):
+                with self.assertRaisesRegex(setup.SetupError, 'Espace insuffisant'):
+                    restore(snapshot, kit, work, data, target='linux')
+            report['installation']['open_webui'] = 'ancienne version'
+            setup.write_json(report_path, report, private=True)
+            with self.assertRaisesRegex(setup.SetupError, 'Kit incompatible'):
+                restore(snapshot, kit, work, data, target='linux')
+            del report['installation']
+            setup.write_json(report_path, report, private=True)
+            with self.assertRaisesRegex(setup.SetupError, 'Version de sauvegarde inconnue'):
+                restore(snapshot, kit, work, data, target='linux')
+        self.assertFalse(work.parent.exists())
+
+    def test_cross_system_restore_rejects_case_conflict_between_kit_and_snapshot(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'linux')
+        report_path = kit/'manifest.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        entry = next(e for e in report['files'] if e['path'].endswith('/guide.fr.md'))
+        new_name = entry['path'].replace('/guides/', '/Guides/')
+        path = kit/new_name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            (kit/entry['path']).rename(path)
+        entry['path'] = new_name
+        # Drop the other kit guide for this case so the conflict spans the two inputs.
+        report['files'] = [record for record in report['files'] if not record['path'].endswith('/kit.fr.md')]
+        setup.write_json(report_path, report)
+        work, data = self.root/'target/private', self.root/'target/data'
+        with patch('pilot_backup.host_target', return_value='windows'), patch('kit_audit.validate'):
+            with self.assertRaisesRegex(setup.SetupError, 'Conflit de noms'):
+                restore(snapshot, kit, work, data, target='windows')
+        self.assertFalse(work.parent.exists())
+
+    def test_cross_system_restore_refuses_a_bad_destination_copy_before_activation(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        work, data = self.root/'target/private', self.root/'target/data'
+        copyfile = shutil.copyfile
+
+        def faulty_copy(source, destination):
+            copyfile(source, destination)
+            if destination.name == 'guide.fr.md':
+                destination.write_bytes(b'X'*destination.stat().st_size)
+
+        with patch('pilot_backup.host_target', return_value='linux'), patch('kit_audit.validate'), \
+             patch('pilot_backup.cross_system_preflight'), patch.object(shutil, 'copyfile', side_effect=faulty_copy), \
+             patch.object(setup.Installation, 'up') as up:
+            with self.assertRaisesRegex(setup.SetupError, 'Copie non conforme'):
+                restore(snapshot, kit, work, data, target='linux')
+        up.assert_not_called()
+        self.assertFalse((work/'settings.json').exists())
+        self.assertEqual((snapshot/'data/library/guides/guide.fr.md').read_bytes(), b'guide personnel')
 
     def test_restore_rejects_overlapping_targets_before_hashing_or_copying(self):
         with patch('pilot_kit.checked_entries') as entries:
@@ -133,7 +274,7 @@ class DeliveryTests(unittest.TestCase):
         kit=self.root/'kit';script=kit/'app/scripts/setup.py';script.parent.mkdir(parents=True);script.write_bytes(b'# fixture')
         setup.write_json(kit/'manifest.json',{'files':[{'path':'app/scripts/setup.py','bytes':script.stat().st_size,'sha256':setup.file_hash(script)}]})
         work=self.root/'restored/private';data=self.root/'restored/data'
-        with patch.object(setup,'ROOT',setup.ROOT),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'):
+        with patch('pilot_backup.host_target',return_value='linux'),patch.object(setup,'ROOT',setup.ROOT),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'):
             restore(snapshot,kit,work,data)
         restored=data/'state/pilot/archive-index'
         found=archive_index.search(restored,retrieval.plan('crevaison',['crevaison'],{}))

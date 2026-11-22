@@ -30,6 +30,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
 
+## 22 novembre 2026
+
+- [Restauration des données personnelles entre Windows et Linux](2026-11-22-restauration-intersystemes.md) — 0.94.0, copie et garde-fous vérifiés avec des services simulés.
+
 ## 21 novembre 2026
 
 - [Index de classement compressé](2026-11-21-index-compresse.md) — 0.88.0 ; quatre variantes comparées chez Marc sur 272 recherches réelles, conversion vérifiée sur trois index réels.
