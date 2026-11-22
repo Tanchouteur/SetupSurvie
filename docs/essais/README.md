@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Duplication du kit sur Windows sans Python](2026-11-22-duplication-windows-sans-python.md) — 0.104.0, contrôles des fichiers locaux et lancement simulé.
+
 - [Point protégé lors de l’installation du kit public Linux](2026-11-22-point-kit-public-linux.md) — 0.103.0, raccordement à l’entretien Linux et reprise simulée.
 
 - [Reprise de l’installation du kit public Linux](2026-11-22-reprise-installation-kit-linux.md) — 0.102.0, fichiers partiels et activation interrompue.

@@ -10,6 +10,49 @@ foreach ($path in @((Join-Path $root 'scripts'), $PSScriptRoot)) {
 }
 . (Join-Path $root 'scripts\prepare-windows.ps1') -Check -CacheDir (Join-Path $env:TEMP ('survie-mock-' + [guid]::NewGuid()))
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
+# The duplication button can install just Python from a verified local kit.
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    $fixture = Join-Path ([IO.Path]::GetTempPath()) ('survie-dupliquer-python-' + [guid]::NewGuid())
+    $null = New-Item -ItemType Directory -Path (Join-Path $fixture 'app/deploy'), (Join-Path $fixture 'installateurs-windows') -Force
+    $file = 'python-3.13.17-amd64.exe'
+    $installer = Join-Path $fixture "installateurs-windows/$file"
+    $catalog = Join-Path $fixture 'app/deploy/windows-installers.json'
+    $manifest = Join-Path $fixture 'manifest.json'
+    $launches = [Collections.Generic.List[object]]::new()
+    function Start-Process { param($FilePath, $ArgumentList, [switch]$Wait, [switch]$PassThru)
+        $launches.Add(@{Path=$FilePath; Arguments=$ArgumentList})
+        return @{ExitCode=0}
+    }
+    function Update-SurviePath {}
+    function Find-SurviePython { param([switch]$RequireTk)
+        if ($RequireTk) { return @{Path='python.exe'; Prefix=@()} }
+    }
+    function Invoke-WebRequest { throw 'La duplication hors ligne ne doit pas télécharger.' }
+    try {
+        [IO.File]::WriteAllText($installer, 'verified test installer')
+        @{schema=1; installers=@(@{id='python'; file=$file; sha256=(Get-FileHash -LiteralPath $installer).Hash})} |
+            ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $catalog -Encoding UTF8
+        @{schema=1; kind='SetupSurvie public pilot kit'; files=@(@{
+            path='app/deploy/windows-installers.json'; bytes=(Get-Item -LiteralPath $catalog).Length
+            sha256=(Get-FileHash -LiteralPath $catalog).Hash
+        })} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifest -Encoding UTF8
+        $python = Install-SurvieKitPython $fixture
+        Assert ($python.Path -eq 'python.exe') 'Return a Python with Tk'
+        Assert ($launches.Count -eq 1 -and $launches[0].Path -eq $installer) 'Only the local Python installer may launch'
+        Assert ('Include_tcltk=1' -in $launches[0].Arguments -and 'InstallAllUsers=0' -in $launches[0].Arguments) 'Python must include Tk and install for the current user'
+        [IO.File]::WriteAllText($installer, 'corrupt test installer!')
+        $failed = $false
+        try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Installateur incomplet ou modifié*' }
+        Assert ($failed -and $launches.Count -eq 1) 'Refuse a modified installer before running it'
+        [IO.File]::AppendAllText($catalog, ' ')
+        $failed = $false
+        try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Catalogue Python incomplet*' }
+        Assert ($failed -and $launches.Count -eq 1) 'Refuse a modified catalog before running it'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
 # Network selection and health checks are isolated from this PC's real network.
 & {
     . (Join-Path $root 'scripts\windows-common.ps1')
