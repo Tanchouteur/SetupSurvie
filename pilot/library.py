@@ -303,7 +303,7 @@ def _index_guides(check):
 
 STOPWORDS=set('a au aux avec ce ces cette dans de des du elle en est et eux faire fais fait for from how il ils je la le les leur lui ma mais me mes moi mon nous of on or ou par pas pour qu que quel quelle qui sa se ses si sois sort sortir sous sur ta te tes the this to toi ton un une vos votre vous what quel quels quelles comment document documents guide guides efficacement peux peut voudrais veux donne donnez montre'.split())
 SYNONYMS={'toit':['toit','toiture','roof','roofing'],'toiture':['toiture','toit','roof'],'abri':['abri','abris','shelter'],'bache':['bache','tarpaulin','sheeting'],'eau':['eau','water'],'potable':['potable','drinking'],'apprendre':['apprendre','learning'],'enfant':['enfant','enfants','children'],'maths':['maths','mathematiques','mathematics']}
-STOPWORDS.update('comment pourquoi trouver rechercher recherche cherche expliquer explique informations information sujet concernant utiliser utilise voudrais besoin besoin les leurs pouvez pourrait pouvez avoir quand contient contient moi documenter faire preparer correctement sujet bon bonne'.split())
+STOPWORDS.update('chez comment pourquoi trouver rechercher recherche cherche expliquer explique informations information sujet concernant utiliser utilise voudrais besoin besoin les leurs pouvez pourrait pouvez avoir quand contient contient moi documenter faire preparer correctement sujet bon bonne'.split())
 SYNONYMS.update({
     'semences':['semences','graines','seeds'],'graines':['graines','semences','seeds'],
     'stocker':['stocker','stockage','storage','storing'],'conservation':['conservation','preservation','storage'],

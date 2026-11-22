@@ -432,6 +432,9 @@ PRACTICAL_PUBLISHERS = frozenset({
     'ministere de l interieur securite civile sgdsn', 'croix rouge francaise ifrc',
     'oms war trauma foundation world vision', 'usda nchfp university of georgia',
     'victron energy', 'fao', 'anfr', 'baofeng radioddity',
+    'ademe', 'anses', 'direction generale de l armement', 'dirm mediterranee', 'djepva', 'ffessm',
+    'gouvernement de la polynesie francaise dag', 'itavi ministere de l agriculture', 'ministere de la mer',
+    'ministere de la sante dgs', 'prefecture de la gironde',
 })
 
 
@@ -466,9 +469,15 @@ CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})
 
 
 def application_domains(item, indexed=None):
-    if source_role(item) in CULTURE_SOURCE_ROLES:
+    role = source_role(item)
+    if role in CULTURE_SOURCE_ROLES:
         return ['culture']
-    return domains(item) if indexed is None else indexed
+    found = domains(item) if indexed is None else indexed
+    # Pages of a practical guide (MSF, OMS, SGDSN…) stay searchable in Autonomie,
+    # whatever words a single page happens to contain.
+    if role == 'practical' and 'resilience' not in found:
+        return ['resilience', *found]
+    return found
 
 
 def ifixit_edition(book):
