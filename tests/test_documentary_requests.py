@@ -92,6 +92,15 @@ class DocumentaryRequestTests(unittest.TestCase):
         plan=self.plan(question);self.assertNotIn('comme',plan.words)
         group=next(group for group in plan.groups if 'frottement' in group);self.assertIn('friction',group)
 
+    def test_factual_questions_search_the_library_before_answering(self):
+        for question in ('Quelle est la posologie du paracétamol pour un adulte ?',
+                         'Quelles règles de sécurité pour la chasse sous-marine en apnée ?',
+                         'Que faire en cas d’accident nucléaire ?', 'Pourquoi le pain lève-t-il ?'):
+            with self.subTest(question=question):
+                self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
+        for question in ('Bonjour', 'Merci beaucoup', 'Combien font deux plus deux ?'):
+            self.assertIsNone(engine.document_request([{'role':'user','content':question}]))
+
     def test_numeric_answer_instructions_do_not_cancel_document_reading(self):
         for question in (
             'À partir des documents locaux, quelle longueur théorique faut-il pour un brin quart d’onde à 145 MHz ? Distingue le calcul théorique d’une dimension de fabrication.',

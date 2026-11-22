@@ -142,6 +142,10 @@ def document_request(history):
     if plan.practical and plan.action:return question,''
     if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
         return question,''
+    # Factual questions (which dose, which rules, what to do…) also deserve the
+    # library first; otherwise a small model may answer from memory instead.
+    if re.search(r'\b(quel|quelle|quels|quelles|que faire|qu est ce|pourquoi|faut il|peut on|est il|est elle|what|which|why)\b',raw):
+        return question,''
     return None
 
 

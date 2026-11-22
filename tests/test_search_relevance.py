@@ -195,7 +195,7 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     def test_practical_guide_pages_stay_in_autonomie_whatever_the_page_words(self):
         page = {'id': 'guide:msf.fr.pdf#page=251', 'title': 'Médicaments essentiels — page 251',
                 'provenance': 'MSF — https://example.invalid — édition 2026', '_text': 'Paracétamol. Histoire et sciences.'}
-        self.assertIn('resilience', retrieval.application_domains(page, ['culture']))
+        self.assertEqual(retrieval.application_domains(page, ['culture']), ['resilience'])
         unknown = {**page, 'provenance': 'Éditeur inconnu — https://example.invalid'}
         self.assertEqual(retrieval.application_domains(unknown, ['culture']), ['culture'])
         self.assertNotIn('chez', library.search_terms("soigner une diarrhée chez l'enfant"))

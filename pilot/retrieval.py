@@ -483,10 +483,10 @@ def application_domains(item, indexed=None):
     if role in CULTURE_SOURCE_ROLES:
         return ['culture']
     found = domains(item) if indexed is None else indexed
-    # Pages of a practical guide (MSF, OMS, SGDSN…) stay searchable in Autonomie,
-    # whatever words a single page happens to contain.
-    if role == 'practical' and 'resilience' not in found:
-        return ['resilience', *found]
+    # Pages of a practical guide (MSF, OMS, SGDSN…) belong to Autonomie, whatever
+    # words a single page happens to contain (« histoire », « échec du traitement »…).
+    if role == 'practical':
+        return ['resilience']
     return found
 
 
