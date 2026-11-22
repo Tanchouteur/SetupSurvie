@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Portable pilot kit: public content and model files, never personal accounts."""
 import argparse
+from contextlib import nullcontext
+import hashlib
 import json
 import os
 import re
@@ -14,6 +16,8 @@ import setup
 from pilot import durable
 
 
+KIT_INSTALL_JOURNAL = 'installation-kit.json'
+KIT_INSTALL_FOLDER = 'SetupSurvie-Kit'
 KIT_GUIDE = 'LISEZ-MOI.html'
 KIT_GUIDE_SOURCE = Path('docs/installation/lisez-moi-kit.html')
 
@@ -157,6 +161,18 @@ def export_lab(destination,english=True):
     print('KIT PRÊT',dest,flush=True)
 
 
+def install_job(path):
+    if path.is_symlink():
+        raise setup.SetupError('Lien de journal du kit refusé.')
+    if not path.exists():
+        return None
+    job = json.loads(path.read_text(encoding='utf-8'))
+    if (not isinstance(job, dict) or job.get('schema') != 1
+            or job.get('phase') not in ('copying', 'activating', 'complete')):
+        raise setup.SetupError('Journal d’installation du kit non reconnu.')
+    return job
+
+
 def start_installed(base, *, progress=None):
     from delivery_paths import destination, locked
     app_dir = destination(base, 'application')
@@ -164,6 +180,9 @@ def start_installed(base, *, progress=None):
         raise setup.SetupError('Ouvrez le lanceur du dossier installé.')
     work = destination(base, 'private')
     with locked(destination(base, '.demarrage-kit.lock')):
+        job = install_job(destination(base, KIT_INSTALL_JOURNAL))
+        if job and job['phase'] != 'complete':
+            raise setup.SetupError('Relancez l’installation depuis le SSD pour la terminer.')
         destination(work, 'settings.json')
         app = setup.Installation(work)
         config = app.load()
@@ -178,14 +197,41 @@ def start_installed(base, *, progress=None):
         app.verify(config)
 
 
+def check_empty_installation(application, work, data):
+    if application.exists():
+        raise setup.SetupError('Le dossier application existe déjà.')
+    if any(path.exists() and (not path.is_dir() or any(path.iterdir())) for path in (data, work)):
+        raise setup.SetupError('Installation du kit réservée à des dossiers de données et réglages vides.')
+
+
+def copy_target(entry, target, application, data):
+    from delivery_paths import destination
+    root = application if entry['path'].startswith('app/') else data
+    return destination(root, target.relative_to(root).as_posix())
+
+
+def copy_kit_file(entry, source, target, application, data, *, verify, resume):
+    from pilot_backup import restore_copy, verified_copy
+    if verify:
+        copy_target(entry, target, application, data)
+    if resume:
+        if verified_copy(entry, target):
+            return
+        if target.exists():
+            target.unlink()
+    restore_copy(entry, source, target, verify=verify)
+
+
 def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True,cpu=False,graphical=False,progress=None):
     import collection_tasks
     from pilot import collection_sort
-    from pilot_backup import portable_restore_preflight, publish_local_launcher, restore_copy, separate_roots
+    from delivery_paths import destination, locked
+    from pilot_backup import portable_restore_preflight, publish_local_launcher, separate_roots
     if cpu and target != 'linux':
         raise setup.SetupError('L’option --cpu du kit est réservée à Linux.')
     if (root/'kit-building.json').exists():raise setup.SetupError('Kit encore en préparation.')
-    manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
+    raw = destination(root, 'manifest.json').read_bytes()
+    manifest = json.loads(raw)
     entries=checked_entries(root,manifest)
     if graphical:
         from kit_audit import validate
@@ -203,9 +249,15 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True,cpu=Fa
     if graphical and (target != 'linux' or not cpu or work.name != 'private'
                       or data != work.parent/'data'):
         raise setup.SetupError('Dossiers ou mode incompatibles avec le lanceur Linux.')
-    if application.exists():raise setup.SetupError('Le dossier application existe déjà ; utiliser la mise à jour, pas une réinstallation.')
-    if (data.exists() and any(data.iterdir())) or (work.exists() and any(work.iterdir())):
-        raise setup.SetupError('Installation du kit réservée à des dossiers de données et réglages vides.')
+    journal = destination(work.parent, KIT_INSTALL_JOURNAL) if graphical else None
+    inputs = {'kit': hashlib.sha256(raw).hexdigest(), 'destination': work.parent.as_posix(),
+              'lan': lan_address}
+    job = install_job(journal) if graphical else None
+    if job and job.get('inputs') != inputs:
+        raise setup.SetupError('Ce dossier a été commencé avec un autre kit ou d’autres réglages.')
+    if not job:
+        check_empty_installation(application, work, data)
+    activating = job is not None and job['phase'] in ('activating', 'complete')
     preset = next((path for entry,path in entries if entry['path'] == 'app/'+collection_tasks.DEFAULT_SORT_PATH), None)
     sorting = collection_sort.read_file(preset) if preset else collection_sort.Sort()
     payload = [(entry,path) for entry,path in entries if entry['path'].startswith('payload/')
@@ -214,55 +266,90 @@ def install(root,target,data_dir,work_dir,lan_address=None,*,startup=True,cpu=Fa
                 for entry, path in entries if entry['path'].startswith('app/')]
     resources = [(entry, path, data/Path(entry['path']).relative_to('payload'))
                  for entry, path in payload]
-    if graphical:
-        portable_restore_preflight([(dest, entry['bytes']) for entry, _, dest in software + resources])
-    else:
-        ancestor = next(parent for parent in (data, *data.parents) if parent.exists())
-        if shutil.disk_usage(ancestor).free < sum(e['bytes'] for e,_ in payload)+15_000_000_000:
-            raise setup.SetupError('Espace libre insuffisant pour copier les données du kit.')
-    if progress:
-        progress('Copie de SetupSurvie et des documents…')
-    durable.mkdir(application.parent)
-    application.mkdir()
-    durable.sync_directory(application.parent)
-    for entry, path, dest in software:
-        restore_copy(entry, path, dest, verify=graphical)
-    setup.ROOT=application
-    app=setup.Installation(work)
-    c=app.init(target,data,lan=bool(lan_address),cpu=cpu)
-    c['app_dir']=application.as_posix();setup.write_json(app.settings_path,c,private=True)
-    if lan_address:c['lan_host']=setup.lan_host(lan_address);setup.write_json(app.settings_path,c,private=True);app.render(c)
-    for entry, path, dest in resources:
-        restore_copy(entry, path, dest, verify=graphical)
-    import search_index_queue
-    if preset:
-        collection_tasks.seed(data, sorting)
-    for entry,path in payload:
-        if entry['path'].startswith('payload/library/zim/'):
-            archive=data/Path(entry['path']).relative_to('payload')
-            if not graphical and setup.file_hash(archive)!=entry['sha256']:raise setup.SetupError('Copie de l’archive non conforme ; indexation non lancée.')
-            search_index_queue.enqueue(data,{'path':entry['path'].removeprefix('payload/'),'sha256':entry['sha256']})
-    durable.sync_tree(application);durable.sync_tree(data)
-    if progress:
-        progress('Préparation et démarrage des services…')
-    app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True)
-    import search_index_tools
-    try:
-        if not search_index_tools.prepare(app,c,offline=True):print('Indexation complémentaire : outil absent du kit, préparation nécessaire dans les réglages.')
-    except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):print('Outil d’indexation incompatible ou incomplet ; les autres documents restent disponibles. Réessayez dans les réglages.')
-    setup.prepare_youtube_tools(c,True)
-    if graphical:
-        setup.write_json(work/'inference-paused.json', {'reason': 'linux_kit_install'}, private=True)
-    app.up(c);app.verify(c)
-    if graphical:
-        publish_local_launcher(work.parent, application, 'linux')
-        c['kit_linux_graphical'] = True
-        setup.write_json(app.settings_path, c, private=True)
-    app.install_windows_shortcuts(c,startup=startup)
-    setup.schedule_initial_videos(app,c,offline=True)
-    app.addresses(c)
-    print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
-    print('Application installée, indépendante du kit :',application)
+    lock = locked(destination(work.parent, '.demarrage-kit.lock')) if graphical else nullcontext()
+    with lock:
+        if graphical and install_job(journal) != job:
+            raise setup.SetupError('Le dossier a changé. Rouvrez le lanceur.')
+        if not job:
+            check_empty_installation(application, work, data)
+        if graphical:
+            sizes = []
+            if not activating:
+                for entry, _, dest in software + resources:
+                    copy_target(entry, dest, application, data)
+                    existing = dest.stat().st_size if job and dest.is_file() else 0
+                    sizes.append((dest, max(0, entry['bytes'] - existing)))
+            portable_restore_preflight(sizes, activating=activating)
+        else:
+            ancestor = next(parent for parent in (data, *data.parents) if parent.exists())
+            if shutil.disk_usage(ancestor).free < sum(e['bytes'] for e,_ in payload)+15_000_000_000:
+                raise setup.SetupError('Espace libre insuffisant pour copier les données du kit.')
+        resuming = job is not None
+        if graphical and not job:
+            job = {'schema': 1, 'phase': 'copying', 'inputs': inputs}
+            setup.write_json(journal, job, private=True)
+        previous_root = setup.ROOT
+        try:
+            if activating:
+                setup.ROOT = application
+                destination(work, 'settings.json')
+                app = setup.Installation(work)
+                c = app.load()
+                expected = {'target': target, 'cpu': cpu, 'app_dir': application.as_posix(),
+                            'data_dir': data.as_posix(), 'project': job.get('project')}
+                if any(c.get(key) != value for key, value in expected.items()):
+                    raise setup.SetupError('Les réglages de l’installation interrompue ont changé.')
+            else:
+                if progress:
+                    progress('Copie de SetupSurvie et des documents…')
+                durable.mkdir(application.parent)
+                application.mkdir(exist_ok=resuming)
+                durable.sync_directory(application.parent)
+                for entry, path, dest in software:
+                    copy_kit_file(entry, path, dest, application, data, verify=graphical, resume=resuming)
+                setup.ROOT=application
+                app=setup.Installation(work)
+                c=app.init(target,data,lan=bool(lan_address),cpu=cpu)
+                c['app_dir']=application.as_posix();setup.write_json(app.settings_path,c,private=True)
+                if lan_address:c['lan_host']=setup.lan_host(lan_address);setup.write_json(app.settings_path,c,private=True);app.render(c)
+                for entry, path, dest in resources:
+                    copy_kit_file(entry, path, dest, application, data, verify=graphical, resume=resuming)
+                import search_index_queue
+                if preset:
+                    collection_tasks.seed(data, sorting)
+                for entry,path in payload:
+                    if entry['path'].startswith('payload/library/zim/'):
+                        archive=data/Path(entry['path']).relative_to('payload')
+                        if not graphical and setup.file_hash(archive)!=entry['sha256']:raise setup.SetupError('Copie de l’archive non conforme ; indexation non lancée.')
+                        search_index_queue.enqueue(data,{'path':entry['path'].removeprefix('payload/'),'sha256':entry['sha256']})
+                durable.sync_tree(application);durable.sync_tree(data)
+                if progress:
+                    progress('Préparation et démarrage des services…')
+                app.import_images(c,root/'images.tar');app.doctor(c);app.prepare(c,offline=True)
+                import search_index_tools
+                try:
+                    if not search_index_tools.prepare(app,c,offline=True):print('Indexation complémentaire : outil absent du kit, préparation nécessaire dans les réglages.')
+                except (OSError,ValueError,setup.SetupError,subprocess.SubprocessError):print('Outil d’indexation incompatible ou incomplet ; les autres documents restent disponibles. Réessayez dans les réglages.')
+                setup.prepare_youtube_tools(c,True)
+                if graphical:
+                    setup.write_json(work/'inference-paused.json', {'reason': 'linux_kit_install'}, private=True)
+                if graphical:
+                    job.update(phase='activating', project=c['project'])
+                    setup.write_json(journal, job, private=True)
+            app.up(c);app.verify(c)
+            if graphical:
+                publish_local_launcher(work.parent, application, 'linux')
+                c['kit_linux_graphical'] = True
+                setup.write_json(app.settings_path, c, private=True)
+                job['phase'] = 'complete'
+                setup.write_json(journal, job, private=True)
+            app.install_windows_shortcuts(c,startup=startup)
+            setup.schedule_initial_videos(app,c,offline=True)
+            app.addresses(c)
+            print('Identifiants propres à cette installation :',app.work/'identifiants.txt')
+            print('Application installée, indépendante du kit :',application)
+        finally:
+            setup.ROOT = previous_root
 
 
 def complete_youtube_caches(data):

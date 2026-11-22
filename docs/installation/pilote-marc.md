@@ -138,8 +138,15 @@ le disque et confirmer la création d’un nouveau dossier. Le kit
 fonctionne sur le processeur et le site se lance avec l’IA en pause.
 Après un redémarrage, ouvrir **Ouvrir-SetupSurvie.desktop** dans le
 dossier installé, avec Docker démarré. Le SSD peut être retiré après
-l’installation terminée. Si la première installation s’arrête pendant
-la copie, relancer vers un nouveau dossier vide.
+l’installation terminée.
+
+Depuis la 0.101.0, le lanceur graphique reprend dans le dossier
+`SetupSurvie-Kit` si on choisit le même disque avec le même kit après
+une coupure. Il contrôle les fichiers de la copie et recopie ceux qui
+sont incomplets. Si les services avaient commencé à démarrer, il
+relance la vérification avec les données actuelles. Le parcours sans
+Python ni Docker réutilise aussi les outils déjà extraits. Un dossier
+déjà occupé par une autre installation reste protégé.
 
 Sur un PC Linux avec Python 3.11, Docker et Compose déjà installés, le kit
 public peut utiliser le processeur sans GPU NVIDIA depuis la 0.98.0. Depuis

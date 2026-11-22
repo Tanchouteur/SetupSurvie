@@ -64,9 +64,9 @@ case "$mode" in
     install-kit)
         parent=$(choose_disk) || exit 0
         [[ "$parent" == /* ]] || exit 0
-        destination="${parent%/}/SetupSurvie-Kit-$(date +%Y%m%d-%H%M%S)"
+        destination="${parent%/}/SetupSurvie-Kit"
         zenity --question --title="Installer SetupSurvie" \
-            --text="Installer Python, Docker et SetupSurvie depuis ce SSD dans $destination ?" \
+            --text="Installer ou reprendre SetupSurvie dans $destination avec les outils de ce SSD ?" \
             --ok-label="Installer" --cancel-label="Annuler" || exit 0
         action=install-kit
         ;;

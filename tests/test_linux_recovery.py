@@ -376,7 +376,7 @@ class LinuxRecoveryTests(unittest.TestCase):
                            'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
         arguments = result.with_suffix('.args').read_text().splitlines()
         self.assertEqual(arguments[-3:-1], ['install-kit', str(self.source)])
-        self.assertTrue(arguments[-1].startswith('/srv/Disque SSD/SetupSurvie-Kit-'))
+        self.assertEqual(arguments[-1], '/srv/Disque SSD/SetupSurvie-Kit')
 
         subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'duplicate', self.source],
                        check=True, timeout=10, env={**os.environ,

@@ -71,10 +71,36 @@ if [[ "$action" == duplicate ]]; then
     exit
 fi
 if [[ "$action" == install-kit ]]; then
-    # Never change a pre-existing folder. The graphical entry chooses a new one.
-    mkdir -- "$base" || die 'Dossier de destination déjà utilisé.'
-    printf '%s\n' 'Installation des outils Linux depuis le SSD…'
-    /bin/bash "$script_dir/installer-outils-linux-hors-ligne.sh" "$source_base/installateurs-linux" "$base/outils-linux"
+    lock="$parent/.$(basename -- "$base").installation-kit.lock"
+    [[ ! -L "$lock" && ( ! -e "$lock" || -f "$lock" ) ]] || die 'Verrou d’installation invalide.'
+    exec 9>>"$lock"
+    flock -n 9 || die 'Cette installation est déjà en cours.'
+    stamp="$base/.kit-source.sha256"
+    fingerprint=$(sha256sum -- "$source_base/manifest.json")
+    fingerprint=${fingerprint%% *}
+    if [[ ! -e "$base" ]]; then
+        mkdir -- "$base"
+    fi
+    [[ $(stat -c '%u:%a' -- "$base") == 0:700 ]] || die 'Dossier de destination déjà utilisé.'
+    if [[ -e "$stamp" || -L "$stamp" ]]; then
+        [[ -f "$stamp" && ! -L "$stamp" && $(cat -- "$stamp") == "$fingerprint" ]] ||
+            die 'Reprenez avec le même kit ou choisissez un autre disque.'
+    else
+        [[ -z $(find "$base" -mindepth 1 -maxdepth 1 -print -quit) ]] || die 'Dossier de destination déjà utilisé.'
+        stamp_tmp=$(mktemp -- "$parent/.kit-source.XXXXXXXX")
+        printf '%s\n' "$fingerprint" > "$stamp_tmp"
+        sync -f -- "$stamp_tmp"
+        mv -T -- "$stamp_tmp" "$stamp"
+        sync -f -- "$base"
+    fi
+    if [[ ! -e "$base/outils-linux" && ! -L "$base/outils-linux" ]]; then
+        printf '%s\n' 'Installation des outils Linux depuis le SSD…'
+        /bin/bash "$script_dir/installer-outils-linux-hors-ligne.sh" "$source_base/installateurs-linux" "$base/outils-linux"
+    fi
+    [[ ! -L "$base/outils-linux" && ! -L "$base/outils-linux/environnement.sh" ]] ||
+        die 'Dossier des outils Linux non valide.'
+    cmp -s -- "$base/outils-linux/.setupsurvie-restauration" "$source_base/app/deploy/linux-offline-installers.txt" ||
+        die 'Les outils de cette installation ne correspondent pas au kit.'
     export PYTHONDONTWRITEBYTECODE=1
     source "$base/outils-linux/environnement.sh"
     exec "$base/outils-linux/bin/python3" "$script_dir/linux_public_kit.py" "$base" --kit "$source_base"

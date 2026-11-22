@@ -512,6 +512,81 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
         self.assertTrue(up.call_args.args[0]['cpu'])
         verify.assert_called_once_with(up.call_args.args[0])
 
+    def test_graphical_install_resumes_after_abrupt_copy_and_activation_interruptions(self):
+        fixture = """
+import time
+from pathlib import Path
+from unittest.mock import patch
+import pilot_kit
+
+kit, base, ready = map(Path, sys.argv[2:5])
+phase = sys.argv[5]
+original = pilot_kit.copy_kit_file
+
+def wait_for_cut():
+    ready.touch()
+    while True:
+        time.sleep(1)
+
+def copy(entry, source, target, *args, **kwargs):
+    if phase == 'copying' and target.name == 'kit.fr.md':
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(b'partial')
+        wait_for_cut()
+    original(entry, source, target, *args, **kwargs)
+
+def up(config):
+    if phase == 'activating':
+        (base/'data/library/guides/kit.fr.md').write_bytes(b'updated after startup')
+        wait_for_cut()
+
+with patch.object(setup, 'ROOT', kit/'app'), patch('kit_audit.validate'), patch('pilot_backup.portable_restore_preflight'), patch('pilot_kit.copy_kit_file', copy), patch.object(setup.Installation, 'doctor'), patch.object(setup.Installation, 'import_images'), patch.object(setup.Installation, 'prepare'), patch.object(setup.Installation, 'up', side_effect=up):
+    pilot_kit.install(kit, 'linux', base/'data', base/'private', cpu=True, graphical=True)
+"""
+        from pilot_kit import copy_kit_file
+        for phase in ('copying', 'activating'):
+            with self.subTest(phase=phase):
+                root = self.root/phase
+                _, kit, _ = self.cross_system_fixture(root, 'linux')
+                name = 'Ouvrir-SetupSurvie.desktop'
+                relative = 'app/scripts/restored-launchers/'+name
+                template = kit/relative
+                template.parent.mkdir(parents=True)
+                template.write_bytes((setup.ROOT/'scripts/restored-launchers'/name).read_bytes())
+                manifest = json.loads((kit/'manifest.json').read_text(encoding='utf-8'))
+                manifest['files'].append({'path': relative, 'bytes': template.stat().st_size, 'sha256': setup.file_hash(template)})
+                setup.write_json(kit/'manifest.json', manifest)
+                base, ready = root/'target', root/'ready'
+                journal = base/'installation-kit.json'
+                crash_after_ready(fixture, [kit, base, ready, phase], ready)
+                before = json.loads(journal.read_text(encoding='utf-8'))
+                self.assertEqual(before['phase'], phase)
+                data, work = base/'data', base/'private'
+                prior_settings = json.loads((work/'settings.json').read_text(encoding='utf-8'))
+                with patch.object(setup,'ROOT',kit/'app'), patch('kit_audit.validate'), \
+                     patch('pilot_backup.portable_restore_preflight') as preflight, \
+                     patch('pilot_kit.copy_kit_file', wraps=copy_kit_file) as copy, \
+                     patch.object(setup.Installation, 'doctor'), patch.object(setup.Installation, 'import_images') as images, \
+                     patch.object(setup.Installation, 'prepare'), patch.object(setup.Installation, 'up') as up, \
+                     patch.object(setup.Installation, 'verify'), patch.object(setup.Installation, 'addresses'):
+                    original_manifest = (kit/'manifest.json').read_bytes()
+                    (kit/'manifest.json').write_bytes(original_manifest + b'\n')
+                    with self.assertRaisesRegex(setup.SetupError, 'autre kit'):
+                        install(kit, 'linux', data, work, cpu=True, graphical=True)
+                    (kit/'manifest.json').write_bytes(original_manifest)
+                    install(kit, 'linux', data, work, cpu=True, graphical=True)
+                    self.assertEqual(up.call_args.args[0]['project'], prior_settings['project'])
+                    self.assertEqual(preflight.call_args.kwargs['activating'], phase == 'activating')
+                    if phase == 'activating':
+                        copy.assert_not_called()
+                        images.assert_not_called()
+                    else:
+                        images.assert_called_once()
+                expected = b'autre guide public' if phase == 'copying' else b'updated after startup'
+                self.assertEqual((data/'library/guides/kit.fr.md').read_bytes(), expected)
+                self.assertEqual((kit/'payload/library/guides/kit.fr.md').read_bytes(), b'autre guide public')
+                self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'], 'complete')
+
     def test_kit_installs_independent_application_and_retains_transport_copy(self):
         kit=self.root/'kit';application=kit/'app';(application/'scripts').mkdir(parents=True)
         original=application/'scripts/setup.py';original.write_text('transport copy')
