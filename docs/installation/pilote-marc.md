@@ -236,6 +236,14 @@ réactiver l’IA après restauration. Voir le
 [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle)
 pour les prérequis hors ligne.
 
+Sur une machine préparée avec Python et son interface Tkinter, ouvrir dans le
+dossier `app` du kit **Restaurer-Mes-Donnees-SetupSurvie.cmd** sous Windows ou
+**Restaurer-Mes-Donnees-SetupSurvie.desktop** sous Linux. La fenêtre demande de
+choisir le dossier de la sauvegarde, puis le disque de destination. Elle crée
+un nouveau dossier horodaté, affiche l’étape en cours et propose d’ouvrir le
+site à la fin. Ce lanceur 0.95.0 couvre aussi le changement de PC avec le même
+système. Un poste Linux doit déjà avoir le paquet Tkinter de sa distribution.
+
 Sur la machine de destination, lancer la commande depuis le dossier `app` du
 kit. Remplacer les chemins d’exemple par ceux du SSD et du disque cible.
 Réserver sur le disque cible l’espace des fichiers à copier, plus 20 Gio de

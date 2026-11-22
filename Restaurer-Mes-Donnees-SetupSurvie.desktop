@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Restaurer mes données SetupSurvie
+Comment=Récupérer une sauvegarde personnelle depuis ce kit hors ligne
+Exec=/bin/sh -c "exec /bin/sh \\"\\$(dirname \\"\\$1\\")/scripts/restaurer-donnees-linux.sh\\" \\"\\$(dirname \\"\\$1\\")/..\\"" sh %k
+Terminal=false
+Categories=Utility;

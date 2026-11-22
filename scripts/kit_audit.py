@@ -7,6 +7,7 @@ import tarfile
 
 import content
 import setup
+from pilot_kit import KIT_APP_FILES
 
 
 def validate(root,manifest):
@@ -25,7 +26,7 @@ def validate(root,manifest):
             if not allowed or relative.endswith(('.db','.db-wal','.db-shm','.key','.pem','.env')) or Path(relative).name in ('settings.json','identifiants.txt'):
                 raise setup.SetupError('État personnel interdit dans le kit public : '+relative)
         elif relative not in ('images.tar','images.tar.json'):
-            allowed=relative in {'app/'+name for name in ('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','Installer-SetupSurvie.cmd','Mettre-a-jour-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.desktop')}
+            allowed=relative in {'app/'+name for name in KIT_APP_FILES}
             allowed|=any(relative.startswith('app/'+folder+'/') for folder in ('scripts','pilot','portal','deploy','docs','fixtures','tests','assets','vendor'))
             if not allowed:raise setup.SetupError('Fichier hors périmètre du kit : '+relative)
     release=read('app/deploy/release.json')

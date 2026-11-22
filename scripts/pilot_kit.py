@@ -14,6 +14,15 @@ import setup
 from pilot import durable
 
 
+KIT_APP_FILES = (
+    'README.md', 'AGENTS.md', 'compose.yaml', 'compose.linux.yaml', 'compose.gpu.yaml',
+    'Installer-SetupSurvie.cmd', 'Mettre-a-jour-SetupSurvie.cmd',
+    '1-Preparer-le-PC.cmd', '2-Installer-SetupSurvie.cmd',
+    'Dupliquer-Kit-SetupSurvie.cmd', 'Dupliquer-Kit-SetupSurvie.desktop',
+    'Restaurer-Mes-Donnees-SetupSurvie.cmd', 'Restaurer-Mes-Donnees-SetupSurvie.desktop',
+)
+
+
 def checked_entries(root,manifest,progress=None):
     from delivery_paths import destination
     if not isinstance(manifest,dict) or not isinstance(manifest.get('files'),list):
@@ -61,7 +70,7 @@ def export_lab(destination,english=True):
         # Check the source too: never label an old same-size copy as current.
         if digest!=setup.file_hash(source):
             shutil.copyfile(source,target);digest=setup.file_hash(target)
-        if relative == 'app/Dupliquer-Kit-SetupSurvie.desktop':shutil.copymode(source,target)
+        if relative.startswith('app/') and Path(relative).name in KIT_APP_FILES and relative.endswith('.desktop'):shutil.copymode(source,target)
         records.append({'path':relative,'bytes':target.stat().st_size,'sha256':digest})
         print('KIT',relative,flush=True)
 
@@ -109,7 +118,7 @@ def export_lab(destination,english=True):
         for path in sorted((setup.ROOT/name).rglob('*')):
             if path.is_file() and not path.is_symlink() and '__pycache__' not in path.parts and path.suffix!='.pyc':
                 copy(path,'app/'+path.relative_to(setup.ROOT).as_posix())
-    for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','Installer-SetupSurvie.cmd','Mettre-a-jour-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.desktop']:
+    for name in KIT_APP_FILES:
         copy(setup.ROOT/name,'app/'+name)
     for path in sorted((lab.MOUNT/'tools/discovery-wheels').iterdir()):
         if path.is_file():copy(path,'app/vendor/discovery/'+path.name)
@@ -225,11 +234,11 @@ def refresh_app(root):
     paths=[]
     for name in ['scripts','pilot','portal','deploy','docs','fixtures','tests','assets']:
         paths.extend(p for p in (setup.ROOT/name).rglob('*') if p.is_file() and not p.is_symlink() and '__pycache__' not in p.parts and p.suffix!='.pyc')
-    paths.extend(setup.ROOT/name for name in ['README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml','Installer-SetupSurvie.cmd','Mettre-a-jour-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.cmd','Dupliquer-Kit-SetupSurvie.desktop'])
+    paths.extend(setup.ROOT/name for name in KIT_APP_FILES)
     for source in paths:
         relative='app/'+source.relative_to(setup.ROOT).as_posix();dest=root/relative
         dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,dest)
-        if source.name == 'Dupliquer-Kit-SetupSurvie.desktop':shutil.copymode(source,dest)
+        if source.name in KIT_APP_FILES and source.suffix == '.desktop':shutil.copymode(source,dest)
         records.append({'path':relative,'bytes':dest.stat().st_size,'sha256':setup.file_hash(dest)})
     wheels=Path(os.environ.get('SURVIE_DISCOVERY_WHEELS',setup.ROOT/'vendor/discovery'))
     if not wheels.exists():wheels=Path('/run/media/louis/SetupSurvie/tools/discovery-wheels')
