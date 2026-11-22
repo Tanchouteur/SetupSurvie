@@ -127,9 +127,15 @@ Zenity et PolicyKit, lancer le même fichier et choisir un dossier système
 sur le disque cible. L’autorisation administrateur se fait dans une
 fenêtre. Le lanceur installe ses outils et un moteur Docker dédié dans
 le dossier choisi. Les services locaux démarrent avec le système après
-installation. Le kit public crée une nouvelle installation. La
-[copie de secours Linux complète](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours)
-propose le point de restauration protégé.
+installation. Depuis la 0.103.0, ce parcours coche par défaut le point de
+restauration protégé. Prévoir de la place pour une deuxième copie et ses
+images Docker. La création peut arrêter brièvement le portail. En cas
+d’interruption, reprendre avec le même SSD, le même disque et le même choix.
+Le menu **Entretien de SetupSurvie** permet ensuite de créer un point si
+l’option était décochée, de revenir à l’installation après une création
+interrompue ou de restaurer une nouvelle copie du point. Les anciennes
+données restent dans le dossier mis à l’abri. Voir le
+[guide d’entretien](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
 
 Depuis la 0.99.0, sur un PC Linux déjà préparé, ouvrir
 **Installer-Kit-SetupSurvie.desktop** dans le dossier `app` du SSD.

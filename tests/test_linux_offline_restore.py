@@ -129,7 +129,8 @@ esac
              patch.object(restore, 'check_service_tree'), patch.object(restore, 'check_engine'), \
              patch.object(restore, 'publish_units') as publish, patch.object(setup, 'run') as run, \
              patch.object(restore, 'bind_controller_to_engine'), patch.object(restore, 'launch_services') as launch, \
-             patch('linux_offline_tools.prepare_kit') as verify_tools, patch('pilot_kit.install') as install:
+             patch('linux_offline_tools.prepare_kit') as verify_tools, patch('pilot_kit.install') as install, \
+             patch.object(linux_public_kit, 'prepare_maintenance') as maintenance:
             linux_public_kit.install(kit, self.base)
             name = restore.service_name(self.base, initial=True)
             verify_tools.assert_called_once_with(kit, verify_only=True)
@@ -141,10 +142,38 @@ esac
             self.assertTrue(install.call_args.kwargs['cpu'])
             self.assertTrue(install.call_args.kwargs['graphical'])
             launch.assert_called_once_with(self.base, name, public_kit=True)
+            maintenance.assert_called_once_with(kit, self.base, point=True)
             service = restore.unit_contents(self.base, name, public_kit=True)[name+'.service']
             self.assertIn('/application/scripts/linux_public_kit.py', service)
             self.assertNotIn(str(kit), service)
             self.assertNotIn('--kit', service)
+
+    def test_public_kit_maintenance_can_create_point_or_defer_it(self):
+        import linux_public_kit
+        kit = self.base.parent/'Kit'
+        tool_list = [{'path': 'installateurs-linux/tools/linux-offline-installers/docker-compose',
+                      'bytes': 4, 'sha256': 'test'}]
+        for enabled in (True, False):
+            with self.subTest(enabled=enabled), patch('linux_offline_tools.kit_items', return_value=tool_list), \
+                 patch('linux_recovery.copy_verified') as copy, patch.object(setup, 'run') as run:
+                linux_public_kit.prepare_maintenance(kit, self.base, point=enabled)
+                self.assertEqual(copy.call_args.args[2]['path'], 'tools/linux-offline-installers/docker-compose')
+                self.assertEqual([call.args[0][-2] for call in run.call_args_list],
+                                 ['prepare-maintenance', 'point'] if enabled else ['prepare-maintenance'])
+
+    def test_public_kit_retries_a_protected_point_before_touching_the_active_installation(self):
+        import linux_public_kit
+        kit = self.base.parent/'Kit'
+        (kit/'app').mkdir(parents=True)
+        with patch.object(setup, 'ROOT', kit/'app'), patch.object(restore, 'check_service_tree'), \
+             patch('linux_offline_tools.prepare_kit'), patch.object(restore, 'check_engine'), \
+             patch('pilot_kit.install_job', return_value={'phase': 'complete'}), \
+             patch.object(Path, 'is_file', return_value=True), patch('pilot_kit.install') as install, \
+             patch.object(linux_public_kit, 'prepare_maintenance') as maintenance, patch.object(setup, 'run') as run:
+            linux_public_kit.install(kit, self.base)
+        install.assert_not_called()
+        maintenance.assert_called_once_with(kit, self.base, point=True)
+        run.assert_called_once_with(['systemctl', 'enable', restore.service_name(self.base, initial=True)+'.service'])
 
     def test_public_kit_copy_failure_stops_only_its_dedicated_engine(self):
         import linux_public_kit

@@ -48,14 +48,15 @@ Le bureau doit permettre les fenêtres Zenity et l’autorisation administrateur
 PolicyKit.</p>
 <ol>
 <li>Dans <strong>app</strong>, ouvrez <strong>Installer-Kit-SetupSurvie.desktop</strong>. Si votre gestionnaire de fichiers le demande, autorisez le lancement.</li>
-<li>Choisissez le disque. Si les outils manquent, autorisez leur installation dans la fenêtre d’administration. Ils sont lus sur le SSD.</li>
+<li>Choisissez le disque. Si les outils manquent, autorisez leur installation dans la fenêtre d’administration. Ils sont lus sur le SSD. Le point de restauration est coché par défaut. Décochez-le si vous voulez éviter une deuxième copie.</li>
 <li>Le site s’ouvre à la fin avec l’IA en pause. Lorsque SetupSurvie a installé son propre moteur Docker, il est configuré pour redémarrer avec le PC. Après redémarrage, ouvrez <code>http://127.0.0.1:8080</code>. Sur un PC déjà préparé, ouvrez <strong>Ouvrir-SetupSurvie.desktop</strong> dans le dossier installé.</li>
 </ol>
 <p>En cas de coupure pendant l’installation du kit public, rouvrez le même
 lanceur et choisissez le même disque. SetupSurvie reprend dans le dossier
-<strong>SetupSurvie-Kit</strong>. La
-<a href="app/docs/exploitation/transfert-installation.md">copie de secours Linux complète</a>
-fournit le parcours avec point de restauration protégé.</p>
+<strong>SetupSurvie-Kit</strong>. Gardez le même choix de point de restauration
+pour reprendre. Sur une installation qui a fourni ses propres outils, le menu
+<strong>Entretien de SetupSurvie</strong> sert à créer un point plus tard ou à
+repartir d’une nouvelle copie du point protégé, même sans le SSD.</p>
 </section>
 
 <section id="restaurer">
