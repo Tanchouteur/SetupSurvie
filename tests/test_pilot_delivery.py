@@ -496,10 +496,11 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
             'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in files]})
         work=self.root/'installed/private';data=self.root/'installed/data'
         with patch.object(setup,'ROOT',application),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'doctor'),patch.object(setup.Installation,'prepare'),patch.object(setup.Installation,'up'),patch.object(setup.Installation,'verify'),patch.object(setup.Installation,'addresses'):
-            install(kit,'linux',data,work)
+            install(kit,'linux',data,work,cpu=True)
         settings=json.loads((work/'settings.json').read_text())
         installed=self.root/'installed/application'
         self.assertEqual(settings['app_dir'],installed.as_posix())
+        self.assertTrue(settings['cpu'])
         self.assertEqual((installed/'scripts/setup.py').read_text(),'transport copy')
         self.assertFalse((installed/'unlisted-private.txt').exists())
         self.assertFalse((data/'library/zim'/excluded.name).exists())

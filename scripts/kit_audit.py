@@ -7,7 +7,7 @@ import tarfile
 
 import content
 import setup
-from pilot_kit import KIT_APP_FILES
+from pilot_kit import KIT_APP_FILES, KIT_GUIDE
 
 
 def validate(root,manifest):
@@ -25,7 +25,7 @@ def validate(root,manifest):
             allowed=relative.startswith(('payload/models/','payload/library/','payload/state/openwebui/cache/')) or relative=='payload/catalog/downloaded-content.json'
             if not allowed or relative.endswith(('.db','.db-wal','.db-shm','.key','.pem','.env')) or Path(relative).name in ('settings.json','identifiants.txt'):
                 raise setup.SetupError('État personnel interdit dans le kit public : '+relative)
-        elif relative not in ('images.tar','images.tar.json'):
+        elif relative not in ('images.tar', 'images.tar.json', KIT_GUIDE):
             allowed=relative in {'app/'+name for name in KIT_APP_FILES}
             allowed|=any(relative.startswith('app/'+folder+'/') for folder in ('scripts','pilot','portal','deploy','docs','fixtures','tests','assets','vendor'))
             if not allowed:raise setup.SetupError('Fichier hors périmètre du kit : '+relative)

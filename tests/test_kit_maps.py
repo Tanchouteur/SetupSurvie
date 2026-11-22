@@ -169,6 +169,8 @@ class OfflineClosureTests(unittest.TestCase):
     def test_duplicate_preserves_a_complete_kit_without_a_runtime(self):
         import kit_duplicate
 
+        original = setup.ROOT/pilot_kit.KIT_GUIDE_SOURCE
+        pilot_kit.publish_kit_guide(*pilot_kit.kit_guide(self.root, self.files), self.files)
         manifest = {**self.manifest(), 'schema': 1, 'kind': 'SetupSurvie public pilot kit'}
         setup.write_json(self.root / 'manifest.json', manifest)
         second_disk = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -179,6 +181,11 @@ class OfflineClosureTests(unittest.TestCase):
             result = kit_audit.validate(duplicate, manifest)
         self.assertEqual(len(entries), len(self.files))
         self.assertEqual((result['models'], result['images']), (1, 4))
+        guide = duplicate/pilot_kit.KIT_GUIDE
+        self.assertEqual(guide.read_bytes(), original.read_bytes())
+        guide.write_bytes(b'incomplete')
+        with self.assertRaisesRegex(setup.SetupError, 'Kit incomplet ou modifié'):
+            pilot_kit.checked_entries(duplicate, manifest)
 
     def test_public_download_receipt_and_root_launchers_are_allowed(self):
         self.add('payload/catalog/downloaded-content.json', {'items': []})
