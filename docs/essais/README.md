@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Préparation Windows depuis le lanceur de restauration](2026-11-22-restauration-windows-neuf.md) — 0.106.0, préparation et redémarrage simulés.
+
 - [Duplication du kit sur Linux sans Python](2026-11-22-duplication-linux-sans-python.md) — 0.105.0, copie réelle d’un kit réduit sans réseau et sans droits administrateur.
 
 - [Duplication du kit sur Windows sans Python](2026-11-22-duplication-windows-sans-python.md) — 0.104.0, contrôles des fichiers locaux et lancement simulé.
