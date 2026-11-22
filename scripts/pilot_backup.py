@@ -39,7 +39,7 @@ def separate_roots(*roots):
 
 def backup(app,c,destination,*,resume=True):
     with maintenance(app,c):
-        return stopped_backup(app,c,destination,resume=resume)
+        return stopped_backup(app,c,destination,resume=resume,identity=backup_identity(c))
 
 
 @contextmanager
@@ -88,8 +88,12 @@ def backup_identity(config):
     versions = root/'deploy/versions.json'
     if not release.is_file() or not versions.is_file():
         return None
-    return restore_identity(json.loads(release.read_text(encoding='utf-8')),
-                            json.loads(versions.read_text(encoding='utf-8')))
+    try:
+        return restore_identity(json.loads(release.read_text(encoding='utf-8')),
+                                json.loads(versions.read_text(encoding='utf-8')))
+    except (OSError, ValueError, KeyError, TypeError):
+        # Keep the same-system backup usable when version files are incomplete.
+        return None
 
 
 def host_target():
@@ -171,7 +175,7 @@ def restore_copy(entry, source, target, *, verify=False):
         raise setup.SetupError('Copie non conforme sur la destination : '+entry['path'])
 
 
-def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progress=None):
+def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progress=None,identity=None):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
@@ -233,7 +237,6 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
             collect(map(copy_entry, sources))
             durable.sync_tree(dest, sync_files=False)
         report = {'schema': 1, 'files': files}
-        identity = backup_identity(c)
         if identity is not None:
             report['installation'] = identity
         setup.write_json(dest/'backup.json', report, private=True)
