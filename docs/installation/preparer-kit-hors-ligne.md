@@ -21,6 +21,13 @@ conservée lors d’une duplication. Ouvrez-la directement dans un navigateur
 avant de remettre le SSD.
 
 
+Depuis la 0.104.0, le bouton de duplication Windows peut aussi démarrer sur
+un PC dépourvu de Python. Il propose dans une fenêtre l’installation de
+Python avec Tcl/Tk pour le compte courant depuis les fichiers vérifiés
+du kit. La duplication utilise uniquement Python et le kit, sans
+préparer WSL ni démarrer Docker.
+
+
 ## Ajouter les installateurs Linux
 
 Depuis la 0.101.0, préparer les outils Linux sur un ordinateur connecté,
