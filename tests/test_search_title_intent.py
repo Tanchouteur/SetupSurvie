@@ -104,6 +104,34 @@ class TitleIntentTests(unittest.TestCase):
             with self.subTest(query=query):
                 self.assertEqual(self.ordered(query,task,prices,'Extrait fictif de prix.')[0]['id'],'zim:fixture/task')
 
+    def test_procedures_precede_equipment_lists_for_a_task(self):
+        cases = [
+            ('réparer une crevaison de vélo',
+             'Comment coller une rustine pour réparer une chambre à air de vélo',
+             'Bicycles/Maintenance and Repair/Tools and Supplies/Puncture Repair Kit',
+             'A fictional bicycle puncture repair kit with patch and tools.'),
+            ('réparer une crevaison de vélo', 'Mécanique vélo/Matériel/Réparer une crevaison',
+             'Matériel pour réparer une crevaison de vélo',
+             'Liste fictive de fournitures pour réparer une crevaison de vélo.'),
+            ('réparer une crevaison de vélo', 'Comment réparer une crevaison de vélo avec un kit',
+             'Trousse pour réparer une crevaison de vélo',
+             'Liste fictive de fournitures pour réparer une crevaison de vélo.'),
+        ]
+        for query, task, equipment, text in cases:
+            with self.subTest(equipment=equipment):
+                found = self.ordered(query, task, equipment, text)
+                self.assertEqual([row['id'] for row in found], ['zim:fixture/task', 'guide:background'])
+
+    def test_equipment_requests_keep_the_equipment_heading_first(self):
+        for query, task, equipment in (
+            ('kit de réparation de vélo', 'Réparer une crevaison de vélo', 'Kit de réparation de vélo'),
+            ('quel matériel pour réparer un vélo', 'Réparer un vélo', 'Matériel pour réparer un vélo'),
+            ('bicycle repair kit', 'How to repair a bicycle tyre', 'Bicycle Repair Kit'),
+        ):
+            with self.subTest(query=query):
+                found = self.ordered(query, task, equipment, equipment + '. Liste fictive.')
+                self.assertEqual(found[0]['id'], 'guide:background')
+
     def test_recognized_actions_work_without_a_how_or_comment_prefix(self):
         cases=[
             ('remplacer un roulement','Remplacer un roulement','Prix de remplacement d’un roulement'),

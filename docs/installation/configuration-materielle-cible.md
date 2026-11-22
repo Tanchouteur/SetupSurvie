@@ -152,8 +152,8 @@ la preuve que tout son fonds y tiendra. Additionner système, services et disque
 virtuel Docker éventuel, documents, cartes, vidéos, modèles, index, caches et
 espace temporaire des mises à jour. Son fonds reste
 [sans plafond logiciel](../bibliotheque/bibliotheque-complete-marc.md), dans les
-limites physiques du stockage. Les règles du laboratoire (600 Go au total,
-500 Go documentaires) restent propres au PC de Louis.
+limites physiques du stockage. Louis a aussi levé les plafonds fixes de son
+laboratoire Bazzite le 21 novembre 2026.
 
 Le SSD doit accueillir les données réellement sollicitées : remplacer seulement
 le disque système en laissant les archives, index ou modèles sur un disque lent

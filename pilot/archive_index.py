@@ -11,11 +11,52 @@ import shutil
 import sqlite3
 import time
 from urllib.parse import quote
+import zlib
 
 from . import durable,retrieval,wiki_structure
 from .html_text import Text
 
 FORMAT=2
+TOKENIZE="tokenize='unicode61 remove_diacritics 2'"
+# Since 0.88.0 the article text is stored once, zlib-compressed, in `docs`; the
+# FTS table reads it through a view (external content). Ranking only uses the
+# FTS index, so results stay identical while the file shrinks by about 40 %.
+# Older indexes, with the text inside the FTS table, stay readable.
+COMPRESSED_TABLE='docs'
+
+
+def unz(blob):
+    return zlib.decompress(blob).decode('utf-8') if blob is not None else None
+
+
+def is_compressed(db):
+    return db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",(COMPRESSED_TABLE,)).fetchone() is not None
+
+
+def _create_tables(db,tables,domains,compressed):
+    extra=',domains UNINDEXED' if domains else ''
+    options=''
+    if compressed:
+        column=',domains' if domains else ''
+        db.execute(f'CREATE TABLE IF NOT EXISTS {COMPRESSED_TABLE}(id INTEGER PRIMARY KEY,path TEXT,title TEXT,ztext BLOB,language TEXT{column})')
+        db.execute(f'CREATE VIEW IF NOT EXISTS docs_text AS SELECT id,path,title,unz(ztext) AS text,language{column} FROM {COMPRESSED_TABLE}')
+        options=",content='docs_text',content_rowid='id'"
+    for table in tables:
+        db.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS {table} USING fts5(path UNINDEXED,title,text,language UNINDEXED{extra},{TOKENIZE}{options})")
+
+
+def _insert(db,table,rows,compressed):
+    """Rows are (path,title,text,language[,domains]), kept in insertion order."""
+    for row in rows:
+        marks=','.join('?'*len(row))
+        if not compressed:
+            db.execute(f'INSERT INTO {table} VALUES({marks})',row)
+            continue
+        names='path,title,text,language'+(',domains' if len(row)==5 else '')
+        packed=(row[0],row[1],zlib.compress(row[2].encode('utf-8'),6),*row[3:])
+        identifier=db.execute(f"INSERT INTO {COMPRESSED_TABLE}({names.replace('text','ztext')}) VALUES({marks})",packed).lastrowid
+        # External content: the FTS index is fed explicitly with the same rowid.
+        db.execute(f'INSERT INTO {table}(rowid,{names}) VALUES(?,{marks})',(identifier,*row))
 
 
 class Paused(Exception):pass
@@ -32,6 +73,7 @@ def connect(path,readonly=False):
     path=Path(path).resolve()
     db=sqlite3.connect(path.as_uri()+'?mode=ro' if readonly else str(path),uri=readonly,timeout=2)
     db.row_factory=sqlite3.Row
+    db.create_function('unz',1,unz,deterministic=True)
     if readonly:db.execute('PRAGMA query_only=ON')
     try:yield db
     finally:db.close()
@@ -98,10 +140,35 @@ def search(root,plan,language='',limit=40,source_dir=None,*,collection_match=Non
                 shared = category is not None and db.execute(
                     "SELECT 1 FROM sqlite_master WHERE type='table' AND name='articles'").fetchone() is not None
                 table = 'articles_' + category if category and not shared else 'articles'
-                category_filter = ' AND instr(domains, ?) > 0' if shared else ''
+                compressed = table == 'articles' and is_compressed(db)
+                # Compressed indexes filter on the plain columns of `docs`, so
+                # ranking never decompresses the text of the candidates.
+                column = 'd.' if compressed else ''
+                category_filter = f' AND instr({column}domains, ?) > 0' if shared else ''
                 lang={'fra':'fr','eng':'en'}.get(language,language)
-                parameters = (plan.fts(), lang, lang) + ((json.dumps(category),) if shared else ()) + (limit,)
-                rows=db.execute(f"SELECT path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?){category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters).fetchall()
+                language_filter = f" AND (?='' OR {column}language=?)"
+                parameters = (plan.fts(), lang, lang)
+                book = meta['book']
+                ifixit = retrieval.ifixit_edition(book)
+                if lang and (ifixit or book.lower().partition('_')[0] == retrieval.LOWTECH_ARCHIVE):
+                    # Reclassify candidates in existing indexes. Only iFixit
+                    # needs the body text to determine the article language.
+                    db.create_function('article_language', 3, lambda path, hint, text: retrieval.article_language({
+                        'id': f'zim:{book}/{path}', 'book': book, 'language': hint, 'text': text,
+                    }), deterministic=True)
+                    text = 'substr(unz(d.ztext),1,4000)' if compressed else 'substr(text,1,4000)'
+                    if not ifixit:
+                        text = 'NULL'
+                    language_filter = f' AND article_language({column}path, {column}language, {text})=?'
+                    parameters = (plan.fts(), lang)
+                parameters += ((json.dumps(category),) if shared else ()) + (limit,)
+                shown=f"path,title,language,substr(text,1,4000) AS _text{domains_column},snippet({table},2,'','','…',45) AS excerpt"
+                if compressed:
+                    ids=[row[0] for row in db.execute(f"SELECT {table}.rowid FROM {table} JOIN {COMPRESSED_TABLE} d ON d.id={table}.rowid WHERE {table} MATCH ?{language_filter}{category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters)]
+                    found={row['rowid']:row for row in db.execute(f"SELECT rowid,{shown} FROM {table} WHERE {table} MATCH ? AND rowid IN ({','.join('?'*len(ids))})",(plan.fts(),*ids))} if ids else {}
+                    rows=[found[identifier] for identifier in ids if identifier in found]
+                else:
+                    rows=db.execute(f"SELECT {shown} FROM {table} WHERE {table} MATCH ?{language_filter}{category_filter} ORDER BY bm25({table},0,3,1,0) LIMIT ?",parameters).fetchall()
                 return [{'id':'zim:'+meta['book']+'/'+r['path'],'title':r['title'],'language':r['language'],'excerpt':r['excerpt'],'_text':r['_text'],
                     'url':'/content/'+quote(meta['book']+'/'+r['path'],safe='/'),'book':meta['book'],'collection':meta['title'],'kind':'article','match':'local_index','_rank':i,**({'_indexed_domains':json.loads(r['domains'])} if category else {})} for i,r in enumerate(rows)],'searched',meta['book']
         except (OSError,sqlite3.Error,ValueError,KeyError,TypeError):return [],'failed',None
@@ -148,13 +215,14 @@ def _article(entry, info, categories, corrections):
     text = parser.text()
     if not text:
         return None, False
-    language = parser.language or {'fra': 'fr', 'eng': 'en'}.get(info['language'], info['language'])
+    language = retrieval.article_language({'id': 'zim:' + info['book'] + '/' + entry.path,
+        'book': info['book'], 'language': parser.language or info['language'], 'text': text})
     domains = corrections.get(entry.path)
     if categories and domains is None:
         candidate = {'id': 'zim:' + info['book'] + '/' + entry.path, 'title': entry.title, '_text': text}
         if wiki_structure.wikipedia(candidate) and item.mimetype != 'text/plain':
             candidate['_wiki_structure'] = wiki_structure.extract(raw[:wiki_structure.MAX_HTML].encode('utf-8'))
-        domains = retrieval.domains(candidate)
+        domains = retrieval.application_domains(candidate)
     return (entry.path, entry.title, text[:502_400], language, domains), False
 
 
@@ -232,9 +300,10 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
         legacy = categories and db.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='articles_resilience'").fetchone()
         tables = ['articles_' + domain for domain in categories] if legacy else ['articles']
-        extra=',domains UNINDEXED' if categories else ''
-        for table in tables:
-            db.execute(f"CREATE VIRTUAL TABLE IF NOT EXISTS {table} USING fts5(path UNINDEXED,title,text,language UNINDEXED{extra},tokenize='unicode61 remove_diacritics 2')")
+        # A build resumed from an older release keeps the format it started with.
+        started = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='articles'").fetchone()
+        compressed = not legacy and (not started or is_compressed(db))
+        _create_tables(db,tables,bool(categories),compressed)
         db.execute('INSERT OR IGNORE INTO metadata VALUES(?,?)',('source',json.dumps(info)))
         cursor=db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone();cursor=int(cursor[0]) if cursor else 0
         count=db.execute("SELECT value FROM metadata WHERE key='articles'").fetchone();count=int(count[0]) if count else 0
@@ -260,11 +329,9 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
                             if domain in counts:
                                 counts[domain] += 1
                     suffix = (json.dumps(domains),) if categories else ()
-                    values = '?,?,?,?,?' if categories else '?,?,?,?'
                     for table in selected:
-                        db.executemany(f'INSERT INTO {table} VALUES({values})',
-                            ((path, title, text[start:start+2400], language, *suffix)
-                             for start in range(0, min(len(text), 500_000), 2200)))
+                        _insert(db, table, ((path, title, text[start:start+2400], language, *suffix)
+                                            for start in range(0, min(len(text), 500_000), 2200)), compressed)
                     count += 1
                 if (index+1)%64==0:
                     db.execute('INSERT OR REPLACE INTO metadata VALUES(?,?)',('cursor',str(index+1)))
@@ -283,3 +350,54 @@ def build_archive(source,root,*,cancel=None,force=False,reserve=1_000_000_000,
         db.commit()
     durable.sync_file(building);durable.publish(building,published)
     return {'archive':source.name,'status':'ready',**native,'index_reason':reason,'bytes':stat.st_size,'mtime_ns':stat.st_mtime_ns,'articles':count,'skipped_entries':skipped}
+
+
+def compress(published,*,cancel=None,reserve=1_000_000_000,batch=2000):
+    """Rewrite a published index in the compressed format, without the ZIM.
+
+    The same rows are copied in the same order, so search results are unchanged.
+    The old file stays published until the new one is complete and verified.
+    Returns the new size, or None when there is nothing to convert."""
+    published=Path(published);work=published.with_suffix('.compressing')
+    before=published.stat()
+    def check():
+        if cancel and Path(cancel).exists():raise Paused()
+        if shutil.disk_usage(published.parent).free<reserve:raise StorageReserve('Espace libre insuffisant pour compresser l’index.')
+    with connect(published,True) as source:
+        names={row[0] for row in source.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')")}
+        if COMPRESSED_TABLE in names or 'articles' not in names:return None
+    # The new file is about 60 % of the old one; keep the usual reserve on top.
+    if shutil.disk_usage(published.parent).free<before.st_size*0.7+reserve:
+        raise StorageReserve('Espace libre insuffisant pour compresser l’index.')
+    work.unlink(missing_ok=True)
+    try:
+        # The source is closed before publishing: Windows refuses to replace an open file.
+        with connect(published,True) as source,connect(work) as db:
+            domains='domains' in {row[1] for row in source.execute('PRAGMA table_info(articles)')}
+            # A crash only leaves a work file, deleted at the next attempt.
+            db.execute('PRAGMA journal_mode=OFF');db.execute('PRAGMA synchronous=OFF')
+            db.execute('CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT)')
+            db.executemany('INSERT INTO metadata VALUES(?,?)',source.execute('SELECT key,value FROM metadata'))
+            _create_tables(db,['articles'],domains,True)
+            columns='path,title,text,language'+(',domains' if domains else '')
+            rows=source.execute(f'SELECT {columns} FROM articles ORDER BY rowid')
+            copied=0
+            while chunk:=rows.fetchmany(batch):
+                check()
+                _insert(db,'articles',(tuple(row) for row in chunk),True)
+                copied+=len(chunk)
+                db.commit()
+            expected=source.execute('SELECT count(*) FROM articles').fetchone()[0]
+            if copied!=expected or db.execute(f'SELECT count(*) FROM {COMPRESSED_TABLE}').fetchone()[0]!=expected:
+                raise sqlite3.DatabaseError('Copie incomplète de l’index.')
+            db.execute("INSERT INTO articles(articles) VALUES('optimize')")
+            db.commit()
+            db.execute("INSERT INTO articles(articles,rank) VALUES('integrity-check',0)")
+        current=published.stat()
+        if (current.st_size,current.st_mtime_ns)!=(before.st_size,before.st_mtime_ns):
+            raise ArchiveChanged('Index republié pendant la compression ; nouvelle version conservée.')
+        durable.sync_file(work);durable.publish(work,published)
+    except BaseException:
+        work.unlink(missing_ok=True)
+        raise
+    return published.stat().st_size

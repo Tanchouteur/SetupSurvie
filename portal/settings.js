@@ -24,8 +24,8 @@ async function loadGeography(){
 }
 function renderGeoJob(data){const geo=!!data.options&&'radius_km' in data.options,busy=['starting','planning','downloading','refreshing'].includes(data.phase);$('geo-download').disabled=busy||contentCommandBusy;$('routing-download').disabled=busy||contentCommandBusy;$('geo-pause').hidden=!geo||!['starting','downloading'].includes(data.phase);if(geo){$('geo-message').textContent=data.message||'';if(data.phase==='completed')loadGeography();}}
 $('geo-use-location').onclick=async()=>{try{const data=await api('/settings'),point=data.departure||data.home;if(!point)throw new Error('Définissez d’abord un lieu dans Paramètres.');$('geo-lat').value=point.lat;$('geo-lon').value=point.lon;}catch(e){$('geo-message').textContent=e.message;}};
-$('geo-download-form').onsubmit=async e=>{e.preventDefault();await contentAction('geography',{lat:Number($('geo-lat').value),lon:Number($('geo-lon').value),radius_km:Number($('geo-radius').value),terrain:$('geo-terrain').checked});$('geo-message').textContent=$('content-message').textContent;};
+$('geo-download-form').onsubmit=async e=>{e.preventDefault();$('geo-message').textContent=await contentAction('geography',{lat:Number($('geo-lat').value),lon:Number($('geo-lon').value),radius_km:Number($('geo-radius').value),terrain:$('geo-terrain').checked});};
 $('geo-refresh').onclick=()=>{loadGeography();if(S.user?.role==='admin')loadContentManager();};
-$('geo-pause').onclick=()=>contentAction('pause');
+$('geo-pause').onclick=async()=>{$('geo-message').textContent=await contentAction('pause');};
 
-$('routing-download').onclick=async()=>{if(!$('geo-lat').reportValidity()||!$('geo-lon').reportValidity())return;await contentAction('routing',{lat:Number($('geo-lat').value),lon:Number($('geo-lon').value),radius_km:Number($('geo-radius').value),terrain:false});$('routing-download-status').textContent=$('content-message').textContent;};
+$('routing-download').onclick=async()=>{if(!$('geo-lat').reportValidity()||!$('geo-lon').reportValidity())return;$('routing-download-status').textContent=await contentAction('routing',{lat:Number($('geo-lat').value),lon:Number($('geo-lon').value),radius_km:Number($('geo-radius').value),terrain:false});};

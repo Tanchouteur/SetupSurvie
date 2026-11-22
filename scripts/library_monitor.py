@@ -114,7 +114,9 @@ def snapshot(root, work, *, now=None):
                 transfer,transfer_alive={},None
         if web.get('action')=='index' and web_alive is not True and web.get('index_pid'):
             if owner_status({'pid':web['index_pid'],'identity':web.get('index_identity')}) is True:web_alive=True
-        if transfer and (transfer_alive is True or not web.get('id') or web_alive is not True):
+        same_worker = (transfer.get('pid') and transfer['pid'] == web.get('pid')
+                       and transfer.get('identity') == web.get('identity') and web.get('action') == 'download')
+        if transfer and not same_worker and (transfer_alive is True or not web.get('id') or web_alive is not True):
             owner, alive, source = transfer, transfer_alive, transfer_source
             plan_path = transfer_plan
             started = transfer.get('started', 0)
@@ -218,7 +220,11 @@ def snapshot(root, work, *, now=None):
         paused = destination(root, 'catalog/content-supervisor.pause').exists()
         if source == 'web':
             paused = paused or destination(work, 'library-web/' + web['id'] + '/cancel').exists()
-        if items and len(verified) == len(items):
+        if source == 'web' and web.get('phase') in ('completed', 'error'):
+            phase = 'verified' if web['phase'] == 'completed' else 'error'
+        elif source == 'web' and web.get('phase') == 'refreshing' and alive is True:
+            phase = 'refreshing'
+        elif items and len(verified) == len(items):
             phase = 'refreshing' if source == 'web' and web.get('phase') == 'refreshing' else 'verified'
         elif alive is None:
             phase = 'unknown'
@@ -234,7 +240,9 @@ def snapshot(root, work, *, now=None):
             phase = 'checking'
         failed = retry.get('failed', {}) if matching_retry else {}
         failed_count = sum(i in selected and i not in verified for i in failed) if isinstance(failed, dict) else 0
-        return {**base, 'source': source, 'phase': phase, 'kind': 'download',
+        web_controls = {'operation_id': web['id'], 'web_download': True,
+                        'pause_requested': paused, 'message': str(web.get('message', ''))[:400]} if source == 'web' else {}
+        return {**base, **web_controls, 'source': source, 'phase': phase, 'kind': 'download',
                 'worker_alive': alive, 'progress_at': updated if fresh else None,
                 'stale': not fresh or now - updated > 120, 'active': active,
                 'total_count': len(items), 'verified_count': len(verified),

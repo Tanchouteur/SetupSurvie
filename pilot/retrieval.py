@@ -1,5 +1,5 @@
 """Small, deterministic query planning and ranking. No model or network required."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from collections import OrderedDict
 from functools import cached_property
 from itertools import islice,product
@@ -68,7 +68,7 @@ class NormalCache:
 
 # Intent words are useful for ranking, but must not exclude a book that uses
 # "production" instead of "allumer", or "construction" instead of "fabriquer".
-ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation'.split())
+ACTIONS=set('allumer allumage fabriquer fabrication construire construction reparer reparation entretenir entretien apprendre preparer preparation produire production faire realiser comment technique techniques tutoriel methode methodes proceder procedure rendre installer installation identifier reconnaitre identification recognize recognise identify'.split())
 EXTRA_STOP=set('source sources aucun aucune autres autre resultat resultats merci ok oui bonjour salut tu ne j aimerais savoir aimerai existe existent existez trouve trouves trouvee trouvez rien quelque chose ce cette cet cela ca bien aussi alors donc dans wikipedia wikipédia appropedia wikihow wikibooks wikilivres encyclopedie encyclopedies francais francaise anglais anglaise ni article articles explication explications expliquer explique expliquez expliquerais marche fonctionne fonctionne t il possible peut on s y pourquoi why'.split())
 EXTRA_STOP.update('comme dois doit doivent devrais devrait devraient pourrais pourrait pouvons pouvez utiliser utilisez utilise utilisation puis ensuite'.split())
 COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',),'wikihow':('wikihow',),'wikibooks':('wikibooks','wikilivres')}
@@ -88,6 +88,7 @@ CONCEPTS={
  'crevaison':{'terms':['crevaison','crevaisons','puncture','punctures','rustine','patching'],'fr':['crevaison'],'en':['puncture']},
  'filtration':{'terms':['filtrer','filtration','filter','filtering','filteration'],'fr':['filtration'],'en':['filtering']},
  'fuite':{'terms':['fuite','fuites','leak','leaks','leaking'],'fr':['fuite'],'en':['leak']},
+ 'tuyau':{'terms':['tuyau','tuyaux','pipe','pipes'],'fr':['tuyau'],'en':['pipe']},
  'eau':{'terms':['eau','water'],'fr':['eau'],'en':['water']},
  'abri':{'terms':['abri','abris','shelter','shelters'],'fr':['abri'],'en':['shelter']},
  'couture':{'terms':['couture','coudre','recoudre','ravauder','sewing','mending'],'fr':['couture'],'en':['sewing']},
@@ -179,13 +180,16 @@ def plan(query,words,synonyms,collection=''):
     for word in terms:
         concept=next((value for value in CONCEPTS.values() if word in value['terms']),None)
         group=list(dict.fromkeys([word]+synonyms.get(word,[])+(concept['terms'] if concept else [])))
+        if (concept is CONCEPTS['potable'] and any(term in CONCEPTS['eau']['terms'] for term in terms)):
+            group.extend(('traitement', 'treatment', 'potabiliser'))
         if not concept and word not in synonyms:group=number_forms(word)
         if any(set(group)&set(g) for g in groups):continue
         groups.append(group);dedup.append(word)
     title_fr=[];title_en=[]
     for word,group in zip(dedup,groups):
         concept=next((c for c in CONCEPTS.values() if word in c['terms']),None)
-        title_fr.append(concept['fr'][0] if concept else word)
+        french = concept['fr'][0] if concept else word
+        title_fr.append(word if word in number_forms(french) else french)
         title_en.append(concept['en'][0] if concept else next((x for x in reversed(synonyms.get(word,[])) if x!=word),word))
     if action=='preserve' and len(dedup)==1 and dedup[0] in CONCEPTS['aliment']['terms']:
         title_fr=['conservation des aliments'];title_en=['food preservation']
@@ -198,9 +202,13 @@ def title_forms(query,english=False):
     original=query.title_en if english else query.title_fr
     if not original:return []
     changes=[]
+    literal = original == ' '.join(query.words)
     for word,group in zip(query.words,query.groups):
-        if not word.endswith(('s','x')) or group!=number_forms(word) or not re.search(r'\b'+re.escape(word)+r'\b',original):continue
-        alternatives=[form for form in group[1:] if not form.endswith(('s','x'))]
+        if not word.endswith(('s','x')) or not re.search(r'\b'+re.escape(word)+r'\b',original):continue
+        forms = number_forms(word)
+        if group != forms and not literal:
+            continue
+        alternatives=[form for form in forms[1:] if form in group and not form.endswith(('s','x'))]
         if alternatives:changes.append((word,alternatives))
     values=[original]
     if changes:
@@ -209,6 +217,11 @@ def title_forms(query,english=False):
             for (word,_),form in zip(changes,combination):value=re.sub(r'\b'+re.escape(word)+r'\b',form,value)
             if value not in values:values.append(value)
     return values
+
+
+EQUIPMENT = r'kits?|trousses?|materiel|equipements?|outils?|outillage|fournitures?|equipment|tools?|supplies|materials?'
+EQUIPMENT_REQUEST = re.compile(rf'\b(?:{EQUIPMENT}|pieces?|parts?)\b')
+EQUIPMENT_HEADING = re.compile(rf'^(?:{EQUIPMENT})\b|\b(?:kits?|tools and supplies)\s*$')
 
 
 def rank(item,query,position=0,*,normalizer=None):
@@ -232,7 +245,12 @@ def rank(item,query,position=0,*,normalizer=None):
             # searchable, while explicit how-to titles may still discuss costs.
             prices=bool(re.search(r'\b(prix|tarifs?|couts?|prices?|pricing|costs?)\b',title))
             steps=bool(re.search(r'\b(comment|tutorial|tutoriels?|instructions|etapes|steps|methode|method)\b|\bhow (to|(can|do|should) (i|we|you|one))\b',title))
-            if prices and not steps:contextual=True;instruction=False
+            heading=normalize(item.get('title','').rsplit('/',1)[-1])
+            equipment=(query.practical and EQUIPMENT_HEADING.search(heading)
+                       and not EQUIPMENT_REQUEST.search(normalize(query.original)))
+            # The heading carries the article's subject. A breadcrumb may
+            # contain the action even when the leaf is a list of supplies.
+            if (prices or equipment) and not steps:contextual=True;instruction=False
             direct=query.practical and title_hits==1 and len(title_tokens)>1 and (not contextual or instruction)
             score+=55 if direct else 12 if query.practical and contextual and not instruction else 28
             if direct and (instruction or title.startswith('diy ')):score+=12 # A reading lead, never a verified procedure.
@@ -254,6 +272,9 @@ def rank(item,query,position=0,*,normalizer=None):
     if query.practical:
         classification=item.get('classification',{})
         if classification.get('method')=='human' and classification.get('document_type') in ('procedure','manual'):score+=10
+        if (title_hits == 1 and query.action and re.search(INTENTS[query.action], title)
+                and item.get('id', '').startswith('guide:') and source_role(item) == 'practical'):
+            score += 24
         if any('feu' in group for group in query.groups) and re.search(r'\b(production de feu|faire du feu|allumage|fire making|fire starting|start a fire)\b',title):score+=20
         if re.search(r'\b(construction|fabrication|allumage|production|techniques|guide|instructions|tutorial|making|build|repair|starting)\b',title):score+=15
         if re.search(r'\b(quiz|questionnaire|qcm)\b',title+' '+text):score-=24
@@ -268,6 +289,41 @@ def rank(item,query,position=0,*,normalizer=None):
             if len(last)==len(query.groups) and index-min(last.values())<60:
                 score+=6;break
     return score
+
+
+def subject_in_passage(item, query, normalize=normal):
+    title = set(normalize(item.get('title', '')).split())
+    excerpt = set(normalize(item.get('excerpt', '')).split())
+    topic = title | excerpt
+    return bool(query.token_groups) and all(
+        any(term <= topic for term in group) for group in query.token_groups
+    )
+
+
+def encyclopedic_matches(items, query, limit, *, normalizer=None):
+    normalize = normalizer or NormalCache()
+    candidates = []
+    for item in items:
+        label = item.get('title', '').strip()
+        if label.casefold().endswith((' (homonymie)', ' (disambiguation)')):
+            continue
+        title = set(normalize(label).split())
+        if query.token_groups and all(any(term <= title for term in group) for group in query.token_groups):
+            candidates.append({**item, 'reference_fallback': True})
+    if len(query.words) == 1:
+        # Accent folding lets an unaccented query find an accented title. When
+        # the typed spelling has an exact subject heading, discard homographs
+        # with a different spelling (for example Ruche and Ruché).
+        spelling = unicodedata.normalize('NFC', query.original.casefold())
+        labels = {word for word in re.findall(r'[^\W_]+', spelling) if normalize(word) == query.words[0]}
+        headings = [(item, unicodedata.normalize('NFC', item.get('title', '').strip().casefold()))
+                    for item in candidates]
+        if any(heading in labels for _, heading in headings):
+            candidates = [item for item, heading in headings
+                          if heading in labels or normalize(heading) != query.words[0]]
+    # An encyclopedia can introduce the subject even if its excerpt does not
+    # describe the requested action.
+    return ordered(candidates, replace(query, action=''), limit, normalizer=normalize)
 
 
 def match_quality(item,query,*,normalizer=None):
@@ -297,6 +353,9 @@ def ordered(items,query,limit,*,normalizer=None):
         title_hits=sum(any(term<=title_tokens for term in group) for group in query.token_groups)
         native_without_excerpt=item.get('_query_complete') and not excerpt and title_hits>0
         if hits<required and not native_without_excerpt:continue
+        pdf_passage = item.get('kind') == 'guide' and re.search(r'\.pdf#page=\d+$', item['id'], re.I)
+        if pdf_passage and not subject_in_passage(item, query, normalize):
+            continue
         if query.practical and query.action:
             evidence=INTENTS[query.action]
             named_device=query.action=='build' and (not excerpt or item.get('match')=='title') and len(query.groups)>1 and title_hits==len(query.groups)
@@ -331,16 +390,104 @@ INTENTS={
  'purify':r'\b(potable|potabilisation|potabiliser|purifier|purification|filtrer|filtration|disinfection|desinfection|purifying|treatment|traitement)\b',
  'build':r'\b(fabriquer|fabrication|construire|construction|build|building|assembly|assemble|diy)\b',
  'install':r'\b(installer|installation|install|installing)\b',
+ 'recognize':r'\b(reconnaitre|reconnaissance|identifier|identification|recognize|recognise|identify|distinguish)\b',
  'sharpen':r'\b(affutage|affuter|aiguiser|sharpen|sharpening)\b',
  'ignite':r'\b(allumer|allumage|amadou|tinder|campfire|feu de camp|ignition|ignite|friction|percussion|production de feu|faire du feu|fire making|fire starting|start a fire|lighting a fire|making a fire)\b',
 }
 
+ENGLISH_PROSE = frozenset('the and of with for this that from which when into each'.split())
+FRENCH_PROSE = frozenset('les une des avec pour dans cette qui sur est sont aux'.split())
+LOWTECH_ARCHIVE = 'solar.lowtechmagazine.com'
+LOWTECH_ARTICLE_PATH = re.compile(
+    r'(?:solar\.lowtechmagazine\.com/)?(?:(en|fr|de|nl|es|it|pt|pl|ar|vi|ko)/)?'
+    r'\d{4}/(?:0[1-9]|1[0-2])/[^/]+/?$'
+)
+
+
+ARCHIVE_ROLES = {
+    'appropedia': 'practical', 'ifixit': 'practical', 'wikihow': 'practical',
+    LOWTECH_ARCHIVE: 'practical', 'wikipedia': 'reference',
+    'vikidia': 'reference', 'encyclopedie-environnement.org': 'reference',
+    'encyclopedie-environnement': 'reference', 'environment-encyclopedia': 'reference',
+    'wiktionary': 'language', 'gutenberg': 'culture', 'wikisource': 'culture',
+    'wikivoyage': 'culture', 'alexandria.dk': 'culture',
+}
+PRACTICAL_PUBLISHERS = frozenset({
+    'who wedc', 'hesperian health guides', 'msf', 'ifrc', 'unhcr', 'inrs',
+    'ministere de l interieur securite civile sgdsn', 'croix rouge francaise ifrc',
+    'oms war trauma foundation world vision', 'usda nchfp university of georgia',
+    'victron energy', 'fao', 'anfr', 'baofeng radioddity',
+})
+
+
+def source_role(item):
+    """Recognise established source families and publishers by stable metadata."""
+    identifier = item.get('id', '')
+    if identifier.startswith('guide:'):
+        publisher = normal(item.get('provenance', '').partition(' — ')[0])
+        return 'practical' if publisher in PRACTICAL_PUBLISHERS else ''
+    book = item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]
+    family = book.lower().split('_', 1)[0]
+    if family.endswith('.stackexchange.com'):
+        return 'reference'
+    return ARCHIVE_ROLES.get(family, '')
+
+
+def fallback_encyclopedia(book):
+    return book.lower().partition('_')[0] in ('wikipedia', 'vikidia')
+
+
+PRACTICAL_FORUMS = frozenset({
+    'bicycles.stackexchange.com', 'crafts.stackexchange.com', 'diy.stackexchange.com',
+    'gardening.stackexchange.com', 'mechanics.stackexchange.com', 'woodworking.stackexchange.com',
+})
+
+
+def practical_forum(book):
+    return book.lower().partition('_')[0] in PRACTICAL_FORUMS
+
+
+CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})
+
+
+def application_domains(item, indexed=None):
+    if source_role(item) in CULTURE_SOURCE_ROLES:
+        return ['culture']
+    return domains(item) if indexed is None else indexed
+
+
+def ifixit_edition(book):
+    match = re.match(r'ifixit_(en|fr)_all(?:_|$)', book)
+    return match[1] if match else ''
+
+
 def article_language(item):
-    """Wiki translation suffixes describe the article, not its archive language."""
-    language=item.get('language','')
-    if 'appropedia' in item.get('book',item.get('id','')).lower():
-        suffix=re.search(r'/([a-z]{2})(?:-[a-z]+)?$',item.get('id',''))
-        if suffix:return suffix[1]
+    """Prefer available evidence about the page over a general metadata hint."""
+    identifier = item.get('id', '')
+    book = (item.get('book') or identifier.removeprefix('zim:').split('/', 1)[0]).lower()
+    language = item.get('language', '')
+    if book.partition('_')[0] == LOWTECH_ARCHIVE:
+        # Translated articles share the English HTML shell and article slugs.
+        article = LOWTECH_ARTICLE_PATH.fullmatch(identifier.partition('/')[2])
+        if article:
+            return article[1] or 'en'
+    if 'appropedia' in book:
+        suffix = re.search(r'/([a-z]{2})(?:-[a-z]+)?$', identifier)
+        if suffix:
+            return suffix[1]
+    edition = ifixit_edition(book)
+    if edition:
+        # Both iFixit editions can declare html lang=fr. Keep the edition
+        # language unless the content gives a strong signal of the other language.
+        content = item.get('_text') or item.get('text') or item.get('excerpt') or ''
+        tokens = set(normal(content[:4_000]).split())
+        english = len(tokens & ENGLISH_PROSE)
+        french = len(tokens & FRENCH_PROSE)
+        if english >= max(3, 2 * french):
+            return 'en'
+        if french >= max(3, 2 * english):
+            return 'fr'
+        return edition
     return {'fra':'fr','eng':'en'}.get(language,language)
 
 def legacy_domains(item):

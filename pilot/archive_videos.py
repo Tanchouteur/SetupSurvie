@@ -43,11 +43,22 @@ def original_revision(payload):
     except (OSError,ValueError,KeyError):return None
 
 
-def items(errors=None):
+def published_indexes():
+    """Yield only complete files placed in the published inventory directory."""
     root=directory()
     if not root.is_dir() or video_inventory.is_link(root):return
     for path in sorted(root.glob('*.sqlite')):
-        if not re.fullmatch('[a-f0-9]{24}\\.sqlite',path.name) or video_inventory.is_link(path):continue
+        if not re.fullmatch('[a-f0-9]{24}\\.sqlite',path.name):
+            continue
+        try:
+            info = video_inventory.regular(path)
+        except (OSError, ValueError):
+            continue
+        yield path, info
+
+
+def items(errors=None):
+    for path, _ in published_indexes():
         try:
             with zim_video_inventory.connect(path,True) as db:
                 titles=db.execute('SELECT value FROM metadata WHERE key=?',(zim_video_inventory.YOUTUBE_TITLES,)).fetchone()

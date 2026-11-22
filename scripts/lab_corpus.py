@@ -3,11 +3,11 @@
 import fcntl
 import hashlib
 import json
-import shutil
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
 
+import content
 import linux_lab as lab
 from lab_library_ranges import download
 
@@ -43,8 +43,8 @@ def main():
             partial = destination.with_suffix('.zim.part')
             # Conservative: reserve enough for a full outstanding archive, even on resume.
             if not destination.exists():
-                if shutil.disk_usage(lab.MOUNT).free < size + 5_000_000_000:
-                    raise RuntimeError('Marge insuffisante dans le volume plafonné pour ' + name)
+                if content.free_space(lab.MOUNT / 'data', lab.MOUNT) < size + 5_000_000_000:
+                    raise RuntimeError('Marge insuffisante sur le SSD dédié pour ' + name)
                 print(f'Téléchargement : {name}, {size / 1e9:.2f} Go', flush=True)
                 download(partial, name, size, mirrors=mirrors,
                          status_path=lab.MOUNT / 'results/corpus-progress.json')

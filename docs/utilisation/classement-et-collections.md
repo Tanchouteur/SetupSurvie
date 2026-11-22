@@ -66,7 +66,18 @@ Vérifiez le volume et le classement proposés avant de lancer le transfert.
 Les éditions sont reconnues par la référence de collection, langue comprise.
 
 Les nouvelles installations partent du [tri fourni avec le logiciel](../../deploy/collection-sort-default.json)
-lorsqu’aucun fichier personnalisé n’est donné. Le tri initial peut être ajusté
+lorsqu’aucun fichier personnalisé n’est donné. Le 21 novembre 2026, ce tri
+part de l’export de Louis et y ajoute, à sa demande et d’après la
+[liste de thèmes de Marc](../bibliotheque/savoirs-durables.md#liste-de-thèmes-de-marc--21-novembre-2026) :
+2 exclusions sans usage (encyclopédies de fans Evangelion et Magic), et un
+rangement dans **Autre** de ce qui peut servir sans aider la recherche
+pratique : encyclopédies et forums savants, informatique et réseaux,
+religions, langues, musique, jeux, littérature, philosophie, droit, des
+textes Wikisource, de l’histoire, de la vulgarisation, des livres à lire et
+des thèmes C'est pas sorcier sans rapport direct avec l’autonomie (arts,
+sport, défense, économie, histoire, astronomie, géographie, écologie,
+géologie, transports). Gutenberg reste disponible pour la lecture. Le tri
+initial peut être ajusté
 puis exporté depuis la même page. Le réglage enregistré par une installation
 existante reste prioritaire.
 [Décision et plan de recette](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md)
@@ -75,6 +86,13 @@ Avant la 0.65.0, ce tri et l’index Wikipédia occupaient deux panneaux dans
 **Bibliothèque → Collections** ; Louis les a jugés inutilisables le 20 novembre
 2026 (on ne comprenait pas quelle collection était laquelle ni l’effet des
 boutons), d’où cette page.
+
+Le portail et l’assistant ouvrent **Autonomie et résilience** par défaut.
+Le même réglage s’applique à `/api/search` sans espace indiqué. Une
+recherche limitée aux favoris ou aux traductions partagées peut chercher
+dans toute sa sélection. Le choix **Autre** ou **Toute la bibliothèque**
+élargit la recherche quand vous le demandez. L’assistant conserve l’espace
+choisi pendant sa préparation et ses recherches complémentaires.
 
 ## Préparer la recherche du fonds principal par espace
 
@@ -105,12 +123,18 @@ Les corrections de classement enregistrées gardent la priorité. Voir
 
 ## Comprendre le classement automatique
 
-Pour Wikipédia, le classement tient compte du titre, des sections principales
-et des catégories d'article quand elles sont présentes dans l'archive locale.
-Un article peut appartenir aux deux espaces. L'indication peut évoluer à la
-fin d'une recherche progressive, après lecture de la structure. Si un résultat
-attendu manque, élargir à **Toute la bibliothèque** puis corriger son
-classement si nécessaire.
+Le rôle indiqué dépend de la source. **Guide pratique** repère notamment les
+fiches OMS, les manuels Hesperian et les tutoriels iFixit. **Référence** couvre
+les encyclopédies comme Wikipédia. **Langue** désigne les dictionnaires.
+**Culture** regroupe notamment les collections littéraires comme Gutenberg.
+Une source non reconnue continue à être classée d’après son contenu.
+
+Les références, dictionnaires et collections culturelles connues sont classés
+automatiquement dans **Savoirs et culture**. Pour un article de référence qui
+contient une méthode utile, le profil Famille peut ajouter **Autonomie et
+résilience** après lecture. Le choix Fonds principal / Autre détermine
+toujours les collections parcourues. Pour inclure aussi **Autre**, élargir à
+**Toute la bibliothèque**.
 
 Le [protocole de mesure](../essais/mesurer-classement-documentaire.md) permet
 de comparer deux versions sur les mêmes documents et vidéos.

@@ -13,6 +13,13 @@ reste distinct : des mesures rapides ne prouvent pas qu’un résultat est utile
 
 Dans **Bibliothèque → Rechercher**, décrire le besoin : « allumer un feu »,
 « fabriquer un générateur à pédales », « rendre eau potable » ou « réparer un vélo ».
+Pour iFixit, la recherche et le lecteur utilisent la langue de l’édition et
+les indices du texte. Une page dont le contenu est majoritairement anglais
+peut ainsi être étiquetée Anglais dans l’édition française. Quand un extrait
+est trop court ou équilibré entre les deux langues, le résultat conserve la
+langue de l’édition. Le filtre français retire les résultats reconnus comme
+anglais.
+
 Le choix de langue permet de chercher en français et en anglais. Le sélecteur
 **Toutes les collections** permet aussi de cibler une source installée, par exemple
 Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/Suivant.

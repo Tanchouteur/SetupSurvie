@@ -6,7 +6,7 @@ import re
 import sqlite3
 import time
 
-from . import archive_index, collection_sort, durable
+from . import archive_index, collection_sort, durable, retrieval
 
 DIRECTORY = 'category-index'
 DOMAINS = ('resilience', 'culture')
@@ -40,7 +40,9 @@ def signature(path, state):
                             saved[key[len(prefix):]] = sorted(set(domains))
                     except (AttributeError,TypeError,ValueError):
                         continue
-    payload = [FORMAT, path.name, info.st_size, info.st_mtime_ns, saved]
+    role = retrieval.source_role({'book': path.stem})
+    format_version = FORMAT + 1 if role in retrieval.CULTURE_SOURCE_ROLES else FORMAT
+    payload = [format_version, path.name, info.st_size, info.st_mtime_ns, saved]
     return hashlib.sha256(json.dumps(payload,sort_keys=True).encode()).hexdigest(), saved
 
 
@@ -86,6 +88,41 @@ def availability(zims, state, sorting=None, *, indexes=None):
     elif report['phase'] in ('completed', 'unavailable'):
         report['phase'] = 'outdated'
     return report, next(iter(ready.values()), None)
+
+
+def compress_ready(root, paths, ready, report, failures, save, *, cancel=None, reserve=15_000_000_000, keep=None):
+    """Convert indexes built before 0.88.0 to the compressed format (same results)."""
+    for path in paths:
+        if path.stem not in ready or (keep and not keep(path)):
+            continue
+        if cancel and Path(cancel).exists():
+            raise archive_index.Paused()
+        report.update(archive=path.name, step='compression', done=None, total=None)
+        save()
+        try:
+            size = archive_index.compress(ready[path.stem], cancel=cancel, reserve=reserve)
+        except archive_index.Paused:
+            raise
+        except (OSError, sqlite3.Error) as error:
+            # The old index stays published and searchable.
+            failures.append({'archive': path.name, 'step': 'compression', 'error': type(error).__name__})
+            report['failures'] = failures
+            save()
+            if isinstance(error, archive_index.StorageReserve):
+                break
+            continue
+        if size is None:
+            continue
+        record = _record(root, path)
+        try:
+            saved = json.loads(record.read_text(encoding='utf-8'))
+            saved['bytes'] = size
+            durable.write_bytes(record, json.dumps(saved).encode(), private=True)
+        except (OSError, ValueError, TypeError):
+            pass
+        report['bytes'] = sum(index.stat().st_size for index in ready.values())
+        save()
+    report.pop('step', None)
 
 
 def prepare(zims, state, *, cancel=None, job_id=None, reserve=15_000_000_000, workers=1, catalog=None):
@@ -155,6 +192,7 @@ def prepare(zims, state, *, cancel=None, job_id=None, reserve=15_000_000_000, wo
             ready[path.stem] = index
             report.update(completed=len(ready), bytes=sum(index.stat().st_size for index in ready.values()))
             save()
+        compress_ready(root, paths, ready, report, failures, save, cancel=cancel, reserve=reserve, keep=in_main)
         current = sources(zims, collection_sort.load(catalog) if catalog is not None else sorting)
         complete = all(path.stem in ready for path in current)
         report['phase'] = 'completed' if complete else 'error' if failures else 'outdated'

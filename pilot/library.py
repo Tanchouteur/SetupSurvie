@@ -24,6 +24,7 @@ from fastapi import HTTPException
 
 from . import category_index,collection_sort,network,store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
 
+DEFAULT_SEARCH_DOMAIN = 'resilience'
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
 
@@ -418,7 +419,11 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
         if query_plan and query_plan.collection and not catalogue.matches_collection(book,query_plan.collection,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')),saved_labels):continue
-        languages=archive_index.languages(book.get('language') or '')
+        edition = retrieval.ifixit_edition(book['book'])
+        declared = {'en': 'eng', 'fr': 'fra'}.get(edition, book.get('language') or '')
+        if edition:
+            book['language'] = declared
+        languages=archive_index.languages(declared)
         if requested and requested not in languages:continue
         selected_books.append(book)
         if book.get('fulltext') is False and known.get('status')!='ready':
@@ -778,7 +783,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
             concept=next((c for c in retrieval.CONCEPTS.values() if word in c['terms']),None)
             if lang=='eng':translated.append(english.get(word,concept['en'][0] if concept else word))
             else:translated.append(concept['fr'][0] if concept and word not in concept['fr'] else word)
-        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
+        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'recognize':('identification','identification'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
     saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))
@@ -792,8 +797,39 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         metadata_available=annotations.annotate(combined,fresh=fresh)
         allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
         combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
-        if domain in ('resilience','culture'):combined=[r for r in combined if domain in r['domains']]
-        ordered=retrieval.ordered(combined,query_plan,limit*2,normalizer=normalize)
+        primary = [row for row in combined if domain not in category_index.DOMAINS or domain in row['domains']]
+        ordered = retrieval.ordered(primary, query_plan, limit * 2, normalizer=normalize)
+        remaining = min(3, limit * 2 - len(ordered))
+        if domain == 'resilience' and not any(
+            row['match_quality'] == 'subject' and (
+                row.get('kind') == 'guide'
+                or row['classification']['source_role'] == 'practical'
+                or row['classification']['document_type'] in ('procedure', 'manual')
+            ) for row in ordered
+        ):
+            references = [
+                row for row in combined
+                if row['classification']['method'] == 'automatic'
+                and 'resilience' not in row['domains']
+                and row.get('book') and archive_allowed(row['book'])
+            ]
+            if len(query_plan.groups) > 1:
+                direct = [row for row in ordered if row['match_quality'] == 'subject']
+                room = min(3, limit * 2 - len(direct))
+                forum_matches = retrieval.ordered(
+                    [row for row in references if retrieval.practical_forum(row['book'])
+                     and retrieval.match_quality(row, query_plan, normalizer=normalize) == 'subject'],
+                    query_plan, room, normalizer=normalize,
+                ) if room else []
+                if forum_matches:
+                    context = [row for row in ordered if row['match_quality'] != 'subject']
+                    ordered = (direct + forum_matches + context)[:limit * 2]
+                    remaining = min(3 - len(forum_matches), limit * 2 - len(ordered))
+            if remaining:
+                ordered += retrieval.encyclopedic_matches(
+                    [row for row in references if retrieval.fallback_encyclopedia(row['book'])],
+                    query_plan, remaining, normalizer=normalize,
+                )
         processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
         return ordered,metadata_available
     async def selected(items,*,fresh=False):return await kiwix_queries.disk_io(selected_sync,items,fresh)
@@ -811,13 +847,28 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         indexes = await asyncio.to_thread(category_index.ready_indexes, zims, store.ROOT, sorting)
         category_report, _ = await asyncio.to_thread(category_index.availability, zims, store.ROOT, sorting, indexes=indexes)
         paths = [path for book, path in indexes.items() if archive_allowed(book)]
-        if paths:
+        reference_paths = [
+            path for book, path in indexes.items() if domain == 'resilience' and archive_allowed(book)
+            and (retrieval.fallback_encyclopedia(book) or retrieval.practical_forum(book))
+        ]
+        searched = set()
+        for category, category_paths in ((domain, paths), ('culture', reference_paths)):
+            if not category_paths:
+                continue
             result = await asyncio.to_thread(
-                archive_index.search, paths[0].parent, query_plan, language, candidate_limit, zims,
+                archive_index.search, category_paths[0].parent, query_plan, language, candidate_limit, zims,
                 collection_match=lambda book, selection: catalogue.matches_collection(book, selection, GUIDES, zims, saved_metadata),
-                category=domain, index_paths=paths)
+                category=category, index_paths=category_paths)
             local_rows.extend(result)
-            chosen = tuple(result.coverage.get('books', ()))
+            books = set(result.coverage.get('books', ()))
+            if category != domain:
+                # A failed secondary scan must leave the native fallback available.
+                searched.difference_update(
+                    book for book, path in indexes.items() if path in reference_paths and book not in books
+                )
+            else:
+                searched.update(books)
+        chosen = tuple(sorted(searched))
     async def read_local():
         found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
             collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),archive_allowed=archive_allowed,skip_books=chosen)
@@ -929,7 +980,8 @@ async def source(identifier):
     text=p.text()
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
     result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':retrieval.article_language({'id': identifier, 'book': book['book'],
+                'language': p.language or book.get('language', ''), 'text': text}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
     if wiki_structure.wikipedia(result):
         result['_wiki_structure'] = await kiwix_queries.disk_io(wiki_structure.extract, raw)
     catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))

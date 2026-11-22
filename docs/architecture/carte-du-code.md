@@ -180,7 +180,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `pilot_update.py`, `windows_update.py`, `update-windows.ps1`, `rollback-windows.ps1`, `delivery_paths.py` | Mises à jour avec sauvegarde et retour arrière ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `maintenance_site.py` | Suivi commun `catalog/maintenance.json` et page temporaire sur les ports du portail pendant l’arrêt des conteneurs |
 | `update_watch.py` | Vérification de `main` et lancement du lanceur Windows depuis le portail (dans le contrôleur hôte) |
-| `windows_resume.py`, `register-windows-resume.ps1` | Reprise après coupure ([guide](../exploitation/coupures-et-redemarrage.md)) |
+| `windows_resume.py`, `register-windows-resume.ps1` | Reprise du téléchargement après coupure : tâche de démarrage Windows, contrôleur sous Linux depuis 0.86.0 ([guide](../exploitation/coupures-et-redemarrage.md)) |
 | `pilot_kit.py`, `kit_audit.py`, `kit_maps.py` | Kit hors ligne ([guide](../installation/preparer-kit-hors-ligne.md)) |
 | `kit_duplicate.py` | Duplication du kit public hors ligne avec empreintes, reprise et conservation des installateurs locaux |
 | `windows_kit_installers.py` | Préparation et contrôle des prérequis Windows sur un kit même depuis Linux ([guide](../installation/preparer-kit-hors-ligne.md#ajouter-les-installateurs-windows-depuis-linux)) |
@@ -195,6 +195,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `library_tasks.py`, `library_monitor.py`, `collection_tasks.py` | Travaux Kiwix et collections côté hôte ; vue bornée des travaux |
 | `content.py`, `content_mirrors.py`, `content_retry.py`, `content-monitor.ps1` | Téléchargement des lots figés ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)) |
 | `kiwix_select.py`, `audit_selection.py` | Sélection Kiwix par thème ([guide](../bibliotheque/selection-kiwix-par-theme.md)) |
+| `library_reference.py` | Manifeste du fonds de référence figé (`deploy/library-reference.json`) : construction et vérification d’une installation ([guide](../bibliotheque/bibliotheque-complete-marc.md#fonds-de-référence-figé)) |
 | `index_archives.py`, `index_categories.py`, `search_index_*.py`, `index_locks.py`, `index_reader_probe.py` | Indexation des archives et du fonds principal |
 | `inventory_zim_videos.py`, `library_videos.py`, `youtube_videos.py`, `youtube_tools.py` | Vidéos ZIM et YouTube ([guide](../utilisation/telecharger-videos-youtube.md)) |
 | `maps.py`, `map_install.py`, `geography_data.py`, `routing_prepare.py` | Cartes, adresses, relief et graphes OSRM |

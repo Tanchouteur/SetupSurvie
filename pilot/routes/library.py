@@ -82,6 +82,34 @@ async def export_collection_sort(value=Depends(admin)):
     return JSONResponse(sorting.as_json(),headers={'Content-Disposition':'attachment; filename="SetupSurvie-tri.json"'})
 
 
+@router.get('/api/admin/library/reference')
+async def preview_library_reference(value=Depends(admin)):
+    return await operations.library_command('reference-preview')
+
+
+@router.get('/api/admin/library/reference/restoration')
+async def preview_reference_restoration(value=Depends(admin)):
+    return await operations.library_command('reference-preview', {'restore': True})
+
+
+class ReferenceDownload(BaseModel):
+    archive: str = Field(min_length=1, max_length=240)
+
+
+class ReferenceRestoration(BaseModel):
+    confirmation_token: str = Field(pattern='^[a-f0-9]{64}$')
+
+
+@router.post('/api/admin/library/reference/restoration',status_code=202)
+async def restore_library_reference(body:ReferenceRestoration,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_confirmation': body.confirmation_token})
+
+
+@router.post('/api/admin/library/reference/download',status_code=202)
+async def download_reference_archive(body:ReferenceDownload,value=Depends(admin)):
+    return await operations.library_command('download', {'reference_archive': body.archive})
+
+
 @router.post('/api/admin/library/collection-sort/{action}')
 async def change_collection_sort(action:Literal['move','preview','exclude'],body:CollectionBatch,value=Depends(admin)):
     return await operations.library_command('collection-'+action,body.model_dump())
@@ -123,7 +151,9 @@ async def search_diagnostic():
 
 
 @router.get('/api/search')
-async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture','other']='all',diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
+async def search(request:Request,q:str=Query(default='',max_length=200),language:str='',limit:int=Query(default=8,ge=1,le=20),favorites_only:bool=False,translations_only:bool=False,collection:str=Query(default='',max_length=160),domain:Literal['all','resilience','culture','other']|None=None,diagnostic:bool=False,stream:bool=False,kind:Literal['all','documents','videos']='all'):
+    if domain is None:
+        domain = 'all' if favorites_only or translations_only else library.DEFAULT_SEARCH_DOMAIN
     owner=(await user(request))['id'] if favorites_only else None
     if stream:
         return StreamingResponse(search_stream.packets(q.strip(),language,limit=limit,favorite_user=owner,translations_only=translations_only,collection=collection,domain=domain,diagnostic=diagnostic,kind=kind),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})

@@ -84,6 +84,41 @@ def capture(reference, base, *, check_filters=False):
     return {'schema': 1, 'server_version': health['version'], 'cases': captured}
 
 
+def scan_library(reference, base, *, read_top=1):
+    """Record searches and public reader reachability without saving excerpts."""
+    before = json.loads(request(base + '/api/library/search-diagnostic'))
+    captured = []
+    for case in reference['cases']:
+        row = dict(case)
+        try:
+            params = {'q': case['query'], 'domain': case['domain'], 'kind': 'documents',
+                      'language': case.get('language', ''), 'limit': 12}
+            found = json.loads(request(base + '/api/search', params))
+            fields = ('id', 'title', 'language', 'kind', 'collection', 'domains')
+            row['results'] = [{key: item[key] for key in fields if key in item} for item in found['results']]
+            row['coverage'] = found.get('coverage', {}).get('status')
+            opened = [item['id'] for item in row['results'][:read_top]]
+            expected = case.get('expected_source')
+            if expected:
+                row['expected_rank'] = next((i for i, item in enumerate(row['results'], 1)
+                    if item['id'].split('#page=', 1)[0] == expected), None)
+                opened.append(expected)
+            row['reader'] = {}
+            for identifier in dict.fromkeys(opened):
+                try:
+                    source = json.loads(request(base + '/api/source', {'id': identifier}))
+                    row['reader'][identifier] = {'has_text': bool(source.get('text', '').strip()),
+                                                  'language': source.get('language', '')}
+                except (OSError, ValueError) as error:
+                    row['reader'][identifier] = {'error': getattr(error, 'code', type(error).__name__)}
+        except (OSError, ValueError) as error:
+            row['search_error'] = getattr(error, 'code', type(error).__name__)
+        captured.append(row)
+    after = json.loads(request(base + '/api/library/search-diagnostic'))
+    return {'schema': 1, 'server_version': before.get('version'), 'catalog_before': before.get('catalog'),
+            'catalog_after': after.get('catalog'), 'cases': captured}
+
+
 def metrics(rows):
     measured = [row for row in rows if 'predicted' in row]
     result = {'requested': len(rows), 'measured': len(measured), 'found_in_search': sum('position' in row for row in rows),
@@ -117,7 +152,7 @@ def evaluate(snapshot, *, kiwix=None, legacy=False):
                     row['wiki_structure'] = {key: len(labels) for key, labels in structure.items()}
                 except (OSError, ValueError) as error:
                     row['wiki_structure_error'] = str(error)
-            classifier = retrieval.legacy_domains if legacy else retrieval.domains
+            classifier = retrieval.legacy_domains if legacy else retrieval.application_domains
             row['predicted'] = classifier(item)
             row['correction'] = captured['item'].get('classification', {}).get('method') == 'human'
         cases.append(row)
@@ -201,6 +236,11 @@ def main():
     collect.add_argument('output', type=Path)
     collect.add_argument('--portal', required=True)
     collect.add_argument('--check-filters', action='store_true', help='Interroger aussi chaque espace pour chaque cas')
+    scan = commands.add_parser('scan-library')
+    scan.add_argument('reference', type=Path)
+    scan.add_argument('output', type=Path)
+    scan.add_argument('--portal', required=True)
+    scan.add_argument('--read-top', type=int, choices=(0, 1, 2, 3), default=1)
     score = commands.add_parser('score')
     score.add_argument('snapshot', type=Path)
     score.add_argument('output', type=Path)
@@ -217,6 +257,8 @@ def main():
     args = parser.parse_args()
     if args.command == 'capture':
         data = capture(json.loads(args.reference.read_bytes()), args.portal.rstrip('/'), check_filters=args.check_filters)
+    elif args.command == 'scan-library':
+        data = scan_library(json.loads(args.reference.read_bytes()), args.portal.rstrip('/'), read_top=args.read_top)
     elif args.command == 'score':
         raw = args.snapshot.read_bytes()
         data = evaluate(json.loads(raw), kiwix=args.kiwix.rstrip('/') if args.kiwix else None, legacy=args.legacy)

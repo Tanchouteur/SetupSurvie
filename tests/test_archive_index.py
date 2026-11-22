@@ -43,6 +43,28 @@ class ArchiveIndexTests(unittest.TestCase):
         self.assertEqual(self.query()[0]['id'],'zim:manual_fr/Reparer_velo')
         body=self.query('crevaison');self.assertTrue(body);self.assertIn('/content/manual_fr/Reparer_velo',body[0]['url'])
         self.assertEqual(archive_index.build_archive(self.zim,self.index)['articles'],result['articles'])
+        with archive_index.connect(next(self.index.glob('*.sqlite')),True) as db:
+            self.assertTrue(archive_index.is_compressed(db))
+
+    def test_category_build_is_compressed_and_matches_the_former_format(self):
+        categories=dict(categories=('resilience','culture'),category_signature='s')
+        def found(path):
+            return [archive_index.search(self.index,retrieval.plan(words,library.search_terms(words),library.SYNONYMS),
+                                         category=category,only_path=path)
+                    for words in ('réparer un vélo','crevaison','document fictif') for category in ('resilience','culture')]
+        create,insert=archive_index._create_tables,archive_index._insert
+        with patch.object(archive_index,'_create_tables',lambda db,tables,domains,_:create(db,tables,domains,False)),\
+             patch.object(archive_index,'_insert',lambda db,table,rows,_:insert(db,table,rows,False)):
+            archive_index.build_archive(self.zim,self.index,force=True,**categories)
+        path=next(self.index.glob('*.sqlite'));former=path.read_bytes();before=found(path)
+        path.unlink()
+        archive_index.build_archive(self.zim,self.index,force=True,**categories)
+        with archive_index.connect(path,True) as db:self.assertTrue(archive_index.is_compressed(db))
+        self.assertEqual(found(path),before)
+        self.assertTrue(any(before))
+        legacy=self.index/'legacy.sqlite';legacy.write_bytes(former)
+        archive_index.compress(legacy,reserve=0)
+        self.assertEqual(found(legacy),before)
 
     def test_old_index_stays_readable_until_explicit_rebuild_with_new_parser(self):
         with patch.object(archive_index,'FORMAT',1):archive_index.build_archive(self.zim,self.index)
@@ -54,6 +76,21 @@ class ArchiveIndexTests(unittest.TestCase):
         with archive_index.connect(path,True) as db:
             new=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
         self.assertTrue(new['fingerprint'].startswith('2:'));self.assertTrue(self.query())
+
+    def test_lowtech_language_filter_corrects_the_language_of_already_indexed_articles(self):
+        archive = self.root / 'solar.lowtechmagazine.com_mul_all_test.zim'
+        with Creator(archive).config_indexing(False, 'eng') as writer:
+            writer.add_metadata('Title', 'Magazine fictif')
+            writer.add_metadata('Language', 'eng,fra')
+            writer.add_item(Article('fr/2024/02/test/', 'Solaire', 'Un projet solaire fictif.'))
+            writer.add_item(Article('2024/02/test/', 'Solar', 'A fictitious solar project.'))
+        plan = retrieval.plan('solaire', library.search_terms('solaire'), library.SYNONYMS)
+        with patch.object(retrieval, 'article_language', return_value='en'):
+            archive_index.build_archive(archive, self.index)
+        french = archive_index.search(self.index, plan, 'fr')
+        english = archive_index.search(self.index, plan, 'en')
+        self.assertEqual([row['id'].split('/', 1)[1] for row in french], ['fr/2024/02/test/'])
+        self.assertEqual([row['id'].split('/', 1)[1] for row in english], ['2024/02/test/'])
 
     def test_interruption_resumes_from_committed_cursor_and_preserves_old_publication(self):
         archive_index.build_archive(self.zim,self.index);original=self.query()

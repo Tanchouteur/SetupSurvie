@@ -18,7 +18,7 @@ import setup
 import maintenance_site
 from pilot import durable
 from delivery_paths import destination,locked
-from pilot_backup import maintenance,stopped_backup
+from pilot_backup import maintenance,rebuildable,stopped_backup
 from pilot_kit import checked_entries
 
 FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
@@ -160,12 +160,16 @@ class Services:
         raise setup.SetupError('La nouvelle version ne répond pas correctement.')
 
 
-def clear_state(folder):
-    """Keep OS lease inodes, including the index lease owned by this operation."""
+def clear_state(folder,data=None):
+    """Keep OS lease inodes, including the index lease owned by this operation.
+
+    Rebuildable indexes are absent from snapshots: they stay in place and
+    validate themselves against the ZIM archives after a rollback."""
     for path in folder.iterdir():
         if path.is_symlink():raise setup.SetupError('Lien dans les états ; restauration manuelle requise.')
+        if data is not None and rebuildable(path.relative_to(data)):continue
         if path.is_dir():
-            clear_state(path)
+            clear_state(path,data)
             if not any(path.iterdir()):path.rmdir()
         elif not path.name.endswith('.lease'):path.unlink()
 
@@ -174,12 +178,12 @@ def restore_snapshot(snapshot,app,c):
     report=json.loads((snapshot/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(snapshot,report)
     data=Path(c['data_dir'])
     for entry,_ in entries:
-        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json'):
+        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json','data/catalog/collection-sort.json'):
             raise setup.SetupError('Sauvegarde non reconnue ; restauration manuelle requise.')
     # Only mutable service state; models, ZIM and caches are never removed.
     for name in ('state/pilot','state/caddy'):
         folder=destination(data,name)
-        if folder.exists():clear_state(folder)
+        if folder.exists():clear_state(folder,data)
     folder=destination(data,'state/openwebui')
     if folder.exists():
         for path in folder.iterdir():
@@ -393,7 +397,7 @@ def apply(app,package,digest,services=None,*,rollback=False):
         if (root/'vendor').is_dir():
             if (root/'vendor').is_symlink() or any(p.is_symlink() for p in (root/'vendor').rglob('*')):raise setup.SetupError('Lien dans les dépendances locales refusé.')
             shutil.copytree(root/'vendor',staged/'vendor')
-        snapshot_bytes=sum(p.stat().st_size for name in ('state/pilot','state/openwebui','state/caddy','library/guides') for p in (data/name).rglob('*') if p.is_file() and not p.is_symlink() and 'cache' not in p.relative_to(data).parts)
+        snapshot_bytes=sum(p.stat().st_size for name in ('state/pilot','state/openwebui','state/caddy','library/guides') for p in (data/name).rglob('*') if p.is_file() and not p.is_symlink() and 'cache' not in p.relative_to(data).parts and not rebuildable(p.relative_to(data)))
         if shutil.disk_usage(root).free<snapshot_bytes+2_000_000_000:raise setup.SetupError('Marge libre insuffisante pour la sauvegarde et le remplacement.')
         durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),

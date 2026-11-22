@@ -12,6 +12,8 @@ import setup
 
 KIWIX = {'download.kiwix.org', 'lb.download.kiwix.org', 'mirror.download.kiwix.org'}
 NS = {'m': 'urn:ietf:params:xml:ns:metalink'}
+# Large archives carry a list of hashes for their individual pieces.
+MAX_METALINK_BYTES = 8_000_000
 
 
 def https_url(value):
@@ -39,10 +41,14 @@ def network_open(request, timeout=10):
     return urllib.request.build_opener(urllib.request.ProxyHandler({}), SecureRedirect()).open(request, timeout=timeout)
 
 
-def metalink_urls(raw, item):
-    if len(raw) > 2_000_000 or b'<!DOCTYPE' in raw.upper():
+def parse_metalink(raw):
+    if len(raw) > MAX_METALINK_BYTES or b'<!DOCTYPE' in raw.upper():
         raise ValueError('Metalink trop volumineux ou déclaration XML refusée.')
-    root = ET.fromstring(raw)
+    return ET.fromstring(raw)
+
+
+def metalink_urls(raw, item):
+    root = parse_metalink(raw)
     files = [f for f in root.findall('m:file', NS) if f.get('name') == item['path'].rsplit('/', 1)[-1]]
     if len(files) != 1:
         raise ValueError('Archive absente ou ambiguë dans le Metalink.')
@@ -99,7 +105,7 @@ class Selector:
             try:
                 check()
                 with self.opener(urllib.request.Request(metadata, headers={'User-Agent': 'SetupSurvie-offline-library/0.1'}), timeout=10) as response:
-                    urls = metalink_urls(response.read(2_000_001), item)
+                    urls = metalink_urls(response.read(MAX_METALINK_BYTES + 1), item)
             except (OSError, ValueError, ET.ParseError, setup.SetupError):
                 return [item['url']]
             rates = {}

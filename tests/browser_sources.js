@@ -29,7 +29,8 @@ async (page) => {
   await page.waitForFunction(()=>document.getElementById('upload-status').textContent.includes('Date du document'));
   await form.locator('[name="document_date"]').fill('');await form.locator('button[type=submit]').click();
   await page.waitForFunction(()=>document.getElementById('upload-status').textContent.includes('Guide ajouté'));
-  const results=await(await page.request.get(base+'/api/search?q=compartiments')).json();
+  // This neutral title tests added documents and date display across the library.
+  const results=await(await page.request.get(base+'/api/search?q=compartiments&domain=all')).json();
   if(!results.results.length)throw Error('Document ajouté introuvable');
   await page.evaluate(()=>{location.hash='#/bibliotheque/recherche';});await page.locator('#view-library').waitFor();
   await page.evaluate(id=>readSource(id),results.results[0].id);

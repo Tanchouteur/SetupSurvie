@@ -12,11 +12,12 @@ import setup
 from pilot import collection_sort
 
 
-def remaining(root, items):
+def remaining(root, items, *, sorting=None):
     receipt = root/'catalog/downloaded-content.json'
     recorded = {i['path']: i for i in content.catalog(receipt)} if receipt.exists() else {}
     pending = []
-    sorting = collection_sort.load(root / 'catalog')
+    if sorting is None:
+        sorting = collection_sort.load(root / 'catalog')
     for item in items:
         if not sorting.permits(collection_sort.path_key(item['path']), 'all'):
             continue

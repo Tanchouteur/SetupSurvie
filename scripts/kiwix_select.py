@@ -8,7 +8,6 @@ import math
 import subprocess
 from pathlib import Path
 import re
-import shutil
 import sys
 import unicodedata
 import urllib.parse
@@ -16,6 +15,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import content
+from content_mirrors import MAX_METALINK_BYTES, parse_metalink
 import setup
 from pilot import collection_sort
 
@@ -143,14 +143,14 @@ def inventory(root, pinned):
 
 
 def pin(entry, reasons, reader=fetch):
-    root = ET.fromstring(reader(entry['meta4'], maximum=2_000_000))
+    root = parse_metalink(reader(entry['meta4'], maximum=MAX_METALINK_BYTES))
     files = root.findall('m:file', METALINK)
     if len(files) != 1 or files[0].get('name') != entry['filename']:
         raise setup.SetupError('Metalink ne correspondant pas à l’archive.')
     record = files[0]
     size = int(record.findtext('m:size', '0', METALINK))
     digest = next((h.text or '' for h in record.findall('m:hash', METALINK) if h.get('type') == 'sha-256'), '').strip().lower()
-    if not 0 < size <= 600_000_000_000 or not re.fullmatch('[a-f0-9]{64}', digest):
+    if size <= 0 or not re.fullmatch('[a-f0-9]{64}', digest):
         raise setup.SetupError('Taille exacte ou SHA-256 absent du Metalink.')
     url = official_url(entry['meta4'].removesuffix('.meta4'))
     return {'id': 'kiwix-' + hashlib.sha256(entry['filename'].encode()).hexdigest()[:16],
@@ -176,9 +176,7 @@ def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
         if item['path'].endswith('.zim'):
             local_families.setdefault(family(Path(item['path']).name), []).append(item['path'])
     used = content.check_capacity(root, budget=budget, reserve=reserve, storage_root=storage_root)
-    free = shutil.disk_usage(storage_root or root).free
-    if storage_root is not None:
-        budget=min(budget if budget is not None else content.DEFAULT_BUDGET, content.DEFAULT_BUDGET)
+    free = content.free_space(root, storage_root)
     sorting = collection_sort.load(root / "catalog")
     available = max(0, min(max_add if max_add is not None else free,
                            budget - used if budget is not None else free, free - reserve))

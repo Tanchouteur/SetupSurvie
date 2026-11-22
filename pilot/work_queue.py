@@ -148,8 +148,10 @@ def add_host_work(jobs, report):
         'source', 'stale', 'observed_at', 'progress_at', 'active', 'total_bytes',
         'verified_bytes', 'verified_count', 'total_count', 'pending_errors', 'index_progress'
     ) if key in report}
+    web_download = kind == 'download' and report.get('web_download') is True
     controls = {'operation_id': report['operation_id']} if (
-        kind in HOST_PREPARATIONS and status == 'running' and report.get('operation_id')
+        (kind in HOST_PREPARATIONS or web_download and phase != 'refreshing')
+        and status == 'running' and report.get('operation_id')
         and not report.get('pause_requested')) else {}
     if report.get('pause_requested') and status == 'running':
         stage = 'Pause demandée · enregistrement du point de reprise'
@@ -187,6 +189,10 @@ def add_host_work(jobs, report):
     if kind == 'video-inventory':
         extra['focus'] = 'next-archive-videos'
         if status == 'partial' and message:
+            stage = message
+    if web_download:
+        extra['web_download'] = True
+        if status in ('running', 'completed') and message:
             stage = message
     if status in ('error', 'interrupted'):
         extra |= {'error': message or 'Le PC serveur n’a pas précisé la cause de l’arrêt.',
@@ -493,8 +499,8 @@ class Queue(Slot):
                 job['kind'] in TRACK_PREPARATIONS and job['status'] in ('queued', 'running', 'preparing'))
             job['retry'] = job['status'] in ('paused', 'error', 'failed', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or admin and
-                job['kind'] in ('youtube','youtube-track',*TRACK_PREPARATIONS,'translation-test','guide-index',*VIDEO_INVENTORIES,
-                                *('host-' + kind for kind in HOST_PREPARATIONS)))
+                (job.get('web_download') or job['kind'] in ('youtube','youtube-track',*TRACK_PREPARATIONS,
+                    'translation-test','guide-index',*VIDEO_INVENTORIES,*('host-' + kind for kind in HOST_PREPARATIONS))))
         with store.connect() as db:
             seen = dict(db.execute('SELECT id,signature FROM work_seen WHERE profile=?', (profile['id'],)).fetchall())
         for job in jobs:
@@ -638,7 +644,7 @@ def describe(kind, identifier):
 async def pause(identifier, operation_id=None):
     from . import operations, videos, captions, transcriptions, caption_acquisition, library
 
-    host_ids = {'host:' + kind for kind in HOST_PREPARATIONS} | {'archive-video-index'}
+    host_ids = {'host:' + kind for kind in HOST_PREPARATIONS} | {'archive-video-index', 'host:download'}
     if identifier in host_ids and operation_id:
         await operations.library_command('pause', {'operation_id': operation_id})
         return
@@ -670,7 +676,7 @@ async def retry(identifier, profile):
     if identifier == 'host:video-inventory':
         # The host examination of collections is the same work as the archive inventory.
         identifier = 'archive-video-index'
-    if identifier in ('host:index', 'host:index-prepare', 'host:category-index'):
+    if identifier in ('host:index', 'host:index-prepare', 'host:category-index', 'host:download'):
         from . import operations
         if profile['role'] != 'admin':
             raise HTTPException(403, 'Accès réservé à l’administrateur.')
@@ -678,7 +684,7 @@ async def retry(identifier, profile):
         report = await operations.library_command()
         if report.get('action') != action or report.get('phase') not in ('paused', 'error', 'interrupted'):
             raise HTTPException(409, 'Cette préparation ne demande plus de reprise.')
-        await operations.library_command(action)
+        await operations.library_command(action, {'id': report['id']} if action == 'download' else None)
         return
     if identifier in VIDEO_INVENTORIES:
         if profile['role'] != 'admin':raise HTTPException(403,'Accès réservé à l’administrateur.')

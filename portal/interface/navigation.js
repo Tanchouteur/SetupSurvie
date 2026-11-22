@@ -203,7 +203,7 @@
   readSource=async id=>{
     if(openingSource)return baseRead(id);
     readerOrigin=current?.name==='library'?current.tab:null;
-    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
+    const route=fromLegacy('library');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'resilience');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');route.params.set('source',id);
     openingSource=true;navigate(route);
     try{await baseRead(id);}finally{openingSource=false;}
   };
@@ -267,9 +267,9 @@
   $('chat-domain').addEventListener('change',()=>put('chat-domain',$('chat-domain').value));
   $('search-domain').addEventListener('change',()=>{put('domain',$('search-domain').value);const route=fromLegacy('library');route.params.set('domain',$('search-domain').value);if($('library-query').value)route.params.set('q',$('library-query').value);navigate(route);});
   $('search-kind')?.addEventListener('change',()=>{const route=fromLegacy('library');route.params.delete('source');route.params.set('kind',$('search-kind').value);route.params.set('q',$('library-query').value);if(!$('library-query').value&&$('search-kind').value!=='videos')route.params.delete('q');navigate(route);});
-  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'all');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;searchActive=true;},true);
+  $('library-search').addEventListener('submit',()=>{if(applying||scopeCommand)return;const route=fromLegacy('library');route.params.delete('source');route.params.set('q',$('library-query').value);route.params.set('lang',$('search-language').value);route.params.set('kind',$('search-kind')?.value||'all');route.params.set('domain',$('search-domain')?.value||'resilience');if($('search-collection')?.value)route.params.set('collection',$('search-collection').value);else route.params.delete('collection');skipSearch=true;navigate(route);skipSearch=false;searchActive=true;},true);
   document.addEventListener('click',event=>{
-    if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.closest('#content-download,#routing-download')){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Ce suivi reste en lecture seule.');return;}
+    if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.closest('#organizer-reference-apply,.organizer-reference-row button,#routing-download')){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Ce suivi reste en lecture seule.');return;}
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     if(event.target.closest('a.skip')){event.preventDefault();$('main').focus();return;}
     const routeLink=event.target.closest('[data-route]');
@@ -286,7 +286,7 @@
     const scope=event.target.closest('[data-library-scope]');
     if(scope&&!scopeCommand){event.preventDefault();event.stopImmediatePropagation();const tab={all:'recherche',favorites:'favoris',translations:'traductions'}[scope.dataset.libraryScope];navigate(parse('#/bibliotheque/'+tab));}
   },true);
-  document.addEventListener('submit',event=>{if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&['content-form','geo-download-form'].includes(event.target.id)){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Attendez sa fin ou utilisez sa procédure de pause avant une autre préparation.');}},true);
+  document.addEventListener('submit',event=>{if(lastActivity?.source==='windows'&&lastActivity.worker_alive===true&&event.target.id==='geo-download-form'){event.preventDefault();event.stopImmediatePropagation();toast('Un transfert Windows est déjà actif. Attendez sa fin ou utilisez sa procédure de pause avant une autre préparation.');}},true);
   window.addEventListener('hashchange',event=>{event.stopImmediatePropagation();if(current&&location.hash===urlFor(current.section,current.tab,current.params))return;popping=true;activate(parse(location.hash)||fromLegacy(location.hash.slice(1)),true);popping=false;},true);
   window.addEventListener('popstate',()=>{
     saveDraft();popping=true;
