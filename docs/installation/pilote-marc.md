@@ -119,7 +119,7 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
-Depuis la 0.100.0, le kit public peut aussi démarrer sur un PC Linux sans
+Depuis la 0.101.0, le kit public peut aussi démarrer sur un PC Linux sans
 Python ni Docker. Préparer à l’avance
 [les installateurs du kit Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux).
 Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64, avec un bureau équipé de
@@ -127,7 +127,7 @@ Zenity et PolicyKit, lancer le même fichier et choisir un dossier système
 sur le disque cible. L’autorisation administrateur se fait dans une
 fenêtre. Le lanceur installe ses outils et un moteur Docker dédié dans
 le dossier choisi. Les services locaux démarrent avec le système après
-installation. Depuis la 0.102.0, ce parcours coche par défaut le point de
+installation. Depuis la 0.103.0, ce parcours coche par défaut le point de
 restauration protégé. Prévoir de la place pour une deuxième copie et ses
 images Docker. La création peut arrêter brièvement le portail. En cas
 d’interruption, reprendre avec le même SSD, le même disque et le même choix.
@@ -146,7 +146,7 @@ Après un redémarrage, ouvrir **Ouvrir-SetupSurvie.desktop** dans le
 dossier installé, avec Docker démarré. Le SSD peut être retiré après
 l’installation terminée.
 
-Depuis la 0.101.0, le lanceur graphique reprend dans le dossier
+Depuis la 0.102.0, le lanceur graphique reprend dans le dossier
 `SetupSurvie-Kit` si on choisit le même disque avec le même kit après
 une coupure. Il contrôle les fichiers de la copie et recopie ceux qui
 sont incomplets. Si les services avaient commencé à démarrer, il

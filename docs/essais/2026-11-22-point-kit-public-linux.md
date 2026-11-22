@@ -1,6 +1,6 @@
 # Point protégé lors de l’installation du kit public Linux
 
-**Bilan daté — 22 novembre 2026, SetupSurvie 0.102.0.** Le parcours système
+**Bilan daté — 22 novembre 2026, SetupSurvie 0.103.0.** Le parcours système
 qui installe Python et Docker depuis le SSD propose le point protégé par
 défaut. Il conserve les installateurs pour lancer l’entretien sans le
 SSD, y compris lorsqu’on choisit de créer le point plus tard.
