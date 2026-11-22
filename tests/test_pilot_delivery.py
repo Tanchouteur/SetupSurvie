@@ -1,4 +1,5 @@
 from collections import namedtuple
+from crash_harness import crash_after_ready
 from contextlib import closing
 import shutil
 import sqlite3
@@ -15,7 +16,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 from pilot_kit import checked_entries
 from pilot_kit import install
-from pilot_backup import backup,restore
+from pilot_backup import backup,host_target,restore,restore_copy
 from delivery_paths import locked
 import index_locks
 from pilot import archive_index,collection_sort,retrieval
@@ -228,6 +229,86 @@ class DeliveryTests(unittest.TestCase):
         up.assert_not_called()
         self.assertFalse((work/'settings.json').exists())
         self.assertEqual((snapshot/'data/library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+
+    def test_interrupted_restore_resumes_copy_or_activation_without_changing_original(self):
+        fixture = """
+import time
+from pathlib import Path
+from unittest.mock import patch
+import kit_audit
+import pilot_backup
+
+snapshot, kit, work, data, ready = map(Path, sys.argv[2:7])
+phase = sys.argv[7]
+target = pilot_backup.host_target()
+original_copy = pilot_backup.restore_copy
+
+def wait_for_cut():
+    ready.touch()
+    while True:
+        time.sleep(1)
+
+def copy(entry, source, destination, *, verify):
+    if phase == 'copying' and destination.name == 'guide.fr.md':
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        from pilot import durable
+        durable.write_bytes(destination, b'partial')
+        wait_for_cut()
+    original_copy(entry, source, destination, verify=verify)
+
+def start(config):
+    if phase == 'activating':
+        from pilot import durable
+        durable.write_bytes(data / 'library/guides/guide.fr.md', b'written after activation')
+        wait_for_cut()
+
+with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_restore_preflight'), patch.object(pilot_backup, 'restore_copy', copy), patch.object(setup.Installation, 'doctor'), patch.object(setup.Installation, 'import_images'), patch.object(setup.Installation, 'prepare'), patch.object(setup.Installation, 'up', side_effect=start):
+    pilot_backup.restore(snapshot, kit, work, data, target=target)
+"""
+        target = host_target()
+        if target is None:
+            self.skipTest('Restauration portable disponible sous Windows et Linux')
+        for phase in ('copying', 'activating'):
+            with self.subTest(phase=phase):
+                root = self.root/phase
+                snapshot, kit, _ = self.cross_system_fixture(root, target)
+                work, data = root/'target/private', root/'target/data'
+                ready = root/'ready'
+                journal = work.parent/'restauration.json'
+                crash_after_ready(fixture, [snapshot, kit, work, data, ready, phase], ready)
+                before = json.loads(journal.read_text(encoding='utf-8'))
+                self.assertEqual(before['phase'], phase)
+                with patch('kit_audit.validate'), patch('pilot_backup.portable_restore_preflight') as preflight, \
+                     patch('pilot_backup.restore_copy', wraps=restore_copy) as copy, \
+                     patch.object(setup.Installation, 'doctor'), patch.object(setup.Installation, 'import_images') as images, \
+                     patch.object(setup.Installation, 'prepare'), patch.object(setup.Installation, 'up') as up, \
+                     patch.object(setup.Installation, 'verify'):
+                    with self.assertRaisesRegex(setup.SetupError, 'nouveau dossier'):
+                        restore(snapshot, kit, work, data, target=target)
+                    manifest = kit/'manifest.json'
+                    original_manifest = manifest.read_bytes()
+                    manifest.write_bytes(original_manifest + b'\n')
+                    with self.assertRaisesRegex(setup.SetupError, 'un autre kit'):
+                        restore(snapshot, kit, work, data, target=target, resume=True)
+                    manifest.write_bytes(original_manifest)
+                    restore(snapshot, kit, work, data, target=target, resume=True)
+                    up.assert_called_once()
+                    self.assertEqual(up.call_args.args[0]['project'], before['project'])
+                    self.assertEqual(preflight.call_args.kwargs['activating'], phase == 'activating')
+                    if phase == 'copying':
+                        copied = {call.args[2].name for call in copy.call_args_list}
+                        self.assertIn('guide.fr.md', copied)
+                        self.assertNotIn('conversations.sqlite3', copied)
+                        images.assert_called_once()
+                    else:
+                        copy.assert_not_called()
+                        images.assert_not_called()
+                expected = b'guide personnel' if phase == 'copying' else b'written after activation'
+                self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), expected)
+                self.assertEqual((snapshot/'data/library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+                self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'], 'complete')
+                with self.assertRaisesRegex(setup.SetupError, 'déjà terminée'):
+                    restore(snapshot, kit, work, data, target=target, resume=True)
 
     def test_restore_rejects_overlapping_targets_before_hashing_or_copying(self):
         with patch('pilot_kit.checked_entries') as entries:

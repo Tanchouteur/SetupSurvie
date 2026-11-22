@@ -271,11 +271,15 @@ utilise le processeur par défaut. Le moteur IA reste en pause sur les deux
 systèmes jusqu’à une action volontaire. Avant de retirer le SSD de secours,
 ouvrir un profil, un échange existant et un document personnel.
 
-En cas d’interruption ou d’erreur après le début de la copie, garder la
-sauvegarde intacte et reprendre vers un nouveau dossier vide. Si les services ont déjà démarré, les arrêter depuis le dossier
-`application` de la copie avant le nouvel essai.
-Sous Linux, utiliser `python3 scripts/setup.py --work-dir ../private down`.
-Sous Windows, utiliser `py -3 scripts/setup.py --work-dir ../private down`. La recette sur deux machines
+Depuis la 0.96.0, en cas de coupure, rouvrir le lanceur, choisir la même
+sauvegarde et le même disque, puis accepter la reprise. Le journal
+`restauration.json` dans le dossier de destination identifie l’opération.
+Les fichiers déjà vérifiés sont réutilisés, et les fichiers partiels sont
+recopiés. Si les services avaient commencé à démarrer, la reprise repart
+des données actuelles de la copie et relance les contrôles. En ligne de
+commande, ajouter `--resume` à la commande d’origine avec les mêmes
+destinations et les mêmes sources. Un kit ou une sauvegarde modifiés
+demandent une nouvelle restauration. La recette sur deux machines
 différentes hors ligne reste à effectuer.
 
 ## Moteur, mode jeu et comparaisons
