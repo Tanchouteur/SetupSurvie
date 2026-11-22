@@ -483,4 +483,21 @@ complet et à vérifier hors ligne avant toute intégration.
 Les relances documentaires automatisées utilisent une unité transitoire
 de type scope pour garder les conteneurs actifs après la fin de la tâche
 qui les démarre. Le pilote est resté joignable après un redémarrage
-ainsi lancé depuis une tâche courte. Le redémarrage du PC reste à tester.
+ainsi lancé depuis une tâche courte.
+
+### Reprise après un démarrage réel — 22 novembre 2026
+
+Après le rallumage de Bazzite, le volume ext4 du labo était remonté et le
+service utilisateur de reprise transférait déjà `Survivor Library`.
+Le fichier partiel est passé de 99 355 721 728 à 100 285 808 640 octets,
+sur 220 347 600 505 attendus. Après un déclenchement manuel du service de
+recette, le suivi en lecture seule publie cette progression dans la File
+d’attente du portail 18080. Le compteur reste à 204 archives vérifiées
+sur 205. Le contrôle porte sur la reprise, le montage et la visibilité de
+la progression. La vérification finale de l’archive reste en attente.
+
+Le pilote du labo répond en 0.90.0 depuis le commit `da236eb`. Un
+redémarrage du seul pilote a conservé le même processus de transfert. La
+file IA est inactive et le marqueur de pause de l’inférence est toujours
+présent. Le paquet 0.91.0 a été copié sur le volume du labo et son empreinte
+a été vérifiée. Sa validation sur cette installation reste à faire.
