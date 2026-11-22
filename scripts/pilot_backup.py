@@ -278,6 +278,49 @@ def verified_copy(entry, target):
             and setup.file_hash(target) == entry['sha256'])
 
 
+def publish_restored_launcher(base, application, target):
+    extension = {'linux': 'desktop', 'windows': 'cmd'}[target]
+    name = 'Ouvrir-SetupSurvie.'+extension
+    template = checked_destination(application, 'scripts/restored-launchers/'+name)
+    if not template.is_file():
+        return  # Older kits have no installed launcher.
+    launcher = checked_destination(base, name)
+    body = template.read_bytes()
+    if launcher.exists():
+        if not launcher.is_file() or launcher.read_bytes() != body:
+            raise setup.SetupError('Un autre fichier porte déjà le nom '+name+'.')
+    else:
+        durable.write_bytes(launcher, body)
+    launcher.chmod(0o755)
+    durable.sync_file(launcher)
+
+
+def start_restored(base, *, progress=None):
+    base = setup.safe_path(base)
+    application = checked_destination(base, 'application')
+    if setup.ROOT.resolve() != application:
+        raise setup.SetupError('Ouvrez le lanceur du dossier restauré.')
+    journal = checked_destination(base, RESTORE_JOURNAL)
+    with locked(checked_destination(base, 'restauration.lock')):
+        job = read_restore_job(journal)
+        if not job or job['phase'] != 'complete':
+            raise setup.SetupError('Cette restauration doit être terminée depuis le lanceur du SSD de secours.')
+        work = Path(job['paths']['work'])
+        if work.parent != base or work.is_symlink():
+            raise setup.SetupError('Le dossier restauré doit rester à son emplacement d’installation.')
+        checked_destination(work, 'settings.json')
+        app = setup.Installation(work)
+        config = app.load()
+        expected = {'project': job['project'], 'target': host_target(),
+                    'data_dir': job['paths']['data'], 'app_dir': application.as_posix()}
+        if any(config.get(key) != value for key, value in expected.items()):
+            raise setup.SetupError('Les réglages de cette installation restaurée ont changé.')
+        if progress:
+            progress('Démarrage et vérification de SetupSurvie…')
+        app.up(config)
+        app.verify(config)
+
+
 def checked_destination_for_copy(entry, target, work, data, application):
     root = {'app': application, 'data': data, 'payload': data, 'private': work}[entry['path'].split('/')[0]]
     checked_destination(root, target.relative_to(root).as_posix())
@@ -447,6 +490,7 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
             app.up(config)
             app.verify(config)
             if portable:
+                publish_restored_launcher(work.parent, application, target)
                 job['phase'] = 'complete'
                 setup.write_json(journal, job, private=True)
         finally:

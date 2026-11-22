@@ -15,14 +15,30 @@ class RestoreWindowTests(unittest.TestCase):
     def test_offers_to_resume_the_same_destination(self):
         self.exercise_restore(resume=True)
 
-    def exercise_restore(self, *, resume):
+    def test_opens_restored_installation_without_a_kit_picker(self):
+        gui = self.load_gui()
+        with tempfile.TemporaryDirectory() as temp:
+            base = Path(temp).resolve()
+            with patch.object(sys, 'argv', ['restaurer', '--open', str(base)]), \
+                 patch.object(gui.tk, 'Tk'), patch.object(gui.filedialog, 'askdirectory') as picker, \
+                 patch.object(gui, 'start_restored') as start, patch.object(gui, 'show_operation') as show:
+                gui.main()
+                action = show.call_args.args[3]
+                action(None)
+                picker.assert_not_called()
+                start.assert_called_once_with(base, progress=None)
+
+    def load_gui(self):
         path = Path(__file__).resolve().parents[1]/'scripts/pilot_restore_gui.py'
         spec = util.spec_from_file_location('restore_window_test', path)
         gui = util.module_from_spec(spec)
         tk = MagicMock()
         with patch.dict(sys.modules, {'tkinter': tk}):
             spec.loader.exec_module(gui)
+        return gui
 
+    def exercise_restore(self, *, resume):
+        gui = self.load_gui()
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp).resolve()
             kit, snapshot, disk = (root/name for name in ('kit', 'sauvegarde', 'autre disque'))
