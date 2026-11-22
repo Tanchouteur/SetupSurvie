@@ -41,9 +41,15 @@
 <p>Le parcours demande Windows 11 24H2 ou ultérieur, un PC x64 et la virtualisation activée. Gardez les <a href="app/docs/installation/deux-etapes-windows.md">instructions Windows</a> à portée de main si une étape s’arrête.</p>
 
 <h3>Sur Linux</h3>
-<p>Ce kit public s’installe sur un PC Linux déjà préparé avec Python 3.11 ou ultérieur, Docker et Compose. Si vous utilisez ce parcours, ouvrez un terminal dans le dossier <strong>app</strong> et exécutez cette commande. Elle crée une installation dans votre dossier personnel, avec le processeur.</p>
-<p><code>python3 scripts/pilot_kit.py install .. --target linux --cpu --data-dir "$HOME/SetupSurvie/data" --work-dir "$HOME/SetupSurvie/private"</code></p>
-<p>Choisissez un autre emplacement si ce dossier est déjà utilisé. Quand le script termine, ouvrez <code>http://127.0.0.1:8080</code> dans votre navigateur.</p>
+<p>Ce kit public s’installe sur un PC Linux déjà préparé avec Python 3.11 ou
+ultérieur avec Tkinter, Docker et Compose. Le moteur Docker doit être démarré
+et accessible depuis votre compte.</p>
+<ol>
+<li>Dans <strong>app</strong>, ouvrez <strong>Installer-Kit-SetupSurvie.desktop</strong>. Si votre gestionnaire de fichiers le demande, choisissez d’autoriser le lancement.</li>
+<li>Choisissez le disque. La fenêtre vous montre le nouveau dossier avant de lancer la copie. Le site s’ouvre à la fin, avec l’IA en pause.</li>
+<li>Après un redémarrage, ouvrez <strong>Ouvrir-SetupSurvie.desktop</strong> dans le dossier installé. Cette fois, vous pouvez laisser le SSD de secours débranché.</li>
+</ol>
+<p>En cas de coupure pendant cette première installation, relancez depuis le kit vers un nouveau dossier. Pour les commandes de secours, ouvrez <a href="app/docs/installation/pilote-marc.md">le guide du pilote</a>.</p>
 <p>Pour préparer automatiquement un PC Debian 12, Debian 13 ou Ubuntu 22.04 x86-64, il faut la copie de secours Linux complète. Sur cette copie, ouvrez <strong>Installer-SetupSurvie.desktop</strong>. Le lanceur demande où installer le site et propose de créer un point de restauration protégé.</p>
 </section>
 

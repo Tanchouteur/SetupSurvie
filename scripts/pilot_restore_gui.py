@@ -29,13 +29,51 @@ def find_pending(disk, inputs):
             return folder
 
 
+def install_kit(window, kit):
+    from pilot_kit import install
+    title = 'Installer SetupSurvie'
+    if host_target() != 'linux' or not (kit/'manifest.json').is_file():
+        messagebox.showerror(title, 'Ouvrez le lanceur Linux depuis le dossier app du kit.', parent=window)
+        window.destroy()
+        return
+    parent = filedialog.askdirectory(parent=window, title='Choisir où installer SetupSurvie', mustexist=True)
+    if not parent:
+        window.destroy()
+        return
+    destination = Path(parent)/datetime.now().strftime('SetupSurvie-%Y%m%d-%H%M%S-%f')
+    if not messagebox.askokcancel(
+        title, f'Installer SetupSurvie dans ce nouveau dossier ?\n\n{destination}\n\n'
+        'Python et Docker doivent être prêts. Après la copie, le site s’ouvrira avec le moteur IA en pause.',
+        parent=window,
+    ):
+        window.destroy()
+        return
+
+    def action(progress):
+        install(kit, 'linux', destination/'data', destination/'private', cpu=True,
+                graphical=True, progress=progress)
+
+    show_operation(window, destination, 'Vérification du kit…', action, title=title)
+
+
+def open_local(base, *, progress=None):
+    if (base/RESTORE_JOURNAL).exists():
+        start_restored(base, progress=progress)
+    else:
+        from pilot_kit import start_installed
+        start_installed(base, progress=progress)
+
+
 def main():
     window = tk.Tk()
     window.withdraw()
+    if sys.argv[1] == '--install':
+        install_kit(window, setup.safe_path(sys.argv[2]))
+        return
     if sys.argv[1] == '--open':
         base = setup.safe_path(sys.argv[2])
         show_operation(window, base, 'Démarrage de SetupSurvie…',
-                       lambda progress: start_restored(base, progress=progress))
+                       lambda progress: open_local(base, progress=progress))
         return
     kit = setup.safe_path(sys.argv[1])
     target = host_target()
@@ -98,8 +136,9 @@ def main():
                    restoring=True)
 
 
-def show_operation(window, destination, initial_status, action, *, restoring=False):
-    title = TITLE if restoring else 'Ouvrir SetupSurvie'
+def show_operation(window, destination, initial_status, action, *, restoring=False, title='Ouvrir SetupSurvie'):
+    if restoring:
+        title = TITLE
     window.title(title)
     frame = ttk.Frame(window, padding=18)
     frame.pack(fill='both', expand=True)

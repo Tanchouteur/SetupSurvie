@@ -194,6 +194,7 @@ class OfflineClosureTests(unittest.TestCase):
         self.add('app/1-Preparer-le-PC.cmd', b'fixture')
         self.add('app/2-Installer-SetupSurvie.cmd', b'fixture')
         self.add('app/Dupliquer-Kit-SetupSurvie.desktop', b'fixture')
+        self.add('app/Installer-Kit-SetupSurvie.desktop', b'fixture')
         self.add('app/Restaurer-Mes-Donnees-SetupSurvie.desktop', b'fixture')
         self.add('app/Restaurer-Mes-Donnees-SetupSurvie.cmd', b'fixture')
         self.assertEqual(kit_audit.validate(self.root,self.manifest())['models'],1)

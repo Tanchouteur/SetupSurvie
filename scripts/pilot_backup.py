@@ -278,7 +278,7 @@ def verified_copy(entry, target):
             and setup.file_hash(target) == entry['sha256'])
 
 
-def publish_restored_launcher(base, application, target):
+def publish_local_launcher(base, application, target):
     extension = {'linux': 'desktop', 'windows': 'cmd'}[target]
     name = 'Ouvrir-SetupSurvie.'+extension
     template = checked_destination(application, 'scripts/restored-launchers/'+name)
@@ -490,7 +490,7 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
             app.up(config)
             app.verify(config)
             if portable:
-                publish_restored_launcher(work.parent, application, target)
+                publish_local_launcher(work.parent, application, target)
                 job['phase'] = 'complete'
                 setup.write_json(journal, job, private=True)
         finally:

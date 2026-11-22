@@ -19,6 +19,7 @@ class RestoreWindowTests(unittest.TestCase):
         gui = self.load_gui()
         with tempfile.TemporaryDirectory() as temp:
             base = Path(temp).resolve()
+            (base/gui.RESTORE_JOURNAL).touch()
             with patch.object(sys, 'argv', ['restaurer', '--open', str(base)]), \
                  patch.object(gui.tk, 'Tk'), patch.object(gui.filedialog, 'askdirectory') as picker, \
                  patch.object(gui, 'start_restored') as start, patch.object(gui, 'show_operation') as show:
@@ -27,6 +28,28 @@ class RestoreWindowTests(unittest.TestCase):
                 action(None)
                 picker.assert_not_called()
                 start.assert_called_once_with(base, progress=None)
+
+    def test_linux_kit_prompts_for_a_destination_and_uses_cpu(self):
+        gui = self.load_gui()
+        with tempfile.TemporaryDirectory() as temp:
+            disk = Path(temp).resolve()
+            kit = disk/'kit'
+            kit.mkdir()
+            (kit/'manifest.json').touch()
+            with patch.object(sys, 'argv', ['installer', '--install', str(kit)]), \
+                 patch.object(gui, 'host_target', return_value='linux'), \
+                 patch.object(gui.tk, 'Tk'), patch.object(gui.filedialog, 'askdirectory', return_value=str(disk)), \
+                 patch.object(gui.messagebox, 'askokcancel', return_value=True), \
+                 patch('pilot_kit.install') as install, patch.object(gui, 'show_operation') as show:
+                gui.main()
+                show.call_args.args[3](None)
+            source, os_target, data, work = install.call_args.args
+            self.assertEqual((source, os_target), (kit, 'linux'))
+            self.assertEqual((data.name, work.name), ('data', 'private'))
+            self.assertEqual(work.parent, data.parent)
+            self.assertEqual(work.parent.parent, disk)
+            self.assertTrue(install.call_args.kwargs['cpu'])
+            self.assertTrue(install.call_args.kwargs['graphical'])
 
     def load_gui(self):
         path = Path(__file__).resolve().parents[1]/'scripts/pilot_restore_gui.py'

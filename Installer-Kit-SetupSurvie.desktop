@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Installer SetupSurvie
+Comment=Installer le kit hors ligne sur un PC Linux préparé
+Exec=/bin/sh -c "exec /bin/sh \\"\\$(dirname \\"\\$1\\")/scripts/restaurer-donnees-linux.sh\\" --install \\"\\$(dirname \\"\\$1\\")/..\\"" sh %k
+Terminal=false
+Categories=Utility;

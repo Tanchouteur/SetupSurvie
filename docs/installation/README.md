@@ -60,6 +60,11 @@ les prérequis et les droits d’usage.
 
 ## Installer hors ligne depuis le SSD sur Linux
 
+Pour un PC Linux qui dispose déjà de Python avec Tkinter et de Docker avec
+Compose, le kit public 0.99.0 propose **Installer-Kit-SetupSurvie.desktop** dans
+`app`. Voir le [guide du kit](pilote-marc.md#installer-à-partir-du-kit).
+
+
 Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64 déjà démarré avec un bureau
 compatible, ouvrir **Installer SetupSurvie** depuis une copie de transfert
 Linux créée en 0.77.0 ou ultérieure. Choisir le disque de destination puis
