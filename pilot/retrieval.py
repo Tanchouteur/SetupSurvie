@@ -294,23 +294,33 @@ def rank(item,query,position=0,*,normalizer=None):
 PASSAGE_WINDOW = 40
 
 
+# Words that describe a concern rather than a subject cannot anchor a guide title.
+GENERIC_ANCHORS = frozenset({'securite', 'regle', 'regles', 'eviter', 'prevention', 'risque', 'risques',
+                             'domicile', 'maison', 'guide', 'conseils', 'safety', 'rules', 'home'})
+
+
 def subject_in_passage(item, query, normalize=normal):
-    """A PDF page matches when every query concept appears in its title or excerpt,
-    or close together in the page text (a long manual names everything somewhere)."""
-    if not query.token_groups:
+    """A PDF page matches when the query concepts appear in its title or excerpt, or
+    close together in the page text (a long manual names everything somewhere).
+    When the guide title already names a subject word of the query, two thirds of
+    the concepts suffice: a natural question carries generic words besides the subject."""
+    groups = query.token_groups
+    if not groups:
         return False
     title = set(normalize(item.get('title', '')).split())
-    excerpt = set(normalize(item.get('excerpt', '')).split())
-    topic = title | excerpt
-    if all(any(term <= topic for term in group) for group in query.token_groups):
+    in_title = {number for number, group in enumerate(groups) if any(term <= title for term in group)}
+    anchored = any(not any(term <= GENERIC_ANCHORS for term in groups[number]) for number in in_title)
+    required = max(1, (2 * len(groups) + 2) // 3) if anchored else len(groups)
+    topic = title | set(normalize(item.get('excerpt', '')).split())
+    if sum(any(term <= topic for term in group) for group in groups) >= required:
         return True
-    missing = [group for group in query.token_groups if not any(term <= title for term in group)]
+    need = required - len(in_title)
     last = {}
     for index, word in enumerate(normalize(item.get('_text', '')).split()):
-        for number, group in enumerate(missing):
-            if any(term == {word} for term in group):
+        for number, group in enumerate(groups):
+            if number not in in_title and any(term == {word} for term in group):
                 last[number] = index
-        if len(last) == len(missing) and index - min(last.values()) < PASSAGE_WINDOW:
+        if sum(index - position < PASSAGE_WINDOW for position in last.values()) >= need:
             return True
     return False
 
@@ -432,6 +442,9 @@ PRACTICAL_PUBLISHERS = frozenset({
     'ministere de l interieur securite civile sgdsn', 'croix rouge francaise ifrc',
     'oms war trauma foundation world vision', 'usda nchfp university of georgia',
     'victron energy', 'fao', 'anfr', 'baofeng radioddity',
+    'ademe', 'anses', 'direction generale de l armement', 'dirm mediterranee', 'djepva', 'ffessm',
+    'gouvernement de la polynesie francaise dag', 'itavi ministere de l agriculture', 'ministere de la mer',
+    'ministere de la sante dgs', 'prefecture de la gironde',
 })
 
 
@@ -466,9 +479,15 @@ CULTURE_SOURCE_ROLES = frozenset({'reference', 'language', 'culture'})
 
 
 def application_domains(item, indexed=None):
-    if source_role(item) in CULTURE_SOURCE_ROLES:
+    role = source_role(item)
+    if role in CULTURE_SOURCE_ROLES:
         return ['culture']
-    return domains(item) if indexed is None else indexed
+    found = domains(item) if indexed is None else indexed
+    # Pages of a practical guide (MSF, OMS, SGDSN…) stay searchable in Autonomie,
+    # whatever words a single page happens to contain.
+    if role == 'practical' and 'resilience' not in found:
+        return ['resilience', *found]
+    return found
 
 
 def ifixit_edition(book):

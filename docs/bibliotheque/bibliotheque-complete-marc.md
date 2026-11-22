@@ -122,6 +122,21 @@ livrer une nouvelle version :
 python3 scripts/library_reference.py build --inventory inventaire.json --add 'MOTIF' --reason 'motif' --reference 'origine et date'
 ```
 
+### Guides ajoutés le 22 novembre 2026 (0.100.0)
+
+Une mise à jour ne télécharge jamais de contenu. Pour ajouter chez Marc les
+18 guides des thèmes sans résultat, lancer une fois, avec Internet, après la
+mise à jour en 0.100.0 (les guides déjà présents et vérifiés sont conservés) :
+
+```powershell
+py -3 scripts\content.py download --work-dir D:\SetupSurvie\prive --pack survival --pack repair --pack nature --pack food --pack agriculture --pack family-health
+```
+
+L’index par espace des archives se reconnaît périmé après la mise à jour :
+la préparation automatique le refait, sinon utiliser une fois **Créer ou
+reprendre les index**. Le classement des guides est recalculé à chaque
+recherche.
+
 ### Reporter le tri fait chez Marc
 
 Le fonds et le tri de Marc au 21 novembre 2026 sont conservés dans

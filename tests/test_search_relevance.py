@@ -192,6 +192,26 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
                          [bee_home['id']])
         self.assertTrue(retrieval.encyclopedic_matches([grape], plan, 3))
 
+    def test_practical_guide_pages_stay_in_autonomie_whatever_the_page_words(self):
+        page = {'id': 'guide:msf.fr.pdf#page=251', 'title': 'Médicaments essentiels — page 251',
+                'provenance': 'MSF — https://example.invalid — édition 2026', '_text': 'Paracétamol. Histoire et sciences.'}
+        self.assertIn('resilience', retrieval.application_domains(page, ['culture']))
+        unknown = {**page, 'provenance': 'Éditeur inconnu — https://example.invalid'}
+        self.assertEqual(retrieval.application_domains(unknown, ['culture']), ['culture'])
+        self.assertNotIn('chez', library.search_terms("soigner une diarrhée chez l'enfant"))
+
+    def test_guide_title_naming_the_subject_relaxes_a_natural_question(self):
+        query = "Comment rendre l'eau potable en cas de coupure d'eau ?"
+        plan = retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
+        page = {'title': 'Eau : traitement au point d’utilisation — page 1', 'excerpt': 'Rendre l’eau potable.',
+                '_text': 'Traitement de l’eau potable en urgence. Extrait fictif.'}
+        generic = {'title': 'Abri : sécurité de la construction — page 4', 'excerpt': 'Stocker le matériel.',
+                   '_text': 'Sécurité du chantier. Extrait fictif.'}
+        self.assertTrue(retrieval.subject_in_passage(page, plan))
+        query = 'stocker une arme en sécurité'
+        plan = retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
+        self.assertFalse(retrieval.subject_in_passage(generic, plan))
+
     def test_pdf_page_text_counts_only_when_query_terms_are_close(self):
         query = 'posologie du paracétamol'
         plan = retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
