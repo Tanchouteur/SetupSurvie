@@ -32,7 +32,9 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
-- [Préparation du kit sur un Linux sans Python ni Docker](2026-11-22-kit-public-linux-sans-outils.md) — 0.100.0, extraction réelle des outils réseau coupé.
+- [Reprise de l’installation du kit public Linux](2026-11-22-reprise-installation-kit-linux.md) — 0.102.0, fichiers partiels et activation interrompue.
+
+- [Préparation du kit sur un Linux sans Python ni Docker](2026-11-22-kit-public-linux-sans-outils.md) — 0.101.0, extraction réelle des outils réseau coupé.
 
 - [Installation du kit public par double-clic sous Linux](2026-11-22-installation-graphique-kit-linux.md) — 0.99.0, sélection du disque et relance locale simulée.
 
