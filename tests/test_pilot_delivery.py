@@ -49,6 +49,21 @@ class DeliveryTests(unittest.TestCase):
         file.write_text('other')
         with self.assertRaises(setup.SetupError):checked_entries(kit,{'files':[entry]})
 
+    def test_backup_refuses_during_update_or_transfer_before_stopping_services(self):
+        app = setup.Installation(self.root/'private')
+        config = app.init('linux', self.root/'data', cpu=True)
+        target = self.root/'external/snapshot'
+        with patch.object(app, 'compose') as compose:
+            for name in ('update.lock', 'transfer.lock'):
+                with self.subTest(lock=name), locked(app.work/name):
+                    with self.assertRaisesRegex(setup.SetupError, 'opération'):
+                        backup(app, config, target)
+            setup.write_json(app.work/'transfer-guard.json', {'id': 'fixture'})
+            with self.assertRaisesRegex(setup.SetupError, 'Transfert en cours'):
+                backup(app, config, target)
+        compose.assert_not_called()
+        self.assertFalse(target.exists())
+
     def test_backup_stops_services_preserves_wal_and_restarts_on_error(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
         state=Path(c['data_dir'])/'state/pilot'
@@ -94,8 +109,9 @@ class DeliveryTests(unittest.TestCase):
     def cross_system_fixture(self, root, source_target):
         app = setup.Installation(root/'source/private')
         config = app.init(source_target, root/'source/data', cpu=source_target == 'linux')
+        routing = json.loads((setup.ROOT/'deploy/routing-engine.json').read_text())['image']
         config.update(lan_host='192.168.1.9', bind='0.0.0.0', docker_rootless=True,
-                      routing_image={'id': 'obsolete'}, local_images={'portal': {}},
+                      routing_image={'id': 'obsolete', 'reference': routing}, local_images={'portal': {}},
                       app_dir=str(setup.ROOT))
         setup.write_json(app.settings_path, config, private=True)
         data = Path(config['data_dir'])

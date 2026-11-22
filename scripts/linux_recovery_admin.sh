@@ -41,6 +41,10 @@ case "$action:$#" in
         dest=$3
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
+    backup-personal:3)
+        dest=$2
+        source_base=$2
+        ;;
     prepare-maintenance:2|point:2|restore:2|cancel-point:2) dest=$2; source_base=$2 ;;
     *) die 'Action inconnue.' ;;
 esac
@@ -139,6 +143,8 @@ if [[ ! -d "$runtime" ]]; then
     if [[ -d "$application/application/scripts" ]]; then
         application="$application/application"
     fi
+    [[ "$action" != backup-personal ]] ||
+        die 'L’entretien doit déjà être installé. Utilisez le lanceur Entretien de SetupSurvie.'
     [[ -f "$application/scripts/linux_recovery.py" ]] ||
         die 'Rouvrez le lanceur depuis le SSD de secours pour initialiser l’entretien.'
     # Keep the maintenance application separate. It must work if SetupSurvie cannot start.

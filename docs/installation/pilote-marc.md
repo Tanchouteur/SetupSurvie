@@ -232,6 +232,14 @@ par IP et QR code (**Mon appareil → Paramètres → Profils et connexion**).
 
 ## Sauvegarder et restaurer
 
+Depuis la 0.109.0, ouvrir **Transférer SetupSurvie** puis choisir
+**Sauvegarder mes données**. Sur une installation Linux avec un moteur Docker
+dédié, cette action se trouve aussi dans **Entretien de SetupSurvie** et
+demande une autorisation administrateur. Choisir le disque et confirmer.
+La sauvegarde crée un nouveau dossier horodaté à côté du kit, hors de son
+dossier. Le site se remet en service à la fin. Conserver une copie antérieure
+tant que la nouvelle sauvegarde n’a pas été annoncée comme terminée.
+
 Conserver le kit public d’origine et une sauvegarde privée des comptes,
 historiques, guides et certificats. La sauvegarde arrête brièvement le site et
 les services de compte pour obtenir une copie cohérente, puis les redémarre. Les

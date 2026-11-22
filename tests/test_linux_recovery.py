@@ -350,10 +350,10 @@ class LinuxRecoveryTests(unittest.TestCase):
             '#!/bin/sh\ncase "$1" in\n'
             '--file-selection) case "$*" in *sauvegarde*) printf "%s\\n" "$BACKUP";; '
             '*) printf "/srv/Disque SSD\\n";; esac;;\n'
-            '--list) case "$*" in *--title="Entretien de SetupSurvie"*) printf "cancel-point\\n";; '
+            '--list) case "$*" in *--title="Entretien de SetupSurvie"*) printf "%s\\n" "${MAINT_ACTION:-cancel-point}";; '
             '*--radiolist*) printf "autre\\n";; esac;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
-            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label=Restaurer*|*--ok-label=Installer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
+            '--question) case "$*" in *--ok-label=Sauvegarder*|*--ok-label=Dupliquer*|*--ok-label=Restaurer*|*--ok-label=Installer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
             '*) exit 1;; esac;;\n'
             'esac\n')
         (scripts / 'pkexec').write_text(
@@ -403,3 +403,11 @@ class LinuxRecoveryTests(unittest.TestCase):
                            'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
         arguments = result.with_suffix('.args').read_text().splitlines()
         self.assertEqual(arguments[-2:], ['cancel-point', str(self.active)])
+        subprocess.run(['bash', scripts/'linux_recovery_gui.sh', 'maintenance', self.active],
+                       check=True, timeout=10, env={**os.environ, 'MAINT_ACTION': 'backup-personal',
+                           'BACKUP': str(backup), 'RESULT': str(result),
+                           'PATH': f'{scripts}:{os.environ["PATH"]}'})
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[-3:-1], ['backup-personal', str(self.active)])
+        self.assertEqual(Path(arguments[-1]).parent, backup)
+        self.assertTrue(Path(arguments[-1]).name.startswith('SetupSurvie-Sauvegarde-'))
