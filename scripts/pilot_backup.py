@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import shutil
 import secrets
+import socket
 import sys
 import time
 
@@ -17,6 +18,8 @@ from pilot import durable
 from delivery_paths import destination as checked_destination,locked
 
 PRIVATE_FILES=('settings.json','identifiants.txt','inference-paused.json')
+PRIVATE_DATA=('data/state/pilot/','data/state/openwebui/','data/state/caddy/','data/library/guides/')
+PRIVATE_CATALOG=('data/catalog/downloaded-content.json','data/catalog/collection-sort.json')
 # Rebuilt from the ZIM archives without Internet or AI; often hundreds of GB.
 REBUILDABLE=(('state','pilot','category-index'),)
 
@@ -36,7 +39,7 @@ def separate_roots(*roots):
 
 def backup(app,c,destination,*,resume=True):
     with maintenance(app,c):
-        return stopped_backup(app,c,destination,resume=resume)
+        return stopped_backup(app,c,destination,resume=resume,identity=backup_identity(c))
 
 
 @contextmanager
@@ -72,7 +75,107 @@ def copy_snapshot_file(source, target, relative):
     return {'path': relative, 'bytes': target.stat().st_size, 'sha256': digest}
 
 
-def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progress=None):
+def restore_identity(release, versions):
+    # Open WebUI owns a separate database schema from the SetupSurvie pilot.
+    identity = {key: release[key] for key in ('version', 'data_schema')}
+    identity['open_webui'] = versions['images']['open-webui']
+    return identity
+
+
+def backup_identity(config):
+    root = Path(config.get('app_dir') or setup.ROOT)
+    release = root/'deploy/release.json'
+    versions = root/'deploy/versions.json'
+    if not release.is_file() or not versions.is_file():
+        return None
+    try:
+        return restore_identity(json.loads(release.read_text(encoding='utf-8')),
+                                json.loads(versions.read_text(encoding='utf-8')))
+    except (OSError, ValueError, KeyError, TypeError):
+        # Keep the same-system backup usable when version files are incomplete.
+        return None
+
+
+def host_target():
+    return {'win32': 'windows', 'linux': 'linux'}.get(sys.platform)
+
+
+def cross_system_settings(saved, target):
+    saved['target'] = target
+    saved['cpu'] = saved['target'] == 'linux'
+    saved['bind'] = '127.0.0.1'
+    for key in ('lan_host', 'docker_rootless', 'routing_image', 'inference_autostart'):
+        saved.pop(key, None)
+
+
+def validate_cross_system(report, kit, public, public_entries, source_target):
+    from kit_audit import validate
+    if source_target not in ('windows', 'linux'):
+        raise setup.SetupError('Système de la sauvegarde inconnu.')
+    identity = report.get('installation')
+    if report.get('schema') != 1 or not identity:
+        raise setup.SetupError('Version de sauvegarde inconnue. Créez une nouvelle sauvegarde depuis l’installation d’origine.')
+    paths = {entry['path']: path for entry, path in public_entries}
+    release = paths.get('app/deploy/release.json')
+    versions = paths.get('app/deploy/versions.json')
+    if not release or not versions:
+        raise setup.SetupError('Version et composants du kit manquants.')
+    version_data = json.loads(versions.read_text(encoding='utf-8'))
+    expected = restore_identity(json.loads(release.read_text(encoding='utf-8')), version_data)
+    if identity != expected:
+        raise setup.SetupError('Kit incompatible avec la sauvegarde. Choisissez un kit de la même version et avec la même image Open WebUI.')
+    validate(kit, public)
+    return version_data
+
+
+def check_portable_layout(files):
+    # Windows folds case even when Linux can distinguish two names, including
+    # directory names. Check the merged tree before creating any destination.
+    tree = {}
+    for file in files:
+        for path in (file, *file.parents):
+            key = path.as_posix().casefold()
+            value = (path.as_posix(), path == file)
+            if tree.setdefault(key, value) != value:
+                raise setup.SetupError('Conflit de noms entre le kit et la sauvegarde : '+path.as_posix())
+
+
+def cross_system_preflight(copies):
+    # Sum space needed for all destinations on a shared filesystem. On Windows
+    # st_dev is not reliable across drives, so use the nearest existing drive.
+    volumes = {}
+    for target, size in copies:
+        ancestor = target.parent
+        while not ancestor.exists():
+            ancestor = ancestor.parent
+        volume = ancestor.drive.casefold() if os.name == 'nt' else ancestor.stat().st_dev
+        previous, _ = volumes.get(volume, (0, ancestor))
+        volumes[volume] = (previous + size, ancestor)
+    for size, ancestor in volumes.values():
+        if shutil.disk_usage(ancestor).free < size + 20 * 1024**3:
+            raise setup.SetupError('Espace insuffisant sur le disque de destination : '+str(ancestor))
+    for port in (8080, 8081, 3000, 8443, 8444, 8445, 11435, 11436):
+        with socket.socket() as sock:
+            if sock.connect_ex(('127.0.0.1', port)) == 0:
+                raise setup.SetupError(f'Port {port} occupé. Arrêtez l’ancienne installation ou choisissez un autre ordinateur.')
+    setup.run(['docker', 'compose', 'version'], capture=True, timeout=30)
+    if setup.run(['docker', 'info', '--format', '{{.OSType}}'], capture=True, timeout=30) != 'linux':
+        raise setup.SetupError('Docker doit utiliser les conteneurs Linux.')
+
+
+def restore_copy(entry, source, target, *, verify=False):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    if entry['path'].startswith('app/'):
+        if os.name != 'nt':
+            target.chmod((source.stat().st_mode & 0o755) | 0o600)
+    elif entry['path'].startswith(('private/', 'data/')):
+        target.chmod(0o600)
+    if verify and (target.stat().st_size != entry['bytes'] or setup.file_hash(target) != entry['sha256']):
+        raise setup.SetupError('Copie non conforme sur la destination : '+entry['path'])
+
+
+def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progress=None,identity=None):
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
@@ -133,69 +236,122 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
         else:
             collect(map(copy_entry, sources))
             durable.sync_tree(dest, sync_files=False)
-        setup.write_json(dest/'backup.json',{'schema':1,'files':files,'requires':'Le kit public correspondant fournit modèles, archives ZIM et caches ; cette sauvegarde contient comptes, conversations, guides et certificats privés.'},private=True)
+        report = {'schema': 1, 'files': files}
+        if identity is not None:
+            report['installation'] = identity
+        setup.write_json(dest/'backup.json', report, private=True)
     finally:
         if resume:app.compose(c,'start','open-webui','pilot','portal')
     print('Sauvegarde privée créée :',dest)
 
 
-def restore(source,kit,work_dir,data_dir):
+def restore(source,kit,work_dir,data_dir,*,target=None):
     from pilot_kit import checked_entries
     source=setup.safe_path(source);kit=setup.safe_path(kit);data=setup.safe_path(data_dir);work=setup.safe_path(work_dir)
     application=work.parent/'application'
     separate_roots(source,kit,data,work,application)
+    if target is not None and (target not in ('windows', 'linux') or target != host_target()):
+        raise setup.SetupError('Le système demandé doit être celui de cet ordinateur.')
     for dest in [data,work]:
         if dest.exists() and (not dest.is_dir() or any(dest.iterdir())):raise setup.SetupError('Restauration uniquement vers des dossiers vides.')
     report=json.loads((source/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(source,report)
-    public=json.loads((kit/'manifest.json').read_text(encoding='utf-8'));public_entries=checked_entries(kit,public)
     allowed_private={'private/'+name for name in PRIVATE_FILES}
     for entry,_ in entries:
         relative=entry['path']
-        if relative not in allowed_private and relative not in ('data/catalog/downloaded-content.json','data/catalog/collection-sort.json') and not relative.startswith(('data/state/','data/library/guides/')):
+        if relative not in allowed_private and relative not in PRIVATE_CATALOG and not relative.startswith(('data/state/','data/library/guides/')):
             raise setup.SetupError('Fichier de sauvegarde hors périmètre : '+relative)
     settings=next((path for entry,path in entries if entry['path']=='private/settings.json'),None)
     if settings is None:raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
     saved=json.loads(settings.read_text(encoding='utf-8'))
-    saved['data_dir']=data.as_posix()
+    cross_system = target is not None and saved['target'] != target
+    host = host_target()
+    if target is None and host is not None and saved['target'] != host:
+        raise setup.SetupError('Sauvegarde d’un autre système. Indiquez --target linux ou --target windows sur la machine cible.')
     if application.exists():raise setup.SetupError('Le dossier application de restauration doit être absent.')
-    durable.mkdir(application)
-    for entry,path in public_entries:
-        if not entry['path'].startswith('app/'):continue
-        target=application/Path(entry['path']).relative_to('app')
-        target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,target);shutil.copymode(path,target)
-    setup.ROOT=application
+    public=json.loads((kit/'manifest.json').read_text(encoding='utf-8'));public_entries=checked_entries(kit,public)
+    versions = setup.VERSIONS
+    if cross_system:
+        versions = validate_cross_system(report, kit, public, public_entries, saved['target'])
+        for entry, _ in entries:
+            relative = entry['path']
+            if relative.startswith('data/state/') and not relative.startswith(PRIVATE_DATA):
+                raise setup.SetupError('Données du système source inconnues : '+relative)
+        entries = [(entry, path) for entry, path in entries if not entry['path'].startswith('data/state/caddy/')]
+        cross_system_settings(saved, target)
+    saved['data_dir']=data.as_posix()
     saved['app_dir']=application.as_posix()
     saved['project']='survie-restored-'+secrets.token_hex(4)
     # An image ID is platform-local; it is re-imported and verified below.
     saved.pop('local_images',None)
-    for entry,path in entries:
-        if entry['path'].startswith('data/state/') and entry['path'].endswith('.lease'):continue
-        if entry['path'].startswith('data/'):
-            dest=data/Path(entry['path']).relative_to('data')
-        elif entry['path'] in allowed_private-{'private/settings.json'}:dest=checked_destination(work,entry['path'].removeprefix('private/'))
-        else:continue
-        dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest);dest.chmod(0o600)
-    for entry,path in public_entries:
-        if not entry['path'].startswith('payload/'):continue
-        relative=Path(entry['path']).relative_to('payload');dest=data/relative
-        if dest.exists() and (relative.parts[:2]==('library','guides') or relative in (Path('catalog/downloaded-content.json'),Path('catalog/collection-sort.json'))):continue
-        dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(path,dest)
+    copies = []
+    for entry, path in entries:
+        relative = entry['path']
+        if relative.startswith('data/state/') and relative.endswith('.lease'):
+            continue
+        if relative.startswith('data/'):
+            dest = data/Path(relative).relative_to('data')
+        elif relative in allowed_private-{'private/settings.json'}:
+            dest = work/Path(relative).relative_to('private')
+        else:
+            continue
+        copies.append((entry, path, dest))
+    private_destinations = {dest for _, _, dest in copies}
+    if cross_system:
+        data_paths = [dest.relative_to(data) for dest in private_destinations if dest.is_relative_to(data)]
+        data_paths.extend(Path(entry['path']).relative_to('payload') for entry, _ in public_entries if entry['path'].startswith('payload/'))
+        check_portable_layout(data_paths)
+    for entry, path in public_entries:
+        relative = entry['path']
+        if relative.startswith('app/'):
+            dest = application/Path(relative).relative_to('app')
+        elif relative.startswith('payload/'):
+            subpath = Path(relative).relative_to('payload')
+            dest = data/subpath
+            if dest in private_destinations and (subpath.parts[:2] == ('library', 'guides') or 'data/'+subpath.as_posix() in PRIVATE_CATALOG):
+                continue
+        else:
+            continue
+        copies.append((entry, path, dest))
+    if cross_system:
+        check_portable_layout([Path(entry['path']).relative_to('app') for entry, _, _ in copies if entry['path'].startswith('app/')])
+        cross_system_preflight([(dest, entry['bytes']) for entry, _, dest in copies])
+    durable.mkdir(application.parent)
+    application.mkdir(exist_ok=False)
+    durable.sync_directory(application.parent)
+    if cross_system:
+        durable.mkdir(work)
+        work.chmod(0o700)
+    for entry, path, dest in copies:
+        restore_copy(entry, path, dest, verify=cross_system)
+    if cross_system and not (work/'inference-paused.json').exists():
+        setup.write_json(work/'inference-paused.json', {'reason': 'cross_system_restore'}, private=True)
     for folder in (application,data,work):
         if folder.exists():durable.sync_tree(folder)
-    app=setup.Installation(work);setup.write_json(app.settings_path,saved,private=True)
-    app.init(saved['target'],data,cpu=saved['cpu'])
-    app.import_images(saved,kit/'images.tar');app.prepare(saved,True);app.up(saved);app.verify(saved)
-    print('Restauration effectuée. Les mêmes ports sont utilisés : arrêter l’ancienne installation avant de démarrer celle-ci.')
+    previous_root, previous_versions = setup.ROOT, setup.VERSIONS
+    try:
+        setup.ROOT, setup.VERSIONS = application, versions
+        app=setup.Installation(work);setup.write_json(app.settings_path,saved,private=True)
+        app.init(saved['target'],data,cpu=saved['cpu'])
+        if cross_system:
+            app.doctor(saved)
+        app.import_images(saved,kit/'images.tar');app.prepare(saved,True);app.up(saved);app.verify(saved)
+    finally:
+        setup.ROOT, setup.VERSIONS = previous_root, previous_versions
+    if cross_system:
+        print('Restauration vérifiée. Ouvrez http://127.0.0.1:8080 sur cet ordinateur. Le moteur IA reste en pause.')
+    else:
+        print('Restauration effectuée. Les mêmes ports sont utilisés : arrêter l’ancienne installation avant de démarrer celle-ci.')
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);subs=parser.add_subparsers(dest='action',required=True)
     p=subs.add_parser('backup');p.add_argument('destination');p.add_argument('--work-dir',required=True)
     p=subs.add_parser('restore');p.add_argument('source');p.add_argument('--kit',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--data-dir',required=True)
+    p.add_argument('--target',choices=('linux','windows'),help='Système de cet ordinateur, obligatoire pour une restauration entre systèmes.')
     args=parser.parse_args()
     if args.action=='backup':
         app=setup.Installation(args.work_dir);c=app.load();app.render(c);backup(app,c,args.destination)
-    else:restore(args.source,args.kit,args.work_dir,args.data_dir)
+    else:restore(args.source,args.kit,args.work_dir,args.data_dir,target=args.target)
 
 
 if __name__=='__main__':

@@ -223,6 +223,53 @@ Les ZIM ajoutés après le kit et les nouveaux modèles se sauvegardent séparé
 s’incluent dans un nouveau kit. Les sauvegardes privées contiennent des secrets :
 les garder hors de la bibliothèque publique.
 
+### Restaurer les données personnelles sur l’autre système
+
+Depuis la 0.94.0, une machine Linux préparée peut charger une sauvegarde privée
+Windows, et une machine Windows préparée peut charger une sauvegarde privée
+Linux. Il faut créer cette sauvegarde avec la 0.94.0 ou une version ultérieure et
+emporter le kit public complet correspondant exactement à l’installation
+d’origine, avec la même version d’Open WebUI. Le kit fournit les modèles, les
+ZIM et les cartes. Préparer sur la machine cible Python, Docker avec Compose
+et les conteneurs Linux. Sous Windows, préparer aussi Ollama pour pouvoir
+réactiver l’IA après restauration. Voir le
+[manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle)
+pour les prérequis hors ligne.
+
+Sur la machine de destination, lancer la commande depuis le dossier `app` du
+kit. Remplacer les chemins d’exemple par ceux du SSD et du disque cible.
+Réserver sur le disque cible l’espace des fichiers à copier, plus 20 Gio de
+marge par volume de destination. Laisser les ports habituels de SetupSurvie
+libres. Le débit du SSD et le volume de fichiers déterminent la durée, avec
+une lecture pour contrôler la source puis une autre pour vérifier la copie.
+
+**Sauvegarde Windows vers cible Linux**
+
+```bash
+python3 scripts/pilot_backup.py restore /media/secours/sauvegarde --kit /media/secours/kit --work-dir "$HOME/SurvieRestaure/private" --data-dir "$HOME/SurvieRestaure/data" --target linux
+```
+
+**Sauvegarde Linux vers cible Windows**
+
+```powershell
+py -3 scripts\pilot_backup.py restore E:\Secours\sauvegarde --kit E:\Secours\kit --work-dir D:\SurvieRestaure\private --data-dir D:\SurvieRestaure\data --target windows
+```
+
+La restauration crée une installation indépendante, accessible sur
+`http://127.0.0.1:8080`. Les profils, historiques et documents personnels sont
+copiés depuis la sauvegarde. Les certificats et l’adresse réseau concernent la
+nouvelle machine et sont à établir sur celle-ci. Sous Linux, la configuration
+utilise le processeur par défaut. Le moteur IA reste en pause sur les deux
+systèmes jusqu’à une action volontaire. Avant de retirer le SSD de secours,
+ouvrir un profil, un échange existant et un document personnel.
+
+En cas d’interruption ou d’erreur après le début de la copie, garder la
+sauvegarde intacte et reprendre vers un nouveau dossier vide. Si les services ont déjà démarré, les arrêter depuis le dossier
+`application` de la copie avant le nouvel essai.
+Sous Linux, utiliser `python3 scripts/setup.py --work-dir ../private down`.
+Sous Windows, utiliser `py -3 scripts/setup.py --work-dir ../private down`. La recette sur deux machines
+différentes hors ligne reste à effectuer.
+
 ## Moteur, mode jeu et comparaisons
 
 **Mon appareil → Vue d’ensemble** (« État de l’appareil ») affiche le moteur, le
