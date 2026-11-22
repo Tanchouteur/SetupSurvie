@@ -19,3 +19,13 @@ Windows avec des SSD réels. La recette n’installe ni Windows ni les images
 Docker. La migration des comptes entre systèmes et la restauration Windows
 restent à valider séparément. Voir le
 [guide du kit](../installation/preparer-kit-hors-ligne.md#dupliquer-un-kit-public).
+
+
+## Lanceur Linux — 0.93.0, 22 novembre
+
+GLib a ouvert le fichier de bureau depuis un chemin de support contenant
+espaces, apostrophe, accent et signe pourcentage. Un interpréteur de test a
+reçu le bon dossier de kit et le chemin de la fenêtre. Un test automatisé
+couvre également ce passage de chemin. Les tests de copie du kit avec
+fichiers fictifs sont rejoués sans réseau. Une recette sur un bureau
+interactif et un support physique reste attendue.
