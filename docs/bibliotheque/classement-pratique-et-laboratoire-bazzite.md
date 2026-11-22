@@ -515,3 +515,28 @@ Kiwix sert les 205 éditions et la préparation du texte est terminée avec
 démarré sur ce fonds. Le relevé de lecture du portail et la vérification des
 vidéos suivent dans la même recette. L’inventaire vidéo continue séparément.
 Les résultats de cette campagne restent à examiner.
+
+### Comparaison des réglages sur le fonds complet — 22 novembre 2026
+
+Banc du labo, 205 archives indexées, 136 requêtes des 68 thèmes de Marc,
+60 s maximum par requête. Requêtes avec au moins un résultat : réglage
+d’origine 102, encyclopédies en secours 106, filtre PDF 82, filtre PDF et
+encyclopédies 87, réglage livré 87, avec forums 87. Le nombre de résultats
+ne mesure pas leur pertinence : sur les 20 requêtes que le réglage livré
+laisse vides, la lecture des titres montre surtout du bruit retiré (dossier
+du Var pour « allumer un feu », manuel radio VHF pour les armes, jardin
+scolaire pour les rongeurs), mais aussi des réponses perdues : guides MSF
+pour la posologie du paracétamol et la diarrhée de l’enfant, guide SGDSN
+pour la protection civile en temps de guerre, Sésamath et Éduscol pour le
+calcul. Dix thèmes restent vides avec tous les réglages : armes, autonomie
+au sens large, carburants, champignons et plantes, chasse sous-marine,
+élevage, nuisibles, organisation collective, pêche, permaculture.
+
+La 0.99.1 accepte aussi une page PDF lorsque les mots de la requête sont
+proches dans son texte (moins de 40 mots), et plus seulement dans le titre
+ou l’extrait affiché. Sur le même banc, elle ne change que deux requêtes :
+« Premiers secours citoyen » passe premier pour l’hémorragie, et le guide
+Victron passe en tête pour l’entretien d’un moteur de bateau. Les pages MSF
+visées restent absentes, car la page où les deux termes sont proches (page
+23 pour le paracétamol) n’arrive pas parmi les candidats retenus. La
+sélection des pages candidates d’un même PDF est la prochaine piste.

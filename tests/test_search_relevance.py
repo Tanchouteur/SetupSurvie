@@ -192,6 +192,16 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
                          [bee_home['id']])
         self.assertTrue(retrieval.encyclopedic_matches([grape], plan, 3))
 
+    def test_pdf_page_text_counts_only_when_query_terms_are_close(self):
+        query = 'posologie du paracétamol'
+        plan = retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
+        close = {'title': 'Médicaments essentiels — page 40', 'excerpt': 'Comprimés à 500 mg.',
+                 '_text': 'Paracétamol oral. Posologie chez l’adulte : extrait fictif sans dose réelle.'}
+        apart = {'title': 'Médicaments essentiels — page 3', 'excerpt': 'Sommaire.',
+                 '_text': 'Posologie générale. ' + 'mot ' * 80 + 'Paracétamol cité dans une autre partie.'}
+        self.assertTrue(retrieval.subject_in_passage(close, plan))
+        self.assertFalse(retrieval.subject_in_passage(apart, plan))
+
     async def test_pdf_passages_need_the_subject_in_the_visible_match(self):
         items = [
             ('guide:jardin.fr.pdf#page=1', 'Jardin scolaire', '', 'fr', 'Éviter les insectes et organiser le jardin.'),

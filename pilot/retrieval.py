@@ -291,13 +291,28 @@ def rank(item,query,position=0,*,normalizer=None):
     return score
 
 
+PASSAGE_WINDOW = 40
+
+
 def subject_in_passage(item, query, normalize=normal):
+    """A PDF page matches when every query concept appears in its title or excerpt,
+    or close together in the page text (a long manual names everything somewhere)."""
+    if not query.token_groups:
+        return False
     title = set(normalize(item.get('title', '')).split())
     excerpt = set(normalize(item.get('excerpt', '')).split())
     topic = title | excerpt
-    return bool(query.token_groups) and all(
-        any(term <= topic for term in group) for group in query.token_groups
-    )
+    if all(any(term <= topic for term in group) for group in query.token_groups):
+        return True
+    missing = [group for group in query.token_groups if not any(term <= title for term in group)]
+    last = {}
+    for index, word in enumerate(normalize(item.get('_text', '')).split()):
+        for number, group in enumerate(missing):
+            if any(term == {word} for term in group):
+                last[number] = index
+        if len(last) == len(missing) and index - min(last.values()) < PASSAGE_WINDOW:
+            return True
+    return False
 
 
 def encyclopedic_matches(items, query, limit, *, normalizer=None):
