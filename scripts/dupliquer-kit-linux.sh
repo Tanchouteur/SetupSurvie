@@ -16,14 +16,84 @@ show_error() {
 
 base=$(CDPATH='' cd -- "$1" && pwd -P)
 if [ ! -f "$base/manifest.json" ]; then
-    show_error 'Ouvrez ce lanceur depuis le dossier app d’un kit SetupSurvie complet.'
+    show_error "Ouvrez ce lanceur depuis le dossier app d’un kit SetupSurvie complet."
     exit 1
 fi
-if ! python3 -c 'import sys, tkinter; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
-    show_error 'La fenêtre de copie nécessite Python 3.11 ou ultérieur avec Tkinter. Utilisez un ordinateur équipé ou installez le paquet python3-tk de votre distribution.'
+export PYTHONDONTWRITEBYTECODE=1
+if python3 -c 'import sys, tkinter; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
+    if ! python3 "$base/app/scripts/kit_duplicate_gui.py" "$base"; then
+        show_error "La fenêtre de copie ne s’est pas ouverte. Vérifiez que vous utilisez une session graphique."
+        exit 1
+    fi
+    exit 0
+fi
+
+if ! command -v zenity >/dev/null 2>&1; then
+    show_error 'Pour copier ce kit, ouvrez une session graphique avec Zenity ou Python 3.11 avec Tkinter.'
     exit 1
 fi
-if ! python3 "$base/app/scripts/kit_duplicate_gui.py" "$base"; then
-    show_error 'La fenêtre de copie ne s’est pas ouverte. Vérifiez que vous utilisez une session graphique.'
+python=python3
+bundle="$base/installateurs-linux"
+if ! "$python" -c 'import sqlite3, sys; sys.exit(sys.version_info < (3, 11))' >/dev/null 2>&1; then
+    if [ ! -f "$bundle/tools/linux-offline-installers/python-archive.txt" ]; then
+        show_error 'Python manque sur ce PC et dans le kit. Consultez LISEZ-MOI.html pour préparer les installateurs Linux.'
+        exit 1
+    fi
+    python=
+fi
+
+parent=$(zenity --file-selection --directory --title='Choisir un dossier sur le second disque') || exit 0
+[ -n "$parent" ] || exit 0
+target="${parent%/}/SetupSurvie-Kit"
+zenity --question --title="$title" --text="Copier le kit vers ce dossier ?
+$target
+
+Pour reprendre, choisissez le même dossier." ||
+    exit 0
+
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/setupsurvie-copie.XXXXXXXX") || {
+    show_error 'Impossible de créer un dossier temporaire pour la copie.'
+    exit 1
+}
+trap 'rm -rf -- "$scratch"' EXIT
+(
+    # Keep writing the result even if the progress window closes.
+    trap '' PIPE
+    set +e
+    if [ -z "$python" ]; then
+        printf '%s
+' 'Installation temporaire de Python depuis le SSD…'
+        /bin/bash "$base/app/scripts/installer-outils-linux-hors-ligne.sh" --python-seul "$bundle" "$scratch/outils"
+        code=$?
+        if [ "$code" -ne 0 ]; then
+            printf '%s
+' "$code" > "$scratch/statut"
+            exit "$code"
+        fi
+        python="$scratch/outils/bin/python3"
+    fi
+    "$python" "$base/app/scripts/pilot_kit.py" duplicate "$base" "$target"
+    printf '%s
+' "$?" > "$scratch/statut"
+) 2>&1 | (
+    trap '' PIPE
+    while IFS= read -r line; do
+        printf '%s
+' "$line" >> "$scratch/resultat"
+        printf '# %s
+' "$line" 2>/dev/null || :
+    done
+    printf '100
+' 2>/dev/null || :
+) | zenity --progress --pulsate --auto-close --no-cancel --title="$title" --text='Préparation de la copie…' || :
+
+if [ -f "$scratch/statut" ] && [ "$(cat "$scratch/statut")" = 0 ]; then
+    zenity --info --title="$title" --text='Le second kit est vérifié. Vous pouvez éjecter le support.' || :
+else
+    if [ ! -s "$scratch/resultat" ]; then
+        printf '%s
+' 'La copie a été interrompue. Rouvrez le lanceur pour reprendre.' > "$scratch/resultat"
+    fi
+    zenity --text-info --title='Copie interrompue' --filename="$scratch/resultat" || :
     exit 1
 fi

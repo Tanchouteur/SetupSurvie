@@ -80,6 +80,11 @@ contient à son tour le lanceur.
 
 Depuis la 0.93.0, sur Linux équipé de Python 3.11 ou ultérieur avec Tkinter,
 ouvrir **Dupliquer-Kit-SetupSurvie.desktop** dans le même dossier **app**.
+Depuis la 0.105.0, un bureau avec Zenity permet aussi de dupliquer le kit
+sans Python préinstallé si les installateurs Linux sont sur le support.
+Le lanceur extrait Python dans un dossier temporaire et le retire à la
+fin. Avec Python 3.11 ou ultérieur et Tkinter, la fenêtre habituelle
+reste disponible.
 Si le bureau demande de faire confiance au lanceur, l’autoriser pour ce kit.
 Choisir un dossier accessible en écriture sur le second disque. L’assistant
 utilise les droits de la session et reprend une copie interrompue vers la
