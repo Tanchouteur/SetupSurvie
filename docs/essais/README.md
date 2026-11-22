@@ -7,6 +7,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## Protocoles, plans et suivis transversaux
 
+- [Duplication du kit public hors ligne](2026-11-21-duplication-kit-public.md) — reprise après remontage, contenu privé exclu et dépendances contrôlées.
 - [Préparation locale du kit Windows](2026-11-21-preparation-kit-windows-hors-ligne.md) — installateurs figés, dossier local et reprise après redémarrage.
 - [Retour à l’installation après un point interrompu](2026-11-21-retour-apres-point-interrompu.md) — données conservées, refus des autres transferts et reprise après coupure.
 - [Duplication du SSD de secours hors ligne](2026-11-21-duplication-secours-linux.md) — chaîne de copies sur trois volumes et reprise après interruption.
