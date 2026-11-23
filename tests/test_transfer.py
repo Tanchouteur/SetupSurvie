@@ -393,7 +393,11 @@ class ActivationTests(unittest.TestCase):
 
     def test_activation_fences_source_and_checks_mounts_documents(self):
         if os.name=='nt':self.skipTest('Linux runtime fixture')
+        # A previous preparation may leave its lease even without an indexing reader.
+        (self.work/'search-tools-prepare.lock.lease').touch()
         self.prepared()
+        self.assertIn('private/search-tools-prepare.lock.lease',
+                      transfer.read(self.dest/'transfer.json')['inventory']['excluded'])
         def run(command,**kwargs):return 'linux' if 'info' in command else ''
         with patch.object(setup,'ROOT',self.dest/'application'),patch.object(setup,'run',side_effect=run),patch.object(setup.Installation,'import_images'),patch.object(setup.Installation,'up') as up,patch.object(setup.Installation,'compose',return_value='{"search":"passed","open_document":"passed"}'),patch.object(transfer,'validate_mounts') as mounts:
             transfer.activate(self.dest)
