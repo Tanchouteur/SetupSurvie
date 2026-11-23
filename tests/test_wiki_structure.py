@@ -70,3 +70,28 @@ class SearchStructureTests(IsolatedAsyncioTestCase):
                 library.enrich_wikipedia(items[:4], plan, 'shared', retrieval.NormalCache()),
             )
         self.assertEqual((first['selected'], first['read'], second['read'], peak), (12, 12, 4, 2))
+
+    async def test_redirect_alias_uses_one_result_slot_without_merging_other_editions(self):
+        canonical = 'zim:wikipedia_fr_test/Photosynthèse'
+        alias = 'zim:wikipedia_fr_test/Photosynthese'
+        other = 'zim:wikipedia_en_test/Photosynthesis'
+        items = [
+            {'id': canonical, 'title': 'Photosynthèse'},
+            {'id': alias, 'title': 'Photosynthese'},
+            {'id': other, 'title': 'Photosynthesis', 'excerpt': 'Photosynthèse'},
+        ]
+        plan = retrieval.plan('photosynthèse', ['photosynthese'], {})
+        redirected = '/content/wikipedia_fr_test/Photosynth%C3%A8se'
+
+        async def read(path, _maximum):
+            return library.Fetched(b'<h2>History</h2>', 'text/html', path if 'wikipedia_en' in path else redirected)
+
+        with patch.object(library, 'get', side_effect=read) as reader:
+            for _ in range(2):
+                await library.enrich_wikipedia(items, plan, 'redirects', retrieval.NormalCache())
+                ranked = retrieval.ordered(items, plan, 5)
+                self.assertEqual(len(ranked), 2)
+                self.assertIn(ranked[0]['id'], {alias, canonical})
+                self.assertEqual(ranked[1]['id'], other)
+                self.assertNotIn('_resolved_zim_id', ranked[0])
+            self.assertEqual(reader.await_count, 3)

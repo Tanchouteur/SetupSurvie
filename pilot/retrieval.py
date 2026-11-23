@@ -83,6 +83,8 @@ CONCEPTS={
  'reparation':{'terms':['reparation','reparer','repair','repairing','remplacer','remplacement','replace','replacement'],'fr':['reparation'],'en':['repair']},
  'conservation':{'terms':['conservation','conserver','preservation','preserving','storage'],'fr':['conservation'],'en':['preservation']},
  'batterie':{'terms':['batterie','batteries','battery'],'fr':['batterie'],'en':['battery']},
+ 'mise a la terre':{'terms':['mise a la terre','prise de terre','grounding','earthing'],'fr':['mise a la terre'],'en':['electrical grounding']},
+ 'potager':{'terms':['potager','potagers','potagere','potageres','vegetable garden','kitchen garden'],'fr':['potager'],'en':['vegetable garden']},
  'semences':{'terms':['semences','semence','graines','graine','seed','seeds'],'fr':['semences'],'en':['seeds']},
  'velo':{'terms':['velo','velos','bicycle','bicycles','bike','bikes'],'fr':['velo'],'en':['bicycle']},
  'crevaison':{'terms':['crevaison','crevaisons','puncture','punctures','rustine','patching'],'fr':['crevaison'],'en':['puncture']},
@@ -169,6 +171,17 @@ def plan(query,words,synonyms,collection=''):
     if re.search(r'\b(pourquoi|why)\b',raw) and not re.search(r'\b(comment|how)\b',raw):practical=False
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
+    grounding = re.fullmatch(r'(?:la )?mise a la terre(?: (?:d une|de l|des) installations?(?: electriques?)?)?', raw)
+    if grounding:
+        # A named electrical concept; generic installation matches electronics repairs.
+        terms = ['mise a la terre']
+        action = ''
+        practical = False
+    if re.search(r'\b(?:vegetable|kitchen) garden\b', raw):
+        terms = ['vegetable garden' if word == 'garden' else word for word in terms
+                 if word not in ('vegetable', 'kitchen')]
+    if re.search(r'\bseeds? saving\b', raw):
+        terms = [word for word in terms if word != 'saving']
     if re.search(r'\bprotection civile\b',raw):
         terms=['protection civile' if w=='protection' else w for w in terms if w!='civile']
         if 'en temps de' in raw:terms=[w for w in terms if w!='temps']
@@ -266,7 +279,7 @@ def rank(item,query,position=0,*,normalizer=None):
         else:score-=12
     path=str(item.get('id','')).split('/',1)[-1]
     if re.search(r'(?:^|/)(?:Category:|Special:|questions/tagged/|tags/)',path,re.I):score-=45
-    if re.search(r'(highest voted|questions tagged|category|categorie)',title):score-=35
+    if re.search(r'\b(highest voted|questions tagged|category|categorie)\b',title):score-=35
     if item.get('language') in ('fr','fra'):score+=2
     canonical=' '.join(query.words)
     if canonical and (canonical==title or normalize(query.original)==title):score+=5 if query.practical else 30
@@ -397,9 +410,10 @@ def ordered(items,query,limit,*,normalizer=None):
             if not re.search(evidence,combined) and not named_device and not human_manual:continue
         template=bool(re.search(r'\b(modele a remplir|modele a completer|template to fill|fill in this template)\b',excerpt[:2000]))
         if query.practical and template and not title_hits and not re.search(r'\b(modele|template|inventaire|inventory)\b',normalize(query.original)):continue
-        if item.get('match')=='title' and re.search(r'(song|single|album)',normalize(item.get('excerpt',''))) and query.practical:continue
-        if item['id'] in seen:continue
-        seen.add(item['id'])
+        if item.get('match')=='title' and re.search(r'\b(song|single|album)\b',normalize(item.get('excerpt',''))) and query.practical:continue
+        identity = ifixit_guide_identity(item) or item.get('_resolved_zim_id', item['id'])
+        if identity in seen:continue
+        seen.add(identity)
         clean={k:v for k,v in item.items() if not k.startswith('_')}
         clean['match_quality']=match_quality(item,query,normalizer=normalize)
         parent=item['id'].split('#page=')[0].split('#t=')[0]
@@ -501,6 +515,14 @@ def application_domains(item, indexed=None):
 def ifixit_edition(book):
     match = re.match(r'ifixit_(en|fr)_all(?:_|$)', book)
     return match[1] if match else ''
+
+
+def ifixit_guide_identity(item):
+    book, _, path = item.get('id', '').removeprefix('zim:').partition('/')
+    if not ifixit_edition(book) or item.get('language') not in ('en', 'fr'):
+        return None
+    guide = re.fullmatch(r'(?:Guide|Tutoriel)/[^/]+/([0-9]+)', path)
+    return ('ifixit', guide[1], item['language']) if guide else None
 
 
 def article_language(item):
