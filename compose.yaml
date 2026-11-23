@@ -79,7 +79,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 10s
+      # kiwix-manage reads every archive before serving: about 100 s for 210
+      # archives on Marc's PC, more while indexing loads the disk (22 Nov 2026).
+      # Failures during this period do not count; updates wait up to 420 s.
+      start_period: 360s
   pilot:
     image: ${WEBUI_IMAGE}
     restart: unless-stopped

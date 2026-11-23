@@ -192,7 +192,7 @@ class TranslationText(Text):
     def handle_starttag(self,tag,attrs):
         super().handle_starttag(tag,attrs)
         if tag=='section':
-            match=re.fullmatch(r'page=(\d+)',dict(attrs).get('id',''))
+            match=re.fullmatch(r'page=(\d+)',(dict(attrs).get('id') or ''))
             if match:self.page=int(match.group(1));self.pages[self.page]=[]
     def handle_data(self,data):
         super().handle_data(data)

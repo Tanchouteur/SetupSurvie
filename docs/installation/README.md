@@ -60,6 +60,14 @@ les prérequis et les droits d’usage.
 
 ## Installer hors ligne depuis le SSD sur Linux
 
+La 0.101.0 peut fournir Python et Docker à un PC Linux neuf. Préparer
+[les installateurs Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux)
+sur le SSD avant de partir hors ligne. Le lanceur du kit public demande
+l’autorisation administrateur dans une fenêtre et configure des services
+locaux sans téléchargement. Depuis la 0.103.0, le point de restauration de
+ce parcours est activé par défaut. Il peut être désactivé dans la fenêtre
+d’installation et créé plus tard depuis **Entretien de SetupSurvie**.
+
 Pour un PC Linux qui dispose déjà de Python avec Tkinter et de Docker avec
 Compose, le kit public 0.99.0 propose **Installer-Kit-SetupSurvie.desktop** dans
 `app`. Voir le [guide du kit](pilote-marc.md#installer-à-partir-du-kit).

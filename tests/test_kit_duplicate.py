@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 
 import kit_duplicate
+import linux_offline_tools
 from pilot_kit import checked_entries
 import setup
 import transfer
@@ -86,6 +87,52 @@ class KitDuplicateTests(unittest.TestCase):
             [str(self.source / 'app/scripts/kit_duplicate_gui.py'), str(self.source)],
         )
 
+    @unittest.skipUnless(sys.platform == 'linux', 'Lanceur de bureau Linux.')
+    def test_linux_launcher_uses_bundled_python_without_administrator(self):
+        self.publish_manifest()
+        tools = self.source/'installateurs-linux/tools/linux-offline-installers'
+        tools.mkdir(parents=True)
+        (tools/'python-archive.txt').touch()
+        scripts = self.source/'app/scripts'
+        scripts.mkdir()
+        trace = self.base/'trace'
+        temp = self.base/'temp'
+        temp.mkdir()
+        driver = self.base/'python3'
+        driver.write_text('#!/bin/sh\nexit 127\n', encoding='utf-8')
+        driver.chmod(0o755)
+        zenity = self.base/'zenity'
+        zenity.write_text(
+            '#!/bin/sh\ncase "$1" in\n'
+            '--file-selection) printf "%s\\n" "$DISK";;\n'
+            '--progress) cat >/dev/null;;\n'
+            '--info) printf "verified\\n" >> "$TRACE";;\n'
+            '--text-info) exit 1;;\nesac\n',
+            encoding='utf-8',
+        )
+        zenity.chmod(0o755)
+        bootstrap = scripts/'installer-outils-linux-hors-ligne.sh'
+        bootstrap.write_text(
+            'set -e\n[ "$1" = --python-seul ]\n[ "$2" = "$KIT/installateurs-linux" ]\n'
+            'mkdir -p "$3/bin"\ncat >"$3/bin/python3" <<\'PYTHON\'\n'
+            '#!/bin/sh\nprintf "%s\\n" "$@" >> "$TRACE"\nPYTHON\n'
+            'chmod +x "$3/bin/python3"\n',
+            encoding='utf-8',
+        )
+        result = subprocess.run(
+            ['/bin/sh', ROOT/'scripts/dupliquer-kit-linux.sh', self.source],
+            env={**os.environ, 'PATH': str(self.base)+':'+os.environ['PATH'],
+                 'DISK': str(self.target), 'KIT': str(self.source),
+                 'TMPDIR': str(temp), 'TRACE': str(trace)},
+            cwd=ROOT, capture_output=True, text=True, check=True, timeout=10,
+        )
+        self.assertEqual(trace.read_text().splitlines(), [
+            str(scripts/'pilot_kit.py'), 'duplicate', str(self.source),
+            str(self.target/'SetupSurvie-Kit'), 'verified',
+        ])
+        self.assertEqual(list(temp.iterdir()), [])
+        self.assertEqual(result.stderr, '')
+
     def test_windows_installers_and_components_are_retained(self):
         packages = {}
         for name in sorted(windows_kit_installers.COMPONENTS):
@@ -100,6 +147,30 @@ class KitDuplicateTests(unittest.TestCase):
         windows_kit_installers.prepare(self.target, verify_only=True)
         self.assertEqual((self.target / 'installateurs-windows/sxs/platform.cab').read_bytes(), b'composant fixture')
         self.assertEqual((self.target / 'manifest.json').read_bytes(), (self.source / 'manifest.json').read_bytes())
+
+    def test_linux_tool_bundle_is_verified_and_duplicated_without_network(self):
+        names = ['docker.tar.gz', 'docker-compose', linux_offline_tools.KIT_PYTHON]
+        names += [prefix + 'nftables_test.deb' for prefix in ('', 'debian12/', 'ubuntu2204/')]
+        entries = []
+        folder = linux_offline_tools.KIT_FOLDER
+        for name in names:
+            record = self.add_file(f'{folder}/{linux_offline_tools.FOLDER}/{name}', name.encode(),
+                                   add_to_manifest=False)
+            entries.append(f"{record['sha256']} {record['bytes']} {name} https://example.invalid/tools")
+        self.add_file(linux_offline_tools.CATALOG, '\n'.join(entries).encode())
+        self.publish_manifest()
+        with self.assertRaisesRegex(setup.SetupError, 'préparation des installateurs Linux'):
+            kit_duplicate.duplicate(self.source, self.target)
+        receipt = f'{folder}/{linux_offline_tools.RECEIPT}'
+        self.add_file(receipt, (linux_offline_tools.KIT_PYTHON+'\n').encode(), add_to_manifest=False)
+        with patch('linux_offline_tools.content.transfer', side_effect=AssertionError('Réseau interdit')):
+            kit_duplicate.duplicate(self.source, self.target)
+            linux_offline_tools.prepare_kit(self.target, verify_only=True)
+        self.assertEqual((self.target/receipt).read_bytes(), (self.source/receipt).read_bytes())
+        docker = self.target/folder/linux_offline_tools.FOLDER/'docker-compose'
+        docker.write_bytes(b'x'*docker.stat().st_size)
+        with self.assertRaisesRegex(setup.SetupError, 'absent ou modifié'):
+            linux_offline_tools.prepare_kit(self.target, verify_only=True)
 
     def test_same_size_altered_source_never_publishes_the_file_or_the_kit(self):
         self.publish_manifest()

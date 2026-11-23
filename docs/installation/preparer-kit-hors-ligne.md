@@ -21,6 +21,35 @@ conservée lors d’une duplication. Ouvrez-la directement dans un navigateur
 avant de remettre le SSD.
 
 
+Depuis la 0.104.0, le bouton de duplication Windows peut aussi démarrer sur
+un PC dépourvu de Python. Il propose dans une fenêtre l’installation de
+Python avec Tcl/Tk pour le compte courant depuis les fichiers vérifiés
+du kit. La duplication utilise uniquement Python et le kit, sans
+préparer WSL ni démarrer Docker.
+
+
+## Ajouter les installateurs Linux
+
+Depuis la 0.101.0, préparer les outils Linux sur un ordinateur connecté,
+Windows ou Linux, avec le logiciel du kit à jour. Depuis le dossier `app`
+du kit, lancer la commande suivante sous Linux.
+
+```sh
+python3 scripts/pilot_kit.py prepare-linux ..
+python3 scripts/pilot_kit.py prepare-linux .. --verify-only
+```
+
+Sous Windows, utiliser `py -3 scripts\pilot_kit.py prepare-linux ..`.
+La préparation ajoute les installateurs vérifiés au dossier
+`installateurs-linux` du kit. Le contrôle hors ligne et la duplication y
+incluent Python, Docker, Compose et les paquets réseau. Prévoir environ
+200 Mo supplémentaires. Sur le PC cible, suivre **LISEZ-MOI.html** et
+ouvrir **Installer-Kit-SetupSurvie.desktop**. Le lanceur graphique demande
+l’autorisation administrateur et déploie les outils dans la destination
+choisie. Il utilise les paquets du support pour Debian 12, Debian 13 ou
+Ubuntu 22.04 x86-64. Le bureau doit proposer Zenity et PolicyKit.
+
+
 ## Sous-commandes de `pilot_kit.py`
 
 | Commande | Rôle |
@@ -51,6 +80,11 @@ contient à son tour le lanceur.
 
 Depuis la 0.93.0, sur Linux équipé de Python 3.11 ou ultérieur avec Tkinter,
 ouvrir **Dupliquer-Kit-SetupSurvie.desktop** dans le même dossier **app**.
+Depuis la 0.105.0, un bureau avec Zenity permet aussi de dupliquer le kit
+sans Python préinstallé si les installateurs Linux sont sur le support.
+Le lanceur extrait Python dans un dossier temporaire et le retire à la
+fin. Avec Python 3.11 ou ultérieur et Tkinter, la fenêtre habituelle
+reste disponible.
 Si le bureau demande de faire confiance au lanceur, l’autoriser pour ce kit.
 Choisir un dossier accessible en écriture sur le second disque. L’assistant
 utilise les droits de la session et reprend une copie interrompue vers la

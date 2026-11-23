@@ -32,6 +32,18 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 22 novembre 2026
 
+- [Préparation Windows depuis le lanceur de restauration](2026-11-22-restauration-windows-neuf.md) — 0.106.0, préparation et redémarrage simulés.
+
+- [Duplication du kit sur Linux sans Python](2026-11-22-duplication-linux-sans-python.md) — 0.105.0, copie réelle d’un kit réduit sans réseau et sans droits administrateur.
+
+- [Duplication du kit sur Windows sans Python](2026-11-22-duplication-windows-sans-python.md) — 0.104.0, contrôles des fichiers locaux et lancement simulé.
+
+- [Point protégé lors de l’installation du kit public Linux](2026-11-22-point-kit-public-linux.md) — 0.103.0, raccordement à l’entretien Linux et reprise simulée.
+
+- [Reprise de l’installation du kit public Linux](2026-11-22-reprise-installation-kit-linux.md) — 0.102.0, fichiers partiels et activation interrompue.
+
+- [Préparation du kit sur un Linux sans Python ni Docker](2026-11-22-kit-public-linux-sans-outils.md) — 0.101.0, extraction réelle des outils réseau coupé.
+
 - [Installation du kit public par double-clic sous Linux](2026-11-22-installation-graphique-kit-linux.md) — 0.99.0, sélection du disque et relance locale simulée.
 
 - [Notice à la racine du kit public](2026-11-22-notice-kit-public.md) — 0.98.0, copie et contrôle de la notice, mode CPU Linux.

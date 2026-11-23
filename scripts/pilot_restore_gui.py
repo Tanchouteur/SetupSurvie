@@ -30,7 +30,7 @@ def find_pending(disk, inputs):
 
 
 def install_kit(window, kit):
-    from pilot_kit import install
+    from pilot_kit import KIT_INSTALL_FOLDER, install
     title = 'Installer SetupSurvie'
     if host_target() != 'linux' or not (kit/'manifest.json').is_file():
         messagebox.showerror(title, 'Ouvrez le lanceur Linux depuis le dossier app du kit.', parent=window)
@@ -40,9 +40,9 @@ def install_kit(window, kit):
     if not parent:
         window.destroy()
         return
-    destination = Path(parent)/datetime.now().strftime('SetupSurvie-%Y%m%d-%H%M%S-%f')
+    destination = Path(parent)/KIT_INSTALL_FOLDER
     if not messagebox.askokcancel(
-        title, f'Installer SetupSurvie dans ce nouveau dossier ?\n\n{destination}\n\n'
+        title, f'Installer ou reprendre SetupSurvie dans ce dossier ?\n\n{destination}\n\n'
         'Python et Docker doivent être prêts. Après la copie, le site s’ouvrira avec le moteur IA en pause.',
         parent=window,
     ):
@@ -53,7 +53,8 @@ def install_kit(window, kit):
         install(kit, 'linux', destination/'data', destination/'private', cpu=True,
                 graphical=True, progress=progress)
 
-    show_operation(window, destination, 'Vérification du kit…', action, title=title)
+    show_operation(window, destination, 'Vérification du kit…', action, title=title,
+                   recovery='Pour reprendre, ouvrez le même lanceur et choisissez le même disque.')
 
 
 def open_local(base, *, progress=None):
@@ -136,7 +137,7 @@ def main():
                    restoring=True)
 
 
-def show_operation(window, destination, initial_status, action, *, restoring=False, title='Ouvrir SetupSurvie'):
+def show_operation(window, destination, initial_status, action, *, restoring=False, title='Ouvrir SetupSurvie', recovery=''):
     if restoring:
         title = TITLE
     window.title(title)
@@ -168,6 +169,8 @@ def show_operation(window, destination, initial_status, action, *, restoring=Fal
             if kind == 'error':
                 if restoring:
                     body += '\n\nPour reprendre, rouvrez le lanceur et choisissez la même sauvegarde et le même disque.'
+                elif recovery:
+                    body += '\n\n' + recovery
                 messagebox.showerror(title, body, parent=window)
             elif not restoring or messagebox.askyesno(title, 'Restauration terminée. Ouvrir SetupSurvie ?', parent=window):
                 webbrowser.open('http://127.0.0.1:8080')

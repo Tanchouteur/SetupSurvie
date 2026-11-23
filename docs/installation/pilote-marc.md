@@ -119,6 +119,24 @@ ou `-NoStartup` (`install.ps1`). Une mise à jour ne réactive pas un démarrage
 désactivé : la commande de création est volontaire. Les lanceurs et l’ouverture
 de session restent à essayer sur le Windows réel de Marc.
 
+Depuis la 0.101.0, le kit public peut aussi démarrer sur un PC Linux sans
+Python ni Docker. Préparer à l’avance
+[les installateurs du kit Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux).
+Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64, avec un bureau équipé de
+Zenity et PolicyKit, lancer le même fichier et choisir un dossier système
+sur le disque cible. L’autorisation administrateur se fait dans une
+fenêtre. Le lanceur installe ses outils et un moteur Docker dédié dans
+le dossier choisi. Les services locaux démarrent avec le système après
+installation. Depuis la 0.103.0, ce parcours coche par défaut le point de
+restauration protégé. Prévoir de la place pour une deuxième copie et ses
+images Docker. La création peut arrêter brièvement le portail. En cas
+d’interruption, reprendre avec le même SSD, le même disque et le même choix.
+Le menu **Entretien de SetupSurvie** permet ensuite de créer un point si
+l’option était décochée, de revenir à l’installation après une création
+interrompue ou de restaurer une nouvelle copie du point. Les anciennes
+données restent dans le dossier mis à l’abri. Voir le
+[guide d’entretien](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+
 Depuis la 0.99.0, sur un PC Linux déjà préparé, ouvrir
 **Installer-Kit-SetupSurvie.desktop** dans le dossier `app` du SSD.
 Il faut Python avec Tkinter, Docker et Compose déjà disponibles. Choisir
@@ -126,8 +144,15 @@ le disque et confirmer la création d’un nouveau dossier. Le kit
 fonctionne sur le processeur et le site se lance avec l’IA en pause.
 Après un redémarrage, ouvrir **Ouvrir-SetupSurvie.desktop** dans le
 dossier installé, avec Docker démarré. Le SSD peut être retiré après
-l’installation terminée. Si la première installation s’arrête pendant
-la copie, relancer vers un nouveau dossier vide.
+l’installation terminée.
+
+Depuis la 0.102.0, le lanceur graphique reprend dans le dossier
+`SetupSurvie-Kit` si on choisit le même disque avec le même kit après
+une coupure. Il contrôle les fichiers de la copie et recopie ceux qui
+sont incomplets. Si les services avaient commencé à démarrer, il
+relance la vérification avec les données actuelles. Le parcours sans
+Python ni Docker réutilise aussi les outils déjà extraits. Un dossier
+déjà occupé par une autre installation reste protégé.
 
 Sur un PC Linux avec Python 3.11, Docker et Compose déjà installés, le kit
 public peut utiliser le processeur sans GPU NVIDIA depuis la 0.98.0. Depuis
@@ -258,6 +283,14 @@ et les conteneurs Linux. Sous Windows, préparer aussi Ollama pour pouvoir
 réactiver l’IA après restauration. Voir le
 [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle)
 pour les prérequis hors ligne.
+
+Depuis la 0.106.0, le lanceur Windows peut préparer un PC neuf avant
+d’ouvrir la fenêtre de restauration. Il utilise le dossier
+`installateurs-windows` du kit pour compléter les outils manquants.
+Valider la demande dans la fenêtre. Si un redémarrage est demandé,
+laisser le SSD branché et rouvrir le même lanceur. Docker Desktop
+peut demander de terminer sa configuration ou d’accepter sa licence.
+Voir [la préparation Windows hors ligne](deux-etapes-windows.md).
 
 Sur une machine préparée avec Python et son interface Tkinter, ouvrir dans le
 dossier `app` du kit **Restaurer-Mes-Donnees-SetupSurvie.cmd** sous Windows ou

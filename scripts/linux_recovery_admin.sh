@@ -23,12 +23,19 @@ case "$action:$#" in
         [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
+    install-kit:4)
+        source_base=$(realpath -e -- "$2")
+        dest=$3
+        [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
+        [[ -f "$source_base/manifest.json" && "$source_base/app/scripts" == "$script_dir" ]] ||
+            die 'Ouvrez le lanceur Linux depuis le dossier app du kit public.'
+        ;;
     duplicate:3)
         source_base=$(realpath -e -- "$2")
         dest=$3
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
-    point:2|restore:2|cancel-point:2) dest=$2; source_base=$2 ;;
+    prepare-maintenance:2|point:2|restore:2|cancel-point:2) dest=$2; source_base=$2 ;;
     *) die 'Action inconnue.' ;;
 esac
 [[ "$dest" == /* && "$dest" != / && "$dest" != */ && "$dest" != *$'\n'* && "$dest" != *$'\r'* ]] ||
@@ -46,10 +53,10 @@ for directory in "$parent" "$base"; do
         directory=$(dirname -- "$directory")
     done
 done
-if [[ ( "$action" == install || "$action" == duplicate ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
     die 'Choisissez une destination distincte du dossier de secours.'
 fi
-if [[ ( "$action" == install || "$action" == duplicate ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
     die 'Choisissez un disque différent du SSD de secours.'
 fi
 if [[ "$action" == duplicate ]]; then
@@ -63,6 +70,41 @@ if [[ "$action" == duplicate ]]; then
     /bin/bash "$application/scripts/installer-outils-linux-hors-ligne.sh" --python-seul "$source_base/data" "$scratch/outils"
     "$scratch/outils/bin/python3" "$application/scripts/linux_recovery.py" "$parent" duplicate "$source_base" "$base"
     exit
+fi
+if [[ "$action" == install-kit ]]; then
+    lock="$parent/.$(basename -- "$base").installation-kit.lock"
+    [[ ! -L "$lock" && ( ! -e "$lock" || -f "$lock" ) ]] || die 'Verrou d’installation invalide.'
+    exec 9>>"$lock"
+    flock -n 9 || die 'Cette installation est déjà en cours.'
+    stamp="$base/.kit-source.sha256"
+    fingerprint=$(sha256sum -- "$source_base/manifest.json")
+    fingerprint="${fingerprint%% *}:$4"
+    if [[ ! -e "$base" ]]; then
+        mkdir -- "$base"
+    fi
+    [[ $(stat -c '%u:%a' -- "$base") == 0:700 ]] || die 'Dossier de destination déjà utilisé.'
+    if [[ -e "$stamp" || -L "$stamp" ]]; then
+        [[ -f "$stamp" && ! -L "$stamp" && $(cat -- "$stamp") == "$fingerprint" ]] ||
+            die 'Reprenez avec le même kit et le même choix de point de restauration.'
+    else
+        [[ -z $(find "$base" -mindepth 1 -maxdepth 1 -print -quit) ]] || die 'Dossier de destination déjà utilisé.'
+        stamp_tmp=$(mktemp -- "$parent/.kit-source.XXXXXXXX")
+        printf '%s\n' "$fingerprint" > "$stamp_tmp"
+        sync -f -- "$stamp_tmp"
+        mv -T -- "$stamp_tmp" "$stamp"
+        sync -f -- "$base"
+    fi
+    if [[ ! -e "$base/outils-linux" && ! -L "$base/outils-linux" ]]; then
+        printf '%s\n' 'Installation des outils Linux depuis le SSD…'
+        /bin/bash "$script_dir/installer-outils-linux-hors-ligne.sh" "$source_base/installateurs-linux" "$base/outils-linux"
+    fi
+    [[ ! -L "$base/outils-linux" && ! -L "$base/outils-linux/environnement.sh" ]] ||
+        die 'Dossier des outils Linux non valide.'
+    cmp -s -- "$base/outils-linux/.setupsurvie-restauration" "$source_base/app/deploy/linux-offline-installers.txt" ||
+        die 'Les outils de cette installation ne correspondent pas au kit.'
+    export PYTHONDONTWRITEBYTECODE=1
+    source "$base/outils-linux/environnement.sh"
+    exec "$base/outils-linux/bin/python3" "$script_dir/linux_public_kit.py" "$base" --kit "$source_base" --point "$4"
 fi
 recovery="$parent/.$(basename -- "$base")-secours"
 [[ ! -L "$recovery" ]] || die 'Dossier de secours invalide.'

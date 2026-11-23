@@ -8,11 +8,16 @@ try {
         throw "Ouvrez ce lanceur depuis le dossier app d’un kit SetupSurvie complet."
     }
     Update-SurviePath
-    $python = Find-SurviePython
+    $python = Find-SurviePython -RequireTk
     if (-not $python) {
-        throw "Ce PC a besoin de Python pour dupliquer le kit. L’installateur local se trouve sur le SSD, dans installateurs-windows."
+        $answer = [Windows.Forms.MessageBox]::Show(
+            'Python avec Tcl/Tk est nécessaire pour afficher la copie. Installer Python pour votre compte depuis le SSD ?',
+            'Dupliquer le kit SetupSurvie', 'YesNo', 'Question')
+        if ($answer -ne 'Yes') { exit 0 }
+        $python = Install-SurvieKitPython $kit
     }
     $prefix = $python.Prefix
+    $env:PYTHONDONTWRITEBYTECODE = '1'
     & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'kit_duplicate_gui.py') $kit
     if ($LASTEXITCODE -ne 0) { throw "La fenêtre de copie ne s’est pas ouverte. Vérifiez que Python inclut Tcl/Tk." }
 } catch {

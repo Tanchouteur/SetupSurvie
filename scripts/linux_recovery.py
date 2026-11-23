@@ -556,7 +556,7 @@ def main():
     duplicator = actions.add_parser('duplicate')
     duplicator.add_argument('source', type=setup.safe_path)
     duplicator.add_argument('base', type=setup.safe_path)
-    for name in ('point', 'restore', 'cancel-point'):
+    for name in ('prepare-maintenance', 'point', 'restore', 'cancel-point'):
         actions.add_parser(name).add_argument('base', type=setup.safe_path)
     args = parser.parse_args()
     try:
@@ -564,6 +564,8 @@ def main():
             install(args.recovery, args.source, args.base, args.point == 'yes')
         elif args.action == 'duplicate':
             duplicate(args.source, args.base)
+        elif args.action == 'prepare-maintenance':
+            install_shortcut(args.recovery, args.base)
         elif args.action == 'point':
             create_existing_point(args.recovery, args.base)
         elif args.action == 'cancel-point':
