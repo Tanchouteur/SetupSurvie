@@ -237,6 +237,10 @@ def rank(item,query,position=0,*,normalizer=None):
     text_hits=sum(any(term<=text_tokens for term in group) for group in query.token_groups)/len(query.groups)
     score=65*title_hits+25*text_hits+8/(1+item.get('_rank',position))
     if title_hits<1 and text_hits<1:score-=35
+    if 'protection civile' in query.words and re.search(r'\b(engagement majeur|menace d origine etatique|conflit arme)\b',text):
+        score+=55
+    if 'abri' in query.words and {'bombardement','bombardements'} & set(query.words) and source_role(item)=='practical':
+        if 'en cas d alerte' in text and text_tokens & {'consigne','consignes'}:score+=55
     if query.action:
         evidence=INTENTS[query.action]
         if re.search(evidence,title):

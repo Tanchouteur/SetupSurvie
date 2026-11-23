@@ -192,10 +192,12 @@ modèle répondait souvent de mémoire. Restent exclus : salutations et
 remerciements, calculs (« calcule », « combien », « convertir »), demandes de
 position et demandes de vidéos, qui ont leur propre recherche.
 
-Mesure sur le labo Bazzite (gemma4:e4b, 205 archives, une question par thème
-de Marc, 68 questions) : réponses citant un document lu, 23 en 0.100.0 et 48
-avec ce changement ; réponses marquées « Références à vérifier », 15 puis 5.
-Ces essais ne valident pas la justesse des réponses.
+Sur le labo Bazzite (`gemma4:e4b`, 205 archives), le relevé de 68 questions
+passe de 24 à 53 réponses avec au moins une source ouverte, de 23 à 48 avec
+une citation et de 15 à 5 portant « Références à vérifier ». Plusieurs
+citations correspondent à des passages hors sujet. Le
+[bilan du labo](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#lecture-du-relevé-des-68-questions)
+donne les exemples relus et l’essai ciblé sur la protection civile.
 
 ## Procédures ordinaires — 0.19.1
 
