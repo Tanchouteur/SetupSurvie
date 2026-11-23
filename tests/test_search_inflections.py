@@ -110,4 +110,28 @@ class InflectionSearchTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(all('cuivre' in form and len(form.split())==4 for form in forms))
 
 
+class TechnicalVocabularyTests(unittest.TestCase):
+    def plan(self, query):
+        return retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
+
+    def test_grounding_keeps_the_electrical_expression_together(self):
+        plan = self.plan('mise à la terre d’une installation')
+        self.assertEqual(plan.words, ['mise a la terre'])
+        self.assertIn('grounding', plan.groups[0])
+        hits = retrieval.ordered([
+            {'id': 'guide:other', 'title': 'Installation de la nappe de l’écran', 'excerpt': 'Mettre à la terre.'},
+            {'id': 'guide:grounding', 'title': 'Standards for Grounding and Lightning Protection'},
+        ], plan, 5)
+        self.assertEqual([hit['id'] for hit in hits], ['guide:grounding'])
+
+    def test_seed_saving_matches_the_french_subject_without_unrelated_words(self):
+        for query in ('seed saving for vegetable garden', 'conserver les graines du potager'):
+            with self.subTest(query=query):
+                plan = self.plan(query)
+                self.assertEqual(plan.action, 'preserve')
+                self.assertEqual(len(plan.groups), 2)
+                self.assertTrue(any('potageres' in group for group in plan.groups))
+                self.assertTrue(any('semences' in group for group in plan.groups))
+
+
 if __name__=='__main__':unittest.main()
