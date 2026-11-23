@@ -604,11 +604,13 @@ l’appui réel demande de relire les citations et les passages.
   le choix d’un masque. Aucun des deux cas ne porte le bandeau d’avertissement.
   Sur les semences, deux sources ont été ouvertes et aucune citée.
 
-Le début de la campagne laisse « Protection civile en temps de guerre ? »
+Le relevé de la campagne laisse « Protection civile en temps de guerre ? »
 sans source ouverte. Sur le candidat 0.108.0, les requêtes « protection
 civile en temps de guerre » et « abri en cas de bombardement » font remonter
 en premier le guide *Tous responsables : se préparer aux crises* du SGDSN,
-aux pages PDF 9 et 10. La page 9 traite l’engagement majeur et les signaux
+aux pages PDF 9 et 10 de l’exemplaire du labo. [Publication du SGDSN](https://www.sgdsn.gouv.fr/publications/guide-tous-responsables)
+
+La page 9 traite l’engagement majeur et les signaux
 d’alerte. La page 10 décrit les consignes générales d’alerte. L’essai ciblé
 Gemma a ouvert puis cité la page 9 pour le conseil de laisser les réseaux
 libres aux secours. Les deux pages donnent des consignes générales et leur
@@ -642,9 +644,37 @@ Wiktionnaire, Autonomie a interrogé zéro archive et **Autre** a retrouvé
 le Wiktionnaire français et anglais. L’entrée française s’ouvre dans le
 lecteur. **Toute la bibliothèque** les retrouve aussi. L’essai Gemma
 « Comment faire du compost ? », dans l’espace par défaut, a ouvert cinq
-sources et en a cité quatre, sans Wiktionnaire. Le tri initial vient de
+sources et en a cité quatre, sans Wiktionnaire. Avec **Autre** choisi, la requête « Cherche compost
+dans Autre » a ouvert et cité le Wiktionnaire français. Le tri initial vient de
 l’export existant et le tri local continue de déterminer les collections
 recherchées.
+
+### Inventaire et lecture des vidéos sur le labo
+
+L’examen vidéo repris après rallumage était arrêté à 190 archives
+examinées. Le journal SQLite de TED Health empêchait la reprise en
+lecture seule. Avec la correction, l’inventaire a repris au dernier
+point enregistré et publié ses **36 942 entrées examinées**, dont
+**737 ressources vidéo** et **16 635 pistes exploitables** selon les
+contrôles techniques. Le test de l’arrêt brutal reproduit ce cas sur
+une petite archive. Aucun fichier média n’a été exporté et aucune transcription n’a été lancée.
+
+Le rapport du 23 novembre à 19 h 20 UTC indiquait **195 / 205 archives
+examinées**. Le portail annonçait une couverture partielle et servait
+l’index précédent de 16 634 vidéos. Les quatre recherches vidéo testées
+ont ouvert un résultat et livré une plage HTTP 206 de 1 024 octets.
+La pertinence varie, notamment pour « addition ». Chromium a décodé
+et lu le tutoriel de couture « Callie » (480 × 270, une piste). Gemma
+a proposé un lien vers ce tutoriel via sa recherche dédiée aux vidéos.
+La synchronisation et la fidélité des pistes restent à vérifier.
+
+L’examen continue en arrière-plan à faible priorité. Deux Wiktionnaires
+et Wikisource français comptent à eux seuls plusieurs millions d’entrées.
+Le suivi local reprend la recette du lecteur après publication de l’index.
+La relance des services documentaires du labo accepte désormais l’absence
+du marqueur de pause IA et garde le contrôle du mode jeu. Le service
+relancé sur place a confirmé les 205 archives sans transfert. Gemma reste
+disponible sur le labo.
 
 ### Quatre lacunes après lecture du fonds
 
@@ -657,7 +687,7 @@ sans fournir une réponse directement utilisable.
 | --- | --- | --- | --- |
 | Stockage domestique des carburants | INRS ED 753, 39 passages indexés. | « Conserver de l’essence longtemps » est vide. « Stockage du gazole en jerrican » remonte la page PDF 24. La brochure traite les risques chimiques en milieu de travail et ne répond pas à la durée de conservation de l’essence à domicile. | L’[arrêté du 1er juillet 2004, art. 2](https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000437731/2026-06-18) couvre notamment le gazole et le fioul. Son périmètre ne comprend pas l’essence. |
 | Rongeurs et réserves | Articles zoologiques retrouvés dans le Wikipédia français. Aucun guide dédié repéré parmi les PDF. | « Protéger les réserves des rongeurs » est vide en Autonomie, et la variante élargie remonte un thésaurus, un article d’oiseau et un texte ancien. Les résultats zoologiques ne répondent pas à la protection du stock. | Le [rapport CNEV de mars 2015, § 2.3.2](https://www.anses.fr/fr/system/files/CNEV-Ft-Mars2015-Typhus_murin.pdf) traite les réserves et les accès des rongeurs dans le cadre du typhus murin. La réutilisation commerciale du PDF reste à établir. |
-| Pêche en rivière | Guide DGS sur l’autoconsommation, 22 passages indexés, et page « Pêche sportive » dans Wikiversité. | « Pêcher en rivière » est vide. « Pêche eau douce » retrouve la page 15 de la DGS et l’article Wikiversité. Le guide porte sur la sécurité de la consommation. L’article est une introduction et ne donne pas les règles locales à jour. | [Service Public, fiche F2117](https://www.service-public.gouv.fr/particuliers/vosdroits/F2117), vérifiée le 25 septembre 2026, donne les règles générales et renvoie aux variations locales. Vérifier les conditions pour le fichier retenu. |
+| Pêche en rivière | Guide DGS sur l’autoconsommation, 22 passages indexés, et page « Pêche sportive » dans Wikiversité. | « Pêcher en rivière » est vide. « Pêche eau douce » retrouve la page 15 de la DGS et l’article Wikiversité. Le guide porte sur la sécurité de la consommation. L’article traite surtout de l’encadrement professionnel. Il manque une initiation et les règles locales à jour. | [Service Public, fiche F2117](https://www.service-public.gouv.fr/particuliers/vosdroits/F2117), vérifiée le 25 septembre 2026, donne les règles générales et renvoie aux variations locales. Le [flux DILA de fiches](https://www.data.gouv.fr/datasets/fiches-pratiques-et-ressources-de-service-public-gouv-fr-particuliers) est publié sous Licence Ouverte 2.0. |
 | Élevage de chèvres | « Élevage caprin », retrouvé dans le Wikipédia français et ouvert. Les PDF sur les pondeuses, lapins et autres volailles portent sur d’autres élevages. | « Élever des chèvres » est vide. « Élevage caprin » retrouve l’article encyclopédique derrière une occurrence MSF hors sujet. L’article décrit la filière et les modes d’élevage, avec peu d’aide pratique pour débuter. | Le [Pense-bête caprin de l’Institut de l’élevage](https://idele.fr/inosys-reseaux-elevage/publications/detail-article?cHash=75041c6a4722dcad5fd7f811ca166c53&tx_atolidelecontenus_publicationdetail%5Baction%5D=showArticle&tx_atolidelecontenus_publicationdetail%5Bcontroller%5D=Detail&tx_atolidelecontenus_publicationdetail%5Bprojet%5D=28&tx_atolidelecontenus_publicationdetail%5Bpublication%5D=25667) a été publié le 10 juillet 2026. Ses [conditions de reproduction](https://idele.fr/mentions-legales) exigent l’accord du titulaire pour la diffusion numérique du document. |
 
 Les pistes en ligne n’ont pas été versées au fonds. Le caractère complet
@@ -678,7 +708,7 @@ téléchargés chez Marc. Leur état d’indexation et le tri chez Marc restent
 | INRS ED 753 et FAO, lapin | Copyright INRS 2016 sur l’exemplaire. Introduction de l’édition révisée FAO 1996, ISBN 92-5-203441-2. | Autorisation requise selon les mentions de l’[INRS](https://www.inrs.fr/footer/mentions-legales) et de la [FAO](https://www.fao.org/4/t1690f/t1690f.pdf). |
 | DGS et ANSES | DGS, juillet 2023, copyright 2022. Infographie champignons, fichier diffusé en 2018. Avis punaises de lit, juillet 2023. | Les [mentions de l’ANSES](https://www.anses.fr/fr/mentions-legales-site-ansesfr) distinguent données publiques et contenus sous CC BY-NC-ND. Vérifier le régime de chaque document et des illustrations avant diffusion. |
 | FFESSM, pêche sous-marine niveaux 2 et 3 | Les deux datent de janvier 2016 et se réfèrent à la formation de 2013. | La [FFESSM](https://ffessm.fr/conditions-generales-d-utilisation) réserve l’exploitation de ses contenus. Autorisation et mise à jour des références réglementaires à vérifier. |
-| Mer et DIRM | Loisirs sous-marins, mars 2025. Écogestes, édition 2024. Fiche Méditerranée, campagne 2026 intégrant l’arrêté du 1er avril 2026. | Autorisation des trois fichiers, illustrations comprises, à établir. |
+| Mer et DIRM | Loisirs sous-marins, mars 2025. Écogestes, édition 2024. Fiche Méditerranée, campagne 2026 intégrant l’arrêté du 1er avril 2026. | Les [mentions du ministère de la Mer](https://www.mer.gouv.fr/mentions-legales) limitent la reproduction et prévoient l’accord de l’auteur pour les illustrations. Autorisation des trois fichiers complets à établir. |
 | Polynésie française, ITAVI et DJEPVA | Pondeuses, fichier 2024. Coups de chaleur, fichier 2020. Obligations comptables, fichier créé en 2016 et modifié en 2017. | Autorisation de redistribution du PDF complet à établir. |
 
 Les 18 entrées restent signalées pour examen avant commercialisation.
