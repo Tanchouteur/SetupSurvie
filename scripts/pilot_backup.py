@@ -125,7 +125,7 @@ def read_backup(source, progress=None):
         raise setup.SetupError('Sauvegarde incomplète ou dossier non reconnu : backup.json absent. '
                                'Choisissez le dossier daté de la sauvegarde ou recréez-la.')
     report = json.loads(manifest.read_text(encoding='utf-8'))
-    entries = checked_entries(source, report, progress)
+    entries = checked_entries(source, report, progress, backup=True)
     allowed_private = {'private/'+name for name in PRIVATE_FILES}
     for entry, _ in entries:
         relative = entry['path']

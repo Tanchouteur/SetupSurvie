@@ -32,7 +32,7 @@ KIT_APP_FILES = (
 )
 
 
-def checked_entries(root,manifest,progress=None):
+def checked_entries(root,manifest,progress=None,*,backup=False):
     from delivery_paths import destination
     if not isinstance(manifest,dict) or not isinstance(manifest.get('files'),list):
         raise setup.SetupError('Manifeste de fichiers non valide.')
@@ -47,9 +47,11 @@ def checked_entries(root,manifest,progress=None):
             raise setup.SetupError('Taille ou empreinte de manifeste non valide.')
         path=destination(root,relative)
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or not path.is_file():
-            raise setup.SetupError('Fichier de kit absent ou chemin non valide : '+entry['path'])
+            label = 'Fichier de sauvegarde' if backup else 'Fichier de kit'
+            raise setup.SetupError(f'{label} absent ou chemin non valide : {relative}')
         if path.stat().st_size!=entry['bytes'] or setup.file_hash(path)!=entry['sha256']:
-            raise setup.SetupError('Kit incomplet ou modifié : '+entry['path'])
+            label = 'Fichier de sauvegarde incomplet ou modifié' if backup else 'Kit incomplet ou modifié'
+            raise setup.SetupError(f'{label} : {relative}')
         result.append((entry,path))
         if progress:progress(number,len(manifest['files']),entry['bytes'])
     return result

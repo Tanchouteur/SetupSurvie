@@ -233,7 +233,10 @@ class DeliveryTests(unittest.TestCase):
         self.assertIn('seulement sur le même système', verify_backup(snapshot, kit, report=lambda _line: None))
         guide = snapshot/'data/library/guides/guide.fr.md'
         guide.write_bytes(b'x'*guide.stat().st_size)
-        with self.assertRaisesRegex(setup.SetupError, 'modifié'):
+        with self.assertRaisesRegex(setup.SetupError, 'Fichier de sauvegarde incomplet ou modifié'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        guide.unlink()
+        with self.assertRaisesRegex(setup.SetupError, 'Fichier de sauvegarde absent'):
             verify_backup(snapshot, kit, report=lambda _line: None)
         if os.name != 'nt' and os.geteuid() != 0:
             snapshot.chmod(0o000)
