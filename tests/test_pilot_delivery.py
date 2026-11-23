@@ -235,6 +235,13 @@ class DeliveryTests(unittest.TestCase):
         guide.write_bytes(b'x'*guide.stat().st_size)
         with self.assertRaisesRegex(setup.SetupError, 'modifié'):
             verify_backup(snapshot, kit, report=lambda _line: None)
+        if os.name != 'nt' and os.geteuid() != 0:
+            snapshot.chmod(0o000)
+            try:
+                with self.assertRaisesRegex(setup.SetupError, 'Sauvegarde protégée'):
+                    verify_backup(snapshot, kit, report=lambda _line: None)
+            finally:
+                snapshot.chmod(0o700)
         report_path.unlink()
         with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
             verify_backup(snapshot, kit, report=lambda _line: None)

@@ -166,11 +166,21 @@ def check_kit_identity(report, public_entries):
     return version_data, expected['version']
 
 
+def protected_backup(source):
+    """True when a backup folder or manifest is reserved to the administrator."""
+    source = Path(source)
+    manifest = source/'backup.json'
+    return (source.is_dir() and not os.access(source, os.R_OK | os.X_OK)) or (
+        os.path.lexists(manifest) and not os.access(manifest, os.R_OK))
+
+
 def verify_backup(source, kit, *, report=print):
     """Read-only check that a backup can be restored with this kit, before going offline."""
     from pilot_kit import checked_entries
     source = setup.safe_path(source)
     kit = setup.safe_path(kit)
+    if protected_backup(source):
+        raise setup.SetupError('Sauvegarde protégée : sa lecture demande l’autorisation administrateur.')
     separate_roots(source, kit)
     manifest = checked_destination(source, 'backup.json')
     before = setup.file_hash(manifest) if manifest.is_file() else None

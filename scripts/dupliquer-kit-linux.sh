@@ -95,7 +95,13 @@ trap 'rm -rf -- "$scratch"' EXIT
     code=$?
     if [ "$code" -eq 0 ] && [ -n "$backup" ]; then
         printf '\n'
-        "$python" "$base/app/scripts/pilot_backup.py" verify "$backup" --kit "$base"
+        if { [ ! -r "$backup" ] || [ ! -x "$backup" ] || { [ -e "$backup/backup.json" ] && [ ! -r "$backup/backup.json" ]; }; } &&
+                command -v pkexec >/dev/null 2>&1; then
+            printf '%s\n' 'Sauvegarde protégée : autorisation administrateur demandée…'
+            pkexec --disable-internal-agent /bin/bash "$base/app/scripts/linux_recovery_admin.sh" verify-backup "$base" "$backup"
+        else
+            "$python" "$base/app/scripts/pilot_backup.py" verify "$backup" --kit "$base"
+        fi
         code=$?
     fi
     printf '%s

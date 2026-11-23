@@ -1,5 +1,8 @@
 """Graphical entry point for copying an exported public kit."""
+import os
 import queue
+import shutil
+import subprocess
 from pathlib import Path
 import sys
 import threading
@@ -7,8 +10,22 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from kit_duplicate import duplicate, verify_support
-from pilot_backup import verify_backup
+from pilot_backup import protected_backup, verify_backup
 import setup
+
+
+def check_backup(kit, backup, report):
+    """Check a backup; on Linux, ask for administrator rights if it is root-only."""
+    if not protected_backup(backup) or sys.platform != 'linux' or not shutil.which('pkexec'):
+        return verify_backup(backup, kit, report=report)
+    report('Sauvegarde protégée : autorisation administrateur demandée…')
+    admin = Path(kit) / 'app/scripts/linux_recovery_admin.sh'
+    result = subprocess.run(['pkexec', '--disable-internal-agent', '/bin/bash', str(admin), 'verify-backup',
+                             str(kit), str(backup)], capture_output=True, text=True)
+    if result.returncode != 0:
+        lines = (result.stderr or result.stdout).strip().splitlines()
+        raise setup.SetupError(lines[-1].removeprefix('ERREUR : ') if lines else 'Autorisation refusée : sauvegarde non vérifiée.')
+    return '\n'.join(line for line in result.stdout.splitlines() if not line.startswith('Sauvegarde : '))
 
 
 def main():
@@ -58,7 +75,7 @@ def main():
             if checking:
                 result = verify_support(source, report=report)
                 if backup:
-                    result += '\n\n' + verify_backup(backup, source, report=report)
+                    result += '\n\n' + check_backup(source, backup, report)
             else:
                 duplicate(source, target, report=report)
                 result = 'Le second kit est vérifié. Vous pouvez éjecter le support.'

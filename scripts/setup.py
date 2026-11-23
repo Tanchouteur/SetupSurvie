@@ -67,6 +67,59 @@ def canonical_image_id(value):
     return 'sha256:'+value
 
 
+def loaded_image_references(output):
+    """Images named by `docker image load`, by ID or by tag."""
+    found = []
+    for line in str(output).splitlines():
+        for prefix in ('Loaded image ID: ', 'Loaded image: '):
+            if line.startswith(prefix):
+                found.append(line[len(prefix):].strip())
+    return found
+
+
+def archive_image_layers(archive, image_id):
+    """Layer diff IDs of an image config inside a verified docker-archive file."""
+    import tarfile
+    digest = canonical_image_id(image_id).removeprefix('sha256:')
+    with tarfile.open(archive) as tar:
+        for name in (digest + '.json', 'blobs/sha256/' + digest):
+            try:
+                member = tar.getmember(name)
+            except KeyError:
+                continue
+            body = tar.extractfile(member).read()
+            if hashlib.sha256(body).hexdigest() != digest:
+                raise SetupError('Configuration d’image incohérente dans le kit.')
+            config = json.loads(body)
+            return (config.get('architecture'), config.get('os'), tuple(config['rootfs']['diff_ids']))
+    raise SetupError('Image absente de l’archive du kit.')
+
+
+def loaded_image_id(archive, image_id, loaded):
+    """Local ID of an image after `docker image load`.
+
+    The classic Docker store keeps the config digest recorded by the kit. The
+    containerd store of recent Docker Engine and Docker Desktop names the image
+    by its manifest digest instead: match it by architecture, system and layer
+    diff IDs read from the verified archive."""
+    expected = canonical_image_id(image_id)
+    try:
+        actual = json.loads(run(['docker', 'image', 'inspect', image_id], capture=True))[0]
+    except SetupError:
+        actual = None
+    if actual is not None and canonical_image_id(actual['Id']) == expected:
+        return expected
+    layers = archive_image_layers(archive, expected)
+    matches = set()
+    for reference in loaded:
+        info = json.loads(run(['docker', 'image', 'inspect', reference], capture=True))[0]
+        if (info.get('Architecture'), info.get('Os'), tuple(info.get('RootFS', {}).get('Layers') or ())) == layers:
+            matches.add(canonical_image_id(info['Id']))
+    if len(matches) != 1:
+        raise SetupError('ID d’image invalide après chargement.')
+    return matches.pop()
+
+
 def run(args, *, capture=False, env=None, timeout=None):
     try:
         result = subprocess.run([str(a) for a in args], cwd=ROOT, env=env,
@@ -633,14 +686,10 @@ class Installation:
             reference=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8'))['image']
             if entries['routing']['reference']!=reference:raise SetupError('Le kit contient un moteur de routage différent.')
             expected.add('routing')
-        run(['docker', 'image', 'load', '-i', source])
+        loaded = loaded_image_references(run(['docker', 'image', 'load', '-i', source], capture=True))
         for name in expected:
             entry = entries[name]
-            actual = json.loads(run(['docker', 'image', 'inspect', entry['id']], capture=True))[0]
-            actual_id=canonical_image_id(actual['Id'])
-            if actual_id != canonical_image_id(entry['id']):
-                raise SetupError('ID d’image invalide après chargement.')
-            entries[name]={**entry,'id':actual_id}
+            entries[name] = {**entry, 'id': loaded_image_id(source, entry['id'], loaded)}
         # `docker save/load` need not retain RepoDigests. Local immutable IDs avoid a network lookup.
         c['local_images'] = {name: entries[name] for name in expected if name!='routing'}
         if 'routing' in expected:c['routing_image']=entries['routing']

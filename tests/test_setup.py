@@ -147,6 +147,32 @@ class InstallationTests(unittest.TestCase):
         self.assertTrue(all(entry['id'].startswith('sha256:') for entry in self.config['local_images'].values()))
         self.assertFalse(any('pull' in args for args in calls))
 
+    def test_import_matches_containerd_manifest_ids_by_verified_layers(self):
+        import hashlib, io, tarfile
+        archive=self.base/'images.tar'
+        configs={}
+        with tarfile.open(archive,'w') as tar:
+            for index,name in enumerate(setup.VERSIONS['images']):
+                body=json.dumps({'architecture':'amd64','os':'linux','rootfs':{'type':'layers','diff_ids':['sha256:'+format(index+1,'064x')]}}).encode()
+                digest=hashlib.sha256(body).hexdigest();configs[name]=digest
+                info=tarfile.TarInfo(digest+'.json');info.size=len(body);tar.addfile(info,io.BytesIO(body))
+        images=[{'service':name,'reference':reference,'id':configs[name]} for name,reference in setup.VERSIONS['images'].items()]
+        setup.write_json(Path(str(archive)+'.json'),{'images':images,'sha256':setup.file_hash(archive)})
+        manifests={'sha256:'+format(100+index,'064x'):index for index in range(len(images))}
+        def command(args,**kwargs):
+            if args[:3]==['docker','image','load']:return '\n'.join('Loaded image ID: '+key for key in manifests)
+            self.assertEqual(args[:3],['docker','image','inspect'])
+            if args[3] not in manifests:raise setup.SetupError('No such image')
+            index=manifests[args[3]]
+            return json.dumps([{'Id':args[3],'Architecture':'amd64','Os':'linux','RootFS':{'Layers':['sha256:'+format(index+1,'064x')]}}])
+        with patch.object(setup,'run',side_effect=command):self.app.import_images(self.config,archive)
+        for index,name in enumerate(setup.VERSIONS['images']):
+            if name in self.config['local_images']:
+                self.assertEqual(self.config['local_images'][name]['id'],'sha256:'+format(100+index,'064x'))
+        manifests={key:0 for key in manifests}
+        with patch.object(setup,'run',side_effect=command),self.assertRaisesRegex(setup.SetupError,'ID d’image invalide'):
+            self.app.import_images(self.config,archive)
+
     def test_sensitive_settings_cannot_be_in_public_library(self):
         app=setup.Installation(self.base / 'exposed/library/private')
         with self.assertRaises(setup.SetupError):
