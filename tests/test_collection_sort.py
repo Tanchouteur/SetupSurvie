@@ -161,6 +161,25 @@ class CategorySearchTests(unittest.TestCase):
         self.assertEqual(report['failures'],[{'archive':self.zim.name,'error':'AttributeError'}])
         self.assertEqual(report['completed'],1)
 
+    def test_host_classification_reads_published_corrections_without_opening_pilot_db(self):
+        # Windows reads of the WAL pilot.db broke the Docker pilot's SQLite calls (23 Nov 2026).
+        from pilot import catalogue
+        before,_=category_index.signature(self.zim,self.state)
+        identifier=f'zim:{self.zim.stem}/Conservation'
+        revision=catalogue.revision(identifier,self.guide,self.root)
+        catalogue.save(identifier,{'domains':['resilience'],'document_type':'procedure','status':'reviewed'},
+                       revision,self.guide,self.root)
+        published=json.loads((self.state/category_index.CORRECTIONS).read_text())
+        self.assertEqual(published['records'],{identifier:{'revision':revision,'domains':['resilience']}})
+        with patch('sqlite3.connect',side_effect=AssertionError('pilot.db opened')):
+            after,saved=category_index.signature(self.zim,self.state)
+            self.assertEqual(len(category_index.ready_indexes(self.root,self.state)),0)
+        self.assertNotEqual(before,after)
+        self.assertEqual(saved,{'Conservation':['resilience']})
+        catalogue.reset(identifier)
+        self.assertEqual(json.loads((self.state/category_index.CORRECTIONS).read_text())['records'],{})
+        self.assertEqual(category_index.signature(self.zim,self.state)[0],before)
+
     def test_correction_invalidates_then_rebuilds_the_category_index(self):
         from pilot import catalogue
         category_index.prepare(self.root,self.state,reserve=0)

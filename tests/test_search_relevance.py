@@ -78,6 +78,26 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     async def test_unknown_subject_does_not_fabricate_results(self):
         self.assertEqual(await library.search('propulsion quantique inexistante'),[])
 
+    async def test_civil_protection_finds_official_guidance_vocabulary(self):
+        with store.connect() as db:
+            db.execute('INSERT INTO passages VALUES(?,?,?,?,?)', (
+                'guide:consignes.pdf#page=9', 'Se préparer aux crises — page 9',
+                '/guides/consignes.pdf#page=9', 'fr',
+                'Menace en lien avec un engagement majeur. En cas d’alerte, respectez les consignes et rejoignez un abri.',
+            ))
+            db.execute('INSERT INTO guide_meta VALUES(?,?,?,?,?)', (
+                'consignes.pdf', 'Se préparer aux crises', 'fr', 'Ministère de l’Intérieur Sécurité civile SGDSN', '',
+            ))
+            db.execute('INSERT INTO passages VALUES(?,?,?,?,?)', (
+                'guide:risques.pdf#page=1', 'Protection civile et consignes — page 1',
+                '/guides/risques.pdf#page=1', 'fr',
+                'Protection civile : la menace de crue est surveillée. Des consignes existent pour se mettre à l’abri.',
+            ))
+        for query in ('protection civile en temps de guerre', 'abri en cas de bombardement'):
+            with self.subTest(query=query):
+                found=await library.search(query,domain='resilience')
+                self.assertEqual(found[0]['id'], 'guide:consignes.pdf#page=9')
+
     async def test_punctuation_and_search_syntax_remain_data(self):
         for query in ['" OR NOT * - ( )','feu" OR title:secret','😊']:
             with self.subTest(query=query):await library.search(query)
@@ -195,7 +215,7 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     def test_practical_guide_pages_stay_in_autonomie_whatever_the_page_words(self):
         page = {'id': 'guide:msf.fr.pdf#page=251', 'title': 'Médicaments essentiels — page 251',
                 'provenance': 'MSF — https://example.invalid — édition 2026', '_text': 'Paracétamol. Histoire et sciences.'}
-        self.assertIn('resilience', retrieval.application_domains(page, ['culture']))
+        self.assertEqual(retrieval.application_domains(page, ['culture']), ['resilience'])
         unknown = {**page, 'provenance': 'Éditeur inconnu — https://example.invalid'}
         self.assertEqual(retrieval.application_domains(unknown, ['culture']), ['culture'])
         self.assertNotIn('chez', library.search_terms("soigner une diarrhée chez l'enfant"))
