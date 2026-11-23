@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 23 novembre 2026
 
+- [Libérer de la place pour une restauration Linux](2026-11-23-place-restauration-linux.md) — 0.113.0, sélection et reprise après interruption.
+
 - [Vérification de la sauvegarde avant le départ](2026-11-23-verifier-sauvegarde-hors-ligne.md) — 0.112.0, manifeste, périmètre et compatibilité avec le kit.
 
 ## 22 novembre 2026

@@ -60,6 +60,87 @@ class LinuxRecoveryTests(unittest.TestCase):
         }
         transfer.save(self.source, self.journal)
 
+    def test_free_space_deletes_only_chosen_previous_installations(self):
+        old, recent = 'a'*32, 'b'*32
+        for identifier in (old, recent):
+            folder = self.state/('ancienne-installation-'+identifier)/'data'
+            folder.mkdir(parents=True)
+            (folder/'note.txt').write_bytes(b'x'*5000)
+        point = self.state/'point'
+        point.mkdir()
+        (point/'garde.txt').write_text('point')
+        (self.state/('ancienne-installation-'+'c'*31)).mkdir()
+        listed = []
+        with patch('builtins.print', side_effect=lambda line, **_: listed.append(line)):
+            recovery.list_archives(self.state)
+        self.assertEqual([line.split('|')[0] for line in listed], [old, recent])
+        with self.assertRaisesRegex(setup.SetupError, 'introuvable'):
+            recovery.delete_archives(self.state, ['d'*32])
+        setup.write_json(self.state/'remplacement.json', {'id': recent})
+        with self.assertRaisesRegex(setup.SetupError, 'restauration en cours'):
+            recovery.delete_archives(self.state, [recent])
+        old_path = self.state/('ancienne-installation-'+old)
+        with patch('transfer_retire.mounted_paths', return_value=[old_path/'data']):
+            with self.assertRaisesRegex(setup.SetupError, 'volume est monté'):
+                recovery.delete_archives(self.state, [old])
+        self.assertTrue(old_path.is_dir())
+        with patch.object(recovery.shutil, 'rmtree', side_effect=OSError('interruption')):
+            with self.assertRaisesRegex(OSError, 'interruption'):
+                recovery.delete_archives(self.state, [old])
+        self.assertFalse(old_path.exists())
+        self.assertTrue((self.state/('.suppression-'+old)/'data/note.txt').is_file())
+        with patch('builtins.print') as shown:
+            recovery.list_archives(self.state)
+        self.assertIn('suppression à reprendre', shown.call_args.args[0])
+        recovery.delete_archives(self.state, [old])
+        self.assertTrue((self.state/('ancienne-installation-'+recent)/'data/note.txt').is_file())
+        self.assertEqual((point/'garde.txt').read_text(), 'point')
+        self.assertFalse(list(self.state.glob('.suppression-*')))
+
+    def test_graphical_archive_deletion_requires_confirmation(self):
+        interface = self.directory / 'outils'
+        interface.mkdir()
+        identifier = 'a' * 32
+        commands = self.directory / 'actions'
+        for name, script in {
+            'zenity': """#!/bin/sh
+case "$*" in
+    *--radiolist*) printf 'free-space\n' ;;
+    *--checklist*) printf '%s\n' "$ARCHIVE" ;;
+    *--question*) test "$CONFIRM" = oui ;;
+    *--progress*) cat >/dev/null ;;
+esac
+""",
+            'pkexec': """#!/bin/sh
+printf '%s\n' "${4}" >> "$COMMANDS"
+case "${4}" in
+    list-archives) printf '%s|23/11/2026 12:00|20,0 Go\n' "$ARCHIVE" ;;
+    delete-archives) printf '%s\n' "${6}" >> "$COMMANDS"; printf 'Place libérée : 20,0 Go.\n' ;;
+esac
+""",
+        }.items():
+            executable = interface / name
+            executable.write_text(script)
+            executable.chmod(0o755)
+        env = {**os.environ, 'ARCHIVE': identifier, 'COMMANDS': str(commands),
+               'PATH': f'{interface}:{os.environ["PATH"]}'}
+        launcher = ['bash', ROOT/'scripts/linux_recovery_gui.sh', 'maintenance', self.active]
+        subprocess.run(launcher, check=True, timeout=10, env={**env, 'CONFIRM': 'non'})
+        self.assertEqual(commands.read_text().splitlines(), ['list-archives'])
+        subprocess.run(launcher, check=True, timeout=10, env={**env, 'CONFIRM': 'oui'})
+        self.assertEqual(commands.read_text().splitlines(),
+                         ['list-archives', 'list-archives', 'delete-archives', identifier])
+
+    def test_insufficient_space_message_gives_amounts_and_the_way_out(self):
+        (self.state/('ancienne-installation-'+'a'*32)).mkdir()
+        (self.state/'images.tar').write_bytes(b'0'*10)
+        (self.state/'images.tar.json').write_bytes(b'{}')
+        journal = {'inventory': {'files': [{'path': 'data/guide.txt', 'bytes': 40}]}}
+        usage = SimpleNamespace(total=100, used=100, free=0)
+        with patch.object(recovery.shutil, 'disk_usage', return_value=usage), \
+             self.assertRaisesRegex(setup.SetupError, 'nécessaires, 0,0 Go libres.*Libérer de la place'):
+            recovery.require_space(self.state, [self.state/'nouvelle-copie'], journal)
+
     def test_default_creates_point_and_activates_only_working_copy(self):
         with patch.object(recovery, 'check_sealing'), patch.object(recovery, 'seal'), \
                 patch.object(recovery, 'protected_tree'), patch.object(recovery, 'activate') as activate, \

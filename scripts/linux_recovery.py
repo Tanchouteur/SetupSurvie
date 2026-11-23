@@ -115,11 +115,91 @@ def remaining_bytes(source, target, journal):
     return sum(max(0, size - partial_size(target, name)) for name, size in amounts)
 
 
+def gigabytes(size):
+    return f'{size / 1e9:.1f}'.replace('.', ',') + ' Go'
+
+
 def require_space(source, targets, journal):
     needed = sum(remaining_bytes(source, target, journal) for target in targets)
     docker = destination(source, 'images.tar').stat().st_size * 2
-    if shutil.disk_usage(targets[0].parent).free < needed + docker + COPY_MARGIN:
-        raise setup.SetupError('Place insuffisante pour les copies et la réinstallation des images Docker.')
+    free = shutil.disk_usage(targets[0].parent).free
+    if free < needed + docker + COPY_MARGIN:
+        message = (f'Place insuffisante sur le disque : {gigabytes(needed + docker + COPY_MARGIN)} nécessaires, '
+                   f'{gigabytes(free)} libres.')
+        if archived_installations(targets[0].parent):
+            message += ' Ouvrez Entretien de SetupSurvie, puis « Libérer de la place » pour supprimer une ancienne installation mise à l’abri.'
+        raise setup.SetupError(message)
+
+
+ARCHIVE = re.compile(r'(ancienne-installation-|\.suppression-)([0-9a-f]{32})')
+
+
+def archived_installations(recovery):
+    """Return completed replacements and interrupted deletions, oldest first."""
+    state = destination(recovery, 'remplacement.json')
+    pending = None
+    if state.exists():
+        journal = transfer.read(state)
+        pending = journal.get('id') if isinstance(journal, dict) else None
+        if not isinstance(pending, str) or not re.fullmatch('[0-9a-f]{32}', pending):
+            raise setup.SetupError('Journal de remplacement invalide.')
+    found = {}
+    for path in recovery.iterdir():
+        match = ARCHIVE.fullmatch(path.name)
+        if not match or match[2] == pending or path.is_symlink() or not path.is_dir():
+            continue
+        identifier = match[2]
+        if identifier in found:
+            raise setup.SetupError('Deux dossiers correspondent à la même ancienne installation. Les dossiers sont conservés.')
+        found[identifier] = path
+    return dict(sorted(found.items(), key=lambda item: item[1].lstat().st_ctime))
+
+
+def tree_size(root):
+    total = 0
+    for folder, _, names in os.walk(root):
+        for name in names:
+            try:
+                total += (Path(folder) / name).lstat().st_blocks * 512
+            except FileNotFoundError:
+                continue
+    return total
+
+
+def list_archives(recovery):
+    from datetime import datetime
+    for identifier, path in archived_installations(recovery).items():
+        date = datetime.fromtimestamp(path.lstat().st_ctime).strftime('%d/%m/%Y %H:%M')
+        if path.name.startswith('.suppression-'):
+            date += ' (suppression à reprendre)'
+        print(f'{identifier}|{date}|{gigabytes(tree_size(path))}', flush=True)
+
+
+def delete_archives(recovery, identifiers):
+    """Delete only the selected archives while holding the admin launcher lock."""
+    from transfer_retire import mounted_paths
+
+    known = archived_installations(recovery)
+    selected = dict.fromkeys(identifiers)
+    if not selected or selected.keys() - known.keys():
+        raise setup.SetupError('Ancienne installation introuvable ou utilisée par la restauration en cours. Rouvrez « Libérer de la place ».')
+    mounts = list(mounted_paths())
+    if any(mount.is_relative_to(known[identifier]) for mount in mounts for identifier in selected):
+        raise setup.SetupError('Un volume est monté dans une ancienne installation. Démontez-le avant la suppression.')
+    before = shutil.disk_usage(recovery).free
+    for identifier in selected:
+        path = known[identifier]
+        phase('Suppression de l’ancienne installation ' + identifier[:8] + '…')
+        # Persist the pending deletion before removing any contents.
+        trash = destination(recovery, '.suppression-' + identifier)
+        if path != trash:
+            if trash.exists():
+                raise setup.SetupError('Une suppression existe déjà pour cette ancienne installation.')
+            os.rename(path, trash)
+            durable.sync_directory(recovery)
+        shutil.rmtree(trash)
+        durable.sync_directory(recovery)
+    phase(f'Place libérée : {gigabytes(max(0, shutil.disk_usage(recovery).free - before))}.')
 
 
 def copy_payload(source, target, journal):
@@ -571,8 +651,11 @@ def main():
     backup = actions.add_parser('backup-personal')
     backup.add_argument('base', type=setup.safe_path)
     backup.add_argument('target', type=setup.safe_path)
-    for name in ('prepare-maintenance', 'point', 'restore', 'cancel-point'):
+    for name in ('prepare-maintenance', 'point', 'restore', 'cancel-point', 'list-archives'):
         actions.add_parser(name).add_argument('base', type=setup.safe_path)
+    remover = actions.add_parser('delete-archives')
+    remover.add_argument('base', type=setup.safe_path)
+    remover.add_argument('identifiers', nargs='+')
     args = parser.parse_args()
     try:
         if args.action == 'install':
@@ -587,6 +670,11 @@ def main():
             create_existing_point(args.recovery, args.base)
         elif args.action == 'cancel-point':
             cancel_point(args.recovery, args.base)
+        elif args.action == 'list-archives':
+            list_archives(args.recovery)
+            return 0
+        elif args.action == 'delete-archives':
+            delete_archives(args.recovery, args.identifiers)
         else:
             restore(args.recovery, args.base)
     except (OSError, ValueError, KeyError, TypeError, setup.SetupError, subprocess.SubprocessError) as error:

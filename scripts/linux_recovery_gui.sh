@@ -103,7 +103,7 @@ case "$mode" in
             base=$(zenity --file-selection --directory --title="Choisir le dossier SetupSurvie déjà installé" --filename="/srv/") || exit 0
             base=${base%/}
         fi
-        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore FALSE "Revenir à mon installation" cancel-point FALSE "Sauvegarder mes données" backup-personal) || exit 0
+        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore FALSE "Revenir à mon installation" cancel-point FALSE "Sauvegarder mes données" backup-personal FALSE "Libérer de la place" free-space) || exit 0
         case "$action" in
             point) ;;
             backup-personal)
@@ -118,6 +118,29 @@ case "$mode" in
                 zenity --question --title="Revenir à mon installation" \
                     --text="Si un point est en cours de création, sa copie partielle sera mise de côté. SetupSurvie redémarrera avec vos données actuelles. Continuer ?" \
                     --ok-label="Redémarrer SetupSurvie" --cancel-label="Annuler" || exit 0
+                ;;
+            free-space)
+                listing=$(pkexec --disable-internal-agent /bin/bash "$admin" list-archives "$base" 2>&1) || {
+                    zenity --error --title="Libérer de la place" --text="$listing"
+                    exit 1
+                }
+                rows=()
+                while IFS='|' read -r identifier date size; do
+                    [[ "$identifier" =~ ^[0-9a-f]{32}$ ]] && rows+=(FALSE "$date" "$size" "$identifier")
+                done <<<"$listing"
+                if (( ${#rows[@]} == 0 )); then
+                    zenity --info --title="Libérer de la place" --text="Aucune ancienne installation n'est gardée sur ce disque."
+                    exit 0
+                fi
+                chosen=$(zenity --list --checklist --title="Libérer de la place" \
+                    --text="Anciennes installations mises à l'abri lors des restaurations. Cochez celles à supprimer." \
+                    --column="Supprimer" --column="Mise à l'abri le" --column="Taille" --column="Identifiant" \
+                    --print-column=4 --separator=' ' --hide-column=4 "${rows[@]}") || exit 0
+                [[ -n "$chosen" ]] || exit 0
+                zenity --question --title="Supprimer définitivement ?" \
+                    --text="Les installations cochées et les données qu'elles contiennent seront supprimées définitivement. Le point de restauration et l'installation actuelle ne sont pas touchés. Continuer ?" \
+                    --ok-label="Supprimer" --cancel-label="Annuler" || exit 0
+                read -r -a identifiers <<<"$chosen"
                 ;;
             restore)
                 zenity --question --title="Confirmer la restauration" --text="SetupSurvie sera arrêté et remplacé par une nouvelle copie du point de restauration. Les données récentes seront gardées dans l'ancien dossier, sans être remises automatiquement dans la nouvelle copie. Continuer ?" || exit 0
@@ -144,6 +167,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
         duplicate) pkexec --disable-internal-agent /bin/bash "$admin" duplicate "$base" "$destination" ;;
         backup-personal) pkexec --disable-internal-agent /bin/bash "$admin" backup-personal "$base" "$destination" ;;
         point|restore|cancel-point) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
+        free-space) pkexec --disable-internal-agent /bin/bash "$admin" delete-archives "$base" "${identifiers[@]}" ;;
     esac 2>&1
     printf '%s\n' "$?" >"$tmpdir/statut"
 ) | (
@@ -153,7 +177,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
         case "$line" in
             'Copie vérifiée '*|'Copie en cours '*|'Protection du point '*|'Préparation de la copie '*|\
             'Installation des outils '*|'Copie de SetupSurvie '*|'Préparation et démarrage des services'*|'Préparation du point '*|'Vérification et copie '*|\
-            'Mise à l’abri '*|'Copie du SSD '*|'Vérification du second SSD '*|'Redémarrage de votre installation '*)
+            'Mise à l’abri '*|'Suppression de l’ancienne '*|'Copie du SSD '*|'Vérification du second SSD '*|'Redémarrage de votre installation '*)
                 printf '# %s\n' "$line" 2>/dev/null || : ;;
         esac
     done
@@ -163,6 +187,8 @@ trap 'rm -rf -- "$tmpdir"' EXIT
 if [[ -f "$tmpdir/statut" ]] && [[ $(cat "$tmpdir/statut") == 0 ]]; then
     if [[ "$action" == backup-personal ]]; then
         zenity --info --title="SetupSurvie" --text="Sauvegarde privée créée dans $destination"
+    elif [[ "$action" == free-space ]]; then
+        zenity --info --title="SetupSurvie" --text="$(grep '^Place libérée' "$tmpdir/resultat" | tail -1)"
     elif [[ "$action" == point ]]; then
         zenity --info --title="SetupSurvie" --text="Le point de restauration a été vérifié et protégé."
     elif [[ "$action" == duplicate ]]; then

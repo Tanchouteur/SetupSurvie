@@ -61,7 +61,13 @@ case "$action:$#" in
         dest=$2
         source_base=$2
         ;;
-    prepare-maintenance:2|point:2|restore:2|cancel-point:2) dest=$2; source_base=$2 ;;
+    prepare-maintenance:2|point:2|restore:2|cancel-point:2|list-archives:2) dest=$2; source_base=$2 ;;
+    delete-archives:*)
+        (( $# >= 3 )) || die 'Choisissez au moins une ancienne installation.'
+        for identifier in "${@:3}"; do
+            [[ "$identifier" =~ ^[0-9a-f]{32}$ ]] || die 'Ancienne installation non valide.'
+        done
+        dest=$2; source_base=$2 ;;
     *) die 'Action inconnue.' ;;
 esac
 [[ "$dest" == /* && "$dest" != / && "$dest" != */ && "$dest" != *$'\n'* && "$dest" != *$'\r'* ]] ||
@@ -159,7 +165,7 @@ if [[ ! -d "$runtime" ]]; then
     if [[ -d "$application/application/scripts" ]]; then
         application="$application/application"
     fi
-    [[ "$action" != backup-personal ]] ||
+    [[ "$action" != backup-personal && "$action" != list-archives && "$action" != delete-archives ]] ||
         die 'L’entretien doit déjà être installé. Utilisez le lanceur Entretien de SetupSurvie.'
     [[ -f "$application/scripts/linux_recovery.py" ]] ||
         die 'Rouvrez le lanceur depuis le SSD de secours pour initialiser l’entretien.'
