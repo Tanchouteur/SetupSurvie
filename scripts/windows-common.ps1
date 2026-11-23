@@ -240,8 +240,8 @@ function Install-SurvieKitPython([string]$Kit) {
         arguments = @('InstallAllUsers=0', 'PrependPath=1', 'Include_tcltk=1')
     }
     $code = Install-SurvieDependency $item (Join-Path $Kit 'installateurs-windows') -Offline
-    if ($code -eq 3010) { throw 'Redémarrez Windows, puis rouvrez Dupliquer le kit SetupSurvie.' }
+    if ($code -eq 3010) { throw 'Redémarrez Windows, puis rouvrez le même lanceur du SSD.' }
     $python = Find-SurviePython -RequireTk
-    if (-not $python) { throw 'Python avec Tcl/Tk reste introuvable. Terminez son installation puis relancez la copie.' }
+    if (-not $python) { throw 'Python avec Tcl/Tk reste introuvable. Terminez son installation puis rouvrez le même lanceur du SSD.' }
     return $python
 }

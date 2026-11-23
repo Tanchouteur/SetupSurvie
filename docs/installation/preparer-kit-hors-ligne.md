@@ -11,9 +11,9 @@ Windows propres à la machine restent à préparer selon le
 [guide Windows](deux-etapes-windows.md#préparer-un-kit-pour-windows-sans-internet).
 Les commandes propres au laboratoire se lancent sur le PC de Louis.
 
-La reconstruction complète sur une autre machine sans aucun téléchargement est un
-protocole à réaliser, pas une fonction : voir le
-[disque de secours](../exploitation/disque-de-secours-hors-ligne.md) (13 novembre 2026).
+Le kit et une sauvegarde personnelle permettent de reconstruire SetupSurvie
+hors ligne sur un système compatible. Les résultats et les essais restant à
+mener figurent dans le [protocole du disque de secours](../exploitation/disque-de-secours-hors-ligne.md#10-recette-dacceptation).
 
 Depuis la 0.98.0, l’export et le rafraîchissement du kit ajoutent
 **LISEZ-MOI.html** à sa racine. La notice est contrôlée par le manifeste et
