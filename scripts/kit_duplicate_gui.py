@@ -35,6 +35,22 @@ def main():
     checking = '--verify' in sys.argv[2:]
     title = 'Vérifier le kit SetupSurvie' if checking else 'Dupliquer le kit SetupSurvie'
     target = source
+    window.title(title)
+    frame = ttk.Frame(window, padding=18)
+    frame.pack(fill='both', expand=True)
+    folder = ttk.Label(frame, text=str(source), wraplength=460)
+    folder.pack(anchor='w')
+    status = ttk.Label(frame, text='En attente de votre choix…', wraplength=460)
+    status.pack(anchor='w', pady=10)
+    progress = ttk.Progressbar(frame, mode='indeterminate', length=460)
+    progress.pack(fill='x')
+    windows = sys.platform == 'win32'
+    if windows:
+        # The hidden PowerShell launcher can lose the foreground after installing Python.
+        # Map the owner above Explorer before opening the native modal dialogs.
+        window.attributes('-topmost', True)
+        window.deiconify()
+        window.update_idletasks()
     backup = None
     if checking and messagebox.askyesno(
             title, 'Vérifier aussi une sauvegarde personnelle ?\n\n'
@@ -57,14 +73,10 @@ def main():
             window.destroy()
             return
 
-    window.title(title)
-    frame = ttk.Frame(window, padding=18)
-    frame.pack(fill='both', expand=True)
-    ttk.Label(frame, text=str(target), wraplength=460).pack(anchor='w')
-    status = ttk.Label(frame, text='Contrôle du kit…', wraplength=460)
-    status.pack(anchor='w', pady=10)
-    progress = ttk.Progressbar(frame, mode='indeterminate', length=460)
-    progress.pack(fill='x')
+    folder.configure(text=str(target))
+    status.configure(text='Contrôle du kit…')
+    if windows:
+        window.attributes('-topmost', False)
     progress.start()
     window.protocol('WM_DELETE_WINDOW', lambda: None)
     messages = queue.SimpleQueue()
