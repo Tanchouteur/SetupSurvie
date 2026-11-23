@@ -43,6 +43,10 @@ async def lifespan(app):
     youtube_pipeline.initialize()
     await asyncio.to_thread(profiles.initialize)
     DEGRADED.clear()
+    # Host tools read this copy instead of opening pilot.db across the Docker boundary.
+    from . import catalogue
+    try:await asyncio.to_thread(catalogue.publish_corrections)
+    except OSError:DEGRADED['catalogue_corrections']=True
     try:map_notebook.init()
     except Exception:DEGRADED['map_notebook']=True
     library.GUIDE_REFRESH_STOP.clear()
@@ -105,7 +109,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.106.1'
+VERSION='0.106.2'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 

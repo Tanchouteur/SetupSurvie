@@ -92,6 +92,16 @@ type d’erreur), les autres archives sont classées, puis la phase finale indiq
 `ready.gov` portant un attribut sans valeur (`<span class>`) arrêtait tout le
 classement ; les lecteurs HTML lisent désormais un tel attribut comme vide.
 
+Depuis 0.106.2, les outils lancés sous Windows (contrôleur, classement) n’ouvrent
+plus `pilot.db` : le pilote publie les corrections de classement des archives dans
+`data/state/pilot/catalogue-corrections.json`, au démarrage et à chaque correction,
+et le classement lit ce fichier. Le 23 novembre 2026 chez Marc, la lecture de la
+base WAL depuis Windows, pendant que le pilote l’utilisait dans Docker, faisait
+échouer environ 2 % des accès SQLite du pilote (« disk I/O error ») : pages en
+erreur, mise à jour refusée et archives comptées à tort comme non classées. Un
+essai sur une copie a reproduit ces erreurs avec un lecteur Windows et aucune sans
+lui ; le mode DELETE aggravait le problème. La base est restée intacte.
+
 Si un fichier a été remplacé depuis sa vérification, la file est suspendue et
 l’indique. Refaire la vérification ou le téléchargement de cette archive avant de
 reprendre ; la nouvelle édition ne doit pas être marquée traitée par l’ancien travail.
