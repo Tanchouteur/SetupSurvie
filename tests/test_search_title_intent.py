@@ -145,5 +145,31 @@ class TitleIntentTests(unittest.TestCase):
                 found=self.ordered(query,task,prices,'Extrait fictif de tarifs, sans instructions.')
                 self.assertEqual(found[0]['id'],'zim:fixture/task');self.assertEqual(len(found),2)
 
+    def test_category_titles_are_downgraded_even_without_a_category_path(self):
+        plan = retrieval.plan('vélo', ['velo'], {})
+        article = {'id': 'zim:fixture/article', 'title': 'Réparer un vélo'}
+        category = {**article, 'id': 'zim:fixture/index', 'title': 'Catégorie : Réparer un vélo'}
+        self.assertEqual(retrieval.rank(article, plan) - retrieval.rank(category, plan), 35)
+
+    def test_ifixit_groups_same_guide_and_language_but_keeps_translation(self):
+        plan = retrieval.plan('radio', ['radio'], {})
+        rows = [
+            {'id': 'zim:ifixit_en_all_2025-12/Guide/Radio/123', 'title': 'Radio', 'language': 'en'},
+            {'id': 'zim:ifixit_fr_all_2026-03/Tutoriel/Radio/123', 'title': 'Radio', 'language': 'en'},
+            {'id': 'zim:ifixit_fr_all_2026-03/Tutoriel/Récepteur_radio/123', 'title': 'Récepteur radio', 'language': 'fr'},
+            {'id': 'zim:ifixit_en_all_2025-12/Guide/Radio/456', 'title': 'Radio', 'language': 'en'},
+        ]
+        found = retrieval.ordered(rows, plan, 5)
+        self.assertEqual(len(found), 3)
+        self.assertEqual(found[0]['id'], rows[0]['id'])
+        self.assertNotIn(rows[1]['id'], [row['id'] for row in found])
+        self.assertIn(rows[2]['id'], [row['id'] for row in found])
+
+    def test_title_only_song_does_not_displace_practical_reading(self):
+        plan = retrieval.plan('comment stocker les semences', ['semences'], {})
+        hit = {'id': 'zim:fixture/album', 'title': 'Stocker les semences',
+               'excerpt': 'Song', 'match': 'title'}
+        self.assertEqual(retrieval.ordered([hit], plan, 5), [])
+
 
 if __name__=='__main__':unittest.main()

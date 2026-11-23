@@ -1,0 +1,16 @@
+{
+  "cases": [
+    {"id":"khan-fractions","query":"fractions CM2","domain":"culture"},
+    {"id":"khan-algebra","query":"résoudre une équation du premier degré","domain":"culture"},
+    {"id":"khan-photosynthesis","query":"photosynthèse","domain":"culture"},
+    {"id":"khan-cell","query":"mitose méiose","domain":"culture"},
+    {"id":"khan-geometry","query":"théorème de Pythagore","domain":"culture"},
+    {"id":"khan-astronomy","query":"phases de la lune","domain":"culture"},
+    {"id":"survivor-tanning","query":"tannage des peaux","domain":"resilience"},
+    {"id":"survivor-carving","query":"wood carving hand tools","domain":"resilience"},
+    {"id":"survivor-weaving","query":"hand weaving loom","domain":"resilience"},
+    {"id":"survivor-watermill","query":"water mill construction","domain":"resilience"},
+    {"id":"survivor-joinery","query":"mortise and tenon joinery","domain":"resilience"},
+    {"id":"survivor-orchard","query":"fruit tree grafting","domain":"resilience"}
+  ]
+}
