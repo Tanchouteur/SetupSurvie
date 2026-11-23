@@ -911,7 +911,7 @@ def activate(dest):
         setup.write_json(app.settings_path,config,private=True)
         app.import_images(config,dest/'images.tar')
         # Prevent an absent wheel from causing an implicit network installation.
-        if any(p.startswith('private/search-tools') for p in journal['inventory']['excluded']):
+        if 'private/search-tools' in journal['inventory']['excluded']:
             import search_index_tools
             cache=dest/'data/tools/search-index-wheels'
             search_index_tools.validate_cache(cache)

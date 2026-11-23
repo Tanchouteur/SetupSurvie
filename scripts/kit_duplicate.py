@@ -83,7 +83,7 @@ def verify_support(root, *, report=print):
             lines.append(f'{platform} : les installateurs présents sur le SSD sont vérifiés.')
         else:
             lines.append(f'{platform} : aucun installateur embarqué. Le PC doit déjà être préparé.')
-    lines.append('Ce contrôle porte sur le kit public. Vérifiez séparément votre sauvegarde personnelle.')
+    lines.append('Ce contrôle porte sur le kit public.')
     return '\n'.join(lines)
 
 

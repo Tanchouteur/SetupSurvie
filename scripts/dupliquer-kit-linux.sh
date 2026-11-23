@@ -53,14 +53,21 @@ if [ "$mode" = duplicate ]; then
     [ -n "$parent" ] || exit 0
     target="${parent%/}/SetupSurvie-Kit"
     zenity --question --title="$title" --text="Copier le kit vers ce dossier ?
-    $target
+$target
 
-    Pour reprendre, choisissez le même dossier." ||
+Pour reprendre, choisissez le même dossier." ||
         exit 0
 
     set -- "$target"
 else
     set --
+fi
+backup=
+if [ "$mode" = verify-support ] && zenity --question --title="$title" --ok-label=Oui --cancel-label=Non \
+        --text="Vérifier aussi une sauvegarde personnelle ?
+
+Choisissez ensuite son dossier daté, sur ce SSD ou un autre disque. Rien ne sera modifié."; then
+    backup=$(zenity --file-selection --directory --title='Choisir le dossier de la sauvegarde personnelle') || backup=
 fi
 
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/setupsurvie-copie.XXXXXXXX") || {
@@ -85,8 +92,20 @@ trap 'rm -rf -- "$scratch"' EXIT
         python="$scratch/outils/bin/python3"
     fi
     "$python" "$base/app/scripts/pilot_kit.py" "$mode" "$base" "$@"
+    code=$?
+    if [ "$code" -eq 0 ] && [ -n "$backup" ]; then
+        printf '\n'
+        if { [ ! -r "$backup" ] || [ ! -x "$backup" ] || { [ -e "$backup/backup.json" ] && [ ! -r "$backup/backup.json" ]; }; } &&
+                command -v pkexec >/dev/null 2>&1; then
+            printf '%s\n' 'Sauvegarde protégée : autorisation administrateur demandée…'
+            pkexec --disable-internal-agent /bin/bash "$base/app/scripts/linux_recovery_admin.sh" verify-backup "$base" "$backup"
+        else
+            "$python" "$base/app/scripts/pilot_backup.py" verify "$backup" --kit "$base"
+        fi
+        code=$?
+    fi
     printf '%s
-' "$?" > "$scratch/statut"
+' "$code" > "$scratch/statut"
 ) 2>&1 | (
     trap '' PIPE
     while IFS= read -r line; do
@@ -106,10 +125,16 @@ if [ -f "$scratch/statut" ] && [ "$(cat "$scratch/statut")" = 0 ]; then
         zenity --info --title="$title" --text='Le second kit est vérifié. Vous pouvez éjecter le support.' || :
     fi
 else
+    failure='Copie interrompue'
+    message='La copie a été interrompue. Rouvrez le lanceur pour reprendre.'
+    if [ "$mode" = verify-support ]; then
+        failure='Vérification non réussie'
+        message='La vérification a été interrompue. Rouvrez le lanceur pour recommencer.'
+    fi
     if [ ! -s "$scratch/resultat" ]; then
         printf '%s
-' 'La copie a été interrompue. Rouvrez le lanceur pour reprendre.' > "$scratch/resultat"
+' "$message" > "$scratch/resultat"
     fi
-    zenity --text-info --title='Copie interrompue' --filename="$scratch/resultat" || :
+    zenity --text-info --title="$failure" --filename="$scratch/resultat" || :
     exit 1
 fi

@@ -11,9 +11,9 @@ Windows propres à la machine restent à préparer selon le
 [guide Windows](deux-etapes-windows.md#préparer-un-kit-pour-windows-sans-internet).
 Les commandes propres au laboratoire se lancent sur le PC de Louis.
 
-La reconstruction complète sur une autre machine sans aucun téléchargement est un
-protocole à réaliser, pas une fonction : voir le
-[disque de secours](../exploitation/disque-de-secours-hors-ligne.md) (13 novembre 2026).
+Le kit et une sauvegarde personnelle permettent de reconstruire SetupSurvie
+hors ligne sur un système compatible. Les résultats et les essais restant à
+mener figurent dans le [protocole du disque de secours](../exploitation/disque-de-secours-hors-ligne.md#10-recette-dacceptation).
 
 Depuis la 0.98.0, l’export et le rafraîchissement du kit ajoutent
 **LISEZ-MOI.html** à sa racine. La notice est contrôlée par le manifeste et
@@ -80,8 +80,27 @@ qu’il faudra un PC déjà préparé ou ajouter ces fichiers avant de partir.
 
 Le contrôle fonctionne sans Docker et ne modifie aucun fichier du kit.
 Les mêmes prérequis graphiques que pour le bouton de duplication
-s’appliquent. Le contrôle porte sur le kit public. Pour la sauvegarde
-personnelle, suivre le [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle).
+s’appliquent.
+
+Depuis la 0.112.0, le même lanceur propose de vérifier aussi une sauvegarde
+personnelle : répondre **Oui**, puis choisir son dossier daté. Le contrôle
+relit chaque fichier listé dans `backup.json`, refuse un fichier hors
+périmètre et indique le système d’origine. Pour une sauvegarde créée depuis
+la 0.94.0, il applique la règle de restauration : même format des données,
+même image Open WebUI, kit de même version ou plus récent et noms de fichiers
+compatibles entre les deux systèmes. Sur Linux, évitez les noms réservés par
+Windows, comme `COM¹.txt`, et les caractères de contrôle. Une sauvegarde
+plus ancienne est signalée comme restaurable seulement sur le même système.
+En ligne de commande :
+
+```bash
+python3 app/scripts/pilot_backup.py verify /chemin/sauvegarde --kit /chemin/kit
+```
+
+Ce contrôle ne démarre ni Docker ni les services et n’écrit rien. Il ne vérifie
+pas la cohérence interne des bases SQLite et ne remplace pas un essai de
+restauration. Pour la restauration elle-même, suivre le
+[manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle).
 
 
 ## Dupliquer un kit public

@@ -9,13 +9,29 @@ action=${1:-}
 source /etc/os-release
 case "${ID:-}:${VERSION_ID:-}:$(uname -m)" in
     debian:12:x86_64|debian:13:x86_64|ubuntu:22.04:x86_64) ;;
-    *) [[ "$action" == duplicate ]] ||
+    *) [[ "$action" == duplicate || "$action" == verify-backup ]] ||
         die 'Choisissez un PC Debian 12, Debian 13 ou Ubuntu 22.04 (64 bits).';;
 esac
-if [[ "$action" != duplicate && ! -d /run/systemd/system ]]; then
+if [[ "$action" != duplicate && "$action" != verify-backup && ! -d /run/systemd/system ]]; then
     die 'Le système doit avoir démarré normalement.'
 fi
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+if [[ "$action:$#" == verify-backup:3 ]]; then
+    # Read-only check of a root-owned personal backup, from the public kit.
+    source_base=$(realpath -e -- "$2")
+    backup=$(realpath -e -- "$3")
+    [[ -f "$source_base/manifest.json" && "$source_base/app/scripts" == "$script_dir" ]] ||
+        die 'Ouvrez le lanceur Linux depuis le dossier app du kit public.'
+    export PYTHONDONTWRITEBYTECODE=1
+    if /usr/bin/python3 -c 'import sqlite3, sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
+        exec /usr/bin/python3 "$script_dir/pilot_backup.py" verify "$backup" --kit "$source_base"
+    fi
+    scratch=$(mktemp -d /var/tmp/.setupsurvie-verification.XXXXXXXX)
+    trap 'rm -rf -- "$scratch"' EXIT
+    /bin/bash "$script_dir/installer-outils-linux-hors-ligne.sh" --python-seul "$source_base/installateurs-linux" "$scratch/outils" >/dev/null
+    "$scratch/outils/bin/python3" "$script_dir/pilot_backup.py" verify "$backup" --kit "$source_base"
+    exit
+fi
 case "$action:$#" in
     install:4)
         source_base=$(realpath -e -- "$2")

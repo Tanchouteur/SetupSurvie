@@ -16,7 +16,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 from pilot_kit import checked_entries
 from pilot_kit import install
-from pilot_backup import backup,host_target,restore,restore_copy,start_restored
+from pilot_backup import backup,host_target,restore,restore_copy,start_restored,verify_backup
 from delivery_paths import locked
 import index_locks
 from pilot import archive_index,collection_sort,retrieval
@@ -210,6 +210,68 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT * FROM conversation').fetchall(),
                              [('profil-fixe', 'Échange de test')])
         self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+
+    def test_verify_backup_is_read_only_and_reports_compatibility_or_damage(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        files = lambda: {path.relative_to(self.root): path.read_bytes()
+                         for path in self.root.rglob('*') if path.is_file()}
+        before = files()
+        with patch.object(setup, 'run', side_effect=AssertionError('Docker interdit')), \
+             patch('content.transfer', side_effect=AssertionError('Réseau interdit')):
+            result = verify_backup(snapshot, kit, report=lambda _line: None)
+        self.assertIn('sous Windows', result)
+        self.assertIn('compatible avec ce kit', result)
+        self.assertEqual(files(), before)
+        report_path = snapshot/'backup.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        report['installation']['version'] = '99.0.0'
+        setup.write_json(report_path, report, private=True)
+        with self.assertRaisesRegex(setup.SetupError, 'plus ancien que la sauvegarde'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        del report['installation']
+        setup.write_json(report_path, report, private=True)
+        self.assertIn('seulement sur le même système', verify_backup(snapshot, kit, report=lambda _line: None))
+        guide = snapshot/'data/library/guides/guide.fr.md'
+        guide.write_bytes(b'x'*guide.stat().st_size)
+        with self.assertRaisesRegex(setup.SetupError, 'Fichier de sauvegarde incomplet ou modifié'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        guide.unlink()
+        with self.assertRaisesRegex(setup.SetupError, 'Fichier de sauvegarde absent'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        if os.name != 'nt' and os.geteuid() != 0:
+            snapshot.chmod(0o000)
+            try:
+                with self.assertRaisesRegex(setup.SetupError, 'Sauvegarde protégée'):
+                    verify_backup(snapshot, kit, report=lambda _line: None)
+            finally:
+                snapshot.chmod(0o700)
+        report_path.unlink()
+        with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
+            verify_backup(self.root/'source', kit, report=lambda _line: None)
+
+    def test_verification_and_restore_both_refuse_cross_system_path_conflicts(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        report_path = kit/'manifest.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        replaced = 'payload/library/guides/guide.fr.md'
+        (kit/replaced).unlink()
+        report['files'] = [entry for entry in report['files'] if entry['path'] != replaced]
+        relative = 'payload/library/guides/Guide.fr.md/nested.txt'
+        nested = kit/relative
+        nested.parent.mkdir()
+        nested.write_bytes(b'ownership conflict')
+        report['files'].append({'path': relative, 'sha256': setup.file_hash(nested),
+                                'bytes': nested.stat().st_size})
+        setup.write_json(report_path, report)
+        work, data = self.root/'target/private', self.root/'target/data'
+        with self.assertRaisesRegex(setup.SetupError, 'Conflit de noms'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        with patch('pilot_backup.host_target', return_value='windows'), patch('kit_audit.validate'):
+            with self.assertRaisesRegex(setup.SetupError, 'Conflit de noms'):
+                restore(snapshot, kit, work, data, target='windows')
+        self.assertFalse(work.parent.exists())
 
     def test_cross_system_restore_checks_version_host_and_space_before_writing(self):
         snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
@@ -470,8 +532,15 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
     def test_manifest_rejects_duplicate_case_aliases_and_windows_reserved_paths(self):
         kit=self.root/'kit';kit.mkdir();path=kit/'valid';path.write_bytes(b'fixture')
         good={'path':'valid','bytes':path.stat().st_size,'sha256':setup.file_hash(path)}
-        for records in [[good,good],[good,{**good,'path':'VALID'}],[{**good,'path':'C:private'}],[{**good,'path':'con.txt'}],[{**good,'path':'./valid'}],[{**good,'bytes':True}]]:
-            with self.subTest(records=records),self.assertRaises(setup.SetupError):checked_entries(kit,{'files':records})
+        invalid_paths = ('C:private', 'con.txt', './valid', 'guides/COM¹.txt',
+                         'guides/lPt²/archive.txt', 'guides/guide\n.txt', 'guides/a\x1fb.txt')
+        invalid_records = [[good, good], [good, {**good, 'path': 'VALID'}], [{**good, 'bytes': True}]]
+        for records in invalid_records:
+            with self.subTest(records=records), self.assertRaises(setup.SetupError):
+                checked_entries(kit, {'files': records})
+        for name in invalid_paths:
+            with self.subTest(name=name), self.assertRaisesRegex(setup.SetupError, 'Chemin de contenu non valide'):
+                checked_entries(kit, {'files': [{**good, 'path': name}]})
 
     def test_restore_requires_settings_verified_by_manifest_before_copying(self):
         source=self.root/'backup';kit=self.root/'kit'
@@ -512,7 +581,7 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
     def test_backup_never_marks_nonportable_guide_paths_as_restorable(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
         guides=Path(c['data_dir'])/'library/guides'
-        for names in [('con.txt',),('Guide.txt','guide.txt')]:
+        for names in [('con.txt',), ('COM¹.txt',), ('Guide.txt','guide.txt')]:
             for name in names:(guides/name).write_bytes(b'fixture')
             dest=self.root/('backup-'+names[0])
             with patch.object(app,'compose'),self.assertRaises(setup.SetupError):backup(app,c,dest)
