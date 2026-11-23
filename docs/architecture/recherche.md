@@ -189,3 +189,16 @@ Les demandes contextuelles restent cherchables. La comparaison de titre exact
 accepte la requête originale normalisée et ses mots de liaison ; ces règles ne
 modifient aucune classification humaine. Le [bilan](../essais/2026-11-15-questions-peripheriques-et-titres-exacts.md)
 conserve les cas observés et les limites du classement sans lecture du contenu.
+
+
+## Qualité du classement et variantes de source — 0.108.1
+
+L'inspection des candidats Wikipédia conserve la destination de la lecture
+d'une redirection valide. Deux liens dont la destination est identique
+occupent une seule place dans le classement. Pour iFixit, l'identifiant du
+guide et la langue de l'article servent à rapprocher les variantes d'une
+même procédure. La sélection conserve les identifiants d'origine de ses
+résultats. Le plan commun reconnaît aussi les expressions de mise à la terre
+et les variantes bilingues liées aux semences potagères. Le
+[bilan Bazzite](../essais/2026-11-23-audit-qualite-recherche-bazzite.md)
+présente les cas reproduits, les limites de pertinence du fonds et la recette.

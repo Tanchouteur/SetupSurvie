@@ -639,7 +639,7 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
 
 
 async def enrich_wikipedia(items, query, generation, normalize):
-    """Enrich the most relevant candidates within a shared lane and time budget."""
+    """Read structure and resolve redirects within the existing inspection budget."""
     candidates = [item for item in items if wiki_structure.wikipedia(item)]
     if not candidates:
         return None
@@ -668,14 +668,17 @@ async def enrich_wikipedia(items, query, generation, normalize):
             try:
                 path = '/content/' + quote(safe_zim_path(identifier), safe='/')
                 async with asyncio.timeout(0.45):
-                    raw, content_type = await get(path, wiki_structure.MAX_HTML)
+                    fetched = await get(path, wiki_structure.MAX_HTML)
+                    raw, content_type = fetched
                     if 'text/html' not in content_type:
                         return
                     structure = await kiwix_queries.disk_io(wiki_structure.extract, raw)
+                    resolved = getattr(fetched, 'path', path)
+                    canonical = 'zim:' + safe_zim_path('zim:' + resolved.removeprefix('/content/'))
             except (TimeoutError, httpx.HTTPError, HTTPException, ValueError):
                 return
-            evidence[identifier] = structure
-            cache[key] = (time.monotonic(), structure)
+            evidence[identifier] = (structure, canonical)
+            cache[key] = (time.monotonic(), evidence[identifier])
             cache.move_to_end(key)
             while len(cache) > 256:
                 cache.popitem(last=False)
@@ -687,10 +690,10 @@ async def enrich_wikipedia(items, query, generation, normalize):
         pass
     for item in candidates:
         if item['id'] in evidence:
-            item['_wiki_structure'] = evidence[item['id']]
+            item['_wiki_structure'], item['_resolved_zim_id'] = evidence[item['id']]
     return {'selected': len(selected), 'read': len(evidence),
-            'categories': sum(bool(info['categories']) for info in evidence.values()),
-            'sections': sum(bool(info['sections'] or info['subsections']) for info in evidence.values()),
+            'categories': sum(bool(info['categories']) for info, _ in evidence.values()),
+            'sections': sum(bool(info['sections'] or info['subsections']) for info, _ in evidence.values()),
             'elapsed_ms': round((time.monotonic() - started) * 1000)}
 
 
@@ -884,7 +887,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     finally:
         if not local_task.done():local_task.cancel()
         await asyncio.gather(local_task,return_exceptions=True)
-    wiki_report = await enrich_wikipedia(local + articles, query_plan, coverage.get('cache_generation', ''), normalize)
+    wiki_report = await enrich_wikipedia(local_rows + articles, query_plan, coverage.get('cache_generation', ''), normalize)
     if diagnostic and wiki_report is not None:
         coverage['wikipedia_structure'] = wiki_report
     ordered,metadata_available=await selected(results+local_rows+articles,fresh=True)

@@ -204,7 +204,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 
 ### Évaluation et audits
 
-`audit_library.py`, `audit_learning.py`, `audit_kit_lab.py`, `evaluate_domains.py`,
+`audit_library.py`, `audit_search_quality.py`, `audit_learning.py`, `audit_kit_lab.py`, `evaluate_domains.py`,
 `evaluation_report.py`, `compare_models.py`, `prepare_reliability_cases.py`.
 
 ### Laboratoire de Louis (Bazzite uniquement)

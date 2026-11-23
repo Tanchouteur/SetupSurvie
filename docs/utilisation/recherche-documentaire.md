@@ -303,3 +303,13 @@ fin, cache et couverture. Il ne supprime pas les caches et ne prouve pas un dép
 sans modifier les fichiers. Il prépare le futur index vidéo ; il ne rend pas encore
 les paroles recherchables et ne crée pas de sous-titres. Les guides donnent les
 commandes Windows/Linux et les limites des rapports.
+
+
+### Reconnaître les variantes d’un même résultat
+
+Deux liens Wikipédia vers la même page peuvent apparaître sous un seul
+résultat quand la recherche a pu vérifier leur destination. Les guides iFixit
+du même numéro et de la même langue sont réunis dans le classement.
+Pour chercher dans une édition précise, sélectionnez sa collection. Les
+[comparaisons sur le fonds Bazzite](../essais/2026-11-23-audit-qualite-recherche-bazzite.md)
+donnent des exemples et les limites de la recherche pratique.
