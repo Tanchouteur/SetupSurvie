@@ -181,6 +181,22 @@ les pages effectivement retenues bénéficient d’un lien direct vers cette pag
 Une référence inconnue garde le contrôle d’échec. La validité du numéro ne certifie
 ni l’affirmation ni l’usage de la pagination imprimée.
 
+## La bibliothèque d’abord — 0.107.0
+
+Depuis la 0.107.0, toute question qui porte un sujet est d’abord cherchée et
+lue dans la bibliothèque, avant la rédaction : questions en « quel… », « que
+faire… », « pourquoi… », et demandes courtes comme « tanner une peau ? ».
+Auparavant, seules les questions en « comment… », de dimensions ou avec un
+verbe d’action déclenchaient cette préparation ; pour les autres, un petit
+modèle répondait souvent de mémoire. Restent exclus : salutations et
+remerciements, calculs (« calcule », « combien », « convertir »), demandes de
+position et demandes de vidéos, qui ont leur propre recherche.
+
+Mesure sur le labo Bazzite (gemma4:e4b, 205 archives, une question par thème
+de Marc, 68 questions) : réponses citant un document lu, 23 en 0.100.0 et 48
+avec ce changement ; réponses marquées « Références à vérifier », 15 puis 5.
+Ces essais ne valident pas la justesse des réponses.
+
 ## Procédures ordinaires — 0.19.1
 
 Le choix des passages analyse tous les mots utiles de la question bornée, y
