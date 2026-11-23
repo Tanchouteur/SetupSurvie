@@ -78,6 +78,18 @@ class SearchRelevanceTests(unittest.IsolatedAsyncioTestCase):
     async def test_unknown_subject_does_not_fabricate_results(self):
         self.assertEqual(await library.search('propulsion quantique inexistante'),[])
 
+    async def test_civil_protection_finds_official_guidance_vocabulary(self):
+        with store.connect() as db:
+            db.execute('INSERT INTO passages VALUES(?,?,?,?,?)', (
+                'guide:consignes.pdf#page=9', 'Se préparer aux crises — page 9',
+                '/guides/consignes.pdf#page=9', 'fr',
+                'Menace en lien avec un engagement majeur. Respectez les consignes des autorités et rejoignez un abri.',
+            ))
+        for query in ('protection civile en temps de guerre', 'abri en cas de bombardement'):
+            with self.subTest(query=query):
+                found=await library.search(query,domain='resilience')
+                self.assertIn('guide:consignes.pdf#page=9',[item['id'] for item in found])
+
     async def test_punctuation_and_search_syntax_remain_data(self):
         for query in ['" OR NOT * - ( )','feu" OR title:secret','😊']:
             with self.subTest(query=query):await library.search(query)

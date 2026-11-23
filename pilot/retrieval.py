@@ -169,6 +169,10 @@ def plan(query,words,synonyms,collection=''):
     if re.search(r'\b(pourquoi|why)\b',raw) and not re.search(r'\b(comment|how)\b',raw):practical=False
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
+    if re.search(r'\bprotection civile\b',raw):
+        terms=['protection civile' if w=='protection' else w for w in terms if w!='civile']
+        if 'en temps de' in raw:terms=[w for w in terms if w!='temps']
+        synonyms={**synonyms,'protection civile':['consignes','sauvegarde','civil protection']}
     meaningful=[w for w in terms if w not in ACTIONS]
     if meaningful:terms=meaningful
     if any(w in CONCEPTS['feu']['terms'] for w in terms):terms=[w for w in terms if w not in ('start','starting','make','making','produce')]
