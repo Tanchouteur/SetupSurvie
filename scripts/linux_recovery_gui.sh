@@ -103,9 +103,17 @@ case "$mode" in
             base=$(zenity --file-selection --directory --title="Choisir le dossier SetupSurvie déjà installé" --filename="/srv/") || exit 0
             base=${base%/}
         fi
-        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore FALSE "Revenir à mon installation" cancel-point) || exit 0
+        action=$(zenity --list --radiolist --title="Entretien de SetupSurvie" --text="Choisissez une opération :" --column="Choix" --column="Opération" --column="Action" --print-column=3 TRUE "Créer un point de restauration" point FALSE "Restaurer dans une nouvelle copie" restore FALSE "Revenir à mon installation" cancel-point FALSE "Sauvegarder mes données" backup-personal) || exit 0
         case "$action" in
             point) ;;
+            backup-personal)
+                parent=$(zenity --file-selection --directory --title="Choisir le disque de sauvegarde") || exit 0
+                [[ "$parent" == /* ]] || exit 0
+                destination="${parent%/}/SetupSurvie-Sauvegarde-$(date +%Y%m%d-%H%M%S)"
+                zenity --question --title="Sauvegarder mes données" \
+                    --text="Copier les profils, échanges et documents personnels ? Le site sera mis en pause pendant la sauvegarde." \
+                    --ok-label="Sauvegarder" --cancel-label="Annuler" || exit 0
+                ;;
             cancel-point)
                 zenity --question --title="Revenir à mon installation" \
                     --text="Si un point est en cours de création, sa copie partielle sera mise de côté. SetupSurvie redémarrera avec vos données actuelles. Continuer ?" \
@@ -134,6 +142,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
         install-kit) pkexec --disable-internal-agent /bin/bash "$admin" install-kit "$base" "$destination" "$point" ;;
         restore-kit) pkexec --disable-internal-agent /bin/bash "$admin" restore-kit "$base" "$destination" "$backup" ;;
         duplicate) pkexec --disable-internal-agent /bin/bash "$admin" duplicate "$base" "$destination" ;;
+        backup-personal) pkexec --disable-internal-agent /bin/bash "$admin" backup-personal "$base" "$destination" ;;
         point|restore|cancel-point) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
     esac 2>&1
     printf '%s\n' "$?" >"$tmpdir/statut"
@@ -152,7 +161,9 @@ trap 'rm -rf -- "$tmpdir"' EXIT
 ) | zenity --progress --pulsate --auto-close --no-cancel --title="SetupSurvie" --text="Opération en cours. Autorisez l'administration si cela vous est demandé."
 
 if [[ -f "$tmpdir/statut" ]] && [[ $(cat "$tmpdir/statut") == 0 ]]; then
-    if [[ "$action" == point ]]; then
+    if [[ "$action" == backup-personal ]]; then
+        zenity --info --title="SetupSurvie" --text="Sauvegarde privée créée dans $destination"
+    elif [[ "$action" == point ]]; then
         zenity --info --title="SetupSurvie" --text="Le point de restauration a été vérifié et protégé."
     elif [[ "$action" == duplicate ]]; then
         zenity --info --title="SetupSurvie" --text="Le second SSD est vérifié. Ouvrez son dossier SetupSurvie-Secours pour retrouver le lanceur. Vous pouvez maintenant éjecter les disques."

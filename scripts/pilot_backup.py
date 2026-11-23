@@ -40,8 +40,15 @@ def separate_roots(*roots):
 
 
 def backup(app,c,destination,*,resume=True):
-    with maintenance(app,c):
-        return stopped_backup(app,c,destination,resume=resume,identity=backup_identity(c))
+    from transfer import guard
+    dest = setup.safe_path(destination)
+    if dest.is_relative_to(setup.safe_path(c.get('app_dir') or setup.ROOT)):
+        raise setup.SetupError('Choisissez une destination hors du logiciel SetupSurvie.')
+    with locked(checked_destination(app.work, 'update.lock')), locked(checked_destination(app.work, 'transfer.lock')):
+        guard(app.work)
+        with maintenance(app,c):
+            app.render(c)
+            return stopped_backup(app,c,dest,resume=resume,identity=backup_identity(c))
 
 
 @contextmanager
@@ -191,7 +198,9 @@ def stopped_backup(app,c,destination,*,resume=True,services_stopped=False,progre
     data=Path(c['data_dir']);dest=setup.safe_path(destination)
     if dest.exists() or dest.is_relative_to(data) or dest.is_relative_to(app.work):
         raise setup.SetupError('Choisissez une nouvelle destination hors des données et des réglages.')
-    durable.mkdir(dest);dest.chmod(0o700)
+    durable.mkdir(dest.parent)
+    dest.mkdir(mode=0o700)
+    durable.sync_directory(dest.parent)
     try:
         if not services_stopped:
             app.compose(c,'stop','portal','pilot','open-webui')
@@ -518,7 +527,7 @@ def main():
     p.add_argument('--resume', action='store_true', help='Reprendre vers le même dossier après une interruption.')
     args=parser.parse_args()
     if args.action=='backup':
-        app=setup.Installation(args.work_dir);c=app.load();app.render(c);backup(app,c,args.destination)
+        app=setup.Installation(args.work_dir);backup(app,app.load(),args.destination)
     else:restore(args.source,args.kit,args.work_dir,args.data_dir,target=args.target,resume=args.resume)
 
 

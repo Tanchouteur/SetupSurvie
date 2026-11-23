@@ -375,6 +375,18 @@ def create_existing_point(recovery, base):
     install_shortcut(recovery, base)
 
 
+def backup_personal(recovery, base, target):
+    unit = managed_unit(base)
+    app = setup.Installation(destination(base, 'private'))
+    config = app.load()
+    validate_local_layout(base, config)
+    if target.is_relative_to(base) or target.is_relative_to(recovery):
+        raise setup.SetupError('Choisissez un dossier hors de l’installation et de son point protégé.')
+    env = {**os.environ, 'DOCKER_HOST': f'unix:///run/{unit}/docker.sock'}
+    script = destination(base, 'application/scripts/pilot_backup.py')
+    setup.run([sys.executable, script, 'backup', target, '--work-dir', app.work], env=env)
+
+
 def release_current_source(base, point, unit):
     work = base / 'private'
     with locked(work / 'update.lock'), locked(work / 'transfer.lock'):
@@ -556,6 +568,9 @@ def main():
     duplicator = actions.add_parser('duplicate')
     duplicator.add_argument('source', type=setup.safe_path)
     duplicator.add_argument('base', type=setup.safe_path)
+    backup = actions.add_parser('backup-personal')
+    backup.add_argument('base', type=setup.safe_path)
+    backup.add_argument('target', type=setup.safe_path)
     for name in ('prepare-maintenance', 'point', 'restore', 'cancel-point'):
         actions.add_parser(name).add_argument('base', type=setup.safe_path)
     args = parser.parse_args()
@@ -564,6 +579,8 @@ def main():
             install(args.recovery, args.source, args.base, args.point == 'yes')
         elif args.action == 'duplicate':
             duplicate(args.source, args.base)
+        elif args.action == 'backup-personal':
+            backup_personal(args.recovery, args.base, args.target)
         elif args.action == 'prepare-maintenance':
             install_shortcut(args.recovery, args.base)
         elif args.action == 'point':

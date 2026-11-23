@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Local desktop entry point: works without the portal or a web server."""
 import argparse
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -62,6 +63,9 @@ class Wizard:
         ttk.Button(row,text='Suivi dans le navigateur',command=self.open_monitor).pack(side='left',padx=2)
         if os.name=='nt':
             button=ttk.Button(row,text='Vérifier Docker',command=self.docker_status);button.pack(side='left',padx=2);self.actions.append(button)
+        row=ttk.Frame(panel);row.pack(fill='x',pady=(8,0))
+        button=ttk.Button(row,text='Sauvegarder mes données',command=self.backup_personal)
+        button.pack(side='left',padx=2);self.actions.append(button)
         self.status=tk.StringVar(value='Commencez par Examiner. Une destination existante ne sera pas remplacée.')
         ttk.Label(panel,textvariable=self.status,wraplength=700).pack(anchor='w',pady=12)
         self.bar=ttk.Progressbar(panel,mode='determinate');self.bar.pack(fill='x')
@@ -146,7 +150,7 @@ class Wizard:
     def append(self,text):
         self.log.configure(state='normal');self.log.insert('end',text+'\n');self.log.see('end');self.log.configure(state='disabled')
 
-    def launch(self, action):
+    def launch(self, action, *, done=None):
         if self.busy:return
         self.busy=True
         self.active_from_web=self.web_requested
@@ -157,7 +161,7 @@ class Wizard:
         work=self.work.get();dest=self.dest.get()
         self.current_work=work;self.current_dest=dest
         def run():
-            try:action();self.events.put(('done','Étape terminée. Consultez le rapport et les étapes restantes.'))
+            try:action();self.events.put(('done', done or 'Étape terminée. Consultez le rapport et les étapes restantes.'))
             except Exception as exc:
                 import tempfile,traceback
                 with tempfile.NamedTemporaryFile(prefix='setupsurvie-transfert-',suffix='.log',delete=False,mode='w',encoding='utf-8') as stream:traceback.print_exc(file=stream)
@@ -165,6 +169,25 @@ class Wizard:
                 detail=str(exc) if isinstance(exc,setup.SetupError) and not str(exc).startswith(('Échec de','Délai dépassé')) else 'Opération interrompue ; la copie reste non validée.'
                 self.events.put(('error',detail+'\nDiagnostic privé : '+stream.name))
         threading.Thread(target=run,daemon=True).start()
+
+    def backup_personal(self):
+        if self.busy:
+            return
+        app = self.app()
+        parent = filedialog.askdirectory(title='Choisir le disque de sauvegarde', mustexist=True)
+        if not parent:
+            return
+        name = datetime.now().strftime('SetupSurvie-Sauvegarde-%Y%m%d-%H%M%S-%f')
+        target = Path(parent)/name
+        if not messagebox.askyesno('Sauvegarder mes données',
+                'Les profils, échanges et documents personnels seront copiés. Le site sera mis en pause pendant la sauvegarde. Continuer ?'):
+            return
+
+        def action():
+            from pilot_backup import backup
+            backup(app, app.load(), target)
+
+        self.launch(action, done=f'Sauvegarde privée créée : {target}')
 
     def destination_action(self,action):
         dest=self.destination()
