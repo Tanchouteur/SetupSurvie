@@ -111,7 +111,9 @@ def document_request(history):
     """
     questions=[m['content'] for m in history if m['role']=='user']
     if not questions:return None
-    question=questions[-1];topic=research.primary_query(question)
+    question=questions[-1]
+    if video_requests.requested(question):return None
+    topic=research.primary_query(question)
     plan=library.retrieval.plan(topic,library.search_terms(topic),library.SYNONYMS)
     raw=library.retrieval.normal(topic)
     if re.search(r'\b(favoris|favorites)\b',raw):return None
@@ -134,15 +136,15 @@ def document_request(history):
     if not plan.words:return None
     if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
-    if re.search(r'\b(calculer|calcul|combien|convertir|conversion|multiplier)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
-    if (research.synthesis(question) or illustrations.requested(question) or
-        research.planning_request(raw) or library.retrieval.author_subject(topic) or
-        re.search(r'\b(comment|how to)\b',raw)):return question,''
-    if re.search(r'\b(quell?e?s?)\b.*\b(dimensions?|longueurs?|tailles?)\b',raw):return question,''
-    if plan.practical and plan.action:return question,''
-    if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
-        return question,''
-    return None
+    if re.search(r'\b(calculer|calcule|calculez|calcul|combien|convertir|convertis|convertissez|conversion|multiplier|multiplie)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
+    if set(plan.words) <= CONVERSATIONAL:
+        return None
+    return question,''
+
+
+CONVERSATIONAL = frozenset({'bonjour','bonsoir','salut','coucou','hello','merci','beaucoup','super','parfait',
+                            'ok','okay','daccord','accord','revoir','bientot','bonne','journee','soiree','nuit',
+                            'thanks','thank','bye','oui','non','cool','top','genial'})
 
 
 def fit_context(messages,maximum=24000):

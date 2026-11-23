@@ -5,6 +5,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
 import json
+import sqlite3
 import subprocess
 import sys
 from pilot import zim_video_inventory as inventory
@@ -117,6 +118,28 @@ class ArchiveVideoTests(unittest.TestCase):
         self.assertFalse(list(self.state.glob('*.sqlite')));building=next(self.state.glob('*.building'))
         with inventory.connect(building,True) as db:self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0],'2')
         result=inventory.build(self.zim,self.state,checkpoint=1);self.assertEqual(result['status'],'completed');self.assertFalse(list(self.state.glob('*.building')))
+
+    def test_resume_recovers_a_hot_journal_after_an_abrupt_exit(self):
+        original = inventory.build(self.zim, self.state)
+        published = self.state / original['file']
+        building = published.with_suffix('.building')
+        published.rename(building)
+        subprocess.run([sys.executable, '-c', """
+import os, sqlite3, sys
+db = sqlite3.connect(sys.argv[1])
+db.execute('PRAGMA cache_size=1')
+db.execute('BEGIN')
+db.execute("UPDATE metadata SET value='interrupted' WHERE key='cursor'")
+db.execute("INSERT INTO issues VALUES ('interrupted', 'uncommitted')")
+os._exit(0)
+""", str(building)], check=True, timeout=10)
+        self.assertTrue(building.with_name(building.name + '-journal').is_file())
+        with self.assertRaises(sqlite3.OperationalError), inventory.connect(building, readonly=True) as db:
+            db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()
+        resumed = inventory.build(self.zim, self.state)
+        self.assertEqual(resumed['entries_examined'], original['entries_examined'])
+        self.assertEqual(resumed['issues_count'], original['issues_count'])
+        self.assertTrue(published.is_file())
 
     def test_replaced_archive_keeps_last_completed_inventory_and_rescans_new_edition(self):
         original=inventory.build(self.zim,self.state);before=(self.state/original['file']).read_bytes();self.create(extra=True)

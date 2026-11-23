@@ -578,3 +578,109 @@ Kiwix dépassait 10 Go de mémoire pendant les recherches sur les 205
 archives. Le lanceur limite désormais les archives et moteurs de recherche
 gardés ouverts (16, 8 et 8) : pic de 6,0 Go sur les 136 requêtes, sans
 redémarrage ni perte de résultat, et 90 % des requêtes sous 3,3 s.
+
+### Lecture du relevé des 68 questions
+
+Les deux relevés `essai-assistant-68-0100.json` et `essai-assistant-68.json`
+du volume Bazzite contiennent les mêmes 68 questions, dans le même ordre.
+Gemma 4 E4B est passé de **24 à 53 réponses avec une source ouverte** et
+de **23 à 48 avec une citation**. Tous les titres cités figurent parmi les
+titres ouverts pour leur réponse. « Références à vérifier » apparaît dans
+15 réponses avant le changement et 5 après. Les JSON conservent des titres
+et la réponse, sans identifiants de passage pour chaque titre. Vérifier
+l’appui réel demande de relire les citations et les passages.
+
+- **Citations à propos.** Le guide ANSES sur les champignons appuie la
+  prudence lors de l’identification. Les pages du plateau et des pions
+  des Wikilivres appuient les règles de base des échecs. Le guide de
+  Polynésie sur les pondeuses est utilisé pour le démarrage des poussins
+  et la réponse précise le contexte local.
+- **Appui partiel.** Pour le tannage, l’article de Low-tech Magazine
+  mentionne l’activité et la réponse reconnaît l’absence de méthode.
+  Le guide OMS sur l’eau traite le point d’utilisation. Les éléments
+  extrapolés depuis les autres lectures demandent une vérification distincte.
+- **Citations hors sujet.** La liste de parahomonymes ne justifie pas les
+  conseils de perçage du béton. Le tutoriel de filtre à eau ne documente pas
+  le choix d’un masque. Aucun des deux cas ne porte le bandeau d’avertissement.
+  Sur les semences, deux sources ont été ouvertes et aucune citée.
+
+Le début de la campagne laisse « Protection civile en temps de guerre ? »
+sans source ouverte. Sur le candidat 0.108.0, les requêtes « protection
+civile en temps de guerre » et « abri en cas de bombardement » font remonter
+en premier le guide *Tous responsables : se préparer aux crises* du SGDSN,
+aux pages PDF 9 et 10. La page 9 traite l’engagement majeur et les signaux
+d’alerte. La page 10 décrit les consignes générales d’alerte. L’essai ciblé
+Gemma a ouvert puis cité la page 9 pour le conseil de laisser les réseaux
+libres aux secours. Les deux pages donnent des consignes générales et leur
+portée doit rester explicite. Le relevé de 68 questions a été réutilisé
+sans exécuter une nouvelle campagne.
+
+Les témoins du candidat retrouvent les guides MSF pour « paracétamol »
+en Autonomie. En Savoirs et culture, les résultats équivalents viennent
+des encyclopédies et « règles des échecs » retrouve les pages de jeu.
+Les salutations et les demandes de vidéos gardent leurs parcours selon
+les tests. Sur le labo, le calcul « Calcule 12 × 4 » a répondu 48 sans
+source documentaire.
+
+### Rapprochement réel du fonds et dictionnaires — 23 novembre 2026
+
+Le pilote et le portail candidats ont été démarrés sur le labo isolé
+Bazzite, sur 18000 et 18080. Kiwix et Open WebUI ont repris sur 18081 et
+13000. L’installation sur 8080 est restée en service. Le relevé de l’index
+texte indique **205 archives traitées sur 205**.
+
+Dans Chromium, **Organiser les collections → Comparer avec la bibliothèque
+de référence** a affiché « Aucun écart de fichier ou de classement ». Le
+contrôleur du labo, limité aux opérations de consultation pour cet essai,
+a confirmé **205 conformes**. L’aperçu de retour à la référence a compté
+zéro téléchargement, suppression ou déplacement, avec confirmation
+désactivée. L’export du tri est identique avant et après. Le contrôle rapide
+s’appuie sur les tailles et les reçus SHA-256 existants.
+
+Les trois Wiktionnaires sont dans **Autre**. Pour « compost » limité à
+Wiktionnaire, Autonomie a interrogé zéro archive et **Autre** a retrouvé
+le Wiktionnaire français et anglais. L’entrée française s’ouvre dans le
+lecteur. **Toute la bibliothèque** les retrouve aussi. L’essai Gemma
+« Comment faire du compost ? », dans l’espace par défaut, a ouvert cinq
+sources et en a cité quatre, sans Wiktionnaire. Le tri initial vient de
+l’export existant et le tri local continue de déterminer les collections
+recherchées.
+
+### Quatre lacunes après lecture du fonds
+
+Contrôle sur le labo, 205 ZIM et 18 PDF de la 0.100.0 présents. Le calcul
+**87 → 105 sur 136** porte sur les requêtes qui remontent au moins un
+résultat. Une reformulation peut trouver une mention ou un article général
+sans fournir une réponse directement utilisable.
+
+| Cas | Document présent et indexé dans le labo | Ce que la recherche et l’ouverture ont établi | Source repérée en ligne |
+| --- | --- | --- | --- |
+| Stockage domestique des carburants | INRS ED 753, 39 passages indexés. | « Conserver de l’essence longtemps » est vide. « Stockage du gazole en jerrican » remonte la page PDF 24. La brochure traite les risques chimiques en milieu de travail et ne répond pas à la durée de conservation de l’essence à domicile. | L’[arrêté du 1er juillet 2004, art. 2](https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000437731/2026-06-18) couvre notamment le gazole et le fioul. Son périmètre ne comprend pas l’essence. |
+| Rongeurs et réserves | Articles zoologiques retrouvés dans le Wikipédia français. Aucun guide dédié repéré parmi les PDF. | « Protéger les réserves des rongeurs » est vide en Autonomie, et la variante élargie remonte un thésaurus, un article d’oiseau et un texte ancien. Les résultats zoologiques ne répondent pas à la protection du stock. | Le [rapport CNEV de mars 2015, § 2.3.2](https://www.anses.fr/fr/system/files/CNEV-Ft-Mars2015-Typhus_murin.pdf) traite les réserves et les accès des rongeurs dans le cadre du typhus murin. La réutilisation commerciale du PDF reste à établir. |
+| Pêche en rivière | Guide DGS sur l’autoconsommation, 22 passages indexés, et page « Pêche sportive » dans Wikiversité. | « Pêcher en rivière » est vide. « Pêche eau douce » retrouve la page 15 de la DGS et l’article Wikiversité. Le guide porte sur la sécurité de la consommation. L’article est une introduction et ne donne pas les règles locales à jour. | [Service Public, fiche F2117](https://www.service-public.gouv.fr/particuliers/vosdroits/F2117), vérifiée le 25 septembre 2026, donne les règles générales et renvoie aux variations locales. Vérifier les conditions pour le fichier retenu. |
+| Élevage de chèvres | « Élevage caprin », retrouvé dans le Wikipédia français et ouvert. Les PDF sur les pondeuses, lapins et autres volailles portent sur d’autres élevages. | « Élever des chèvres » est vide. « Élevage caprin » retrouve l’article encyclopédique derrière une occurrence MSF hors sujet. L’article décrit la filière et les modes d’élevage, avec peu d’aide pratique pour débuter. | Le [Pense-bête caprin de l’Institut de l’élevage](https://idele.fr/inosys-reseaux-elevage/publications/detail-article?cHash=75041c6a4722dcad5fd7f811ca166c53&tx_atolidelecontenus_publicationdetail%5Baction%5D=showArticle&tx_atolidelecontenus_publicationdetail%5Bcontroller%5D=Detail&tx_atolidelecontenus_publicationdetail%5Bprojet%5D=28&tx_atolidelecontenus_publicationdetail%5Bpublication%5D=25667) a été publié le 10 juillet 2026. Ses [conditions de reproduction](https://idele.fr/mentions-legales) exigent l’accord du titulaire pour la diffusion numérique du document. |
+
+Les pistes en ligne n’ont pas été versées au fonds. Le caractère complet
+d’une réponse de l’API signifie que la requête s’est terminée sur son
+périmètre, sans démontrer l’absence d’une source dans tout le fonds.
+
+### Éditions, provenance et droits des 18 PDF
+
+Les 18 fichiers du labo correspondent par SHA-256 au catalogue, avec au
+moins un passage indexé par fichier. Louis indique qu’ils ont été
+téléchargés chez Marc. Leur état d’indexation et le tri chez Marc restent
+à confirmer sur son installation.
+
+| Sources | Édition ou date relevée | Droit de diffusion commerciale |
+| --- | --- | --- |
+| Préfecture de la Gironde et DGA | Fiche Gironde, date de fichier novembre 2022. Guide DGA, 4e édition décembre 2022. | Autorisation de redistribution du PDF complet à établir. |
+| ADEME, faire durer les objets, smartphone, compostage | Janvier 2019, fichier smartphone septembre 2025 et septembre 2020. | Le smartphone crédite des photos de tiers, dont Shutterstock et Adobe Stock. Autorisation des fichiers complets à établir. |
+| INRS ED 753 et FAO, lapin | Copyright INRS 2016 sur l’exemplaire. Introduction de l’édition révisée FAO 1996, ISBN 92-5-203441-2. | Autorisation requise selon les mentions de l’[INRS](https://www.inrs.fr/footer/mentions-legales) et de la [FAO](https://www.fao.org/4/t1690f/t1690f.pdf). |
+| DGS et ANSES | DGS, juillet 2023, copyright 2022. Infographie champignons, fichier diffusé en 2018. Avis punaises de lit, juillet 2023. | Les [mentions de l’ANSES](https://www.anses.fr/fr/mentions-legales-site-ansesfr) distinguent données publiques et contenus sous CC BY-NC-ND. Vérifier le régime de chaque document et des illustrations avant diffusion. |
+| FFESSM, pêche sous-marine niveaux 2 et 3 | Les deux datent de janvier 2016 et se réfèrent à la formation de 2013. | La [FFESSM](https://ffessm.fr/conditions-generales-d-utilisation) réserve l’exploitation de ses contenus. Autorisation et mise à jour des références réglementaires à vérifier. |
+| Mer et DIRM | Loisirs sous-marins, mars 2025. Écogestes, édition 2024. Fiche Méditerranée, campagne 2026 intégrant l’arrêté du 1er avril 2026. | Autorisation des trois fichiers, illustrations comprises, à établir. |
+| Polynésie française, ITAVI et DJEPVA | Pondeuses, fichier 2024. Coups de chaleur, fichier 2020. Obligations comptables, fichier créé en 2016 et modifié en 2017. | Autorisation de redistribution du PDF complet à établir. |
+
+Les 18 entrées restent signalées pour examen avant commercialisation.
+L’inventaire vidéo de Marc reste attendu pour comparer les vidéos
+individuelles, les pistes et les éditions.

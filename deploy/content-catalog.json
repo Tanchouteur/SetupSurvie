@@ -2473,7 +2473,7 @@
         "stockage",
         "liquides inflammables"
       ],
-      "edition": "ED 753, PDF 2012 ; collecte 2026-11-22",
+      "edition": "ED 753, © INRS 2016 ; collecte 2026-11-22",
       "language": "fr",
       "publisher": "INRS",
       "path": "library/guides/EXT-inrs-ed753-stockage.fr.pdf",
@@ -2482,7 +2482,7 @@
       "sha256": "eea09ec1073187ba08f1ebfa1401d962ff54d5b85bff78cbab044e8b088ec4a6",
       "hash_source": "calculated-from-https-source",
       "commercial_review": true,
-      "licence": "Consultation personnelle ; conditions de réutilisation non précisées par l’éditeur, à vérifier avant diffusion commerciale.",
+      "licence": "© INRS 2016. Reproduction et redistribution hors usage privé soumises à l’autorisation de l’INRS.",
       "priority": "P1"
     },
     {
@@ -2540,7 +2540,7 @@
         "apnée",
         "sécurité"
       ],
-      "edition": "formation pratiquant ; collecte 2026-11-22",
+      "edition": "formation pratiquant, janvier 2016 ; collecte 2026-11-22",
       "language": "fr",
       "publisher": "FFESSM",
       "path": "library/guides/EXT-ffessm-psm-n2.fr.pdf",
@@ -2627,7 +2627,7 @@
         "élevage",
         "lapins"
       ],
-      "edition": "2011 ; collecte 2026-11-22",
+      "edition": "version révisée, FAO 1996 ; collecte 2026-11-22",
       "language": "fr",
       "publisher": "FAO",
       "path": "library/guides/EXT-fao-lapin-intro.fr.pdf",
@@ -2636,7 +2636,7 @@
       "sha256": "1c3224f26910a1c0bef5a6fb83fe927598668fa8b4a58042b752876f9a2265be",
       "hash_source": "calculated-from-https-source",
       "commercial_review": true,
-      "licence": "Consultation personnelle ; conditions de réutilisation non précisées par l’éditeur, à vérifier avant diffusion commerciale.",
+      "licence": "© FAO 1996, tous droits réservés. Autorisation préalable prévue par la publication pour la reproduction et la diffusion.",
       "priority": "P1"
     },
     {
@@ -2714,7 +2714,7 @@
         "réglementation",
         "Méditerranée"
       ],
-      "edition": "2026-01 ; collecte 2026-11-22",
+      "edition": "2026, inclut l’arrêté du 1er avril 2026 ; collecte 2026-11-22",
       "language": "fr",
       "publisher": "DIRM Méditerranée",
       "path": "library/guides/EXT-dirm-peche-mediterranee.fr.pdf",
