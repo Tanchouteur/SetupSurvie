@@ -139,6 +139,28 @@ class CategorySearchTests(unittest.TestCase):
             ))
             self.assertFalse(asyncio.run(library.search('conservation des aliments', kind='documents', domain='resilience')))
 
+    def test_valueless_html_attributes_are_read_as_empty(self):
+        # ready.gov (22 Nov 2026): <span class> stopped the whole classification.
+        from pilot.html_text import Text
+        from pilot.illustrations import HTMLFigures
+        reader=Text();reader.feed('<html lang><body><span class>Eau</span><img class src="a.png" alt></body></html>')
+        self.assertIn('Eau',''.join(reader.parts))
+        figures=HTMLFigures();figures.feed('<figure class><img class src="a.png" alt><figcaption class>Pompe</figcaption></figure>')
+        self.assertEqual(figures.images[0]['src'],'a.png')
+
+    def test_one_failing_archive_is_reported_and_the_others_continue(self):
+        other=self.root/'guides_fr_2026-11.zim'
+        other.write_bytes(self.zim.read_bytes())
+        original=archive_index.build_archive
+        def build(path,*args,**kwargs):
+            if path==self.zim:raise AttributeError('fixture')
+            return original(path,*args,**kwargs)
+        with patch.object(archive_index,'build_archive',side_effect=build):
+            report=category_index.prepare(self.root,self.state,reserve=0)
+        self.assertEqual(report['phase'],'error')
+        self.assertEqual(report['failures'],[{'archive':self.zim.name,'error':'AttributeError'}])
+        self.assertEqual(report['completed'],1)
+
     def test_correction_invalidates_then_rebuilds_the_category_index(self):
         from pilot import catalogue
         category_index.prepare(self.root,self.state,reserve=0)
