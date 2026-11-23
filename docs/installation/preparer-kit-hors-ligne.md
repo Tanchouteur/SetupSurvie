@@ -88,7 +88,8 @@ relit chaque fichier listé dans `backup.json`, refuse un fichier hors
 périmètre et indique le système d’origine. Pour une sauvegarde créée depuis
 la 0.94.0, il applique la règle de restauration : même format des données,
 même image Open WebUI, kit de même version ou plus récent et noms de fichiers
-compatibles entre les deux systèmes. Une sauvegarde
+compatibles entre les deux systèmes. Sur Linux, évitez les noms réservés par
+Windows, comme `COM¹.txt`, et les caractères de contrôle. Une sauvegarde
 plus ancienne est signalée comme restaurable seulement sur le même système.
 En ligne de commande :
 
