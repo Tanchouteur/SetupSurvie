@@ -1,6 +1,6 @@
 # Contrôle graphique du kit hors ligne
 
-**Bilan du 22 novembre 2026 — SetupSurvie 0.110.0.** La version mineure
+**Bilan du 22 novembre 2026 — SetupSurvie 0.111.0.** La version mineure
 ajoute un lanceur de contrôle graphique pour les fichiers du kit et les
 installateurs présents. Le résultat distingue les systèmes avec et sans
 installateurs embarqués.

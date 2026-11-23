@@ -353,6 +353,9 @@ SYNONYMS['ph']=['ph','acidity','acidite']
 SYNONYMS['cordage']=['cordage','cordages','rope','ropes','cord']
 SYNONYMS['couture']=['couture','sewing','stitching','mending']
 SYNONYMS['etalonnage']=['etalonnage','calibration','calibrating']
+# Official civil-protection guides speak of alert and threat rather than bombing or war.
+for _word in ('bombardement','bombardements','guerre','attaque','frappe','frappes'):
+    SYNONYMS[_word]=[_word,'alerte','menace','conflit','attaque','bombardement','war','attack','air raid']
 LEARNING_ENGLISH.update({'electromagnetisme':'electromagnetism','moteurs':'motors','roues':'wheels','hydrauliques':'hydraulic'})
 for french,english in LEARNING_ENGLISH.items():
     SYNONYMS[french]=list(dict.fromkeys(SYNONYMS.get(french,[french])+[english]))

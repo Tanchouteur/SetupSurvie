@@ -72,7 +72,7 @@ La copie du kit sur le volume limité de Louis garde tous ses contrôles de capa
 
 ## Vérifier le SSD avant de partir
 
-Depuis la 0.110.0, ouvrir **Verifier-Kit-SetupSurvie.cmd** sous Windows ou
+Depuis la 0.111.0, ouvrir **Verifier-Kit-SetupSurvie.cmd** sous Windows ou
 **Verifier-Kit-SetupSurvie.desktop** sous Linux, dans le dossier `app` du
 kit. Le lanceur indique les fichiers endommagés ou manquants et vérifie
 les installateurs présents. L’absence d’installateurs d’un système indique

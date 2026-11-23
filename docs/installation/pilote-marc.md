@@ -232,7 +232,7 @@ par IP et QR code (**Mon appareil → Paramètres → Profils et connexion**).
 
 ## Sauvegarder et restaurer
 
-Depuis la 0.109.0, ouvrir **Transférer SetupSurvie** puis choisir
+Depuis la 0.110.0, ouvrir **Transférer SetupSurvie** puis choisir
 **Sauvegarder mes données**. Sur une installation Linux avec un moteur Docker
 dédié, cette action se trouve aussi dans **Entretien de SetupSurvie** et
 demande une autorisation administrateur. Choisir le disque et confirmer.
@@ -284,7 +284,7 @@ les garder hors de la bibliothèque publique.
 Depuis la 0.94.0, une machine Linux préparée peut charger une sauvegarde privée
 Windows, et une machine Windows préparée peut charger une sauvegarde privée
 Linux. Il faut créer cette sauvegarde avec la 0.94.0 ou une version ultérieure et
-emporter un kit public complet de même version. Depuis la 0.108.0, un kit
+emporter un kit public complet de même version. Depuis la 0.109.0, un kit
 plus récent convient aussi si le format des données et l’image Open WebUI
 sont identiques. Le lanceur refuse un kit plus ancien. Le kit fournit les
 modèles, les ZIM et les cartes. Préparer sur la machine cible Python, Docker avec Compose
