@@ -361,7 +361,9 @@ def build(source,root,*,cancel=None,checkpoint=128,reserve=1_000_000_000):
                     if fingerprint(source,archive)!=revision:raise ArchiveChanged()
             return reused
     if building.exists():
-        with connect(building,True) as db:prior=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
+        # An interrupted write can leave a hot journal. Under the archive
+        # lease, open read-write so SQLite can restore the last checkpoint.
+        with connect(building) as db:prior=json.loads(db.execute("SELECT value FROM metadata WHERE key='source'").fetchone()[0])
         if prior['revision']!=revision:
             # Keep an interrupted older edition for diagnosis; do not mix rows.
             retired=root/(key+'.interrupted-'+str(time.time_ns())+'.sqlite');durable.publish(building,retired)

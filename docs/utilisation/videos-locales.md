@@ -32,6 +32,9 @@ un inventaire interrompu par un redémarrage reprend au démarrage suivant. Les
 vidéos des collections ZIM demandent un examen distinct. La [première installation](../installation/README.md) le programme pour les archives présentes. Un ZIM nouveau ou remplacé est ensuite examiné automatiquement pendant le
 créneau choisi dans **Préparation automatique des archives**. Vous pouvez aussi
 lancer l’examen ou le mettre en pause depuis la file ou le portail.
+Après une coupure pendant l’écriture, la reprise de l’examen d’un ZIM
+récupère le dernier point enregistré dans le journal SQLite. Les résultats
+publiés restent consultables pendant la reprise.
 
 Le travail continue si l’onglet est fermé. **Arrêter l’inventaire** conserve l’ancien
 index ; une nouvelle actualisation recommence son examen sans altérer les fichiers.

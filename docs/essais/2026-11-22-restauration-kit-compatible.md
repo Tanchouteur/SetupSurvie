@@ -1,6 +1,6 @@
 # Restauration avec un kit plus récent
 
-**Bilan du 22 novembre 2026 — SetupSurvie 0.108.0.** La version mineure
+**Bilan du 22 novembre 2026 — SetupSurvie 0.109.0.** La version mineure
 permet de restaurer une sauvegarde créée par une version antérieure de
 SetupSurvie lorsque le format des données et l’image Open WebUI sont
 identiques. Le kit doit être de même version ou plus récent.
