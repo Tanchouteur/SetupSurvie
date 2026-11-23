@@ -288,7 +288,8 @@ class VideoAssistantTests(unittest.TestCase):
         _,saved=self.run_chat([{'content':'Aucune vidéo sur la soudure.'}],search=search)
         self.assertNotIn('Vidéos trouvées',saved['content'])
 
-    def test_model_can_call_find_videos_itself(self):
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_model_can_call_find_videos_itself(self,_automatic):
         self.question('Bonjour, et pour les abris ?')
         video=self.video()
         async def search(query,language='',**options):

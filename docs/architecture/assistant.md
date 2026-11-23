@@ -181,6 +181,24 @@ les pages effectivement retenues bénéficient d’un lien direct vers cette pag
 Une référence inconnue garde le contrôle d’échec. La validité du numéro ne certifie
 ni l’affirmation ni l’usage de la pagination imprimée.
 
+## La bibliothèque d’abord — 0.108.0
+
+Depuis la 0.108.0, toute question qui porte un sujet est d’abord cherchée et
+lue dans la bibliothèque, avant la rédaction : questions en « quel… », « que
+faire… », « pourquoi… », et demandes courtes comme « tanner une peau ? ».
+Auparavant, seules les questions en « comment… », de dimensions ou avec un
+verbe d’action déclenchaient cette préparation ; pour les autres, un petit
+modèle répondait souvent de mémoire. Restent exclus : salutations et
+remerciements, calculs (« calcule », « combien », « convertir »), demandes de
+position et demandes de vidéos, qui ont leur propre recherche.
+
+Sur le labo Bazzite (`gemma4:e4b`, 205 archives), le relevé de 68 questions
+passe de 24 à 53 réponses avec au moins une source ouverte, de 23 à 48 avec
+une citation et de 15 à 5 portant « Références à vérifier ». Plusieurs
+citations correspondent à des passages hors sujet. Le
+[bilan du labo](../bibliotheque/classement-pratique-et-laboratoire-bazzite.md#lecture-du-relevé-des-68-questions)
+donne les exemples relus et l’essai ciblé sur la protection civile.
+
 ## Procédures ordinaires — 0.19.1
 
 Le choix des passages analyse tous les mots utiles de la question bornée, y

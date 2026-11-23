@@ -32,15 +32,15 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 23 novembre 2026
 
-- [Vérification de la sauvegarde avant le départ](2026-11-23-verifier-sauvegarde-hors-ligne.md) — 0.111.0, manifeste, périmètre et compatibilité avec le kit.
+- [Vérification de la sauvegarde avant le départ](2026-11-23-verifier-sauvegarde-hors-ligne.md) — 0.112.0, manifeste, périmètre et compatibilité avec le kit.
 
 ## 22 novembre 2026
 
-- [Contrôle graphique du kit hors ligne](2026-11-22-verifier-kit-hors-ligne.md) — 0.110.0, empreintes des fichiers et installateurs.
+- [Contrôle graphique du kit hors ligne](2026-11-22-verifier-kit-hors-ligne.md) — 0.111.0, empreintes des fichiers et installateurs.
 
-- [Sauvegarde personnelle depuis l’assistant](2026-11-22-sauvegarde-personnelle-graphique.md) — 0.109.0, destination et exclusion mutuelle testées.
+- [Sauvegarde personnelle depuis l’assistant](2026-11-22-sauvegarde-personnelle-graphique.md) — 0.110.0, destination et exclusion mutuelle testées.
 
-- [Restauration avec un kit plus récent](2026-11-22-restauration-kit-compatible.md) — 0.108.0, contrôle du format des données et des images.
+- [Restauration avec un kit plus récent](2026-11-22-restauration-kit-compatible.md) — 0.109.0, contrôle du format des données et des images.
 
 - [Restauration depuis le kit sur Linux sans Python ni Docker](2026-11-22-restauration-linux-neuf.md) — 0.107.0, extraction des outils et reprise avec moteur simulé.
 

@@ -169,6 +169,10 @@ def plan(query,words,synonyms,collection=''):
     if re.search(r'\b(pourquoi|why)\b',raw) and not re.search(r'\b(comment|how)\b',raw):practical=False
     vocabulary=set(synonyms)|{word for concept in CONCEPTS.values() for word in concept['terms']}
     terms=[w[:-1] if w not in vocabulary and w.endswith('s') and w[:-1] in vocabulary else w for w in words if w not in EXTRA_STOP]
+    if re.search(r'\bprotection civile\b',raw):
+        terms=['protection civile' if w=='protection' else w for w in terms if w!='civile']
+        if 'en temps de' in raw:terms=[w for w in terms if w!='temps']
+        synonyms={**synonyms,'protection civile':['consignes','sauvegarde','civil protection']}
     meaningful=[w for w in terms if w not in ACTIONS]
     if meaningful:terms=meaningful
     if any(w in CONCEPTS['feu']['terms'] for w in terms):terms=[w for w in terms if w not in ('start','starting','make','making','produce')]
@@ -233,6 +237,10 @@ def rank(item,query,position=0,*,normalizer=None):
     text_hits=sum(any(term<=text_tokens for term in group) for group in query.token_groups)/len(query.groups)
     score=65*title_hits+25*text_hits+8/(1+item.get('_rank',position))
     if title_hits<1 and text_hits<1:score-=35
+    if 'protection civile' in query.words and re.search(r'\b(engagement majeur|menace d origine etatique|conflit arme)\b',text):
+        score+=55
+    if 'abri' in query.words and {'bombardement','bombardements'} & set(query.words) and source_role(item)=='practical':
+        if 'en cas d alerte' in text and text_tokens & {'consigne','consignes'}:score+=55
     if query.action:
         evidence=INTENTS[query.action]
         if re.search(evidence,title):
@@ -483,10 +491,10 @@ def application_domains(item, indexed=None):
     if role in CULTURE_SOURCE_ROLES:
         return ['culture']
     found = domains(item) if indexed is None else indexed
-    # Pages of a practical guide (MSF, OMS, SGDSN…) stay searchable in Autonomie,
-    # whatever words a single page happens to contain.
-    if role == 'practical' and 'resilience' not in found:
-        return ['resilience', *found]
+    # Pages of a practical guide (MSF, OMS, SGDSN…) belong to Autonomie, whatever
+    # words a single page happens to contain (« histoire », « échec du traitement »…).
+    if role == 'practical':
+        return ['resilience']
     return found
 
 

@@ -72,7 +72,7 @@ La copie du kit sur le volume limité de Louis garde tous ses contrôles de capa
 
 ## Vérifier le SSD avant de partir
 
-Depuis la 0.110.0, ouvrir **Verifier-Kit-SetupSurvie.cmd** sous Windows ou
+Depuis la 0.111.0, ouvrir **Verifier-Kit-SetupSurvie.cmd** sous Windows ou
 **Verifier-Kit-SetupSurvie.desktop** sous Linux, dans le dossier `app` du
 kit. Le lanceur indique les fichiers endommagés ou manquants et vérifie
 les installateurs présents. L’absence d’installateurs d’un système indique
@@ -82,7 +82,7 @@ Le contrôle fonctionne sans Docker et ne modifie aucun fichier du kit.
 Les mêmes prérequis graphiques que pour le bouton de duplication
 s’appliquent.
 
-Depuis la 0.111.0, le même lanceur propose de vérifier aussi une sauvegarde
+Depuis la 0.112.0, le même lanceur propose de vérifier aussi une sauvegarde
 personnelle : répondre **Oui**, puis choisir son dossier daté. Le contrôle
 relit chaque fichier listé dans `backup.json`, refuse un fichier hors
 périmètre et indique le système d’origine. Pour une sauvegarde créée depuis

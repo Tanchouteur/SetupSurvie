@@ -1,6 +1,6 @@
 # Vérification de la sauvegarde personnelle avant le départ hors ligne
 
-**Bilan du 23 novembre 2026 — SetupSurvie 0.111.0.** La version mineure
+**Bilan du 23 novembre 2026 — SetupSurvie 0.112.0.** La version mineure
 ajoute au lanceur **Vérifier le kit SetupSurvie** un contrôle facultatif de
 la sauvegarde personnelle, ainsi que la commande `pilot_backup.py verify`.
 La restauration réutilise les mêmes contrôles de manifeste, de périmètre et de
