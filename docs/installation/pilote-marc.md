@@ -292,6 +292,16 @@ laisser le SSD branché et rouvrir le même lanceur. Docker Desktop
 peut demander de terminer sa configuration ou d’accepter sa licence.
 Voir [la préparation Windows hors ligne](deux-etapes-windows.md).
 
+Depuis la 0.107.0, le lanceur Linux sait aussi restaurer la sauvegarde sur
+un PC sans Python ou Docker déjà installé. Pour Debian 12, Debian 13 ou
+Ubuntu 22.04 x86-64 avec Zenity et PolicyKit, préparer le dossier
+`installateurs-linux` sur le kit. Dans la fenêtre, choisir la sauvegarde
+puis le disque de destination et valider l’autorisation administrateur.
+Le lanceur reprend dans `SetupSurvie-Restaure` en sélectionnant le même
+kit, la même sauvegarde et le même disque. Lorsque la restauration est
+terminée, les services sont configurés pour démarrer avec la machine,
+sans le SSD. Ouvrir `http://127.0.0.1:8080` depuis ce PC.
+
 Sur une machine préparée avec Python et son interface Tkinter, ouvrir dans le
 dossier `app` du kit **Restaurer-Mes-Donnees-SetupSurvie.cmd** sous Windows ou
 **Restaurer-Mes-Donnees-SetupSurvie.desktop** sous Linux. La fenêtre demande de

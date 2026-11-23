@@ -579,12 +579,12 @@ archives. Le lanceur limite désormais les archives et moteurs de recherche
 gardés ouverts (16, 8 et 8) : pic de 6,0 Go sur les 136 requêtes, sans
 redémarrage ni perte de résultat, et 90 % des requêtes sous 3,3 s.
 
-### Cas limites de l’assistant — 0.107.0, 23 novembre 2026
+### Cas limites de l’assistant — 0.108.0, 23 novembre 2026
 
 L’essai de l’assistant sur une question par thème de Marc (68 questions)
 montrait 23 réponses citant un document en 0.100.0 : les questions sans
 « comment » ni verbe d’action n’étaient pas cherchées automatiquement. La
-0.107.0 cherche d’abord dans la bibliothèque pour toute question avec un
+0.108.0 cherche d’abord dans la bibliothèque pour toute question avec un
 sujet (48 réponses citant un document lu). Elle range aussi les pages des
 guides pratiques uniquement en Autonomie (un homonyme « échec du traitement »
 faisait sortir le guide MSF pour « règles des échecs ») et relie le

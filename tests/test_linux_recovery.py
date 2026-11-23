@@ -348,11 +348,12 @@ class LinuxRecoveryTests(unittest.TestCase):
         (scripts / 'linux_recovery_admin.sh').touch()
         (scripts / 'zenity').write_text(
             '#!/bin/sh\ncase "$1" in\n'
-            '--file-selection) printf "/srv/Disque SSD\\n";;\n'
+            '--file-selection) case "$*" in *sauvegarde*) printf "%s\\n" "$BACKUP";; '
+            '*) printf "/srv/Disque SSD\\n";; esac;;\n'
             '--list) case "$*" in *--title="Entretien de SetupSurvie"*) printf "cancel-point\\n";; '
             '*--radiolist*) printf "autre\\n";; esac;;\n'
             '--progress) cat >"$RESULT.progress";;\n'
-            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label=Installer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
+            '--question) case "$*" in *--ok-label=Dupliquer*|*--ok-label=Restaurer*|*--ok-label=Installer*|*--ok-label="Redémarrer SetupSurvie"*) exit 0;; '
             '*) exit 1;; esac;;\n'
             'esac\n')
         (scripts / 'pkexec').write_text(
@@ -379,6 +380,16 @@ class LinuxRecoveryTests(unittest.TestCase):
         arguments = result.with_suffix('.args').read_text().splitlines()
         self.assertEqual(arguments[-4:],
                          ['install-kit', str(self.source), '/srv/Disque SSD/SetupSurvie-Kit', 'yes'])
+
+        backup = self.directory/'Sauvegarde'
+        backup.mkdir()
+        (backup/'backup.json').touch()
+        subprocess.run(['bash', scripts/'linux_recovery_gui.sh', 'restore-kit', self.source],
+                       check=True, timeout=10, env={**os.environ, 'BACKUP': str(backup),
+                           'RESULT': str(result), 'PATH': f'{scripts}:{os.environ["PATH"]}'})
+        arguments = result.with_suffix('.args').read_text().splitlines()
+        self.assertEqual(arguments[-4:],
+                         ['restore-kit', str(self.source), '/srv/Disque SSD/SetupSurvie-Restaure', str(backup)])
 
         subprocess.run(['bash', scripts / 'linux_recovery_gui.sh', 'duplicate', self.source],
                        check=True, timeout=10, env={**os.environ,

@@ -181,9 +181,9 @@ les pages effectivement retenues bénéficient d’un lien direct vers cette pag
 Une référence inconnue garde le contrôle d’échec. La validité du numéro ne certifie
 ni l’affirmation ni l’usage de la pagination imprimée.
 
-## La bibliothèque d’abord — 0.107.0
+## La bibliothèque d’abord — 0.108.0
 
-Depuis la 0.107.0, toute question qui porte un sujet est d’abord cherchée et
+Depuis la 0.108.0, toute question qui porte un sujet est d’abord cherchée et
 lue dans la bibliothèque, avant la rédaction : questions en « quel… », « que
 faire… », « pourquoi… », et demandes courtes comme « tanner une peau ? ».
 Auparavant, seules les questions en « comment… », de dimensions ou avec un

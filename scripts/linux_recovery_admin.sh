@@ -23,10 +23,16 @@ case "$action:$#" in
         [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
         [[ -f "$source_base/transfer.json" ]] || die 'Ce support ne contient pas de copie SetupSurvie.'
         ;;
-    install-kit:4)
+    install-kit:4|restore-kit:4)
         source_base=$(realpath -e -- "$2")
         dest=$3
-        [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
+        if [[ "$action" == restore-kit ]]; then
+            backup=$(realpath -e -- "$4")
+            [[ -f "$backup/backup.json" && ! -L "$backup/backup.json" ]] ||
+                die 'Choisissez le dossier de la sauvegarde personnelle.'
+        else
+            [[ $4 == yes || $4 == no ]] || die 'Choix du point de restauration invalide.'
+        fi
         [[ -f "$source_base/manifest.json" && "$source_base/app/scripts" == "$script_dir" ]] ||
             die 'Ouvrez le lanceur Linux depuis le dossier app du kit public.'
         ;;
@@ -53,10 +59,10 @@ for directory in "$parent" "$base"; do
         directory=$(dirname -- "$directory")
     done
 done
-if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit || "$action" == restore-kit ) && ( "$source_base/" == "$base/"* || "$base/" == "$source_base/"* ) ]]; then
     die 'Choisissez une destination distincte du dossier de secours.'
 fi
-if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
+if [[ ( "$action" == install || "$action" == duplicate || "$action" == install-kit || "$action" == restore-kit ) && $(stat -c %d -- "$source_base") == $(stat -c %d -- "$parent") ]]; then
     die 'Choisissez un disque différent du SSD de secours.'
 fi
 if [[ "$action" == duplicate ]]; then
@@ -71,21 +77,34 @@ if [[ "$action" == duplicate ]]; then
     "$scratch/outils/bin/python3" "$application/scripts/linux_recovery.py" "$parent" duplicate "$source_base" "$base"
     exit
 fi
-if [[ "$action" == install-kit ]]; then
+if [[ "$action" == install-kit || "$action" == restore-kit ]]; then
     lock="$parent/.$(basename -- "$base").installation-kit.lock"
     [[ ! -L "$lock" && ( ! -e "$lock" || -f "$lock" ) ]] || die 'Verrou d’installation invalide.'
     exec 9>>"$lock"
     flock -n 9 || die 'Cette installation est déjà en cours.'
     stamp="$base/.kit-source.sha256"
     fingerprint=$(sha256sum -- "$source_base/manifest.json")
-    fingerprint="${fingerprint%% *}:$4"
+    fingerprint=${fingerprint%% *}
+    if [[ "$action" == restore-kit ]]; then
+        [[ "$backup/" != "$base/"* && "$base/" != "$backup/"* &&
+           "$backup/" != "$source_base/"* && "$source_base/" != "$backup/"* ]] ||
+            die 'Choisissez des dossiers distincts pour le kit, la sauvegarde et la destination.'
+        backup_digest=$(sha256sum -- "$backup/backup.json")
+        fingerprint="$fingerprint:restauration:${backup_digest%% *}"
+        options=(--backup "$backup")
+        resume_message='Reprenez avec le même kit et la même sauvegarde.'
+    else
+        fingerprint="$fingerprint:$4"
+        options=(--point "$4")
+        resume_message='Reprenez avec le même kit et le même choix de point de restauration.'
+    fi
     if [[ ! -e "$base" ]]; then
         mkdir -- "$base"
     fi
     [[ $(stat -c '%u:%a' -- "$base") == 0:700 ]] || die 'Dossier de destination déjà utilisé.'
     if [[ -e "$stamp" || -L "$stamp" ]]; then
         [[ -f "$stamp" && ! -L "$stamp" && $(cat -- "$stamp") == "$fingerprint" ]] ||
-            die 'Reprenez avec le même kit et le même choix de point de restauration.'
+            die "$resume_message"
     else
         [[ -z $(find "$base" -mindepth 1 -maxdepth 1 -print -quit) ]] || die 'Dossier de destination déjà utilisé.'
         stamp_tmp=$(mktemp -- "$parent/.kit-source.XXXXXXXX")
@@ -104,7 +123,7 @@ if [[ "$action" == install-kit ]]; then
         die 'Les outils de cette installation ne correspondent pas au kit.'
     export PYTHONDONTWRITEBYTECODE=1
     source "$base/outils-linux/environnement.sh"
-    exec "$base/outils-linux/bin/python3" "$script_dir/linux_public_kit.py" "$base" --kit "$source_base" --point "$4"
+    exec "$base/outils-linux/bin/python3" "$script_dir/linux_public_kit.py" "$base" --kit "$source_base" "${options[@]}"
 fi
 recovery="$parent/.$(basename -- "$base")-secours"
 [[ ! -L "$recovery" ]] || die 'Dossier de secours invalide.'

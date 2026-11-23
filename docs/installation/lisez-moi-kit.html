@@ -64,12 +64,15 @@ repartir d’une nouvelle copie du point protégé, même sans le SSD.</p>
 <p>Prenez le dossier de sauvegarde personnelle qui contient <code>backup.json</code> et le kit public de la même version.</p>
 <p>Sur Windows, le lanceur peut préparer les outils depuis
 <strong>installateurs-windows</strong>. Si Windows demande de redémarrer,
-laissez le SSD branché et rouvrez le même lanceur. Sur Linux, Python avec
-Tkinter, Docker et Compose doivent être prêts pour restaurer les données.</p>
+laissez le SSD branché et rouvrez le même lanceur. Sur Debian 12, Debian 13
+ou Ubuntu 22.04 x86-64, si Python ou Docker manque, le lanceur peut utiliser
+<strong>installateurs-linux</strong>. Le bureau doit permettre Zenity et
+l’autorisation administrateur. Après démarrage des services, le SSD peut
+être retiré. Ouvrez le site à <code>http://127.0.0.1:8080</code>.</p>
 <ol>
 <li>Dans <strong>app</strong>, ouvrez <strong>Restaurer-Mes-Donnees-SetupSurvie.cmd</strong> sous Windows ou <strong>Restaurer-Mes-Donnees-SetupSurvie.desktop</strong> sous Linux.</li>
 <li>Choisissez le dossier de la sauvegarde, puis le disque de destination. Après une interruption, faites les mêmes choix et acceptez de reprendre.</li>
-<li>Ouvrez un ancien échange et un document personnel avant de retirer le SSD. Après un redémarrage, utilisez <strong>Ouvrir SetupSurvie</strong> dans le dossier restauré.</li>
+<li>Ouvrez un ancien échange et un document personnel avant de retirer le SSD. Après un redémarrage, si le site ne s’ouvre pas automatiquement, ouvrez <code>http://127.0.0.1:8080</code>. Sur un PC déjà préparé, utilisez <strong>Ouvrir SetupSurvie</strong> dans le dossier restauré.</li>
 </ol>
 <p>Gardez la sauvegarde d’origine sur un support distinct. Le kit fournit le logiciel et les ressources communes. La sauvegarde apporte les profils, conversations et documents personnels qu’elle contient.</p>
 </section>
