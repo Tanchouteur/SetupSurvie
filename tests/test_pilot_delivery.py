@@ -529,8 +529,15 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
     def test_manifest_rejects_duplicate_case_aliases_and_windows_reserved_paths(self):
         kit=self.root/'kit';kit.mkdir();path=kit/'valid';path.write_bytes(b'fixture')
         good={'path':'valid','bytes':path.stat().st_size,'sha256':setup.file_hash(path)}
-        for records in [[good,good],[good,{**good,'path':'VALID'}],[{**good,'path':'C:private'}],[{**good,'path':'con.txt'}],[{**good,'path':'./valid'}],[{**good,'bytes':True}]]:
-            with self.subTest(records=records),self.assertRaises(setup.SetupError):checked_entries(kit,{'files':records})
+        invalid_paths = ('C:private', 'con.txt', './valid', 'guides/COM¹.txt',
+                         'guides/lPt²/archive.txt', 'guides/guide\n.txt', 'guides/a\x1fb.txt')
+        invalid_records = [[good, good], [good, {**good, 'path': 'VALID'}], [{**good, 'bytes': True}]]
+        for records in invalid_records:
+            with self.subTest(records=records), self.assertRaises(setup.SetupError):
+                checked_entries(kit, {'files': records})
+        for name in invalid_paths:
+            with self.subTest(name=name), self.assertRaisesRegex(setup.SetupError, 'Chemin de contenu non valide'):
+                checked_entries(kit, {'files': [{**good, 'path': name}]})
 
     def test_restore_requires_settings_verified_by_manifest_before_copying(self):
         source=self.root/'backup';kit=self.root/'kit'
@@ -571,7 +578,7 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
     def test_backup_never_marks_nonportable_guide_paths_as_restorable(self):
         app=setup.Installation(self.root/'private');c=app.init('linux',self.root/'data',cpu=True)
         guides=Path(c['data_dir'])/'library/guides'
-        for names in [('con.txt',),('Guide.txt','guide.txt')]:
+        for names in [('con.txt',), ('COM¹.txt',), ('Guide.txt','guide.txt')]:
             for name in names:(guides/name).write_bytes(b'fixture')
             dest=self.root/('backup-'+names[0])
             with patch.object(app,'compose'),self.assertRaises(setup.SetupError):backup(app,c,dest)
