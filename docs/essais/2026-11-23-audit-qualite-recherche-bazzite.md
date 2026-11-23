@@ -116,12 +116,35 @@ requise. Aucune suppression ni modification du fonds de référence.
   deux copies du média. iFixit sert le guide 133026 en anglais dans ses
   deux éditions, avec des habillages et des longueurs de texte différents.
   Un document traduit reste une source distincte.
+- **TED, 30,02 Go dans 18 ZIM.** Le catalogue des vidéos contient 2 772
+  entrées. Le rapprochement par chemin interne et taille trouve 396 groupes
+  candidats sur plusieurs ZIM. Le SHA-256 de chaque média local confirme
+  tous ces groupes, soit 521 occurrences en plus et 5,31 Go de données vidéo
+  répétées. Certains packs peuvent avoir des pistes ou des conférences
+  exclusives. Les Go répétés mesurent le contenu des entrées vidéo. Libérer
+  cet espace impliquerait de choisir des packs ou de reconstruire les ZIM.
 - **Autres gros lots.** Gutenberg représente 195,45 Go dans 24 partitions,
-  TED 30,02 Go dans 18 archives et les trois Wiktionnaires 19,81 Go. La
-  partition, la langue ou la taille signalent où échantillonner. Ces
-  regroupements ne mesurent pas les œuvres ou vidéos réellement en double.
+  et les trois Wiktionnaires 19,81 Go. Leur inventaire signale où
+  échantillonner. Le recouvrement des œuvres ou des définitions reste à
+  mesurer.
 
 ## Résultats corrigés et limites
+
+La campagne HTTP de référence en 0.108.0 a exécuté 166 cas en combinant
+les [besoins de Marc](../../tests/fixtures/domain-evaluation/besoins-marc-2026-11-21.json)
+et la [recette du portail](../../portal/interface/search-reference.json).
+Les deux cas du thème armes ont été écartés de cette passe. Résultat,
+134 recherches avec au moins une réponse, 32 sans résultat et une seule
+couverture signalée partielle. Ces nombres mesurent la récupération des
+candidats, sans note de pertinence automatique.
+
+Le contrôle historique de 18 références précises acquitte 14 ouvertures
+avec texte et fichier source. Le PDF attendu pour « fractions CM2 »,
+« plantes toxiques » et « douleur dents » manque parmi les premiers
+résultats de cette recette. Le même contrôle cherche un identifiant
+cartographique via la recherche documentaire et le catalogue de cartes
+du laboratoire est vide. Le cas cartes reste en échec, à part de la
+qualification du moteur de texte.
 
 - Wikipédia groupe les URLs dont la lecture établit la même destination
   dans la même archive. « Photosynthese » et « Photosynthèse » du même
@@ -157,7 +180,11 @@ restent à traiter avec des sources françaises directement utilisables.
 La suite Python complète du candidat, exécutée dans un conteneur de test
 sans accès au réseau ni aux données du labo sur Bazzite, a terminé avec
 **1 362 tests, 7 ignorés, aucun échec**. Les tests couvrent notamment la
-recherche, le classement et le lecteur d'archives. La 0.108.1 est une
+recherche, le classement et le lecteur d'archives. Les routes de recherche
+JSON et progressive, puis l'ouverture par `/api/source`, ont aussi été
+exercées sur le vrai Kiwix Bazzite pour les alias de photosynthèse, le
+doublon d'autoradio et les semences, avec une requête témoin sans résultat.
+La 0.108.1 est une
 correction compatible. Elle utilise le schéma et les index existants.
 
 ## Reproduction
