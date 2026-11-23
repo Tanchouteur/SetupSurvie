@@ -73,6 +73,21 @@ case "$mode" in
         [[ -n "$selection" ]] && point=yes
         action=install-kit
         ;;
+    restore-kit)
+        backup=$(zenity --file-selection --directory --title="Choisir le dossier de la sauvegarde personnelle" \
+            --filename="$(dirname -- "$base")/") || exit 0
+        if [[ ! -f "$backup/backup.json" ]]; then
+            zenity --error --text="Choisissez le dossier qui contient le fichier backup.json."
+            exit 1
+        fi
+        parent=$(choose_disk) || exit 0
+        [[ "$parent" == /* ]] || exit 0
+        destination="${parent%/}/SetupSurvie-Restaure"
+        zenity --question --title="Restaurer mes données SetupSurvie" \
+            --text="Restaurer ou reprendre dans $destination avec les outils du SSD ?" \
+            --ok-label="Restaurer" --cancel-label="Annuler" || exit 0
+        action=restore-kit
+        ;;
     duplicate)
         parent=$(zenity --file-selection --directory --title="Choisir le second SSD" \
             --filename="$(dirname -- "$base")/") || exit 0
@@ -117,6 +132,7 @@ trap 'rm -rf -- "$tmpdir"' EXIT
     case "$action" in
         install) pkexec --disable-internal-agent /bin/bash "$admin" install "$base" "$destination" "$point" ;;
         install-kit) pkexec --disable-internal-agent /bin/bash "$admin" install-kit "$base" "$destination" "$point" ;;
+        restore-kit) pkexec --disable-internal-agent /bin/bash "$admin" restore-kit "$base" "$destination" "$backup" ;;
         duplicate) pkexec --disable-internal-agent /bin/bash "$admin" duplicate "$base" "$destination" ;;
         point|restore|cancel-point) pkexec --disable-internal-agent /bin/bash "$admin" "$action" "$base" ;;
     esac 2>&1

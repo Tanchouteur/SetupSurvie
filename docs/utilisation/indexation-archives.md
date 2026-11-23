@@ -92,7 +92,7 @@ type d’erreur), les autres archives sont classées, puis la phase finale indiq
 `ready.gov` portant un attribut sans valeur (`<span class>`) arrêtait tout le
 classement ; les lecteurs HTML lisent désormais un tel attribut comme vide.
 
-Depuis 0.106.2, les outils lancés sous Windows (contrôleur, classement) n’ouvrent
+Depuis 0.107.1, les outils lancés sous Windows (contrôleur, classement) n’ouvrent
 plus `pilot.db` : le pilote publie les corrections de classement des archives dans
 `data/state/pilot/catalogue-corrections.json`, au démarrage et à chaque correction,
 et le classement lit ce fichier. Le 23 novembre 2026 chez Marc, la lecture de la

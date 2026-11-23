@@ -59,6 +59,13 @@ class OfflineRestoreTests(unittest.TestCase):
             env={**os.environ, 'PATH': str(shell_tools)+':'+os.environ['PATH']},
         )
         self.assertEqual(result.stdout.splitlines(), ['install-kit', str(kit)])
+        result = subprocess.run(
+            ['sh', ROOT/'scripts/restaurer-donnees-linux.sh', kit],
+            check=True, capture_output=True, text=True, timeout=10,
+            env={**os.environ, 'PATH': str(shell_tools)+':'+os.environ['PATH']},
+        )
+        self.assertEqual(result.stdout.splitlines(), ['restore-kit', str(kit)])
+
 
     @unittest.skipUnless(platform.machine() == 'x86_64', 'Installateurs Linux x86-64.')
     def test_extracted_tools_remove_group_write_permissions(self):
@@ -147,6 +154,28 @@ esac
             self.assertIn('/application/scripts/linux_public_kit.py', service)
             self.assertNotIn(str(kit), service)
             self.assertNotIn('--kit', service)
+
+    def test_public_kit_restores_and_restarts_without_the_ssd(self):
+        import linux_public_kit
+        kit, backup = self.base.parent/'Kit', self.base.parent/'Backup'
+        (kit/'app').mkdir(parents=True)
+        backup.mkdir()
+        with patch.dict(os.environ, {}, clear=True), patch.object(setup, 'ROOT', kit/'app'), \
+             patch.object(restore, 'check_service_tree'), patch.object(restore, 'check_engine'), \
+             patch.object(restore, 'publish_units'), patch.object(restore, 'launch_services') as launch, \
+             patch.object(restore, 'bind_controller_to_engine'), patch.object(setup, 'run'), \
+             patch('linux_offline_tools.prepare_kit'), patch('pilot_backup.read_restore_job', return_value={'phase':'copying'}), \
+             patch('pilot_backup.restore') as restore_backup, patch.object(linux_public_kit, 'prepare_maintenance') as maintenance:
+            linux_public_kit.install(kit, self.base, backup=backup)
+            self.assertEqual(restore_backup.call_args.args, (backup, kit, self.base/'private', self.base/'data'))
+            self.assertEqual(restore_backup.call_args.kwargs['target'], 'linux')
+            self.assertTrue(restore_backup.call_args.kwargs['resume'])
+            launch.assert_called_once_with(self.base, restore.service_name(self.base, initial=True), public_kit=True)
+            maintenance.assert_called_once_with(kit, self.base, point=False)
+        (self.base/'restauration.json').touch()
+        with patch.object(restore, 'bind_controller_to_engine'), patch('pilot_backup.start_restored') as start:
+            linux_public_kit.start(self.base)
+        start.assert_called_once_with(self.base)
 
     def test_public_kit_maintenance_can_create_point_or_defer_it(self):
         import linux_public_kit
