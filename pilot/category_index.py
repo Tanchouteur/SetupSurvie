@@ -176,9 +176,10 @@ def prepare(zims, state, *, cancel=None, job_id=None, reserve=15_000_000_000, wo
                     progress=progress, workers=workers)
             except MovedFromMain:
                 continue
-            except archive_index.StorageReserve:
+            except (archive_index.StorageReserve, archive_index.Paused):
                 raise
-            except (OSError, RuntimeError, sqlite3.Error) as error:
+            except Exception as error:
+                # One unreadable archive is reported; the remaining archives still progress.
                 failures.append({'archive': path.name, 'error': type(error).__name__})
                 report['failures'] = failures
                 save()

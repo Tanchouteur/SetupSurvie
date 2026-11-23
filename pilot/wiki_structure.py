@@ -26,7 +26,7 @@ class ArticleStructure(HTMLParser):
         self.category_divs = 0
 
     def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
+        attrs = {key: value or '' for key, value in attrs}
         if tag in ('nav', 'script', 'style'):
             self.ignored.append(tag)
         if self.ignored:

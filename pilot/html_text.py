@@ -13,7 +13,8 @@ class Text(HTMLParser):
         self.parts.append(text)
         for section in self.active:section['parts'].append(text)
     def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs)
+        # A valueless attribute (<span class>) arrives as None from HTMLParser.
+        attrs={k:v or '' for k,v in attrs}
         if self.math:
             self.math.start(tag,attrs);return
         if tag_name(tag)=='math' and not self.skip:
