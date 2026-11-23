@@ -99,8 +99,10 @@ class DocumentaryRequestTests(unittest.TestCase):
                          'Tanner une peau ?', 'Réparer plutôt que jeter ?'):
             with self.subTest(question=question):
                 self.assertEqual(engine.document_request([{'role':'user','content':question}]),(question,''))
-        for question in ('Bonjour', 'Merci beaucoup', 'Bonne journée !', 'Combien font deux plus deux ?', 'Calcule 12 * 4'):
-            self.assertIsNone(engine.document_request([{'role':'user','content':question}]))
+        for question in ('Bonjour', 'Merci beaucoup', 'Bonne journée !', 'Combien font deux plus deux ?', 'Calcule 12 * 4',
+                         'Quelles vidéos sur la couture ?', 'Cherche une vidéo sur comment réparer un vélo'):
+            with self.subTest(question=question):
+                self.assertIsNone(engine.document_request([{'role':'user','content':question}]))
 
     def test_numeric_answer_instructions_do_not_cancel_document_reading(self):
         for question in (

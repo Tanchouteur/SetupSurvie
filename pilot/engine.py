@@ -111,7 +111,9 @@ def document_request(history):
     """
     questions=[m['content'] for m in history if m['role']=='user']
     if not questions:return None
-    question=questions[-1];topic=research.primary_query(question)
+    question=questions[-1]
+    if video_requests.requested(question):return None
+    topic=research.primary_query(question)
     plan=library.retrieval.plan(topic,library.search_terms(topic),library.SYNONYMS)
     raw=library.retrieval.normal(topic)
     if re.search(r'\b(favoris|favorites)\b',raw):return None
@@ -135,20 +137,7 @@ def document_request(history):
     if research.notice_request(topic):return question,''
     if re.search(r'\b(proche|autour|itineraire|altitude|coordonnees)\b',raw) and not re.search(r'\b(document|documents|guide|manuel|fabriquer|construire|reparer)\b',raw):return None
     if re.search(r'\b(calculer|calcule|calculez|calcul|combien|convertir|convertis|convertissez|conversion|multiplier|multiplie)\b',raw) and not re.search(r'\b(documents?|sources?|notices?|manuels?|guides?)\b',raw):return None
-    if (research.synthesis(question) or illustrations.requested(question) or
-        research.planning_request(raw) or library.retrieval.author_subject(topic) or
-        re.search(r'\b(comment|how to)\b',raw)):return question,''
-    if re.search(r'\b(quell?e?s?)\b.*\b(dimensions?|longueurs?|tailles?)\b',raw):return question,''
-    if plan.practical and plan.action:return question,''
-    if re.search(r'\b(cherche|recherche|trouver|documents?|bibliotheque|allumer|fabriquer|construire|reparer|stocker|conserver|filtrer|potabiliser|coudre)\b',raw) or re.search(r'\bcomment faire\b',raw):
-        return question,''
-    # Factual questions (which dose, which rules, what to do…) also deserve the
-    # library first; otherwise a small model may answer from memory instead.
-    if re.search(r'\b(quel|quelle|quels|quelles|que faire|qu est ce|pourquoi|faut il|peut on|est il|est elle|what|which|why)\b',raw):
-        return question,''
-    # Any other request with a subject consults the library first; otherwise a
-    # small model may answer from memory. Greetings and thanks are skipped.
-    if set(plan.words) <= CONVERSATIONAL or video_requests.requested(question):
+    if set(plan.words) <= CONVERSATIONAL:
         return None
     return question,''
 
