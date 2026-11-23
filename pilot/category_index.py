@@ -12,6 +12,19 @@ DIRECTORY = 'category-index'
 DOMAINS = ('resilience', 'culture')
 FORMAT = 1
 PILOT_ARCHIVE = re.compile(r'wikipedia_fr_all(?:_(?:maxi|mini|nopic))?_\d{4}-\d{2}(?:-\d{2})?[a-z]?\.zim')
+# Corrections of ZIM entries, published by the pilot next to pilot.db. Host tools
+# (Windows controller, classification) must read this copy: opening the WAL
+# pilot.db from Windows while the Docker pilot uses it makes the pilot's own
+# SQLite calls fail with "disk I/O error" (measured 22-23 November 2026).
+CORRECTIONS = 'catalogue-corrections.json'
+
+
+def published_corrections(state):
+    try:
+        records = json.loads((Path(state)/CORRECTIONS).read_text(encoding='utf-8')).get('records')
+    except (OSError, ValueError, AttributeError):
+        return {}
+    return records if isinstance(records, dict) else {}
 
 
 def sources(zims, sorting=None):
@@ -23,23 +36,17 @@ def sources(zims, sorting=None):
                                            '_maxi_' not in path.name, path.name))
 
 
-def signature(path, state):
+def signature(path, state, records=None):
     info = path.stat()
     revision = hashlib.sha256(f'stat-v1:{path.name}:{info.st_size}:{info.st_mtime_ns}'.encode()).hexdigest()
     saved = {}
-    database = Path(state)/'pilot.db'
-    if database.is_file():
-        with archive_index.connect(database, True) as db:
-            prefix = f'catalogue:v1:zim:{path.stem}/'
-            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='settings'").fetchone():
-                for key, value in db.execute('SELECT key,value FROM settings WHERE key>=? AND key<? ORDER BY key',(prefix,prefix[:-1]+'0')):
-                    try:
-                        record = json.loads(value)
-                        domains = record.get('domains')
-                        if record.get('revision') == revision and isinstance(domains,list) and all(d in DOMAINS for d in domains):
-                            saved[key[len(prefix):]] = sorted(set(domains))
-                    except (AttributeError,TypeError,ValueError):
-                        continue
+    prefix = f'zim:{path.stem}/'
+    for key, record in (published_corrections(state) if records is None else records).items():
+        if not key.startswith(prefix) or not isinstance(record, dict):
+            continue
+        domains = record.get('domains')
+        if record.get('revision') == revision and isinstance(domains, list) and all(d in DOMAINS for d in domains):
+            saved[key[len(prefix):]] = sorted(set(domains))
     role = retrieval.source_role({'book': path.stem})
     format_version = FORMAT + 1 if role in retrieval.CULTURE_SOURCE_ROLES else FORMAT
     payload = [format_version, path.name, info.st_size, info.st_mtime_ns, saved]
@@ -58,6 +65,7 @@ def _record(root, path):
 def ready_indexes(zims, state, sorting=None):
     root = Path(state) / DIRECTORY
     legacy = read_status(state)
+    records = published_corrections(state)
     ready = {}
     for path in sources(zims, sorting):
         index = root / (archive_index.index_name(path.name) + '.sqlite')
@@ -68,7 +76,7 @@ def ready_indexes(zims, state, sorting=None):
             saved = json.loads(record.read_text(encoding='utf-8')) if record.is_file() else legacy
             if saved.get('archive') != path.name or saved.get('phase') != 'completed':
                 continue
-            fingerprint, _ = signature(path, state)
+            fingerprint, _ = signature(path, state, records)
             if saved.get('fingerprint') == fingerprint:
                 ready[path.stem] = index
         except (OSError, ValueError, AttributeError, sqlite3.Error):
