@@ -1,4 +1,6 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([switch]$Verifier)
+$ErrorActionPreference = 'Stop'
+$title = if ($Verifier) { 'Vérifier le kit SetupSurvie' } else { 'Dupliquer le kit SetupSurvie' }
 Add-Type -AssemblyName System.Windows.Forms
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
 
@@ -12,15 +14,17 @@ try {
     if (-not $python) {
         $answer = [Windows.Forms.MessageBox]::Show(
             'Python avec Tcl/Tk est nécessaire pour afficher la copie. Installer Python pour votre compte depuis le SSD ?',
-            'Dupliquer le kit SetupSurvie', 'YesNo', 'Question')
+            $title, 'YesNo', 'Question')
         if ($answer -ne 'Yes') { exit 0 }
         $python = Install-SurvieKitPython $kit
     }
     $prefix = $python.Prefix
     $env:PYTHONDONTWRITEBYTECODE = '1'
-    & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'kit_duplicate_gui.py') $kit
+    $arguments = @($kit)
+    if ($Verifier) { $arguments += '--verify' }
+    & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'kit_duplicate_gui.py') @arguments
     if ($LASTEXITCODE -ne 0) { throw "La fenêtre de copie ne s’est pas ouverte. Vérifiez que Python inclut Tcl/Tk." }
 } catch {
-    [void][Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Dupliquer le kit SetupSurvie', 'OK', 'Error')
+    [void][Windows.Forms.MessageBox]::Show($_.Exception.Message, $title, 'OK', 'Error')
     exit 1
 }

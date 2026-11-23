@@ -70,6 +70,20 @@ de Marc : les compléments se préparent sur son installation, sans plafond
 documentaire, selon la [préparation du fonds complet](../bibliotheque/bibliotheque-complete-marc.md).
 La copie du kit sur le volume limité de Louis garde tous ses contrôles de capacité.
 
+## Vérifier le SSD avant de partir
+
+Depuis la 0.111.0, ouvrir **Verifier-Kit-SetupSurvie.cmd** sous Windows ou
+**Verifier-Kit-SetupSurvie.desktop** sous Linux, dans le dossier `app` du
+kit. Le lanceur indique les fichiers endommagés ou manquants et vérifie
+les installateurs présents. L’absence d’installateurs d’un système indique
+qu’il faudra un PC déjà préparé ou ajouter ces fichiers avant de partir.
+
+Le contrôle fonctionne sans Docker et ne modifie aucun fichier du kit.
+Les mêmes prérequis graphiques que pour le bouton de duplication
+s’appliquent. Le contrôle porte sur le kit public. Pour la sauvegarde
+personnelle, suivre le [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle).
+
+
 ## Dupliquer un kit public
 
 Depuis la 0.92.0, sur Windows équipé de Python avec Tcl/Tk, ouvrir
