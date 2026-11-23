@@ -248,6 +248,28 @@ class DeliveryTests(unittest.TestCase):
         with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
             verify_backup(self.root/'source', kit, report=lambda _line: None)
 
+    def test_verification_and_restore_both_refuse_cross_system_path_conflicts(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        report_path = kit/'manifest.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        replaced = 'payload/library/guides/guide.fr.md'
+        (kit/replaced).unlink()
+        report['files'] = [entry for entry in report['files'] if entry['path'] != replaced]
+        relative = 'payload/library/guides/Guide.fr.md/nested.txt'
+        nested = kit/relative
+        nested.parent.mkdir()
+        nested.write_bytes(b'ownership conflict')
+        report['files'].append({'path': relative, 'sha256': setup.file_hash(nested),
+                                'bytes': nested.stat().st_size})
+        setup.write_json(report_path, report)
+        work, data = self.root/'target/private', self.root/'target/data'
+        with self.assertRaisesRegex(setup.SetupError, 'Conflit de noms'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        with patch('pilot_backup.host_target', return_value='windows'), patch('kit_audit.validate'):
+            with self.assertRaisesRegex(setup.SetupError, 'Conflit de noms'):
+                restore(snapshot, kit, work, data, target='windows')
+        self.assertFalse(work.parent.exists())
+
     def test_cross_system_restore_checks_version_host_and_space_before_writing(self):
         snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
         work, data = self.root/'target/private', self.root/'target/data'
