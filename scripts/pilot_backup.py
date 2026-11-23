@@ -195,13 +195,15 @@ def verify_backup(source, kit, *, report=print):
     if not isinstance(files, list):
         raise setup.SetupError('Manifeste du kit non valide.')
     wanted = {'app/deploy/release.json', 'app/deploy/versions.json'}
-    public_entries = checked_entries(kit, {'files': [entry for entry in files
-                                                     if isinstance(entry, dict) and entry.get('path') in wanted]})
+    if any(not isinstance(entry, dict) or not isinstance(entry.get('path'), str) for entry in files):
+        raise setup.SetupError('Manifeste du kit non valide.')
+    public_entries = checked_entries(kit, {'files': [entry for entry in files if entry['path'] in wanted]})
     system = {'linux': 'Linux', 'windows': 'Windows'}[saved['target']]
     lines = [f'La sauvegarde est lisible : {len(entries)} fichiers vérifiés.',
              f'Elle vient d’un ordinateur sous {system}.']
     if backup_report.get('installation'):
         _, kit_version = check_kit_identity(backup_report, public_entries)
+        portable_backup_entries(entries, [entry['path'] for entry in files])
         version = backup_report['installation']['version']
         lines.append(f'Elle est compatible avec ce kit (sauvegarde {version}, kit {kit_version}), '
                      'vers Windows comme vers Linux.')
@@ -233,6 +235,22 @@ def check_portable_layout(files):
             value = (path.as_posix(), path == file)
             if tree.setdefault(key, value) != value:
                 raise setup.SetupError('Conflit de noms entre le kit et la sauvegarde : '+path.as_posix())
+
+
+def portable_backup_entries(entries, public_names):
+    for entry, _ in entries:
+        relative = entry['path']
+        if relative.startswith('data/state/') and not relative.startswith(PRIVATE_DATA):
+            raise setup.SetupError('Données du système source inconnues : '+relative)
+    entries = [(entry, path) for entry, path in entries
+               if not entry['path'].startswith('data/state/caddy/')
+               and not (entry['path'].startswith('data/state/') and entry['path'].endswith('.lease'))]
+    data_paths = [Path(entry['path']).relative_to('data') for entry, _ in entries
+                  if entry['path'].startswith('data/')]
+    data_paths.extend(Path(name).relative_to('payload') for name in public_names if name.startswith('payload/'))
+    check_portable_layout(data_paths)
+    check_portable_layout([Path(name).relative_to('app') for name in public_names if name.startswith('app/')])
+    return entries
 
 
 def portable_restore_preflight(copies, *, activating=False):
@@ -460,11 +478,7 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
     versions = setup.VERSIONS
     if portable:
         versions = validate_portable_restore(report, kit, public, public_entries, saved['target'])
-        for entry, _ in entries:
-            relative = entry['path']
-            if relative.startswith('data/state/') and not relative.startswith(PRIVATE_DATA):
-                raise setup.SetupError('Données du système source inconnues : '+relative)
-        entries = [(entry, path) for entry, path in entries if not entry['path'].startswith('data/state/caddy/')]
+        entries = portable_backup_entries(entries, [entry['path'] for entry, _ in public_entries])
         portable_settings(saved, target)
     saved['data_dir']=data.as_posix()
     saved['app_dir']=application.as_posix()
@@ -484,10 +498,6 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
             continue
         copies.append((entry, path, dest))
     private_destinations = {dest for _, _, dest in copies}
-    if portable:
-        data_paths = [dest.relative_to(data) for dest in private_destinations if dest.is_relative_to(data)]
-        data_paths.extend(Path(entry['path']).relative_to('payload') for entry, _ in public_entries if entry['path'].startswith('payload/'))
-        check_portable_layout(data_paths)
     for entry, path in public_entries:
         relative = entry['path']
         if relative.startswith('app/'):
@@ -502,7 +512,6 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
         copies.append((entry, path, dest))
     activating = job is not None and job['phase'] == 'activating'
     if portable:
-        check_portable_layout([Path(entry['path']).relative_to('app') for entry, _, _ in copies if entry['path'].startswith('app/')])
         sizes = []
         if not activating:
             for entry, _, dest in copies:

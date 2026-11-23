@@ -45,3 +45,20 @@ Périmètre restant pour la [recette d’acceptation](../exploitation/disque-de-
 rejouer le retour au point avec un kit intégralement reconstruit, les essais
 sur un SSD physique, les combinaisons avec Windows et le parcours graphique
 sur un bureau réel.
+
+
+Une troisième VM Debian 12 a installé le kit réduit 0.112.0 reconstruit depuis
+le commit `54e14e2`, avec le correctif déjà dans le kit. La VM disposait d’un
+Python système au départ, sans Docker. L’installateur a utilisé les outils
+embarqués. L’assistant d’entretien a restauré le point sans SSD de secours ni
+route par défaut. Il a conservé une ancienne copie et l’empreinte du manifeste
+du point protégé. Après le redémarrage suivant, le portail et Kiwix répondaient.
+Open WebUI renvoyait encore HTTP 502 au dernier contrôle. Le fichier témoin
+attendu dans l’ancienne copie n’a pas été retrouvé. La perte de connexion à
+Bazzite a interrompu le deuxième retour au point, lancé avec un nouveau
+fichier témoin.
+
+Les cinq installateurs Windows (WSL, Python, Docker Desktop, Git et Ollama)
+ont été téléchargés dans une copie de préparation du kit sur Bazzite.
+Leurs empreintes ont été vérifiées avec `prepare-windows --verify-only`.
+La VM Windows reste à préparer.
