@@ -16,7 +16,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 from pilot_kit import checked_entries
 from pilot_kit import install
-from pilot_backup import backup,host_target,restore,restore_copy,start_restored
+from pilot_backup import backup,host_target,restore,restore_copy,start_restored,verify_backup
 from delivery_paths import locked
 import index_locks
 from pilot import archive_index,collection_sort,retrieval
@@ -210,6 +210,36 @@ class DeliveryTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT * FROM conversation').fetchall(),
                              [('profil-fixe', 'Échange de test')])
         self.assertEqual((data/'library/guides/guide.fr.md').read_bytes(), b'guide personnel')
+
+    def test_verify_backup_is_read_only_and_reports_compatibility_or_damage(self):
+        snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')
+        files = lambda: {path.relative_to(self.root): path.read_bytes()
+                         for path in self.root.rglob('*') if path.is_file()}
+        before = files()
+        with patch.object(setup, 'run', side_effect=AssertionError('Docker interdit')), \
+             patch('content.transfer', side_effect=AssertionError('Réseau interdit')):
+            result = verify_backup(snapshot, kit, report=lambda _line: None)
+        self.assertIn('sous Windows', result)
+        self.assertIn('compatible avec ce kit', result)
+        self.assertEqual(files(), before)
+        report_path = snapshot/'backup.json'
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+        report['installation']['version'] = '99.0.0'
+        setup.write_json(report_path, report, private=True)
+        with self.assertRaisesRegex(setup.SetupError, 'plus ancien que la sauvegarde'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        del report['installation']
+        setup.write_json(report_path, report, private=True)
+        self.assertIn('seulement sur le même système', verify_backup(snapshot, kit, report=lambda _line: None))
+        guide = snapshot/'data/library/guides/guide.fr.md'
+        guide.write_bytes(b'x'*guide.stat().st_size)
+        with self.assertRaisesRegex(setup.SetupError, 'modifié'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        report_path.unlink()
+        with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
+            verify_backup(snapshot, kit, report=lambda _line: None)
+        with self.assertRaisesRegex(setup.SetupError, 'backup.json absent'):
+            verify_backup(self.root/'source', kit, report=lambda _line: None)
 
     def test_cross_system_restore_checks_version_host_and_space_before_writing(self):
         snapshot, kit, _ = self.cross_system_fixture(self.root, 'windows')

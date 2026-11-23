@@ -80,8 +80,25 @@ qu’il faudra un PC déjà préparé ou ajouter ces fichiers avant de partir.
 
 Le contrôle fonctionne sans Docker et ne modifie aucun fichier du kit.
 Les mêmes prérequis graphiques que pour le bouton de duplication
-s’appliquent. Le contrôle porte sur le kit public. Pour la sauvegarde
-personnelle, suivre le [manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle).
+s’appliquent.
+
+Depuis la 0.111.0, le même lanceur propose de vérifier aussi une sauvegarde
+personnelle : répondre **Oui**, puis choisir son dossier daté. Le contrôle
+relit chaque fichier listé dans `backup.json`, refuse un fichier hors
+périmètre et indique le système d’origine. Pour une sauvegarde créée depuis
+la 0.94.0, il applique la règle de restauration : même format des données,
+même image Open WebUI et kit de même version ou plus récent. Une sauvegarde
+plus ancienne est signalée comme restaurable seulement sur le même système.
+En ligne de commande :
+
+```bash
+python3 app/scripts/pilot_backup.py verify /chemin/sauvegarde --kit /chemin/kit
+```
+
+Ce contrôle ne démarre ni Docker ni les services et n’écrit rien. Il ne vérifie
+pas la cohérence interne des bases SQLite et ne remplace pas un essai de
+restauration. Pour la restauration elle-même, suivre le
+[manuel de secours](../exploitation/manuel-de-secours.md#7-restaurer-une-sauvegarde-personnelle).
 
 
 ## Dupliquer un kit public

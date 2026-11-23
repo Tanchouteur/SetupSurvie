@@ -30,6 +30,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
 
+## 23 novembre 2026
+
+- [Vérification de la sauvegarde avant le départ](2026-11-23-verifier-sauvegarde-hors-ligne.md) — 0.111.0, manifeste, périmètre et compatibilité avec le kit.
+
 ## 22 novembre 2026
 
 - [Contrôle graphique du kit hors ligne](2026-11-22-verifier-kit-hors-ligne.md) — 0.110.0, empreintes des fichiers et installateurs.

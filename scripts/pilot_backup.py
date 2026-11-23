@@ -117,11 +117,32 @@ def portable_settings(saved, target):
         saved.pop(key, None)
 
 
-def validate_portable_restore(report, kit, public, public_entries, source_target):
-    from kit_audit import validate
-    from pilot_update import version_tuple
-    if source_target not in ('windows', 'linux'):
+def read_backup(source, progress=None):
+    """Check a private backup manifest, its scope and its settings without writing."""
+    from pilot_kit import checked_entries
+    manifest = checked_destination(source, 'backup.json')
+    if manifest.is_symlink() or not manifest.is_file():
+        raise setup.SetupError('Sauvegarde incomplète ou dossier non reconnu : backup.json absent. '
+                               'Choisissez le dossier daté de la sauvegarde ou recréez-la.')
+    report = json.loads(manifest.read_text(encoding='utf-8'))
+    entries = checked_entries(source, report, progress)
+    allowed_private = {'private/'+name for name in PRIVATE_FILES}
+    for entry, _ in entries:
+        relative = entry['path']
+        if relative not in allowed_private and relative not in PRIVATE_CATALOG and not relative.startswith(('data/state/','data/library/guides/')):
+            raise setup.SetupError('Fichier de sauvegarde hors périmètre : '+relative)
+    settings = next((path for entry, path in entries if entry['path'] == 'private/settings.json'), None)
+    if settings is None:
+        raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
+    saved = json.loads(settings.read_text(encoding='utf-8'))
+    if not isinstance(saved, dict) or saved.get('target') not in ('windows', 'linux'):
         raise setup.SetupError('Système de la sauvegarde inconnu.')
+    return report, entries, saved
+
+
+def check_kit_identity(report, public_entries):
+    """Compare backup and kit versions; return the kit component versions."""
+    from pilot_update import version_tuple
     identity = report.get('installation')
     if report.get('schema') != 1 or not identity:
         raise setup.SetupError('Version de sauvegarde inconnue. Créez une nouvelle sauvegarde depuis l’installation d’origine.')
@@ -142,6 +163,52 @@ def validate_portable_restore(report, kit, public, public_entries, source_target
         raise setup.SetupError('Version de la sauvegarde inconnue.')
     if version_tuple(expected['version']) < version_tuple(version):
         raise setup.SetupError(f'Ce kit est plus ancien que la sauvegarde ({version}). Choisissez un kit compatible plus récent.')
+    return version_data, expected['version']
+
+
+def verify_backup(source, kit, *, report=print):
+    """Read-only check that a backup can be restored with this kit, before going offline."""
+    from pilot_kit import checked_entries
+    source = setup.safe_path(source)
+    kit = setup.safe_path(kit)
+    separate_roots(source, kit)
+    manifest = checked_destination(source, 'backup.json')
+    before = setup.file_hash(manifest) if manifest.is_file() else None
+
+    def progress(done, total, _size):
+        if done == 1 or done == total or done % 100 == 0:
+            report(f'Sauvegarde : {done}/{total} fichiers vérifiés.')
+
+    backup_report, entries, saved = read_backup(source, progress)
+    public = json.loads(checked_destination(kit, 'manifest.json').read_text(encoding='utf-8'))
+    files = public.get('files') if isinstance(public, dict) else None
+    if not isinstance(files, list):
+        raise setup.SetupError('Manifeste du kit non valide.')
+    wanted = {'app/deploy/release.json', 'app/deploy/versions.json'}
+    public_entries = checked_entries(kit, {'files': [entry for entry in files
+                                                     if isinstance(entry, dict) and entry.get('path') in wanted]})
+    system = {'linux': 'Linux', 'windows': 'Windows'}[saved['target']]
+    lines = [f'La sauvegarde est lisible : {len(entries)} fichiers vérifiés.',
+             f'Elle vient d’un ordinateur sous {system}.']
+    if backup_report.get('installation'):
+        _, kit_version = check_kit_identity(backup_report, public_entries)
+        version = backup_report['installation']['version']
+        lines.append(f'Elle est compatible avec ce kit (sauvegarde {version}, kit {kit_version}), '
+                     'vers Windows comme vers Linux.')
+    else:
+        lines.append('Sauvegarde d’un ancien format : elle se restaure seulement sur le même système. '
+                     'Pour pouvoir changer de système, créez une nouvelle sauvegarde avant de partir.')
+    if setup.file_hash(manifest) != before:
+        raise setup.SetupError('La sauvegarde a changé pendant la vérification. Relancez le contrôle.')
+    lines.append('Ce contrôle ne modifie rien. Il ne remplace pas un essai de restauration.')
+    return '\n'.join(lines)
+
+
+def validate_portable_restore(report, kit, public, public_entries, source_target):
+    from kit_audit import validate
+    if source_target not in ('windows', 'linux'):
+        raise setup.SetupError('Système de la sauvegarde inconnu.')
+    version_data, _ = check_kit_identity(report, public_entries)
     validate(kit, public)
     return version_data
 
@@ -372,15 +439,8 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
     paths = {'work': work.as_posix(), 'data': data.as_posix()}
     if job and (job.get('inputs') != inputs or job.get('paths') != paths):
         raise setup.SetupError('Cette restauration a commencé avec une autre sauvegarde, un autre kit ou une autre destination.')
-    report=json.loads((source/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(source,report)
+    report, entries, saved = read_backup(source)
     allowed_private={'private/'+name for name in PRIVATE_FILES}
-    for entry,_ in entries:
-        relative=entry['path']
-        if relative not in allowed_private and relative not in PRIVATE_CATALOG and not relative.startswith(('data/state/','data/library/guides/')):
-            raise setup.SetupError('Fichier de sauvegarde hors périmètre : '+relative)
-    settings=next((path for entry,path in entries if entry['path']=='private/settings.json'),None)
-    if settings is None:raise setup.SetupError('Réglages absents du manifeste de sauvegarde.')
-    saved=json.loads(settings.read_text(encoding='utf-8'))
     host = host_target()
     if target is None and host is not None and saved['target'] != host:
         raise setup.SetupError('Sauvegarde d’un autre système. Indiquez --target linux ou --target windows sur la machine cible.')
@@ -525,8 +585,11 @@ def main():
     p=subs.add_parser('restore');p.add_argument('source');p.add_argument('--kit',required=True);p.add_argument('--work-dir',required=True);p.add_argument('--data-dir',required=True)
     p.add_argument('--target',choices=('linux','windows'),help='Adapter la restauration au système de cet ordinateur (kit de même version ou plus récent et compatible).')
     p.add_argument('--resume', action='store_true', help='Reprendre vers le même dossier après une interruption.')
+    p=subs.add_parser('verify');p.add_argument('source');p.add_argument('--kit',required=True)
     args=parser.parse_args()
-    if args.action=='backup':
+    if args.action=='verify':
+        print(verify_backup(args.source, args.kit, report=lambda line: print(line, flush=True)))
+    elif args.action=='backup':
         app=setup.Installation(args.work_dir);backup(app,app.load(),args.destination)
     else:restore(args.source,args.kit,args.work_dir,args.data_dir,target=args.target,resume=args.resume)
 

@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from kit_duplicate import duplicate, verify_support
+from pilot_backup import verify_backup
 import setup
 
 
@@ -17,6 +18,13 @@ def main():
     checking = '--verify' in sys.argv[2:]
     title = 'Vérifier le kit SetupSurvie' if checking else 'Dupliquer le kit SetupSurvie'
     target = source
+    backup = None
+    if checking and messagebox.askyesno(
+            title, 'Vérifier aussi une sauvegarde personnelle ?\n\n'
+            'Choisissez ensuite son dossier daté, sur ce SSD ou un autre disque. Rien ne sera modifié.',
+            parent=window):
+        backup = filedialog.askdirectory(parent=window, title='Choisir le dossier de la sauvegarde personnelle',
+                                         mustexist=True) or None
     if not checking:
         parent = filedialog.askdirectory(parent=window, title='Choisir un dossier sur le second disque',
                                          mustexist=True)
@@ -49,6 +57,8 @@ def main():
             report = lambda line: messages.put(('progress', line))
             if checking:
                 result = verify_support(source, report=report)
+                if backup:
+                    result += '\n\n' + verify_backup(backup, source, report=report)
             else:
                 duplicate(source, target, report=report)
                 result = 'Le second kit est vérifié. Vous pouvez éjecter le support.'
