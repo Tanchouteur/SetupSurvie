@@ -45,6 +45,13 @@ Le rapprochement du 21 novembre compte **110 éditions identiques** sur les
 export et classe 129 archives de la référence dans le Fonds principal,
 76 dans Autre.
 
+Le 23 novembre, Louis indique avoir ajouté les mêmes contenus chez Marc.
+Le [contrôle du fonds Bazzite](../essais/2026-11-23-audit-qualite-recherche-bazzite.md)
+confirme 205 ZIM et détaille l'apport marginal de Wikipédia anglais, de
+Khan Academy et de Survivor Library. Le relevé du 21 novembre reste l'état
+observé avant cet ajout. Les résultats de pertinence du contrôle viennent
+du laboratoire Bazzite.
+
 Bazzite disposait de **2,44 To libres sur son SSD physique** au contrôle en
 cours de transfert. Les 128 archives présentes avaient le nom et la taille
 attendus. La File d’attente en comptait 121 avec un reçu d’empreinte conforme
