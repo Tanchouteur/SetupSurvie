@@ -42,6 +42,12 @@ class ReferenceTests(unittest.TestCase):
         parser=inventory.Videos();parser.feed('<video title="One" data-src="one.webm"><track src="one.en.vtt" srclang="en"></video><video><source src="two.mp4"><track data-src="two.fr.vtt" srclang="fr"></video><iframe src="https://www.youtube.com/embed/abcDEF_12-3"></iframe>')
         self.assertEqual(len(parser.items),3);self.assertEqual(parser.items[0]['tracks'][0]['src'],'one.en.vtt');self.assertEqual(parser.items[1]['tracks'][0]['language_declared'],'fr');self.assertEqual(parser.items[2]['tracks'],[])
 
+    def test_valueless_attributes_do_not_abort_the_archive_inventory(self):
+        parser=inventory.Videos();parser.feed('<base href><video src="a.mp4" title><track src="a.fr.vtt" srclang></video>')
+        self.assertEqual(parser.base,'')
+        self.assertEqual(parser.items[0]['sources'][0]['src'],'a.mp4')
+        self.assertEqual(parser.items[0]['tracks'][0]['language_declared'],'')
+
     def test_reference_limit_is_an_explicit_issue_instead_of_complete_coverage(self):
         parser=inventory.Videos();parser.feed('<video src="v.webm"></video>'*(inventory.MAX_VIDEOS_PER_PAGE+1))
         self.assertEqual(len(parser.items),inventory.MAX_VIDEOS_PER_PAGE);self.assertIn('video_reference_limit',parser.errors)

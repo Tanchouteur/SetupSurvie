@@ -39,6 +39,13 @@ class InterruptedBatch(IncompleteBatch):
     """A reply interrupted after generation started, even for one cue."""
 
 
+
+def busy(db):
+    """Jobs really waiting or running here; rows left by a crash do not fill the queue."""
+    return sum(1 for row in db.execute("SELECT id FROM jobs WHERE status IN ('queued','running')")
+               if row[0] in ACTIVE and not ACTIVE[row[0]].done())
+
+
 def running():return any(not task.done() for task in ACTIVE.values())
 
 
@@ -143,7 +150,7 @@ async def create(identifier,track,mode):
         db.execute('BEGIN IMMEDIATE')
         previous=db.execute('SELECT id FROM jobs WHERE video_id=? AND source_revision=? AND source_hash=? ORDER BY created DESC LIMIT 1',(video_id,revision,parsed['text_utf8_sha256'])).fetchone()
         if not previous:
-            if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'Quatre préparations attendent déjà. Reprenez-les ou mettez-les en pause.')
+            if busy(db)>=4:raise HTTPException(429,'Quatre préparations attendent déjà. Reprenez-les ou mettez-les en pause.')
             db.execute('INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',(key,video_id,revision,selected['path'],language,parsed['text_utf8_sha256'],payload['title'],mode,'queued',None,now,now,None,'not_published'))
             db.executemany('INSERT INTO parts(job_id,position,start_ms,end_ms,source_text,status) VALUES(?,?,?,?,?,?)',
                 [(key,i,cue['start_ms'],cue['end_ms'],cue['text'],'pending') for i,cue in enumerate(parsed['cues'])])
@@ -379,7 +386,7 @@ async def resume(identifier,mode=None):
     if mode is not None and mode not in engine.MODES:raise HTTPException(400,'Mode IA inconnu.')
     await translations.available();await asyncio.to_thread(current_source,item)
     with connect() as db:
-        if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=4:raise HTTPException(429,'La file des préparations est pleine.')
+        if busy(db)>=4:raise HTTPException(429,'La file des préparations est pleine.')
         db.execute("UPDATE parts SET status='pending' WHERE job_id=? AND status='blocked'",(identifier,))
     update(identifier,'queued',mode=mode or item['mode']);launch(identifier);return status(identifier)
 

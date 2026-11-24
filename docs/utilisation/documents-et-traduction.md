@@ -323,7 +323,13 @@ ne réalise aucun OCR. Les anciens rapports gardent leur version et leurs résul
 La version **3** des contrôles (0.32.0) reconnaît aussi les chiffres joints à un
 libellé par l’extraction PDF : `Chapter4` et `Chapitre 4` portent le même nombre.
 Dans cette version, une modification vers `Chapitre 5` ou de `X7` vers `X8` restait bloquante. Depuis la version 10 des contrôles (0.60.0), un numéro de chapitre modifié produit un avertissement. Les
-seuils de longueur, négations et unités ne changent pas. La consigne préserve
+seuils de longueur, négations et unités ne changent pas. Depuis la version **11**
+des contrôles (0.113.2), un débit garde ses deux unités : `5 mg/h` devenu
+`5 mg/min` ou `5 L/min` devenu `5 L/h` est bloqué, ainsi que `kcal`/`kJ`,
+`mV`/`µV` et les unités anglo-saxonnes converties. Un nombre échangé avec un
+numéro de page (`5 comprimés, page 12` devenu `12 comprimés, page 5`) reste
+bloquant ; `10 – 20 mg` est lu comme une plage. Les anciens rapports gardent
+leur version. La consigne préserve
 aussi les noms inscrits sur les touches et boutons. Si une inscription reconnue
 comme `CALL` est remplacée par `APPEL`, un avertissement demande de comparer
 l’original et l’appareil ; toutes les inscriptions et interfaces ne sont pas

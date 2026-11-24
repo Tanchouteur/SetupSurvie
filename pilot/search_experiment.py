@@ -145,7 +145,9 @@ async def watched(awaitable,report,timeout=90):
                 if task.done():break
                 sample=await calibration.guard(report['reserves'])
                 for key,value in sample.items():
-                    if value is not None:report['minimum_free'][key]=min(report['minimum_free'].get(key) or value,value)
+                    if value is not None:
+                        previous=report['minimum_free'].get(key)
+                        report['minimum_free'][key]=value if previous is None else min(previous,value)
             return await task
     finally:
         if not task.done():task.cancel()

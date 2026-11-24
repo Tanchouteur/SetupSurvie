@@ -6,6 +6,11 @@ from urllib.parse import unquote
 MAX_HTML = 1_100_000
 MAX_LABELS = 40
 WIKIPEDIA = re.compile(r'^wikipedia_[a-z0-9-]+_', re.I)
+_BACK = (r'notes|r[eé]f[eé]rences|sources|annexes|bibliograph(?:ie|y)|voir aussi|liens externes|see also|external links'
+         r'|other websites|related pages|more reading|further reading|articles connexes')
+# The whole heading must be back matter: "Références culturelles" or
+# "Notes de musique" are ordinary article sections.
+BACK_MATTER = re.compile(r'^(?:' + _BACK + r')(?:\s*(?:,|et|and|&)\s*(?:' + _BACK + r'))*\s*:?$', re.I)
 
 
 def wikipedia(item):
@@ -50,7 +55,7 @@ class ArticleStructure(HTMLParser):
             self.category_divs -= 1
         if tag == self.heading:
             label = ' '.join(''.join(self.parts).split())[:160]
-            if re.match(r'^(?:notes|r[eé]f[eé]rences|annexes|bibliograph(?:ie|y)|voir aussi|liens externes|see also|external links|other websites|related pages|more reading|further reading|articles connexes)\b', label, re.I):
+            if BACK_MATTER.match(label):
                 self.back_matter = tag == 'h2'
             elif label:
                 labels = self.sections if tag == 'h2' else self.subsections

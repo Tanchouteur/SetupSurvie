@@ -1,6 +1,6 @@
 # Essais et résultats
 
-**Index des bilans datés, protocoles et campagnes — revu le 20 novembre 2026.**
+**Index des bilans datés, protocoles et campagnes — revu le 24 novembre 2026.**
 Un bilan constate une campagne à une date, pour une version et une machine ;
 il ne vaut pas validation de la version actuelle. Les constats Linux, Windows,
 mobiles et hors ligne restent distincts. Les plus récents sont en premier.
@@ -29,6 +29,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Ressources prioritaires : téléchargements du 11 novembre 2026](telechargements-prioritaires.md) — Téléchargements prioritaires, livraison 0.1.6
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
+
+## 24 novembre 2026
+
+- [Audit de bugs et corrections](2026-11-24-audit-bugs-et-corrections.md) — 0.113.2, défauts reproduits, corrigés et testés sur le runner, limites Windows et modèles réels.
 
 ## 23 novembre 2026
 

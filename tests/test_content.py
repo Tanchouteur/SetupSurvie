@@ -165,4 +165,12 @@ class ContentTests(unittest.TestCase):
             podman.assert_not_called()
 
 
+    def test_lab_download_refreshes_only_library_services(self):
+        import linux_lab as lab
+        item={**self.item,'pack':'health'}
+        installation=type('Installation',(),{'__init__':lambda self,root:None,'load':lambda self:{},'catalog':lambda self,c:None})
+        with patch.object(sys,'argv',['content.py','download','--lab','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download'),patch.object(content,'check_capacity'),patch.object(content,'install_templates'),patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab.setup,'Installation',installation),patch.object(lab,'podman') as podman:
+            content.main()
+        podman.assert_called_once_with('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
+
 if __name__=='__main__':unittest.main()

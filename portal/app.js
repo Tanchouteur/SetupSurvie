@@ -54,6 +54,8 @@ window.addEventListener('scroll',()=>{if(mobileNav.matches)rememberReading();},{
 window.addEventListener('pagehide',rememberReading);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)rememberReading();});
 function reloadProfile(){if(S.profileReloading)return;S.profileReloading=true;location.reload();}
+// Tells other tabs; blocked storage (Safari private mode, full quota) must not stop the switch.
+function announceProfileChange(){try{localStorage.setItem('survie.profile.changed',String(Date.now()));}catch{}}
 function toast(text,tone){
   /* Messages en français simple ; la perte de connexion est annoncée par le bandeau commun. */
   const net=window.SurvieNet,message=net?net.humanize(text):String(text??''),node=$('toast');
@@ -130,7 +132,7 @@ async function auth(){
   catch(error){$('profile-error').textContent=error.message;}
 }
 async function switchProfile(identifier){
-  try{await api('/profiles/select',{id:identifier});localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('profile-error').textContent=error.message;}
+  try{await api('/profiles/select',{id:identifier});announceProfileChange();reloadProfile();}catch(error){$('profile-error').textContent=error.message;}
 }
 
 function needUser(){if(S.user)return true;auth();return false;}
@@ -322,7 +324,7 @@ async function runSearch(event){
   function interrupted(message){$('search-message').textContent=message;$('search-message').classList.add('search-warning');$('search-results').setAttribute('aria-busy','false');$('search-message').dataset.tone='empty';if(!$('search-results').querySelector('.result')){const empty=$('search-results').querySelector('.empty-panel.search-extra')||$('search-results').appendChild(element('div','','empty-panel search-extra'));empty.textContent='Aucun résultat reçu avant l’interruption. Vous pouvez relancer la recherche.';}}
   $('search-stop')?.remove();const stop=button('Arrêter la recherche',()=>{controller.abort();if(S.searchAbort===controller){interrupted('Recherche arrêtée. Les résultats reçus sont conservés ; la recherche peut être incomplète.');stop.remove();}},'secondary');stop.id='search-stop';$('search-message').after(stop);
   try{const data=await api('/search?q='+encodeURIComponent(q)+'&stream=true&kind='+encodeURIComponent(kind)+'&language='+encodeURIComponent($('search-language').value)+'&domain='+encodeURIComponent($('search-domain')?.value||'resilience')+'&collection='+encodeURIComponent($('search-collection')?.value||$('search-collection')?.dataset.requested||''),undefined,{signal:controller.signal,onResult:display});display(data);
-  }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)interrupted(e.message);}
+  }catch(e){if(e.name!=='AbortError'&&S.searchAbort===controller)interrupted(window.SurvieNet?SurvieNet.humanize(e):e.message);}
   finally{stop.remove();}
 }
 function videoTimestamp(ms){const seconds=Math.floor((Number(ms)||0)/1000);return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
@@ -857,7 +859,7 @@ async function refreshProfileOnReturn(){
 window.addEventListener('focus',refreshProfileOnReturn);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshProfileOnReturn();});
 setInterval(refreshProfileOnReturn,10000);
-$('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
+$('profile-create-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/profiles',{name:new FormData(event.target).get('name')});announceProfileChange();reloadProfile();}catch(error){$('profile-error').textContent=error.message;}finally{b.disabled=false;}};
 $('add-user-form').onsubmit=async event=>{event.preventDefault();const b=event.submitter;b.disabled=true;try{await api('/admin/users',Object.fromEntries(new FormData(event.target)));event.target.reset();$('user-status').textContent='Profil créé. Il est disponible dans le choix de profil.';await loadAdmin();}catch(error){$('user-status').textContent=error.message;}finally{b.disabled=false;}};
 $('upload-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter||e.target.querySelector('button[type=submit]');b.disabled=true;$('upload-status').textContent='Ajout et préparation de la recherche…';try{const data=await api('/admin/guides',new FormData(e.target));$('upload-status').textContent='Guide ajouté. Il est disponible dans la recherche et pour l’assistant.';e.target.reset();status();}catch(error){$('upload-status').textContent=error.message;}finally{b.disabled=false;}};
 $('feedback-button').onclick=()=>{if(needUser())$('feedback-dialog').showModal();};$('feedback-form').onsubmit=async e=>{e.preventDefault();try{await api('/feedback',{content:new FormData(e.target).get('content'),view:S.view+(S.view==='chat'?' · '+$('chat-mode').selectedOptions[0].textContent:'')});e.target.reset();$('feedback-dialog').close();toast('Merci, votre retour a été enregistré sur cet appareil.');}catch(error){$('feedback-status').textContent=error.message;}};$('refresh-feedback').onclick=feedbacks;

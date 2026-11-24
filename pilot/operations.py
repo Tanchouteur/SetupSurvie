@@ -41,7 +41,8 @@ async def status(fresh=False):
         marker=network.CATALOG/'inference.json'
         if marker.is_file():
             try:
-                saved=json.loads(marker.read_text());value.update(paused=saved.get('state')=='paused',reason=saved.get('reason',''))
+                saved=json.loads(marker.read_text())
+                if isinstance(saved,dict):value.update(paused=saved.get('state')=='paused',reason=str(saved.get('reason','')))
             except (ValueError,OSError):pass
         if not value['paused']:
             try:

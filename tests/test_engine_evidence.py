@@ -140,6 +140,11 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(call['function']['arguments'],{})
         self.assertIn('pas abouti',answer['content'])
 
+    @patch.object(engine,'document_request',return_value=None)  # model-driven tool loop
+    def test_division_by_zero_is_explained_to_the_model(self,_automatic):
+        payloads,_=self.run_chat([self.call('calculate',{'expression':'1/0'}),{'content':'Division impossible.'}])
+        self.assertIn('zéro',json.loads(payloads[1]['messages'][-1]['content'])['error'])
+
     def test_historical_source_pointer_is_reloaded_with_new_numbers(self):
         with store.connect() as db:
             db.execute("DELETE FROM messages WHERE conversation_id='c'")

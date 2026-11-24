@@ -175,7 +175,7 @@ class Videos(HTMLParser):
         super().__init__(convert_charrefs=True);self.items=[];self.active=None;self.base='';self.errors=[];self.skip=0
 
     def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs)
+        attrs={key:value or "" for key,value in attrs}  # Valueless attributes such as <base href>.
         if tag in ('script','style'):self.skip+=1;return
         if self.skip:return
         if tag=='base' and not self.base:self.base=attrs.get('href','')[:4000]

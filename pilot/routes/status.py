@@ -9,7 +9,12 @@ router=APIRouter()
 
 
 @router.get('/api/health')
-async def health():return {'ok':True,'version':core.VERSION,'degraded_features':sorted(DEGRADED)}
+async def health():
+    degraded=set(DEGRADED)
+    # The startup index may fail before the guide folder is mounted, then succeed later.
+    index=library.guide_index_status();since=DEGRADED.get('index')
+    if index.get('status')=='completed' and isinstance(since,float) and index.get('updated',0)>since:degraded.discard('index')
+    return {'ok':True,'version':core.VERSION,'degraded_features':sorted(degraded)}
 
 
 @router.get('/api/assistant-context')

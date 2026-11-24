@@ -12,6 +12,10 @@ class ProtocolTests(unittest.TestCase):
     def test_legitimate_examples_and_ordinary_json_stay_ordinary_text(self):
         proposal='{"name":"calculate","arguments":{"expression":"1+2"}}'
         self.assertFalse(tool_protocol.textual_call(proposal,'Explique ce JSON',{'calculate'}))
+        for question in ('Quel est le code postal de Nice ?','Code postal de Toulon ?','Résume le code de la route','Que dit le code civil ?'):
+            self.assertTrue(tool_protocol.textual_call('{"name":"calculate","arguments":{}}',question,{'calculate'}),question)
+        for question in ('Écris un script pour sauvegarder','Explique ce code source','Corrige ce programme'):
+            self.assertFalse(tool_protocol.textual_call(proposal,question,{'calculate'}),question)
         for content in ['{"voltage":12}','La notice donne 12 V.','{"name":"other","arguments":{}}']:
             self.assertFalse(tool_protocol.textual_call(content,'Donne la tension',{'calculate'}))
 
