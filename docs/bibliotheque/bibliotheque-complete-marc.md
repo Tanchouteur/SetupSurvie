@@ -50,7 +50,9 @@ Le [contrôle du fonds Bazzite](../essais/2026-11-23-audit-qualite-recherche-baz
 confirme 205 ZIM et détaille l'apport marginal de Wikipédia anglais, de
 Khan Academy et de Survivor Library. Le relevé du 21 novembre reste l'état
 observé avant cet ajout. Les résultats de pertinence du contrôle viennent
-du laboratoire Bazzite.
+du laboratoire Bazzite. Le [relevé du 24 novembre](../essais/2026-11-24-apport-wikipedia-bazzite.md)
+compare aussi le français, Maxi EN et Simple English à la lecture et
+distingue le rôle encyclopédique des guides pratiques.
 
 Bazzite disposait de **2,44 To libres sur son SSD physique** au contrôle en
 cours de transfert. Les 128 archives présentes avaient le nom et la taille
