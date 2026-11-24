@@ -60,6 +60,18 @@ initiale en ligne, même avec un tri importé. Le fonds de référence daté
 ci-dessous reste consultable et ses collections sont disponibles sur
 demande depuis le portail après installation.
 
+**Le 24 novembre 2026 (0.114.1), Louis demande de retirer Wikipédia anglais
+du fonds de référence.** Le manifeste ne contient plus
+`wikipedia_en_all_maxi_2026-08.zim` (127,4 Go) ni
+`wikipedia_en-simple_all_maxi_2026-09.zim` (3,1 Go) : **203 archives,
+916,1 Go**, dont 127 dans le Fonds principal. Le champ `removed` du manifeste
+date ce retrait. Sur une installation qui les possède déjà, la comparaison les
+affiche désormais **Hors référence** ; leur suppression reste un choix coché
+à la main. Ce retrait remplace, pour la référence, la phrase précédente :
+Wikipédia anglais n’y est plus disponible sur demande. Les relevés antérieurs
+sur 205 archives restent des mesures datées. Wikipédia anglais reste
+téléchargeable depuis le catalogue Kiwix en dehors du fonds de référence.
+
 Bazzite disposait de **2,44 To libres sur son SSD physique** au contrôle en
 cours de transfert. Les 128 archives présentes avaient le nom et la taille
 attendus. La File d’attente en comptait 121 avec un reçu d’empreinte conforme
@@ -82,7 +94,8 @@ physique fixe la marge réelle. Chez Marc, le diagnostic Windows du
 18 novembre confirme que les données utilisent le SSD de **2 To**. Le
 relevé du 21 novembre y mesure **252 Go d’index de classement avant
 compression**. Il faut ajouter ces index et les autres données aux
-**1 046,6 Go** des archives de référence. L’espace libre actuel chez Marc
+**1 046,6 Go** des archives de référence (916,1 Go depuis le retrait de
+Wikipédia anglais le 24 novembre). L’espace libre actuel chez Marc
 reste à mesurer.
 [Diagnostic Windows](../installation/configuration-materielle-cible.md#18-novembre-2026--transfert-déclaré-réussi-et-rapports-0430),
 [mesure des index](../essais/2026-11-21-index-compresse.md)
