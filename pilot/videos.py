@@ -131,6 +131,12 @@ def publish_built():
 
 
 def replace_index(path,target):
+    if target.is_file():
+        # Copy most of a large log back while searches continue: the final
+        # checkpoint below, with connections blocked, then has little left.
+        db=sqlite3.connect(target,timeout=30)
+        try:db.execute('PRAGMA wal_checkpoint(PASSIVE)')
+        finally:db.close()
     with ACCESS.replacing_file():
         if target.is_file():
             # A clean checkpoint first: an interruption below leaves either the
