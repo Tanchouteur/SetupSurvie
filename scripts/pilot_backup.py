@@ -288,6 +288,14 @@ def restore_kit_permissions(relative, source, target):
         mode = (source.stat().st_mode & 0o755) | 0o600
         if relative == 'app/deploy/kiwix-entrypoint.sh':
             mode |= 0o044
+        if relative in (
+            'app/scripts/installer-outils-linux-hors-ligne.sh',
+            'app/scripts/restaurer-linux-hors-ligne.sh',
+            'app/scripts/survie.sh',
+        ):
+            # Maintenance and systemd call these scripts directly. The public
+            # kit can be copied from a filesystem that does not preserve +x.
+            mode |= 0o100
         target.chmod(mode)
     elif relative.startswith('payload/library/zim/') and target.suffix == '.zim':
         # Kiwix reads this public directory through a read-only mount as an

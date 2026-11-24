@@ -625,6 +625,19 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
                 self.assertEqual(source.stat().st_mode & 0o777, 0o600)
                 self.assertEqual(target.read_bytes(), b'fixture')
 
+    @unittest.skipIf(os.name == 'nt', 'Permissions Linux')
+    def test_linux_kit_restores_executable_modes_required_for_offline_maintenance(self):
+        for name in ('installer-outils-linux-hors-ligne.sh', 'restaurer-linux-hors-ligne.sh', 'survie.sh'):
+            with self.subTest(name=name):
+                source = self.root/name
+                source.write_bytes(b'fixture')
+                source.chmod(0o644)
+                target = self.root/'installed'/name
+                entry = {'path': f'app/scripts/{name}', 'bytes': 7, 'sha256': setup.file_hash(source)}
+                restore_copy(entry, source, target, verify=True)
+                self.assertEqual(target.stat().st_mode & 0o777, 0o744)
+                self.assertEqual(source.stat().st_mode & 0o777, 0o644)
+
     def test_linux_graphical_kit_creates_a_local_launcher_and_keeps_inference_paused(self):
         from pilot_kit import start_installed
         _, kit, _ = self.cross_system_fixture(self.root, 'linux')
