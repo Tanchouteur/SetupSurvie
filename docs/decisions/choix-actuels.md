@@ -41,6 +41,8 @@ Le même jour, Marc transmet sa [liste de thèmes](../bibliotheque/savoirs-durab
 qui devient la grille du fonds, du tri et de la recette de recherche. Pour religion, Internet, culture et loisirs, Marc ne veut qu’une
 base ; les fonds culturels déjà installés chez lui restent dans **Autre**
 jusqu’à son propre tri (décision de Louis).
+Le 24 novembre 2026, Louis retire Wikipédia anglais (complet et Simple
+English) du manifeste : la référence compte 203 archives (0.114.1).
 [Fonds de référence](../bibliotheque/bibliotheque-complete-marc.md#fonds-de-référence-figé) ·
 [tri fourni](../utilisation/classement-et-collections.md)
 

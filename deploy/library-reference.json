@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "SetupSurvie library reference",
-  "reference": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
+  "reference": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster ; Wikipédia anglais retiré le 2026-11-24",
   "items": [
     {
       "id": "kiwix-63e9868b6346267a",
@@ -5053,60 +5053,6 @@
       "classification": "main"
     },
     {
-      "id": "kiwix-b4647e4ea7c0501d",
-      "title": "Wikipedia in simple English",
-      "language": "eng",
-      "edition": "2026-09-27",
-      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en-simple_all_maxi_2026-09.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster"
-      ],
-      "path": "library/zim/wikipedia_en-simple_all_maxi_2026-09.zim",
-      "bytes": 3121060947,
-      "sha256": "2fbdafb57fbf5a43e674b5996319d4a0aebf1b5e5b171566815675e4b3f461af",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "Wikipedia in a simple English",
-      "selection_reasons": [
-        "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en-simple_all_maxi_2026-09.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
-      "classification": "main"
-    },
-    {
-      "id": "kiwix-1a6602381f651370",
-      "title": "Wikipedia",
-      "language": "eng",
-      "edition": "2026-08-25",
-      "url": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2026-08.zim",
-      "publisher": "Kiwix / openZIM — voir les attributions dans l’archive",
-      "topics": [
-        "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster"
-      ],
-      "path": "library/zim/wikipedia_en_all_maxi_2026-08.zim",
-      "bytes": 127418087648,
-      "sha256": "34162d18b9f96f494eac48a73a309c72e0bc95d85f76be405d0f5de795854aa6",
-      "pack": "kiwix-themes",
-      "commercial_review": true,
-      "licence": "Droits et attributions de chaque contenu à examiner avant redistribution commerciale.",
-      "notes": "The free encyclopedia",
-      "selection_reasons": [
-        "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster"
-      ],
-      "source_meta4": "https://lb.download.kiwix.org/zim/wikipedia/wikipedia_en_all_maxi_2026-08.zim.meta4",
-      "fulltext_index": true,
-      "pictures": true,
-      "videos": false,
-      "reference_source": "Version de travail du 2026-11-21 : fonds relevé chez Marc, thèmes de Marc, tri et ajouts à ajuster",
-      "classification": "main"
-    },
-    {
       "id": "kiwix-b99f815655d6e079",
       "title": "Wikipédia",
       "language": "fra",
@@ -5544,5 +5490,15 @@
     "wiki_en_all_maxi_2026-10.zim"
   ],
   "unavailable": [],
-  "total_bytes": 1046614916577
+  "total_bytes": 916075767982,
+  "removed": [
+    {
+      "archives": [
+        "wikipedia_en_all_maxi_2026-08.zim",
+        "wikipedia_en-simple_all_maxi_2026-09.zim"
+      ],
+      "date": "2026-11-24",
+      "reason": "Demande de Louis : plus de Wikipédia anglais dans le fonds de référence."
+    }
+  ]
 }
