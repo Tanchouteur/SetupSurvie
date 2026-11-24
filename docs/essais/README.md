@@ -1,6 +1,6 @@
 # Essais et résultats
 
-**Index des bilans datés, protocoles et campagnes — revu le 20 novembre 2026.**
+**Index des bilans datés, protocoles et campagnes — revu le 24 novembre 2026.**
 Un bilan constate une campagne à une date, pour une version et une machine ;
 il ne vaut pas validation de la version actuelle. Les constats Linux, Windows,
 mobiles et hors ligne restent distincts. Les plus récents sont en premier.
@@ -33,6 +33,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 ## 24 novembre 2026
 
 - [Passe d’optimisation volume et vitesse](2026-11-24-passe-optimisation-volume-vitesse.md) — 0.114.0, index vidéo compact, sauvegardes allégées, portail compressé et démarrage de Kiwix.
+
+- [Audit de bugs et corrections](2026-11-24-audit-bugs-et-corrections.md) — 0.113.2, défauts reproduits, corrigés et testés sur le runner, limites Windows et modèles réels.
 
 ## 23 novembre 2026
 

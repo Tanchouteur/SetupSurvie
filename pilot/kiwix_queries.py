@@ -25,8 +25,11 @@ async def disk_io(operation,*args):
     try:return await asyncio.shield(task)
     except asyncio.CancelledError:
         while not task.done():
+            # The caller was cancelled (or timed out): report that, even if the
+            # thread later fails, so wait_for() still raises TimeoutError.
             try:await asyncio.shield(task)
             except asyncio.CancelledError:pass
+            except Exception:pass
         if not task.cancelled():task.exception()
         raise
 

@@ -6,7 +6,11 @@ function Invoke-SurvieOfflineRestorePreparation([string]$Kit) {
     $script = Join-Path $PSScriptRoot 'prepare-windows.ps1'
     # Use the existing preparation executable, including its restart journal
     # and mutex. Passing -Kit prevents downloads on the target.
-    $details = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Kit $Kit 2>&1 | Out-String
+    # Windows PowerShell 5.1 turns redirected stderr into a terminating error
+    # under 'Stop': keep the output and the exit code (3010 = restart needed).
+    $ErrorActionPreference = 'Continue'
+    $PSNativeCommandUseErrorActionPreference = $false
+    $details = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Kit $Kit 2>&1 | ForEach-Object { $_.ToString() } | Out-String
     return @{ Code = $LASTEXITCODE; Details = $details.Trim() }
 }
 

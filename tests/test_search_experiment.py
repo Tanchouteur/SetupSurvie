@@ -11,6 +11,14 @@ from pilot import calibration,engine,library,model_runtime,operations,search_exp
 
 
 class SearchExperimentTests(unittest.IsolatedAsyncioTestCase):
+    async def test_a_zero_free_space_sample_is_kept_as_the_minimum(self):
+        report={'reserves':{},'minimum_free':{}}
+        samples=iter([{'disk':10},{'disk':0},{'disk':5_000_000_000}])
+        async def slow():await asyncio.sleep(3.5);return 'done'
+        with patch.object(calibration,'guard',AsyncMock(side_effect=lambda _:next(samples,{'disk':7}))):
+            self.assertEqual(await experiment.watched(slow(),report),'done')
+        self.assertEqual(report['minimum_free']['disk'],0)
+
     def setUp(self):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup);root=Path(temporary.name)
         self.pause=False;self.hang=False;self.invalid=False;self.bad_rank=False;self.partial=False;self.remote=False

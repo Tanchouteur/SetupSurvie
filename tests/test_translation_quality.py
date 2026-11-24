@@ -7,6 +7,35 @@ from pilot import translation_quality as quality,translations,store,publications
 import test_translations as fixtures
 
 
+class AuditRegressionTests(unittest.TestCase):
+    """Cases found by the November 2026 audit: rates, swaps, ranges and rare letters."""
+    def status(self,source,translated):
+        return quality.assess(source,translated,source_language='en',english_grouping=True)['status']
+
+    def test_compound_and_less_common_units_are_never_silently_converted(self):
+        for source,translated in (('Give 5 mg/h.','Donnez 5 mg/min.'),('Flow 5 L/min.','Débit 5 L/h.'),('Use 3 kcal.','Utilisez 3 kJ.'),
+                                  ('Set 5 mV.','Réglez 5 µV.'),('Drive at 30 mph.','Roulez à 48 km/h.'),('Give 5 mg/day.','Donnez 5 mg/h.')):
+            with self.subTest(source=source):self.assertEqual(self.status(source,translated),'blocked')
+        for source,translated in (('Give 5 mg/kg/day.','Donnez 5 mg/kg/jour.'),('Flow 5 L/min.','Débit 5 l/min.'),('Use 3 kcal.','Utilisez 3 kcal.'),
+                                  ('Set 5 µg.','Réglez 5 μg.'),('Speed 3 m/s.','Vitesse 3 m/s.'),('The bus 5 goes north.','Le bus 5 va au nord.')):
+            with self.subTest(source=source):self.assertEqual(self.status(source,translated),'checked')
+
+    def test_a_quantity_swapped_with_a_page_number_stays_blocked(self):
+        self.assertEqual(self.status('Take 5 tablets daily. See page 12.','Prenez 12 comprimés par jour. Voir page 5.'),'blocked')
+        # A label that only moves away from its number remains accepted.
+        self.assertEqual(self.status('See page 12 for 5 tablets.','Voir la page suivante, 12, pour 5 comprimés.'),'checked')
+
+    def test_spaced_ranges_are_not_negative_numbers(self):
+        for dash in ('–','-','—'):
+            with self.subTest(dash=dash):self.assertEqual(self.status(f'Take 10 {dash} 20 mg daily.','Prenez 10 à 20 mg par jour.'),'checked')
+        self.assertEqual(self.status('Keep at -5 °C.','Conservez à 5 °C.'),'blocked')
+        self.assertEqual(self.status('Range 10 to -20 °C.','Plage de 10 à -20 °C.'),'checked')
+
+    def test_long_s_from_old_prints_does_not_crash(self):
+        self.assertEqual(self.status('Wait 5 ſecondes.','Attendez 5 secondes.'),'checked')
+        self.assertEqual(quality.unit_key('ſecondes'),'s')
+
+
 class TokenChecksTests(unittest.TestCase):
     def test_protected_references_restore_exactly_and_reject_bad_anchors(self):
         from pilot.math_text import marked

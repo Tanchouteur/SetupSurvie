@@ -558,6 +558,10 @@ async def run(identifier,user_id,conversation_id,mode,source_id=None,domain=libr
                             elif name=='calculate':value=library.calculate(arguments.get('expression',''))
                             elif name=='convert_units':value=library.convert(**arguments)
                             else:raise ValueError('Outil non autorisé.')
+                        except ValueError as exc:
+                            # Calculation messages are written for the reader (division by zero, units).
+                            detail=str(exc) if name in ('calculate','convert_units') and str(exc) else 'Outil indisponible ou arguments non valides.'
+                            value={'error':detail+' Ne pas inventer son résultat.'}
                         except Exception:
                             value={'error':'Outil indisponible ou arguments non valides. Ne pas inventer son résultat.'}
                         if name in ('search_library','read_source'):record_evidence(name,arguments,value,lookup_key)

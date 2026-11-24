@@ -131,6 +131,28 @@ class DocumentLibraryTests(unittest.TestCase):
         library.index_guides(automatic=True)
         self.assertEqual(self.client.get('/api/source',params={'id':'guide:ajout.fr.txt'}).status_code,200)
 
+    def test_watcher_retries_after_the_guide_folder_was_missing_at_startup(self):
+        library.GUIDE_REFRESH_STOP.clear();library.guide_hold().unlink(missing_ok=True)
+        hidden=self.root/'not-mounted'
+        self.guides.rename(hidden)
+        with self.assertRaises(OSError):library.index_guides(automatic=True)
+        self.assertEqual(library.guide_index_status()['status'],'error')
+        gateway.DEGRADED['index']=time.time()
+        hidden.rename(self.guides)
+        real_sleep=asyncio.sleep
+        async def tick(seconds):await real_sleep(0)
+        async def watch_once():
+            with patch.object(library.asyncio,'sleep',tick):
+                task=asyncio.create_task(library.watch_guides())
+                for _ in range(200):
+                    await real_sleep(0.01)
+                    if library.guide_index_status().get('status')=='completed':break
+                task.cancel()
+        asyncio.run(watch_once())
+        self.assertEqual(library.guide_index_status()['status'],'completed')
+        self.assertEqual(self.client.get('/api/source',params={'id':'guide:manual.en.txt'}).status_code,200)
+        self.assertNotIn('index',self.client.get('/api/health').json()['degraded_features'])
+
     def test_publication_failure_retains_translation_original_search_and_favorites_then_retries(self):
         item=self.pending_translation()
         with patch.object(publications,'_publish',side_effect=OSError('fixture disk failure')):

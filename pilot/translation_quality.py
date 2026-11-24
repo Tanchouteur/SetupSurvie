@@ -9,10 +9,11 @@ import re
 import unicodedata
 from .math_text import BLOCKS,UNREADABLE
 
-VERSION=10
+VERSION=11
 # PDF extraction often joins a label and its number ("Chapter4", "X7").
 # Count that number on both sides, including when French restores the space.
-NUMBER=r'(?<!\d)(?:[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
+# A dash after a number and a space is a range ("10 – 20"), not a sign.
+NUMBER=r'(?<!\d)(?:(?<!\d[ \u00a0\u202f])[-+−]\s*)?\d+(?:[ \u00a0\u202f]\d{3})*(?:[.,]\d+)?'
 NUMBERS=re.compile(NUMBER)
 ENGLISH_DOLLAR_AMOUNT=re.compile(r'(\$\s*)([+-]?\d{1,3}(?:,\d{3})+(?:\.\d+)?)(?!\d|[.,]\d)')
 ENGLISH_GROUPED_NUMBER=re.compile(r'(?<![\d.,])\d{1,3}(?:,\d{3})+(?:\.\d+)?(?!\d|[.,]\d)')
@@ -45,8 +46,31 @@ UNIT_ALIASES={
     '°c':'°c','°f':'°f','%':'%','volts':'v','volt':'v','v':'v','watts':'w','watt':'w','w':'w',
     'ma':'ma','a':'a','kw':'kw','kwh':'kwh','wh':'wh','hz':'hz','bar':'bar','pa':'pa','kpa':'kpa','mpa':'mpa',
     'psi':'psi','rpm':'rpm','mm²':'mm²','cm²':'cm²','m²':'m²','cm³':'cm³','m³':'m³',
-    'mg/kg':'mg/kg','g/l':'g/l','mg/l':'mg/l','ml/min':'ml/min','km/h':'km/h','m/s':'m/s'}
-UNIT=re.compile('('+NUMBER+r')\s*('+ '|'.join(re.escape(k).replace('/',r'\s*/\s*').replace('°','°'+r'\s*') for k in sorted(UNIT_ALIASES,key=len,reverse=True))+r')(?![a-zà-ÿ\d²³])',re.I)
+    'kcal':'kcal','kilocalories':'kcal','kilocalorie':'kcal','calories':'cal','calorie':'cal','cal':'cal',
+    'kj':'kj','kilojoules':'kj','kilojoule':'kj','joules':'j','joule':'j',
+    'mv':'mv','millivolts':'mv','millivolt':'mv','µv':'µv','μv':'µv','microvolts':'µv','microvolt':'µv','kv':'kv',
+    'µg':'µg','μg':'µg','mcg':'µg','micrograms':'µg','microgram':'µg','microgrammes':'µg','microgramme':'µg',
+    'µm':'µm','μm':'µm','micrometers':'µm','micromètres':'µm','nm':'nm','ms':'ms','milliseconds':'ms','millisecondes':'ms',
+    'iu':'ui','ui':'ui','mmhg':'mmhg','mah':'mah','ah':'ah','kva':'kva','mw':'mw',
+    'ft':'ft','feet':'ft','foot':'ft','pieds':'ft','pied':'ft','inches':'in','inch':'in','pouces':'in','pouce':'in',
+    'miles':'mi','mile':'mi','mph':'mph','gallons':'gal','gallon':'gal','gal':'gal','oz':'oz','ounces':'oz','ounce':'oz','onces':'oz','lb':'lb','lbs':'lb'}
+# Rates keep both sides: "5 mg/h" and "5 mg/min" differ by a factor 60.
+DENOMINATOR_ALIASES={'day':'jour','days':'jour','jour':'jour','jours':'jour','j':'jour','d':'jour',
+    'week':'semaine','weeks':'semaine','semaine':'semaine','semaines':'semaine','month':'mois','mois':'mois',
+    'year':'an','years':'an','an':'an','ans':'an','année':'an','dose':'dose','doses':'dose'}
+UNIT_LOOKUP={key.casefold():value for key,value in UNIT_ALIASES.items()}
+_UNIT_NAMES='|'.join(re.escape(k).replace('°','°'+r'\s*') for k in sorted(UNIT_ALIASES,key=len,reverse=True))
+UNIT=re.compile('('+NUMBER+r')\s*((?:'+_UNIT_NAMES+r')(?:\s*/\s*(?:\d+\s*)?[^\W\d_]+[²³]?)?)(?![^\W_]|[²³])',re.I)
+
+
+def unit_key(text):
+    """Canonical unit, including compound rates; never fails on a new spelling."""
+    parts=re.sub(r'\s','',text).casefold().split('/',1)
+    key=UNIT_LOOKUP.get(parts[0],parts[0])
+    if len(parts)>1:
+        denominator=parts[1]
+        key+='/'+UNIT_LOOKUP.get(denominator,DENOMINATOR_ALIASES.get(denominator,denominator))
+    return key
 
 
 # Match complete structured bibliography lines only when author initials and a
@@ -226,6 +250,10 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
     # "page suivante, 12"). Pair only surplus cardinals with unmatched references.
     moved_to_target=(source_refs-target_refs)&(target_cardinals-source_cardinals)
     moved_to_source=(target_refs-source_refs)&(source_cardinals-target_cardinals)
+    if moved_to_target and moved_to_source:
+        # Moves in both directions are a swap ("5 tablets, page 12" to
+        # "12 tablets, page 5"): a quantity changed, so keep both strict.
+        moved_to_target=moved_to_source=Counter()
     if source_refs-moved_to_target!=target_refs-moved_to_source:
         add('numbers','warning','Un numéro de référence a changé ou disparu. Comparez l’original.')
     if source_cardinals-moved_to_source!=target_cardinals-moved_to_target:
@@ -246,7 +274,7 @@ def assess(source,translated,*,source_language=None,english_grouping=False):
                 rest=text[match.end(2):]
                 if '\n' in gap and not text[line_start:match.start(1)].strip() and re.match(r'[ 	]+[^\W\d_]',rest):
                     continue
-            pairs[number(match.group(1)),UNIT_ALIASES[unit.lower()]]+=1
+            pairs[number(match.group(1)),unit_key(unit)]+=1
         return pairs
     if measures(measure_source)!=measures(translated):add('units','error','Des associations nombre/unité diffèrent de l’original. Aucune conversion silencieuse n’est acceptée.')
     if len(source.strip())>=160 and len(translated.strip())<len(source.strip())*.4:

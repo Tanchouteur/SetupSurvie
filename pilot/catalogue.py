@@ -183,7 +183,7 @@ def automatic_labels(stem,title):
     prefix=match[1] if match else stem
     families={'wikipedia':'Wikipédia','wikibooks':'Wikilivres','vikidia':'Vikidia','appropedia':'Appropedia','canadian-prepper':'Canadian Prepper'}
     family=families.get(prefix,title if not match or retrieval.normal(prefix)==retrieval.normal(title) else prefix.replace('-',' '))
-    raw=match[3].replace('-',' ') if match else ''
+    raw=match[3].replace('-',' ').replace('_',' ') if match else ''
     names={'all':'Collection complète','all maxi':'Collection complète illustrée','all nopic':'Collection complète sans images',
            'preppingfood':'Alimentation','preppinggear':'Équipement','preppingsurvival':'Préparation et autonomie',
            'survival':'Survie et autonomie','food':'Alimentation','energy':'Énergie','water':'Eau','shelter':'Abri',

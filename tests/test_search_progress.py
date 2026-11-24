@@ -102,11 +102,16 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cached);self.assertEqual(calls,2)
 
     async def test_responses_arriving_together_share_one_cache_commit(self):
-        batches=[]
+        batches=[];arrived=threading.Event()
+        def writer(root,entries):
+            # Hold the first commit until every response has arrived, whatever
+            # the machine load: the others must then share a single commit.
+            if not batches:arrived.wait(5)
+            batches.append(len(entries))
         async def reader(path):return b'<rss><channel/></rss>','application/xml'
-        with patch.object(search_cache,'write_many',lambda root,entries:batches.append(len(entries))):
+        with patch.object(search_cache,'write_many',writer):
             await asyncio.gather(*(kiwix_queries.request(store.ROOT,'fixture',f'/search?q=batch{i}','fulltext',reader,generation='a') for i in range(6)))
-            await kiwix_queries.close()
+            arrived.set();await kiwix_queries.close()
         self.assertEqual(sum(batches),6);self.assertLessEqual(len(batches),2)
         with patch.object(search_cache,'RESERVE_BYTES',0):
             search_cache.write_many(store.ROOT,[(f'many{i}',(b'<rss/>','application/xml')) for i in range(3)])

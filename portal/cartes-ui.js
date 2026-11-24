@@ -13,9 +13,10 @@
   let reloading=false;function reloadProfile(){if(reloading)return;reloading=true;location.reload();}
   async function login(){
     if(!$('map-login-dialog').open)$('map-login-dialog').showModal();$('map-login-error').textContent='';$('map-profile-list').replaceChildren();
-    try{const r=await fetch('/api/profiles'),data=await r.json();if(!r.ok)throw Error('Liste des profils indisponible.');for(const profile of data.profiles){const b=document.createElement('button');b.type='button';b.textContent=profile.name;b.onclick=async()=>{b.disabled=true;try{const r=await fetch('/api/profiles/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:profile.id})});if(!r.ok)throw Error('Impossible de choisir ce profil.');localStorage.setItem('survie.profile.changed',String(Date.now()));reloadProfile();}catch(error){$('map-login-error').textContent=error.message;b.disabled=false;}};$('map-profile-list').append(b);}}
-    catch(error){$('map-login-error').textContent=error.message;}
+    try{const r=await fetch('/api/profiles');if(!r.ok)throw Error('Liste des profils indisponible.');const data=await r.json();for(const profile of data.profiles){const b=document.createElement('button');b.type='button';b.textContent=profile.name;b.onclick=async()=>{b.disabled=true;try{const r=await fetch('/api/profiles/select',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:profile.id})});if(!r.ok)throw Error('Impossible de choisir ce profil.');try{localStorage.setItem('survie.profile.changed',String(Date.now()));}catch{}reloadProfile();}catch(error){$('map-login-error').textContent=friendly(error);b.disabled=false;}};$('map-profile-list').append(b);}}
+    catch(error){$('map-login-error').textContent=friendly(error);}
   }
+  function friendly(error){return error instanceof TypeError?'Le serveur SetupSurvie ne répond pas. Vérifiez que cet appareil est sur le même réseau, puis réessayez.':error.message;}
   const UI=window.MapUI={user:null,showPanel,notify,login,requireUser(){if(this.user)return true;notify('Choisissez un profil pour utiliser cet outil. La carte reste ouverte.');login();return false;}};
   document.querySelectorAll('[data-panel]').forEach(b=>b.onclick=()=>showPanel(b.dataset.panel));
   document.querySelectorAll('[data-map-login]').forEach(b=>b.onclick=login);

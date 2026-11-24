@@ -85,6 +85,9 @@ GUIDE_REFRESH_STOP=threading.Event()
 GUIDE_INDEX_STATUS={}
 GUIDE_INDEX_STATUS_ROOT=None
 GUIDE_INDEX_REVISION=None
+# Folder state at the last failure: retry automatically once it changes.
+GUIDE_INDEX_FAILED_REVISION=None
+GUIDE_TASKS=set()
 GUIDE_EXTENSIONS={'.txt','.md','.html','.pdf','.epub'}
 
 
@@ -113,13 +116,14 @@ class GuideIndexPaused(Exception):
 
 
 def index_guides(*, automatic=False):
-    global GUIDE_INDEX_REVISION, GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT
+    global GUIDE_INDEX_REVISION, GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT, GUIDE_INDEX_FAILED_REVISION
     with INDEX_LOCK:
         def check():
             if automatic and (GUIDE_REFRESH_STOP.is_set() or guide_hold().exists()):
                 raise GuideIndexPaused()
         GUIDE_INDEX_STATUS_ROOT = store.ROOT
         GUIDE_INDEX_STATUS = {'status': 'running', 'pausable': automatic}
+        revision = None
         try:
             check()
             revision = guide_revision()
@@ -130,6 +134,7 @@ def index_guides(*, automatic=False):
             return None
         except Exception:
             GUIDE_INDEX_STATUS = {'status': 'error', 'error': 'L’index des guides n’a pas pu être actualisé.'}
+            GUIDE_INDEX_FAILED_REVISION = revision
             raise
         GUIDE_INDEX_STATUS = {'status': 'completed', 'stage': f'{count} guide(s) recherchable(s)', 'updated': time.time()}
         return count
@@ -161,7 +166,9 @@ async def resume_guide_refresh():
     GUIDE_REFRESH_STOP.clear()
     GUIDE_INDEX_STATUS_ROOT = store.ROOT
     GUIDE_INDEX_STATUS = {'status': 'queued'}
-    asyncio.create_task(refresh_guides())
+    task = asyncio.create_task(refresh_guides())
+    GUIDE_TASKS.add(task)
+    task.add_done_callback(GUIDE_TASKS.discard)
 
 
 async def refresh_guides():
@@ -175,9 +182,13 @@ async def watch_guides():
     while True:
         await asyncio.sleep(60)
         try:
-            if guide_index_status().get('status') in ('running', 'queued', 'paused', 'error'):
+            state = guide_index_status().get('status')
+            if state in ('running', 'queued', 'paused'):
                 continue
-            if await asyncio.to_thread(guide_revision) != GUIDE_INDEX_REVISION:
+            revision = await asyncio.to_thread(guide_revision)
+            # After a failure (folder not mounted yet, unreadable file), retry
+            # when the folder changes instead of waiting for a manual reindex.
+            if revision != (GUIDE_INDEX_FAILED_REVISION if state == 'error' else GUIDE_INDEX_REVISION):
                 await refresh_guides()
         except OSError:
             continue
@@ -1000,10 +1011,14 @@ def calculate(expression):
     tree=ast.parse(expression,mode='eval')
     if sum(1 for _ in ast.walk(tree))>45:raise ValueError('Expression trop complexe.')
     def visit(node):
-        if isinstance(node,ast.Constant) and type(node.value) in (int,float):value=Fraction(str(node.value))
+        if isinstance(node,ast.Constant) and type(node.value) in (int,float):
+            if node.value!=node.value or abs(node.value)==float('inf'):raise ValueError('Valeur hors limites.')
+            value=Fraction(str(node.value))
         elif isinstance(node,ast.UnaryOp) and isinstance(node.op,(ast.UAdd,ast.USub)):value=visit(node.operand)*(1 if isinstance(node.op,ast.UAdd) else -1)
         elif isinstance(node,ast.BinOp):
             a,b=visit(node.left),visit(node.right)
+            if (isinstance(node.op,(ast.Div,ast.FloorDiv,ast.Mod)) and b==0) or (isinstance(node.op,ast.Pow) and a==0 and b<0):
+                raise ValueError('Division par zéro : le résultat n’est pas défini.')
             if isinstance(node.op,ast.Add):value=a+b
             elif isinstance(node.op,ast.Sub):value=a-b
             elif isinstance(node.op,ast.Mult):value=a*b
