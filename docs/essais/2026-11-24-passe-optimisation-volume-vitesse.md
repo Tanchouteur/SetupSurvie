@@ -1,6 +1,6 @@
 # Passe d’optimisation volume et vitesse — 24 novembre 2026
 
-**Bilan daté — version 0.114.0, laboratoire Bazzite de Louis (Ryzen 9, 32 Go,
+**Bilan daté — version 0.115.0, laboratoire Bazzite de Louis (Ryzen 9, 32 Go,
 RTX 2060 6 Go, fonds de 205 archives ZIM soit 976 Go, 17 375 vidéos indexées).**
 Les mesures ont été faites sur le laboratoire en service, avec la session de
 Louis ouverte et d’autres travaux en cours (inventaire vidéo des ZIM, recette
@@ -8,7 +8,7 @@ documentaire) : elles donnent des ordres de grandeur, pas des chronométrages de
 référence. Aucune mesure Windows ni chez Marc ; aucun essai sur iPhone réel.
 Les mesures de la passe ont été faites dans des conteneurs jetables (dossier
 d’état temporaire, données réelles en lecture seule) pendant que le labo restait
-en 0.108.0 ; le labo a ensuite été mis à jour en 0.114.0 (section « Mise à jour
+en 0.108.0 ; le labo a ensuite été mis à jour en 0.115.0 (section « Mise à jour
 réelle du laboratoire »).
 
 ## Objectif fixé
@@ -39,7 +39,7 @@ réelle du laboratoire »).
   réécrivait le catalogue grandissant.
 - Caddy servait le portail sans compression et en `no-cache` partout.
 
-## Changements de la 0.114.0
+## Changements de la 0.115.0
 
 Voir l’[architecture des vidéos](../architecture/videos.md#index-vidéo-compact-et-publication-dun-bloc--01140),
 l’[architecture générale](../architecture/README.md#compression-cache-du-portail-et-catalogue-kiwix--01140)
@@ -84,7 +84,7 @@ Conteneur jetable (image du pilote du labo, réseau coupé, 2 Go de mémoire),
 code de la branche, dossier d’état temporaire, vidéos, ZIM et inventaires
 vidéo des ZIM du labo en lecture seule :
 
-| Mesure | Ancien format (pilote du labo) | 0.114.0 (conteneur jetable) |
+| Mesure | Ancien format (pilote du labo) | 0.115.0 (conteneur jetable) |
 | --- | --- | --- |
 | Vidéos, pistes | 17 375 vidéos, 61 586 pistes | identiques |
 | Durée | 1 494 à 1 850 s | 399 s |
@@ -150,7 +150,7 @@ du pilote (hors fichiers régénérables, 208 Mo) dans
 `runtime/avant-livraison-0114/`. Open WebUI et Ollama (arrêté) n’ont pas été
 touchés.
 
-| Mesure réelle | 0.108.0 | 0.114.0 |
+| Mesure réelle | 0.108.0 | 0.115.0 |
 | --- | --- | --- |
 | Kiwix prêt après création, 205 archives | ≈ 1 min (démarrage de 06 h 33) | 8 s |
 | Index vidéo | 9,44 Go | 3,42 Go, même nombre de vidéos (17 375) et de pistes (61 586) |
@@ -168,22 +168,51 @@ environ 0,1 s. Les deux corrections, déployées par deux redémarrages du seul
 pilote (09 h 27 et 09 h 34), ramènent la série à 2,75 s. Les résultats de la
 recette vidéo enregistrés en 0.108.0 (quatre requêtes) se retrouvent tous.
 
-Constats non corrigés : le pilote du labo pointe vers un contrôleur
-(`10.89.0.1:21436`) qui n’écoute plus depuis le redémarrage du PC (déjà le cas
-en 0.108.0 ; marche et arrêt du moteur indisponibles depuis le portail) ; le
-domaine par défaut « résilience » ne renvoie rien pour « greffer un pommier »,
-alors que le domaine « tout » trouve « Greffe anglaise » et Baltet.
+Constats de ce premier déploiement : le pilote du labo pointait vers un
+contrôleur (`10.89.0.1:21436`) qui n’écoutait plus depuis le redémarrage du PC
+(déjà le cas en 0.108.0 ; marche et arrêt du moteur indisponibles depuis le
+portail) ; le domaine par défaut « résilience » ne renvoyait rien pour
+« greffer un pommier », alors que le domaine « tout » trouvait « Greffe
+anglaise » et Baltet. Ils sont traités dans la section suivante.
+
+Numérotation : la branche portait 0.114.0 pendant ces essais ; la PR #129 a
+aussi publié une 0.114.0 sur `main`. Après rapprochement, cette livraison est
+numérotée **0.115.0** (niveau `y` : changement de format de l’index vidéo et
+nouveau réglage `control_port`, évolutions compatibles).
+
+## Corrections après la mise à jour — 24 novembre 2026
+
+- **Contrôleur** : nouveau réglage `control_port` (21436 au labo, 11436 par
+  défaut) lu par `scripts/control.py` et par `linux_lab.py`, qui envoie le
+  pilote vers `host.containers.internal:<port>` (adresse de l’hôte vue par
+  pasta, stable après redémarrage). Au labo, un service utilisateur
+  `setupsurvie-lab-controle.service` relance le contrôleur au démarrage.
+  Vérifié : `control_available` vrai, GPU, RAM et disque visibles dans le
+  portail ; aucun moteur IA n’a été démarré.
+- **Arrêt du pilote** : `--timeout-graceful-shutdown 5` pour uvicorn (Compose,
+  laboratoire, scripts de rafraîchissement et de restauration). Le déploiement
+  suivant s’est arrêté sans arrêt forcé par Podman.
+- **Greffe** : concepts `greffe` et `pommier` ajoutés à la recherche (verbe,
+  pluriels et traduction anglaise). Le premier essai au labo renvoyait encore
+  0 résultat, mais pour une autre raison : le conteneur Kiwix du labo avait été
+  créé avec `--memory=1g` (valeur antérieure à cette passe, alors que
+  `linux_lab.py` prévoit 6 Go). Saturé et en swap, il mettait 2 min 40 s pour
+  une seule recherche, d’où 65 lots en erreur et le dépassement du délai.
+  Kiwix a été recréé avec 6 Go : même requête en 0,05 s, recherche complète en
+  3,7 s sans échec, et 3 réponses pertinentes (gardening.stackexchange :
+  greffe sur pommier adulte, sur souche, coing et pommier). Limite observée :
+  « purifier l’eau de pluie » ne renvoie qu’un résultat hors sujet
+  (« Air purifier ») ; non traité dans cette passe.
 
 ## Limites et suites proposées
 
 - Les tests automatisés couvrent la publication, la reprise après échec,
   l’attente des connexions ouvertes, l’anti-boucle et les écritures groupées du
   cache et du rapport vidéo.
-- L’arrêt du pilote attend la fermeture des connexions HTTP ouvertes ; lors de
-  la deuxième bascule, une connexion restée ouverte a fait dépasser les 30 s et
-  Podman a forcé l’arrêt. Comportement antérieur à cette livraison ; aucun
-  fichier n’a été abîmé.
-- Mise à jour vers 0.114.0 : une reconstruction unique de l’index vidéo au
+- L’arrêt du pilote attendait la fermeture des connexions HTTP ouvertes (arrêt
+  forcé par Podman après 30 s lors de la deuxième bascule) ; corrigé par le
+  délai de 5 s ci-dessus.
+- Mise à jour vers 0.115.0 : une reconstruction unique de l’index vidéo au
   premier démarrage (changement de format), avec l’ancien index consultable
   jusqu’à la fin.
 - Recherche documentaire neuve : 3,6 à 15 s au labo, sans gain obtenu dans

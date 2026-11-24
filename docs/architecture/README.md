@@ -142,7 +142,7 @@ existant ; le dernier plan autorisé est figé par son empreinte. Ce mécanisme 
 remplace ni une ouverture de session Windows ni la récupération d’une mise à jour
 interrompue. Voir le [guide Windows](../installation/deux-etapes-windows.md#démarrage-automatique-windows-depuis-0130).
 
-## Compression, cache du portail et catalogue Kiwix — 0.114.0
+## Compression, cache du portail et catalogue Kiwix — 0.115.0
 
 Caddy compresse en gzip (préféré, plus compact ici) ou zstd les réponses textuelles du portail et de l’API
 (HTML, CSS, JavaScript, JSON, SVG, Markdown, texte) à partir de 1 Ko. Les flux

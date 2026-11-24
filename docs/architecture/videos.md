@@ -8,7 +8,7 @@
 `scripts/library_videos.py`. `pilot/videos.py` publie un index SQLite/FTS séparé
 dans `state/pilot/videos.db`, avec métadonnées et segments par piste. Actualisation
 explicite, annulation par événement rejoint, transaction globale et rapport R6
-par vidéo ; une interruption laisse l’index précédent (depuis 0.114.0, construction
+par vidéo ; une interruption laisse l’index précédent (depuis 0.115.0, construction
 dans un fichier séparé : voir [plus bas](#index-vidéo-compact-et-publication-dun-bloc--01140)). Aucun original n’est écrit.
 Le montage `library/video:/videos:ro` reste indépendant des guides/ZIM et ne change
 pas le schéma du magasin principal. Une recherche vidéo optionnelle défaillante
@@ -86,7 +86,7 @@ bruts. Sauvegarde/transfert emportent cet état avec les autres états du pilote
 Voir le [guide](../utilisation/videos-locales.md) et les
 [preuves et limites](../essais/2026-11-16-acquisition-sous-titres.md).
 
-## Index vidéo compact et publication d’un bloc — 0.114.0
+## Index vidéo compact et publication d’un bloc — 0.115.0
 
 Remplace, pour la publication, la « transaction globale » de la 0.23.0 : le scan
 construit `state/pilot/videos.db.next` sans journal ni synchronisation, puis
@@ -111,7 +111,7 @@ l’index du labo (17 375 vidéos, 11,5 millions de répliques), la taille passe
 7,70 à 3,42 Go à contenu identique, avec les mêmes réponses sur 1 395 requêtes
 et des temps équivalents ; la construction SQL est deux fois plus rapide.
 
-Un fichier publié avant 0.114.0 garde `video_text` et reste lisible
+Un fichier publié avant 0.115.0 garde `video_text` et reste lisible
 (`videos.main_table()`) jusqu’à sa reconstruction, déclenchée automatiquement
 par le changement d’empreinte. Après un retour arrière, une version antérieure
 ne trouve pas `video_text` dans le nouveau format : elle crée sa propre table

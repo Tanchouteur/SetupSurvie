@@ -32,7 +32,7 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 24 novembre 2026
 
-- [Passe d’optimisation volume et vitesse](2026-11-24-passe-optimisation-volume-vitesse.md) — 0.114.0, index vidéo compact, sauvegardes allégées, portail compressé et démarrage de Kiwix.
+- [Passe d’optimisation volume et vitesse](2026-11-24-passe-optimisation-volume-vitesse.md) — 0.115.0, index vidéo compact, sauvegardes allégées, portail compressé et démarrage de Kiwix.
 
 - [Apport des éditions de Wikipédia sur Bazzite](2026-11-24-apport-wikipedia-bazzite.md) — Wikipédia FR, EN Maxi et Simple English comparés aux résultats du fonds complet.
 

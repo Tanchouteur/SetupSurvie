@@ -98,7 +98,7 @@ def connect():
 
 
 def main_table(db):
-    """Search table of the rebuilt layout, or of a file published before 0.114.0."""
+    """Search table of the rebuilt layout, or of a file published before 0.115.0."""
     return 'video_search' if db.execute("SELECT 1 FROM sqlite_master WHERE name='video_search'").fetchone() else 'video_text'
 
 

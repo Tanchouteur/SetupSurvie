@@ -402,7 +402,7 @@ de maintenance, qui recrée les services avec ce montage.
 L’index `state/pilot/videos.db` et son rapport sont séparés des originaux et de
 l’index documentaire principal. Une actualisation construit un nouveau fichier :
 l’ancien index reste utilisable tant que le nouveau n’est pas terminé. Depuis
-0.114.0, cet index régénérable n’est plus copié dans les sauvegardes ; il se
+0.115.0, cet index régénérable n’est plus copié dans les sauvegardes ; il se
 reconstruit après une restauration. Les statuts et
 révisions de taille/date détectent des changements observés, pas toute altération
 possible. L’[outil d’inventaire en ligne de commande](inventaire-videos.md) reste
