@@ -23,6 +23,7 @@ import search_index_queue as index_queue
 from delivery_paths import destination, locked
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
+CANCELLABLE = ('download',)
 QUEUE_PREPARATIONS = {'index', 'index-prepare', 'category-index', 'video-inventory'}
 
 
@@ -151,10 +152,12 @@ class Manager:
             result['youtube']=self.youtube_progress(state['id'])
             result['youtube_list']=state.get('youtube_list')
         if state.get('id'):
-            if state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
+            if state['phase'] in ACTIVE and (self.paths(state['id']) / 'discard').exists():
+                result.update(pause_requested=True, message='Annulation demandée. Attente de la fin de l’échange en cours ; les fichiers commencés seront supprimés.')
+            elif state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
                 result.update(pause_requested=True, message='Pause demandée. Attente de la fin de l’échange en cours ; les fichiers partiels seront conservés.')
             plan_path = self.paths(state['id']) / 'plan.json'
-            if plan_path.is_file():
+            if plan_path.is_file() and state['phase'] != 'cancelled':
                 plan = json.loads(plan_path.read_text(encoding='utf-8'))
                 result['plan'] = {k: plan[k] for k in ('candidates', 'remaining_download_bytes', 'missing_themes', 'library_bytes')}
                 result['plan']['count'] = len(plan['items'])
@@ -342,21 +345,33 @@ class Manager:
                 import library_reference
                 root, scope = storage
                 previous = state.get('options', {}).get('reference_restore')
-                if not previous and (state['phase'] == 'planned' or (
-                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted')
-                )):
-                    raise setup.SetupError('Reprenez d’abord le téléchargement précédent depuis la File d’attente.')
+                stopped_download = state['phase'] == 'planned' or (
+                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted'))
                 with locked(root/'catalog/content.lock'):
                     reference = library_reference.load()
                     sorting = collection_sort.load(root/'catalog')
                     plan = library_reference.restoration_plan(root, reference, sorting, storage_root=scope)
                     if plan['confirmation_token'] != body['reference_confirmation']:
                         raise setup.SetupError('La bibliothèque a changé. Actualisez la comparaison avant de confirmer.')
+                    plan = library_reference.select_changes(plan, body.get('selection'))
                     if not any(plan[key] for key in ('downloads', 'removals', 'moves')):
-                        raise setup.SetupError('La bibliothèque correspond déjà à la référence.')
+                        raise setup.SetupError('Cochez au moins un changement à appliquer.' if body.get('selection') is not None
+                                               else 'La bibliothèque correspond déjà à la référence.')
+                    if not plan['downloads'] and not plan['removals']:
+                        # A ranking change alone is immediate and leaves any paused download untouched.
+                        library_reference.apply_moves(root, plan['moves'])
+                        return None
+                    if not previous and stopped_download:
+                        raise setup.SetupError('Annulez ou reprenez d’abord le téléchargement précédent depuis la File d’attente.')
                     if not plan['space_sufficient']:
                         raise setup.SetupError('L’espace libre est insuffisant pour préparer les éditions de référence.')
+                    # The ranking does not wait for the files: apply it before downloading.
+                    library_reference.apply_moves(root, plan['moves'])
                     names = {row['archive'] for row in plan['downloads']}
+                    if previous and stopped_download:
+                        # The new confirmation replaces a stopped restoration: drop its unfinished files.
+                        self.discard_files(state, keep={item['path'] for item in reference['items']
+                                                        if Path(item['path']).name in names}, locked_content=True)
                     state = {'id': uuid.uuid4().hex, 'phase': 'planned', 'options': {'reference_restore': True}}
                     folder = self.paths(state['id'])
                     folder.mkdir(parents=True)
@@ -409,8 +424,8 @@ class Manager:
         else:
             raise setup.SetupError('Action documentaire inconnue.')
         folder = self.paths(state['id'])
-        (folder / 'cancel').unlink(missing_ok=True)
-        (folder / 'ready').unlink(missing_ok=True)
+        for marker in ('cancel', 'discard', 'ready'):
+            (folder / marker).unlink(missing_ok=True)
         state.update(action=action, pid=None, started_at=time.time(), message='Préparation de l’opération…')
         self.write(state)
         try:
@@ -481,6 +496,73 @@ class Manager:
             elif not automatic:
                 marker.unlink(missing_ok=True)
         (folder / 'cancel').touch()
+
+    def cancel(self, operation_id):
+        """Cancel a library download and delete its unfinished files.
+
+        A running worker is asked to stop first; it cleans up when it reaches its
+        next checkpoint. Archives already verified and published are kept."""
+        with locked(destination(self.app.work, 'library-web/operation.lock')):
+            state = self.current()
+            if not operation_id or state.get('id') != operation_id or state.get('action') not in CANCELLABLE:
+                raise setup.SetupError('Ce téléchargement n’est plus dans la file.')
+            folder = self.paths(state['id'])
+            if state['phase'] in ACTIVE:
+                if state['phase'] == 'refreshing':
+                    raise setup.SetupError('Les fichiers sont déjà vérifiés et en cours de mise à disposition. Patientez quelques instants.')
+                (folder / 'discard').touch()
+                (folder / 'cancel').touch()
+                return 'requested'
+            if state['phase'] not in ('planned', 'paused', 'error', 'interrupted'):
+                raise setup.SetupError('Ce téléchargement est déjà terminé ou annulé.')
+            self.discard(state)
+            return 'cancelled'
+
+    def discard_files(self, state, keep=(), locked_content=False):
+        """Delete the partial and staged files of a stopped download job."""
+        root = Path(self.config['data_dir'])
+        folder = self.paths(state['id'])
+        plan_path = folder / 'plan.json'
+        try:
+            plan = json.loads(plan_path.read_text(encoding='utf-8')) if plan_path.is_file() else {}
+        except (OSError, ValueError):
+            plan = {}
+        paths = {item['path'] for item in plan.get('items', []) if isinstance(item, dict) and isinstance(item.get('path'), str)}
+        removed = [0, 0]
+        def clean():
+            for relative in sorted(paths - set(keep)):
+                for suffix in ('.part', '.verified'):
+                    try:
+                        target = content.destination(root, relative + suffix)
+                        size = target.stat().st_size if target.is_file() else None
+                    except (OSError, setup.SetupError):
+                        continue
+                    if size is None:
+                        continue
+                    target.unlink(missing_ok=True)
+                    removed[0] += 1
+                    removed[1] += size
+        if locked_content:
+            clean()
+        else:
+            with locked(content.destination(root, 'catalog/content.lock')):
+                clean()
+        resume = self.app.work / 'content-resume.json'
+        try:
+            armed = json.loads(resume.read_text(encoding='utf-8')) if resume.is_file() else {}
+            if armed.get('enabled') and Path(armed.get('selection', '')).resolve() == plan_path.resolve():
+                setup.write_json(resume, {**armed, 'enabled': False}, private=True)
+        except (OSError, ValueError):
+            pass
+        return removed
+
+    def discard(self, state):
+        count, size = self.discard_files(state)
+        state.update(phase='cancelled', pid=None,
+                     message=(f'Téléchargement annulé. {count} fichier(s) commencé(s) supprimé(s), '
+                              f'{size/1e9:.2f} Go libérés. ' if count else 'Téléchargement annulé. ')
+                             + 'Les archives déjà terminées et le classement déjà appliqué sont conservés.')
+        self.write(state)
 
     def run(self, job):
         folder = self.paths(job)
@@ -684,6 +766,12 @@ class Manager:
                     self.app.compose(self.config, 'restart', 'kiwix', *(['pilot'] if any(i['path'].startswith('library/guides/') for i in items) else []))
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
+            if state.get('action') in CANCELLABLE and (folder / 'discard').exists():
+                try:
+                    self.discard(state)
+                except setup.SetupError:
+                    update('paused', 'Annulation à terminer : les fichiers commencés n’ont pas pu être supprimés. Cliquez de nouveau sur « Annuler ».')
+                return
             update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Téléchargement YouTube en pause. Les vidéos rangées et la vidéo en cours sont conservées ; « Reprendre » continue la liste.' if state.get('action')=='youtube-download' else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')

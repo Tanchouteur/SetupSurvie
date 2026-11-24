@@ -221,6 +221,20 @@
       control.disabled = connection !== 'ready' || pending;
       tools.append(control);
     }
+    if (job.cancellable) {
+      const id = job.id + ':cancel';
+      const question = job.kind === 'host-download'
+        ? 'Annuler ce téléchargement ? Les fichiers commencés seront supprimés. Les archives déjà terminées restent sur l’appareil.'
+        : 'Annuler ce travail ? Les passages déjà traduits et son suivi seront supprimés. Le document original et toute version déjà partagée sont conservés.';
+      const control = button('Annuler', () => {
+        if (confirm(question)) command('/' + encodeURIComponent(job.id) + '/cancel', {operation_id: job.cancel_operation}, id);
+      });
+      control.className = 'quiet work-queue-cancel';
+      control.setAttribute('aria-label', 'Annuler ' + job.title + ' et supprimer ce qui a été commencé');
+      control.dataset.workControl = id;
+      control.disabled = connection !== 'ready' || pending;
+      tools.append(control);
+    }
     if (job.retry) {
       const id = job.id + ':retry';
       const control = button(job.retry_label || (held(job) ? 'Reprendre' : 'Réessayer'), () => command('/' + encodeURIComponent(job.id) + '/retry', {}, id));
