@@ -165,12 +165,16 @@ def pin(entry, reasons, reader=fetch):
 
 
 def select(entries, root, requested, *, languages=('fra', 'eng'), max_add=None,
-           budget=None, reserve=15_000_000_000, storage_root=None, reader=fetch, include_supplements=False):
+           budget=None, reserve=15_000_000_000, storage_root=None, reader=fetch,
+           include_supplements=False, initial_installation=False):
     rules = themes()
     if not requested or set(requested) - rules.keys():
         raise setup.SetupError('Choisir un thème présent dans la commande themes.')
     pinned = content.catalog()
     local = inventory(root, pinned)
+    if initial_installation:
+        pinned = [item for item in pinned if not content.english_wikipedia(item['path'])]
+        entries = (entry for entry in entries if not content.english_wikipedia(entry['filename']))
     local_families = {}
     for item in local:
         if item['path'].endswith('.zim'):
@@ -339,6 +343,7 @@ def main():
     parser.add_argument('--no-refresh', action='store_true', help='prepare : transférer sans redémarrer les services.')
     parser.add_argument('--include-supplements',action='store_true',help='Inclure aussi les fonds culturels et grandes collections vidéo ; volumes à examiner.')
     parser.add_argument('--collection-sort', type=Path, help='Fichier de tri à importer avant de préparer le plan.')
+    parser.add_argument('--initial-installation', action='store_true', help='Écarter les éditions anglaises de Wikipédia du plan d’installation.')
     args = parser.parse_args()
     if args.action == 'themes':
         for name, rule in themes().items():
@@ -378,7 +383,8 @@ def main():
         raise setup.SetupError('Le plan existe déjà ; choisir un autre --output pour le conserver.')
     report = select(entries, root, requested, languages=tuple(LANGUAGES[l] for l in (args.language or ['fr', 'en'])),
                     max_add=int(args.max_add_gb * 1_000_000_000) or None, budget=args.budget_gb * 1_000_000_000 or None,
-                    storage_root=storage_root,include_supplements=args.include_supplements)
+                    storage_root=storage_root,include_supplements=args.include_supplements,
+                    initial_installation=args.initial_installation)
     report['catalog_sha256'] = hashlib.sha256(raw).hexdigest()
     setup.write_json(output, report)
     display_plan(report)

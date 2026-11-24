@@ -1,5 +1,6 @@
 import hashlib
 import io
+from contextlib import redirect_stderr
 import json
 from pathlib import Path
 import sys
@@ -24,6 +25,23 @@ class ContentTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         self.raw=b'%PDF-document-content'
         self.item={'id':'book','path':'library/guides/book.pdf','url':'https://example.org/book.pdf','bytes':len(self.raw),'sha256':hashlib.sha256(self.raw).hexdigest()}
+
+    def test_initial_download_rejects_a_saved_plan_with_english_wikipedia(self):
+        plan = self.root / 'initial-library-plan.json'
+        for name in ('wikipedia_en_all_nopic_2026-06.zim', 'wikipedia_en-simple_all_maxi_2026-09.zim'):
+            with self.subTest(name=name):
+                item = {**self.item, 'path': 'library/zim/' + name, 'pack': 'kiwix-themes'}
+                setup.write_json(plan, {'schema': 1, 'kind': 'SetupSurvie Kiwix thematic selection', 'items': [item]})
+                args = ['content.py', 'download', '--data-dir', str(self.root), '--selection', str(plan)]
+                with patch.object(content, 'download_and_refresh') as download, redirect_stderr(io.StringIO()) as err:
+                    with patch.object(sys, 'argv', args + ['--initial-installation']), self.assertRaises(SystemExit) as stopped:
+                        content.main()
+                    self.assertEqual(stopped.exception.code, 2)
+                    self.assertIn('édition anglaise de Wikipédia', err.getvalue())
+                    download.assert_not_called()
+                    with patch.object(sys, 'argv', args):
+                        content.main()
+                    self.assertEqual(download.call_args.args[4], [item])
     def test_verified_zim_download_enqueues_indexing_but_bad_hash_does_not(self):
         import search_index_queue
         item={**self.item,'path':'library/zim/book.zim','title':'Tiny fixture'}

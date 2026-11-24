@@ -29,6 +29,11 @@ class DownloadPaused(Exception):
     pass
 
 
+def english_wikipedia(path):
+    filename = PurePosixPath(path).name.casefold()
+    return bool(re.fullmatch(r'wikipedia_en(?:-[a-z0-9-]+)?_.+\.zim', filename))
+
+
 def free_space(root, storage_root=None):
     if storage_root is None:
         return shutil.disk_usage(root).free
@@ -289,12 +294,17 @@ def main():
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     p.add_argument('--jobs',type=int,choices=(1,2,3),default=2,help='Téléchargements simultanés (2 par défaut).')
     p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ou manifeste deploy/library-reference.json ; installe exactement ces archives.')
+    p.add_argument('--initial-installation', action='store_true', help='Refuser les éditions anglaises de Wikipédia dans un plan d’installation.')
     args=p.parse_args()
+    if args.initial_installation and (args.action != 'download' or not args.selection):
+        p.error('--initial-installation requiert download --selection.')
     if args.selection:
         if args.pack or args.id:p.error('--selection ne se combine pas avec --pack ou --id.')
         plan=json.loads(args.selection.read_text(encoding='utf-8'))
         if plan.get('schema')!=1 or plan.get('kind') not in ('SetupSurvie Kiwix thematic selection','SetupSurvie library reference'):p.error('Plan de sélection Kiwix ou manifeste de référence non reconnu.')
         items=catalog(args.selection);selected=items
+        if args.initial_installation and any(english_wikipedia(item['path']) for item in selected):
+            p.error('Le plan d’installation contient une édition anglaise de Wikipédia. Recréez la sélection avec l’installateur.')
     else:
         items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
     if args.action=='list':

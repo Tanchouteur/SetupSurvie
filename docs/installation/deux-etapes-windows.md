@@ -135,6 +135,11 @@ préliminaire réserve au moins **60 Go libres** sur le disque de données en pl
 du logiciel ; cela ne garantit pas la place du fonds complet. Vérifier
 séparément l’espace du disque Docker.
 
+Depuis la 0.113.3, l’installation en ligne écarte les éditions anglaises
+de Wikipédia, y compris Simple English. Cela s’applique également au plan
+préparé avec un fichier de tri importé. Le plan peut toujours inclure
+Wikipédia français et les autres collections en anglais.
+
 **Avec kit** : toutes les empreintes et dépendances sont contrôlées avant copie,
 les images sont importées localement, aucun lot documentaire n’est téléchargé.
 Espace exigé : copies restantes plus **22 Go** de marge (le contrôle des services

@@ -32,6 +32,8 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 
 ## 24 novembre 2026
 
+- [Apport des éditions de Wikipédia sur Bazzite](2026-11-24-apport-wikipedia-bazzite.md) — Wikipédia FR, EN Maxi et Simple English comparés aux résultats du fonds complet.
+
 - [Audit de bugs et corrections](2026-11-24-audit-bugs-et-corrections.md) — 0.113.2, défauts reproduits, corrigés et testés sur le runner, limites Windows et modèles réels.
 
 ## 23 novembre 2026

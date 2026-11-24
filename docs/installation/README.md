@@ -152,6 +152,11 @@ tri de leur installation source. Les options `--content-pack` sont réservées �
 l’installation en ligne. Les codes des lots sont listés par
 `python3 scripts/content.py list`.
 
+Depuis la 0.113.3, l’installation initiale en ligne écarte les éditions
+anglaises de Wikipédia, y compris Simple English, des lots demandés.
+Wikipédia français reste disponible dans le lot `encyclopedia-fr`.
+Un ajout de collections après installation se fait depuis la bibliothèque.
+
 Depuis la 0.70.0, une installation Linux x86-64 en ligne conserve dans
 `donnees/tools/linux-offline-installers/` les archives vérifiées de Docker
 Engine, Compose, du même Python mineur (3.11 à 3.15) et des dépendances
