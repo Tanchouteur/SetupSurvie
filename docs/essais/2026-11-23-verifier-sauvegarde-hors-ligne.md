@@ -83,3 +83,15 @@ quand Python est absent. Les tests automatisés contrôlent l’ordre d’ouvert
 des fenêtres, les arguments du programme d’installation et le cas où un
 Python déjà installé doit être modifié pour obtenir Tcl/Tk. La recette du
 premier double-clic avec cette correction reste à effectuer sur Windows.
+
+## Copie Windows relue sous Linux
+
+Le 24 novembre 2026, le lanceur **Dupliquer le kit SetupSurvie** a copié
+le kit réduit 0.113.0 depuis son support en lecture seule, en VM Windows 11
+sans carte réseau. La destination choisie dans l’assistant était un
+second disque virtuel USB formaté en exFAT. Après l’arrêt de la VM, ce
+disque a été monté en lecture seule sous Linux. Le vérificateur a contrôlé
+les 1 274 fichiers, y compris les installateurs Windows et Linux. Le
+manifeste final était présent et le marqueur de copie en cours avait
+disparu. La recette couvre le passage du kit public de Windows à Linux,
+avec des supports virtuels.
