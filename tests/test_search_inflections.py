@@ -72,6 +72,15 @@ class InflectionSearchTests(unittest.IsolatedAsyncioTestCase):
         radio=retrieval.plan('radio',library.search_terms('radio'),library.SYNONYMS)
         self.assertIn('radio',radio.groups[0])
 
+    def test_grafting_an_apple_tree_reaches_english_guides_without_loose_matches(self):
+        # Lab, 24 November 2026: « greffer un pommier » found nothing in the
+        # practical space, while « greffe » found Appropedia « Grafting ».
+        plan=retrieval.plan('greffer un pommier',library.search_terms('greffer un pommier'),library.SYNONYMS)
+        self.assertEqual((plan.title_fr,plan.title_en),('greffe pommier','grafting apple tree'))
+        items=[{'id':'zim:appropedia/Grafting','title':'Grafting','excerpt':'Whip grafting joins a scion to an apple rootstock.','kind':'article'},
+               {'id':'zim:fixture/Pomme','title':'Pomme','excerpt':'La pomme est un fruit.','kind':'article'}]
+        self.assertEqual([r['id'] for r in retrieval.ordered(items,plan,8)],['zim:appropedia/Grafting'])
+
     def test_document_reading_selects_the_passage_with_the_other_number_form(self):
         text='Contexte fictif sans rapport. '*300+'Repère conservé : les couteaux sont le sujet de cet extrait fictif. '+'Autre contexte fictif. '*200
         parts=research.passages(text,'couteau',900)

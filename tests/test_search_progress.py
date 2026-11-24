@@ -101,6 +101,22 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             _,cached=await kiwix_queries.request(store.ROOT,'fixture','/search?q=retry','fulltext',reader,generation='a')
         self.assertTrue(cached);self.assertEqual(calls,2)
 
+    async def test_responses_arriving_together_share_one_cache_commit(self):
+        batches=[];arrived=threading.Event()
+        def writer(root,entries):
+            # Hold the first commit until every response has arrived, whatever
+            # the machine load: the others must then share a single commit.
+            if not batches:arrived.wait(5)
+            batches.append(len(entries))
+        async def reader(path):return b'<rss><channel/></rss>','application/xml'
+        with patch.object(search_cache,'write_many',writer):
+            await asyncio.gather(*(kiwix_queries.request(store.ROOT,'fixture',f'/search?q=batch{i}','fulltext',reader,generation='a') for i in range(6)))
+            arrived.set();await kiwix_queries.close()
+        self.assertEqual(sum(batches),6);self.assertLessEqual(len(batches),2)
+        with patch.object(search_cache,'RESERVE_BYTES',0):
+            search_cache.write_many(store.ROOT,[(f'many{i}',(b'<rss/>','application/xml')) for i in range(3)])
+            self.assertTrue(all(search_cache.read(store.ROOT,f'many{i}') for i in range(3)))
+
     async def test_slow_cache_writer_does_not_delay_results_and_shutdown_joins_the_file_user(self):
         entered=threading.Event();release=threading.Event();closed=threading.Event()
         def writer(*args):
@@ -108,7 +124,7 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             try:release.wait(5)
             finally:closed.set()
         async def reader(path):return b'<rss><channel/></rss>','application/xml'
-        with patch.object(search_cache,'write',writer):
+        with patch.object(search_cache,'write_many',writer):
             try:
                 await asyncio.wait_for(kiwix_queries.request(store.ROOT,'fixture','/search?q=slow-disk','fulltext',reader,generation='a'),1)
                 self.assertTrue(await asyncio.to_thread(entered.wait,1))

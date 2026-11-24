@@ -50,21 +50,27 @@ def read(root,key):
     return None
 
 
-def write(root,key,value):
-    maximum=budget();raw,content=value
-    if not maximum or len(raw)>min(maximum,MAX_ENTRY):return
+def write(root,key,value):write_many(root,[(key,value)])
+
+
+def write_many(root,entries):
+    """One transaction per batch: a single synchronised commit instead of one
+    per Kiwix response, and readers wait for one short lock, not hundreds."""
+    maximum=budget()
+    entries=[(key,value) for key,value in entries if maximum and len(value[0])<=min(maximum,MAX_ENTRY)]
+    if not entries:return
     folder=Path(root)/'cache/search';path=folder/'responses.sqlite'
     try:
         # Optional cache must not consume the installation's remaining workspace.
         folder.mkdir(parents=True,exist_ok=True)
-        if path.is_symlink() or shutil.disk_usage(folder).free<RESERVE_BYTES+len(raw):return
+        if path.is_symlink() or shutil.disk_usage(folder).free<RESERVE_BYTES+sum(len(value[0]) for _,value in entries):return
         with closing(sqlite3.connect(path,timeout=.1)) as db:
             db.execute('PRAGMA auto_vacuum=INCREMENTAL')
             db.execute('PRAGMA journal_mode=DELETE');db.execute('PRAGMA synchronous=NORMAL')
             db.execute('CREATE TABLE IF NOT EXISTS responses(key TEXT PRIMARY KEY,created REAL,content TEXT,bytes INTEGER,raw BLOB)')
             db.execute('CREATE INDEX IF NOT EXISTS response_age ON responses(created)')
             now=time.time();db.execute('DELETE FROM responses WHERE created<?',(now-MAX_AGE,))
-            db.execute('INSERT OR REPLACE INTO responses VALUES(?,?,?,?,?)',(token(key),now,str(content)[:100],len(raw),raw))
+            db.executemany('INSERT OR REPLACE INTO responses VALUES(?,?,?,?,?)',[(token(key),now,str(content)[:100],len(raw),raw) for key,(raw,content) in entries])
             total,count=db.execute('SELECT COALESCE(sum(bytes),0),count(*) FROM responses').fetchone()
             if total>maximum or count>MAX_ENTRIES:
                 for old,size in db.execute('SELECT key,bytes FROM responses ORDER BY created').fetchall():

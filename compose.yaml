@@ -81,13 +81,16 @@ services:
       retries: 8
       # kiwix-manage reads every archive before serving: about 100 s for 210
       # archives on Marc's PC, more while indexing loads the disk (22 Nov 2026).
-      # Failures during this period do not count; updates wait up to 420 s.
+      # A single call takes 3 s for 205 archives on the Bazzite lab (24 Nov
+      # 2026); the margin stays for slow disks. Updates wait up to 420 s.
       start_period: 360s
   pilot:
     image: ${WEBUI_IMAGE}
     restart: unless-stopped
     working_dir: /srv
-    entrypoint: [python, -m, uvicorn, pilot.app:app, --host, "0.0.0.0", --port, "8000"]
+    # Bounded wait for open connections (a search stream, a tab left open):
+    # the pilot then stops cleanly before Docker resorts to SIGKILL.
+    entrypoint: [python, -m, uvicorn, pilot.app:app, --host, "0.0.0.0", --port, "8000", --timeout-graceful-shutdown, "5"]
     command: []
     environment:
       PILOT_STATE_DIR: /pilot-data
