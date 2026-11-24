@@ -126,5 +126,13 @@ index complet reste inférieur à quatre fois la durée de sa construction
 locaux et le tri sont inchangés (`local_signature`). Le pilote consacre ainsi au
 plus un cinquième de son temps à ces reconstructions ; une petite bibliothèque
 reste actualisée immédiatement et la fin de l’inventaire relance l’index.
+
+La requête vidéo trie sur la colonne `rank` de FTS5 (bm25 par défaut) : FTS5
+classe lui-même les correspondances et ne lit le texte que des lignes gardées.
+Un alias `bm25(...) AS rank` faisait lire chaque réplique correspondante avant
+le tri. `videos.status()` réutilise enfin le rapport décodé tant que son fichier
+(inode, taille, date) ne change pas : terminé, il liste chaque vidéo (25 Mo au
+labo) et son décodage coûtait environ 0,3 s par recherche vidéo. Les appelants
+reçoivent leur propre dictionnaire et ne lisent que les entrées partagées.
 L’index, son journal et son rapport sont régénérables : les sauvegardes ne les
 copient plus. Voir le [bilan du 24 novembre 2026](../essais/2026-11-24-passe-optimisation-volume-vitesse.md).

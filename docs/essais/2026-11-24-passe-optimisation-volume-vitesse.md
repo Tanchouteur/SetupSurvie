@@ -6,9 +6,10 @@ Les mesures ont été faites sur le laboratoire en service, avec la session de
 Louis ouverte et d’autres travaux en cours (inventaire vidéo des ZIM, recette
 documentaire) : elles donnent des ordres de grandeur, pas des chronométrages de
 référence. Aucune mesure Windows ni chez Marc ; aucun essai sur iPhone réel.
-Le laboratoire lui-même est resté en 0.100.0 : les essais du code de la
-branche ont été faits dans des conteneurs jetables, avec un dossier d’état
-temporaire et les données réelles montées en lecture seule.
+Les mesures de la passe ont été faites dans des conteneurs jetables (dossier
+d’état temporaire, données réelles en lecture seule) pendant que le labo restait
+en 0.108.0 ; le labo a ensuite été mis à jour en 0.114.0 (section « Mise à jour
+réelle du laboratoire »).
 
 ## Objectif fixé
 
@@ -137,12 +138,51 @@ place jusqu’à la publication : prévoir la place des deux.
   synchronisation disque par lot au lieu d’une par réponse (337 pour ces cinq
   recherches), utile sur un disque plus lent, sans gain de temps mesuré au labo.
 
+## Mise à jour réelle du laboratoire — 24 novembre 2026
+
+Le labo tournait en 0.108.0 (code `runtime/candidat-0108.ddESzy`, ports
+décalés 18080, 18000 et 18081 parce que 8080 et 11436 sont pris par
+l’installation « neuf » du PC). Un `lab.sh up` standard aurait repris les ports
+par défaut : les conteneurs pilote, portail et Kiwix ont été recréés avec leur
+commande de création d’origine, seuls les chemins du code étant remplacés par
+`runtime/livraison-0114-<commit>`. Retour arrière : commandes d’origine et état
+du pilote (hors fichiers régénérables, 208 Mo) dans
+`runtime/avant-livraison-0114/`. Open WebUI et Ollama (arrêté) n’ont pas été
+touchés.
+
+| Mesure réelle | 0.108.0 | 0.114.0 |
+| --- | --- | --- |
+| Kiwix prêt après création, 205 archives | ≈ 1 min (démarrage de 06 h 33) | 8 s |
+| Index vidéo | 9,44 Go | 3,42 Go, même nombre de vidéos (17 375) et de pistes (61 586) |
+| Reconstruction unique au premier démarrage | — | 323 s ; pic de 12,7 Go le temps de la publication (ancien et nouveau fichiers) |
+| Portail, 77 fichiers liés à la page | 1,17 Mo | 468 Ko (gzip), cache d’un an pour les fichiers `?v=` |
+| 16 recherches vidéo (domaine par défaut) | 5,7 s cumulées pendant la reconstruction | 2,75 s, mêmes listes 16/16 |
+
+Pendant la reconstruction, les recherches vidéo ont continué sur l’ancien
+index (0,2 à 0,6 s) avec l’avertissement d’actualisation. Après publication,
+elles prenaient d’abord 9,4 s cumulées : la comparaison « avant » était
+favorisée par un rapport vidéo minuscule pendant la reconstruction. Le
+profilage a montré que le décodage du rapport complet (25 Mo, déjà présent en
+0.108.0) coûtait environ 0,3 s par recherche, et le tri par alias de bm25
+environ 0,1 s. Les deux corrections, déployées par deux redémarrages du seul
+pilote (09 h 27 et 09 h 34), ramènent la série à 2,75 s. Les résultats de la
+recette vidéo enregistrés en 0.108.0 (quatre requêtes) se retrouvent tous.
+
+Constats non corrigés : le pilote du labo pointe vers un contrôleur
+(`10.89.0.1:21436`) qui n’écoute plus depuis le redémarrage du PC (déjà le cas
+en 0.108.0 ; marche et arrêt du moteur indisponibles depuis le portail) ; le
+domaine par défaut « résilience » ne renvoie rien pour « greffer un pommier »,
+alors que le domaine « tout » trouve « Greffe anglaise » et Baltet.
+
 ## Limites et suites proposées
 
 - Les tests automatisés couvrent la publication, la reprise après échec,
   l’attente des connexions ouvertes, l’anti-boucle et les écritures groupées du
-  cache. Le laboratoire lui-même n’a pas été mis à jour en 0.114.0 pendant cette
-  passe : les gains sont mesurés dans des conteneurs jetables.
+  cache et du rapport vidéo.
+- L’arrêt du pilote attend la fermeture des connexions HTTP ouvertes ; lors de
+  la deuxième bascule, une connexion restée ouverte a fait dépasser les 30 s et
+  Podman a forcé l’arrêt. Comportement antérieur à cette livraison ; aucun
+  fichier n’a été abîmé.
 - Mise à jour vers 0.114.0 : une reconstruction unique de l’index vidéo au
   premier démarrage (changement de format), avec l’ancien index consultable
   jusqu’à la fin.
