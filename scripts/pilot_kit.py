@@ -214,11 +214,12 @@ def copy_target(entry, target, application, data):
 
 
 def copy_kit_file(entry, source, target, application, data, *, verify, resume):
-    from pilot_backup import restore_copy, verified_copy
+    from pilot_backup import restore_copy, restore_kit_permissions, verified_copy
     if verify:
         copy_target(entry, target, application, data)
     if resume:
         if verified_copy(entry, target):
+            restore_kit_permissions(entry['path'], source, target)
             return
         if target.exists():
             target.unlink()

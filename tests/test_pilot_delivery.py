@@ -595,6 +595,36 @@ with patch.object(kit_audit, 'validate'), patch.object(pilot_backup, 'portable_r
                 with self.assertRaises(setup.SetupError):backup(app,c,target)
             compose.assert_not_called()
 
+    @unittest.skipIf(os.name == 'nt', 'Permissions Linux')
+    def test_linux_kit_copy_allows_unprivileged_kiwix_to_read_its_script_and_zim(self):
+        from pilot_kit import copy_kit_file
+
+        application, data = self.root/'application', self.root/'data'
+        for relative, target in (
+            ('app/deploy/kiwix-entrypoint.sh', application/'deploy/kiwix-entrypoint.sh'),
+            ('payload/library/zim/recette.zim', data/'library/zim/recette.zim'),
+        ):
+            with self.subTest(relative=relative):
+                source = self.root/'kit'/relative
+                source.parent.mkdir(parents=True)
+                source.write_bytes(b'fixture')
+                source.chmod(0o600)
+                target.parent.mkdir(parents=True)
+                target.parent.chmod(0o700)
+                entry = {'path': relative, 'bytes': 7, 'sha256': setup.file_hash(source)}
+                restore_copy(entry, source, target, verify=True)
+                self.assertEqual(target.stat().st_mode & 0o777, 0o644)
+                if target.suffix == '.zim':
+                    self.assertEqual(target.parent.stat().st_mode & 0o777, 0o755)
+                    target.parent.chmod(0o700)
+                target.chmod(0o600)
+                copy_kit_file(entry, source, target, application, data, verify=True, resume=True)
+                self.assertEqual(target.stat().st_mode & 0o777, 0o644)
+                if target.suffix == '.zim':
+                    self.assertEqual(target.parent.stat().st_mode & 0o777, 0o755)
+                self.assertEqual(source.stat().st_mode & 0o777, 0o600)
+                self.assertEqual(target.read_bytes(), b'fixture')
+
     def test_linux_graphical_kit_creates_a_local_launcher_and_keeps_inference_paused(self):
         from pilot_kit import start_installed
         _, kit, _ = self.cross_system_fixture(self.root, 'linux')
