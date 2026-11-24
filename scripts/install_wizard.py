@@ -259,7 +259,8 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
             from kiwix_select import display_plan
             if not selection.is_file():
                 data.mkdir(parents=True,exist_ok=True)
-                execute_step([application/'scripts/kiwix_select.py','select','--work-dir',work,'--output',selection])
+                execute_step([application/'scripts/kiwix_select.py','select','--work-dir',work,'--output',selection,
+                              '--initial-installation'])
             else:
                 display_plan(json.loads(selection.read_text(encoding='utf-8')))
             if confirm('Télécharger les collections de cette sélection ? Tapez O pour continuer : ').strip().casefold() not in ('o','oui'):
@@ -268,7 +269,8 @@ def install(base, kit=None, *, resume=False, startup=True, lan_host=None, execut
             setup.write_json(journal,state,private=True)
         execute_step(arguments)
         if custom_sort and not kit:
-            execute_step([application/'scripts/content.py','download','--work-dir',work,'--selection',selection,'--jobs','2'])
+            execute_step([application/'scripts/content.py','download','--work-dir',work,'--selection',selection,
+                          '--jobs','2','--initial-installation'])
         if not kit:
             profiles = json.loads((setup.ROOT/'deploy/model-profiles.json').read_text())['profiles']
             for model in sorted({p['model'] for p in profiles if p.get('category') == 'recommended'} - {setup.VERSIONS['default_model']}):
