@@ -50,6 +50,11 @@ choisie. Il utilise les paquets du support pour Debian 12, Debian 13 ou
 Ubuntu 22.04 x86-64. Le bureau doit proposer Zenity et PolicyKit.
 
 
+Depuis la 0.115.1, la copie donne au service Kiwix les droits de lecture
+sur son script et sur les archives ZIM publiques. Ces droits sont réappliqués
+quand la copie reprend après une interruption. Les permissions du support et
+la protection du dossier de l’installation sont conservées.
+
 ## Sous-commandes de `pilot_kit.py`
 
 | Commande | Rôle |
