@@ -63,6 +63,8 @@ et le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilot
    d’un an pour les fichiers appelés avec `?v=` (empreinte du contenu).
 7. Kiwix : catalogue en un seul appel ; repli archive par archive si l’une
    d’elles est illisible.
+8. Cache disque des réponses Kiwix : les réponses arrivées pendant une écriture
+   sont enregistrées ensemble, en une transaction (voir plus bas).
 
 ## Résultats
 
@@ -75,11 +77,79 @@ et le [guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilot
 | Premier chargement du portail | 983 Ko | 304 Ko gzip, 318 Ko zstd | Caddy jetable, même image |
 | Revalidations au rechargement | 69 | 1 (la page) | en-têtes `Cache-Control` |
 
+### Scan réel complet avec le code de la branche
+
+Conteneur jetable (image du pilote du labo, réseau coupé, 2 Go de mémoire),
+code de la branche, dossier d’état temporaire, vidéos, ZIM et inventaires
+vidéo des ZIM du labo en lecture seule :
+
+| Mesure | Ancien format (pilote du labo) | 0.114.0 (conteneur jetable) |
+| --- | --- | --- |
+| Vidéos, pistes | 17 375 vidéos, 61 586 pistes | identiques |
+| Durée | 1 494 à 1 850 s | 399 s |
+| Fichier final | 6,87 puis 8,53 Go (journal vide) | 3,42 Go, aucun journal |
+| Occupation maximale pendant la construction | ≈ 14,6 Go (base + journal de 7,7 Go) | 3,42 Go (l’ancien fichier n’existait pas) |
+
+Les durées ne sont pas comparables strictement : l’ancien code tournait dans le
+pilote du labo, avec les recherches et d’autres travaux, et un premier essai
+jetable sans le dossier `deploy` monté avait pris 1 494 s avec des erreurs de
+recherche des transcriptions. Seize recherches vidéo (8 mots, tous les domaines
+et « résilience ») ont répondu en 0,5 à 1,5 s sur l’index neuf, sans erreur ;
+leur statut reste « partiel » car l’état temporaire n’avait pas tous les
+inventaires du labo. Lors d’une mise à jour réelle, l’ancien fichier reste en
+place jusqu’à la publication : prévoir la place des deux.
+
+### Où passe le temps d’une recherche documentaire
+
+- Sonde de latence de la boucle du pilote : médiane 1,07 ms et 95ᵉ centile
+  1,41 ms au repos ; 1,17 et 4,29 ms pendant une reconstruction vidéo. Le
+  verrou de l’interpréteur n’explique donc pas les recherches lentes.
+- Échantillonnage des piles (5 ms) d’un pilote jetable relié à un Kiwix jetable
+  sur le fonds réel : le code du pilote ne calcule qu’environ 0,5 s par
+  recherche neuve ; il attend surtout Kiwix et son cache disque. Une recherche
+  déjà en cache répond en 0,2 à 0,6 s.
+- Concurrence Kiwix, 33 lots plein texte d’une vraie recherche, rejoués :
+
+  | Voies parallèles | Durée murale |
+  | --- | --- |
+  | 1 | 4,3 à 6,1 s |
+  | 2 (réglage actuel) | 2,0 à 3,3 s |
+  | 4 | 1,7 à 2,1 s |
+  | 6 | 1,5 à 2,7 s |
+
+  Mémoire maximale de Kiwix : 690 Mo. Ce rejeu isolé suggérait environ 1 s de
+  gain avec quatre voies, mais cinq recherches complètes neuves, rejouées deux
+  fois avec 2 puis 4 voies (pilote jetable, cache vidé), donnent les mêmes
+  durées : 50,4 et 45,5 s cumulées avec 4 voies, 45,8 et 51,3 s avec 2. Le
+  réglage n’est pas modifié.
+- Diagnostic d’une recherche lente (« isoler un grenier », 14 s) : 33 requêtes
+  plein texte Kiwix cumulent 22,9 s sur deux voies ; les archives Gutenberg
+  dominent (un lot de 12 archives à 5,9 s, d’autres lots de 1 à 2 s). Le coût
+  principal est donc la recherche plein texte de Kiwix dans ces grandes
+  archives, pas le pilote.
+- Cache disque des réponses Kiwix : sur cinq recherches neuves, 223 écritures,
+  chacune dans sa propre transaction synchronisée (médiane 38 ms, jusqu’à
+  0,84 s), et 223 lectures, dont certaines restaient bloquées jusqu’à 150 ms
+  par ces écritures. Les écritures se font maintenant par lots. Essai alterné
+  ancien/nouveau (cinq recherches neuves, cache vidé, deux passes chacune) :
+  durées identiques (47,1 et 51,0 s cumulées avant, 47,5 et 46,9 s après), car
+  la file d’écriture était déjà hors du chemin des résultats. Le gain est une
+  synchronisation disque par lot au lieu d’une par réponse (337 pour ces cinq
+  recherches), utile sur un disque plus lent, sans gain de temps mesuré au labo.
+
 ## Limites et suites proposées
 
-- Les essais du scan réel et de la réactivité du pilote sont décrits plus bas
-  quand ils ont abouti ; les tests automatisés couvrent la publication, la
-  reprise après échec, l’attente des connexions ouvertes et l’anti-boucle.
+- Les tests automatisés couvrent la publication, la reprise après échec,
+  l’attente des connexions ouvertes, l’anti-boucle et les écritures groupées du
+  cache. Le laboratoire lui-même n’a pas été mis à jour en 0.114.0 pendant cette
+  passe : les gains sont mesurés dans des conteneurs jetables.
+- Mise à jour vers 0.114.0 : une reconstruction unique de l’index vidéo au
+  premier démarrage (changement de format), avec l’ancien index consultable
+  jusqu’à la fin.
+- Recherche documentaire neuve : 3,6 à 15 s au labo, sans gain obtenu dans
+  cette passe. Pistes à mesurer : lancer d’abord les lots les plus lents
+  (Gutenberg), régler les fils de `kiwix-serve`, ou indexer localement les
+  archives dont la recherche Kiwix est la plus lente.
 - Proposition non réalisée : réutiliser les lignes des vidéos inchangées au
   lieu de relire toutes les pistes (reconstruction partielle).
 - Proposition non réalisée : compresser `images.tar` du kit (couches non

@@ -37,9 +37,14 @@ def remember_on_disk(shared,root,key,result):
     async def write_all():
         try:
             while pending:
-                _,arguments=pending.popitem(last=False)
-                try:await disk_io(search_cache.write,*arguments)
-                except Exception:pass # Optional persistence never fails a search.
+                # Responses that arrived during the previous commit share the
+                # next one; a single root in practice, grouped for safety.
+                batches={}
+                while pending:
+                    _,(root,key,result)=pending.popitem(last=False);batches.setdefault(root,[]).append((key,result))
+                for root,entries in batches.items():
+                    try:await disk_io(search_cache.write_many,root,entries)
+                    except Exception:pass # Optional persistence never fails a search.
         finally:pending.clear()
     if shared['writer'] is None or shared['writer'].done():shared['writer']=asyncio.create_task(write_all())
 

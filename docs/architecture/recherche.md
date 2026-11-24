@@ -159,6 +159,7 @@ Le portail conserve la lecture ouverte et les résultats lors d’un arrêt.
 `pilot/search_cache.py` complète les requêtes mutualisées de `kiwix_queries.py` :
 SQLite reconstructible sous `state/pilot/cache/search`, réponses valides seulement,
 invalidation par état des ZIM/catalogue/manifeste, quotas et réserve disque.
+Depuis 0.114.0, la file d’écriture enregistre ses réponses par lots (`write_many`).
 Aucune migration des données privées ni changement d’image tiers. Voir le
 [guide d’exploitation](../exploitation/cache-et-recherche-progressive.md).
 La traduction et l’indexation des [vidéos locales](../decisions/videos-locales-et-recherche.md)
