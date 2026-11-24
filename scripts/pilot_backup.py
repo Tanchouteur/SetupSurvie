@@ -281,13 +281,34 @@ def portable_restore_preflight(copies, *, activating=False):
         raise setup.SetupError('Docker doit utiliser les conteneurs Linux.')
 
 
+def restore_kit_permissions(relative, source, target):
+    if os.name == 'nt':
+        return
+    if relative.startswith('app/'):
+        mode = (source.stat().st_mode & 0o755) | 0o600
+        if relative == 'app/deploy/kiwix-entrypoint.sh':
+            mode |= 0o044
+        if relative in (
+            'app/scripts/installer-outils-linux-hors-ligne.sh',
+            'app/scripts/restaurer-linux-hors-ligne.sh',
+            'app/scripts/survie.sh',
+        ):
+            # Maintenance and systemd call these scripts directly. The public
+            # kit can be copied from a filesystem that does not preserve +x.
+            mode |= 0o100
+        target.chmod(mode)
+    elif relative.startswith('payload/library/zim/') and target.suffix == '.zim':
+        # Kiwix reads this public directory through a read-only mount as an
+        # unprivileged user. The admin launcher creates the installation with umask 077.
+        target.parent.chmod(0o755)
+        target.chmod(0o644)
+
+
 def restore_copy(entry, source, target, *, verify=False):
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
-    if entry['path'].startswith('app/'):
-        if os.name != 'nt':
-            target.chmod((source.stat().st_mode & 0o755) | 0o600)
-    elif entry['path'].startswith(('private/', 'data/')):
+    restore_kit_permissions(entry['path'], source, target)
+    if entry['path'].startswith(('private/', 'data/')):
         target.chmod(0o600)
     if verify and (target.stat().st_size != entry['bytes'] or setup.file_hash(target) != entry['sha256']):
         raise setup.SetupError('Copie non conforme sur la destination : '+entry['path'])
@@ -548,6 +569,7 @@ def restore(source,kit,work_dir,data_dir,*,target=None,progress=None,resume=Fals
                 if portable:
                     checked_destination_for_copy(entry, dest, work, data, application)
                     if resume and verified_copy(entry, dest):
+                        restore_kit_permissions(entry['path'], path, dest)
                         continue
                     # Replace a partial file by its directory entry; its inode
                     # could still be shared with another copy on this volume.
