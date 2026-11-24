@@ -168,7 +168,8 @@ def build(root,source,bbox,*,backend='compose',storage_root=None,check=lambda:No
                 check();content.check_capacity(root,100_000_000,storage_root=storage_root)
                 task='survie-routing-'+uuid.uuid4().hex
                 stopped=threading.Event();errors=[]
-                def watch():
+                # Bind this phase's objects: a late watcher must not stop the next phase.
+                def watch(stopped=stopped,errors=errors,task=task):
                     while not stopped.wait(1):
                         try:
                             check();content.check_capacity(root,100_000_000,storage_root=storage_root)

@@ -37,6 +37,16 @@ class SpeechWorkerTests(unittest.TestCase):
         cues,_,warnings=speech.aligned_cues([segment(1,3,[word(1,3,'first')]),segment(2,4,[word(2,4,'second')])],0,0,60000)
         self.assertEqual(len(cues),2);self.assertEqual(warnings,['recognition_overlap'])
 
+    def test_overlapping_recognition_still_passes_the_unit_timeline_check(self):
+        from pilot import transcriptions
+        cues,_,warnings=speech.aligned_cues([segment(10,12,[word(10,11,'a'*60),word(10.98,12,'b'*60)])],0,0,60000)
+        self.assertEqual(warnings,['recognition_overlap'])
+        self.assertEqual([(c['start_ms'],c['end_ms']) for c in cues],[(10000,11000),(11000,12000)])
+        transcriptions.checked_unit({'cues':cues,'eof':False,'last_decoded_ms':60000},0,60000)
+        # A cue entirely inside the previous one joins it instead of disappearing.
+        cues,_,_=speech.aligned_cues([segment(1,3,[word(1,3,'first')]),segment(1.5,2.5,[word(1.5,2.5,'inner')])],0,0,60000)
+        self.assertEqual(cues,[{'start_ms':1000,'end_ms':3000,'text':'first inner'}])
+
     def test_long_silence_inside_recognizer_segment_becomes_separate_cues(self):
         cues,_,warnings=speech.aligned_cues([segment(6,59,[word(6,7,' blue'),word(7,8,' wheel.'),word(57,59,' Final check.')])],60000,60000,120000)
         self.assertEqual(cues,[{'start_ms':66000,'end_ms':68000,'text':'blue wheel.'},{'start_ms':117000,'end_ms':119000,'text':'Final check.'}])

@@ -341,8 +341,8 @@ def download_and_refresh(args,app,c,root,selected,budget,storage_root):
             print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
             return
         if args.lab:
-            from linux_lab import setup as lab_setup
-            lab_app=lab_setup.Installation(lab.MOUNT/'private')
+            import linux_lab as lab
+            lab_app=lab.setup.Installation(lab.MOUNT/'private')
             lab_app.catalog(lab_app.load())
             lab.podman('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
             print('Bibliothèque du laboratoire actualisée ; moteur IA inchangé.')

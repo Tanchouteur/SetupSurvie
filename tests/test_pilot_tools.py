@@ -20,7 +20,9 @@ class ToolBoundaryTests(unittest.TestCase):
         self.assertEqual(library.calculate('12 * 100 * 0.8 * 0.8')['exact'],'768')
         self.assertEqual(library.convert(2.5,'kWh','MJ')['value'],9)
         for value in ["__import__('os').getcwd()",'2 ** 1000000','True + 1','[1]*10000000','1e999','1/0']:
-            with self.assertRaises((ValueError,ZeroDivisionError)):library.calculate(value)
+            with self.assertRaises(ValueError):library.calculate(value)
+        for value in ['1/0','7 % 0','7 // 0','0 ** -1']:
+            with self.assertRaisesRegex(ValueError,'zéro'):library.calculate(value)
         for args in [(1,'kg','L'),(float('inf'),'m','cm'),(True,'m','cm')]:
             with self.assertRaises(ValueError):library.convert(*args)
 

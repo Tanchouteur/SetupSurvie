@@ -2,6 +2,7 @@
 import asyncio
 import importlib
 import logging
+import time
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
@@ -24,14 +25,14 @@ async def prepare_initial_index(app):
             await asyncio.to_thread(library.index_guides, automatic=True)
             DEGRADED.pop('index',None)
         except Exception:
-            DEGRADED['index']=True
+            DEGRADED['index']=time.time()
             logging.getLogger(__name__).warning('Indexation des guides indisponible au démarrage.')
 
     app.state.initial_index_task=asyncio.create_task(index())
     try:await asyncio.wait_for(asyncio.shield(app.state.initial_index_task),STARTUP_FEATURE_TIMEOUT)
     except asyncio.TimeoutError:
         if not app.state.initial_index_task.done():
-            DEGRADED['index']=True
+            DEGRADED['index']=time.time()
             logging.getLogger(__name__).warning('La préparation de l’index continue en arrière-plan.')
 
 
@@ -109,7 +110,7 @@ async def lifespan(app):
     await library.kiwix_queries.close()
 
 
-VERSION='0.113.1'
+VERSION='0.113.2'
 app=FastAPI(title='SetupSurvie',version=VERSION,lifespan=lifespan,docs_url=None,redoc_url=None)
 
 

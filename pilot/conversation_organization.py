@@ -1,6 +1,13 @@
 """Optional profile-owned folders. Legacy conversation IDs and tables stay intact."""
+import unicodedata
 from fastapi import HTTPException
 from . import store
+
+
+def folded(text):
+    """Case- and accent-insensitive form: SQLite LIKE only folds ASCII letters."""
+    decomposed=unicodedata.normalize('NFKD',str(text or '').casefold())
+    return ''.join(c for c in decomposed if not unicodedata.combining(c))
 
 
 def initialize(db):
@@ -42,6 +49,7 @@ def delete_folder(owner,identifier):
 
 
 def move(owner,conversation,folder):
+    folder=folder or None  # An empty choice means "Sans dossier", like null.
     with store.connect() as db:
         initialize(db)
         if not db.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(conversation,owner)).fetchone():raise HTTPException(404,'Conversation introuvable.')
@@ -66,8 +74,9 @@ def listing(owner,q='',folder=None,offset=0):
             where.append('x.folder_id IS NULL' if folder=='unfiled' else 'x.folder_id=?')
             if folder!='unfiled':args.append(folder)
         if q.strip():
-            pattern='%'+q.strip().replace('\\','\\\\').replace('%','\\%').replace('_','\\_')+'%'
-            where.append("(c.title LIKE ? ESCAPE '\\' OR EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=c.id AND m.content LIKE ? ESCAPE '\\'))")
-            args.extend([pattern,pattern])
+            db.create_function('survie_fold',1,folded,deterministic=True)
+            needle=folded(q.strip())
+            where.append("(instr(survie_fold(c.title),?)>0 OR EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=c.id AND instr(survie_fold(m.content),?)>0))")
+            args.extend([needle,needle])
         rows=db.execute('SELECT c.*,x.folder_id FROM conversations c LEFT JOIN conversation_filing x ON x.conversation_id=c.id WHERE '+' AND '.join(where)+' ORDER BY c.created DESC,c.id LIMIT 101 OFFSET ?',(*args,offset)).fetchall()
         return {'conversations':[dict(row) for row in rows[:100]],'has_more':len(rows)>100}

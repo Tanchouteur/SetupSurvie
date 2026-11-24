@@ -31,6 +31,13 @@ REASONS={'provider_tool_unavailable':'L’outil de récupération des sous-titre
     'provider_response_too_large':'La réponse de la source dépasse la limite de préparation. Aucune piste partielle n’est publiée.'}
 
 
+
+def busy(db):
+    """Jobs really waiting or running here; rows left by a crash do not fill the queue."""
+    return sum(1 for row in db.execute("SELECT id FROM jobs WHERE status IN ('queued','running')")
+               if row[0] in ACTIVE and not ACTIVE[row[0]].done())
+
+
 def running():return any(not task.done() for task in ACTIVE.values())
 
 
@@ -250,7 +257,7 @@ async def _create(video_id,reference,language,origin,mode,translate_french):
         previous=db.execute('SELECT id FROM jobs WHERE video_id=? AND source_revision=? AND provider_id=? AND language=? AND origin=? AND translate_french=? ORDER BY created DESC LIMIT 1',
             (video_id,revision,provider['id'],language,origin,int(translate_french))).fetchone()
         if not previous:
-            if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'Deux récupérations sont déjà en cours ; attendez ou mettez-les en pause.')
+            if busy(db)>=2:raise HTTPException(429,'Deux récupérations sont déjà en cours ; attendez ou mettez-les en pause.')
             db.execute('INSERT INTO jobs(id,video_id,source_revision,title,provider_id,identity_basis,language,origin,preferred_language,mode,translate_french,status,created,updated,index_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
                 (key,video_id,revision,payload['title'],provider['id'],provider['basis'],language,origin,payload['media'].get('language_declared') or '',mode,int(translate_french),'queued',now,now,'not_published'))
     if previous:return status(previous[0])
@@ -279,7 +286,7 @@ async def _resume(identifier):
     if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette récupération est déjà active ou terminée.')
     await asyncio.to_thread(current_source,item)
     with connect() as db:
-        if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'La file des récupérations est pleine.')
+        if busy(db)>=2:raise HTTPException(429,'La file des récupérations est pleine.')
     update(identifier,'queued');launch(identifier);return status(identifier)
 
 

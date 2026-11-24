@@ -25,6 +25,13 @@ VERSIONS=Path('/srv/versions.json') if Path('/srv/versions.json').is_file() else
 NOTICE='Transcription locale automatique de la parole, non relue. Les mots et horodatages sont estimés ; les images et gestes ne sont pas analysés. Vérifiez les passages techniques avec la vidéo.'
 
 
+
+def busy(db):
+    """Jobs really waiting or running here; rows left by a crash do not fill the queue."""
+    return sum(1 for row in db.execute("SELECT id FROM jobs WHERE status IN ('queued','running')")
+               if row[0] in ACTIVE and not ACTIVE[row[0]].done())
+
+
 def running():return any(not task.done() for task in ACTIVE.values())
 
 
@@ -289,7 +296,7 @@ async def create(video_id,language='',mode='rapide',translate_french=True):
         previous=db.execute('SELECT id FROM jobs WHERE video_id=? AND source_revision=? AND language=? AND translate_french=? ORDER BY created DESC LIMIT 1',
             (video_id,revision,language,int(translate_french))).fetchone()
         if not previous:
-            if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'Deux transcriptions attendent déjà. Reprenez-les ou mettez-les en pause.')
+            if busy(db)>=2:raise HTTPException(429,'Deux transcriptions attendent déjà. Reprenez-les ou mettez-les en pause.')
             db.execute('INSERT INTO jobs(id,video_id,source_revision,title,language,mode,translate_french,status,created,updated,index_status) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
                 (key,video_id,revision,payload['title'],language,mode,int(translate_french),'queued',now,now,'not_published'))
     if previous:return status(previous[0])
@@ -311,7 +318,7 @@ async def resume(identifier):
     if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette transcription est déjà active ou terminée.')
     await available();await asyncio.to_thread(current_source,item)
     with connect() as db:
-        if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'La file des transcriptions est pleine.')
+        if busy(db)>=2:raise HTTPException(429,'La file des transcriptions est pleine.')
     update(identifier,'queued');launch(identifier);return status(identifier)
 
 

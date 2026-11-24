@@ -32,3 +32,16 @@ class OperationsDiagnosticTests(unittest.IsolatedAsyncioTestCase):
                     data=await operations.status(fresh=True)
                 self.assertEqual(data['control_error'],kind);self.assertFalse(data['control_available']);self.assertTrue(data['online'])
                 self.assertNotIn('PRIVATE',str(data));self.assertIn('control_elapsed_ms',data)
+
+
+class CorruptedStateFileTests(unittest.IsolatedAsyncioTestCase):
+    async def test_valid_json_of_the_wrong_shape_falls_back_to_safe_defaults(self):
+        from pilot import network
+        client=httpx.AsyncClient
+        async def handler(request):return httpx.Response(503,text='down')
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);(root/'inference.json').write_text('[]');(root/'network.json').write_text('[]')
+            with patch.object(network,'CATALOG',root),patch.object(operations,'CACHE',{}),patch.object(operations,'UPDATED',0),patch.object(httpx,'AsyncClient',side_effect=lambda **kw:client(transport=httpx.MockTransport(handler),**kw)):
+                data=await operations.status(fresh=True)
+                self.assertFalse(data['paused'])
+                self.assertEqual(network.status('192.0.2.5')['ip'],'192.0.2.5')

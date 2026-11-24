@@ -79,6 +79,8 @@ class CatalogueTests(unittest.IsolatedAsyncioTestCase):
     def test_grouping_is_generic_and_editorial_types_are_not_certified_from_titles(self):
         rows=[catalogue.automatic_labels('example-channel_en_'+topic+'_2026-01','Example Channel') for topic in ('energy','food')]
         self.assertEqual(rows[0]['family'],rows[1]['family']);self.assertNotEqual(rows[0]['variant'],rows[1]['variant'])
+        self.assertEqual(catalogue.automatic_labels('wikipedia_fr_all_nopic_2026-01','Wikipédia')['variant'],'Collection complète sans images')
+        self.assertEqual(catalogue.automatic_labels('wikipedia_fr_all_maxi_2026-01','Wikipédia')['variant'],'Collection complète illustrée')
         self.assertEqual(catalogue.classification({'id':'guide:unknown','title':'Guide de construction'},self.guides,self.zims)['document_type'],'unknown')
         self.assertEqual(catalogue.classification({'id':'guide:unknown','title':'Quiz botanique'},self.guides,self.zims)['document_type'],'exercise')
         self.assertEqual(retrieval.domains({'title':'Histoire du traitement de l’eau'}),['resilience','culture'])

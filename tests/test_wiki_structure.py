@@ -22,6 +22,13 @@ class ArticleStructureTests(TestCase):
         item = {'id': 'zim:wikipedia_en_test/Seed_library', 'title': 'Seed library', '_wiki_structure': structure}
         self.assertEqual(retrieval.domains(item), ['resilience', 'culture'])
 
+    def test_ordinary_sections_starting_like_back_matter_keep_the_rest_of_the_article(self):
+        raw = """<h2>Histoire</h2><h2>Références culturelles</h2><h2>Notes de musique</h2><h3>Gammes</h3>
+            <h2>Notes et références</h2><h2>Navigation</h2>""".encode()
+        structure = wiki_structure.extract(raw)
+        self.assertEqual(structure['sections'], ['Histoire', 'Références culturelles', 'Notes de musique'])
+        self.assertEqual(structure['subsections'], ['Gammes'])
+
     def test_incidental_excerpt_uses_fallback_only_without_structure(self):
         item = {'id': 'zim:wikipedia_fr_test/Eau', 'title': 'Eau', 'excerpt': 'Fabrication et réparation des batteries'}
         self.assertIn('resilience', retrieval.domains(item))
