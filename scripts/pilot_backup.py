@@ -23,7 +23,11 @@ PRIVATE_FILES=('settings.json','identifiants.txt','inference-paused.json')
 PRIVATE_DATA=('data/state/pilot/','data/state/openwebui/','data/state/caddy/','data/library/guides/')
 PRIVATE_CATALOG=('data/catalog/downloaded-content.json','data/catalog/collection-sort.json')
 # Rebuilt from the ZIM archives without Internet or AI; often hundreds of GB.
-REBUILDABLE=(('state','pilot','category-index'),)
+# The video search index is rebuilt from the media, tracks and video inventories
+# that backups keep: 7 to 10 GB with its log on the Bazzite lab (24 Nov 2026).
+REBUILDABLE=(('state','pilot','category-index'),
+             *(('state','pilot','videos.db'+suffix) for suffix in ('','-wal','-shm','.next','.next-journal')),
+             ('state','pilot','videos-report.json'))
 
 
 def rebuildable(relative):

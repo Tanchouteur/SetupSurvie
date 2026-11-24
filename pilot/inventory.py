@@ -111,7 +111,8 @@ def sortable_collections():
         if path.name.endswith('.zim'):item.setdefault('url','/content/'+stem+'/')
         item['files'].append(path.name);item['bytes']+=info.st_size
     seen=set()
-    for key,label,path,info in collection_sort.video_files(videos.ROOT,store.ROOT/'videos.db'):
+    with videos.ACCESS.reading():files=list(collection_sort.video_files(videos.ROOT,videos.database()))
+    for key,label,path,info in files:
         if (key,path) in seen:continue
         seen.add((key,path))
         item=items.setdefault(key,{'key':key,'title':label if label!='.' else 'Vidéos locales',

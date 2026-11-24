@@ -5,6 +5,24 @@
 }
 (portal_routes) {
 	header X-Content-Type-Options nosniff
+	# Compress text only: event streams, PDFs, tiles and media keep their own
+	# encoding and byte ranges. Portal assets shrink about threefold.
+	encode {
+		gzip 5
+		zstd
+		minimum_length 1024
+		match {
+			header Content-Type text/html*
+			header Content-Type text/css*
+			header Content-Type text/javascript*
+			header Content-Type application/javascript*
+			header Content-Type application/json*
+			header Content-Type application/manifest+json*
+			header Content-Type image/svg+xml*
+			header Content-Type text/markdown*
+			header Content-Type text/plain*
+		}
+	}
 	handle /api/* {
 		reverse_proxy pilot:8000
 	}
@@ -27,7 +45,12 @@
 		file_server
 	}
 	handle {
-		header Cache-Control "no-cache"
+		# build_portal.py writes the content hash in each local ?v= link: such a
+		# file never changes under the same address, unlike the pages themselves.
+		@versioned query v=*
+		@unversioned not query v=*
+		header @versioned Cache-Control "public, max-age=31536000, immutable"
+		header @unversioned Cache-Control "no-cache"
 		root * /srv/portal
 		file_server
 	}

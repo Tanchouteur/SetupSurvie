@@ -71,6 +71,60 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         (videos.ROOT/'cours.mp4').unlink()
         with self.assertRaises(HTTPException):videos.source(self.id)
 
+    async def test_rebuild_stores_caption_text_once_and_publishes_a_compact_file(self):
+        with videos.connect() as db:
+            names={row[0] for row in db.execute("SELECT name FROM sqlite_master")}
+            partitions=list(videos.partition_tables(db).values())
+            self.assertTrue(partitions)
+            self.assertFalse({name+'_content' for name in partitions}&names)
+            texts=[row[0] for table in partitions for row in db.execute(f"SELECT text FROM {table} WHERE {table} MATCH 'rotor'")]
+        self.assertEqual(len(texts),1);self.assertIn('17 mm',texts[0])
+        self.assertFalse(videos.building().exists())
+        wal=Path(str(videos.database())+'-wal')
+        self.assertLessEqual(wal.stat().st_size if wal.exists() else 0,videos.WAL_LIMIT)
+
+    async def test_interrupted_rebuild_keeps_the_published_index_and_discards_the_build(self):
+        (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:04,000\nTexte remplacé sans le mot cherché.\n')
+        with patch.object(videos,'build_partitions',side_effect=OSError('disk full')):
+            report=videos.scan()
+        self.assertEqual(report['phase'],'failed');self.assertFalse(videos.building().exists())
+        with videos.connect() as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM video_text WHERE video_text MATCH 'rotor'").fetchone()[0],1)
+
+    def test_restored_report_without_its_rebuildable_index_requests_a_rebuild(self):
+        self.assertFalse(videos.stale())
+        for path in store.ROOT.glob('videos.db*'):path.unlink()
+        self.assertTrue(videos.stale())
+
+    def test_running_archive_inventory_does_not_rebuild_the_index_in_a_loop(self):
+        original=videos.signature
+        def archives_changed(archives=True):return 'archives-changed' if archives else original(archives=False)
+        with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=True):
+            self.assertFalse(videos.stale())
+            report=json.loads((store.ROOT/'videos-report.json').read_text())
+            report['finished']-=videos.ARCHIVE_REFRESH_INTERVAL+1
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            self.assertTrue(videos.stale())
+            report['finished']+=videos.ARCHIVE_REFRESH_INTERVAL+1
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            (videos.ROOT/'autre.fr.srt').write_text('1\n00:00:01,000 --> 00:00:02,000\nTexte.\n')
+            self.assertTrue(videos.stale())
+        with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=False):
+            (videos.ROOT/'autre.fr.srt').unlink()
+            self.assertTrue(videos.stale())
+
+    def test_published_file_is_replaced_only_once_open_connections_close(self):
+        opened=threading.Event();release=threading.Event()
+        def reader():
+            with videos.connect():
+                with videos.connect():opened.set();release.wait(5)
+        thread=threading.Thread(target=reader);thread.start();self.assertTrue(opened.wait(5))
+        with self.assertRaises(TimeoutError):
+            with videos.ACCESS.replacing_file(timeout=0.1):pass
+        release.set();thread.join(5)
+        with videos.ACCESS.replacing_file(timeout=1):pass
+        with videos.connect() as db:self.assertGreater(db.execute('SELECT count(*) FROM media').fetchone()[0],0)
+
     async def test_missing_subtitles_remain_title_only_without_fabricated_readable_text(self):
         for p in videos.ROOT.glob('*.srt'):p.unlink()
         for p in videos.ROOT.glob('*.vtt'):p.unlink()

@@ -193,6 +193,8 @@ class UpdateTests(unittest.TestCase):
         index=self.data/'state/pilot/category-index/book.sqlite'
         index.parent.mkdir(parents=True);index.write_bytes(b'rebuildable-index')
         (index.parent/'progress.json').write_text('{"phase":"completed"}')
+        videos=self.data/'state/pilot/videos.db';videos.write_bytes(b'video-index')
+        (self.data/'state/pilot/videos.db-wal').write_bytes(b'video-log')
         # Saved by every backup since the collection sort exists; rollback must accept it.
         sort=self.data/'catalog/collection-sort.json'
         sort.parent.mkdir(parents=True,exist_ok=True);sort.write_text('{"schema":1}')
@@ -201,8 +203,9 @@ class UpdateTests(unittest.TestCase):
         operation=next(path for path in (self.root.parent/'updates').iterdir())
         report=json.loads((operation/'snapshot/backup.json').read_text(encoding='utf-8'))
         saved={entry['path'] for entry in report['files']}
-        self.assertFalse(any('category-index' in path for path in saved))
+        self.assertFalse(any('category-index' in path or 'videos.db' in path for path in saved))
         self.assertIn('data/state/pilot/archive-index/text.sqlite',saved)
+        self.assertEqual(videos.read_bytes(),b'video-index')
         self.assertFalse((operation/'snapshot/data/state/pilot/category-index').exists())
         self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
         self.assertEqual(index.read_bytes(),b'rebuildable-index')

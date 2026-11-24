@@ -141,3 +141,24 @@ concurrents. La reprise web réutilise l’identifiant et le gestionnaire de tâ
 existant ; le dernier plan autorisé est figé par son empreinte. Ce mécanisme ne
 remplace ni une ouverture de session Windows ni la récupération d’une mise à jour
 interrompue. Voir le [guide Windows](../installation/deux-etapes-windows.md#démarrage-automatique-windows-depuis-0130).
+
+## Compression, cache du portail et catalogue Kiwix — 0.114.0
+
+Caddy compresse en gzip (préféré, plus compact ici) ou zstd les réponses textuelles du portail et de l’API
+(HTML, CSS, JavaScript, JSON, SVG, Markdown, texte) à partir de 1 Ko. Les flux
+`text/event-stream`, les PDF, les tuiles, les médias et les plages d’octets sont
+exclus. Les fichiers appelés avec `?v=` reçoivent `Cache-Control: public,
+max-age=31536000, immutable` : `scripts/build_portal.py` y écrit l’empreinte du
+contenu, l’adresse change donc avec le fichier. Les pages et les fichiers sans
+`?v=` restent en `no-cache`. Mesure au laboratoire Bazzite du 24 novembre 2026 :
+premier chargement du portail (69 fichiers) de 983 Ko à 304 Ko transférés en gzip, 318 Ko en zstd, puis
+plus aucune revalidation des fichiers versionnés. Open WebUI et Kiwix compressent
+déjà leurs propres réponses ; leurs routes ne changent pas.
+
+`deploy/kiwix-entrypoint.sh` ajoute toutes les archives au catalogue en un seul
+appel `kiwix-manage` : 3 s pour 205 archives au lieu de 42 à 59 s quand chaque
+ajout réécrivait le catalogue. Si une archive est illisible, l’appel groupé
+n’enregistre rien ; le script reprend alors archive par archive et ignore la
+seule archive illisible, signalée dans le journal du conteneur. Auparavant,
+`set -e` empêchait Kiwix de démarrer dans ce cas. Les délais de santé Compose
+gardent leur marge pour les disques lents.
