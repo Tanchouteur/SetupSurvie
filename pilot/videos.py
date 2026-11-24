@@ -519,8 +519,11 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
         rows=[]
         for table in tables:
             if plan.words:
+                # FTS5's own rank column (default bm25) lets FTS5 sort the matches
+                # and read the text of the kept rows only; an alias of bm25()
+                # made SQLite read every matching cue first (3x on the lab).
                 query=f"""SELECT id,title,language,track,start_ms,end_ms,snippet({table},6,'','', '…',45) AS excerpt,
-                          text AS _text,bm25({table}) AS rank FROM {table} WHERE {table} MATCH ? {restriction}
+                          text AS _text,rank FROM {table} WHERE {table} MATCH ? {restriction}
                           AND (?='' OR language=? OR substr(language,1,2)=?) ORDER BY rank LIMIT ?"""
                 args=(plan.fts(relaxed=True),language,language,language[:2],limit)
             else:
