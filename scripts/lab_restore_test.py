@@ -48,7 +48,7 @@ def main():
             '-v',str(data/'library/guides')+':/guides','--entrypoint','python','--memory=1g'],
             {'PILOT_STATE_DIR':'/pilot-data','WEBUI_DB_PATH':'/webui-data/webui.db','WEBUI_SECRET_KEY':c['secret'],
              'WEBUI_URL':'http://'+ui+':8080','KIWIX_URL':'http://kiwix:8080','GUIDES_DIR':'/guides'},
-            command_args=['-m','uvicorn','pilot.app:app','--host','0.0.0.0','--port','8000'])
+            command_args=['-m','uvicorn','pilot.app:app','--host','0.0.0.0','--port','8000','--timeout-graceful-shutdown','5'])
         created.append(pilot)
         opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
         def request(path,payload=None,token=None):

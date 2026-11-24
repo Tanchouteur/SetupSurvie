@@ -28,6 +28,11 @@ voir le [bilan](../essais/2026-11-17-installation-neuve-bazzite.md).
   elle s’arrête avec la commande à appliquer. Avec Docker système, le contrôleur
   reste sur toutes les interfaces, protégé par son jeton : bloquer le port
   11436 au pare-feu du réseau local.
+- **Deux installations sur le même PC** (depuis 0.114.0) : `control_port` dans
+  `settings.json` du dossier privé choisit un autre port que 11436 pour le
+  contrôleur (au-dessus de 1024) ; le laboratoire Podman transmet ce port au
+  pilote. Au labo Bazzite, l’installation « neuf » garde 11436 et le labo
+  utilise 21436, même protection par jeton et même consigne de pare-feu.
 - **GPU avec Docker rootless** : le runtime NVIDIA doit être enregistré dans
   le `daemon.json` de ce Docker et `no-cgroups = true` réglé dans la
   configuration `nvidia-container-runtime` lue par ce démon (fichier système

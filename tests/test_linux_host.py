@@ -189,6 +189,16 @@ class LinuxHostTest(unittest.TestCase):
             with mock.patch.dict(os.environ, {'SURVIE_SYSTEM_DOCKER_GATEWAY': '172.29.0.1'}):
                 control.Server(app, {**c, 'docker_rootless': False}, 'compose')
             self.assertEqual(init.call_args.args[0], ('172.29.0.1', 11436))
+            # A second installation on the same PC chooses its own port; an
+            # invalid value keeps the default instead of failing to start.
+            control.Server(app, {**c, 'docker_rootless': False, 'control_port': 21436}, 'lab')
+            self.assertEqual(init.call_args.args[0], ('0.0.0.0', 21436))
+            self.assertEqual(control.control_port({'control_port': 'x'}), 11436)
+            self.assertEqual(control.control_port({'control_port': 80}), 11436)
+        import linux_lab
+        with mock.patch.object(setup, 'control_key', return_value='fixture'):
+            env = linux_lab.container_specifications({**c, 'bind': '127.0.0.1', 'secret': 's', 'admin_email': 'a', 'admin_password': 'p', 'control_port': 21436})['pilot'][1]
+        self.assertEqual(env['PILOT_CONTROL_URL'], 'http://host.containers.internal:21436')
 
 
 if __name__ == '__main__':

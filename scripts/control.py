@@ -70,6 +70,12 @@ def hardware(c):
     return {'memory':memory,'gpus':gpu,'disk':{'total':disk.total,'used':disk.used,'free':disk.free}}
 
 
+def control_port(c):
+    try:port=int(c.get('control_port') or 11436)
+    except (TypeError,ValueError):return 11436
+    return port if 1024<port<65536 else 11436
+
+
 class Server(ThreadingHTTPServer):
     daemon_threads=True
     def __init__(self,app,c,backend,address=None):
@@ -77,7 +83,9 @@ class Server(ThreadingHTTPServer):
         # token-protected controller need not listen on the local network.
         system_gateway = os.environ.get('SURVIE_SYSTEM_DOCKER_GATEWAY') if c.get('target') == 'linux' and backend == 'compose' else None
         bind = '127.0.0.1' if c.get('docker_rootless') else system_gateway or '0.0.0.0'
-        address = address or (bind, 11436)
+        # control_port lets a second installation on the same PC (the Bazzite
+        # lab beside a fresh install) keep its own controller.
+        address = address or (bind, control_port(c))
         self.app,self.config,self.backend=app,c,backend
         self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0

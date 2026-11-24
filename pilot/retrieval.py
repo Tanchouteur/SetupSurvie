@@ -77,6 +77,10 @@ COLLECTIONS={'wikipedia':('wikipedia','wikipédia'),'appropedia':('appropedia',)
 CONCEPTS={
  'feu':{'terms':['feu','feux','fire','campfire','allumage','amadou','tinder'],'fr':['production de feu','allumage feu'],'en':['fire making','fire starting']},
  'friction':{'terms':['friction','frottement','frottements'],'fr':['frottement'],'en':['friction']},
+ # Grafting and fruit trees: the verb and the tree named in French must reach
+ # English practical guides (Appropedia « Grafting ») and match their text.
+ 'greffe':{'terms':['greffe','greffes','greffer','greffage','greffon','greffons','grafting','graft','grafts'],'fr':['greffe'],'en':['grafting']},
+ 'pommier':{'terms':['pommier','pommiers','apple','apples'],'fr':['pommier'],'en':['apple tree']},
  'generateur':{'terms':['generateur','generatrice','generator','alternateur'],'fr':['generateur'],'en':['generator']},
  'pedale':{'terms':['pedale','pedales','pedal','pedals','pedaling'],'fr':['pedales'],'en':['pedal']},
  'potable':{'terms':['potable','potabilisation','purification','drinking','purifying'],'fr':['potabilisation eau'],'en':['drinking water']},

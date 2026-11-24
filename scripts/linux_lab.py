@@ -193,6 +193,7 @@ def run_container(name, image, args, env=None, *, detach=True,command_args=()):
 
 
 def container_specifications(c):
+    import control
     tls_hosts=list(dict.fromkeys(['localhost',c.get('lan_host','localhost')]+([c.get('discovery_name','survie')+'.local'] if c['bind']=='0.0.0.0' else [])))
     return {
         'ollama': (['--device', 'nvidia.com/gpu=all', '--network', 'setupsurvie-lab',
@@ -231,7 +232,7 @@ def container_specifications(c):
                    '-v', f'{MOUNT}/data/library/guides:/guides',
                    '-v', f'{MOUNT}/data/library/maps:/maps:ro', '--memory=2g'],
                   {'PILOT_STATE_DIR':'/pilot-data','WEBUI_DB_PATH':'/webui-data/webui.db',
-                   'PILOT_CONTROL_URL':'http://host.containers.internal:11436','PILOT_CONTROL_TOKEN':setup.control_key(c),
+                   'PILOT_CONTROL_URL':f'http://host.containers.internal:{control.control_port(c)}','PILOT_CONTROL_TOKEN':setup.control_key(c),
                    'WEBUI_SECRET_KEY':c['secret'],'WEBUI_URL':'http://open-webui:8080',
                    'OLLAMA_URL':'http://ollama:11434','KIWIX_URL':'http://kiwix:8080',
                    'PILOT_SEARCH_CACHE_BYTES':os.environ.get('PILOT_SEARCH_CACHE_BYTES','2000000000'),
@@ -270,7 +271,7 @@ def up():
                        '--security-opt=label=disable','--log-driver=k8s-file','--log-opt=max-size=10mb',
                        f'--log-opt=path={MOUNT}/logs/pilot.log','--env-file',envpath,*args,
                        '--entrypoint','python',reference('open-webui'),'-m','uvicorn','pilot.app:app',
-                       '--host','0.0.0.0','--port','8000',capture=True)
+                       '--host','0.0.0.0','--port','8000','--timeout-graceful-shutdown','5',capture=True)
             else:
                 run_container(name, reference(name), args, env)
         print(f'Démarré : {name}', flush=True)
