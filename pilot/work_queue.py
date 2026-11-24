@@ -68,6 +68,7 @@ HOST_PHASES = {
     'planned': ('completed', 'Sélection prête'),
     'completed': ('completed', 'Préparation terminée'),
     'partial': ('partial', 'Examen terminé avec des limites'),
+    'cancelled': ('cancelled', 'Téléchargement annulé'),
     'unknown': ('unknown', 'État non confirmé'),
 }
 
@@ -88,6 +89,7 @@ HOST_HELP_DEFAULT = ('Cette préparation s’est arrêtée. Cliquez sur son titr
 HOST_RETRY = {'video-inventory': 'Relancer l’examen'}
 HOST_PREPARATIONS = ('index', 'index-prepare', 'category-index', 'video-inventory')
 TRACK_PREPARATIONS = ('captions', 'speech', 'acquisition')
+CANCELLABLE_STATUSES = ('queued', 'preparing', 'running', 'paused', 'stopped', 'interrupted', 'error', 'failed')
 INDEX_WAITING = {
     'schedule': 'Attente de la plage d’indexation',
     'gaming': 'Attente de la fin du mode jeu',
@@ -153,7 +155,9 @@ def add_host_work(jobs, report):
         (kind in HOST_PREPARATIONS or web_download and phase != 'refreshing')
         and status == 'running' and report.get('operation_id')
         and not report.get('pause_requested')) else {}
-    if report.get('pause_requested') and status == 'running':
+    if report.get('cancel_requested') and status == 'running':
+        stage = 'Annulation demandée · suppression des fichiers commencés'
+    elif report.get('pause_requested') and status == 'running':
         stage = 'Pause demandée · enregistrement du point de reprise'
     if report.get('automatic_pause') and status == 'paused':
         stage = 'Reprise automatique à la prochaine plage autorisée'
@@ -192,8 +196,12 @@ def add_host_work(jobs, report):
             stage = message
     if web_download:
         extra['web_download'] = True
-        if status in ('running', 'completed') and message:
+        if status in ('running', 'completed', 'cancelled') and message:
             stage = message
+        # Cancelling deletes unfinished files; it is refused while files are being published.
+        if (report.get('operation_id') and phase != 'refreshing' and not report.get('cancel_requested')
+                and status in ('running', 'paused', 'interrupted', 'error')):
+            extra['cancel_operation'] = report['operation_id']
     if status in ('error', 'interrupted'):
         extra |= {'error': message or 'Le PC serveur n’a pas précisé la cause de l’arrêt.',
                  'help': HOST_HELP.get(kind, HOST_HELP_DEFAULT)}
@@ -497,6 +505,8 @@ class Queue(Slot):
                 bool(job.get('pausable')) or
                 bool(job.get('operation_id')) or
                 job['kind'] in TRACK_PREPARATIONS and job['status'] in ('queued', 'running', 'preparing'))
+            job['cancellable'] = (admin and bool(job.get('cancel_operation'))) or (
+                job['kind'] == 'translation' and job['status'] in CANCELLABLE_STATUSES and can_move(job, profile))
             job['retry'] = job['status'] in ('paused', 'error', 'failed', 'stopped', 'interrupted') and (
                 job['kind'] in ('translation', 'summary') or admin and
                 (job.get('web_download') or job['kind'] in ('youtube','youtube-track',*TRACK_PREPARATIONS,
@@ -660,6 +670,35 @@ async def pause(identifier, operation_id=None):
         await module.pause(identifier)
         return
     raise HTTPException(409, 'Cette préparation n’est plus en cours.')
+
+
+async def cancel(identifier, profile, operation_id=None):
+    """Cancel a queue item and clean what it had started.
+
+    Library download: the PC server deletes the unfinished files.
+    Translation: the private work is deleted, like « Supprimer » in the reader."""
+    if identifier == 'host:download':
+        from . import operations
+        if profile['role'] != 'admin':
+            raise HTTPException(403, 'Accès réservé à l’administrateur.')
+        if not operation_id:
+            raise HTTPException(409, 'Ce téléchargement n’est plus dans la file.')
+        return await operations.library_command('cancel', {'operation_id': operation_id})
+    record = QUEUE.records.get(identifier)
+    if record is None:
+        with store.connect() as db:
+            row = db.execute('SELECT data FROM work_history WHERE id=?', (identifier,)).fetchone()
+        record = json.loads(row[0]) if row else None
+    kind = record['kind'] if record else None
+    if kind is None:
+        from . import document_workspace
+        recent = document_workspace.recent(profile['id'])
+        if any(item['id'] == identifier for item in recent['translations']):
+            kind = 'translation'
+    if kind != 'translation':
+        raise HTTPException(409, 'Ce travail ne peut pas être annulé depuis la file.')
+    from . import translations
+    return await translations.delete(identifier, profile['id'])
 
 
 async def retry(identifier, profile):

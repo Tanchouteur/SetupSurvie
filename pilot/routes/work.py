@@ -87,3 +87,11 @@ class WorkPausePreparation(BaseModel):
 async def pause_queued_preparation(identifier:str,body:WorkPausePreparation,value=Depends(admin)):
     await work_queue.pause(identifier,body.operation_id)
     return {'accepted':True}
+
+
+@router.post('/api/work-queue/{identifier}/cancel',status_code=202)
+async def cancel_work(identifier:str,body:WorkPausePreparation,value=Depends(user)):
+    """Cancel a queue item and delete what it had started (partial files, private work)."""
+    if len(identifier)>300:raise HTTPException(400,'Élément inconnu.')
+    result=await work_queue.cancel(identifier,value,body.operation_id)
+    return {'accepted':True,**({'notice':result['notice']} if isinstance(result,dict) and result.get('notice') else {})}

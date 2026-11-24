@@ -268,13 +268,13 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause'):
+        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause','/library/cancel'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
         try:
             length=int(self.headers.get('Content-Length','0'))
-            maximum=384_000 if self.path in ('/library/plan','/library/collection-move','/library/collection-preview','/library/collection-exclude') else self.MAX_POST_BYTES
+            maximum=384_000 if self.path in ('/library/plan','/library/download','/library/collection-move','/library/collection-preview','/library/collection-exclude') else self.MAX_POST_BYTES
             if not 0<=length<=maximum:raise ValueError()
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
@@ -319,6 +319,9 @@ class Handler(BaseHTTPRequestHandler):
                         if state.get('action')!='youtube-download' or body.get('list')!=state.get('youtube_list'):
                             raise setup.SetupError('Ce téléchargement YouTube n’est plus en cours.')
                         self.server.library.pause(state=state)
+                    elif self.path=='/library/cancel':
+                        self.respond(202,{'accepted':True,'result':self.server.library.cancel(body.get('operation_id'))})
+                        return
                     elif self.path=='/library/pause':
                         state=self.server.library.current()
                         if 'operation_id' in body and body['operation_id'] != state.get('id'):
@@ -328,6 +331,10 @@ class Handler(BaseHTTPRequestHandler):
                         job_id=self.server.library.start(self.path.rsplit('/',1)[-1],body)
                         if self.path=='/library/collection-exclude':
                             self.respond(202,{'accepted':True,'id':job_id})
+                            return
+                        if self.path=='/library/download':
+                            # A ranking-only reference change is applied at once, without a queued job.
+                            self.respond(202,{'accepted':True,'queued':job_id is not None})
                             return
                 self.respond(202,{'accepted':True})
             except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})

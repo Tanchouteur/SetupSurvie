@@ -218,10 +218,12 @@ def snapshot(root, work, *, now=None):
         retry = read_json(destination(root, 'catalog/content-retry.json'), {})
         matching_retry = retry.get('pid') == owner.get('pid')
         paused = destination(root, 'catalog/content-supervisor.pause').exists()
+        cancelling = False
         if source == 'web':
             paused = paused or destination(work, 'library-web/' + web['id'] + '/cancel').exists()
-        if source == 'web' and web.get('phase') in ('completed', 'error'):
-            phase = 'verified' if web['phase'] == 'completed' else 'error'
+            cancelling = destination(work, 'library-web/' + web['id'] + '/discard').exists()
+        if source == 'web' and web.get('phase') in ('completed', 'error', 'cancelled'):
+            phase = {'completed': 'verified', 'error': 'error', 'cancelled': 'cancelled'}[web['phase']]
         elif source == 'web' and web.get('phase') == 'refreshing' and alive is True:
             phase = 'refreshing'
         elif items and len(verified) == len(items):
@@ -241,7 +243,8 @@ def snapshot(root, work, *, now=None):
         failed = retry.get('failed', {}) if matching_retry else {}
         failed_count = sum(i in selected and i not in verified for i in failed) if isinstance(failed, dict) else 0
         web_controls = {'operation_id': web['id'], 'web_download': True,
-                        'pause_requested': paused, 'message': str(web.get('message', ''))[:400]} if source == 'web' else {}
+                        'pause_requested': paused, 'cancel_requested': cancelling,
+                        'message': str(web.get('message', ''))[:400]} if source == 'web' else {}
         return {**base, **web_controls, 'source': source, 'phase': phase, 'kind': 'download',
                 'worker_alive': alive, 'progress_at': updated if fresh else None,
                 'stale': not fresh or now - updated > 120, 'active': active,

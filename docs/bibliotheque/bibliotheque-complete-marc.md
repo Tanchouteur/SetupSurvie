@@ -105,11 +105,23 @@ révision actuelle. **Télécharger** demande l’édition
 indiquée et ouvre un lien vers la **File d’attente**. Le serveur contrôle
 l’empreinte pendant le téléchargement.
 
-**Revenir à l’état de la référence** ouvre la liste des archives à télécharger,
-des anciennes éditions et archives hors référence à retirer, et des collections
-à reclasser. La confirmation concerne les fichiers affichés. Une archive de
-remplacement est vérifiée avant publication et l’ancienne édition reste
-disponible jusqu’à cette vérification. Les fichiers locaux hors ZIM, dont les
+**Choisir les changements à appliquer** (depuis la 0.114.0, à la demande de
+Louis le 24 novembre 2026) ouvre la liste des archives à télécharger, des
+anciennes éditions et archives hors référence à retirer, et des collections à
+reclasser. Chaque ligne a sa case : seules les lignes cochées sont appliquées,
+les autres restent telles quelles. Le reclassement est coché d’office ; les
+téléchargements et suppressions se cochent un par un, avec **Tout cocher ou
+décocher** par groupe. Le volume à télécharger et l’espace libre suivent les
+cases cochées. Le classement s’applique tout de suite, sans attendre les
+téléchargements ; un reclassement seul ne crée aucune tâche et laisse en place
+un téléchargement en pause. Pour lancer d’autres téléchargements, annulez ou
+reprenez d’abord le téléchargement en pause depuis la
+[File d’attente](../utilisation/file-attente.md). Une suppression demande une
+confirmation. Supprimer une ancienne édition sans cocher la nouvelle retire la
+collection. Une archive de remplacement cochée est vérifiée avant publication et
+l’ancienne édition reste disponible jusqu’à cette vérification. Avant la 0.114.0,
+la confirmation appliquait obligatoirement tous les écarts et le classement
+attendait la fin des téléchargements. Les fichiers locaux hors ZIM, dont les
 guides PDF et les vidéos ajoutées à la main, restent accessibles. La File
 d’attente indique le déroulement de l’opération.
 

@@ -125,6 +125,31 @@ class SchedulerTests(unittest.IsolatedAsyncioTestCase):
             await work_queue.pause('host:category-index', operation_id)
         command.assert_awaited_once_with('pause', {'operation_id': operation_id})
 
+    async def test_library_download_can_be_cancelled_from_the_queue_by_the_administrator(self):
+        operation_id = 'a' * 32
+        for phase, cancellable in (('paused', True), ('downloading', True), ('refreshing', False), ('cancelled', False)):
+            report = {'kind': 'download', 'phase': phase, 'operation_id': operation_id, 'web_download': True,
+                      'message': 'Téléchargement annulé.' if phase == 'cancelled' else ''}
+            job = next(job for job in self.queue.snapshot(ADMIN, report)['jobs'] if job['id'] == 'host:download')
+            self.assertEqual(job['cancellable'], cancellable, phase)
+            if phase == 'cancelled':
+                self.assertEqual(job['status'], 'cancelled')
+                self.assertFalse(job['retry'])
+        report = {'kind': 'download', 'phase': 'paused', 'operation_id': operation_id, 'web_download': True}
+        self.assertFalse(next(job for job in self.queue.snapshot(CHILD, report)['jobs'] if job['id'] == 'host:download')['cancellable'])
+        requested = {**report, 'phase': 'pausing', 'cancel_requested': True, 'pause_requested': True}
+        job = next(job for job in self.queue.snapshot(ADMIN, requested)['jobs'] if job['id'] == 'host:download')
+        self.assertFalse(job['cancellable'])
+        self.assertIn('Annulation demandée', job['stage'])
+        with self.assertRaises(HTTPException) as denied:
+            await work_queue.cancel('host:download', CHILD, operation_id)
+        self.assertEqual(denied.exception.status_code, 403)
+        with patch.object(operations, 'library_command', AsyncMock()) as command:
+            await work_queue.cancel('host:download', ADMIN, operation_id)
+        command.assert_awaited_once_with('cancel', {'operation_id': operation_id})
+        with self.assertRaises(HTTPException):
+            await work_queue.cancel('video-index', ADMIN)
+
     async def test_finished_item_marked_seen_leaves_followup_until_its_state_changes(self):
         report = {'phase': 'partial', 'archives': 1, 'completed': 1,
                   'results': [{'status': 'partial', 'skipped_html': 12}]}
