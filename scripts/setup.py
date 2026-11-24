@@ -758,7 +758,8 @@ def main(argv=None, *, initial_chat_model=None, additional_models=()):
             unknown = packs - {item['pack'] for item in items}
             if unknown:
                 raise SetupError('Lots inconnus : ' + ', '.join(sorted(unknown)))
-            selected_content = [item for item in items if item['pack'] in packs]
+            selected_content = [item for item in items if item['pack'] in packs
+                                and not content.english_wikipedia(item['path'])]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
         c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model,

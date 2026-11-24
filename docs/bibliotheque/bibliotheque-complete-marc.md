@@ -54,6 +54,12 @@ du laboratoire Bazzite. Le [relevé du 24 novembre](../essais/2026-11-24-apport-
 compare aussi le français, Maxi EN et Simple English à la lecture et
 distingue le rôle encyclopédique des guides pratiques.
 
+Le 24 novembre, Louis demande que l’installateur ne télécharge aucune
+édition anglaise de Wikipédia. La 0.113.3 applique ce choix à l’installation
+initiale en ligne, même avec un tri importé. Le fonds de référence daté
+ci-dessous reste consultable et ses collections sont disponibles sur
+demande depuis le portail après installation.
+
 Bazzite disposait de **2,44 To libres sur son SSD physique** au contrôle en
 cours de transfert. Les 128 archives présentes avaient le nom et la taille
 attendus. La File d’attente en comptait 121 avec un reçu d’empreinte conforme

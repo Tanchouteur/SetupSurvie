@@ -88,6 +88,23 @@ class KiwixSelectionTests(unittest.TestCase):
             with self.subTest(theme=theme):
                 self.assertIn(theme,ks.matches(self.entry(title=title),ks.themes(),[theme]))
 
+    def test_initial_selection_skips_english_wikipedia_from_both_catalogues(self):
+        maxi = self.entry(name='wikipedia_en_all')
+        simple = self.entry(name='wikipedia_en-simple_all')
+        french = self.entry(name='wikipedia_fr_all', languages=['fra'])
+        other = self.entry(name='appropedia_en_all')
+        pinned = {'id': 'wiki-en', 'title': 'Wikipedia', 'language': 'en',
+                  'path': 'library/zim/' + maxi['filename'], 'bytes': len(self.raw),
+                  'sha256': self.digest, 'url': maxi['meta4'].removesuffix('.meta4')}
+        by_url = {entry['meta4']: entry for entry in (french, other)}
+        with patch.object(content, 'catalog', return_value=[pinned]):
+            plan = ks.select([maxi, simple, french, other], self.root, ['fonds-general', 'autonomie'],
+                             reserve=0, initial_installation=True,
+                             reader=lambda url, **kw: self.metalink(by_url[url]))
+        self.assertEqual({Path(item['path']).name for item in plan['items']},
+                         {french['filename'], other['filename']})
+        self.assertEqual(plan['remaining_download_bytes'], 2 * len(self.raw))
+
     def test_sustainable_knowledge_themes_and_real_collection_prefixes_are_selected(self):
         examples={'sciences':('libretexts.org_en_phys','Physics LibreTexts'),
                   'mesure':('metrology_en_all','Calibration and quality control'),

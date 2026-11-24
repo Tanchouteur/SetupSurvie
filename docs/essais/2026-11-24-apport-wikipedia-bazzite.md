@@ -96,6 +96,9 @@ Le statut des recherches partielles limite l'interprétation des absences.
 Le 24 novembre, Louis privilégie Wikipédia FR avec le fonds existant
 et demande que l’installation ne télécharge aucune édition anglaise.
 
+La 0.113.3 applique ce choix à l’installation en ligne sur Windows et Linux,
+y compris à une sélection préparée avec un fichier de tri importé.
+
 **Garder Wikipédia FR et proposer Maxi EN en option.** Le français
 documente les bases de science et de culture, fournit des illustrations
 et peut expliquer des gestes comme la greffe en écusson. Pour les

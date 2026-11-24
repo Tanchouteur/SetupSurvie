@@ -122,6 +122,16 @@ class WizardTests(unittest.TestCase):
         self.assertIn('--offline', self.calls[-1])
         self.assertNotIn('--content-pack', self.calls[-1])
 
+    def test_online_with_imported_sort_filters_both_selection_and_download(self):
+        from pilot import collection_sort
+        sorting = collection_sort.Sort(frozenset({'zim:wikipedia_en_all'}), frozenset())
+        collection_sort.save(self.root, sorting)
+        wizard.install(self.base, sort_file=self.root/collection_sort.FILENAME,
+                       confirm=lambda _: 'O', execute_step=self.step)
+        for action in ('select', 'download'):
+            step = next(call for call in self.calls if action in call)
+            self.assertIn('--initial-installation', step)
+
     def test_default_sort_filters_kit_and_leaves_an_edited_sort_alone_on_resume(self):
         from pilot import collection_sort
         kit = self.root/'kit'
