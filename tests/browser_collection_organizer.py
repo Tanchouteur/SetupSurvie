@@ -77,13 +77,18 @@ def install_routes(page, state):
             return fulfill(route, {'accepted': True}, 202)
         if path == '/admin/library/reference/restoration':
             if request.method == 'POST':
-                state['reference_restore'] = json.loads(request.post_data)
-                return fulfill(route, {'accepted': True}, 202)
+                body = json.loads(request.post_data)
+                state.setdefault('reference_restores', []).append(body)
+                state['reference_restore'] = body
+                ranking_only = not body['selection']['downloads'] and not body['selection']['removals']
+                return fulfill(route, {'accepted': True, 'queued': not ranking_only}, 202)
             return fulfill(route, {'download_bytes': 1_000_000_000, 'available_bytes': 22_000_000_000,
+                'storage_reserve': 15_000_000_000,
                 'space_sufficient': True, 'confirmation_token': '1'*64,
-                'downloads': [{'title': 'Manuel de bricolage', 'archive': 'manuel_fr_2026-11.zim'}],
-                'removals': [{'archive': 'manuel_fr_2026-10.zim'}],
-                'moves': [{'title': 'Notes pratiques', 'state': 'main', 'expected_state': 'other'}],
+                'downloads': [{'title': 'Manuel de bricolage', 'archive': 'manuel_fr_2026-11.zim', 'remaining_bytes': 1_000_000_000},
+                              {'title': 'Wikipédia anglais', 'archive': 'wikipedia_en_all_maxi_2026-08.zim', 'remaining_bytes': 120_000_000_000}],
+                'removals': [{'archive': 'manuel_fr_2026-10.zim', 'expected': 'manuel_fr_2026-11.zim'}],
+                'moves': [{'key': 'zim:notes_fr', 'title': 'Notes pratiques', 'state': 'main', 'expected_state': 'other'}],
             })
         if path == '/admin/library/collection-sort/move':
             body = json.loads(request.post_data)
@@ -147,16 +152,34 @@ def exercise(page, base, name):
     missing.get_by_role('button', name='Télécharger Manuel de bricolage').click()
     reference.get_by_role('link', name='Voir la file d’attente →').wait_for()
     check(state['reference_download'] == {'archive': 'manuel_fr_2026-11.zim'}, name + ' : édition exacte envoyée à la file')
-    reference.get_by_role('button', name='Revenir à l’état de la référence…').click()
+    choose = reference.get_by_role('button', name='Choisir les changements à appliquer…')
+    choose.click()
     confirm = reference.locator('#organizer-reference-confirm')
-    confirm.get_by_text('Fichiers à supprimer (1)').click()
-    confirm.get_by_text('manuel_fr_2026-10.zim').wait_for()
-    confirm.get_by_role('button', name='Annuler').click()
-    check('reference_restore' not in state, name + ' : annulation de la confirmation')
-    reference.get_by_role('button', name='Revenir à l’état de la référence…').click()
-    confirm.get_by_role('button', name='Confirmer les changements').click()
-    reference.get_by_text('Retour à la référence demandé.', exact=False).wait_for()
-    check(state['reference_restore'] == {'confirmation_token': '1'*64}, name + ' : retour global confirmé')
+    confirm.get_by_text('manuel_fr_2026-10.zim', exact=False).wait_for()
+    apply = confirm.locator('#organizer-reference-apply')
+    check(apply.inner_text() == 'Appliquer 1 changement', name + ' : seul le classement est coché d’office')
+    check(confirm.get_by_role('checkbox', name='Wikipédia anglais', exact=False).is_checked() is False,
+          name + ' : téléchargement non coché par défaut')
+    confirm.get_by_role('checkbox', name='Wikipédia anglais', exact=False).check()
+    check('insuffisant' in confirm.locator('#organizer-reference-confirm-space').inner_text() and apply.is_disabled(),
+          name + ' : espace recalculé selon les cases')
+    confirm.get_by_role('checkbox', name='Wikipédia anglais', exact=False).uncheck()
+    page.screenshot(path=str(OUTPUT / (name + '-reference-choix.png')), full_page=False)
+    confirm.get_by_role('button', name='Fermer').click()
+    check('reference_restore' not in state, name + ' : fermeture sans rien appliquer')
+    choose.click()
+    apply.click()
+    reference.get_by_text('Classement appliqué.', exact=False).wait_for()
+    check(state['reference_restore']['selection'] == {'downloads': [], 'removals': [], 'moves': ['zim:notes_fr']},
+          name + ' : classement seul appliqué sans téléchargement')
+    choose.click()
+    confirm.get_by_role('checkbox', name='Manuel de bricolage', exact=False).check()
+    page.once('dialog', lambda dialog: dialog.accept())
+    confirm.get_by_role('checkbox', name='manuel_fr_2026-10.zim', exact=False).check()
+    apply.click()
+    reference.get_by_text('suivent dans la file d’attente', exact=False).wait_for()
+    check(state['reference_restore']['selection'] == {'downloads': ['manuel_fr_2026-11.zim'], 'removals': ['manuel_fr_2026-10.zim'],
+          'moves': ['zim:notes_fr']}, name + ' : seules les lignes cochées sont envoyées')
     reference.locator(':scope > summary').click()
     check(page.locator('#organizer-groups .organizer-group h3').all_inner_texts()[0] == 'Wikipédia', name + ' : familles triées par taille')
     check(page.locator('.organizer-group:not(.is-single) .organizer-row').count() == 0, name + ' : familles repliées à l’ouverture')

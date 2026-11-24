@@ -1,6 +1,6 @@
 # Suivre les travaux de SetupSurvie
 
-**Guide actuel — actualisé pour la 0.67.3.**
+**Guide actuel — actualisé pour la 0.114.0.**
 
 Dans **Mon appareil**, l’onglet **File d’attente** ouvre cette même page.
 **À suivre** affiche les tâches actives, en attente et celles qui demandent une
@@ -74,6 +74,23 @@ une demande d’arrêt et conserve son fichier partiel. **Reprendre la file**
 libère le prochain créneau. Les traitements interrompus par le mode jeu
 gardent leurs propres commandes de reprise, après redémarrage volontaire
 du moteur.
+
+**Annuler** (depuis la 0.114.0) arrête définitivement un travail et nettoie ce
+qu’il avait commencé, après confirmation :
+
+- téléchargement de la bibliothèque (profil Famille) : en cours, en pause,
+  interrompu ou en erreur. Le PC serveur supprime les fichiers partiels et les
+  éditions de remplacement non publiées, puis désactive la reprise automatique
+  de ce téléchargement. Les archives déjà vérifiées et publiées restent sur
+  l’appareil, comme le classement déjà appliqué. Si le transfert est en cours,
+  la carte affiche « Annulation demandée » jusqu’au prochain point d’arrêt.
+  L’annulation est refusée pendant la mise à disposition finale des fichiers ;
+- traduction du profil : ses passages privés et son suivi sont supprimés,
+  comme avec **Supprimer** dans le lecteur. Le document original et toute
+  version déjà partagée sont conservés.
+
+Les autres travaux gardent la pause, la reprise ou les commandes de leur page
+d’origine.
 
 Une tâche en erreur libère le créneau. Le signe **!** apparaît sur l’icône,
 et l’aperçu en indique le titre et le motif lorsque le service les fournit.

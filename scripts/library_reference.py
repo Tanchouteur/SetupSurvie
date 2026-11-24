@@ -228,8 +228,49 @@ def restoration_plan(root, data, sorting, *, storage_root=None):
                          for item in data['items']]
     fingerprint = [content_signature, observed, [[row['key'], row['state'], row['status']] for row in report['archives']]]
     token = hashlib.sha256(json.dumps(fingerprint, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-    return {**report, **changes, 'confirmation_token': token,
+    return {**report, **changes, 'confirmation_token': token, 'storage_reserve': content.STORAGE_RESERVE,
             'space_sufficient': report['available_bytes'] >= report['download_bytes'] + content.STORAGE_RESERVE}
+
+
+SELECTION_FIELDS = {'downloads': 'archive', 'removals': 'archive', 'moves': 'key'}
+
+
+def select_changes(plan, selection):
+    """Keep only the changes ticked by the administrator; None keeps them all.
+
+    The confirmation token still covers the whole comparison: a selection never
+    widens what was reviewed, it only leaves some lines untouched."""
+    if selection is None:
+        return plan
+    if not isinstance(selection, dict) or set(selection) - set(SELECTION_FIELDS):
+        raise setup.SetupError('Choix des changements non valide.')
+    chosen = {}
+    for field, identifier in SELECTION_FIELDS.items():
+        values = selection.get(field, [])
+        if (not isinstance(values, list) or len(values) > 5000
+                or any(not isinstance(value, str) or not 0 < len(value) <= 300 for value in values)):
+            raise setup.SetupError('Choix des changements non valide.')
+        available = {row[identifier] for row in plan[field]}
+        if set(values) - available:
+            raise setup.SetupError('La comparaison a changé. Actualisez-la avant de confirmer.')
+        chosen[field] = [row for row in plan[field] if row[identifier] in set(values)]
+    download_bytes = sum(row.get('remaining_bytes', 0) for row in chosen['downloads'])
+    return {**plan, **chosen, 'download_bytes': download_bytes,
+            'space_sufficient': not chosen['downloads'] or
+            plan['available_bytes'] >= download_bytes + content.STORAGE_RESERVE}
+
+
+def apply_moves(root, moves):
+    """Apply confirmed ranking changes at once: they never wait for a download.
+
+    The caller holds catalog/content.lock."""
+    if not moves:
+        return
+    folder = root/'catalog'
+    sorting = collection_sort.load(folder)
+    for state in ('main', 'other'):
+        sorting = sorting.change({move['key'] for move in moves if move['expected_state'] == state}, state)
+    collection_sort.save(folder, sorting)
 
 
 def restoration_downloads(root, plan):
@@ -285,12 +326,17 @@ def finish_restoration(root, plan, check, before_apply=lambda: None):
                 raise setup.SetupError('Le fichier à remplacer a changé. Actualisez la comparaison.')
         def candidate(name):
             return replacements[name][0] if name in replacements else path(name)
-        if any(not candidate(name).is_file() or candidate(name).stat().st_size != item['bytes'] for name, item in items.items()):
+        # Only the editions chosen for download must be complete: unticked lines stay as they are.
+        chosen = {row['archive'] for row in job['downloads']}
+        if any(not candidate(name).is_file() or candidate(name).stat().st_size != items[name]['bytes'] for name in chosen):
             raise setup.SetupError('Certaines éditions de référence sont encore manquantes ou incomplètes.')
         for name in sorted({row['expected'] for row in job['removals'] if row.get('expected')} - replacements.keys()):
             check()
             target = path(name)
             item = items[name]
+            if name not in chosen and not target.exists():
+                # Removal confirmed without its replacement: nothing to verify.
+                continue
             if sha256(target, check) != item['sha256']:
                 raise setup.SetupError('L’édition de référence doit être vérifiée avant de retirer l’ancienne.')
         check()
@@ -327,9 +373,7 @@ def finish_restoration(root, plan, check, before_apply=lambda: None):
         if receipt.is_file() and removed_paths:
             records = [item for item in content.catalog(receipt) if item['path'] not in removed_paths]
             setup.write_json(receipt, {'schema': 1, 'items': records})
-        for state in ('main', 'other'):
-            sorting = sorting.change({move['key'] for move in job['moves'] if move['expected_state'] == state}, state)
-        collection_sort.save(root/'catalog', sorting)
+        apply_moves(root, job['moves'])
 
 
 def diff(before, after, sort_before=None, sort_after=None):

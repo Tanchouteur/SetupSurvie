@@ -42,15 +42,16 @@
           <ul id="organizer-reference-rows"></ul>
           <div class="organizer-actions">
             <button type="button" class="secondary" id="organizer-reference-refresh">Actualiser</button>
-            <button type="button" class="secondary" id="organizer-reference-restore">Revenir à l’état de la référence…</button>
+            <button type="button" class="secondary" id="organizer-reference-restore">Choisir les changements à appliquer…</button>
           </div>
           <section id="organizer-reference-confirm" class="organizer-confirm" hidden aria-labelledby="organizer-reference-confirm-title">
-            <h3 id="organizer-reference-confirm-title">Confirmer le retour à la référence</h3>
-            <p id="organizer-reference-confirm-space"></p>
+            <h3 id="organizer-reference-confirm-title">Choisir les changements à appliquer</h3>
+            <p>Cochez seulement ce que vous voulez. Les lignes non cochées restent telles quelles. Le classement s’applique tout de suite, sans attendre les téléchargements.</p>
             <div id="organizer-reference-confirm-changes"></div>
+            <p id="organizer-reference-confirm-space" role="status"></p>
             <div class="organizer-actions">
-              <button type="button" class="secondary" id="organizer-reference-cancel">Annuler</button>
-              <button type="button" class="organizer-danger is-strong" id="organizer-reference-apply">Confirmer les changements</button>
+              <button type="button" class="secondary" id="organizer-reference-cancel">Fermer</button>
+              <button type="button" class="organizer-danger is-strong" id="organizer-reference-apply">Appliquer les changements cochés</button>
             </div>
           </section>
         </div>
@@ -170,30 +171,76 @@
     restorationPlan=null;
     restore.focus();
   };
+  // Each line of the comparison is a separate choice: nothing forces the whole reference.
+  const groupChoices=new Map();
+  function chosen(){
+    const selection={downloads:[],removals:[],moves:[]};
+    for(const [field,boxes] of groupChoices)for(const box of boxes)if(box.checked)selection[field].push(box.value);
+    return selection;
+  }
+  function updateChoice(){
+    if(!restorationPlan)return;
+    const selection=chosen();
+    const count=selection.downloads.length+selection.removals.length+selection.moves.length;
+    const picked=new Set(selection.downloads);
+    const download=restorationPlan.downloads.filter(row=>picked.has(row.archive)).reduce((sum,row)=>sum+(row.remaining_bytes||0),0);
+    const enough=!download||restorationPlan.available_bytes>=download+(restorationPlan.storage_reserve||0);
+    const parts=[count?plural(count,'changement coché','changements cochés'):'Aucun changement coché'];
+    if(download)parts.push(bytes(download)+' à télécharger');
+    parts.push(bytes(restorationPlan.available_bytes)+' disponibles');
+    $('organizer-reference-confirm-space').textContent=parts.join(' · ')+'.'+(enough?'':' L’espace libre est insuffisant pour ces téléchargements.');
+    restoreApply.disabled=!count||!enough;
+    restoreApply.textContent=count?'Appliquer '+plural(count,'changement','changements'):'Appliquer les changements cochés';
+    for(const [field,boxes] of groupChoices){
+      const all=$('organizer-reference-all-'+field);
+      if(!all)continue;
+      const ticked=boxes.filter(box=>box.checked).length;
+      all.checked=ticked===boxes.length;
+      all.indeterminate=ticked>0&&ticked<boxes.length;
+    }
+  }
   restore.onclick=async()=>{
     restore.disabled=true;
     try{
       const plan=await api('/admin/library/reference/restoration',undefined,{cache:'no-store'});
       restorationPlan=plan;
+      groupChoices.clear();
+      const removalNote=row=>row.expected?(plan.downloads.some(item=>item.archive===row.expected)?' · remplacée par '+row.expected:' · ancienne édition'):' · hors référence';
+      // Ranking is ticked by default; downloads and deletions are chosen one by one.
       const groups=[
-        ['À télécharger ou remplacer',plan.downloads,row=>`${row.title} · ${row.archive}`],
-        ['Fichiers à supprimer',plan.removals,row=>row.archive],
-        ['Collections à reclasser',plan.moves,row=>`${row.title} · ${referenceLabels[row.state]} → ${referenceLabels[row.expected_state]}`],
+        ['moves','key','Collections à reclasser',plan.moves,row=>`${row.title} · ${referenceLabels[row.state]} → ${referenceLabels[row.expected_state]}`,true],
+        ['downloads','archive','À télécharger ou remplacer',plan.downloads,row=>`${row.title} · ${row.archive}`+(row.remaining_bytes?` · ${bytes(row.remaining_bytes)}`:''),false],
+        ['removals','archive','Fichiers à supprimer',plan.removals,row=>row.archive+removalNote(row),false],
       ];
-      $('organizer-reference-confirm-changes').replaceChildren(...groups.filter(([,rows])=>rows.length).map(([label,rows,display])=>{
+      $('organizer-reference-confirm-changes').replaceChildren(...groups.filter(([,,,rows])=>rows.length).map(([field,identifier,label,rows,display,checked])=>{
         const details=element('details');
-        details.append(element('summary',`${label} (${rows.length})`));
-        const list=element('ul',undefined,'organizer-confirm-names');
-        list.append(...rows.map(row=>element('li',display(row))));
-        details.append(list);
+        details.open=true;
+        const summaryLine=element('summary',`${label} (${rows.length})`);
+        const allLabel=element('label',undefined,'organizer-reference-choice organizer-reference-all');
+        const all=element('input');
+        all.type='checkbox';all.id='organizer-reference-all-'+field;all.checked=checked;
+        allLabel.append(all,element('span','Tout cocher ou décocher'));
+        const list=element('ul',undefined,'organizer-confirm-names organizer-reference-choices');
+        const boxes=rows.map(row=>{
+          const item=element('li');
+          const choice=element('label',undefined,'organizer-reference-choice');
+          const box=element('input');
+          box.type='checkbox';box.value=row[identifier];box.checked=checked;
+          box.onchange=updateChoice;
+          choice.append(box,element('span',display(row)));
+          item.append(choice);
+          list.append(item);
+          return box;
+        });
+        all.onchange=()=>{for(const box of boxes)box.checked=all.checked;updateChoice();};
+        groupChoices.set(field,boxes);
+        details.append(summaryLine,allLabel,list);
         return details;
       }));
-      const anyChanges=groups.some(([,rows])=>rows.length);
-      const available=`${bytes(plan.download_bytes)} à télécharger · ${bytes(plan.available_bytes)} disponibles.`;
-      $('organizer-reference-confirm-space').textContent=anyChanges
-        ? available+(plan.space_sufficient?'':' L’espace libre est insuffisant pour préparer les éditions de référence.')
-        :'La bibliothèque correspond déjà à la référence.';
-      restoreApply.disabled=!anyChanges||!plan.space_sufficient;
+      if(!groups.some(([,,,rows])=>rows.length)){
+        $('organizer-reference-confirm-space').textContent='La bibliothèque correspond déjà à la référence.';
+        restoreApply.disabled=true;
+      }else updateChoice();
       restorePanel.hidden=false;
       $('organizer-reference-cancel').focus();
     }catch(error){referenceStatus.textContent='Comparaison indisponible. '+friendly(error);}
@@ -201,17 +248,28 @@
   };
   restoreApply.onclick=async()=>{
     if(!restorationPlan)return;
+    const selection=chosen();
+    if(selection.removals.length&&!confirm('Supprimer définitivement '+plural(selection.removals.length,'fichier coché','fichiers cochés')+' du PC serveur ?'))return;
     restoreApply.disabled=true;
     try{
-      await api('/admin/library/reference/restoration',{confirmation_token:restorationPlan.confirmation_token});
+      const result=await api('/admin/library/reference/restoration',{confirmation_token:restorationPlan.confirmation_token,selection});
       restorePanel.hidden=true;
       restorationPlan=null;
+      if(result?.queued===false){
+        await refresh();
+        referenceJobs.clear();
+        await refreshReference();
+        referenceStatus.textContent='Classement appliqué. '+referenceStatus.textContent;
+        restore.focus();
+        return;
+      }
       const queue=element('a','Voir la file d’attente →','secondary-link');
       queue.href='#/file';queue.dataset.route='file';
-      referenceStatus.replaceChildren('Retour à la référence demandé. ',queue);
+      referenceStatus.replaceChildren((selection.moves.length?'Classement appliqué. ':'')+'Changements demandés : téléchargements et suppressions suivent dans la file d’attente. ',queue);
+      if(selection.moves.length)refresh();
       queue.focus();
     }catch(error){
-      referenceStatus.textContent='Retour à la référence non lancé. '+friendly(error);
+      referenceStatus.textContent='Changements non appliqués. '+friendly(error);
       restoreApply.disabled=false;
     }
   };

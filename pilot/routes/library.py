@@ -96,13 +96,24 @@ class ReferenceDownload(BaseModel):
     archive: str = Field(min_length=1, max_length=240)
 
 
+class ReferenceSelection(BaseModel):
+    downloads: list[str] = Field(default_factory=list, max_length=5000)
+    removals: list[str] = Field(default_factory=list, max_length=5000)
+    moves: list[str] = Field(default_factory=list, max_length=5000)
+
+
 class ReferenceRestoration(BaseModel):
     confirmation_token: str = Field(pattern='^[a-f0-9]{64}$')
+    # Absent: every listed change (former behaviour). Present: only the ticked lines.
+    selection: ReferenceSelection | None = None
 
 
 @router.post('/api/admin/library/reference/restoration',status_code=202)
 async def restore_library_reference(body:ReferenceRestoration,value=Depends(admin)):
-    return await operations.library_command('download', {'reference_confirmation': body.confirmation_token})
+    command = {'reference_confirmation': body.confirmation_token}
+    if body.selection is not None:
+        command['selection'] = body.selection.model_dump()
+    return await operations.library_command('download', command)
 
 
 @router.post('/api/admin/library/reference/download',status_code=202)
