@@ -82,6 +82,10 @@ Le contrôle fonctionne sans Docker et ne modifie aucun fichier du kit.
 Les mêmes prérequis graphiques que pour le bouton de duplication
 s’appliquent.
 
+Depuis la 0.113.1, sous Windows, si Python manque, confirmer son installation
+depuis le SSD. Le lanceur affiche l’avancement puis ouvre sa fenêtre. Si
+Python est déjà présent sans Tcl/Tk, suivre l’écran de modification proposé.
+
 Depuis la 0.112.0, le même lanceur propose de vérifier aussi une sauvegarde
 personnelle : répondre **Oui**, puis choisir son dossier daté. Le contrôle
 relit chaque fichier listé dans `backup.json`, refuse un fichier hors

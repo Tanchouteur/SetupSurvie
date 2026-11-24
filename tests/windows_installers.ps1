@@ -25,8 +25,9 @@ function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } 
         return @{ExitCode=0}
     }
     function Update-SurviePath {}
+    $existingPython = $false
     function Find-SurviePython { param([switch]$RequireTk)
-        if ($RequireTk) { return @{Path='python.exe'; Prefix=@()} }
+        if ($RequireTk -or $existingPython) { return @{Path='python.exe'; Prefix=@()} }
     }
     function Invoke-WebRequest { throw 'La duplication hors ligne ne doit pas télécharger.' }
     try {
@@ -41,14 +42,18 @@ function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } 
         Assert ($python.Path -eq 'python.exe') 'Return a Python with Tk'
         Assert ($launches.Count -eq 1 -and $launches[0].Path -eq $installer) 'Only the local Python installer may launch'
         Assert ('Include_tcltk=1' -in $launches[0].Arguments -and 'InstallAllUsers=0' -in $launches[0].Arguments) 'Python must include Tk and install for the current user'
+        Assert ('/passive' -in $launches[0].Arguments -and 'Include_test=0' -in $launches[0].Arguments) 'Python must show progress without asking for more choices'
+        $existingPython = $true
+        $null = Install-SurvieKitPython $fixture
+        Assert ($launches.Count -eq 2 -and '/passive' -notin $launches[1].Arguments) 'Keep Python modification interactive if Python already exists'
         [IO.File]::WriteAllText($installer, 'corrupt test installer!')
         $failed = $false
         try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Installateur incomplet ou modifié*' }
-        Assert ($failed -and $launches.Count -eq 1) 'Refuse a modified installer before running it'
+        Assert ($failed -and $launches.Count -eq 2) 'Refuse a modified installer before running it'
         [IO.File]::AppendAllText($catalog, ' ')
         $failed = $false
         try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Catalogue Python incomplet*' }
-        Assert ($failed -and $launches.Count -eq 1) 'Refuse a modified catalog before running it'
+        Assert ($failed -and $launches.Count -eq 2) 'Refuse a modified catalog before running it'
     } finally {
         Remove-Item -LiteralPath $fixture -Recurse -Force
     }

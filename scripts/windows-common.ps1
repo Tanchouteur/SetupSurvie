@@ -233,11 +233,15 @@ function Install-SurvieKitPython([string]$Kit) {
             $packages[0].file -cnotmatch '^python-3[.]1[1-5][.][0-9]+-amd64[.]exe$') {
         throw 'Installateur Python x64 absent du catalogue.'
     }
+    $pythonOptions = @('InstallAllUsers=0', 'PrependPath=1', 'Include_tcltk=1')
+    if (-not (Find-SurviePython)) {
+        $pythonOptions = @('/passive', 'Include_test=0') + $pythonOptions
+    }
     $item = @{
         id = 'python'
         file = $packages[0].file
         sha256 = $packages[0].sha256
-        arguments = @('InstallAllUsers=0', 'PrependPath=1', 'Include_tcltk=1')
+        arguments = $pythonOptions
     }
     $code = Install-SurvieDependency $item (Join-Path $Kit 'installateurs-windows') -Offline
     if ($code -eq 3010) { throw 'Redémarrez Windows, puis rouvrez le même lanceur du SSD.' }

@@ -61,7 +61,8 @@ class RestoreWindowTests(unittest.TestCase):
             kit = Path(temp).resolve()
             with patch.object(sys, 'argv', ['verifier', str(kit), '--verify']), \
                  patch.object(gui.tk, 'Tk') as tk, patch.object(gui, 'ttk'), \
-                 patch.object(gui.messagebox, 'askyesno', return_value=True), \
+                 patch.object(gui.sys, 'platform', 'win32'), \
+                 patch.object(gui.messagebox, 'askyesno', return_value=True) as question, \
                  patch.object(gui.filedialog, 'askdirectory', return_value='/media/sauvegarde'), \
                  patch.object(gui.messagebox, 'showinfo') as info, \
                  patch.object(gui, 'verify_support', return_value='Kit vérifié.') as support, \
@@ -69,7 +70,14 @@ class RestoreWindowTests(unittest.TestCase):
                  patch.object(gui, 'duplicate') as duplicate, patch.object(gui.threading, 'Thread') as worker:
                 worker.side_effect = lambda target, daemon: type('Worker', (), {'start': staticmethod(target)})()
                 tk.return_value.after.side_effect = lambda _delay, callback: callback()
+                steps = MagicMock()
+                steps.attach_mock(tk.return_value, 'window')
+                steps.attach_mock(question, 'question')
                 gui.main()
+                called = [name for name, _, _ in steps.mock_calls]
+                self.assertLess(called.index('window.deiconify'), called.index('question'))
+                self.assertEqual(tk.return_value.attributes.call_args_list[0].args, ('-topmost', True))
+                self.assertEqual(tk.return_value.attributes.call_args_list[1].args, ('-topmost', False))
         support.assert_called_once()
         self.assertEqual(backup.call_args.args, ('/media/sauvegarde', kit))
         duplicate.assert_not_called()

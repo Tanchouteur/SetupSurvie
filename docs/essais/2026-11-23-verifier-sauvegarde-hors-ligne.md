@@ -62,3 +62,24 @@ Les cinq installateurs Windows (WSL, Python, Docker Desktop, Git et Ollama)
 ont été téléchargés dans une copie de préparation du kit sur Bazzite.
 Leurs empreintes ont été vérifiées avec `prepare-windows --verify-only`.
 La VM Windows reste à préparer.
+
+## Vérificateur graphique sur Windows 11 hors ligne
+
+Dans une VM Windows 11 Enterprise LTSC 24H2 sans carte réseau, Python et
+Docker étaient absents au début de l’essai. Le double-clic sur le lanceur du
+kit réduit 0.113.0, monté en lecture seule, a proposé l’installation de Python
+3.13.17 pour le compte courant. Elle s’est terminée avec les fichiers locaux.
+Après fermeture de l’installateur, la question sur la sauvegarde était derrière
+l’Explorateur. Il a fallu revenir à la fenêtre SetupSurvie pour continuer.
+
+Le vérificateur graphique a contrôlé les 1 274 fichiers du kit et les cinq
+fichiers d’une sauvegarde Linux fictive. Il a indiqué que cette sauvegarde
+était compatible avec le kit sur Windows et Linux. Cette recette a contrôlé
+la lecture et le message de compatibilité.
+
+La correction 0.113.1 affiche la fenêtre de SetupSurvie avant la première
+question et lance une installation de Python avec affichage de l’avancement
+quand Python est absent. Les tests automatisés contrôlent l’ordre d’ouverture
+des fenêtres, les arguments du programme d’installation et le cas où un
+Python déjà installé doit être modifié pour obtenir Tcl/Tk. La recette du
+premier double-clic avec cette correction reste à effectuer sur Windows.
