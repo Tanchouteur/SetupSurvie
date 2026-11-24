@@ -1,6 +1,6 @@
 # Clôture de la première version fiable : preuves en 0.15.0
 
-**Audit historique du 15 novembre 2026.** Le [suivi actuel de l’objectif](../decisions/fiabilisation-recherche-et-contenus.md#etat-objectif) remplace cet état pour les validations restantes. Les conclusions ci-dessous conservent leurs preuves et leur contexte ; l’avancée minimale vidéo décrite à cette date ne constitue pas une clôture du besoin actuel.
+**Audit historique du 15 novembre 2026.** Le [suivi actuel de l’objectif](../decisions/fiabilisation-recherche-et-contenus.md#état-actuel-pour-la-fin-de-lobjectif--17-novembre-2026-0383) remplace cet état pour les validations restantes. Les conclusions ci-dessous conservent leurs preuves et leur contexte ; l’avancée minimale vidéo décrite à cette date ne constitue pas une clôture du besoin actuel.
 
 **Complément reçu après cet audit :** le [R2 réel 0.15.0](2026-11-15-rapport-0150-et-requetes-synthese.md)
 est maintenant disponible : 32 recherches complètes, fin médiane 2,11 s avec cache

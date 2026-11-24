@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([string]$WorkDir)
+param([string]$WorkDir, [switch]$Browser)
 $ErrorActionPreference='Stop'
 try {
     . (Join-Path $PSScriptRoot 'windows-common.ps1')
@@ -14,7 +14,9 @@ try {
     $portable=Join-Path $config.data_dir 'tools\Python312\python.exe'
     if (Test-Path -LiteralPath $portable) { $python=@{Path=$portable;Prefix=@()} }
     if (-not $python) { throw 'Python manque. La copie de secours doit fournir un runtime ou un installateur hors ligne.' }
-    & $python.Path @($python.Prefix) -X utf8 (Join-Path $config.app_dir 'scripts\transfer_wizard.py') --work-dir $WorkDir --base (Split-Path $config.app_dir)
+    $wizardArgs=@('-X','utf8',(Join-Path $config.app_dir 'scripts\transfer_wizard.py'),'--work-dir',$WorkDir,'--base',(Split-Path $config.app_dir))
+    if ($Browser) { $wizardArgs+='--browser' }
+    & $python.Path @($python.Prefix) @wizardArgs
     if ($LASTEXITCODE -ne 0) { throw 'Assistant de transfert interrompu. Python avec Tk est nécessaire.' }
 } catch {
     $shell=New-Object -ComObject WScript.Shell

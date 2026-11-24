@@ -10,11 +10,22 @@ import time
 
 import httpx
 
+# No idle expiry. Explicit stop/game pause and the engine scheduler still apply.
+KEEP_ALIVE=-1
+
 
 class Failure(RuntimeError):
     def __init__(self,kind):
         self.kind=kind
         super().__init__(kind)
+
+
+def interrupted_reply(error):
+    """Identify a broken reply after a caller has received generated output."""
+    return (
+        isinstance(error, (httpx.TransportError, json.JSONDecodeError))
+        or isinstance(error, Failure) and error.kind == 'stream_interrupted'
+    )
 
 
 def failure_kind(value):
@@ -71,7 +82,7 @@ class Session:
             try:
                 response=await self.client.post(self.endpoint+'/api/chat',json={
                     'model':self.runtime['model'],'messages':[],'stream':False,
-                    'keep_alive':'5m','options':{'num_ctx':self.context}},timeout=httpx.Timeout(300,connect=15))
+                    'keep_alive':KEEP_ALIVE,'options':{'num_ctx':self.context}},timeout=httpx.Timeout(300,connect=15))
                 response.raise_for_status();event=response.json()
                 if event.get('error'):raise Failure(failure_kind(event['error']))
                 if event.get('done') is not True or event.get('done_reason')!='load':raise Failure('invalid_model_load')
@@ -86,7 +97,7 @@ class Session:
                 self.measurement.value['model_preparations'].append(record)
 
     async def chat(self,payload):
-        payload={**payload,'messages':chat_messages(payload['messages'],payload.get('tools'),self.runtime.get('tool_schema_placement'))}
+        payload={**payload,'keep_alive':KEEP_ALIVE,'messages':chat_messages(payload['messages'],payload.get('tools'),self.runtime.get('tool_schema_placement'))}
         while True:
             produced=False;last={};done=False
             self.notice('loading' if self.runtime.get('available') and not self.loaded else 'preparing')

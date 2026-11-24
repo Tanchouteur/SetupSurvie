@@ -29,6 +29,24 @@ async page=>{
   const health=await page.evaluate(()=>api('/health'));
   check(!!health.version,'Une nouvelle requête fonctionne après la restauration de la page');
   check(await page.evaluate(()=>[...PAGE_REQUESTS].every(controller=>!controller.signal.aborted)),'Les requêtes annulées sont retirées du suivi');
+  await page.waitForFunction(()=>!S.profileChecking);
+  let profileRequests=0,releaseProfile;
+  const profileGate=new Promise(resolve=>releaseProfile=resolve);
+  await page.route('**/api/profiles/current',async route=>{
+    profileRequests++;
+    await profileGate;
+    await route.fulfill({json:{id:'browser'}}).catch(()=>{});
+  });
+  const checking=page.waitForRequest('**/api/profiles/current');
+  await page.evaluate(()=>{void refreshProfileOnReturn();});
+  await checking;
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  await page.waitForFunction(()=>!S.profileChecking);
+  await page.evaluate(()=>refreshProfileOnReturn());
+  check(profileRequests===1,'La vérification de profil en cours est annulée et ne repart pas au départ de la page');
+  releaseProfile();
+  await page.unrouteAll({behavior:'wait'});
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));
   check(errors.length===0,'Aucune erreur JavaScript : '+errors.join(','));
   return {checks:checks.length,results:checks};
 }

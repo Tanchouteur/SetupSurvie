@@ -2,8 +2,9 @@
 
 | Document | Statut et rôle |
 | --- | --- |
+| [Guides pratiques et laboratoire Bazzite](classement-pratique-et-laboratoire-bazzite.md) | Décision, début de la copie et plan de recette par besoin |
 | [Savoirs et savoir-faire durables](savoirs-durables.md) | Besoins de Marc, parcours, sélection concrète et grille des besoins restant à vérifier, pilote 0.1.19 |
-| [Bibliothèque complète de Marc](bibliotheque-complete-marc.md) | Guide actuel : tous les thèmes et fonds de base, sans plafond chez Marc ; laboratoire réduit et plafonné |
+| [Bibliothèque complète de Marc](bibliotheque-complete-marc.md) | Guide actuel : tous les thèmes et fonds de base, sans plafond logiciel |
 | [Notice Baofeng et antennes](baofeng-et-antennes.md) | Guide actuel : ajout volontaire du PDF, variante exacte, calculs et limites |
 | [Where There Is No Doctor](where-there-is-no-doctor.md) | Guide d’ajout et recette : édition 2025 complète, 32 PDF, 503 pages, recherche et IA vérifiées |
 | [Sélection Kiwix par thème](selection-kiwix-par-theme.md) | Guide actuel : inventaire local, choix des collections, plan figé et téléchargement contrôlé |
@@ -14,10 +15,9 @@
 | [Ajouter des contenus](../exploitation/mises-a-jour-et-bibliotheque-pilote.md#télécharger-des-lots-sans-réinstaller) | Procédure pour les lots figés, reprise, intégrité et budget |
 
 Depuis le 12 novembre 2026, **aucun plafond documentaire logiciel chez Marc**.
-Les **500 Go documentaires** concernent le laboratoire de Louis, hors modèles IA et caches d’essai.
-Il reste distinct de l’espace physique disponible et du plafond global du
-laboratoire. Les mêmes documents ne sont pas comptés deux fois dans le budget du
-kit ; une copie supplémentaire utilise néanmoins de l’espace réel.
+Le 21 novembre, Louis a également levé les plafonds fixes du laboratoire Bazzite.
+Les transferts vérifient l’espace libre disponible. Une copie supplémentaire
+utilise de l’espace réel. Voir le [plan du laboratoire](classement-pratique-et-laboratoire-bazzite.md).
 
 Les [catalogues documentaires](../../deploy/content-catalog.json) et
 [cartographiques](../../deploy/map-catalog.json) fixent les références techniques.

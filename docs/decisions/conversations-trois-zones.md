@@ -25,6 +25,17 @@ Sur ordinateur, une interface familière inspirée des assistants tels que ChatG
 Sur téléphone, une seule zone à la fois, avec les boutons explicites
 **Conversations**, **Discussion**, **Documents**. Même organisation et mêmes dossiers.
 
+## Traduction dans le fil — décision du 19 novembre 2026
+
+Louis demande de lire la traduction au fur et à mesure dans la discussion
+et propose de regrouper les boutons en haut. SetupSurvie 0.58.0 retient un
+bandeau repliable pour les commandes et la progression. Les passages traduits
+et les blocages se lisent dans le fil. Cette disposition remplace le suivi
+des traductions dans le volet droit décrit ci-dessus. La [lecture plein
+écran](../utilisation/documents-et-traduction.md#lire-pendant-que-le-document-se-traduit--0280)
+reste accessible depuis le bandeau. Les synthèses gardent leurs commandes
+dans **Documents**.
+
 ## À préciser avec Louis avant le développement global
 
 Comportement détaillé des dossiers, présentation de la profondeur de réponse,
@@ -58,14 +69,13 @@ n’est décidée dans ce document.
 
 Les contrôles existants gardent leurs IDs et leurs gestionnaires. Déplacer les
 blocs plutôt que les cloner. En particulier, la 0.28.0 peut déplacer les passages
-`translation-parts` vers son lecteur dédié pendant sa lecture ; ils reviennent
-dans le panneau à la fermeture. Conserver ce confort ou le remplacer par un
+`translation-parts` vers son lecteur dédié pendant sa lecture. Depuis 0.58.0, ils reviennent dans le fil à la fermeture. Conserver ce confort ou le remplacer par un
 parcours offrant les mêmes capacités, sans reprendre l’inférence au rechargement.
-Voir la [référence d’architecture](../architecture/README.md#lecture-pendant-une-traduction--0280).
+Voir la [référence d’architecture](../architecture/traduction.md#lecture-pendant-une-traduction--0280).
 
 État du code observé le 16 novembre : `deploy/model-profiles.json` contient dix
 profils pour sept références de modèles ; ce catalogue n’est pas une preuve de
-leur présence sur un PC. Le lanceur a déjà `scripts/setup.py pull-model --model`,
+leur présence sur un PC. Le lanceur a déjà `scripts/setup.py pull-model <modèle>`,
 qui appelle le moteur local et refuse les références cloud. Le contrôleur du site
 ne propose pas encore une file dédiée de téléchargement de modèles. Le futur
 menu doit donc réutiliser ces distinctions, ajouter suivi/reprise et vérification

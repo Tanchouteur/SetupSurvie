@@ -39,7 +39,10 @@ def run(zim_dir,state_dir,*,cancel=None,workers=None,reserve=15_000_000_000,job_
                 except inventory.Paused:result={'archive':source.name,'status':'paused'}
                 except inventory.ArchiveChanged:result={'archive':source.name,'status':'error','reason':'archive_changed'}
                 except Exception as error:result={'archive':source.name,'status':'error','reason':type(error).__name__}
-                report['results'].append(result);report['completed']+=1;save()
+                report['results'].append(result)
+                if result['status'] in inventory.EXAMINED_STATUSES:
+                    report['completed']+=1
+                save()
         report['phase']='paused' if any(r['status']=='paused' for r in report['results']) else 'partial' if report['unexamined'] or any(r['status'] in ('error','partial') or r.get('issues_count',0) for r in report['results']) else 'completed'
         report['finished']=time.time();save()
     return report

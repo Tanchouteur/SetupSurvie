@@ -1,19 +1,40 @@
 # Retrouver et lire les vidéos
 
-**Guide actuel — 0.35.0, 16 novembre 2026.** Les fichiers restent dans
+**Guide actuel — 0.63.3, 19 novembre 2026.** **Bibliothèque → Collections → Vidéos de la
+bibliothèque** regroupe les vidéos d’une même collection sur une carte. Ouvrez
+la carte pour voir les titres et les commandes de lecture. Les vidéos sans
+groupe gardent leur carte individuelle. Le filtre retrouve les titres ainsi que
+les noms des collections.
+
+Les fichiers restent dans
 `library/video/` du disque de données, avec leurs sous-dossiers. Cette fonction
-concerne les fichiers locaux et, après examen volontaire, les médias présents
-dans les collections ZIM. Aucun contenu de Marc n’a été examiné dans le runner.
+concerne les fichiers locaux et les médias des collections ZIM déjà examinées. Le fonds complet de Marc reste à vérifier.
+
+Pour plus tard, Louis propose d'étudier une [voix française générée à partir des sous-titres traduits](../decisions/boite-a-idees.md), notamment avec Qwen TTS. Cette piste n'est pas une fonction disponible.
 
 ## Préparer depuis le site
 
 Après la mise à jour de maintenance, choisir **Famille → Bibliothèque → Collections →
-Vidéos de la bibliothèque → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
+Vidéos de la bibliothèque → Gestion de la vidéothèque → Actualiser les vidéos et leurs sous-titres**. Cela lit les noms,
 les métadonnées `.info.json` et les pistes `.fr.srt`, `.en.vtt`, etc. à côté du
 média. Aucun téléchargement, reconnaissance vocale ou modèle IA n’est lancé par cette actualisation.
 Attendre « Inventaire terminé », puis rechercher avec le filtre des Collections
-ou dans **Rechercher**. Relancer cette actualisation après un nouveau téléchargement
-ou une modification de sous-titre ; elle n’est pas automatique dans cette version.
+ou dans **Rechercher**.
+
+Depuis 0.40.0, ce bouton n’est plus indispensable : le répertoire s’actualise tout
+seul au démarrage du service, puis le pilote vérifie en arrière-plan, au plus une fois
+par minute, si des vidéos, sous-titres ou `.info.json` ont été ajoutés, modifiés ou
+retirés. Le contrôle ne lit que les noms, tailles et dates des fichiers ; il ignore
+les téléchargements en cours (`.part`, `.ytdl`…). L’ancien répertoire reste
+consultable pendant l’actualisation. Un inventaire arrêté avec **Arrêter
+l’inventaire** n’est relancé automatiquement que si les fichiers changent ensuite ;
+un inventaire interrompu par un redémarrage reprend au démarrage suivant. Les
+vidéos des collections ZIM demandent un examen distinct. La [première installation](../installation/README.md) le programme pour les archives présentes. Un ZIM nouveau ou remplacé est ensuite examiné automatiquement pendant le
+créneau choisi dans **Préparation automatique des archives**. Vous pouvez aussi
+lancer l’examen ou le mettre en pause depuis la file ou le portail.
+Après une coupure pendant l’écriture, la reprise de l’examen d’un ZIM
+récupère le dernier point enregistré dans le journal SQLite. Les résultats
+publiés restent consultables pendant la reprise.
 
 Le travail continue si l’onglet est fermé. **Arrêter l’inventaire** conserve l’ancien
 index ; une nouvelle actualisation recommence son examen sans altérer les fichiers.
@@ -22,25 +43,84 @@ ne deviennent pas des ressources prêtes. Un fichier remplacé après indexation
 est refusé jusqu’à l’actualisation. Les fichiers finaux sont présumés terminés
 par leur nom et l’absence de marqueur : aucun décodage intégral ne le certifie.
 
+## Chercher seulement les vidéos — 0.40.0
+
+Dans **Bibliothèque → Rechercher**, le menu **Documents et vidéos** propose
+**Vidéos uniquement** et **Documents uniquement**. Avec **Vidéos uniquement**, on
+peut laisser la recherche vide : toutes les vidéos répertoriées s’affichent, par
+ordre alphabétique de titre. Avec des mots, la recherche porte sur les titres,
+descriptions et sous-titres prêts. Ce mode ignore l’espace « Autonomie et
+résilience / Savoirs et culture » : les vidéos sont rarement classées et ne
+doivent pas disparaître d’une recherche dédiée. Le choix est conservé dans
+l’adresse de la page et revient avec le bouton Précédent.
+
+Si aucune vidéo n’apparaît, le message distingue : répertoire pas encore créé
+(il se lance tout seul), actualisation en cours, dossier `library/video/` absent,
+ou aucune vidéo correspondant aux mots. Une absence de résultat ne prouve pas
+que les collections ZIM non examinées sont sans vidéo.
+
 ## Chercher et lire
 
-Les titres/descriptions participent au filtre de Collections. **Rechercher** réunit
+Le bouton **Vidéos** en haut de Collections ouvre directement la liste vidéo.
+Dans le volet vidéo déplié, le menu **Origine des vidéos** propose
+**Toutes les vidéos** et **Nos vidéos ajoutées**. Depuis la demande de Louis du
+20 novembre 2026, ce second choix remplace les anciens filtres **YouTube** et
+**Hors YouTube** : il affiche seulement les fichiers rangés dans
+`library/video/` (à la main ou par l’outil de liste YouTube, dans
+`library/video/youtube/`) et écarte les vidéos lues dans les archives Kiwix.
+Le choix se combine avec le filtre par mots et s’applique aussi aux cartes
+dépliées.
+Le filtre consulte l’index disponible pendant que l’inventaire se poursuit.
+Si la liste tarde à répondre, un message s’affiche avec le bouton **Réessayer**.
+
+Les titres et descriptions participent au filtre de Collections. **Rechercher** réunit
 documents et vidéos ; les paroles ne sont cherchées que dans les pistes locales
 qui passent les contrôles techniques. Un titre seul ne décrit pas toute la vidéo.
 Les différents passages d’un média sont regroupés sous un résultat « Vidéo ».
 Un passage trouvé ouvre le lecteur à son horodatage et garde la langue de sa piste
 dans le texte envoyé à l’assistant.
 
-Le lecteur propose la piste française locale quand elle existe, la langue source
-et **Sans sous-titres**. Les SRT sont servis en WebVTT sans changer l’original.
+Dans **Sous-titres**, le réglage **Automatique** choisit le français si une
+piste existe pour une vidéo anglaise, puis l’anglais. Une vidéo française s’ouvre
+sans sous-titres. Si la langue parlée est inconnue, le lecteur privilégie
+le français, puis l’anglais. Pour les autres langues, il affiche une piste
+française si elle est disponible.
+
+Choisissez une piste ou **Sans sous-titres** dans le menu du lecteur pour
+mémoriser ce choix pour cette vidéo, avec votre profil et dans ce navigateur.
+Sélectionnez **Automatique** pour revenir au réglage par défaut. Si la piste
+mémorisée devient indisponible, le lecteur utilise le réglage automatique.
+Les SRT sont servis en WebVTT sans changer l’original.
 La lecture, le changement de piste et les déplacements dans le média fonctionnent
 sans Internet ni IA. La position est mémorisée par profil et navigateur pour la
 même révision ; un passage explicitement trouvé prend priorité sur cette position.
 Quitter le lecteur met la vidéo en pause.
 
+## Créer, traduire et suivre les sous-titres dans le lecteur — 0.45.0
+
+Avec le profil **Famille**, ouvrez une vidéo depuis une recherche, un lien de
+l’assistant ou les Collections. Sous le lecteur, choisissez **Créer les
+sous-titres depuis l’audio** si aucune piste n’est lisible. Vous pouvez demander
+la version française en même temps. Si une piste source est déjà disponible,
+ouvrez **Préparer une piste française**, choisissez la piste et lancez la
+traduction.
+
+Le lecteur affiche l’attente, l’avancement, les erreurs et les résultats de
+cette vidéo, avec les commandes **Mettre en pause** et **Reprendre**. Vous
+retrouvez le suivi en rouvrant la vidéo. Dès que l’inventaire a pris en compte
+la nouvelle piste, elle rejoint le menu **Sous-titres** sans fermer le lecteur.
+**Lire la transcription** déroule les paroles disponibles. Sur un grand écran,
+les sous-titres et les options se placent à côté de la vidéo lorsqu’elle est
+ouverte directement, sans liste de résultats.
+**Qualité des sous-titres** affiche les informations de provenance et les limites
+des pistes. Dans **Collections → Vidéos**, les cartes affichent d’abord le titre,
+l’état des sous-titres et **Voir la vidéo**. **Options de sous-titrage** regroupe
+les commandes de la carte. **Suivi des sous-titres** rassemble les travaux et
+leurs rapports, et **Gestion de la vidéothèque** contient les commandes d’inventaire.
+
 ## Vidéos dans les collections ZIM — 0.33.0
 
-Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque →
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque → Gestion de la vidéothèque →
 Vidéos dans les collections → Examiner ou reprendre les collections**. L’outil
 d’archives doit avoir été préparé dans **Paramètres → Bibliothèque**. Cet examen
 ne télécharge rien et ne lance pas l’IA. Il peut durer longtemps au premier
@@ -48,11 +128,32 @@ passage ; le nombre de collections terminées et les pistes lisibles sont affich
 **Mettre l’examen en pause** conserve les points de reprise. Reprendre reste
 volontaire après un redémarrage ou une pause.
 
-L’examen continue si la page est fermée. Les anciennes données terminées restent
-disponibles pendant le suivant. Ensuite, une mise à jour du lecteur et de la
-recherche prend les pistes en compte. Si le service a redémarré entre-temps,
-**Actualiser le lecteur vidéo** permet de terminer cette étape. Le rapport des
-collections conserve l’examen, les erreurs et les archives non examinées.
+L’examen continue si la page est fermée. Depuis la 0.89.1, les anciennes données
+terminées restent disponibles pendant le suivant et le portail vérifie si de
+nouvelles collections ont été examinées et actualise la recherche. Les vidéos
+déjà prêtes peuvent apparaître pendant l’examen des
+collections restantes. **Actualiser le lecteur vidéo** permet aussi de demander
+cette mise à jour. Le rapport des collections conserve l’examen, les erreurs
+et les archives non examinées.
+
+Depuis la version 0.51.1, les collections YouTube de Kiwix donnent leurs titres
+à la vidéothèque et à la recherche hors ligne. Après la mise à jour, relancer
+**Examiner ou reprendre les collections** pour récupérer les titres des archives
+déjà examinées à partir de leur catalogue embarqué. Les liens vidéo et les
+pistes déjà préparées gardent leurs références.
+
+Depuis la 0.90.0, les sous-titres déclarés dans ce catalogue rejoignent aussi
+le lecteur et la recherche lorsque leur fichier est présent et lisible dans
+le ZIM. **Examiner ou reprendre les collections** récupère ces pistes à
+partir des inventaires existants. Les chapitres restent distincts des
+sous-titres.
+
+Les autres collections utilisent le titre de la page qui contient la vidéo ou
+un nom de fichier lisible. Quand le titre manque, **Vidéo sans titre** indique
+la collection et une référence courte. Les fragments de streaming et les
+fichiers techniques reconnus sont écartés de la vidéothèque.
+Les lignes vides supplémentaires entre deux sous-titres WebVTT sont ignorées
+pendant l’examen, y compris dans les collections.
 
 Les vidéos effectivement incluses apparaissent avec les fichiers locaux. **Ouvrir
 l’article d’origine** conserve l’accès au document qui les héberge. Le lecteur
@@ -116,16 +217,17 @@ codecs de tous les fichiers de Marc ni Safari sur son téléphone réel.
 
 ## Préparer une piste française depuis le site — 0.24.0
 
-Depuis 0.37.1, si le moteur annonce un refus tout en renvoyant des traductions,
-le logiciel lui demande une seule fois de clarifier sa réponse. La proposition
-rejetée reste dans le rapport. Un refus clair ou un second échec arrête la
-préparation ; aucun segment ni horodatage n’est réinterprété pour forcer la
-publication. La pause reste prioritaire pendant cette vérification.
+Le modèle reçoit le nombre exact de segments à traduire. Depuis **0.50.2**,
+SetupSurvie réduit aussi les lots quand une réponse est tronquée ou illisible,
+ou que les identifiants sont modifiés ou réordonnés. Quand un contrôle échoue
+pour un segment, les segments valides sont enregistrés et celui qui a échoué
+est réessayé seul. Un échec persistant laisse la piste en brouillon et le rapport
+indique le problème. Les propositions rejetées restent dans le rapport.
+Un refus explicite arrête le travail et la pause reste prioritaire.
 
-Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une vidéo,
-ouvrir **Préparer une piste française**, choisir la langue source puis **Traduire
-les sous-titres**. Le modèle se choisit dans **Préparer les sous-titres**,
-sous les vidéos. Il doit être installé et démarré volontairement. Une vidéo sans
+Choisir **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**. Sur une carte vidéo,
+ouvrir **Options de sous-titrage → Préparer une piste française**, choisir la langue source puis **Traduire
+les sous-titres**. Le modèle se choisit dans **Suivi des sous-titres → Modèle de traduction**. Il doit être installé et démarré volontairement. Une vidéo sans
 piste exploitable utilise le parcours audio ci-dessous ; ce bouton de traduction seul ne connaît pas ses paroles.
 
 Le suivi compte les segments terminés. **Mettre en pause** conserve ces segments ;
@@ -137,7 +239,9 @@ Les essais de performance/calibration refusent une préparation concurrente.
 
 Les horodatages sont copiés de la source, jamais inventés par le modèle. Un lot
 perdant un segment ou modifiant son ordre est refusé. Les changements détectés de
-nombres/unités bloquent la publication ; négations et longueurs suspectes peuvent
+nombres/unités bloquent la publication. Pour une piste déclarée en anglais,
+un montant comme « $70,000 » garde la même valeur s’il est écrit
+« 70 000 dollars » en français. Les négations et longueurs suspectes peuvent
 produire des avertissements. **Télécharger le rapport** conserve segments source,
 traduction, propositions refusées, modèle et contrôles. Ce rapport contient du
 texte de la vidéo et doit rester privé. Le rapport vidéo général inclut aussi
@@ -155,10 +259,17 @@ Une modification du média ou de sa piste source empêche de reprendre l’ancie
 brouillon et retire l’association de l’ancienne traduction après actualisation.
 Les anciens fichiers et brouillons restent conservés pour comparaison.
 
+Essai du 18 novembre 2026 sur Bazzite avec GPT-OSS 20B et un contexte de
+8 192 jetons. À partir des 93 segments du rapport Windows, une préparation
+isolée a produit une piste française complète avec les 93 horodatages d’origine.
+Trois avertissements ont été conservés. Le test a utilisé les sous-titres du
+rapport et un média factice. La fidélité à l’audio et la reprise sur
+l’installation Windows de Marc restent à vérifier.
+
 ## Récupérer les pistes YouTube — 0.31.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, ouvrir
-**Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
+**Options de sous-titrage → Récupérer sur YouTube** sur le média. Si son adresse est déjà associée au fichier,
 laisser le champ vide ; sinon, copier l’adresse exacte de la vidéo correspondante.
 Le logiciel ne cherche pas cette adresse depuis un titre approximatif.
 Choisir la piste automatique, française ou anglaise, puis **Récupérer les sous-titres**.
@@ -169,8 +280,7 @@ puis l’anglais. Dans une même langue, une piste déclarée fournie est priori
 sur une piste automatique. « Français » accepte aussi une variante comme `fr-FR`.
 Une langue annoncée par YouTube ne prouve pas que la piste a été relue.
 
-Le suivi est sous **Préparer les sous-titres → Suivre la récupération des sous-titres
-YouTube**. **Mettre en pause** arrête la requête ; **Reprendre avec Internet** la
+Le suivi est sous **Suivi des sous-titres → Récupérations YouTube**. **Mettre en pause** arrête la requête ; **Reprendre avec Internet** la
 relance à votre demande. Fermer la page ne l’arrête pas ; après un redémarrage,
 la reprise reste explicite. Un refus du fournisseur ou une piste absente reste
 une erreur expliquée, avec la création locale depuis l’audio comme autre possibilité.
@@ -194,20 +304,19 @@ transfert de l’installation ; aucun compte YouTube n’est nécessaire pour ce
 ## Créer les sous-titres depuis un MP4 seul — 0.26.0
 
 Dans **Famille → Bibliothèque → Collections → Vidéos de la bibliothèque**, actualiser les
-vidéos. Sur un média sans piste exploitable, ouvrir **Créer les sous-titres depuis
-l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
+vidéos dans **Gestion de la vidéothèque**. Sur une carte sans piste exploitable,
+ouvrir **Options de sous-titrage → Créer les sous-titres depuis l’audio**, choisir la langue parlée ou la détection automatique, puis **Créer les
 sous-titres**. **Préparer aussi la version française** utilise ensuite le modèle
 choisi dans les préparations de pistes. Aucun traitement ne démarre à la lecture
 ou à l’ouverture de Collections.
 
-La reconnaissance réutilise le modèle local préparé pour la dictée. S’il manque,
-le message demande cette préparation par l’installateur, une fois avec Internet ;
-le bouton ne télécharge rien. Une fois préparée, elle fonctionne hors ligne,
+La reconnaissance utilise le modèle local Whisper préparé par l’installateur.
+S’il manque, préparez-le sur le serveur avec Internet ou importez le cache
+du kit hors ligne. Une fois préparée, elle fonctionne hors ligne,
 sur le processeur du serveur. La traduction française utilise aussi un modèle
 local installé et volontairement démarré. La pause IA est respectée.
 
-Le suivi est dans **Préparer les sous-titres → Suivre la création des
-sous-titres depuis l’audio**. **Mettre en pause** garde les passages terminés ;
+Le suivi est dans **Suivi des sous-titres → Transcriptions audio**. **Mettre en pause** garde les passages terminés ;
 **Reprendre** continue les autres. Fermer la page ne stoppe pas le serveur, mais
 un redémarrage attend une reprise explicite. Aucun sous-titre partiel n’est annoncé
 prêt. Une vidéo modifiée demande une nouvelle préparation après actualisation.
@@ -223,6 +332,30 @@ une langue/un son ; elle ne décrit pas les gestes ni les images. Une vidéo san
 audio ou sans parole reconnue ne reçoit pas de sous-titre vide présenté comme prêt.
 Les résultats réels limités de cette version sont dans le [bilan](../essais/2026-11-16-transcription-audio-videos.md).
 
+## Demander une vidéo à l’assistant — 0.40.0
+
+Quand la question parle de vidéo (« trouve une vidéo pour faire du feu », « montre
+une vidéo de la bibliothèque »), l’assistant cherche d’abord dans les vidéos
+répertoriées, avec les mots utiles de la question, ou sans mot-clé pour une
+demande générale. Il reçoit pour chaque vidéo son titre, sa chaîne, sa durée, les
+langues de sous-titres prêtes et un lien qui ouvre le lecteur. Il peut aussi
+lancer lui-même cette recherche avec l’outil `find_videos`. Si rien ne correspond
+au sujet, il reçoit aussi quelques autres vidéos disponibles et le nombre de
+vidéos répertoriées, pour ne pas conclure que la bibliothèque n’en contient aucune.
+
+Si le modèle oublie de donner les liens, le logiciel ajoute à la fin de la réponse
+une liste **Vidéos trouvées dans la bibliothèque** avec ces liens. Ces liens
+proviennent uniquement des résultats réels. Un titre n’est pas une parole
+consultée : pour résumer une vidéo, l’assistant doit lire ses sous-titres comme
+un document. Une vidéo sans piste reste proposée par son titre seulement.
+
+Depuis 0.43.4, si la demande porte sur un sujet, l’assistant lit d’abord les
+sous-titres exploitables des vidéos trouvées : il peut répondre sur leur contenu,
+sans demander de confirmation. Les liens mal écrits par le modèle sont réparés, et
+les liens réels restent affichés si sa réponse est rejetée. Ce parcours a été essayé
+avec de vrais modèles sur des vidéos fictives ([bilan](../essais/2026-11-18-demandes-videos-modele-reel.md)) ;
+il reste à essayer avec le modèle et le fonds de Marc.
+
 ## Utilisation des paroles par l’assistant
 
 Une question ordinaire peut chercher et lire des sous-titres et des documents,
@@ -231,15 +364,17 @@ un document. Une vidéo sans piste n’a **aucune parole consultée** : son titr
 sa description ne deviennent pas une transcription. L’IA ne voit pas les images
 et ne comprend pas les gestes grâce au seul texte des sous-titres.
 
+À l’ouverture, l’aperçu est lu directement dans la piste associée à la vidéo.
+Les vidéos déjà inventoriées profitent de cet accès sans nouvel inventaire.
 L’aperçu contient au plus 80 segments et 100 000 caractères à partir du passage
-demandé ; la lecture partielle reste signalée. La synthèse longue et la traduction
+demandé. La lecture partielle reste signalée. La synthèse longue et la traduction
 documentaire intégrale refusent cet aperçu au lieu de perdre ses horodatages.
 La traduction synchronisée utilise le parcours vidéo ci-dessus. Les favoris et classements humains gardent
 la même référence vidéo ; un classement humain ne certifie pas la procédure.
 
 ## Rapport et sous-titres manquants
 
-**Télécharger le rapport vidéo** fournit l’état de chaque vidéo : pistes trouvées,
+Dans **Gestion de la vidéothèque**, **Télécharger le rapport vidéo** fournit l’état de chaque vidéo : pistes trouvées,
 langues déclarées, origine fournie/automatique/inconnue, erreurs, contrôles et
 prochaine action. Une piste nommée « fr » n’est pas une preuve de langue française,
 de traduction fidèle ou de synchronisation ; la relecture humaine reste à faire.
@@ -255,14 +390,20 @@ reste à exécuter selon le
 ## Installation et conservation
 
 Le pilote reçoit le montage **en lecture seule** de `library/video/` vers `/videos`.
+Le dossier s’appelle `video`, au singulier : un dossier `library/videos/` n’est pas lu.
+Depuis 0.41.0, et depuis le site en 0.43.0, l’outil [Télécharger une liste de vidéos YouTube](telecharger-videos-youtube.md)
+range les vidéos dans `library/video/youtube/`, avec `.info.json` et sous-titres ;
+le répertoire les reprend ensuite tout seul.
 Le lanceur crée le dossier s’il manque, sans copier de vidéo. Windows et Linux
 utilisent la même API ; le laboratoire reste protégé par ses contrôles de montage.
 Une mise à jour de code dans une installation active doit passer par la procédure
 de maintenance, qui recrée les services avec ce montage.
 
 L’index `state/pilot/videos.db` et son rapport sont séparés des originaux et de
-l’index documentaire principal. Une actualisation est transactionnelle : l’ancien
-index reste utilisable tant que le nouveau n’est pas terminé. Les statuts et
+l’index documentaire principal. Une actualisation construit un nouveau fichier :
+l’ancien index reste utilisable tant que le nouveau n’est pas terminé. Depuis
+0.115.0, cet index régénérable n’est plus copié dans les sauvegardes ; il se
+reconstruit après une restauration. Les statuts et
 révisions de taille/date détectent des changements observés, pas toute altération
 possible. L’[outil d’inventaire en ligne de commande](inventaire-videos.md) reste
 disponible, sans modifier cet index du site.

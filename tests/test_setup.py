@@ -42,6 +42,21 @@ class InstallationTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_linux_start_includes_engine_and_respects_gaming_pause(self):
+        import control,discovery
+        with patch.object(self.app,'catalog'),patch.object(control,'start'),patch.object(discovery,'start'),patch.object(self.app,'start_native'),patch.object(self.app,'compose') as compose:
+            self.app.up(self.config)
+            start=next(call for call in compose.call_args_list if call.args[1:3]==('up','-d'))
+            self.assertNotIn('pilot',start.args)  # no explicit subset: Compose starts Ollama too
+            self.assertTrue(any(call.args[1:3]==('exec','-T') for call in compose.call_args_list))
+            compose.reset_mock()
+            marker=self.app.work/'inference-paused.json';marker.write_text('{"reason":"user_gaming"}')
+            self.app.up(self.config)
+            self.assertTrue(any(call.args[1:]==('stop','ollama') for call in compose.call_args_list))
+            start=next(call for call in compose.call_args_list if call.args[1:3]==('up','-d'))
+            self.assertIn('pilot',start.args);self.assertNotIn('ollama',start.args)
+            self.assertTrue(marker.exists())
+
     def test_new_installation_uses_requested_default_login_without_resetting_existing_account(self):
         self.assertEqual(self.config['admin_email'],'admin@survie.local')
         config={**self.config,'admin_password':'changed-by-owner'}
@@ -132,6 +147,32 @@ class InstallationTests(unittest.TestCase):
         self.assertTrue(all(entry['id'].startswith('sha256:') for entry in self.config['local_images'].values()))
         self.assertFalse(any('pull' in args for args in calls))
 
+    def test_import_matches_containerd_manifest_ids_by_verified_layers(self):
+        import hashlib, io, tarfile
+        archive=self.base/'images.tar'
+        configs={}
+        with tarfile.open(archive,'w') as tar:
+            for index,name in enumerate(setup.VERSIONS['images']):
+                body=json.dumps({'architecture':'amd64','os':'linux','rootfs':{'type':'layers','diff_ids':['sha256:'+format(index+1,'064x')]}}).encode()
+                digest=hashlib.sha256(body).hexdigest();configs[name]=digest
+                info=tarfile.TarInfo(digest+'.json');info.size=len(body);tar.addfile(info,io.BytesIO(body))
+        images=[{'service':name,'reference':reference,'id':configs[name]} for name,reference in setup.VERSIONS['images'].items()]
+        setup.write_json(Path(str(archive)+'.json'),{'images':images,'sha256':setup.file_hash(archive)})
+        manifests={'sha256:'+format(100+index,'064x'):index for index in range(len(images))}
+        def command(args,**kwargs):
+            if args[:3]==['docker','image','load']:return '\n'.join('Loaded image ID: '+key for key in manifests)
+            self.assertEqual(args[:3],['docker','image','inspect'])
+            if args[3] not in manifests:raise setup.SetupError('No such image')
+            index=manifests[args[3]]
+            return json.dumps([{'Id':args[3],'Architecture':'amd64','Os':'linux','RootFS':{'Layers':['sha256:'+format(index+1,'064x')]}}])
+        with patch.object(setup,'run',side_effect=command):self.app.import_images(self.config,archive)
+        for index,name in enumerate(setup.VERSIONS['images']):
+            if name in self.config['local_images']:
+                self.assertEqual(self.config['local_images'][name]['id'],'sha256:'+format(100+index,'064x'))
+        manifests={key:0 for key in manifests}
+        with patch.object(setup,'run',side_effect=command),self.assertRaisesRegex(setup.SetupError,'ID d’image invalide'):
+            self.app.import_images(self.config,archive)
+
     def test_sensitive_settings_cannot_be_in_public_library(self):
         app=setup.Installation(self.base / 'exposed/library/private')
         with self.assertRaises(setup.SetupError):
@@ -182,15 +223,31 @@ class InstallationTests(unittest.TestCase):
                 self.app.import_images(self.config, archive)
             run.assert_not_called()
 
+    def test_preparing_additional_model_preserves_installed_models_and_resumes(self):
+        compact = 'qwen3:1.7b-q4_K_M'
+        standard = setup.VERSIONS['default_model']
+        installed = {'models': [{'name': standard}, {'name': 'marc:custom'}]}
+        with patch.object(self.app, 'request', return_value=installed), \
+                patch.object(self.app, 'pull_model') as pull, patch.object(self.app, 'record') as record:
+            self.app.prepare_models(dict(self.config, chat_model=compact), (standard, compact))
+            pull.assert_called_once_with(dict(self.config, chat_model=compact), compact)
+            installed['models'].append({'name': compact})
+            self.app.prepare_models(self.config, (standard, compact))
+            pull.assert_called_once()
+            record.assert_called_once_with(self.config)
+
     def test_compose_windows_cpu_and_gpu_with_spaces(self):
         for target, cpu in [('windows', False), ('linux', True), ('linux', False)]:
             with self.subTest(target=target, cpu=cpu):
                 c = dict(self.config, target=target, cpu=cpu)
+                if target == 'linux' and cpu:
+                    c['chat_model'] = 'qwen3:1.7b-q4_K_M'
                 self.app.render(c)
                 result = subprocess.run(self.app.command(c, 'config', '--format', 'json'), capture_output=True, text=True,env={**self.app.environment(),'PILOT_SEARCH_CACHE_BYTES':'8000000000'})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 services = json.loads(result.stdout)['services']
                 self.assertEqual(services['pilot']['environment']['PILOT_SEARCH_CACHE_BYTES'],'8000000000')
+                self.assertEqual(services['pilot']['environment']['CHAT_MODEL'], c['chat_model'])
                 self.assertEqual(services['open-webui']['environment']['ENABLE_SIGNUP'], 'false')
                 self.assertEqual(services['open-webui']['environment']['WEBUI_SECRET_KEY'], self.config['secret'])
                 self.assertEqual(services['open-webui']['environment']['WEBUI_AUTH_TRUSTED_EMAIL_HEADER'],'X-Survie-Email')

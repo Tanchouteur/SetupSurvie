@@ -50,6 +50,18 @@ class PilotAPITests(unittest.TestCase):
         self.assertEqual(self.client.delete('/api/conversation-folders/'+folder,headers=headers).status_code,200)
         self.assertEqual(self.client.get('/api/conversations',params={'folder':'unfiled'}).json()['conversations'][0]['title'],'Semis')
 
+    def test_conversation_search_folds_accents_and_empty_folder_means_unfiled(self):
+        self.login('alice');headers={'Origin':'http://testserver'}
+        with store.connect() as db:
+            db.execute('INSERT INTO conversations VALUES(?,?,?,?)',('school','alice','École du 100%_dimanche',1))
+            db.execute('INSERT INTO conversations VALUES(?,?,?,?)',('other','alice','Jardin',2))
+        for query in ('école','ECOLE','Ecole','100%_','100%x'):
+            found=[c['id'] for c in self.client.get('/api/conversations',params={'q':query}).json()['conversations']]
+            self.assertEqual(found,[] if query=='100%x' else ['school'],query)
+        self.assertEqual(self.client.put('/api/conversations/school/folder',json={'folder_id':''},headers=headers).status_code,200)
+        self.assertEqual(self.client.get('/api/conversations',params={'folder':'unfiled'}).status_code,200)
+        self.assertNotIn('conversation_organization',self.client.get('/api/health').json()['degraded_features'])
+
     def test_translation_terms_belong_to_selected_profile_and_do_not_start_a_job(self):
         headers={'Origin':'http://testserver'};self.login('alice')
         with patch.object(translations,'launch') as launch:
@@ -250,6 +262,17 @@ class PilotAPITests(unittest.TestCase):
         self.client.cookies.clear();self.login('alice')
         self.assertEqual(self.client.post('/api/admin/guides',files={'file':('x.txt',b'Fiction')},data={'title':'x'},headers=headers).status_code,403)
 
+    def test_index_failures_are_explained_and_leave_no_orphan_upload(self):
+        self.login('admin');headers={'Origin':'http://testserver'}
+        response=self.client.post('/api/admin/reindex',headers=headers)
+        self.assertEqual(response.status_code,503);self.assertIn('dossier des guides',response.json()['detail'])
+        library.GUIDES.mkdir()
+        with patch.object(library,'index_guides',side_effect=RuntimeError('fixture index failure')):
+            response=self.client.post('/api/admin/guides',files={'file':('notice.txt',b'Volume : 40 litres.','text/plain')},data={'title':'Notice'},headers=headers)
+        self.assertEqual(response.status_code,503)
+        self.assertEqual(list(library.GUIDES.iterdir()),[])
+        with store.connect() as db:self.assertEqual(db.execute('SELECT count(*) FROM guide_meta').fetchone()[0],0)
+
     def test_associated_document_survives_reopen_and_omitted_source_then_can_be_removed(self):
         self.login();library.GUIDES.mkdir();(library.GUIDES/'guide.en.txt').write_text('Useful water guide')
         library.index_guides();headers={'Origin':'http://testserver'}
@@ -347,6 +370,25 @@ class PilotAPITests(unittest.TestCase):
             self.assertEqual(response.status_code,202)
             command.assert_awaited_once_with('plan',{'themes':['energie'],'languages':['fr','en'],'max_add_gb':5,'include_supplements':False})
         self.assertEqual(self.client.post('/api/admin/library/download',json={'id':'../outside'},headers={'Origin':'http://testserver'}).status_code,422)
+
+    def test_update_routes_require_famille_and_can_pause_the_queue_first(self):
+        headers={'Origin':'http://testserver'}
+        self.login()
+        with patch.object(operations,'update_request',new_callable=AsyncMock) as command:
+            self.assertEqual(self.client.get('/api/maintenance/update').status_code,403)
+            self.assertEqual(self.client.post('/api/maintenance/update/start',json={'confirmed':True},headers=headers).status_code,403)
+            command.assert_not_called()
+        self.client.cookies.clear();self.login('admin')
+        with patch.object(operations,'update_request',new_callable=AsyncMock,return_value={'accepted':True,'id':'x'}) as command, \
+                patch.object(gateway.work_queue.QUEUE,'set_paused') as paused:
+            self.assertEqual(self.client.post('/api/maintenance/update/start',json={},headers=headers).status_code,422)
+            response=self.client.post('/api/maintenance/update/start',json={'confirmed':True},headers=headers)
+            self.assertEqual(response.status_code,202);paused.assert_not_called()
+            command.assert_awaited_with('start',{'confirmed':True})
+            self.client.post('/api/maintenance/update/start',json={'confirmed':True,'pause_queue':True},headers=headers)
+            paused.assert_called_once_with(True)
+            self.assertEqual(self.client.post('/api/maintenance/update/check',headers=headers).status_code,202)
+            command.assert_awaited_with('check')
 
     def test_delete_conversation_checks_owner_and_active_jobs_and_removes_data(self):
         self.login()

@@ -1,0 +1,336 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "independent-01",
+      "split": "verify",
+      "query": "isolation thermique",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Isolation_thermique",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Mise en œuvre dans le bâtiment et sur les canalisations."
+    },
+    {
+      "id": "independent-02",
+      "split": "verify",
+      "query": "habitat passif",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Habitat_passif",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Principes de conception d’un habitat et histoire du concept."
+    },
+    {
+      "id": "independent-03",
+      "split": "verify",
+      "query": "plante médicinale",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Plante_médicinale",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présentation des plantes, histoire et patrimoine."
+    },
+    {
+      "id": "independent-04",
+      "split": "verify",
+      "query": "télescope",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Télescope",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Instrument astronomique, histoire et caractéristiques."
+    },
+    {
+      "id": "independent-05",
+      "split": "verify",
+      "query": "nœud de chaise",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Nœud_de_chaise",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Fonctions du nœud, réalisation et limites."
+    },
+    {
+      "id": "independent-06",
+      "split": "verify",
+      "query": "monoxyde de carbone",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Monoxyde_de_carbone",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Propriétés, présence dans l’environnement et effets."
+    },
+    {
+      "id": "independent-07",
+      "split": "verify",
+      "query": "conservation de la viande",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Conservation_de_la_viande",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Historique et procédés de conservation."
+    },
+    {
+      "id": "independent-08",
+      "split": "verify",
+      "query": "réservoir d’eau",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Réservoir_d'eau",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Stockage, design, usages et évolution historique."
+    },
+    {
+      "id": "independent-09",
+      "split": "verify",
+      "query": "charpente",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Charpente",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Techniques de structure et historique du métier."
+    },
+    {
+      "id": "independent-10",
+      "split": "verify",
+      "query": "écluse",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Écluse",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Fonctionnement, histoire et technique d’une infrastructure de transport."
+    },
+    {
+      "id": "independent-11",
+      "split": "verify",
+      "query": "brûlure",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Brûlure",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Effets sur le corps, classification et premiers soins."
+    },
+    {
+      "id": "independent-12",
+      "split": "verify",
+      "query": "marée",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Marée",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Explication d’un phénomène naturel."
+    },
+    {
+      "id": "independent-13",
+      "split": "verify",
+      "query": "water cycle",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Water_cycle",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Cycle naturel de l’eau."
+    },
+    {
+      "id": "independent-14",
+      "split": "verify",
+      "query": "battery",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Battery",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Fonctionnement, dimensions, types et histoire des batteries."
+    },
+    {
+      "id": "independent-15",
+      "split": "verify",
+      "query": "solar cell",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Solar_cell",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Principe physique, usages et évolution des cellules."
+    },
+    {
+      "id": "independent-16",
+      "split": "verify",
+      "query": "water purification",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Water_purification",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Explication de la purification de l’eau et procédés."
+    },
+    {
+      "id": "independent-17",
+      "split": "verify",
+      "query": "electrical generator",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Electrical_generator",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Fonctionnement et composants d’un générateur."
+    },
+    {
+      "id": "independent-18",
+      "split": "verify",
+      "query": "cardiopulmonary resuscitation",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Cardiopulmonary_resuscitation",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Procédure de premiers secours."
+    },
+    {
+      "id": "independent-19",
+      "split": "verify",
+      "query": "friction",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Friction",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présentation d’un phénomène physique général."
+    },
+    {
+      "id": "independent-20",
+      "split": "verify",
+      "query": "wind",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Wind",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Phénomène météorologique."
+    },
+    {
+      "id": "independent-21",
+      "split": "verify",
+      "query": "phonograph",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Phonograph",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Histoire et description d’un appareil de lecture sonore."
+    },
+    {
+      "id": "independent-22",
+      "split": "verify",
+      "query": "hand washing",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Hand_washing",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Quand et comment se laver les mains."
+    },
+    {
+      "id": "independent-23",
+      "split": "verify",
+      "query": "drinking water",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Drinking_water",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Approvisionnement en eau et traitement."
+    },
+    {
+      "id": "independent-24",
+      "split": "verify",
+      "query": "boiling",
+      "kind": "documents",
+      "collection": "wikipedia_en-simple_all_maxi_2026-09",
+      "path": "Boiling",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Principe physique de l’ébullition et exemples d’utilisation."
+    },
+    {
+      "id": "independent-25",
+      "split": "control",
+      "query": "eau",
+      "kind": "documents",
+      "collection": "vikidia_fr_all_maxi_2026-09",
+      "path": "Eau",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présentation pédagogique de l’eau."
+    },
+    {
+      "id": "independent-26",
+      "split": "control",
+      "query": "soleil",
+      "kind": "documents",
+      "collection": "vikidia_fr_all_maxi_2026-09",
+      "path": "Soleil",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présentation de l’étoile et de ses caractéristiques."
+    },
+    {
+      "id": "independent-27",
+      "split": "control",
+      "query": "volcan",
+      "kind": "documents",
+      "collection": "vikidia_fr_all_maxi_2026-09",
+      "path": "Volcan",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Présente les volcans et leurs éruptions pour un jeune lectorat."
+    }
+  ]
+}

@@ -1,375 +1,363 @@
 # Installer SetupSurvie sur Windows
 
-**Guide actuel — pilote 0.1.33, 13 novembre 2026.** Lanceur unique et contrôles préliminaires
-testés sur le Windows de Marc ; installation complète sur Windows vierge, redémarrages et téléphones encore à valider.
-Ce parcours ne modifie pas l’installation 0.1.16 en cours chez Marc.
+**Guide de référence — revu le 20 novembre 2026 pour la 0.67.0.** Le lanceur
+unique et les contrôles préliminaires ont été testés sur le Windows de Marc le
+13 novembre 2026 ; l’installation complète sur un Windows vierge, le démarrage à
+froid, les redémarrages et les téléphones restent à valider. Ce parcours ne
+modifie pas l’installation 0.1.16 en cours chez Marc.
 
-## Déplacer une installation déjà en service
-
-Utiliser **Transférer SetupSurvie**, installé avec les lanceurs de maintenance ; voir le [parcours SSD](../exploitation/transfert-installation.md). Ne pas réinstaller par-dessus la source et ne pas déplacer le disque virtuel Docker par une copie de dossier.
+Pour une installation **déjà en service**, ne pas réinstaller par-dessus : la
+déplacer avec **Transférer SetupSurvie** ([parcours SSD](../exploitation/transfert-installation.md) ;
+ne pas copier le disque virtuel Docker comme un dossier) ou la mettre à jour avec
+**Mettre à jour SetupSurvie** ([guide](../exploitation/mises-a-jour-et-bibliotheque-pilote.md)).
 
 ## Commencer avec un seul fichier
 
-Double-cliquer sur **`Installer-SetupSurvie.cmd`**. Il vérifie et prépare le PC,
-puis passe automatiquement à l’installation. Les composants déjà présents sont
-conservés, y compris Docker Desktop installé sur un autre disque ou un moteur
-Docker déjà accessible. Aucun service existant n’est arrêté automatiquement.
+Double-cliquer sur **`Installer-SetupSurvie.cmd`** : il vérifie et prépare le PC
+(étape 1), puis installe (étape 2). Les composants déjà présents sont conservés,
+y compris Docker Desktop installé sur un autre disque ou un moteur Docker déjà
+accessible ; aucun service existant n’est arrêté. Options (`scripts/install-all-windows.ps1`) :
 
-Si un redémarrage Windows est nécessaire, le parcours s’arrête et demande de
-relancer ce même fichier après le redémarrage, avec les mêmes options. Une installation
-applicative interrompue se reprend avec `Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Resume`.
-Les anciens fichiers `1-Preparer-le-PC.cmd` et `2-Installer-SetupSurvie.cmd`
-restent disponibles pour exécuter séparément les deux étapes décrites ci-dessous.
-
-Depuis 0.1.23, les copies sont synchronisées avant d’enregistrer l’étape terminée.
-Pour un arrêt brutal du PC, suivre [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md) ;
-une installation interrompue reste distincte d’une mise à jour à récupérer.
-
-Pour vérifier seulement les prérequis sans installer ni démarrer Docker :
-
-```powershell
-.\Installer-SetupSurvie.cmd -Check
-```
-
-## Préparer le PC
-
-Depuis le dépôt récupéré ou décompressé, double-cliquer sur
-**`1-Preparer-le-PC.cmd`**. Python et WinGet ne sont pas nécessaires pour ce lanceur.
-Il nécessite Windows 11 24H2 ou plus récent **x64**, la virtualisation activée dans
-le BIOS/UEFI, Internet et la possibilité de valider les demandes administrateur.
-
-Le lanceur vérifie WSL 2, Python x64 3.11 à 3.15, Docker Desktop, Git et Ollama. Il
-conserve les installations présentes, installe les composants absents et ne
-met pas automatiquement les logiciels existants à niveau. Les versions présentes
-ne sont pas toutes certifiées compatibles par ce seul diagnostic ; le second
-lanceur vérifie réellement Docker/Compose et les services.
-
-Les installateurs manquants sont téléchargés depuis Python, Docker, Git for Windows et Ollama,
-avec SHA-256 vérifié avant exécution. Les versions, URL, empreintes et sources
-consultées figurent dans `deploy/windows-installers.json`. Ces métadonnées ont
-été relues dans les [manifestes Microsoft](https://github.com/microsoft/winget-pkgs)
-et, pour Git, dans son [API de livraison officielle](https://api.github.com/repos/git-for-windows/git/releases/tags/v2.56.1.windows.1) ;
-les binaires ne sont pas téléchargés ni installés dans le runner CPU.
-La référence Ollama native reste celle de `deploy/versions.json`.
-
-Les installateurs affichent leurs écrans et licences. Pour Python, conserver
-l’ajout au PATH ; pour Docker, choisir WSL 2 et les conteneurs Linux. Les fichiers
-sont conservés dans `%LOCALAPPDATA%\SetupSurvie\installateurs`. Le paramètre
-`-CacheDir` permet de choisir un autre emplacement. Ce cache ne constitue pas
-encore un kit système hors ligne complet.
-
-Si WSL doit être préparé ou un installateur demande un redémarrage, le lanceur
-rend le code 3010 et affiche la marche à suivre. Redémarrer Windows puis relancer
-**le même fichier**. Il n’installe pas Ubuntu et ne redémarre pas lui-même le PC.
-L’état de préparation conserve seulement le besoin de redémarrage et l’identifiant
-du démarrage ; il ne contient aucun identifiant de compte SetupSurvie.
-
-Le pilote NVIDIA reste à installer depuis le constructeur pour le matériel exact.
-Le diagnostic appelle `nvidia-smi` sans charger de modèle ; cela ne valide pas
-l’inférence réelle ni les performances. Une virtualisation désactivée ou un OS
-non pris en charge arrête le parcours avant installation.
-
-Pour un diagnostic sans installation ni démarrage de Docker :
-
-```powershell
-.\1-Preparer-le-PC.cmd -Check
-```
-
-## Installer SetupSurvie
-
-Double-cliquer sur **`2-Installer-SetupSurvie.cmd`** et renseigner :
-
-1. Un dossier dédié sur le disque de données. Entrée accepte `D:\SetupSurvie` si le disque D: existe, sinon `SetupSurvie` dans votre dossier utilisateur. Le contrôle de capacité reste obligatoire.
-2. Le dossier du kit contenant `manifest.json`, ou Entrée pour télécharger.
-3. Le réseau privé proposé : Entrée confirme son adresse lorsqu’il est unique.
-   Saisir LOCAL pour limiter volontairement l’accès au PC.
-
-Docker Desktop démarre si nécessaire. Terminer son accueil et vérifier **Settings
-→ Resources → Advanced → Disk image location**. Le lanceur attend une confirmation
-de l’emplacement : il ne déplace pas un disque Docker existant. Une autre instance
-Docker déjà accessible doit utiliser des conteneurs Linux.
-
-Avant les questions sur le kit et le réseau, le lanceur vérifie les ports. Si une
-autre installation fonctionne déjà, il indique comment l’ouvrir ou la mettre à
-jour et s’arrête avant de copier ou télécharger. Un autre dossier ne suffit pas
-à faire cohabiter deux serveurs : les ports de service sont communs. La reprise
-accepte les services et processus identifiés comme appartenant à cette installation.
-
-Le dossier choisi contient ensuite :
-
-| Dossier | Contenu |
+| Option | Effet |
 | --- | --- |
-| `application` | Copie indépendante du logiciel, compatible avec les mises à jour |
-| `donnees` | Modèles, bibliothèque, caches et états des services |
-| `prive` | Réglages et identifiants de cette installation |
-
-Sans kit, le parcours prépare les services, caches, les deux modèles des trois modes conseillés et le lot
-`survival` du catalogue figé. Il ne télécharge pas tous les modèles de comparaison,
-ni toute la bibliothèque ni les cartes. Bibliothèque et cartes se complètent dans
-le portail ; les autres modèles peuvent être ajoutés avec `scripts/survie.ps1 pull-model`.
-Le contrôle préliminaire réserve au moins 60 Go libres sur le disque de données,
-en plus du logiciel à copier ; cela ne garantit pas la place nécessaire au fonds
-complet. Contrôler séparément l’espace du disque Docker.
-
-Avec kit, toutes les empreintes et dépendances sont contrôlées avant copie. Les
-images sont importées localement ; aucun lot documentaire n’est téléchargé.
-L’espace exigé correspond aux copies restantes plus 22 Go de marge (le contrôle des services exige 20 Gio libres), hors espace
-Docker. Le kit et la destination doivent rester séparés.
-
-Le lanceur crée les raccourcis **Ouvrir SetupSurvie** et **Arrêter SetupSurvie** et
-le démarrage à l’ouverture de session. `-NoStartup` conserve seulement les
-raccourcis manuels. Le portail s’ouvre à la fin ; `-NoBrowser` évite cette ouverture.
-Il crée aussi **Mettre à jour SetupSurvie** sur le Bureau et
-`Mettre-a-jour-SetupSurvie.cmd` à côté du dossier `application`. Ce lanceur stable
-utilise Git puis la sauvegarde et le retour arrière existants ; voir le
-[guide de mise à jour](../exploitation/mises-a-jour-et-bibliotheque-pilote.md).
-Les raccourcis d’une autre installation sont conservés ; les nouveaux reçoivent
-un suffixe si leur nom est déjà utilisé. Désactiver le démarrage ne supprime que
-le raccourci et désactive les tâches appartenant à l’installation concernée.
-Les tests de disponibilité n’interrogent aucun modèle. Une pause existante reste
-respectée. L’installation initiale peut lancer Ollama pour préparer les modèles ;
-les démarrages automatiques suivants ouvrent les services documentaires sans IA.
-
-Exemple avec paramètres :
+| `-BaseDir D:\SetupSurvie` | Dossier d’installation |
+| `-Kit E:\livraison-marc` | Installer depuis un kit hors ligne |
+| `-LanHost 192.168.1.50` | Partager sur le réseau privé à cette IPv4 |
+| `-Resume` | Reprendre une installation interrompue |
+| `-Check` | Diagnostic seul : rien n’est installé, Docker n’est pas démarré |
+| `-NoStartup`, `-NoBrowser` | Pas de démarrage automatique ; pas d’ouverture du navigateur |
+| `-CacheDir` | Autre dossier pour les installateurs téléchargés |
+| `-CollectionSort` | Reprendre un tri de collections ([voir plus bas](#reprendre-le-tri-dune-autre-installation)) |
 
 ```powershell
 .\Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Kit E:\livraison-marc -LanHost 192.168.1.50
 ```
 
-Pour un kit ancien sans ces deux fichiers à sa racine, utiliser le second lanceur
-du dépôt 0.1.17 en lui indiquant le dossier du kit. Le logiciel installé reste
-celui du kit, avec sa version. Les nouveaux exports/rafraîchissements du kit
-incluent le lanceur d’installation, celui de mise à jour et les deux anciens. Les mises à jour d’une installation existante incluent
-leurs scripts et le générateur du lanceur stable, mais excluent les quatre fichiers racine `.cmd` pour rester
-lisibles par le programme de mise à jour 0.1.16 ; une installation terminée utilise
-ses raccourcis habituels.
+Si un redémarrage Windows est nécessaire, le parcours s’arrête et demande de
+relancer ce même fichier, avec les mêmes options. Les deux lanceurs
+`1-Preparer-le-PC.cmd` et `2-Installer-SetupSurvie.cmd` exécutent séparément les
+deux étapes. Un kit ancien sans `Installer-SetupSurvie.cmd` à sa racine s’installe
+avec le second lanceur du dépôt, en lui indiquant le dossier du kit : le logiciel
+installé reste celui du kit.
+
+## Préparer un kit pour Windows sans Internet
+
+Avec la 0.81.0, depuis un PC connecté qui dispose du lanceur de préparation,
+prendre un kit public SetupSurvie dont le dossier **app** est en 0.81.0 ou
+ultérieur. Exécuter une fois cette commande avec le chemin du kit.
+
+```powershell
+.\1-Preparer-le-PC.cmd -Kit E:\livraison-marc -DownloadOnly
+```
+
+Depuis Linux, la 0.82.0 propose le même téléchargement et un contrôle hors ligne
+avec [prepare-windows](preparer-kit-hors-ligne.md#ajouter-les-installateurs-windows-depuis-linux).
+
+Cette commande place les installateurs vérifiés de WSL, Python, Docker Desktop,
+Git et Ollama dans `installateurs-windows` à la racine du kit. Elle prépare
+le support sans installer les composants sur le PC connecté.
+
+Sur le PC hors ligne, ouvrir **Installer-SetupSurvie.cmd** dans le dossier
+**app** du kit. Le lanceur détecte ce kit et vérifie les installateurs
+manquants avant de modifier Windows. Si la plateforme de virtualisation est
+désactivée, DISM utilise les composants locaux. Un dossier
+`installateurs-windows\sxs` issu de la version de Windows correspondante peut
+servir de source au besoin. WSL est installé depuis le MSI du kit. Après
+chaque demande de redémarrage, rouvrir le même lanceur. En l’absence de pilote
+NVIDIA utilisable, la préparation du PC peut continuer. Les écrans de licence
+et de placement de Docker restent à suivre.
+
+[Installation WSL hors ligne](https://learn.microsoft.com/en-us/windows/wsl/install#offline-install) · [Préparation DISM](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/enable-or-disable-windows-features-using-dism?view=windows-11)
+
+## Préparer le PC
+
+**`1-Preparer-le-PC.cmd`** (ni Python ni WinGet requis) exige Windows 11 24H2 ou
+plus récent **x64** (build 26100), la virtualisation activée dans le BIOS/UEFI,
+la validation des demandes administrateur et un accès Internet ou un kit préparé.
+Il vérifie WSL 2, Python x64
+3.11 à 3.15, Docker Desktop, Git et Ollama, conserve ce qui est présent, installe
+ce qui manque et **ne met pas à niveau** les logiciels existants. Les versions
+présentes ne sont pas toutes certifiées compatibles par ce diagnostic : l’étape 2
+vérifie réellement Docker, Compose et les services.
+
+- Les installateurs manquants (Python, Docker, Git for Windows, Ollama) sont
+  téléchargés avec SHA-256 vérifié avant exécution. Versions, URL, empreintes et
+  sources sont dans `deploy/windows-installers.json` (relues dans les
+  [manifestes Microsoft](https://github.com/microsoft/winget-pkgs) et l’[API officielle de Git](https://api.github.com/repos/git-for-windows/git/releases/tags/v2.56.1.windows.1) ;
+  rien n’a été téléchargé ni installé dans le runner CPU). La référence Ollama
+  native est dans `deploy/versions.json`.
+- Les installateurs affichent leurs écrans et licences : pour Python, garder
+  l’ajout au PATH ; pour Docker, choisir WSL 2 et les conteneurs Linux. Ils sont
+  conservés dans `%LOCALAPPDATA%\SetupSurvie\installateurs` (cache local du PC).
+- Si WSL doit être préparé ou si un installateur demande un redémarrage, le
+  lanceur rend le code 3010 et affiche la marche à suivre : redémarrer Windows,
+  puis relancer **le même fichier**. Il n’installe pas Ubuntu et ne redémarre pas
+  le PC. L’état conservé ne contient que le besoin de redémarrage et
+  l’identifiant du démarrage, aucun identifiant de compte SetupSurvie.
+- Le pilote NVIDIA s’installe depuis le constructeur. Le diagnostic appelle
+  `nvidia-smi` sans charger de modèle : cela ne valide ni l’inférence ni les
+  performances. Une virtualisation désactivée ou un système non pris en charge
+  arrête le parcours avant toute installation.
+- Diagnostic seul : `.\1-Preparer-le-PC.cmd -Check`.
+
+## Installer SetupSurvie
+
+**`2-Installer-SetupSurvie.cmd`** demande :
+
+1. Un dossier dédié sur le disque de données (Entrée accepte `D:\SetupSurvie` si
+   D: existe, sinon `SetupSurvie` dans le dossier utilisateur).
+2. Le dossier du kit contenant `manifest.json`, ou Entrée pour télécharger.
+3. Le réseau privé proposé (Entrée confirme son adresse si elle est unique) ou
+   **LOCAL** pour limiter l’accès au PC.
+
+Docker Desktop démarre si nécessaire : terminer son accueil et vérifier **Settings
+→ Resources → Advanced → Disk image location**. Le lanceur attend une confirmation
+de l’emplacement et ne déplace pas un disque Docker existant. Une autre instance
+Docker déjà accessible doit utiliser des conteneurs Linux. Avant les questions, le
+lanceur vérifie les ports : si une autre installation fonctionne, il indique
+comment l’ouvrir ou la mettre à jour et s’arrête avant de copier. Un autre dossier
+ne permet pas de faire cohabiter deux serveurs (ports communs) ; la reprise
+accepte les services identifiés comme appartenant à cette installation.
+
+| Dossier créé | Contenu |
+| --- | --- |
+| `application` | Copie indépendante du logiciel, compatible avec les mises à jour |
+| `donnees` | Modèles, bibliothèque, caches, états des services |
+| `prive` | Réglages et identifiants de cette installation |
+
+**Sans kit** (Internet) : services, caches, **le modèle par défaut `gpt-oss:20b`**
+(`deploy/versions.json`) et le lot `survival` du catalogue figé, plus les cartes
+de base (voir plus bas). Ni les autres modèles, ni toute la bibliothèque : les
+compléter depuis le portail (**Mon appareil → Paramètres → Assistant → Modèles de
+l’assistant**, profil Famille, et **Bibliothèque et préparations**) ; sur le
+serveur, `scripts\survie.ps1 pull-model NOM_DU_MODELE` reste possible. Le contrôle
+préliminaire réserve au moins **60 Go libres** sur le disque de données en plus
+du logiciel ; cela ne garantit pas la place du fonds complet. Vérifier
+séparément l’espace du disque Docker.
+
+Depuis la 0.113.3, l’installation en ligne écarte les éditions anglaises
+de Wikipédia, y compris Simple English. Cela s’applique également au plan
+préparé avec un fichier de tri importé. Le plan peut toujours inclure
+Wikipédia français et les autres collections en anglais.
+
+**Avec kit** : toutes les empreintes et dépendances sont contrôlées avant copie,
+les images sont importées localement, aucun lot documentaire n’est téléchargé.
+Espace exigé : copies restantes plus **22 Go** de marge (le contrôle des services
+exige 20 Gio libres), hors Docker. Le kit et la destination restent séparés.
+Voir aussi le [guide Marc](pilote-marc.md#installer-à-partir-du-kit).
+
+Raccourcis et démarrage : le lanceur crée sur le Bureau **Ouvrir SetupSurvie**,
+**Arrêter SetupSurvie**, **Mettre à jour SetupSurvie**, **Transférer SetupSurvie**
+(et **Suivi bibliothèque SetupSurvie** s’il est présent), ainsi que
+`Mettre-a-jour-SetupSurvie.cmd` à côté du dossier `application` (lanceur stable :
+Git, sauvegarde, retour arrière). Le démarrage à l’ouverture de session est activé
+sauf `-NoStartup`. Les raccourcis d’une autre installation sont conservés ; les
+nouveaux reçoivent un suffixe si le nom est pris. Désactiver le démarrage ne
+supprime que le raccourci et désactive les tâches de cette installation. Le
+portail s’ouvre à la fin (sauf `-NoBrowser`). Les tests de disponibilité
+n’interrogent aucun modèle et une pause existante est respectée ; l’installation
+initiale peut lancer Ollama pour préparer le modèle, les démarrages automatiques
+suivants ouvrent d’abord les services documentaires.
+
+Les nouveaux exports de kit incluent les quatre lanceurs racine ; les paquets de
+mise à jour d’une installation existante contiennent les scripts et le générateur
+du lanceur stable, mais **excluent les fichiers `.cmd` racine**, pour rester
+lisibles par le programme de mise à jour 0.1.16.
+
+## Réseau et accès depuis les autres appareils
+
+Sur un unique réseau Windows privé avec passerelle, l’installateur propose son
+IPv4 : Entrée confirme le partage, **LOCAL** limite volontairement au PC. Avec
+plusieurs réseaux privés, choisir l’adresse explicitement. Sans réseau privé
+détecté, il ne choisit rien en silence : passer le réseau domestique en privé ou
+choisir LOCAL. Il ne change jamais la catégorie du réseau.
+
+Si une IPv4 est fournie, le lanceur demande les droits administrateur pour les
+règles de pare-feu existantes : accès Web sur le réseau privé et sous-réseau
+local ; blocage des ports de commande sur les interfaces physiques ; retrait
+(avec copie de leurs réglages) des seules autorisations publiques entrantes
+Ollama correspondant à l’exécutable de cette installation. Un refus laisse
+l’application installée et signale la configuration réseau restant à terminer.
+
+Avant de donner l’adresse, le lanceur contrôle `/api/health` sur l’IPv4 choisie
+et exige la version installée : un site limité à localhost ou une ancienne version
+échouent. L’adresse HTTP est donnée d’abord ; HTTPS demande que chaque appareil
+fasse confiance au certificat racine public de SetupSurvie (ne pas contourner un
+avertissement TLS comme preuve). Réserver l’IP dans le routeur, tester depuis un
+autre appareil, puis suivre le [guide Marc](pilote-marc.md#accès-depuis-tout-le-réseau-local)
+pour le certificat et les téléphones. Un contrôle fait depuis le serveur ne
+remplace pas celui d’un téléphone (Wi-Fi invité, isolation des clients, autre
+pare-feu).
 
 ## Reprendre une interruption
 
-Le journal `.installation.json` enregistre la source, les options et la phase
-d’installation ; un verrou système empêche deux installations simultanées dans
-la même destination et est libéré à la fermeture du processus.
-
-Après une interruption, conserver le dépôt ou kit source inchangé puis lancer :
+Le journal `.installation.json` enregistre la source, les options et la phase ;
+un verrou système empêche deux installations simultanées dans la même
+destination et se libère à la fermeture du processus. Conserver le dépôt ou le kit
+source inchangé, puis :
 
 ```powershell
 .\Installer-SetupSurvie.cmd -BaseDir D:\SetupSurvie -Resume
 ```
 
 Le parcours retrouve le kit, le partage réseau et le choix de démarrage. Les
-copies déjà conformes sont réutilisées ; une copie partielle est remplacée après
-contrôle. Une fois la configuration commencée, les contenus initiaux ne sont
-plus recopiés sur les éventuels ajouts utilisateur. Les téléchargements des
-composants utilisent leurs mécanismes de cache et de reprise existants.
+copies conformes sont réutilisées, une copie partielle est remplacée après
+contrôle ; une fois la configuration commencée, les contenus initiaux ne sont plus
+recopiés sur les ajouts de l’utilisateur. Les téléchargements de composants
+utilisent leurs caches de reprise. Sont **refusés** : source modifiée, options
+différentes, dossiers occupés sans journal, installation terminée (utiliser alors
+les [mises à jour et sauvegardes](../exploitation/README.md)). Ne pas supprimer le
+journal pour contourner ce contrôle. Depuis 0.1.23, les copies sont synchronisées
+avant d’enregistrer l’étape terminée : après un arrêt brutal du PC, voir
+[Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md) (une
+installation interrompue reste distincte d’une mise à jour à récupérer).
 
-Une source modifiée, des options différentes, des dossiers déjà occupés sans
-journal ou une installation terminée sont refusés. Ne pas supprimer le journal
-pour contourner ce contrôle. Pour une installation terminée, utiliser les
-[mises à jour et sauvegardes](../exploitation/README.md).
+## Reprendre le tri d’une autre installation
 
-## Réseau et limites de validation
+À la seconde étape, laisser la réponse vide pour utiliser le
+[tri fourni](../../deploy/collection-sort-default.json). Les collections
+classées **Autre** restent dans le kit à copier si elles y figurent, et les
+collections exclues sont omises. Après installation, ajuster le tri depuis
+**Organiser les collections**.
 
-Si une IPv4 a été fournie, le lanceur demande les droits administrateur pour
-exécuter les règles existantes de pare-feu : accès Web sur le réseau privé et
-blocage des ports de commande sur les interfaces physiques. Un refus laisse
-l’application installée et affiche la configuration réseau restant à terminer.
-Il ne transforme pas un réseau Windows public en réseau privé.
-
-Réserver l’IP dans le routeur, tester l’accès depuis un autre appareil puis suivre
-le [guide Marc](pilote-marc.md#accès-depuis-tout-le-réseau-local) pour le certificat
-public et les téléphones. La confiance HTTPS sur chaque client reste une étape
-manuelle ; ni `survie.local` ni Safari iOS ne sont validés par ce lanceur.
-
-Références système : [WSL](https://learn.microsoft.com/en-us/windows/wsl/basic-commands)
-et [Docker Desktop Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
-
-Ce premier lot ne fournit pas encore les installateurs système hors ligne, la
-réinstallation de Windows, les sauvegardes planifiées depuis le portail ni les
-métadonnées enrichies des notices. Ces lots restent à réaliser et à tester selon
-le plan retenu. Ne pas annoncer une réinstallation complète hors ligne validée.
-
+Pour le personnaliser dès cette étape, donner le chemin du fichier `SetupSurvie-tri.json` exporté
+depuis **Mon appareil → Paramètres → Bibliothèque et préparations → Organiser les
+collections** (0.65.0), ou l’option `-CollectionSort`. Le récapitulatif liste les
+collections à télécharger ou copier, les collections **Autre** et les exclusions ;
+confirmer pour démarrer. Le journal conserve tri et plan pour `-Resume`. Les
+contenus absents du catalogue ou du kit restent en attente d’une source
+compatible. En ligne de commande (aussi sous Linux) :
+`scripts/kiwix_select.py select --work-dir … --collection-sort …` prépare et
+affiche le plan ; `scripts/content.py download --work-dir … --selection …` l’exécute
+après vérification.
 
 ## Démarrage automatique Windows depuis 0.1.30
 
-L’installation avec démarrage automatique (choix par défaut) prépare un lanceur
-stable dans `maintenance/startup-windows.ps1`, ses chemins Python/Docker/Ollama
-réels et deux tâches Windows limitées à l’utilisateur courant. À l’ouverture de
-session, Docker Desktop est démarré si nécessaire, puis le portail, Open WebUI,
-Kiwix et le contrôleur. Un contrôle toutes les cinq minutes retente si le démarrage
-a échoué ; un site déjà sain à la version installée n’est pas redémarré. Le lanceur
-ne dépend pas de `Docker/install-settings.json`, fichier qui peut disparaître.
-Les outils portables sur le disque de données restent trouvables après redémarrage.
+Avec le démarrage automatique (choix par défaut), l’installation prépare
+`maintenance/startup-windows.ps1`, les chemins réels de Python, Docker et Ollama,
+et deux tâches Windows limitées à l’utilisateur courant. À l’ouverture de
+session : Docker Desktop si nécessaire, puis portail, Open WebUI, Kiwix et
+contrôleur. Un contrôle toutes les cinq minutes retente un démarrage échoué ; un
+site déjà sain à la version installée n’est pas redémarré. Le lanceur ne dépend
+pas de `Docker/install-settings.json`, qui peut disparaître ; les outils portables
+du disque de données restent trouvables. Ces tâches fonctionnent **après ouverture
+de session Windows** (nécessaire à Docker Desktop) et n’activent pas l’ouverture
+de session automatique.
 
-La préférence `inference_autostart: false` est enregistrée : les services
-s’ouvrent sans lancer le moteur IA. L’utilisateur peut démarrer l’IA depuis le
-portail. La pause du mode jeu est conservée. Seul le raccourci de démarrage
-Ollama correspondant exactement à l’exécutable utilisé est déplacé hors du
-dossier Startup, avec conservation d’une copie ; les autres installations sont
-laissées en place. Les modèles nécessaires à l’installation peuvent toujours
-être préparés pendant l’installation initiale.
+- **Moteur IA** : depuis 0.43.1, il démarre avec les services ; la mise à jour d’un
+  démarrage géré remplace l’ancien réglage `inference_autostart: false`. Une
+  pause explicite (mode jeu) reste respectée. Le site peut être accessible avant
+  que le moteur soit prêt. Seul le raccourci de démarrage d’Ollama correspondant
+  exactement à l’exécutable utilisé est déplacé hors du dossier Startup (copie
+  conservée).
+- **Reprise des téléchargements** : une tâche distincte, **sans limite de durée**,
+  reprend le dernier plan documentaire autorisé et figé (armée par les commandes de
+  sélection/téléchargement et le téléchargement web). Sans plan, elle ne fait rien ;
+  aucun nouveau catalogue n’est choisi à l’insu de l’utilisateur ; pauses et
+  transferts actifs sont respectés ; les reçus évitent de relire les grosses
+  archives. Une reprise avant ouverture de session est une option distincte,
+  décrite dans [Coupures et redémarrage](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127).
+- **Arrêt volontaire** : **Arrêter SetupSurvie** laisse un marqueur ; la
+  surveillance ne relance pas le site cinq minutes plus tard. **Ouvrir SetupSurvie**
+  ou un `up` explicite reprend. La pause de téléchargement reste indépendante de
+  l’arrêt du site. Une mise à jour inachevée bloque les redémarrages automatiques
+  jusqu’à sa récupération explicite.
+- **Silencieux** : la tâche lance `pythonw.exe` avec `windows_background.py`
+  (`CREATE_NO_WINDOW`, entrées fermées, sorties dans
+  `diagnostics/startup-background.log` ; un échec renvoie un code non nul au
+  planificateur). Les fenêtres de suivi et de mise à jour ouvertes volontairement
+  restent visibles. Les mesures NVIDIA lisent directement la bibliothèque NVML du
+  pilote, sans lancer `nvidia-smi` ni PowerShell ; sans NVML, la mesure est
+  indisponible.
+- **Journaux** : `data/diagnostics/demarrage-automatique.log` et `bibliotheque-auto.log`.
+- **Options** : `-NoStartup` désactive les nouveaux raccourcis et tâches (une reprise
+  avant session activée séparément reste indépendante). Pour une installation
+  existante : `python scripts/setup.py --work-dir CHEMIN_PRIVE shortcuts` depuis le
+  dossier application, avec `--no-startup` pour désactiver. Une mise à jour seule
+  ne réactive pas un démarrage désactivé et rafraîchit les helpers d’un démarrage
+  déjà configuré sans toucher aux préférences IA, au réseau, aux données ni à
+  Ollama ; un nom de tâche ou un dossier de maintenance d’une autre application
+  est refusé.
+- **Docker introuvable** : si Docker est arrêté, le lanceur vérifie aussi son
+  emplacement enregistré par Windows. Une installation non enregistrée est
+  signalée sans ouvrir l’interface ; une installation enregistrée qui ne démarre pas
+  reçoit **une seule tentative automatique par démarrage Windows**
+  (`docker-start-attempt.json` dans le dossier privé). **Ouvrir SetupSurvie**
+  permet une nouvelle tentative après réparation. Réparer Docker avec son
+  installateur officiel, après sauvegarde de ses données à l’arrêt ; ne pas
+  désinstaller ni supprimer les distributions WSL. Cas observé : [WIN-019](../exploitation/journal-incidents-windows.md#win-019--docker-desktop-introuvable-dans-le-registre-et-boîtes-derreur-répétées).
 
-Une tâche distincte, **sans limite de durée**, reprend le dernier plan documentaire
-autorisé et figé. Les commandes de sélection/téléchargement et le téléchargement
-web arment cette reprise quand le lanceur automatique est installé. Aucun nouveau
-catalogue n’est choisi à l’insu de l’utilisateur. Sans plan sélectionné, elle ne
-fait rien. Les pauses volontaires restent respectées. Un transfert déjà actif
-n’est pas remplacé ; les reçus permettent de garder les fichiers vérifiés sans
-relire toutes les grosses archives. Une sélection web reprise conserve son
-identifiant et actualise son état dans le portail.
-
-Ces tâches utilisateur fonctionnent **après ouverture de session Windows**,
-nécessaire à Docker Desktop. Elles n’activent pas l’ouverture de session automatique.
-La [reprise avant ouverture de session](../exploitation/coupures-et-redemarrage.md#reprise-automatique-de-la-bibliothèque-sous-windows--0127)
-reste une option distincte pour la bibliothèque seule ; elle est déjà configurée
-chez Marc et coexiste sans doublon grâce aux verrous.
-
-`-NoStartup` désactive les nouveaux raccourcis et tâches de surveillance ; une
-reprise avant session activée séparément reste indépendante. Les journaux sont
-sous `data/diagnostics/demarrage-automatique.log` et `bibliotheque-auto.log`.
-Pour une installation existante, installer la version correspondante puis lancer
-`python scripts/setup.py --work-dir CHEMIN_PRIVE shortcuts` depuis son dossier
-application. Ajouter `--no-startup` pour désactiver les tâches et le raccourci de
-démarrage. Une mise à jour logicielle seule ne réactive pas un démarrage
-explicitement désactivé.
-
-Vérifications chez Marc le 13 novembre : 94 tests ciblés sans échec, dont cinq
-ignorés Windows, exécution réelle des deux tâches et accès au site 0.1.29 réussis,
-même téléchargement en cours et IA en pause. Le nouveau démarrage à froid et une
-installation complète sur Windows vierge restent à tester ; aucun redémarrage du
-PC n’a été imposé pour ces contrôles.
-
-
-## Éviter une installation limitée au PC par erreur
-
-**Réserve de recette du 13 novembre :** après correction de l'écoute locale,
-Marc signale encore une expiration depuis son Wi-Fi, par IP et par nom. L'accès
-entre appareils n'était donc pas validé lors de ce premier essai. Un retour
-ultérieur de Marc confirme que les deux liens fonctionnent après connexion au
-Wi-Fi. La cause des premiers échecs et la qualification de tous les points d'accès
-restent distinctes de ce succès. Le [journal Windows](../exploitation/journal-incidents-windows.md#win-008--observations-et-essais-du-13-novembre)
-conserve les faits, les essais sans effet et le prochain test à effectuer.
-
-Sur un unique réseau Windows privé avec passerelle, l’installateur propose son
-IPv4 : Entrée confirme le partage sur ce réseau. Pour rester volontairement
-limité au PC, saisir **LOCAL**. Si plusieurs réseaux privés sont présents,
-choisir leur adresse explicitement. Sans réseau privé détecté, le lanceur ne
-choisit pas silencieusement un mode inaccessible : passer le réseau domestique
-en privé ou choisir LOCAL. Il ne change pas la catégorie réseau à votre place.
-
-L’étape pare-feu autorisée ouvre les ports web sur le profil privé et le sous-réseau
-local. Elle conserve le blocage des commandes IA sur les interfaces physiques et
-retire seulement les autorisations publiques entrantes Ollama correspondant à
-l’exécutable de cette installation, avec copie de leurs réglages précédents.
-Un refus d’élévation est signalé comme une validation réseau non terminée.
-
-Avant de donner l’adresse à utiliser, le lanceur contrôle `/api/health` sur
-l’IPv4 choisie et exige la version installée ; un site limité à localhost ou une
-ancienne version ne passent pas ce contrôle. L’adresse HTTP est fournie d’abord
-pour un premier essai simple. HTTPS est également disponible, mais nécessite la
-confiance dans le certificat racine public de SetupSurvie sur chaque appareil,
-notamment pour la dictée. Ne pas contourner un avertissement TLS comme preuve
-que le certificat est installé.
-
-Un contrôle effectué depuis le serveur ne remplace pas celui du téléphone : le
-Wi-Fi invité, l’isolation des clients ou un autre pare-feu peuvent encore empêcher
-l’accès. Lors de la recette du 13 novembre chez Marc, HTTP, nom local, recherche,
-lecture PDF par plage et les trois services HTTPS avec la CA locale sont validés
-sur le PC. Le contrôle depuis un autre appareil reste à faire par Marc.
-
-
-Le raccourci **Suivi bibliothèque SetupSurvie** est également installé. Le suivi
-reconnaît `python.exe` et `pythonw.exe` ; il lit la longueur réelle des partiels
-par un handle partagé Windows, car la taille d’annuaire peut rester à zéro tant
-que le fichier est ouvert. Seules les lignes d’erreur sont affichées comme telles,
-pas les titres des contenus en cours. Fermer ou rouvrir ce suivi ne coupe aucun
-transfert. Ces corrections ont été vérifiées sur la reprise active de Marc.
-
-
-Le raccourci Arrêter conserve un marqueur d’arrêt volontaire pour le site : la
-surveillance ne le relance pas cinq minutes plus tard. Ouvrir SetupSurvie ou une
-commande `up` explicite permet de reprendre. La pause de téléchargement reste
-indépendante ; ne pas confondre l’arrêt du site avec celui du superviseur de
-bibliothèque. Les mises à jour inachevées bloquent les redémarrages automatiques
-jusqu’à leur récupération explicite.
-
+Le suivi **Suivi bibliothèque SetupSurvie** reconnaît `python.exe` et `pythonw.exe`
+et lit la longueur réelle des partiels par un handle partagé (la taille
+d’annuaire peut rester à zéro tant que le fichier est ouvert). Le fermer ou le
+rouvrir ne coupe aucun transfert.
 
 ## Cartes incluses dans la préparation de base — 0.1.33
 
-En installation **avec Internet**, le lanceur prépare désormais les fonds locaux
-PMTiles : Sud (PACA, Occitanie et Corse, zoom 13) et Solliès-Ville (zoom 15), puis
-le relief et les lieux/adresses dans un rayon de 25 km autour de Solliès-Ville.
-Il s’agit des zones du pilote de Marc, déclarées dans `deploy/map-catalog.json`,
-pas d’une couverture mondiale. Les altitudes permettent l’ombrage et la coupe
-du terrain. Le calcul d’itinéraires reste une préparation distincte.
+En installation **avec Internet**, le lanceur prépare les fonds PMTiles locaux :
+Sud (PACA, Occitanie, Corse ; zoom 13) et Solliès-Ville (zoom 15), puis relief,
+lieux et adresses dans un rayon de 25 km autour de Solliès-Ville
+(`deploy/map-catalog.json`). Ce sont les zones du pilote de Marc, pas une
+couverture mondiale. L’ombrage et la coupe du terrain s’appuient sur le relief ;
+le calcul d’itinéraires reste une préparation distincte.
 
-L’outil PMTiles Windows/Linux x64 est téléchargé depuis sa publication officielle
-avec empreinte SHA-256 figée, avant toute exécution. Les cartes terminées sont
-vérifiées et réutilisées. Une extraction partielle est conservée en diagnostic,
-puis reprise en recommençant uniquement cette extraction ; le programme PMTiles
-ne permet pas ici la reprise octet par octet. Le fond quotidien officiel peut
-expirer : un fond récent du même fournisseur est alors recherché, avec sa **vraie
-date et sa source enregistrées**, sans prétendre conserver l’ancienne édition.
+- L’outil PMTiles Windows/Linux x64 vient de sa publication officielle, avec
+  SHA-256 figé vérifié avant exécution. Les cartes terminées sont vérifiées et
+  réutilisées ; une extraction partielle est conservée en diagnostic puis reprise
+  depuis le début de cette extraction (pas de reprise octet par octet).
+- Si le fond quotidien officiel expire, un fond récent du même fournisseur est
+  cherché, avec sa **vraie date et sa source enregistrées**.
+- Le relief est préparé indépendamment des adresses et points d’intérêt. Une panne
+  Overpass conserve fonds et altitudes prêts et affiche un avertissement ;
+  `catalog/map-installation.json` distingue les états de chaque jeu. Les
+  coordonnées de la zone sont transmises aux fournisseurs. Les lieux OSM ne
+  prouvent ni accès, ni horaires à jour, ni ressource disponible, ni eau potable.
+- **Depuis un kit hors ligne** : rien n’est téléchargé ; les cartes présentes sont
+  contrôlées et les jeux absents signalés. Préparer le kit avec les cartes avant
+  de l’apporter sur un site sans Internet.
 
-Le relief est préparé indépendamment des adresses/points d’intérêt. Une panne
-Overpass conserve les fonds et altitudes déjà prêts et affiche un avertissement
-explicite ; `catalog/map-installation.json` distingue les états de chaque jeu.
-Les fournisseurs fixes de secours sont conservés dans le manifeste du jeu acquis.
-Les coordonnées de la zone sont transmises à ces fournisseurs. Les lieux OSM ne
-prouvent pas un accès, des horaires à jour, une ressource disponible ou de l’eau potable.
-
-Une installation **depuis un kit hors ligne** ne télécharge rien : les cartes
-présentes sont contrôlées ; les jeux absents sont signalés explicitement. Préparer
-le kit avec les cartes avant de l’apporter sur un site sans Internet.
-
-Pour compléter une installation existante, sans réinstaller les comptes ni
-relancer un modèle :
+Pour compléter une installation existante, sans réinstaller ni relancer un modèle
+(adapter les deux chemins) :
 
 ```powershell
 python application/scripts/setup.py --work-dir prive prepare-maps
 ```
 
-Adapter les deux chemins au dossier existant. Cette commande vérifie les cartes,
-prépare les éléments manquants et réindexe le guide cartographique. Le suivi de
-bibliothèque affiche aussi le nombre de fonds présents : les 100 % d’un plan
-Kiwix/PDF ne signifient plus implicitement que des cartes ont été téléchargées.
+La commande vérifie les cartes, prépare les éléments manquants et réindexe le
+guide cartographique. Le suivi de bibliothèque affiche aussi le nombre de fonds
+présents : 100 % d’un plan Kiwix/PDF ne signifient pas que des cartes ont été
+téléchargées.
 
+## Limites de validation
 
-## Démarrage silencieux et migration des lanceurs — 0.2.0
+- **Chez Marc, 13 novembre 2026** : 94 tests ciblés sans échec (cinq ignorés sous
+  Windows) ; exécution réelle des deux tâches et accès au site 0.1.29 réussis,
+  téléchargement en cours conservé, IA en pause ; HTTP, nom local, recherche, lecture
+  PDF par plage et les trois services HTTPS avec la CA locale validés **sur le PC**.
+  Aucun redémarrage du PC n’a été imposé.
+- **Accès depuis un autre appareil** : un premier essai a signalé une expiration en
+  Wi-Fi (IP et nom) ; un retour ultérieur de Marc confirme que les deux liens
+  fonctionnent après connexion au Wi-Fi. La cause des premiers échecs et la
+  qualification de tous les points d’accès restent distinctes de ce succès : voir
+  [WIN-008](../exploitation/journal-incidents-windows.md#win-008--observations-et-essais-du-13-novembre).
+  Ni `survie.local` ni Safari iOS ne sont validés.
+- **Reste à tester** : démarrage à froid, installation complète sur Windows vierge,
+  téléphones. Depuis la 0.81.0, la préparation vérifie et utilise les
+  installateurs système du kit. La chaîne complète sur un Windows fraîchement
+  installé et déconnecté reste à qualifier.
+- Aucun téléchargement lourd ni installation système dans le runner de
+  développement.
 
-Le correctif local a été intégré à la refonte moteur après autorisation de Louis.
+Références système : [WSL](https://learn.microsoft.com/en-us/windows/wsl/basic-commands),
+[Docker Desktop Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
 
-La tâche de surveillance lance `pythonw.exe` avec `windows_background.py`.
-Ce petit lanceur exécute le script PowerShell fixe avec `CREATE_NO_WINDOW`,
-entrées fermées et sorties dans `diagnostics/startup-background.log`. Un échec
-retourne un code non nul au planificateur ; aucune boîte de dialogue ne remplace
-le journal. Les raccourcis automatiques gérés sont migrés vers ce même lanceur.
-Les fenêtres de suivi et de mise à jour ouvertes volontairement restent visibles.
+## Historique
 
-Le rafraîchissement du lanceur de mise à jour actualise aussi les helpers d’un
-démarrage déjà configuré et migre ses tâches gérées. Il conserve les préférences
-IA et ne réactive pas un démarrage ou une reprise volontairement désactivés.
-Un nom de tâche ou un dossier de maintenance appartenant à une autre application
-reste refusé. Le réseau, les données et Ollama ne sont pas réinitialisés.
-
-Sur Windows, les mesures NVIDIA utilisent directement la bibliothèque NVML du
-pilote, dans le processus du contrôleur : aucun `nvidia-smi`, PowerShell ou autre
-exécutable de mesure n’est lancé. Si la bibliothèque manque ou échoue, la mesure
-est indisponible, sans repli vers un programme pouvant créer une console.
-
-
-### Éviter les boucles d’erreur Docker
-
-Si Docker est arrêté, les fichiers du programme ne suffisent pas à prouver son
-installation : le lanceur vérifie aussi son emplacement enregistré par Windows.
-Une installation non enregistrée est signalée sans ouvrir le GUI. Pour une
-installation enregistrée mais ne démarrant pas, une seule tentative automatique
-est faite par démarrage Windows. Le journal privé `docker-start-attempt.json`
-conserve cette tentative ; les vérifications suivantes ne rouvrent pas la même
-fenêtre. **Ouvrir SetupSurvie** permet une nouvelle tentative explicite après
-réparation. Un moteur accessible ou un backend déjà en cours n’est pas relancé.
-
-Réparer Docker avec son installateur officiel et les emplacements d’origine,
-après sauvegarde de ses données à l’arrêt. Ne pas désinstaller/réinitialiser ni
-supprimer les distributions WSL pour résoudre une erreur de clés de registre.
-Le [journal WIN-019](../exploitation/journal-incidents-windows.md#win-019--docker-desktop-introuvable-dans-le-registre-et-boîtes-derreur-répétées)
-conserve le cas Windows observé et les validations.
+- **0.1.17** : parcours en deux étapes (`1-Preparer-le-PC.cmd`,
+  `2-Installer-SetupSurvie.cmd`). **0.1.20** : lanceur unique. **0.1.21** :
+  lanceur de mise à jour stable.
+- **0.1.30** : démarrage automatique et reprise des téléchargements. **0.1.33** :
+  cartes dans la préparation de base. **0.2.0** : démarrage silencieux et
+  migration des lanceurs (le correctif local a été intégré à la refonte moteur après
+  autorisation de Louis). **0.43.1** : moteur IA démarré avec les services.
+  **0.65.0** : reprise d’un tri de collections.

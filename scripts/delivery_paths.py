@@ -5,22 +5,30 @@ Kept independent from the content downloader so its catalogue can evolve separat
 from contextlib import contextmanager
 import os
 import json
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
 import setup
 
 
-def destination(root,relative):
-    if not isinstance(relative,str) or any(c in relative for c in '\\:\x00<>"|?*'):
+WINDOWS_INVALID_CHARACTERS = re.compile(r'[\\:<>"|?*\x00-\x1f]')
+WINDOWS_DEVICE = re.compile(r'(?:con|prn|aux|nul|(?:com|lpt)[1-9¹²³])(?:\..*)?', re.IGNORECASE)
+
+
+def destination(root,relative,*,allow_leaf_symlink=False):
+    if not isinstance(relative, str):
         raise setup.SetupError('Chemin de contenu non valide.')
-    parts=PurePosixPath(relative).parts
-    if not parts or relative.startswith('/') or any(not p or p in ('.','..') or p.endswith((' ','.')) or re.fullmatch(r'(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?',p) for p in relative.split('/')):
-        raise setup.SetupError('Chemin de contenu non valide.')
-    path=root.joinpath(*parts)
-    for parent in [path,*path.parents]:
+    if WINDOWS_INVALID_CHARACTERS.search(relative):
+        raise setup.SetupError(f'Chemin de contenu non valide. Renommez le fichier ou le dossier indiqué dans {relative!r}.')
+    parts = relative.split('/')
+    for part in parts:
+        if not part or part in ('.', '..') or part.endswith((' ', '.')) or WINDOWS_DEVICE.fullmatch(part):
+            raise setup.SetupError(f'Chemin de contenu non valide. Renommez le fichier ou le dossier {part!r}.')
+    path = root.joinpath(*parts)
+    contained=path.parent if allow_leaf_symlink else path
+    for parent in (contained,*contained.parents):
         if parent==root.parent:break
         if parent.is_symlink():raise setup.SetupError('Lien symbolique refusé : '+relative)
-    if not path.resolve().is_relative_to(root.resolve()):raise setup.SetupError('Chemin externe refusé.')
+    if not contained.resolve().is_relative_to(root.resolve()):raise setup.SetupError('Chemin externe refusé.')
     return path
 
 

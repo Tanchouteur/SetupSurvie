@@ -22,8 +22,9 @@ import xml.etree.ElementTree as ET
 import httpx
 from fastapi import HTTPException
 
-from . import store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations
+from . import category_index,collection_sort,network,store,source_metadata,durable,retrieval,archive_index,kiwix_catalog,catalogue,kiwix_queries,search_cache,illustrations,wiki_structure
 
+DEFAULT_SEARCH_DOMAIN = 'resilience'
 GUIDES=Path(os.environ.get('GUIDES_DIR','/guides'))
 KIWIX=os.environ.get('KIWIX_URL','http://kiwix:8080').rstrip('/')
 
@@ -80,10 +81,119 @@ async def books(*,refresh=False):
 
 
 INDEX_LOCK=threading.RLock()
+GUIDE_REFRESH_STOP=threading.Event()
+GUIDE_INDEX_STATUS={}
+GUIDE_INDEX_STATUS_ROOT=None
+GUIDE_INDEX_REVISION=None
+# Folder state at the last failure: retry automatically once it changes.
+GUIDE_INDEX_FAILED_REVISION=None
+GUIDE_TASKS=set()
+GUIDE_EXTENSIONS={'.txt','.md','.html','.pdf','.epub'}
 
 
-def index_guides():
-    with INDEX_LOCK:return _index_guides()
+def guide_files():
+    for path in sorted(GUIDES.rglob('*')):
+        if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()):
+            continue
+        relative = path.relative_to(GUIDES).as_posix()
+        if path.suffix.lower() in GUIDE_EXTENSIONS and not relative.startswith(('box.', 'boite.')):
+            yield path, relative
+
+
+def guide_revision():
+    if not GUIDES.is_dir():
+        raise OSError('Dossier documentaire indisponible.')
+    seed = GUIDES/'metadata.json'
+    paths = list(guide_files())
+    if seed.is_file() and not seed.is_symlink():
+        paths.append((seed, 'metadata.json'))
+    return GUIDES, tuple((name, info.st_size, info.st_mtime_ns)
+                         for path, name in paths for info in (path.stat(),))
+
+
+class GuideIndexPaused(Exception):
+    pass
+
+
+def index_guides(*, automatic=False):
+    global GUIDE_INDEX_REVISION, GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT, GUIDE_INDEX_FAILED_REVISION
+    with INDEX_LOCK:
+        def check():
+            if automatic and (GUIDE_REFRESH_STOP.is_set() or guide_hold().exists()):
+                raise GuideIndexPaused()
+        GUIDE_INDEX_STATUS_ROOT = store.ROOT
+        GUIDE_INDEX_STATUS = {'status': 'running', 'pausable': automatic}
+        revision = None
+        try:
+            check()
+            revision = guide_revision()
+            count = _index_guides(check)
+            GUIDE_INDEX_REVISION = revision
+        except GuideIndexPaused:
+            GUIDE_INDEX_STATUS = {'status': 'paused'}
+            return None
+        except Exception:
+            GUIDE_INDEX_STATUS = {'status': 'error', 'error': 'L’index des guides n’a pas pu être actualisé.'}
+            GUIDE_INDEX_FAILED_REVISION = revision
+            raise
+        GUIDE_INDEX_STATUS = {'status': 'completed', 'stage': f'{count} guide(s) recherchable(s)', 'updated': time.time()}
+        return count
+
+
+def guide_hold():
+    return store.ROOT/'guide-index.paused'
+
+
+def pause_guide_refresh():
+    durable.write_bytes(guide_hold(), b'paused\n', private=True)
+    GUIDE_REFRESH_STOP.set()
+
+
+def guide_index_status():
+    report = GUIDE_INDEX_STATUS.copy() if GUIDE_INDEX_STATUS_ROOT == store.ROOT else {}
+    if guide_hold().exists():
+        if report.get('status') == 'running':
+            if report.get('pausable'):
+                report.update(stage='Pause demandée · index précédent conservé', pausable=False)
+        else:
+            return {'status': 'paused', 'stage': 'Actualisation automatique en pause'}
+    return report
+
+
+async def resume_guide_refresh():
+    global GUIDE_INDEX_STATUS, GUIDE_INDEX_STATUS_ROOT
+    guide_hold().unlink(missing_ok=True)
+    GUIDE_REFRESH_STOP.clear()
+    GUIDE_INDEX_STATUS_ROOT = store.ROOT
+    GUIDE_INDEX_STATUS = {'status': 'queued'}
+    task = asyncio.create_task(refresh_guides())
+    GUIDE_TASKS.add(task)
+    task.add_done_callback(GUIDE_TASKS.discard)
+
+
+async def refresh_guides():
+    try:
+        await asyncio.to_thread(index_guides, automatic=True)
+    except Exception:
+        logging.getLogger(__name__).warning('Actualisation des guides indisponible.')
+
+
+async def watch_guides():
+    while True:
+        await asyncio.sleep(60)
+        try:
+            state = guide_index_status().get('status')
+            if state in ('running', 'queued', 'paused'):
+                continue
+            revision = await asyncio.to_thread(guide_revision)
+            # After a failure (folder not mounted yet, unreadable file), retry
+            # when the folder changes instead of waiting for a manual reindex.
+            if revision != (GUIDE_INDEX_FAILED_REVISION if state == 'error' else GUIDE_INDEX_REVISION):
+                await refresh_guides()
+        except OSError:
+            continue
+        except Exception:
+            logging.getLogger(__name__).warning('Actualisation des guides indisponible.')
 
 
 class TranslationText(Text):
@@ -93,7 +203,7 @@ class TranslationText(Text):
     def handle_starttag(self,tag,attrs):
         super().handle_starttag(tag,attrs)
         if tag=='section':
-            match=re.fullmatch(r'page=(\d+)',dict(attrs).get('id',''))
+            match=re.fullmatch(r'page=(\d+)',(dict(attrs).get('id') or ''))
             if match:self.page=int(match.group(1));self.pages[self.page]=[]
     def handle_data(self,data):
         super().handle_data(data)
@@ -103,7 +213,7 @@ class TranslationText(Text):
         if tag=='section':self.page=None
 
 
-def _index_guides():
+def _index_guides(check):
     if not GUIDES.is_dir():raise OSError('Dossier documentaire indisponible ; index précédent conservé.')
     documents=[];passages=[];report=[]
     if GUIDES.exists():
@@ -120,10 +230,9 @@ def _index_guides():
                                    (item['path'],dates['document_date'],dates['edition'] if item.get('edition') else '',dates['collected_at']))
             except (ValueError,TypeError):pass
         with store.connect() as db:metadata={r['path']:dict(r) for r in db.execute('SELECT * FROM guide_meta')}
-        for path in sorted(GUIDES.rglob('*')):
-            if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(GUIDES.resolve()):continue
-            relative=path.relative_to(GUIDES).as_posix();suffix=path.suffix.lower()
-            if suffix not in ('.txt','.md','.html','.pdf','.epub') or relative.startswith(('box.','boite.')):continue
+        for path, relative in guide_files():
+            check()
+            suffix=path.suffix.lower()
             record={'path':relative,'bytes':path.stat().st_size,'status':'pending'}
             report.append(record)
             if record['bytes']>300_000_000:
@@ -179,9 +288,15 @@ def _index_guides():
             documents.append(('guide:'+relative,title,'/guides/'+quote(relative),language,text[:500000]))
             for number,page_text in (numbered_pages if numbered_pages is not None else enumerate(page_texts,1)):
                 if page_text.strip():passages.append(('guide:'+relative+'#page='+str(number),title+' — page '+str(number),'/guides/'+quote(relative)+'#page='+str(number),language,page_text))
+    check()
     with store.connect() as db:
         db.execute('DELETE FROM documents');db.executemany('INSERT INTO documents VALUES(?,?,?,?,?)',documents)
         db.execute('DELETE FROM passages');db.executemany('INSERT INTO passages VALUES(?,?,?,?,?)',passages)
+        db.execute('DELETE FROM guide_search_domains')
+        db.executemany('INSERT INTO guide_search_domains VALUES(?,?)', (
+            (identifier, json.dumps(retrieval.domains({'id': identifier, 'title': title, '_text': text})))
+            for records in (documents, passages) for identifier, title, _, _, text in records
+        ))
     durable.mkdir(store.ROOT)
     try:durable.write_bytes(store.ROOT/'index-report.json',json.dumps({'documents':report,'indexed':sum(r['status']=='indexed' for r in report)},ensure_ascii=False).encode('utf-8'),private=True)
     except OSError:logging.getLogger(__name__).warning('Rapport documentaire non actualisé ; index de recherche conservé.')
@@ -199,7 +314,7 @@ def _index_guides():
 
 STOPWORDS=set('a au aux avec ce ces cette dans de des du elle en est et eux faire fais fait for from how il ils je la le les leur lui ma mais me mes moi mon nous of on or ou par pas pour qu que quel quelle qui sa se ses si sois sort sortir sous sur ta te tes the this to toi ton un une vos votre vous what quel quels quelles comment document documents guide guides efficacement peux peut voudrais veux donne donnez montre'.split())
 SYNONYMS={'toit':['toit','toiture','roof','roofing'],'toiture':['toiture','toit','roof'],'abri':['abri','abris','shelter'],'bache':['bache','tarpaulin','sheeting'],'eau':['eau','water'],'potable':['potable','drinking'],'apprendre':['apprendre','learning'],'enfant':['enfant','enfants','children'],'maths':['maths','mathematiques','mathematics']}
-STOPWORDS.update('comment pourquoi trouver rechercher recherche cherche expliquer explique informations information sujet concernant utiliser utilise voudrais besoin besoin les leurs pouvez pourrait pouvez avoir quand contient contient moi documenter faire preparer correctement sujet bon bonne'.split())
+STOPWORDS.update('chez sont cas comment pourquoi trouver rechercher recherche cherche expliquer explique informations information sujet concernant utiliser utilise voudrais besoin besoin les leurs pouvez pourrait pouvez avoir quand contient contient moi documenter faire preparer correctement sujet bon bonne'.split())
 SYNONYMS.update({
     'semences':['semences','graines','seeds'],'graines':['graines','semences','seeds'],
     'stocker':['stocker','stockage','storage','storing'],'conservation':['conservation','preservation','storage'],
@@ -222,7 +337,9 @@ SYNONYMS.update({
 })
 SYNONYMS.update({'examiner':['examiner','examine','examining','examination'],
                  'malade':['malade','malades','sick','patient'],
-                 'personne':['personne','person','people']})
+                 'personne':['personne','personnes','person','people'],
+                 'repartition':['repartition','repartitions','repartir'],
+                 'repartir':['repartir','repartition','repartitions']})
 SYNONYMS.update({'feu':['feu','feux','fire','campfire'],'allumer':['allumer','allumage','lighting','ignite'],'camp':['camp','camping','campfire']})
 TERM_ALIASES={'feux':'feu','stocker':'stocker','stockage':'stocker','conserver':'conservation','graine':'graines',
               'plante':'plantes','dent':'dents','radios':'radio','batteries':'batterie',
@@ -247,6 +364,9 @@ SYNONYMS['ph']=['ph','acidity','acidite']
 SYNONYMS['cordage']=['cordage','cordages','rope','ropes','cord']
 SYNONYMS['couture']=['couture','sewing','stitching','mending']
 SYNONYMS['etalonnage']=['etalonnage','calibration','calibrating']
+# Official civil-protection guides speak of alert and threat rather than bombing or war.
+for _word in ('bombardement','bombardements','guerre','attaque','frappe','frappes'):
+    SYNONYMS[_word]=[_word,'alerte','menace','conflit','attaque','bombardement','war','attack','air raid']
 LEARNING_ENGLISH.update({'electromagnetisme':'electromagnetism','moteurs':'motors','roues':'wheels','hydrauliques':'hydraulic'})
 for french,english in LEARNING_ENGLISH.items():
     SYNONYMS[french]=list(dict.fromkeys(SYNONYMS.get(french,[french])+[english]))
@@ -262,11 +382,16 @@ def index_report():
 
 def search_terms(query,maximum=10):
     query=retrieval.search_subject(query)
+    author=retrieval.author_subject(query)
+    # A spoken elaboration after the first question is not required vocabulary
+    # for finding the topic. Keep it in the request so the answer can address it.
+    if author:query=author
+    else:query=re.split(r'[?!]\s+(?=(?:genre|par exemple|for example|like)[\s,:])',query,maxsplit=1,flags=re.I)[0]
     words=[unicodedata.normalize('NFKD',w).encode('ascii','ignore').decode().lower() for w in re.findall(r'\w+',query,flags=re.UNICODE)]
     return list(dict.fromkeys(TERM_ALIASES.get(w,w) for w in words if w and w not in STOPWORDS and len(w)>1))[:maximum]
 
 
-async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12):
+async def search_archives(pattern_for, language, limit, *, query_plan=None,diagnostic=False,on_update=None,budget=12,sorting=None,domain="all",skip_native=()):
     """Explicit homogeneous archive sets; multilingual archives queried separately.
 
     Bounded fallbacks isolate a rejected archive instead of hiding an entire language.
@@ -281,10 +406,12 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     if not getattr(available,'available',True):
         return [],{**report,'status':'unavailable','warning':'Les encyclopédies n’ont pas pu être interrogées. Les résultats des guides seuls ne prouvent pas l’absence d’information dans la bibliothèque.'}
     requested={'fr':'fra','en':'eng'}.get(language,language)
+    scoped=[book for book in available if book.get('book') not in skip_native and
+            (sorting is None or sorting.permits(collection_sort.archive(book.get('book') or ''),domain))]
     groups={};eligible=[];selected_books=[];incompatible=[]
     saved_labels=catalogue.snapshot()
     manifests={Path(r['archive']).stem:r for r in archive_index.manifest(store.ROOT/'archive-index',Path(os.environ.get('ZIM_DIR','/zim'))).values()}
-    generation=await asyncio.to_thread(search_cache.snapshot,Path(os.environ.get('ZIM_DIR','/zim')),available,store.ROOT/'archive-index')
+    generation=await asyncio.to_thread(search_cache.snapshot,Path(os.environ.get('ZIM_DIR','/zim')),scoped,store.ROOT/'archive-index')
     # Metadata tags can be absent or stale even when an index exists. Query
     # announced indexes first, but probe the other archives within the same budget.
     def priority(book):
@@ -301,12 +428,16 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
             (r'\b(plomberie|fuite|leak)\b',('diy','wikihow'))))
         return (not indexed,not targeted,preferred,'fra' not in str(book.get('language','')))
     report['locally_indexed']=0
-    for original in sorted(available,key=priority):
+    for original in sorted(scoped,key=priority):
         book=dict(original)
         known=manifests.get(book.get('book',''),{})
         if known.get('has_fulltext_index') is True:book['fulltext']=True
         if query_plan and query_plan.collection and not catalogue.matches_collection(book,query_plan.collection,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')),saved_labels):continue
-        languages=archive_index.languages(book.get('language') or '')
+        edition = retrieval.ifixit_edition(book['book'])
+        declared = {'en': 'eng', 'fr': 'fra'}.get(edition, book.get('language') or '')
+        if edition:
+            book['language'] = declared
+        languages=archive_index.languages(declared)
         if requested and requested not in languages:continue
         selected_books.append(book)
         if book.get('fulltext') is False and known.get('status')!='ready':
@@ -518,21 +649,109 @@ async def search_archives(pattern_for, language, limit, *, query_plan=None,diagn
     return list(records.values()),report
 
 
-async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12):
+async def enrich_wikipedia(items, query, generation, normalize):
+    """Read structure and resolve redirects within the existing inspection budget."""
+    candidates = [item for item in items if wiki_structure.wikipedia(item)]
+    if not candidates:
+        return None
+    original = normalize(query.original)
+
+    def priority(pair):
+        position, item = pair
+        return (normalize(item['title']) != original,
+                -retrieval.rank(item, query, position, normalizer=normalize))
+
+    ranked = sorted(enumerate(candidates), key=priority)
+    selected = list(dict.fromkeys(item['id'] for _, item in ranked))[:12]
+    shared = kiwix_queries.state()
+    cache = shared['structures']
+    evidence = {}
+    started = time.monotonic()
+
+    async def inspect(identifier):
+        key = (KIWIX, generation, identifier)
+        async with shared['structure_lane']:
+            prior = cache.get(key)
+            if prior and time.monotonic() - prior[0] < kiwix_queries.TTL:
+                cache.move_to_end(key)
+                evidence[identifier] = prior[1]
+                return
+            try:
+                path = '/content/' + quote(safe_zim_path(identifier), safe='/')
+                async with asyncio.timeout(0.45):
+                    fetched = await get(path, wiki_structure.MAX_HTML)
+                    raw, content_type = fetched
+                    if 'text/html' not in content_type:
+                        return
+                    structure = await kiwix_queries.disk_io(wiki_structure.extract, raw)
+                    resolved = getattr(fetched, 'path', path)
+                    canonical = 'zim:' + safe_zim_path('zim:' + resolved.removeprefix('/content/'))
+            except (TimeoutError, httpx.HTTPError, HTTPException, ValueError):
+                return
+            evidence[identifier] = (structure, canonical)
+            cache[key] = (time.monotonic(), evidence[identifier])
+            cache.move_to_end(key)
+            while len(cache) > 256:
+                cache.popitem(last=False)
+
+    try:
+        async with asyncio.timeout(0.7):
+            await asyncio.gather(*(inspect(identifier) for identifier in selected))
+    except TimeoutError:
+        pass
+    for item in candidates:
+        if item['id'] in evidence:
+            item['_wiki_structure'], item['_resolved_zim_id'] = evidence[item['id']]
+    return {'selected': len(selected), 'read': len(evidence),
+            'categories': sum(bool(info['categories']) for info, _ in evidence.values()),
+            'sections': sum(bool(info['sections'] or info['subsections']) for info, _ in evidence.values()),
+            'elapsed_ms': round((time.monotonic() - started) * 1000)}
+
+
+async def search(query,language='',limit=8,*,favorite_user=None,translations_only=False,collection='',domain='all',diagnostic=False,on_update=None,budget=12,kind='all'):
+    if kind not in ('all','documents','videos'):raise ValueError('Invalid search kind')
     query_plan=retrieval.plan(query,search_terms(query),SYNONYMS,collection)
     words=query_plan.words
+    try:
+        sorting=await asyncio.to_thread(collection_sort.load,network.CATALOG)
+    except (OSError,ValueError):
+        raise HTTPException(503,'Le fichier de tri de la bibliothèque est illisible.') from None
+    def archive_allowed(book):
+        return sorting.permits(collection_sort.archive(book),domain)
     candidate_limit=min(80,max(20,limit*4))
     results=[];video_coverage={'status':'not_run'}
-    if not translations_only:
+    if kind != 'documents' and not translations_only:
         try:
             from . import videos
-            video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit)
+            await videos.ensure_fresh()
+            video_rows,video_coverage=await kiwix_queries.disk_io(videos.search,query_plan,language,candidate_limit,sorting,domain)
             if favorite_user is not None:
                 with store.connect() as db:video_favorites={row['source_id'].split('#t=')[0] for row in db.execute('SELECT source_id FROM favorites WHERE user_id=?',(favorite_user,))}
                 video_rows=[item for item in video_rows if item['id'].split('#t=')[0] in video_favorites]
             results.extend(video_rows)
         except Exception:video_coverage={'status':'unavailable'}
-    if words:
+    if kind == 'videos':
+        if translations_only:video_coverage={'status':'not_available','reason':'translations_only'}
+        # Videos are few and rarely classified: the documentary space chosen
+        # for texts must not hide them when the user asks for videos only.
+        catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        ordered=retrieval.ordered(results,query_plan,limit*2) if words else []
+        if not ordered:
+            # A long question matches only some words: in this small dedicated
+            # list, keep those videos rather than announce that none exists.
+            unique={}
+            for item in sorted(results,key=lambda row:row.get('match')!='subtitle'):unique.setdefault(item['id'].split('#t=')[0],item)
+            ordered=[{k:v for k,v in item.items() if not k.startswith('_')} for item in list(unique.values())[:limit*2]]
+        state=video_coverage['status']
+        coverage={'status':'complete' if state=='complete' else 'partial','coverage_scope':'indexed_videos','domain':domain,'collection':query_plan.collection,'videos':video_coverage,'kind':'videos'}
+        warnings={'not_indexed':'Les vidéos n’ont pas encore été répertoriées. L’inventaire se lance automatiquement ; vous pouvez aussi le lancer dans Bibliothèque → Collections → Vidéos de la bibliothèque.',
+                  'refreshing':'Le répertoire des vidéos est en cours d’actualisation ; les nouvelles vidéos apparaîtront à la fin.',
+                  'not_available':'Le dossier des vidéos locales n’est pas disponible sur ce serveur.',
+                  'unavailable':'La recherche des vidéos n’a pas abouti ; réessayez dans un instant.',
+                  'partial':'Certaines vidéos ne sont pas encore répertoriées (dossier modifié ou collections non examinées) ; les résultats affichés restent utilisables.'}
+        if state in warnings:coverage['warning']=warnings[state]
+        return SearchResults(ordered,coverage)
+    if words and domain!='other':
         expression=query_plan.fts()
         with store.connect() as db:
             for table in ('documents','passages'):
@@ -547,13 +766,15 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
                     relaxed=[query_plan.fts(relaxed=True),*parameters[1:]]
                     rows+=db.execute(f"SELECT id,title,url,language,substr(text,1,20000) AS _text,snippet({table},4,'','', '…',45) AS excerpt FROM {table} WHERE {table} MATCH ? AND (?='' OR language=?) AND lower(id) NOT LIKE '%.pdf' {restriction} ORDER BY bm25({table}) LIMIT ?",(*relaxed,candidate_limit)).fetchall()
                 results.extend([{**dict(r),'_rank':position,'_query_complete':r['id'] in strict_ids,'kind':'guide',**guide_metadata(db,r['id'])} for position,r in enumerate(rows)])
-            if favorite_user is not None and not translations_only:
-                rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(expression,favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
-                results.extend([{**dict(row),'kind':'article'} for row in rows])
+    if words and favorite_user is not None and not translations_only:
+        with store.connect() as db:
+            db.create_function('archive_allowed',1,lambda source: archive_allowed(source.split('/',1)[0].removeprefix('zim:')),deterministic=True)
+            rows=db.execute("SELECT id,title,url,language,snippet(favorite_articles,5,'','', '…',30) AS excerpt FROM favorite_articles WHERE favorite_articles MATCH ? AND user_id=? AND archive_allowed(id) AND (?='' OR language IN (?,?)) ORDER BY bm25(favorite_articles) LIMIT ?",(query_plan.fts(),favorite_user,language,language,{'fr':'fra','en':'eng'}.get(language,language),limit)).fetchall()
+            results.extend([{**dict(row),'kind':'article'} for row in rows])
     if query_plan.collection:results=[r for r in results if query_plan.collection in retrieval.normal(str(r.get('provenance',''))+' '+r['title']+' '+r['id']).replace(' ','')]
     if favorite_user is not None or translations_only:
         catalogue.annotate(results,GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
-        if domain!='all':results=[r for r in results if domain in r['domains']]
+        if domain in ('resilience','culture'):results=[r for r in results if domain in r['domains']]
         return retrieval.ordered(results,query_plan,limit*2)
     def pattern_for(lang,selected_words=None):
         english={'toit':'roof','toiture':'roof','abri':'shelter','bache':'tarpaulin','eau':'water','potable':'drinking',
@@ -579,7 +800,7 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
             concept=next((c for c in retrieval.CONCEPTS.values() if word in c['terms']),None)
             if lang=='eng':translated.append(english.get(word,concept['en'][0] if concept else word))
             else:translated.append(concept['fr'][0] if concept and word not in concept['fr'] else word)
-        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
+        action={'repair':('reparation','repair'),'preserve':('conservation','storage'),'purify':('purification','purification'),'build':('construction','construction'),'install':('installation','installation'),'recognize':('identification','identification'),'sharpen':('affutage','sharpening')}.get(query_plan.action)
         if action and selected_words is None and query_plan.action!='build':translated.append(action[lang=='eng'])
         return ' '.join(translated) if translated else query
     saved_metadata=catalogue.snapshot();zims=Path(os.environ.get('ZIM_DIR','/zim'))
@@ -593,8 +814,39 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
         metadata_available=annotations.annotate(combined,fresh=fresh)
         allowed={'fr','fra','en','eng'} if not language else {language,{'fr':'fra','en':'eng','fra':'fr','eng':'en'}.get(language,language)}
         combined=[r for r in combined if not r.get('language') or allowed.intersection(re.split(r'[,;\s]+',r['language']))]
-        if domain!='all':combined=[r for r in combined if domain in r['domains']]
-        ordered=retrieval.ordered(combined,query_plan,limit*2,normalizer=normalize)
+        primary = [row for row in combined if domain not in category_index.DOMAINS or domain in row['domains']]
+        ordered = retrieval.ordered(primary, query_plan, limit * 2, normalizer=normalize)
+        remaining = min(3, limit * 2 - len(ordered))
+        if domain == 'resilience' and not any(
+            row['match_quality'] == 'subject' and (
+                row.get('kind') == 'guide'
+                or row['classification']['source_role'] == 'practical'
+                or row['classification']['document_type'] in ('procedure', 'manual')
+            ) for row in ordered
+        ):
+            references = [
+                row for row in combined
+                if row['classification']['method'] == 'automatic'
+                and 'resilience' not in row['domains']
+                and row.get('book') and archive_allowed(row['book'])
+            ]
+            if len(query_plan.groups) > 1:
+                direct = [row for row in ordered if row['match_quality'] == 'subject']
+                room = min(3, limit * 2 - len(direct))
+                forum_matches = retrieval.ordered(
+                    [row for row in references if retrieval.practical_forum(row['book'])
+                     and retrieval.match_quality(row, query_plan, normalizer=normalize) == 'subject'],
+                    query_plan, room, normalizer=normalize,
+                ) if room else []
+                if forum_matches:
+                    context = [row for row in ordered if row['match_quality'] != 'subject']
+                    ordered = (direct + forum_matches + context)[:limit * 2]
+                    remaining = min(3 - len(forum_matches), limit * 2 - len(ordered))
+            if remaining:
+                ordered += retrieval.encyclopedic_matches(
+                    [row for row in references if retrieval.fallback_encyclopedia(row['book'])],
+                    query_plan, remaining, normalizer=normalize,
+                )
         processing['snapshots']+=1;processing['selection_ms']+=(time.monotonic()-started)*1000;processing['selection_cpu_ms']+=(time.thread_time()-cpu)*1000
         return ordered,metadata_available
     async def selected(items,*,fresh=False):return await kiwix_queries.disk_io(selected_sync,items,fresh)
@@ -606,21 +858,57 @@ async def search(query,language='',limit=8,*,favorite_user=None,translations_onl
     async def native_update(rows,coverage):
         nonlocal current_articles,current_coverage
         current_articles=rows;current_coverage=coverage;await notify()
+    category_report={}
+    chosen=()
+    if domain in category_index.DOMAINS and words:
+        indexes = await asyncio.to_thread(category_index.ready_indexes, zims, store.ROOT, sorting)
+        category_report, _ = await asyncio.to_thread(category_index.availability, zims, store.ROOT, sorting, indexes=indexes)
+        paths = [path for book, path in indexes.items() if archive_allowed(book)]
+        reference_paths = [
+            path for book, path in indexes.items() if domain == 'resilience' and archive_allowed(book)
+            and (retrieval.fallback_encyclopedia(book) or retrieval.practical_forum(book))
+        ]
+        searched = set()
+        for category, category_paths in ((domain, paths), ('culture', reference_paths)):
+            if not category_paths:
+                continue
+            result = await asyncio.to_thread(
+                archive_index.search, category_paths[0].parent, query_plan, language, candidate_limit, zims,
+                collection_match=lambda book, selection: catalogue.matches_collection(book, selection, GUIDES, zims, saved_metadata),
+                category=category, index_paths=category_paths)
+            local_rows.extend(result)
+            books = set(result.coverage.get('books', ()))
+            if category != domain:
+                # A failed secondary scan must leave the native fallback available.
+                searched.difference_update(
+                    book for book, path in indexes.items() if path in reference_paths and book not in books
+                )
+            else:
+                searched.update(books)
+        chosen = tuple(sorted(searched))
     async def read_local():
         found=await asyncio.to_thread(archive_index.search,store.ROOT/'archive-index',query_plan,language,candidate_limit,zims,
-            collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata))
+            collection_match=lambda book,selection:catalogue.matches_collection(book,selection,GUIDES,zims,saved_metadata),archive_allowed=archive_allowed,skip_books=chosen)
         local_rows.extend(found);await notify();return found
     local_task=asyncio.create_task(read_local())
     try:
         await notify()
-        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic,on_update=native_update if on_update else None,budget=budget)
+        articles,coverage=await search_archives(pattern_for,language,candidate_limit,query_plan=query_plan,diagnostic=diagnostic,on_update=native_update if on_update else None,budget=budget,sorting=sorting,domain=domain,skip_native=chosen)
         local=await local_task
     finally:
         if not local_task.done():local_task.cancel()
         await asyncio.gather(local_task,return_exceptions=True)
-    ordered,metadata_available=await selected(results+local+articles,fresh=True)
+    wiki_report = await enrich_wikipedia(local_rows + articles, query_plan, coverage.get('cache_generation', ''), normalize)
+    if diagnostic and wiki_report is not None:
+        coverage['wikipedia_structure'] = wiki_report
+    ordered,metadata_available=await selected(results+local_rows+articles,fresh=True)
     if diagnostic:coverage['processing']={**{key:round(value,2) for key,value in processing.items()},'metadata_evaluations':annotations.evaluated,'source_revision_checks':annotations.source_checks,'normalizations':normalize.misses,'normalization_hits':normalize.hits,'normalization_cache_bytes':normalize.bytes}
     coverage['local_query']=getattr(local,'coverage',{})
+    if category_report:
+        coverage['category_index']={key:category_report[key] for key in ('phase','archive','done','total','bytes','elapsed_seconds') if key in category_report}
+        coverage['category_index']['searched']=len(chosen)
+    if diagnostic:
+        coverage['indexes_queried']=coverage.get('searched',0)+coverage['local_query'].get('searched',0)+len(chosen)
     if any(coverage['local_query'].get(key,0) for key in ('failed','outdated')):
         if coverage['status']=='complete':coverage['status']='partial'
         coverage['warning']=coverage.get('warning','')+' Certains index locaux sont indisponibles ou périmés ; relancez leur préparation.'
@@ -654,7 +942,9 @@ def guide_metadata(db,identifier):
     path=identifier.removeprefix('guide:').split('#page=')[0]
     row=db.execute('SELECT m.provenance,m.licence,d.document_date,d.edition,d.collected_at FROM guide_meta m LEFT JOIN guide_dates d ON m.path=d.path WHERE m.path=?',(path,)).fetchone()
     item=dict(row) if row else {}
-    return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path)}
+    classified = db.execute('SELECT domains FROM guide_search_domains WHERE id=?', (identifier,)).fetchone()
+    domains = {'_indexed_domains': json.loads(classified[0])} if classified else {}
+    return {**item,**source_metadata.metadata(item),**source_metadata.translation_metadata(db,path),**domains}
 
 
 def focused_page(identifier,query):
@@ -681,6 +971,7 @@ async def source(identifier):
         from . import videos
         result=await kiwix_queries.disk_io(videos.source,identifier)
         catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+        result.pop('_indexed_domains', None)
         return result
     if identifier.startswith('guide:'):
         with store.connect() as db:
@@ -706,8 +997,13 @@ async def source(identifier):
     text=p.text()
     images=illustrations.html_images(raw.decode(errors='replace'),resolved_path)
     result={'id':identifier,'title':''.join(p.title) or path.split('/')[-1].replace('_',' '),'text':safe_prefix(text,100000),'text_truncated':len(text)>100000,
-            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':p.language or retrieval.article_language({'id':identifier,'language':book.get('language','')}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
-    catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')));return result
+            'url':'/content/'+quote(path,safe='/'),'kind':'article','images':images,'language':retrieval.article_language({'id': identifier, 'book': book['book'],
+                'language': p.language or book.get('language', ''), 'text': text}),'collection':book.get('title',''),'book':book['book'],**source_metadata.metadata(book)}
+    if wiki_structure.wikipedia(result):
+        result['_wiki_structure'] = await kiwix_queries.disk_io(wiki_structure.extract, raw)
+    catalogue.annotate([result],GUIDES,Path(os.environ.get('ZIM_DIR','/zim')))
+    result.pop('_wiki_structure', None)
+    return result
 
 
 def calculate(expression):
@@ -715,10 +1011,14 @@ def calculate(expression):
     tree=ast.parse(expression,mode='eval')
     if sum(1 for _ in ast.walk(tree))>45:raise ValueError('Expression trop complexe.')
     def visit(node):
-        if isinstance(node,ast.Constant) and type(node.value) in (int,float):value=Fraction(str(node.value))
+        if isinstance(node,ast.Constant) and type(node.value) in (int,float):
+            if node.value!=node.value or abs(node.value)==float('inf'):raise ValueError('Valeur hors limites.')
+            value=Fraction(str(node.value))
         elif isinstance(node,ast.UnaryOp) and isinstance(node.op,(ast.UAdd,ast.USub)):value=visit(node.operand)*(1 if isinstance(node.op,ast.UAdd) else -1)
         elif isinstance(node,ast.BinOp):
             a,b=visit(node.left),visit(node.right)
+            if (isinstance(node.op,(ast.Div,ast.FloorDiv,ast.Mod)) and b==0) or (isinstance(node.op,ast.Pow) and a==0 and b<0):
+                raise ValueError('Division par zéro : le résultat n’est pas défini.')
             if isinstance(node.op,ast.Add):value=a+b
             elif isinstance(node.op,ast.Sub):value=a-b
             elif isinstance(node.op,ast.Mult):value=a*b

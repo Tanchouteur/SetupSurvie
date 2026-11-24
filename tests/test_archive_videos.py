@@ -2,6 +2,7 @@
 import asyncio
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import AsyncMock,patch
 import httpx
@@ -30,6 +31,90 @@ class ArchiveVideoIndexTests(unittest.TestCase):
         self.assertTrue(source['transcription_available']);self.assertIn('Fictional 17 mm.',source['text']);self.assertEqual(source['position_ms'],1000)
         self.assertIn('00:00:01.000 --> 00:00:02.000',videos.webvtt(video['id'].split(':')[1],0))
         self.assertFalse(source['audio_verified']);self.assertEqual(source['human_review'],'not_performed')
+
+    def test_local_filter_keeps_only_files_from_the_video_folder(self):
+        from zim_video_fixture import create
+        youtube=self.root/'youtube-fixture.zim'
+        create(youtube,youtube=True,with_tracks=False)
+        zim_video_inventory.build(youtube,archive_videos.directory())
+        (videos.ROOT/'local.mp4').write_bytes(b'local fixture')
+        (videos.ROOT/'youtube').mkdir()
+        (videos.ROOT/'youtube'/'download.mp4').write_bytes(b'download fixture')
+        videos.scan()
+
+        self.assertEqual(videos.listing()['total'],8)
+        local=videos.listing(origin='local')
+        self.assertEqual(sorted(videos.row(item['id'])[1]['path'] for item in local['videos']),
+                         ['local.mp4','youtube/download.mp4'])
+        grouped=videos.listing(grouped=True,origin='local')
+        self.assertEqual(grouped['total'],2)
+        self.assertEqual(videos.listing(grouped=True,origin='local',query='shadow')['total'],0)
+        self.assertEqual(videos.listing(grouped=True,origin='local',query='download')['total'],1)
+
+    def test_published_archive_is_searchable_before_the_host_inventory_finishes(self):
+        from zim_video_fixture import create
+
+        async def scenario():
+            directory = archive_videos.directory()
+            progress = directory/'progress.json'
+            host = {'schema': 1, 'job_id': 'batch', 'phase': 'running', 'archives': 3,
+                    'results': [self.report]}
+            progress.write_text(json.dumps(host), encoding='utf-8')
+            self.assertEqual(videos.scan()['videos'], 2)
+            self.assertFalse(videos.stale())
+            query = retrieval.plan('measure a shadow', ['measure', 'shadow'], library.SYNONYMS)
+            self.assertFalse(videos.search(query)[0])
+
+            (directory/'aaaaaaaaaaaaaaaaaaaaaaaa.building').write_bytes(b'incomplete fixture')
+            self.assertFalse(videos.stale())
+            second = self.root/'youtube-fixture.zim'
+            create(second, youtube=True, with_tracks=False)
+            host['results'].append(zim_video_inventory.build(second, directory))
+            progress.write_text(json.dumps(host), encoding='utf-8')
+            self.assertTrue(videos.stale())
+
+            with patch.object(videos, 'ACTIVE', None), patch.object(videos, 'CHECKED', 0.0):
+                self.assertEqual(await videos.ensure_fresh(force=True), 'refreshing')
+                report = await asyncio.wait_for(videos.ACTIVE, 5)
+            self.assertEqual(report['videos'], 6)
+            self.assertFalse(videos.stale())
+            self.assertEqual(archive_videos.progress()['phase'], 'running')
+            self.assertFalse(archive_videos.state()['reader_ready'])
+            self.assertEqual(videos.listing()['total'], 6)
+            found, coverage = videos.search(query)
+            self.assertEqual(found[0]['title'], 'How do we measure a shadow?')
+            self.assertEqual(coverage['status'], 'partial')
+
+        asyncio.run(scenario())
+
+    def test_youtube_subtitles_already_in_the_zim_join_search_after_reusing_the_inventory(self):
+        from zim_video_fixture import create
+
+        youtube = self.root/'youtube-with-subtitles.zim'
+        create(youtube, youtube=True, youtube_tracks=True, with_tracks=False)
+        with patch.object(zim_video_inventory, 'save_youtube_metadata', lambda *args: None):
+            previous = zim_video_inventory.build(youtube, archive_videos.directory())
+        with zim_video_inventory.connect(archive_videos.directory()/previous['file']) as db:
+            db.execute('INSERT INTO metadata VALUES(?,?)', (zim_video_inventory.YOUTUBE_TITLES, json.dumps({
+                'videos/aaaaaaaaaaa/video.webm': 'How do we measure a shadow?',
+            })))
+        videos.scan()
+        query = retrieval.plan('règle graduée', ['regle', 'graduee'], library.SYNONYMS)
+        self.assertFalse(videos.search(query, 'fr')[0])
+
+        upgraded = zim_video_inventory.build(youtube, archive_videos.directory())
+        self.assertEqual(upgraded['status'], 'reused')
+        self.assertTrue(videos.stale())
+        self.assertEqual(videos.scan()['phase'], 'completed')
+
+        found, _ = videos.search(query, 'fr')
+        self.assertEqual(len(found), 1)
+        source = videos.source(found[0]['id'])
+        self.assertEqual(source['title'], 'How do we measure a shadow?')
+        self.assertEqual(source['position_ms'], 1000)
+        self.assertIn('règle graduée fictive', source['text'])
+        self.assertEqual(source['subtitle_status'], 'french_available')
+        self.assertEqual(len(source['tracks']), 1)
 
     def test_archive_replacement_invalidates_reading_and_missing_cache_is_not_an_empty_success(self):
         videos.scan();video=next(item for item in videos.listing()['videos'] if item['tracks']);_,payload,_=videos.row(video['id'])
@@ -67,6 +152,17 @@ class ArchiveVideoIndexTests(unittest.TestCase):
 
 
 class ArchiveVideoLifecycleTests(unittest.IsolatedAsyncioTestCase):
+    def test_legacy_report_excludes_unfinished_collections_from_examined_count(self):
+        with TemporaryDirectory() as folder,patch.object(store,'ROOT',Path(folder)):
+            directory=archive_videos.directory()
+            directory.mkdir()
+            report={'schema':1,'phase':'paused','completed':4,'archives':4,'results':[
+                {'status':'reused'},{'status':'partial'},{'status':'paused'},{'status':'error'},
+            ]}
+            (directory/'progress.json').write_text(json.dumps(report),encoding='utf-8')
+            result=archive_videos.progress()
+            self.assertEqual((result['completed'],result['archives'],result['phase']),(2,4,'paused'))
+
     async def test_host_start_failure_and_queue_are_not_hidden_by_an_old_finished_inventory(self):
         previous={'phase':'completed','job_id':'old','reader_ready':True,'reader_updating':False}
         host={'action':'video-inventory','id':'new','phase':'starting'}

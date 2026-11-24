@@ -32,6 +32,9 @@ def connect():
 def init():
     with connect() as db:
         db.executescript('''
+        CREATE TABLE IF NOT EXISTS work_history(id TEXT PRIMARY KEY, data TEXT NOT NULL, updated REAL NOT NULL);
+        CREATE TABLE IF NOT EXISTS work_seen(profile TEXT NOT NULL, id TEXT NOT NULL, signature TEXT NOT NULL, seen REAL NOT NULL, PRIMARY KEY(profile,id));
+        CREATE TABLE IF NOT EXISTS youtube_pipeline(id TEXT PRIMARY KEY, kind TEXT NOT NULL, data TEXT NOT NULL, updated REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS profiles(id TEXT PRIMARY KEY,name TEXT NOT NULL,email TEXT NOT NULL UNIQUE,role TEXT NOT NULL,origin TEXT NOT NULL,created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS recovery(user_id TEXT PRIMARY KEY,salt TEXT NOT NULL,digest TEXT NOT NULL,used INTEGER NOT NULL DEFAULT 0);
         CREATE TABLE IF NOT EXISTS limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,until REAL NOT NULL);
@@ -47,6 +50,7 @@ def init():
         CREATE TABLE IF NOT EXISTS feedback(id TEXT PRIMARY KEY,user_id TEXT,content TEXT NOT NULL,view TEXT,created REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS guide_meta(path TEXT PRIMARY KEY,title TEXT,language TEXT,provenance TEXT,licence TEXT);
+        CREATE TABLE IF NOT EXISTS guide_search_domains(id TEXT PRIMARY KEY,domains TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS guide_dates(path TEXT PRIMARY KEY,document_date TEXT NOT NULL DEFAULT '',edition TEXT NOT NULL DEFAULT '',collected_at TEXT NOT NULL DEFAULT '');
         CREATE VIRTUAL TABLE IF NOT EXISTS documents USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');
         CREATE VIRTUAL TABLE IF NOT EXISTS passages USING fts5(id UNINDEXED,title,url UNINDEXED,language UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');

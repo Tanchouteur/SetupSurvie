@@ -14,7 +14,7 @@ class HTMLFigures(HTMLParser):
     def __init__(self):
         super().__init__();self.images=[];self.stack=[];self.figures=[];self.skip=0
     def handle_starttag(self,tag,attrs):
-        attrs=dict(attrs);classes=set(attrs.get('class','').split())
+        attrs={k:v or '' for k,v in attrs};classes=set(attrs.get('class','').split())
         if tag not in self.VOID:self.stack.append(tag)
         if tag in ('script','style','nav'):self.skip+=1
         if self.skip:return

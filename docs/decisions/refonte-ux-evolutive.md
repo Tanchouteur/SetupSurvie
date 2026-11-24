@@ -48,7 +48,7 @@ suivi doit distinguer travail en cours, résultat provisoire, fin et erreur. Une
 nouvelle capacité ne justifie pas à elle seule un nouvel écran ou une nouvelle
 commande permanente ; partir de l’usage et des composants déjà présents.
 
-`portal/nouveau/ui.js` fournit les primitives communes ;
+`portal/interface/ui.js` fournit les primitives communes ;
 `ux-system.css` et les styles de composants portent leurs règles.
 `ux-system.js` gère les adaptations et repères personnels. `SurvieUI.help(libellé, texte)` produit une aide
 facultative, accessible au survol, au clic, au clavier et à Échap. Les conséquences
@@ -59,7 +59,7 @@ Toute nouvelle fonction précise sa destination, ses commandes, ses états,
 son aide et sa recette. Utiliser les composants existants avant d’en ajouter.
 Les modules partagent l’identifiant et l’état serveur d’un même travail.
 Les sélecteurs ne doivent pas dépendre du texte visible. Les pages générées restent
-produites par `scripts/build_next_portal.py`, jamais modifiées isolément.
+produites par `scripts/build_portal.py`, jamais modifiées isolément.
 
 ## Coordination du chantier parallèle
 
@@ -100,3 +100,52 @@ suffisaient à déclarer le résultat visuel terminé. La reprise nettoie la cou
 maquette, unifie les cartes et clarifie les responsabilités CSS/JS ; voir la
 [référence des composants](../architecture/composants-interface.md).
 La revue visuelle sur pages remplies fait désormais partie de la recette.
+
+## Cohérence et qualité visuelle à reprendre — demande de Louis du 17 novembre 2026
+
+**Statut : travail futur demandé, conception et corrections non réalisées.** Malgré
+les travaux précédents, Louis juge le design global insuffisamment abouti : boutons,
+titres et autres éléments ne sont pas uniformes, ce qui nuit à l'esthétique et à
+la compréhension de leur rôle. Il demande de travailler leur finition et leur
+cohérence dans tout le site, pas seulement sur un écran.
+
+- **Navigation des cartes :** Louis constate qu'elle diffère de celle du reste du
+  site et demande de comprendre et corriger cet écart. Dans le code actuel,
+  `portal/map-site-nav.js` construit une barre distincte et
+  `portal/map-site-nav.css` porte ses propres styles ; le portail construit sa
+  navigation dans `portal/interface/layout.js`. Cette séparation explique les
+  implémentations différentes, mais une comparaison visuelle et fonctionnelle reste
+  à mener avant de choisir la correction.
+  *Mise à jour du 20 novembre 2026 (0.70.0) :* les deux navigations sont
+  désormais écrites en HTML avec les mêmes classes, icônes et tailles
+  (`modele.html` et `cartes.html`) ; `map-site-nav.js` ne fait plus que la
+  pastille de profil et `layout.js` ne construit plus la navigation. Voir le
+  [bilan 0.70.0](../essais/2026-11-20-portail-toujours-informe-0700.md).
+- **Modèle, RAM et GPU :** Louis trouve ces informations mal placées et intégrées
+  à la hâte dans la barre. Repenser leur emplacement, leur hiérarchie et leur
+  présentation, notamment lorsque l'espace manque ; étudier l'emploi de couleurs
+  adaptées. Conserver l'accès aux mesures détaillées et la compréhension des états.
+- **Ensemble du site :** examiner les boutons, titres, couleurs, espacements,
+  états interactifs et composants récurrents ; définir une présentation cohérente,
+  soignée et lisible qui aide à reconnaître les actions et les niveaux de titre.
+  Les choix précis restent à concevoir, pas à déduire de ce retour.
+
+Pour préparer ce chantier, comparer les pages principales et les cartes sur
+ordinateur et téléphone, y compris des écrans remplis et des états variés ;
+vérifier lisibilité, clavier et absence de dépendance à la couleur seule. Conserver
+les fonctionnalités, les destinations et l'accès aux informations existantes.
+Prévoir une revue visuelle et des essais de navigation après correction, ainsi
+qu'un essai sur iPhone réel distinct de l'émulation. Ce retour complète la demande
+antérieure d'indicateurs compacts et de navigation dans les cartes : leur présence
+est conservée, leur intégration visuelle reste à revoir.
+
+## Finition de la navigation et des commandes — 18 novembre 2026
+
+Louis demande de soigner les commandes une à une, leur alignement, leur version
+mobile et leurs transitions en partant de l'interface existante. Il donne la
+priorité à la barre PC et cite des jauges pour intégrer proprement le modèle,
+la RAM et la VRAM. La 0.43.2 commence par cette barre, la navigation des Cartes
+sur téléphone et les boutons de recherche. Les mesures partagent un composant
+entre le portail et les Cartes. La [Vue d’ensemble de l’appareil](../utilisation/mesurer-assistant-et-memoire.md#voir-le-modèle-chargé-la-ram-et-la-vram)
+garde les valeurs détaillées. La revue des autres familles de composants
+et l'essai sur iPhone physique restent à faire.

@@ -1,0 +1,211 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "theme": "autonomie",
+      "query": "préparer le foyer à une coupure",
+      "domain": "resilience"
+    },
+    {
+      "theme": "survie",
+      "query": "organiser les réserves du foyer",
+      "domain": "resilience"
+    },
+    {
+      "theme": "chasse",
+      "query": "sécurité et signalisation des promeneurs en forêt",
+      "domain": "resilience"
+    },
+    {
+      "theme": "agriculture",
+      "query": "produire des semences de tomates",
+      "domain": "resilience"
+    },
+    {
+      "theme": "energie",
+      "query": "dimensionner une batterie pour le foyer",
+      "domain": "resilience"
+    },
+    {
+      "theme": "eau",
+      "query": "eau potable",
+      "domain": "resilience",
+      "expected_source": "guide:OFF-water-treatment-2013.en.pdf"
+    },
+    {
+      "theme": "alimentation",
+      "query": "conservation des légumes",
+      "domain": "resilience"
+    },
+    {
+      "theme": "sante",
+      "query": "premiers secours citoyen",
+      "domain": "resilience"
+    },
+    {
+      "theme": "abri",
+      "query": "fixer une bâche",
+      "domain": "resilience"
+    },
+    {
+      "theme": "reparation",
+      "query": "réparer une crevaison de vélo",
+      "domain": "resilience"
+    },
+    {
+      "theme": "communications",
+      "query": "écouter les informations locales",
+      "domain": "resilience"
+    },
+    {
+      "theme": "education",
+      "query": "exercices de lecture CP",
+      "domain": "resilience"
+    },
+    {
+      "theme": "nature",
+      "query": "reconnaître les arbres méditerranéens",
+      "domain": "resilience"
+    },
+    {
+      "theme": "orientation",
+      "query": "s’orienter avec une carte et une boussole",
+      "domain": "resilience"
+    },
+    {
+      "theme": "fonds-general",
+      "query": "cycle de l’eau",
+      "domain": "culture"
+    },
+    {
+      "theme": "elevage",
+      "query": "alimentation des poules",
+      "domain": "resilience"
+    },
+    {
+      "theme": "peche",
+      "query": "entretien du matériel de pêche",
+      "domain": "resilience"
+    },
+    {
+      "theme": "plomberie",
+      "query": "réparer une fuite de robinet",
+      "domain": "resilience"
+    },
+    {
+      "theme": "habitat",
+      "query": "isoler une fenêtre",
+      "domain": "resilience"
+    },
+    {
+      "theme": "soudure",
+      "query": "prévention du risque de soudage",
+      "domain": "resilience"
+    },
+    {
+      "theme": "carburants",
+      "query": "sécurité du stockage des carburants",
+      "domain": "resilience"
+    },
+    {
+      "theme": "nuisibles",
+      "query": "protéger les réserves des rongeurs",
+      "domain": "resilience"
+    },
+    {
+      "theme": "medicaments",
+      "query": "ranger la trousse familiale",
+      "domain": "resilience"
+    },
+    {
+      "theme": "risques",
+      "query": "préparer le domicile à une inondation",
+      "domain": "resilience"
+    },
+    {
+      "theme": "nautisme",
+      "query": "lire un bulletin de météo marine",
+      "domain": "resilience"
+    },
+    {
+      "theme": "artisanat",
+      "query": "apprendre la vannerie",
+      "domain": "resilience"
+    },
+    {
+      "theme": "champignons",
+      "query": "identifier les risques de cueillette de champignons",
+      "domain": "resilience"
+    },
+    {
+      "theme": "sport",
+      "query": "échauffement avant activité physique",
+      "domain": "resilience"
+    },
+    {
+      "theme": "culture",
+      "query": "histoire des bibliothèques",
+      "domain": "culture"
+    },
+    {
+      "theme": "sciences",
+      "query": "exercices de loi d’Ohm",
+      "domain": "resilience"
+    },
+    {
+      "theme": "mesure",
+      "query": "lire un pied à coulisse",
+      "domain": "resilience"
+    },
+    {
+      "theme": "textile",
+      "query": "recoudre une déchirure",
+      "domain": "resilience"
+    },
+    {
+      "theme": "materiaux",
+      "query": "choisir du bois pour une étagère",
+      "domain": "resilience"
+    },
+    {
+      "theme": "machines",
+      "query": "entretenir les outils à main",
+      "domain": "resilience"
+    },
+    {
+      "theme": "metallurgie",
+      "query": "reconnaître les différents alliages métalliques",
+      "domain": "resilience"
+    },
+    {
+      "theme": "chimie-pratique",
+      "query": "lire les pictogrammes des produits ménagers",
+      "domain": "resilience"
+    },
+    {
+      "theme": "organisation",
+      "query": "tenir un inventaire des réserves",
+      "domain": "resilience"
+    },
+    {
+      "theme": "histoire-techniques",
+      "query": "histoire des moulins à eau",
+      "domain": "culture"
+    },
+    {
+      "theme": "eau",
+      "query": "eau potable",
+      "domain": "resilience",
+      "expected_source": "guide:OFF-water-treatment-2013.en.pdf",
+      "language": "fr",
+      "expected_filtered": true
+    },
+    {
+      "theme": "eau",
+      "query": "drinking water treatment",
+      "domain": "resilience",
+      "expected_source": "guide:OFF-water-treatment-2013.en.pdf",
+      "language": "en"
+    }
+  ]
+}

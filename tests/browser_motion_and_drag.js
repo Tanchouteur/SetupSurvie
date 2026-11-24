@@ -11,7 +11,7 @@ async page => {
   await page.locator('#chat-reset').click();
   await page.locator('#chat-input').fill('Conversation fictive pour le glisser-déposer '+Date.now());
   await page.locator('#chat-form').evaluate(n=>n.requestSubmit());
-  await page.waitForFunction(()=>!!S.conversation&&!S.job);
+  await page.waitForFunction(()=>!!S.conversation&&!S.sending&&!S.job&&new URLSearchParams(location.hash.split('?')[1]).get('conversation')===S.conversation);
   const id = await page.evaluate(()=>S.conversation), name = 'Dossier de recette '+Date.now();
   await page.locator('#assistant-folder-create').click();
   await page.locator('#assistant-editor input').fill(name);
@@ -22,27 +22,27 @@ async page => {
   const row = () => page.locator('.conversation-row').filter({has:page.locator('[data-conversation-id="'+id+'"]')});
   const target = page.locator('[data-folder-id="'+folder+'"]');
   await page.locator('#chat-input').fill('Brouillon à conserver');
-  await row().dragTo(target);
+  await row().locator('.assistant-drag-handle').dragTo(target);
   await page.waitForFunction(folder=>document.querySelector('[data-folder-id="'+folder+'"]')?.textContent.includes('(1)'),folder);
   check((await (await page.request.get(base+'/api/conversations?folder='+folder,{maxRetries:1})).json()).conversations.some(c=>c.id===id),'Glisser-déposer range réellement la conversation dans le dossier');
   check(moves.length===1,'Un seul déplacement transmis pour un dépôt');
   check((await page.locator('.toast').textContent()).includes(name),'Confirmation nommant le dossier de destination');
   check(await page.evaluate(id=>S.conversation===id,id) && await page.locator('#chat-input').inputValue()==='Brouillon à conserver','Déplacer garde la discussion ouverte et le brouillon');
-  await row().dragTo(target);
+  await row().locator('.assistant-drag-handle').dragTo(target);
   await page.waitForFunction(()=>document.querySelector('.toast').textContent.includes('déjà dans ce dossier'));
   check(moves.length===1,'Dépôt dans le dossier courant expliqué sans déplacement supplémentaire');
   await page.reload();await page.waitForFunction(()=>typeof S!=='undefined' && S.authReady && S.user&&!S.loadingConversation);
   check((await (await page.request.get(base+'/api/conversations?folder='+folder,{maxRetries:1})).json()).conversations.some(c=>c.id===id),'Classement retrouvé après rechargement');
-  await row().dragTo(page.locator('[data-folder-id=""]'));
+  await row().locator('.assistant-drag-handle').dragTo(page.locator('[data-folder-id=""]'));
   await page.waitForFunction(folder=>document.querySelector('[data-folder-id="'+folder+'"]')?.textContent.includes('(0)'),folder);
   check((await (await page.request.get(base+'/api/conversations?folder=unfiled',{maxRetries:1})).json()).conversations.some(c=>c.id===id),'Dépôt sur Sans dossier retire le classement sans supprimer la conversation');
   const before = moves.length;
   await target.evaluate((node,id)=>{const dt=new DataTransfer();dt.setData('application/x-setupsurvie-conversation',id);node.dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:dt}));},id);
   check(moves.length===before,'Un dépôt externe sans glissement local ne déclenche aucun déplacement');
-  await row().dragTo(page.locator('#assistant-discussion'));
+  await row().locator('.assistant-drag-handle').dragTo(page.locator('#assistant-discussion'));
   check(moves.length===before && !await page.locator('.assistant-dragging,.is-drop-target,.is-dragging').count(),'Dépôt hors dossier annulé proprement');
   await page.route('**/api/conversations/'+id+'/folder',route=>route.fulfill({status:503,json:{detail:'Classement temporairement indisponible.'}}));
-  await row().dragTo(target);
+  await row().locator('.assistant-drag-handle').dragTo(target);
   await page.waitForFunction(()=>document.querySelector('.toast').textContent.includes('Classement temporairement indisponible'));
   check((await (await page.request.get(base+'/api/conversations?folder=unfiled',{maxRetries:1})).json()).conversations.some(c=>c.id===id),'Échec du déplacement annoncé sans perdre ni déplacer la conversation');
   await page.unroute('**/api/conversations/'+id+'/folder');
@@ -94,7 +94,7 @@ async page => {
   check(await page.locator('#assistant-workspace').evaluate(n=>getComputedStyle(n).transitionDuration==='0s'),'La préférence de réduction supprime aussi les transitions CSS');
   await page.locator('[data-close-panel=documents]').click();await panel.waitFor({state:'hidden'});await opener.press('Enter');await panel.waitFor({state:'visible'});
   check(await page.locator('#chat-input').inputValue()==='Brouillon à conserver','Volets utilisables sans animation');
-  for(const path of ['/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau','/cartes.html?interface=nouveau']){
+  for(const path of ['/pdf.html?id=guide%3Ashelter.en.pdf','/cartes.html']){
     await page.goto(base+path);await page.waitForFunction(()=>!!window.SurvieMotion);
     check(await page.locator('body').evaluate(n=>n.classList.contains('ux-motion')),'Retour visuel commun chargé dans '+path.split('?')[0]);
     check(await page.locator('button').first().evaluate(n=>getComputedStyle(n).transitionDuration==='0s'),'Réduction des animations respectée dans '+path.split('?')[0]);

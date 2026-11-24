@@ -8,13 +8,16 @@ import threading
 import unittest
 from unittest.mock import patch,AsyncMock
 import httpx
-from pilot import library,store,search_stream,search_cache,kiwix_queries
+from pilot import library,store,search_stream,search_cache,kiwix_queries,videos
 
 
 class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         folder=tempfile.TemporaryDirectory();self.addCleanup(folder.cleanup);self.root=Path(folder.name)
         p=patch.object(store,'ROOT',self.root/'state');p.start();self.addCleanup(p.stop);store.init()
+        # This fixture tests document streams, without a background video scan
+        # outliving its temporary state directory (notably locked on Windows).
+        p=patch.object(videos,'ensure_fresh',AsyncMock(return_value='fresh'));p.start();self.addCleanup(p.stop)
         self.addAsyncCleanup(kiwix_queries.close)
 
     async def test_guide_is_received_before_a_slow_native_catalogue_finishes(self):
@@ -54,12 +57,13 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             frames=[frame async for frame in search_stream.packets('fixture')]
         self.assertIn('"state":"error"',frames[-1]);self.assertNotIn('PRIVATE',str(frames))
 
-    async def test_http_stream_is_opt_in_and_uses_a_longer_bounded_budget(self):
+    async def test_http_stream_is_opt_in_and_both_formats_use_the_portal_budget(self):
         from pilot.app import app
         found=library.SearchResults([{'id':'guide:fixture'}],{'status':'complete'})
         with patch.object(library,'search',AsyncMock(return_value=found)) as search:
             async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://fixture') as client:
                 plain=await client.get('/api/search?q=fixture');self.assertIn('application/json',plain.headers['content-type'])
+                self.assertEqual(search.await_args.kwargs['budget'],search_stream.BUDGET)
                 streamed=await client.get('/api/search?q=fixture&stream=true')
                 self.assertIn('text/event-stream',streamed.headers['content-type']);self.assertIn('"state":"done"',streamed.text)
                 self.assertEqual(search.await_args.kwargs['budget'],60);self.assertIsNotNone(search.await_args.kwargs['on_update'])
@@ -97,6 +101,22 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             _,cached=await kiwix_queries.request(store.ROOT,'fixture','/search?q=retry','fulltext',reader,generation='a')
         self.assertTrue(cached);self.assertEqual(calls,2)
 
+    async def test_responses_arriving_together_share_one_cache_commit(self):
+        batches=[];arrived=threading.Event()
+        def writer(root,entries):
+            # Hold the first commit until every response has arrived, whatever
+            # the machine load: the others must then share a single commit.
+            if not batches:arrived.wait(5)
+            batches.append(len(entries))
+        async def reader(path):return b'<rss><channel/></rss>','application/xml'
+        with patch.object(search_cache,'write_many',writer):
+            await asyncio.gather(*(kiwix_queries.request(store.ROOT,'fixture',f'/search?q=batch{i}','fulltext',reader,generation='a') for i in range(6)))
+            arrived.set();await kiwix_queries.close()
+        self.assertEqual(sum(batches),6);self.assertLessEqual(len(batches),2)
+        with patch.object(search_cache,'RESERVE_BYTES',0):
+            search_cache.write_many(store.ROOT,[(f'many{i}',(b'<rss/>','application/xml')) for i in range(3)])
+            self.assertTrue(all(search_cache.read(store.ROOT,f'many{i}') for i in range(3)))
+
     async def test_slow_cache_writer_does_not_delay_results_and_shutdown_joins_the_file_user(self):
         entered=threading.Event();release=threading.Event();closed=threading.Event()
         def writer(*args):
@@ -104,7 +124,7 @@ class SearchProgressTests(unittest.IsolatedAsyncioTestCase):
             try:release.wait(5)
             finally:closed.set()
         async def reader(path):return b'<rss><channel/></rss>','application/xml'
-        with patch.object(search_cache,'write',writer):
+        with patch.object(search_cache,'write_many',writer):
             try:
                 await asyncio.wait_for(kiwix_queries.request(store.ROOT,'fixture','/search?q=slow-disk','fulltext',reader,generation='a'),1)
                 self.assertTrue(await asyncio.to_thread(entered.wait,1))

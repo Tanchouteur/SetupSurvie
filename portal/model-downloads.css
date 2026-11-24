@@ -1,0 +1,67 @@
+#model-downloads {
+  --model-line: var(--ds-line, #e5dbc9);
+  --model-surface: var(--ds-surface, #fffdf8);
+  --model-radius: var(--ds-r-lg, 18px);
+}
+#model-downloads [hidden] { display: none; }
+#model-downloads > p { max-width: 64ch; }
+.model-catalogue { display: grid; gap: .75rem; margin-block-start: 1.25rem; }
+.model-catalogue h3 { margin: 0; font-size: 1.05rem; }
+.model-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--model-surface);
+  border: 1px solid var(--model-line);
+  border-radius: var(--model-radius);
+}
+.model-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .85rem 1rem;
+}
+.model-list li + li { border-top: 1px solid var(--model-line); }
+.model-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.model-list li p { margin: .125rem 0 0; }
+.model-list button { flex: none; min-height: 44px; padding-inline: .85rem; }
+.model-installed {
+  flex: none;
+  padding: .3rem .65rem;
+  border-radius: 99px;
+  background: var(--ds-ok-soft, #e8efe4);
+  color: var(--ds-ok, #31563a);
+  font-size: .825rem;
+  font-weight: 700;
+}
+.model-comparison > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 44px;
+  list-style: none;
+}
+.model-comparison > summary::-webkit-details-marker { display: none; }
+.model-comparison > summary::after { content: '⌄'; font-weight: 700; }
+.model-comparison[open] > summary::after { transform: rotate(180deg); }
+.model-comparison > .model-list { margin-top: .5rem; }
+.model-progress {
+  margin-block: 1rem;
+  padding: .85rem 1rem;
+  border: 1px solid var(--model-line);
+  border-radius: var(--model-radius);
+  background: var(--ds-surface-2, #f2ebde);
+}
+.model-progress[data-state="error"] { background: var(--ds-danger-soft, #fbe6e1); }
+.model-progress[data-state="complete"] { background: var(--ds-ok-soft, #e8efe4); }
+.model-progress progress { display: block; width: 100%; margin-block: .5rem; accent-color: var(--ds-ember-strong, #93320a); }
+.model-progress-title { overflow-wrap: anywhere; }
+.model-progress-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+.model-progress-footer button { min-height: 44px; }
+.model-progress-detail:empty, .model-notice:empty { display: none; }
+
+@media (max-width: 360px) {
+  .model-list li { flex-wrap: wrap; }
+}

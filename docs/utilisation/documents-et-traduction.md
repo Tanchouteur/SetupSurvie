@@ -1,6 +1,6 @@
 # Documents, favoris et traductions
 
-**Guide de référence — pilote 0.37.3, 17 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
+**Guide de référence — pilote 0.60.2, 19 novembre 2026.** Fonction du portail ; les conversations Open WebUI restent distinctes.
 
 ## Lire et retrouver un document
 
@@ -9,6 +9,12 @@ zoom, recherche dans le texte et illustrations d’origine. Le lecteur PDF.js es
 fourni localement, sans service Internet ni IA. **Texte et assistant** conserve
 l’aperçu textuel pour poser des questions. Le bouton d’ouverture directe et le
 téléchargement restent disponibles si le lecteur rencontre un problème.
+
+Depuis 0.41.0, les grandes images sont redimensionnées pour l’affichage avec
+un budget de canvas explicite. Le PDF source, ses pages et ses illustrations
+restent intacts ; l’ouverture directe et le téléchargement donnent toujours
+l’original. Cela ne borne pas toute la mémoire nécessaire au décodage et ne
+garantit pas la lecture de tout PDF sur un téléphone.
 
 Avec le profil choisi, **Ajouter aux favoris** marque un document ou un article
 Kiwix. Les favoris sont propres au profil, enregistrés côté serveur et conservés entre
@@ -104,6 +110,21 @@ panne de cette option ne bloque ni l’original, ni les PDF, ni la recherche. Le
 fichiers partagés restent également ouvrables depuis la Bibliothèque. Le modèle
 peut être arrêté pendant cette lecture.
 
+## Lire confortablement une traduction en cours — 0.39.0
+
+Depuis la Bibliothèque, le panneau conserve ses commandes et les passages déjà
+lus pendant les actualisations. L’état donne les passages et pages terminés,
+ainsi que la page en cours ; **Lire les derniers passages traduits** permet de
+rejoindre volontairement le dernier groupe prêt, sans déplacement automatique.
+Une actualisation ne remet pas le texte au début et ne referme pas les comparaisons.
+Dans l’assistant, **Lire le texte français** ouvre une fenêtre large sur ordinateur.
+
+Les titres, listes, tableaux et formules présents dans le texte sont rendus dans
+une présentation de lecture ; les simples retours de ligne de la prose peuvent
+se réunir. Ce rendu ne reconstitue pas la composition exacte d’un PDF, ses colonnes
+ou ses illustrations. Les pages originales et les comparaisons restent accessibles.
+Le rendu ne change ni le texte enregistré, ni les contrôles, ni les exports.
+
 ## Traduire en français
 
 Depuis **0.34.0**, les commandes restent dans le lecteur du portail. Dans le
@@ -116,15 +137,64 @@ de chaque page Kiwix ni une traduction de vidéo.
 3. Cliquer sur **Démarrer la traduction**. Une conversation associée conserve le travail, sans remplacer la discussion en cours. Un lien permet de l’ouvrir. Les conversations existantes gardent également leurs commandes de traduction : une demande comme « traduit moi ce guide en français » peut déclencher la traduction dédiée. Avec plusieurs documents choisis, ce traitement porte sur le seul document indiqué.
 4. Lire les passages terminés par groupes de dix, avec page/section, modèle utilisé, contrôle enregistré et **Comparer avec l’original**. La progression ne ferme pas les comparaisons ouvertes. Les propositions refusées restent signalées et séparées du texte traduit.
 5. **Mettre en pause** conserve les passages terminés. Choisir au besoin un autre mode puis reprendre explicitement le reste. **Arrêter** conserve les passages terminés. **Supprimer ce travail** demande confirmation ; supprimer le travail privé n’efface ni l’original ni une version déjà publiée.
-6. Une nouvelle traduction terminée est ajoutée automatiquement aux **documents locaux, visibles par tous**. Le panneau donne accès au document partagé et permet de retenter un ajout échoué. Les anciennes traductions privées restent privées jusqu’à publication explicite.
-7. Télécharger le texte français permet aussi de conserver une traduction partielle ; les passages manquants y sont indiqués. Retrouver les travaux récents dans **Mon appareil → Travaux en cours → Mes traductions et synthèses**, ou depuis leur original.
+6. Quand le traitement a parcouru tous les passages, le texte français disponible est ajouté automatiquement aux **documents locaux, visibles par tous**. Une traduction incomplète est signalée comme partielle, avec le nombre de passages disponibles, les emplacements manquants et un lien vers l’original. Le panneau donne accès au document partagé et permet de retenter un ajout échoué. Les anciennes traductions privées restent privées jusqu’à publication explicite.
+7. **Reprendre les passages à vérifier** relance ensemble les passages non traduits avec le mode choisi. Une reprise réussie complète le document partagé au même lien. Télécharger le texte français permet de conserver une copie avec les passages manquants indiqués. Retrouver les travaux récents dans **Mon appareil → File d’attente**, ou depuis leur original.
+
+Depuis **0.60.0**, les échecs propres à un passage déclenchent une tentative
+de correction automatique. Une réponse tronquée ou mal formée peut être
+retentée en deux morceaux courts. Si le passage reste inutilisable, il est
+marqué **À reprendre** et le traitement passe au suivant. Une panne du moteur
+ou une pause explicite suspend le traitement. Lorsqu’aucun passage français
+n’est disponible à la fin, l’original reste le document à consulter.
+
+Depuis **0.49.1**, le modèle reçoit un format de réponse centré sur le texte
+traduit. GPT-OSS pouvait choisir le statut de refus proposé par l’ancien format
+pour un passage ordinaire. Une réponse vide, interrompue ou signalée comme un
+refus reste à reprendre. Les contrôles de traduction sont appliqués avant de
+compter un passage terminé. Pour une traduction interrompue, utilisez
+**Reprendre avec le modèle choisi** dans le travail existant.
+
+De **0.50.2** à **0.59.0**, si la réponse est vide, tronquée ou mal formée, ou si
+le contrôle rejette le texte proposé, SetupSurvie retente le passage avec le
+même modèle. Il le découpe en deux si une fin de phrase ou de ligne adaptée
+est disponible. Chaque morceau est vérifié, puis le passage complet est vérifié
+avant son enregistrement. Le nouvel essai écarte l’extrait du passage précédent
+et conserve les termes préférés. Les passages terminés et leur numérotation
+sont conservés, y compris quand on reprend un travail créé avant la mise à jour.
+Un refus explicite ou un échec persistant laisse le passage en attente de reprise.
+
+Depuis **0.52.2**, une coupure réseau en cours de réponse déclenche un
+nouvel essai sur le passage entier, avec le même modèle et le même texte
+source. La réponse partielle est écartée. Si la connexion se coupe à nouveau,
+le travail attend une reprise. Une réponse complète mais inutilisable peut
+toujours déclencher un nouvel essai sur des morceaux plus courts. Si un
+rang anglais chiffré disparaît, le moteur peut le recevoir en toutes lettres
+lors d’un nouvel essai. Le résultat reste vérifié contre le passage original.
+
+Depuis **0.55.3**, pour un document identifié comme anglais, le contrôle
+reconnaît qu’un nombre comme `400,000` correspond à `400 000` en français.
+Les changements de valeur ou d’unité bloquent toujours le passage. La reprise
+réutilise le texte et les passages déjà enregistrés.
+
+Le contrôle distingue aussi le verbe « a » et les mots élidés comme « s’il »
+d’une unité de mesure, ainsi qu’un article « A » après un numéro de page isolé.
+Une modification de la valeur ou d’une unité explicite
+comme « A » (ampères) continue de bloquer la publication. Un ordinal anglais
+comme « 1st » peut être rendu par « 1re » ou « première ». Une mesure
+manquante reste bloquante même si le même chiffre figure dans un ordinal.
 
 Le traitement continue quand le navigateur est fermé, tant que le serveur et le moteur fonctionnent. Après un arrêt du serveur, la traduction est mise en pause et attend une reprise explicite. Une pause du moteur, notamment le mode jeu, empêche un nouveau départ ou une reprise ; elle est aussi vérifiée entre les passages. Aucun démarrage forcé n’est effectué.
 
 Depuis 0.1.18, le panneau de traduction peut se réduire et défiler sur les écrans
 courts pour garder le champ de question et son bouton d’envoi accessibles.
 
-Une traduction utilise la même file d’inférence que les questions du portail. Elle libère cette file entre les passages. Une seule traduction active par compte et quatre en attente ou en cours sur le serveur sont autorisées. Alterner les modèles entre questions et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
+Une traduction utilise la même [file d’attente](file-attente.md) que les questions
+du portail et libère le moteur entre les passages. Quand le moteur est occupé
+ou la file en pause, **Ajouter à la file d’attente** permet de lancer ou reprendre
+une traduction. Un même profil peut mettre en file des traductions dans plusieurs
+conversations. La limite est d’une traduction en cours ou en attente par
+conversation et de quatre sur le serveur. Alterner les modèles entre questions
+et traduction peut provoquer des rechargements par Ollama et augmenter les délais.
 
 Depuis 0.20.1, chaque passage reprend le **contexte configuré pour son modèle**,
 limité par la capacité annoncée par le moteur local. Il ne revient plus toujours
@@ -220,8 +290,8 @@ comme traduit. Ils ne demandent ni Internet ni seconde inférence.
 
 | Résultat | Comportement et action |
 | --- | --- |
-| Nombres ajoutés, perdus ou modifiés ; association nombre/unité reconnue différente ; long texte identique à la source | Passage refusé, traitement interrompu. La proposition reste visible comme **refusée, ne pas utiliser** ; elle ne compte pas comme traduite et n’est pas publiée. Choisir un autre mode puis **Reprendre**. Les passages terminés restent conservés |
-| Réponse beaucoup plus courte ou longue ; négation anglaise sans équivalent français repéré ; blancs ou caractères manquants dans une commande extraite | Passage conservé avec **À relire**. L’avertissement apparaît dans la conversation, l’export et le document local partagé. Comparer à la source |
+| Valeur ou unité reconnue modifiée, formule altérée, prose anglaise identique ou réponse inutilisable | Après une tentative de correction, le passage reste **À reprendre** si l’anomalie persiste. La proposition refusée reste privée, le traitement continue et la version partagée indique le passage manquant |
+| Numéro de référence ou ordinal ambigu ; réponse beaucoup plus courte ou longue ; négation anglaise sans équivalent français repéré ; blancs ou caractères manquants dans une commande extraite | Passage conservé avec **À relire**. L’avertissement apparaît dans la conversation, l’export et le document local partagé. Comparer à la source |
 | Aucune anomalie repérée | Passage conservé avec la mention **Contrôles limités**. Cela ne valide pas son sens ni sa fidélité |
 | Ancien passage déjà traduit | **Pas de contrôle enregistré**. Il n’est pas présenté comme validé rétroactivement ; les anciennes publications restent inchangées |
 
@@ -234,13 +304,14 @@ source et une proposition refusée restent privés ; le partage n’ajoute que l
 avertissements aux traductions acceptées. Les avertissements ne sont pas un
 certificat de relecture humaine.
 
-Le modèle reçoit la consigne de garder les chiffres, signes, occurrences et
+Les liens, DOI et notices bibliographiques reconnues sont réinsérés à partir de
+l’original. Un passage qui contient uniquement ces références est conservé sans
+appel au modèle. Le modèle reçoit la consigne de garder les chiffres, signes, occurrences et
 unités, sans conversion. Les contrôles tolèrent notamment `1.5` / `1,5`, `1 000` /
 `1000`, et les noms d’unités courants traduits. Ils sont conservateurs : un nombre
 écrit en lettres, une conversion correcte ou un format de milliers ambigu peut
-bloquer le passage. Il n’existe pas de bouton pour accepter silencieusement une
-proposition refusée. Si un autre mode reste bloqué, conserver l’original et
-l’export des passages terminés ; une traduction manuelle reste nécessaire.
+laisser un passage à reprendre. La version partagée et l’export indiquent où
+consulter l’original. Les réponses refusées restent dans le travail privé.
 
 Depuis la version **2** de ces contrôles (0.20.1), un avertissement signale aussi
 certains trous du texte source, comme une touche dessinée dans un PDF devenue
@@ -251,8 +322,14 @@ ne réalise aucun OCR. Les anciens rapports gardent leur version et leurs résul
 
 La version **3** des contrôles (0.32.0) reconnaît aussi les chiffres joints à un
 libellé par l’extraction PDF : `Chapter4` et `Chapitre 4` portent le même nombre.
-Une modification vers `Chapitre 5` ou de `X7` vers `X8` reste bloquante. Les
-seuils de longueur, négations et unités ne changent pas. La consigne préserve
+Dans cette version, une modification vers `Chapitre 5` ou de `X7` vers `X8` restait bloquante. Depuis la version 10 des contrôles (0.60.0), un numéro de chapitre modifié produit un avertissement. Les
+seuils de longueur, négations et unités ne changent pas. Depuis la version **11**
+des contrôles (0.113.2), un débit garde ses deux unités : `5 mg/h` devenu
+`5 mg/min` ou `5 L/min` devenu `5 L/h` est bloqué, ainsi que `kcal`/`kJ`,
+`mV`/`µV` et les unités anglo-saxonnes converties. Un nombre échangé avec un
+numéro de page (`5 comprimés, page 12` devenu `12 comprimés, page 5`) reste
+bloquant ; `10 – 20 mg` est lu comme une plage. Les anciens rapports gardent
+leur version. La consigne préserve
 aussi les noms inscrits sur les touches et boutons. Si une inscription reconnue
 comme `CALL` est remplacée par `APPEL`, un avertissement demande de comparer
 l’original et l’appareil ; toutes les inscriptions et interfaces ne sont pas
@@ -293,8 +370,9 @@ une traduction relue par une personne compétente.
 
 ## Partage, sauvegarde et suppression
 
-**Depuis 0.1.25, une nouvelle traduction terminée devient un document local
-partagé**, consultable sans compte sur le réseau familial. Les brouillons,
+**Une nouvelle traduction devient un document local partagé** à la fin de son
+traitement, consultable sans compte sur le réseau familial. Depuis 0.60.0,
+le texte français disponible est aussi partagé si des passages restent à reprendre. Les brouillons,
 instantanés sources, conversations et exports privés restent rattachés au profil, hors du fonds documentaire partagé.
 Les anciennes traductions restent privées : leur propriétaire doit choisir
 **Ajouter aux documents locaux · visible par tous** pour les publier. Cette mise
@@ -303,15 +381,16 @@ Les anciennes traductions restent privées : leur propriétaire doit choisir
 Le document partagé est un fichier HTML français indépendant, marqué **Traduction
 IA non vérifiée**. Il conserve le titre, la date et l’édition connues de l’original,
 les pages traitées, les modèles employés et un lien vers l’original. Une traduction
-d’une plage de pages l’indique ; des pages sans texte donnent une traduction
-signalée partielle. Les nombres, unités et consignes doivent toujours être
+d’une plage de pages l’indique. Un passage non traduit ou sans texte extractible
+est signalé à son emplacement. Une reprise réussie retravaille les passages
+oubliés et actualise le fichier au même lien. Les nombres, unités et consignes doivent toujours être
 comparés à l’original. Une traduction ne constitue pas une seconde source fiable.
 Les droits de l’original continuent de s’appliquer ; le partage local n’accorde
 aucune autorisation supplémentaire de revente ou redistribution.
 
 Supprimer une conversation supprime ses associations et ses traductions privées,
 **mais conserve les documents déjà publiés** et les favoris. Une traduction active
-doit d’abord être mise en pause. Une traduction terminée dont l’ajout automatique
+doit d’abord être mise en pause. Une traduction dont l’ajout automatique
 a échoué bloque la suppression pour préserver son résultat : réessayer l’ajout
 avant de supprimer la conversation. Les originaux ne sont pas modifiés.
 
@@ -325,7 +404,7 @@ La publication est actuellement limitée à 20 millions de caractères traduits.
 
 ## Si une fonction ne répond plus
 
-Le lien **Lecture de secours** ouvre `/secours.html`. Il donne un accès aux fichiers
+Le lien **Documents de secours** ouvre `/secours.html`. Il donne un accès aux fichiers
 locaux et à Kiwix sans API du pilote ni moteur IA. Sa liste est la dernière liste
 statique produite par l’indexation (ou le catalogue d’installation précédent) ; son
 filtre porte sur les titres. Si elle manque, le lien Kiwix reste accessible. Le
@@ -393,11 +472,13 @@ les légendes d’origine ; il n’ajoute pas de traduction des libellés ni d�
 
 ## Lire pendant que le document se traduit — 0.28.0
 
-Déplier le panneau de traduction dans la conversation. Dès qu’un passage est
-terminé, son texte français apparaît : vous pouvez commencer à lire pendant que
-les suivants sont préparés. Le suivi indique les pages/sections entièrement
-traduites, les pages commencées et celle en cours, en plus des passages. Une page
-illustrée sans texte exploitable reste signalée, sans être comptée comme traduite.
+Depuis **0.58.0**, dans l’Assistant, le bandeau **Traduction** au-dessus de la
+discussion affiche l’état, le nombre de passages traduits et les commandes.
+Les passages terminés apparaissent dans le fil au fur et à mesure, même avec
+le bandeau replié. Les passages refusés par les contrôles et ceux dont le texte
+est illisible sont signalés dans le fil. Les passages encore en attente sont
+comptés dans la progression. Le suivi indique aussi les pages ou sections
+entièrement traduites, les pages commencées et celle en cours.
 
 Les actualisations ne referment plus une comparaison avec l’original et ne
 remplacent pas un passage déjà prêt. **Passages suivants/précédents** parcourent
@@ -417,13 +498,14 @@ serveur, mais cette position locale n’est pas transférée automatiquement.
 Lire ou recharger ne reprend pas une traduction en pause.
 
 Le brouillon en cours reste dans la conversation. Sa publication dans les
-traductions partagées attend la fin du traitement ; les avertissements de
+traductions partagées attend que tous les passages aient été parcourus. La version peut être partielle et indique les éléments manquants. Les avertissements de
 traduction automatique restent visibles dès les premiers passages.
 
 ## Gérer une traduction — 0.29.0
 
-Les commandes se trouvent dans le panneau de traduction et dans **Lire le texte
-français** pendant la lecture :
+Les commandes se trouvent dans le bandeau **Traduction**, au-dessus de la
+discussion, et dans la fenêtre **Lire le texte français**. Dans le bandeau,
+ouvrez **Plus d’actions** pour arrêter, télécharger ou supprimer le travail.
 
 - **Mettre en pause** interrompt le passage en cours et conserve les précédents.
 - **Arrêter la traduction** conserve aussi le texte, avec l’état **Arrêtée**.

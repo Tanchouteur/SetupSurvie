@@ -43,16 +43,34 @@ def original_revision(payload):
     except (OSError,ValueError,KeyError):return None
 
 
-def items(errors=None):
+def published_indexes():
+    """Yield only complete files placed in the published inventory directory."""
     root=directory()
     if not root.is_dir() or video_inventory.is_link(root):return
     for path in sorted(root.glob('*.sqlite')):
-        if not re.fullmatch('[a-f0-9]{24}\\.sqlite',path.name) or video_inventory.is_link(path):continue
+        if not re.fullmatch('[a-f0-9]{24}\\.sqlite',path.name):
+            continue
+        try:
+            info = video_inventory.regular(path)
+        except (OSError, ValueError):
+            continue
+        yield path, info
+
+
+def items(errors=None):
+    for path, _ in published_indexes():
         try:
             with zim_video_inventory.connect(path,True) as db:
+                titles=db.execute('SELECT value FROM metadata WHERE key=?',(zim_video_inventory.YOUTUBE_TITLES,)).fetchone()
+                has_youtube_catalogue=titles is not None
+                titles=json.loads(titles[0]) if titles else {}
                 for row in db.execute('SELECT payload FROM video_items ORDER BY id'):
                     value=json.loads(row[0])
+                    if not zim_video_inventory.standalone_media(value['path'],value['media']['mimetype']):
+                        continue
                     if original_revision(value):
+                        value['title']=zim_video_inventory.display_title(value,titles)
+                        value['youtube_archive']=has_youtube_catalogue
                         for track in value['tracks']:
                             if track.get('archive_cache') and track['technical_status']=='passed':
                                 try:
@@ -74,8 +92,12 @@ def progress():
     path=directory()/'progress.json'
     try:
         if any(video_inventory.is_link(parent) for parent in (store.ROOT,directory(),path)) or video_inventory.regular(path).st_size>2_000_000:raise ValueError()
-        value=json.loads(path.read_text())
+        value=json.loads(path.read_text(encoding='utf-8'))
         if not isinstance(value,dict) or value.get('schema')!=1:raise ValueError()
+        # Older reports counted paused and failed attempts as examined.
+        if isinstance(value.get('results'),list):
+            value['completed']=sum(row.get('status') in zim_video_inventory.EXAMINED_STATUSES
+                                   for row in value['results'] if isinstance(row,dict))
         return value
     except (OSError,ValueError):return {'schema':1,'phase':'not_started','archives':0,'completed':0,'results':[],'unexamined':[]}
 
@@ -93,6 +115,11 @@ async def status():
     value=await asyncio.to_thread(state)
     try:host=await operations.library_command()
     except HTTPException:return {**value,'control_notice':'Le suivi du PC serveur ne répond pas. Les inventaires déjà terminés restent disponibles.'}
+    if host.get('initial_video_inventory_pending'):
+        message = ('L’examen demandé à l’installation attend que le PC serveur soit disponible.'
+                   if host.get('index_reader_ready') else
+                   'L’examen demandé à l’installation attend la préparation de l’outil d’indexation.')
+        value['control_notice'] = message
     if host.get('action')!='video-inventory':return value
     value['host_job']={key:host[key] for key in ('id','phase') if key in host}
     same=host.get('id')==value.get('job_id')
@@ -110,7 +137,7 @@ def coverage():
     if not ZIMS.is_dir():return {'status':'not_available','archives':0,'examined':0}
     files=[path for path in ZIMS.glob('*.zim') if path.is_file() and not path.is_symlink()]
     if not files:return {'status':'not_available','archives':0,'examined':0}
-    value=progress();ready={row['archive']:row for row in value.get('results',[]) if row.get('status') in ('completed','reused','partial')}
+    value=progress();ready={row['archive']:row for row in value.get('results',[]) if row.get('status') in zim_video_inventory.EXAMINED_STATUSES}
     examined=0
     for path in files:
         saved=ready.get(path.name,{}).get('revision',{})

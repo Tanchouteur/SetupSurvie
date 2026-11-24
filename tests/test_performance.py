@@ -16,9 +16,12 @@ class Found(list):coverage={'status':'partial','searched':2,'failed':1,'processi
 
 
 class PerformanceTests(unittest.IsolatedAsyncioTestCase):
+    # Windows runners can take several seconds to publish the durable reports.
+    CAMPAIGN_TIMEOUT = 30
+
     def setUp(self):
         temp=tempfile.TemporaryDirectory();self.addCleanup(temp.cleanup)
-        self.calls=[];self.pause=False;self.fail=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
+        self.calls=[];self.pause=False;self.memory_failure=False;self.hang=False;self.no_reads=False;self.started=asyncio.Event()
         for module,key,value in [(store,'ROOT',Path(temp.name)),(perf,'ACTIVE',{}),(perf,'REPORTS',{}),(perf,'INTERVAL',.01),(perf,'BASELINE',.01),
                                  (engine,'LOCK',asyncio.Semaphore(1)),(engine,'ACTIVE',{}),(translations,'ACTIVE',{}),(engine,'MEASUREMENTS',{})]:
             self.mock(module,key,value)
@@ -46,7 +49,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(payload['options']['num_predict'],512)
             self.assertNotIn('tools',payload);self.assertNotEqual(payload.get('keep_alive'),0)
             if self.hang:self.started.set();await asyncio.Event().wait()
-            if self.fail:return httpx.Response(200,content=b'{"error":"out of memory"}\n')
+            if self.memory_failure:return httpx.Response(200,content=b'{"error":"out of memory"}\n')
             return httpx.Response(200,content=json.dumps({'done':True,'done_reason':'stop','message':{'content':'PRIVATE synthetic answer'},'load_duration':1000000,'eval_duration':2000000,'eval_count':3}).encode()+b'\n')
         self.mock(httpx,'AsyncClient',lambda **kw:original(transport=httpx.MockTransport(handler),**kw))
 
@@ -55,7 +58,12 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
 
     async def finish(self):
         report=await perf.start('rapide','family','fixture')
-        await asyncio.wait_for(perf.ACTIVE[report['id']],5)
+        task = perf.ACTIVE[report['id']]
+        done, _ = await asyncio.wait({task}, timeout=self.CAMPAIGN_TIMEOUT)
+        if not done:
+            await perf.cancel()
+            self.fail('The fixture campaign did not finish within the test deadline')
+        await task
         return perf.status(full=True)
 
     async def test_full_campaign_separates_repeats_exports_no_private_text_and_cleans_jobs(self):
@@ -80,7 +88,7 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             'catalog':{'state':'stale','collections':135,'age_seconds':60,'error':'PRIVATE-catalog'},
             'local_index':{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4,'started':'PRIVATE-time','reader_probe':{'path':'PRIVATE-reader'}}})
         report=await self.finish();coverage=report['steps'][0]['coverage']
-        self.assertEqual(report['status'],'completed');self.assertEqual(report['reason'],'completed_with_gaps')
+        self.assertEqual(report['status'],'completed',report);self.assertEqual(report['reason'],'completed_with_gaps')
         self.assertEqual(coverage['videos'],{'status':'not_indexed','results':0})
         self.assertEqual(coverage['catalog'],{'state':'stale','collections':135,'age_seconds':60})
         self.assertEqual(coverage['local_index'],{'phase':'completed','archives':15,'completed':15,'articles':300,'workers':4})
@@ -122,14 +130,16 @@ class PerformanceTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(db.execute("SELECT id FROM conversations WHERE id='keep-user'").fetchone())
 
     async def test_model_memory_failure_kept_and_does_not_abort_classical_report(self):
-        self.fail=True;report=await self.finish()
-        self.assertEqual(report['status'],'completed')
+        self.memory_failure=True;report=await self.finish()
+        self.assertEqual(report['status'],'completed',report)
         self.assertEqual(report['reason'],'completed_with_gaps')
         self.assertEqual(report['steps'][6]['reason'],'memory_error')
         self.assertEqual(report['steps'][6]['status'],'failed')
 
     async def test_cancel_in_flight_keeps_completed_steps_and_releases_lock(self):
-        self.hang=True;report=await perf.start('rapide','family','fixture');await asyncio.wait_for(self.started.wait(),3)
+        self.hang=True;await perf.start('rapide','family','fixture')
+        self.addAsyncCleanup(perf.cancel)
+        await asyncio.wait_for(self.started.wait(),self.CAMPAIGN_TIMEOUT)
         result=await perf.cancel()
         self.assertEqual(result['status'],'cancelled');self.assertEqual(len(result['steps']),7)
         self.assertFalse(engine.LOCK.locked());self.assertFalse(perf.running())

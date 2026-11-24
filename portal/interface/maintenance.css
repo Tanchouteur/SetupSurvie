@@ -1,0 +1,121 @@
+/* Updates in the navigation, tracking on the home page and maintenance mode. */
+
+/* ---------- Version number and update entry ---------- */
+/* Normally the entry is just the version number; it turns into a button only
+   when a newer version exists. */
+.ds-nav-version.update-nav-replaced { display: none; }
+.update-nav { position: relative; flex: none; align-self: center; }
+.update-nav[hidden] { display: none; }
+.next-interface .update-nav > button.update-nav-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 6px;
+  color: var(--ds-ink-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ds-r-full);
+  font: 400 .6875rem/1.2 var(--ds-font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.next-interface .update-nav > button.update-nav-button:is(:hover, :focus-visible) { color: var(--ds-ink); background: var(--ds-surface-2); box-shadow: none; }
+.next-interface .update-nav > button.update-nav-button:active { scale: 1; }
+.update-nav-icon, .update-nav-label, .update-nav-dot { display: none; }
+.update-available .update-nav-version { display: none; }
+.next-interface .update-nav.update-available > button.update-nav-button {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--ds-ember-strong);
+  background: var(--ds-ember-soft);
+  border-color: var(--ds-ember);
+  font: 600 .8125rem/1.2 var(--ds-font);
+}
+.next-interface .update-nav.update-available > button.update-nav-button:is(:hover, :focus-visible) { color: var(--ds-ember-strong); background: var(--ds-ember-soft); border-color: var(--ds-ember-strong); }
+.update-available .update-nav-icon { display: inline; font-size: 1rem; line-height: 1; }
+.update-available .update-nav-label { display: inline; }
+.update-available .update-nav-dot {
+  display: block;
+  position: absolute;
+  inset: -3px -3px auto auto;
+  width: 9px;
+  height: 9px;
+  background: var(--ds-ember);
+  border: 2px solid var(--ds-surface);
+  border-radius: 50%;
+}
+.update-nav-preview {
+  position: absolute;
+  z-index: 35;
+  inset: calc(100% + 6px) auto auto 0;
+  display: none;
+  box-sizing: border-box;
+  width: min(360px, 46vw);
+  padding: 14px 16px;
+  gap: 6px;
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line-strong);
+  border-radius: var(--ds-r-lg);
+  box-shadow: var(--ds-shadow-4);
+}
+/* Invisible bridge: the pointer can move down to the preview without closing it. */
+.update-nav-preview::before { content: ''; position: absolute; inset: -12px 0 auto; height: 12px; }
+.update-nav:is(:hover, :focus-within) > .update-nav-preview { display: grid; }
+.update-nav-preview p { margin: 0; color: var(--ds-ink-2); line-height: 1.4; }
+.update-nav-preview .update-nav-error { color: var(--ds-danger); }
+.update-nav-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.update-nav-actions [hidden], .update-nav-preview [hidden] { display: none; }
+@media (max-width: 760px) {
+  .update-nav-desktop { display: none; }
+  .next-interface .update-nav.update-available > button.update-nav-button { min-height: 32px; padding: 0 9px; font-size: .75rem; }
+}
+
+/* ---------- Confirmation ---------- */
+.update-dialog { max-width: min(560px, calc(100vw - 32px)); }
+.update-dialog h3 { margin: 14px 0 4px; font-size: 1rem; }
+.update-dialog-changes { max-height: 12rem; overflow: auto; margin: 0; padding-left: 1.2em; line-height: 1.45; }
+.update-dialog-warning, .update-dialog-queue {
+  padding: 10px 12px;
+  background: var(--ds-warn-soft);
+  border: 1px solid var(--ds-warn-line);
+  border-radius: var(--ds-r-sm);
+  line-height: 1.45;
+}
+.update-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.update-dialog [hidden] { display: none; }
+
+/* ---------- Home page and banner ---------- */
+.maintenance-home { margin: 0 auto 20px; max-width: 880px; }
+.maintenance-home[hidden] { display: none; }
+.maintenance-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  padding: 8px 16px;
+  color: var(--ds-warn);
+  background: var(--ds-warn-soft);
+  border-bottom: 1px solid var(--ds-warn-line);
+  font-weight: 600;
+}
+.maintenance-banner[hidden] { display: none; }
+.maintenance-banner a { min-height: 32px; display: inline-flex; align-items: center; color: inherit; }
+
+/* ---------- Maintenance mode: only the tracking stays reachable ---------- */
+body.maintenance-mode #navigation .nav-item:not([data-route="accueil"]),
+body.maintenance-mode .work-queue-nav,
+body.maintenance-mode .update-nav,
+body.maintenance-mode .ds-search-trigger,
+body.maintenance-mode .sidebar-section,
+body.maintenance-mode #view-home > :not(#maintenance-home) { display: none !important; }
+body.maintenance-mode #navigation::after {
+  content: "Maintenance en cours";
+  align-self: center;
+  padding: 0 14px;
+  color: var(--ds-warn);
+  font-weight: 600;
+}

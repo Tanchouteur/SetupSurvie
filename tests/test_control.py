@@ -16,6 +16,16 @@ import setup,control
 
 
 class ControlTests(unittest.TestCase):
+    def test_status_distinguishes_no_loaded_model_from_failed_model_observation(self):
+        for payload,available in [({'models':[]},True), (OSError('engine observation unavailable'),False)]:
+            self.server.cache_time=0
+            replies=[{'version':'fixture'},payload]
+            with patch.object(control,'hardware',return_value={'memory':{},'gpus':[]}),patch.object(self.app,'request',side_effect=replies):
+                state=self.server.status()
+            self.assertTrue(state['online'])
+            self.assertEqual(state['models'],[])
+            self.assertEqual(state['models_available'],available)
+
     def test_nonwindows_hardware_query_accepts_fractional_gpu_temperature(self):
         output = SimpleNamespace(returncode=0, stdout='NVIDIA GPU, 8192, 1024, 10, 46.73\n')
         with patch.object(control,'os',SimpleNamespace(name='posix')),patch.object(control.subprocess, 'run', return_value=output) as run:
@@ -53,6 +63,40 @@ class ControlTests(unittest.TestCase):
                 self.assertEqual(error.exception.code,code)
             change.assert_not_called()
 
+    def test_update_routes_are_authenticated_and_require_confirmation(self):
+        token=control.key(self.c)
+        with patch.object(self.server.updates,'start_update',return_value='a'*32) as start:
+            with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/start',None,{'confirmed':True})
+            self.assertEqual(error.exception.code,401)
+            with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/start',token,{})
+            self.assertEqual(error.exception.code,409)
+            start.assert_not_called()
+            with self.post('/update/start',token,{'confirmed':True}) as response:
+                self.assertEqual(json.load(response),{'accepted':True,'id':'a'*32})
+        with self.assertRaises(urllib.error.HTTPError) as error:self.post('/update/check',token)
+        self.assertEqual(error.exception.code,409)  # Linux installations update from their own procedure.
+        request=urllib.request.Request(self.base+'/update',headers={'Authorization':'Bearer '+token})
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request,timeout=3) as response:
+            self.assertFalse(json.load(response)['supported'])
+
+    def test_library_reference_preview_is_authenticated_and_read_only(self):
+        import library_reference
+
+        path = '/library/reference-preview'
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.post(path)
+        self.assertEqual(error.exception.code, 401)
+        with self.post(path, control.key(self.c)) as response:
+            preview = json.load(response)
+        self.assertEqual(preview['counts'], {'missing': len(library_reference.load()['items'])})
+        self.assertGreater(preview['download_bytes'], 0)
+        with self.post(path, control.key(self.c), {'restore': True}) as response:
+            plan = json.load(response)
+        self.assertEqual(len(plan['confirmation_token']), 64)
+        self.assertEqual(len(plan['downloads']), preview['counts']['missing'])
+        self.assertEqual(plan['removals'], [])
+        self.assertFalse(list((self.root/'data/library/zim').iterdir()))
+
     def test_library_routes_are_authenticated_and_limited(self):
         with patch.object(self.server.library,'start') as start:
             with self.post('/library/plan',control.key(self.c),{'themes':['eau']}) as response:
@@ -71,6 +115,18 @@ class ControlTests(unittest.TestCase):
         with patch.object(self.server.library,'current',return_value={'action':'video-inventory'}),patch.object(self.server.library,'pause') as pause:
             with self.post('/library/video-inventory-pause',control.key(self.c)) as response:self.assertEqual(response.status,202)
             pause.assert_called_once_with()
+
+    def test_youtube_pause_checks_the_list_before_pausing(self):
+        for state in ({'action':'download'}, {'action':'youtube-download','youtube_list':'another'}):
+            with patch.object(self.server.library,'current',return_value=state),patch.object(self.server.library,'pause') as pause:
+                with self.assertRaises(urllib.error.HTTPError) as error:
+                    self.post('/library/youtube-download-pause',control.key(self.c),{'list':'ours'})
+                self.assertEqual(error.exception.code,409)
+                pause.assert_not_called()
+        with patch.object(self.server.library,'current',return_value={'action':'youtube-download','youtube_list':'ours'}),patch.object(self.server.library,'pause') as pause:
+            with self.post('/library/youtube-download-pause',control.key(self.c),{'list':'ours'}) as response:
+                self.assertEqual(response.status,202)
+            pause.assert_called_once_with(state={'action':'youtube-download','youtube_list':'ours'})
 
     def test_performance_counters_are_authenticated_and_never_start_engine(self):
         import host_performance

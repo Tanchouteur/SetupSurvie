@@ -10,7 +10,8 @@ import setup
 from delivery_paths import locked,destination
 import index_reader_probe
 
-VERSION='3.13.1'
+VERSION=index_reader_probe.VERSION
+REQUIREMENT='libzim=='+VERSION
 
 
 class ReaderUnavailable(setup.SetupError):
@@ -92,12 +93,12 @@ def prepare(app,config,*,offline=False,check=lambda:None,force=False):
         subprocess.run([str(python(app)),'-m','ensurepip','--upgrade'],check=True,timeout=120,**hidden)
         if not offline:
             check();subprocess.run([str(python(app)),'-m','pip','download','--only-binary=:all:','--no-deps',
-                '--dest',str(cache),'-r',str(setup.ROOT/'scripts/requirements-index.txt')],check=True,timeout=300,**hidden)
+                '--dest',str(cache),REQUIREMENT],check=True,timeout=300,**hidden)
         records=[{'path':p.name,'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in cache.glob('*.whl') if not p.is_symlink()]
         if not offline:setup.write_json(cache/'manifest.json',{'libzim':VERSION,'files':records})
         validate_cache(cache)
         check();subprocess.run([str(python(app)),'-m','pip','install','--no-index','--find-links',str(cache),
-            '-r',str(setup.ROOT/'scripts/requirements-index.txt')],check=True,timeout=300,**hidden)
+            REQUIREMENT],check=True,timeout=300,**hidden)
         check();report=verify(app)
         setup.write_json(app.work/'search-tools/reader-ready.json',{'libzim':VERSION,'probe':report},private=True)
         return True
@@ -107,15 +108,17 @@ def cache_target(app,config,target):
     """Download a pinned wheel for another kit target; never execute that wheel."""
     import re
     platform,separator,version=target.partition(':')
-    if not separator or platform not in ('win_amd64','manylinux_2_28_x86_64') or not re.fullmatch(r'3\.(11|12|13|14)',version):
-        raise setup.SetupError('Cible attendue : win_amd64:3.13 ou manylinux_2_28_x86_64:3.13, Python 3.11 à 3.14.')
+    if not separator or platform not in ('win_amd64','manylinux_2_28_x86_64') or not re.fullmatch(r'3\.(11|12|13|14|15)',version):
+        raise setup.SetupError('Cible attendue : win_amd64:3.13 ou manylinux_2_28_x86_64:3.13, Python 3.11 à 3.15.')
+    if index_reader_probe.expected_version(tuple(int(part) for part in version.split('.')))!=VERSION:
+        raise setup.SetupError('Cette cible utilise une autre version du lecteur que ce PC ; préparez son cache depuis un Python de la même série.')
     cache=Path(config['data_dir'])/'tools/search-index-wheels'
     with locked(destination(app.work,'search-tools-prepare.lock')):
         validate_cache(cache)
         hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
         subprocess.run([str(python(app)),'-m','pip','download','--only-binary=:all:','--no-deps','--platform',platform,
-            '--python-version',version,'--implementation','cp','--abi','cp'+version.replace('.',''),'--dest',str(cache),
-            '-r',str(setup.ROOT/'scripts/requirements-index.txt')],check=True,timeout=300,**hidden)
+            '--python-version',version,'--implementation','cp','--abi','abi3' if VERSION==index_reader_probe.CURRENT else 'cp'+version.replace('.',''),'--dest',str(cache),
+            REQUIREMENT],check=True,timeout=300,**hidden)
         records=[{'path':p.name,'bytes':p.stat().st_size,'sha256':setup.file_hash(p)} for p in cache.glob('*.whl') if not p.is_symlink()]
         setup.write_json(cache/'manifest.json',{'libzim':VERSION,'files':records})
         validate_cache(cache)

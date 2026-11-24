@@ -1,6 +1,6 @@
 # Points et itinéraires hors ligne
 
-Guide actuel **0.11.0**. La carte sert à préparer et consulter des déplacements,
+Guide actuel **0.50.0**. La carte sert à préparer et consulter des déplacements,
 sans suivi GPS et sans service de routage Internet.
 
 ## Consulter sur téléphone
@@ -8,13 +8,22 @@ sans suivi GPS et sans service de routage Internet.
 Ouvrir Cartes puis utiliser **Choisir un profil**, en haut de la carte. Les profils sont libres et sans mot de passe, comme dans le portail. Ouvrir **Rechercher · Mes repères**, puis l’onglet **Mes repères**.
 Choisir une liste, toucher un point ou ouvrir un trajet. La fiche indique les
 kilomètres par les voies, le mode et la durée estimée. Les notes et le tracé restent
-accessibles même si le moteur de calcul est arrêté. Le téléphone consulte les
-contenus du serveur sur le réseau local ; il ne devient pas une carte autonome
-loin du serveur. Exporter le GPX ou imprimer la carte et la fiche avant de partir.
+accessibles sur le réseau de la maison même si le moteur de calcul est arrêté.
+La [carte téléchargée sur le téléphone](parametres-et-cartes.md#télécharger-une-zone-sur-le-téléphone)
+contient le fond de carte. Avant de partir avec des repères ou un trajet, exporter
+le GPX pour une application compatible ou imprimer la carte et la fiche depuis
+un ordinateur.
 
-L’édition est masquée sur petit écran et appareil tactile. Le panneau mobile est repliable ; la carte conserve sa hauteur. Un résumé du trajet avec kilomètres et durée reste visible quand le panneau est fermé. Les lecteurs ne peuvent
-pas modifier les listes, points ou trajets, quelle que soit la taille de l’écran.
-Le profil Famille prépare sur ordinateur.
+Avec le profil **Famille** ou un profil donnant accès aux réglages, toucher
+l’emplacement voulu sur la carte, puis **Ajouter à une liste**. Donner un nom
+au repère, choisir ou créer sa liste, puis **Enregistrer**. On peut aussi ouvrir
+**Mes repères → Ajouter un point** puis toucher la carte pour ouvrir le formulaire.
+Les repères enregistrés sont partagés entre les profils de l’installation.
+
+Sur téléphone, le bouton **Rechercher · Mes repères** se trouve sous la carte.
+Le bouton « i » dans la carte ouvre les crédits cartographiques. Les outils de
+modification et de suppression des points, de gestion des listes et de préparation
+des trajets sont disponibles sur ordinateur.
 
 ## Préparer sur ordinateur
 
@@ -172,9 +181,10 @@ le relief. Le bouton du relief manquant reste activable pour expliquer la raison
 profil nécessaire, service indisponible ou altitudes non préparées. Les données
 manquantes ne sont pas téléchargées automatiquement.
 
-Sur le laboratoire Podman sans privilèges de Louis, la préparation utilise l’UID
+Sur le laboratoire Podman et sur Docker rootless, la préparation utilise l’UID
 0 du conteneur, qui correspond à l’utilisateur Linux dans cet espace de noms.
 Cela préserve l’écriture sur le volume monté, sans privilèges root sur le PC.
-La préparation Docker conserve son utilisateur non privilégié habituel. Les
+Le mode rootless est vérifié auprès du moteur avant de choisir cet UID ;
+Docker système conserve son utilisateur non privilégié habituel. Les
 limites CPU, RAM, réseau et capacités restent appliquées. Les extractions en
 ligne consignent aussi le serveur Overpass réellement utilisé dans le manifeste.

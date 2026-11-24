@@ -6,7 +6,8 @@ import time
 import uuid
 import httpx
 from fastapi import HTTPException
-from . import assistant_metrics,durable,engine,model_runtime,operations,store,translations
+from . import work_queue
+from . import model_session,assistant_metrics,durable,engine,model_runtime,operations,store,translations
 
 ACTIVE={}
 RAM_RESERVE=4*1024**3
@@ -125,7 +126,7 @@ async def trial(report,context,temperature,options):
             target=2048 if temperature=='probe' else int((context-3072)*.9/report['prompt_tokens_per_byte'])
             material=prompt(context,target);row['prompt_utf8_bytes']=len(material.encode('utf-8'))
             payload={'model':report['model'],'messages':[{'role':'user','content':material}],'think':engine.MODES[report['mode']]['think'],
-                'stream':True,'keep_alive':'5m','options':{'num_ctx':context,'num_predict':1 if temperature=='probe' else 1024,'temperature':0}}
+                'stream':True,'keep_alive':model_session.KEEP_ALIVE,'options':{'num_ctx':context,'num_predict':1 if temperature=='probe' else 1024,'temperature':0}}
             row['stage']='model_request'
             async with client.stream('POST',engine.OLLAMA+'/api/chat',json=payload) as response:
                 response.raise_for_status()
@@ -188,6 +189,7 @@ async def release_model(report):
     except Exception:report['model_released']=False
 
 
+@work_queue.tracked('calibration')
 async def run(report,options):
     try:
         async with engine.LOCK,asyncio.timeout(3600):

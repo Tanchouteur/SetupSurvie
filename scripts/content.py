@@ -18,10 +18,10 @@ import urllib.request
 
 import setup
 from delivery_paths import locked
-from pilot import durable
+from pilot import collection_sort, durable
 
 CATALOG=setup.ROOT/'deploy/content-catalog.json'
-DEFAULT_BUDGET=500_000_000_000
+STORAGE_RESERVE = 15_000_000_000
 
 
 class DownloadPaused(Exception):
@@ -29,20 +29,39 @@ class DownloadPaused(Exception):
     pass
 
 
-def check_capacity(root,missing=0,*,budget=None,reserve=15_000_000_000,storage_root=None):
-    """Cap documents once; enforce physical free space separately from test models."""
-    scope=Path(storage_root) if storage_root is not None else root
-    if storage_root is not None:
-        if not scope.is_mount() or not root.resolve().is_relative_to(scope.resolve()):
-            raise setup.SetupError('Volume de stockage absent ou extérieur aux données.')
-        disk=shutil.disk_usage(scope)
-    else:
-        disk=shutil.disk_usage(root)
-    library=destination(root,'library')
-    used=sum(p.stat().st_size for p in library.rglob('*') if p.is_file() and not p.is_symlink())
-    if storage_root is not None:
-        budget=min(budget if budget is not None else DEFAULT_BUDGET, DEFAULT_BUDGET)
-    if (budget is not None and used+missing>budget) or disk.free<missing+reserve:
+def english_wikipedia(path):
+    filename = PurePosixPath(path).name.casefold()
+    return bool(re.fullmatch(r'wikipedia_en(?:-[a-z0-9-]+)?_.+\.zim', filename))
+
+
+def free_space(root, storage_root=None):
+    if storage_root is None:
+        return shutil.disk_usage(root).free
+    scope = Path(storage_root)
+    if not scope.is_mount() or not root.resolve().is_relative_to(scope.resolve()):
+        raise setup.SetupError('Volume de stockage absent ou extérieur aux données.')
+    free = shutil.disk_usage(scope).free
+    if sys.platform == 'linux':
+        # A sparse loop image shares space with the rest of its physical SSD.
+        device = scope.stat().st_dev
+        attribute = Path(f'/sys/dev/block/{os.major(device)}:{os.minor(device)}/loop/backing_file')
+        try:
+            backing = Path(attribute.read_text().rstrip('\n'))
+        except FileNotFoundError:
+            pass
+        else:
+            if not backing.is_file():
+                raise setup.SetupError('Fichier du volume de stockage inaccessible.')
+            free = min(free, shutil.disk_usage(backing.parent).free)
+    return free
+
+
+def check_capacity(root, missing=0, *, budget=None, reserve=STORAGE_RESERVE, storage_root=None):
+    """Enforce the supplied budget and physical reserve before writing."""
+    free = free_space(root, storage_root)
+    library = destination(root, 'library')
+    used = sum(p.stat().st_size for p in library.rglob('*') if p.is_file() and not p.is_symlink())
+    if (budget is not None and used + missing > budget) or free < missing + reserve:
         raise setup.SetupError('Budget documentaire ou marge physique insuffisants ; transfert arrêté sans publication.')
     return used
 
@@ -70,13 +89,13 @@ def catalog(path=CATALOG):
             raise setup.SetupError('Catalogue ambigu ou chemin non documentaire.')
         if url.scheme!='https' or not url.hostname or url.username or url.password or url.fragment:
             raise setup.SetupError('URL HTTPS publique requise.')
-        if not isinstance(item['bytes'],int) or not 0<item['bytes']<=600_000_000_000 or not re.fullmatch('[a-f0-9]{64}',item['sha256']):
+        if type(item['bytes']) is not int or item['bytes'] <= 0 or not re.fullmatch('[a-f0-9]{64}',item['sha256']):
             raise setup.SetupError('Taille ou empreinte absente du catalogue.')
         seen.add(item['id']);paths.add(relative.casefold())
     return items
 
 
-def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None,write_lock=None):
+def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=None,write_lock=None,staged=False):
     def check():
         if cancelled and cancelled():raise DownloadPaused()
     def digest(path):
@@ -87,7 +106,7 @@ def transfer(root,item,opener=None,progress=None,before_write=None,cancelled=Non
                 check();value.update(block)
         check();return value.hexdigest()
     check()
-    target=destination(root,item['path']);partial=destination(root,item['path']+'.part')
+    target=destination(root,item['path']+('.verified' if staged else ''));partial=destination(root,item['path']+'.part')
     size=item['bytes'];target.parent.mkdir(parents=True,exist_ok=True)
     if target.exists():
         if target.stat().st_size==size and digest(target)==item['sha256']:return 'present'
@@ -160,7 +179,7 @@ def record_download(root,item,state):
 
 
 def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,cancelled=None,
-             workers=1,continue_on_error=False,repair_tls=None):
+             workers=1,continue_on_error=False,repair_tls=None,confirmed_reference=False,stage_paths=()):
     if type(workers) is not int or not 1<=workers<=3:
         raise setup.SetupError('Choisissez entre un et trois téléchargements simultanés.')
     items=list(items)
@@ -169,9 +188,15 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
     root=setup.safe_path(root)
     if not root.is_dir():raise setup.SetupError('Le dossier de données doit déjà exister sur le disque choisi.')
     with locked(destination(root,'catalog/content.lock')):
+        sorting = collection_sort.load(root / 'catalog')
+        if not confirmed_reference:
+            items = [item for item in items if sorting.permits(collection_sort.path_key(item['path']), 'all')]
+        if not items:
+            return []
         missing=0
         for item in items:
-            final=destination(root,item['path']);part=destination(root,item['path']+'.part')
+            final=destination(root,item['path']+('.verified' if item['path'] in stage_paths else ''))
+            part=destination(root,item['path']+'.part')
             if not final.exists():missing+=max(0,item['bytes']-(part.stat().st_size if part.exists() else 0))
         check_capacity(root,missing,budget=budget,reserve=reserve,storage_root=storage_root)
         # Shared read-only monitoring for direct Linux/Windows CLI transfers too.
@@ -203,18 +228,20 @@ def download(root,items,*,budget=None,reserve=15_000_000_000,storage_root=None,c
             def progress(done,total):report(item,done,total,'downloading')
             def before_write(count):
                 check_capacity(root,count+1_000_000,budget=budget,reserve=reserve,storage_root=storage_root)
+            transfer_options = {'staged': True} if item['path'] in stage_paths else {}
             try:
                 try:
-                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes,**transfer_options)
                 except Exception as exc:
                     if not repair_tls or 'CERTIFICATE_VERIFY_FAILED' not in str(exc):raise
                     if stopped():raise DownloadPaused()
                     repair_tls(item['url'])
-                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes)
-                with metadata:
-                    record_download(root,item,state)
-                    import search_index_queue
-                    search_index_queue.enqueue(root,item)
+                    state=transfer(root,item,progress=progress,before_write=before_write,cancelled=stopped,write_lock=writes,**transfer_options)
+                if not transfer_options:
+                    with metadata:
+                        record_download(root,item,state)
+                        import search_index_queue
+                        search_index_queue.enqueue(root,item)
                 return {'id':item['id'],'status':state}
             except DownloadPaused:
                 stop.set();raise
@@ -263,16 +290,21 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('action',choices=['list','download','clean-partials']);p.add_argument('--data-dir');p.add_argument('--pack',action='append',default=[]);p.add_argument('--id',action='append',default=[])
     p.add_argument('--budget-gb',type=int,default=0,help='0 : pas de plafond documentaire hors laboratoire.');p.add_argument('--work-dir')
-    p.add_argument('--lab',action='store_true',help='Montage Linux vérifié ; 500 Go de documents, modèles et caches exclus ; marge physique contrôlée.')
+    p.add_argument('--lab',action='store_true',help='Montage Linux vérifié, marge physique contrôlée sur le SSD.')
     p.add_argument('--no-refresh',action='store_true',help='Télécharger seulement ; actualiser les services séparément hors du service de transfert.')
     p.add_argument('--jobs',type=int,choices=(1,2,3),default=2,help='Téléchargements simultanés (2 par défaut).')
-    p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ; utilise ses archives sélectionnées.')
+    p.add_argument('--selection',type=Path,help='Plan figé créé par kiwix_select.py ou manifeste deploy/library-reference.json ; installe exactement ces archives.')
+    p.add_argument('--initial-installation', action='store_true', help='Refuser les éditions anglaises de Wikipédia dans un plan d’installation.')
     args=p.parse_args()
+    if args.initial_installation and (args.action != 'download' or not args.selection):
+        p.error('--initial-installation requiert download --selection.')
     if args.selection:
         if args.pack or args.id:p.error('--selection ne se combine pas avec --pack ou --id.')
         plan=json.loads(args.selection.read_text(encoding='utf-8'))
-        if plan.get('schema')!=1 or plan.get('kind')!='SetupSurvie Kiwix thematic selection':p.error('Plan de sélection Kiwix non reconnu.')
+        if plan.get('schema')!=1 or plan.get('kind') not in ('SetupSurvie Kiwix thematic selection','SetupSurvie library reference'):p.error('Plan de sélection Kiwix ou manifeste de référence non reconnu.')
         items=catalog(args.selection);selected=items
+        if args.initial_installation and any(english_wikipedia(item['path']) for item in selected):
+            p.error('Le plan d’installation contient une édition anglaise de Wikipédia. Recréez la sélection avec l’installateur.')
     else:
         items=catalog();selected=[i for i in items if i['pack'] in args.pack or i['id'] in args.id]
     if args.action=='list':
@@ -301,13 +333,14 @@ def main():
         print('Seuls les téléchargements partiels sélectionnés ont été supprimés.');return
     if args.budget_gb<0:p.error('Budget positif ou 0 pour aucun plafond.')
     budget=args.budget_gb*1_000_000_000 or None
-    if storage_root is not None:budget=min(budget if budget is not None else DEFAULT_BUDGET,DEFAULT_BUDGET)
     download_and_refresh(args,app,c,root,selected,budget,storage_root)
 
 
 def download_and_refresh(args,app,c,root,selected,budget,storage_root):
     if app and getattr(args,'selection',None):
         import windows_resume
+        # A reference manifest is copied into the catalogue so a restart resumes this exact plan.
+        args.selection=windows_resume.frozen_plan(root,args.selection)
         windows_resume.arm_if_installed(app,c,args.selection,args.jobs)
     # Keep publication and restarts within the same backup exclusion window.
     with locked(destination(root,'catalog/publication.lock')):
@@ -318,8 +351,8 @@ def download_and_refresh(args,app,c,root,selected,budget,storage_root):
             print('Téléchargements vérifiés ; actualisation des services à effectuer séparément.')
             return
         if args.lab:
-            from linux_lab import setup as lab_setup
-            lab_app=lab_setup.Installation(lab.MOUNT/'private')
+            import linux_lab as lab
+            lab_app=lab.setup.Installation(lab.MOUNT/'private')
             lab_app.catalog(lab_app.load())
             lab.podman('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
             print('Bibliothèque du laboratoire actualisée ; moteur IA inchangé.')

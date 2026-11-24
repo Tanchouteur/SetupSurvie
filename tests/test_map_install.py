@@ -14,6 +14,7 @@ from datetime import date
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import map_install
 import maps as preparation
+import content
 import search_index_tools
 import setup
 
@@ -76,7 +77,12 @@ class MapInstallTests(unittest.TestCase):
     def test_default_install_requires_maps_before_reporting_success(self):
         app=MagicMock();config={'data_dir':str(self.root),'chat_model':'already-present','target':'windows'}
         app.init.return_value=config;app.request.return_value={'models':[{'name':'already-present'}]}
-        with patch.object(search_index_tools,'prepare',return_value=True),patch.object(setup,'Installation',return_value=app),patch.object(map_install,'ensure',side_effect=setup.SetupError('map failure')) as ensure:
+        with (
+            patch.object(search_index_tools, 'prepare', return_value=True),
+            patch.object(setup, 'prepare_youtube_tools'),
+            patch.object(setup, 'Installation', return_value=app),
+            patch.object(map_install, 'ensure', side_effect=setup.SetupError('map failure')) as ensure,
+        ):
             with self.assertRaisesRegex(setup.SetupError,'map failure'):
                 setup.main(['--work-dir',str(self.root/'work'),'install','--target','windows'])
         ensure.assert_called_once_with(self.root,offline=False)
@@ -84,9 +90,29 @@ class MapInstallTests(unittest.TestCase):
 
     def test_offline_install_never_silently_switches_to_online_map_preparation(self):
         app=MagicMock();app.init.return_value={'data_dir':str(self.root),'target':'windows'}
-        with patch.object(search_index_tools,'prepare',return_value=True),patch.object(setup,'Installation',return_value=app),patch.object(map_install,'ensure',return_value=False) as ensure:
+        with (
+            patch.object(search_index_tools, 'prepare', return_value=True),
+            patch.object(setup, 'prepare_youtube_tools'),
+            patch.object(setup, 'Installation', return_value=app),
+            patch.object(map_install, 'ensure', return_value=False) as ensure,
+        ):
             setup.main(['--work-dir',str(self.root/'work'),'install','--target','windows','--offline'])
         ensure.assert_called_once_with(self.root,offline=True)
+
+    def test_install_downloads_french_wikipedia_and_skips_english_pack(self):
+        app = MagicMock()
+        app.init.return_value = {'data_dir': str(self.root), 'target': 'windows'}
+        with (
+            patch.object(search_index_tools, 'prepare', return_value=True),
+            patch.object(setup, 'prepare_youtube_tools'),
+            patch.object(setup, 'Installation', return_value=app),
+            patch.object(map_install, 'ensure'),
+            patch.object(content, 'download') as download,
+        ):
+            setup.main(['--work-dir', str(self.root/'work'), 'install', '--target', 'windows',
+                        '--content-pack', 'encyclopedia-fr', '--content-pack', 'encyclopedia-en'])
+        download.assert_called_once()
+        self.assertEqual([item['id'] for item in download.call_args.args[1]], ['wikipedia-fr'])
 
     def test_poi_failure_keeps_verified_relief_and_is_explicit_in_the_report(self):
         import geography_data

@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 from pilot import library, store
 
 BASE = Path(__file__).resolve().parents[1]
-REFERENCE = json.loads((BASE/'portal/nouveau/search-reference.json').read_text(encoding='utf-8'))
+REFERENCE = json.loads((BASE/'portal/interface/search-reference.json').read_text(encoding='utf-8'))
 FIXTURES = json.loads((BASE/'tests/search_reference_fixtures.json').read_text(encoding='utf-8'))
 
 

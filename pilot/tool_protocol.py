@@ -4,7 +4,9 @@ import re
 
 
 def textual_call(content,question,names):
-    if re.search(r'\b(json|python|javascript|code|syntaxe|api)\b',question,re.I):return False
+    # Only programming questions may legitimately expect JSON in the answer.
+    # "Code postal", "code de la route" or "code civil" are ordinary questions.
+    if re.search(r'\b(?:json|python|javascript|syntaxe|api|script|programm\w*|code\s+(?:source|informatique|python|javascript|json))\b',question,re.I):return False
     def call(value):
         if not isinstance(value,dict):return False
         function=value.get('function',value)

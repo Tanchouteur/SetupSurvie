@@ -12,6 +12,8 @@ import time
 import uuid
 
 import content
+import collection_tasks
+from pilot import category_index, collection_sort, zim_video_inventory
 import discovery
 import kiwix_select
 import geography_data
@@ -21,6 +23,8 @@ import search_index_queue as index_queue
 from delivery_paths import destination, locked
 
 ACTIVE = {'starting', 'planning', 'downloading', 'refreshing'}
+CANCELLABLE = ('download',)
+QUEUE_PREPARATIONS = {'index', 'index-prepare', 'category-index', 'video-inventory'}
 
 
 class Paused(Exception):
@@ -54,6 +58,12 @@ class Manager:
         return json.loads(self.state_path.read_text(encoding='utf-8')) if self.state_path.exists() else {'phase': 'idle'}
 
     def write(self, state):
+        identifier = state.get('youtube_list')
+        if identifier and state['phase'] in ('completed','paused','error','interrupted'):
+            keys = ('id','phase','message','options','action','youtube_list')
+            result = {key: state[key] for key in keys if key in state}
+            result['youtube'] = self.youtube_progress(state['id'])
+            setup.write_json(self.youtube_result_path(identifier),result,private=True)
         setup.write_json(self.state_path, state, private=True)
 
     def paths(self, job):
@@ -61,7 +71,7 @@ class Manager:
             raise setup.SetupError('Opération documentaire non valide.')
         return self.directory / job
 
-    def check_storage(self):
+    def check_storage(self,reserve=15_000_000_000):
         root = setup.safe_path(self.config['data_dir'])
         scope = None
         if self.backend == 'lab':
@@ -69,7 +79,7 @@ class Manager:
             lab.checked_mount(); scope = lab.MOUNT
             if root != lab.MOUNT / 'data':
                 raise setup.SetupError('Données du laboratoire hors du volume dédié.')
-        content.check_capacity(root, storage_root=scope)
+        content.check_capacity(root, storage_root=scope, reserve=reserve)
         return root, scope
 
     def current(self):
@@ -80,6 +90,16 @@ class Manager:
                 # The worker can finish between the first read and the PID check.
                 state = self.read()
                 if state['phase'] not in ACTIVE:return state
+                if state.get('action') in ('youtube-download','category-index'):
+                    child=state.get('index_pid');identity=state.get('index_identity')
+                    if child and identity and discovery.identity(child)==identity:return state
+                    if state.get('action')=='category-index':
+                        root=Path(self.config['data_dir'])/'state/pilot'
+                        report=category_index.read_status(root)
+                        if report.get('job_id')==state.get('id') and report['phase'] in ('completed','paused'):
+                            state.update(phase=report['phase'],message='État de la préparation Wikipédia récupéré.')
+                            self.write(state)
+                            return state
                 if state.get('action')=='video-inventory':
                     child=state.get('index_pid');identity=state.get('index_identity')
                     if child and identity and discovery.identity(child)==identity:return state
@@ -87,7 +107,12 @@ class Manager:
                     try:report=json.loads(report_path.read_text(encoding='utf-8'))
                     except (OSError,ValueError):report={}
                     if report.get('job_id')==state.get('id') and report.get('phase') in ('completed','partial','paused'):
-                        state.update(phase={'completed':'completed','partial':'error','paused':'paused'}[report['phase']],message='État de l’inventaire vidéo récupéré après l’arrêt du superviseur.')
+                        phase = report['phase']
+                        if zim_video_inventory.partial_with_all_archives(report):
+                            state.update(phase='completed', message=zim_video_inventory.LIMITED_INVENTORY_MESSAGE)
+                        else:
+                            state.update(phase='error' if phase == 'partial' else phase,
+                                         message='État de l’inventaire vidéo récupéré après l’arrêt du superviseur.')
                         self.write(state);return state
                 if state.get('action')=='index':
                     child=state.get('index_pid');identity=state.get('index_identity')
@@ -101,7 +126,9 @@ class Manager:
                         if report['phase']=='partial':index_queue.hold(root,'error')
                         self.write(state);return state
                     index_queue.hold(root,'interrupted')
-                state.update(phase='interrupted', message='Opération interrompue. Préparez une nouvelle sélection pour reprendre les fichiers partiels.')
+                message = ('Téléchargement interrompu. Retrouvez la reprise dans la File d’attente.'
+                           if state.get('action') == 'download' else 'Opération interrompue. Relancez la préparation.')
+                state.update(phase='interrupted', message=message)
                 self.write(state)
         return state
 
@@ -109,26 +136,28 @@ class Manager:
         state = self.current()
         result = {k: state[k] for k in ('phase', 'message', 'options', 'id', 'reader_probe') if k in state}
         result['index_reader_ready']=self.index_ready()
+        result['initial_video_inventory_pending'] = (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).is_file()
         result['index_queue']=index_queue.summary(Path(self.config['data_dir']))
-        queued=result['index_queue'];waiting=''
-        if queued['pending']:
-            if queued['hold']:waiting=queued['hold']
-            elif not queued['settings']['enabled']:waiting='disabled'
-            elif index_queue.gaming(self.app.work):waiting='gaming'
-            elif not index_queue.in_window(queued['settings']):waiting='schedule'
-            elif not result['index_reader_ready']:waiting='missing_reader'
-            elif state['phase']=='planned':waiting='selection_pending'
-            elif state['phase'] in ACTIVE:waiting='other_operation' if state.get('action')!='index' else ''
-            else:waiting=index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
-        queued['waiting_reason']=waiting
+        queued=result['index_queue']
+        queued['waiting_reason']=self.index_waiting_reason(queued, state, result['index_reader_ready'])
         from pilot.archive_index import status as index_status
         result['search_index']=index_status(Path(self.config['data_dir'])/'state/pilot/archive-index')
+        root=Path(self.config['data_dir'])
+        result['category_index']=category_index.availability(root/'library/zim',root/'state/pilot',collection_sort.load(root/'catalog'))[0]
+        if result['category_index']['phase']=='running' and (state.get('action')!='category-index' or state['phase'] not in ACTIVE):
+            result['category_index']['phase']='interrupted'
         result.update(available=True, themes=[{'id': k, 'label': v['label']} for k, v in kiwix_select.themes().items()])
+        result['action']=state.get('action')
+        if state.get('action')=='youtube-download' and state.get('id'):
+            result['youtube']=self.youtube_progress(state['id'])
+            result['youtube_list']=state.get('youtube_list')
         if state.get('id'):
-            if state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
+            if state['phase'] in ACTIVE and (self.paths(state['id']) / 'discard').exists():
+                result.update(pause_requested=True, message='Annulation demandée. Attente de la fin de l’échange en cours ; les fichiers commencés seront supprimés.')
+            elif state['phase'] in ACTIVE and (self.paths(state['id']) / 'cancel').exists():
                 result.update(pause_requested=True, message='Pause demandée. Attente de la fin de l’échange en cours ; les fichiers partiels seront conservés.')
             plan_path = self.paths(state['id']) / 'plan.json'
-            if plan_path.is_file():
+            if plan_path.is_file() and state['phase'] != 'cancelled':
                 plan = json.loads(plan_path.read_text(encoding='utf-8'))
                 result['plan'] = {k: plan[k] for k in ('candidates', 'remaining_download_bytes', 'missing_themes', 'library_bytes')}
                 result['plan']['count'] = len(plan['items'])
@@ -142,16 +171,85 @@ class Manager:
                     result['progress']['active'] = [{k: entry[k] for k in ('id','title','bytes','total','status') if k in entry} for entry in value.get('active',[])]
         return result
 
+    def index_waiting_reason(self, queued, state, reader_ready):
+        if not queued['pending']:return ''
+        if queued['hold']:return queued['hold']
+        if not queued['settings']['enabled']:return 'disabled'
+        if index_queue.gaming(self.app.work):return 'gaming'
+        if not index_queue.in_window(queued['settings']):return 'schedule'
+        if not reader_ready:return 'missing_reader'
+        if state['phase']=='planned':return 'selection_pending'
+        if state['phase'] in ACTIVE:return 'other_operation' if state.get('action')!='index' else ''
+        if state['phase'] in ('paused','error','interrupted') and state.get('action') != 'index':
+            return 'other_operation_stopped'
+        return index_queue.read(Path(self.config['data_dir'])).get('last_attempt',{}).get('reason','')
+
+    def pending_video_archives(self, root):
+        from pilot.archive_index import status as index_status
+        report = index_status(root/'state/pilot/zim-videos')
+        usable = report['phase'] in ('not_prepared', 'completed') or (
+            report['phase'] == 'partial' and all(
+                row.get('status') in zim_video_inventory.EXAMINED_STATUSES for row in report.get('results', [])))
+        return len(zim_video_inventory.unexamined_files(root/'library/zim', report)) if usable else 0
+
+    def queue_paused(self):
+        return (Path(self.config['data_dir']) / 'state/pilot/work-queue.pause').is_file()
+
     def auto_index(self):
-        root=Path(self.config['data_dir']);state=self.current();queue=index_queue.read(root)
-        allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not index_queue.gaming(self.app.work)
+        root = Path(self.config['data_dir'])
+        state = self.current()
+        if self.queue_paused():
+            if (state.get('action') in QUEUE_PREPARATIONS
+                    and state['phase'] in ('starting', 'planning', 'downloading')
+                    and not (self.paths(state['id']) / 'cancel').exists()):
+                self.pause(automatic=bool(state.get('options', {}).get('automatic')), state=state)
+            return
+        queue = index_queue.read(root)
+        gaming = index_queue.gaming(self.app.work)
+        allowed=queue['settings']['enabled'] and index_queue.in_window(queue['settings']) and not gaming
         if state['phase'] in ACTIVE:
-            if state.get('action')=='video-inventory' and index_queue.gaming(self.app.work):
+            if state.get('action')=='video-inventory' and (gaming or state.get('options',{}).get('automatic') and not allowed):
                 self.pause(automatic=True)
-            if state.get('action')=='index' and state.get('options',{}).get('automatic') and not allowed:
+            if state.get('action') in ('index','category-index') and state.get('options',{}).get('automatic') and not allowed:
                 self.pause(automatic=True)
             return
-        if state['phase'] not in ('idle','completed') and not (state['phase']=='paused' and state.get('action')=='index' and state.get('options',{}).get('automatic')):return
+        request = self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST
+        video_resume = (state.get('action') == 'video-inventory' and state.get('options', {}).get('automatic')
+                        and state['phase'] == 'paused' and (self.paths(state['id'])/'auto-pause').is_file())
+        if allowed and video_resume and self.index_ready():
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {'automatic': True})
+            return
+        if (self.backend == 'compose' and state['phase'] != 'planned' and request.is_file()
+                and allowed and self.index_ready()):
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {'automatic': True})
+            return
+        automatic_category_resume = (state.get('action') == 'category-index' and
+            state.get('options', {}).get('automatic') and
+            (state['phase'] == 'interrupted' or state['phase'] == 'paused' and
+             (self.paths(state['id']) / 'auto-pause').is_file()))
+        if (allowed and (automatic_category_resume or not queue['pending']) and self.index_ready() and
+                (state['phase'] in ('idle', 'completed') or automatic_category_resume)):
+            category,_=category_index.availability(root/'library/zim',root/'state/pilot',collection_sort.load(root/'catalog'))
+            if category['phase'] in ('outdated','not_prepared') or automatic_category_resume and category['phase'] != 'completed':
+                try:
+                    with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                        self.start('category-index',{'automatic':True})
+                except setup.SetupError:pass
+                return
+        # Existing ZIM indexes remain usable. Only examine new or changed
+        # archives during the configured window and after pending text indexes.
+        if (allowed and not queue['pending'] and self.index_ready() and
+                state['phase'] in ('idle', 'completed') and self.pending_video_archives(root)):
+            with locked(destination(root, 'catalog/content.lock')), locked(destination(root, 'catalog/publication.lock')):
+                self.start('video-inventory', {'automatic': True})
+            return
+        automatic = state.get('options', {}).get('automatic')
+        resumable = state['phase'] == 'paused' and state.get('action') == 'index' and automatic
+        initial_video_error = state['phase'] == 'error' and state.get('action') == 'video-inventory' and automatic
+        if state['phase'] not in ('idle', 'completed') and not (resumable or initial_video_error):
+            return
         if not allowed or not queue['pending'] or queue.get('hold') or not self.index_ready():return
         try:
             # Never start during any CLI/web content publication or backup.
@@ -186,11 +284,20 @@ class Manager:
             return self.start_locked(action, body)
 
     def start_locked(self, action, body):
+        if action in QUEUE_PREPARATIONS and self.queue_paused():
+            raise setup.SetupError('Reprenez la file pour lancer cette préparation.')
         state = self.current()
         if state['phase'] in ACTIVE:
             raise setup.SetupError('Une opération documentaire est déjà en cours.')
-        self.check_storage()
-        if action in ('index','index-prepare','video-inventory'):
+        storage = self.check_storage(0) if action=='collection-exclude' else self.check_storage()
+        if action == 'category-index':
+            if not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
+            if index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’indexation après la pause.')
+            root=Path(self.config['data_dir'])
+            if not category_index.sources(root/'library/zim',collection_sort.load(root/'catalog')):raise setup.SetupError('Le fonds principal ne contient aucune archive disponible.')
+            state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':body.get('automatic') is True}}
+            self.paths(state['id']).mkdir(parents=True)
+        elif action in ('index','index-prepare','video-inventory'):
             if action in ('index','video-inventory') and not self.index_ready():raise setup.SetupError('Préparez d’abord l’outil d’indexation depuis les réglages.')
             if action=='video-inventory' and index_queue.gaming(self.app.work):raise setup.SetupError('Le mode jeu est actif. Reprenez l’inventaire vidéo après la pause ; les résultats terminés restent disponibles.')
             automatic=body.get('automatic') is True
@@ -200,9 +307,19 @@ class Manager:
             if action=='index' and not automatic:index_queue.hold(root,'')
             state={'id':uuid.uuid4().hex,'phase':'starting','options':{'automatic':automatic,'selection':selection}}
             self.paths(state['id']).mkdir(parents=True)
+        elif action=='youtube-download':
+            state=self.youtube_job(state,body)
         elif action in ('geography','routing'):
             options = geography_data.validate(body)
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': options}
+            self.paths(state['id']).mkdir(parents=True)
+        elif action == 'collection-exclude':
+            keys = collection_tasks.validate_keys(body)
+            current = collection_tasks.preview(Path(self.config['data_dir']), keys)
+            if not current['files'] or current['token'] != body.get('token'):
+                raise setup.SetupError('Affichez et confirmez la liste actuelle des fichiers à supprimer.')
+            state = {'id': uuid.uuid4().hex, 'phase': 'starting',
+                     'options': {'keys': sorted(keys), 'token': current['token']}}
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'plan':
             requested = body.get('themes')
@@ -216,21 +333,99 @@ class Manager:
                 raise setup.SetupError('Le plafond de téléchargement doit être positif, ou 0 pour tous les ajouts possibles.')
             if not isinstance(languages, list) or not languages or any(l not in ('fr', 'en') for l in languages):
                 raise setup.SetupError('Choisissez le français, l’anglais ou les deux.')
+            try:
+                collection_tasks.merge(Path(self.config['data_dir']), body.get('collection_sort'))
+            except ValueError as exc:
+                raise setup.SetupError(str(exc)) from exc
             state = {'id': uuid.uuid4().hex, 'phase': 'starting', 'options': {
                 'themes': list(dict.fromkeys(requested)), 'max_add_gb': size, 'languages': list(dict.fromkeys(languages)),'include_supplements':supplements}}
             self.paths(state['id']).mkdir(parents=True)
         elif action == 'download':
-            if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error'):
+            if 'reference_confirmation' in body:
+                import library_reference
+                root, scope = storage
+                previous = state.get('options', {}).get('reference_restore')
+                stopped_download = state['phase'] == 'planned' or (
+                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted'))
+                with locked(root/'catalog/content.lock'):
+                    reference = library_reference.load()
+                    sorting = collection_sort.load(root/'catalog')
+                    plan = library_reference.restoration_plan(root, reference, sorting, storage_root=scope)
+                    if plan['confirmation_token'] != body['reference_confirmation']:
+                        raise setup.SetupError('La bibliothèque a changé. Actualisez la comparaison avant de confirmer.')
+                    plan = library_reference.select_changes(plan, body.get('selection'))
+                    if not any(plan[key] for key in ('downloads', 'removals', 'moves')):
+                        raise setup.SetupError('Cochez au moins un changement à appliquer.' if body.get('selection') is not None
+                                               else 'La bibliothèque correspond déjà à la référence.')
+                    if not plan['downloads'] and not plan['removals']:
+                        # A ranking change alone is immediate and leaves any paused download untouched.
+                        library_reference.apply_moves(root, plan['moves'])
+                        return None
+                    if not previous and stopped_download:
+                        raise setup.SetupError('Annulez ou reprenez d’abord le téléchargement précédent depuis la File d’attente.')
+                    if not plan['space_sufficient']:
+                        raise setup.SetupError('L’espace libre est insuffisant pour préparer les éditions de référence.')
+                    # The ranking does not wait for the files: apply it before downloading.
+                    library_reference.apply_moves(root, plan['moves'])
+                    names = {row['archive'] for row in plan['downloads']}
+                    if previous and stopped_download:
+                        # The new confirmation replaces a stopped restoration: drop its unfinished files.
+                        self.discard_files(state, keep={item['path'] for item in reference['items']
+                                                        if Path(item['path']).name in names}, locked_content=True)
+                    state = {'id': uuid.uuid4().hex, 'phase': 'planned', 'options': {'reference_restore': True}}
+                    folder = self.paths(state['id'])
+                    folder.mkdir(parents=True)
+                    setup.write_json(folder/'plan.json', {
+                        'schema': 1, 'kind': library_reference.KIND,
+                        'items': [item for item in reference['items'] if Path(item['path']).name in names],
+                        'candidates': [], 'remaining_download_bytes': plan['download_bytes'],
+                        'missing_themes': [], 'library_bytes': 0, 'include_supplements': False,
+                        'restoration': {**{key: plan[key] for key in ('downloads', 'moves', 'removals', 'states')},
+                                        'manifest': reference['items']},
+                    }, private=True)
+                body = {'id': state['id']}
+            elif 'reference_archive' in body:
+                import library_reference
+                archive = body['reference_archive']
+                root, scope = storage
+                reference = library_reference.load()
+                item = next((item for item in reference['items'] if Path(item['path']).name == archive), None)
+                if item is None:
+                    raise setup.SetupError('Cette édition ne figure pas dans la référence.')
+                if not collection_sort.load(root/'catalog').permits(collection_sort.path_key(item['path']), 'all'):
+                    raise setup.SetupError('Cette collection est exclue par le classement actuel.')
+                previous_download = state['phase'] == 'planned' or (
+                    state.get('action') == 'download' and state['phase'] in ('paused', 'error', 'interrupted')
+                )
+                if previous_download:
+                    if state.get('options', {}).get('reference_archive') != archive:
+                        raise setup.SetupError('Reprenez d’abord le téléchargement précédent depuis la File d’attente.')
+                else:
+                    if content.destination(root, item['path']).exists():
+                        raise setup.SetupError('Cette édition est déjà sur le disque. Actualisez la comparaison.')
+                    report = library_reference.preview(root, {'items': [item]}, collection_sort.load(root/'catalog'), storage_root=scope)
+                    if report['download_bytes'] + content.STORAGE_RESERVE > report['available_bytes']:
+                        raise setup.SetupError('L’espace libre est insuffisant pour télécharger cette archive.')
+                    state = {'id': uuid.uuid4().hex, 'phase': 'planned', 'options': {'reference_archive': archive}}
+                    folder = self.paths(state['id'])
+                    folder.mkdir(parents=True)
+                    setup.write_json(folder/'plan.json', {
+                        'schema': 1, 'kind': library_reference.KIND, 'items': [item],
+                        'candidates': [], 'remaining_download_bytes': report['download_bytes'],
+                        'missing_themes': [], 'library_bytes': 0, 'include_supplements': False,
+                    }, private=True)
+                body = {'id': state['id']}
+            if body.get('id') != state.get('id') or state['phase'] not in ('planned', 'paused', 'error', 'interrupted'):
                 raise setup.SetupError('Préparez une sélection avant de télécharger.')
             plan_path = self.paths(state['id']) / 'plan.json'
-            if not plan_path.is_file() or not content.catalog(plan_path):
+            if not plan_path.is_file() or (not content.catalog(plan_path) and not state['options'].get('reference_restore')):
                 raise setup.SetupError('Cette sélection ne contient aucun ajout à télécharger.')
             state['phase'] = 'starting'
         else:
             raise setup.SetupError('Action documentaire inconnue.')
         folder = self.paths(state['id'])
-        (folder / 'cancel').unlink(missing_ok=True)
-        (folder / 'ready').unlink(missing_ok=True)
+        for marker in ('cancel', 'discard', 'ready'):
+            (folder / marker).unlink(missing_ok=True)
         state.update(action=action, pid=None, started_at=time.time(), message='Préparation de l’opération…')
         self.write(state)
         try:
@@ -246,13 +441,128 @@ class Manager:
         except Exception:
             state.update(phase='error', message='Le transfert n’a pas pu démarrer. Réessayez depuis le PC serveur.')
             self.write(state); raise
+        if action == 'video-inventory':
+            (self.app.work / setup.INITIAL_ZIM_VIDEO_REQUEST).unlink(missing_ok=True)
+        return state['id']
 
-    def pause(self,automatic=False):
-        state = self.current()
+    def youtube_job(self,previous,body):
+        """A list saved by the site in state/pilot/youtube-lists, or the paused one."""
+        if body.get('resume') is True:
+            if previous.get('action')!='youtube-download' or previous['phase'] not in ('paused','interrupted','error'):
+                raise setup.SetupError('Aucun téléchargement YouTube à reprendre.')
+            text=(self.paths(previous['id'])/'liste.txt').read_text(encoding='utf-8');height=previous['options']['max_height'];identifier=previous.get('youtube_list')
+        else:
+            identifier=body.get('list');height=body.get('max_height',480)
+            if not isinstance(identifier,str) or not re.fullmatch('[a-f0-9]{32}',identifier):raise setup.SetupError('Liste de vidéos non valide.')
+            if height not in (360,480,720):raise setup.SetupError('Qualité non valide : 360, 480 ou 720.')
+            source=Path(self.config['data_dir'])/'state/pilot/youtube-lists'/(identifier+'.txt')
+            if source.is_symlink() or not source.is_file() or source.stat().st_size>300_000:raise setup.SetupError('Liste de vidéos introuvable ; déposez-la de nouveau.')
+            text=source.read_text(encoding='utf-8')
+        from pilot.youtube_list import parse_list
+        entries,_=parse_list(text)
+        if not entries:raise setup.SetupError('La liste ne contient aucune adresse de vidéo YouTube valide.')
+        state={'id':uuid.uuid4().hex,'phase':'starting','options':{'max_height':height,'videos':len(entries)},'youtube_list':identifier}
+        folder=self.paths(state['id']);folder.mkdir(parents=True)
+        setup.write_json(folder/'liste.json',{'count':len(entries)},private=True)
+        (folder/'liste.txt').write_text(text,encoding='utf-8')
+        if identifier:self.youtube_result_path(identifier).unlink(missing_ok=True)
+        return state
+
+    def youtube_result_path(self, identifier):
+        if not re.fullmatch('[a-f0-9]{32}', identifier):
+            raise setup.SetupError('Liste de vidéos non valide.')
+        return self.directory / 'youtube-results' / (identifier + '.json')
+
+    def youtube_result(self, identifier):
+        path = self.youtube_result_path(identifier)
+        if not path.is_file():
+            return None
+        return json.loads(path.read_text(encoding='utf-8'))
+
+    def youtube_progress(self,job):
+        try:return json.loads((self.paths(job)/'progress.json').read_text(encoding='utf-8'))
+        except (OSError,ValueError):return {}
+
+    def pause(self,automatic=False,*,state=None):
+        if state is None:state = self.current()
         if state['phase'] not in ('starting', 'planning', 'downloading'):
             raise setup.SetupError('Aucun téléchargement ou recherche à mettre en pause.')
         if state.get('action')=='index' and not automatic:index_queue.hold(Path(self.config['data_dir']),'user')
-        (self.paths(state['id']) / 'cancel').touch()
+        folder = self.paths(state['id'])
+        if state.get('action') in ('category-index', 'video-inventory'):
+            marker = folder / 'auto-pause'
+            if automatic and not (folder / 'cancel').exists():
+                marker.touch()
+            elif not automatic:
+                marker.unlink(missing_ok=True)
+        (folder / 'cancel').touch()
+
+    def cancel(self, operation_id):
+        """Cancel a library download and delete its unfinished files.
+
+        A running worker is asked to stop first; it cleans up when it reaches its
+        next checkpoint. Archives already verified and published are kept."""
+        with locked(destination(self.app.work, 'library-web/operation.lock')):
+            state = self.current()
+            if not operation_id or state.get('id') != operation_id or state.get('action') not in CANCELLABLE:
+                raise setup.SetupError('Ce téléchargement n’est plus dans la file.')
+            folder = self.paths(state['id'])
+            if state['phase'] in ACTIVE:
+                if state['phase'] == 'refreshing':
+                    raise setup.SetupError('Les fichiers sont déjà vérifiés et en cours de mise à disposition. Patientez quelques instants.')
+                (folder / 'discard').touch()
+                (folder / 'cancel').touch()
+                return 'requested'
+            if state['phase'] not in ('planned', 'paused', 'error', 'interrupted'):
+                raise setup.SetupError('Ce téléchargement est déjà terminé ou annulé.')
+            self.discard(state)
+            return 'cancelled'
+
+    def discard_files(self, state, keep=(), locked_content=False):
+        """Delete the partial and staged files of a stopped download job."""
+        root = Path(self.config['data_dir'])
+        folder = self.paths(state['id'])
+        plan_path = folder / 'plan.json'
+        try:
+            plan = json.loads(plan_path.read_text(encoding='utf-8')) if plan_path.is_file() else {}
+        except (OSError, ValueError):
+            plan = {}
+        paths = {item['path'] for item in plan.get('items', []) if isinstance(item, dict) and isinstance(item.get('path'), str)}
+        removed = [0, 0]
+        def clean():
+            for relative in sorted(paths - set(keep)):
+                for suffix in ('.part', '.verified'):
+                    try:
+                        target = content.destination(root, relative + suffix)
+                        size = target.stat().st_size if target.is_file() else None
+                    except (OSError, setup.SetupError):
+                        continue
+                    if size is None:
+                        continue
+                    target.unlink(missing_ok=True)
+                    removed[0] += 1
+                    removed[1] += size
+        if locked_content:
+            clean()
+        else:
+            with locked(content.destination(root, 'catalog/content.lock')):
+                clean()
+        resume = self.app.work / 'content-resume.json'
+        try:
+            armed = json.loads(resume.read_text(encoding='utf-8')) if resume.is_file() else {}
+            if armed.get('enabled') and Path(armed.get('selection', '')).resolve() == plan_path.resolve():
+                setup.write_json(resume, {**armed, 'enabled': False}, private=True)
+        except (OSError, ValueError):
+            pass
+        return removed
+
+    def discard(self, state):
+        count, size = self.discard_files(state)
+        state.update(phase='cancelled', pid=None,
+                     message=(f'Téléchargement annulé. {count} fichier(s) commencé(s) supprimé(s), '
+                              f'{size/1e9:.2f} Go libérés. ' if count else 'Téléchargement annulé. ')
+                             + 'Les archives déjà terminées et le classement déjà appliqué sont conservés.')
+        self.write(state)
 
     def run(self, job):
         folder = self.paths(job)
@@ -267,9 +577,67 @@ class Manager:
         def check():
             if (folder / 'cancel').exists(): raise Paused()
         try:
-            root, scope = self.check_storage()
+            root, scope = self.check_storage(0) if state['action']=='collection-exclude' else self.check_storage()
             check()
-            if state['action']=='index-prepare':
+            if state['action']=='collection-exclude':
+                update('refreshing','Suppression des fichiers confirmés…')
+                keys=set(state['options']['keys'])
+                if self.backend == 'lab':
+                    import linux_lab as lab
+                    if any(key.startswith('zim:') for key in keys):lab.podman('stop',lab.PREFIX+'kiwix',capture=True)
+                elif any(key.startswith('zim:') for key in keys):
+                    self.app.compose(self.config,'stop','kiwix')
+                try:
+                    recovered=collection_tasks.exclude(root,keys,state['options']['token'])
+                    update('refreshing','Fichiers supprimés. Actualisation du catalogue et redémarrage des services…')
+                    self.app.catalog(self.config)
+                finally:
+                    if self.backend == 'lab':
+                        lab.podman('start',lab.PREFIX+'kiwix',capture=True)
+                        lab.podman('restart',lab.PREFIX+'pilot',capture=True)
+                    else:
+                        self.app.compose(self.config,'start','kiwix')
+                        self.app.compose(self.config,'restart','pilot')
+                update('completed',f'Collections supprimées et exclues. {recovered/1e9:.2f} Go de fichiers retirés.')
+            elif state['action']=='youtube-download':
+                update('downloading','Téléchargement des vidéos YouTube et de leurs sous-titres…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                command=[sys.executable,'-X','utf8',str(setup.ROOT/'scripts/youtube_videos.py'),'download',str(folder/'liste.txt'),
+                    '--data-dir',str(root),'--max-height',str(state['options']['max_height']),'--progress',str(folder/'progress.json'),'--cancel',str(folder/'cancel')]
+                with (folder/'youtube.log').open('ab') as log:
+                    process=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=log,stderr=log,**hidden)
+                    state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
+                    code=process.wait()
+                report=self.youtube_progress(job)
+                if report.get('phase')=='paused' or (folder/'cancel').exists():raise Paused()
+                if code not in (0,2) or report.get('phase')!='completed':
+                    raise setup.SetupError('Le téléchargement des vidéos n’a pas pu se terminer. Vérifiez Internet et l’espace libre, puis reprenez : les vidéos déjà rangées sont conservées.')
+                counts=report.get('counts',{})
+                items=report.get('items',[])
+                duplicates=sum(item.get('reason')=='duplicate_in_list' for item in items)
+                rejected_lines=sum(item.get('status')=='refused' and not item.get('id') for item in items)
+                existing=counts.get('skipped',0)-duplicates
+                failed=counts.get('error',0)+counts.get('refused',0)-rejected_lines
+                update('completed',f"Téléchargement terminé : {counts.get('downloaded',0)} vidéo(s) ajoutée(s), {existing} déjà présente(s), "
+                       f"{failed} non téléchargée(s). "
+                       +(f"{duplicates+rejected_lines} ligne(s) écartée(s) de la liste. " if duplicates or rejected_lines else '')
+                       +(f"{report['remaining']} restante(s), à reprendre après avoir libéré de l’espace. " if report.get('remaining') else '')
+                       +'Le site répertorie les vidéos téléchargées.')
+            elif state['action']=='category-index':
+                update('downloading','Classement des archives du fonds principal…')
+                hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
+                command=[str(self.index_python()),'-X','utf8',str(setup.ROOT/'scripts/index_categories.py'),
+                         '--data-dir',str(root),'--cancel',str(folder/'cancel'),'--job-id',job]
+                process=subprocess.Popen(command,**hidden)
+                state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
+                code=process.wait();check()
+                report=category_index.read_status(root/'state/pilot')
+                if code or report['phase'] not in ('completed','outdated'):
+                    raise setup.SetupError('Le classement du fonds principal doit être repris.')
+                message = ('Classement des archives du fonds principal terminé.' if report['phase']=='completed'
+                           else 'Le fonds principal a changé pendant le classement.')
+                update('completed',message)
+            elif state['action']=='index-prepare':
                 update('downloading','Préparation de l’outil de recherche (Internet requis une seule fois)…')
                 import search_index_tools
                 search_index_tools.prepare(self.app,self.config,check=check,force=True)
@@ -286,8 +654,14 @@ class Manager:
                 state.update(index_pid=process.pid,index_identity=discovery.identity(process.pid));self.write(state)
                 code=process.wait();check()
                 report=json.loads((root/'state/pilot/zim-videos/progress.json').read_text(encoding='utf-8'))
-                if code or report.get('job_id')!=job or report.get('phase')!='completed':raise setup.SetupError('Certaines collections n’ont pas pu être examinées. Les inventaires terminés restent disponibles ; consultez le rapport vidéo.')
-                update('completed','Inventaire des vidéos terminé. Leur présence ne valide pas leur lecture ou leurs sous-titres.')
+                if code or report.get('job_id') != job:
+                    update('error', 'L’examen des vidéos a échoué. Les résultats précédents restent disponibles.')
+                elif zim_video_inventory.partial_with_all_archives(report):
+                    update('completed', zim_video_inventory.LIMITED_INVENTORY_MESSAGE)
+                elif report.get('phase') == 'completed':
+                    update('completed', 'Inventaire des vidéos terminé. Leur présence ne valide pas leur lecture ou leurs sous-titres.')
+                else:
+                    update('error', 'Certaines collections n’ont pas pu être examinées. Consultez le rapport vidéo avant de relancer.')
             elif state['action']=='index':
                 update('downloading','Indexation locale des archives, sans IA. La bibliothèque reste accessible…')
                 hidden={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
@@ -343,6 +717,43 @@ class Manager:
                 # Cancellation is checked before each network request/write/hash block.
                 import windows_resume
                 windows_resume.arm_if_installed(self.app,self.config,folder/'plan.json',2)
+                if state['options'].get('reference_restore'):
+                    import library_reference
+                    plan = json.loads((folder/'plan.json').read_text(encoding='utf-8'))
+                    pending, staged = library_reference.restoration_downloads(root, plan)
+                    content.download(root, pending, storage_root=scope, workers=2,
+                                     cancelled=lambda: (folder/'cancel').exists(),
+                                     confirmed_reference=True, stage_paths=staged)
+                    check()
+                    update('refreshing', 'Vérification des éditions avant de retirer les anciens fichiers…')
+                    stopped = False
+                    def stop_kiwix():
+                        nonlocal stopped
+                        if plan['restoration']['removals'] or staged:
+                            if self.backend == 'lab':
+                                import linux_lab as lab
+                                lab.podman('stop', lab.PREFIX + 'kiwix', capture=True)
+                            else:
+                                self.app.compose(self.config, 'stop', 'kiwix')
+                            stopped = True
+                    try:
+                        library_reference.finish_restoration(root, plan, check, stop_kiwix)
+                        self.app.catalog(self.config)
+                    finally:
+                        if stopped:
+                            if self.backend == 'lab':
+                                import linux_lab as lab
+                                lab.podman('start', lab.PREFIX + 'kiwix', capture=True)
+                            else:
+                                self.app.compose(self.config, 'start', 'kiwix')
+                    if not stopped and items:
+                        if self.backend == 'lab':
+                            import linux_lab as lab
+                            lab.podman('restart', lab.PREFIX + 'kiwix', capture=True)
+                        else:
+                            self.app.compose(self.config, 'restart', 'kiwix')
+                    update('completed', 'La bibliothèque a été remise à l’état de la référence.')
+                    return
                 import content_retry
                 pending=content_retry.remaining(root,items)
                 content.download(root, pending, storage_root=scope, workers=2, cancelled=lambda: (folder / 'cancel').exists())
@@ -355,11 +766,23 @@ class Manager:
                     self.app.compose(self.config, 'restart', 'kiwix', *(['pilot'] if any(i['path'].startswith('library/guides/') for i in items) else []))
                 update('completed', 'Archives téléchargées et vérifiées. La bibliothèque est actualisée.')
         except (Paused, content.DownloadPaused):
-            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
+            if state.get('action') in CANCELLABLE and (folder / 'discard').exists():
+                try:
+                    self.discard(state)
+                except setup.SetupError:
+                    update('paused', 'Annulation à terminer : les fichiers commencés n’ont pas pu être supprimés. Cliquez de nouveau sur « Annuler ».')
+                return
+            update('paused', 'Préparation géographique arrêtée. Les zones existantes sont conservées ; relancez cette zone pour recommencer.' if state.get('action') in ('geography','routing') else 'Téléchargement YouTube en pause. Les vidéos rangées et la vidéo en cours sont conservées ; « Reprendre » continue la liste.' if state.get('action')=='youtube-download' else 'Opération mise en pause. Les fichiers partiels sont conservés pour la reprise.')
         except Exception as exc:
             if state.get('action')=='index':index_queue.hold(Path(self.config['data_dir']),'error')
             if state.get('action') in ('index','index-prepare') and getattr(exc,'report',None):state['reader_probe']=exc.report
             print(type(exc).__name__, str(exc), flush=True)
+            if state.get('action')=='category-index':
+                update('error','La préparation des index Wikipédia doit être reprise. La recherche habituelle reste disponible.')
+                return
+            if state.get('action')=='collection-exclude':
+                update('error','La suppression ou l’actualisation a été interrompue. Rechargez les collections pour voir les fichiers restants.')
+                return
             update('error',getattr(exc,'public_message',None) or ('L’indexation ou sa préparation a échoué ; les anciens index restent disponibles. Vérifiez le suivi et l’espace libre.' if state.get('action') in ('index','index-prepare') else 'L’opération a échoué. Les fichiers existants sont conservés. Vérifiez la connexion Internet et l’espace libre, puis réessayez.'))
 
 

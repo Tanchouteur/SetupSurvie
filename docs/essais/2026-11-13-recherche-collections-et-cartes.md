@@ -1,6 +1,6 @@
 # Recherche des ressources et cartes directes — 13 novembre 2026
 
-**Bilan daté — 0.1.34.** Voir le [guide actuel](../utilisation/nouvelle-interface.md).
+**Bilan daté — 0.1.34.** Voir le [guide actuel](../utilisation/portail.md).
 
 ## Demande et changement
 

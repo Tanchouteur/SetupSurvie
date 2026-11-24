@@ -1,6 +1,6 @@
 # Installer SetupSurvie
 
-Guide d’orientation mis à jour le 12 novembre 2026. Les procédures Windows et
+Guide d’orientation mis à jour le 20 novembre 2026. Les procédures Windows et
 les essais sur les appareils de Marc restent à valider sur place.
 
 ## Préparer le matériel
@@ -25,6 +25,11 @@ lanceur Git, avec sauvegarde et récupération ; voir le
 
 ## Installer le kit hors ligne chez Marc
 
+Sur un kit public préparé avec la 0.98.0 ou ultérieure, ouvrir
+**LISEZ-MOI.html** à la racine du SSD. La notice s’ouvre dans un navigateur
+avant l’installation et indique quel lanceur utiliser pour installer,
+dupliquer ou restaurer. Elle reste disponible sur les copies du kit.
+
 Le [guide Marc](pilote-marc.md) est la référence : prérequis, vérification du kit,
 installation dans des dossiers vides, raccourcis, LAN, certificats et recette.
 Le kit contient les services, modèles et contenus sélectionnés ; vérifier son
@@ -33,7 +38,88 @@ manifeste avant transfert. Les prérequis système doivent être installés sép
 Pour actualiser les cartes et vérifier les dépendances du kit avant transfert,
 suivre [Préparer et vérifier le kit hors ligne](preparer-kit-hors-ligne.md).
 
+## Préparer les vidéos à la première installation
+
+Depuis la 0.54.0, le serveur examine en arrière-plan les vidéos et les pistes
+fournies dans les encyclopédies ZIM présentes à la fin de l’installation, y compris
+depuis un kit hors ligne. Après publication de l’inventaire, le portail
+rend les titres et les pistes exploitables recherchables. Le suivi se trouve dans
+**Bibliothèque → Collections → Vidéos de la bibliothèque**. L’examen attend si
+l’outil d’indexation manque, si le serveur est occupé ou si le mode jeu est actif.
+Après une interruption, reprenez l’examen depuis le même écran.
+
+Pour une installation en ligne, renseignez
+[`deploy/youtube-installation.txt`](../../deploy/youtube-installation.txt) **avant**
+de lancer l’installateur. Le dépôt fournit le fichier avec ses consignes et
+aucune adresse présélectionnée. Le serveur télécharge les vidéos listées en 480p
+et prépare automatiquement les sous-titres manquants, leur version française
+et l’index de recherche. Consultez **File d’attente** pour suivre le travail ou
+relancer une étape en erreur. Le portail est utilisable pendant ces opérations.
+Le [guide YouTube](../utilisation/telecharger-videos-youtube.md) détaille le format,
+les prérequis et les droits d’usage.
+
+## Installer hors ligne depuis le SSD sur Linux
+
+La 0.101.0 peut fournir Python et Docker à un PC Linux neuf. Préparer
+[les installateurs Linux](preparer-kit-hors-ligne.md#ajouter-les-installateurs-linux)
+sur le SSD avant de partir hors ligne. Le lanceur du kit public demande
+l’autorisation administrateur dans une fenêtre et configure des services
+locaux sans téléchargement. Depuis la 0.103.0, le point de restauration de
+ce parcours est activé par défaut. Il peut être désactivé dans la fenêtre
+d’installation et créé plus tard depuis **Entretien de SetupSurvie**.
+
+Pour un PC Linux qui dispose déjà de Python avec Tkinter et de Docker avec
+Compose, le kit public 0.99.0 propose **Installer-Kit-SetupSurvie.desktop** dans
+`app`. Voir le [guide du kit](pilote-marc.md#installer-à-partir-du-kit).
+
+
+Sur Debian 12, Debian 13 ou Ubuntu 22.04 x86-64 déjà démarré avec un bureau
+compatible, ouvrir **Installer SetupSurvie** depuis une copie de transfert
+Linux créée en 0.77.0 ou ultérieure. Choisir le disque de destination puis
+laisser l’assistant installer les outils et ouvrir SetupSurvie. La demande
+administrateur se fait dans une fenêtre. Le point de restauration protégé est
+coché au départ et peut être décoché. Voir le
+[parcours graphique et ses prérequis](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+
 ## Préparer une installation depuis le dépôt
+
+### Installation automatique Linux
+
+Depuis la 0.72.0, le lanceur accepte Debian 12, Debian 13 et Ubuntu 22.04
+x86-64 avec systemd, Bash, curl et les certificats HTTPS. Lancer depuis le
+dossier logiciel obtenu. L'artefact de qualification GitHub Actions contient
+`SetupSurvie-linux-VERSION.tar.gz` et son fichier SHA-256. Après contrôle de
+l'archive et extraction, ouvrir le dossier `SetupSurvie`.
+
+```sh
+sudo ./scripts/install.sh --preparer-systeme /srv/setup-survie --content-pack health --content-pack water
+```
+
+Le mode automatique prépare et vérifie Docker, Compose, Python et nftables,
+puis installe SetupSurvie en mode CPU. Le dossier `/srv/setup-survie` est
+créé avec un stockage Docker dédié, le code, les réglages privés, les données
+et les installateurs destinés au transfert. Le lanceur utilise les ports de
+SetupSurvie et active le routage IPv4. Après l'installation, accéder au
+portail sur `http://127.0.0.1:8080`. Les services démarrent avec le système.
+En cas d'interruption, relancer la même commande avec les mêmes lots.
+
+**À mettre en œuvre.** Télécharger par défaut tous les lots de contenus
+proposés et permettre à l’utilisateur d’exclure explicitement ceux qu’il
+souhaite écarter. Pour l’instant, sélectionner les lots avec `--content-pack`
+comme dans la commande ci-dessus. [Décision de Louis](../decisions/choix-actuels.md#lots-téléchargés-par-défaut--décision-de-louis-du-21-novembre-2026)
+
+Avec la 0.74.0, une première installation automatique prépare GPT-OSS 20B
+et Qwen3 1,7B. Sur les machines qui détectent moins de 16 Gio de RAM,
+le profil rapide et la traduction automatique des vidéos utilisent Qwen3
+avec un contexte initial de 8 192 tokens. GPT-OSS 20B et les autres choix
+restent accessibles dans la liste des modèles. Le réglage est enregistré
+à la première initialisation. La copie hors ligne conserve tous les modèles
+présents et peut adapter le profil rapide à la [mémoire de la cible](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne).
+
+Pour utiliser une autre distribution ou un Docker déjà configuré, suivre
+le parcours manuel ci-dessous.
+
+### Installation manuelle
 
 Ce parcours télécharge ses dépendances et n’équivaut pas à l’installation du kit.
 Sous Windows : Python x64 3.11 à 3.15, Docker Desktop avec conteneurs Linux,
@@ -55,6 +141,40 @@ Sur un Linux préparé pour Docker et NVIDIA, choisir le disque de données :
 ```bash
 ./scripts/install.sh --lan --data-dir /DISQUE/SetupSurvie/donnees
 ```
+
+Pour séparer les réglages privés du dépôt, ajouter
+`--work-dir '/DISQUE/SetupSurvie/Réglages privés'`. Garder ce même dossier
+lors de chaque relance. Une nouvelle installation sur un fonds vide applique le
+[tri de collections fourni](../../deploy/collection-sort-default.json).
+Le parcours [d’installation d’un kit public](pilote-marc.md) omet les
+collections exclues lors de la copie. Les copies de restauration suivent le
+tri de leur installation source. Les options `--content-pack` sont réservées à
+l’installation en ligne. Les codes des lots sont listés par
+`python3 scripts/content.py list`.
+
+Depuis la 0.113.3, l’installation initiale en ligne écarte les éditions
+anglaises de Wikipédia, y compris Simple English, des lots demandés.
+Wikipédia français reste disponible dans le lot `encyclopedia-fr`.
+Un ajout de collections après installation se fait depuis la bibliothèque.
+
+Depuis la 0.70.0, une installation Linux x86-64 en ligne conserve dans
+`donnees/tools/linux-offline-installers/` les archives vérifiées de Docker
+Engine, Compose, du même Python mineur (3.11 à 3.15) et des dépendances
+réseau pour Debian 13. Depuis la 0.72.0, le lot contient aussi les paquets
+résolus pour Debian 12 et Ubuntu 22.04. Le transfert emporte ces archives avec les données. Elles permettent de préparer les
+outils sur une cible Linux glibc sans accès à Internet.
+[Restaurer sur une autre machine Linux](../exploitation/transfert-installation.md#restaurer-sur-une-autre-machine-linux-hors-ligne)
+
+Suivre le [guide de démarrage Linux](demarrage-linux.md) pour le service
+systemd, Docker rootless et les prérequis GPU correspondants.
+
+### Préparation initiale des guides longs (0.40.1)
+
+Sur un fonds important, l’extraction initiale des PDF peut dépasser les 30 secondes
+réservées au démarrage. Le portail conserve son dernier index et poursuit la
+préparation en arrière-plan ; son état redevient normal dès la réussite. Une
+erreur réelle reste signalée, sans afficher le contenu des documents. Les caches
+d’extraction sont conservés pour les démarrages suivants.
 
 Remplacer les chemins d’exemple par les destinations réelles. Les images et caches
 nécessaires doivent être préparés avant de couper Internet ; la présence d’un

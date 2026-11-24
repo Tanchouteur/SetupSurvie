@@ -15,6 +15,7 @@ import sys
 import time
 
 from fastapi import HTTPException
+from . import work_queue
 from . import captions,durable,engine,operations,store,video_inventory,videos
 
 ACTIVE={}
@@ -22,6 +23,13 @@ UNIT_MS=60000
 MODEL_ROOT=Path(os.environ.get('PILOT_SPEECH_CACHE','/webui-data/cache/whisper'))
 VERSIONS=Path('/srv/versions.json') if Path('/srv/versions.json').is_file() else Path(__file__).resolve().parents[1]/'deploy/versions.json'
 NOTICE='Transcription locale automatique de la parole, non relue. Les mots et horodatages sont estimés ; les images et gestes ne sont pas analysés. Vérifiez les passages techniques avec la vidéo.'
+
+
+
+def busy(db):
+    """Jobs really waiting or running here; rows left by a crash do not fill the queue."""
+    return sum(1 for row in db.execute("SELECT id FROM jobs WHERE status IN ('queued','running')")
+               if row[0] in ACTIVE and not ACTIVE[row[0]].done())
 
 
 def running():return any(not task.done() for task in ACTIVE.values())
@@ -36,6 +44,7 @@ def connect():
         title TEXT NOT NULL,language TEXT NOT NULL,detected_language TEXT,mode TEXT NOT NULL,translate_french INTEGER NOT NULL,
         status TEXT NOT NULL,error TEXT,created REAL NOT NULL,updated REAL NOT NULL,probe TEXT,progress_ms INTEGER NOT NULL DEFAULT 0,
         published_hash TEXT,index_status TEXT,translation_job TEXT);
+        CREATE INDEX IF NOT EXISTS jobs_by_video ON jobs(video_id, created DESC);
         CREATE TABLE IF NOT EXISTS units(job_id TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,result TEXT NOT NULL,
         PRIMARY KEY(job_id,start_ms));
         CREATE TABLE IF NOT EXISTS rejections(job_id TEXT NOT NULL,start_ms INTEGER NOT NULL,created REAL NOT NULL,reason TEXT NOT NULL,result TEXT NOT NULL);''')
@@ -68,12 +77,23 @@ def status(identifier,full=False):
     if full:
         with connect() as db:rejected=[{**dict(row),'result':json.loads(row['result'])} for row in db.execute('SELECT start_ms,created,reason,result FROM rejections WHERE job_id=? ORDER BY created',(identifier,))]
         result.update(source_revision=item['source_revision'],published_hash=item['published_hash'],probe=probe,units=units,rejected_proposals=rejected)
+    result.update(work_queue.queue_fields(identifier,item['status'],'speech'))
     return result
 
 
-def listing(limit=100):
-    with connect() as db:ids=[r[0] for r in db.execute('SELECT id FROM jobs ORDER BY created DESC'+(' LIMIT ?' if limit is not None else ''),(limit,) if limit is not None else ())]
-    return [status(identifier) for identifier in ids]
+def listing(limit=100, *, video_id=None):
+    query='SELECT id FROM jobs'
+    parameters=[]
+    if video_id is not None:
+        query+=' WHERE video_id=?'
+        parameters.append(video_id)
+    query+=' ORDER BY created DESC'
+    if limit is not None:
+        query+=' LIMIT ?'
+        parameters.append(limit)
+    with connect() as db:
+        identifiers=[row[0] for row in db.execute(query,parameters)]
+    return [status(identifier) for identifier in identifiers]
 
 
 def model_config():
@@ -84,9 +104,9 @@ def model_config():
             if video_inventory.is_link(path) or not path.exists():raise ValueError()
         runtime={key:importlib.metadata.version(key) for key in ('faster-whisper','av','ctranslate2')}
         return {'available':True,'model_path':str(folder),'model':pin,'runtime':runtime,'device':'cpu','compute_type':'int8',
-            'threads':max(1,min(32,(os.cpu_count() or 2)-1))}
+            'threads':max(1,min(4,(os.cpu_count() or 2)//2))}
     except (OSError,ValueError,KeyError,importlib.metadata.PackageNotFoundError):
-        return {'available':False,'reason':'speech_not_prepared','message':'La reconnaissance vocale n’est pas préparée. Préparez la dictée avec l’installateur, une fois avec Internet, puis réessayez.'}
+        return {'available':False,'reason':'speech_not_prepared','message':'La reconnaissance vocale n’est pas préparée. Préparez la reconnaissance vocale avec l’installateur, une fois avec Internet, puis réessayez.'}
 
 
 def current_source(item):
@@ -151,7 +171,7 @@ class Worker:
                     'archive_media_redirect_refused':'Cette référence renvoie vers un autre média ; la reconnaissance reste en attente d’une source locale vérifiée.',
                     'archive_media_response_invalid':'Le média renvoyé ne correspond pas à l’inventaire. Vérifiez la collection avant de reprendre.',
                     'archive_secondary_reference_refused':'Ce média demande d’ouvrir une autre ressource. La reconnaissance accepte ici les fichiers vidéo inclus, sans liste distante.'}
-                raise ValueError(messages.get(value.get('reason'),'Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la dictée.'))
+                raise ValueError(messages.get(value.get('reason'),'Le décodage audio ou la reconnaissance a échoué. Vérifiez le format du fichier et la préparation de la reconnaissance vocale.'))
             return value['result']
         finally:
             if not response.done():response.cancel();await asyncio.gather(response,return_exceptions=True)
@@ -186,13 +206,14 @@ def publish(identifier):
     return True
 
 
+@work_queue.tracked('speech')
 async def run(identifier):
     worker=Worker()
     try:
         config=model_config()
         if not config['available']:raise ValueError(config['message'])
         while True:
-            async with engine.LOCK:
+            async with work_queue.QUEUE.slots['local']:
                 await available();item=get(identifier)
                 if item['status'] not in ('queued','running'):return
                 _,source=await asyncio.to_thread(current_source,item)
@@ -229,7 +250,7 @@ async def run(identifier):
                     break
             # A waiting ordinary question gets the lock between audio units.
             await asyncio.sleep(1)
-        try:await videos.start();update(identifier,'completed',index_status='requested')
+        try:await videos.refresh_after(time.time());update(identifier,'completed',index_status='requested')
         except HTTPException:update(identifier,'completed',index_status='pending')
         item=get(identifier)
         if item['translate_french'] and not (item['detected_language'] or item['language']).startswith('fr'):
@@ -251,7 +272,7 @@ async def run(identifier):
         update(identifier,'completed' if get(identifier)['status']=='completed' else 'error',str(error))
     except Exception:
         if get(identifier)['status']=='completed':update(identifier,'completed','La transcription est conservée ; la préparation française reste à lancer depuis cette vidéo.')
-        else:update(identifier,'error','Transcription interrompue. Les passages terminés restent conservés ; vérifiez le fichier et la préparation de la dictée.')
+        else:update(identifier,'error','Transcription interrompue. Les passages terminés restent conservés ; vérifiez le fichier et la préparation de la reconnaissance vocale.')
     finally:await worker.close()
 
 
@@ -275,7 +296,7 @@ async def create(video_id,language='',mode='rapide',translate_french=True):
         previous=db.execute('SELECT id FROM jobs WHERE video_id=? AND source_revision=? AND language=? AND translate_french=? ORDER BY created DESC LIMIT 1',
             (video_id,revision,language,int(translate_french))).fetchone()
         if not previous:
-            if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'Deux transcriptions attendent déjà. Reprenez-les ou mettez-les en pause.')
+            if busy(db)>=2:raise HTTPException(429,'Deux transcriptions attendent déjà. Reprenez-les ou mettez-les en pause.')
             db.execute('INSERT INTO jobs(id,video_id,source_revision,title,language,mode,translate_french,status,created,updated,index_status) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
                 (key,video_id,revision,payload['title'],language,mode,int(translate_french),'queued',now,now,'not_published'))
     if previous:return status(previous[0])
@@ -297,7 +318,7 @@ async def resume(identifier):
     if item['status'] not in ('paused','error'):raise HTTPException(409,'Cette transcription est déjà active ou terminée.')
     await available();await asyncio.to_thread(current_source,item)
     with connect() as db:
-        if db.execute("SELECT count(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]>=2:raise HTTPException(429,'La file des transcriptions est pleine.')
+        if busy(db)>=2:raise HTTPException(429,'La file des transcriptions est pleine.')
     update(identifier,'queued');launch(identifier);return status(identifier)
 
 

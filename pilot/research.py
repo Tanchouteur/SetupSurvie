@@ -18,6 +18,33 @@ def size(value):return len(json.dumps(value,ensure_ascii=False).encode('utf-8'))
 def synthesis(query):return retrieval.search_subject(query)!=query
 
 
+def planning_request(raw):
+    """Detect a request for a plan with a topic that local guides can inform."""
+    return bool(re.match(
+        r'^(?:(?:peux tu|pourrais tu|pouvez vous|could you|can you) )?(?:me )?'
+        r'(?:prepare[r]?|planifie[r]?|propose[r]?|fais|faire|elabore[r]?|plan|make|suggest)'
+        r'(?: moi)? (?:un|une|le|la|a|the) '
+        r'(?:semaine|programme|planning|emploi du temps|plan|week|schedule)\b',raw))
+
+
+def notice_request(query):
+    raw=retrieval.normal(query)
+    return bool(re.search(r'\b(notices?|manuels?|manuals?|instructions?|mode d emploi)\b',raw)
+                and re.search(r'\b(touches?|boutons?|commandes?|reglages?|appuy\w*|afficher|effac\w*|buttons?|keys?|settings|press|reset)\b',raw))
+
+
+def device_references(query):
+    # Only explicit mixed letter/digit identifiers, never a model-supplied name
+    # or a guessed title. Multiple references keep the complete comparison.
+    return list(dict.fromkeys(m[0] for m in re.finditer(
+        r'(?<![\w-])(?=[A-Za-z0-9-]*[A-Za-z])(?=[A-Za-z0-9-]*\d)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?![\w-])',query)))
+
+
+def notice_search_query(query):
+    references=device_references(query)
+    return references[0] if notice_request(query) and len(references)==1 else query
+
+
 def primary_query(query):
     """Use the primary topic for the initial search, retaining the full user
     request in conversation for comparisons and any complementary tool calls.
@@ -238,9 +265,17 @@ def normalize_citations(answer,references):
     return answer
 
 
-def unsupported_citations(answer,references):
+def unsupported_citation_spans(answer,references):
     read={item['number'] for item in references.values() if item.get('consulted')}
-    return bool(citation_numbers(answer)-read) or any(not (citation_source(match[1],references) or {}).get('consulted') for match in source_id_citations(answer))
+    ids=[match.span() for match in source_id_citations(answer)
+         if not (citation_source(match[1],references) or {}).get('consulted')]
+    numbers=[(part['start'],part['end']) for part in citation_spans(answer)
+             if part['numbers']-read and not any(start<=part['start']<end for start,end in ids)]
+    return ids+numbers
+
+
+def unsupported_citations(answer,references):
+    return bool(unsupported_citation_spans(answer,references))
 
 
 def citations_valid(answer,references):

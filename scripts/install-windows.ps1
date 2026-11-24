@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume, [switch]$NoBrowser, [switch]$NoStartup)
+param([string]$BaseDir, [string]$Kit, [string]$LanHost, [switch]$Resume, [switch]$NoBrowser, [switch]$NoStartup, [string]$CollectionSort, [switch]$SourceChosen)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'windows-common.ps1')
 try {
@@ -15,8 +15,12 @@ try {
     $prefix = $python.Prefix
     & $python.Path @prefix -X utf8 (Join-Path $PSScriptRoot 'install_wizard.py') --base-dir $BaseDir --check
     if ($LASTEXITCODE -ne 0) { throw 'Installation non démarrée. Suivez le message ci-dessus pour conserver votre installation existante.' }
-    if (-not $Kit -and -not $Resume) {
+    if (-not $Kit -and -not $Resume -and -not $SourceChosen) {
         $Kit = Read-Host 'Dossier du kit local, ou Entrée pour télécharger avec Internet'
+    }
+    if (-not $Resume -and -not $CollectionSort) {
+        $CollectionSort = Read-Host 'Fichier de tri SetupSurvie JSON, ou Entrée pour garder le tri par défaut'
+        if ($CollectionSort) { $CollectionSort = $CollectionSort.Trim('"') }
     }
     if (-not $Resume) { $LanHost=Select-SurvieLanHost $LanHost }
     if ($Resume) {
@@ -31,6 +35,7 @@ try {
     if ((Read-Host 'Emplacement Docker vérifié ? Tapez O pour continuer') -notmatch '^(o|oui)$') { throw 'Vérifiez le disque Docker puis relancez.' }
     $arguments = @('-X', 'utf8', (Join-Path $PSScriptRoot 'install_wizard.py'), '--base-dir', $BaseDir)
     if ($Kit) { $arguments += @('--kit', $Kit) }
+    if ($CollectionSort) { $arguments += @('--collection-sort', $CollectionSort) }
     if ($Resume) { $arguments += '--resume' }
     if ($NoStartup) { $arguments += '--no-startup' }
     if ($LanHost) { $arguments += @('--lan-host', $LanHost) }

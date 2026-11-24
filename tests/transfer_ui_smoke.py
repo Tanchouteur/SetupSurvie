@@ -1,4 +1,5 @@
-"""Real Tk event-loop smoke in a disposable X display; no services or private data."""
+"""Real Tk event-loop smoke; no services or private data."""
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -9,7 +10,7 @@ with tempfile.TemporaryDirectory() as name:
     wizard=Wizard(Path(name))
     wizard.root.update()
     assert wizard.root.title()=='Transférer SetupSurvie'
-    assert len(wizard.actions)==7
+    assert len(wizard.actions)==(8 if os.name=='nt' else 7)
     wizard.launch(lambda:wizard.events.put(('text','fixture completed')))
     import time
     end=time.monotonic()+5
@@ -18,4 +19,4 @@ with tempfile.TemporaryDirectory() as name:
     assert not wizard.busy
     assert 'fixture completed' in wizard.log.get('1.0','end')
     wizard.close()
-print('Tk: real window, seven actions, background worker and completion passed')
+print('Tk: real window, transfer actions, background worker and completion passed')

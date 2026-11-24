@@ -4,18 +4,21 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 import shutil
+import stat
 import sys
 import time
 import uuid
 import zipfile
 
 import setup
+import maintenance_site
 from pilot import durable
 from delivery_paths import destination,locked
-from pilot_backup import maintenance,stopped_backup
+from pilot_backup import maintenance,rebuildable,stopped_backup
 from pilot_kit import checked_entries
 
 FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
@@ -23,6 +26,18 @@ FOLDERS=('scripts','pilot','portal','deploy','docs','fixtures','tests','assets')
 # First-install wrappers belong to source/kit deliveries, not software updates.
 FILES=('README.md','AGENTS.md','compose.yaml','compose.linux.yaml','compose.gpu.yaml')
 SERVICES=('open-webui','kiwix','pilot','portal')
+# Set by main() when no PowerShell launcher publishes the portal status itself.
+STATUS=None
+
+
+def report_progress(phase, detail='', current=None, total=None):
+    if STATUS is not None:
+        STATUS.progress(phase, detail, current, total)
+    if os.environ.get('SURVIE_UPDATE_PROGRESS') != '1':
+        return
+    print('SURVIE_UPDATE_PROGRESS '+json.dumps({
+        'phase': phase, 'detail': detail, 'current': current, 'total': total,
+    }), flush=True)
 
 
 def release_at(root):
@@ -100,14 +115,22 @@ def unpack(package,expected,dest):
 
 
 class Services:
-    def __init__(self,app,c):self.app,self.c=app,c
+    def __init__(self,app,c):self.app,self.c,self.site=app,c,None
     def stop(self):
         import control,discovery
         control.stop(self.app);discovery.stop(self.app)
         self.app.compose(self.c,'stop',*SERVICES)
+        # Readers keep a page and the progress while every container is stopped.
+        if self.site is None:
+            try:self.site=maintenance_site.open_site(self.c)
+            except (OSError,ValueError,KeyError) as exc:print('Page de maintenance indisponible :',exc,flush=True)
+    def close_site(self):
+        site,self.site=self.site,None
+        if site:site.close()
     def start(self):
         # Do not start Ollama, consume VRAM, pull images or change a gaming pause.
         import control,discovery
+        self.close_site()
         self.app.render(self.c)
         self.app.compose(self.c,'up','-d','--no-deps','--force-recreate','--pull','never','--wait','--wait-timeout','420',*SERVICES)
         control.start(self.app,self.c)
@@ -137,12 +160,16 @@ class Services:
         raise setup.SetupError('La nouvelle version ne répond pas correctement.')
 
 
-def clear_state(folder):
-    """Keep OS lease inodes, including the index lease owned by this operation."""
+def clear_state(folder,data=None):
+    """Keep OS lease inodes, including the index lease owned by this operation.
+
+    Rebuildable indexes are absent from snapshots: they stay in place and
+    validate themselves against the ZIM archives after a rollback."""
     for path in folder.iterdir():
         if path.is_symlink():raise setup.SetupError('Lien dans les états ; restauration manuelle requise.')
+        if data is not None and rebuildable(path.relative_to(data)):continue
         if path.is_dir():
-            clear_state(path)
+            clear_state(path,data)
             if not any(path.iterdir()):path.rmdir()
         elif not path.name.endswith('.lease'):path.unlink()
 
@@ -151,12 +178,12 @@ def restore_snapshot(snapshot,app,c):
     report=json.loads((snapshot/'backup.json').read_text(encoding='utf-8'));entries=checked_entries(snapshot,report)
     data=Path(c['data_dir'])
     for entry,_ in entries:
-        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json'):
+        if not entry['path'].startswith(('data/state/','data/library/guides/')) and entry['path'] not in ('private/settings.json','private/identifiants.txt','private/inference-paused.json','data/catalog/downloaded-content.json','data/catalog/collection-sort.json'):
             raise setup.SetupError('Sauvegarde non reconnue ; restauration manuelle requise.')
     # Only mutable service state; models, ZIM and caches are never removed.
     for name in ('state/pilot','state/caddy'):
         folder=destination(data,name)
-        if folder.exists():clear_state(folder)
+        if folder.exists():clear_state(folder,data)
     folder=destination(data,'state/openwebui')
     if folder.exists():
         for path in folder.iterdir():
@@ -186,9 +213,63 @@ def recover(app,journal,services):
         return recover_locked(app,journal,services)
 
 
+def resume_startup(app, *, restart=False):
+    """Resolve an interrupted update from its durable journal and application directories."""
+    import transfer
+    with locked(app.work/'update.lock'):
+        transfer.guard(app.work)
+        journal=app.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        if state['phase'] in ('complete','rolled_back'):
+            return
+        config=app.load()
+        root=setup.safe_path(config['app_dir'])
+        previous=Path(state['previous'])
+        snapshot=Path(state['snapshot'])
+        if (state['phase'] not in ('prepared','snapshot_ready','switched')
+            or root!=setup.safe_path(state['application'])
+            or setup.ROOT.resolve() not in (root,previous.resolve())
+            or not previous.resolve().is_relative_to(root.parent/'updates')
+            or previous.name!='previous' or snapshot!=previous.parent/'snapshot'):
+            raise setup.SetupError('Mise à jour incomplète : ouvrez la récupération de mise à jour.')
+        installed=release_at(root)['version'] if root.is_dir() else None
+        if state['phase'] in ('prepared','snapshot_ready'):
+            # Before publication service state has never been handed to the new code.
+            if state['phase']=='snapshot_ready' and installed is None and previous.is_dir():
+                if release_at(previous)['version']!=state['old_version'] or not (snapshot/'backup.json').is_file():
+                    raise setup.SetupError('Ancienne installation incomplète ; récupération manuelle nécessaire.')
+                durable.publish(previous,root)
+                installed=state['old_version']
+            if installed==state['old_version'] and not previous.exists():
+                state['phase']='rolled_back'
+                setup.write_json(journal,state,private=True)
+                return
+        if (state['phase']=='prepared' or installed!=state['new_version'] or not previous.is_dir()
+            or release_at(previous)['version']!=state['old_version'] or not (snapshot/'backup.json').is_file()):
+            raise setup.SetupError('Version installée ou sauvegarde incohérente ; récupération manuelle nécessaire.')
+        services=Services(app,config)
+        if restart:
+            try:
+                health=app.request('http://127.0.0.1:8080/api/health',timeout=3)
+                running=health.get('ok') and health.get('version')==state['new_version']
+            except (OSError,ValueError,setup.SetupError):
+                running=False
+            if running:
+                import control
+                control.start(app,config)
+            else:
+                services.start()
+        services.check(state['new_version'])
+        state['phase']='complete'
+        setup.write_json(journal,state,private=True)
+
+
 def recover_locked(app,journal,services):
     j=json.loads(journal.read_text(encoding='utf-8'));root=Path(j['application']);previous=Path(j['previous']);snapshot=Path(j['snapshot'])
     if j['phase'] in ('complete','rolled_back'):raise setup.SetupError('Cette opération est terminée ; aucun état utilisateur ne sera écrasé.')
+    if j['phase']!='rolling_back':
+        j['phase']='rolling_back'
+        setup.write_json(journal,j,private=True)
     services.stop()
     if previous.exists():
         if root.exists():durable.publish(root,root.with_name(root.name+'.failed-'+uuid.uuid4().hex[:8]))
@@ -197,6 +278,91 @@ def recover_locked(app,journal,services):
     setup.ROOT=root
     services.start();services.check(j['old_version'])
     j['phase']='rolled_back';setup.write_json(journal,j,private=True)
+    report_progress('restored')
+
+
+def plain_directory(path):
+    info = path.lstat()
+    return stat.S_ISDIR(info.st_mode) and not (
+        getattr(info, 'st_file_attributes', 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    )
+
+
+def prune_update_history(updates, current):
+    """Rotate only the in-place update history after a successful service check."""
+    candidates = []
+    pending = []
+    resolved_updates = updates.resolve()
+    for entry in updates.iterdir():
+        if not re.fullmatch(r'(?:discarded-)?[0-9a-f]{32}', entry.name):
+            continue
+        if not plain_directory(entry) or entry.resolve().parent != resolved_updates:
+            continue
+        if entry.name.startswith('discarded-'):
+            pending.append(entry)
+            continue
+        if {child.name for child in entry.iterdir()} != {'previous', 'snapshot'}:
+            continue
+        previous = entry/'previous'
+        snapshot = entry/'snapshot'
+        if not plain_directory(previous) or not plain_directory(snapshot):
+            continue
+        manifest = snapshot/'backup.json'
+        if not manifest.is_file() or manifest.is_symlink() or not (previous/'deploy/release.json').is_file():
+            continue
+        candidates.append((manifest.stat().st_mtime_ns, entry))
+
+    # Keep the current validated backup plus the most recent preceding copy.
+    if not any(entry == current for _, entry in candidates):
+        return
+    older = sorted(((date, entry) for date, entry in candidates if entry != current), reverse=True)
+    expired = [entry for _, entry in older[1:]]
+    if not expired and not pending:
+        return
+    total = len(expired) + len(pending)
+    report_progress("prune", current=0, total=total)
+    removed = 0
+    for index, entry in enumerate(expired + pending, 1):
+        try:
+            if not plain_directory(entry) or entry.resolve().parent != resolved_updates:
+                continue
+            if entry in expired:
+                discarded = updates/('discarded-'+entry.name)
+                if discarded.exists() or discarded.is_symlink():
+                    raise setup.SetupError('Un nettoyage portant le même identifiant existe déjà.')
+                durable.publish(entry, discarded)
+                entry = discarded
+            shutil.rmtree(entry)
+            removed += 1
+        except (OSError, setup.SetupError) as exc:
+            print(f'Nettoyage différé pour {entry.name} : {exc}', flush=True)
+        finally:
+            report_progress("prune", current=index, total=total)
+    print(f'Anciennes copies de mise à jour supprimées : {removed}.', flush=True)
+
+
+def prune_completed_update(app):
+    """Allow the operator to resume or run history rotation between updates."""
+    import transfer
+    with locked(app.work/'update.lock'):
+        transfer.guard(app.work)
+        config = app.load()
+        root = setup.safe_path(config['app_dir'])
+        updates = destination(root.parent, 'updates')
+        journal = app.work/'update.json'
+        if not journal.is_file():
+            raise setup.SetupError('Aucune mise à jour terminée à partir de laquelle nettoyer les anciennes copies.')
+        state = json.loads(journal.read_text(encoding='utf-8'))
+        previous = Path(state['previous'])
+        current = previous.parent
+        if (state['phase'] != 'complete' or root != setup.ROOT.resolve() or (root/'.git').exists()
+            or root != setup.safe_path(state['application']) or previous.name != 'previous'
+            or current.parent != updates or not re.fullmatch(r'[0-9a-f]{32}', current.name)
+            or release_at(root)['version'] != state['new_version']):
+            raise setup.SetupError('Le nettoyage exige une mise à jour terminée et une version installée cohérente.')
+        report_progress("check")
+        Services(app, config).check(state['new_version'])
+        prune_update_history(updates, current)
 
 
 def apply(app,package,digest,services=None,*,rollback=False):
@@ -216,8 +382,11 @@ def apply(app,package,digest,services=None,*,rollback=False):
         operation=destination(root.parent,'updates/'+uuid.uuid4().hex)
         durable.mkdir(operation);operation.chmod(0o700)
         staged=operation/'new';previous=operation/'previous';snapshot=operation/'snapshot'
+        report_progress("package")
         manifest=unpack(Path(package),digest,staged)
         old_release=release_at(root)
+        if STATUS is not None:
+            STATUS.value.update(installed=old_release['version'],available=manifest['release']['version'])
         available=version_tuple(manifest['release']['version']);installed=version_tuple(old_release['version'])
         if (not rollback and available<=installed) or (rollback and available>=installed):
             raise setup.SetupError('Choisissez une version strictement antérieure pour le retour.' if rollback else 'Version déjà installée ou plus ancienne ; aucun remplacement effectué.')
@@ -228,25 +397,42 @@ def apply(app,package,digest,services=None,*,rollback=False):
         if (root/'vendor').is_dir():
             if (root/'vendor').is_symlink() or any(p.is_symlink() for p in (root/'vendor').rglob('*')):raise setup.SetupError('Lien dans les dépendances locales refusé.')
             shutil.copytree(root/'vendor',staged/'vendor')
-        snapshot_bytes=sum(p.stat().st_size for name in ('state/pilot','state/openwebui','state/caddy','library/guides') for p in (data/name).rglob('*') if p.is_file() and not p.is_symlink() and 'cache' not in p.relative_to(data).parts)
+        snapshot_bytes=sum(p.stat().st_size for name in ('state/pilot','state/openwebui','state/caddy','library/guides') for p in (data/name).rglob('*') if p.is_file() and not p.is_symlink() and 'cache' not in p.relative_to(data).parts and not rebuildable(p.relative_to(data)))
         if shutil.disk_usage(root).free<snapshot_bytes+2_000_000_000:raise setup.SetupError('Marge libre insuffisante pour la sauvegarde et le remplacement.')
         durable.sync_tree(staged)
         j={'phase':'prepared','application':str(root),'previous':str(previous),'snapshot':str(snapshot),
            'old_version':old_release['version'],'new_version':manifest['release']['version']}
-        with maintenance(app,c):
+        report_progress("maintenance")
+        with maintenance(app,c,pause_video_inventory=c['target']=='windows' and not rollback):
             setup.write_json(journal,j,private=True)
             try:
+                report_progress("stop")
                 services.stop()
-                stopped_backup(app,c,snapshot,resume=False)
+                report_progress("backup", "Préparation de la liste des fichiers…")
+                stopped_backup(app,c,snapshot,resume=False,services_stopped=True,
+                               progress=lambda done, total: report_progress("backup", current=done, total=total))
+                report_progress("switch")
                 j['phase']='snapshot_ready';setup.write_json(journal,j,private=True)
                 durable.publish(root,previous);durable.publish(staged,root)
                 j['phase']='switched';setup.write_json(journal,j,private=True)
-                services.start();services.check(j['new_version'])
+                report_progress("start")
+                services.start()
+                report_progress("check")
+                services.check(j['new_version'])
                 j['phase']='complete';setup.write_json(journal,j,private=True)
             except BaseException:
+                report_progress("rollback")
                 try:recover_locked(app,journal,services)
                 except BaseException as error:raise setup.SetupError('Mise à jour interrompue ; conserver le dossier updates et lancer recover. '+str(error))
                 raise
+            finally:
+                # Never leave the temporary page holding the portal ports.
+                getattr(services,'close_site',lambda:None)()
+        if c['target']=='windows' and not rollback:
+            try:
+                prune_update_history(operation.parent, operation)
+            except (OSError, setup.SetupError) as exc:
+                print('Nettoyage des anciennes mises à jour différé :', exc, flush=True)
         print('Retour terminé :' if rollback else 'Mise à jour terminée :',j['new_version'],'; données conservées. Sauvegarde privée :',operation)
         return operation
 
@@ -256,15 +442,47 @@ def main():
     b=sub.add_parser('build');b.add_argument('output')
     for action in ('apply','rollback'):
         a=sub.add_parser(action);a.add_argument('package');a.add_argument('--sha256',required=True);a.add_argument('--work-dir',required=True)
-    r=sub.add_parser('recover');r.add_argument('--work-dir',required=True)
+    for action in ('recover', 'prune'):
+        command = sub.add_parser(action)
+        command.add_argument('--work-dir', required=True)
+    f=sub.add_parser('resume-startup',aliases=['finish-switched']);f.add_argument('--work-dir',required=True)
     args=p.parse_args()
     if args.action=='build':build(args.output);return
     app=setup.Installation(args.work_dir)
-    if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
-    else:
-        # Recovery and application share the same OS lease, including after a crash.
-        with locked(app.work/'update.lock'):
-            recover(app,app.work/'update.json',Services(app,app.load()))
+    if args.action in ('apply','rollback','recover'):
+        start_status(app,args.action)
+    try:
+        if args.action in ('apply','rollback'):apply(app,args.package,args.sha256,rollback=args.action=='rollback')
+        elif args.action == 'prune':
+            prune_completed_update(app)
+        elif args.action in ('resume-startup','finish-switched'):
+            resume_startup(app,restart=True)
+        else:
+            # Recovery and application share the same OS lease, including after a crash.
+            with locked(app.work/'update.lock'):
+                services=Services(app,app.load())
+                try:recover(app,app.work/'update.json',services)
+                finally:services.close_site()
+    except BaseException as exc:
+        if STATUS is not None:
+            STATUS.progress('error',str(exc) or 'Consultez le journal de mise à jour.')
+        raise
+    if STATUS is not None:
+        STATUS.progress('done','Vous pouvez actualiser SetupSurvie dans votre navigateur.')
+
+
+def start_status(app,action):
+    """Publish the portal status directly when no launcher does it for us."""
+    global STATUS
+    if os.environ.get('SURVIE_UPDATE_PROGRESS')=='1' or not maintenance_site.enabled():
+        return
+    try:
+        config=app.load()
+        STATUS=maintenance_site.StatusWriter(config['data_dir'],{'apply':'update'}.get(action,action),
+                                             installed=release_at(setup.ROOT)['version'])
+        STATUS.progress('setup')
+    except (OSError,ValueError,KeyError,setup.SetupError):
+        STATUS=None
 
 
 if __name__=='__main__':

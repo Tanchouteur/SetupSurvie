@@ -11,6 +11,7 @@ import time
 
 import discovery
 from delivery_paths import destination
+from pilot import zim_video_inventory
 
 MAX_JSON = 32 * 1024 * 1024
 MAX_ITEMS = 20000
@@ -103,27 +104,63 @@ def snapshot(root, work, *, now=None):
         # A verified independent worker takes precedence over a stale web record.
         transfer_alive = owner_status(transfer) if transfer else None
         web_alive = owner_status(web) if web else None
+        # After a disk migration, a finished transfer can still name the old
+        # disk. It is history, not an unknown current activity.
+        transfer_plan=None
+        if transfer:
+            try:transfer_plan=allowed_plan(transfer['plan'],root,work)
+            except (ValueError,KeyError,TypeError,OSError):
+                if transfer_alive is True:raise
+                transfer,transfer_alive={},None
         if web.get('action')=='index' and web_alive is not True and web.get('index_pid'):
             if owner_status({'pid':web['index_pid'],'identity':web.get('index_identity')}) is True:web_alive=True
-        if transfer and (transfer_alive is True or not web.get('id') or web_alive is not True):
+        same_worker = (transfer.get('pid') and transfer['pid'] == web.get('pid')
+                       and transfer.get('identity') == web.get('identity') and web.get('action') == 'download')
+        if transfer and not same_worker and (transfer_alive is True or not web.get('id') or web_alive is not True):
             owner, alive, source = transfer, transfer_alive, transfer_source
-            plan_path = allowed_plan(transfer['plan'], root, work)
+            plan_path = transfer_plan
             started = transfer.get('started', 0)
         elif web.get('id') and re.fullmatch('[a-f0-9]{32}', web['id']):
             owner, alive, source = web, web_alive, 'web'
             started = web.get('started_at', 0)
-            if web.get('action') in ('geography', 'routing', 'plan','index','index-prepare'):
+            if web.get('action') in ('geography', 'routing', 'plan','index','index-prepare','video-inventory','youtube-download','category-index','collection-exclude'):
                 phase = web.get('phase', 'unknown')
                 if phase in ('starting', 'planning', 'downloading', 'refreshing') and alive is False:
                     phase = 'interrupted'
                 extra={}
+                message=web.get('message') if isinstance(web.get('message'),str) else ''
+                if web['action'] == 'video-inventory' and phase in ('completed', 'error'):
+                    report = read_json(destination(root, 'state/pilot/zim-videos/progress.json'), {})
+                    if (isinstance(report, dict) and report.get('job_id') == web['id']
+                            and zim_video_inventory.partial_with_all_archives(report)
+                            and (phase == 'completed' or message.startswith('L’opération a échoué.'))):
+                        phase = 'partial'
+                        message = zim_video_inventory.LIMITED_INVENTORY_MESSAGE
+                        extra = {'archives': report['archives'], 'completed': report['archives']}
                 if web['action']=='index':
                     progress=read_json(root/'state/pilot/archive-index/progress.json',{})
                     if isinstance(progress,dict):extra={key:progress.get(key,0) for key in ('archives','completed','articles') if type(progress.get(key,0)) is int}
                     if phase=='downloading':phase='indexing'
                 elif web['action']=='index-prepare' and phase=='downloading':phase='index_preparation'
+                elif web['action']=='category-index':
+                    progress=read_json(root/'state/pilot/category-index/progress.json',{})
+                    if isinstance(progress,dict) and (not progress.get('job_id') or progress.get('job_id')==web['id']):
+                        counts=progress.get('counts') if isinstance(progress.get('counts'),dict) else {}
+                        extra={'entries_done':progress.get('done'),'entries_total':progress.get('total'),
+                               'resilience':counts.get('resilience'),'culture':counts.get('culture'),
+                               'archives':progress.get('archives'),'completed':progress.get('completed')}
+                        extra={key:value for key,value in extra.items() if type(value) is int and value>=0}
+                    if phase=='downloading':phase='category_indexing'
+                elif web['action']=='collection-exclude' and phase=='refreshing':phase='removing'
+                elif web['action']=='youtube-download':
+                    progress=read_json(destination(work,'library-web/'+web['id']+'/progress.json'),{})
+                    counts=progress.get('counts') if isinstance(progress,dict) else None
+                    if isinstance(counts,dict):extra={'videos':progress.get('videos',0),'downloaded':counts.get('downloaded',0),'skipped':counts.get('skipped',0),'errors':counts.get('error',0)}
                 return {**base, 'source': source, 'phase': phase,
-                        'kind': web['action'], 'worker_alive': alive,'index_progress':extra}
+                        'kind': web['action'], 'operation_id': web['id'],
+                        'pause_requested': (work/'library-web'/web['id']/'cancel').is_file(),
+                        'automatic_pause': phase == 'paused' and (work/'library-web'/web['id']/'auto-pause').is_file(),
+                        'worker_alive': alive,'index_progress':extra,'message':message[:400]}
             plan_path = allowed_plan(work / 'library-web' / web['id'] / 'plan.json', root, work)
         else:
             return base
@@ -181,9 +218,15 @@ def snapshot(root, work, *, now=None):
         retry = read_json(destination(root, 'catalog/content-retry.json'), {})
         matching_retry = retry.get('pid') == owner.get('pid')
         paused = destination(root, 'catalog/content-supervisor.pause').exists()
+        cancelling = False
         if source == 'web':
             paused = paused or destination(work, 'library-web/' + web['id'] + '/cancel').exists()
-        if items and len(verified) == len(items):
+            cancelling = destination(work, 'library-web/' + web['id'] + '/discard').exists()
+        if source == 'web' and web.get('phase') in ('completed', 'error', 'cancelled'):
+            phase = {'completed': 'verified', 'error': 'error', 'cancelled': 'cancelled'}[web['phase']]
+        elif source == 'web' and web.get('phase') == 'refreshing' and alive is True:
+            phase = 'refreshing'
+        elif items and len(verified) == len(items):
             phase = 'refreshing' if source == 'web' and web.get('phase') == 'refreshing' else 'verified'
         elif alive is None:
             phase = 'unknown'
@@ -199,7 +242,10 @@ def snapshot(root, work, *, now=None):
             phase = 'checking'
         failed = retry.get('failed', {}) if matching_retry else {}
         failed_count = sum(i in selected and i not in verified for i in failed) if isinstance(failed, dict) else 0
-        return {**base, 'source': source, 'phase': phase, 'kind': 'download',
+        web_controls = {'operation_id': web['id'], 'web_download': True,
+                        'pause_requested': paused, 'cancel_requested': cancelling,
+                        'message': str(web.get('message', ''))[:400]} if source == 'web' else {}
+        return {**base, **web_controls, 'source': source, 'phase': phase, 'kind': 'download',
                 'worker_alive': alive, 'progress_at': updated if fresh else None,
                 'stale': not fresh or now - updated > 120, 'active': active,
                 'total_count': len(items), 'verified_count': len(verified),

@@ -96,8 +96,9 @@ class MapsKitTests(unittest.TestCase):
 
     def test_publication_failure_restores_old_manifest_images_and_files(self):
         original=setup.write_json
+        manifest=self.kit.resolve()/'manifest.json'
         def fail(path,value,**kwargs):
-            if path==self.kit/'manifest.json' and 'map_bundles' in value:raise OSError('power failure simulation')
+            if path==manifest and 'map_bundles' in value:raise OSError('power failure simulation')
             return original(path,value,**kwargs)
         with patch.object(setup,'write_json',side_effect=fail),self.assertRaises(OSError):self.refresh()
         self.assertEqual(json.loads((self.kit/'manifest.json').read_text()),self.old)
@@ -165,12 +166,37 @@ class OfflineClosureTests(unittest.TestCase):
         result=kit_audit.validate(self.root,self.manifest())
         self.assertEqual(result['models'],1);self.assertEqual(result['images'],4)
 
+    def test_duplicate_preserves_a_complete_kit_without_a_runtime(self):
+        import kit_duplicate
+
+        original = setup.ROOT/pilot_kit.KIT_GUIDE_SOURCE
+        pilot_kit.publish_kit_guide(*pilot_kit.kit_guide(self.root, self.files), self.files)
+        manifest = {**self.manifest(), 'schema': 1, 'kind': 'SetupSurvie public pilot kit'}
+        setup.write_json(self.root / 'manifest.json', manifest)
+        second_disk = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        duplicate = second_disk / 'Nouveau kit'
+        kit_duplicate.duplicate(self.root, duplicate)
+        with patch('content.transfer', side_effect=AssertionError('Téléchargement interdit')):
+            entries = pilot_kit.checked_entries(duplicate, manifest)
+            result = kit_audit.validate(duplicate, manifest)
+        self.assertEqual(len(entries), len(self.files))
+        self.assertEqual((result['models'], result['images']), (1, 4))
+        guide = duplicate/pilot_kit.KIT_GUIDE
+        self.assertEqual(guide.read_bytes(), original.read_bytes())
+        guide.write_bytes(b'incomplete')
+        with self.assertRaisesRegex(setup.SetupError, 'Kit incomplet ou modifié'):
+            pilot_kit.checked_entries(duplicate, manifest)
+
     def test_public_download_receipt_and_root_launchers_are_allowed(self):
         self.add('payload/catalog/downloaded-content.json', {'items': []})
         self.add('app/Installer-SetupSurvie.cmd', b'fixture')
         self.add('app/Mettre-a-jour-SetupSurvie.cmd', b'fixture')
         self.add('app/1-Preparer-le-PC.cmd', b'fixture')
         self.add('app/2-Installer-SetupSurvie.cmd', b'fixture')
+        self.add('app/Dupliquer-Kit-SetupSurvie.desktop', b'fixture')
+        self.add('app/Installer-Kit-SetupSurvie.desktop', b'fixture')
+        self.add('app/Restaurer-Mes-Donnees-SetupSurvie.desktop', b'fixture')
+        self.add('app/Restaurer-Mes-Donnees-SetupSurvie.cmd', b'fixture')
         self.assertEqual(kit_audit.validate(self.root,self.manifest())['models'],1)
         self.add('payload/catalog/settings.json', {'secret': 'fixture'})
         with self.assertRaisesRegex(setup.SetupError,'personnel interdit'):

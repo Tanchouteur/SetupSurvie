@@ -1,0 +1,490 @@
+"""Real queue, SQLite and media search with a simulated YouTube host and models."""
+import asyncio
+import json
+import time
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import AsyncMock, patch
+
+from fastapi import HTTPException
+
+from pilot import archive_videos, engine, library, operations, store, videos, work_queue, youtube_pipeline
+import test_video_transcriptions as speech_fixture
+
+ADMIN = {'id': 'famille', 'role': 'admin'}
+CHILD = {'id': 'enfant', 'role': 'user'}
+
+
+class SchedulerTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        state = patch.object(store, 'ROOT', Path(temporary.name))
+        state.start()
+        self.addCleanup(state.stop)
+        store.init()
+        self.queue = work_queue.Queue()
+        self.queue.initialize()
+
+    async def test_global_pause_stops_video_inventory_and_updates_host_hold(self):
+        from pilot.app import WorkPause, pause_work_queue
+
+        marker = store.ROOT / 'work-queue.pause'
+        with patch.object(work_queue, 'QUEUE', self.queue), \
+                patch.object(videos, 'running', return_value=object()), \
+                patch.object(videos, 'STOP', asyncio.Event()), \
+                patch.object(videos, 'STOP_REASON', 'user'), \
+                patch.object(youtube_pipeline, 'pause_active_download', AsyncMock()):
+            self.assertEqual(await pause_work_queue(WorkPause(paused=True), ADMIN), {'paused': True})
+            self.assertTrue(marker.is_file())
+            self.assertTrue(videos.STOP.is_set())
+            self.assertTrue(self.queue.snapshot(ADMIN)['running'])
+            with self.assertRaises(HTTPException) as rejected:
+                await videos.start()
+            self.assertEqual(rejected.exception.status_code, 409)
+            self.assertEqual(await videos.ensure_fresh(force=True), 'paused')
+            self.assertEqual(await pause_work_queue(WorkPause(paused=False), ADMIN), {'paused': False})
+            self.assertFalse(marker.exists())
+
+    async def test_video_index_publication_remains_active_until_finished(self):
+        with patch.object(videos, 'running', return_value=None), \
+                patch.object(videos, 'partitions_running', return_value=True):
+            state = self.queue.snapshot(ADMIN)
+        video = next(job for job in state['jobs'] if job['id'] == 'video-index')
+        self.assertTrue(state['running'])
+        self.assertEqual(video['status'], 'running')
+        self.assertIn('Publication', video['stage'])
+
+    async def test_recent_lab_download_is_visible_without_the_host_controller(self):
+        from pilot.routes.work import get_work_queue
+
+        report = {'kind': 'download', 'phase': 'downloading', 'source': 'local',
+                  'observed_at': time.time(), 'active': [{'title': 'Archive fictive',
+                  'bytes': 750, 'total': 2000, 'phase': 'downloading'}]}
+        snapshot = store.ROOT / 'lab-activity.json'
+        snapshot.write_text(json.dumps(report), encoding='utf-8')
+        with patch.object(operations, 'TOKEN', ''), patch.object(operations.network, 'CATALOG', store.ROOT), \
+                patch.object(work_queue, 'QUEUE', self.queue):
+            value = json.loads((await get_work_queue(CHILD)).body)
+            self.assertTrue(value['preparations_available'])
+            download = next(job for job in value['jobs'] if job['id'] == 'host:download')
+            self.assertEqual(download['preparation']['active'], report['active'])
+            report['observed_at'] -= 31
+            snapshot.write_text(json.dumps(report), encoding='utf-8')
+            value = json.loads((await get_work_queue(CHILD)).body)
+            self.assertFalse(value['preparations_available'])
+            self.assertFalse(any(job['id'] == 'host:download' for job in value['jobs']))
+
+    async def test_host_preparations_use_the_same_cards_without_queue_controls(self):
+        report = {'kind': 'download', 'phase': 'verifying', 'source': 'windows',
+                  'total_bytes': 2000, 'verified_bytes': 1000,
+                  'active': [{'title': 'Collection fictive', 'phase': 'verifying'}]}
+        jobs = self.queue.snapshot(CHILD, report)['jobs']
+        transfer = next(job for job in jobs if job['id'] == 'host:download')
+        self.assertEqual((transfer['lane'], transfer['status']), ('network', 'running'))
+        self.assertEqual(transfer['preparation']['verified_bytes'], 1000)
+        self.assertFalse(transfer['movable'] or transfer['retry'])
+
+        report = {'kind': 'video-inventory', 'phase': 'paused', 'observed_at': 123}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'paused'}):
+            jobs = self.queue.snapshot(ADMIN, report)['jobs']
+        inventory = [job for job in jobs if job['kind'] in ('archive-video-index', 'host-video-inventory')]
+        self.assertEqual(len(inventory), 1)
+        self.assertEqual(inventory[0]['preparation']['observed_at'], 123)
+
+    async def test_stopped_host_preparation_explains_what_to_do(self):
+        report = {'kind': 'video-inventory', 'phase': 'error',
+                  'message': 'Certaines collections n’ont pas pu être examinées.'}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            jobs = self.queue.snapshot(ADMIN, report)['jobs']
+        job = next(job for job in jobs if job['id'] == 'host:video-inventory')
+        self.assertEqual(job['error'], report['message'])
+        self.assertIn('Relancer l’examen', job['help'])
+        self.assertEqual(job['retry_label'], 'Relancer l’examen')
+        self.assertTrue(job['retry'])
+        self.assertTrue(job['href'].startswith('#/bibliotheque/collections'))
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            child = next(job for job in self.queue.snapshot(CHILD, report)['jobs'] if job['id'] == 'host:video-inventory')
+        self.assertFalse(child['retry'])
+        silent = {'kind': 'index', 'phase': 'error'}
+        with patch.object(archive_videos, 'progress', return_value={'phase': 'not_started'}):
+            index = next(job for job in self.queue.snapshot(ADMIN, silent)['jobs'] if job['id'] == 'host:index')
+        self.assertIn('pas précisé', index['error'])
+        self.assertIn('Cliquez sur son titre', index['help'])
+        self.assertTrue(index['retry'])
+
+    async def test_preparation_cards_show_wait_reason_and_safe_host_pause(self):
+        operation_id = 'a' * 32
+        report = {'kind': 'category-index', 'phase': 'category_indexing', 'operation_id': operation_id,
+                  'pending_index': {'count': 2, 'reason': 'other_operation'}}
+        jobs = {job['id']: job for job in self.queue.snapshot(ADMIN, report)['jobs']}
+        self.assertTrue(jobs['host:category-index']['pausable'])
+        self.assertIn('Une autre préparation', jobs['host:index']['stage'])
+        with patch.object(operations, 'library_command', AsyncMock()) as command:
+            await work_queue.pause('host:category-index', operation_id)
+        command.assert_awaited_once_with('pause', {'operation_id': operation_id})
+
+    async def test_library_download_can_be_cancelled_from_the_queue_by_the_administrator(self):
+        operation_id = 'a' * 32
+        for phase, cancellable in (('paused', True), ('downloading', True), ('refreshing', False), ('cancelled', False)):
+            report = {'kind': 'download', 'phase': phase, 'operation_id': operation_id, 'web_download': True,
+                      'message': 'Téléchargement annulé.' if phase == 'cancelled' else ''}
+            job = next(job for job in self.queue.snapshot(ADMIN, report)['jobs'] if job['id'] == 'host:download')
+            self.assertEqual(job['cancellable'], cancellable, phase)
+            if phase == 'cancelled':
+                self.assertEqual(job['status'], 'cancelled')
+                self.assertFalse(job['retry'])
+        report = {'kind': 'download', 'phase': 'paused', 'operation_id': operation_id, 'web_download': True}
+        self.assertFalse(next(job for job in self.queue.snapshot(CHILD, report)['jobs'] if job['id'] == 'host:download')['cancellable'])
+        requested = {**report, 'phase': 'pausing', 'cancel_requested': True, 'pause_requested': True}
+        job = next(job for job in self.queue.snapshot(ADMIN, requested)['jobs'] if job['id'] == 'host:download')
+        self.assertFalse(job['cancellable'])
+        self.assertIn('Annulation demandée', job['stage'])
+        with self.assertRaises(HTTPException) as denied:
+            await work_queue.cancel('host:download', CHILD, operation_id)
+        self.assertEqual(denied.exception.status_code, 403)
+        with patch.object(operations, 'library_command', AsyncMock()) as command:
+            await work_queue.cancel('host:download', ADMIN, operation_id)
+        command.assert_awaited_once_with('cancel', {'operation_id': operation_id})
+        with self.assertRaises(HTTPException):
+            await work_queue.cancel('video-index', ADMIN)
+
+    async def test_finished_item_marked_seen_leaves_followup_until_its_state_changes(self):
+        report = {'phase': 'partial', 'archives': 1, 'completed': 1,
+                  'results': [{'status': 'partial', 'skipped_html': 12}]}
+        card = lambda profile: next(job for job in self.queue.snapshot(profile)['jobs'] if job['id'] == 'archive-video-index')
+        with patch.object(archive_videos, 'progress', return_value=report):
+            first = card(ADMIN)
+            self.assertTrue(first['dismissible'])
+            self.assertFalse(first['seen'])
+            work_queue.mark_seen(ADMIN, 'archive-video-index', first['signature'])
+            self.assertTrue(card(ADMIN)['seen'])
+            # The mark belongs to the profile that saw the item.
+            self.assertFalse(card(CHILD)['seen'])
+        report.update(archives=2, completed=2, results=[{'status': 'partial', 'skipped_html': 12}, {'status': 'partial', 'skipped_html': 3}])
+        with patch.object(archive_videos, 'progress', return_value=report):
+            changed = card(ADMIN)
+        self.assertNotEqual(changed['signature'], first['signature'])
+        self.assertFalse(changed['seen'])
+
+    def test_only_finished_items_can_be_marked_seen(self):
+        self.assertTrue(work_queue.dismissible({'status': 'error'}))
+        self.assertTrue(work_queue.dismissible({'status': 'completed', 'failure_count': 2}))
+        for status in ('queued', 'running', 'paused', 'interrupted', 'completed'):
+            self.assertFalse(work_queue.dismissible({'status': status}), status)
+
+    async def test_host_video_inventory_retry_restarts_the_collection_examination(self):
+        with patch.object(archive_videos, 'status', AsyncMock(return_value={'phase': 'error'})), \
+                patch.object(archive_videos, 'start', AsyncMock()) as start:
+            await work_queue.retry('host:video-inventory', ADMIN)
+        start.assert_awaited_once()
+
+    async def test_partial_video_inventory_distinguishes_coverage_from_failure(self):
+        report = {'phase': 'partial', 'archives': 1, 'completed': 1,
+                  'results': [{'status': 'partial', 'skipped_html': 390}]}
+        with patch.object(archive_videos, 'progress', return_value=report):
+            card = next(job for job in self.queue.snapshot(ADMIN)['jobs'] if job['id'] == 'archive-video-index')
+        self.assertEqual((card['status'], card['done'], card['retry']), ('partial', 1, False))
+        with patch.object(archive_videos, 'status', AsyncMock(return_value=report)), \
+                patch.object(archive_videos, 'start', AsyncMock()) as start:
+            with self.assertRaises(HTTPException) as exception:
+                await work_queue.retry('host:video-inventory', ADMIN)
+            self.assertEqual(exception.exception.status_code, 409)
+            start.assert_not_awaited()
+            report['results'][0]['status'] = 'error'
+            await work_queue.retry('host:video-inventory', ADMIN)
+            start.assert_awaited_once()
+
+    async def test_priority_pause_running_slot_and_error_isolation(self):
+        queue = self.queue
+        observed = []
+        finish = asyncio.Event()
+
+        async def execute(identifier):
+            token = work_queue.CURRENT.set(identifier)
+            try:
+                async with queue:
+                    observed.append(identifier)
+                    if identifier == 'active':
+                        await finish.wait()
+                    elif identifier == 'bad':
+                        raise RuntimeError('Fixture')
+            finally:
+                work_queue.CURRENT.reset(token)
+
+        for identifier, owner in [('active', None), ('bad', 'famille'), ('child', 'enfant'), ('last', None)]:
+            queue.records[identifier] = {'id': identifier, 'kind': 'translation', 'title': identifier, 'status': 'queued', 'owner': owner}
+        tasks = [asyncio.create_task(execute(identifier)) for identifier in queue.records]
+        await asyncio.sleep(0)
+        self.assertEqual(observed, ['active'])
+        queue.set_paused(True)
+        with self.assertRaises(HTTPException):
+            queue.move('active', 1, ADMIN)
+        with self.assertRaises(HTTPException):
+            queue.move('last', -1, CHILD)
+        queue.move('last', -1, ADMIN)
+        finish.set()
+        await tasks[0]
+        self.assertEqual(observed, ['active'])
+        restarted = work_queue.Queue()
+        restarted.initialize()
+        self.assertTrue(restarted.paused)
+        queue.set_paused(False)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        self.assertIsInstance(results[1], RuntimeError)
+        self.assertEqual(observed, ['active', 'last', 'child', 'bad'])
+        self.assertFalse(queue.locked())
+
+    async def test_questions_get_next_ai_slot_with_video_work_in_parallel(self):
+        queue = self.queue
+        observed = []
+        release_ai = asyncio.Event()
+        release_background = asyncio.Event()
+
+        async def run(identifier, gate=None):
+            token = work_queue.CURRENT.set(identifier)
+            kind = queue.records[identifier]['kind']
+            try:
+                async with queue.slots[work_queue.BACKGROUND_LANE.get(kind, 'ai')]:
+                    observed.append(identifier)
+                    if gate:
+                        await gate.wait()
+            finally:
+                work_queue.CURRENT.reset(token)
+
+        jobs = [('initial', 'translation'), ('background', 'translation'),
+                ('q1', 'chat'), ('q2', 'chat'), ('q3', 'chat'), ('q4', 'chat'),
+                ('download', 'youtube'), ('speech', 'speech')]
+        for identifier, kind in jobs:
+            queue.records[identifier] = {'id': identifier, 'kind': kind, 'owner': 'famille',
+                                         'title': identifier, 'status': 'queued'}
+        first = asyncio.create_task(run('initial', release_ai))
+        await asyncio.sleep(0)
+        tasks = [asyncio.create_task(run(identifier, release_background if identifier in ('download','speech') else None))
+                 for identifier, _ in jobs[1:]]
+        await asyncio.sleep(0)
+        self.assertEqual(observed, ['initial', 'download', 'speech'])
+        self.assertEqual(queue.order(), ['q1', 'q2', 'q3', 'background', 'q4'])
+        self.assertEqual(queue.waiting_state('q1'), 'next')
+        self.assertEqual(queue.waiting_state('q2'), 'waiting')
+        queue.set_paused(True)
+        self.assertEqual(queue.waiting_state('q1'), 'paused')
+        queue.set_paused(False)
+        with self.assertRaises(HTTPException):
+            queue.move('background', -1, ADMIN)
+        release_ai.set()
+        await first
+        await asyncio.wait_for(asyncio.gather(*tasks[:-2]), 2)
+        self.assertEqual(observed[3:], ['q1', 'q2', 'q3', 'background', 'q4'])
+        self.assertFalse(queue.locked())
+        self.assertTrue(queue.slots['network'].locked())
+        self.assertTrue(queue.slots['local'].locked())
+        queue.set_paused(True)
+        release_background.set()
+        await asyncio.gather(*tasks[-2:])
+
+    async def test_cancelled_head_releases_the_slot_to_other_jobs(self):
+        queue = self.queue
+        await queue.acquire()
+        waiter = asyncio.create_task(queue.acquire())
+        following = asyncio.create_task(queue.acquire())
+        await asyncio.sleep(0)
+        waiter.cancel()
+        queue.release()
+        await asyncio.gather(waiter, return_exceptions=True)
+        await asyncio.wait_for(following, 1)
+        queue.release()
+        self.assertFalse(queue.locked())
+
+    async def test_drop_moves_only_visible_waiters_in_the_same_priority_group(self):
+        queue = self.queue
+        queue.set_paused(True)
+        for key, kind, owner in [('first', 'translation', 'famille'), ('private', 'translation', 'enfant'),
+                                 ('second', 'translation', 'famille'), ('question', 'chat', 'famille'),
+                                 ('last', 'translation', 'famille')]:
+            queue.records[key] = {'kind': kind, 'owner': owner}
+            queue.waiters.append((key, asyncio.get_running_loop().create_future()))
+        with self.assertRaises(HTTPException):
+            queue.move('last', None, ADMIN, target='private')
+        with self.assertRaises(HTTPException):
+            queue.move('last', None, ADMIN, target='question')
+        queue.move('last', None, ADMIN, target='first')
+        self.assertEqual([key for key, _ in queue.waiters], ['last', 'private', 'first', 'question', 'second'])
+        queue.move('last', None, ADMIN, target='second', after=True)
+        self.assertEqual([key for key, _ in queue.waiters], ['first', 'private', 'second', 'question', 'last'])
+
+    async def test_both_video_inventories_remain_visible_during_track_preparation(self):
+        queue = self.queue
+        track = {'id': 'track', 'kind': 'youtube-track', 'title': 'Piste', 'status': 'running'}
+        queue.records['track'] = track
+        queue.slots['local'].active = ('track', None)
+        with (patch.object(videos, 'running', return_value=object()),
+              patch.object(videos, 'status', return_value={'phase': 'running', 'videos': 3}),
+              patch.object(archive_videos, 'progress', return_value={'phase': 'running', 'completed': 2, 'archives': 5}),
+              patch.object(work_queue, 'describe', return_value=track)):
+            value = queue.snapshot(ADMIN)
+        active = {job['id']: job for job in value['jobs'] if job['status'] == 'running'}
+        self.assertEqual(set(active), {'track', 'video-index', 'archive-video-index'})
+        self.assertEqual((active['archive-video-index']['done'], active['archive-video-index']['total']), (2, 5))
+        self.assertTrue(value['lanes']['local']['running'])
+        self.assertTrue(all(job['lane'] == 'local' and not job['movable'] for job in active.values()))
+
+    async def test_failed_video_index_is_visible_without_counting_as_running(self):
+        report = {'phase': 'failed', 'error': 'L’ancien index reste disponible.', 'videos': 3}
+        with patch.object(videos, 'ROOT', store.ROOT), patch.object(videos, 'status', return_value=report):
+            value = self.queue.snapshot(ADMIN)
+        self.assertFalse(value['lanes']['local']['running'])
+        index = next(job for job in value['jobs'] if job['id'] == 'video-index')
+        self.assertEqual((index['lane'], index['status'], index['error']), ('local', 'failed', report['error']))
+        self.assertTrue(index['retry'])
+
+    async def test_paused_archive_can_be_resumed_by_administrator_from_queue(self):
+        progress = {'phase': 'paused', 'completed': 2, 'archives': 5}
+        with (patch.object(archive_videos, 'progress', return_value=progress),
+              patch.object(archive_videos, 'status', new_callable=AsyncMock, return_value=progress),
+              patch.object(archive_videos, 'start', new_callable=AsyncMock) as start):
+            for profile, allowed in ((ADMIN, True), (CHILD, False)):
+                job = next(job for job in self.queue.snapshot(profile)['jobs'] if job['id'] == 'archive-video-index')
+                self.assertEqual(job['retry'], allowed)
+            with self.assertRaises(HTTPException) as denied:
+                await work_queue.retry('archive-video-index', CHILD)
+            self.assertEqual(denied.exception.status_code, 403)
+            await work_queue.retry('archive-video-index', ADMIN)
+            start.assert_awaited_once()
+
+    async def test_completed_transcription_overrides_interrupted_queue_history(self):
+        self.queue.save({'id': 'speech', 'kind': 'speech', 'title': 'Piste', 'status': 'interrupted'})
+        with patch.object(work_queue, 'describe', return_value={'status': 'completed'}):
+            job = next(job for job in self.queue.snapshot(ADMIN)['jobs'] if job['id'] == 'speech')
+        self.assertEqual(job['status'], 'completed')
+        self.assertFalse(job['retry'])
+
+    async def test_summary_hides_other_profile_content_but_reports_activity(self):
+        queue = self.queue
+        queue.save({'id': 'own', 'owner': 'enfant', 'kind': 'chat', 'title': 'Question enfant', 'status': 'done'})
+        queue.save({'id': 'private', 'owner': 'famille', 'kind': 'translation', 'title': 'Document privé', 'status': 'error'})
+        queue.save({'id': 'shared', 'owner': None, 'kind': 'captions', 'title': 'Vidéo familiale', 'status': 'error'})
+        await queue.acquire()
+        try:
+            value = queue.snapshot(CHILD)
+            self.assertTrue(value['running'])
+            self.assertEqual([job['id'] for job in value['jobs']], ['shared', 'own'])
+            self.assertFalse(value['jobs'][0]['retry'])
+        finally:
+            queue.release()
+
+
+class YoutubePipelineTests(unittest.IsolatedAsyncioTestCase):
+    asyncSetUp = speech_fixture.VideoTranscriptionTests.asyncSetUp
+    asyncTearDown = speech_fixture.VideoTranscriptionTests.asyncTearDown
+
+    async def test_batch_reattaches_to_host_and_indexes_english_and_translated_words(self):
+        youtube_pipeline.initialize()
+        queue = work_queue.Queue()
+        queue.initialize()
+        with patch.object(engine, 'LOCK', queue), patch.object(work_queue, 'QUEUE', queue), \
+             patch.object(youtube_pipeline, 'launch'):
+            batch = await youtube_pipeline.submit('https://youtu.be/aaaaaaaaaaa\nhttps://youtu.be/bbbbbbbbbbb', 480)
+            identifier = batch['job']
+            item = {'line': 1, 'id': 'aaaaaaaaaaa', 'path': 'rotor.mp4', 'title': 'Rotor fictif', 'status': 'downloaded'}
+            failure = {'line': 2, 'id': 'bbbbbbbbbbb', 'status': 'error', 'reason': 'private', 'message': 'vidéo privée'}
+            completion = {'phase': 'completed', 'action': 'youtube-download', 'youtube_list': identifier,
+                          'message': 'Un téléchargement a échoué.',
+                          'youtube': {'items': [item, failure], 'counts': {'downloaded': 1, 'error': 1}}}
+            youtube_pipeline.update(identifier, submitted=True)
+            with patch.object(operations, 'library_command', AsyncMock(return_value={'phase': 'idle'})) as host, \
+                 patch.object(operations, 'youtube_result', AsyncMock(return_value=completion)):
+                await youtube_pipeline.download(identifier)
+                host.assert_awaited_once_with()
+            self.assertEqual(youtube_pipeline.read(identifier)['status'], 'error')
+            self.assertEqual(youtube_pipeline.details(identifier)['failures'], [failure])
+            preparation = next(row for row in youtube_pipeline.listing() if row['kind'] == 'youtube-track')
+            await asyncio.wait_for(youtube_pipeline.prepare(preparation['id']), 30)
+            self.assertEqual(youtube_pipeline.read(preparation['id'])['status'], 'queued')
+            await asyncio.wait_for(youtube_pipeline.prepare(preparation['id']), 30)
+            self.assertEqual(youtube_pipeline.read(preparation['id'])['status'], 'completed')
+            self.assertEqual({track['language'] for track in videos.source(self.video)['tracks']}, {'en', 'fr'})
+            self.assertEqual(len(self.calls), 3)  # Probe and two known audio units.
+            for term, language, expected in [('rotor fictif', '', 'title'),
+                                               ('fictional', 'en', 'subtitle'), ('ouvrir', 'fr', 'subtitle')]:
+                plan = library.retrieval.plan(term, library.search_terms(term), library.SYNONYMS)
+                found, _ = videos.search(plan, language)
+                self.assertTrue(any(row['id'].startswith(self.video) and row['match'] == expected for row in found), term)
+            youtube_pipeline.observe(completion)
+            self.assertEqual(youtube_pipeline.read(preparation['id'])['status'], 'completed')
+
+    async def test_download_counter_excludes_rejected_input_lines(self):
+        youtube_pipeline.initialize()
+        text = 'https://youtu.be/aaaaaaaaaaa\nhttps://youtu.be/bbbbbbbbbbb\nhttps://youtu.be/aaaaaaaaaaa'
+        with patch.object(youtube_pipeline, 'launch'):
+            batch = await youtube_pipeline.submit(text, 480)
+        identifier = batch['job']
+        state = {
+            'phase': 'completed', 'youtube_list': identifier,
+            'youtube': {
+                'videos': 2, 'total': 4, 'done': 3,
+                'counts': {'downloaded': 1, 'skipped': 1, 'refused': 1},
+                'items': [{'status': 'skipped', 'reason': 'duplicate_in_list'},
+                          {'status': 'refused', 'reason': 'playlist_refused'}],
+            },
+        }
+        await youtube_pipeline.follow(identifier, state)
+        self.assertEqual(youtube_pipeline.details(identifier)['done'], 1)
+        self.assertEqual(youtube_pipeline.details(identifier)['total'], 2)
+        youtube_pipeline.update(identifier, done=3)
+        youtube_pipeline.initialize()
+        self.assertEqual(youtube_pipeline.details(identifier)['done'], 2)
+
+    async def test_youtube_worker_does_not_hold_the_ai_slot(self):
+        youtube_pipeline.initialize()
+        queue = work_queue.Queue()
+        queue.initialize()
+        started, finish = asyncio.Event(), asyncio.Event()
+
+        async def follow(*_):
+            started.set()
+            await finish.wait()
+
+        with patch.object(engine, 'LOCK', queue), patch.object(work_queue, 'QUEUE', queue), \
+             patch.object(operations, 'library_command', AsyncMock(return_value={'phase': 'idle'})), \
+             patch.object(youtube_pipeline, 'follow', follow):
+            try:
+                batch = await youtube_pipeline.submit('https://youtu.be/aaaaaaaaaaa', 480)
+                await asyncio.wait_for(started.wait(), 2)
+                self.assertIn(batch['job'], youtube_pipeline.TASKS)
+                await asyncio.wait_for(engine.LOCK.acquire(), 2)
+                try:
+                    value = queue.snapshot(ADMIN)
+                    self.assertTrue(value['lanes']['ai']['running'])
+                    self.assertTrue(value['lanes']['network']['running'])
+                    download = next(job for job in value['jobs'] if job['id'] == batch['job'])
+                    self.assertEqual((download['lane'], download['status']), ('network','running'))
+                finally:
+                    engine.LOCK.release()
+            finally:
+                finish.set()
+                await youtube_pipeline.stop()
+
+    async def test_backfill_only_registers_local_youtube_downloads(self):
+        youtube_pipeline.initialize()
+        report = {'per_video': [
+            {'path':'youtube/Canal/exemple.mp4','title':'Exemple local','source':{'extractor':'Youtube'}},
+            {'path':'autres/video.mp4','source':{'extractor':'Youtube'}},
+            {'path':'youtube/video-sans-provenance.mp4','source':{}},
+        ]}
+        youtube_pipeline.register_indexed_youtube(report)
+        youtube_pipeline.register_indexed_youtube(report)
+        self.assertEqual([row['title'] for row in youtube_pipeline.listing()], ['Exemple local'])
+
+    async def test_resume_does_not_start_a_report_already_completed_on_host(self):
+        youtube_pipeline.initialize()
+        with patch.object(youtube_pipeline, 'launch'), patch.object(engine, 'LOCK', work_queue.Queue()):
+            batch = await youtube_pipeline.submit('https://youtu.be/aaaaaaaaaaa', 480)
+            identifier = batch['job']
+            youtube_pipeline.update(identifier, submitted=True)
+            state = {'phase': 'completed', 'action': 'youtube-download', 'youtube_list': identifier, 'youtube': {}}
+            with patch.object(operations, 'library_command', AsyncMock(return_value=state)) as host:
+                await youtube_pipeline.download(identifier)
+            host.assert_awaited_once_with()
+            self.assertEqual(youtube_pipeline.read(identifier)['status'], 'completed')

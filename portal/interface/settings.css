@@ -1,0 +1,204 @@
+.next-interface .settings-destination {
+  text-decoration: none;
+}
+/* Settings: destination grids, card anatomy, forms and mobile permissions. */
+.next-interface .settings-pane .panel > details {
+  margin-top: 0;
+}
+.next-interface .settings-pane input,
+.next-interface .settings-pane select {
+  max-width: 100%;
+}
+.next-interface .settings-pane pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.next-interface #settings-tests,
+.next-interface #settings-tests > details,
+.next-interface #settings-tests form {
+  min-width: 0;
+  max-width: 100%;
+}
+.next-interface #settings-tests form {
+  grid-template-columns: minmax(0, 1fr);
+}
+.next-interface #settings-tests select {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.next-interface #settings-tests label {
+  min-width: 0;
+  overflow-x: clip;
+}
+.next-interface #settings-tests select:focus-visible {
+  outline-offset: -3px;
+}
+.next-interface #settings-tests button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .next-interface #engine-controls:not([hidden]) {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+  .next-interface #content-pause:not([hidden]),
+  .next-interface #geo-pause:not([hidden]) {
+    display: inline-flex !important;
+  }
+  .next-interface #next-index-prepare,
+  .next-interface #next-index-start,
+  .next-interface #next-index-settings {
+    display: none !important;
+  }
+  .next-interface .next-tabs {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 4px;
+  }
+  .next-interface .next-tabs a {
+    white-space: normal;
+    padding: 9px 10px;
+  }
+  .next-interface #content-manager::after {
+    content: none;
+  }
+}
+.next-interface .settings-destinations,
+.next-interface .settings-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--ux-card-gap);
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+.next-interface .settings-destinations .settings-destination,
+.next-interface .settings-card-grid .settings-destination {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 8px;
+  min-height: 168px;
+  margin: 0;
+  height: 100%;
+}
+.next-interface .settings-destination strong {
+  margin: 0;
+}
+.next-interface .settings-destination > span.muted {
+  font-size: 14px;
+}
+.next-interface .settings-destination .settings-arrow {
+  margin: 0;
+  padding: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  align-self: end;
+}
+.next-interface .settings-destination:hover {
+  background: #f8f5f0;
+  border-color: #aca399;
+}
+.next-interface .settings-heading {
+  margin: 0 0 20px;
+  max-width: 760px;
+}
+.next-interface .settings-heading h2 {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+.next-interface .settings-heading p {
+  font-size: 14px;
+  margin: 0;
+}
+.next-interface #settings-reglages > .settings-heading {
+  display: none;
+}
+.next-interface .settings-advanced {
+  margin-bottom: 16px;
+  padding: 4px 20px;
+}
+.next-interface .settings-advanced > article.panel {
+  padding: 12px 0 16px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.next-interface .settings-advanced > summary {
+  padding: 14px 0;
+}
+.next-interface .settings-pane > .panel,
+.next-interface .settings-pane > .settings-advanced {
+  margin-bottom: 16px;
+}
+.next-interface .settings-back {
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+@media (max-width: 760px) {
+  .next-interface .settings-destinations,
+  .next-interface .settings-card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    grid-auto-rows: 1fr;
+  }
+  .next-interface .settings-destinations .settings-destination,
+  .next-interface .settings-card-grid .settings-destination {
+    min-height: 148px;
+  }
+}
+/* One header for every collapsible settings card, including when closed. */
+.next-interface .settings-card-summary {
+  position: relative;
+  display: block;
+  list-style: none;
+  padding: 16px 24px 16px 0 !important;
+}
+.next-interface .settings-card-summary::-webkit-details-marker {
+  display: none;
+}
+.next-interface .settings-card-summary::after {
+  content: "⌄";
+  position: absolute;
+  right: 0;
+  top: 18px;
+  font-size: 18px;
+  font-weight: 400;
+}
+.next-interface details[open] > .settings-card-summary::after {
+  transform: rotate(180deg);
+}
+.next-interface .settings-card-title {
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+.next-interface .settings-card-description {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--muted);
+}
+.next-interface .settings-pane .panel:has(> .settings-card-summary),
+.next-interface .settings-pane .panel:has(> details > .settings-card-summary) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.next-interface #settings-engine-state {
+  margin-top: 12px;
+}
+
+.server-metrics { margin: 1.5rem 0; min-width: 0; scroll-margin-top: 6rem; }
+.server-metrics > h2 { margin-bottom: .5rem; }
+.server-metrics #monitor-stats { margin: 1rem 0; }
+.server-metrics .model-monitor-row { display: grid; gap: .35rem; overflow-wrap: anywhere; }
+.server-metrics .model-monitor-row strong { font-size: 1.15rem; }

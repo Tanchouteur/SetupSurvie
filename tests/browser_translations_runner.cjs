@@ -1,164 +1,170 @@
-// Browser regression against the local CPU fixture API, never a real model/account.
-const fs=require('node:fs');
-const path=require('node:path');
-const {createRequire}=require('node:module');
-const {spawn}=require('node:child_process');
-const {chromium,webkit,firefox}=createRequire('/tmp/setupsurvie-browser/package.json')('playwright');
-(async()=>{
-  const root=path.resolve(__dirname,'..');
-  const server=spawn('python',['tests/browser_translation_server.py'],{cwd:root,stdio:['ignore','ignore','inherit']});
-  async function checkUI(browser,name,files){
-    for(const file of files){
-      const context=await browser.newContext();
-      try{
-        const recipe=eval('('+fs.readFileSync(path.join(root,'tests',file),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/ui-finish-')+')');
-        console.log(JSON.stringify({engine:name,recipe:file,...await recipe(await context.newPage())}));
-      }finally{await context.close();}
+// Portal regression against a local API with synthetic data and inference.
+const fs = require('node:fs');
+const path = require('node:path');
+const { createRequire } = require('node:module');
+const { spawn } = require('node:child_process');
+const { once } = require('node:events');
+
+const root = path.resolve(__dirname, '..');
+// BROWSER_FIXTURE_URL lets a remote browser reach the fixture API (for example
+// http://10.0.3.2:8769 from a Playwright server in a container).
+const fixtureURL = process.env.BROWSER_FIXTURE_URL || 'http://127.0.0.1:8769';
+const artifactRoot = path.resolve(process.env.BROWSER_ARTIFACTS || '/tmp/setupsurvie-browser-results');
+const playwright = createRequire(process.env.BROWSER_PLAYWRIGHT || '/tmp/setupsurvie-browser/package.json')('playwright');
+
+const portalRecipes = [
+  'browser_video_origin.js',
+  'browser_translation.js',
+  'browser_sources.js',
+  'browser_learning.js',
+  'browser_documents.js',
+  'browser_translation_quality.js',
+  'browser_profiles.js',
+  'browser_collection_filter.js',
+  'browser_chat_comfort.js',
+  'browser_search_core.js',
+  'browser_search_progress.js',
+  'browser_search_tools.js',
+  'browser_catalogue.js',
+  'browser_assistant_diagnostics.js',
+  'browser_startup_diagnostic.js',
+  'browser_request_lifecycle.js',
+  'browser_performance.js',
+  'browser_local_videos.js',
+  'browser_archive_videos.js',
+  'browser_archive_audio.js',
+  'browser_caption_preparation.js',
+  'browser_audio_transcription.js',
+  'browser_caption_acquisition.js',
+  'browser_translation_benchmark.js',
+  'browser_translation_progressive.js',
+  'browser_translation_controls.js',
+  'browser_translation_terms.js',
+  'browser_search_experiment.js',
+  'browser_practical.js',
+  'browser_usage_recipe.js',
+  'browser_settings_ux.js',
+  'browser_documentary_evidence.js',
+  'browser_model_switch.js',
+  'browser_document_choices.js',
+  'browser_long_summaries.js',
+  'browser_french_lifecycle.js',
+  'browser_figure_lifecycle.js',
+  'browser_figure_worker_start.js',
+  'browser_source_figures.js',
+  'browser_procedure_review.js',
+  'browser_bilingual_reader.js',
+  'browser_next_portal.js',
+  'browser_work_queue.js',
+  'browser_work_queue_seen.js',
+  'browser_memory_translation_comfort.js',
+  'browser_motion_resilience.js',
+  'browser_motion_and_drag.js',
+  'browser_ux_foundations.js',
+  'browser_assistant_workspace.js',
+  'browser_reader_work.js',
+  'browser_ui_finish.js',
+  'browser_map_fallback.js',
+];
+const firefoxRecipes = [
+  'browser_translation_progressive.js',
+  'browser_motion_resilience.js',
+  'browser_motion_and_drag.js',
+  'browser_ui_finish.js',
+  'browser_assistant_workspace.js',
+  'browser_chat_comfort.js',
+  'browser_reader_work.js',
+  'browser_settings_ux.js',
+  'browser_map_fallback.js',
+];
+
+async function waitForFixture(server) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (server.exitCode !== null || server.signalCode !== null) {
+      throw Error('Portal fixture server exited');
     }
+    try {
+      if ((await fetch(fixtureURL + '/api/health', { signal: AbortSignal.timeout(500) })).ok) return;
+    } catch {
+      // The fixture is still starting.
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-  let browser;
-  try{
-    let ready=false;
-    for(let n=0;n<100;n++){
-      if(server.exitCode!==null)throw Error('Fixture server exited');
-      try{if((await fetch('http://127.0.0.1:8769/api/health')).ok){ready=true;break;}}catch(_){}
-      await new Promise(r=>setTimeout(r,100));
+  throw Error('Portal fixture API is unavailable');
+}
+
+async function runRecipe(browser, engine, file) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const directory = path.join(artifactRoot, engine, path.basename(file, '.js'));
+  fs.mkdirSync(directory, { recursive: true });
+  const started = Date.now();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const label = '[' + engine + '] ' + file;
+  console.log('START ' + label);
+  try {
+    const source = fs.readFileSync(path.join(__dirname, file), 'utf8')
+      .replaceAll(/http:\/\/10\.0\.3\.2:87(?:69|72)/g, fixtureURL)
+      .replaceAll('/artifacts/', directory + '/');
+    // Existing recipes are function expressions shared with the manual harness.
+    const recipe = eval('(' + source + '\n)\n//# sourceURL=' + file);
+    const result = await recipe(page);
+    if (errors.length) throw Error(errors.join('\n'));
+    console.log(JSON.stringify({ engine, recipe: file, status: 'passed', ms: Date.now() - started, ...result }));
+    return true;
+  } catch (error) {
+    console.error('FAIL ' + label + ' after ' + (Date.now() - started) + ' ms', error);
+    try {
+      await page.screenshot({ path: path.join(directory, 'failure.png'), timeout: 5000 });
+    } catch (screenshotError) {
+      console.error('Could not capture ' + label + ': ' + screenshotError.message);
     }
-    if(!ready)throw Error('Fixture API unavailable');
-    const source=fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'");
-    const recipe=eval('('+source+')');
-    for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
-      browser=await engine.launch({headless:true});
-      const context=await browser.newContext();const page=await context.newPage();
-      const errors=[];page.on('pageerror',error=>errors.push(String(error)));
-      const result=await recipe(page);
-      const sourceRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_sources.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'")+')');
-      const sourceResult=await sourceRecipe(page);
-      const learningRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_learning.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'")+')');
-      const learningResult=await learningRecipe(page);
-      const documentsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_documents.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'")+')');
-      const documentsResult=await documentsRecipe(page);
-      const qualityRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_quality.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'")+')');
-      const qualityResult=await qualityRecipe(page);
-      const profileRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_profiles.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('.goto(base)',".goto(base+'/classique/')").replaceAll("base+'/index.html#library'","base+'/classique/index.html#library'")+')');
-      const profileResult=await profileRecipe(page);
-      const filterPage=await context.newPage();
-      const filterRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_collection_filter.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const filterResult=await filterRecipe(filterPage);await filterPage.close();
-      const comfortPage=await context.newPage();
-      const comfortRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_chat_comfort.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/chat-comfort-')+')');
-      const comfortResult=await comfortRecipe(comfortPage);await comfortPage.close();
-      const searchPage=await context.newPage();
-      const searchRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_core.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/search-core-')+')');
-      const searchResult=await searchRecipe(searchPage);await searchPage.close();
-      const progressPage=await context.newPage();
-      const progressRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_progress.js'),'utf8').replaceAll('http://10.0.3.2:8772','http://127.0.0.1:8769')+')');
-      const progressResult=await progressRecipe(progressPage);await progressPage.close();
-      const toolsPage=await context.newPage();
-      const toolsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_tools.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const toolsResult=await toolsRecipe(toolsPage);await toolsPage.close();
-      const cataloguePage=await context.newPage();
-      const catalogueRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_catalogue.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const catalogueResult=await catalogueRecipe(cataloguePage);await cataloguePage.close();
-      const diagnosticPage=await context.newPage();
-      const diagnosticRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_assistant_diagnostics.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const diagnosticResult=await diagnosticRecipe(diagnosticPage);await diagnosticPage.close();
-      const startupContext=await browser.newContext(),startupPage=await startupContext.newPage();
-      const startupRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_startup_diagnostic.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,startupDiagnostic:await startupRecipe(startupPage)}));await startupContext.close();
-      const requestContext=await browser.newContext(),requestPage=await requestContext.newPage();
-      const requestRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_request_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,requestLifecycle:await requestRecipe(requestPage)}));await requestContext.close();
-      const performanceContext=await browser.newContext(),performancePage=await performanceContext.newPage();
-      const performanceRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_performance.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,performance:await performanceRecipe(performancePage)}));await performanceContext.close();
-      const videosContext=await browser.newContext(),videosPage=await videosContext.newPage();
-      const videosRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_local_videos.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,localVideos:await videosRecipe(videosPage)}));await videosContext.close();
-      const archiveContext=await browser.newContext(),archivePage=await archiveContext.newPage();
-      const archiveRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_archive_videos.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,archiveVideos:await archiveRecipe(archivePage)}));await archiveContext.close();
-      const archiveAudioContext=await browser.newContext(),archiveAudioPage=await archiveAudioContext.newPage();
-      const archiveAudioRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_archive_audio.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,archiveAudio:await archiveAudioRecipe(archiveAudioPage)}));await archiveAudioContext.close();
-      const captionsContext=await browser.newContext(),captionsPage=await captionsContext.newPage();
-      const captionsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_caption_preparation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,captionPreparation:await captionsRecipe(captionsPage)}));await captionsContext.close();
-      const audioContext=await browser.newContext(),audioPage=await audioContext.newPage();
-      const audioRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_audio_transcription.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,audioTranscription:await audioRecipe(audioPage)}));await audioContext.close();
-      const acquisitionContext=await browser.newContext(),acquisitionPage=await acquisitionContext.newPage();
-      const acquisitionRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_caption_acquisition.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,captionAcquisition:await acquisitionRecipe(acquisitionPage)}));await acquisitionContext.close();
-      const benchmarkContext=await browser.newContext(),benchmarkPage=await benchmarkContext.newPage();
-      const benchmarkRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_benchmark.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,translationBenchmark:await benchmarkRecipe(benchmarkPage)}));await benchmarkContext.close();
-      const progressiveContext=await browser.newContext(),progressivePage=await progressiveContext.newPage();
-      const progressiveRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_progressive.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,progressiveTranslation:await progressiveRecipe(progressivePage)}));await progressiveContext.close();
-      const controlsContext=await browser.newContext(),controlsPage=await controlsContext.newPage();
-      const controlsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_controls.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,translationControls:await controlsRecipe(controlsPage)}));await controlsContext.close();
-      const termsContext=await browser.newContext(),termsPage=await termsContext.newPage();
-      const termsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation_terms.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,translationTerms:await termsRecipe(termsPage)}));await termsContext.close();
-      const experimentPage=await context.newPage();
-      const experimentRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_search_experiment.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const experimentResult=await experimentRecipe(experimentPage);await experimentPage.close();
-      const practicalPage=await context.newPage();
-      const practicalRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_practical.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const practicalResult=await practicalRecipe(practicalPage);await practicalPage.close();
-      const usagePage=await context.newPage();
-      const usageRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_usage_recipe.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/usage-recipe-')+')');
-      const usageResult=await usageRecipe(usagePage);await usagePage.close();
-      const settingsContext=await browser.newContext();const settingsPage=await settingsContext.newPage();
-      const settingsRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_settings_ux.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const settingsResult=await settingsRecipe(settingsPage);await settingsContext.close();
-      const documentaryContext=await browser.newContext();const documentaryPage=await documentaryContext.newPage();
-      const documentaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_documentary_evidence.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/documentary-')+')');
-      const documentaryResult=await documentaryRecipe(documentaryPage);await documentaryContext.close();
-      const modelContext=await browser.newContext();const modelPage=await modelContext.newPage();
-      const modelRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_model_switch.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const modelResult=await modelRecipe(modelPage);await modelContext.close();
-      const choicesContext=await browser.newContext();const choicesPage=await choicesContext.newPage();
-      const choicesRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_document_choices.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const choicesResult=await choicesRecipe(choicesPage);await choicesContext.close();
-      const summaryContext=await browser.newContext();const summaryPage=await summaryContext.newPage();
-      const summaryRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_long_summaries.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const summaryResult=await summaryRecipe(summaryPage);await summaryContext.close();
-      console.log(JSON.stringify({engine:name,longSummaries:summaryResult}));
-      const frenchLifecycleContext=await browser.newContext(),frenchLifecyclePage=await frenchLifecycleContext.newPage();
-      const frenchLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_french_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,frenchLifecycle:await frenchLifecycleRecipe(frenchLifecyclePage)}));await frenchLifecycleContext.close();
-      const figureLifecycleContext=await browser.newContext(),figureLifecyclePage=await figureLifecycleContext.newPage();
-      const figureLifecycleRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_figure_lifecycle.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,figureLifecycle:await figureLifecycleRecipe(figureLifecyclePage)}));await figureLifecycleContext.close();
-      const figureWorkerContext=await browser.newContext(),figureWorkerPage=await figureWorkerContext.newPage();
-      const figureWorkerRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_figure_worker_start.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,figureWorkerStart:await figureWorkerRecipe(figureWorkerPage)}));await figureWorkerContext.close();
-      const figuresContext=await browser.newContext();const figuresPage=await figuresContext.newPage();
-      const figuresRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_source_figures.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769').replaceAll('/artifacts/','/tmp/figures-')+')');
-      const figuresResult=await figuresRecipe(figuresPage);await figuresContext.close();
-      console.log(JSON.stringify({engine:name,sourceFigures:figuresResult}));
-      const procedureContext=await browser.newContext();const procedurePage=await procedureContext.newPage();
-      const procedureRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_procedure_review.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,procedureReview:await procedureRecipe(procedurePage)}));await procedureContext.close();
-      const bilingualContext=await browser.newContext();const bilingualPage=await bilingualContext.newPage();
-      const bilingualRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_bilingual_reader.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      console.log(JSON.stringify({engine:name,bilingualReader:await bilingualRecipe(bilingualPage)}));await bilingualContext.close();
-      const nextPage=await context.newPage();
-      const nextRecipe=eval('('+fs.readFileSync(path.join(root,'tests/browser_next_portal.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const nextResult=await nextRecipe(nextPage);
-      const nextTranslation=eval('('+fs.readFileSync(path.join(root,'tests/browser_translation.js'),'utf8').replaceAll('http://10.0.3.2:8769','http://127.0.0.1:8769')+')');
-      const nextTranslationResult=await nextTranslation(nextPage);await nextPage.close();
-      if(errors.length)throw Error(errors.join('\n'));console.log(JSON.stringify({engine:name,documentChoices:choicesResult}));
-      console.log(JSON.stringify({engine:name,...result,sources:sourceResult,learning:learningResult,documents:documentsResult,quality:qualityResult,profiles:profileResult,collections:filterResult,chatComfort:comfortResult,searchCore:searchResult,searchProgress:progressResult,searchTools:toolsResult,catalogue:catalogueResult,assistantDiagnostics:diagnosticResult,searchExperiment:experimentResult,practical:practicalResult,usage:usageResult,settings:settingsResult,documentary:documentaryResult,modelSwitch:modelResult,next:nextResult,nextTranslation:nextTranslationResult}));
-      await checkUI(browser,name,['browser_motion_resilience.js','browser_motion_and_drag.js','browser_ux_foundations.js','browser_assistant_workspace.js','browser_reader_work.js','browser_ui_finish.js','browser_map_fallback.js']);
-      await context.close();await browser.close();browser=null;
+    return false;
+  } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await context.close();
+  }
+}
+
+async function main() {
+  const engines = ['chromium', 'webkit', 'firefox'];
+  const targetEngine = process.env.BROWSER_ENGINE;
+  if (targetEngine && !engines.includes(targetEngine)) throw Error('Invalid BROWSER_ENGINE: ' + targetEngine);
+  const requested = process.argv.slice(2);
+  const unknown = requested.filter(file => !portalRecipes.includes(file) && !firefoxRecipes.includes(file));
+  if (unknown.length) throw Error('Unknown portal recipe: ' + unknown.join(', '));
+  const server = spawn(process.env.BROWSER_PYTHON || 'python', ['tests/browser_translation_server.py'], {
+    cwd: root,
+    stdio: ['ignore', 'ignore', 'inherit'],
+  });
+  const exited = once(server, 'exit');
+  const failures = [];
+  try {
+    await Promise.race([waitForFixture(server), exited.then(() => { throw Error('Portal fixture server exited'); })]);
+    for (const engine of targetEngine ? [targetEngine] : engines) {
+      const files = requested.length ? requested : engine === 'firefox' ? firefoxRecipes : portalRecipes;
+      // BROWSER_WS connects to an existing Playwright server instead of launching
+      // a local browser (runner without the system libraries of the browsers).
+      const browser = process.env.BROWSER_WS
+        ? await playwright[engine].connect(process.env.BROWSER_WS, { headers: { 'x-playwright-launch-options': JSON.stringify(engine === 'chromium' ? { channel: 'chromium' } : {}) } })
+        : await playwright[engine].launch({ headless: true });
+      try {
+        for (const file of files) {
+          if (!await runRecipe(browser, engine, file)) failures.push(engine + '/' + file);
+        }
+      } finally {
+        await browser.close();
+      }
     }
-    // The user's desktop screenshots are from Firefox; exercise its layout too.
-    browser=await firefox.launch({headless:true});
-    await checkUI(browser,'firefox',['browser_motion_resilience.js','browser_motion_and_drag.js','browser_ui_finish.js','browser_assistant_workspace.js','browser_chat_comfort.js','browser_reader_work.js','browser_settings_ux.js','browser_map_fallback.js']);
-    await browser.close();browser=null;
-  }finally{if(browser)await browser.close();server.kill();}
-})().catch(error=>{console.error(error);process.exitCode=1;});
+  } finally {
+    server.kill();
+    await exited;
+  }
+  if (failures.length) throw Error('Failed portal recipes: ' + failures.join(', '));
+}
+
+main().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -40,7 +40,7 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
             if isinstance(value,tuple):return httpx.Response(value[0],json={'error':value[1]})
             return httpx.Response(200,content=json.dumps(value).encode()+b'\n')
         self.payload={'model':'new:local','messages':[{'role':'user','content':'Question privée conservée'}],
-                      'tools':[{'function':{'name':'read_source'}}],'stream':True,'keep_alive':'5m','options':{'num_ctx':16384,'num_predict':4096}}
+                      'tools':[{'function':{'name':'read_source'}}],'stream':True,'keep_alive':-1,'options':{'num_ctx':16384,'num_predict':4096}}
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
             session=model_session.Session(client,'http://fixture',runtime or {'model':'new:local','available':True,'running':None,'other_models':1},16384,self.measured,self.stages.append,self.guard)
             await session.prepare()
@@ -55,7 +55,7 @@ class SessionTests(unittest.IsolatedAsyncioTestCase):
     async def test_switch_loads_target_before_question_with_same_context_and_keepalive(self):
         result=await self.exercise([self.ready(),self.reply()])
         self.assertEqual(result[-1]['message']['content'],'Réponse fictive')
-        self.assertEqual(self.requests[0],{'model':'new:local','messages':[],'stream':False,'keep_alive':'5m','options':{'num_ctx':16384}})
+        self.assertEqual(self.requests[0],{'model':'new:local','messages':[],'stream':False,'keep_alive':-1,'options':{'num_ctx':16384}})
         self.assertEqual(self.requests[1],self.payload)
         self.assertIn('switching',self.stages)
         self.assertEqual(self.measured.value['model_preparations'][0]['status'],'ready')

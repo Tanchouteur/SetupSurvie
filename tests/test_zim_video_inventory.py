@@ -2,8 +2,10 @@
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock,patch
 import json
+import sqlite3
 import subprocess
 import sys
 from pilot import zim_video_inventory as inventory
@@ -14,6 +16,18 @@ except ImportError:HAS_ZIM=False
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_display_title_hides_technical_names_and_preserves_question_marks(self):
+        payload={'path':'opaque/videoplayback?id=123','title':'videoplayback?id=123',
+                 'collection':'Cours','inventory_id':'deadbeef001'}
+        self.assertEqual(inventory.display_title(payload,{}),'Cours — Vidéo sans titre (deadbeef)')
+        payload.update(title='Comment reconnaître une étoile ?')
+        self.assertEqual(inventory.display_title(payload,{}),payload['title'])
+        payload.update(title='Carte_du_ciel.mp4',path='media/Carte_du_ciel.mp4')
+        self.assertEqual(inventory.display_title(payload,{}),'Carte du ciel')
+        self.assertFalse(inventory.standalone_media('some/segment.m4s?part=1','video/mp4'))
+        self.assertFalse(inventory.standalone_media('library/index.d.ts','video/mp2t'))
+        self.assertTrue(inventory.standalone_media('media/concert.ts','video/mp2t'))
+
     def test_relative_archive_paths_and_remote_urls_remain_distinct(self):
         self.assertEqual(inventory.resolve('A/course.html','../media/clip%20one.webm#t=2')['path'],'media/clip one.webm')
         self.assertEqual(inventory.resolve('A/course.html','/tracks/en.vtt')['path'],'tracks/en.vtt')
@@ -28,9 +42,33 @@ class ReferenceTests(unittest.TestCase):
         parser=inventory.Videos();parser.feed('<video title="One" data-src="one.webm"><track src="one.en.vtt" srclang="en"></video><video><source src="two.mp4"><track data-src="two.fr.vtt" srclang="fr"></video><iframe src="https://www.youtube.com/embed/abcDEF_12-3"></iframe>')
         self.assertEqual(len(parser.items),3);self.assertEqual(parser.items[0]['tracks'][0]['src'],'one.en.vtt');self.assertEqual(parser.items[1]['tracks'][0]['language_declared'],'fr');self.assertEqual(parser.items[2]['tracks'],[])
 
+    def test_valueless_attributes_do_not_abort_the_archive_inventory(self):
+        parser=inventory.Videos();parser.feed('<base href><video src="a.mp4" title><track src="a.fr.vtt" srclang></video>')
+        self.assertEqual(parser.base,'')
+        self.assertEqual(parser.items[0]['sources'][0]['src'],'a.mp4')
+        self.assertEqual(parser.items[0]['tracks'][0]['language_declared'],'')
+
     def test_reference_limit_is_an_explicit_issue_instead_of_complete_coverage(self):
         parser=inventory.Videos();parser.feed('<video src="v.webm"></video>'*(inventory.MAX_VIDEOS_PER_PAGE+1))
         self.assertEqual(len(parser.items),inventory.MAX_VIDEOS_PER_PAGE);self.assertIn('video_reference_limit',parser.errors)
+
+    def test_html_prefilter_ignores_plain_pages_but_preserves_media_in_mixed_case(self):
+        db = Mock()
+        entry = SimpleNamespace(path='A/course.html', title='Cours fictif')
+        with patch.object(inventory, 'Videos', side_effect=AssertionError('Unnecessary HTML parse')):
+            inventory.scan_html_references(db, entry, b'<p>Un guide sur les videos sans lecteur.</p>')
+        db.execute.assert_not_called()
+
+        inventory.scan_html_references(
+            db, entry, b'<script>"<VIDEO src=ignored.webm>"</script>'
+            b'<VIDEO><SOURCE src="../clip.webm"><TRACK src="fr.vtt" SRCLANG="fr"></VIDEO>'
+            b'<IFrame src="https://youtube.com/embed/fixture"></IFrame>',
+        )
+        outputs = [json.loads(call.args[1][3]) for call in db.execute.call_args_list]
+        self.assertEqual(len(outputs), 2)
+        self.assertEqual(outputs[0]['sources'][0]['resolved']['path'], 'clip.webm')
+        self.assertEqual(outputs[0]['tracks'][0]['resolved']['path'], 'A/fr.vtt')
+        self.assertEqual(outputs[1]['sources'][0]['resolved']['status'], 'remote_reference')
 
 
 @unittest.skipUnless(HAS_ZIM,'Optional libzim reader required')
@@ -42,6 +80,25 @@ class ArchiveVideoTests(unittest.TestCase):
     def create(self,extra=False):
         from zim_video_fixture import create
         create(self.zim,extra=extra)
+
+    def test_youtube_titles_enrich_existing_inventory_without_changing_video_identity(self):
+        from zim_video_fixture import create
+        create(self.zim,youtube=True)
+        with patch.object(inventory,'save_youtube_metadata',lambda *args:None):
+            original=inventory.build(self.zim,self.state)
+        path=self.state/original['file']
+        with inventory.connect(path,True) as db:
+            old_rows=db.execute('SELECT payload FROM video_items ORDER BY id').fetchall()
+        updated=inventory.build(self.zim,self.state)
+        self.assertEqual(updated['status'],'reused')
+        self.assertEqual(updated['revision'],original['revision'])
+        with inventory.connect(path,True) as db:
+            rows=db.execute('SELECT payload FROM video_items ORDER BY id').fetchall()
+            titles=json.loads(db.execute('SELECT value FROM metadata WHERE key=?',(inventory.YOUTUBE_TITLES,)).fetchone()[0])
+        self.assertEqual(rows,old_rows)
+        self.assertEqual(titles,{'videos/aaaaaaaaaaa/video.webm':'How do we measure a shadow?',
+                                 'videos/bbbbbbbbbbb/video.webm':'A different lesson'})
+        self.assertEqual(inventory.build(self.zim,self.state)['status'],'reused')
 
     def test_native_text_index_does_not_skip_media_and_local_presence_is_not_decoding(self):
         result=inventory.build(self.zim,self.state);self.assertEqual(result['status'],'completed');self.assertEqual(result['video_resources'],2)
@@ -67,6 +124,28 @@ class ArchiveVideoTests(unittest.TestCase):
         self.assertFalse(list(self.state.glob('*.sqlite')));building=next(self.state.glob('*.building'))
         with inventory.connect(building,True) as db:self.assertEqual(db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()[0],'2')
         result=inventory.build(self.zim,self.state,checkpoint=1);self.assertEqual(result['status'],'completed');self.assertFalse(list(self.state.glob('*.building')))
+
+    def test_resume_recovers_a_hot_journal_after_an_abrupt_exit(self):
+        original = inventory.build(self.zim, self.state)
+        published = self.state / original['file']
+        building = published.with_suffix('.building')
+        published.rename(building)
+        subprocess.run([sys.executable, '-c', """
+import os, sqlite3, sys
+db = sqlite3.connect(sys.argv[1])
+db.execute('PRAGMA cache_size=1')
+db.execute('BEGIN')
+db.execute("UPDATE metadata SET value='interrupted' WHERE key='cursor'")
+db.execute("INSERT INTO issues VALUES ('interrupted', 'uncommitted')")
+os._exit(0)
+""", str(building)], check=True, timeout=10)
+        self.assertTrue(building.with_name(building.name + '-journal').is_file())
+        with self.assertRaises(sqlite3.OperationalError), inventory.connect(building, readonly=True) as db:
+            db.execute("SELECT value FROM metadata WHERE key='cursor'").fetchone()
+        resumed = inventory.build(self.zim, self.state)
+        self.assertEqual(resumed['entries_examined'], original['entries_examined'])
+        self.assertEqual(resumed['issues_count'], original['issues_count'])
+        self.assertTrue(published.is_file())
 
     def test_replaced_archive_keeps_last_completed_inventory_and_rescans_new_edition(self):
         original=inventory.build(self.zim,self.state);before=(self.state/original['file']).read_bytes();self.create(extra=True)

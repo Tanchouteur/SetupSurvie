@@ -3,8 +3,10 @@ import asyncio
 import hashlib
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import AsyncMock,patch
 
@@ -38,6 +40,15 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         later=videos.source(self.id+'#t=8000');self.assertIn('dynamo',later['text']);self.assertNotIn('rotor',later['text'])
         self.assertEqual(catalogue.canonical(found[0]['id']),self.id)
 
+    async def test_opening_uses_the_selected_track_without_the_text_search_index(self):
+        with videos.connect() as db:
+            db.execute(f'DELETE FROM {videos.main_table(db)}')
+        source=await library.source(self.id+'#t=4000')
+        self.assertIn('dynamo',source['text'])
+        self.assertNotIn('rotor',source['text'])
+        self.assertEqual(source['language'],'fr')
+        self.assertIn('31 mm',(await library.source(self.id+'#t=1000&track=0'))['text'])
+
     async def test_common_search_returns_documents_and_caption_then_assistant_reads_only_text(self):
         (library.GUIDES/'guide.fr.txt').write_text('Fabrication du générateur à pédales : construire un support. Texte fictif.')
         library.index_guides()
@@ -61,6 +72,93 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         value=videos.source(self.id);self.assertEqual(value['subtitle_status'],'source_only')
         (videos.ROOT/'cours.mp4').unlink()
         with self.assertRaises(HTTPException):videos.source(self.id)
+
+    async def test_rebuild_stores_caption_text_once_and_publishes_a_compact_file(self):
+        with videos.connect() as db:
+            names={row[0] for row in db.execute("SELECT name FROM sqlite_master")}
+            partitions=list(videos.partition_tables(db).values())
+            self.assertTrue(partitions)
+            self.assertEqual(videos.main_table(db),'video_search')
+            self.assertFalse({name+'_content' for name in partitions+['video_search']}&names)
+            self.assertNotIn('video_text',names)
+            self.assertEqual(db.execute("SELECT count(*) FROM video_doc").fetchone()[0],1)
+            texts=[row[0] for table in partitions for row in db.execute(f"SELECT text FROM {table} WHERE {table} MATCH 'rotor'")]
+        self.assertEqual(len(texts),1);self.assertIn('17 mm',texts[0])
+        self.assertFalse(videos.building().exists())
+        wal=Path(str(videos.database())+'-wal')
+        self.assertLessEqual(wal.stat().st_size if wal.exists() else 0,videos.WAL_LIMIT)
+
+    async def test_interrupted_rebuild_keeps_the_published_index_and_discards_the_build(self):
+        (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:04,000\nTexte remplacé sans le mot cherché.\n')
+        with patch.object(videos,'build_search_tables',side_effect=OSError('disk full')):
+            report=videos.scan()
+        self.assertEqual(report['phase'],'failed');self.assertFalse(videos.building().exists())
+        with videos.connect() as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM video_search WHERE video_search MATCH 'rotor'").fetchone()[0],1)
+
+    def test_restored_report_without_its_rebuildable_index_requests_a_rebuild(self):
+        self.assertFalse(videos.stale())
+        for path in store.ROOT.glob('videos.db*'):path.unlink()
+        self.assertTrue(videos.stale())
+
+    def test_running_archive_inventory_does_not_rebuild_the_index_in_a_loop(self):
+        original=videos.signature
+        def archives_changed(archives=True):return 'archives-changed' if archives else original(archives=False)
+        with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=True):
+            # A 25-minute rebuild that ended 10 minutes ago waits; after 100 minutes it may run.
+            report=json.loads((store.ROOT/'videos-report.json').read_text())
+            report.update(started=time.time()-35*60,finished=time.time()-10*60)
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            self.assertFalse(videos.stale())
+            report.update(started=time.time()-126*60,finished=time.time()-101*60)
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            self.assertTrue(videos.stale())
+            report.update(started=time.time()-35*60,finished=time.time()-10*60)
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            (videos.ROOT/'autre.fr.srt').write_text('1\n00:00:01,000 --> 00:00:02,000\nTexte.\n')
+            self.assertTrue(videos.stale())
+        with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=False):
+            (videos.ROOT/'autre.fr.srt').unlink()
+            self.assertTrue(videos.stale())
+
+    def test_index_published_before_0114_stays_searchable_until_rebuilt(self):
+        legacy=store.ROOT/'legacy.db'
+        db=sqlite3.connect(legacy);db.executescript(videos.SCHEMA)
+        with videos.connect() as current:
+            for row in current.execute('SELECT * FROM media'):db.execute('INSERT INTO media VALUES(?,?,?,?)',tuple(row))
+            for row in current.execute('SELECT id,title,language,track,start_ms,end_ms,text FROM video_search'):db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',tuple(row))
+        db.commit();db.close()
+        for path in store.ROOT.glob('videos.db*'):path.unlink()
+        legacy.rename(videos.database())
+        found,_=videos.search(self.plan('rotor'));self.assertEqual(len(found),1)
+        report=json.loads((store.ROOT/'videos-report.json').read_text());report['signature']='before-0.114'
+        (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+        self.assertTrue(videos.stale())
+        videos.scan()
+        with videos.connect() as current:self.assertEqual(videos.main_table(current),'video_search')
+        found,_=videos.search(self.plan('rotor'));self.assertEqual(len(found),1)
+
+    def test_unchanged_report_is_decoded_once_and_callers_get_their_own_copy(self):
+        report=store.ROOT/'videos-report.json'
+        report.write_text(json.dumps({'phase':'completed','videos':1,'per_video':[{'id':'video:a'}]}))
+        videos.REPORT_CACHE=None
+        with patch.object(videos.json,'loads',wraps=json.loads) as decode:
+            first=videos.status();first['phase']='changed';second=videos.status()
+        self.assertEqual(decode.call_count,1);self.assertEqual(second['phase'],'completed')
+        replacement=report.with_name('report.next');replacement.write_text(json.dumps({'phase':'failed','videos':0}));replacement.replace(report)
+        self.assertEqual(videos.status()['phase'],'failed')
+
+    def test_published_file_is_replaced_only_once_open_connections_close(self):
+        opened=threading.Event();release=threading.Event()
+        def reader():
+            with videos.connect():
+                with videos.connect():opened.set();release.wait(5)
+        thread=threading.Thread(target=reader);thread.start();self.assertTrue(opened.wait(5))
+        with self.assertRaises(TimeoutError):
+            with videos.ACCESS.replacing_file(timeout=0.1):pass
+        release.set();thread.join(5)
+        with videos.ACCESS.replacing_file(timeout=1):pass
+        with videos.connect() as db:self.assertGreater(db.execute('SELECT count(*) FROM media').fetchone()[0],0)
 
     async def test_missing_subtitles_remain_title_only_without_fabricated_readable_text(self):
         for p in videos.ROOT.glob('*.srt'):p.unlink()
@@ -101,7 +199,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
     async def test_previous_index_remains_readable_during_replacement_transaction(self):
         reached=threading.Event();release=threading.Event();original=videos.inventory.inspect_subtitle
         def inspected(*args,**kwargs):
-            if kwargs.get('include_cues'):
+            if kwargs.get('include_cues') and not reached.is_set():
                 reached.set()
                 if not release.wait(5):raise RuntimeError('Test release not received.')
             return original(*args,**kwargs)

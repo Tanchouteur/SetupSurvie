@@ -48,6 +48,7 @@ async page => {
   await page.evaluate(()=>new Promise(requestAnimationFrame));
   check(await page.evaluate(length=>S.view==='library'&&history.length===length,length),'Suivant retrouve la rubrique sans étape d’historique créée par les animations');
   check(await page.evaluate(()=>{const n=document.activeElement;return !!n&&n.getClientRects().length>0&&!n.closest('[hidden],[inert]');}),'Le focus restauré reste dans une zone visible et utilisable');
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const help=page.getByRole('button',{name:'Comprendre le filtre des collections',exact:true});
   await help.focus();await page.keyboard.press('Enter');
   check(await help.getAttribute('aria-expanded')==='true','Une aide animée reste ouvrable au clavier');

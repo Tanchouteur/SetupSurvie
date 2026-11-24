@@ -10,6 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+import zlib
 BASE=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(BASE))
 from fastapi.staticfiles import StaticFiles
@@ -57,13 +58,25 @@ async def fixture_acquisitions_release():
     acquisition_gate=None;return {'released':True}
 
 @gateway.app.post('/fixture/videos')
-def fixture_videos():
+def fixture_videos(extra_track:bool=False):
     videos.ROOT.mkdir(exist_ok=True)
     shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'cours.webm')
     shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/'sans-piste.webm')
     (videos.ROOT/'cours.info.json').write_text(json.dumps({'title':'Fabrication du rotor fictif','language':'en','duration':12,'channel':'Chaîne de test','description':'Vidéo synthétique, aucun guide pratique.'}))
     (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:03,000\nIntroduction fictive.\n\n2\n00:00:08,000 --> 00:00:10,000\nMontage du rotor fictif, cote inventée 17 mm.\n')
     (videos.ROOT/'cours.en.vtt').write_text('WEBVTT\n\n00:08.000 --> 00:10.000\nImaginary rotor assembly, fictional 17 mm.\n')
+    for name,title,audio,subtitle in (
+        ('english','Vidéo de test en anglais','eng','en-GB'),
+        ('french','Vidéo de test en français','fr-FR','fr'),
+    ):
+        shutil.copyfile(BASE/'tests/fixtures/video/solid-green.webm',videos.ROOT/(name+'.webm'))
+        metadata = {'title':title,'language':audio,'duration':12}
+        if name == 'english':
+            metadata['channel'] = 'Chaîne de test'
+        (videos.ROOT/(name+'.info.json')).write_text(json.dumps(metadata))
+        (videos.ROOT/(name+'.'+subtitle+'.vtt')).write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nFixture.\n')
+    if extra_track:
+        (videos.ROOT/'cours.de.vtt').write_text('WEBVTT\n\n00:01.000 --> 00:02.000\nTest.\n')
     return {'ready':True}
 
 caption_gate=None
@@ -142,8 +155,8 @@ with closing(sqlite3.connect(accounts.DB_PATH)) as db:
 (library.GUIDES/'quality-bad.en.txt').write_text('Use 10 mg. Do not exceed the limit.',encoding='utf-8')
 (library.GUIDES/'quality-short.en.txt').write_text('Quality short fixture. '+'Disconnect the power and inspect the wiring. '*12,encoding='utf-8')
 (library.GUIDES/'quality-gaps.en.txt').write_text('Press the         key to enter the menu.',encoding='utf-8')
-from pypdf import PdfWriter
-from pypdf.generic import DecodedStreamObject,DictionaryObject,NameObject
+from pypdf import PdfReader,PdfWriter
+from pypdf.generic import DecodedStreamObject,DictionaryObject,EncodedStreamObject,NameObject,NumberObject
 writer=PdfWriter()
 for number in range(1,7):
     page=writer.add_blank_page(width=300,height=400)
@@ -152,6 +165,37 @@ for number in range(1,7):
     if number==6:text+=' Appendix rotor calibration.'
     stream=DecodedStreamObject();stream.set_data(('BT /F1 12 Tf 20 100 Td ('+text+') Tj ET'+(' 20 40 80 30 re S 160 40 80 30 re S 100 55 m 160 55 l S' if number==6 else '')).encode());page[NameObject('/Contents')]=stream
 writer.write(library.GUIDES/'shelter.en.pdf')
+writer=PdfWriter()
+for text in ('The fictional cover is blue.', 'The fictional sample weighs 10 mg.', 'The final chapter is brief.'):
+    page=writer.add_blank_page(width=300,height=400)
+    page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
+    stream=DecodedStreamObject();stream.set_data(f'BT /F1 12 Tf 20 100 Td ({text}) Tj ET'.encode())
+    page[NameObject('/Contents')]=stream
+writer.write(library.GUIDES/'quality-partial.en.pdf')
+
+# A small file with a genuinely large image, compressed without allocating its
+# complete RGB bitmap in the fixture server.
+writer=PdfWriter();page=writer.add_blank_page(width=500,height=720)
+compressor=zlib.compressobj();chunks=[];remaining=5000*7200
+while remaining:
+    pixels=min(remaining,300000)
+    chunks.append(compressor.compress(b'\x00\x00\xff'*pixels));remaining-=pixels
+chunks.append(compressor.flush())
+image=EncodedStreamObject();image._data=b''.join(chunks)
+image.update({NameObject('/Type'):NameObject('/XObject'),NameObject('/Subtype'):NameObject('/Image'),
+              NameObject('/Width'):NumberObject(5000),NameObject('/Height'):NumberObject(7200),
+              NameObject('/ColorSpace'):NameObject('/DeviceRGB'),NameObject('/BitsPerComponent'):NumberObject(8),
+              NameObject('/Filter'):NameObject('/FlateDecode')})
+page[NameObject('/Resources')]=DictionaryObject({NameObject('/XObject'):DictionaryObject({NameObject('/Im0'):writer._add_object(image)})})
+stream=DecodedStreamObject();stream.set_data(b'q 500 0 0 720 0 0 cm /Im0 Do Q');page[NameObject('/Contents')]=stream
+for number in (2,3):
+    page=writer.add_blank_page(width=500,height=720)
+    page[NameObject('/Resources')]=DictionaryObject({NameObject('/Font'):DictionaryObject({NameObject('/F1'):DictionaryObject({NameObject('/Type'):NameObject('/Font'),NameObject('/Subtype'):NameObject('/Type1'),NameObject('/BaseFont'):NameObject('/Helvetica')})})})
+    stream=DecodedStreamObject();stream.set_data(f'BT /F1 12 Tf 20 680 Td (High resolution fixture page {number}.) Tj ET'.encode());page[NameObject('/Contents')]=stream
+high_resolution=library.GUIDES/'high-resolution.en.pdf';writer.write(high_resolution)
+assert high_resolution.stat().st_size<200000
+source_image=PdfReader(high_resolution).pages[0]['/Resources']['/XObject']['/Im0']
+assert (source_image['/Width'],source_image['/Height'])==(5000,7200)
 (library.GUIDES/'metadata.json').write_text(json.dumps([{'path':'shelter.en.txt','title':'Shelter fixture','language':'en',
     'document_date':'2010-05','edition':'Deuxième édition','collected_at':'2026-11-12','provenance':'Fixture synthétique'}]))
 
@@ -246,10 +290,13 @@ async def library_command(action=None,payload=None):
             'plan':{'count':0,'remaining_download_bytes':0,'library_bytes':0,'missing_themes':[],'candidates':[],
                     'learning_coverage':[{'id':'sciences','label':rules['sciences']['label'],'references':1,'local_references':0,'skills_to_review':['Algèbre'],'status':'references_to_review'}]}}
 operations.library_command=library_command
-async def translate(text,mode,*,on_metrics=None,guidance=None):
+async def translate(text,mode,*,on_metrics=None,guidance=None,correction=None,spell_ordinals=False):
     await asyncio.sleep(.5)
     if on_metrics:on_metrics({'context':16384,'requested_context':16384,'runtime_after':{'running':{'context_length':16384}},
         'model_calls':[{'prompt_eval_count':300,'eval_count':400,'load_ms':2,'eval_ms':450}]})
+    if text.startswith('The fictional cover'):return 'La couverture fictive est bleue.',engine.MODES[mode]['model']
+    if text.startswith('The fictional sample'):return ('L’échantillon fictif pèse 100 mg.' if mode=='rapide' else 'L’échantillon fictif pèse 10 mg.'),engine.MODES[mode]['model']
+    if text.startswith('The final chapter'):return 'Le dernier chapitre est bref.',engine.MODES[mode]['model']
     if text.startswith('Use 10 mg.'):return 'Utilisez 100 mg. Ne dépassez pas la limite.',engine.MODES[mode]['model']
     if text.startswith('Quality short fixture.'):return 'Débranchez le courant.',engine.MODES[mode]['model']
     if text.startswith('Press the         key'):return 'Appuyez sur la touche         pour accéder au menu.',engine.MODES[mode]['model']
@@ -302,5 +349,5 @@ install_archive_video_fixture(gateway.app,root,BASE)
 gateway.app.mount('/guides',StaticFiles(directory=str(library.GUIDES)),name='fixture-guides')
 gateway.app.mount('/',StaticFiles(directory=str(base/'portal'),html=True),name='fixture-portal')
 import uvicorn
-try:uvicorn.run(gateway.app,host='0.0.0.0',port=8769,log_level='warning')
+try:uvicorn.run(gateway.app,host='0.0.0.0',port=int(os.environ.get("BROWSER_FIXTURE_PORT","8769")),log_level='warning')
 finally:temporary.cleanup()

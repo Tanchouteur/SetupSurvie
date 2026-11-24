@@ -4,6 +4,7 @@ async page=>{
  // own profile; a legitimate one-active-translation refusal is not a UI timeout.
  const profileResponse=await page.request.post(base+'/api/profiles',{data:{name:'Recette lecteur de traduction'},headers:{Origin:base}});
  check(profileResponse.ok(),'Profil de recette isolé des traductions des autres scénarios');
+ await page.emulateMedia({reducedMotion:'reduce'});
  await page.setViewportSize({width:1366,height:950});await page.goto(base+'/#/bibliotheque/recherche?q=Shelter');await page.waitForSelector('#search-results .result button');await page.evaluate(()=>readSource('guide:shelter.en.pdf'));
  const before=page.url();await page.locator('#reader').getByRole('button',{name:/^(Traduire en français|Traduction : ouvrir ou reprendre)$/}).click();
  check(page.url()===before,'Traduction prépare sur place');check(await page.locator('#reader-work h3').evaluate(n=>n.getBoundingClientRect().top>=76),'Titre de traduction visible sous la navigation PC');await page.locator('#reader-work-choice').selectOption('');await page.locator('#reader-work').getByRole('button',{name:'Démarrer la traduction',exact:true}).click();
@@ -25,7 +26,7 @@ async page=>{
  await pdf.addInitScript(()=>{const fetch=window.fetch;window.readerProfileReads=0;window.fetch=(input,options)=>{if(String(input).includes('/profiles/current')&&options?.headers)window.readerProfileReads++;return fetch(input,options);};});
  let releaseStatus;const heldStatus=new Promise(resolve=>{releaseStatus=resolve;});
  await pdf.route('**/api/status',async route=>{await heldStatus;await route.continue();});
- await pdf.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf&interface=nouveau',{waitUntil:'domcontentloaded'});
+ await pdf.goto(base+'/pdf.html?id=guide%3Ashelter.en.pdf',{waitUntil:'domcontentloaded'});
  await pdf.getByRole('button',{name:'Traduire ce PDF',exact:true}).waitFor();
  const premature=await pdf.evaluate(()=>{const before=window.readerProfileReads;window.dispatchEvent(new Event('focus'));return window.readerProfileReads-before;});
  releaseStatus();check(premature===0,'Le focus pendant le chargement attend le profil avant de le comparer');

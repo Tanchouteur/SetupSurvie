@@ -9,6 +9,51 @@ enseigner, au quotidien et sur une longue durée. Les principes doivent permettr
 d’adapter une méthode aux conditions et au matériel disponibles. Aucun sinistre
 n’est présumé et l’autonomie matérielle complète n’est pas garantie.
 
+## Liste de thèmes de Marc — 21 novembre 2026
+
+**Besoin confirmé**, transmis par Louis le 21 novembre 2026 (« PC de l’Apocalypse —
+thèmes de la base de connaissances »). Cette liste complète les besoins du
+12 novembre ci-dessous, sans les remplacer. Elle sert de grille pour le
+[fonds de référence](bibliotheque-complete-marc.md#fonds-de-référence-figé),
+le tri des collections et la recette de recherche
+([`besoins-marc-2026-11-21.json`](../../tests/fixtures/domain-evaluation/besoins-marc-2026-11-21.json),
+deux requêtes par thème). Une collection repérée pour un thème ne prouve pas
+que le thème est couvert : la recette distingue présence, recherche et lecture.
+
+| Famille | Thèmes et contenu attendu |
+| --- | --- |
+| Autonomie et ressources | **Autonomie au sens large** (production locale, sobriété, réparation, réemploi, gestion des ressources, dépendances aux chaînes d’approvisionnement, solutions de remplacement) ; **énergie** (électricité, solaire thermique et photovoltaïque, batteries, groupes électrogènes, éolien, hydraulique, biomasse, énergie humaine et animale, rendement, stockage, entretien) ; **électricité** (principes, continu et alternatif, tension, intensité, puissance, circuits, protections, câblage, mise à la terre, installations autonomes) ; **plomberie et réseaux d’eau** (matériaux, raccords, pompes, surpresseurs, réservoirs, fuites, évacuation, assainissement) ; **isolation et habitat** (isolation, étanchéité à l’air et à l’eau, ventilation, humidité, confort d’été et d’hiver, moisissures) ; **eau** (captage, récupération, stockage, pompage, filtration, traitements, contrôle de qualité, pathogènes, eaux grises) ; **gaz** (types, usages, équipements, stockage, détection des fuites, ventilation, remplacements) ; **carburants** (types, stockage, vieillissement, risques, contenants, substitution) ; **chauffage** (bois, gaz, électricité, solaire, biomasse, rendement, fumées, monoxyde de carbone) ; **feu** (allumage, combustibles, foyers, cuisson, éclairage, usages artisanaux, maîtrise des incendies) |
+| Alimentation et agriculture | **Ressources alimentaires** (production, cueillette, identification, stockage, dégradation, sécurité) ; **conservation** (conserve, séchage, fermentation, salage, fumage, sucre, froid, emballage, aliments altérés) ; **cuisine à ressources limitées** (aliments de base, cuisson économe en eau et combustible, restes, équilibre) ; **encyclopédie de l’alimentation** (végétal, animal, fongique, aquatique ; préparation, transformation, risques) ; **potager** (espèces, calendriers, semis, associations, rotations, sol, compost, irrigation, maladies, ravageurs) ; **arbres fruitiers et petits fruits** (plantation, taille, greffe, multiplication) ; **semences** (production, sélection, conservation, germination, stock) ; **agriculture durable et permaculture** (sols, eau, biodiversité, agroforesterie) ; **élevage** (lapins, poules, cailles, porcs, moutons, chèvres, canards, oies, cobayes ; races, alimentation, reproduction, soins, maladies) ; **apiculture** ; **pêche en mer et en rivière** ; **chasse sous-marine** ; **chasse** (réglementation, sécurité, armes, pièges autorisés, gibier) ; **champignons et plantes sauvages** (comestibles et toxiques, récolte, culture) |
+| Santé et soins | **Médecine et santé publique** (anatomie, hygiène, premiers secours, symptômes, maladies infectieuses, santé maternelle et infantile, dents, santé mentale, urgences) ; **médicaments et compléments** (indications, notices, posologies officielles, contre-indications, interactions, conservation, péremption, sources datées) ; **plantes médicinales, huiles essentielles et remèdes** (usages documentés, risques, interactions) ; **soins aux chiens et chats** |
+| Techniques, fabrication et réparation | **Bricolage** ; **mécanique** (auto, moto, vélo, moteurs, freins, pneus) ; **soudure et assemblage** (arc, MIG, TIG, brasage, étain) ; **menuiserie** (essences, séchage, assemblages, charpente) ; **construction d’abris** ; **cabanes et constructions légères** ; **low-tech** ; **mécanismes en milieu dégradé** (pédaliers, dynamo, pompes, moulins, séchoirs solaires, lave-linge manuels, réemploi) ; **outils et machines** (affûtage, leviers, poulies, engrenages, tours, forges) ; **matériaux et matières premières** (bois, argile, pierre, minerais, fibres, peaux, chaux, métaux) ; **fabrication de matériaux** (briques, céramique, verre, charbon de bois, mortier, papier, cordages, colles, encres, peintures) ; **métallurgie et chimie pratique** (forge, traitements thermiques, corrosion, savon, produits d’entretien) ; **tannage** ; **textile** (fibres, filage, tissage, couture, raccommodage, chaussures, cordages) ; **vannerie** ; **nuisibles** |
+| Milieux naturels, déplacement et survie | **Bushcraft** ; **survie en milieu naturel** (orientation, abri, eau, nourriture, météo, signalement) ; **survie en milieu urbain** (services interrompus, hygiène, entraide) ; **météorologie et climat** (observation du ciel, phénomènes violents, sécheresse, risques locaux) ; **navigation maritime et fluviale** ; **vie à bord d’un bateau** ; **résilience et autosuffisance** |
+| Risques et situations de conflit | **NRBC** (exposition, détection, consignes officielles, protection, décontamination, limites des équipements) ; **protection individuelle** (masques, filtres, gants, combinaisons ; choix, ajustement, durée, limites) ; **armes et munitions** (catégories, réglementation, sécurité, stockage, entretien, usages légaux) ; **guerre et siège** (effets sur les services, protection civile, abris, besoins essentiels, droit applicable, conséquences humanitaires) ; **stocks et réserves** (quantités, rotation, inventaire, personnes et animaux) ; **vie en situation dégradée** |
+| Connaissances fondamentales et transmission | **Sciences fondamentales** ; **mesure, calcul et contrôle** ; **enseignement et transmission** ; **organisation collective** ; **histoire des techniques et des sociétés** ; **histoire et religions** (traditions, textes, diversité des croyances) ; **culture générale et loisirs** (langues, arts, musique, jeux, lecture) |
+| Communication et informatique | **Communication** (radio, téléphonie, réseaux locaux, Internet, satellite, codes, antennes, portée) ; **informatique autonome** (matériel, systèmes, logiciels, documentation hors ligne, réseau local, sauvegardes, formats, restauration) ; **base de connaissances** (classement, indexation, métadonnées, versions, sources, conservation) ; **IA locale** (recherche avec références, distinction sources et synthèses, lacunes, conservation des modèles) |
+
+Pour chaque domaine, Marc demande de documenter : les **fondements** (principes,
+vocabulaire, schémas), la **pratique courante** (matériel, procédures,
+entretien, diagnostic), les **solutions avec ressources limitées** (substituts,
+réparation, réemploi, fabrication d’outils) et la **transmission** (plans,
+illustrations, exercices, critères de réussite, erreurs fréquentes).
+
+Précision de Marc transmise par Louis le 21 novembre 2026 : pour la religion,
+Internet, la culture, les langues et les loisirs, il veut seulement des
+connaissances de base, pour « avoir de tout », pas l’ensemble des savoirs.
+Wikipédia, Vikidia et C'est pas sorcier fournissent ce socle ; aucun fonds
+spécialisé n’est ajouté pour ces sujets. Les collections déjà installées
+restent dans **Autre** ; seules deux encyclopédies de fans sans usage sont
+exclues en attendant le tri de Marc. Le même jour, Louis décide de garder dans la référence,
+rangés dans **Autre**, les fonds culturels volumineux déjà installés chez
+Marc (environ 270 Go : Gutenberg anglais hors sections pratiques, Alexandria,
+Wikisource, Nota Bene, Wiktionnaire anglais, TED histoire, internet et
+religion, petits forums) : Marc décidera en triant sa bibliothèque. Les
+sections Gutenberg sciences, médecine, agriculture et technologie restent
+dans le fonds principal. Les thèmes sans collection Kiwix adaptée (NRBC, gaz, armes et
+réglementation, tannage, vannerie, météorologie, chasse sous-marine, vie à
+bord) demandent des guides officiels ou spécialisés à repérer, de préférence
+en français ; ils ne sont pas couverts tant que la recette ne le montre pas.
+
 ## Les besoins retenus
 
 | Domaine | Contenu recherché |
@@ -51,11 +96,10 @@ restent à examiner. Un compteur de repères ne certifie pas une couverture comp
   entretenir → transmettre**. Les parcours et la recherche restent accessibles
   sans modèle chargé ; une question n’est générée qu’après envoi et disponibilité
   du moteur. Une pause IA n’est pas levée.
-- **Données locales → Enrichir la bibliothèque** : 38 thèmes. Les nouveaux thèmes
-  couvrent sciences, mesure, textile, matériaux, machines, métallurgie, chimie
-  pratique, organisation et histoire des techniques. Les axes existants sont
-  approfondis. Les anciennes sélections conservent leurs choix : cocher les
-  nouveaux thèmes puis préparer une nouvelle sélection.
+- La sélection en ligne de commande connaît 38 thèmes, dont sciences,
+  mesure, textile, matériaux, machines, métallurgie, chimie pratique,
+  organisation et histoire des techniques.
+  [Sélection par thème](selection-kiwix-par-theme.md)
 - Les thèmes peuvent sélectionner des manuels déjà référencés : mathématiques,
   lecture, semences, jardin scolaire, mesure du chlore, santé et prévention en
   atelier. Un guide commun à plusieurs thèmes est téléchargé une seule fois.

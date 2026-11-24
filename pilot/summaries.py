@@ -13,6 +13,7 @@ import time
 import httpx
 from fastapi import HTTPException
 
+from . import work_queue
 from . import assistant_metrics,citation_links,illustrations,document_text,engine,model_runtime,model_session,operations,research,store
 
 ACTIVE={}
@@ -37,7 +38,7 @@ def status(identifier,user_id,offset=0):
     for source in inputs:
         source['metadata']=json.loads(source['metadata']);source['metadata'].pop('images',None)
     for node in nodes:node['notes']=json.loads(node.pop('result'))
-    return {**item,'notice':NOTICE,'inputs':inputs,'total':sum(counts.values()),'read':counts.get('done',0),
+    return {**item,**work_queue.queue_fields(identifier,item['status'],'summary'),'notice':NOTICE,'inputs':inputs,'total':sum(counts.values()),'read':counts.get('done',0),
             'unreadable':counts.get('unreadable',0),'pending':counts.get('pending',0),'nodes':nodes,'node_count':count,'offset':offset}
 
 
@@ -172,7 +173,7 @@ async def infer(item,messages,*,schema=None,output=None):
     async with httpx.AsyncClient(trust_env=False) as client:
         session=model_session.Session(client,engine.OLLAMA,runtime,context,measurement,lambda stage:None,available)
         await session.prepare()
-        payload={'model':selected['model'],'messages':messages,'tools':[],'stream':True,'keep_alive':'5m',
+        payload={'model':selected['model'],'messages':messages,'tools':[],'stream':True,'keep_alive':model_session.KEEP_ALIVE,
             'think':('low' if selected['think'] in ('low','medium','high') else False) if schema else selected['think'],
             'options':{'num_ctx':context,'num_predict':output,'temperature':0 if schema else .2}}
         if schema:payload['format']=schema
@@ -302,6 +303,7 @@ async def step(item):
     return True
 
 
+@work_queue.tracked('summary')
 async def run(identifier):
     try:
         with store.connect() as db:row=db.execute('SELECT * FROM summary_jobs WHERE id=?',(identifier,)).fetchone()

@@ -59,7 +59,7 @@ async def check(args):
     original=httpx.AsyncClient
     report={'schema':1,'kind':'SetupSurvie real documentary case check','fictional_corpus':False,'customer_hardware_validation':False,'radio_hardware_control':False,
         'version':json.loads((base/'deploy/release.json').read_text())['version'],'model':args.model,
-        'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').glob('*.py')))).hexdigest(),
+        'source_digest':hashlib.sha256(b''.join(p.read_bytes() for p in sorted((base/'pilot').rglob('*.py')))).hexdigest(),
         'policy_digest':hashlib.sha256((base/'deploy/assistant-system.fr.txt').read_bytes()).hexdigest(),
         'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'manual':None if external else {key:entry[key] for key in ('id','url','sha256','bytes','edition')},

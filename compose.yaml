@@ -4,7 +4,7 @@ services:
     image: ${WEBUI_IMAGE:?Run the installer first}
     restart: unless-stopped
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:${HOST_GATEWAY:-host-gateway}"
     environment:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
       ENABLE_OPENAI_API: "false"
@@ -79,12 +79,18 @@ services:
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 10s
+      # kiwix-manage reads every archive before serving: about 100 s for 210
+      # archives on Marc's PC, more while indexing loads the disk (22 Nov 2026).
+      # A single call takes 3 s for 205 archives on the Bazzite lab (24 Nov
+      # 2026); the margin stays for slow disks. Updates wait up to 420 s.
+      start_period: 360s
   pilot:
     image: ${WEBUI_IMAGE}
     restart: unless-stopped
     working_dir: /srv
-    entrypoint: [python, -m, uvicorn, pilot.app:app, --host, "0.0.0.0", --port, "8000"]
+    # Bounded wait for open connections (a search stream, a tab left open):
+    # the pilot then stops cleanly before Docker resorts to SIGKILL.
+    entrypoint: [python, -m, uvicorn, pilot.app:app, --host, "0.0.0.0", --port, "8000", --timeout-graceful-shutdown, "5"]
     command: []
     environment:
       PILOT_STATE_DIR: /pilot-data
@@ -94,6 +100,7 @@ services:
       PILOT_CONTROL_URL: http://host.docker.internal:11436
       PILOT_CONTROL_TOKEN: ${PILOT_CONTROL_TOKEN}
       OLLAMA_URL: ${OLLAMA_BASE_URL}
+      CHAT_MODEL: ${CHAT_MODEL:-}
       KIWIX_URL: http://kiwix:8080
       PILOT_SEARCH_CACHE_BYTES: ${PILOT_SEARCH_CACHE_BYTES:-2000000000}
       GUIDES_DIR: /guides
@@ -114,7 +121,7 @@ services:
       - ${DATA_DIR}/models:/models:ro
       - ${DATA_DIR}/catalog:/catalog:ro
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "host.docker.internal:${HOST_GATEWAY:-host-gateway}"
     healthcheck:
       test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
       interval: 15s

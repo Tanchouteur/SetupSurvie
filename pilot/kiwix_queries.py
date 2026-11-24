@@ -15,7 +15,7 @@ MAX_ENTRIES=256
 
 def state():
     loop=asyncio.get_running_loop()
-    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'flights':{},'retiring':set(),'pending':OrderedDict(),'writer':None}
+    if loop not in STATES:STATES[loop]={'fulltext':asyncio.Semaphore(2),'title':asyncio.Semaphore(2),'cache':OrderedDict(),'structure_lane':asyncio.Semaphore(2),'structures':OrderedDict(),'flights':{},'retiring':set(),'pending':OrderedDict(),'writer':None}
     return STATES[loop]
 
 
@@ -25,8 +25,11 @@ async def disk_io(operation,*args):
     try:return await asyncio.shield(task)
     except asyncio.CancelledError:
         while not task.done():
+            # The caller was cancelled (or timed out): report that, even if the
+            # thread later fails, so wait_for() still raises TimeoutError.
             try:await asyncio.shield(task)
             except asyncio.CancelledError:pass
+            except Exception:pass
         if not task.cancelled():task.exception()
         raise
 
@@ -37,9 +40,14 @@ def remember_on_disk(shared,root,key,result):
     async def write_all():
         try:
             while pending:
-                _,arguments=pending.popitem(last=False)
-                try:await disk_io(search_cache.write,*arguments)
-                except Exception:pass # Optional persistence never fails a search.
+                # Responses that arrived during the previous commit share the
+                # next one; a single root in practice, grouped for safety.
+                batches={}
+                while pending:
+                    _,(root,key,result)=pending.popitem(last=False);batches.setdefault(root,[]).append((key,result))
+                for root,entries in batches.items():
+                    try:await disk_io(search_cache.write_many,root,entries)
+                    except Exception:pass # Optional persistence never fails a search.
         finally:pending.clear()
     if shared['writer'] is None or shared['writer'].done():shared['writer']=asyncio.create_task(write_all())
 

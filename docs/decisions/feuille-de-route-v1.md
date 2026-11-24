@@ -1,3 +1,7 @@
+> Actualisation du 19 novembre 2026 : la maquette fictive est retirée du paquet en 0.59.0 ; l’interface classique a ensuite été retirée en 0.63.0 (`/classique/` et `/nouveau/` redirigent vers la racine).
+
+> La liste de clôture, les preuves pour la 0.69.4 et les recettes sur appareils réels figurent dans l’[audit V1 du 20 novembre 2026](../essais/2026-11-20-audit-v1.md).
+
 # Feuille de route vers la V1 (1.0.0)
 
 **Statut : bilan et proposition de l’agent du 17 novembre 2026, à la demande de
@@ -21,6 +25,72 @@ pas les [deux objectifs du 16 novembre](choix-actuels.md#deux-prochains-objectif
 > l’instant.** Le protocole de cet essai est dans
 > [Installation neuve et transfert entre SSD sur Bazzite](../essais/plan-installation-neuve-et-transfert-bazzite.md).
 
+## Périmètre V1 — décision de Louis du 20 novembre 2026
+
+Linux est la cible unique de la V1. SetupSurvie est donné à des amis qui
+achètent leur configuration. La préparation inclut un bureau léger, à
+choisir après mesure de la RAM et de la VRAM, et Firefox avec son
+traducteur et les langues utiles téléchargées avant remise. Vérifier la
+traduction sur les pages locales concernées après coupure d’Internet.
+Voir le [cadrage de référence](acces-simple-et-offre.md).
+
+**Complément de Louis du 21 novembre 2026 (V1-D02 et V1-D11).** L’installation
+depuis le SSD suppose un Linux compatible déjà installé. L’interface doit
+permettre à un proche d’ouvrir le lanceur par double-clic, de choisir son disque
+et de cliquer sur **Installer** pour une installation hors ligne sans terminal. Les droits
+administrateur peuvent être demandés dans une fenêtre. Faire réussir ce parcours
+à une personne non accompagnée avec la notice locale. Voir le
+[parcours depuis le SSD](../exploitation/disque-de-secours-hors-ligne.md#7-installer-depuis-le-ssd-de-secours).
+
+L’installation normale prépare deux installations de SetupSurvie. La première
+reste saine et sert de point de restauration. La seconde sert au quotidien.
+La 0.77.0 fournit le [lanceur hors ligne et son menu d’entretien](../exploitation/transfert-installation.md#installer-depuis-le-ssd-de-secours).
+La recette doit couvrir **Restaurer** après une panne qui empêche la seconde de
+démarrer, puis un essai par un proche sur le bureau de référence.
+Voir le [point de restauration](../exploitation/disque-de-secours-hors-ligne.md#point-de-restauration-dès-linstallation--décision-de-louis-du-21-novembre-2026).
+
+## Revue des fonctionnalités existantes — 20 novembre 2026
+
+Louis demande d’approfondir les fonctions existantes, de vérifier leur
+cohérence et de corriger les bugs en gardant des parcours simples. L’ordre
+ci-dessous est proposé pour la revue. Pour chaque parcours, partir d’un usage
+concret, observer le résultat normal puis un échec ou une interruption,
+et consigner ce qui a été vérifié sur données de test et sur appareil réel.
+
+Les priorités ci-dessous sont proposées par l’agent le 20 novembre 2026.
+Louis demande de les conserver dans la feuille de route. Elles restent à
+examiner et ne constituent pas des résultats d’essai.
+
+1. **Bibliothèque et lecteurs** — chercher avec des mots simples, retrouver
+   le bon guide et ouvrir la bonne page ou le bon passage vidéo, y compris
+   avec le moteur IA arrêté. Vérifier les filtres et le classement après
+   indexation ou correction. Rendre visibles les PDF mal extraits et les
+   archives encore en préparation.
+2. **Assistant, profils et conversations** — vérifier les affirmations et
+   les sources réellement consultées, les ajouts inventés et les refus
+   injustifiés. Comparer les trois modes sur les mêmes questions et retrouver
+   une conversation après changement de profil.
+3. **Traductions, synthèses et sous-titres** — essayer un vrai manuel long
+   et une vraie vidéo, comparer les chiffres, unités et horodatages à la
+   source, interrompre et reprendre le travail puis vérifier le résultat
+   publié. Tester aussi la traduction des pages locales dans Firefox avec
+   les langues téléchargées et Internet coupé.
+4. **File d’attente et préparations** — suivre attente, progression,
+   interruption et reprise. Comparer les cartes aux rapports et vérifier
+   qu’un résultat annoncé comme terminé est consultable. Vérifier la lecture
+   au clavier pendant les actualisations.
+5. **Cartes et téléphone** — scanner le QR code, retrouver un lieu, ouvrir
+   une zone téléchargée et calculer un trajet sans Internet. Vérifier le
+   message lorsqu’une zone ou un mode manque, puis le retour à la liste sur
+   iPhone et Android réels.
+6. **Installation, mise à jour et secours** — prévoir un retour à une
+   installation initiale saine en cas de bibliothèque modifiée, de corruption
+   ou de blocage incompris, avec protection des données personnelles. Voir le
+   [protocole de secours](../exploitation/disque-de-secours-hors-ligne.md).
+   Suivre aussi le guide sur une
+   installation d’essai et vérifier les données après interruption et reprise.
+   Distinguer transfert sur le même PC et restauration sur un autre appareil.
+
 ## 1. Ce qui existe (état observé le 17 novembre 2026)
 
 Tableau par capacité ; les numéros de version cités servent seulement à
@@ -37,7 +107,7 @@ retrouver les bilans. Légende : **Réel** = essayé sur un PC cible avec de vra
 | Cartes | PMTiles Sud, points, itinéraires OSRM hors ligne | Réel chez Marc (Windows) ; CI sur réseau synthétique |
 | Profils | Sans mot de passe, Famille, Open WebUI par en-têtes | Simulé ; pas de recette multi-utilisateurs simultanés |
 | Installation Windows | Lanceur unique, reprise, démarrage automatique, raccourcis, mise à jour Git | Diagnostic réel chez Marc ; **jamais d’installation sur Windows vierge** |
-| Installation Linux | `install.sh` (Docker + NVIDIA Container Toolkit) | **Jamais exécuté de zéro** ; le laboratoire Podman n’est pas ce parcours |
+| Installation Linux | `install.sh` sur Linux préparé (Docker + NVIDIA Container Toolkit) | Premier parcours réel Bazzite repris et terminé : [bilan](../essais/2026-11-17-installation-neuve-bazzite.md). Docker, Python et le pilote GPU étaient déjà présents ; OS vierge non qualifié. |
 | Mises à jour | `pilot_update.py`, sauvegarde, retour arrière | Réel chez Marc à plusieurs reprises (incidents corrigés) |
 | Transfert | `transfer.py` et assistant graphique : copie reprenable, préparation, activation, retour | Simulé (fixtures) ; **ni Windows réel, ni Linux réel** |
 | Secours | Protocole R01–R18, manuel de secours, `/secours.html` | **Plan** ; aucun scénario R01–R18 exécuté |
@@ -47,16 +117,14 @@ retrouver les bilans. Légende : **Réel** = essayé sur un PC cible avec de vra
 
 | ID | Point | Pourquoi c’est bloquant | Preuve attendue |
 | --- | --- | --- | --- |
-| V1-D01 | **Installation de zéro réussie sur chaque système vendu** (Windows vierge, et Linux si proposé) | L’offre est un PC préinstallé : la préparation avant livraison doit être reproductible sans l’agent | Journal complet d’une installation sur disque vide, temps, téléchargements, erreurs corrigées. Premier essai Linux : [protocole Bazzite](../essais/plan-installation-neuve-et-transfert-bazzite.md) |
-| V1-D02 | **Transfert et restauration réels** d’un disque à l’autre, puis fonctionnement sans le disque source et sans Internet | Objectif 2 de Louis ; aucun essai réel à ce jour | Scénarios R02, R05, R08, R15 au minimum du [protocole de secours](../exploitation/disque-de-secours-hors-ligne.md#10-recette-dacceptation) |
-| V1-D03 | **Droits de redistribution commerciale** des contenus | 107 des 111 entrées du catalogue portent `commercial_review: true` ; vendre un PC avec ces fichiers n’est pas autorisé par défaut | Tableau par ressource : licence, preuve, décision (inclure / téléchargement par le client / retirer) |
-| V1-D04 | **Licences des modèles et composants tiers** pour un usage commercial | Gemma, GPT-OSS, Qwen, Kiwix, Open WebUI, OSRM, cartes : conditions différentes | Inventaire des licences et mentions obligatoires livrées avec le PC |
-| V1-D05 | **Profil matériel de référence** et modes conseillés validés sur ce matériel | Les modes « rapide/moyenne/approfondie » sont mesurés sur RTX 2060 et 5060 Ti 8 Go, pas sur la [cible 16 Go](../installation/configuration-materielle-cible.md) | Mesures de délai, contexte stable et mémoire sur la machine vendue |
+| V1-D01 | **Installation de zéro réussie sur la configuration Linux de référence** | La préparation d’un PC pour un proche doit être reproductible | Journal complet d’une installation sur disque vide, temps, téléchargements, bureau et traduction Firefox hors ligne vérifiés. Premier essai Linux : [protocole Bazzite](../essais/plan-installation-neuve-et-transfert-bazzite.md) |
+| V1-D02 | **Transfert et restauration réels** d’un disque à l’autre, puis fonctionnement sans le disque source et sans Internet | Objectif 2 de Louis. [Transfert Bazzite entre SSD validé](../essais/2026-11-18-transfert-ssd-bazzite.md) sur le même PC avec données source indisponibles et sortie Internet isolée. Docker reste sur le disque système | Scénarios R02, R05, R08, R15 au minimum du [protocole de secours](../exploitation/disque-de-secours-hors-ligne.md#10-recette-dacceptation) |
+| V1-D05 | **Profil matériel de référence** et modes conseillés validés sur ce matériel | Les modes « rapide/moyenne/approfondie » sont mesurés sur RTX 2060 et 5060 Ti 8 Go, pas sur la [cible 16 Go](../installation/configuration-materielle-cible.md) | Mesures de délai, contexte stable et mémoire sur la machine de référence |
 | V1-D06 | **Fidélité de l’assistant sur un jeu de vérité** | Les essais réels montrent des ajouts non sourcés (exemples de fabrication, « tête-bêche ») ; aucune mesure de taux d’erreur | 30 à 50 questions à réponse vérifiable, relecture humaine, taux d’erreurs graves, comparaison des modes ([protocole](../essais/protocole-fiabilite-ia.md)) |
 | V1-D07 | **Usage réel sur téléphone**, dont Safari iPhone | Public non informaticien ; aucune recette sur iPhone physique | Parcours QR code → recherche → lecture → question, sur iPhone et Android réels |
 | V1-D08 | **Premier usage par une personne non accompagnée** | La refonte UX n’a pas encore été jugée par un utilisateur cible | Marc (ou une autre personne) réalise 5 à 8 tâches sans aide ; incompréhensions notées |
-| V1-D09 | **Démarrage après coupure et redémarrage** sur la machine vendue | Alimentation solaire de Marc ; seuls des processus tués ont été testés | Coupure physique pendant lecture, téléchargement et traduction ; état après redémarrage |
-| V1-D10 | **Mise à jour d’une V1 vers une version suivante** sans perte | Nécessaire pour un produit vendu ; aujourd’hui éprouvée seulement entre versions pilotes | Mise à jour + retour arrière sur une copie de l’installation vendue |
+| V1-D09 | **Démarrage après coupure et redémarrage** sur la machine de référence | Alimentation solaire de Marc ; seuls des processus tués ont été testés | Coupure physique pendant lecture, téléchargement et traduction ; état après redémarrage |
+| V1-D10 | **Mise à jour d’une V1 vers une version suivante** sans perte | Nécessaire pour un PC remis à un proche ; aujourd’hui éprouvée seulement entre versions pilotes | Mise à jour + retour arrière sur une copie de l’installation de référence |
 | V1-D11 | **Manuel humain autonome** testé par une personne | Exigence du protocole de secours ; le manuel actuel est un premier guide | Recette humaine R16–R17 |
 
 Complément du 17 novembre 2026 : la stratégie d’évaluation et des modes dégradés
@@ -71,9 +139,11 @@ erreur (V1-D06).
 ### Interface et simplicité
 
 - **Retirer ou isoler les anciennes interfaces** : `portal/classique/` et
-  `portal/maquette/` restent livrées à côté de `portal/nouveau/`. Décider de leur
+  `portal/maquette/` restent livrées à côté de `portal/interface/`. Décider de leur
   sort (archive hors paquet ou suppression) pour réduire la maintenance et les
   risques de régression. À arbitrer avec Louis.
+  *Réalisé en 0.63.0 :* Louis demande le 19 novembre 2026 le retrait de
+  l’interface classique ; `portal/nouveau/` devient `portal/interface/`.
 - **Mesurer la simplicité au lieu de la supposer** : nombre de clics pour les
   10 tâches principales, temps pour trouver une source, taux d’abandon. Aujourd’hui
   la validation porte sur le bon fonctionnement, pas sur la facilité.
@@ -95,8 +165,8 @@ erreur (V1-D06).
 
 ### Exploitation
 
-- **Installation Linux portable** : jamais exécutée ; Bazzite (système immuable,
-  Docker rootless) est un bon premier cas difficile.
+- **Installation Linux** : le premier essai sur Bazzite préparé a réussi.
+  Reste à répéter la préparation depuis un disque vide sur la cible V1.
 - **Profil documentaire pour une installation limitée** (ex. 300 Go) : aujourd’hui
   le catalogue complet fait 200 Go, dont Wikipédia anglais 127 Go ; il manque un
   choix simple « fonds réduit » sans réglage manuel.
@@ -140,12 +210,11 @@ Ordre proposé, du plus utile au moins urgent :
 | 1 | Installation Linux de zéro avec bibliothèque, cartes et modèles | Bazzite, SSD système | Décisions du [protocole](../essais/plan-installation-neuve-et-transfert-bazzite.md#3-décisions-à-obtenir-avant-de-commencer) |
 | 2 | Transfert SSD → SSD réel, activation, redémarrage, hors ligne | Bazzite, deux SSD | Essai 1 |
 | 3 | Restauration sans source (source rendue inaccessible) et sans Internet | Bazzite | Essai 2 |
-| 4 | Transfert HDD → SSD 2 To de Marc | Windows de Marc | Pose du SSD par Marc |
-| 5 | Jeu de vérité de l’assistant et de la traduction (V1-D06) | Bazzite puis Windows | Questions et réponses vérifiées à préparer |
+| Hors V1 Linux | Transfert HDD → SSD 2 To de Marc | Windows de Marc | Pose du SSD par Marc |
+| 5 | Jeu de vérité de l’assistant et de la traduction (V1-D06) | Configuration Linux de référence | Questions et réponses vérifiées à préparer |
 | 6 | Parcours téléphone réels (iPhone, Android), QR code, HTTPS, `survie.local` | Réseau domestique | Installation en service |
 | 7 | Usage non accompagné (V1-D08) | Chez Marc | Version stabilisée |
 | 8 | Coupure électrique réelle pendant écriture | PC de test | Accord sur le risque matériel |
-| 9 | Installation sur Windows vierge | PC ou VM Windows dédiée | Licence et machine |
 | 10 | Mise à jour V1 → V1.0.1 et retour | Copie d’installation | Paquet de test |
 
 Chaque résultat suit les règles habituelles : version, machine, supports,
@@ -156,15 +225,13 @@ réseau, preuves, limites ; « préparé », « vérifié » et « réussi » re
 Seuil de l’assistant décidé par Louis le 17 novembre 2026 : au moins **95 %**
 des réponses de la banque sans refus injustifié ni erreur grave, car une réponse
 peut sauver une vie ; voir l’[ingénierie de tests](../essais/ingenierie-de-tests.md#seuils-pour-la-v1).
-Proposition à valider par Louis pour le reste : tous les points V1-D01 à V1-D11 ont une preuve
+Proposition à valider par Louis pour le reste : tous les points du tableau des critères bloquants ont une preuve
 réelle datée, aucun défaut connu ne fait perdre de données ni ne bloque la
 bibliothèque, et une personne non accompagnée réussit les tâches principales.
 Tant que ces critères ne sont pas remplis, rester en `0.y.z`.
 
 ## 7. Questions pour Louis
 
-1. Quels systèmes seront vendus en V1 : Windows seulement, Linux seulement, ou les deux ?
-2. Les anciennes interfaces `classique` et `maquette` peuvent-elles sortir du paquet ?
-3. Qui fera la recette humaine (Marc, une autre personne) et quand ?
-4. Faut-il un avis juridique pour les droits des contenus et modèles avant la vente ?
-5. Les critères de la section 6 conviennent-ils pour la 1.0.0 ?
+1. Les anciennes interfaces `classique` et `maquette` peuvent-elles sortir du paquet ? *Oui : maquette retirée en 0.59.0, classique en 0.63.0 (Louis, 19 novembre 2026).*
+2. Qui fera la recette humaine (Marc, une autre personne) et quand ?
+3. Les critères de la section 6 conviennent-ils pour la 1.0.0 ?

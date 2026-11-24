@@ -11,6 +11,12 @@ async page=>{
  await page.locator('#translation-panel').evaluate(node=>node.open=true);await page.locator('#translation-start').click();
  await page.waitForFunction(()=>S.translation&&document.getElementById('translation-progress').value>=1);
  const id=await page.evaluate(()=>S.translation),conversation=await page.evaluate(()=>S.conversation);
+ const more=page.locator('#translation-more');
+ const download=more.locator('#translation-export');
+ check(await download.count()===1&&await download.isHidden(),'Le téléchargement est dans Plus d’actions');
+ await more.locator('summary').click();
+ check(await download.isVisible()&&(await download.getAttribute('href')).endsWith('/'+id+'/export'),'Le bandeau donne accès à l’export de la traduction');
+ await more.locator('summary').click();
  await page.locator('#translation-reading-open').click();
  check(await page.locator('#translation-reading-dialog #translation-pause').isVisible()&&await page.locator('#translation-reading-dialog #translation-stop').isVisible(),'Pause et arrêt accessibles pendant la lecture');
  await page.locator('#translation-pause').click();await page.waitForFunction(()=>document.getElementById('translation-summary').textContent.includes('En pause'));
@@ -32,7 +38,7 @@ async page=>{
  check((await page.request.get(base+'/api/translations/'+id)).ok(),'Annuler la confirmation garde le travail');
  const deleting=commands.filter(x=>x.method==='DELETE').length;
  page.once('dialog',async dialog=>{check(dialog.message().includes('document original')&&dialog.message().includes('version déjà partagée'),'La confirmation précise les éléments conservés');await dialog.accept();});
- await page.locator('#translation-delete').click();await page.waitForFunction(()=>S.translation===null);
+ await page.locator('#translation-delete').click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&!S.loadingConversation&&S.translation===null);
  check(commands.filter(x=>x.method==='DELETE').length===deleting+1,'Une seule suppression est transmise');
  check((await page.request.get(base+'/api/translations/'+id)).status()===404,'Le travail privé et ses passages ne sont plus consultables');
  check((await page.request.get(base+'/api/source?id=guide%3Ashelter.en.txt')).ok(),'Le document original reste consultable');

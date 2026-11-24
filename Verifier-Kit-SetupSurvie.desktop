@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Vérifier le kit SetupSurvie
+Comment=Contrôler les fichiers du SSD avant de partir hors ligne
+Exec=/bin/sh -c "exec /bin/sh \\"\\$(dirname \\"\\$1\\")/scripts/dupliquer-kit-linux.sh\\" \\"\\$(dirname \\"\\$1\\")/..\\" --verify" sh %k
+Terminal=false
+Categories=Utility;

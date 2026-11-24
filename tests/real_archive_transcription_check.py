@@ -113,7 +113,7 @@ async def check(args):
                     'no_media_extracted':not list(video.iterdir()),'range_metrics':all(unit.get('media_io',{}).get('source')=='kiwix_byte_ranges' for unit in result['units']),
                     'french_search_match':bool(matched)}
                 report={'schema':1,'version':json.loads((ROOT/'deploy/release.json').read_text())['version'],'elapsed_ms':round((time.monotonic()-started)*1000),
-                    'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((ROOT/'pilot').glob('*.py')))).hexdigest(),
+                    'source_digest':hashlib.sha256(b''.join(path.read_bytes() for path in sorted((ROOT/'pilot').rglob('*.py')))).hexdigest(),
                     'recipe_digest':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'synthetic_audio':True,'real_native_archive':True,'simulated_kiwix_http':True,
                     'real_recognition':True,'real_translation':True,'customer_validation':False,'source_sha256':source_hash,'archive_bytes':source.stat().st_size,
                     'transcription':result,'translation':translation,'paused':paused,'indexed_source':indexed,'checks':checks,'search_word':search_word,'http_requests':len(requests),'human_semantic_review':'required_separately'}

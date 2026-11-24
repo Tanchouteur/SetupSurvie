@@ -2,9 +2,27 @@
 set -eu
 # 3.8.1 takes files or an XML library, not a directory. An empty library is valid.
 # Keep source archives read-only; rebuild only the small runtime catalogue.
-printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><library version="20110515"></library>' > /tmp/library.xml
-for archive in /data/*.zim; do
-  [ -f "$archive" ] || continue
-  /usr/local/bin/kiwix-manage /tmp/library.xml add "$archive"
-done
+empty() {
+  printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?><library version="20110515"></library>' > "$1"
+}
+empty /tmp/library.xml
+set -- /data/*.zim
+if [ -f "$1" ]; then
+  # One call: adding archives one by one rewrote the catalogue each time,
+  # 42 to 59 s for 205 archives against 3 s (Bazzite lab, 24 November 2026).
+  if ! /usr/local/bin/kiwix-manage /tmp/library.xml add "$@"; then
+    # The batch saves nothing when one archive is unreadable: keep the others.
+    empty /tmp/library.xml
+    for archive in "$@"; do
+      [ -f "$archive" ] || continue
+      /usr/local/bin/kiwix-manage /tmp/library.xml add "$archive" || echo "Archive ignorée, illisible : $archive" >&2
+    done
+  fi
+fi
+# Bound the archives and search engines kept open: with about 200 archives the
+# defaults let Kiwix exceed 10 GB during searches (Bazzite lab, 22 November 2026);
+# these values peaked at 6 GB on the same 136 queries without losing results.
+export KIWIX_ARCHIVE_CACHE_SIZE="${KIWIX_ARCHIVE_CACHE_SIZE:-16}"
+export KIWIX_SEARCHER_CACHE_SIZE="${KIWIX_SEARCHER_CACHE_SIZE:-8}"
+export KIWIX_SUGGESTION_SEARCHER_CACHE_SIZE="${KIWIX_SUGGESTION_SEARCHER_CACHE_SIZE:-8}"
 exec /usr/local/bin/kiwix-serve --port=8080 --library /tmp/library.xml

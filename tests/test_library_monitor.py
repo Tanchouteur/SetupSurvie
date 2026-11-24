@@ -29,6 +29,68 @@ class LibraryMonitorTests(unittest.TestCase):
 
     def result(self):return monitor.snapshot(self.root,self.work)
 
+    def test_finished_transfer_from_an_old_disk_is_not_an_unknown_activity(self):
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json',{'pid':999999,'identity':{'path':'old'},'plan':str(self.root.parent/'ancien-disque/catalog/plan.json'),'started':1})
+        with patch.object(monitor.discovery,'identity',return_value={'path':'other'}):value=self.result()
+        self.assertEqual((value['phase'],value['stale']),('idle',False))
+
+    def test_live_transfer_with_invalid_plan_stays_unknown(self):
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json',{'pid':123,'identity':self.identity,'plan':str(self.root.parent/'ancien-disque/catalog/plan.json'),'started':1})
+        self.assertEqual(self.result()['phase'],'unknown')
+
+    def test_youtube_job_reports_its_own_progress(self):
+        job='a'*32;self.write(self.work/'library-web/state.json',{'id':job,'action':'youtube-download','phase':'downloading','pid':123,'identity':self.identity})
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web'/job/'progress.json',{'videos':3,'counts':{'downloaded':1,'skipped':1,'error':0}})
+        value=self.result();self.assertEqual((value['phase'],value['kind']),('downloading','youtube-download'))
+        self.assertEqual(value['index_progress'],{'videos':3,'downloaded':1,'skipped':1,'errors':0})
+
+    def test_category_index_is_followed_as_itself_with_its_progress(self):
+        job='d'*32;(self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':job,'action':'category-index','phase':'downloading','pid':123,'identity':self.identity})
+        self.write(self.root/'state/pilot/category-index/progress.json',{'phase':'running','job_id':job,'done':2048,'total':8192,
+            'counts':{'resilience':40,'culture':300}})
+        value=self.result()
+        self.assertEqual((value['kind'],value['phase']),('category-index','category_indexing'))
+        self.assertEqual(value['index_progress'],{'entries_done':2048,'entries_total':8192,'resilience':40,'culture':300})
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+        from pilot import work_queue
+        jobs=[];work_queue.add_host_work(jobs,value)
+        self.assertEqual(jobs[0]['title'],'Classement du fonds principal')
+        self.assertEqual((jobs[0]['done'],jobs[0]['total'],jobs[0]['unit']),(2048,8192,'percent'))
+        self.assertIn('Autonomie et résilience',jobs[0]['stage'])
+        self.assertEqual(jobs[0]['focus'],'category-index')
+
+    def test_collection_deletion_is_not_reported_as_a_download(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':'e'*32,'action':'collection-exclude','phase':'refreshing','pid':123,'identity':self.identity})
+        value=self.result();self.assertEqual((value['kind'],value['phase']),('collection-exclude','removing'))
+
+    def test_stopped_web_job_keeps_its_plain_message_for_the_queue(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        self.write(self.work/'library-web/state.json',{'id':'c'*32,'action':'video-inventory','phase':'error','pid':303,'identity':self.identity,
+            'message':'Certaines collections n’ont pas pu être examinées.'})
+        value=self.result();self.assertEqual((value['kind'],value['phase']),('video-inventory','error'))
+        self.assertEqual(value['message'],'Certaines collections n’ont pas pu être examinées.')
+
+    def test_video_inventory_with_skipped_entries_is_complete_for_the_matching_job(self):
+        (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
+        job = 'c' * 32
+        self.write(self.work/'library-web/state.json',
+                   {'id': job, 'action': 'video-inventory', 'phase': 'error',
+                    'message': 'L’opération a échoué. Les fichiers existants sont conservés.'})
+        report = {'job_id': job, 'phase': 'partial', 'archives': 2,
+                  'results': [{'status': 'reused'}, {'status': 'partial', 'skipped_html': 390}]}
+        path = self.root/'state/pilot/zim-videos/progress.json'
+        self.write(path, report)
+        value = self.result()
+        self.assertEqual(value['phase'], 'partial')
+        self.assertEqual(value['index_progress'], {'archives': 2, 'completed': 2})
+        self.write(path, {**report, 'job_id': 'd' * 32})
+        self.assertEqual(self.result()['phase'], 'error')
+        self.write(path, {**report, 'results': [{'status': 'partial'}, {'status': 'error'}]})
+        self.assertEqual(self.result()['phase'], 'error')
+
     def test_index_activity_tracks_live_child_and_does_not_report_it_as_download(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()
         self.write(self.work/'library-web/state.json',{'id':'a'*32,'action':'index','phase':'downloading','pid':101,'identity':{'path':'old','created':'0'},'index_pid':202,'index_identity':self.identity})
@@ -99,6 +161,24 @@ class LibraryMonitorTests(unittest.TestCase):
         self.write(self.work/'library-web/state.json',{'id':job,'action':'download','phase':'downloading','pid':123,'identity':self.identity,'started_at':time.time()-10})
         self.write(self.work/'library-web'/job/'plan.json',{'items':[self.item]})
         value=self.result();self.assertEqual(value['source'],'web');self.assertEqual(value['total_bytes'],6)
+
+    def test_reference_job_keeps_its_controls_after_starting_the_shared_downloader(self):
+        job = 'a'*32
+        plan = self.work/'library-web'/job/'plan.json'
+        web = {'id': job, 'action': 'download', 'phase': 'downloading', 'pid': 123,
+               'identity': self.identity, 'started_at': time.time()-10}
+        self.write(plan, {'items': [self.item]})
+        self.write(self.work/'library-web/state.json', web)
+        self.write(self.root/'diagnostics/bibliotheque-transfer.json', {
+            'pid': 123, 'identity': self.identity, 'plan': str(plan), 'started': time.time()-10,
+        })
+        report = self.result()
+        self.assertEqual(report['source'], 'web')
+        self.assertEqual(report['operation_id'], job)
+        self.assertTrue(report['web_download'])
+        self.write(self.work/'library-web/state.json', {**web, 'phase': 'error', 'message': 'Échec de la vérification.'})
+        report = self.result()
+        self.assertEqual((report['phase'], report['message']), ('error', 'Échec de la vérification.'))
 
     def test_web_geography_has_no_private_coordinates(self):
         (self.root/'diagnostics/bibliotheque-transfer.json').unlink()

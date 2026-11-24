@@ -3,7 +3,7 @@ async page => {
   const check=(ok,label)=>{if(!ok)throw Error(label);checks.push(label);};
   const ready=()=>page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user);
   const reload=async()=>{await page.waitForLoadState('networkidle');await page.reload({waitUntil:'domcontentloaded'});await ready();};
-  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash==='#/appareil/'+tab,tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','tests','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
+  const route=async tab=>{await page.goto(base+'/#/appareil/'+tab);await ready();await page.waitForFunction(tab=>location.hash===(tab==='activite'?'#/file':'#/appareil/'+tab),tab).catch(error=>{throw Error('Route '+tab+' URL '+page.url()+' JS '+errors.join(' / ')+' '+error.message);});if(['reglages','acces','bibliotheque','assistant','tests','entretien','lieux'].includes(tab))await page.locator('#settings-'+tab).waitFor({state:'visible'});};
   page.on('pageerror',e=>errors.push(e.message));
   page.on('request',r=>{if(['POST','PUT','DELETE','PATCH'].includes(r.method()))commands.push(new URL(r.url()).pathname);});
   let state={online:false,paused:true,message:'Mode jeu · assistant en pause',models:[],gpus:[],memory:{},disk:{},jobs:{},control_available:true};
@@ -15,7 +15,7 @@ async page => {
   const commandStart=commands.length;
   for(const tab of ['acces','profils','connexion','reglages','bibliotheque','telechargements','stockage','assistant','tests','entretien','lieux','ensemble','activite']){
     await route(tab);
-    check(await page.locator('#view-'+({profils:'users',connexion:'connect',telechargements:'data',stockage:'storage',ensemble:'monitor',activite:'activity'}[tab]||'settings')).isVisible(),'Lien direct '+tab);
+    check(await page.locator('#view-'+({profils:'users',connexion:'connect',telechargements:'data',stockage:'storage',ensemble:'monitor',activite:'work-queue'}[tab]||'settings')).isVisible(),'Lien direct '+tab);
     check(await page.evaluate(()=>{const ids=[...document.querySelectorAll('[id]')].map(n=>n.id);return new Set(ids).size===ids.length;}),'IDs uniques dans '+tab);
   }
   check(commands.length===commandStart,'La navigation ne lance aucune commande');
@@ -51,8 +51,14 @@ async page => {
       check(!await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),'Sans débordement '+width+' / '+tab);
     }
   }
-  await page.setViewportSize({width:320,height:740});await route('activite');await page.waitForFunction(()=>document.querySelector('#view-activity .next-transfer-title').textContent==='Téléchargement en cours');
-  check(await page.locator('#view-activity .next-transfer-message').isVisible(),'Suivi du travail indépendant accessible à 320 px');
+  await page.route('**/api/work-queue',r=>r.fulfill({json:{paused:false,running:true,jobs:[{
+    id:'host:download',kind:'host-download',type:'Préparation de l’appareil',title:'Téléchargement de la bibliothèque',
+    lane:'network',status:'running',stage:'Téléchargement',preparation:{source:'windows',total_bytes:10000,verified_bytes:3000,
+      total_count:4,verified_count:1,active:[{title:'Collection simulée en cours',bytes:3000,total:10000}]}
+  }]}}));
+  await page.setViewportSize({width:320,height:740});await route('activite');
+  await page.getByText('Détails techniques', {exact:true}).click();
+  check(await page.getByText('Transfert Windows indépendant · suivi en lecture seule.', {exact:true}).isVisible(),'Suivi du travail indépendant accessible à 320 px');
   await route('bibliotheque');await page.locator('#settings-index > summary').click(); // Collapse if previously remembered open; inspect visibility via DOM below.
   check(!await page.locator('#next-index-start').isVisible(),'Préparation complexe réservée au PC');
   check(await page.locator('.next-mobile-tools a[href="/secours.html"]').isVisible(),'Secours accessible sur téléphone');
@@ -61,12 +67,15 @@ async page => {
   await route('assistant');await page.locator('#settings-context > summary').click();
   await page.locator('#next-context-size').focus();check(await page.locator('#next-context-size').evaluate(n=>n===document.activeElement),'Champ technique accessible au clavier');
   // Preserve the original controls and the ancestor contracts used by feature modules.
-  for(const id of ['location-target','location-query','location-mode','location-label','location-lat','location-lon','clear-departure','engine-start','engine-stop','assistant-policy','refresh-feedback','next-search-check-suite','next-search-check-open','next-usage-open','next-experiment-mode','next-experiment-suite','next-experiment-budget','next-experiment-start','next-experiment-stop','next-experiment-export','next-index-prepare','next-index-start','next-index-pause','next-index-export','next-index-auto','next-index-from','next-index-until','next-index-workers','next-context-model','next-context-size','next-calibration-mode','next-calibration-limit','next-calibration-start','next-calibration-stop','next-calibration-apply','next-calibration-rollback','next-calibration-export','next-clear-memory','geo-use-location','geo-lat','geo-lon','geo-radius','geo-terrain','geo-download','routing-download','geo-refresh','geo-pause','content-languages','content-budget','content-supplements','content-plan','content-download','content-pause','content-refresh','print-connect','copy-connect'])check(await page.locator('#'+id).count()===1,'Commande conservée '+id);
+  for(const id of ['location-target','location-query','location-mode','location-label','location-lat','location-lon','clear-departure','engine-start','engine-stop','assistant-policy','refresh-feedback','next-search-check-suite','next-search-check-open','next-usage-open','next-experiment-mode','next-experiment-suite','next-experiment-budget','next-experiment-start','next-experiment-stop','next-experiment-export','next-index-prepare','next-index-start','next-index-pause','next-index-export','next-index-auto','next-index-from','next-index-until','next-index-workers','next-context-model','next-context-size','next-calibration-mode','next-calibration-limit','next-calibration-start','next-calibration-stop','next-calibration-apply','next-calibration-rollback','next-calibration-export','next-clear-memory','geo-use-location','geo-lat','geo-lon','geo-radius','geo-terrain','geo-download','routing-download','geo-refresh','geo-pause','print-connect','copy-connect'])check(await page.locator('#'+id).count()===1,'Commande conservée '+id);
   for(const name of ['title','file','language','provenance','document_date','edition','licence'])check(await page.locator('#upload-form [name="'+name+'"]').count()===1,'Champ du guide conservé '+name);
   check(await page.locator('#next-context-form').evaluate(n=>!!n.closest('article')&&!!n.closest('#view-settings')),'Ancêtres nécessaires au contrôleur conservés');
   await page.setViewportSize({width:1440,height:950});await route('profils');
-  const profileName='Profil UX '+Date.now();await page.locator('#add-user-form [name="name"]').fill(profileName);await page.locator('#add-user-form button').click();
-  await page.waitForFunction(()=>document.querySelector('#user-status').textContent.includes('Profil créé'));
+  const profileName='Profil UX '+Date.now();await page.locator('#add-user-form [name="name"]').fill(profileName);
+  const profileCreated=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/admin/users'&&response.request().method()==='POST');
+  await page.locator('#add-user-form button').click();const profileResponse=await profileCreated;
+  check(profileResponse.ok(),'Création de profil HTTP '+profileResponse.status()+' : '+await profileResponse.text());
+  await page.waitForFunction(()=>document.querySelector('#user-status').textContent.includes('Profil créé')).catch(async error=>{throw Error('Statut de création de profil : '+await page.locator('#user-status').textContent()+' ; '+error.message);});
   check(true,'Création de profil branchée depuis les nouveaux paramètres');
   await page.locator('#navigation [data-route="assistant"]').click();await page.locator('#chat-input').fill('Brouillon Famille UX');
   await page.locator('#account-button').click();await page.locator('#profile-list').getByRole('button',{name:profileName,exact:true}).click();
@@ -77,6 +86,7 @@ async page => {
   await page.locator('#profile-list').getByRole('button',{name:'Famille',exact:true}).click();await page.waitForFunction(()=>typeof S!=='undefined'&&S.authReady&&S.user?.id==='local-family');
   await page.locator('#settings-reglages').waitFor({state:'visible'});
   await page.locator('#navigation [data-route="assistant"]').click();
+  await page.waitForFunction(() => document.querySelector('#chat-input').value === 'Brouillon Famille UX');
   check(await page.locator('#chat-input').inputValue()==='Brouillon Famille UX','Retour Famille conserve son brouillon');
   check(await page.locator('input[type="password"]').count()===0,'Aucun mot de passe ajouté');
   await route('entretien');await page.locator('#settings-navigation-memory > summary').click();

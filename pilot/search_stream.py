@@ -14,7 +14,7 @@ async def packets(query,language='',limit=8,**options):
     async def update(value):put({'state':'results','results':list(value),'coverage':value.coverage})
     async def work():
         try:
-            value=await library.search(query,language,limit=limit,on_update=update,budget=BUDGET,**options) if query.strip() else []
+            value=await library.search(query,language,limit=limit,on_update=update,budget=BUDGET,**options) if query.strip() or options.get('kind')=='videos' else []
             put({'state':'done','results':list(value),'coverage':getattr(value,'coverage',{})})
         except asyncio.CancelledError:raise
         except Exception:put({'state':'error','message':'La recherche a été interrompue. Les résultats reçus restent consultables ; réessayez pour compléter.'})

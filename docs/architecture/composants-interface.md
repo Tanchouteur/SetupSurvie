@@ -1,6 +1,6 @@
 # Composants et règles de présentation du portail
 
-**Référence de développement — 0.37.2, 17 novembre 2026.** Cette organisation
+**Référence de développement — 0.37.2, 17 novembre 2026 ; direction « Veillée » 0.44.0 ajoutée plus bas.** Pour les règles visuelles actuelles, le [guide de design](guide-design.md) prime. Cette organisation
 remplace l’empilement de styles de la maquette utilisé en 0.34.0. Elle répond
 aux captures de Louis : aides trop grandes, case mal alignée, commandes de volets
 redondantes et cartes de paramètres incohérentes. Les tests de fonctionnement
@@ -27,23 +27,59 @@ interdisant une bibliothèque future lorsque son intérêt est démontré.
 
 | Fichier | Responsabilité |
 | --- | --- |
-| `portal/style.css` | Contrôles historiques partagés avec le portail classique, états métier et lecteurs communs ; conservés pour compatibilité |
-| `portal/nouveau/style.css` | Structure du portail et navigation, règles propres aux outils ; ancien thème complet de la maquette retiré |
-| `portal/nouveau/ux-system.css` | Variables, typographie, formulaires, aides, surfaces, bibliothèque et lecteurs : règles communes de présentation |
-| `portal/nouveau/settings.css` | Grilles de cartes, contenu des cartes, formulaires et restrictions mobiles des paramètres |
-| `portal/nouveau/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
-| `portal/nouveau/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |
-| `portal/nouveau/motion.css` et `motion.js` | Transitions et retour visuel ; aucun appel API ni état métier, aucune attente ajoutée aux commandes ; partagés avec cartes/PDF |
-| `portal/nouveau/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation et en-tête de carte dépliable |
-| `portal/nouveau/ux-system.js` | Reprise, travaux personnels et adaptations communes utilisant les contrôles du portail |
-| `portal/nouveau/layout.js` | Placement initial des contrôles, avant leur raccordement aux actions |
-| `portal/nouveau/assistant-workspace.js` | État et commandes des volets, dossiers, classement et sources consultées |
-| `portal/nouveau/settings-layout.js` | Organisation des rubriques, avec un seul modèle de carte `SurvieUI.cardLink` |
-| `scripts/build_next_portal.py` | Ordre explicite des ressources ; primitives avant layout, navigation après les modules |
+| `portal/style.css` | Contrôles historiques, états métier et lecteurs communs ; conservés pour compatibilité (le portail classique qui les partageait est retiré en 0.63.0) |
+| `portal/interface/modele.html` | Depuis 0.63.0 : balisage des contrôles et de leurs IDs, source unique de `portal/index.html` ; ne contient ni ressource propre ni lien vers une autre interface |
+| `portal/interface/style.css` | Structure du portail et navigation, règles propres aux outils ; ancien thème complet de la maquette retiré |
+| `portal/interface/ux-system.css` | Variables, typographie, formulaires, aides, surfaces, bibliothèque et lecteurs : règles communes de présentation |
+| `portal/resource-status.css` et `resource-status.js` | Bloc modèle et jauges mémoire dans la navigation PC du portail et des Cartes. Le portail réutilise son actualisation, les Cartes lisent les mesures tant que la barre est visible. |
+| `portal/interface/settings.css` | Grilles de cartes, contenu des cartes, formulaires et restrictions mobiles des paramètres |
+| `portal/interface/assistant-workspace.css` | Conversation, composition, volets et adaptation aux largeurs ; aucun deuxième thème de navigation |
+| `portal/interface/reader-work.css` | Travail de traduction dans le lecteur et fenêtre PDF dédiée |
+| `portal/interface/motion.css` et `motion.js` | Transitions et retour visuel ; aucun appel API ni état métier, aucune attente ajoutée aux commandes ; partagés avec cartes/PDF |
+| `portal/design/tokens.css` | Depuis 0.44.0 : polices locales, couleurs, rayons, ombres, durées et icônes, partagés par toutes les pages |
+| `portal/design/system.css` | Depuis 0.44.0 : apparence du portail, chargée après les feuilles des fonctions, qui gardent leur disposition |
+| `portal/design/pages.css` | Depuis 0.44.0 : même identité pour Cartes, PDF, secours et suivi de copie ; ces pages restent utilisables sans elle |
+| `portal/design/experience.js` | Depuis 0.44.0 : repères de navigation, progression de lecture et accès rapide, sans API ni état enregistré |
+| `portal/interface/ui.js` | Primitives sans API ni données de profil : icônes SVG locales, aide facultative, carte de navigation et en-tête de carte dépliable |
+| `portal/interface/ux-system.js` | Reprise, travaux personnels et adaptations communes utilisant les contrôles du portail |
+| `portal/interface/layout.js` | Placement initial des contrôles, avant leur raccordement aux actions |
+| `portal/interface/assistant-workspace.js` | État et commandes des volets, dossiers, classement et sources consultées |
+| `portal/interface/settings-layout.js` | Organisation des rubriques, avec un seul modèle de carte `SurvieUI.cardLink` |
+| `portal/interface/work-queue.css`, `work-queue.js` et `portal/work-queue-preview.js` | File d’attente : page, aperçu au survol et raccourci, partagés avec Cartes et PDF |
+| `scripts/build_portal.py` | Génère l’entrée unique `portal/index.html` depuis `modele.html` ; ordre explicite des ressources, primitives avant layout, navigation après les modules |
 
 Les scripts repris sont formatés pour la lecture. Les outils de formatage et
 l’analyseur CSS utilisés dans le runner ne sont pas des dépendances du logiciel
 livré. Les variables de présentation ne doivent pas remplacer un état serveur.
+
+## Direction visuelle « Veillée » — 0.44.0
+
+**Décision du 18 novembre 2026.** Louis demande une refonte du design, sans
+changement de fonctions, et laisse le champ libre sur l’expérience à condition de
+ne pas dégrader l’existant. L’agent a retenu l’univers du logo : le feu, le livre
+et le papier. Le [guide de design Veillée](guide-design.md) est la référence des
+prochaines interventions. Cette section conserve les choix du premier lot.
+
+- **Couleurs.** Papier chaud pour les fonds, encre brune pour le texte. Le rouge
+  braise est réservé à l’action principale d’un écran et aux repères de position.
+  Les boutons ordinaires sont encre, les boutons secondaires papier. Le vert ne
+  sert plus qu’aux états « prêt » et « disponible ».
+- **Typographie.** Fraunces pour les titres, Atkinson Hyperlegible Next pour le
+  texte, choisie pour sa lisibilité. Les deux sont sous licence SIL OFL 1.1,
+  embarquées dans `portal/design/fonts/` avec leur licence et sans accès réseau.
+- **Mouvement.** Il indique une position ou une conséquence : pastille et
+  soulignement qui glissent, cartes qui se soulèvent, entrées courtes. Un bloc
+  contenant une aide fixe s’anime en opacité seulement. La réduction du mouvement
+  coupe tout, y compris les braises de l’accueil.
+- **Accès rapide.** `Ctrl K`, `⌘ K`, `/` ou la loupe ouvrent une fenêtre pour
+  chercher, préparer une question ou aller à une page. Une question préparée n’est
+  jamais envoyée sans l’action de l’utilisateur.
+
+Le bandeau sous la navigation est retiré sur PC. Depuis 0.48.1, le numéro de
+version est aussi visible dans la barre supérieure. Les anciennes feuilles conservent des règles
+désormais recouvertes ; leur nettoyage reste à faire, par petites étapes.
+Sur mobile, les liens de navigation des Cartes ont une hauteur tactile minimale
+de 44 px, avec un bandeau de hauteur inchangée pour conserver la place de la carte.
 
 ## Cartes et commandes
 
@@ -118,3 +154,13 @@ propre composant ; les colonnes de l’assistant continuent d’animer leur larg
 La recette `browser_motion_resilience.js` ouvre une aide pendant la transition
 mobile et contrôle son placement avant et après. Voir la
 [référence CSS sur le repère créé par transform](https://developer.mozilla.org/en-US/docs/Web/CSS/transform).
+
+
+## Volet par projets — 0.38.0
+
+Les dossiers existants sont présentés comme projets dépliables. Chaque projet
+charge ses conversations et sa pagination à l’ouverture, avec garde de profil
+et de génération. Une seule surface verticale défile dans le volet. Les menus
+de renommage et le classement restent sur leurs API existantes. La séparation
+PC utilise la capture du pointeur et un rôle separator accessible au clavier ;
+sa largeur est bornée par l’espace disponible. Aucun changement de schéma.

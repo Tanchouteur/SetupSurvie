@@ -1,5 +1,6 @@
 import hashlib
 import io
+from contextlib import redirect_stderr
 import json
 from pathlib import Path
 import sys
@@ -24,6 +25,23 @@ class ContentTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
         self.raw=b'%PDF-document-content'
         self.item={'id':'book','path':'library/guides/book.pdf','url':'https://example.org/book.pdf','bytes':len(self.raw),'sha256':hashlib.sha256(self.raw).hexdigest()}
+
+    def test_initial_download_rejects_a_saved_plan_with_english_wikipedia(self):
+        plan = self.root / 'initial-library-plan.json'
+        for name in ('wikipedia_en_all_nopic_2026-06.zim', 'wikipedia_en-simple_all_maxi_2026-09.zim'):
+            with self.subTest(name=name):
+                item = {**self.item, 'path': 'library/zim/' + name, 'pack': 'kiwix-themes'}
+                setup.write_json(plan, {'schema': 1, 'kind': 'SetupSurvie Kiwix thematic selection', 'items': [item]})
+                args = ['content.py', 'download', '--data-dir', str(self.root), '--selection', str(plan)]
+                with patch.object(content, 'download_and_refresh') as download, redirect_stderr(io.StringIO()) as err:
+                    with patch.object(sys, 'argv', args + ['--initial-installation']), self.assertRaises(SystemExit) as stopped:
+                        content.main()
+                    self.assertEqual(stopped.exception.code, 2)
+                    self.assertIn('édition anglaise de Wikipédia', err.getvalue())
+                    download.assert_not_called()
+                    with patch.object(sys, 'argv', args):
+                        content.main()
+                    self.assertEqual(download.call_args.args[4], [item])
     def test_verified_zim_download_enqueues_indexing_but_bad_hash_does_not(self):
         import search_index_queue
         item={**self.item,'path':'library/zim/book.zim','title':'Tiny fixture'}
@@ -119,8 +137,25 @@ class ContentTests(unittest.TestCase):
         self.assertFalse((self.root/self.item['path']).exists())
         self.assertEqual((self.root/(self.item['path']+'.part')).stat().st_size,0)
 
-    def test_default_budget_is_500_decimal_gb(self):
-        self.assertEqual(content.DEFAULT_BUDGET,500_000_000_000)
+    def test_loop_capacity_counts_the_real_ssd_space(self):
+        backing = self.root/'storage.img'
+        backing.touch()
+        usage = namedtuple('Usage', 'total used free')
+        read_text = Path.read_text
+
+        def sysfs(path, *args, **kwargs):
+            if Path(path).as_posix().endswith('/loop/backing_file'):
+                return str(backing)+'\n'
+            return read_text(path, *args, **kwargs)
+
+        with patch.object(Path, 'is_mount', return_value=True), \
+                patch.object(content.sys, 'platform', 'linux'), \
+                patch.object(content.os, 'major', create=True, return_value=7), \
+                patch.object(content.os, 'minor', create=True, return_value=0), \
+                patch.object(Path, 'read_text', sysfs), \
+                patch.object(content.shutil, 'disk_usage', side_effect=[usage(900, 10, 890), usage(900, 890, 10)]):
+            with self.assertRaises(setup.SetupError):
+                content.check_capacity(self.root, 5, reserve=6, storage_root=self.root)
 
     def test_metadata_distinguishes_edition_from_collection_and_keeps_unknown_old_collection_unknown(self):
         item={**self.item,'title':'Notice','language':'fr','publisher':'Fixture','edition':'2010','licence':'Test'}
@@ -144,8 +179,16 @@ class ContentTests(unittest.TestCase):
         with patch.object(sys,'argv',['content.py','download','--lab','--no-refresh','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download') as download,patch.object(content,'check_capacity'),patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab,'podman') as podman:
             content.main()
             # Windows temporary paths may use an 8.3 alias resolved by safe_path.
-            download.assert_called_once_with((self.root/'data').resolve(),[item],budget=500_000_000_000,storage_root=self.root,workers=2)
+            download.assert_called_once_with((self.root/'data').resolve(),[item],budget=None,storage_root=self.root,workers=2)
             podman.assert_not_called()
 
+
+    def test_lab_download_refreshes_only_library_services(self):
+        import linux_lab as lab
+        item={**self.item,'pack':'health'}
+        installation=type('Installation',(),{'__init__':lambda self,root:None,'load':lambda self:{},'catalog':lambda self,c:None})
+        with patch.object(sys,'argv',['content.py','download','--lab','--pack','health']),patch.object(content,'catalog',return_value=[item]),patch.object(content,'download'),patch.object(content,'check_capacity'),patch.object(content,'install_templates'),patch.object(lab,'checked_mount'),patch.object(lab,'MOUNT',self.root),patch.object(lab.setup,'Installation',installation),patch.object(lab,'podman') as podman:
+            content.main()
+        podman.assert_called_once_with('restart',lab.PREFIX+'kiwix',lab.PREFIX+'pilot',capture=True)
 
 if __name__=='__main__':unittest.main()

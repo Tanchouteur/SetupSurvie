@@ -6,6 +6,7 @@ async page=>{
   page.on('pageerror',error=>errors.push(error.message));
   await page.request.post(base+'/api/profiles/select',{data:{id:'browser'},headers:{Origin:base}});
   await page.setViewportSize({width:1366,height:900});
+  let searches=0;page.on('request',request=>{if(request.url().includes('/api/search?')&&request.url().includes('fixture-progress-one'))searches++;});
   await gate('fixture-progress-one',true);await page.goto(base+'/#/bibliotheque/recherche?q=fixture-progress-one&domain=all');
   await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
   check((await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Premier résultat visible pendant que les autres collections restent en cours');
@@ -17,19 +18,37 @@ async page=>{
   check(await page.locator('#search-results .other-matches').evaluate(node=>node.open),'Les passages ouverts restent dépliés quand arrivent les autres documents');
   check(await page.locator('#search-results .other-matches button').evaluate(node=>node===document.activeElement),'La navigation au clavier est conservée pendant les résultats progressifs');
   check(!(await page.locator('#search-message').textContent()).includes('Recherche en cours'),'Fin de recherche distincte des premiers résultats');
-  check((await page.locator('#search-message').textContent()).includes('2 document(s)'),'Dernière réponse complète les résultats');
+  check((await page.locator('#search-message').textContent()).includes('2 résultats'),'Dernière réponse complète les résultats');
+  const initialSearches=searches;
+  await page.locator('#search-results .result button').first().click();
+  await page.locator('#reader h2').waitFor();
+  const rail=page.locator('#search-results');
+  await rail.locator('.result[aria-current="true"]').waitFor();
+  await page.addStyleTag({content:'.reading .search-results > .result { min-height: 520px; flex-shrink: 0; }'});
+  await page.evaluate(()=>window.scrollBy(0,380));
+  check(await rail.evaluate(node=>{
+    const box=node.getBoundingClientRect(),nav=document.querySelector('#main-navigation').getBoundingClientRect();
+    if(box.top<nav.bottom||box.bottom>innerHeight||node.scrollHeight<=node.clientHeight)return false;
+    node.scrollTop=node.scrollHeight;
+    return node.scrollTop>0&&node.lastElementChild.getBoundingClientRect().bottom<=box.bottom;
+  }),'Le volet tient sous la navigation et défile jusqu’au dernier résultat');
+  await page.locator('#reader').getByRole('button',{name:'← Résultats',exact:true}).click();
+  check(searches===initialSearches&&await page.locator('#search-results .result').count()===2,'Retour au lecteur conserve les résultats sans nouvelle recherche');
+  check(await page.locator('#search-results .other-matches').evaluate(node=>node.open),'Passages dépliés conservés au retour');
+  await page.locator('[data-route="accueil"]').first().click();await page.goBack();
+  check(searches===initialSearches&&await page.locator('#search-results .result').count()===2,'Retour navigateur conserve les résultats sans nouvelle recherche');
   const request=async query=>{if(!await page.locator('#library-query').isVisible())await page.locator('#reader').getByRole('button',{name:'← Résultats',exact:true}).click();await page.locator('#library-query').fill(query);await page.locator('#library-search').evaluate(form=>form.requestSubmit());};
   for(const suffix of ['complete','partial','stop','error']){
     const query='fixture-progress-empty-'+suffix;await gate(query,true);await request(query);
-    await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours — aucun résultat pour le moment')&&document.querySelector('#search-stop'));
-    check(!(await page.locator('#search-message').textContent()).includes('0 document(s) trouvé(s)'),'Aucun résultat provisoire annoncé comme un total final : '+suffix);
-    check((await page.locator('#search-results .empty-panel').textContent()).includes('La recherche continue'),'Attente expliquée aussi dans la liste vide : '+suffix);
+    await page.waitForFunction(()=>document.querySelector('#search-message').textContent.includes('Recherche en cours…')&&document.querySelector('#search-stop'));
+    check(!/Aucun résultat|0 résultat/.test(await page.locator('#search-message').textContent()),'Aucun résultat provisoire annoncé comme un total final : '+suffix);
+    check(await page.locator('#search-results').evaluate(e=>e.getAttribute('aria-busy')==='true'&&!e.children.length&&getComputedStyle(e).minHeight!=='0px'),'Attente montrée par des silhouettes de résultats : '+suffix);
     if(suffix==='stop')await page.locator('#search-stop').click();
     await gate(query,false);await page.waitForFunction(()=>!document.getElementById('search-stop'));
     const message=await page.locator('#search-message').textContent(),empty=await page.locator('#search-results .empty-panel').textContent();
-    check(!message.includes('Recherche en cours')&&!empty.includes('La recherche continue'),'Aucun faux suivi actif après la fin ou interruption : '+suffix);
+    check(!message.includes('Recherche en cours')&&!empty.includes('Recherche en cours'),'Aucun faux suivi actif après la fin ou interruption : '+suffix);
     check(await page.locator('#search-results').getAttribute('aria-busy')==='false','Fin de traitement accessible aux lecteurs d’écran : '+suffix);
-    check(suffix==='complete'?message.includes('Recherche terminée — aucun résultat trouvé'):suffix==='partial'?message.includes('Recherche terminée, mais incomplète'):message.includes(suffix==='stop'?'arrêtée':'interrompue'),'Fin complète, partielle, arrêt et erreur distingués : '+suffix);
+    check(suffix==='complete'?message.includes('Aucun résultat pour')&&!message.includes('incomplète'):suffix==='partial'?message.includes('Aucun résultat pour')&&message.includes('incomplète')&&empty.includes('ne prouve pas'):message.includes(suffix==='stop'?'arrêtée':'interrompue'),'Fin complète, partielle, arrêt et erreur distingués : '+suffix);
   }
   await gate('fixture-progress-stop',true);await request('fixture-progress-stop');await page.waitForFunction(()=>document.querySelectorAll('#search-results .result').length===1&&document.getElementById('search-stop'));
   await page.locator('#search-stop').click();

@@ -10,6 +10,100 @@ foreach ($path in @((Join-Path $root 'scripts'), $PSScriptRoot)) {
 }
 . (Join-Path $root 'scripts\prepare-windows.ps1') -Check -CacheDir (Join-Path $env:TEMP ('survie-mock-' + [guid]::NewGuid()))
 function Assert($Condition, $Message) { if (-not $Condition) { throw $Message } }
+# The duplication button can install just Python from a verified local kit.
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    $fixture = Join-Path ([IO.Path]::GetTempPath()) ('survie-dupliquer-python-' + [guid]::NewGuid())
+    $null = New-Item -ItemType Directory -Path (Join-Path $fixture 'app/deploy'), (Join-Path $fixture 'installateurs-windows') -Force
+    $file = 'python-3.13.17-amd64.exe'
+    $installer = Join-Path $fixture "installateurs-windows/$file"
+    $catalog = Join-Path $fixture 'app/deploy/windows-installers.json'
+    $manifest = Join-Path $fixture 'manifest.json'
+    $launches = [Collections.Generic.List[object]]::new()
+    function Start-Process { param($FilePath, $ArgumentList, [switch]$Wait, [switch]$PassThru)
+        $launches.Add(@{Path=$FilePath; Arguments=$ArgumentList})
+        return @{ExitCode=0}
+    }
+    function Update-SurviePath {}
+    $existingPython = $false
+    function Find-SurviePython { param([switch]$RequireTk)
+        if ($RequireTk -or $existingPython) { return @{Path='python.exe'; Prefix=@()} }
+    }
+    function Invoke-WebRequest { throw 'La duplication hors ligne ne doit pas télécharger.' }
+    try {
+        [IO.File]::WriteAllText($installer, 'verified test installer')
+        @{schema=1; installers=@(@{id='python'; file=$file; sha256=(Get-FileHash -LiteralPath $installer).Hash})} |
+            ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $catalog -Encoding UTF8
+        @{schema=1; kind='SetupSurvie public pilot kit'; files=@(@{
+            path='app/deploy/windows-installers.json'; bytes=(Get-Item -LiteralPath $catalog).Length
+            sha256=(Get-FileHash -LiteralPath $catalog).Hash
+        })} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifest -Encoding UTF8
+        $python = Install-SurvieKitPython $fixture
+        Assert ($python.Path -eq 'python.exe') 'Return a Python with Tk'
+        Assert ($launches.Count -eq 1 -and $launches[0].Path -eq $installer) 'Only the local Python installer may launch'
+        Assert ('Include_tcltk=1' -in $launches[0].Arguments -and 'InstallAllUsers=0' -in $launches[0].Arguments) 'Python must include Tk and install for the current user'
+        Assert ('/passive' -in $launches[0].Arguments -and 'Include_test=0' -in $launches[0].Arguments) 'Python must show progress without asking for more choices'
+        $existingPython = $true
+        $null = Install-SurvieKitPython $fixture
+        Assert ($launches.Count -eq 2 -and '/passive' -notin $launches[1].Arguments) 'Keep Python modification interactive if Python already exists'
+        [IO.File]::WriteAllText($installer, 'corrupt test installer!')
+        $failed = $false
+        try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Installateur incomplet ou modifié*' }
+        Assert ($failed -and $launches.Count -eq 2) 'Refuse a modified installer before running it'
+        [IO.File]::AppendAllText($catalog, ' ')
+        $failed = $false
+        try { $null = Install-SurvieKitPython $fixture } catch { $failed = $_.Exception.Message -like 'Catalogue Python incomplet*' }
+        Assert ($failed -and $launches.Count -eq 2) 'Refuse a modified catalog before running it'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
+# Recovery on a fresh PC uses preparation, then starts Docker, then opens the picker.
+& {
+    . (Join-Path $root 'scripts\restaurer-donnees-windows.ps1')
+    $events = [Collections.Generic.List[string]]::new()
+    $testState = @{Docker = ''; Python = $false; Code = 0}
+    function Initialize-SurvieTools { $events.Add('paths') }
+    function Get-SurvieDockerType { return $testState.Docker }
+    function Find-SurvieDockerDesktop { return $null }
+    function Find-SurviePython { param([switch]$RequireTk)
+        if ($RequireTk -and $testState.Python) { return @{Path='python.exe'; Prefix=@()} }
+    }
+    function Invoke-SurvieOfflineRestorePreparation([string]$Kit) {
+        if ($Kit -ne 'Kit avec espaces') { throw 'The original kit must be passed without splitting its path' }
+        $events.Add('prepare')
+        if ($testState.Code -eq 0) {
+            $testState.Docker = 'linux'
+            $testState.Python = $true
+        }
+        return @{Code=$testState.Code; Details='test error'}
+    }
+    function Start-SurvieDocker { $events.Add('docker') }
+    function Install-SurvieKitPython([string]$Kit) {
+        $events.Add('python')
+        return @{Path='python.exe'; Prefix=@()}
+    }
+    $kit = 'Kit avec espaces'
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $events.Add('confirm'); $true }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,confirm,prepare,paths,docker') 'Fresh PC setup must run before Docker opens'
+    $events.Clear()
+    $python = Initialize-SurvieRestoreRuntime $kit -Installed -Confirm { throw 'Do not ask to install dependencies after restoration' }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,docker') 'The installed launcher only needs local services'
+    $events.Clear()
+    $testState.Python = $false
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $events.Add('confirm'); $true }
+    Assert ($python.Path -eq 'python.exe' -and ($events -join ',') -eq 'paths,confirm,python,docker') 'Prepare only Python when Docker is ready'
+    $events.Clear()
+    $testState.Docker = ''
+    $python = Initialize-SurvieRestoreRuntime $kit -Confirm { $false }
+    Assert ($null -eq $python -and ($events -join ',') -eq 'paths') 'Cancel before changing Windows'
+    $events.Clear()
+    $testState.Code = 3010
+    $failed = $false
+    try { $null = Initialize-SurvieRestoreRuntime $kit -Confirm { $true } }
+    catch { $failed = $_.Exception.Message -like 'Redémarrez Windows*' }
+    Assert ($failed -and ($events -join ',') -eq 'paths,prepare') 'A required reboot must stop before the picker and Docker'
+}
 # Network selection and health checks are isolated from this PC's real network.
 & {
     . (Join-Path $root 'scripts\windows-common.ps1')
@@ -174,6 +268,7 @@ try {
 # The single entry point must never continue after a failed check or reboot request.
 & {
     . (Join-Path $root 'scripts\install-all-windows.ps1') -BaseDir 'D:\test avec espaces' -Resume -NoStartup -NoBrowser
+    function Get-SurvieResumeKit($Directory) { return 'E:\kit hors ligne' }
     $script:steps = @()
     $script:preparationCode = 3010
     $script:installationCode = 0
@@ -193,10 +288,107 @@ try {
     $script:steps = @(); $Check = $false
     Assert ((Invoke-SurvieWindowsInstall) -eq 0) 'Prepared PC must continue automatically'
     Assert ($script:steps.Count -eq 2) 'Both stages must run'
+    Assert ($script:steps[0].Arguments -contains '-Kit' -and $script:steps[0].Arguments -contains 'E:\kit hors ligne') 'The journal kit must select offline preparation'
+    Assert ($script:steps[1].Arguments -contains 'E:\kit hors ligne' -and $script:steps[1].Arguments -contains '-SourceChosen') 'The same kit must reach the application installer'
     Assert ($script:steps[1].Arguments -contains 'D:\test avec espaces') 'Paths with spaces must remain one argument'
     Assert ($script:steps[1].Arguments -contains '-Resume') 'Resume must reach the application installer'
     Assert ($script:steps[1].Arguments -contains '-NoStartup') 'Startup choice must be preserved'
     $script:steps = @(); $script:installationCode = 1
     Assert ((Invoke-SurvieWindowsInstall) -eq 1) 'Application installation errors must reach the caller'
 }
+# Offline preparation uses only installers on the media and preserves the reboot boundary.
+& {
+    $fixture = Join-Path $env:TEMP ('survie-offline-' + [guid]::NewGuid())
+    $null = New-Item -ItemType Directory -Path $fixture
+    try {
+        $cache = Join-Path $fixture 'local-status'
+        . (Join-Path $root 'scripts\prepare-windows.ps1') -Kit $fixture -CacheDir $cache
+        '{"schema":1,"kind":"SetupSurvie public pilot kit","files":[]}' |
+            Set-Content -LiteralPath (Join-Path $fixture 'manifest.json')
+        $script:boot = 'first'
+        $script:platform = $false
+        $script:wslReady = $false
+        $script:missing = 'docker'
+        $script:launched = @()
+        $script:downloads = @()
+        function Initialize-SurvieTools { }
+        function Get-SurvieWindowsFacts { return @{ Build = 26100; X64 = $true; Virtualization = $true; Boot = $script:boot } }
+        function Test-SurvieWSL { return $script:wslReady }
+        function Test-SurvieVirtualMachinePlatform { return $script:platform }
+        function Test-SurvieDependencyPresent($Id) { return ($Id -eq 'docker' -and -not $script:missing) -or $Id -ne 'docker' }
+        function Invoke-SurvieWSLInstall { throw 'Internet WSL flow attempted' }
+        function Get-SurvieInstaller($Item, $CacheDir, [switch]$Offline) {
+            Assert ($CacheDir -eq (Join-Path $fixture 'installateurs-windows')) 'Installers must be found in the kit'
+            if ($DownloadOnly) {
+                Assert (-not $Offline) 'Only the explicit media preparation may download'
+                $script:downloads += $Item.id
+            } else {
+                Assert $Offline 'Installer lookup must stay offline'
+                if ($Item.id -eq $script:missing) { throw 'Docker manquant dans la fixture.' }
+            }
+            return (Join-Path $CacheDir $Item.file)
+        }
+        function Start-Process($FilePath, $ArgumentList, $Verb, [switch]$Wait, [switch]$PassThru) {
+            $script:launched += @{
+                Path = $FilePath; Arguments = $ArgumentList; Verb = $Verb
+            }
+            return @{ ExitCode = 3010 }
+        }
+        function Get-Command { param($Name, $ErrorAction) return $null }
+        $failed = $false
+        try { Invoke-SurviePreparation } catch { $failed = $_.Exception.Message -match 'Docker manquant' }
+        Assert ($failed -and $script:launched.Count -eq 0) 'All installers needed must be checked before DISM or MSI'
+        $script:missing = ''
+        Assert ((Invoke-SurviePreparation) -eq 3010) 'Enabling the Windows feature can require reboot'
+        Assert ((Invoke-SurviePreparation) -eq 3010 -and $script:launched.Count -eq 1) 'Same boot must not run DISM again'
+        Assert ($script:launched[0].Path -like '*dism.exe' -and $script:launched[0].Arguments -match '/LimitAccess' -and $script:launched[0].Verb -eq 'RunAs') 'DISM must use local sources and UAC'
+        $script:boot = 'after-platform'
+        $script:platform = $true
+        Assert ((Invoke-SurviePreparation) -eq 3010) 'Installing the WSL MSI requires an explicit restart'
+        Assert ($script:launched.Count -eq 2 -and $script:launched[1].Path -like '*msiexec.exe' -and $script:launched[1].Arguments -match 'installateurs-windows.*\.msi') 'WSL must come from the local MSI'
+        $script:boot = 'after-msi'
+        $script:wslReady = $true
+        Assert ((Invoke-SurviePreparation) -eq 0) 'A disconnected setup can continue without NVIDIA'
+        Assert ($script:launched.Count -eq 2) 'Ready machine must not install prerequisites again'
+        $DownloadOnly = $true
+        Assert ((Invoke-SurviePreparation) -eq 0 -and $script:downloads.Count -eq 5) 'Preloading prepares WSL and four dependencies'
+        Assert ($script:launched.Count -eq 2) 'Preloading must not run any installer'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
+
+& {
+    . (Join-Path $root 'scripts\windows-common.ps1')
+    function Invoke-WebRequest { throw 'Network was used' }
+    $fixture = Join-Path $env:TEMP ('survie-no-network-' + [guid]::NewGuid())
+    $item = @{ file = 'fixture.exe'; id = 'fixture'; sha256 = ('0' * 64) }
+    $failed = $false
+    try { Get-SurvieInstaller $item $fixture -Offline } catch {
+        $failed = $_.Exception.Message -match 'Installateur manquant dans le kit'
+    }
+    Assert ($failed -and -not (Test-Path -LiteralPath $fixture)) 'Offline missing dependency must not download or alter the kit'
+}
+
+# A double-click launched inside kit/app must select the media before preparation.
+& {
+    $fixture = Join-Path $env:TEMP ('survie-kit-entry-' + [guid]::NewGuid())
+    $scripts = Join-Path $fixture 'app\scripts'
+    $null = New-Item -ItemType Directory -Path $scripts -Force
+    try {
+        $entry = Join-Path $scripts 'install-all-windows.ps1'
+        Copy-Item -LiteralPath (Join-Path $root 'scripts\install-all-windows.ps1') -Destination $entry
+        $kitIdentity = [guid]::NewGuid().ToString()
+        Set-Content -LiteralPath (Join-Path $fixture 'manifest.json') -Value ('{"id":"' + $kitIdentity + '"}')
+        . $entry
+        function Read-Host { throw 'An embedded kit should be detected without asking' }
+        $actual = Select-SurvieInstallKit $survieInstallerScripts
+        Assert $actual 'The double-clicked launcher must find a kit'
+        $selectedManifest = Get-Content -LiteralPath (Join-Path $actual 'manifest.json') -Raw | ConvertFrom-Json
+        Assert ($selectedManifest.id -eq $kitIdentity) 'The double-clicked launcher must use its own kit'
+    } finally {
+        Remove-Item -LiteralPath $fixture -Recurse -Force
+    }
+}
+
 Write-Host 'Windows installer checks passed; no real dependency installed.'

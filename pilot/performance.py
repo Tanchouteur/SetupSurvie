@@ -15,6 +15,7 @@ import uuid
 import httpx
 from fastapi import HTTPException
 
+from . import work_queue
 from . import assistant_metrics,calibration,documentary,durable,engine,library,model_runtime,model_session,operations,store,translations
 
 ACTIVE={}
@@ -202,7 +203,7 @@ async def generation(row,report):
             await session.prepare();measured.phase('model_preparation')
             last={};characters=0;thinking=0
             payload={'model':report['model'],'messages':[{'role':'user','content':'Essai de débit sans documents. Décris un village imaginaire en environ 150 mots, en français. Aucune instruction technique.'}],
-                     'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':'5m',
+                     'stream':True,'think':engine.MODES[report['mode']]['think'],'keep_alive':model_session.KEEP_ALIVE,
                      'options':{'num_ctx':context,'num_predict':512,'temperature':0,'seed':0}}
             async for event in session.chat(payload):
                 message=event.get('message',{});text=message.get('content','');characters+=len(text);thinking+=len(message.get('thinking',''))
@@ -286,6 +287,7 @@ def interpretation(report):
                           'capacity_occupied_is_not_proof_of_bottleneck','disk_counters_may_include_multiple_mounts','paging_counters_not_available_on_all_platforms','no_automatic_hardware_purchase_recommendation']}
 
 
+@work_queue.tracked('performance')
 async def run(report,user):
     start=time.monotonic();sampler=asyncio.create_task(samples(report,start))
     try:

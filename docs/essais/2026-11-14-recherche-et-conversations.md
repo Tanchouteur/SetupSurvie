@@ -39,7 +39,7 @@ y compris depuis cette fenêtre sur téléphone. Les boutons demandés sont reti
 des menus ; `/classique/` conserve ses fichiers et accès direct. L’accueil demande
 **Qu’avez-vous envie d’apprendre ?**.
 
-Le [guide actuel](../utilisation/nouvelle-interface.md) décrit la navigation et
+Le [guide actuel](../utilisation/portail.md) décrit la navigation et
 la mise à jour habituelle Windows/Linux ; la livraison ne remplace pas une
 installation active par un simple pull.
 

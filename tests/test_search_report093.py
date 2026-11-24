@@ -88,7 +88,7 @@ class Report093Tests(unittest.IsolatedAsyncioTestCase):
     async def test_search_payload_keeps_index_counts_without_repeating_the_manifest(self):
         progress={'phase':'completed','archives':135,'completed':135,'articles':120,'workers':9,'results':[{'archive':'fixture'+str(i)+'.zim','status':'kiwix_index'} for i in range(135)]}
         with patch.object(library,'books',AsyncMock(return_value=[])),patch.object(library.archive_index,'status',return_value=progress):
-            found=await library.search('comment faire du feu')
+            found=await library.search('comment faire du feu',kind='documents')
         self.assertEqual(found.coverage['local_index']['archives'],135)
         self.assertNotIn('results',found.coverage['local_index']);self.assertNotIn('fixture134',json.dumps(found.coverage))
         self.assertEqual(len(progress['results']),135)

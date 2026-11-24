@@ -21,11 +21,24 @@ try {
     if (Test-Path -LiteralPath $paused) {
         if ($OpenBrowser) { Remove-Item -LiteralPath $paused } else { exit 0 }
     }
-    # A completed update is required before restarting any services.
     $journal=Join-Path $WorkDir 'update.json'
     if (Test-Path -LiteralPath $journal) {
         $update=Get-Content -LiteralPath $journal -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($update.phase -notin @('complete','rolled_back')) { throw 'Mise a jour incomplete : recuperation explicite necessaire.' }
+        if ($update.phase -in @('prepared','snapshot_ready','switched')) {
+            $updater = Join-Path $application 'scripts\pilot_update.py'
+            if ($update.phase -eq 'snapshot_ready' -and -not (Test-Path -LiteralPath $application)) {
+                $updateRoot = [IO.Path]::GetFullPath((Join-Path (Split-Path $application) 'updates'))
+                $previous = [IO.Path]::GetFullPath($update.previous)
+                if (-not $previous.StartsWith(($updateRoot + '\'),[StringComparison]::OrdinalIgnoreCase) -or
+                    (Split-Path $previous -Leaf) -ne 'previous') { throw 'Chemin de recuperation non reconnu.' }
+                $updater = Join-Path $previous 'scripts\pilot_update.py'
+            }
+            Start-SurvieDocker -Automatic:($Startup -and -not $OpenBrowser) -WorkDir $WorkDir
+            & $runtime.python -X utf8 $updater resume-startup --work-dir $WorkDir
+            if ($LASTEXITCODE -ne 0) { throw 'Validation de la mise a jour interrompue indisponible. Voir le journal de demarrage.' }
+        } elseif ($update.phase -notin @('complete','rolled_back')) {
+            throw 'Mise a jour incomplete : utilisez Mettre-a-jour-SetupSurvie.cmd -Recover.'
+        }
     }
     # The download uses a separate unlimited task, never a child of this
     # ten-minute web startup task (which must not terminate a long transfer).
@@ -44,8 +57,7 @@ try {
     }
     if ($OpenBrowser) { Start-Process 'http://localhost:8080' }
 } catch {
-    try { $_ | Out-String | Add-Content -LiteralPath $log -Encoding UTF8 } catch { }
-    Write-Error $_
+    Write-Error $_ -ErrorAction Continue
     exit 1
 } finally {
     try { Stop-Transcript | Out-Null } catch { }

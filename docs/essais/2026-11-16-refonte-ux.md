@@ -38,7 +38,7 @@ La version mineure **0.34.0** correspond à une évolution fonctionnelle
 significative compatible. Le contrat de données reste `data_schema: 1`, les
 nouvelles tables d’organisation sont additives et aucune version tierce n’a changé.
 Voir l’[inventaire des parcours](../decisions/inventaire-parcours-ux.md) et le
-[guide utilisateur](../utilisation/nouvelle-interface.md).
+[guide utilisateur](../utilisation/portail.md).
 
 ## Vérifications
 

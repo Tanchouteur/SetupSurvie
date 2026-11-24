@@ -9,6 +9,7 @@
     const response = await fetch('/api/maps');
     if (!response.ok) throw new Error('Le service des cartes ne répond pas.');
     const {maps} = await response.json();
+    window.MapDownloads?.setAreas(maps);
     const hasBasemap=maps.length>0;
     if(!hasBasemap)maps.push({id:'empty',title:'Aucun fond de carte préparé',center:[2.3,46.5],bbox:[-180,-80,180,80],maxzoom:0});
     document.getElementById('no-basemap').hidden=hasBasemap;
@@ -25,26 +26,7 @@
     select.replaceChildren(...maps.map(item => new Option(item.title, item.id)));
     let current = maps.find(m => m.id === 'sollies') || maps[0];
     select.value = current.id;
-    const baseStyle = item => ({
-      version: 8,
-      glyphs: location.origin + '/vendor/maps/fonts/{fontstack}/{range}.pbf',
-      sources: {local: {type: 'vector', url: 'pmtiles://' + location.origin + item.url, attribution: item.attribution}},
-      layers: [
-        {id: 'background', type: 'background', paint: {'background-color': '#f1efdf'}},
-        {id: 'earth', type: 'fill', source: 'local', 'source-layer': 'earth', paint: {'fill-color': '#f1efdf'}},
-        {id: 'landcover', type: 'fill', source: 'local', 'source-layer': 'landcover', paint: {'fill-color': '#d2dfbd', 'fill-opacity': 0.6}},
-        {id: 'landuse', type: 'fill', source: 'local', 'source-layer': 'landuse', paint: {'fill-color': '#c4d5b0', 'fill-opacity': 0.55}},
-        {id: 'water', type: 'fill', source: 'local', 'source-layer': 'water', filter: ['==', ['geometry-type'], 'Polygon'], paint: {'fill-color': '#a6cdda'}},
-        {id: 'rivers', type: 'line', source: 'local', 'source-layer': 'water', filter: ['==', ['geometry-type'], 'LineString'], paint: {'line-color': '#76afc6', 'line-width': 1}},
-        {id: 'boundaries', type: 'line', source: 'local', 'source-layer': 'boundaries', paint: {'line-color': '#9c9690', 'line-width': 1, 'line-dasharray': [3, 3]}},
-        {id: 'buildings', type: 'fill', source: 'local', 'source-layer': 'buildings', minzoom: 12, paint: {'fill-color': '#c8b9a9'}},
-        {id: 'roads-outline', type: 'line', source: 'local', 'source-layer': 'roads', paint: {'line-color': '#c2b7a1', 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.8, 15, 5]}},
-        {id: 'roads', type: 'line', source: 'local', 'source-layer': 'roads', paint: {'line-color': ['match', ['get', 'kind'], 'highway', '#edc578', 'major_road', '#f2db9c', 'path', '#b7a27b', '#ffffff'], 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.4, 15, 3]}},
-        {id: 'road-names', type: 'symbol', source: 'local', 'source-layer': 'roads', minzoom: 12, layout: {'symbol-placement': 'line', 'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name'], ''], 'text-font': ['Noto Sans Regular'], 'text-size': 11}, paint: {'text-color': '#64574b', 'text-halo-color': '#fff', 'text-halo-width': 1}},
-        {id: 'places', type: 'symbol', source: 'local', 'source-layer': 'places', layout: {'text-field': ['coalesce', ['get', 'name:fr'], ['get', 'name'], ''], 'text-font': ['Noto Sans Regular'], 'text-size': ['interpolate', ['linear'], ['zoom'], 5, 11, 13, 15]}, paint: {'text-color': '#29463e', 'text-halo-color': '#fff', 'text-halo-width': 1.5}}
-      ]
-    });
-    const style=item=>{const s=baseStyle(item);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/shade/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
+    const style=item=>{const s=window.survieMapStyle(item,location.origin+item.url);if(item.id==='empty'){s.sources={};s.layers=s.layers.filter(l=>l.id==='background');}if(showRelief){s.sources.terrain={type:'raster',tiles:[location.origin+'/api/geography/shade/{z}/{x}/{y}.png'],tileSize:256,minzoom:8,maxzoom:14,attribution:'Mapzen · Copernicus EU-DEM · USGS · NOAA'};s.layers.splice(Math.min(4,s.layers.length),0,{id:'terrain-shade',type:'raster',source:'terrain',paint:{'raster-opacity':0.8,'raster-fade-duration':0}});}return s;};
     let map;
     try {
       map = new maplibregl.Map({container: 'map', style: style(current), center: current.center, zoom: 12, maxZoom: 18, maxTileCacheSize: 96, trackResize: false});
@@ -60,8 +42,7 @@
       const explanation = document.createElement('p');
       explanation.textContent = message;
       const back = document.createElement('a');
-      back.href = new URLSearchParams(location.search).get('interface') === 'nouveau'
-        ? '/nouveau/#/bibliotheque' : '/index.html#library';
+      back.href = '/#/bibliotheque';
       back.textContent = 'Revenir à la bibliothèque';
       notice.append(title, explanation, back);
       document.querySelector('.map-stage').append(notice);
@@ -85,7 +66,7 @@
     new ResizeObserver(resizeMap).observe(document.getElementById('map'));
     map.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.addControl(new maplibregl.ScaleControl({unit: 'metric'}));
-    const showStatus = () => { status.textContent = current.id==='empty'?'Aucun fond de carte téléchargé. Préparez une carte pour voir les routes et bâtiments.':current.title + ' · données du ' + current.edition + ' · détail jusqu’au zoom ' + current.maxzoom + '. Fonctionne sans Internet.'; };
+    const showStatus = () => { status.textContent = current.id==='empty'?'Aucun fond de carte téléchargé. Préparez une carte pour voir les routes et bâtiments.':current.title + ' · données du ' + current.edition + ' · détail jusqu’au zoom ' + current.maxzoom + '. Fonctionne sans Internet sur le réseau de la maison.'; };
     map.on('load', showStatus);
     map.on('error', event => {status.textContent = 'Certaines données ne sont pas téléchargées dans cette zone. Les outils restent disponibles pour les données présentes.'; console.warn(event.error);});
     select.addEventListener('change', () => {
@@ -104,7 +85,7 @@
 
     const toolStatus=document.getElementById('geo-tool-status'),results=document.getElementById('map-results');
     let point=reference?{lat:reference.lat,lon:reference.lon}:null,marker=null,measureStart=null,measuring=false,pointRequest=0,nearbyRequest=0;
-    async function api(path){const response=await fetch('/api'+path,{headers:window.MapUI.user?{'X-Survie-Profile':window.MapUI.user.id}:{}});const data=await response.json();if(!response.ok){if(response.status===401){window.MapUI.user=null;document.body.dataset.mapRole='guest';document.getElementById('map-auth-state').hidden=false;window.MapUI.notify('Choisissez un profil pour continuer.');window.MapUI.login();}throw new Error(response.status===401?'Profil nécessaire pour cet outil.':typeof data.detail==='string'?data.detail:'Outil indisponible.');}return data;}
+    async function api(path){let response;try{response=await fetch('/api'+path,{headers:window.MapUI.user?{'X-Survie-Profile':window.MapUI.user.id}:{}});}catch{throw new Error('Le serveur SetupSurvie ne répond pas. La carte déjà affichée reste utilisable.');}const data=await response.json().catch(()=>null);if(!response.ok){if(response.status===401){window.MapUI.user=null;document.body.dataset.mapRole='guest';document.getElementById('map-auth-state').hidden=false;window.MapUI.notify('Choisissez un profil pour continuer.');window.MapUI.login();}throw new Error(response.status===401?'Profil nécessaire pour cet outil.':typeof data?.detail==='string'?data.detail:'Outil indisponible.');}if(data===null)throw new Error('Le serveur a renvoyé une réponse illisible. Réessayez.');return data;}
     function node(tag,text){const n=document.createElement(tag);n.textContent=text;return n;}
     async function selectPoint(lat,lon){
       const request=++pointRequest;point={lat,lon};if(marker)marker.remove();marker=new maplibregl.Marker().setLngLat([lon,lat]).addTo(map);
@@ -193,7 +174,7 @@
     map.on('click','notebook-points',event=>{const feature=event.features[0],p=notebookPoints.find(p=>p.id===feature.properties.id);if(p){selectPoint(p.lat,p.lon);new maplibregl.Popup().setLngLat([p.lon,p.lat]).setText(p.title).addTo(map);window.dispatchEvent(new CustomEvent('survie-saved-point',{detail:p}));}});
     window.SurvieMap={
       point:()=>point,
-      pickPoint:()=>{window.MapUI.notify('Cliquez sur la carte à l’endroit à enregistrer.');map.getCanvas().style.cursor='crosshair';},
+      pickPoint:()=>{window.MapUI.notify('Touchez ou cliquez sur la carte à l’endroit à enregistrer.');map.getCanvas().style.cursor='crosshair';},
       finishPick:()=>{map.getCanvas().style.cursor='';},
       selectPoint:(p)=>{selectPoint(p.lat,p.lon);map.flyTo({center:[p.lon,p.lat],zoom:14});},
       points:items=>{notebookPoints=items;restorePlanningLayers();},

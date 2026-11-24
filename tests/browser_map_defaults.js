@@ -21,7 +21,7 @@ async page => {
     return route.fulfill({json:values[u.pathname]||{}});
   });
   await page.setViewportSize({width:1440,height:900});
-  await page.goto(base+'/cartes.html?interface=nouveau');await page.waitForFunction(()=>window.SurvieMap);
+  await page.goto(base+'/cartes.html');await page.waitForFunction(()=>window.SurvieMap);
   check(await page.locator('#relief').getAttribute('aria-pressed')==='true','Relief activé dès l’ouverture si disponible');
   await page.waitForFunction(()=>document.querySelector('#map').dataset.ready==='true');
   check(tileRequests>0,'La couche relief demande seulement les tuiles locales');
@@ -35,7 +35,7 @@ async page => {
   // Finish the previous document before counting requests for the no-terrain case.
   // Re-enabling hillshade may still have queued tile requests when reload starts.
   await page.goto('about:blank');terrain=false;tileRequests=0;
-  await page.goto(base+'/cartes.html?interface=nouveau');await page.waitForFunction(()=>window.SurvieMap);
+  await page.goto(base+'/cartes.html');await page.waitForFunction(()=>window.SurvieMap);
   await page.waitForFunction(()=>document.querySelector('#map').dataset.ready==='true');
   check(await page.locator('#relief').getAttribute('aria-pressed')==='false','Sans altitudes la carte reste sans faux relief');
   check((await page.locator('#relief-help').textContent()).includes('Aucune altitude'),'Altitudes absentes expliquées');

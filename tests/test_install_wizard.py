@@ -122,6 +122,81 @@ class WizardTests(unittest.TestCase):
         self.assertIn('--offline', self.calls[-1])
         self.assertNotIn('--content-pack', self.calls[-1])
 
+    def test_online_with_imported_sort_filters_both_selection_and_download(self):
+        from pilot import collection_sort
+        sorting = collection_sort.Sort(frozenset({'zim:wikipedia_en_all'}), frozenset())
+        collection_sort.save(self.root, sorting)
+        wizard.install(self.base, sort_file=self.root/collection_sort.FILENAME,
+                       confirm=lambda _: 'O', execute_step=self.step)
+        for action in ('select', 'download'):
+            step = next(call for call in self.calls if action in call)
+            self.assertIn('--initial-installation', step)
+
+    def test_default_sort_filters_kit_and_leaves_an_edited_sort_alone_on_resume(self):
+        from pilot import collection_sort
+        kit = self.root/'kit'
+        kit.mkdir()
+        files = [(self.entry, self.source)]
+        other = 'wiktionary_fr_all_maxi_2026-10.zim'
+        excluded = 'gutenberg_en_lcc-a_2026-10.zim'
+        for name in (other, excluded):
+            path = self.root/name
+            path.write_bytes(name.encode())
+            files.append(({'path': 'payload/library/zim/'+name, 'bytes': path.stat().st_size,
+                           'sha256': setup.file_hash(path)}, path))
+        wizard.source_records.return_value = (files, {})
+        data = self.base/'donnees'
+        key = collection_sort.archive(other)
+
+        def interrupt(args):
+            self.step(args)
+            if 'install' in args:
+                sorting = collection_sort.load(data/'catalog')
+                self.assertEqual(sorting.state(key), 'other')
+                self.assertEqual(sorting.state(collection_sort.archive(excluded)), 'excluded')
+                collection_sort.save(data/'catalog', sorting.change([key], 'main'))
+                raise setup.SetupError('simulated interruption')
+
+        def no_prompt(_):
+            self.fail('The bundled preset should be applied without an import prompt')
+
+        with self.assertRaisesRegex(setup.SetupError, 'simulated interruption'):
+            wizard.install(self.base, kit, confirm=no_prompt, execute_step=interrupt)
+        wizard.install(self.base, kit, resume=True, execute_step=self.step)
+        self.assertEqual(collection_sort.load(data/'catalog').state(key), 'main')
+        self.assertEqual([p.name for p in (data/'library/zim').iterdir()], [other])
+
+    def test_new_installation_imports_sort_and_preserves_it_on_resume(self):
+        from pilot import collection_sort
+        kit=self.root/'kit'
+        kit.mkdir()
+        other=self.root/'other.zim'
+        other.write_bytes(b'kept')
+        removed=self.root/'removed.zim'
+        removed.write_bytes(b'not copied')
+        files=[(self.entry,self.source)]
+        for name,path in [('ted_mul_history_2027-01.zim',other),('gutenberg_en_lcc-d_2027-01.zim',removed)]:
+            files.append(({'path':'payload/library/zim/'+name,'bytes':path.stat().st_size,
+                           'sha256':setup.file_hash(path)},path))
+        self.records.stop()
+        self.records=patch.object(wizard,'source_records',return_value=(files,{}))
+        self.records.start()
+        sorting=collection_sort.Sort(frozenset({'zim:ted_mul_history'}),frozenset({'zim:gutenberg_en_lcc-d'}))
+        collection_sort.save(self.root,sorting)
+
+        def interrupt(args):
+            self.step(args)
+            if 'install' in args:
+                raise setup.SetupError('simulated interruption')
+
+        with self.assertRaisesRegex(setup.SetupError,'simulated interruption'):
+            wizard.install(self.base,kit,sort_file=self.root/collection_sort.FILENAME,
+                           confirm=lambda _: 'O',execute_step=interrupt)
+        wizard.install(self.base,kit,resume=True,execute_step=self.step)
+        data=self.base/'donnees'
+        self.assertEqual(collection_sort.load(data/'catalog'),sorting)
+        self.assertEqual(sorted(path.name for path in (data/'library/zim').glob('*.zim')),['ted_mul_history_2027-01.zim'])
+
     def test_corrupt_copy_never_becomes_final(self):
         self.entry['sha256'] = 'f'*64
         target = self.root/'target.py'

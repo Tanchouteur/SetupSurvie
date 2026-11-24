@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 from fastapi import HTTPException
-from . import retrieval, store
+from . import durable, retrieval, store
 
 PREFIX='catalogue:v1:'
 DOMAINS={'resilience','culture'}
@@ -93,7 +93,9 @@ def classification(item,guides,zims,saved=None,*,revisions=None):
     try:key=canonical(item['id']);current=current_revision(key,guides,zims,revisions)
     except HTTPException:key='';current=None
     record=saved.get(key)
-    automatic={'domains':retrieval.domains({**item,'_text':item.get('_text',item.get('text',''))}),'document_type':'exercise' if re.search(r'\b(quiz|qcm|questionnaire|exercices?|exercises?)\b',retrieval.normal(item.get('title',''))) else 'unknown',
+    domains = retrieval.application_domains({**item, '_text': item.get('_text', item.get('text', ''))},
+                                            item.get('_indexed_domains'))
+    automatic={'domains':domains,'source_role':retrieval.source_role(item),'document_type':'exercise' if re.search(r'\b(quiz|qcm|questionnaire|exercices?|exercises?)\b',retrieval.normal(item.get('title',''))) else 'unknown',
                'method':'automatic','status':'unreviewed','revision':current,'has_correction':bool(record)}
     if record and current and record['revision']==current:
         return {**automatic,**{k:record[k] for k in ('domains','document_type','status')},'method':'human'}
@@ -144,12 +146,29 @@ def save(identifier,values,expected,guides,zims):
         if not exists and db.execute('SELECT count(*) FROM settings WHERE key LIKE ?',(PREFIX+'%',)).fetchone()[0]>=10000:
             raise HTTPException(409,'La limite de corrections est atteinte. Exportez les métadonnées avant leur entretien.')
         db.execute('INSERT INTO settings VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value',(PREFIX+key,json.dumps(record,ensure_ascii=False)))
+    publish_corrections()
     return record
 
 
 def reset(identifier):
     key=canonical(identifier)
     with store.connect() as db:db.execute('DELETE FROM settings WHERE key=?',(PREFIX+key,))
+    publish_corrections()
+
+
+def publish_corrections():
+    """Write the ZIM corrections next to pilot.db for host tools, which must not open it."""
+    from .category_index import CORRECTIONS
+    saved=snapshot()
+    if not saved.available:return False
+    records={key:{'revision':value['revision'],'domains':value['domains']} for key,value in sorted(saved.items()) if key.startswith('zim:')}
+    body=json.dumps({'schema':1,'records':records},ensure_ascii=False,sort_keys=True).encode()
+    path=store.ROOT/CORRECTIONS
+    try:
+        if path.read_bytes()==body:return True
+    except OSError:pass
+    durable.write_bytes(path,body,private=True)
+    return True
 
 
 def export():
@@ -164,7 +183,7 @@ def automatic_labels(stem,title):
     prefix=match[1] if match else stem
     families={'wikipedia':'Wikipédia','wikibooks':'Wikilivres','vikidia':'Vikidia','appropedia':'Appropedia','canadian-prepper':'Canadian Prepper'}
     family=families.get(prefix,title if not match or retrieval.normal(prefix)==retrieval.normal(title) else prefix.replace('-',' '))
-    raw=match[3].replace('-',' ') if match else ''
+    raw=match[3].replace('-',' ').replace('_',' ') if match else ''
     names={'all':'Collection complète','all maxi':'Collection complète illustrée','all nopic':'Collection complète sans images',
            'preppingfood':'Alimentation','preppinggear':'Équipement','preppingsurvival':'Préparation et autonomie',
            'survival':'Survie et autonomie','food':'Alimentation','energy':'Énergie','water':'Eau','shelter':'Abri',

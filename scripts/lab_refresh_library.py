@@ -39,7 +39,7 @@ def refresh():
                     ('data/state/openwebui','/webui-data:ro'),('data/library/zim','/zim:ro'),('data/models','/models:ro'),
                     ('data/catalog','/catalog:ro'),('data/library/guides','/guides'),('data/library/maps','/maps:ro')]
             for source,target in mounts:args+=['-v',str(lab.MOUNT/source)+':'+target]
-            args+=['--entrypoint','python',lab.reference('open-webui'),'-m','uvicorn','pilot.app:app','--host','0.0.0.0','--port','8000']
+            args+=['--entrypoint','python',lab.reference('open-webui'),'-m','uvicorn','pilot.app:app','--host','0.0.0.0','--port','8000','--timeout-graceful-shutdown','5']
         lab.podman(*common,*args,capture=True)
         print('Actualisé :',name,flush=True)
     # A library-only recovery may follow a reboot, when containers survived but

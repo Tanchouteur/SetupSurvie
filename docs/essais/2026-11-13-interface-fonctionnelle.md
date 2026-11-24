@@ -1,6 +1,6 @@
 # Interface fonctionnelle Windows/Linux — 13 novembre 2026
 
-**Bilan daté — 0.1.32.** Voir le [guide actuel](../utilisation/nouvelle-interface.md).
+**Bilan daté — 0.1.32.** Voir le [guide actuel](../utilisation/portail.md).
 
 ## Périmètre
 

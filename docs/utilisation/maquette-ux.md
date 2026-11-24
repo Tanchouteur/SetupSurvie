@@ -1,10 +1,12 @@
+> **Archive historique :** la maquette fictive a été retirée du paquet en 0.59.0, sur demande de Louis le 19 novembre 2026. Les indications d’accès ci-dessous décrivent la version 0.1.31 et ne s’appliquent plus.
+
 # Essayer la nouvelle organisation du portail
 
-**Depuis 0.1.32**, la [nouvelle interface fonctionnelle](nouvelle-interface.md)
-est l’entrée principale ; la classique reste sous `/classique/`. La maquette
+**Depuis 0.1.32**, la [nouvelle interface fonctionnelle](portail.md)
+est devenue l’entrée principale ; la classique restait alors sous `/classique/` (retirée en 0.63.0). La maquette
 ci-dessous est conservée comme démonstration fictive de la phase 0.1.31.
 
-**Guide actuel de la maquette 0.1.31 — 13 novembre 2026.**
+**Archive — maquette 0.1.31, 13 novembre 2026.**
 La refonte complète reste un [plan](../decisions/plan-refonte-ux.md).
 
 ## Ouvrir et revenir au portail habituel

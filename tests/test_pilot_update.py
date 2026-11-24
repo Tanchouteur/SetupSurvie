@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -12,6 +13,7 @@ from crash_harness import crash_after_ready
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 import setup
 import pilot_update as update
+import library_tasks
 from delivery_paths import locked
 
 
@@ -59,6 +61,56 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'state/pilot/archive-index/text.sqlite').read_bytes(),b'index-sentinel')
         self.assertTrue((self.work/'inference-paused.json').exists())
 
+    def test_snapshot_manifest_is_published_only_after_all_copies_are_synced(self):
+        from pilot_backup import stopped_backup
+        target = self.base/'partial-snapshot'
+        with patch.object(update.durable, 'sync_file', side_effect=OSError('simulated write failure')):
+            with self.assertRaisesRegex(OSError, 'simulated write failure'):
+                stopped_backup(self.app, self.c, target, resume=False, services_stopped=True)
+        self.assertFalse((target/'backup.json').exists())
+
+    def test_pruning_keeps_two_complete_copies_and_preserves_unrecognized_folders(self):
+        history = self.base/'updates'
+        current, older, obsolete, unfinished = (history/(str(i)*32) for i in range(1, 5))
+        for index, operation in enumerate((obsolete, older, current), 1):
+            release = operation/'previous/deploy/release.json'
+            release.parent.mkdir(parents=True)
+            release.write_text('{}')
+            manifest = operation/'snapshot/backup.json'
+            manifest.parent.mkdir()
+            manifest.write_text('{}')
+            os.utime(manifest, (index, index))
+        (unfinished/'new').mkdir(parents=True)
+        manual = history/'manual-copy'
+        manual.mkdir()
+        discarded = history/('discarded-'+'5'*32)
+        discarded.mkdir()
+
+        update.prune_update_history(history, history/('9'*32))
+        self.assertTrue(obsolete.is_dir())
+        self.assertTrue(discarded.is_dir())
+        update.prune_update_history(history, current)
+        self.assertEqual(set(history.iterdir()), {current, older, unfinished, manual})
+
+    def test_cleanup_between_updates_requires_a_complete_journal_and_healthy_installation(self):
+        operation, _ = self.run_update()
+        journal = self.work/'update.json'
+        saved = json.loads(journal.read_text(encoding='utf-8'))
+        with patch.object(setup, 'ROOT', self.root), patch.object(update, 'Services') as services, \
+                patch.object(update, 'prune_update_history') as prune:
+            setup.write_json(journal, {**saved, 'phase': 'switched'})
+            with self.assertRaises(setup.SetupError):
+                update.prune_completed_update(self.app)
+            services.assert_not_called()
+            setup.write_json(journal, saved)
+            services.return_value.check.side_effect = setup.SetupError('unhealthy')
+            with self.assertRaisesRegex(setup.SetupError, 'unhealthy'):
+                update.prune_completed_update(self.app)
+            prune.assert_not_called()
+            services.return_value.check.side_effect = None
+            update.prune_completed_update(self.app)
+            prune.assert_called_once_with(operation.parent, operation)
+
     def test_windows_update_reconciles_only_prepared_routers(self):
         graph=self.data/'library/maps/routing/current/manifest.json'
         graph.parent.mkdir(parents=True)
@@ -86,6 +138,36 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'complete')
         self.assertFalse((self.work/'update.lock').exists())
 
+    def test_resume_startup_keeps_data_created_after_the_update(self):
+        self.run_update()
+        journal=self.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        state['phase']='switched'
+        setup.write_json(journal,state)
+        db=self.data/'state/pilot/pilot.db'
+        db.write_bytes(b'new conversations')
+        service=Services(self.app,self.c)
+        with patch.object(setup,'ROOT',self.root),patch.object(update,'Services',return_value=service):
+            update.resume_startup(self.app)
+        self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'],'complete')
+        self.assertEqual(db.read_bytes(),b'new conversations')
+        self.assertEqual((service.stops,service.starts),(0,0))
+
+    def test_resume_startup_restores_application_between_renames_without_touching_data(self):
+        operation,_=self.run_update()
+        journal=self.work/'update.json'
+        state=json.loads(journal.read_text(encoding='utf-8'))
+        state['phase']='snapshot_ready'
+        setup.write_json(journal,state)
+        self.root.rename(operation/'new')
+        db=self.data/'state/pilot/pilot.db'
+        db.write_bytes(b'keep current data')
+        with patch.object(setup,'ROOT',operation/'previous'):
+            update.resume_startup(self.app)
+        self.assertEqual(update.release_at(self.root)['version'],'0.1.1')
+        self.assertEqual(json.loads(journal.read_text(encoding='utf-8'))['phase'],'rolled_back')
+        self.assertEqual(db.read_bytes(),b'keep current data')
+
     def test_first_install_wrappers_do_not_break_legacy_update_allowlist(self):
         for name in ('Mettre-a-jour-SetupSurvie.cmd','Installer-SetupSurvie.cmd','1-Preparer-le-PC.cmd','2-Installer-SetupSurvie.cmd'):
             (self.source/name).write_text('first install fixture')
@@ -106,6 +188,29 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
         self.assert_static_data()
         self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
+
+    def test_snapshot_skips_rebuildable_category_index_and_rollback_keeps_it(self):
+        index=self.data/'state/pilot/category-index/book.sqlite'
+        index.parent.mkdir(parents=True);index.write_bytes(b'rebuildable-index')
+        (index.parent/'progress.json').write_text('{"phase":"completed"}')
+        videos=self.data/'state/pilot/videos.db';videos.write_bytes(b'video-index')
+        (self.data/'state/pilot/videos.db-wal').write_bytes(b'video-log')
+        # Saved by every backup since the collection sort exists; rollback must accept it.
+        sort=self.data/'catalog/collection-sort.json'
+        sort.parent.mkdir(parents=True,exist_ok=True);sort.write_text('{"schema":1}')
+        with self.assertRaisesRegex(setup.SetupError,'Unhealthy'):self.run_update(fail=True)
+        self.assertEqual(json.loads((self.work/'update.json').read_text())['phase'],'rolled_back')
+        operation=next(path for path in (self.root.parent/'updates').iterdir())
+        report=json.loads((operation/'snapshot/backup.json').read_text(encoding='utf-8'))
+        saved={entry['path'] for entry in report['files']}
+        self.assertFalse(any('category-index' in path or 'videos.db' in path for path in saved))
+        self.assertIn('data/state/pilot/archive-index/text.sqlite',saved)
+        self.assertEqual(videos.read_bytes(),b'video-index')
+        self.assertFalse((operation/'snapshot/data/state/pilot/category-index').exists())
+        self.assertEqual((self.data/'state/pilot/pilot.db').read_bytes(),b'old-db')
+        self.assertEqual(index.read_bytes(),b'rebuildable-index')
+        self.assertTrue((index.parent/'progress.json').is_file())
+        self.assert_static_data()
 
     def test_voluntary_rollback_preserves_recent_data_and_allows_updating_again(self):
         # Real package verification and filesystem swaps, simulated services only.
@@ -156,6 +261,34 @@ class UpdateTests(unittest.TestCase):
             compose.assert_not_called()
         self.assertEqual(service.stops,0);self.assertFalse((self.work/'update.json').exists())
         self.assertEqual((self.root/'portal/index.html').read_text(),'version 0.1.1');self.assert_static_data()
+
+    def test_windows_update_waits_for_video_pause_before_stopping_services(self):
+        self.c['target']='windows'
+        setup.write_json(self.app.settings_path,self.c,private=True)
+        manager=library_tasks.Manager(self.app,self.c,'compose')
+        job={'id':'a'*32,'action':'video-inventory','phase':'downloading'}
+        manager.write(job)
+        folder=manager.paths(job['id']);folder.mkdir()
+        observed=[]
+        def current(*_):
+            if (folder/'cancel').exists():
+                with self.assertRaises(setup.SetupError),locked(manager.directory/'operation.lock'):
+                    pass
+                observed.append('paused')
+                return {**job,'phase':'paused'}
+            return job
+        with patch.object(library_tasks.Manager,'current',current),patch('pilot_backup.time.sleep'):
+            _,service=self.run_update()
+        self.assertEqual(observed,['paused'])
+        self.assertEqual(service.stops,1)
+
+    def test_windows_update_refuses_an_active_video_writer_before_stopping(self):
+        service=Services(self.app,self.c)
+        with locked(self.data/'state/pilot/zim-videos/operation.lock'),patch.object(setup,'ROOT',self.root):
+            with self.assertRaisesRegex(setup.SetupError,'opération'):
+                update.apply(self.app,self.package,self.digest,service)
+        self.assertEqual(service.stops,0)
+        self.assertFalse((self.work/'update.json').exists())
 
     def test_index_lease_survives_rollback_and_excludes_writers_through_all_transitions(self):
         index=self.data/'state/pilot/archive-index';lease=index/'operation.lock.lease';lease.write_bytes(b'lease inode sentinel')
@@ -285,6 +418,18 @@ else:
 
     def test_kill_during_rollback_database_copy_then_repeat_recovery(self):
         self.assert_abrupt_cut_recovery('rollback-copy')
+
+
+class KiwixStartupTests(unittest.TestCase):
+    def test_kiwix_start_period_covers_a_large_library_within_the_update_wait(self):
+        import re
+        text=(Path(__file__).resolve().parents[1]/'compose.yaml').read_text(encoding='utf-8')
+        block=text.split('\n  kiwix:\n',1)[1].split('\n  pilot:\n',1)[0]
+        seconds=int(re.search(r'start_period: (\d+)s',block).group(1))
+        wait=int(re.search(r"'--wait-timeout','(\d+)'",(Path(update.__file__)).read_text(encoding='utf-8')).group(1))
+        # 210 archives took about 100 s on Marc's PC; an update failed at 130 s.
+        self.assertGreaterEqual(seconds,300)
+        self.assertLess(seconds,wait)
 
 
 if __name__=='__main__':unittest.main()

@@ -26,7 +26,8 @@ VERSIONS = json.loads((ROOT / "deploy/versions.json").read_text(encoding="utf-8"
 PORTS = {"portal": 8080, "kiwix": 8081, "open-webui": 3000}
 MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEBUI_ADMIN_EMAIL',
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
-             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE'}
+             'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE','HOST_GATEWAY'}
+INITIAL_ZIM_VIDEO_REQUEST = 'initial-zim-video-inventory.json'
 DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
@@ -66,6 +67,59 @@ def canonical_image_id(value):
     return 'sha256:'+value
 
 
+def loaded_image_references(output):
+    """Images named by `docker image load`, by ID or by tag."""
+    found = []
+    for line in str(output).splitlines():
+        for prefix in ('Loaded image ID: ', 'Loaded image: '):
+            if line.startswith(prefix):
+                found.append(line[len(prefix):].strip())
+    return found
+
+
+def archive_image_layers(archive, image_id):
+    """Layer diff IDs of an image config inside a verified docker-archive file."""
+    import tarfile
+    digest = canonical_image_id(image_id).removeprefix('sha256:')
+    with tarfile.open(archive) as tar:
+        for name in (digest + '.json', 'blobs/sha256/' + digest):
+            try:
+                member = tar.getmember(name)
+            except KeyError:
+                continue
+            body = tar.extractfile(member).read()
+            if hashlib.sha256(body).hexdigest() != digest:
+                raise SetupError('Configuration d’image incohérente dans le kit.')
+            config = json.loads(body)
+            return (config.get('architecture'), config.get('os'), tuple(config['rootfs']['diff_ids']))
+    raise SetupError('Image absente de l’archive du kit.')
+
+
+def loaded_image_id(archive, image_id, loaded):
+    """Local ID of an image after `docker image load`.
+
+    The classic Docker store keeps the config digest recorded by the kit. The
+    containerd store of recent Docker Engine and Docker Desktop names the image
+    by its manifest digest instead: match it by architecture, system and layer
+    diff IDs read from the verified archive."""
+    expected = canonical_image_id(image_id)
+    try:
+        actual = json.loads(run(['docker', 'image', 'inspect', image_id], capture=True))[0]
+    except SetupError:
+        actual = None
+    if actual is not None and canonical_image_id(actual['Id']) == expected:
+        return expected
+    layers = archive_image_layers(archive, expected)
+    matches = set()
+    for reference in loaded:
+        info = json.loads(run(['docker', 'image', 'inspect', reference], capture=True))[0]
+        if (info.get('Architecture'), info.get('Os'), tuple(info.get('RootFS', {}).get('Layers') or ())) == layers:
+            matches.add(canonical_image_id(info['Id']))
+    if len(matches) != 1:
+        raise SetupError('ID d’image invalide après chargement.')
+    return matches.pop()
+
+
 def run(args, *, capture=False, env=None, timeout=None):
     try:
         result = subprocess.run([str(a) for a in args], cwd=ROOT, env=env,
@@ -86,6 +140,49 @@ def run(args, *, capture=False, env=None, timeout=None):
 def write_json(path, value, *, private=False):
     body = (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode('utf-8')
     durable.write_bytes(path, body, private=private)
+
+
+def prepare_youtube_tools(config,offline):
+    """yt-dlp, Deno and FFmpeg for video lists; optional, never blocks setup."""
+    try:
+        import youtube_tools
+        if youtube_tools.prepare(config['data_dir'],offline=offline):print('Outils de téléchargement des vidéos YouTube prêts.')
+        else:print('Outils de téléchargement des vidéos YouTube : préparation terminée au premier téléchargement avec Internet.')
+    except (OSError,ValueError,SetupError,subprocess.SubprocessError):
+        print('Outils de téléchargement des vidéos YouTube non préparés ; ils le seront au premier téléchargement avec Internet. Les autres fonctions restent disponibles.')
+
+
+def schedule_initial_videos(app, config, *, offline):
+    """Leave durable requests for the existing host inventory and pilot queue."""
+    from delivery_paths import destination
+    from pilot.youtube_list import INSTALLATION_LIST, MAX_TEXT, parse_list
+
+    data = Path(config['data_dir'])
+    try:
+        archives = destination(data, 'library/zim')
+        if any(path.is_file() and not path.is_symlink() for path in archives.glob('*.zim')):
+            write_json(app.work / INITIAL_ZIM_VIDEO_REQUEST, {'requested': True}, private=True)
+            print('Inventaire vidéo des encyclopédies demandé en arrière-plan. Suivi dans Vidéos de la bibliothèque.')
+    except (OSError, SetupError):
+        print('Inventaire vidéo des encyclopédies à lancer depuis Vidéos de la bibliothèque.')
+
+    if offline:
+        return
+    try:
+        with (ROOT / 'deploy' / INSTALLATION_LIST).open('rb') as source:
+            raw = source.read(MAX_TEXT + 1)
+        if len(raw) > MAX_TEXT:
+            raise ValueError('liste trop longue')
+        text = raw.decode('utf-8-sig')
+        entries, errors = parse_list(text)
+        if entries:
+            path = destination(data, 'state/pilot/' + INSTALLATION_LIST)
+            durable.write_bytes(path, text.encode('utf-8'))
+            print(f'{len(entries)} vidéo(s) YouTube demandée(s) en arrière-plan. Suivi dans File d’attente.')
+        elif errors:
+            print('La liste YouTube de l’installation ne contient aucune adresse de vidéo valide.')
+    except (OSError, ValueError, SetupError):
+        print('Liste YouTube de l’installation illisible ou trop longue. Ajoutez-la depuis la bibliothèque.')
 
 
 def safe_path(value):
@@ -115,7 +212,8 @@ class Installation:
             raise SetupError("Installation non initialisée. Lancez d’abord install ou init.")
         return json.loads(self.settings_path.read_text(encoding="utf-8"))
 
-    def init(self, target, data_dir=None, lan=False, cpu=False):
+    def init(self, target, data_dir=None, lan=False, cpu=False, *, initial_chat_model=None,
+             seed_collection_sort=False):
         durable.mkdir(self.work)
         if os.name != "nt":
             self.work.chmod(0o700)
@@ -133,12 +231,15 @@ class Installation:
                 raise SetupError("Choisissez un sous-dossier dédié aux données, pas le dépôt ou son parent.")
             if data == self.work or self.work.is_relative_to(data / "library"):
                 raise SetupError("Les réglages privés ne doivent pas être placés dans la bibliothèque publique.")
+            if seed_collection_sort and not any((data / "library/zim").glob("*.zim")):
+                import collection_tasks
+                collection_tasks.seed(data, collection_tasks.installation_default())
             config = {"schema": 1, "target": target, "data_dir": data.as_posix(),
                       "bind": "0.0.0.0" if lan else "127.0.0.1", "cpu": cpu,
                       "project": "survie-" + secrets.token_hex(4),
                       "secret": secrets.token_hex(32), "admin_email": "admin@survie.local",
                       "admin_password": secrets.token_urlsafe(32),
-                      "chat_model": VERSIONS["default_model"]}
+                      "chat_model": initial_chat_model or VERSIONS["default_model"]}
             write_json(self.settings_path, config, private=True)
             credentials = self.work / "identifiants.txt"
             durable.write_bytes(credentials,("SetupSurvie — profils locaux sans mot de passe\n"
@@ -157,6 +258,8 @@ class Installation:
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],
                   "WEBUI_ADMIN_PASSWORD": c["admin_password"], "CHAT_MODEL": c["chat_model"]}
         values['PILOT_CONTROL_TOKEN']=control_key(c)
+        # Rootless Docker: host-gateway is the internal bridge, not the host.
+        values['HOST_GATEWAY']='10.0.2.2' if c.get('docker_rootless') else 'host-gateway'
         routing_recipe=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8')) if (ROOT/'deploy/routing-engine.json').exists() else None
         if routing_recipe:
             entry=c.get('routing_image')
@@ -239,6 +342,12 @@ class Installation:
         os_type = run(["docker", "info", "--format", "{{.OSType}}"], capture=True, timeout=30)
         if os_type != "linux":
             raise SetupError("Docker doit utiliser les conteneurs Linux.")
+        if c["target"] == "linux":
+            import linux_host
+            rootless=linux_host.docker_rootless()
+            if bool(c.get('docker_rootless'))!=rootless:
+                c['docker_rootless']=rootless;write_json(self.settings_path,c,private=True);self.render(c)
+            if rootless:print(linux_host.ensure_host_loopback())
         self.compose(c, "config", "--quiet")
         free = shutil.disk_usage(c["data_dir"]).free / 1024**3
         print(f"Docker et Compose disponibles. Espace libre : {free:.1f} Gio.")
@@ -291,7 +400,7 @@ class Installation:
         env = os.environ.copy()
         env.update({"OLLAMA_HOST": "0.0.0.0:11435", "OLLAMA_MODELS": str(Path(c["data_dir"]) / "models"),
                     "OLLAMA_NO_CLOUD": "1", "OLLAMA_CONTEXT_LENGTH": "8192",
-                    "OLLAMA_NUM_PARALLEL": "1", "OLLAMA_MAX_LOADED_MODELS": "1"})
+                    "OLLAMA_NUM_PARALLEL": "1", "OLLAMA_MAX_LOADED_MODELS": "1", "OLLAMA_KEEP_ALIVE": "-1"})
         log_path = self.work / "ollama.log"
         with log_path.open("ab") as output:
             process = subprocess.Popen([binary, "serve"], env=env, stdin=subprocess.DEVNULL,
@@ -377,7 +486,7 @@ class Installation:
         marker=Path(c['data_dir'])/'state/openwebui/cache/whisper/ready.json'
         folder=marker.parent/'faster-whisper-small'
         if marker.exists() and json.loads(marker.read_text())==VERSIONS['speech'] and all((folder/name).is_file() for name in ('model.bin','config.json','tokenizer.json')):return
-        if offline:raise SetupError('Dictée non préparée. Lancez prepare avec Internet ou importez les caches du kit.')
+        if offline:raise SetupError('Reconnaissance vocale non préparée. Lancez prepare avec Internet ou importez les caches du kit.')
         self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','-e','HF_HUB_OFFLINE=0','-e','OFFLINE_MODE=false','open-webui','-c',PREPARE_SPEECH)
         script="from pathlib import Path; Path('/app/backend/data/cache/whisper/ready.json').write_text("+repr(json.dumps(VERSIONS['speech']))+")"
         self.compose(c,'run','--rm','--no-deps','-T','--entrypoint','python','open-webui','-c',script)
@@ -438,7 +547,7 @@ class Installation:
         if c['bind']=='0.0.0.0':
             print('Nom facile à retenir : http://'+c.get('discovery_name','survie')+'.local:8080')
             print(f'Sur le réseau local : https://{host}:8443 ; Open WebUI : https://{host}:8444 ; Kiwix : https://{host}:8445')
-            print('Installer le certificat local sur chaque appareil pour HTTPS et la dictée. Voir docs/installation/pilote-marc.md.')
+            print('Installer le certificat local sur chaque appareil pour HTTPS. Voir docs/installation/pilote-marc.md.')
         else:print('Accès limité au PC serveur. configure --lan --lan-host ADRESSE_IP pour ouvrir le réseau privé.')
 
     def certificate(self,c,destination):
@@ -462,6 +571,16 @@ class Installation:
         write_json(self.work / "manifest.json", {"recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                    "target": c["target"], "images": VERSIONS["images"], "embedding": VERSIONS["embedding"],
                    "ollama": versions, "models": [{key: m.get(key) for key in ("name", "digest", "size", "details")} for m in tags.get("models", [])]})
+
+    def prepare_models(self, c, additional_models=()):
+        existing = self.request('http://127.0.0.1:11435/api/tags').get('models', [])
+        installed = {model['name'] for model in existing}
+        required = dict.fromkeys((c['chat_model'], *additional_models))
+        missing = [model for model in required if model not in installed]
+        for model in missing:
+            self.pull_model(c, model)
+        if not missing:
+            self.record(c)
 
     def verify(self, c, inference=False):
         paused=(self.work/'inference-paused.json').exists()
@@ -517,8 +636,8 @@ class Installation:
         try:
             self.compose(c,'exec','-T','open-webui','python','-c',
                          "from faster_whisper import WhisperModel; WhisperModel('/app/backend/data/cache/whisper/faster-whisper-small',device='cpu',compute_type='int8',local_files_only=True)")
-            print('OK : modèle de dictée chargé depuis les fichiers locaux, sur CPU')
-        except SetupError as error:failures.append('Dictée locale : '+str(error))
+            print('OK : modèle de transcription audio chargé depuis les fichiers locaux, sur CPU')
+        except SetupError as error:failures.append('Transcription audio locale : '+str(error))
         report = {"automated_checks_passed": not failures, "failures": failures, "inference_paused": paused, "ollama_checks_deferred": paused,
                   "manual_checks_pending": ["LAN depuis un téléphone", "question française sur guide anglais", "réseau Internet débranché", "redémarrage du PC", "restauration"]}
         write_json(self.work / "verification.json", report)
@@ -567,14 +686,10 @@ class Installation:
             reference=json.loads((ROOT/'deploy/routing-engine.json').read_text(encoding='utf-8'))['image']
             if entries['routing']['reference']!=reference:raise SetupError('Le kit contient un moteur de routage différent.')
             expected.add('routing')
-        run(['docker', 'image', 'load', '-i', source])
+        loaded = loaded_image_references(run(['docker', 'image', 'load', '-i', source], capture=True))
         for name in expected:
             entry = entries[name]
-            actual = json.loads(run(['docker', 'image', 'inspect', entry['id']], capture=True))[0]
-            actual_id=canonical_image_id(actual['Id'])
-            if actual_id != canonical_image_id(entry['id']):
-                raise SetupError('ID d’image invalide après chargement.')
-            entries[name]={**entry,'id':actual_id}
+            entries[name] = {**entry, 'id': loaded_image_id(source, entry['id'], loaded)}
         # `docker save/load` need not retain RepoDigests. Local immutable IDs avoid a network lookup.
         c['local_images'] = {name: entries[name] for name in expected if name!='routing'}
         if 'routing' in expected:c['routing_image']=entries['routing']
@@ -603,9 +718,10 @@ def parser():
         child.add_argument('--lan-host',type=lan_host)
         child.add_argument("--cpu", action="store_true", help="Linux : essai CPU explicite, sans réservation GPU")
         if command == "install":
+            child.add_argument("--work-dir", default=argparse.SUPPRESS, help="Réglages privés (par défaut .local dans le dépôt)")
             child.add_argument("--offline", action="store_true")
             child.add_argument('--content-pack',action='append',default=[],help='Lot documentaire choisi dans scripts/content.py list ; répéter pour plusieurs lots.')
-            child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; --no-startup conserve seulement les raccourcis.')
+            child.add_argument('--startup',action=argparse.BooleanOptionalAction,default=True,help='Windows : démarrage à l’ouverture de session et raccourcis du Bureau ; Linux : service utilisateur systemd au démarrage du PC. --no-startup ne l’active pas.')
     for command in ("up", "down", "doctor", "catalog", "reload-library", "demo", "verify", "record", "prepare", "prepare-maps", "pull-model", "configure", "export-images", "import-images", "addresses", "certificate", "recover-account", "shortcuts"):
         child = subs.add_parser(command)
         if command == "shortcuts":
@@ -629,11 +745,25 @@ def parser():
     return p
 
 
-def main(argv=None):
+def main(argv=None, *, initial_chat_model=None, additional_models=()):
     args = parser().parse_args(argv)
+    selected_content = []
+    if args.action == "install":
+        if args.offline and args.content_pack:
+            raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
+        if args.content_pack:
+            import content
+            items = content.catalog()
+            packs = set(args.content_pack)
+            unknown = packs - {item['pack'] for item in items}
+            if unknown:
+                raise SetupError('Lots inconnus : ' + ', '.join(sorted(unknown)))
+            selected_content = [item for item in items if item['pack'] in packs
+                                and not content.english_wikipedia(item['path'])]
     app = Installation(args.work_dir)
     if args.action in {"install", "init"}:
-        c = app.init(args.target, args.data_dir, args.lan, args.cpu)
+        c = app.init(args.target, args.data_dir, args.lan, args.cpu, initial_chat_model=initial_chat_model,
+                     seed_collection_sort=args.action == 'install')
         if args.lan_host:
             if not args.lan:raise SetupError('--lan-host nécessite --lan.')
             c['lan_host']=args.lan_host;write_json(app.settings_path,c,private=True);app.render(c)
@@ -643,27 +773,27 @@ def main(argv=None):
     if args.action == "init":
         print(f"Réglages conservés dans {app.work}. Accès par profil, sans mot de passe.")
     elif args.action == "install":
-        if args.offline and args.content_pack:raise SetupError('Choisir le kit hors ligne ou des téléchargements de lots en ligne.')
         app.doctor(c)
         if not args.offline:
+            if c['target'] == 'linux':
+                import linux_offline_tools
+                if linux_offline_tools.prepare(c['data_dir']):
+                    print('Installateurs hors ligne vérifiés : Docker, Compose, Python et paquets réseau Linux.')
+                else:
+                    print('Installateurs hors ligne indisponibles pour cette architecture ou version de Python.')
             app.compose(c, "pull")
         app.prepare(c, args.offline)
         import search_index_tools
         try:
             if not search_index_tools.prepare(app,c,offline=args.offline):print('Indexation complémentaire à préparer depuis les réglages ; bibliothèque disponible.')
-        except (OSError,ValueError,SetupError,subprocess.SubprocessError):print('Outil d’indexation non préparé ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
+        except (OSError,ValueError,SetupError,subprocess.SubprocessError) as error:
+            print('Outil d’indexation non préparé ('+(str(error).strip()[:200] or type(error).__name__)+') ; réessayez dans les réglages. Les autres fonctions restent disponibles.')
+        prepare_youtube_tools(c,args.offline)
         app.up(c)
         if not args.offline:
-            existing = app.request('http://127.0.0.1:11435/api/tags').get('models', [])
-            if c['chat_model'] not in {model['name'] for model in existing}:
-                app.pull_model(c, c["chat_model"])
-            else:
-                app.record(c)
-        if args.content_pack:
-            import content
-            items=content.catalog();unknown=set(args.content_pack)-{i['pack'] for i in items}
-            if unknown:raise SetupError('Lots inconnus : '+', '.join(sorted(unknown)))
-            content.download(Path(c['data_dir']),[i for i in items if i['pack'] in args.content_pack],workers=2)
+            app.prepare_models(c, additional_models)
+        if selected_content:
+            content.download(Path(c['data_dir']), selected_content, workers=2)
             app.catalog(c);app.compose(c,'restart','kiwix','pilot')
         import map_install
         map_install.ensure(Path(c['data_dir']),offline=args.offline)
@@ -673,7 +803,15 @@ def main(argv=None):
                     'from pilot import library; library.index_guides()')
         app.verify(c)
         app.install_windows_shortcuts(c,startup=args.startup)
-        print(f"Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
+        if c['target']=='linux':
+            import linux_host
+            if args.startup:
+                for line in linux_host.install_autostart(app,c):print(line)
+            if not linux_host.controller_reachable(app,c):
+                print('Attention : le portail ne joint pas le contrôleur local ; démarrage/arrêt de l’IA et indexation automatique indisponibles depuis le site. Voir docs/installation/README.md.')
+            else:print('Contrôleur local joignable depuis le portail.')
+        schedule_initial_videos(app, c, offline=args.offline)
+        print("Accueil : http://localhost:8080 — choisissez un profil, sans mot de passe")
     elif args.action == "prepare-maps":
         import map_install
         map_install.ensure(Path(c['data_dir']))
@@ -735,6 +873,9 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    # Helper modules ``import setup``: share this module so their SetupError
+    # is the one caught below, and errors stay short French messages.
+    sys.modules.setdefault("setup", sys.modules[__name__])
     try:
         raise SystemExit(main())
     except (SetupError, OSError, ValueError) as error:

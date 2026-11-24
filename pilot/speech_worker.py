@@ -131,19 +131,30 @@ def aligned_cues(segments,window_start,start,end):
             for group in groups:
                 text=''.join(word[2] for word in group).strip();left=group[0][0];right=group[-1][1]
                 if not text or right<=left:continue
-                if cues and left<cues[-1]['end_ms']:warnings.append('recognition_overlap')
-                cues.append({'start_ms':left,'end_ms':right,'text':text})
+                add_cue(cues,warnings,left,right,text)
             continue
         else:
             warnings.append('word_timestamps_unavailable')
             left=round(segment.start*1000)+window_start;right=round(segment.end*1000)+window_start
             if not start<=(left+right)/2<end:continue
             left,right=max(start,left),min(end,right);text=segment.text.strip()
-        # Retain an anomaly rather than silently certify overlapping ASR output.
         if not text or right<=left:continue
-        if cues and left<cues[-1]['end_ms']:warnings.append('recognition_overlap')
-        cues.append({'start_ms':left,'end_ms':right,'text':text})
+        add_cue(cues,warnings,left,right,text)
     return cues,raw,sorted(set(warnings))
+
+
+def add_cue(cues,warnings,left,right,text):
+    """Retain overlapping ASR output as an anomaly, with a playable timeline.
+
+    The unit check refuses overlapping cues; without this the same unit would
+    fail at every resume. The later cue starts when the previous one ends, or
+    joins it when nothing of its own time remains.
+    """
+    if cues and left<cues[-1]['end_ms']:
+        warnings.append('recognition_overlap');left=cues[-1]['end_ms']
+        if right<=left:
+            cues[-1]['text']=(cues[-1]['text']+' '+text)[:6000];return
+    cues.append({'start_ms':left,'end_ms':right,'text':text})
 
 
 def transcribe(command):

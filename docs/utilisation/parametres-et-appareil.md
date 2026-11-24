@@ -14,10 +14,9 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
 
 - **Vue d’ensemble** : état de l’assistant, disponibilité des fonctions et progression.
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
-- **Travaux en cours** : progression, fichiers, dernière observation et accès aux
-  téléchargements. Un transfert Windows indépendant reste suivi en lecture seule.
-  **Vos traductions et synthèses** retrouve les travaux récents du profil ;
-  l’actualisation ne les reprend pas et ne les montre pas dans le suivi global.
+- **File d’attente** : progression des travaux du PC et du profil courant. Le
+  [guide de la file d’attente](file-attente.md) décrit les commandes de suivi et
+  de reprise.
 - **Paramètres** : choisir l’une des cinq rubriques ci-dessous. Ouvrir une page,
   déplier une option ou recharger ne lance aucun travail.
 
@@ -28,6 +27,9 @@ Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et télép
 | Assistant | Démarrer/arrêter le moteur ; ouvrir le réglage manuel du contexte et les instructions |
 | Tests et diagnostics | Mesurer les lenteurs, vérifier la recherche, comparer une aide IA, tester la mémoire et une traduction de 40 pages, vérifier l’usage hors ligne |
 | Entretien et données | Exporter les classements/dossiers, gérer les repères du navigateur et consulter les anciens retours |
+
+Pour les procédures détaillées, consulter les [préparations de la bibliothèque](preparations-bibliotheque.md),
+les [cartes hors ligne](parametres-et-cartes.md) et l’[inventaire du stockage](inventaire-local.md).
 
 Les tests sont rangés en cinq rubriques dépliables : lenteurs, recherche (avec son comparatif IA), mémoire, traduction longue et usage hors ligne. Le [guide du test de 40 pages](../exploitation/test-traduction-40-pages.md) explique la durée, le rapport et la reprise. Le lien depuis Assistant mène à l’essai mémoire ; le réglage du contexte reste dans Assistant.
 
@@ -89,14 +91,14 @@ Dans le tableau, les destinations abrégées sont sous **Mon appareil → Param�
 | Dossiers pratiques : exporter les dossiers | Même rubrique dépliable ; édition des références toujours dans la bibliothèque |
 | Mémoire de navigation : effacer onglets/filtres/brouillons locaux | **Entretien et données → Effacer les repères de ce navigateur** ; confirmation avant effacement, données serveur conservées |
 | Retours déjà enregistrés : actualiser/lire | **Entretien et données → Consulter les retours déjà enregistrés**, secondaire ; aucune création de retour réintroduite |
-| Téléchargements : thèmes, langues, maximum à ajouter, suppléments culturels, chercher les contenus | **Bibliothèque et préparations → Télécharger des collections et préparer les cartes → Enrichir la bibliothèque**, ordinateur |
+| Comparer, télécharger et revenir au fonds de référence | **Bibliothèque → Organiser les collections** |
 | Sélection : collections proposées, besoins à vérifier, télécharger, pause, actualiser, progression | Même page de téléchargements ; suivi/pause du portail disponibles sur téléphone |
 | Géographie : zones préparées, ouvrir la carte, actualiser, arrêter | Même page → **Préparer des cartes, adresses et itinéraires**, dépliable ; suivi/pause sur téléphone |
 | Géographie : point enregistré, latitude/longitude, rayon, relief, télécharger, préparer itinéraires | Même préparation, formulaires sur ordinateur ; aucune modification des cartes ou téléchargements |
 | Stockage : résumé disque, modèles enregistrés, préparation/inventaire | **Bibliothèque et préparations → Voir les fichiers et l’espace disque** ; lecture seule |
 | Vue d’ensemble : état, fonctions disponibles, suivi des travaux | **Mon appareil → Vue d’ensemble** ; bouton **Gérer l’assistant** vers la bonne rubrique |
 | Mesures : GPU/VRAM, RAM, espace libre, questions, modèle chargé, date de mesure | Vue d’ensemble → **Détails techniques : mémoire et modèle chargé**, dépliable |
-| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → Travaux en cours** ; suivi conservé indépendamment de l’assistant |
+| Activité : volumes, fichiers actifs, date, messages | **Mon appareil → File d’attente → Détails techniques** de la carte ; suivi conservé indépendamment de l’assistant |
 | Open WebUI, documents de secours | Menu ordinateur et bas de page mobile, conservés |
 
 Les favoris, conversations, traductions, classement des sources, dossiers pratiques,
@@ -110,7 +112,7 @@ Toutes les adresses sont relatives à l’adresse locale de votre installation.
 | Adresse | Page |
 | --- | --- |
 | `/#/appareil/ensemble` | Vue d’ensemble |
-| `/#/appareil/activite` | Travaux en cours (ancien onglet Activité) |
+| `/#/appareil/activite` | redirection vers la File d’attente |
 | `/#/appareil/reglages` | Accueil Paramètres (ancien écran Réglages) |
 | `/#/appareil/profils`, `/#/appareil/connexion` | Anciennes pages profils/connexion conservées |
 | `/#/appareil/telechargements`, `/#/appareil/stockage` | Anciennes pages téléchargements/stockage conservées |

@@ -34,9 +34,9 @@ reçoivent leur complément ; la durée dépend du texte présent. Il n’est pa
 nécessaire de réparer l’outil s’il était déjà prêt. Télécharger ensuite le rapport
 d’indexation, puis le nouveau contrôle complet de recherche.
 
-Une préparation longue peut tourner la nuit. Dans **Préparation automatique après
-téléchargement**, activer/désactiver la fonction, choisir les heures du PC serveur
-et la puissance de calcul. Deux heures identiques autorisent toute la journée ;
+Une préparation longue peut tourner la nuit. Dans **Préparation automatique des archives**, activer/désactiver la fonction, choisir les heures du PC serveur
+et la puissance de calcul. Ces réglages concernent aussi le classement et
+l’examen vidéo automatiques des archives. Deux heures identiques autorisent toute la journée ;
 22 h à 6 h couvre la nuit. Fermer le navigateur n’arrête pas le travail.
 
 ## Après la correction des formules — 0.37.3
@@ -85,6 +85,23 @@ et la raison du complément (`native_multilingual`, `native_language_missing` ou
 `missing_index`). Ce contrôle de métadonnées ne certifie pas tous les usages de
 l’API Kiwix. Une langue d’article non déterminée n’est pas déclarée française.
 
+Depuis 0.106.1, le classement du fonds principal par espace continue après une
+archive qu’il ne parvient pas à lire : elle est inscrite dans `failures` (nom et
+type d’erreur), les autres archives sont classées, puis la phase finale indique
+`error` jusqu’à la reprise. Le 22 novembre 2026 chez Marc, une page de
+`ready.gov` portant un attribut sans valeur (`<span class>`) arrêtait tout le
+classement ; les lecteurs HTML lisent désormais un tel attribut comme vide.
+
+Depuis 0.107.1, les outils lancés sous Windows (contrôleur, classement) n’ouvrent
+plus `pilot.db` : le pilote publie les corrections de classement des archives dans
+`data/state/pilot/catalogue-corrections.json`, au démarrage et à chaque correction,
+et le classement lit ce fichier. Le 23 novembre 2026 chez Marc, la lecture de la
+base WAL depuis Windows, pendant que le pilote l’utilisait dans Docker, faisait
+échouer environ 2 % des accès SQLite du pilote (« disk I/O error ») : pages en
+erreur, mise à jour refusée et archives comptées à tort comme non classées. Un
+essai sur une copie a reproduit ces erreurs avec un lecteur Windows et aucune sans
+lui ; le mode DELETE aggravait le problème. La base est restée intacte.
+
 Si un fichier a été remplacé depuis sa vérification, la file est suspendue et
 l’indique. Refaire la vérification ou le téléchargement de cette archive avant de
 reprendre ; la nouvelle édition ne doit pas être marquée traitée par l’ancien travail.
@@ -108,6 +125,25 @@ ignore les redirections et les formats non textuels, et limite un article à 2 M
 texte terminée ne signifie pas que le contenu parlé ou les images sont recherchables,
 ni qu’une procédure est bonne. Le volume final et la durée sur le fonds réel restent
 à mesurer. Les sauvegardes de l’état peuvent grossir ; prévoir leur capacité.
+
+### Index compressés depuis 0.88.0
+
+Les nouveaux index rangent le texte des passages une seule fois, compressé (zlib),
+dans une table `docs` ; la table de recherche le lit au besoin (contenu externe
+FTS5). Le classement n’utilise que l’index de recherche : les résultats, leur ordre
+et les extraits sont identiques à l’ancien format, pour un fichier environ 40 %
+plus petit. La recherche classe d’abord sans décompresser, puis ne décompresse que
+les résultats affichés. Les anciens index restent lisibles tels quels.
+
+Le classement du fonds principal (« Lancer le classement » dans Mon appareil ›
+Bibliothèque, proposé dès qu’une archive est ajoutée ou modifiée ; script
+`index_categories.py`) convertit ensuite les index déjà prêts, un par un, sans
+relire les ZIM ni changer leur empreinte : rien n’est réindexé. La copie compressée
+(`.compressing`) remplace l’ancien fichier seulement une fois complète, comptée et
+vérifiée (`integrity-check`) ; une pause, un manque de place ou un index republié
+entre-temps laisse l’ancien fichier en service. Il faut environ 70 % de la taille de
+l’index converti en place libre temporaire, en plus de la réserve de 15 Go.
+Mesures du 21 novembre 2026 chez Marc : voir le [bilan](../essais/2026-11-21-index-compresse.md).
 
 ## Kit hors ligne et maintenance
 

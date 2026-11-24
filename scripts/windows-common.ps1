@@ -49,13 +49,16 @@ function Update-SurviePath {
 }
 
 function Find-SurviePython {
+    param([switch]$RequireTk)
+    $probe = 'import sys,struct; sys.exit(0 if (3,11) <= sys.version_info[:2] <= (3,15) and struct.calcsize(chr(80))==8 else 1)'
+    if ($RequireTk) { $probe = 'import tkinter; ' + $probe }
     foreach ($candidate in @('py', 'python', 'python3')) {
         $command = Get-Command $candidate -ErrorAction SilentlyContinue
         if (-not $command) { continue }
         $prefix = @()
         if ($candidate -eq 'py') { $prefix = @('-3') }
         try {
-            & $command.Source @prefix -c 'import sys,struct; sys.exit(0 if (3,11) <= sys.version_info[:2] <= (3,15) and struct.calcsize(chr(80))==8 else 1)' 2>$null | Out-Null
+            & $command.Source @prefix -c $probe 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) { return @{ Path = $command.Source; Prefix = $prefix } }
         } catch { }
     }
@@ -182,10 +185,11 @@ function Assert-SurvieInstallerHash($Path, $Expected) {
     }
 }
 
-function Install-SurvieDependency($Item, $CacheDir) {
-    $null = New-Item -ItemType Directory -Force -Path $CacheDir
+function Get-SurvieInstaller($Item, $CacheDir, [switch]$Offline) {
     $path = Join-Path $CacheDir $Item.file
-    if (-not (Test-Path -LiteralPath $path)) {
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        if ($Offline) { throw ('Installateur manquant dans le kit : ' + $Item.file) }
+        $null = New-Item -ItemType Directory -Force -Path $CacheDir
         Write-Host ('Téléchargement : ' + $Item.id + ' ' + $Item.version)
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Invoke-WebRequest -UseBasicParsing -Uri $Item.url -OutFile ($path + '.part')
@@ -193,6 +197,11 @@ function Install-SurvieDependency($Item, $CacheDir) {
         Move-Item -LiteralPath ($path + '.part') -Destination $path -Force
     }
     Assert-SurvieInstallerHash $path $Item.sha256
+    return $path
+}
+
+function Install-SurvieDependency($Item, $CacheDir, [switch]$Offline) {
+    $path = Get-SurvieInstaller $Item $CacheDir -Offline:$Offline
     Write-Host ('Ouverture de l''installateur ' + $Item.id + '. Suivez ses écrans et sa licence.')
     $options = @{ FilePath = $path; Wait = $true; PassThru = $true }
     if (@($Item.arguments).Count) { $options.ArgumentList = @($Item.arguments) }
@@ -201,4 +210,42 @@ function Install-SurvieDependency($Item, $CacheDir) {
     if ($process.ExitCode -ne 0) { throw ('Installation interrompue : ' + $Item.id + ' (code ' + $process.ExitCode + '). Relancez après correction.') }
     Update-SurviePath
     return 0
+}
+
+
+function Install-SurvieKitPython([string]$Kit) {
+    if (Test-Path -LiteralPath (Join-Path $Kit 'kit-building.json')) { throw 'Kit encore en préparation.' }
+    $manifest = Get-Content -LiteralPath (Join-Path $Kit 'manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($manifest.schema -ne 1 -or $manifest.kind -ne 'SetupSurvie public pilot kit' -or $manifest.files -isnot [array]) {
+        throw 'Choisissez un kit public SetupSurvie complet.'
+    }
+    $relative = 'app/deploy/windows-installers.json'
+    $records = @($manifest.files | Where-Object { $_.path -ceq $relative })
+    if ($records.Count -ne 1) { throw 'Catalogue Python absent ou dupliqué. Actualisez le kit.' }
+    $catalogPath = Join-Path $Kit $relative
+    if ((Get-Item -LiteralPath $catalogPath).Length -ne $records[0].bytes) {
+        throw 'Catalogue Python incomplet. Actualisez le kit.'
+    }
+    Assert-SurvieInstallerHash $catalogPath $records[0].sha256
+    $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $packages = @($catalog.installers | Where-Object { $_.id -ceq 'python' })
+    if ($catalog.schema -ne 1 -or $packages.Count -ne 1 -or
+            $packages[0].file -cnotmatch '^python-3[.]1[1-5][.][0-9]+-amd64[.]exe$') {
+        throw 'Installateur Python x64 absent du catalogue.'
+    }
+    $pythonOptions = @('InstallAllUsers=0', 'PrependPath=1', 'Include_tcltk=1')
+    if (-not (Find-SurviePython)) {
+        $pythonOptions = @('/passive', 'Include_test=0') + $pythonOptions
+    }
+    $item = @{
+        id = 'python'
+        file = $packages[0].file
+        sha256 = $packages[0].sha256
+        arguments = $pythonOptions
+    }
+    $code = Install-SurvieDependency $item (Join-Path $Kit 'installateurs-windows') -Offline
+    if ($code -eq 3010) { throw 'Redémarrez Windows, puis rouvrez le même lanceur du SSD.' }
+    $python = Find-SurviePython -RequireTk
+    if (-not $python) { throw 'Python avec Tcl/Tk reste introuvable. Terminez son installation puis rouvrez le même lanceur du SSD.' }
+    return $python
 }

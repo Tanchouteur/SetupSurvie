@@ -18,7 +18,7 @@ async page=>{
     if(u.pathname.startsWith('/api/geography/shade/'))return route.fulfill({contentType:'image/png',body:Buffer.from('__SHADE_FIXTURE__','base64')});
     const values={
       '/api/profiles/current':{id:'fixture',name:'Famille',role:'admin'},
-      '/api/maps':{maps:[{id:'sollies',title:'Carte fictive de test',url:'/api/maps/test/archive',center:[6.1,43.1],bbox:[6,43,6.2,43.2],maxzoom:12,edition:'Fixture',attribution:'Fictional test'}]},
+      '/api/maps':{maps:[{id:'sollies',title:'Carte fictive de test',url:'/api/maps/test/archive',center:[6.1,43.1],bbox:[6,43,6.2,43.2],maxzoom:12,edition:'Fixture',attribution:'Fictional test · OpenStreetMap contributors · Protomaps · ODbL 1.0'}]},
       '/api/settings':{home:{lat:43.1,lon:6.1},departure:null},
       '/api/geography/status':{datasets:[{terrain:true}]},
       '/api/geography/elevation':{elevation_m:123},
@@ -44,6 +44,21 @@ async page=>{
     await page.setViewportSize({width,height});
     if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Débordement '+width);
   }
+  await page.setViewportSize({width:320,height:568});
+  const attribution=page.locator('.maplibregl-ctrl-attrib-button');
+  const tools=page.locator('#open-map-panel');
+  const credits=page.locator('.maplibregl-ctrl-attrib.maplibregl-compact');
+  await credits.waitFor();
+  if(await credits.evaluate(el=>el.classList.contains('maplibregl-compact-show')))await attribution.click();
+  await attribution.click();
+  await credits.locator('.maplibregl-ctrl-attrib-inner').getByText('Fictional test',{exact:false}).waitFor();
+  const creditsBox=await credits.boundingBox(), toolsBox=await tools.boundingBox();
+  if(creditsBox.y+creditsBox.height>toolsBox.y)throw Error('Les outils chevauchent les crédits ouverts');
+  const selectedBox=await page.locator('#selected-point-card').boundingBox();
+  if(selectedBox.y+selectedBox.height>creditsBox.y)throw Error('Les crédits ouverts chevauchent la fiche du repère');
+  await page.screenshot({path:'/artifacts/setupsurvie-cartes-mobile-credits.png',fullPage:true});
+  await tools.click();
+  await page.locator('#close-map-panel').waitFor({state:'visible'});
   if(!ranges.length||errors.length||outside.length)throw Error(JSON.stringify({ranges,errors,outside}));
   return {passed:true,real_pmtiles:true,range_requests:ranges.length,real_renderer:true,style_preserved:true,synthetic_data:true};
 }

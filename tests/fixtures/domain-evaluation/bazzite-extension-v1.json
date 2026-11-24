@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "cases": [
+    {
+      "id": "wide-01",
+      "split": "verify",
+      "query": "Permaculture",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Permaculture",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Méthodes d’aménagement, histoire et principes."
+    },
+    {
+      "id": "wide-02",
+      "split": "verify",
+      "query": "récupération eau pluie",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Récupération_de_l'eau_de_pluie",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Systèmes de collecte, stockage et usages."
+    },
+    {
+      "id": "wide-03",
+      "split": "verify",
+      "query": "Soudage",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Soudage",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Technique d’assemblage, procédés et histoire."
+    },
+    {
+      "id": "wide-04",
+      "split": "verify",
+      "query": "Énergie solaire",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Énergie_solaire",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Ressource naturelle et technologies pour l’exploiter."
+    },
+    {
+      "id": "wide-05",
+      "split": "verify",
+      "query": "Éolienne",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Éolienne",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Équipement technique et son développement historique."
+    },
+    {
+      "id": "wide-06",
+      "split": "verify",
+      "query": "Eau de Cologne",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Eau_de_Cologne",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Histoire, création et appellation de parfumerie."
+    },
+    {
+      "id": "wide-07",
+      "split": "verify",
+      "query": "Charles de Gaulle",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Charles_de_Gaulle",
+      "expected": [
+        "culture"
+      ],
+      "reason": "Biographie politique."
+    },
+    {
+      "id": "wide-08",
+      "split": "verify",
+      "query": "Extincteur",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Extincteur",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Types d’appareils et leur emploi."
+    },
+    {
+      "id": "wide-09",
+      "split": "verify",
+      "query": "Pêche à la ligne",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Pêche_à_la_ligne",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Techniques de pêche et équipement."
+    },
+    {
+      "id": "wide-10",
+      "split": "verify",
+      "query": "Semis",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Semis",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Méthode de mise en terre, équipement et conditions."
+    },
+    {
+      "id": "wide-11",
+      "split": "verify",
+      "query": "Navigation astronomique",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Navigation_astronomique",
+      "expected": [
+        "resilience",
+        "culture"
+      ],
+      "reason": "Méthodes pratiques et lien aux observations astronomiques."
+    },
+    {
+      "id": "wide-12",
+      "split": "verify",
+      "query": "Suture médecine",
+      "kind": "documents",
+      "collection": "wikipedia_fr_all_maxi_2026-05",
+      "path": "Suture_(médecine)",
+      "expected": [
+        "resilience"
+      ],
+      "reason": "Geste technique et modes de réalisation en contexte médical."
+    }
+  ]
+}

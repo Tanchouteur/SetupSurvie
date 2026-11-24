@@ -15,7 +15,7 @@ def status(host):
         try:
             value=json.loads(path.read_text())
             keys=('name','ip','ready','lan_enabled','http_url','https_url','direct_url','direct_https_url','warning')
-            return {key:value.get(key) for key in keys}
+            if isinstance(value,dict):return {key:value.get(key) for key in keys}
         except (ValueError,OSError):pass
     return {'name':host,'ip':host,'ready':False,'lan_enabled':False,
             'http_url':f'http://{host}:8080/','https_url':f'https://{host}:8443/',

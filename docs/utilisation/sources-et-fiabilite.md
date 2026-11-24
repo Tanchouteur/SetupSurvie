@@ -1,6 +1,6 @@
 # Sources, dates et fiabilité des réponses
 
-**Guide actuel — pilote 0.37.3, 17 novembre 2026.** Les règles et la transmission
+**Guide actuel — pilote 0.38.3, 17 novembre 2026.** Les règles et la transmission
 des métadonnées sont implémentées. Les tests simulés ne certifient pas le respect
 de ces règles par les modèles réels.
 
@@ -15,11 +15,66 @@ qui ne tient pas entier dans leur budget, plutôt que d’envoyer une demi-fract
 La limite d’aperçu d’un long article ne coupe pas non plus un bloc de formule.
 La lecture reste signalée comme partielle lorsqu’une partie du texte manque.
 
+Depuis 0.38.3, cette protection couvre aussi la lecture explicite de la suite
+d’un article et la réduction des passages pour tenir dans le contexte. Une
+lecture peut s’arrêter avant une formule ; la suivante reprend à sa limite.
+Si une position demandée tombe au milieu d’une formule qui tient entière, le
+lecteur revient à son début. Une formule dépassant la fenêtre est omise avec
+un indicateur `formula_omitted` dans le résultat d’outil et une lecture partielle.
+Si aucun texte exploitable ne reste, la lecture échoue sans déclarer une nouvelle
+source consultée. Aucune hausse automatique du contexte ou interprétation de la
+formule n’est effectuée. Ouvrir l’original reste nécessaire pour les omissions.
+
 Ces notations ne constituent ni une lecture visuelle des schémas ni une
 vérification du raisonnement. Une traduction techniquement ambiguë peut garder
 tous ses chiffres : comparer la source et son original illustré pour les gestes,
 branchements et usages importants. Un ancien fichier texte ayant déjà perdu
 ses formules ne peut pas les retrouver sans réextraction de son original.
+
+## Aide générale lorsque les sources ne suffisent pas — 0.38.1
+
+Depuis 0.43.5, l’assistant cherche et lit des passages dès la préparation de
+certaines demandes de planning et d’identification d’une œuvre. Si la
+recherche ne fournit aucun passage utile, ses consignes lui demandent
+d’indiquer cette limite et lui permettent de proposer une aide générale.
+[Bilan de l’essai sur le R7](../essais/2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435)
+
+Pour une explication, une idée ou une organisation familiale, l’assistant peut
+répondre avec ses **connaissances générales**, en le signalant clairement.
+Une recherche sans passage utile ne doit pas provoquer un refus automatique.
+Il peut proposer un point de départ adaptable et demander l’âge ou le niveau
+des enfants ; les horaires et durées proposés sont des exemples, pas des normes.
+
+Les références numérotées restent réservées aux sources effectivement lues.
+Une réponse générale n’ajoute pas de document au suivi et ne prouve pas que le
+fonds entier a été interrogé. Si la question demande le contenu d’une notice,
+une commande exacte ou une preuve, le manque doit être annoncé pour ce point.
+Pour un dosage, une décision de potabilité, un branchement ou une structure,
+l’absence de données décisives ne permet pas d’inventer une procédure ou une
+garantie : l’assistant doit clarifier et donner les principes de prudence utiles.
+
+Cette règle guide le modèle ; elle ne certifie pas la justesse de chaque réponse.
+Les refus de moteur, la mémoire et les interruptions gardent leurs messages
+techniques : ils ne sont pas remplacés par une réponse générale inventée.
+
+## Commandes tirées d’une notice — 0.38.2
+
+Une question portant explicitement sur une touche, un bouton ou un réglage
+présent dans une notice déclenche une recherche locale avant la rédaction.
+Lorsqu’une seule référence alphanumérique explicite est donnée (par exemple
+`UV-5R`), elle sert à retrouver la notice ; la question complète sert ensuite
+à sélectionner les passages. Une notice absente ou illisible reste un manque,
+pas une autorisation d’inventer la commande. Un document trouvé doit encore
+être lu et correspondre au modèle exact, à son édition et à ses conditions.
+
+Une relance courte comme « Et pour revenir à l’accueil, quelle touche ? » peut
+reprendre la référence et la collection de la question utilisateur précédente.
+Le logiciel ne prend pas une référence supposée par l’IA et ne remonte pas au-delà
+d’un nouveau sujet utilisateur. Plusieurs références ou une référence absente
+conservent la question complète au lieu de deviner un appareil unique.
+
+Ce routage améliore l’accès aux notices ; il ne garantit ni leur présence dans
+le fonds, ni la fidélité de chaque réponse ou la validité d’une commande réelle.
 
 ## Lire une réponse de l’assistant
 
@@ -48,6 +103,15 @@ garantit pas à elle seule l’exactitude ni l’actualité des documents.
 La [référence de recherche](recherche-documentaire.md) décrit le classement
 commun et la préparation des demandes documentaires depuis 0.1.36. Un classement
 élevé ne transforme pas un article général en procédure validée.
+
+Depuis 0.50.1, si le contrôle des références ne peut pas relier la réponse
+aux passages lus, l’assistant conserve son texte et affiche **Références à
+vérifier** au début. Les citations inconnues ou renvoyant à des résultats
+non lus sont signalées. Les documents effectivement lus restent accessibles
+dans le suivi documentaire, même lorsque la réponse ne contient aucun lien
+vérifiable. Le texte et l’avertissement restent visibles à la réouverture de
+la conversation. Si le moteur ne produit aucun texte de réponse, l’assistant
+peut afficher les extraits consultés.
 
 ## Suivi des recherches et lectures dans l’assistant
 

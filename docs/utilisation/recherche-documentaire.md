@@ -13,11 +13,33 @@ reste distinct : des mesures rapides ne prouvent pas qu’un résultat est utile
 
 Dans **Bibliothèque → Rechercher**, décrire le besoin : « allumer un feu »,
 « fabriquer un générateur à pédales », « rendre eau potable » ou « réparer un vélo ».
+Pour iFixit, la recherche et le lecteur utilisent la langue de l’édition et
+les indices du texte. Une page dont le contenu est majoritairement anglais
+peut ainsi être étiquetée Anglais dans l’édition française. Quand un extrait
+est trop court ou équilibré entre les deux langues, le résultat conserve la
+langue de l’édition. Le filtre français retire les résultats reconnus comme
+anglais.
+
 Le choix de langue permet de chercher en français et en anglais. Le sélecteur
 **Toutes les collections** permet aussi de cibler une source installée, par exemple
 Wikipédia. Ce choix reste dans l’adresse pour le rechargement et Précédent/Suivant.
 Le rechargement relance une seule fois la recherche mémorisée avec ses filtres.
 Une formule comme « faire du feu dans Wikipédia » peut également cibler cette source.
+
+Depuis 0.43.5, la recherche se concentre sur l’œuvre nommée dans « Qui a écrit
+Les Misérables et ça raconte quoi ? ». Elle peut aussi retrouver un guide
+intitulé « Répartir les tâches » pour une demande sur la « répartition des
+tâches » et chercher le sujet principal d’une question qui se poursuit par un
+exemple. Les résultats restent accessibles sans IA. Voir le
+[bilan de fiabilité documentaire](../essais/2026-11-18-fiabilite-documentaire-r7.md#contre-épreuve-en-0435).
+
+Dans un même onglet, revenir d'un document ou utiliser Précédent et Suivant
+retrouve les résultats déjà reçus sans relancer la même recherche. Ils restent en
+mémoire temporaire, séparés par profil et par filtres ; changer de profil les
+efface. Une nouvelle recherche interrompt une recherche encore en cours et en
+conserve les résultats partiels avec un avertissement. Le bouton de recherche
+permet de relancer explicitement pour actualiser les résultats ; recharger ou
+fermer l'onglet efface cette mémoire temporaire.
 
 **« Recherche en cours — aucun résultat pour le moment »** signifie que les
 collections sont encore interrogées. Ce n'est pas une conclusion d'absence de
@@ -36,6 +58,16 @@ orienter une demande pratique ; les questions sur un détail et les aperçus de
 risques restent accessibles. Un titre bien classé ne garantit pas des instructions
 complètes. Une demande générale identique à un titre conserve aussi ses mots de
 liaison pour la correspondance exacte, par exemple « Histoire du vélo ».
+
+Depuis 0.49.2, « conservation des aliments » garde le sujet complet dans les
+recherches par titre. Les documents sur la conservation alimentaire peuvent
+apparaître dans **Autonomie et résilience**. Pour une recherche pratique de
+conservation, les entrées du Wiktionnaire et les pages de transcription de
+Wikisource passent plus bas. La recherche ciblée sur ces collections reste
+possible. Sur les archives présentes sur Bazzite, la requête française avec
+**Autonomie et résilience** a placé l’article « Conservation des aliments » de
+Wikipédia en tête. Cet essai portait sur les archives natives, avec une
+couverture partielle. L’ordre dépend du fonds de chaque installation.
 
 Depuis 0.36.1, des formes courantes de singulier/pluriel se retrouvent ensemble,
 par exemple « couteau/couteaux », « tuyau/tuyaux » ou « ruche/ruches ». La forme
@@ -204,7 +236,7 @@ n’est configuré ou testé par cette livraison.
 
 ## Indexation et espaces depuis 0.3.0
 
-Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. Le classement utilise le texte disponible ; élargir au fonds complet permet de retrouver les documents non classés. La sélection et les filtres figurent dans l’adresse et sont restaurés au retour. Les favoris et traductions gardent leurs sélections personnelles.
+Choisir Autonomie et résilience, Savoirs et culture ou Toute la bibliothèque. Le classement utilise le texte disponible et, quand elle est accessible, la structure des articles de Wikipédia. Élargir au fonds complet permet de retrouver les documents écartés par l’espace. Voir le [guide des classements](classement-et-collections.md). La sélection et les filtres figurent dans l’adresse et sont restaurés au retour. Les favoris et traductions gardent leurs sélections personnelles.
 
 Depuis 0.6.0, le profil Famille peut [corriger ces espaces et le type du document](classement-et-collections.md),
 ainsi que les noms des collections. Une correction humaine conservée prime sur
@@ -271,3 +303,13 @@ fin, cache et couverture. Il ne supprime pas les caches et ne prouve pas un dép
 sans modifier les fichiers. Il prépare le futur index vidéo ; il ne rend pas encore
 les paroles recherchables et ne crée pas de sous-titres. Les guides donnent les
 commandes Windows/Linux et les limites des rapports.
+
+
+### Reconnaître les variantes d’un même résultat
+
+Deux liens Wikipédia vers la même page peuvent apparaître sous un seul
+résultat quand la recherche a pu vérifier leur destination. Les guides iFixit
+du même numéro et de la même langue sont réunis dans le classement.
+Pour chercher dans une édition précise, sélectionnez sa collection. Les
+[comparaisons sur le fonds Bazzite](../essais/2026-11-23-audit-qualite-recherche-bazzite.md)
+donnent des exemples et les limites de la recherche pratique.

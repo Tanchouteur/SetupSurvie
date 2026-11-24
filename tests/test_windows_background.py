@@ -40,6 +40,13 @@ class BackgroundLauncherTests(unittest.TestCase):
             (self.work/'startup-paused.json').write_text('{}')
             self.assertEqual(windows_background.run(self.work),0)
             (self.work/'startup-paused.json').unlink()
-            (self.work/'update.json').write_text('{"phase":"switched"}')
+            (self.work/'update.json').write_text('{"phase":"unrecognized"}')
             self.assertEqual(windows_background.run(self.work),1)
         run.assert_not_called()
+
+    def test_interrupted_published_update_runs_validation_even_if_portal_responds(self):
+        (self.work/'update.json').write_text('{"phase":"switched"}')
+        result=MagicMock(returncode=0)
+        with patch.object(windows_background,'__file__',str(self.root/'windows_background.py')),patch.dict(os.environ,{'SystemRoot':'C:/Windows'}),patch.object(windows_background.subprocess,'CREATE_NO_WINDOW',0x08000000,create=True),patch.object(windows_background.subprocess,'run',return_value=result) as run,patch.object(windows_background,'healthy',return_value=True):
+            self.assertEqual(windows_background.run(self.work),0)
+        run.assert_called_once()

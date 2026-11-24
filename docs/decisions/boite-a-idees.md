@@ -21,6 +21,8 @@ pas des fonctionnalités livrées ni un engagement de calendrier.
 
 | IDEE-011 | Contexte personnel de chaque installation | Louis, 17 novembre 2026 | **Demandé pour le futur** : chaque foyer décrit son contexte avec une **trame simple** (inventaire du stock, adultes et enfants avec âges, compétences, matériel, etc.) que l’assistant utilise pour adapter ses réponses. Données privées : hors Git, incluses dans sauvegarde et transfert, distinctes des sources documentaires ; les profils actuels ne les protègent pas entre lecteurs du réseau. Tests prévus avec et sans contexte ([ingénierie de tests](../essais/ingenierie-de-tests.md#contexte-personnel-de-chaque-foyer-évolution-future)). Aucun développement lancé. |
 
+| IDEE-012 | Voix française pour les vidéos à partir des sous-titres traduits | Louis, 17 novembre 2026 | **Piste future à étudier** : envisager Qwen TTS pour produire un audio français à partir des sous-titres traduits et l'associer à la vidéo. Examiner la qualité de la traduction et de la voix, la synchronisation, le matériel nécessaire, le fonctionnement hors ligne et les licences avant de choisir une solution. Aucun développement ni essai ne sont annoncés. |
+
 Les problèmes prioritaires de recherche, classement des collections, contenus
 pratiques, langues et délai de l’assistant sont suivis dans le
 [retour d’expérience de Marc](../essais/2026-11-14-retour-experience-marc.md).

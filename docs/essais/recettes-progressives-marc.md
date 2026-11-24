@@ -4,7 +4,9 @@
 Ce document ne prouve aucun essai supplémentaire et ne décrit pas des boutons
 qui seraient déjà tous livrés. Référence : [plan des lots](../decisions/plan-ameliorations-marc.md).
 
-## Prochaine validation ciblée — 0.37.3
+<a id="prochaine-validation-ciblée--0373"></a>
+
+## Prochaine validation ciblée — 0.38.3
 
 Après mise à jour habituelle, privilégier ces trois contrôles utiles plutôt que
 relancer tous les essais de performances :
@@ -24,8 +26,10 @@ relancer tous les essais de performances :
    réussite d’un petit MP4 de test ne qualifie pas toutes les vidéos de Marc.
 
 Pour un article technique, ouvrir aussi l’original illustré et comparer les
-formules. Une ancienne traduction conserve son instantané ; pour tester le
-nouveau lecteur, créer un nouveau travail depuis l’article original. La reprise
+formules, y compris après lecture de la suite. Pour une question sur une touche
+d’appareil, fournir sa référence et vérifier que la commande vient réellement
+de la notice consultée ; une notice manquante doit rester signalée. Une ancienne
+traduction conserve son instantané ; pour tester le nouveau lecteur, créer un nouveau travail depuis l’article original. La reprise
 des compléments d’index est utile si l’on souhaite reconstruire leurs anciennes
 extractions ; elle ne répare pas les textes déjà enregistrés ni les traductions.
 Ce protocole décrit une validation à faire, pas un nouveau résultat chez Marc.
@@ -99,7 +103,7 @@ ou une indexation complète pour chacun des contrôles suivants.
 2. Après cette réponse, passer à un mode utilisant un autre modèle et poser une
    petite question. La première demande doit aboutir sans renvoi manuel. En cas
    d’erreur, noter l’heure et le mode puis exporter **Voir les durées** si disponible.
-   Dans **Paramètres → Entretien et diagnostics → Tests et diagnostics → Mémoire
+   Dans **Paramètres → Tests et diagnostics → Mémoire
    et contexte**, **Télécharger le diagnostic de démarrage** fournit l’état actuel
    en lecture seule. Les refus enregistrés de tests sont distincts de cette demande
    réelle : le diagnostic ne reconstitue pas un échec ancien de conversation.
@@ -192,7 +196,7 @@ Faire ces étapes progressivement, sans tout lancer en même temps. La
 testé et ce qui nécessite le PC de Marc.
 
 1. Appliquer la mise à jour habituelle et vérifier **0.15.0**. Avec **Famille**,
-   aller dans **Mon appareil → Paramètres → Entretien et diagnostics → Vérifier
+   aller dans **Mon appareil → Paramètres → Tests et diagnostics → Vérifier
    la recherche → Contrôle complet · 32 recherches**. Ce R2 ne lance pas l’IA et
    n’exige pas de réindexation intégrale pour ces corrections. Il attend au plus
    90 secondes par demande ; réserver jusqu’à une cinquantaine de minutes au
@@ -227,7 +231,7 @@ sans effacer les caches ni prétendre à un départ froid non établi.
 ## Ce qui est utilisable maintenant
 
 Le contrôle de recherche est disponible depuis 0.3.0. Le chemin actuel est
-**Famille → Mon appareil → Paramètres → Entretien et diagnostics → Vérifier la recherche**,
+**Famille → Mon appareil → Paramètres → Tests et diagnostics → Vérifier la recherche**,
 puis **Télécharger le rapport**. Les recherches de ce contrôle n’appellent aucun
 modèle ; le rapport exporte version, délais, couverture, résultats et extraits.
 La [création/reprise des index](../utilisation/indexation-archives.md) est une

@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import re
 import signal
 import subprocess
 import sys
@@ -18,6 +19,7 @@ import discovery
 import setup
 import library_tasks
 import library_monitor
+import update_watch
 
 
 def key(c):return hmac.new(c['secret'].encode(),b'SetupSurvie engine control v1',hashlib.sha256).hexdigest()
@@ -68,14 +70,28 @@ def hardware(c):
     return {'memory':memory,'gpus':gpu,'disk':{'total':disk.total,'used':disk.used,'free':disk.free}}
 
 
+def control_port(c):
+    try:port=int(c.get('control_port') or 11436)
+    except (TypeError,ValueError):return 11436
+    return port if 1024<port<65536 else 11436
+
+
 class Server(ThreadingHTTPServer):
     daemon_threads=True
-    def __init__(self,app,c,backend,address=('0.0.0.0',11436)):
+    def __init__(self,app,c,backend,address=None):
+        # Rootless Docker reaches the host loopback through rootlesskit, so the
+        # token-protected controller need not listen on the local network.
+        system_gateway = os.environ.get('SURVIE_SYSTEM_DOCKER_GATEWAY') if c.get('target') == 'linux' and backend == 'compose' else None
+        bind = '127.0.0.1' if c.get('docker_rootless') else system_gateway or '0.0.0.0'
+        # control_port lets a second installation on the same PC (the Bazzite
+        # lab beside a fresh install) keep its own controller.
+        address = address or (bind, control_port(c))
         self.app,self.config,self.backend=app,c,backend
         self.library=library_tasks.Manager(app,c,backend)
         self.operation=None;self.operation_error=None;self.lock=threading.Lock();self.cache={};self.cache_time=0
         self.activity_cache=None;self.activity_time=0
         self.performance_lock=threading.Lock()
+        self.updates=update_watch.Watcher(app,c)
         super().__init__(address,Handler)
 
     def status(self):
@@ -88,11 +104,12 @@ class Server(ThreadingHTTPServer):
         if paused.exists():
             try:reason=json.loads(paused.read_text()).get('reason','user_pause')
             except ValueError:reason='user_pause'
-        online=False;models=[]
+        online=False;models=[];models_available=False
         try:
             version=self.app.request('http://127.0.0.1:11435/api/version',timeout=1)
             online=bool(version.get('version'))
             models=[{k:m.get(k) for k in ('name','size','size_vram','context_length')} for m in self.app.request('http://127.0.0.1:11435/api/ps',timeout=1).get('models',[])]
+            models_available=True
         except (OSError,ValueError):pass
         diagnostic={}
         try:
@@ -101,13 +118,28 @@ class Server(ThreadingHTTPServer):
                 saved=json.loads(path.read_text(encoding='utf-8'))
                 diagnostic=clean_engine_diagnostic(saved)
         except (OSError,ValueError,TypeError):pass
-        return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,
+        return {**value,'online':online,'paused':paused.exists(),'reason':reason,'models':models,'models_available':models_available,
                 'operation':operation,'error':error,'control_available':True,'last_engine_action':diagnostic}
 
     def activity(self):
         with self.lock:
             if self.activity_cache is None or time.monotonic()-self.activity_time>5:
                 self.activity_cache=library_monitor.snapshot(self.config['data_dir'],self.app.work)
+                try:
+                    import search_index_queue as index_queue
+                    root = Path(self.config['data_dir'])
+                    queued = index_queue.summary(root)
+                    state, reader_ready = self.library.read(), self.library.index_ready()
+                    if queued['pending']:
+                        waiting = self.library.index_waiting_reason(queued, state, reader_ready)
+                        self.activity_cache['pending_index'] = {'count': queued['pending'], 'reason': waiting}
+                    videos = self.library.pending_video_archives(root)
+                    if videos:
+                        waiting = self.library.index_waiting_reason({**queued, 'pending': videos, 'hold': ''}, state, reader_ready)
+                        self.activity_cache['pending_archive_video'] = {'count': videos, 'reason': waiting or (
+                            'waiting_text' if queued['pending'] else '')}
+                except (OSError, ValueError, setup.SetupError):
+                    pass
                 self.activity_time=time.monotonic()
             return self.activity_cache
 
@@ -225,6 +257,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
+        if self.path=='/update':
+            try:self.respond(200,self.server.updates.status())
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'État des mises à jour indisponible.'})
+            return
+        match=re.fullmatch(r'/library/youtube/([a-f0-9]{32})',self.path)
+        if match:
+            try:
+                result=self.server.library.youtube_result(match[1])
+                self.respond(200 if result is not None else 404,result or {'detail':'Rapport indisponible.'})
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'Rapport indisponible.'})
+            return
         if self.path=='/library':
             try:self.respond(200,self.server.library.status())
             except (OSError,ValueError,RuntimeError,setup.SetupError):self.respond(503,{'detail':'Le suivi documentaire est indisponible sur le PC serveur.'})
@@ -233,27 +276,74 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/video-inventory','/library/video-inventory-pause'):
+        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause','/library/cancel'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
         try:
             length=int(self.headers.get('Content-Length','0'))
-            if not 0<=length<=self.MAX_POST_BYTES:raise ValueError()
+            maximum=384_000 if self.path in ('/library/plan','/library/download','/library/collection-move','/library/collection-preview','/library/collection-exclude') else self.MAX_POST_BYTES
+            if not 0<=length<=maximum:raise ValueError()
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return
+        if self.path.startswith('/update/'):
+            try:
+                if self.path=='/update/check':
+                    self.respond(202,{'accepted':self.server.updates.request_check()})
+                else:
+                    if body.get('confirmed') is not True:raise setup.SetupError('Confirmation requise.')
+                    self.respond(202,{'accepted':True,'id':self.server.updates.start_update()})
+            except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
+            except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'La mise à jour n’a pas pu être lancée sur le PC serveur.'})
+            return
         if self.path.startswith('/library/'):
             try:
+                if self.path == '/library/reference-preview':
+                    import library_reference
+                    from pilot import collection_sort
+                    root, scope = self.server.library.check_storage(0)
+                    inspect = library_reference.restoration_plan if body.get('restore') is True else library_reference.preview
+                    result = inspect(root, library_reference.load(),
+                                     collection_sort.load(root/'catalog'), storage_root=scope)
+                    self.respond(200, result)
+                    return
                 with self.server.lock:
+                    if self.path in ('/library/collection-move','/library/collection-preview'):
+                        import collection_tasks
+                        root,_=self.server.library.check_storage(0)
+                        result=(collection_tasks.move(root,body) if self.path.endswith('-move') else
+                                collection_tasks.preview(root,collection_tasks.validate_keys(body)))
+                        self.respond(200,result)
+                        return
                     if self.path=='/library/index-settings':
                         import search_index_queue
                         search_index_queue.settings(Path(self.server.config['data_dir']),body)
                     elif self.path=='/library/video-inventory-pause':
                         if self.server.library.current().get('action')!='video-inventory':raise setup.SetupError('Aucun inventaire des vidéos de collections n’est en cours.')
                         self.server.library.pause()
-                    elif self.path=='/library/pause':self.server.library.pause()
-                    else:self.server.library.start(self.path.rsplit('/',1)[-1],body)
+                    elif self.path=='/library/youtube-download-pause':
+                        state=self.server.library.current()
+                        if state.get('action')!='youtube-download' or body.get('list')!=state.get('youtube_list'):
+                            raise setup.SetupError('Ce téléchargement YouTube n’est plus en cours.')
+                        self.server.library.pause(state=state)
+                    elif self.path=='/library/cancel':
+                        self.respond(202,{'accepted':True,'result':self.server.library.cancel(body.get('operation_id'))})
+                        return
+                    elif self.path=='/library/pause':
+                        state=self.server.library.current()
+                        if 'operation_id' in body and body['operation_id'] != state.get('id'):
+                            raise setup.SetupError('Cette préparation n’est plus en cours.')
+                        self.server.library.pause(state=state)
+                    else:
+                        job_id=self.server.library.start(self.path.rsplit('/',1)[-1],body)
+                        if self.path=='/library/collection-exclude':
+                            self.respond(202,{'accepted':True,'id':job_id})
+                            return
+                        if self.path=='/library/download':
+                            # A ranking-only reference change is applied at once, without a queued job.
+                            self.respond(202,{'accepted':True,'queued':job_id is not None})
+                            return
                 self.respond(202,{'accepted':True})
             except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
             except (OSError,ValueError,RuntimeError):self.respond(503,{'detail':'Vérifiez le disque de données et le service de téléchargement sur le PC serveur.'})
@@ -294,14 +384,34 @@ def stop(app):
     marker.unlink(missing_ok=True)
 
 
+RESUME_INTERVAL=300
+
+
+def resume_downloads(app,config,previous=None):
+    """Linux: relaunch a pinned library plan after a restart; Windows uses its startup task."""
+    if config.get('target')!='linux' or (previous is not None and previous.poll() is None):return previous
+    try:state=json.loads((app.work/'content-resume.json').read_text(encoding='utf-8'))
+    except (OSError,ValueError):return None
+    if state.get('enabled') is not True:return None
+    with (app.work/'content-resume.log').open('ab') as log:
+        return subprocess.Popen([sys.executable,str(setup.ROOT/'scripts/windows_resume.py'),'run','--work-dir',str(app.work)],
+                                stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
+
+
 def serve(app,backend):
     server=Server(app,app.load(),backend);server.timeout=.5
-    last_index=0
+    last_index=0;last_resume=-RESUME_INTERVAL+60;resume=None
     while not (app.work/'control.stop').exists():
         server.handle_request()
         if time.monotonic()-last_index>=5:
             last_index=time.monotonic()
             try:server.library.auto_index()
+            except (OSError,ValueError,setup.SetupError):pass
+            try:server.updates.tick()
+            except (OSError,ValueError,setup.SetupError):pass
+        if time.monotonic()-last_resume>=RESUME_INTERVAL:
+            last_resume=time.monotonic()
+            try:resume=resume_downloads(app,server.config,resume)
             except (OSError,ValueError,setup.SetupError):pass
     server.server_close()
 

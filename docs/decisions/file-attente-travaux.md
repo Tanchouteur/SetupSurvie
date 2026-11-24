@@ -1,0 +1,61 @@
+# File d’attente des travaux SetupSurvie
+
+Décision de Louis, 18 novembre 2026. Le portail doit donner un point de suivi
+commun aux questions, traductions, transcriptions, sous-titres et téléchargements
+YouTube. Le réglage de l’ordre porte sur les travaux qui attendent. Une erreur
+doit rester visible tout en libérant la place pour la suite.
+
+## Suivi du chantier
+
+- [x] Identifier les refus de yt-dlp par vidéo, isoler les erreurs et rendre la reprise possible.
+- [x] Enchaîner automatiquement le téléchargement, l’indexation du titre, la
+  préparation des sous-titres et leur indexation après transcription ou traduction.
+- [x] Piloter les travaux depuis une file réordonnable avec une pause et une reprise globales.
+- [x] Afficher la file dans la navigation, avec un aperçu au survol et au clavier,
+  une page accessible au toucher et des erreurs visibles séparément.
+- [x] Raccorder les reprises et contrôles du chantier de fiabilité des traductions.
+- [x] Vérifier priorités, erreurs, reprise, recherche par titre et par sous-titres
+  ainsi que les parcours de navigation sur ordinateur et téléphone.
+
+La capture de Marc montre le départ d’une liste de sept vidéos. Le compte rendu
+communiqué ensuite indique six téléchargements sans sous-titres et un échec
+yt-dlp à la ligne 2. Le détail du refus yt-dlp de cette ligne reste inconnu.
+
+
+La version **0.51.0** ajoute une fonctionnalité compatible au portail. Le
+planificateur reprend les points d’acquisition du moteur conservés par le
+[correctif de traduction 0.50.2](https://github.com/Tanchouteur/SetupSurvie/pull/51) et fait
+passer les étapes de la chaîne vidéo par les mêmes travailleurs que les
+actions manuelles. Les essais automatisés peuvent vérifier ces enchaînements
+avec un contrôleur et des modèles simulés. La recette sur le PC Windows de
+Marc, le détail exact de sa ligne 2 et la reconnaissance sur ses propres
+vidéos restent à valider sur place.
+
+## Priorité des questions et traitements simultanés
+
+Louis demande de donner la priorité aux messages envoyés à l’assistant et de
+montrer dans l’aperçu quels travaux avancent en parallèle. SetupSurvie 0.52.0
+utilise trois créneaux pour le moteur IA, les téléchargements et la préparation
+locale. Le moteur traite au plus trois questions prioritaires de suite tant
+qu’une tâche de fond attend. Les téléchargements et la transcription sur CPU
+peuvent avancer pendant une réponse. La priorité s’applique entre les étapes
+enregistrées. L’interface montre le prochain travail prévu dans chaque créneau.
+
+## Visibilité des états dans le portail
+
+Louis demande de rendre les états et les erreurs accessibles depuis
+l’aperçu et la page de la file. Dans la version 0.52.1, le signal d’erreur
+reste présent pendant la pause et les tâches à reprendre disposent de leur
+propre rubrique. Une coupure du suivi conserve le dernier état connu et
+désactive les commandes de la file jusqu’à la prochaine actualisation.
+La conversation et le formulaire YouTube gardent un message de suivi
+explicite quand leur service ne répond plus.
+
+
+## Cartes et glisser-déposer — 19 novembre 2026
+
+Louis demande des sections distinctes et des tâches encadrées dans l’aperçu
+et la page dédiée. En 0.55.0, une poignée à trois barres remplace les boutons
+à flèches. L’inventaire vidéo et l’examen des collections sont visibles pendant
+les autres préparations locales. Un même profil peut lancer ou reprendre des
+traductions dans des conversations distinctes. Voir le [guide de la file](../utilisation/file-attente.md).

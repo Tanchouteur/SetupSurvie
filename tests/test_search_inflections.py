@@ -72,6 +72,15 @@ class InflectionSearchTests(unittest.IsolatedAsyncioTestCase):
         radio=retrieval.plan('radio',library.search_terms('radio'),library.SYNONYMS)
         self.assertIn('radio',radio.groups[0])
 
+    def test_grafting_an_apple_tree_reaches_english_guides_without_loose_matches(self):
+        # Lab, 24 November 2026: « greffer un pommier » found nothing in the
+        # practical space, while « greffe » found Appropedia « Grafting ».
+        plan=retrieval.plan('greffer un pommier',library.search_terms('greffer un pommier'),library.SYNONYMS)
+        self.assertEqual((plan.title_fr,plan.title_en),('greffe pommier','grafting apple tree'))
+        items=[{'id':'zim:appropedia/Grafting','title':'Grafting','excerpt':'Whip grafting joins a scion to an apple rootstock.','kind':'article'},
+               {'id':'zim:fixture/Pomme','title':'Pomme','excerpt':'La pomme est un fruit.','kind':'article'}]
+        self.assertEqual([r['id'] for r in retrieval.ordered(items,plan,8)],['zim:appropedia/Grafting'])
+
     def test_document_reading_selects_the_passage_with_the_other_number_form(self):
         text='Contexte fictif sans rapport. '*300+'Repère conservé : les couteaux sont le sujet de cet extrait fictif. '+'Autre contexte fictif. '*200
         parts=research.passages(text,'couteau',900)
@@ -108,6 +117,30 @@ class InflectionSearchTests(unittest.IsolatedAsyncioTestCase):
         forms=retrieval.title_forms(plan)
         self.assertEqual(forms[0],query);self.assertLessEqual(len(forms),5)
         self.assertTrue(all('cuivre' in form and len(form.split())==4 for form in forms))
+
+
+class TechnicalVocabularyTests(unittest.TestCase):
+    def plan(self, query):
+        return retrieval.plan(query, library.search_terms(query), library.SYNONYMS)
+
+    def test_grounding_keeps_the_electrical_expression_together(self):
+        plan = self.plan('mise à la terre d’une installation')
+        self.assertEqual(plan.words, ['mise a la terre'])
+        self.assertIn('grounding', plan.groups[0])
+        hits = retrieval.ordered([
+            {'id': 'guide:other', 'title': 'Installation de la nappe de l’écran', 'excerpt': 'Mettre à la terre.'},
+            {'id': 'guide:grounding', 'title': 'Standards for Grounding and Lightning Protection'},
+        ], plan, 5)
+        self.assertEqual([hit['id'] for hit in hits], ['guide:grounding'])
+
+    def test_seed_saving_matches_the_french_subject_without_unrelated_words(self):
+        for query in ('seed saving for vegetable garden', 'conserver les graines du potager'):
+            with self.subTest(query=query):
+                plan = self.plan(query)
+                self.assertEqual(plan.action, 'preserve')
+                self.assertEqual(len(plan.groups), 2)
+                self.assertTrue(any('potageres' in group for group in plan.groups))
+                self.assertTrue(any('semences' in group for group in plan.groups))
 
 
 if __name__=='__main__':unittest.main()

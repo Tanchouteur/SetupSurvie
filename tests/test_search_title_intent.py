@@ -104,6 +104,34 @@ class TitleIntentTests(unittest.TestCase):
             with self.subTest(query=query):
                 self.assertEqual(self.ordered(query,task,prices,'Extrait fictif de prix.')[0]['id'],'zim:fixture/task')
 
+    def test_procedures_precede_equipment_lists_for_a_task(self):
+        cases = [
+            ('réparer une crevaison de vélo',
+             'Comment coller une rustine pour réparer une chambre à air de vélo',
+             'Bicycles/Maintenance and Repair/Tools and Supplies/Puncture Repair Kit',
+             'A fictional bicycle puncture repair kit with patch and tools.'),
+            ('réparer une crevaison de vélo', 'Mécanique vélo/Matériel/Réparer une crevaison',
+             'Matériel pour réparer une crevaison de vélo',
+             'Liste fictive de fournitures pour réparer une crevaison de vélo.'),
+            ('réparer une crevaison de vélo', 'Comment réparer une crevaison de vélo avec un kit',
+             'Trousse pour réparer une crevaison de vélo',
+             'Liste fictive de fournitures pour réparer une crevaison de vélo.'),
+        ]
+        for query, task, equipment, text in cases:
+            with self.subTest(equipment=equipment):
+                found = self.ordered(query, task, equipment, text)
+                self.assertEqual([row['id'] for row in found], ['zim:fixture/task', 'guide:background'])
+
+    def test_equipment_requests_keep_the_equipment_heading_first(self):
+        for query, task, equipment in (
+            ('kit de réparation de vélo', 'Réparer une crevaison de vélo', 'Kit de réparation de vélo'),
+            ('quel matériel pour réparer un vélo', 'Réparer un vélo', 'Matériel pour réparer un vélo'),
+            ('bicycle repair kit', 'How to repair a bicycle tyre', 'Bicycle Repair Kit'),
+        ):
+            with self.subTest(query=query):
+                found = self.ordered(query, task, equipment, equipment + '. Liste fictive.')
+                self.assertEqual(found[0]['id'], 'guide:background')
+
     def test_recognized_actions_work_without_a_how_or_comment_prefix(self):
         cases=[
             ('remplacer un roulement','Remplacer un roulement','Prix de remplacement d’un roulement'),
@@ -116,6 +144,32 @@ class TitleIntentTests(unittest.TestCase):
             with self.subTest(query=query):
                 found=self.ordered(query,task,prices,'Extrait fictif de tarifs, sans instructions.')
                 self.assertEqual(found[0]['id'],'zim:fixture/task');self.assertEqual(len(found),2)
+
+    def test_category_titles_are_downgraded_even_without_a_category_path(self):
+        plan = retrieval.plan('vélo', ['velo'], {})
+        article = {'id': 'zim:fixture/article', 'title': 'Réparer un vélo'}
+        category = {**article, 'id': 'zim:fixture/index', 'title': 'Catégorie : Réparer un vélo'}
+        self.assertEqual(retrieval.rank(article, plan) - retrieval.rank(category, plan), 35)
+
+    def test_ifixit_groups_same_guide_and_language_but_keeps_translation(self):
+        plan = retrieval.plan('radio', ['radio'], {})
+        rows = [
+            {'id': 'zim:ifixit_en_all_2025-12/Guide/Radio/123', 'title': 'Radio', 'language': 'en'},
+            {'id': 'zim:ifixit_fr_all_2026-03/Tutoriel/Radio/123', 'title': 'Radio', 'language': 'en'},
+            {'id': 'zim:ifixit_fr_all_2026-03/Tutoriel/Récepteur_radio/123', 'title': 'Récepteur radio', 'language': 'fr'},
+            {'id': 'zim:ifixit_en_all_2025-12/Guide/Radio/456', 'title': 'Radio', 'language': 'en'},
+        ]
+        found = retrieval.ordered(rows, plan, 5)
+        self.assertEqual(len(found), 3)
+        self.assertEqual(found[0]['id'], rows[0]['id'])
+        self.assertNotIn(rows[1]['id'], [row['id'] for row in found])
+        self.assertIn(rows[2]['id'], [row['id'] for row in found])
+
+    def test_title_only_song_does_not_displace_practical_reading(self):
+        plan = retrieval.plan('comment stocker les semences', ['semences'], {})
+        hit = {'id': 'zim:fixture/album', 'title': 'Stocker les semences',
+               'excerpt': 'Song', 'match': 'title'}
+        self.assertEqual(retrieval.ordered([hit], plan, 5), [])
 
 
 if __name__=='__main__':unittest.main()

@@ -45,6 +45,188 @@ class LibraryJobTests(unittest.TestCase):
         setup.write_json(folder / 'plan.json', plan)
         return state, folder
 
+    def test_global_pause_requests_a_category_checkpoint_and_holds_host_preparations(self):
+        state, folder = self.seed(action='category-index', phase='downloading')
+        marker = self.root / 'data/state/pilot/work-queue.pause'
+        marker.touch()
+        self.manager.auto_index()
+        self.assertTrue((folder / 'cancel').is_file())
+        self.assertFalse((folder / 'auto-pause').exists())
+        self.manager.write({**state, 'phase': 'paused'})
+        with self.assertRaisesRegex(setup.SetupError, 'Reprenez la file'):
+            self.manager.start('category-index', {})
+        with patch.object(self.manager, 'index_ready') as readiness:
+            self.manager.auto_index()
+        readiness.assert_not_called()
+        marker.unlink()
+        self.assertFalse(self.manager.queue_paused())
+
+    def test_reference_download_pins_only_the_requested_edition_and_keeps_previous_plan(self):
+        import library_reference
+
+        item = {**self.item, 'classification': 'main'}
+        archive = Path(item['path']).name
+        worker = MagicMock(pid=os.getpid())
+        with patch.object(library_reference, 'load', return_value={'items': [item]}), \
+             patch.object(jobs.subprocess, 'Popen', return_value=worker) as launch:
+            with self.assertRaisesRegex(setup.SetupError, 'ne figure pas'):
+                self.manager.start('download', {'reference_archive': 'old.zim'})
+            launch.assert_not_called()
+            job = self.manager.start('download', {'reference_archive': archive})
+            self.assertEqual(content.catalog(self.manager.paths(job)/'plan.json'), [item])
+            self.assertEqual(self.manager.status()['plan']['count'], 1)
+            self.assertEqual(self.manager.status()['action'], 'download')
+
+            self.manager.write({**self.manager.read(), 'phase': 'paused', 'options': {}})
+            with self.assertRaisesRegex(setup.SetupError, 'téléchargement précédent'):
+                self.manager.start('download', {'reference_archive': archive})
+            launch.assert_called_once()
+
+    def test_reference_restoration_verifies_before_replacing_or_removing_exact_files(self):
+        import library_reference
+        from pilot import collection_sort
+
+        root = self.root/'data'
+        item = {**self.item, 'classification': 'other'}
+        target = root/item['path']
+        previous = target.with_name('garden_en_all_2025-12.zim')
+        extra = target.with_name('notes_fr_all_2026-01.zim')
+        target.write_bytes(b'wrong size')
+        previous.write_bytes(b'older edition')
+        extra.write_bytes(b'extra archive')
+        catalog = {'items': [item]}
+        preview = library_reference.restoration_plan(root, catalog, collection_sort.Sort())
+        with patch.object(library_reference, 'load', return_value=catalog), \
+             patch.object(jobs.subprocess, 'Popen', return_value=MagicMock(pid=os.getpid())):
+            with self.assertRaisesRegex(setup.SetupError, 'a changé'):
+                self.manager.start('download', {'reference_confirmation': '1'*64})
+            job = self.manager.start('download', {'reference_confirmation': preview['confirmation_token']})
+
+        class Response(io.BytesIO):
+            status = 200
+            headers = {}
+
+            def geturl(self):
+                return item['url']
+
+        with patch('content_mirrors.opener_for', return_value=None), \
+             patch('content_mirrors.network_open', return_value=Response(b'x'*len(self.raw))), \
+             patch.object(self.app, 'compose') as compose:
+            self.manager.run(job)
+            compose.assert_not_called()
+        self.assertEqual(self.manager.read()['phase'], 'error')
+        self.assertEqual(target.read_bytes(), b'wrong size')
+        self.assertTrue(previous.is_file())
+        self.assertTrue(extra.is_file())
+
+        target.with_name(target.name+'.part').write_bytes(self.raw)
+        with patch.object(self.app, 'catalog'), patch.object(self.app, 'compose') as compose:
+            self.manager.run(job)
+        self.assertEqual(self.manager.read()['phase'], 'completed')
+        self.assertEqual(target.read_bytes(), self.raw)
+        self.assertFalse(previous.exists())
+        self.assertFalse(extra.exists())
+        self.assertEqual(collection_sort.load(root/'catalog').state(collection_sort.archive(target.name)), 'other')
+        self.assertEqual([call.args[1:] for call in compose.call_args_list], [('stop', 'kiwix'), ('start', 'kiwix')])
+
+    def test_reference_selection_applies_ranking_at_once_and_keeps_a_paused_download(self):
+        import library_reference
+        from pilot import collection_sort
+
+        root = self.root/'data'
+        state, folder = self.seed(phase='paused')
+        partial = root/(self.item['path']+'.part')
+        partial.write_bytes(b'xx')
+        present = {**self.item, 'id': 'present', 'path': 'library/zim/notes_fr_all_2026-01.zim',
+                   'title': 'Notes', 'bytes': 5, 'classification': 'other'}
+        (root/present['path']).write_bytes(b'notes')
+        missing = {**self.item, 'id': 'missing', 'path': 'library/zim/wikipedia_en_all_maxi_2026-08.zim',
+                   'title': 'Wikipédia EN', 'classification': 'main'}
+        catalog = {'items': [present, missing]}
+        plan = library_reference.restoration_plan(root, catalog, collection_sort.Sort())
+        key = collection_sort.archive('notes_fr_all_2026-01.zim')
+        self.assertEqual([row['key'] for row in plan['moves']], [key])
+        with patch.object(library_reference, 'load', return_value=catalog), \
+             patch.object(jobs.subprocess, 'Popen') as launch:
+            with self.assertRaisesRegex(setup.SetupError, 'Cochez'):
+                self.manager.start('download', {'reference_confirmation': plan['confirmation_token'],
+                                                'selection': {'downloads': [], 'removals': [], 'moves': []}})
+            with self.assertRaisesRegex(setup.SetupError, 'a changé'):
+                self.manager.start('download', {'reference_confirmation': plan['confirmation_token'],
+                                                'selection': {'moves': ['zim:inconnue']}})
+            result = self.manager.start('download', {'reference_confirmation': plan['confirmation_token'],
+                                                     'selection': {'moves': [key]}})
+            launch.assert_not_called()
+            self.assertIsNone(result)
+            # A download still needs the paused one to be cancelled or resumed first.
+            plan = library_reference.restoration_plan(root, catalog, collection_sort.load(root/'catalog'))
+            with self.assertRaisesRegex(setup.SetupError, 'Annulez ou reprenez'):
+                self.manager.start('download', {'reference_confirmation': plan['confirmation_token'],
+                                                'selection': {'downloads': ['wikipedia_en_all_maxi_2026-08.zim']}})
+        self.assertEqual(collection_sort.load(root/'catalog').state(key), 'other')
+        self.assertEqual(self.manager.read()['phase'], 'paused')
+        self.assertTrue(partial.is_file())
+
+    def test_reference_selection_downloads_only_the_ticked_edition(self):
+        import library_reference
+        from pilot import collection_sort
+
+        root = self.root/'data'
+        wanted = {**self.item, 'classification': 'main'}
+        unwanted = {**self.item, 'id': 'en', 'path': 'library/zim/wikipedia_en_all_maxi_2026-08.zim',
+                    'title': 'Wikipédia EN', 'bytes': 10**12, 'classification': 'main'}
+        extra = root/'library/zim/notes_fr_all_2026-01.zim'
+        extra.write_bytes(b'extra archive')
+        catalog = {'items': [wanted, unwanted]}
+        plan = library_reference.restoration_plan(root, catalog, collection_sort.Sort())
+        self.assertFalse(plan['space_sufficient'])
+        with patch.object(library_reference, 'load', return_value=catalog), \
+             patch.object(jobs.subprocess, 'Popen', return_value=MagicMock(pid=os.getpid())):
+            job = self.manager.start('download', {'reference_confirmation': plan['confirmation_token'],
+                                                  'selection': {'downloads': [Path(wanted['path']).name]}})
+        self.assertEqual([item['id'] for item in content.catalog(self.manager.paths(job)/'plan.json')], ['book'])
+        (root/(wanted['path']+'.part')).write_bytes(self.raw)
+        with patch.object(self.app, 'catalog'), patch.object(self.app, 'compose'):
+            self.manager.run(job)
+        self.assertEqual(self.manager.read()['phase'], 'completed')
+        self.assertEqual((root/wanted['path']).read_bytes(), self.raw)
+        self.assertFalse((root/unwanted['path']).exists())
+        self.assertTrue(extra.is_file())
+
+    def test_cancel_deletes_started_files_and_disarms_recovery(self):
+        root = self.root/'data'
+        state, folder = self.seed(phase='paused')
+        partial = root/(self.item['path']+'.part')
+        partial.write_bytes(b'abc')
+        finished = root/'library/zim/kept_fr_all_2026-01.zim'
+        finished.write_bytes(b'done')
+        setup.write_json(self.app.work/'content-resume.json', {'schema': 1, 'enabled': True, 'selection': str(folder/'plan.json')})
+        with self.assertRaisesRegex(setup.SetupError, 'plus dans la file'):
+            self.manager.cancel('b'*32)
+        self.assertEqual(self.manager.cancel(state['id']), 'cancelled')
+        self.assertFalse(partial.exists())
+        self.assertTrue(finished.is_file())
+        current = self.manager.read()
+        self.assertEqual(current['phase'], 'cancelled')
+        self.assertIn('1 fichier(s) commencé(s) supprimé(s)', current['message'])
+        self.assertFalse(json.loads((self.app.work/'content-resume.json').read_text())['enabled'])
+        self.assertNotIn('plan', self.manager.status())
+        with self.assertRaisesRegex(setup.SetupError, 'déjà terminé ou annulé'):
+            self.manager.cancel(state['id'])
+
+    def test_cancel_of_a_running_download_cleans_up_at_the_next_checkpoint(self):
+        root = self.root/'data'
+        state, folder = self.seed(phase='downloading')
+        self.assertEqual(self.manager.cancel(state['id']), 'requested')
+        self.assertTrue((folder/'cancel').is_file() and (folder/'discard').is_file())
+        self.assertIn('Annulation demandée', self.manager.status()['message'])
+        partial = root/(self.item['path']+'.part')
+        partial.write_bytes(b'abc')
+        self.manager.write({**self.manager.read(), 'action': 'download'})
+        self.manager.run(state['id'])
+        self.assertEqual(self.manager.read()['phase'], 'cancelled')
+        self.assertFalse(partial.exists())
+
     def test_index_requires_finished_reader_preparation_and_reports_progress(self):
         with self.assertRaises(setup.SetupError):self.manager.start('index',{})
         binary=self.manager.index_python();binary.parent.mkdir(parents=True);binary.touch()
