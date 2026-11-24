@@ -3,8 +3,10 @@ import asyncio
 import hashlib
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import AsyncMock,patch
 
@@ -40,7 +42,7 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_opening_uses_the_selected_track_without_the_text_search_index(self):
         with videos.connect() as db:
-            db.execute('DELETE FROM video_text')
+            db.execute(f'DELETE FROM {videos.main_table(db)}')
         source=await library.source(self.id+'#t=4000')
         self.assertIn('dynamo',source['text'])
         self.assertNotIn('rotor',source['text'])
@@ -76,7 +78,10 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
             names={row[0] for row in db.execute("SELECT name FROM sqlite_master")}
             partitions=list(videos.partition_tables(db).values())
             self.assertTrue(partitions)
-            self.assertFalse({name+'_content' for name in partitions}&names)
+            self.assertEqual(videos.main_table(db),'video_search')
+            self.assertFalse({name+'_content' for name in partitions+['video_search']}&names)
+            self.assertNotIn('video_text',names)
+            self.assertEqual(db.execute("SELECT count(*) FROM video_doc").fetchone()[0],1)
             texts=[row[0] for table in partitions for row in db.execute(f"SELECT text FROM {table} WHERE {table} MATCH 'rotor'")]
         self.assertEqual(len(texts),1);self.assertIn('17 mm',texts[0])
         self.assertFalse(videos.building().exists())
@@ -85,11 +90,11 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_interrupted_rebuild_keeps_the_published_index_and_discards_the_build(self):
         (videos.ROOT/'cours.fr.srt').write_text('1\n00:00:01,000 --> 00:00:04,000\nTexte remplacé sans le mot cherché.\n')
-        with patch.object(videos,'build_partitions',side_effect=OSError('disk full')):
+        with patch.object(videos,'build_search_tables',side_effect=OSError('disk full')):
             report=videos.scan()
         self.assertEqual(report['phase'],'failed');self.assertFalse(videos.building().exists())
         with videos.connect() as db:
-            self.assertEqual(db.execute("SELECT count(*) FROM video_text WHERE video_text MATCH 'rotor'").fetchone()[0],1)
+            self.assertEqual(db.execute("SELECT count(*) FROM video_search WHERE video_search MATCH 'rotor'").fetchone()[0],1)
 
     def test_restored_report_without_its_rebuildable_index_requests_a_rebuild(self):
         self.assertFalse(videos.stale())
@@ -100,18 +105,38 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         original=videos.signature
         def archives_changed(archives=True):return 'archives-changed' if archives else original(archives=False)
         with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=True):
-            self.assertFalse(videos.stale())
+            # A 25-minute rebuild that ended 10 minutes ago waits; after 100 minutes it may run.
             report=json.loads((store.ROOT/'videos-report.json').read_text())
-            report['finished']-=videos.ARCHIVE_REFRESH_INTERVAL+1
+            report.update(started=time.time()-35*60,finished=time.time()-10*60)
+            (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+            self.assertFalse(videos.stale())
+            report.update(started=time.time()-126*60,finished=time.time()-101*60)
             (store.ROOT/'videos-report.json').write_text(json.dumps(report))
             self.assertTrue(videos.stale())
-            report['finished']+=videos.ARCHIVE_REFRESH_INTERVAL+1
+            report.update(started=time.time()-35*60,finished=time.time()-10*60)
             (store.ROOT/'videos-report.json').write_text(json.dumps(report))
             (videos.ROOT/'autre.fr.srt').write_text('1\n00:00:01,000 --> 00:00:02,000\nTexte.\n')
             self.assertTrue(videos.stale())
         with patch.object(videos,'signature',side_effect=archives_changed),patch.object(videos,'archive_inventory_running',return_value=False):
             (videos.ROOT/'autre.fr.srt').unlink()
             self.assertTrue(videos.stale())
+
+    def test_index_published_before_0114_stays_searchable_until_rebuilt(self):
+        legacy=store.ROOT/'legacy.db'
+        db=sqlite3.connect(legacy);db.executescript(videos.SCHEMA)
+        with videos.connect() as current:
+            for row in current.execute('SELECT * FROM media'):db.execute('INSERT INTO media VALUES(?,?,?,?)',tuple(row))
+            for row in current.execute('SELECT id,title,language,track,start_ms,end_ms,text FROM video_search'):db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',tuple(row))
+        db.commit();db.close()
+        for path in store.ROOT.glob('videos.db*'):path.unlink()
+        legacy.rename(videos.database())
+        found,_=videos.search(self.plan('rotor'));self.assertEqual(len(found),1)
+        report=json.loads((store.ROOT/'videos-report.json').read_text());report['signature']='before-0.114'
+        (store.ROOT/'videos-report.json').write_text(json.dumps(report))
+        self.assertTrue(videos.stale())
+        videos.scan()
+        with videos.connect() as current:self.assertEqual(videos.main_table(current),'video_search')
+        found,_=videos.search(self.plan('rotor'));self.assertEqual(len(found),1)
 
     def test_published_file_is_replaced_only_once_open_connections_close(self):
         opened=threading.Event();release=threading.Event()

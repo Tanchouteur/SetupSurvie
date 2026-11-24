@@ -26,6 +26,18 @@ NOTICE='Sous-titres locaux : langue, sens et synchronisation non vérifiés. Le 
 
 SCHEMA='''CREATE TABLE IF NOT EXISTS media(id TEXT PRIMARY KEY,path TEXT NOT NULL,revision TEXT NOT NULL,payload TEXT NOT NULL);
         CREATE VIRTUAL TABLE IF NOT EXISTS video_text USING fts5(id UNINDEXED,title,language UNINDEXED,track UNINDEXED,start_ms UNINDEXED,end_ms UNINDEXED,text,tokenize='unicode61 remove_diacritics 2');'''
+# Rebuilt layout: identifier and title once per video, each cue once; the
+# search tables index a view instead of copying it. 7.70 GB became 3.42 GB with
+# identical answers to 1,395 queries on the Bazzite lab (24 November 2026).
+# The main table is named video_search: earlier versions, after a rollback,
+# create their own empty video_text and rebuild instead of writing into it.
+BUILD_SCHEMA='''CREATE TABLE media(id TEXT PRIMARY KEY,path TEXT NOT NULL,revision TEXT NOT NULL,payload TEXT NOT NULL);
+        CREATE TABLE video_doc(doc INTEGER PRIMARY KEY,id TEXT NOT NULL UNIQUE,title TEXT NOT NULL,first_cue INTEGER,last_cue INTEGER);
+        CREATE TABLE video_cue(cue INTEGER PRIMARY KEY,doc INTEGER NOT NULL,language TEXT NOT NULL,track TEXT NOT NULL,start_ms INTEGER NOT NULL,end_ms INTEGER NOT NULL,text TEXT NOT NULL);
+        CREATE VIEW video_rows AS SELECT c.cue AS cue,d.id AS id,d.title AS title,c.language AS language,c.track AS track,
+            c.start_ms AS start_ms,c.end_ms AS end_ms,c.text AS text FROM video_cue c JOIN video_doc d ON d.doc=c.doc;
+        CREATE VIRTUAL TABLE video_search USING fts5(id UNINDEXED,title,language UNINDEXED,track UNINDEXED,start_ms UNINDEXED,end_ms UNINDEXED,text,content='video_rows',content_rowid='cue',tokenize='unicode61 remove_diacritics 2');
+        CREATE TABLE video_search_partitions(scope TEXT PRIMARY KEY);'''
 # Bound the write-ahead log once checkpointed: without it a full inventory left
 # a multi-gigabyte videos.db-wal on disk (Bazzite lab, 24 November 2026).
 WAL_LIMIT=64*1024*1024
@@ -79,10 +91,15 @@ def connect():
         path=database();db=sqlite3.connect(path,timeout=10);db.row_factory=sqlite3.Row
         path.chmod(0o600)
         db.execute('PRAGMA journal_mode=WAL');db.execute('PRAGMA synchronous=FULL');db.execute(f'PRAGMA journal_size_limit={WAL_LIMIT}')
-        db.executescript(SCHEMA)
+        if not db.execute('SELECT 1 FROM sqlite_master LIMIT 1').fetchone():db.executescript(SCHEMA)
         try:
             with db:yield db
         finally:db.close()
+
+
+def main_table(db):
+    """Search table of the rebuilt layout, or of a file published before 0.114.0."""
+    return 'video_search' if db.execute("SELECT 1 FROM sqlite_master WHERE name='video_search'").fetchone() else 'video_text'
 
 
 @contextmanager
@@ -95,7 +112,7 @@ def build_connection():
     db=sqlite3.connect(path);db.row_factory=sqlite3.Row
     path.chmod(0o600)
     db.execute('PRAGMA journal_mode=OFF');db.execute('PRAGMA synchronous=OFF')
-    db.executescript(SCHEMA)
+    db.executescript(BUILD_SCHEMA)
     try:
         with db:yield db
     except BaseException:
@@ -281,7 +298,7 @@ def signature(archives=True):
     download in progress does not trigger repeated inventories. Without
     `archives`, only the local files and the collection sort count."""
     local = ROOT.is_dir() and not inventory.is_link(ROOT)
-    digest=hashlib.sha256(b'archive-display-titles-and-origin-v3')
+    digest=hashlib.sha256(b'archive-display-titles-and-origin-v3-compact-index-0.114')
     digest.update(json.dumps(collection_sort.load(network.CATALOG).as_json()).encode())
     count=0
     for directory,folders,files in os.walk(ROOT,followlinks=False) if local else ():
@@ -312,9 +329,13 @@ CHECK_INTERVAL=60
 # Each archive published by a running ZIM video inventory changes the
 # signature; a full rebuild took 25 minutes of the pilot's CPU for 17,375 videos
 # and restarted in a loop on the Bazzite lab (24 November 2026). While such an
-# inventory runs, its partial results are indexed at most this often; its end
-# still triggers a rebuild (archive_videos.follow and the finished date).
-ARCHIVE_REFRESH_INTERVAL=6*3600
+# inventory runs, its newly published archives wait until this many times the
+# last rebuild duration has passed: at most a fifth of the time spent
+# rebuilding. Its end still triggers a rebuild
+# (archive_videos.follow and the finished date).
+ARCHIVE_REFRESH_FACTOR=4
+# Rebuilds shorter than this are never deferred.
+ARCHIVE_DEFER_AFTER=60
 
 
 def archive_inventory_running():
@@ -335,9 +356,10 @@ def stale():
     # A completed, failed or voluntarily stopped inventory is redone only
     # when the files changed since it started.
     if current.get('signature')==signature():return False
-    if (current['phase']=='completed' and 'local_signature' in current and archive_inventory_running()
-            and time.time()-current.get('finished',0)<ARCHIVE_REFRESH_INTERVAL
-            and current['local_signature']==signature(archives=False)):
+    duration=max(0,current.get('finished',0)-current.get('started',0))
+    if (current['phase']=='completed' and 'local_signature' in current and duration>=ARCHIVE_DEFER_AFTER
+            and time.time()-current['finished']<ARCHIVE_REFRESH_FACTOR*duration
+            and archive_inventory_running() and current['local_signature']==signature(archives=False)):
         return False
     return True
 
@@ -436,6 +458,25 @@ def build_partitions(db):
             db.execute(f'INSERT INTO {tables[scope]}(rowid,id,title,language,track,start_ms,end_ms,text) VALUES(?,?,?,?,?,?,?,?)',tuple(row))
 
 
+def build_search_tables(db):
+    """Index the cues of a rebuilt file: the main table, then one partition per
+    collection scope, each reading the cues of its videos by rowid range."""
+    if STOP.is_set():raise InterruptedError()
+    db.execute("INSERT INTO video_search(video_search) VALUES('rebuild')")
+    scopes={key:collection_sort.video(json.loads(payload)) for key,payload in db.execute('SELECT id,payload FROM media')}
+    tables={key:partition_name(key) for key in set(scopes.values())}
+    for key,table in tables.items():
+        db.execute(f"""CREATE VIRTUAL TABLE {table} USING fts5(id UNINDEXED,title,language UNINDEXED,
+            track UNINDEXED,start_ms UNINDEXED,end_ms UNINDEXED,text,content='video_rows',content_rowid='cue',tokenize='unicode61 remove_diacritics 2')""")
+        db.execute('INSERT INTO video_search_partitions VALUES(?)',(key,))
+    for key,first,last in db.execute('SELECT id,first_cue,last_cue FROM video_doc').fetchall():
+        if STOP.is_set():raise InterruptedError()
+        scope=scopes.get(key)
+        if scope is not None and first is not None:
+            db.execute(f'INSERT INTO {tables[scope]}(rowid,id,title,language,track,start_ms,end_ms,text) '
+                       'SELECT cue,id,title,language,track,start_ms,end_ms,text FROM video_rows WHERE cue BETWEEN ? AND ?',(first,last))
+
+
 def search(plan,language='',limit=40,sorting=None,domain='all'):
     if not ROOT.is_dir() and not (store.ROOT/'videos.db').is_file():return [],{'status':'not_available'}
     phase=status()['phase']
@@ -464,7 +505,7 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
                 db.create_function('in_video_scope',1,in_scope,deterministic=True)
                 restriction='AND id IN (SELECT id FROM media WHERE in_video_scope(payload))'
         else:
-            tables=['video_text']
+            tables=[main_table(db)]
             restriction=''
             if restricted or plan.collection:
                 db.create_function('in_video_scope',1,in_scope,deterministic=True)
@@ -539,7 +580,7 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
     filters=[]
     parameters=[]
     if words:
-        title_match="id IN (SELECT id FROM video_text WHERE video_text MATCH ? AND track='metadata')"
+        title_match="id IN (SELECT id FROM {table} WHERE {table} MATCH ? AND track='metadata')"
         filters.append(f'({title_match} OR collection_matches(label))' if grouped or group else title_match)
         parameters.append(' AND '.join('"'+word+'"' for word in words))
     if group:
@@ -557,6 +598,7 @@ def listing(offset=0,limit=30,query='',grouped=False,group='',origin='all'):
         report={key:report[key] for key in ('phase','finished','videos','error') if key in report}
     with connect() as db:
         db.execute('BEGIN')
+        restriction=restriction.replace('{table}',main_table(db))
         if prefix and words:
             def collection_matches(label):
                 text=retrieval.normal(label or '')
@@ -639,13 +681,14 @@ def scan():
                     subject = {'title': item['title'], '_text': description}
                     domains = set(retrieval.domains(subject)) if main else set()
                     language=item['media']['language_declared'] or ''
-                    db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],language,'metadata',0,0,(item['description'] or '')[:100000]))
+                    doc=db.execute('INSERT INTO video_doc(id,title) VALUES(?,?)',(key,item['title'])).lastrowid
+                    first=db.execute('INSERT INTO video_cue(doc,language,track,start_ms,end_ms,text) VALUES(?,?,?,?,?,?)',(doc,language,'metadata',0,0,description)).lastrowid;last=first
                     for index,track in enumerate(item['tracks']):
                         if track['technical_status']!='passed':continue
                         parsed=inventory.inspect_subtitle(track_file(track),item['media']['duration_seconds_declared'],include_cues=True)
                         if parsed['technical_status']!='passed' or parsed['revision']!=track['revision']:raise ValueError('subtitle_changed')
                         for cue in parsed['cues']:
-                            db.execute('INSERT INTO video_text VALUES(?,?,?,?,?,?,?)',(key,item['title'],track['language_declared'] or '',str(index),cue['start_ms'],cue['end_ms'],cue['text']))
+                            last=db.execute('INSERT INTO video_cue(doc,language,track,start_ms,end_ms,text) VALUES(?,?,?,?,?,?)',(doc,track['language_declared'] or '',str(index),cue['start_ms'],cue['end_ms'],cue['text'])).lastrowid
                         for origin in ('acquired_job', 'prepared_job', 'transcription_job'):
                             if track.get(origin):
                                 published.setdefault(origin, set()).add(track[origin])
@@ -661,6 +704,7 @@ def scan():
                         report['tracks']+=1
                     if main:
                         item['search_domains'] = sorted(domains)
+                    db.execute('UPDATE video_doc SET first_cue=?,last_cue=? WHERE doc=?',(first,last,doc))
                     db.execute('INSERT INTO media VALUES(?,?,?,?)',(key,item['path'],version,json.dumps(item,ensure_ascii=False)))
                     report['videos']+=1
                     if time.monotonic()-last_saved>2:
@@ -669,7 +713,7 @@ def scan():
                 fresh=archive_videos.progress()
                 if fresh.get('job_id')!=archive_report.get('job_id') or fresh.get('finished')!=archive_report.get('finished'):report['archive_inventory_job']=None
                 report['stage']='Publication des index de recherche vidéo';save()
-                build_partitions(db)
+                build_search_tables(db)
             publish_built()
             confirm_indexed_tracks(published)
             report.pop('stage')

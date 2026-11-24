@@ -30,6 +30,10 @@ mobiles et hors ligne restent distincts. Les plus récents sont en premier.
 - [Bibliothèque du Sud, recherche et IA — pilote 0.1.7](bibliotheque-sud-recherche-et-ia.md) — Cartes du Sud, recherche et IA, livraison 0.1.7
 - [Mesurer le classement des espaces](mesurer-classement-documentaire.md) — protocole avant/après, résultats Bazzite et recette à étendre chez Marc.
 
+## 24 novembre 2026
+
+- [Passe d’optimisation volume et vitesse](2026-11-24-passe-optimisation-volume-vitesse.md) — 0.114.0, index vidéo compact, sauvegardes allégées, portail compressé et démarrage de Kiwix.
+
 ## 23 novembre 2026
 
 - [Libérer de la place pour une restauration Linux](2026-11-23-place-restauration-linux.md) — 0.113.0, sélection et reprise après interruption.
