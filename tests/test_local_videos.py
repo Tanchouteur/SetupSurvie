@@ -138,6 +138,16 @@ class LocalVideoTests(unittest.IsolatedAsyncioTestCase):
         with videos.connect() as current:self.assertEqual(videos.main_table(current),'video_search')
         found,_=videos.search(self.plan('rotor'));self.assertEqual(len(found),1)
 
+    def test_unchanged_report_is_decoded_once_and_callers_get_their_own_copy(self):
+        report=store.ROOT/'videos-report.json'
+        report.write_text(json.dumps({'phase':'completed','videos':1,'per_video':[{'id':'video:a'}]}))
+        videos.REPORT_CACHE=None
+        with patch.object(videos.json,'loads',wraps=json.loads) as decode:
+            first=videos.status();first['phase']='changed';second=videos.status()
+        self.assertEqual(decode.call_count,1);self.assertEqual(second['phase'],'completed')
+        replacement=report.with_name('report.next');replacement.write_text(json.dumps({'phase':'failed','videos':0}));replacement.replace(report)
+        self.assertEqual(videos.status()['phase'],'failed')
+
     def test_published_file_is_replaced_only_once_open_connections_close(self):
         opened=threading.Event();release=threading.Event()
         def reader():

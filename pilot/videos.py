@@ -553,9 +553,24 @@ def search(plan,language='',limit=40,sorting=None,domain='all'):
     return result,{'status':state,'stale_results':stale_rows,'results':len(result),'indexes_queried':len(tables),'indexed_videos':total,'partitioned':partitions is not None,'scope':'indexed_local_and_archive_video_titles_and_tracks','archives':archives}
 
 
+REPORT_CACHE=None
+
+
 def status():
+    # The completed report lists every video (25 MB for 17,375 on the Bazzite
+    # lab): decoding it for each video search took about 0.3 s. Reuse it while
+    # the published file is unchanged; callers get their own top-level dict and
+    # only read the shared per-video entries.
+    global REPORT_CACHE
+    path=store.ROOT/'videos-report.json'
     try:
-        value=json.loads((store.ROOT/'videos-report.json').read_text())
+        info=path.stat();revision=(str(path),info.st_ino,info.st_size,info.st_mtime_ns)
+        cached=REPORT_CACHE
+        if cached is not None and cached[0]==revision:value=dict(cached[1])
+        else:
+            loaded=json.loads(path.read_text())
+            if not isinstance(loaded,dict):raise ValueError('video_report')
+            REPORT_CACHE=(revision,loaded);value=dict(loaded)
         if value.get('phase')=='running' and (ACTIVE is None or ACTIVE.done()):value['phase']='interrupted'
         return value
     except (OSError,ValueError):return {'schema':1,'phase':'not_started','videos':0,'tracks':0,'errors':[]}
