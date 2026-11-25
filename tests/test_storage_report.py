@@ -112,10 +112,11 @@ class StorageReportTests(unittest.TestCase):
         write(recovery / 'archives/old/app.py', 700)
         (recovery / 'point').mkdir()
         (recovery / 'point/transfer.json').write_text(json.dumps({'bytes': 123_456_789}))
-        point = recovery / 'point'
-        other = {str(recovery): 'backup-disk'}
+        # Resolved paths: Windows runners hand out short temp names (RUNNER~1) that the scan expands.
+        point = (recovery / 'point').resolve()
+        other = {str(recovery.resolve()): 'backup-disk'}
         real_device = storage_report.device_of
-        with patch.object(storage_report, 'device_of', lambda path: other.get(str(path), real_device(path))), \
+        with patch.object(storage_report, 'device_of', lambda path: other.get(str(Path(path).resolve()), real_device(path))), \
                 patch.object(storage_report.Walker, 'add', wraps_add(storage_report.Walker.add, point)):
             report = self.scan()
         items = self.items(report)
@@ -160,7 +161,7 @@ class StorageReportTests(unittest.TestCase):
 def wraps_add(original, point):
     """Make the sealed point unreadable to the walker, as root-only folders are."""
     def add(walker, identifier, device, entry, name, expand=False):
-        if Path(entry.path) == point:
+        if Path(entry.path).resolve() == point:
             walker.item(identifier, device)['unreadable'] += 1
             return None
         return original(walker, identifier, device, entry, name, expand)
