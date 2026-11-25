@@ -122,6 +122,8 @@ def mount():
     checked_mount()
     for name in ('containers', 'tmp', 'private', 'logs', 'results', 'data', 'runtime'):
         (MOUNT / name).mkdir(exist_ok=True)
+    # Podman refuses a missing bind source; private books are mounted under /guides/ebooks.
+    (MOUNT / 'data/library/ebooks').mkdir(parents=True, exist_ok=True)
     (MOUNT / 'private').chmod(0o700)
 
 
@@ -210,6 +212,7 @@ def container_specifications(c):
                     '-v', f'{MOUNT}/runtime/portal:/srv/portal:ro',
                     '-v', f'{MOUNT}/data/catalog:/srv/catalog:ro',
                     '-v', f'{MOUNT}/data/library/guides:/srv/guides:ro',
+                    '-v', f'{MOUNT}/data/library/ebooks:/srv/guides/ebooks:ro',
                     '-v', f'{MOUNT}/data/state/caddy:/data', '--memory=256m'],
                    {'TLS_FALLBACK_HOST':c.get('lan_host','localhost'),**{key:', '.join(f'https://{host}:{port}' for host in tls_hosts)
                     for key,port in [('TLS_PORTAL_ADDRESSES',8443),('TLS_WEBUI_ADDRESSES',8444),('TLS_KIWIX_ADDRESSES',8445)]}}),
@@ -230,6 +233,7 @@ def container_specifications(c):
                    '-v', f'{MOUNT}/data/models:/models:ro',
                    '-v', f'{MOUNT}/data/catalog:/catalog:ro',
                    '-v', f'{MOUNT}/data/library/guides:/guides',
+                   '-v', f'{MOUNT}/data/library/ebooks:/guides/ebooks:ro',
                    '-v', f'{MOUNT}/data/library/maps:/maps:ro', '--memory=2g'],
                   {'PILOT_STATE_DIR':'/pilot-data','WEBUI_DB_PATH':'/webui-data/webui.db',
                    'PILOT_CONTROL_URL':f'http://host.containers.internal:{control.control_port(c)}','PILOT_CONTROL_TOKEN':setup.control_key(c),

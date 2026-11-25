@@ -28,7 +28,7 @@ MANAGED_ENV={'DATA_DIR','BIND_ADDRESS','OLLAMA_BASE_URL','WEBUI_SECRET_KEY','WEB
              'WEBUI_ADMIN_PASSWORD','CHAT_MODEL','WEBUI_IMAGE','KIWIX_IMAGE','PORTAL_IMAGE','OLLAMA_IMAGE',
              'TLS_PORTAL_ADDRESSES','TLS_WEBUI_ADDRESSES','TLS_KIWIX_ADDRESSES','TLS_FALLBACK_HOST','PILOT_CONTROL_TOKEN','ROUTING_IMAGE','HOST_GATEWAY'}
 INITIAL_ZIM_VIDEO_REQUEST = 'initial-zim-video-inventory.json'
-DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
+DIRECTORIES = ("library/zim", "library/video", "library/guides", "library/ebooks", "library/maps", "catalog", "state/openwebui", "state/pilot", "state/caddy", "models")
 PREPARE_EMBEDDING = """
 import os
 os.environ['HF_HUB_OFFLINE'] = '0'
@@ -253,6 +253,9 @@ class Installation:
 
     def render(self, c):
         (Path(c['data_dir'])/'library/video').mkdir(parents=True,exist_ok=True)
+        # Private books (EPUB/PDF): indexed through a mount under /guides/ebooks,
+        # never copied into a kit or a guides bundle (rights not redistributable).
+        (Path(c['data_dir'])/'library/ebooks').mkdir(parents=True,exist_ok=True)
         values = {"DATA_DIR": c["data_dir"], "BIND_ADDRESS": c["bind"],
                   "OLLAMA_BASE_URL": "http://ollama:11434" if c["target"] == "linux" else "http://host.docker.internal:11435",
                   "WEBUI_SECRET_KEY": c["secret"], "WEBUI_ADMIN_EMAIL": c["admin_email"],

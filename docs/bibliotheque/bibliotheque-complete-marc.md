@@ -177,6 +177,22 @@ la préparation automatique le refait, sinon utiliser une fois **Créer ou
 reprendre les index**. Le classement des guides est recalculé à chaque
 recherche.
 
+### Livres personnels : dossier `library/ebooks` (0.116.0)
+
+Le 25 novembre 2026, 16 livres EPUB/PDF déposés chez Marc dans
+`donnees/library/Ebooks` n’étaient pas indexés. En effet, le pilote ne lit que
+`library/guides`. Depuis la 0.116.0, l’installation et chaque mise à jour créent
+`donnees/library/ebooks`. Ce dossier est monté en lecture seule sous
+`/guides/ebooks` dans le pilote et sous `/srv/guides/ebooks` dans le portail.
+Un fichier PDF, EPUB, TXT, MD ou HTML déposé là est donc indexé
+automatiquement en moins d’une minute, puis cité et ouvert comme un guide.
+
+Ce dossier est réservé aux livres personnels dont les droits ne permettent pas
+la redistribution. L’export du kit ignore `guides/ebooks`, et la sauvegarde des
+états ne le copie pas : conserver ces fichiers comme le reste du fonds. Un PDF
+scanné sans texte reste marqué `needs_ocr`. Validé par tests unitaires et
+remontage chez Marc ; pas encore essayé dans le laboratoire Linux.
+
 ### Reporter le tri fait chez Marc
 
 Le fonds et le tri de Marc au 21 novembre 2026 sont conservés dans
