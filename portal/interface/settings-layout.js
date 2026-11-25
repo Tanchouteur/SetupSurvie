@@ -344,7 +344,7 @@
   metrics.setAttribute("aria-labelledby", "server-metrics-title");
   const metricsTitle = make("h2", "", "Mémoire et modèle chargé");
   metricsTitle.id = "server-metrics-title";
-  metrics.append(metricsTitle, make("p", "muted small", "Mesures du PC qui héberge SetupSurvie. Le stockage se consulte séparément dans les paramètres de la bibliothèque."));
+  metrics.append(metricsTitle, make("p", "muted small", "Mesures du PC qui héberge SetupSurvie. L’espace disque a sa propre carte, juste en dessous."));
   get("view-monitor").querySelector(".page-heading").after(metrics);
   metrics.append(
     get("monitor-models").closest("article"),

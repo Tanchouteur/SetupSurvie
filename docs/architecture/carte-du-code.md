@@ -154,7 +154,9 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
   regarder dans Mon appareil), `search-start.js` (écran de départ de Rechercher,
   dernières recherches, filtres repliés sur téléphone). Ajout 0.76.0 :
   `home.js` (ligne « Sur cet appareil » de l’accueil) ; `motion.js` porte les
-  transitions directionnelles et l’apparition en cascade des cartes.
+  transitions directionnelles et l’apparition en cascade des cartes. Ajout
+  0.117.0 : `storage-overview.js` et `storage.css` (carte « Espace disque » de
+  la vue d’ensemble, analyse détaillée en tête de la page Stockage).
 - `design/` : jetons et système visuel « Veillée » ; `vendor/` : bibliothèques
   locales (marked, DOMPurify, PDF.js…) ; `classique/` et `nouveau/` : simples
   redirections vers `/`.
@@ -200,6 +202,7 @@ de points partagés). Guides : [cartes](../utilisation/parametres-et-cartes.md),
 | `inventory_zim_videos.py`, `library_videos.py`, `youtube_videos.py`, `youtube_tools.py` | Vidéos ZIM et YouTube ([guide](../utilisation/telecharger-videos-youtube.md)) |
 | `maps.py`, `map_install.py`, `geography_data.py`, `routing_prepare.py` | Cartes, adresses, relief et graphes OSRM |
 | `runtime_resources.py`, `host_performance.py`, `gpu_windows.py` | Dimensionnement et compteurs matériels |
+| `storage_report.py` | Analyse en lecture seule de l’espace disque par catégorie, en arrière-plan dans le contrôleur (`/storage`, [guide](../utilisation/inventaire-local.md#espace-disque-et-analyse-du-stockage-depuis-01170)) |
 | `diagnose_kiwix.py` | Diagnostic des délais Kiwix ([guide](../exploitation/diagnostic-performances-kiwix.md)) |
 
 ### Évaluation et audits

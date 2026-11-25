@@ -39,7 +39,7 @@ class DesignBudgetTests(unittest.TestCase):
         self.assertLessEqual(len(sizes), MAX_FONT_SIZES, 'Reprenez une taille déjà utilisée.')
 
     def test_new_shared_sheets_use_tokens_only(self):
-        for name in ('core/core.css',):
+        for name in ('core/core.css', 'interface/storage.css'):
             self.assertEqual(raw_colours((PORTAL / name).read_text()), [], name)
 
     def test_tokens_load_before_every_other_sheet(self):

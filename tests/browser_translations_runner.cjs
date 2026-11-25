@@ -58,6 +58,7 @@ const portalRecipes = [
   'browser_work_queue.js',
   'browser_work_queue_seen.js',
   'browser_memory_translation_comfort.js',
+  'browser_storage_summary.js',
   'browser_motion_resilience.js',
   'browser_motion_and_drag.js',
   'browser_ux_foundations.js',

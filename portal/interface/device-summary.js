@@ -4,7 +4,8 @@
  * explication et une action. Les mesures détaillées (modèle chargé, RAM,
  * VRAM, services) restent affichées en dessous, inchangées.
  * Sources : événements `survie:connection`, `survie:inference`,
- * `survie:work-queue`, et `/api/health` pour les fonctions dégradées.
+ * `survie:work-queue`, `survie:storage` (disque presque plein), et
+ * `/api/health` pour les fonctions dégradées.
  */
 (() => {
   const view = document.getElementById("view-monitor");
@@ -28,7 +29,7 @@
   const sub = card.querySelector(".device-summary-sub");
   const list = card.querySelector(".device-summary-list");
 
-  const facts = { online: window.SurvieNet ? window.SurvieNet.state().online : true, inference: null, queue: undefined, degraded: [] };
+  const facts = { online: window.SurvieNet ? window.SurvieNet.state().online : true, inference: null, queue: undefined, degraded: [], disks: [] };
   const admin = () => typeof S !== "undefined" && S.user?.role === "admin";
   const ratio = (item) => item && Number.isFinite(item.used) && Number.isFinite(item.total) && item.total > 0 ? item.used / item.total : null;
 
@@ -57,6 +58,10 @@
       const errors = jobs.filter((job) => ["error", "failed"].includes(job.status)).length;
       if (errors) out.push({ tone: "danger", title: errors === 1 ? "Une tâche a échoué" : `${errors} tâches ont échoué`, text: "Ouvrez la file pour lire le message et la marche à suivre.", action: ["Ouvrir les tâches", "#/file"] });
       if (facts.queue.paused) out.push({ tone: "warn", title: "La file des tâches est en pause", text: "Les téléchargements et préparations attendent sa reprise.", action: ["Ouvrir les tâches", "#/file"] });
+    }
+    for (const disk of facts.disks) {
+      const free = disk.total > 0 ? disk.free / disk.total : 1;
+      if (free < 0.1) out.push({ tone: free < 0.05 ? "danger" : "warn", title: `Disque ${disk.label} presque plein (${Math.round(free * 100)} % libre)`, text: "Les téléchargements et préparations peuvent échouer. Regardez ce qui prend de la place.", action: ["Analyser le stockage", "#/appareil/stockage"] });
     }
     for (const feature of facts.degraded) {
       out.push({ tone: "warn", title: "Fonction réduite : " + feature, text: "Le reste du portail fonctionne. Un redémarrage de l’appareil peut suffire." });
@@ -114,6 +119,7 @@
   document.addEventListener("survie:connection", (e) => { facts.online = e.detail.online; render(); if (facts.online) health(); });
   document.addEventListener("survie:inference", (e) => { facts.inference = e.detail; render(); });
   document.addEventListener("survie:work-queue", (e) => { facts.queue = e.detail; render(); });
+  document.addEventListener("survie:storage", (e) => { facts.disks = Array.isArray(e.detail?.disks) ? e.detail.disks : []; render(); });
   document.addEventListener("survie:view", () => { if (!view.hidden) health(); });
   if (typeof S !== "undefined" && S.inference) facts.inference = S.inference;
   render();

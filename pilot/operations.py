@@ -144,6 +144,29 @@ async def performance():
     except (httpx.HTTPError,ValueError):return {'available':False,'reason':'controller_unavailable'}
 
 
+async def storage():
+    """Disk usage and the last breakdown measured on the host (sizes and relative names only)."""
+    try:
+        if not TOKEN:return {'available':False,'reason':'not_configured'}
+        async with httpx.AsyncClient(trust_env=False,timeout=6) as client:
+            response=await client.get(URL+'/storage',headers={'Authorization':'Bearer '+TOKEN})
+            if response.status_code==404:return {'available':False,'reason':'controller_update_required'}
+            response.raise_for_status();value=response.json()
+            if not isinstance(value,dict) or value.get('schema')!=1:raise ValueError()
+            return {**value,'available':True}
+    except (httpx.HTTPError,ValueError):return {'available':False,'reason':'controller_unavailable'}
+
+
+async def storage_scan():
+    try:
+        if not TOKEN:raise ValueError()
+        async with httpx.AsyncClient(trust_env=False,timeout=8) as client:
+            response=await client.post(URL+'/storage/scan',json={},headers={'Authorization':'Bearer '+TOKEN})
+            if response.status_code==409:raise HTTPException(409,response.json().get('detail','Analyse impossible pour le moment.'))
+            response.raise_for_status();return response.json()
+    except (httpx.HTTPError,ValueError):raise HTTPException(503,'Le service du PC serveur ne répond pas ; l’analyse du disque n’a pas pu démarrer.')
+
+
 async def update_request(action=None,body=None):
     """Update check and launch on the host; the portal never runs a command itself."""
     if action not in (None,'check','start'):raise HTTPException(400,'Action de mise à jour inconnue.')
