@@ -282,6 +282,22 @@ async def progressive_search(query,*args,on_update=None,**kwargs):
 library.search=progressive_search
 async def status(fresh=False):return {'online':True,'paused':False,'message':'Simulation CPU','models':[],'gpus':[],'memory':{},'disk':{},'jobs':{},'control_available':False}
 operations.status=status
+G=1024**3
+STORAGE_DISKS=[{'id':'1','label':'E:','total':1900*G,'used':880*G,'free':1020*G,'data':True,'setupsurvie':820*G,'backups':30*G}]
+STORAGE_ITEMS=[
+    {'id':'zim','category':'library','label':'Wikipédia et archives illustrées','note':'Archives ZIM lues par Kiwix.','rebuildable':False,'bytes':700*G,'files':183,'unreadable':0,'estimated':False,'disks':{'1':700*G},
+     'top':[{'name':'wikipedia_fr_all_maxi_fixture-avec-un-nom-de-fichier-vraiment-tres-long-pour-le-telephone.zim','bytes':400*G},{'name':'khanacademy_fr_fixture.zim','bytes':300*G}]},
+    {'id':'category-index','category':'indexes','label':'Index des catégories','note':'Recalculé automatiquement.','rebuildable':True,'bytes':80*G,'files':364,'unreadable':0,'estimated':False,'disks':{'1':80*G},'top':[]},
+    {'id':'updates','category':'backups','label':'Sauvegardes des mises à jour','note':'','rebuildable':False,'bytes':30*G,'files':12,'unreadable':0,'estimated':False,'disks':{'1':30*G},'top':[{'name':'op/','bytes':30*G}]},
+    {'id':'models','category':'models','label':'Modèles d’IA','note':'','rebuildable':False,'bytes':40*G,'files':22,'unreadable':0,'estimated':False,'disks':{'1':40*G},'top':[]}]
+STORAGE_REPORT={'schema':1,'scanned_at':time.time()-7200,'duration_ms':2200,'total':820*G,'backups':30*G,'rebuildable':80*G,'disks':STORAGE_DISKS,
+                'categories':[{'id':'library','label':'Bibliothèque','bytes':700*G,'rebuildable_bytes':0},{'id':'indexes','label':'Index et caches de recherche','bytes':80*G,'rebuildable_bytes':80*G},
+                              {'id':'models','label':'Assistant IA','bytes':40*G,'rebuildable_bytes':0},{'id':'backups','label':'Copies de sécurité','bytes':30*G,'rebuildable_bytes':0}],
+                'items':STORAGE_ITEMS}
+async def storage():return {'schema':1,'available':True,'scanning':False,'error':None,'report':STORAGE_REPORT,'disks':STORAGE_DISKS}
+operations.storage=storage
+async def storage_scan():return {'accepted':True}
+operations.storage_scan=storage_scan
 async def library_command(action=None,payload=None):
     from fastapi import HTTPException
     if action not in (None,'status'):raise HTTPException(409,'Cette fixture ne télécharge aucun contenu.')

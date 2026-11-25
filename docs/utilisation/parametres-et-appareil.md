@@ -12,7 +12,8 @@ la place nécessaire à leurs commandes ; les options avancées restent dépliab
 
 Dans **Mon appareil**, trois entrées restent visibles sur ordinateur et téléphone :
 
-- **Vue d’ensemble** : état de l’assistant, disponibilité des fonctions et progression.
+- **Vue d’ensemble** : état de l’assistant, disponibilité des fonctions, progression
+  et carte **Espace disque**, qui ouvre l’[analyse du stockage](inventaire-local.md#espace-disque-et-analyse-du-stockage-depuis-01170).
   Les mesures détaillées du PC et du modèle sont dans **Détails techniques**.
 - **File d’attente** : progression des travaux du PC et du profil courant. Le
   [guide de la file d’attente](file-attente.md) décrit les commandes de suivi et

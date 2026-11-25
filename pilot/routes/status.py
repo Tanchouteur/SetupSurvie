@@ -58,6 +58,14 @@ async def inference_status():
     return {**state,'jobs':counts}
 
 
+@router.get('/api/storage')
+async def storage_status():return await operations.storage()
+
+
+@router.post('/api/admin/storage/scan')
+async def storage_scan(value=Depends(admin)):return await operations.storage_scan()
+
+
 class StartEngine(BaseModel):force:bool=False
 
 

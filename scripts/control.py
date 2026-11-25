@@ -19,6 +19,7 @@ import discovery
 import setup
 import library_tasks
 import library_monitor
+import storage_report
 import update_watch
 
 
@@ -92,7 +93,16 @@ class Server(ThreadingHTTPServer):
         self.activity_cache=None;self.activity_time=0
         self.performance_lock=threading.Lock()
         self.updates=update_watch.Watcher(app,c)
+        self.storage=storage_report.Analyzer(app,c,self.storage_scope())
         super().__init__(address,Handler)
+
+    def storage_scope(self):
+        # The laboratory's data live on a sparse image sharing its SSD.
+        if self.backend!='lab':return None
+        try:
+            import linux_lab as lab
+            return lab.MOUNT
+        except (ImportError,AttributeError):return None
 
     def status(self):
         with self.lock:
@@ -257,6 +267,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path=='/activity':
             self.respond(200,self.server.activity());return
+        if self.path=='/storage':
+            try:self.respond(200,self.server.storage.status())
+            except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'L’analyse du disque est indisponible.'})
+            return
         if self.path=='/update':
             try:self.respond(200,self.server.updates.status())
             except (OSError,ValueError,setup.SetupError):self.respond(503,{'detail':'État des mises à jour indisponible.'})
@@ -276,7 +290,7 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200,self.server.status())
     def do_POST(self):
         if not self.authorized():return
-        if self.path not in ('/start','/stop','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause','/library/cancel'):
+        if self.path not in ('/start','/stop','/storage/scan','/update/check','/update/start','/library/plan','/library/download','/library/pause','/library/geography','/library/routing','/library/index','/library/index-prepare','/library/index-settings','/library/collection-move','/library/collection-preview','/library/collection-exclude','/library/reference-preview','/library/category-index','/library/video-inventory','/library/video-inventory-pause','/library/youtube-download','/library/youtube-download-pause','/library/cancel'):
             self.discard_rejected_body()
             self.respond(404,{'detail':'Commande inconnue.'})
             return
@@ -287,6 +301,11 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length) or b'{}')
             if not isinstance(body,dict):raise ValueError()
         except (ValueError,TypeError):self.respond(400,{'detail':'Requête non valide.'});return
+        if self.path=='/storage/scan':
+            try:self.respond(202,{'accepted':self.server.storage.start()})
+            except setup.SetupError as exc:self.respond(409,{'detail':str(exc)})
+            except (OSError,RuntimeError):self.respond(503,{'detail':'L’analyse du disque n’a pas pu démarrer.'})
+            return
         if self.path.startswith('/update/'):
             try:
                 if self.path=='/update/check':
